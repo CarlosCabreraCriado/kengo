@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
+import { NavegacionComponent } from '../navegacion/navegacion.component';
 
 @Component({
   selector: 'app-ejercicios',
-  imports: [],
+  imports: [NavegacionComponent],
   templateUrl: './ejercicios.component.html',
-  styleUrl: './ejercicios.component.css'
+  styleUrl: './ejercicios.component.css',
 })
-export class EjerciciosComponent {
-
-}
+export class EjerciciosComponent {}
