@@ -1,480 +1,432 @@
 <!-- Component: User profile card -->
-<section
-  class="flex h-screen w-screen flex-row flex-wrap items-center gap-5 align-middle"
->
+<section class="relative flex h-screen w-screen items-center">
   <div
-    class="h-72 overflow-hidden rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
+    class="m-auto flex w-screen max-w-7xl flex-row flex-wrap justify-around gap-3 py-16 align-baseline"
   >
-    <!-- Image -->
-    <figure class="p-6 pb-0">
-      <span
-        class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
-      >
-        <img
-          src="https://i.pravatar.cc/80?img=22"
-          alt="user name"
-          title="user name"
-          width="80"
-          height="80"
-          class="max-w-full rounded-full"
-        />
-      </span>
-    </figure>
-    <!-- Body-->
-    <div class="p-6">
-      <header class="mb-4">
-        <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
-        <p class="text-slate-400">Senior Designer</p>
-      </header>
-    </div>
-    <!-- Action base sized with lead icon buttons  -->
-    <div class="flex justify-end gap-2 p-6 pt-0">
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
-      >
-        <span class="order-2">Send message</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-21 desc-21"
-          >
-            <title id="title-21">Icon title</title>
-            <desc id="desc-21">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
+    <div
+      class="h-72 rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
+    >
+      <!-- Image -->
+      <figure class="p-6 pb-0">
+        <span
+          class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
+        >
+          <img
+            src="https://i.pravatar.cc/80?img=22"
+            alt="user name"
+            title="user name"
+            width="80"
+            height="80"
+            class="max-w-full rounded-full"
+          />
         </span>
-      </button>
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
-      >
-        <span class="order-2">Add friend</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-06 desc-06"
-          >
-            <title id="title-06">Icon title</title>
-            <desc id="desc-06">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            />
-          </svg>
-        </span>
-      </button>
+      </figure>
+      <!-- Body-->
+      <div class="p-6">
+        <header class="mb-4">
+          <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
+          <p class="text-slate-400">Senior Designer</p>
+        </header>
+      </div>
+      <!-- Action base sized with lead icon buttons  -->
+      <div class="flex justify-end gap-2 p-6 pt-0">
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
+        >
+          <span class="order-2">Send message</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-21 desc-21"
+            >
+              <title id="title-21">Icon title</title>
+              <desc id="desc-21">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          </span>
+        </button>
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+        >
+          <span class="order-2">Add friend</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-06 desc-06"
+            >
+              <title id="title-06">Icon title</title>
+              <desc id="desc-06">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
-  </div>
 
-  <div
-    class="h-72 w-1/4 overflow-hidden rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
-  >
-    <!-- Image -->
-    <figure class="p-6 pb-0">
-      <span
-        class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
-      >
-        <img
-          src="https://i.pravatar.cc/80?img=22"
-          alt="user name"
-          title="user name"
-          width="80"
-          height="80"
-          class="max-w-full rounded-full"
-        />
-      </span>
-    </figure>
-    <!-- Body-->
-    <div class="p-6">
-      <header class="mb-4">
-        <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
-        <p class="text-slate-400">Senior Designer</p>
-      </header>
+    <div
+      class="h-72 w-1/4 rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
+    >
+      <!-- Image -->
+      <figure class="p-6 pb-0">
+        <span
+          class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
+        >
+          <img
+            src="https://i.pravatar.cc/80?img=22"
+            alt="user name"
+            title="user name"
+            width="80"
+            height="80"
+            class="max-w-full rounded-full"
+          />
+        </span>
+      </figure>
+      <!-- Body-->
+      <div class="p-6">
+        <header class="mb-4">
+          <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
+          <p class="text-slate-400">Senior Designer</p>
+        </header>
+      </div>
+      <!-- Action base sized with lead icon buttons  -->
+      <div class="flex justify-end gap-2 p-6 pt-0">
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
+        >
+          <span class="order-2">Send message</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-21 desc-21"
+            >
+              <title id="title-21">Icon title</title>
+              <desc id="desc-21">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          </span>
+        </button>
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+        >
+          <span class="order-2">Add friend</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-06 desc-06"
+            >
+              <title id="title-06">Icon title</title>
+              <desc id="desc-06">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
-    <!-- Action base sized with lead icon buttons  -->
-    <div class="flex justify-end gap-2 p-6 pt-0">
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
-      >
-        <span class="order-2">Send message</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-21 desc-21"
-          >
-            <title id="title-21">Icon title</title>
-            <desc id="desc-21">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
+    <div
+      class="h-72 w-1/4 rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
+    >
+      <!-- Image -->
+      <figure class="p-6 pb-0">
+        <span
+          class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
+        >
+          <img
+            src="https://i.pravatar.cc/80?img=22"
+            alt="user name"
+            title="user name"
+            width="80"
+            height="80"
+            class="max-w-full rounded-full"
+          />
         </span>
-      </button>
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
-      >
-        <span class="order-2">Add friend</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-06 desc-06"
-          >
-            <title id="title-06">Icon title</title>
-            <desc id="desc-06">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            />
-          </svg>
-        </span>
-      </button>
+      </figure>
+      <!-- Body-->
+      <div class="p-6">
+        <header class="mb-4">
+          <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
+          <p class="text-slate-400">Senior Designer</p>
+        </header>
+      </div>
+      <!-- Action base sized with lead icon buttons  -->
+      <div class="flex justify-end gap-2 p-6 pt-0">
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
+        >
+          <span class="order-2">Send message</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-21 desc-21"
+            >
+              <title id="title-21">Icon title</title>
+              <desc id="desc-21">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          </span>
+        </button>
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+        >
+          <span class="order-2">Add friend</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-06 desc-06"
+            >
+              <title id="title-06">Icon title</title>
+              <desc id="desc-06">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
-  </div>
-  <div
-    class="h-72 w-1/4 overflow-hidden rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
-  >
-    <!-- Image -->
-    <figure class="p-6 pb-0">
-      <span
-        class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
-      >
-        <img
-          src="https://i.pravatar.cc/80?img=22"
-          alt="user name"
-          title="user name"
-          width="80"
-          height="80"
-          class="max-w-full rounded-full"
-        />
-      </span>
-    </figure>
-    <!-- Body-->
-    <div class="p-6">
-      <header class="mb-4">
-        <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
-        <p class="text-slate-400">Senior Designer</p>
-      </header>
+    <div
+      class="h-72 w-1/4 rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
+    >
+      <!-- Image -->
+      <figure class="p-6 pb-0">
+        <span
+          class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
+        >
+          <img
+            src="https://i.pravatar.cc/80?img=22"
+            alt="user name"
+            title="user name"
+            width="80"
+            height="80"
+            class="max-w-full rounded-full"
+          />
+        </span>
+      </figure>
+      <!-- Body-->
+      <div class="p-6">
+        <header class="mb-4">
+          <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
+          <p class="text-slate-400">Senior Designer</p>
+        </header>
+      </div>
+      <!-- Action base sized with lead icon buttons  -->
+      <div class="flex justify-end gap-2 p-6 pt-0">
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
+        >
+          <span class="order-2">Send message</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-21 desc-21"
+            >
+              <title id="title-21">Icon title</title>
+              <desc id="desc-21">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          </span>
+        </button>
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+        >
+          <span class="order-2">Add friend</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-06 desc-06"
+            >
+              <title id="title-06">Icon title</title>
+              <desc id="desc-06">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
-    <!-- Action base sized with lead icon buttons  -->
-    <div class="flex justify-end gap-2 p-6 pt-0">
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
-      >
-        <span class="order-2">Send message</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-21 desc-21"
-          >
-            <title id="title-21">Icon title</title>
-            <desc id="desc-21">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
+    <div
+      class="h-72 rounded bg-white px-14 text-center text-slate-500 shadow-md shadow-slate-200"
+    >
+      <!-- Image -->
+      <figure class="p-6 pb-0">
+        <span
+          class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
+        >
+          <img
+            src="https://i.pravatar.cc/80?img=22"
+            alt="user name"
+            title="user name"
+            width="80"
+            height="80"
+            class="max-w-full rounded-full"
+          />
         </span>
-      </button>
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
-      >
-        <span class="order-2">Add friend</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-06 desc-06"
-          >
-            <title id="title-06">Icon title</title>
-            <desc id="desc-06">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            />
-          </svg>
-        </span>
-      </button>
+      </figure>
+      <!-- Body-->
+      <div class="p-6">
+        <header class="mb-4">
+          <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
+          <p class="text-slate-400">Senior Designer</p>
+        </header>
+      </div>
+      <!-- Action base sized with lead icon buttons  -->
+      <div class="flex justify-end gap-2 p-6 pt-0">
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+        >
+          <span class="order-2">Add friend</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-06 desc-06"
+            >
+              <title id="title-06">Icon title</title>
+              <desc id="desc-06">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
-  </div>
-  <div
-    class="h-72 w-1/4 overflow-hidden rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
-  >
-    <!-- Image -->
-    <figure class="p-6 pb-0">
-      <span
-        class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
-      >
-        <img
-          src="https://i.pravatar.cc/80?img=22"
-          alt="user name"
-          title="user name"
-          width="80"
-          height="80"
-          class="max-w-full rounded-full"
-        />
-      </span>
-    </figure>
-    <!-- Body-->
-    <div class="p-6">
-      <header class="mb-4">
-        <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
-        <p class="text-slate-400">Senior Designer</p>
-      </header>
-    </div>
-    <!-- Action base sized with lead icon buttons  -->
-    <div class="flex justify-end gap-2 p-6 pt-0">
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
-      >
-        <span class="order-2">Send message</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-21 desc-21"
-          >
-            <title id="title-21">Icon title</title>
-            <desc id="desc-21">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
+    <div
+      class="h-72 rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
+    >
+      <!-- Image -->
+      <figure class="p-6 pb-0">
+        <span
+          class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
+        >
+          <img
+            src="../../assets/Logo-K.png"
+            alt="user name"
+            title="user name"
+            width="80"
+            height="80"
+            class="max-w-full rounded-full"
+          />
         </span>
-      </button>
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
-      >
-        <span class="order-2">Add friend</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-06 desc-06"
-          >
-            <title id="title-06">Icon title</title>
-            <desc id="desc-06">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            />
-          </svg>
-        </span>
-      </button>
-    </div>
-  </div>
-  <div
-    class="h-72 w-1/4 overflow-hidden rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
-  >
-    <!-- Image -->
-    <figure class="p-6 pb-0">
-      <span
-        class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
-      >
-        <img
-          src="https://i.pravatar.cc/80?img=22"
-          alt="user name"
-          title="user name"
-          width="80"
-          height="80"
-          class="max-w-full rounded-full"
-        />
-      </span>
-    </figure>
-    <!-- Body-->
-    <div class="p-6">
-      <header class="mb-4">
-        <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
-        <p class="text-slate-400">Senior Designer</p>
-      </header>
-    </div>
-    <!-- Action base sized with lead icon buttons  -->
-    <div class="flex justify-end gap-2 p-6 pt-0">
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
-      >
-        <span class="order-2">Send message</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-21 desc-21"
-          >
-            <title id="title-21">Icon title</title>
-            <desc id="desc-21">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-        </span>
-      </button>
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
-      >
-        <span class="order-2">Add friend</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-06 desc-06"
-          >
-            <title id="title-06">Icon title</title>
-            <desc id="desc-06">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            />
-          </svg>
-        </span>
-      </button>
-    </div>
-  </div>
-  <div
-    class="h-72 w-1/4 overflow-hidden rounded bg-white text-center text-slate-500 shadow-md shadow-slate-200"
-  >
-    <!-- Image -->
-    <figure class="p-6 pb-0">
-      <span
-        class="relative inline-flex h-20 w-20 items-center justify-center rounded-full text-white"
-      >
-        <img
-          src="https://i.pravatar.cc/80?img=22"
-          alt="user name"
-          title="user name"
-          width="80"
-          height="80"
-          class="max-w-full rounded-full"
-        />
-      </span>
-    </figure>
-    <!-- Body-->
-    <div class="p-6">
-      <header class="mb-4">
-        <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
-        <p class="text-slate-400">Senior Designer</p>
-      </header>
-    </div>
-    <!-- Action base sized with lead icon buttons  -->
-    <div class="flex justify-end gap-2 p-6 pt-0">
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 justify-self-center rounded bg-orange-50 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-orange-500 transition duration-300 hover:bg-orange-100 hover:text-orange-600 focus:bg-orange-200 focus:text-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-100 disabled:text-orange-400 disabled:shadow-none"
-      >
-        <span class="order-2">Send message</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-21 desc-21"
-          >
-            <title id="title-21">Icon title</title>
-            <desc id="desc-21">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-        </span>
-      </button>
-      <button
-        class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
-      >
-        <span class="order-2">Add friend</span>
-        <span class="relative only:-mx-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-            role="graphics-symbol"
-            aria-labelledby="title-06 desc-06"
-          >
-            <title id="title-06">Icon title</title>
-            <desc id="desc-06">A more detailed description of the icon</desc>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            />
-          </svg>
-        </span>
-      </button>
+      </figure>
+      <!-- Body-->
+      <div class="p-6">
+        <header class="mb-4">
+          <h3 class="text-xl font-medium text-slate-700">Nichole Jones</h3>
+          <p class="text-slate-400">Senior Designer</p>
+        </header>
+      </div>
+      <!-- Action base sized with lead icon buttons  -->
+      <div class="flex justify-end gap-2 p-6 pt-0">
+        <button
+          class="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded bg-orange-500 px-5 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+        >
+          <span class="order-2">Añadir</span>
+          <span class="relative only:-mx-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              role="graphics-symbol"
+              aria-labelledby="title-06 desc-06"
+            >
+              <title id="title-06">Icon title</title>
+              <desc id="desc-06">A more detailed description of the icon</desc>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 </section>
