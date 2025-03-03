@@ -3,6 +3,7 @@ import { InicioComponent } from './inicio/inicio.component';
 import { EjerciciosComponent } from './ejercicios/ejercicios.component';
 import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
+import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -10,4 +11,9 @@ export const routes: Routes = [
   { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
   { path: 'fisios', component: FisiosComponent, pathMatch: 'full' },
   { path: 'categorias', component: CategoriasComponent, pathMatch: 'full' },
+  {
+    path: 'detalle-ejercicio',
+    component: DetalleEjercicioComponent,
+    pathMatch: 'full',
+  },
 ];
