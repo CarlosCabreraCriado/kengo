@@ -4,6 +4,7 @@ import { EjerciciosComponent } from './ejercicios/ejercicios.component';
 import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
 import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
+import { ClientesComponent } from './clientes/clientes.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -16,4 +17,5 @@ export const routes: Routes = [
     component: DetalleEjercicioComponent,
     pathMatch: 'full',
   },
+  { path: 'clientes', component: ClientesComponent, pathMatch: 'full' },
 ];
