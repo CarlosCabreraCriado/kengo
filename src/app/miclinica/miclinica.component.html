@@ -1,1 +1,191 @@
-<p>miclinica works!</p>
+<section
+  class="m-auto mt-30 flex w-fit max-w-7xl flex-row justify-center gap-10 rounded-2xl bg-white p-5 shadow-2xl"
+>
+  <div class="flex flex-col">
+    <div class="fuente-kengo text-center">Foto de Clinica</div>
+    <!-- Component: Dropzone file input that accepts specific types -->
+
+    <div class="relative my-6 w-96">
+      <input
+        id="id-dropzone02"
+        name="file-upload"
+        type="file"
+        class="peer hidden"
+        accept=".gif,.jpg,.png,.jpeg"
+        multiple
+      />
+      <label
+        for="id-dropzone02"
+        class="flex cursor-pointer flex-col items-center gap-6 rounded border border-dashed border-slate-300 px-6 py-10 text-center"
+      >
+        <span
+          class="inline-flex h-12 items-center justify-center self-center rounded bg-slate-100/70 px-3 text-slate-400"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            aria-label="File input icon"
+            role="graphics-symbol"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="h-6 w-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+            />
+          </svg>
+        </span>
+        <p class="flex flex-col items-center justify-center gap-1 text-sm">
+          <span class="text-emerald-500 hover:text-emerald-500">
+            Upload media
+            <span class="text-slate-500"> or drag and drop </span>
+          </span>
+          <span class="text-slate-600"> PNG, JPG or GIF up to 10MB </span>
+        </p>
+      </label>
+    </div>
+    <!-- End Dropzone file input that accepts specific types -->
+  </div>
+
+  <div class="flex flex-col">
+    <div class="h-10 w-full">Información personal</div>
+    <div class="flex w-full flex-row justify-between gap-5">
+      <!-- Component: Rounded required input -->
+      <div class="relative my-6">
+        <input
+          id="id-b07"
+          type="text"
+          name="id-b07"
+          required
+          value="Guillermo"
+          class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        />
+        <label
+          for="id-b07"
+          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+        >
+          Nombre
+        </label>
+      </div>
+      <!-- End Rounded required input -->
+      <!-- Component: Rounded required input -->
+      <div class="relative my-6">
+        <input
+          id="id-b07"
+          type="text"
+          name="id-b07"
+          required
+          value="Gallardo"
+          class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        />
+        <label
+          for="id-b07"
+          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+        >
+          Apellido
+        </label>
+      </div>
+      <!-- End Rounded required input -->
+      <!-- Component: Rounded basic base sized datepicker -->
+      <div class="relative my-6">
+        <input
+          id="id-date07"
+          type="date"
+          name="id-date07"
+          class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        />
+        <label
+          for="id-date07"
+          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+        >
+          Año de nacimiento
+        </label>
+      </div>
+      <!-- End Rounded basic base sized datepicker -->
+    </div>
+
+    <div>
+      <div class="h-10 w-full">Información de contacto</div>
+      <div class="flex w-full flex-row gap-5 justify-self-start">
+        <!-- Component: Rounded required input -->
+        <div class="relative my-6">
+          <input
+            id="id-b07"
+            type="text"
+            name="id-b07"
+            required
+            value="guillermitopaptito@gmail.com"
+            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          />
+          <label
+            for="id-b07"
+            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+          >
+            E-mail
+          </label>
+        </div>
+        <!-- End Rounded required input -->
+        <!-- Component: Rounded required input -->
+        <div class="relative my-6">
+          <input
+            id="id-b07"
+            type="text"
+            name="id-b07"
+            required
+            value="659894985"
+            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          />
+          <label
+            for="id-b07"
+            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+          >
+            Movil
+          </label>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="h-10 w-full">Dirección</div>
+      <div class="flex w-full flex-row gap-5 justify-self-start">
+        <!-- Component: Rounded required input -->
+        <div class="relative my-6">
+          <input
+            id="id-b07"
+            type="text"
+            name="id-b07"
+            required
+            value="Calle fernandez herrero"
+            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          />
+          <label
+            for="id-b07"
+            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+          >
+            Calle
+          </label>
+        </div>
+        <!-- End Rounded required input -->
+        <!-- Component: Rounded required input -->
+        <div class="relative my-6">
+          <input
+            id="id-b07"
+            type="text"
+            name="id-b07"
+            required
+            value="38005"
+            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          />
+          <label
+            for="id-b07"
+            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+          >
+            Codigo postal
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -5,6 +5,8 @@ import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
 import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
 import { ClientesComponent } from './clientes/clientes.component';
+import { PerfilComponent } from './perfil/perfil.component';
+import { MiclinicaComponent } from './miclinica/miclinica.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -18,4 +20,6 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   { path: 'clientes', component: ClientesComponent, pathMatch: 'full' },
+  { path: 'perfil', component: PerfilComponent, pathMatch: 'full' },
+  { path: 'miclinica', component: MiclinicaComponent, pathMatch: 'full' },
 ];
