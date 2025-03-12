@@ -7,6 +7,8 @@ import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio
 import { ClientesComponent } from './clientes/clientes.component';
 import { PerfilComponent } from './perfil/perfil.component';
 import { MiclinicaComponent } from './miclinica/miclinica.component';
+import { ClientePerfilComponent } from './cliente-perfil/cliente-perfil.component';
+import { LoginComponent } from './login/login.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -22,4 +24,10 @@ export const routes: Routes = [
   { path: 'clientes', component: ClientesComponent, pathMatch: 'full' },
   { path: 'perfil', component: PerfilComponent, pathMatch: 'full' },
   { path: 'miclinica', component: MiclinicaComponent, pathMatch: 'full' },
+  {
+    path: 'cliente-perfil',
+    component: ClientePerfilComponent,
+    pathMatch: 'full',
+  },
+  { path: 'login', component: LoginComponent, pathMatch: 'full' },
 ];
