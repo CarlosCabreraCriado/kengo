@@ -9,6 +9,7 @@ import { PerfilComponent } from './perfil/perfil.component';
 import { MiclinicaComponent } from './miclinica/miclinica.component';
 import { ClientePerfilComponent } from './cliente-perfil/cliente-perfil.component';
 import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -30,4 +31,5 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   { path: 'login', component: LoginComponent, pathMatch: 'full' },
+  { path: 'register', component: RegisterComponent, pathMatch: 'full' },
 ];
