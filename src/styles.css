@@ -1,5 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
+@theme {
+  --color-primary: #e75c3e;
+}
+
 @font-face {
   font-family: kengoFont;
   src: url(../src/assets/fonts/versus-semibold.otf);
