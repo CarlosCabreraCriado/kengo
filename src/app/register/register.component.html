@@ -1,6 +1,8 @@
 <section class="flex h-screen w-full bg-white">
   <div class="loginfondo w-1/2 bg-orange-300"></div>
-  <img class="absolute w-1/2" src="/assets/kengo-icono-nombre-naranja.png" />
+  <div class="absolute flex h-full w-1/2 items-center">
+    <img class="m-auto" src="/assets/kengo-icono-nombre-naranja.png" />
+  </div>
   <div class="w-1/2">
     <div class="bg mt-32 flex w-full flex-col gap-5">
       <div class="fuente-kengo flex justify-start text-3xl">Registrarse</div>
@@ -87,7 +89,9 @@
         <span>Conectarse</span>
       </button>
       <!-- End Large primary basic button -->
-      <div class="text-gray-400">Ya tienes cuenta? Login</div>
+      <a routerLink="/login"
+        ><div class="text-gray-400">Ya tienes cuenta? Login</div></a
+      >
     </div>
     <!-- Component: Base sized outline google app button  -->
     <a
