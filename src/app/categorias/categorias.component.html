@@ -6,193 +6,35 @@
 
 <!--aqui van los videos-->
 <section
-  class="m-auto flex w-screen max-w-7xl flex-row flex-wrap justify-around gap-3 py-16 align-baseline"
+  class="m-auto flex w-screen max-w-7xl flex-row flex-wrap justify-center gap-x-3 gap-y-10 pt-16 align-baseline"
 >
-  <a routerLink="/ejercicios"
-    ><div
-      class="pointer-events-none h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
+  <!-- Inicio Categoria -->
+  @for (categoria of categorias; track categoria.id) {
+    <a
       routerLink="/ejercicios"
+      class="box-border rounded hover:border-2 hover:border-orange-400"
+      ><div
+        class="pointer-events-none w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
+        routerLink="/ejercicios"
+      >
+        <!--  Image -->
+        <figure>
+          <img
+            src="https://picsum.photos/id/69/800/600"
+            alt="card image"
+            class="aspect-video w-full"
+          />
+        </figure>
+        <!-- Body-->
+        <div class="p-6">
+          <header>
+            <h3 class="text-center text-xl font-medium text-slate-700">
+              {{ categoria.nombreCategoria }}
+            </h3>
+          </header>
+        </div>
+      </div></a
     >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div></a
-  >
-
-  <a routerLink="/ejercicios">
-    <div
-      class="ali h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div></a
-  >
-  <a routerLink="/ejercicios">
-    <div
-      class="ali h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div></a
-  >
-  <a routerLink="/ejercicios">
-    <div
-      class="ali h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div></a
-  >
-  <a routerLink="/ejercicios">
-    <div
-      class="ali h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div></a
-  >
-  <a routerLink="/ejercicios">
-    <div
-      class="ali h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div></a
-  >
-  <a routerLink="/ejercicios">
-    <div
-      class="ali h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div></a
-  >
-  <a routerLink="/ejercicios">
-    <div
-      class="ali h-72 w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!--  Image -->
-      <figure>
-        <img
-          src="https://picsum.photos/id/69/800/600"
-          alt="card image"
-          class="aspect-video w-full"
-        />
-      </figure>
-      <!-- Body-->
-      <div class="p-6">
-        <header>
-          <h3 class="text-xl font-medium text-slate-700">
-            Memories of the past
-          </h3>
-          <p class="text-sm text-slate-400">By George, jun 3 2023</p>
-        </header>
-      </div>
-    </div>
-  </a>
-  <!-- End Basic image card -->
+  }
+  <!-- fin Categoria -->
 </section>

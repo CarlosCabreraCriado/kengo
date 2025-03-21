@@ -5,7 +5,7 @@
     class="cente mx-auto mt-10 flex max-w-7xl min-w-5xl flex-col items-start justify-center rounded-2xl bg-white p-10 shadow-2xl"
   >
     <!-- Component: Rounded basic search input -->
-    <div class="relative my-6">
+    <div class="relative mb-2">
       <input
         id="id-s03"
         type="search"
@@ -67,301 +67,72 @@
               Acciones
             </th>
           </tr>
-          <tr class="border-b border-slate-200">
-            <td
-              class="h-12 items-baseline border-slate-200 stroke-slate-500 px-6 text-center align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <div class="flex flex-row gap-2">
-                <!-- Component: Rounded full sm sized basic image avatar -->
-                <a
-                  href="#"
-                  class="relative my-auto inline-flex h-8 w-8 items-baseline justify-center rounded-full text-white"
-                >
-                  <img
-                    src="https://i.pravatar.cc/32?img=4"
-                    alt="user name"
-                    title="user name"
-                    width="32"
-                    height="32"
-                    class="max-w-full rounded-full"
-                  />
-                </a>
-                <!-- End Rounded sm sized basic image avatar -->
-                <div class="my-auto">Emilio Diaz Tejera</div>
-              </div>
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              634941333
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              emilioopb96.com
-            </td>
-            <td
-              class="flex h-12 flex-row items-center justify-end gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <!-- Component: Small outline basic button -->
 
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
+          <!-- clientei -->
+          @for (cliente of clientes; track cliente.id) {
+            <tr class="border-b border-slate-200">
+              <td
+                class="h-12 items-baseline border-slate-200 stroke-slate-500 px-6 text-center align-middle text-sm text-slate-500 transition duration-300"
               >
-                <span>Editar</span>
-              </button>
-              <!-- End Small outline basic button -->
-              <!-- Component: Large primary button with icon  -->
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
+                <div class="flex flex-row gap-2">
+                  <!-- Component: Rounded full sm sized basic image avatar -->
+                  <a
+                    href="#"
+                    class="relative my-auto inline-flex h-8 w-8 items-baseline justify-center rounded-full text-white"
+                  >
+                    <img
+                      src="https://i.pravatar.cc/32?img=4"
+                      alt="user name"
+                      title="user name"
+                      width="32"
+                      height="32"
+                      class="max-w-full rounded-full"
+                    />
+                  </a>
+                  <!-- End Rounded sm sized basic image avatar -->
+                  <div class="my-auto">
+                    {{ cliente.nombre }} {{ cliente.apellidos }}
+                  </div>
+                </div>
+              </td>
+              <td
+                class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
               >
-                <span class="relative only:-mx-6">
-                  <span class="sr-only">Button description</span>
-                  <img
-                    class="h-8 hover:invert-100"
-                    src="../../assets/archivo-bin.png"
-                  />
-                </span>
-              </button>
-              <!-- End Large primary button with icon  -->
-            </td>
-          </tr>
-          <tr class="border-b border-slate-200">
-            <td
-              class="h-12 items-baseline border-slate-200 stroke-slate-500 px-6 text-center align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <div class="flex flex-row gap-2">
-                <!-- Component: Rounded full sm sized basic image avatar -->
-                <a
-                  href="#"
-                  class="relative my-auto inline-flex h-8 w-8 items-baseline justify-center rounded-full text-white"
-                >
-                  <img
-                    src="https://i.pravatar.cc/32?img=4"
-                    alt="user name"
-                    title="user name"
-                    width="32"
-                    height="32"
-                    class="max-w-full rounded-full"
-                  />
-                </a>
-                <!-- End Rounded sm sized basic image avatar -->
-                <div class="my-auto">Emilio Diaz Tejera</div>
-              </div>
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              634941333
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              emilioopb96.com
-            </td>
-            <td
-              class="flex h-12 flex-row items-center justify-end gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <!-- Component: Small outline basic button -->
+                {{ cliente.telefono }}
+              </td>
+              <td
+                class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
+              >
+                {{ cliente.email }}
+              </td>
+              <td
+                class="flex h-12 flex-row items-center justify-end gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
+              >
+                <!-- Component: Small outline basic button -->
 
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
-              >
-                <span>Editar</span>
-              </button>
-              <!-- End Small outline basic button -->
-              <!-- Component: Large primary button with icon  -->
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
-              >
-                <span class="relative only:-mx-6">
-                  <span class="sr-only">Button description</span>
-                  <img
-                    class="h-8 hover:invert-100"
-                    src="../../assets/archivo-bin.png"
-                  />
-                </span>
-              </button>
-              <!-- End Large primary button with icon  -->
-            </td>
-          </tr>
-          <tr class="border-b border-slate-200">
-            <td
-              class="h-12 items-baseline border-slate-200 stroke-slate-500 px-6 text-center align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <div class="flex flex-row gap-2">
-                <!-- Component: Rounded full sm sized basic image avatar -->
-                <a
-                  href="#"
-                  class="relative my-auto inline-flex h-8 w-8 items-baseline justify-center rounded-full text-white"
+                <button
+                  class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
                 >
-                  <img
-                    src="https://i.pravatar.cc/32?img=4"
-                    alt="user name"
-                    title="user name"
-                    width="32"
-                    height="32"
-                    class="max-w-full rounded-full"
-                  />
-                </a>
-                <!-- End Rounded sm sized basic image avatar -->
-                <div class="my-auto">Emilio Diaz Tejera</div>
-              </div>
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              634941333
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              emilioopb96.com
-            </td>
-            <td
-              class="flex h-12 flex-row items-center justify-end gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <!-- Component: Small outline basic button -->
-
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
-              >
-                <span>Editar</span>
-              </button>
-              <!-- End Small outline basic button -->
-              <!-- Component: Large primary button with icon  -->
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
-              >
-                <span class="relative only:-mx-6">
-                  <span class="sr-only">Button description</span>
-                  <img
-                    class="h-8 hover:invert-100"
-                    src="../../assets/archivo-bin.png"
-                  />
-                </span>
-              </button>
-              <!-- End Large primary button with icon  -->
-            </td>
-          </tr>
-          <tr class="border-b border-slate-200">
-            <td
-              class="h-12 items-baseline border-slate-200 stroke-slate-500 px-6 text-center align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <div class="flex flex-row gap-2">
-                <!-- Component: Rounded full sm sized basic image avatar -->
-                <a
-                  href="#"
-                  class="relative my-auto inline-flex h-8 w-8 items-baseline justify-center rounded-full text-white"
+                  <span>Editar</span>
+                </button>
+                <!-- End Small outline basic button -->
+                <!-- Component: Large primary button with icon  -->
+                <button
+                  class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
                 >
-                  <img
-                    src="https://i.pravatar.cc/32?img=4"
-                    alt="user name"
-                    title="user name"
-                    width="32"
-                    height="32"
-                    class="max-w-full rounded-full"
-                  />
-                </a>
-                <!-- End Rounded sm sized basic image avatar -->
-                <div class="my-auto">Emilio Diaz Tejera</div>
-              </div>
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              634941333
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              emilioopb96.com
-            </td>
-            <td
-              class="flex h-12 flex-row items-center justify-end gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <!-- Component: Small outline basic button -->
-
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
-              >
-                <span>Editar</span>
-              </button>
-              <!-- End Small outline basic button -->
-              <!-- Component: Large primary button with icon  -->
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
-              >
-                <span class="relative only:-mx-6">
-                  <span class="sr-only">Button description</span>
-                  <img
-                    class="h-8 hover:invert-100"
-                    src="../../assets/archivo-bin.png"
-                  />
-                </span>
-              </button>
-              <!-- End Large primary button with icon  -->
-            </td>
-          </tr>
-          <tr class="border-b border-slate-200">
-            <td
-              class="h-12 items-baseline border-slate-200 stroke-slate-500 px-6 text-center align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <div class="flex flex-row gap-2">
-                <!-- Component: Rounded full sm sized basic image avatar -->
-                <a
-                  href="#"
-                  class="relative my-auto inline-flex h-8 w-8 items-baseline justify-center rounded-full text-white"
-                >
-                  <img
-                    src="https://i.pravatar.cc/32?img=4"
-                    alt="user name"
-                    title="user name"
-                    width="32"
-                    height="32"
-                    class="max-w-full rounded-full"
-                  />
-                </a>
-                <!-- End Rounded sm sized basic image avatar -->
-                <div class="my-auto">Emilio Diaz Tejera</div>
-              </div>
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              634941333
-            </td>
-            <td
-              class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-            >
-              emilioopb96.com
-            </td>
-            <td
-              class="flex h-12 flex-row items-center justify-end gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
-            >
-              <!-- Component: Small outline basic button -->
-
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
-              >
-                <span>Editar</span>
-              </button>
-              <!-- End Small outline basic button -->
-              <!-- Component: Large primary button with icon  -->
-              <button
-                class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
-              >
-                <span class="relative only:-mx-6">
-                  <span class="sr-only">Button description</span>
-                  <img
-                    class="h-8 hover:invert-100"
-                    src="../../assets/archivo-bin.png"
-                  />
-                </span>
-              </button>
-              <!-- End Large primary button with icon  -->
-            </td>
-          </tr>
+                  <span class="relative only:-mx-6">
+                    <span class="sr-only">Button description</span>
+                    <img
+                      class="h-8 hover:invert-100"
+                      src="../../assets/archivo-bin.png"
+                    />
+                  </span>
+                </button>
+                <!-- End Large primary button with icon  -->
+              </td>
+            </tr>
+          }
+          <!-- Fin cliente -->
         </tbody>
       </table>
     </div>
