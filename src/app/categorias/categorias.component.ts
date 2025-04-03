@@ -25,7 +25,7 @@ export class CategoriasComponent {
     },
     {
       id: 4,
-      nombreCategoria: 'Columna',
+      nombreCategoria: 'Columna Lumbar',
     },
     {
       id: 5,
@@ -38,6 +38,10 @@ export class CategoriasComponent {
     {
       id: 7,
       nombreCategoria: 'Muñeca',
+    },
+    {
+      id: 8,
+      nombreCategoria: 'Columna Dorsal',
     },
   ];
 }
