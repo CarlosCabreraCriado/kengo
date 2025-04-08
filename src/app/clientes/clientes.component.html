@@ -62,7 +62,7 @@
 
             <th
               scope="col"
-              class="h-12 stroke-slate-700 px-6 text-end text-sm font-medium text-slate-700"
+              class="h-12 stroke-slate-700 px-6 text-start text-sm font-medium text-slate-700 sm:text-end"
             >
               Acciones
             </th>
@@ -106,29 +106,31 @@
                 {{ cliente.email }}
               </td>
               <td
-                class="flex h-12 flex-row items-center justify-end gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
+                class="flex h-12 flex-row items-center gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300 sm:justify-end"
               >
-                <!-- Component: Small outline basic button -->
+                <div class="flex flex-row gap-5">
+                  <!-- Component: Small outline basic button -->
 
-                <button
-                  class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
-                >
-                  <span>Editar</span>
-                </button>
-                <!-- End Small outline basic button -->
-                <!-- Component: Large primary button with icon  -->
-                <button
-                  class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
-                >
-                  <span class="relative only:-mx-6">
-                    <span class="sr-only">Button description</span>
-                    <img
-                      class="h-8 hover:invert-100"
-                      src="../../assets/archivo-bin.png"
-                    />
-                  </span>
-                </button>
-                <!-- End Large primary button with icon  -->
+                  <button
+                    class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
+                  >
+                    <span>Editar</span>
+                  </button>
+                  <!-- End Small outline basic button -->
+                  <!-- Component: Large primary button with icon  -->
+                  <button
+                    class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
+                  >
+                    <span class="relative only:-mx-6">
+                      <span class="sr-only">Button description</span>
+                      <img
+                        class="h-8 hover:invert-100"
+                        src="../../assets/archivo-bin.png"
+                      />
+                    </span>
+                  </button>
+                  <!-- End Large primary button with icon  -->
+                </div>
               </td>
             </tr>
           }
