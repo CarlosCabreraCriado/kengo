@@ -5,118 +5,112 @@
   >
     <img class="max-h-full" src="/assets/kengo-icono-nombre-naranja.png" />
   </div>
+
   <div class="flex w-full flex-col justify-center p-5 sm:w-1/2 lg:p-15">
-    <div class="flex w-full flex-col">
-      <div class="fuente-kengo flex justify-start text-3xl">Registrarse</div>
+    <div class="fuente-kengo mb-5 flex justify-start text-3xl">Registro</div>
 
-      <div class="flex w-full flex-row gap-16">
-        <!-- Component: Rounded required input -->
-        <div class="relative my-6">
-          <input
-            id="id-b07"
-            type="text"
-            name="id-b07"
-            required
-            value=""
-            class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 xl:w-3xs"
-          />
-          <label
-            for="id-b07"
-            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-          >
-            Nombre
-          </label>
-        </div>
-        <!-- End Rounded required input -->
-        <!-- Component: Rounded required input -->
-        <div class="relative my-6">
-          <input
-            id="id-b07"
-            type="text"
-            name="id-b07"
-            required
-            value=""
-            class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 xl:w-3xs"
-          />
-          <label
-            for="id-b07"
-            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-          >
-            Apellido
-          </label>
-        </div>
-        <!-- End Rounded required input -->
-      </div>
-      <!-- Component: Rounded required input -->
-      <div class="relative my-4">
+    <!-- Campo nombre -->
+    <div class="flex w-full flex-row">
+      <div class="relative mb-4 w-1/2 pr-2">
         <input
           id="id-b07"
           type="text"
           name="id-b07"
           required
           value=""
-          class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 xl:w-xl"
+          class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-red-400 invalid:text-red-400 focus:border-orange-400 focus:outline-none invalid:focus:border-red-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
         />
         <label
           for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-red-400 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-400 peer-invalid:peer-focus:text-red-400 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-red-400 peer-required:after:content-['\00a0*']"
         >
-          E-mail
+          Nombre
         </label>
       </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded required input -->
-      <div class="relative my-4">
+
+      <!-- Campo Apellidos -->
+      <div class="relative mb-4 w-1/2 pl-2">
         <input
           id="id-b07"
           type="text"
           name="id-b07"
           required
           value=""
-          class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 xl:w-xl"
+          class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-red-400 invalid:text-red-400 focus:border-orange-400 focus:outline-none invalid:focus:border-red-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
         />
         <label
           for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
+          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-red-400 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-400 peer-invalid:peer-focus:text-red-400 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-red-400 peer-required:after:content-['\00a0*']"
         >
-          Contraseña
+          Apellidos
         </label>
       </div>
-      <!-- End Rounded required input -->
-
-      <!-- Component: Large primary basic button -->
-      <button
-        class="mb-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded bg-amber-500 px-6 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-amber-600 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none xl:w-xl"
-      >
-        <span>Conectarse</span>
-      </button>
-      <!-- End Large primary basic button -->
-      <a routerLink="/login"
-        ><div class="text-gray-400">Ya tienes cuenta? Login</div></a
-      >
     </div>
-    <!-- Component: Base sized outline google app button  -->
-    <a
-      href="#"
-      class="inline-flex h-12 w-full min-w-40 items-center justify-center gap-2 rounded border border-slate-900 px-3.5 text-sm font-semibold tracking-wide whitespace-nowrap text-slate-900 transition duration-300 hover:border-slate-950 focus:border-slate-950 focus-visible:outline-none xl:w-xl"
-    >
-      <svg
-        width="40"
-        height="40"
-        class="h-8 w-8"
-        viewBox="0 0 40 40"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        role="graphics-symbol"
-        aria-label="Google play icon"
+
+    <!-- Component: Rounded required input -->
+    <div class="relative mb-4">
+      <input
+        id="id-b07"
+        type="text"
+        name="id-b07"
+        required
+        value=""
+        class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-red-400 invalid:text-red-400 focus:border-orange-400 focus:outline-none invalid:focus:border-red-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+      />
+      <label
+        for="id-b07"
+        class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-red-400 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-400 peer-invalid:peer-focus:text-red-400 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-red-400 peer-required:after:content-['\00a0*']"
       >
-        <path
-          d="M21.9219 19.6222L27.8405 13.7036L8.72367 2.95928C7.45668 2.27475 6.26976 2.17868 5.22895 2.92726L21.9219 19.6222ZM28.8316 26.5339L34.9843 23.0732C36.1853 22.4007 36.8438 21.4479 36.8438 20.3911C36.8438 19.3363 36.203 18.3993 35.0041 17.7267L29.4337 14.5983L23.1452 20.8495L28.8316 26.5339ZM4.20016 4.38239C4.07206 4.7767 4 5.21704 4 5.69941V35.1322C4 35.8948 4.16813 36.5513 4.47237 37.0738L20.6789 20.8652L4.20016 4.38239ZM21.9219 22.1061L5.8054 38.2246C6.11364 38.3427 6.4459 38.4048 6.79617 38.4048C7.42065 38.4048 8.07116 38.2206 8.73367 37.8524L27.258 27.4503L21.9219 22.1061Z"
-          fill="currentColor"
-        ></path>
-      </svg>
-      <span>Conectarse con google</span>
-    </a>
-    <!-- End Base sized outline google app button  -->
+        E-mail
+      </label>
+    </div>
+
+    <!-- End Rounded required input -->
+    <!-- Component: Rounded required input -->
+    <div class="relative mb-5">
+      <input
+        id="id-b07"
+        type="text"
+        name="id-b07"
+        required
+        value=""
+        class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-400 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-red-400 invalid:text-red-400 focus:border-orange-400 focus:outline-none invalid:focus:border-red-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+      />
+      <label
+        for="id-b07"
+        class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-red-400 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-400 peer-invalid:peer-focus:text-red-400 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-red-400 peer-required:after:content-['\00a0*']"
+      >
+        Contraseña
+      </label>
+    </div>
+
+    <div class="relative mb-5">
+      <input
+        id="id-b07"
+        type="text"
+        name="id-b07"
+        required
+        value=""
+        class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-400 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-red-400 invalid:text-red-400 focus:border-orange-400 focus:outline-none invalid:focus:border-red-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+      />
+      <label
+        for="id-b07"
+        class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-red-400 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-400 peer-invalid:peer-focus:text-red-400 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-red-400 peer-required:after:content-['\00a0*']"
+      >
+        Repetir contraseña
+      </label>
+    </div>
+
+    <button
+      class="mb-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded bg-amber-500 px-6 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-amber-600 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
+    >
+      <span>Registrarme</span>
+    </button>
+    <!-- End Large primary basic button -->
+    <a routerLink="/login" class="mb-10"
+      ><div class="text-gray-400">Ya tengo cuenta. Acceder.</div></a
+    >
   </div>
+  <!-- Component: Base sized outline google app button  -->
+  <!-- End Base sized outline google app button  -->
 </section>
