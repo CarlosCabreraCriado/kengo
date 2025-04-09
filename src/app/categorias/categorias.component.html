@@ -1,42 +1,48 @@
-<section class="flex flex-row justify-between gap-5">
+<section class="flex flex-col justify-between gap-5 sm:flex-row">
   <app-navegacion
-    class="relative ml-10 flex w-3xs max-w-3xs md:ml-0"
+    class="relative flex w-3xs max-w-3xs md:ml-0"
   ></app-navegacion>
-  <div class="fuente-kengo flex items-center pt-10 text-3xl">Categorias</div>
-  <div class="w-3xs max-w-3xs"></div>
+  <div class="fuente-kengo m-5 flex items-center text-3xl sm:pt-5">
+    Categorias
+  </div>
+  <div class="hidden w-3xs max-w-3xs sm:block"></div>
 </section>
 
 <!--aqui van los videos-->
 <section
-  class="m-auto flex w-screen max-w-7xl flex-row flex-wrap justify-center gap-x-3 gap-y-10 pt-16 align-baseline"
+  class="m-auto flex w-screen max-w-7xl flex-row flex-wrap justify-start align-baseline sm:pt-16 md:gap-y-10"
 >
   <!-- Inicio Categoria -->
   @for (categoria of categorias; track categoria.id) {
-    <a
-      routerLink="/ejercicios"
-      class="box-border rounded hover:border-2 hover:border-orange-400"
-      ><div
-        class="pointer-events-none w-2xs min-w-3xs items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
+    <div class="relative flex w-1/2 flex-wrap p-5 md:w-1/3 lg:w-1/4 xl:w-1/4">
+      <a
         routerLink="/ejercicios"
+        class="box-border rounded hover:border-2 hover:border-orange-400"
+        ><div
+          class="pointer-events-none items-center overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
+          routerLink="/ejercicios"
+        >
+          <!--  Image -->
+          <figure>
+            <img
+              src="https://picsum.photos/id/69/800/600"
+              alt="card image"
+              class="aspect-video w-full"
+            />
+          </figure>
+          <!-- Body-->
+          <div class="p-6">
+            <header>
+              <h3
+                class="overflow-hidden text-center font-medium text-ellipsis whitespace-nowrap text-slate-700"
+              >
+                {{ categoria.nombreCategoria }}
+              </h3>
+            </header>
+          </div>
+        </div></a
       >
-        <!--  Image -->
-        <figure>
-          <img
-            src="https://picsum.photos/id/69/800/600"
-            alt="card image"
-            class="aspect-video w-full"
-          />
-        </figure>
-        <!-- Body-->
-        <div class="p-6">
-          <header>
-            <h3 class="text-center text-xl font-medium text-slate-700">
-              {{ categoria.nombreCategoria }}
-            </h3>
-          </header>
-        </div>
-      </div></a
-    >
+    </div>
   }
   <!-- fin Categoria -->
 </section>
