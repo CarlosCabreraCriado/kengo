@@ -1,16 +1,15 @@
-<section class="flex flex-col justify-between gap-5 sm:flex-row">
-  <app-navegacion
-    class="relative flex w-3xs max-w-3xs md:ml-0"
-  ></app-navegacion>
-  <div class="fuente-kengo m-5 flex items-center text-3xl sm:pt-5">
+<section class="flex flex-col justify-between gap-5">
+  <div
+    class="fuente-kengo mt-8 flex w-full items-center justify-center text-4xl"
+  >
     Categorias
   </div>
-  <div class="hidden w-3xs max-w-3xs sm:block"></div>
+  <app-navegacion class="relative flex w-3xs max-w-3xs"></app-navegacion>
 </section>
 
 <!--aqui van los videos-->
 <section
-  class="m-auto flex w-screen max-w-7xl flex-row flex-wrap justify-start align-baseline sm:pt-16 md:gap-y-10"
+  class="m-auto flex w-screen max-w-7xl flex-row flex-wrap justify-start align-baseline"
 >
   <!-- Inicio Categoria -->
   @for (categoria of categorias; track categoria.id) {

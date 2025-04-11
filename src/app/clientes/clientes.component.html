@@ -1,11 +1,11 @@
-<section class="w-screen items-center justify-center p-10">
-  <div class="fuente-kengo mt-10 text-center text-4xl">Mis clientes</div>
+<section class="w-screen items-center justify-center">
+  <div class="fuente-kengo mt-8 text-center text-4xl">Mis clientes</div>
 
   <div
-    class="mx-auto mt-10 flex w-full max-w-6xl flex-col items-start justify-center rounded-2xl bg-white p-5 shadow-2xl"
+    class="mx-auto mt-15 flex w-full max-w-6xl flex-col items-start justify-center rounded-2xl bg-white p-5 shadow-2xl"
   >
     <!-- Component: Rounded basic search input -->
-    <div class="relative mb-2">
+    <div class="relative mb-2 w-full sm:w-auto">
       <input
         id="id-s03"
         type="search"
@@ -72,7 +72,7 @@
           @for (cliente of clientes; track cliente.id) {
             <tr class="border-b border-slate-200">
               <td
-                class="h-12 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
+                class="h-12 items-center border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
               >
                 <div class="flex flex-row gap-2">
                   <!-- Component: Rounded full sm sized basic image avatar -->
@@ -90,18 +90,18 @@
                     />
                   </a>
                   <!-- End Rounded sm sized basic image avatar -->
-                  <div class="my-auto">
+                  <div class="my-auto flex justify-center">
                     {{ cliente.nombre }} {{ cliente.apellidos }}
                   </div>
                 </div>
               </td>
               <td
-                class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
+                class="flex h-12 items-center border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
               >
                 {{ cliente.telefono }}
               </td>
               <td
-                class="h-12 border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
+                class="h-12 items-center border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
               >
                 {{ cliente.email }}
               </td>
