@@ -19,5 +19,5 @@ body {
 }
 .fuente-kengo {
   font-family: "kengoFont";
-  color: #e75c3e;
+  color: var(--color-primary);
 }

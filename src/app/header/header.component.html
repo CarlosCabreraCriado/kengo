@@ -53,6 +53,8 @@
             aria-haspopup="false"
             class="flex items-center gap-2 py-4 transition-colors duration-300 hover:text-orange-500 focus:text-orange-600 focus:outline-none focus-visible:outline-none lg:px-8"
             routerLink="miclinica"
+            routerLinkActive="activo"
+            [routerLinkActiveOptions]="{ exact: true }"
           >
             <span>Mi clinica</span></a
           >
@@ -64,6 +66,8 @@
             aria-haspopup="false"
             class="flex items-center gap-2 py-4 transition-colors duration-300 hover:text-orange-600 focus:text-orange-600 focus:outline-none focus-visible:outline-none lg:px-8"
             routerLink="/fisios"
+            routerLinkActive="activo"
+            [routerLinkActiveOptions]="{ exact: true }"
           >
             <span>Fisioterapeutas</span>
           </a>
@@ -75,6 +79,8 @@
             aria-haspopup="false"
             class="flex items-center gap-2 py-4 transition-colors duration-300 hover:text-orange-600 focus:text-orange-600 focus:outline-none focus-visible:outline-none lg:px-8"
             routerLink="/clientes"
+            routerLinkActive="activo"
+            [routerLinkActiveOptions]="{ exact: true }"
           >
             <span>Mis clientes</span>
           </a>
@@ -85,6 +91,8 @@
             aria-haspopup="false"
             class="flex items-center gap-2 py-4 transition-colors duration-300 hover:text-orange-500 focus:text-orange-600 focus:outline-none focus-visible:outline-none lg:px-8"
             routerLink="/categorias"
+            routerLinkActive="activo"
+            [routerLinkActiveOptions]="{ exact: true }"
           >
             <span>Ejercicios</span>
           </a>
