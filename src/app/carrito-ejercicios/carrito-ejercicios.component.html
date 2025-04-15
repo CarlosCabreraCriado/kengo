@@ -1,1 +1,15 @@
-<p>carrito-ejercicios works!</p>
+<div class="drawer-wrapper">
+  <mat-sidenav-container class="drawer-container">
+    <mat-sidenav #drawer mode="over" position="end" class="custom-drawer">
+      <h2>Mi panel lateral</h2>
+      <p>Aquí pones lo que quieras mostrar</p>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <!-- Solo el botón -->
+      <button mat-fab class="avatar-button" (click)="drawer.toggle()">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

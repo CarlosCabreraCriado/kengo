@@ -1,0 +1,29 @@
+.avatar-button {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+}
+
+.drawer-wrapper {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1000;
+  width: auto;
+  height: auto;
+  pointer-events: none; /* Esto evita interferir con clics del resto de la página */
+}
+
+.drawer-container {
+  width: auto;
+  height: auto;
+  pointer-events: all; /* Habilita clic solo en el botón y el drawer */
+  background: none;
+}
+
+.custom-drawer {
+  width: 20vw;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+}

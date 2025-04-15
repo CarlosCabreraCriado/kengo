@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
 import { filter } from 'rxjs/operators';
+import { CarritoEjerciciosComponent } from './carrito-ejercicios/carrito-ejercicios.component';
 
 import {
   RouterOutlet,
@@ -14,7 +15,13 @@ import {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HeaderComponent, FooterComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    HeaderComponent,
+    FooterComponent,
+    CarritoEjerciciosComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
