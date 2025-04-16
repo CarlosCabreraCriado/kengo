@@ -2,14 +2,12 @@ import { Component } from '@angular/core';
 import { NavegacionComponent } from '../navegacion/navegacion.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-carrito-ejercicios',
   imports: [
     NavegacionComponent,
-
     MatButtonModule,
     MatIconModule,
     MatSidenavModule,
@@ -17,4 +15,35 @@ import { MatSidenavModule } from '@angular/material/sidenav';
   templateUrl: './carrito-ejercicios.component.html',
   styleUrl: './carrito-ejercicios.component.css',
 })
-export class CarritoEjerciciosComponent {}
+export class CarritoEjerciciosComponent {
+  public drawerAbierto: boolean = false;
+  public ejerciciosAdjudicados = [
+    {
+      id: 1,
+      nombreCategoria: 'Ejercicio 1',
+    },
+    {
+      id: 2,
+      nombreCategoria: 'Manguito Rotador',
+    },
+    {
+      id: 3,
+      nombreCategoria: 'Hombro Pocho',
+    },
+    {
+      id: 4,
+      nombreCategoria: 'Cuello Vertebrado ',
+    },
+    {
+      id: 5,
+      nombreCategoria: 'Retraso agudo',
+    },
+  ];
+
+  abrirDrawer() {
+    this.drawerAbierto = true;
+  }
+  cerrarDrawer() {
+    this.drawerAbierto = false;
+  }
+}
