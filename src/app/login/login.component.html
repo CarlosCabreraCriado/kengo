@@ -1,19 +1,60 @@
 <section class="relative flex h-full w-screen bg-white">
-  <div class="loginfondo hidden w-1/2 bg-orange-300 sm:block"></div>
-  <div
-    class="absolute top-0 hidden h-full w-1/2 items-center justify-center sm:flex"
-  >
-    <img class="max-h-full" src="/assets/kengo-icono-nombre-naranja.png" />
-  </div>
-  <div class="flex flex-col justify-center">
-    <div class="flex h-[30%] w-full justify-center sm:hidden">
-      <img class="h-auto w-fit" src="/assets/kengo-icono-nombre-naranja.png" />
+  <div class="flex flex-row">
+    <!-- Bloque izquierda -->
+    <div class="relative flex w-1/2 justify-center">
+      <img class="z-1 w-full" src="/assets/kengo-icono-nombre-naranja.png" />
+      <div
+        class="loginfondo absolute z-0 hidden h-full w-full bg-orange-300 sm:block"
+      ></div>
     </div>
 
-    <div class="flex w-full flex-col justify-center p-5 sm:w-1/2 lg:p-15">
-      <div class="fuente-kengo mb-5 flex justify-start text-3xl">Acceder</div>
+    <!-- Bloque Derecha -->
+    <div class="flex w-1/2 flex-col justify-center gap-5 p-5">
+      <div class="fuente-kengo mb-2 flex justify-start text-3xl">Acceder</div>
 
-      <!-- Component: Rounded required input -->
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="login()"
+        class="flex w-full flex-col"
+      >
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Email</mat-label>
+
+          <input matInput type="email" formControlName="email" />
+
+          @if (loginForm.get("email")?.hasError("required")) {
+            <mat-error> El email es obligatorio. </mat-error>
+          }
+
+          @if (loginForm.get("email")?.hasError("email")) {
+            <mat-error> Ingresa un email válido. </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input matInput type="password" formControlName="password" />
+
+          @if (loginForm.get("password")?.hasError("required")) {
+            <mat-error> La contraseña es obligatoria. </mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-stroked-button
+          color="primary"
+          type="submit"
+          [disabled]="loginForm.invalid"
+        >
+          Iniciar sesión
+        </button>
+
+        @if (error) {
+          <div class="error-msg">{{ error }}</div>
+        }
+      </form>
+
+      <!--
       <div class="relative mb-4">
         <input
           id="id-b07"
@@ -30,8 +71,6 @@
           E-mail
         </label>
       </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded required input -->
       <div class="relative mb-5">
         <input
           id="id-b07"
@@ -48,21 +87,18 @@
           Contraseña
         </label>
       </div>
-      <!-- End Rounded required input -->
-
-      <!-- Component: Large primary basic button -->
       <button
-        routerLink="/inicio"
+        (click)="login()"
         class="mb-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded bg-amber-500 px-6 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-amber-600 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none xl:w-xl"
       >
         <span>Conectarse</span>
       </button>
-      <!-- End Large primary basic button -->
       <a routerLink="/register" class="mb-10"
         ><div class="text-gray-400 hover:text-orange-500">
           No tengo cuenta. Registrarme
         </div></a
       >
+-->
     </div>
     <!-- Component: Base sized outline google app button  -->
     <!-- End Base sized outline google app button  -->

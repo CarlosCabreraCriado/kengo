@@ -1,0 +1,57 @@
+<section
+  class="absolute top-0 left-0 flex h-screen w-screen items-center justify-center"
+>
+  <div
+    class="flex h-80 w-80 flex-col justify-center rounded-2xl border-white/20 bg-white/60 p-6 shadow-xl backdrop-blur-md backdrop-filter"
+  >
+    <div
+      class="baseline-end relative flex h-15 w-full items-end justify-center"
+    >
+      <img src="../../assets/logo.svg" class="relative h-[175%]" />
+    </div>
+
+    <div class="fuente-kengo mb-2 w-full text-center text-3xl">Acceder</div>
+
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="login()"
+      class="flex w-full flex-col"
+    >
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Email</mat-label>
+
+        <input matInput type="email" formControlName="email" />
+
+        @if (loginForm.get("email")?.hasError("required")) {
+          <mat-error> El email es obligatorio. </mat-error>
+        }
+
+        @if (loginForm.get("email")?.hasError("email")) {
+          <mat-error> Ingresa un email válido. </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña</mat-label>
+        <input matInput type="password" formControlName="password" />
+
+        @if (loginForm.get("password")?.hasError("required")) {
+          <mat-error> La contraseña es obligatoria. </mat-error>
+        }
+      </mat-form-field>
+
+      <button
+        mat-stroked-button
+        color="primary"
+        type="submit"
+        [disabled]="loginForm.invalid"
+      >
+        Iniciar sesión
+      </button>
+
+      @if (error) {
+        <div class="error-msg">{{ error }}</div>
+      }
+    </form>
+  </div>
+</section>

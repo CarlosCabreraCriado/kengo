@@ -12,6 +12,9 @@ import {
   NavigationEnd,
 } from '@angular/router';
 
+//Servicios:
+import { AppService } from './services/app.service';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -31,10 +34,14 @@ export class AppComponent implements OnInit {
   private location: string | null = null;
   public activarHeader = false;
 
-  constructor(public router: Router) {}
+  constructor(
+    public router: Router,
+    private appService: AppService,
+  ) {}
 
   ngOnInit() {
     this.recallJsFuntions();
+    this.appService.inicializarApp();
   }
 
   recallJsFuntions() {
