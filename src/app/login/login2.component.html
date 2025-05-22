@@ -2,7 +2,7 @@
   class="absolute top-0 left-0 flex h-screen w-screen items-center justify-center"
 >
   <div
-    class="flex h-80 w-80 flex-col justify-center rounded-2xl border-white/20 bg-white/60 p-6 shadow-xl backdrop-blur-md backdrop-filter"
+    class="flex w-80 flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-3 shadow-xl backdrop-blur-md backdrop-filter"
   >
     <div
       class="baseline-end relative flex h-15 w-full items-end justify-center"
@@ -10,7 +10,7 @@
       <img src="../../assets/logo.svg" class="relative h-[175%]" />
     </div>
 
-    <div class="fuente-kengo mb-2 w-full text-center text-3xl">Acceder</div>
+    <div class="fuente-kengo mb-2 w-full text-center text-3xl">Kengo</div>
 
     <form
       [formGroup]="loginForm"
@@ -47,6 +47,10 @@
         [disabled]="loginForm.invalid"
       >
         Iniciar sesión
+      </button>
+
+      <button mat-button color="primary" type="submit" class="mt-2">
+        ¿No tienes cuenta? Registrate
       </button>
 
       @if (error) {

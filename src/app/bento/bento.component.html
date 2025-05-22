@@ -1,0 +1,40 @@
+<!-- BENTO
+<div class="grid grid-cols-8 grid-rows-5 gap-4">
+  KENGO (INICIO)  <div class="col-span-2 row-span-2">1</div>
+
+  CATEGORIAS
+  <div class="col-span-2 col-start-3">2</div>
+
+  GRUPO MUSCULAR
+  <div class="col-span-2 col-start-5">3</div>
+
+  MI CLINICA
+  <div class="col-span-2 col-start-7 row-span-2">4</div>
+
+  PERFIL
+  <div class="col-span-2 col-start-1 row-span-3 row-start-3">5</div>
+
+  EJERCICIOS
+  <div class="col-span-4 col-start-3 row-span-4 row-start-2">6</div>
+
+  MIS CLIENTES
+  <div class="col-span-2 col-start-7 row-span-3 row-start-3">7</div>
+</div>
+ -->
+
+<section class="relative w-full p-5 pt-25 sm:aspect-[8/5]">
+  <div
+    class="relative flex h-full w-full grid-cols-8 grid-rows-5 flex-col gap-4 sm:grid"
+  >
+    <ng-container *ngFor="let slot of slots">
+      <div
+        class="slot relative rounded-2xl border-white/20 shadow-xl backdrop-blur-md backdrop-filter"
+        [style.grid-column]="slot.colStart + ' / span ' + slot.colSpan"
+        [style.grid-row]="slot.rowStart + ' / span ' + slot.rowSpan"
+        [@moveAnimation]
+      >
+        <app-slot [slotName]="slot.name"></app-slot>
+      </div>
+    </ng-container>
+  </div>
+</section>

@@ -1,26 +1,49 @@
-<div class="flex min-h-screen flex-col">
+<section class="m-auto flex min-h-screen max-w-7xl flex-col">
   @if (activarHeader) {
-    <app-header></app-header>
+    <app-header class="relative z-20 w-full"></app-header>
   }
 
-  <img
-    class="fixed bottom-0 left-0 -z-10 rotate-180"
-    src="../assets/fondo-kengo (2).svg"
-  />
-  <div
-    class="fixed top-0 left-0 h-80 w-80 rounded-full bg-orange-400 opacity-30 blur-xl filter"
-  ></div>
+  <div class="fixed top-0 left-0 -z-10 h-screen w-screen overflow-hidden">
+    <!--
+    <img
+      class="fixed top-0 left-0 -z-10 max-w-[50%] -scale-x-100 opacity-50 mix-blend-screen"
+      src="../assets/bonsai.png"
+    />
+
+    <img
+      class="fixed top-0 right-0 -z-10 max-w-[50%] opacity-50 mix-blend-screen"
+      src="../assets/bonsai.png"
+    />
+-->
+
+    <img
+      class="fixed bottom-0 left-0 -z-10 min-w-screen rotate-180"
+      src="../assets/fondo-kengo (2).svg"
+    />
+
+    <div class="background fixed -z-20">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
 
   <!--test commit emilio-->
-  <main class="main flex w-screen flex-grow justify-center">
+  <main class="main z-10 flex-grow justify-center">
     <router-outlet> </router-outlet>
   </main>
   <app-carrito-ejercicios></app-carrito-ejercicios>
 
+  <!--
   <footer class="footer">
+
     <app-footer> </app-footer>
   </footer>
-</div>
+  -->
+</section>
 
 <div
   class="fixed right-0 bottom-0 z-50 bg-red-700 sm:bg-yellow-700 md:bg-purple-500 lg:bg-blue-700 xl:bg-green-700"

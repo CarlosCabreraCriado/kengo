@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { InicioComponent } from './inicio/inicio.component';
+import { BentoComponent } from './bento/bento.component';
 import { EjerciciosComponent } from './ejercicios/ejercicios.component';
 import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
@@ -13,10 +13,11 @@ import { RegisterComponent } from './register/register.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
-  { path: 'inicio', component: InicioComponent, pathMatch: 'full' },
+  { path: 'inicio', component: BentoComponent, pathMatch: 'full' },
   { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
   { path: 'fisios', component: FisiosComponent, pathMatch: 'full' },
   { path: 'categorias', component: CategoriasComponent, pathMatch: 'full' },
+  { path: 'clinica', component: BentoComponent, pathMatch: 'full' },
   {
     path: 'detalle-ejercicio',
     component: DetalleEjercicioComponent,
