@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
 //Modelos:
-import { Usuario, DetalleUsuario } from '../models/Usuarios';
+import { Usuario, DetalleUsuario, Accesos } from '../models/Global';
 
 @Injectable({ providedIn: 'root' })
 export class AppService {
@@ -18,6 +18,7 @@ export class AppService {
   ) {}
 
   usuario$ = new BehaviorSubject<Usuario | null | undefined>(undefined);
+  accesos$ = new BehaviorSubject<Accesos | null | undefined>(undefined);
 
   inicializarApp() {
     console.warn('Inicializando app');
@@ -29,7 +30,6 @@ export class AppService {
       .get<{ data: Usuario }>(`${this.API_DIRECTUS_URL}/users/me`)
       .subscribe({
         next: (res) => {
-          console.warn('Usuario: ', res);
           this.usuario$.next({
             id: res.data['id'],
             avatar: res.data['avatar'],
@@ -38,6 +38,7 @@ export class AppService {
             email: res.data['email'],
             detalle: null,
           });
+          console.warn('Usuario: ', this.usuario$.value);
         },
         error: (error) => {
           console.error('Error al cargar el usuario:', error);
@@ -66,11 +67,7 @@ export class AppService {
               detalle: res.data[0],
             });
           }
-
-          console.log('USUARIO: ', {
-            ...this.usuario$.value,
-            detalle: res.data[0],
-          });
+          console.warn('Usuario+detalle: ', this.usuario$.value);
         },
         error: (error) => {
           console.error('Error al cargar el detalle del usuario', error);

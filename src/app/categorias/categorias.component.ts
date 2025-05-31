@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { NavegacionComponent } from '../navegacion/navegacion.component';
+import { ExploradorComponent } from '../explorador/explorador.component';
 import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-categorias',
   standalone: true,
-  imports: [NavegacionComponent, RouterLink],
+  imports: [ExploradorComponent, RouterLink],
   templateUrl: './categorias.component.html',
   styleUrl: './categorias.component.css',
 })

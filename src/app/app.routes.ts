@@ -13,11 +13,14 @@ import { RegisterComponent } from './register/register.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+
+  //Paginas de Bento:
   { path: 'inicio', component: BentoComponent, pathMatch: 'full' },
+  { path: 'clinica', component: BentoComponent, pathMatch: 'full' },
+
   { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
   { path: 'fisios', component: FisiosComponent, pathMatch: 'full' },
   { path: 'categorias', component: CategoriasComponent, pathMatch: 'full' },
-  { path: 'clinica', component: BentoComponent, pathMatch: 'full' },
   {
     path: 'detalle-ejercicio',
     component: DetalleEjercicioComponent,

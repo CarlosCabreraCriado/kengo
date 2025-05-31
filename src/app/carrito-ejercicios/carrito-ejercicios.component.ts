@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavegacionComponent } from '../navegacion/navegacion.component';
+import { ExploradorComponent } from '../explorador/explorador.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -7,7 +7,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 @Component({
   selector: 'app-carrito-ejercicios',
   imports: [
-    NavegacionComponent,
+    ExploradorComponent,
     MatButtonModule,
     MatIconModule,
     MatSidenavModule,
@@ -16,7 +16,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
   styleUrl: './carrito-ejercicios.component.css',
 })
 export class CarritoEjerciciosComponent {
-  public drawerAbierto: boolean = false;
+  public drawerAbierto = false;
   public ejerciciosAdjudicados = [
     {
       id: 1,

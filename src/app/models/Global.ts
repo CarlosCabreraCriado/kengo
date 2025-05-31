@@ -13,3 +13,10 @@ export interface DetalleUsuario {
   direccion: string;
   postal: string;
 }
+
+export interface Accesos {
+  isCliente: boolean;
+  isFisio: boolean;
+}
+
+export type SeccionPrincipal = 'inicio' | 'ejercicios' | 'clientes' | 'clinica';
