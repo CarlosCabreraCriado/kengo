@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, NavigationEnd } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { SlotComponent } from '../slot/slot.component';
@@ -8,7 +8,7 @@ import { BentoService } from '../services/bento.service';
 @Component({
   selector: 'app-bento',
   standalone: true,
-  imports: [CommonModule, SlotComponent],
+  imports: [SlotComponent],
   templateUrl: './bento.component.html',
   styleUrls: ['./bento.component.scss'],
   animations: [

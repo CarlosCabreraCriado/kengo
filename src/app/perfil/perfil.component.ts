@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 //Servicios:
 import { AppService } from '../services/app.service';
@@ -14,11 +14,10 @@ import { MatInputModule } from '@angular/material/input';
   selector: 'app-perfil',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
-    MatInputModule,
-  ],
+    MatInputModule
+],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css',
 })

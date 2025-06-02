@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 
 // Formulario Angular:
 import { ReactiveFormsModule } from '@angular/forms';
@@ -17,13 +17,12 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   selector: 'app-login',
   imports: [
-    CommonModule,
     MatButtonModule,
     RouterLink,
     ReactiveFormsModule,
     MatFormFieldModule,
-    MatInputModule,
-  ],
+    MatInputModule
+],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })

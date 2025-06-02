@@ -20,21 +20,21 @@
   MIS CLIENTES
   <div class="col-span-2 col-start-7 row-span-3 row-start-3">7</div>
 </div>
- -->
+-->
 
 <section class="relative w-full p-5 pt-25 sm:aspect-[8/5]">
   <div
     class="relative flex h-full w-full grid-cols-8 grid-rows-5 flex-col gap-4 sm:grid"
-  >
-    <ng-container *ngFor="let slot of slots">
+    >
+    @for (slot of slots; track slot) {
       <div
         class="slot relative rounded-2xl border-white/20 shadow-xl backdrop-blur-md backdrop-filter"
         [style.grid-column]="slot.colStart + ' / span ' + slot.colSpan"
         [style.grid-row]="slot.rowStart + ' / span ' + slot.rowSpan"
         [@moveAnimation]
-      >
+        >
         <app-slot [slotName]="slot.name"></app-slot>
       </div>
-    </ng-container>
+    }
   </div>
 </section>
