@@ -24,7 +24,7 @@ import { MatButtonModule } from '@angular/material/button';
     MatFormFieldModule,
     MatInputModule,
   ],
-  templateUrl: './login2.component.html',
+  templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
 export class LoginComponent {

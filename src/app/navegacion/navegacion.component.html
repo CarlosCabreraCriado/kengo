@@ -1,101 +1,36 @@
-<!-- Profile -->
-<mat-card
-  class="daxa-card profile-card border-radius d-block mb-25 border-none bg-white p-0"
->
-  <mat-card-content>
-    <div class="cover-image position-relative border-top-radius">
-      <img
-        src="../assets/images/profile-big-cover-sanfi.png"
-        class="border-top-radius d-block m-auto"
-        alt="cover-image"
-      />
-
-      <!--
-      <button
-        type="button"
-        mat-button
-        class="edit-btn"
-        (click)="actualizarToken()"
-        [matMenuTriggerFor]="editCoverPhotoMenu"
-      >
-        Test
-      </button>
--->
-
-      <mat-menu
-        #editCoverPhotoMenu="matMenu"
-        class="card-header-menu"
-        xPosition="after"
-      >
-        <button mat-menu-item>Subir Foto</button>
-        <button mat-menu-item>Reposicionar</button>
-        <button mat-menu-item>Eliminar</button>
-      </mat-menu>
-    </div>
-
-    <div class="profile-content">
-      <div
-        class="d-flex align-items-center flex-column sm-flex-row sm-align-items-end justify-content-between"
-      >
-        <!-- IMAGEN PERFIL
-        <div class="d-md-flex align-items-end">
-          <div class="image position-relative">
-            @if ((this.appService.misDetalles$ | async)?.imagen_perfil) {
-              <img
-                src="assets/images/users/user{{
-                  (this.appService.misDetalles$ | async)?.imagen_perfil
-                }}.webp"
-                class="rounded-circle foto-perfil"
-                alt="profile-image"
-              />
-            }
-            <button
-              type="button"
-              mat-button
-              class="edit-btn"
-              [matMenuTriggerFor]="editProfilePhotoMenu"
-            >
-              <i class="material-symbols-outlined"> photo_camera </i>
-            </button>
-            <mat-menu
-              #editProfilePhotoMenu="matMenu"
-              class="card-header-menu"
-              xPosition="after"
-            >
-              <button mat-menu-item>Ver foto</button>
-              <button mat-menu-item>Subir foto</button>
-              <button mat-menu-item>Eliminar</button>
-            </mat-menu>
-          </div>
-          <div class="title">
-            <span class="d-block fw-medium">
-              {{ usuario?.nombre | titlecase }}
-              {{ usuario?.apellidos | titlecase }}
-            </span>
-            <span class="d-block text-body">
-              {{ usuario?.email | lowercase }}
-            </span>
-          </div>
-        </div>
-                -->
-
-        <!--
-        <div class="btn-box">
-          <button mat-button (click)="iniciarDialogoBienvenida()">
-            Solicitar Accesos
-          </button>
-        </div>
--->
+<!-- Navegacion -->
+<header class="fixed left-0 h-25 w-full overflow-visible p-5">
+  <div
+    class="relative m-auto flex h-full w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 pr-3 pl-5 shadow-xl backdrop-blur-md backdrop-filter"
+  >
+    <a routerLink="/inicio">
+      <div routerLink="/inicio" class="fuente-kengo text-center text-3xl">
+        Kengo
       </div>
+    </a>
 
+    <div class="relative h-full">
       <mat-tab-group
         [(selectedIndex)]="selectedTabIndex"
         (selectedTabChange)="onTabChange($event)"
+        class="navegador-tabs"
       >
         <mat-tab label="perfil">
-          <ng-template mat-tab-label>
-            <mat-icon class="example-tab-icon">face</mat-icon>
-            Perfil / Accesos
+          <ng-template mat-tab-label class="h-25">
+            <!--
+            <img
+              src="/assets/iconos/icono_ejercicio.webp"
+              alt="Icono ejercicio"
+              class="h-20"
+            />
+            -->
+
+            <div class="fuente-kengo flex flex-col items-center justify-center">
+              <mat-icon class="material-symbols-outlined"
+                >physical_therapy</mat-icon
+              >
+              Ejercicios
+            </div>
           </ng-template>
 
           <mat-chip-listbox aria-label="Selección Perfil">
@@ -117,8 +52,14 @@
         @if (isFisio) {
           <mat-tab label="formador">
             <ng-template mat-tab-label>
-              <mat-icon class="example-tab-icon">school</mat-icon>
-              Formador
+              <div
+                class="fuente-kengo flex flex-col items-center justify-center"
+              >
+                <mat-icon class="material-symbols-outlined"
+                  >personal_injury</mat-icon
+                >
+                Clientes
+              </div>
             </ng-template>
 
             <mat-chip-listbox aria-label="Selección Ejercicios">
@@ -141,7 +82,7 @@
         @if (isCliente) {
           <mat-tab label="institucion">
             <ng-template mat-tab-label>
-              <mat-icon class="example-tab-icon">business</mat-icon>
+              <mat-icon class="material-symbols-outlined">business</mat-icon>
               Institución
             </ng-template>
 
@@ -165,8 +106,20 @@
         @if (isFisio) {
           <mat-tab label="impulsor">
             <ng-template mat-tab-label>
-              <mat-icon class="example-tab-icon">business_center</mat-icon>
-              Impulsor
+              <!--
+              <img
+                src="/assets/iconos/icono_clinica.webp"
+                alt="Icono clinica"
+                class="h-20"
+              />
+            -->
+
+              <div
+                class="fuente-kengo flex flex-col items-center justify-center"
+              >
+                <mat-icon class="material-symbols-outlined">business</mat-icon>
+                Clínica
+              </div>
             </ng-template>
 
             <mat-chip-listbox aria-label="Selección Impulsor">
@@ -187,5 +140,11 @@
         }
       </mat-tab-group>
     </div>
-  </mat-card-content>
-</mat-card>
+
+    <img
+      class="h-10 w-10 rounded-full"
+      src="../../assets/retrato.webp"
+      alt="Rounded Avatar"
+    />
+  </div>
+</header>

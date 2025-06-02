@@ -1,106 +1,56 @@
-<section class="relative flex h-full w-screen bg-white">
-  <div class="flex flex-row">
-    <!-- Bloque izquierda -->
-    <div class="relative flex w-1/2 justify-center">
-      <img class="z-1 w-full" src="/assets/kengo-icono-nombre-naranja.png" />
-      <div
-        class="loginfondo absolute z-0 hidden h-full w-full bg-orange-300 sm:block"
-      ></div>
+<section
+  class="absolute top-0 left-0 flex h-screen w-screen items-center justify-center"
+>
+  <div
+    class="flex w-80 flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-3 shadow-xl backdrop-blur-md backdrop-filter"
+  >
+    <div
+      class="baseline-end relative flex h-15 w-full items-end justify-center"
+    >
+      <img src="../../assets/logo.svg" class="relative h-[175%]" />
     </div>
 
-    <!-- Bloque Derecha -->
-    <div class="flex w-1/2 flex-col justify-center gap-5 p-5">
-      <div class="fuente-kengo mb-2 flex justify-start text-3xl">Acceder</div>
+    <div class="fuente-kengo mb-2 w-full text-center text-3xl">Kengo</div>
 
-      <form
-        [formGroup]="loginForm"
-        (ngSubmit)="login()"
-        class="flex w-full flex-col"
-      >
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Email</mat-label>
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="login()"
+      class="flex w-full flex-col"
+    >
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Email</mat-label>
 
-          <input matInput type="email" formControlName="email" />
+        <input matInput type="email" formControlName="email" />
 
-          @if (loginForm.get("email")?.hasError("required")) {
-            <mat-error> El email es obligatorio. </mat-error>
-          }
-
-          @if (loginForm.get("email")?.hasError("email")) {
-            <mat-error> Ingresa un email válido. </mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Contraseña</mat-label>
-          <input matInput type="password" formControlName="password" />
-
-          @if (loginForm.get("password")?.hasError("required")) {
-            <mat-error> La contraseña es obligatoria. </mat-error>
-          }
-        </mat-form-field>
-
-        <button
-          mat-stroked-button
-          color="primary"
-          type="submit"
-          [disabled]="loginForm.invalid"
-        >
-          Iniciar sesión
-        </button>
-
-        @if (error) {
-          <div class="error-msg">{{ error }}</div>
+        @if (loginForm.get("email")?.hasError("required")) {
+          <mat-error> El email es obligatorio. </mat-error>
         }
-      </form>
 
-      <!--
-      <div class="relative mb-4">
-        <input
-          id="id-b07"
-          type="text"
-          name="id-b07"
-          required
-          value=""
-          class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-red-400 invalid:text-red-400 focus:border-orange-400 focus:outline-none invalid:focus:border-red-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 xl:w-xl"
-        />
-        <label
-          for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-red-400 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-400 peer-invalid:peer-focus:text-red-400 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-red-400 peer-required:after:content-['\00a0*']"
-        >
-          E-mail
-        </label>
-      </div>
-      <div class="relative mb-5">
-        <input
-          id="id-b07"
-          type="text"
-          name="id-b07"
-          required
-          value=""
-          class="peer relative h-10 w-full justify-center rounded border border-slate-200 px-4 text-sm text-slate-400 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-red-400 invalid:text-red-400 focus:border-orange-400 focus:outline-none invalid:focus:border-red-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 xl:w-xl"
-        />
-        <label
-          for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-red-400 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-400 peer-invalid:peer-focus:text-red-400 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-red-400 peer-required:after:content-['\00a0*']"
-        >
-          Contraseña
-        </label>
-      </div>
-      <button
-        (click)="login()"
-        class="mb-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded bg-amber-500 px-6 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-amber-600 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none xl:w-xl"
-      >
-        <span>Conectarse</span>
+        @if (loginForm.get("email")?.hasError("email")) {
+          <mat-error> Ingresa un email válido. </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña</mat-label>
+        <input matInput type="password" formControlName="password" />
+
+        @if (loginForm.get("password")?.hasError("required")) {
+          <mat-error> La contraseña es obligatoria. </mat-error>
+        }
+      </mat-form-field>
+
+      <button mat-stroked-button type="submit" [disabled]="loginForm.invalid">
+        Iniciar sesión
       </button>
-      <a routerLink="/register" class="mb-10"
-        ><div class="text-gray-400 hover:text-orange-500">
-          No tengo cuenta. Registrarme
-        </div></a
-      >
--->
-    </div>
-    <!-- Component: Base sized outline google app button  -->
-    <!-- End Base sized outline google app button  -->
+
+      <button mat-button color="primary" type="submit" class="mt-2">
+        ¿No tienes cuenta? Registrate
+      </button>
+
+      @if (error) {
+        <div class="error-msg">{{ error }}</div>
+      }
+    </form>
   </div>
 </section>

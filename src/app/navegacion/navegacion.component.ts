@@ -18,6 +18,7 @@ import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { Usuario, SeccionPrincipal } from '../models/Global';
+import { ViewEncapsulation } from '@angular/core';
 
 interface Rutas {
   nombre: string;
@@ -46,6 +47,7 @@ interface OpcionesRutas {
     CommonModule,
     MatTabsModule,
   ],
+  encapsulation: ViewEncapsulation.None,
   templateUrl: './navegacion.component.html',
   styleUrl: './navegacion.component.scss',
   animations: [
@@ -62,7 +64,7 @@ export class NavegacionComponent {
   private routeSubscription: Subscription;
 
   //Permisos:
-  public isFisio = false;
+  public isFisio = true;
   public isCliente = false;
   public isAdminClinica = false;
 

@@ -1,7 +1,28 @@
 <section class="m-auto flex min-h-screen max-w-7xl flex-col">
+  <!--
   @if (activarHeader) {
     <app-header class="relative z-20 w-full"></app-header>
   }
+-->
+
+  <header class="fixed left-0 h-25 w-full p-5">
+    <div
+      class="relative m-auto flex h-full w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 pr-3 pl-5 shadow-xl backdrop-blur-md backdrop-filter"
+    >
+      <a routerLink="/inicio">
+        <div routerLink="/inicio" class="fuente-kengo text-center text-3xl">
+          Kengo
+        </div>
+      </a>
+
+      <div></div>
+      <img
+        class="h-10 w-10 rounded-full"
+        src="../../assets/retrato.webp"
+        alt="Rounded Avatar"
+      />
+    </div>
+  </header>
 
   <div class="fixed top-0 left-0 -z-10 h-screen w-screen overflow-hidden">
     <!--
@@ -35,7 +56,10 @@
   <main class="main z-10 flex-grow justify-center">
     <router-outlet> </router-outlet>
   </main>
-  <app-carrito-ejercicios></app-carrito-ejercicios>
+
+  @if (activarHeader) {
+    <app-carrito-ejercicios></app-carrito-ejercicios>
+  }
 
   <!--
   <footer class="footer">
