@@ -2,7 +2,7 @@
   "name": "kengo",
   "version": "0.0.2",
   "engines": {
-    "node": "20.16.0"
+    "node": "22.16.0"
   },
   "scripts": {
     "ng": "ng",
