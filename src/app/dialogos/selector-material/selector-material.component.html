@@ -1,0 +1,24 @@
+<div mat-dialog-content>
+  <mat-icon [mat-dialog-close]="true" id="boton-cerrar-dialogo">close</mat-icon>
+
+  <mat-list>
+    @for (seccion of material; track seccion.nombreSeccion) {
+      <div mat-subheader>{{ seccion.nombreSeccion }}</div>
+      @for (archivo of seccion.archivos; track archivo.nombre) {
+        <mat-list-item>
+          <a matListItemIcon [href]="archivo.url" target="_blank">
+            <mat-icon class="iconoDocumento">{{ archivo.icono }}</mat-icon>
+          </a>
+          <div matListItemTitle>
+            [{{ archivo.codigo }}] {{ archivo.nombre }}
+          </div>
+          <div matListItemLine>
+            <a [href]="archivo.url" target="_blank"> Descargar </a>
+          </div>
+        </mat-list-item>
+      }
+
+      <mat-divider></mat-divider>
+    }
+  </mat-list>
+</div>

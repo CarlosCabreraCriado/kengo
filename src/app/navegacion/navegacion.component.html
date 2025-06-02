@@ -1,56 +1,87 @@
 <!-- Navegacion -->
-<header class="fixed left-0 h-25 w-full overflow-visible p-5">
+<header class="fixed left-0 z-100 h-25 w-full overflow-visible p-5">
   <div
-    class="relative m-auto flex h-full w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 pr-3 pl-5 shadow-xl backdrop-blur-md backdrop-filter"
+    class="relative m-auto flex h-full w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter sm:pr-3 sm:pl-5"
   >
-    <a routerLink="/inicio">
+    <a routerLink="/inicio" class="hidden sm:block">
       <div routerLink="/inicio" class="fuente-kengo text-center text-3xl">
         Kengo
       </div>
     </a>
 
-    <div class="relative h-full">
+    <div class="relative h-full w-full max-w-xl">
       <mat-tab-group
         [(selectedIndex)]="selectedTabIndex"
         (selectedTabChange)="onTabChange($event)"
-        class="navegador-tabs"
+        mat-stretch-tabs="false"
+        class="navegador-tabs tabs-scroll no-scrollbar overflow-x-auto scroll-smooth whitespace-nowrap"
       >
-        <mat-tab label="perfil">
+        <!-- INICIO -->
+        <mat-tab label="inicio">
           <ng-template mat-tab-label class="h-25">
-            <!--
-            <img
-              src="/assets/iconos/icono_ejercicio.webp"
-              alt="Icono ejercicio"
-              class="h-20"
-            />
-            -->
+            <div class="fuente-kengo flex flex-col items-center justify-center">
+              <img
+                src="/assets/logo.svg"
+                alt="Icono ejercicio"
+                class="h-[24px] w-[24px]"
+              />
+              <span class="hidden sm:block"> Inicio </span>
+            </div>
+          </ng-template>
 
+          <div
+            class="relative m-auto mt-2 flex h-10 w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
+          >
+            <mat-chip-listbox aria-label="Inicio">
+              @for (
+                opcion of opciones["inicio"];
+                let i = $index;
+                track opcion.nombre
+              ) {
+                <mat-chip-option
+                  (click)="onChipClick('inicio', i)"
+                  color="warn"
+                  [selected]="opcion.seleccionado"
+                  >{{ opcion.nombre }}
+                </mat-chip-option>
+              }
+            </mat-chip-listbox>
+          </div>
+        </mat-tab>
+
+        <!-- EJERCICIOS -->
+        <mat-tab label="ejercicios">
+          <ng-template mat-tab-label class="h-25">
             <div class="fuente-kengo flex flex-col items-center justify-center">
               <mat-icon class="material-symbols-outlined"
                 >physical_therapy</mat-icon
               >
-              Ejercicios
+              <span class="hidden sm:block"> Ejercicios </span>
             </div>
           </ng-template>
 
-          <mat-chip-listbox aria-label="Selección Perfil">
-            @for (
-              opcion of opciones["inicio"];
-              let i = $index;
-              track opcion.nombre
-            ) {
-              <mat-chip-option
-                (click)="onChipClick('inicio', i)"
-                color="warn"
-                [selected]="opcion.seleccionado"
-                >{{ opcion.nombre }}
-              </mat-chip-option>
-            }
-          </mat-chip-listbox>
+          <div
+            class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
+          >
+            <mat-chip-listbox aria-label="Selección ejercicios">
+              @for (
+                opcion of opciones["ejercicios"];
+                let i = $index;
+                track opcion.nombre
+              ) {
+                <mat-chip-option
+                  (click)="onChipClick('ejercicios', i)"
+                  color="warn"
+                  [selected]="opcion.seleccionado"
+                  >{{ opcion.nombre }}
+                </mat-chip-option>
+              }
+            </mat-chip-listbox>
+          </div>
         </mat-tab>
 
         @if (isFisio) {
-          <mat-tab label="formador">
+          <mat-tab label="pacientes">
             <ng-template mat-tab-label>
               <div
                 class="fuente-kengo flex flex-col items-center justify-center"
@@ -58,53 +89,61 @@
                 <mat-icon class="material-symbols-outlined"
                   >personal_injury</mat-icon
                 >
-                Clientes
+                <span class="hidden sm:block"> Pacientes </span>
               </div>
             </ng-template>
 
-            <mat-chip-listbox aria-label="Selección Ejercicios">
-              @for (
-                opcion of opciones["ejercicios"];
-                let i = $index;
-                track opcion.nombre
-              ) {
-                <mat-chip-option
-                  (click)="onChipClick('ejercicios', i)"
-                  color="warn"
-                  [selected]="opcion.seleccionado"
-                  >{{ opcion.nombre }}</mat-chip-option
-                >
-              }
-            </mat-chip-listbox>
+            <div
+              class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
+            >
+              <mat-chip-listbox aria-label="Selección Ejercicios">
+                @for (
+                  opcion of opciones["pacientes"];
+                  let i = $index;
+                  track opcion.nombre
+                ) {
+                  <mat-chip-option
+                    (click)="onChipClick('pacientes', i)"
+                    color="warn"
+                    [selected]="opcion.seleccionado"
+                    >{{ opcion.nombre }}</mat-chip-option
+                  >
+                }
+              </mat-chip-listbox>
+            </div>
           </mat-tab>
         }
 
-        @if (isCliente) {
+        @if (isPaciente) {
           <mat-tab label="institucion">
             <ng-template mat-tab-label>
               <mat-icon class="material-symbols-outlined">business</mat-icon>
-              Institución
+              <span class="hidden sm:block"> Clinica </span>
             </ng-template>
 
-            <mat-chip-listbox aria-label="Selección Institución">
-              @for (
-                opcion of opciones["ejercicios"];
-                let i = $index;
-                track opcion.nombre
-              ) {
-                <mat-chip-option
-                  (click)="onChipClick('ejercicios', i)"
-                  color="warn"
-                  [selected]="opcion.seleccionado"
-                  >{{ opcion.nombre }}</mat-chip-option
-                >
-              }
-            </mat-chip-listbox>
+            <div
+              class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
+            >
+              <mat-chip-listbox aria-label="Selección Institución">
+                @for (
+                  opcion of opciones["ejercicios"];
+                  let i = $index;
+                  track opcion.nombre
+                ) {
+                  <mat-chip-option
+                    (click)="onChipClick('ejercicios', i)"
+                    color="warn"
+                    [selected]="opcion.seleccionado"
+                    >{{ opcion.nombre }}</mat-chip-option
+                  >
+                }
+              </mat-chip-listbox>
+            </div>
           </mat-tab>
         }
 
         @if (isFisio) {
-          <mat-tab label="impulsor">
+          <mat-tab label="clínica">
             <ng-template mat-tab-label>
               <!--
               <img
@@ -118,33 +157,105 @@
                 class="fuente-kengo flex flex-col items-center justify-center"
               >
                 <mat-icon class="material-symbols-outlined">business</mat-icon>
-                Clínica
+
+                <span class="hidden sm:block"> Clínica </span>
               </div>
             </ng-template>
 
-            <mat-chip-listbox aria-label="Selección Impulsor">
-              @for (
-                opcion of opciones["clinica"];
-                let i = $index;
-                track opcion.nombre
-              ) {
-                <mat-chip-option
-                  (click)="onChipClick('clinica', i)"
-                  color="warn"
-                  [selected]="opcion.seleccionado"
-                  >{{ opcion.nombre }}</mat-chip-option
+            <div
+              class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
+            >
+              <mat-chip-listbox aria-label="Selección Impulsor">
+                @for (
+                  opcion of opciones["clinica"];
+                  let i = $index;
+                  track opcion.nombre
+                ) {
+                  <mat-chip-option
+                    (click)="onChipClick('clinica', i)"
+                    color="warn"
+                    [selected]="opcion.seleccionado"
+                    >{{ opcion.nombre }}</mat-chip-option
+                  >
+                }
+              </mat-chip-listbox>
+            </div>
+          </mat-tab>
+        }
+
+        @if (isMovil) {
+          <mat-tab label="clínica">
+            <ng-template mat-tab-label>
+              <div>
+                <button
+                  mat-button
+                  [matMenuTriggerFor]="avatarMenu"
+                  class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
                 >
-              }
-            </mat-chip-listbox>
+                  <img
+                    class="h-10 w-10 rounded-full border-2 border-solid"
+                    src="../../assets/retrato.webp"
+                    alt="Avatar"
+                  />
+                </button>
+
+                <mat-menu
+                  #avatarMenu="matMenu"
+                  xPosition="before"
+                  yPosition="below"
+                >
+                  <button mat-menu-item routerLink="/inicio/perfil">
+                    <mat-icon class="material-symbols-outlined"
+                      >account_circle</mat-icon
+                    >
+                    <span>Editar perfil</span>
+                  </button>
+
+                  <button mat-menu-item (click)="logout()">
+                    <mat-icon class="material-symbols-outlined"
+                      >logout</mat-icon
+                    >
+                    <span>Cerrar sesión</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </ng-template>
           </mat-tab>
         }
       </mat-tab-group>
     </div>
 
-    <img
-      class="h-10 w-10 rounded-full"
-      src="../../assets/retrato.webp"
-      alt="Rounded Avatar"
-    />
+    @if (!isMovil) {
+      <div>
+        <button
+          mat-button
+          [matMenuTriggerFor]="avatarMenu"
+          class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
+        >
+          <img
+            class="h-10 w-10 rounded-full border-2 border-solid"
+            src="../../assets/retrato.webp"
+            alt="Avatar"
+          />
+        </button>
+
+        <mat-menu #avatarMenu="matMenu" xPosition="before" yPosition="below">
+          <button mat-menu-item routerLink="/inicio/perfil">
+            <mat-icon class="material-symbols-outlined">
+              account_circle</mat-icon
+            >
+            <span>Editar perfil</span>
+          </button>
+          <button mat-menu-item (click)="logout()">
+            <mat-icon class="material-symbols-outlined">logout</mat-icon>
+            <span>Cerrar sesión</span>
+          </button>
+        </mat-menu>
+      </div>
+    }
   </div>
 </header>
+
+<div [@routeAnimations]="routeAnimationState" class="relative pt-30">
+  <router-outlet #outlet="outlet" (activate)="onActivate()"></router-outlet>
+</div>

@@ -1,8 +1,20 @@
 .navegador-tabs {
   .mat-mdc-tab-labels {
+    justify-content: space-around;
+
     .mat-mdc-tab {
       height: 3.7rem;
       position: relative;
+      padding: 0;
+      //min-width: 60px;
+      //min-width: 30px;
+      min-width: 20%;
+      max-width: 20px;
+      // Solo para pantallas grandes (ej. desde md en adelante)
+      @media (min-width: 768px) {
+        padding: 0 1.5rem;
+        min-width: 90px;
+      }
     }
   }
 }

@@ -15,8 +15,12 @@ export interface DetalleUsuario {
 }
 
 export interface Accesos {
-  isCliente: boolean;
+  isPaciente: boolean;
   isFisio: boolean;
 }
 
-export type SeccionPrincipal = 'inicio' | 'ejercicios' | 'clientes' | 'clinica';
+export type SeccionPrincipal =
+  | 'inicio'
+  | 'ejercicios'
+  | 'pacientes'
+  | 'clinica';

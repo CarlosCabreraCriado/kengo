@@ -1,0 +1,39 @@
+<h2 mat-dialog-title class="text-center">Foto de perfil</h2>
+
+<button mat-raised-button color="warn" (click)="fileInput.click()">
+  Subir Archivo
+</button>
+
+<input
+  #fileInput
+  hidden
+  mat-flat-button
+  type="file"
+  (change)="fileChangeEvent($event)"
+  accept="image/*"
+/>
+
+<div class="position-relative">
+  <image-cropper
+    class="cropper"
+    [imageChangedEvent]="imageChangedEvent"
+    [maintainAspectRatio]="true"
+    [aspectRatio]="1 / 1"
+    format="jpeg"
+    (imageCropped)="imageCroppedEvent($event)"
+  >
+  </image-cropper>
+
+  @if (croppedImage) {
+    <img class="imagen" [src]="croppedImage" />
+  }
+</div>
+
+<div mat-dialog-actions class="mt-15">
+  <button mat-flat-button class="daxa" cdkFocusInitial (click)="guardar()">
+    Guardar
+  </button>
+  <button mat-flat-button cdkFocusInitial [mat-dialog-close]="true">
+    Cancelar
+  </button>
+</div>

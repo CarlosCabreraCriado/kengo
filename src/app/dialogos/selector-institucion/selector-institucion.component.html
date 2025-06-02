@@ -1,0 +1,7 @@
+<div mat-dialog-content>
+  <app-tabla-instituciones
+    [modoSelector]="true"
+    [nif]="data.nif"
+    (seleccionarInstitucion)="seleccionarInstitucion($event)"
+  ></app-tabla-instituciones>
+</div>

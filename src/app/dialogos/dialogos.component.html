@@ -1,0 +1,248 @@
+@switch (data.tipo) {
+  <!-- Tipo Informativo -->
+  @case ("informativo") {
+    <h1 mat-dialog-title>
+      {{ data.titulo }}
+    </h1>
+
+    <div mat-dialog-content>
+      <p>
+        {{ data.mensaje }}
+      </p>
+    </div>
+    <div mat-dialog-actions class="mt-0">
+      <button
+        mat-flat-button
+        class="daxa"
+        [mat-dialog-close]="true"
+        cdkFocusInitial
+      >
+        Ok
+      </button>
+    </div>
+  }
+
+  <!-- Tipo Procesando -->
+  @case ("procesando") {
+    <div class="d-flex flex-column justify-content-center">
+      <h1 mat-dialog-title class="text-center">
+        {{ data.titulo }}
+      </h1>
+
+      <div mat-dialog-content class="text-center">
+        <mat-spinner
+          class="text-center mr-auto ml-auto mt-15 mb-15"
+        ></mat-spinner>
+        <p>
+          {{ data.mensaje }}
+        </p>
+      </div>
+    </div>
+  }
+
+  @case ("web") {
+    <div class="d-flex flex-row">
+      <div class="mr-15">
+        <i class="material-symbols-outlined icono-web"> public </i>
+      </div>
+      <div>
+        <h1 mat-dialog-title>
+          {{ data.titulo }}
+        </h1>
+
+        <div mat-dialog-content>
+          <p>
+            {{ data.mensaje }}
+          </p>
+        </div>
+
+        <div mat-dialog-actions class="mt-15">
+          <button mat-flat-button class="daxa" [mat-dialog-close]="true">
+            Sí, ir a la página
+          </button>
+
+          <button mat-flat-button [mat-dialog-close]="false" cdkFocusInitial>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+  <!-- Tipo Warning Confirmación -->
+  @case ("confirmacion") {
+    <div class="d-flex flex-row">
+      <div class="mr-15">
+        <img
+          src="assets/images/icons/warning.webp"
+          alt="warning"
+          class="warning-icon"
+        />
+      </div>
+      <div>
+        <h1 mat-dialog-title>
+          {{ data.titulo }}
+        </h1>
+
+        <div mat-dialog-content>
+          <p>
+            {{ data.mensaje }}
+          </p>
+        </div>
+
+        <div mat-dialog-actions class="mt-15">
+          <button
+            mat-flat-button
+            class="daxa"
+            [mat-dialog-close]="false"
+            cdkFocusInitial
+          >
+            Cancelar
+          </button>
+          <button mat-flat-button [mat-dialog-close]="true" cdkFocusInitial>
+            Sí, estoy seguro
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tipo Warning Confirmación -->
+  @case ("link") {
+    <div class="d-flex flex-row">
+      <div class="mr-15">
+        <img
+          src="assets/images/icons/warning.webp"
+          alt="warning"
+          class="warning-icon"
+        />
+      </div>
+      <div>
+        <h1 mat-dialog-title>
+          {{ data.titulo }}
+        </h1>
+
+        <div mat-dialog-content>
+          <p>
+            {{ data.mensaje }}
+          </p>
+        </div>
+
+        <div mat-dialog-actions class="mt-15">
+          <button
+            mat-flat-button
+            routerLink="{{ data.routerLink }}"
+            [mat-dialog-close]="true"
+          >
+            {{ data.mensajeLink }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tipo Warning Confirmación -->
+  @case ("warning") {
+    <div class="d-flex flex-row">
+      <div class="mr-15">
+        <img
+          src="assets/images/icons/warning.webp"
+          alt="warning"
+          class="warning-icon"
+        />
+      </div>
+      <div>
+        <h1 mat-dialog-title>
+          {{ data.titulo }}
+        </h1>
+
+        <div mat-dialog-content>
+          <p>
+            {{ data.mensaje }}
+          </p>
+        </div>
+
+        <div mat-dialog-actions class="mt-15">
+          <button
+            mat-flat-button
+            class="daxa"
+            [mat-dialog-close]="false"
+            cdkFocusInitial
+          >
+            Ok
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tipo ERROR -->
+  @case ("error") {
+    <div class="d-flex flex-row">
+      <div class="mr-15">
+        <img
+          src="assets/images/icons/error.webp"
+          alt="error"
+          class="warning-icon"
+        />
+      </div>
+      <div>
+        <h1 mat-dialog-title>
+          {{ data.titulo }}
+        </h1>
+
+        <div mat-dialog-content>
+          <p>
+            {{ data.mensaje }}
+          </p>
+        </div>
+
+        <div mat-dialog-actions class="mt-15">
+          <button
+            mat-flat-button
+            class="daxa"
+            [mat-dialog-close]="false"
+            cdkFocusInitial
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tipo ERROR -->
+  @case ("exito") {
+    <div class="d-flex flex-row">
+      <div class="mr-15">
+        <img
+          src="assets/images/icons/exito.webp"
+          alt="error"
+          class="warning-icon"
+        />
+      </div>
+      <div>
+        <h1 mat-dialog-title>
+          {{ data.titulo }}
+        </h1>
+
+        <div mat-dialog-content>
+          <p>
+            {{ data.mensaje }}
+          </p>
+        </div>
+
+        <div mat-dialog-actions class="mt-15">
+          <button
+            mat-flat-button
+            class="daxa"
+            [mat-dialog-close]="false"
+            cdkFocusInitial
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}
+<!-- Fin Switch -->

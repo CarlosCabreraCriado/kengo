@@ -1,58 +1,23 @@
 import { Component } from '@angular/core';
-
-
-//Servicios:
-import { AppService } from '../services/app.service';
-
-//Formularios Angular:
-import { ReactiveFormsModule } from '@angular/forms';
-import { FormBuilder, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule
-],
+    MatIconModule,
+    MatMenuModule,
+    RouterLink,
+    RouterOutlet,
+    MatCardModule,
+    MatButtonModule,
+    RouterLinkActive,
+  ],
   templateUrl: './perfil.component.html',
-  styleUrl: './perfil.component.css',
+  styleUrl: './perfil.component.scss',
 })
-export class PerfilComponent {
-  public perfilForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    first_name: ['', Validators.required],
-    last_name: [''],
-    fecha_nacimiento: [''],
-    postal: [''],
-    direccion: [''],
-    telefono: [''],
-  });
-
-  public loading = true;
-
-  constructor(
-    private appService: AppService,
-    private fb: FormBuilder,
-  ) {
-    this.appService.usuario$.subscribe((usuario) => {
-      if (usuario?.id && !usuario?.detalle) {
-        this.appService.cargarMiDetalle();
-      }
-      if (usuario?.detalle) {
-        console.warn('Usuario con detalle: ', usuario.detalle);
-        this.perfilForm.patchValue({
-          ...usuario,
-          ...usuario.detalle,
-        });
-      }
-    });
-  }
-
-  guardarPerfil() {
-    console.log('Guardando perfil: ', this.perfilForm.value);
-  }
-}
+export class PerfilComponent {}

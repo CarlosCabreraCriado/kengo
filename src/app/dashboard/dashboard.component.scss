@@ -1,0 +1,14 @@
+.textoAcceso {
+  line-height: 1.5; /* Altura de línea relativa al tamaño de fuente */
+  height: calc(1.5em * 3); /* Altura total: 3 líneas */
+  overflow: hidden; /* Ocultar contenido extra */
+  display: -webkit-box; /* Configurar como contenedor flexible (para texto) */
+  -webkit-line-clamp: 3; /* Limitar a 3 líneas */
+  -webkit-box-orient: vertical; /* Orientación vertical */
+}
+
+.tarjetaAcceso:hover {
+  -webkit-box-shadow: 0px 0px 20px 0px rgba(231, 92, 62, 0.7);
+  -moz-box-shadow: 0px 0px 20px 0px rgba(231, 92, 62, 0.7);
+  box-shadow: 0px 0px 20px 0px rgba(231, 92, 62, 0.7);
+}

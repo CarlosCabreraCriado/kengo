@@ -1,141 +1,110 @@
-<div class="fuente-kengo mt-8 text-center text-4xl">Mi perfil</div>
-<section
-  class="m-auto mx-7 mt-15 flex max-w-7xl flex-col justify-center gap-10 rounded-2xl bg-white p-5 shadow-2xl lg:flex-row"
->
-  <div class="flex flex-col items-center">
-    <div class="fuente-kengo text-center">Foto de Perfil</div>
-    <!-- Component: Dropzone file input that accepts specific types -->
-
-    <div class="relative my-6 flex w-96 justify-center">
-      <input
-        id="id-dropzone02"
-        name="file-upload"
-        type="file"
-        class="peer hidden"
-        accept=".gif,.jpg,.png,.jpeg"
-        multiple
-      />
-      <label
-        for="id-dropzone02"
-        class="flex cursor-pointer flex-col items-center justify-center gap-6 rounded border border-dashed border-slate-300 px-6 py-10 text-center"
-      >
-        <span
-          class="inline-flex h-12 items-center justify-center self-center rounded bg-slate-100/70 px-3 text-slate-400"
+<mat-card class="m-5 rounded-2xl bg-white">
+  <mat-card-content class="rounded-2xl bg-white/60">
+    <ul
+      class="mt-0 hidden w-full flex-row justify-around gap-2 overflow-x-scroll pl-0 md:flex"
+    >
+      <li class="inline-block">
+        <button
+          routerLink="/inicio/perfil"
+          matButton="outlined"
+          mat-button
+          class="whitespace-nowrap"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            aria-label="File input icon"
-            role="graphics-symbol"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="h-6 w-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-            />
-          </svg>
-        </span>
-        <p class="flex flex-col items-center justify-center gap-1 text-sm">
-          <span class="text-emerald-500 hover:text-emerald-500">
-            Upload media
-            <span class="text-slate-500"> or drag and drop </span>
-          </span>
-          <span class="text-slate-600"> PNG, JPG or GIF up to 10MB </span>
-        </p>
-      </label>
-    </div>
-    <!-- End Dropzone file input that accepts specific types -->
-  </div>
+          Ajustes de cuenta
+        </button>
+      </li>
 
-  <form
-    [formGroup]="perfilForm"
-    (ngSubmit)="guardarPerfil()"
-    class="flex flex-col"
-  >
-    <div class="h-10 w-full">Información personal</div>
-    <div class="flex w-full flex-row justify-between gap-5">
-      <!-- Component: Rounded required input -->
-      <div class="relative my-2">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Nombre</mat-label>
-          <input matInput type="text" formControlName="first_name" />
-          @if (perfilForm.get("first_name")?.hasError("required")) {
-            <mat-error> El nombre es obligatorio. </mat-error>
-          }
-        </mat-form-field>
-      </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded required input -->
-      <div class="relative my-2">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Apellidos</mat-label>
-          <input matInput type="text" formControlName="last_name" />
-          @if (perfilForm.get("last_name")?.hasError("required")) {
-            <mat-error> El apellido es obligatorio. </mat-error>
-          }
-        </mat-form-field>
-      </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded basic base sized datepicker -->
-      <div class="relative my-2">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Fecha Nacimiento</mat-label>
-          <input matInput type="date" formControlName="fecha_nacimiento" />
-        </mat-form-field>
-      </div>
-      <!-- End Rounded basic base sized datepicker -->
+      <li class="inline-block">
+        <button
+          routerLink="/inicio/perfil/change-password"
+          mat-button
+          routerLinkActive="active"
+          class="whitespace-nowrap"
+          matButton="outlined"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Cambiar Contraseña
+        </button>
+      </li>
+
+      <li class="inline-block">
+        <button
+          matButton="outlined"
+          mat-button
+          routerLink="/inicio/perfil/terms-conditions"
+          mat-button
+          class="whitespace-nowrap"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Condiciones generales
+        </button>
+      </li>
+
+      <li class="inline-block">
+        <button
+          matButton="outlined"
+          routerLink="/inicio/perfil/privacy-policy"
+          mat-button
+          class="whitespace-nowrap"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Protección de datos
+        </button>
+      </li>
+    </ul>
+
+    <!-- Botón hamburguesa solo visible en móvil -->
+    <div class="absolute top-2 right-2 md:hidden">
+      <button
+        class="m-auto"
+        matFab
+        [matMenuTriggerFor]="mobileMenu"
+        aria-label="Menú de navegación"
+      >
+        <mat-icon class="material-symbols-outlined">menu</mat-icon>
+      </button>
     </div>
 
-    <div>
-      <div class="h-10 w-full">Información de contacto</div>
+    <mat-menu #mobileMenu="matMenu">
+      <button
+        mat-menu-item
+        routerLink="/inicio/perfil"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Ajustes de cuenta
+      </button>
+      <button
+        mat-menu-item
+        routerLink="/inicio/perfil/change-password"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Cambiar Contraseña
+      </button>
+      <button
+        mat-menu-item
+        routerLink="/inicio/perfil/terms-conditions"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Condiciones generales
+      </button>
+      <button
+        mat-menu-item
+        routerLink="/inicio/perfil/privacy-policy"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Protección de datos
+      </button>
+    </mat-menu>
 
-      <div class="flex w-full flex-row gap-5 justify-self-start">
-        <!-- Component: Rounded required input -->
-        <div class="relative my-2">
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" />
-            @if (perfilForm.get("email")?.hasError("required")) {
-              <mat-error> El email es obligatorio. </mat-error>
-            }
-            @if (perfilForm.get("email")?.hasError("email")) {
-              <mat-error> Ingresa un email válido. </mat-error>
-            }
-          </mat-form-field>
-        </div>
-        <!-- End Rounded required input -->
-        <!-- Component: Rounded required input -->
-        <div class="relative my-2">
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Teléfono</mat-label>
-            <input matInput type="text" formControlName="telefono" />
-          </mat-form-field>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="h-10 w-full">Dirección</div>
-      <div class="flex w-full flex-row gap-5 justify-self-start">
-        <!-- Component: Rounded required input -->
-        <div class="relative my-2">
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Dirección</mat-label>
-            <input matInput type="text" formControlName="direccion" />
-          </mat-form-field>
-        </div>
-        <!-- End Rounded required input -->
-        <!-- Component: Rounded required input -->
-        <div class="relative my-2">
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Cod. Postal</mat-label>
-            <input matInput type="text" formControlName="postal" />
-          </mat-form-field>
-        </div>
-      </div>
-    </div>
-  </form>
-</section>
+    <hr class="hidden text-zinc-300 md:block" />
+    <router-outlet></router-outlet>
+  </mat-card-content>
+</mat-card>

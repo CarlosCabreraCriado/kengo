@@ -17,6 +17,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Usuario, SeccionPrincipal } from '../models/Global';
 import { ViewEncapsulation } from '@angular/core';
 
@@ -29,7 +30,7 @@ interface Rutas {
 interface OpcionesRutas {
   inicio: Rutas[];
   ejercicios: Rutas[];
-  clientes: Rutas[];
+  pacientes: Rutas[];
   clinica: Rutas[];
 }
 
@@ -44,8 +45,8 @@ interface OpcionesRutas {
     MatCardModule,
     MatMenuModule,
     MatButtonModule,
-    MatTabsModule
-],
+    MatTabsModule,
+  ],
   encapsulation: ViewEncapsulation.None,
   templateUrl: './navegacion.component.html',
   styleUrl: './navegacion.component.scss',
@@ -64,7 +65,7 @@ export class NavegacionComponent {
 
   //Permisos:
   public isFisio = true;
-  public isCliente = false;
+  public isPaciente = false;
   public isAdminClinica = false;
 
   public selectedTabIndex = 0;
@@ -77,25 +78,35 @@ export class NavegacionComponent {
         ruta: 'inicio/dashboard',
         seleccionado: false,
       },
+      {
+        nombre: 'Perfil',
+        ruta: 'inicio/perfil',
+        seleccionado: false,
+      },
     ],
     ejercicios: [
       {
-        nombre: 'Ejercicios',
+        nombre: 'Buscador de ejercicios',
         ruta: 'inicio/ejercicios',
         seleccionado: false,
       },
     ],
-    clientes: [
+    pacientes: [
       {
-        nombre: 'Clientes',
-        ruta: 'inicio/clientes',
+        nombre: 'Mis pacientes',
+        ruta: 'inicio/mis-pacientes',
         seleccionado: false,
       },
     ],
     clinica: [
       {
-        nombre: 'Clinica',
-        ruta: 'inicio/impulsor/cursos',
+        nombre: 'Mi clínica',
+        ruta: 'inicio/mi-clinica',
+        seleccionado: false,
+      },
+      {
+        nombre: 'Fisioterapeutas',
+        ruta: 'inicio/fisioterapeutas',
         seleccionado: false,
       },
     ],
@@ -103,8 +114,10 @@ export class NavegacionComponent {
 
   public routeAnimationState = '';
   public usuario: Usuario | null = null;
+  public isMovil = false;
 
   constructor(
+    private breakpointObserver: BreakpointObserver,
     private cdr: ChangeDetectorRef,
     private router: Router,
     public appService: AppService,
@@ -112,17 +125,27 @@ export class NavegacionComponent {
   ) {
     this.appService.accesos$.subscribe((accesos) => {
       if (accesos) {
-        this.isCliente = accesos.isCliente;
+        this.isPaciente = accesos.isPaciente;
         this.isFisio = accesos.isFisio;
         this.construirRutas();
       }
     });
+
+    this.breakpointObserver
+      .observe(['(max-width: 767.98px)'])
+      .subscribe((result) => {
+        this.isMovil = result.matches;
+      });
 
     this.routeSubscription = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.construirRutas();
       }
     });
+  }
+
+  logout() {
+    console.warn('Realizando Logout...');
   }
 
   onActivate() {
@@ -142,11 +165,11 @@ export class NavegacionComponent {
 
     if (this.isFisio) {
       etiquetas.push('ejercicios');
-      etiquetas.push('clientes');
+      etiquetas.push('pacientes');
       etiquetas.push('clinica');
     }
 
-    if (this.isCliente) {
+    if (this.isPaciente) {
       etiquetas.push('clinica');
       etiquetas.push('clinica');
     }

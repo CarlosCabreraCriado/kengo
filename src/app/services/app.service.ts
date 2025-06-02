@@ -18,6 +18,7 @@ export class AppService {
   ) {}
 
   usuario$ = new BehaviorSubject<Usuario | null | undefined>(undefined);
+  misDetalles$ = new BehaviorSubject<Usuario | null | undefined>(undefined);
   accesos$ = new BehaviorSubject<Accesos | null | undefined>(undefined);
 
   inicializarApp() {

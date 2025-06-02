@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { NavegacionComponent } from '../navegacion/navegacion.component';
 import { RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-ejercicios',
   standalone: true,
-  imports: [NavegacionComponent, RouterLink],
+  imports: [NavegacionComponent, RouterLink, MatCardModule],
   templateUrl: './ejercicios.component.html',
   styleUrl: './ejercicios.component.css',
 })

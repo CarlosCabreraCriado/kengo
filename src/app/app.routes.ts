@@ -1,16 +1,24 @@
 import { Routes } from '@angular/router';
-import { BentoComponent } from './bento/bento.component';
 import { EjerciciosComponent } from './ejercicios/ejercicios.component';
 import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
 import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
 import { ClientesComponent } from './clientes/clientes.component';
-import { PerfilComponent } from './perfil/perfil.component';
-import { MiclinicaComponent } from './miclinica/miclinica.component';
+import { MiClinicaComponent } from './miclinica/miclinica.component';
 import { ClientePerfilComponent } from './cliente-perfil/cliente-perfil.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { NavegacionComponent } from './navegacion/navegacion.component';
+
+//Dashboard:
+import { DashboardComponent } from './dashboard/dashboard.component';
+
+//Perfil:
+import { PerfilComponent } from './perfil/perfil.component';
+import { ModificarPerfilComponent } from './perfil/modificar-perfil/modificar-perfil.component';
+import { CambiarPasswordComponent } from './perfil/cambiar-password/cambiar-password.component';
+import { PrivacyPolicyComponent } from './perfil/privacy-policy/privacy-policy.component';
+import { TermsConditionsComponent } from './perfil/terms-conditions/terms-conditions.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
@@ -21,11 +29,30 @@ export const routes: Routes = [
     path: 'inicio',
     component: NavegacionComponent,
     canActivate: [],
-    /*
     children: [
       //{ path: "perfil", component: InicioPerfilComponent },
-      { path: "accesos", component: InicioAccesosComponent },
+      { path: 'dashboard', component: DashboardComponent },
+      {
+        path: 'perfil',
+        component: PerfilComponent,
+        canActivate: [], //Hay que colocar authguard
+        children: [
+          { path: '', component: ModificarPerfilComponent },
+          { path: 'cambiar-password', component: CambiarPasswordComponent },
+          { path: 'privacy-policy', component: PrivacyPolicyComponent },
+          { path: 'terms-conditions', component: TermsConditionsComponent },
+        ],
+      },
 
+      { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
+      { path: 'mi-clinica', component: MiClinicaComponent, pathMatch: 'full' },
+      {
+        path: 'mis-pacientes',
+        component: ClientesComponent,
+        pathMatch: 'full',
+      },
+
+      /*
       //FORMADOR (INICIO)
       { path: "formador/panel", component: PanelFormadorComponent },
       { path: "formador/buscar-sesion", component: BuscarSesionComponent },
@@ -54,7 +81,6 @@ export const routes: Routes = [
         path: "impulsor/generador-informes",
         component: GeneradorInformesComponent,
       },
-
       {
         path: "perfil",
         component: InicioPerfilComponent,
@@ -82,11 +108,9 @@ export const routes: Routes = [
           { path: "contactos", component: NotificacionesContactosComponent },
         ],
       },
+      */
     ],
-*/
   },
-
-  { path: 'clinica', component: BentoComponent, pathMatch: 'full' },
 
   { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
   { path: 'fisios', component: FisiosComponent, pathMatch: 'full' },
@@ -98,7 +122,7 @@ export const routes: Routes = [
   },
   { path: 'clientes', component: ClientesComponent, pathMatch: 'full' },
   { path: 'perfil', component: PerfilComponent, pathMatch: 'full' },
-  { path: 'miclinica', component: MiclinicaComponent, pathMatch: 'full' },
+  { path: 'miclinica', component: MiClinicaComponent, pathMatch: 'full' },
   {
     path: 'cliente-perfil',
     component: ClientePerfilComponent,

@@ -1,8 +1,8 @@
-<section class="w-screen items-center justify-center">
-  <div class="fuente-kengo mt-8 text-center text-4xl">Mis clientes</div>
-
+<section
+  class="m-5 flex max-w-7xl flex-row flex-wrap justify-start align-baseline"
+>
   <div
-    class="mx-auto mt-15 flex w-full max-w-6xl flex-col items-start justify-center rounded-2xl bg-white p-5 shadow-2xl"
+    class="mx-auto flex w-full max-w-6xl flex-col items-start justify-center rounded-2xl bg-white p-5 shadow-2xl"
   >
     <!-- Component: Rounded basic search input -->
     <div class="relative mb-2 w-full sm:w-auto">
@@ -70,7 +70,7 @@
 
           <!-- clientei -->
           @for (cliente of clientes; track cliente.id) {
-            <tr class="border-b border-slate-200">
+            <tr class="block border-b-2 border-slate-200 pb-2 sm:table-row">
               <td
                 class="h-12 items-center border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
               >
@@ -112,24 +112,25 @@
                   <!-- Component: Small outline basic button -->
 
                   <button
-                    class="inline-flex h-8 items-center justify-center gap-2 rounded border border-amber-500 px-4 text-xs font-medium tracking-wide whitespace-nowrap text-black transition duration-300 hover:border-amber-500 hover:bg-amber-500 hover:text-white focus:border-amber-700 focus:text-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:text-amber-300 disabled:shadow-none"
+                    matFab
+                    extended
+                    class="!h-10 !min-w-[5rem] !px-4 !text-sm"
                   >
-                    <span>Editar</span>
+                    <mat-icon class="material-symbols-outlined">edit</mat-icon>
+                    Editar
                   </button>
+
                   <!-- End Small outline basic button -->
                   <!-- Component: Large primary button with icon  -->
                   <button
-                    class="inline-flex h-8 items-center justify-center gap-2 self-center rounded border-2 border-red-400 px-4 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-red-400 focus:bg-amber-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-amber-300 disabled:bg-amber-300 disabled:shadow-none"
+                    matIconButton
+                    aria-label="Borrar"
+                    class="!text-red-500"
                   >
-                    <span class="relative only:-mx-6">
-                      <span class="sr-only">Button description</span>
-                      <img
-                        class="h-8 hover:invert-100"
-                        src="../../assets/archivo-bin.png"
-                      />
-                    </span>
+                    <mat-icon class="material-symbols-outlined"
+                      >delete</mat-icon
+                    >
                   </button>
-                  <!-- End Large primary button with icon  -->
                 </div>
               </td>
             </tr>
