@@ -22,8 +22,8 @@ import { AppService } from './services/app.service';
     RouterOutlet,
     HeaderComponent,
     FooterComponent,
-    CarritoEjerciciosComponent
-],
+    CarritoEjerciciosComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
