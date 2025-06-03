@@ -1,14 +1,8 @@
 <section class="w-screen">
-  <div class="w-full">
-    <app-navegacion class="relative flex w-2xs max-w-2xs"></app-navegacion>
-  </div>
-
   <div class="flex flex-col items-center justify-center">
     <!-- Component: Image overlay card -->
-    <div
-      class="mt-5 grid max-h-96 w-[80%] max-w-3xl overflow-hidden rounded bg-white text-slate-500 shadow-md shadow-slate-200"
-    >
-      <!-- Image -->
+    <div class="mt-5 max-h-96 w-[80%] max-w-3xl rounded">
+      <!-- Image
       <figure class="relative flex">
         <img
           src="https://picsum.photos/id/100/800/600"
@@ -22,6 +16,28 @@
           <p class="text-sm opacity-75">By George, jun 3 2023</p>
         </figcaption>
       </figure>
+-->
+      @if (ejercicio && ejercicio.video_url) {
+        <figure class="relative flex">
+          <video
+            class="h-auto w-full rounded-2xl"
+            autoplay
+            muted
+            loop
+            playsinline
+          >
+            <source [src]="ejercicio.video_url" type="video/mp4" />
+            Tu navegador no soporta el tag de video.
+          </video>
+          <figcaption
+            class="absolute bottom-0 left-0 w-full rounded-2xl bg-gradient-to-t from-slate-900 p-6 text-white"
+          >
+            <h3 class="text-center text-lg font-medium">
+              {{ ejercicio.nombre_ejercicio }}
+            </h3>
+          </figcaption>
+        </figure>
+      }
     </div>
     <!-- End Image overlay card -->
 

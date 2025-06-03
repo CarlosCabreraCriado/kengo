@@ -1,19 +1,24 @@
 <section
   class="m-5 flex max-w-7xl flex-row flex-wrap justify-center align-baseline md:justify-start"
 >
-  @for (ejercicio of ejercicios; track ejercicio.id) {
-    <div class="w-full max-w-xs p-2 sm:w-1/2 md:w-1/4">
+  @for (ejercicio of ejercicios; track ejercicio.id_ejercicio) {
+    <a
+      class="w-full max-w-xs p-2 sm:w-1/2 md:w-1/4"
+      [routerLink]="['/inicio/detalle-ejercicio', ejercicio.id_ejercicio]"
+    >
       <mat-card appearance="outlined">
-        <img
-          mat-card-image
-          src="https://material.angular.dev/assets/img/examples/shiba2.jpg"
-          alt="Photo ejercicio"
-        />
+        @if (ejercicio.portada_url) {
+          <img
+            mat-card-image
+            src="{{ ejercicio.portada_url }}"
+            alt="Portada ejercicio"
+          />
+        }
         <mat-card-content class="mt-2 text-zinc-700">
-          <mat-card-title>Flexión de rodilla</mat-card-title>
+          <mat-card-title>{{ ejercicio.nombre_ejercicio }}</mat-card-title>
           <mat-card-subtitle>Rehabilitación</mat-card-subtitle>
         </mat-card-content>
       </mat-card>
-    </div>
+    </a>
   }
 </section>

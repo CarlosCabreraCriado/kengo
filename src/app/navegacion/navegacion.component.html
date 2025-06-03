@@ -192,12 +192,24 @@
                   [matMenuTriggerFor]="avatarMenu"
                   class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
                 >
+                  @if (usuario?.avatar_url) {
+                    <img
+                      [src]="usuario?.avatar_url"
+                      class="aspect-square w-full max-w-2xs rounded-full"
+                      class="h-10 w-10 rounded-full border-2 border-solid"
+                      alt="Avatar"
+                    />
+                  } @else {
+                    <div class="foto-perfil cargando-foto rounded-full"></div>
+                  }
+
+                  <!--
                   <img
                     class="h-10 w-10 rounded-full border-2 border-solid"
                     src="../../assets/retrato.webp"
                     alt="Avatar"
                   />
-                </button>
+                --></button>
 
                 <mat-menu
                   #avatarMenu="matMenu"
@@ -232,12 +244,22 @@
           [matMenuTriggerFor]="avatarMenu"
           class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
         >
+          @if (usuario?.avatar_url) {
+            <img
+              [src]="usuario?.avatar_url"
+              class="aspect-square h-10 w-10 max-w-2xs rounded-full border-2 border-solid"
+              alt="Avatar"
+            />
+          } @else {
+            <div class="foto-perfil cargando-foto rounded-full"></div>
+          }
+          <!--
           <img
             class="h-10 w-10 rounded-full border-2 border-solid"
             src="../../assets/retrato.webp"
             alt="Avatar"
           />
-        </button>
+        --></button>
 
         <mat-menu #avatarMenu="matMenu" xPosition="before" yPosition="below">
           <button mat-menu-item routerLink="/inicio/perfil">

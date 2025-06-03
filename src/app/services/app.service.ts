@@ -31,6 +31,7 @@ export class AppService {
       .get<{ data: Usuario }>(`${this.API_DIRECTUS_URL}/users/me`)
       .subscribe({
         next: (res) => {
+          const access_token = localStorage.getItem('access_token') || '';
           this.usuario$.next({
             id: res.data['id'],
             avatar: res.data['avatar'],
@@ -38,6 +39,7 @@ export class AppService {
             last_name: res.data['last_name'],
             email: res.data['email'],
             detalle: null,
+            avatar_url: `${this.API_DIRECTUS_URL}/assets/${res.data['avatar']}/?access_token=${access_token}`,
           });
           console.warn('Usuario: ', this.usuario$.value);
         },

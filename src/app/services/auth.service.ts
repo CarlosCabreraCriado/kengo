@@ -8,6 +8,7 @@ import { tap, map } from 'rxjs/operators';
 
 //Servicios:
 import { AppService } from './app.service';
+import { DirectusService } from './directus.service';
 
 interface AuthResponse {
   data: {
@@ -26,6 +27,7 @@ export class AuthService {
     private http: HttpClient,
     private router: Router,
     private appService: AppService,
+    private directusService: DirectusService,
   ) {}
 
   login(email: string, password: string) {
@@ -50,6 +52,7 @@ export class AuthService {
   }
 
   saveTokens(access: string, refresh: string) {
+    this.directusService.setToken(access);
     localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
   }

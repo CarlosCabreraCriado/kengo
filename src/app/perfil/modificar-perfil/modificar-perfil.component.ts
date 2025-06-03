@@ -89,17 +89,15 @@ export class ModificarPerfilComponent {
       flag_notificacion_secundario: [false, []],
     });
 
-    this.appService.misDetalles$.subscribe((user) => {
+    this.appService.usuario$.subscribe((user) => {
       console.log('Mis detalles: ', user);
-      /*
       if (user) {
         this.usuario = user;
-        if (this.usuario.imagen_perfil) {
-          this.url_perfil = this.usuario.imagen_perfil_url;
+        if (this.usuario.avatar_url) {
+          this.url_perfil = this.usuario.avatar_url;
         }
-        this.cargarFormulario();
+        //this.cargarFormulario();
       }
-      */
     });
 
     this.formularioUsuario.valueChanges.subscribe((form) => {

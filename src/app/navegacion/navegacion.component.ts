@@ -131,6 +131,12 @@ export class NavegacionComponent {
       }
     });
 
+    this.appService.usuario$.subscribe((usuario) => {
+      if (usuario) {
+        this.usuario = usuario;
+      }
+    });
+
     this.breakpointObserver
       .observe(['(max-width: 767.98px)'])
       .subscribe((result) => {

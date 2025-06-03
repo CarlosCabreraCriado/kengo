@@ -45,6 +45,7 @@ export const routes: Routes = [
       },
 
       { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
+      { path: 'detalle-ejercicio/:id', component: DetalleEjercicioComponent },
       { path: 'mi-clinica', component: MiClinicaComponent, pathMatch: 'full' },
       {
         path: 'mis-pacientes',
@@ -115,11 +116,7 @@ export const routes: Routes = [
   { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
   { path: 'fisios', component: FisiosComponent, pathMatch: 'full' },
   { path: 'categorias', component: CategoriasComponent, pathMatch: 'full' },
-  {
-    path: 'detalle-ejercicio',
-    component: DetalleEjercicioComponent,
-    pathMatch: 'full',
-  },
+
   { path: 'clientes', component: ClientesComponent, pathMatch: 'full' },
   { path: 'perfil', component: PerfilComponent, pathMatch: 'full' },
   { path: 'miclinica', component: MiClinicaComponent, pathMatch: 'full' },
