@@ -1,4 +1,4 @@
-<section class="w-screen">
+<section class="m-5 max-w-7xl">
   <div class="flex flex-col items-center justify-center">
     <!-- Component: Image overlay card -->
     <div class="mt-5 max-h-96 w-[80%] max-w-3xl rounded">
@@ -24,147 +24,76 @@
             autoplay
             muted
             loop
+            controls
             playsinline
           >
             <source [src]="ejercicio.video_url" type="video/mp4" />
             Tu navegador no soporta el tag de video.
           </video>
-          <figcaption
-            class="absolute bottom-0 left-0 w-full rounded-2xl bg-gradient-to-t from-slate-900 p-6 text-white"
-          >
-            <h3 class="text-center text-lg font-medium">
-              {{ ejercicio.nombre_ejercicio }}
-            </h3>
-          </figcaption>
         </figure>
       }
     </div>
     <!-- End Image overlay card -->
 
-    <div class="flex w-full max-w-3xl items-start p-5 text-start font-bold">
-      Nombre del video
-    </div>
-  </div>
-  <div class="flex w-screen justify-center">
     <div
-      class="flex max-w-3xl flex-row flex-wrap items-start justify-start lg:items-center"
+      class="flex w-full max-w-3xl justify-center p-5 text-center font-bold text-zinc-700"
     >
-      <!-- Component: Rounded required input -->
-      <div class="relative mb-5 w-1/2 rounded px-5 lg:w-1/4">
-        <input
-          id="id-b07"
-          type="number"
-          name="id-b07"
-          required
-          value="3"
-          class="peer relative h-10 w-full rounded border border-slate-950 px-4 text-sm text-slate-950 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-        />
-        <label
-          for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-950 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-        >
-          Series
-        </label>
-      </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded required input -->
-      <div class="relative mb-5 w-1/2 rounded px-5 lg:w-1/4">
-        <input
-          id="id-b07"
-          type="number"
-          name="id-b07"
-          required
-          value="12"
-          class="peer relative h-10 w-full rounded border border-slate-950 px-4 text-sm text-slate-950 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-        />
-        <label
-          for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-950 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-        >
-          Repetiociones
-        </label>
-      </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded basic input  -->
-      <div class="relative mb-5 w-1/2 px-5 lg:w-1/4">
-        <input
-          id="id-01"
-          type="number"
-          name="id-01"
-          placeholder="your name"
-          class="peer relative h-10 w-full rounded border border-slate-950 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:text-slate-400"
-        />
-        <label
-          for="id-01"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-        >
-          Peso
-        </label>
-      </div>
-      <!-- End Rounded basic input  -->
-      <!-- Component: Rounded basic input  -->
-      <div class="relative mb-5 w-1/2 px-5 lg:w-1/4">
-        <input
-          id="id-01"
-          type="number"
-          name="id-01"
-          placeholder="your name"
-          class="peer relative h-10 w-full rounded border border-slate-950 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-        />
-        <label
-          for="id-01"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-        >
-          Duración
-        </label>
-      </div>
-      <!-- End Rounded basic input  -->
+      {{ ejercicio?.nombre_ejercicio }}
     </div>
   </div>
-  <div class="m-5 flex flex-col items-center justify-center gap-5">
-    <!-- Component: Rounded base size required textarea -->
-    <div class="relative w-full max-w-3xl">
-      <textarea
-        id="id-b07"
-        type="number"
-        name="id-b07"
-        required
-        rows="3"
-        class="peer relative w-full rounded border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-black invalid:text-black focus:border-orange-500 focus:outline-none invalid:focus:border-black focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-      ></textarea>
-      <label
-        for="id-b07"
-        class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-invalid:text-black peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-black peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-      >
-        Escribe un mensaje como ayuda
-      </label>
+
+  <div
+    class="flex w-full flex-col justify-center"
+    [formGroup]="formularioDetalleEjercicio"
+  >
+    <!-- Component: Rounded required input -->
+    <div class="flex w-full px-3">
+      <div class="w-1/2 px-3">
+        <label class="mb-2 block leading-none text-black"> Series </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label> Series </mat-label>
+          <input matInput formControlName="series" />
+        </mat-form-field>
+      </div>
+
+      <div class="w-1/2 px-3">
+        <label class="mb-2 block leading-none text-black"> Repeticiones </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label> Repeticiones </mat-label>
+          <input matInput formControlName="repeticiones" />
+        </mat-form-field>
+      </div>
     </div>
-    <!-- Component: Large primary button with trailing icon  -->
-    <button
-      class="inline-flex h-12 items-center justify-center gap-2 rounded bg-orange-500 px-6 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
-    >
-      <span>Adjudicar video</span>
-      <span class="relative only:-mx-6">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="1.5"
-          role="graphics-symbol"
-          aria-labelledby="title-02 desc-02"
-        >
-          <title id="title-02">Icon title</title>
-          <desc id="desc-02">A more detailed description of the icon</desc>
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-          />
-        </svg>
-      </span>
+
+    <div class="flex w-full px-3">
+      <div class="w-1/2 px-3">
+        <label class="mb-2 block leading-none text-black"> Peso </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label> Peso </mat-label>
+          <input matInput formControlName="peso" />
+        </mat-form-field>
+      </div>
+
+      <div class="w-1/2 px-3">
+        <label class="mb-2 block leading-none text-black"> Duración </label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label> Duración </mat-label>
+          <input matInput formControlName="duracion" />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="w-full px-6">
+      <label class="mb-2 block leading-none text-black"> Observación </label>
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label> Observación </mat-label>
+        <input type="textarea" matInput formControlName="nota" />
+      </mat-form-field>
+    </div>
+
+    <button matFab extended class="mx-6 !h-10 !min-w-[5rem] !px-4 !text-sm">
+      <mat-icon class="material-symbols-outlined">person_edit</mat-icon>
+      Asignar a paciente
     </button>
-    <!-- End Large primary button with trailing icon  -->
   </div>
 </section>

@@ -152,6 +152,7 @@ export class NavegacionComponent {
 
   logout() {
     console.warn('Realizando Logout...');
+    this.router.navigate(['/login']);
   }
 
   onActivate() {
@@ -164,6 +165,7 @@ export class NavegacionComponent {
     if (this.router.url == '/inicio') {
       this.selectedTabIndex = 0;
       this.opciones.inicio[0].seleccionado = true;
+      this.router.navigate(['/inicio/dashboard']);
       return;
     }
 
@@ -194,7 +196,7 @@ export class NavegacionComponent {
         //Corrige para Perfil (tercer nivel)
         if (url.startsWith('inicio/perfil')) {
           this.selectedTabIndex = 0;
-          this.opciones.inicio[0].seleccionado = true;
+          this.opciones.inicio[1].seleccionado = true;
         }
       }
     }
