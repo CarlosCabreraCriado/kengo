@@ -7,7 +7,7 @@ import { ClientesComponent } from './clientes/clientes.component';
 import { MiClinicaComponent } from './miclinica/miclinica.component';
 import { ClientePerfilComponent } from './cliente-perfil/cliente-perfil.component';
 import { LoginComponent } from './login/login.component';
-import { RegisterComponent } from './register/register.component';
+import { RegistroComponent } from './registro/registro.component';
 import { NavegacionComponent } from './navegacion/navegacion.component';
 
 //Dashboard:
@@ -126,5 +126,5 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   { path: 'login', component: LoginComponent, pathMatch: 'full' },
-  { path: 'register', component: RegisterComponent, pathMatch: 'full' },
+  { path: 'registro', component: RegistroComponent, pathMatch: 'full' },
 ];

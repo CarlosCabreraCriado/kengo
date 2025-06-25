@@ -1,6 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { signal } from '@angular/core';
+
+import { RolUsuario } from '../../types/global';
 
 //RXJS:
 import { BehaviorSubject } from 'rxjs';
@@ -12,6 +15,9 @@ import { Usuario, DetalleUsuario, Accesos } from '../models/Global';
 export class AppService {
   private API_DIRECTUS_URL = 'https://admin.kengoapp.com';
 
+  private _rolUsuario = signal<RolUsuario>('fisio');
+  public rolUsuario = this._rolUsuario;
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -20,6 +26,16 @@ export class AppService {
   usuario$ = new BehaviorSubject<Usuario | null | undefined>(undefined);
   misDetalles$ = new BehaviorSubject<Usuario | null | undefined>(undefined);
   accesos$ = new BehaviorSubject<Accesos | null | undefined>(undefined);
+
+  setRolUsuario(rol: RolUsuario) {
+    this._rolUsuario.set(rol);
+    console.warn('Rol de usuario actualizado:', this.rolUsuario());
+  }
+
+  toggleRolUsuario() {
+    const current = this._rolUsuario();
+    this._rolUsuario.set(current === 'fisio' ? 'paciente' : 'fisio');
+  }
 
   inicializarApp() {
     console.warn('Inicializando app');

@@ -278,6 +278,9 @@
   </div>
 </header>
 
-<div [@routeAnimations]="routeAnimationState" class="relative pt-30">
+<div
+  [@routeAnimations]="routeAnimationState"
+  class="relative h-screen w-full pt-30"
+>
   <router-outlet #outlet="outlet" (activate)="onActivate()"></router-outlet>
 </div>

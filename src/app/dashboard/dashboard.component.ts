@@ -1,9 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, computed, Signal, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
+
+//Componentes:
+import { BotonTarjetaComponent } from '../boton-tarjeta/boton-tarjeta.component';
+import { TarjetaFisioComponent } from '../tarjeta-fisio/tarjeta-fisio.component';
+import { TarjetaPrincipalComponent } from '../tarjeta-principal/tarjeta-principal.component';
 
 //Dialogos:
 import { MatDialog } from '@angular/material/dialog';
@@ -22,6 +27,9 @@ import { RouterLink } from '@angular/router';
     MatMenuModule,
     MatButtonModule,
     MatProgressBarModule,
+    BotonTarjetaComponent,
+    TarjetaFisioComponent,
+    TarjetaPrincipalComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -29,66 +37,28 @@ import { RouterLink } from '@angular/router';
 export class DashboardComponent {
   public accesos: Accesos | null | undefined;
 
+  public isFisio: Signal<boolean> = signal(false);
+  public isPaciente: Signal<boolean> = signal(false);
+  userRole = this.appService.rolUsuario;
+
   constructor(
     private router: Router,
-    public dialog: MatDialog,
     private appService: AppService,
+    public dialog: MatDialog,
   ) {
     this.appService.accesos$.subscribe((accesos) => {
       if (accesos) {
         this.accesos = accesos;
       }
     });
+
+    this.isFisio = computed(() => this.appService.rolUsuario() === 'fisio');
+    this.isPaciente = computed(
+      () => this.appService.rolUsuario() === 'paciente',
+    );
   }
 
-  checkAcceso(tipoAcceso: string) {
-    console.warn('Accesos', this.accesos);
-    switch (tipoAcceso) {
-      case 'paciente':
-        if (!this.accesos?.isPaciente) {
-          //Solicitar acceso Formador:
-          console.warn('Solicitar acceso FORMADOR');
-
-          /*
-          const dialogRef = this.dialog
-            .open(DialogoAccesoComponent, {
-              data: {
-                tipo: 'formador',
-              },
-            })
-            .afterClosed()
-            .subscribe((result) => {
-              console.log('Dialogo cerrado, ', result);
-            });
-          */
-        } else {
-          //Redirige a la vista de formador
-          console.log('Redirigiendo a la vista de formador');
-          this.router.navigate(['/inicio/formador/panel']);
-        }
-        break;
-      case 'fisio':
-        if (!this.accesos?.isFisio) {
-          //Solicitar acceso Contacto:
-          console.warn('Solicitar acceso CONTACTO');
-          /*
-          const dialogRef = this.dialog
-            .open(DialogoAccesoComponent, {
-              data: {
-                tipo: 'contacto',
-              },
-            })
-            .afterClosed()
-            .subscribe((result) => {
-              console.log('Dialogo cerrado, ', result);
-            });
-          */
-        } else {
-          //Redirige a la vista de institucion:
-          console.log('Redirigiendo a la vista de institucion');
-          this.router.navigate(['/inicio/institucion/mis-instituciones']);
-        }
-        break;
-    }
+  toggle() {
+    this.appService.toggleRolUsuario();
   }
 }

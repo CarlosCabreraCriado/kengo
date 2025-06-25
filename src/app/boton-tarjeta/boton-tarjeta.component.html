@@ -1,0 +1,180 @@
+@if (tipo == "perfil") {
+  <div
+    class="group relative flex h-full w-full items-center justify-start pl-5"
+  >
+    <img
+      src="../assets/portadas/planta-horizontal.png"
+      alt="Fondo"
+      class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+    />
+
+    <!-- Capa semitransparente para oscurecer un poco la imagen -->
+    <div
+      class="absolute inset-0 bg-black/30 transition-colors duration-500 ease-in-out group-hover:bg-black/40"
+    ></div>
+
+    <!-- Texto superpuesto -->
+    <div
+      class="relative z-10 text-left text-white transition-colors duration-500 ease-in-out group-hover:text-yellow-200"
+    >
+      <h3 class="text-xl font-semibold">Mi perfil</h3>
+      <p class="text-sm">Configura tu perfil</p>
+    </div>
+  </div>
+}
+
+@if (tipo == "centro") {
+  <div
+    class="group relative flex h-full w-full items-center justify-start pl-5"
+  >
+    <img
+      src="../assets/portadas/camilla.PNG"
+      alt="Fondo"
+      class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+    />
+
+    <!-- Capa semitransparente para oscurecer un poco la imagen -->
+    <div
+      class="absolute inset-0 bg-black/30 transition-colors duration-500 ease-in-out group-hover:bg-black/40"
+    ></div>
+
+    <!-- Texto superpuesto -->
+    <div
+      class="relative z-10 text-left text-white transition-colors duration-500 ease-in-out group-hover:text-yellow-200"
+    >
+      <h3 class="text-xl font-semibold">Mi Centro</h3>
+      <p class="text-sm">Configura tu centro de fisioterapia</p>
+    </div>
+  </div>
+}
+
+@if (tipo == "calendario") {
+  <div
+    class="group relative flex h-full w-full items-center justify-start pl-5"
+  >
+    <img
+      src="../assets/portadas/calendario-horizontal.png"
+      alt="Fondo"
+      class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+    />
+
+    <!-- Capa semitransparente para oscurecer un poco la imagen -->
+    <div
+      class="absolute inset-0 bg-black/30 transition-colors duration-500 ease-in-out group-hover:bg-black/40"
+    ></div>
+
+    <!-- Texto superpuesto -->
+    <div
+      class="relative z-10 text-left text-white transition-colors duration-500 ease-in-out group-hover:text-yellow-200"
+    >
+      <h3 class="text-xl font-semibold">Calendario</h3>
+      <p class="text-sm">Revisa tu planificación</p>
+    </div>
+  </div>
+}
+
+@if (tipo == "progreso") {
+  <div
+    class="group relative flex h-full w-full items-center justify-start pl-5"
+  >
+    <img
+      src="../assets/portadas/progreso-horizontal.png"
+      alt="Fondo"
+      class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+    />
+
+    <!-- Capa semitransparente para oscurecer un poco la imagen -->
+    <div
+      class="absolute inset-0 bg-black/30 transition-colors duration-500 ease-in-out group-hover:bg-black/40"
+    ></div>
+
+    <!-- Texto superpuesto -->
+    <div
+      class="relative z-10 text-left text-white transition-colors duration-500 ease-in-out group-hover:text-yellow-200"
+    >
+      <h3 class="text-xl font-semibold">Progreso</h3>
+      <p class="text-sm">Analiza tu progreso</p>
+    </div>
+  </div>
+}
+
+@if (tipo == "catalogo-ejercicios") {
+  <div class="items-top group relative flex h-full w-full justify-center py-2">
+    <img
+      src="../assets/portadas/material.png"
+      alt="Fondo"
+      class="absolute inset-0 h-full w-full object-cover object-bottom transition-transform duration-500 ease-in-out group-hover:scale-105"
+    />
+
+    <!-- Capa semitransparente para oscurecer un poco la imagen -->
+    <div
+      class="absolute inset-0 bg-black/30 transition-colors duration-500 ease-in-out group-hover:bg-black/40"
+    ></div>
+
+    <!-- Texto superpuesto -->
+    <div
+      class="relative z-10 flex h-full flex-col text-left text-white transition-colors duration-500 ease-in-out group-hover:text-yellow-200"
+    >
+      <h3 class="m-auto text-center text-xl font-semibold">Ejercicios</h3>
+
+      <img
+        src="../assets/icono-play.png"
+        class="pointer-events-none absolute top-1/2 left-1/2 z-0 m-auto max-h-[80%] w-full -translate-x-1/2 -translate-y-1/2 transform opacity-20"
+      />
+
+      <!--
+      <p class="text-sm">Accede al catálogo de ejercicios</p>
+-->
+    </div>
+  </div>
+}
+
+@if (tipo == "mis-pacientes") {
+  <div
+    class="group relative flex h-full w-full items-center justify-start pl-5"
+  >
+    <img
+      src="../assets/portadas/ejercicios-horizontal.webp"
+      alt="Fondo"
+      class="absolute inset-0 h-full w-full object-cover object-bottom transition-transform duration-500 ease-in-out group-hover:scale-105"
+    />
+
+    <!-- Capa semitransparente para oscurecer un poco la imagen -->
+    <div
+      class="absolute inset-0 bg-black/30 transition-colors duration-500 ease-in-out group-hover:bg-black/40"
+    ></div>
+
+    <!-- Texto superpuesto -->
+    <div
+      class="relative z-10 text-left text-white transition-colors duration-500 ease-in-out group-hover:text-yellow-200"
+    >
+      <h3 class="text-xl font-semibold">Mis pacientes</h3>
+      <p class="text-sm">Gestiona tus pacientes</p>
+    </div>
+  </div>
+}
+
+@if (tipo == "rutinas") {
+  <div
+    class="group relative flex h-full w-full items-center justify-start pl-5"
+  >
+    <img
+      src="../assets/portadas/rutina-horizontal.png"
+      alt="Fondo"
+      class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+    />
+
+    <!-- Capa semitransparente para oscurecer un poco la imagen -->
+    <div
+      class="absolute inset-0 bg-black/30 transition-colors duration-500 ease-in-out group-hover:bg-black/40"
+    ></div>
+
+    <!-- Texto superpuesto -->
+    <div
+      class="relative z-10 text-left text-white transition-colors duration-500 ease-in-out group-hover:text-yellow-200"
+    >
+      <h3 class="text-xl font-semibold">Rutinas</h3>
+      <p class="text-sm">Visualiza y crea rutinas</p>
+    </div>
+  </div>
+}

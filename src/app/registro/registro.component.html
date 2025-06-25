@@ -1,0 +1,123 @@
+<section
+  class="absolute top-0 left-0 flex h-screen w-screen items-center justify-center px-2"
+>
+  <div
+    class="flex w-full max-w-7xl flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-3 shadow-xl backdrop-blur-md backdrop-filter md:w-2/3"
+  >
+    <div
+      class="baseline-end relative flex h-15 w-full items-end justify-center"
+    >
+      <img src="../../assets/logo.svg" class="relative h-[175%]" />
+    </div>
+
+    <div class="fuente-kengo mb-1 w-full text-center text-3xl">Registro</div>
+
+    <mat-horizontal-stepper linear class="min-h-72 bg-transparent!">
+      <!-- Paso 1: Datos -->
+      <mat-step [stepControl]="datosForm">
+        <form class="mt-2" [formGroup]="datosForm">
+          <ng-template matStepLabel>Datos</ng-template>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombre" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Apellidos</mat-label>
+            <input matInput formControlName="apellidos" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" />
+          </mat-form-field>
+
+          <div class="mt-4">
+            <button mat-button matStepperNext [disabled]="!datosForm.valid">
+              Siguiente
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Paso 2: Tipo de usuario -->
+      <mat-step [stepControl]="tipoUsuarioForm">
+        <form class="mt-2" [formGroup]="tipoUsuarioForm">
+          <ng-template matStepLabel>Tipo</ng-template>
+
+          <mat-radio-group formControlName="tipo">
+            <mat-radio-button value="fisioterapeuta"
+              >Fisioterapeuta</mat-radio-button
+            ><br />
+            <mat-radio-button value="paciente">Paciente</mat-radio-button>
+          </mat-radio-group>
+
+          <div class="mt-4">
+            <button mat-button matStepperPrevious>Anterior</button>
+            <button
+              mat-button
+              matStepperNext
+              [disabled]="!tipoUsuarioForm.valid"
+            >
+              Siguiente
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Paso 3: Código clínica -->
+      <mat-step [stepControl]="codigoClinicaForm">
+        <form class="mt-2" [formGroup]="codigoClinicaForm">
+          <ng-template matStepLabel>Código</ng-template>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Código de clínica</mat-label>
+            <input matInput formControlName="codigo" />
+          </mat-form-field>
+
+          <div class="mt-4">
+            <button mat-button matStepperPrevious>Anterior</button>
+            <button mat-button matStepperNext>Siguiente</button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Paso 4: Contraseña -->
+      <mat-step [stepControl]="passwordForm">
+        <form class="mt-2" [formGroup]="passwordForm">
+          <ng-template matStepLabel>Seguridad</ng-template>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Contraseña</mat-label>
+            <input matInput type="password" formControlName="password" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Repetir contraseña</mat-label>
+            <input matInput type="password" formControlName="repetir" />
+          </mat-form-field>
+
+          <div class="mt-4">
+            <button mat-button matStepperPrevious>Anterior</button>
+            <button
+              mat-button
+              [disabled]="
+                !passwordForm.valid ||
+                passwordForm.value.password !== passwordForm.value.repetir
+              "
+              (click)="completarRegistro()"
+            >
+              Finalizar
+            </button>
+          </div>
+        </form>
+      </mat-step>
+    </mat-horizontal-stepper>
+    <a
+      class="text-primary m-auto block underline underline-offset-2"
+      routerLink="/login"
+      >Ya tengo cuenta</a
+    >
+  </div>
+</section>

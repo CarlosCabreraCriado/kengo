@@ -20,6 +20,17 @@ body {
   background: transparent; /* make scrollbar transparent */
 }
 
+input:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px #e9fcff inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #e9fcff inset !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+input.mat-input-element:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px #e9fcff inset; /* por ejemplo, bg-gray-100 */
+  -webkit-text-fill-color: #111827; /* text-gray-900 */
+}
+
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
