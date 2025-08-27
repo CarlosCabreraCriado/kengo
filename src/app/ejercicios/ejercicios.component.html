@@ -43,7 +43,7 @@
       >
         <img
           alt=""
-          src="{{ ejercicio.portada_url }}"
+          [src]="this.ejerciciosService.getAssetUrl(ejercicio.portada_url)"
           class="absolute inset-0 min-h-full object-cover opacity-75 transition-opacity group-hover:opacity-50"
         />
 

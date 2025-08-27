@@ -16,7 +16,7 @@ import { Ejercicio } from '../models/Global';
 export class EjerciciosComponent implements OnInit {
   public ejercicios: Ejercicio[] = [];
 
-  constructor(private ejerciciosService: EjerciciosService) {
+  constructor(public ejerciciosService: EjerciciosService) {
     this.ejerciciosService.ejercicios$.subscribe((ejercicios) => {
       console.log('Ejercicios: ', ejercicios);
       if (ejercicios) {

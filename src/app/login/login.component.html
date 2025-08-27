@@ -14,7 +14,7 @@
 
     <form
       [formGroup]="loginForm"
-      (ngSubmit)="login()"
+      (ngSubmit)="onSubmit()"
       class="flex w-full flex-col"
     >
       <mat-form-field appearance="outline" class="w-full">
@@ -54,8 +54,8 @@
         ¿No tienes cuenta? Registrate
       </button>
 
-      @if (error) {
-        <div class="error-msg">{{ error }}</div>
+      @if (error()) {
+        <div class="error-msg">{{ error() }}</div>
       }
     </form>
   </div>

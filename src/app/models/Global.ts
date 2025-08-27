@@ -15,13 +15,18 @@ export interface DetalleUsuario {
   postal: string;
 }
 
+export interface Categoria {
+  id_categoria: number;
+  nombre_categoria: string;
+}
+
 export interface Ejercicio {
   id_ejercicio: number;
   categoria: string[];
   nombre_ejercicio: string;
   descripcion: string;
-  repeticiones_defecto: number;
-  series_defecto: number;
+  repeticiones_defecto: string;
+  series_defecto: string;
   video: string;
   portada: string;
   video_url?: string;
