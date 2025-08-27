@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 
 import { httpResource } from '@angular/common/http';
-import { rxResource } from '@angular/core/rxjs-interop';
 
 import { DirectusService } from './directus.service';
 
