@@ -1,76 +1,184 @@
-<section
-  class="m-5 flex max-w-7xl flex-row flex-wrap justify-center align-baseline md:justify-start"
->
-  @for (ejercicio of ejercicios; track ejercicio.id_ejercicio) {
-    <a
-      class="group relative block aspect-[1] w-full max-w-xs overflow-hidden rounded-2xl p-2 sm:w-1/2 md:w-1/3 lg:w-1/4"
-      [routerLink]="['/inicio/detalle-ejercicio', ejercicio.id_ejercicio]"
+<section class="absolute top-20 w-full">
+  <div class="fuente-kengo m-auto mt-4 text-center text-4xl">Ejercicios</div>
+  <form
+    class="mx-5 mt-4 max-w-7xl"
+    [formGroup]="formularioFiltros"
+    (ngSubmit)="$event.preventDefault()"
+  >
+    <div
+      class="relative m-auto mt-2 flex h-fit w-fit items-center justify-center rounded-full border-1 pr-5 pl-5"
     >
-      <!--
-      <mat-card appearance="outlined">
-        @if (ejercicio.portada_url) {
-          <img
-            mat-card-image
-            src="{{ ejercicio.portada_url }}"
-            alt="Portada ejercicio"
-          />
-        }
-        <mat-card-content class="mt-2 text-zinc-700">
-          <mat-card-title>{{ ejercicio.nombre_ejercicio }}</mat-card-title>
-          <mat-card-subtitle>Rehabilitación</mat-card-subtitle>
-        </mat-card-content>
-      </mat-card>
-    -->
-
-      <!--
-      <img
-        alt=""
-        src="https://images.unsplash.com/photo-1588515724527-074a7a56616c?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1500&q=80"
-        class="h-56 w-full rounded-tr-3xl rounded-bl-3xl object-cover sm:h-64 lg:h-72"
-      />
-
-      <div class="mt-4 sm:flex sm:items-center sm:justify-center sm:gap-4">
-        <strong class="font-medium">Company Name</strong>
-
-        <span class="hidden sm:block sm:h-px sm:w-8 sm:bg-yellow-500"></span>
-
-        <p class="mt-0.5 opacity-50 sm:mt-0">Branding / Signage</p>
-      </div>
-    -->
-
-      <div
-        class="relative m-2 h-full w-full overflow-hidden rounded-2xl bg-black"
+      <mat-form-field
+        class="ff-compact my-2 w-full rounded-full"
+        subscriptSizing="dynamic"
       >
-        <img
-          alt=""
-          [src]="this.ejerciciosService.getAssetUrl(ejercicio.portada)"
-          class="absolute inset-0 min-h-full object-cover opacity-75 transition-opacity group-hover:opacity-50"
+        <input
+          matInput
+          formControlName="busqueda"
+          placeholder="Buscar ejercicio..."
         />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          aria-label="Borrar búsqueda"
+          (click)="formularioFiltros.get('busqueda')?.setValue('')"
+        >
+          <mat-icon class="material-symbols-outlined">close</mat-icon>
+        </button>
+      </mat-form-field>
+      <button
+        class="ml-5"
+        matMiniFab
+        [matMenuTriggerFor]="menuCategorias"
+        aria-label="Example icon button with a delete icon"
+      >
+        <mat-icon class="material-symbols-outlined">filter_alt</mat-icon>
+      </button>
 
-        <div class="relative p-4 sm:p-6 lg:p-8">
-          <p class="text-primary text-sm font-medium tracking-widest uppercase">
-            Tobillo
-          </p>
+      <mat-menu #menuCategorias="matMenu" xPosition="before" class="mt-5 w-96">
+        <div mat-menu-content class="p-2" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between">
+            <span class="fuente-kengo ml-2 text-xl">Categorías</span>
+          </div>
+          <mat-divider class="my-2"></mat-divider>
 
-          <p class="text-xl font-bold text-white sm:text-2xl">
-            {{ ejercicio.nombre_ejercicio }}
-          </p>
-
-          <div class="">
-            <div
-              class="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
-            >
-              <p class="text-sm text-white">
-                {{ ejercicio.descripcion }}
-              </p>
+          @if (ejerciciosService.categoriasRes.isLoading()) {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          } @else if (ejerciciosService.categoriasRes.error()) {
+            <div class="text-sm text-red-600">Error cargando categorías</div>
+          } @else {
+            <!-- Lista multi-selección. No cierra el menú al clicar. -->
+            <div (click)="$event.stopPropagation()">
+              <mat-selection-list
+                formControlName="categories"
+                [multiple]="true"
+                class="block max-h-64 overflow-auto"
+              >
+                @for (
+                  cat of ejerciciosService.categoriasRes.value();
+                  track cat.id_categoria
+                ) {
+                  <mat-list-option
+                    [value]="cat.id_categoria"
+                    [selected]="
+                      isCatSelected(cat.id_categoria, categoriasSeleccionadas)
+                    "
+                  >
+                    {{ cat.nombre_categoria }}
+                  </mat-list-option>
+                }
+              </mat-selection-list>
             </div>
+          }
+
+          <mat-divider class="my-2"></mat-divider>
+          <div class="flex justify-end gap-2">
+            <button mat-button type="button" (click)="limpiarCategorias()">
+              Limpiar
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="closeMenu()"
+            >
+              Aplicar
+            </button>
           </div>
         </div>
-        <img
-          src="../assets/icono-play.png"
-          class="pointer-events-none absolute top-1/2 left-1/2 z-0 max-h-[80%] w-1/3 -translate-x-1/2 -translate-y-1/2 transform opacity-20"
-        />
-      </div>
-    </a>
-  }
+      </mat-menu>
+    </div>
+  </form>
+
+  <section>
+    <!-- Estado + grid -->
+    <section class="mx-5 max-w-7xl">
+      @if (ejerciciosService.listaEjerciciosRes.isLoading()) {
+        <mat-spinner class="mx-auto my-12"></mat-spinner>
+      } @else if (ejerciciosService.listaEjerciciosRes.error()) {
+        <p class="text-sm text-red-600">Error cargando ejercicios</p>
+      } @else {
+        <section
+          class="m-5 flex max-w-7xl flex-row flex-wrap justify-center align-baseline md:justify-start"
+        >
+          @for (
+            ejercicio of ejerciciosService.ejercicios();
+            track ejercicio.id_ejercicio
+          ) {
+            <a
+              class="group relative block aspect-[1] w-full max-w-xs overflow-hidden rounded-2xl p-2 sm:w-1/2 md:w-1/3 lg:w-1/4"
+              [routerLink]="[
+                '/inicio/detalle-ejercicio',
+                ejercicio.id_ejercicio,
+              ]"
+            >
+              <div
+                class="relative m-2 h-full w-full overflow-hidden rounded-2xl bg-black"
+              >
+                <img
+                  alt=""
+                  [src]="getAssetUrl(ejercicio.portada)"
+                  class="absolute inset-0 min-h-full object-cover opacity-75 transition-opacity group-hover:opacity-50"
+                />
+                <div class="relative p-4 sm:p-6 lg:p-8">
+                  <p class="text-xl font-bold text-white sm:text-2xl">
+                    {{ ejercicio.nombre_ejercicio }}
+                  </p>
+                  <div class="">
+                    <div
+                      class="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
+                    >
+                      <p class="text-sm text-white">
+                        {{ ejercicio.descripcion }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <img
+                  src="../assets/icono-play.png"
+                  class="pointer-events-none absolute top-1/2 left-1/2 z-10 w-1/3 -translate-x-1/2 -translate-y-1/2 transform opacity-20"
+                />
+              </div>
+            </a>
+          }
+        </section>
+
+        <!-- Paginación -->
+        @if (ejerciciosService.total() > 0) {
+          <div class="my-4 flex items-center justify-center gap-2">
+            <button
+              matButton="filled"
+              class="mx-2 rounded-md border px-2 py-1"
+              (click)="paginaAnterior()"
+              [disabled]="ejerciciosService.page() <= 1"
+            >
+              Anterior
+            </button>
+            <span class="text-sm text-zinc-700"
+              ><span class="hidden sm:inline-block">Página </span>
+              {{ ejerciciosService.page() }} de
+              {{ ejerciciosService.totalPages() }}</span
+            >
+            <button
+              matButton="filled"
+              class="mx-2 rounded-md border px-2 py-1"
+              (click)="siguientePagina()"
+              [disabled]="
+                ejerciciosService.page() >= ejerciciosService.totalPages()
+              "
+            >
+              Siguiente
+            </button>
+          </div>
+        }
+
+        @if (ejerciciosService.ejercicios().length === 0) {
+          <p class="text-md text-center text-gray-700">
+            No se han encontrado ejercicios.
+          </p>
+        }
+      }
+    </section>
+  </section>
 </section>

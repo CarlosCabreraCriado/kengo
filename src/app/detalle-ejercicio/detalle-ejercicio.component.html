@@ -1,23 +1,23 @@
-<section class="m-5 max-w-7xl">
-  <div class="flex flex-col items-center justify-center">
+<section class="absolute top-20 m-5 w-full max-w-7xl">
+  <div
+    class="align-center relative m-auto mt-2 flex h-10 w-[80%] max-w-3xl items-center justify-center rounded-full border-none border-white pr-5 text-center text-xl font-bold text-zinc-800"
+  >
+    <button
+      [routerLink]="['/inicio/ejercicios']"
+      class="!absolute -top-1 left-0"
+      mat-mini-fab
+      aria-label="Example icon button with a delete icon"
+    >
+      <mat-icon class="material-symbols-outlined m-auto">arrow_back</mat-icon>
+    </button>
+
+    {{ ejercicio()?.nombre_ejercicio }}
+  </div>
+
+  <div class="mb-5 flex flex-col items-center justify-center">
     <!-- Component: Image overlay card -->
-    <div class="mt-5 max-h-96 w-[80%] max-w-3xl rounded">
-      <!-- Image
-      <figure class="relative flex">
-        <img
-          src="https://picsum.photos/id/100/800/600"
-          alt="card image"
-          class="h-auto w-full"
-        />
-        <figcaption
-          class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-slate-900 p-6 text-white"
-        >
-          <h3 class="text-lg font-medium">Most famous beaches</h3>
-          <p class="text-sm opacity-75">By George, jun 3 2023</p>
-        </figcaption>
-      </figure>
--->
-      @if (ejercicio && ejercicio.video_url) {
+    <div class="mt-2 max-h-96 w-[80%] max-w-3xl rounded">
+      @if (ejercicio() && ejercicio()?.video) {
         <figure class="relative flex">
           <video
             class="h-auto w-full rounded-2xl"
@@ -27,37 +27,32 @@
             controls
             playsinline
           >
-            <source [src]="ejercicio.video_url" type="video/mp4" />
+            <source
+              [src]="getAssetUrl(ejercicio()?.video || 0)"
+              type="video/mp4"
+            />
             Tu navegador no soporta el tag de video.
           </video>
         </figure>
       }
     </div>
     <!-- End Image overlay card -->
-
-    <div
-      class="flex w-full max-w-3xl justify-center p-5 text-center font-bold text-zinc-700"
-    >
-      {{ ejercicio?.nombre_ejercicio }}
-    </div>
   </div>
 
   <div
-    class="flex w-full flex-col justify-center"
+    class="m-auto flex w-[80%] max-w-3xl flex-col justify-center"
     [formGroup]="formularioDetalleEjercicio"
   >
     <!-- Component: Rounded required input -->
-    <div class="flex w-full px-3">
-      <div class="w-1/2 px-3">
-        <label class="mb-2 block leading-none text-black"> Series </label>
+    <div class="flex w-full gap-5">
+      <div class="w-1/2">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label> Series </mat-label>
           <input matInput formControlName="series" />
         </mat-form-field>
       </div>
 
-      <div class="w-1/2 px-3">
-        <label class="mb-2 block leading-none text-black"> Repeticiones </label>
+      <div class="w-1/2">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label> Repeticiones </mat-label>
           <input matInput formControlName="repeticiones" />
@@ -65,17 +60,15 @@
       </div>
     </div>
 
-    <div class="flex w-full px-3">
-      <div class="w-1/2 px-3">
-        <label class="mb-2 block leading-none text-black"> Peso </label>
+    <div class="flex w-full gap-5">
+      <div class="w-1/2">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label> Peso </mat-label>
           <input matInput formControlName="peso" />
         </mat-form-field>
       </div>
 
-      <div class="w-1/2 px-3">
-        <label class="mb-2 block leading-none text-black"> Duración </label>
+      <div class="w-1/2 gap-5">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label> Duración </mat-label>
           <input matInput formControlName="duracion" />
@@ -83,11 +76,10 @@
       </div>
     </div>
 
-    <div class="w-full px-6">
-      <label class="mb-2 block leading-none text-black"> Observación </label>
+    <div class="w-full">
       <mat-form-field appearance="outline" class="w-full">
         <mat-label> Observación </mat-label>
-        <input type="textarea" matInput formControlName="nota" />
+        <input type="textarea" matInput formControlName="observaciones" />
       </mat-form-field>
     </div>
 

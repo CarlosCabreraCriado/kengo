@@ -1,194 +1,415 @@
-<div class="fuente-kengo my-8 flex w-full justify-center text-4xl">
-  Mi Clinica
-</div>
-<section
-  class="mx-7 flex max-w-7xl flex-col justify-center gap-10 rounded-2xl bg-white p-5 shadow-2xl lg:mt-15 lg:flex-row"
->
-  <div class="flex flex-col items-center">
-    <div class="fuente-kengo w-full text-center">Foto de Clinica</div>
-    <!-- Component: Dropzone file input that accepts specific types -->
-
-    <div class="relative my-6 flex w-full justify-center">
-      <input
-        id="id-dropzone02"
-        name="file-upload"
-        type="file"
-        class="peer hidden"
-        accept=".gif,.jpg,.png,.jpeg"
-        multiple
-      />
-      <label
-        for="id-dropzone02"
-        class="flex w-full cursor-pointer flex-col items-center gap-6 rounded border border-dashed border-slate-300 px-6 py-10 text-center"
-      >
-        <span
-          class="inline-flex h-12 items-center justify-center self-center rounded bg-slate-100/70 px-3 text-slate-400"
+<section class="mx-5 my-6 max-w-5xl">
+  <!-- Selector de clínica (si hay varias) -->
+  @if (clinicasRes().length > 1) {
+    <div class="mb-4">
+      <mat-form-field appearance="outline">
+        <mat-label>Selecciona clínica</mat-label>
+        <mat-select
+          [value]="selectedClinicId()"
+          (selectionChange)="onClinicChange($event.value)"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            aria-label="File input icon"
-            role="graphics-symbol"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="h-6 w-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+          @for (c of clinicasRes(); track c.id_clinica) {
+            <mat-option [value]="$index">{{
+              c.nombre || "Clínica " + c.id_clinica
+            }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
+
+  <!-- Loaders/errores -->
+  @if (!clinicasRes()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  @if (error()) {
+    <p class="mb-3 text-red-600">{{ error() }}</p>
+  }
+
+  @if (clinicasRes() && !modoEdicion()) {
+    <!-- clinicas-hero-list.component.html -->
+    <div class="space-y-6">
+      @if (!clinicasRes() || clinicasRes().length === 0) {
+        <div class="py-10 text-center text-gray-500">No hay clínicas.</div>
+      } @else {
+        @for (c of clinicasRes(); track c?.id_clinica) {
+          <mat-card class="overflow-hidden rounded-2xl shadow-lg">
+            <!-- HERO -->
+            <div class="relative h-64 md:h-72">
+              @if (c.imagenes?.length) {
+                <img
+                  [src]="assetUrl(firstImageId(c))"
+                  alt="{{ c.nombre || 'Clínica' }}"
+                  class="absolute inset-0 h-full w-full object-cover"
+                />
+              } @else {
+                <div
+                  class="absolute inset-0 h-full w-full"
+                  [style.background]="c.color_primario || '#f5f5f5'"
+                ></div>
+              }
+
+              <!-- Overlay -->
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+              ></div>
+
+              <!-- Contenido -->
+              <div class="absolute inset-0 flex items-end p-5 md:p-8">
+                <div class="flex items-center gap-4">
+                  @if (c.logo) {
+                    <img
+                      [src]="assetUrl(c.logo)"
+                      alt="logo"
+                      class="h-16 w-16 rounded-xl bg-white/70 object-cover p-1 ring-2 ring-white/70"
+                    />
+                  }
+                  <div class="text-white">
+                    <h2
+                      class="text-2xl leading-tight font-semibold md:text-3xl"
+                    >
+                      {{ c.nombre || "Clínica sin nombre" }}
+                    </h2>
+                    <p class="opacity-90">
+                      {{ c.direccion || "Dirección no disponible" }}
+                      @if (c.postal) {
+                        <span> · {{ c.postal }}</span>
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                mat-fab
+                disabled
+                class="!absolute top-4 right-4 shadow-lg"
+                aria-label="Editar clínica"
+              >
+                <mat-icon class="material-symbols-outlined">edit</mat-icon>
+              </button>
+            </div>
+
+            <!-- INFO -->
+            <mat-card-content class="my-5 p-5 text-zinc-700 md:p-6">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div class="flex items-center gap-3">
+                  <mat-icon class="material-symbols-outlined">phone</mat-icon>
+                  <span>{{ c.telefono || "—" }}</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <mat-icon class="material-symbols-outlined">mail</mat-icon>
+
+                  @if (c.email) {
+                    <a [href]="'mailto:' + c.email" class="underline">
+                      {{ c.email }}
+                    </a>
+                  } @else {
+                    —
+                  }
+                </div>
+                <div class="flex items-center gap-3">
+                  <mat-icon class="material-symbols-outlined">badge</mat-icon>
+                  <span>{{ c.nif || "—" }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+
+            <mat-divider></mat-divider>
+
+            <!-- ACCIONES -->
+            <mat-card-actions
+              class="flex flex-col justify-between p-4 sm:flex-row"
+            >
+              <button mat-button>
+                <mat-icon class="material-symbols-outlined mr-1">map</mat-icon>
+                Ver en mapa
+              </button>
+
+              <button mat-flat-button>
+                <mat-icon class="material-symbols-outlined mr-1"
+                  >chevron_right</mat-icon
+                >
+                Fisioterapeutas
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <div class="pb-5">
+            <h3 class="mb-2 text-sm font-semibold text-gray-700">
+              Fisioterapeutas
+            </h3>
+            @if ((fisios(c.id_clinica)?.length ?? 0) === 0) {
+              <div class="text-sm text-gray-500">
+                No hay fisioterapeutas asignados.
+              </div>
+            } @else {
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @for (f of fisios(c.id_clinica); track f.id) {
+                  <mat-card
+                    class="rounded-2xl border bg-white/90 shadow transition-shadow hover:shadow-lg"
+                  >
+                    <div class="p-4">
+                      <div class="flex items-center gap-4">
+                        <!-- Avatar -->
+                        @if (f.avatar) {
+                          <img
+                            [src]="assetUrl(f.avatar)"
+                            alt="Avatar de {{ f.first_name }} {{ f.last_name }}"
+                            class="h-14 w-14 rounded-full object-cover ring-2 shadow ring-white"
+                          />
+                        } @else {
+                          <div
+                            class="grid h-14 w-14 place-items-center rounded-full font-semibold text-white shadow"
+                          >
+                            {{ iniciales(f.first_name, f.last_name) }}
+                          </div>
+                        }
+
+                        <!-- Info básica -->
+                        <div class="min-w-0">
+                          <div
+                            class="truncate text-base font-medium text-zinc-700"
+                          >
+                            {{ f.first_name }} {{ f.last_name }}
+                          </div>
+                          <div class="truncate text-sm text-gray-600">
+                            @if (f.email) {
+                              <a
+                                class="underline"
+                                [href]="'mailto:' + f.email"
+                                >{{ f.email }}</a
+                              >
+                            } @else {
+                              <span>Sin email</span>
+                            }
+                          </div>
+                          <div class="text-sm text-gray-600">
+                            <span>{{ f.telefono || "" }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- (Opcional) chips de rol/especialidad si los tienes en f.puestos -->
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        <span
+                          class="text-primary rounded-full border px-2 py-0.5 text-xs"
+                        >
+                          Fisioterapeuta
+                        </span>
+                      </div>
+
+                      <!-- Acciones -->
+                      <div class="mt-4 flex items-center gap-2">
+                        @if (f.email) {
+                          <button
+                            mat-stroked-button
+                            [attr.aria-label]="'Enviar email a ' + f.first_name"
+                          >
+                            <mat-icon class="material-symbols-outlined mr-1"
+                              >mail</mat-icon
+                            >
+                            Contactar
+                          </button>
+                        }
+
+                        @if (f.telefono) {
+                          <button mat-stroked-button>
+                            <mat-icon class="material-symbols-outlined mr-1"
+                              >call</mat-icon
+                            >
+                            Llamar
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </mat-card>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- Formulario -->
+  @if (clinicasRes() && modoEdicion()) {
+    <mat-card>
+      <mat-card-content>
+        <form [formGroup]="form" class="grid gap-4 md:grid-cols-2">
+          <mat-form-field appearance="outline">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombre" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefono" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="direccion" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Código Postal</mat-label>
+            <input matInput formControlName="postal" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>NIF</mat-label>
+            <input matInput formControlName="nif" />
+          </mat-form-field>
+
+          <!-- Color primario -->
+          <div class="flex items-center gap-3">
+            <mat-form-field appearance="outline">
+              <mat-label>Color primario</mat-label>
+              <input
+                matInput
+                formControlName="color_primario"
+                placeholder="#0066cc"
+              />
+            </mat-form-field>
+            <input
+              type="color"
+              [value]="form.get('color_primario')?.value || '#000000'"
+              (input)="
+                form.get('color_primario')?.setValue($any($event.target).value)
+              "
             />
-          </svg>
-        </span>
-        <p class="flex flex-col items-center justify-center gap-1 text-sm">
-          <span class="text-emerald-500 hover:text-emerald-500">
-            Upload media
-            <span class="text-slate-500"> or drag and drop </span>
-          </span>
-          <span class="text-slate-600"> PNG, JPG or GIF up to 10MB </span>
-        </p>
-      </label>
-    </div>
-    <!-- End Dropzone file input that accepts specific types -->
-  </div>
+          </div>
 
-  <div class="flex flex-col">
-    <div class="h-10 w-full">Información principal</div>
-    <div class="flex w-full flex-col justify-between md:flex-row md:gap-5">
-      <!-- Component: Rounded required input -->
-      <div class="relative my-6">
-        <input
-          id="id-b07"
-          type="text"
-          name="id-b07"
-          required
-          value="MyoActive"
-          class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-        />
-        <label
-          for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-        >
-          Nombre
-        </label>
-      </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded required input -->
-      <div class="relative my-6">
-        <input
-          id="id-b07"
-          type="text"
-          name="id-b07"
-          required
-          value="MyoActive@gmail.com"
-          class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-        />
-        <label
-          for="id-b07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-        >
-          Especializacion
-        </label>
-      </div>
-      <!-- End Rounded required input -->
-      <!-- Component: Rounded basic base sized datepicker -->
-      <div class="relative my-6">
-        <input
-          id="id-date07"
-          type="date"
-          name="id-date07"
-          class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-        />
-        <label
-          for="id-date07"
-          class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-        >
-          Fecha de apertura
-        </label>
-      </div>
-      <!-- End Rounded basic base sized datepicker -->
-    </div>
+          <!-- Logo -->
+          <div class="md:col-span-2">
+            <div class="mb-2 font-medium">Logo</div>
+            <div class="flex items-center gap-4">
+              <div class="h-24 w-24 overflow-hidden rounded border bg-gray-100">
+                @if (logoPreviewUrl()) {
+                  <img
+                    [src]="logoPreviewUrl()"
+                    alt="Logo"
+                    class="h-full w-full object-cover"
+                  />
+                } @else {
+                  <div
+                    class="grid h-full w-full place-items-center text-gray-400"
+                  >
+                    Sin logo
+                  </div>
+                }
+              </div>
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="logoInput.click()"
+              >
+                <mat-icon class="material-symbols-outlined">upload</mat-icon>
+                Seleccionar logo
+              </button>
+              <input
+                #logoInput
+                type="file"
+                accept="image/*"
+                class="hidden"
+                (change)="onLogoSelected(logoInput.files)"
+              />
+            </div>
+          </div>
 
-    <div>
-      <div class="h-10 w-full">Información de contacto</div>
-      <div class="flex w-full flex-row gap-5 justify-self-start">
-        <!-- Component: Rounded required input -->
-        <div class="relative my-6">
-          <input
-            id="id-b07"
-            type="text"
-            name="id-b07"
-            required
-            value="MyoActive@gmail.com"
-            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-          />
-          <label
-            for="id-b07"
-            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-          >
-            E-mail
-          </label>
-        </div>
-        <!-- End Rounded required input -->
-        <!-- Component: Rounded required input -->
-        <div class="relative my-6">
-          <input
-            id="id-b07"
-            type="text"
-            name="id-b07"
-            required
-            value="659894985"
-            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-          />
-          <label
-            for="id-b07"
-            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-          >
-            Telefono
-          </label>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="h-10 w-full">Dirección</div>
-      <div class="flex w-full flex-row gap-5 justify-self-start">
-        <!-- Component: Rounded required input -->
-        <div class="relative my-6">
-          <input
-            id="id-b07"
-            type="text"
-            name="id-b07"
-            required
-            value="Calle fernandez herrero"
-            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-          />
-          <label
-            for="id-b07"
-            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-          >
-            Calle
-          </label>
-        </div>
-        <!-- End Rounded required input -->
-        <!-- Component: Rounded required input -->
-        <div class="relative my-6">
-          <input
-            id="id-b07"
-            type="text"
-            name="id-b07"
-            required
-            value="38005"
-            class="peer relative h-10 w-full rounded border border-slate-200 px-4 text-sm text-slate-500 placeholder-transparent transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-orange-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-          />
-          <label
-            for="id-b07"
-            class="absolute -top-2 left-2 z-[1] cursor-text px-2 text-xs text-slate-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-autofill:-top-2 peer-invalid:text-pink-500 peer-focus:-top-2 peer-focus:cursor-default peer-focus:text-xs peer-focus:text-orange-500 peer-invalid:peer-focus:text-pink-500 peer-disabled:cursor-not-allowed peer-disabled:text-slate-400 before:absolute before:top-0 before:left-0 before:z-[-1] before:block before:h-full before:w-full before:bg-white before:transition-all peer-disabled:before:bg-transparent peer-required:after:text-pink-500 peer-required:after:content-['\00a0*']"
-          >
-            Codigo postal
-          </label>
-        </div>
-      </div>
-    </div>
-  </div>
+          <!-- Imágenes -->
+          <div class="md:col-span-2">
+            <div class="mb-2 font-medium">Imágenes</div>
+
+            <!-- existentes -->
+            <div class="mb-2 flex flex-wrap gap-3">
+              @for (id of existingImagenIds(); track id) {
+                <div class="relative">
+                  <img
+                    [src]="imagenPreviewUrl(id)"
+                    class="h-24 w-32 rounded border object-cover"
+                  />
+                  <button
+                    mat-mini-fab
+                    color="warn"
+                    class="!absolute -top-2 -right-2"
+                    type="button"
+                  >
+                    <mat-icon class="material-symbols-outlined">close</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- nuevas -->
+            <div class="mb-2 flex flex-wrap gap-3">
+              @for (f of imagenesFiles(); track f) {
+                <div class="relative">
+                  <!--
+                  <img
+                    [src]="(window as any).URL.createObjectURL(f)"
+                    class="h-24 w-32 rounded border object-cover"
+                  />
+              -->
+                  <button
+                    mat-mini-fab
+                    color="warn"
+                    class="!absolute -top-2 -right-2"
+                    type="button"
+                  >
+                    <mat-icon class="material-symbols-outlined">close</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="imagenesInput.click()"
+            >
+              <mat-icon class="material-symbols-outlined">upload</mat-icon>
+              Añadir imágenes
+            </button>
+            <input
+              #imagenesInput
+              type="file"
+              accept="image/*"
+              class="hidden"
+              multiple
+              (change)="onImagenesSelected(imagenesInput.files)"
+            />
+          </div>
+
+          <div class="mt-2 flex gap-2 md:col-span-2">
+            <button
+              mat-flat-button
+              color="primary"
+              type="submit"
+              [disabled]="form.invalid || loading()"
+            >
+              Guardar
+            </button>
+          </div>
+
+          @if (loading()) {
+            <mat-progress-bar
+              mode="indeterminate"
+              class="mt-2 md:col-span-2"
+            ></mat-progress-bar>
+          }
+        </form>
+      </mat-card-content>
+    </mat-card>
+  } @else if (clinicIds() && clinicIds()?.length === 0) {
+    <p class="text-gray-600">No estás asociado a ninguna clínica.</p>
+  }
 </section>

@@ -9,16 +9,13 @@ import {
 
 import { httpResource } from '@angular/common/http';
 
-import { DirectusService } from './directus.service';
-
-import { BehaviorSubject } from 'rxjs';
-
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { of } from 'rxjs';
-import { map, switchMap, take } from 'rxjs/operators';
+import { environment as env } from '../../environments/environment';
 
 //Tipos:
-import { Categoria, Ejercicio } from '../../types/global';
+import { Ejercicio } from '../../types/global';
 
 interface ExerciseQuery {
   name?: string;
@@ -28,9 +25,18 @@ interface ExerciseQuery {
   sort?: string;
 }
 
-export interface PaginaEjercicios<T> {
-  data: T[];
+export interface Categoria {
+  id_categoria: number;
+  nombre_categoria: string;
+}
+
+export interface PaginaEjercicios {
+  data: Ejercicio[];
   meta: { total_count?: number; filter_count?: number };
+}
+
+export interface DirectusItem<T> {
+  data: T;
 }
 
 export interface PeticionCategoria {
@@ -39,21 +45,19 @@ export interface PeticionCategoria {
 
 interface FiltroEjercicios {
   nombre_ejercicio?: { _icontains: string };
-  categoria?: { categoria: { _in: (string | number)[] } };
+  categoria?: { categorias_id_categoria: { _in: (string | number)[] } };
 }
 
 @Injectable({ providedIn: 'root' })
 export class EjerciciosService {
-  public ejercicios$ = new BehaviorSubject<Ejercicio[] | null>(null);
-
-  private directusService = inject(DirectusService);
+  private http = inject(HttpClient);
 
   // --- Filtros / paginación como señales puras ---
   readonly busqueda: WritableSignal<string> = signal('');
   readonly idsCategoriasSeleccionadas: WritableSignal<(string | number)[]> =
     signal([]);
   readonly page: WritableSignal<number> = signal(1);
-  readonly pageSize: WritableSignal<number> = signal(20);
+  readonly pageSize: WritableSignal<number> = signal(24);
   readonly sort: WritableSignal<string> = signal('nombre_ejercicio');
 
   // Query derivada para exercises
@@ -68,7 +72,7 @@ export class EjerciciosService {
   readonly categoriasRes = httpResource<Categoria[]>(
     () => {
       const req = {
-        url: `${this.directusService.directusUrl}/items/categorias`,
+        url: `${env.DIRECTUS_URL}/items/categorias`,
         method: 'GET',
         params: {
           fields: 'id_categoria,nombre_categoria',
@@ -88,8 +92,28 @@ export class EjerciciosService {
     },
   );
 
-  getAssetUrl(id: unknown) {
-    return `${this.directusService.directusUrl}/assets/${id}`;
+  findInCacheById(id: string | number) {
+    const idStr = String(id);
+    return this.listaEjerciciosRes
+      .value()
+      .data.find((e) => String(e.id_ejercicio) === idStr);
+  }
+
+  /** Petición puntual a Directus para un ejercicio por id */
+  getEjercicioById$(id: string | number): Observable<Ejercicio> {
+    const params = new HttpParams().set(
+      'fields',
+      'id_ejercicio,nombre_ejercicio,descripcion,portada,video,categoria,series_defecto,repeticiones_defecto',
+    );
+    return this.http
+      .get<DirectusItem<Ejercicio>>(
+        `${env.DIRECTUS_URL}/items/ejercicios/${id}`,
+        {
+          params,
+          // withCredentials: true, // si usas cookie/session en vez de Bearer
+        },
+      )
+      .pipe(map((res) => res.data));
   }
 
   private readonly peticionEjercicios = () => {
@@ -101,18 +125,20 @@ export class EjerciciosService {
 
     const filter: FiltroEjercicios = {};
     if (name) filter['nombre_ejercicio'] = { _icontains: name };
+
     if (cats.length) {
       // Ajusta a tu esquema M2M si difiere:
-      filter['categoria'] = { categoria: { _in: cats } };
+      filter['categoria'] = { categorias_id_categoria: { _in: cats } };
       // Alternativas:
       // filter['categories'] = { id: { _in: cats } };
     }
 
     return {
-      url: `${this.directusService.directusUrl}/items/ejercicios`,
+      url: `${env.DIRECTUS_URL}/items/ejercicios`,
       method: 'GET',
       params: {
-        fields: 'id_ejercicio,nombre_ejercicio,descripcion',
+        fields:
+          'id_ejercicio,nombre_ejercicio,descripcion,portada,video,categoria.*,series_defecto,repeticiones_defecto',
         limit: String(ps),
         offset: String((p - 1) * ps),
         sort: so,
@@ -125,44 +151,85 @@ export class EjerciciosService {
     };
   };
 
-  readonly listaEjerciciosRes = httpResource<{
-    items: Ejercicio[];
-    total: number;
-  }>(this.peticionEjercicios, {
-    parse: (res) => {
-      const resultado = res as { items: Ejercicio[]; total: number };
-      console.log('Ejercicios paginados: ', resultado);
-      return resultado;
+  readonly listaEjerciciosRes = httpResource<PaginaEjercicios>(
+    this.peticionEjercicios,
+    {
+      parse: (res) => {
+        const resultado = res as PaginaEjercicios;
+        console.log('Ejercicios paginados: ', resultado);
+        return resultado;
+      },
+      defaultValue: { data: [], meta: {} },
     },
-    defaultValue: { items: [], total: 0 },
-  });
+  );
 
-  getEjercicios() {
-    if (!this.ejercicios$.value) {
-      this.directusService.getEjercicios().subscribe((response) => {
-        if (response.data) {
-          this.ejercicios$.next(response.data);
-        }
-      });
-    }
+  // ========= Derivados (computed) para la vista =========
+  readonly ejercicios = computed(() => this.listaEjerciciosRes.value().data);
+  readonly total = computed(
+    () => this.listaEjerciciosRes.value().meta?.filter_count ?? 0,
+  );
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.total() / this.pageSize())),
+  );
+  readonly hasActiveFilters = computed(
+    () =>
+      !!this.busqueda().trim() || this.idsCategoriasSeleccionadas().length > 0,
+  );
+
+  // ========= Recargas manuales =========
+  reloadEjercicios() {
+    this.listaEjerciciosRes.reload();
   }
 
-  getEjercicioById(id: number | null): Observable<Ejercicio | null> {
-    if (id === null) return of(null);
-    return this.ejercicios$.pipe(
-      take(1), // solo necesitamos el valor actual
-      switchMap((ejercicios) => {
-        const ejercicioLocal = ejercicios?.find((e) => e.id_ejercicio === id);
-        if (ejercicioLocal) {
-          return of(ejercicioLocal);
-        } else {
-          // fallback: buscar en la API
-          return this.directusService.getEjercicioById(id).pipe(
-            // podrías agregar lógica para añadirlo a ejercicios$ si quieres
-            map((ejercicio) => ejercicio || null),
-          );
-        }
-      }),
-    );
+  reloadCategorias() {
+    this.categoriasRes.reload();
+  }
+
+  // ========= Acciones (mutadores) =========
+  setBusqueda(v: string) {
+    this.busqueda.set(v);
+    this.page.set(1);
+  }
+
+  toggleCategoria(id: string | number) {
+    const set = new Set(this.idsCategoriasSeleccionadas());
+    if (set.has(id)) {
+      set.delete(id);
+    } else {
+      set.add(id);
+    }
+    this.idsCategoriasSeleccionadas.set([...set]);
+    this.page.set(1);
+  }
+
+  limpiarCategorias() {
+    this.idsCategoriasSeleccionadas.set([]);
+    this.page.set(1);
+  }
+
+  clearFilters() {
+    this.busqueda.set('');
+    this.idsCategoriasSeleccionadas.set([]);
+    this.page.set(1);
+  }
+
+  setSort(s: 'nombre_ejercicio' | '-nombre_ejercicio') {
+    this.sort.set(s);
+    this.page.set(1);
+  }
+
+  setPageSize(n: number) {
+    this.pageSize.set(n);
+    this.page.set(1);
+  }
+
+  goToPage(p: number) {
+    const max = this.pageSize();
+    this.page.set(Math.min(Math.max(1, p), max));
+  }
+
+  // ========= Helper de assets (ajusta si usas tokens/cookies/blob) =========
+  getAssetUrl(id?: string) {
+    return id ? `${env.DIRECTUS_URL}/assets/${id}` : '';
   }
 }

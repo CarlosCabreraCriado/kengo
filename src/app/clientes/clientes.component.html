@@ -1,144 +1,147 @@
-<section
-  class="m-5 flex max-w-7xl flex-row flex-wrap justify-start align-baseline"
->
-  <div
-    class="mx-auto flex w-full max-w-6xl flex-col items-start justify-center rounded-2xl bg-white p-5 shadow-2xl"
-  >
-    <!-- Component: Rounded basic search input -->
-    <div class="relative mb-2 w-full sm:w-auto">
-      <input
-        id="id-s03"
-        type="search"
-        name="id-s03"
-        placeholder="Search here"
-        aria-label="Search content"
-        class="peer relative h-10 w-full rounded border-2 border-slate-200 px-4 pr-12 text-sm text-slate-500 transition-all outline-none autofill:bg-white invalid:border-pink-500 invalid:text-pink-500 focus:border-amber-500 focus:outline-none invalid:focus:border-pink-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-      />
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="absolute top-2.5 right-4 h-5 w-5 cursor-pointer stroke-slate-400 peer-disabled:cursor-not-allowed"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        aria-hidden="true"
-        aria-label="Search icon"
-        role="graphics-symbol"
+<section class="absolute top-20 mx-auto w-full max-w-7xl">
+  <header class="mx-auto my-4 w-[80%] max-w-7xl">
+    <div
+      class="relative m-auto mt-2 flex h-fit w-fit items-center justify-center rounded-full border-1 pr-5 pl-5"
+    >
+      <mat-form-field
+        class="ff-compact my-2 w-full rounded-full"
+        subscriptSizing="dynamic"
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+        <input
+          #buscador
+          matInput
+          formControlName="busqueda"
+          placeholder="Buscar paciente..."
+          (input)="onBuscar(buscador.value)"
         />
-      </svg>
-    </div>
-    <!-- End Rounded search input -->
-    <!-- Component: Underline Table -->
-    <div class="w-full overflow-x-auto bg-white">
-      <table
-        class="w-overflow-x-auto w-full border-collapse rounded text-left"
-        cellspacing="0"
-      >
-        <tbody>
-          <tr class="border-b border-slate-300">
-            <th
-              scope="col"
-              class="h-12 stroke-slate-700 px-6 text-sm font-medium text-slate-700"
-            >
-              Nombre
-            </th>
-            <th
-              scope="col"
-              class="h-12 stroke-slate-700 px-6 text-sm font-medium text-slate-700"
-            >
-              Movil
-            </th>
-            <th
-              scope="col"
-              class="h-12 stroke-slate-700 px-6 text-sm font-medium text-slate-700"
-            >
-              E-mail
-            </th>
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          aria-label="Borrar búsqueda"
+          (click)="onBuscar('')"
+        >
+          <mat-icon class="material-symbols-outlined">close</mat-icon>
+        </button>
+      </mat-form-field>
 
-            <th
-              scope="col"
-              class="h-12 stroke-slate-700 px-6 text-start text-sm font-medium text-slate-700 sm:text-end"
-            >
+      <button
+        class="ml-2"
+        matMiniFab
+        aria-label="Recargar datos"
+        (click)="reload()"
+      >
+        <mat-icon class="material-symbols-outlined">refresh</mat-icon>
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="ml-2"
+        (click)="openAddPaciente()"
+      >
+        <mat-icon>person_add</mat-icon>
+        Añadir
+      </button>
+    </div>
+  </header>
+
+  <div class="m-auto w-[95%] max-w-7xl">
+    <!-- Estados (opcionales si tienes los httpResource) -->
+    @if (pacientesRes.isLoading() && idsClinicas() != null) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    } @else if (pacientesRes.error()) {
+      <p class="text-red-600">No se pudieron cargar los pacientes.</p>
+    } @else {
+      <!-- Tabla Material -->
+      <div class="m-auto overflow-auto rounded-xl border border-gray-200">
+        <table mat-table [dataSource]="pacientes()" class="w-full">
+          <!-- Col: Nombre -->
+          <ng-container matColumnDef="nombre">
+            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+            <td mat-cell *matCellDef="let p">
+              <div class="flex items-center gap-3 text-zinc-600">
+                @if (avatarUrl(p)) {
+                  <img
+                    [src]="avatarUrl(p)"
+                    [alt]="fullName(p)"
+                    class="h-8 w-8 rounded-full object-cover ring-1 ring-black/10"
+                  />
+                } @else {
+                  <mat-icon
+                    class="material-symbols-outlined !text-zinc-400"
+                    aria-hidden="true"
+                    >person</mat-icon
+                  >
+                }
+
+                <span>
+                  {{ fullName(p) }}
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Col: Móvil -->
+          <ng-container matColumnDef="movil">
+            <th mat-header-cell *matHeaderCellDef>Móvil</th>
+            <td class="text-zinc-600" mat-cell *matCellDef="let p">
+              {{ p.telefono || p.phone || "—" }}
+            </td>
+          </ng-container>
+
+          <!-- Col: Email -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>E-mail</th>
+            <td mat-cell class="text-zinc-600" *matCellDef="let p">
+              {{ p.email || "—" }}
+            </td>
+          </ng-container>
+
+          <!-- Col: Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef class="text-right">
               Acciones
             </th>
+            <td mat-cell *matCellDef="let p" class="text-right">
+              <button
+                matFab
+                extended
+                color="primary"
+                class="mr-4 !h-10 !min-w-[5rem] !px-4 !text-sm"
+                (click)="openEditarPaciente(p)"
+              >
+                <mat-icon class="material-symbols-outlined">edit</mat-icon>
+                Editar
+              </button>
+              <button mat-icon-button color="warn" aria-label="Borrar">
+                <mat-icon class="material-symbols-outlined">delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- Header / Rows -->
+          <tr
+            mat-header-row
+            *matHeaderRowDef="['nombre', 'movil', 'email', 'acciones']"
+          ></tr>
+          <tr
+            mat-row
+            *matRowDef="
+              let row;
+              columns: ['nombre', 'movil', 'email', 'acciones']
+            "
+          ></tr>
+
+          <!-- Vacío -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell p-4 text-gray-600" colspan="4">
+              No hay pacientes para mostrar.
+            </td>
           </tr>
-
-          <!-- clientei -->
-          @for (cliente of clientes; track cliente.id) {
-            <tr class="block border-b-2 border-slate-200 pb-2 sm:table-row">
-              <td
-                class="h-12 items-center border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300"
-              >
-                <div class="flex flex-row gap-2">
-                  <!-- Component: Rounded full sm sized basic image avatar -->
-                  <a
-                    href="#"
-                    class="relative my-auto inline-flex h-8 w-8 items-baseline justify-center rounded-full text-white"
-                  >
-                    <img
-                      src="https://i.pravatar.cc/32?img=4"
-                      alt="user name"
-                      title="user name"
-                      width="32"
-                      height="32"
-                      class="max-w-full rounded-full"
-                    />
-                  </a>
-                  <!-- End Rounded sm sized basic image avatar -->
-                  <div class="my-auto flex justify-center">
-                    {{ cliente.nombre }} {{ cliente.apellidos }}
-                  </div>
-                </div>
-              </td>
-              <td
-                class="flex h-12 items-center border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-              >
-                {{ cliente.telefono }}
-              </td>
-              <td
-                class="h-12 items-center border-slate-200 stroke-slate-500 px-6 text-sm text-slate-500 transition duration-300"
-              >
-                {{ cliente.email }}
-              </td>
-              <td
-                class="flex h-12 flex-row items-center gap-5 border-slate-200 stroke-slate-500 px-6 align-middle text-sm text-slate-500 transition duration-300 sm:justify-end"
-              >
-                <div class="flex flex-row gap-5">
-                  <!-- Component: Small outline basic button -->
-
-                  <button
-                    matFab
-                    extended
-                    class="!h-10 !min-w-[5rem] !px-4 !text-sm"
-                  >
-                    <mat-icon class="material-symbols-outlined">edit</mat-icon>
-                    Editar
-                  </button>
-
-                  <!-- End Small outline basic button -->
-                  <!-- Component: Large primary button with icon  -->
-                  <button
-                    matIconButton
-                    aria-label="Borrar"
-                    class="!text-red-500"
-                  >
-                    <mat-icon class="material-symbols-outlined"
-                      >delete</mat-icon
-                    >
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-          <!-- Fin cliente -->
-        </tbody>
-      </table>
-    </div>
-    <!-- End Underline Table -->
+        </table>
+      </div>
+    }
   </div>
 </section>

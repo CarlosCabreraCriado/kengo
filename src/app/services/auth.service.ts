@@ -1,25 +1,19 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { environment as env } from '../../environments/environment';
 
 //RXJS:
-//import { BehaviorSubject } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 
 //Servicios:
 import { AppService } from './app.service';
-import { DirectusService } from './directus.service';
 
-type LoginResponse = { data: Tokens };
-type RefreshResponse = { data: Tokens };
-
-interface AuthResponse {
-  data: {
-    access_token: string;
-    refresh_token: string;
-    expires: number;
-  };
+interface LoginResponse {
+  data: Tokens;
+}
+interface RefreshResponse {
+  data: Tokens;
 }
 
 interface Tokens {
@@ -28,11 +22,8 @@ interface Tokens {
   expires: number;
 }
 
-const STORAGE_KEY = 'auth_tokens';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private API_URL = 'https://admin.kengoapp.com';
   //currentUser$ = new BehaviorSubject<User | null | undefined>(undefined);
   //
   private http = inject(HttpClient);
@@ -44,32 +35,29 @@ export class AuthService {
   constructor(
     private router: Router,
     private appService: AppService,
-    private directusService: DirectusService,
   ) {
-    // Hydrate desde storage
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const t: Tokens = JSON.parse(raw);
-      this.setTokens(t);
-    }
+    this.accessToken.set(this.getAccessToken());
+    this.refreshToken.set(this.getRefreshToken());
   }
 
   async login(email: string, password: string) {
-    this.removeTokens();
+    this.eliminarTokens();
 
     // 1) Cookie de sesión (httpOnly) — se setea en el navegador
     await firstValueFrom(
       this.http.post(
-        `${this.API_URL}/auth/login`,
+        `${env.DIRECTUS_URL}/auth/login`,
         { email, password, mode: 'session' },
         { withCredentials: true },
       ),
     );
 
     const res = await firstValueFrom(
-      this.http.post<{
-        data: { access_token: string; refresh_token: string; expires: number };
-      }>(`${this.API_URL}/auth/login`, { email, password, mode: 'json' }),
+      this.http.post<LoginResponse>(`${env.DIRECTUS_URL}/auth/login`, {
+        email,
+        password,
+        mode: 'json',
+      }),
     );
 
     this.setTokens(res.data); // tu método que guarda access/refresh/exp
@@ -80,19 +68,15 @@ export class AuthService {
     try {
       await firstValueFrom(
         this.http.post(
-          `${this.API_URL}/auth/logout`,
+          `${env.DIRECTUS_URL}/auth/logout`,
           {},
           { withCredentials: true },
         ),
       );
     } finally {
-      this.clearTokens();
+      this.eliminarTokens();
       this.router.navigate(['/login']);
     }
-  }
-
-  obtenerMiUsuario() {
-    return this.http.get(`${this.API_URL}/users/me`);
   }
 
   private setTokens(t: Tokens) {
@@ -101,25 +85,41 @@ export class AuthService {
     // Directus devuelve `expires` en segundos → calculamos hora de expiración aproximada
     const expMs = Date.now() + t.expires * 1000 - 5000; // -5s de margen
     this.accessTokenExpMs.set(expMs);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(t));
+
+    localStorage.setItem('access_token', t.access_token);
+    localStorage.setItem('refresh_token', t.refresh_token);
   }
 
-  clearTokens() {
+  eliminarTokens() {
     this.accessToken.set(null);
     this.refreshToken.set(null);
     this.accessTokenExpMs.set(null);
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
   }
 
   async refresh(): Promise<void> {
     const rt = this.refreshToken();
     if (!rt) throw new Error('No refresh token');
+
+    console.error('Refrescando token...', rt);
     const res = await firstValueFrom(
-      this.http.post<RefreshResponse>(`${this.API_URL}/auth/refresh`, {
+      this.http.post<RefreshResponse>(`${env.DIRECTUS_URL}/auth/refresh`, {
         mode: 'json',
         refresh_token: rt,
       }),
     );
+    console.error('Respuesta refresh:', res);
+
+    /*
+    const res = await firstValueFrom(
+      this.http.post<RefreshResponse>(
+        `${this.API_URL}/auth/refresh`,
+        {},
+        { withCredentials: true },
+      ),
+    );
+    */
     this.setTokens(res.data);
   }
 
@@ -127,12 +127,6 @@ export class AuthService {
     const exp = this.accessTokenExpMs();
     if (!exp) return true;
     return Date.now() >= exp - thresholdMs;
-  }
-
-  saveTokens(access: string, refresh: string) {
-    this.directusService.setToken(access);
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
   }
 
   cargarUsuario(usuario: unknown) {
@@ -145,11 +139,6 @@ export class AuthService {
 
   getRefreshToken(): string | null {
     return localStorage.getItem('refresh_token');
-  }
-
-  removeTokens() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
   }
 
   isAuthenticated(): boolean {

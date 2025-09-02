@@ -1,17 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  Validators,
-  FormGroup,
-} from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { AppService } from '../../services/app.service';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 
+//Servicios:
+import { AppService } from '../../services/app.service';
+
+//Material:
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 
 //Upload:
@@ -21,9 +20,8 @@ import { ImageUploadComponent } from '../../image-upload/image-upload.component'
 import { MatDialog } from '@angular/material/dialog';
 import { DialogoComponent } from '../../dialogos/dialogos.component';
 
-import { MatMenuModule } from '@angular/material/menu';
-
-import { Usuario } from '../../models/Global';
+//Types:
+import { Usuario } from '../../../types/global';
 
 @Component({
   selector: 'app-modificar-perfil',
@@ -41,73 +39,60 @@ import { Usuario } from '../../models/Global';
   templateUrl: './modificar-perfil.component.html',
   styleUrl: './modificar-perfil.component.scss',
 })
-export class ModificarPerfilComponent {
+export class ModificarPerfilComponent implements OnInit {
+  private appService = inject(AppService);
+  private fb = inject(FormBuilder);
+  public dialog = inject(MatDialog);
+
   // Select Value
   genderSelected = 'option1';
 
-  //Formulario:
-  public formularioUsuario: FormGroup;
-
   // File Uploader
-  private usuario: Usuario | null = null;
+  public usuario = computed(
+    () => this.appService.usuario() as Usuario | null,
+  )();
 
   public url_perfil = '';
   public formularioCambiado = false;
 
-  constructor(
-    private appService: AppService,
-    private fb: FormBuilder,
-    public dialog: MatDialog,
-  ) {
-    this.formularioUsuario = this.fb.group({
-      nombre: ['', [Validators.required]],
-      apellidos: ['', [Validators.required]],
+  //Formulario:
+  public formularioUsuario = this.fb.group({
+    nombre: ['', [Validators.required]],
+    apellidos: ['', [Validators.required]],
 
-      dni: [
-        { value: '', disabled: false },
-        [
-          Validators.required,
-          Validators.pattern('^[XYZ]?([0-9]{7,8})([A-Z])$'),
-        ],
-      ],
-      email: [
-        { value: '', disabled: true },
-        [Validators.required, Validators.email],
-      ],
-      email_aux: ['', [Validators.email]],
+    dni: [
+      { value: '', disabled: false },
+      [Validators.required, Validators.pattern('^[XYZ]?([0-9]{7,8})([A-Z])$')],
+    ],
+    email: [
+      { value: '', disabled: true },
+      [Validators.required, Validators.email],
+    ],
+    email_aux: ['', [Validators.email]],
 
-      telefono: [{ value: '', disabled: false }, [Validators.required]],
-      postal: [
-        '',
-        [Validators.required, Validators.maxLength(5), Validators.minLength(5)],
-      ],
+    telefono: [{ value: '', disabled: false }, [Validators.required]],
+    postal: [
+      '',
+      [Validators.required, Validators.maxLength(5), Validators.minLength(5)],
+    ],
 
-      direccion: ['', [Validators.required]],
-      sexo: ['', [Validators.required]],
+    direccion: ['', [Validators.required]],
+    sexo: ['', [Validators.required]],
 
-      flag_notificacion_principal: [false, []],
-      flag_notificacion_secundario: [false, []],
-    });
+    flag_notificacion_principal: [false, []],
+    flag_notificacion_secundario: [false, []],
+  });
 
-    this.appService.usuario$.subscribe((user) => {
-      console.log('Mis detalles: ', user);
-      if (user) {
-        this.usuario = user;
-        if (this.usuario.avatar_url) {
-          this.url_perfil = this.usuario.avatar_url;
-        }
-        //this.cargarFormulario();
-      }
-    });
-
-    this.formularioUsuario.valueChanges.subscribe((form) => {
+  ngOnInit() {
+    //this.appService.cargarMiDetalle();
+    this.formularioUsuario.valueChanges.subscribe(() => {
       this.formularioCambiado = true;
     });
 
     this.formularioUsuario.get('dni')?.valueChanges.subscribe((valor) => {
       this.formularioUsuario
         .get('dni')
-        ?.setValue(valor.toUpperCase(), { emitEvent: false });
+        ?.setValue(valor?.toUpperCase() || '', { emitEvent: false });
     });
   }
 
@@ -152,7 +137,7 @@ export class ModificarPerfilComponent {
       return;
     }
 
-    const dialogRef = this.dialog.open(DialogoComponent, {
+    this.dialog.open(DialogoComponent, {
       data: {
         tipo: 'procesando',
         titulo: 'Guardando cambios...',
@@ -176,15 +161,6 @@ export class ModificarPerfilComponent {
         }
       });
     */
-  }
-
-  trimFormValues(values: any) {
-    const valoresProcesados: any = {};
-    Object.keys(values).forEach((key) => {
-      valoresProcesados[key] =
-        typeof values[key] === 'string' ? values[key].trim() : values[key];
-    });
-    return valoresProcesados;
   }
 
   cambiarFoto(url_perfil: string) {

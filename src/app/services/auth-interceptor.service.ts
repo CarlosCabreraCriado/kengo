@@ -75,7 +75,7 @@ export const authInterceptor: HttpInterceptorFn = (
         return from(ensureRefreshed(auth)).pipe(
           switchMap(() => next(addAuthHeader(req))),
           catchError((refreshErr) => {
-            auth.clearTokens();
+            auth.eliminarTokens();
             return throwError(() => refreshErr);
           }),
         );

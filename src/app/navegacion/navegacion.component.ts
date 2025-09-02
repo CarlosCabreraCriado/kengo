@@ -1,24 +1,33 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  ChangeDetectorRef,
+  computed,
+  inject,
+  OnInit,
+} from '@angular/core';
 
+//Router:
+import { RouterOutlet } from '@angular/router';
+import { Router, RouterLink, NavigationEnd } from '@angular/router';
+
+import { environment as env } from '../../environments/environment';
+
+//Angular Material:
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
-import { RouterOutlet } from '@angular/router';
-
 import { MatDialog } from '@angular/material/dialog';
-import { AppService } from '../services/app.service';
 import { MatChipsModule } from '@angular/material/chips';
-
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 
+//Servicios:
+import { AppService } from '../services/app.service';
+
 import { trigger, transition, style, animate } from '@angular/animations';
 
-import { Router, RouterLink, NavigationEnd } from '@angular/router';
-import { Subscription } from 'rxjs';
-
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Usuario, SeccionPrincipal } from '../models/Global';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { SeccionPrincipal } from '../../types/global';
 import { ViewEncapsulation } from '@angular/core';
 
 interface Rutas {
@@ -31,7 +40,7 @@ interface OpcionesRutas {
   inicio: Rutas[];
   ejercicios: Rutas[];
   pacientes: Rutas[];
-  clinica: Rutas[];
+  clínica: Rutas[];
 }
 
 @Component({
@@ -59,17 +68,47 @@ interface OpcionesRutas {
     ]),
   ],
 })
-export class NavegacionComponent {
-  // isToggled
-  private routeSubscription: Subscription;
+export class NavegacionComponent implements OnInit {
+  //Servicios:
+  private breakpointObserver = inject(BreakpointObserver);
+  private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router);
+  public appService = inject(AppService);
+  public dialog = inject(MatDialog);
 
   //Permisos:
-  public isFisio = true;
-  public isPaciente = false;
   public isAdminClinica = false;
 
   public selectedTabIndex = 0;
   public opcionSeleccionada: SeccionPrincipal = 'inicio';
+
+  //Señales:
+  public avatarUrl = computed(() => {
+    const id_avatar = this.appService.usuario()?.avatar;
+    return id_avatar
+      ? `${env.DIRECTUS_URL}/assets/${id_avatar}?fit=cover&width=96&height=96&quality=80`
+      : null;
+  });
+
+  public isPaciente = computed(
+    () => this.appService.rolUsuario() === 'paciente',
+  );
+  public isFisio = computed(() => this.appService.rolUsuario() === 'fisio');
+
+  ngOnInit() {
+    this.construirRutas();
+    this.breakpointObserver
+      .observe(['(max-width: 767.98px)'])
+      .subscribe((result) => {
+        this.isMovil = result.matches;
+      });
+
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.construirRutas();
+      }
+    });
+  }
 
   public opciones: OpcionesRutas = {
     inicio: [
@@ -98,7 +137,7 @@ export class NavegacionComponent {
         seleccionado: false,
       },
     ],
-    clinica: [
+    clínica: [
       {
         nombre: 'Mi clínica',
         ruta: 'inicio/mi-clinica',
@@ -113,42 +152,7 @@ export class NavegacionComponent {
   };
 
   public routeAnimationState = '';
-  public usuario: Usuario | null = null;
   public isMovil = false;
-
-  constructor(
-    private breakpointObserver: BreakpointObserver,
-    private cdr: ChangeDetectorRef,
-    private router: Router,
-    public appService: AppService,
-    public dialog: MatDialog,
-  ) {
-    this.appService.accesos$.subscribe((accesos) => {
-      if (accesos) {
-        this.isPaciente = accesos.isPaciente;
-        this.isFisio = accesos.isFisio;
-        this.construirRutas();
-      }
-    });
-
-    this.appService.usuario$.subscribe((usuario) => {
-      if (usuario) {
-        this.usuario = usuario;
-      }
-    });
-
-    this.breakpointObserver
-      .observe(['(max-width: 767.98px)'])
-      .subscribe((result) => {
-        this.isMovil = result.matches;
-      });
-
-    this.routeSubscription = this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        this.construirRutas();
-      }
-    });
-  }
 
   logout() {
     console.warn('Realizando Logout...');
@@ -171,15 +175,14 @@ export class NavegacionComponent {
 
     const etiquetas: SeccionPrincipal[] = ['inicio'];
 
-    if (this.isFisio) {
+    if (this.isFisio()) {
       etiquetas.push('ejercicios');
       etiquetas.push('pacientes');
-      etiquetas.push('clinica');
+      etiquetas.push('clínica');
     }
 
-    if (this.isPaciente) {
-      etiquetas.push('clinica');
-      etiquetas.push('clinica');
+    if (this.isPaciente()) {
+      etiquetas.push('clínica');
     }
 
     const url = this.router.url.slice(1); //URL en formato: "inicio/accesos"
@@ -198,15 +201,37 @@ export class NavegacionComponent {
           this.selectedTabIndex = 0;
           this.opciones.inicio[1].seleccionado = true;
         }
+
+        if (url.startsWith('inicio/mi-clinica')) {
+          this.selectedTabIndex = 3;
+          this.opciones.inicio[0].seleccionado = true;
+        }
+
+        if (url.startsWith('inicio/detalle-ejercicio')) {
+          this.selectedTabIndex = 1;
+          //this.opciones.inicio[0].seleccionado = true;
+        }
       }
     }
   }
 
-  onTabChange(event: any): void {
+  /*
+  avatarUrl(p: Signal<Usuario>): string | null {
+    const id_avatar = p?.avatar;
+    return id_avatar
+      ? `${env.DIRECTUS_URL}/assets/${id_avatar}?fit=cover&width=96&height=96&quality=80`
+      : null;
+  }
+  */
+
+  onTabChange(event: unknown): void {
+    if (!event) return;
+    const evento = event as { tab: { textLabel: SeccionPrincipal } };
     // Navegar a la ruta correspondiente
-    const etiqueta: SeccionPrincipal = event.tab.textLabel;
+    const etiqueta: SeccionPrincipal = evento.tab.textLabel;
     this.opcionSeleccionada = etiqueta;
 
+    console.warn('Cambiando a pestaña: ' + etiqueta);
     if (this.opciones[etiqueta]) {
       for (const opcion of this.opciones[etiqueta]) {
         if (opcion.seleccionado) {

@@ -60,6 +60,7 @@
             </div>
           </ng-template>
 
+          <!--
           <div
             class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
           >
@@ -78,9 +79,10 @@
               }
             </mat-chip-listbox>
           </div>
+            -->
         </mat-tab>
 
-        @if (isFisio) {
+        @if (isFisio()) {
           <mat-tab label="pacientes">
             <ng-template mat-tab-label>
               <div
@@ -93,6 +95,7 @@
               </div>
             </ng-template>
 
+            <!--
             <div
               class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
             >
@@ -111,10 +114,12 @@
                 }
               </mat-chip-listbox>
             </div>
+
+-->
           </mat-tab>
         }
 
-        @if (isPaciente) {
+        @if (isPaciente()) {
           <mat-tab label="institucion">
             <ng-template mat-tab-label>
               <mat-icon class="material-symbols-outlined">business</mat-icon>
@@ -142,7 +147,7 @@
           </mat-tab>
         }
 
-        @if (isFisio) {
+        @if (isFisio()) {
           <mat-tab label="clínica">
             <ng-template mat-tab-label>
               <!--
@@ -165,14 +170,14 @@
             <div
               class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
             >
-              <mat-chip-listbox aria-label="Selección Impulsor">
+              <mat-chip-listbox aria-label="Selección clínica">
                 @for (
-                  opcion of opciones["clinica"];
+                  opcion of opciones["clínica"];
                   let i = $index;
                   track opcion.nombre
                 ) {
                   <mat-chip-option
-                    (click)="onChipClick('clinica', i)"
+                    (click)="onChipClick('clínica', i)"
                     color="warn"
                     [selected]="opcion.seleccionado"
                     >{{ opcion.nombre }}</mat-chip-option
@@ -192,15 +197,15 @@
                   [matMenuTriggerFor]="avatarMenu"
                   class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
                 >
-                  @if (usuario?.avatar_url) {
+                  @if (avatarUrl()) {
                     <img
-                      [src]="usuario?.avatar_url"
+                      [src]="avatarUrl()"
                       class="aspect-square w-full max-w-2xs rounded-full"
                       class="h-10 w-10 rounded-full border-2 border-solid"
                       alt="Avatar"
                     />
                   } @else {
-                    <div class="foto-perfil cargando-foto rounded-full"></div>
+                    <div class="foto-perfil cargando-foto rounded-full">no</div>
                   }
 
                   <!--
@@ -244,14 +249,18 @@
           [matMenuTriggerFor]="avatarMenu"
           class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
         >
-          @if (usuario?.avatar_url) {
+          @if (avatarUrl()) {
             <img
-              [src]="usuario?.avatar_url"
+              [src]="avatarUrl()"
               class="aspect-square h-10 w-10 max-w-2xs rounded-full border-2 border-solid"
               alt="Avatar"
             />
           } @else {
-            <div class="foto-perfil cargando-foto rounded-full"></div>
+            <mat-icon
+              class="material-symbols-outlined !text-zinc-400"
+              aria-hidden="true"
+              >person</mat-icon
+            >
           }
           <!--
           <img
@@ -280,7 +289,7 @@
 
 <div
   [@routeAnimations]="routeAnimationState"
-  class="relative h-screen w-full pt-30"
+  class="relative h-full w-full pt-30"
 >
   <router-outlet #outlet="outlet" (activate)="onActivate()"></router-outlet>
 </div>
