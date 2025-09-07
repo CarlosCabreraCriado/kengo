@@ -1,3 +1,4 @@
+<!--
 <h2 mat-dialog-title class="text-center">Foto de perfil</h2>
 
 <button mat-raised-button color="warn" (click)="fileInput.click()">
@@ -37,3 +38,122 @@
     Cancelar
   </button>
 </div>
+-->
+
+<!--
+<h2 mat-dialog-title>Editar foto de perfil</h2>
+-->
+
+<mat-dialog-content class="space-y-3">
+  <!-- Zona de arrastre/selección -->
+
+  <!-- Errores de carga -->
+  @if (loadError()) {
+    <div class="text-sm text-red-600">
+      {{ loadError() }}
+    </div>
+  }
+
+  @if (pantallaCargarArchivo()) {
+    <div
+      class="cursor-pointer rounded-lg border border-dashed p-4 text-center"
+      (click)="openFilePicker()"
+      (drop)="onDrop($event)"
+      (dragover)="onDragOver($event)"
+      aria-label="Seleccionar o arrastrar una imagen"
+    >
+      <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        class="hidden"
+        (change)="onFileSelected($event)"
+      />
+      <div class="flex flex-col items-center gap-2">
+        <mat-icon class="material-symbols-outlined">upload</mat-icon>
+        <div class="text-sm">
+          Haz clic para seleccionar una imagen o arrástrala aquí
+        </div>
+      </div>
+    </div>
+  } @else {
+    <!-- Cropper -->
+    @if (
+      (imageURL || imageChangedEvent || imageFile) &&
+      (!data.precargar || archivoPrecargado())
+    ) {
+      <!-- Controles -->
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <button matMiniFab (click)="zoomOut()">
+          <mat-icon class="material-symbols-outlined">zoom_out</mat-icon>
+        </button>
+        <button matMiniFab (click)="zoomIn()">
+          <mat-icon class="material-symbols-outlined">zoom_in</mat-icon>
+        </button>
+        <button matMiniFab (click)="rotateLeft()">
+          <mat-icon class="material-symbols-outlined">rotate_left</mat-icon>
+        </button>
+        <button matMiniFab (click)="rotateRight()">
+          <mat-icon class="material-symbols-outlined">rotate_right</mat-icon>
+        </button>
+        <button matMiniFab (click)="toggleFlipH()">
+          <mat-icon class="material-symbols-outlined">swap_horiz</mat-icon>
+        </button>
+        <button matMiniFab (click)="toggleFlipV()">
+          <mat-icon class="material-symbols-outlined">swap_vert</mat-icon>
+        </button>
+
+        <button
+          mat-stroked-button
+          extended
+          (click)="pantallaCargarArchivo.set(true)"
+        >
+          <mat-icon class="material-symbols-outlined">upload</mat-icon>
+          Cargar
+        </button>
+      </div>
+
+      <div
+        class="relative mx-auto mt-2 mb-2 aspect-square max-h-96 overflow-hidden rounded-lg border"
+      >
+        <image-cropper
+          [imageURL]="imageURL || undefined"
+          [imageFile]="imageFile ?? undefined"
+          [imageChangedEvent]="imageChangedEvent"
+          [maintainAspectRatio]="true"
+          [aspectRatio]="1"
+          [resizeToWidth]="data.resizeToWidth"
+          [transform]="transform"
+          [roundCropper]="true"
+          [onlyScaleDown]="true"
+          [alignImage]="'center'"
+          [containWithinAspectRatio]="true"
+          [format]="data.format"
+          [output]="'blob'"
+          [imageQuality]="data.quality"
+          (cropperReady)="onCropperReady()"
+          (loadImageFailed)="onLoadImageFailed()"
+          (imageCropped)="onCropped($event)"
+          class="relative z-10 block h-full w-full"
+        >
+        </image-cropper>
+      </div>
+    }
+  }
+  <!-- Preview recortado -->
+  @if (croppedBase64()) {
+    <div class="mt-2 flex items-center gap-3">
+      <img
+        [src]="croppedBase64()!"
+        alt="preview"
+        class="h-16 w-16 rounded-full border object-cover"
+      />
+      <div class="text-xs text-gray-500">Vista previa del recorte</div>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="guardar()">Guardar</button>
+</mat-dialog-actions>

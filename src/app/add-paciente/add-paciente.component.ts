@@ -33,6 +33,7 @@ interface Clinica {
 interface DirectusPage<T> {
   data: T[];
 }
+
 interface DirectusItem<T> {
   data: T;
 }

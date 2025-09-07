@@ -5,6 +5,8 @@ import { signal, computed, inject } from '@angular/core';
 import { environment as env } from '../../environments/environment';
 import { RolUsuario } from '../../types/global';
 
+import { firstValueFrom } from 'rxjs';
+
 //Modelos:
 import { Usuario, UsuarioDirectus } from '../../types/global';
 
@@ -61,35 +63,21 @@ export class AppService {
         .get<{ data: UsuarioDirectus }>(`${env.DIRECTUS_URL}/users/me`, {
           params: {
             fields:
-              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto,clinicas.puestos.Puestos_id.id,is_cliente,is_fisio,telefono,direccion',
+              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto,clinicas.puestos.Puestos_id.id,is_cliente,is_fisio,telefono,direccion,postal',
           },
         })
         .toPromise();
 
       if (res && res.data) {
-        const usuario: Usuario = {
-          id: res.data['id'],
-          avatar: res.data['avatar'] ?? null,
-          first_name: res.data['first_name'] ?? '',
-          last_name: res.data['last_name'] ?? '',
-          email: res.data['email'] ?? '',
-          telefono: res.data['telefono'] || undefined,
-          direccion: res.data['direccion'] || undefined,
-          detalle: null, // aquí podrás cargar "detalle_usuario" más abajo
-          clinicas:
-            res.data.clinicas?.map((c) => ({
-              id_clinica: c.id_clinica,
-              puestos:
-                c.puestos?.map((p) => ({
-                  id_puesto: p.Puestos_id?.id, // asumiendo que puesto es string
-                  puesto: p.Puestos_id?.puesto || '',
-                })) || [],
-            })) || [],
-          esCliente: !!res.data['is_cliente'],
-          esPaciente: !!res.data['is_paciente'],
-        };
+        const usuario: Usuario = this.transformarUsuarioDirectus(res.data);
 
+        console.log('Usuario cargado:', usuario);
         this._usuario.set(usuario);
+        if (usuario.esFisio) {
+          localStorage.setItem('carrito:last_fisio_id', usuario.id);
+        } else {
+          localStorage.removeItem('carrito:last_fisio_id');
+        }
       } else {
         throw new Error('Respuesta inválida del servidor');
       }
@@ -98,8 +86,64 @@ export class AppService {
       this._error.set('No se pudo cargar el usuario');
       this._usuario.set(null);
       this.router.navigate(['/login']);
+      localStorage.removeItem('carrito:last_fisio_id');
     } finally {
       this._loading.set(false);
     }
   }
+
+  async uploadFile(file: File, title?: string): Promise<string> {
+    const form = new FormData();
+    form.append('file', file);
+    if (title) form.append('title', title);
+
+    const res = await firstValueFrom(
+      this.http.post<{ data: { id: string } }>(
+        `${env.DIRECTUS_URL}/files`,
+        form,
+        {
+          // Si usas sesión por cookies:
+          withCredentials: true,
+        },
+      ),
+    );
+    return res.data.id;
+  }
+
+  transformarUsuarioDirectus(u: UsuarioDirectus): Usuario {
+    return {
+      id: u.id,
+      avatar: u.avatar ?? null,
+      first_name: u.first_name ?? '',
+      last_name: u.last_name ?? '',
+      email: u.email ?? '',
+      telefono: u.telefono || undefined,
+      direccion: u.direccion || undefined,
+      postal: u.postal || undefined,
+      detalle: null, // aquí podrás cargar "detalle_usuario" más abajo
+      clinicas:
+        u.clinicas?.map((c) => ({
+          id_clinica: c.id_clinica,
+          puestos:
+            c.puestos?.map((p) => ({
+              id_puesto: p.Puestos_id?.id, // asumiendo que puesto es string
+              puesto: p.Puestos_id?.puesto || '',
+            })) || [],
+        })) || [],
+      esFisio: !!u.is_fisio,
+      esPaciente: !!u.is_cliente,
+    };
+  }
+
+  /*
+  async updateMe(patch: Record<string, any>): Promise<any> {
+    const res = await firstValueFrom(
+      this.http.patch<{ data: any }>(`${env.DIRECTUS_URL}/users/me`, patch, {
+        withCredentials: true,
+        // headers: this.authHeaders
+      }),
+    );
+    return res.data;
+  }
+  */
 }

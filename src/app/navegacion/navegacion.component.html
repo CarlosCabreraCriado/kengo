@@ -120,23 +120,27 @@
         }
 
         @if (isPaciente()) {
-          <mat-tab label="institucion">
+          <mat-tab label="clínica">
             <ng-template mat-tab-label>
-              <mat-icon class="material-symbols-outlined">business</mat-icon>
-              <span class="hidden sm:block"> Clinica </span>
+              <div
+                class="fuente-kengo flex flex-col items-center justify-center"
+              >
+                <mat-icon class="material-symbols-outlined">business</mat-icon>
+                <span class="hidden sm:block"> Clínica </span>
+              </div>
             </ng-template>
 
             <div
               class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
             >
-              <mat-chip-listbox aria-label="Selección Institución">
+              <mat-chip-listbox aria-label="Selección clínica">
                 @for (
-                  opcion of opciones["ejercicios"];
+                  opcion of opciones["clínica"];
                   let i = $index;
                   track opcion.nombre
                 ) {
                   <mat-chip-option
-                    (click)="onChipClick('ejercicios', i)"
+                    (click)="onChipClick('clínica', i)"
                     color="warn"
                     [selected]="opcion.seleccionado"
                     >{{ opcion.nombre }}</mat-chip-option
@@ -162,7 +166,6 @@
                 class="fuente-kengo flex flex-col items-center justify-center"
               >
                 <mat-icon class="material-symbols-outlined">business</mat-icon>
-
                 <span class="hidden sm:block"> Clínica </span>
               </div>
             </ng-template>

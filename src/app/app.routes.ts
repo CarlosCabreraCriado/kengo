@@ -20,6 +20,8 @@ import { CambiarPasswordComponent } from './perfil/cambiar-password/cambiar-pass
 import { PrivacyPolicyComponent } from './perfil/privacy-policy/privacy-policy.component';
 import { TermsConditionsComponent } from './perfil/terms-conditions/terms-conditions.component';
 
+import { PlanConfigComponent } from './plan-config/plan-config.component';
+
 export const routes: Routes = [
   { path: '', redirectTo: 'inicio', pathMatch: 'full' },
 
@@ -32,6 +34,7 @@ export const routes: Routes = [
     children: [
       //{ path: "perfil", component: InicioPerfilComponent },
       { path: 'dashboard', component: DashboardComponent },
+
       {
         path: 'perfil',
         component: PerfilComponent,
@@ -44,6 +47,11 @@ export const routes: Routes = [
         ],
       },
 
+      {
+        path: 'planes/nuevo',
+        component: PlanConfigComponent,
+        pathMatch: 'full',
+      },
       { path: 'ejercicios', component: EjerciciosComponent, pathMatch: 'full' },
       { path: 'detalle-ejercicio/:id', component: DetalleEjercicioComponent },
       { path: 'mi-clinica', component: MiClinicaComponent, pathMatch: 'full' },

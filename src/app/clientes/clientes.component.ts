@@ -22,6 +22,7 @@ import { AddPacienteDialogComponent } from '../add-paciente/add-paciente.compone
 
 //Servicios:
 import { AppService } from '../services/app.service';
+import { PlanBuilderService } from '../services/plan-builder.service';
 
 import { Usuario, UsuarioDirectus } from '../../types/global';
 
@@ -50,6 +51,7 @@ interface DirectusPage<T> {
 export class ClientesComponent {
   private appService = inject(AppService);
   private dialog = inject(MatDialog);
+  public planBuilderService = inject(PlanBuilderService);
 
   public idsClinicas = computed(() => {
     if (this.appService.usuario() == null) return null;
@@ -105,27 +107,7 @@ export class ClientesComponent {
         const resultado = (v as DirectusPage<UsuarioDirectus>)?.data ?? [];
         const usuarios: Usuario[] = [];
         for (const usuario of resultado) {
-          usuarios.push({
-            id: usuario.id,
-            avatar: usuario.avatar,
-            first_name: usuario.first_name,
-            last_name: usuario.last_name,
-            email: usuario.email,
-            telefono: usuario.telefono || undefined,
-            direccion: usuario.direccion || undefined,
-            clinicas:
-              usuario.clinicas?.map((c) => ({
-                id_clinica: c.id_clinica,
-                puestos:
-                  c.puestos?.map((p) => ({
-                    id_puesto: p.Puestos_id?.id, // asumiendo que puesto es string
-                    puesto: p.Puestos_id?.puesto || '',
-                  })) || [],
-              })) || [],
-            esCliente: usuario.is_cliente,
-            esPaciente: usuario.is_paciente,
-            detalle: null,
-          });
+          usuarios.push(this.appService.transformarUsuarioDirectus(usuario));
         }
         console.log('Pacientes cargados:', resultado);
         return usuarios;
@@ -143,6 +125,10 @@ export class ClientesComponent {
   onBuscar = (term: string) => {
     this.busqueda.set((term ?? '').trim());
   };
+
+  seleccionarPaciente(p: Usuario) {
+    this.planBuilderService.cambiarPaciente(p);
+  }
 
   openAddPaciente() {
     this.dialog
@@ -178,21 +164,4 @@ export class ClientesComponent {
     const ln = (u.last_name || '').trim();
     return fn || ln ? `${fn} ${ln}`.trim() : u.email || u.id;
   }
-
-  public clientes = [
-    {
-      id: 1,
-      nombre: 'Emilio',
-      apellidos: 'Diaz Tejera',
-      email: 'emilio@gmail.com',
-      telefono: '690574534',
-    },
-    {
-      id: 2,
-      nombre: 'Carlos',
-      apellidos: 'Cabrera',
-      telefono: '690574534',
-      email: 'emilio@gmail.com',
-    },
-  ];
 }

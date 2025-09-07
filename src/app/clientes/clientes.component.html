@@ -1,7 +1,7 @@
-<section class="absolute top-20 mx-auto w-full max-w-7xl">
-  <header class="mx-auto my-4 w-[80%] max-w-7xl">
+<section class="absolute top-20 w-full">
+  <header class="mx-5 mt-4 max-w-7xl">
     <div
-      class="relative m-auto mt-2 flex h-fit w-fit items-center justify-center rounded-full border-1 pr-5 pl-5"
+      class="relative m-auto mt-2 mb-5 flex h-fit max-w-md items-center justify-center gap-2 rounded-full border-1 pr-3 pl-3"
     >
       <mat-form-field
         class="ff-compact my-2 w-full rounded-full"
@@ -11,7 +11,7 @@
           #buscador
           matInput
           formControlName="busqueda"
-          placeholder="Buscar paciente..."
+          placeholder="Buscar..."
           (input)="onBuscar(buscador.value)"
         />
         <button
@@ -26,7 +26,7 @@
       </mat-form-field>
 
       <button
-        class="ml-2"
+        class=""
         matMiniFab
         aria-label="Recargar datos"
         (click)="reload()"
@@ -38,7 +38,7 @@
         mat-flat-button
         color="primary"
         type="button"
-        class="ml-2"
+        class=""
         (click)="openAddPaciente()"
       >
         <mat-icon>person_add</mat-icon>
@@ -55,8 +55,12 @@
       <p class="text-red-600">No se pudieron cargar los pacientes.</p>
     } @else {
       <!-- Tabla Material -->
-      <div class="m-auto overflow-auto rounded-xl border border-gray-200">
-        <table mat-table [dataSource]="pacientes()" class="w-full">
+      <div class="tarjeta-kengo m-auto overflow-auto rounded-xl">
+        <table
+          mat-table
+          [dataSource]="pacientes()"
+          class="w-full !bg-transparent"
+        >
           <!-- Col: Nombre -->
           <ng-container matColumnDef="nombre">
             <th mat-header-cell *matHeaderCellDef>Nombre</th>
@@ -83,19 +87,12 @@
             </td>
           </ng-container>
 
-          <!-- Col: Móvil -->
-          <ng-container matColumnDef="movil">
-            <th mat-header-cell *matHeaderCellDef>Móvil</th>
+          <!-- Col: Contacto -->
+          <ng-container matColumnDef="contacto">
+            <th mat-header-cell *matHeaderCellDef>Contacto</th>
             <td class="text-zinc-600" mat-cell *matCellDef="let p">
+              {{ p.email || "—" }}<br />
               {{ p.telefono || p.phone || "—" }}
-            </td>
-          </ng-container>
-
-          <!-- Col: Email -->
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef>E-mail</th>
-            <td mat-cell class="text-zinc-600" *matCellDef="let p">
-              {{ p.email || "—" }}
             </td>
           </ng-container>
 
@@ -104,34 +101,42 @@
             <th mat-header-cell *matHeaderCellDef class="text-right">
               Acciones
             </th>
+
             <td mat-cell *matCellDef="let p" class="text-right">
               <button
-                matFab
-                extended
+                mat-icon-button
+                class=""
                 color="primary"
-                class="mr-4 !h-10 !min-w-[5rem] !px-4 !text-sm"
+                (click)="seleccionarPaciente(p)"
+              >
+                <mat-icon class="material-symbols-outlined">exercise</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                color="primary"
+                class=""
                 (click)="openEditarPaciente(p)"
               >
                 <mat-icon class="material-symbols-outlined">edit</mat-icon>
-                Editar
               </button>
+
+              <!--
               <button mat-icon-button color="warn" aria-label="Borrar">
                 <mat-icon class="material-symbols-outlined">delete</mat-icon>
               </button>
+-->
             </td>
           </ng-container>
 
           <!-- Header / Rows -->
           <tr
             mat-header-row
-            *matHeaderRowDef="['nombre', 'movil', 'email', 'acciones']"
+            *matHeaderRowDef="['nombre', 'contacto', 'acciones']"
           ></tr>
           <tr
             mat-row
-            *matRowDef="
-              let row;
-              columns: ['nombre', 'movil', 'email', 'acciones']
-            "
+            *matRowDef="let row; columns: ['nombre', 'contacto', 'acciones']"
           ></tr>
 
           <!-- Vacío -->

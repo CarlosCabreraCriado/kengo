@@ -25,7 +25,10 @@
               <div class="flow-root">
                 <ul class="-m-1 flex flex-wrap">
                   <li class="p-1 leading-none">
-                    <a href="#" class="text-xs font-medium text-zinc-600">
+                    <a
+                      class="text-xs font-medium text-zinc-600"
+                      [routerLink]="['/inicio/mis-pacientes']"
+                    >
                       Fisioterapeuta
                     </a>
                   </li>
@@ -37,7 +40,7 @@
           <ul class="mt-2 space-y-2">
             <li>
               <a
-                href="#"
+                [routerLink]="['/inicio/ejercicios']"
                 class="hover:border-primary hover:text-primary block h-full rounded-lg border border-white p-2 text-zinc-800"
               >
                 <strong class="font-medium">Asignar Ejercicios</strong>
@@ -52,7 +55,12 @@
       }
     </div>
 
-    <button mat-flat-button class="m-auto block! h-20" color="warn">
+    <button
+      mat-flat-button
+      class="m-auto block! h-20"
+      color="warn"
+      [routerLink]="['/inicio/mis-pacientes']"
+    >
       Todos mis pacientes
     </button>
 

@@ -1,14 +1,8 @@
-.avatar-button {
-  position: fixed;
-  bottom: 80px;
-  right: 25px;
-  pointer-events: auto;
-}
-
 .drawer-container {
   position: fixed;
   z-index: 100;
   top: 0;
+  right: 0;
   width: 100vw;
   height: 100vh;
   pointer-events: none;
@@ -17,15 +11,4 @@
 
 .habilitar-clicks {
   pointer-events: all !important;
-}
-
-.barra-lateral {
-  position: absolute;
-  color: black;
-  pointer-events: auto;
-  overflow: hidden;
-  width: 30vw;
-  height: 100vh;
-  background: white;
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
 }

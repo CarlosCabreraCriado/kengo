@@ -21,7 +21,8 @@ export interface Usuario {
     id_clinica: number;
     puestos: { id_puesto: number; puesto: string }[];
   }[];
-  esCliente: boolean;
+  postal?: string;
+  esFisio: boolean;
   esPaciente: boolean;
 }
 
@@ -39,8 +40,9 @@ export interface UsuarioDirectus {
     id_clinica: number;
     puestos: { Puestos_id: { puesto: string; id: number } }[];
   }[];
+  postal?: string;
+  is_fisio: boolean;
   is_cliente: boolean;
-  is_paciente: boolean;
 }
 
 export interface DetalleUsuario {
@@ -61,6 +63,23 @@ export interface Ejercicio {
   portada: string;
   video_url?: string;
   portada_url?: string;
+}
+
+export interface EjercicioPlan {
+  id?: number;
+  sort: number;
+  date_created?: string;
+  data_updated?: string;
+  plan?: number;
+  ejercicio: Ejercicio;
+  instrucciones_paciente?: string;
+  notas_fisio?: string;
+  series?: number;
+  repeticiones?: number;
+  duracion_seg?: number;
+  descanso_seg?: number;
+  veces_dia?: number;
+  dias_semana?: string[];
 }
 
 export interface ClinicaDirectus {

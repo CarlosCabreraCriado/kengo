@@ -1,6 +1,7 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { Ejercicio } from '../../types/global';
 
+import { PlanBuilderService } from '../services/plan-builder.service';
 import { EjerciciosService } from '../services/ejercicios.service';
 import { ActivatedRoute } from '@angular/router';
 
@@ -15,8 +16,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
 //Formularios:
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
 @Component({
@@ -36,6 +37,7 @@ export class DetalleEjercicioComponent {
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private ejerciciosService = inject(EjerciciosService);
+  private planBuilderService = inject(PlanBuilderService);
 
   //Formulario:
   public formularioDetalleEjercicio = this.fb.group({
@@ -140,5 +142,12 @@ export class DetalleEjercicioComponent {
 
     // Aquí puedes emitir/guardar/añadir al plan, etc.
     console.log('[detalle-ejercicio] payload', payload);
+  }
+
+  asignarEjercicio() {
+    const ejercicio = this.ejercicio();
+    if (ejercicio) {
+      this.planBuilderService.addEjercicio(ejercicio);
+    }
   }
 }

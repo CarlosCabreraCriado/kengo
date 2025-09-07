@@ -1,124 +1,136 @@
 <mat-sidenav-container
   class="drawer-container"
-  [class.habilitar-clicks]="drawerAbierto"
+  [class.habilitar-clicks]="drawerAbierto()"
+  (backdropClick)="toggle()"
 >
   <mat-sidenav
     #drawer
     mode="over"
     position="end"
     class="barra-lateral"
+    [disableClose]="false"
     (opened)="abrirDrawer()"
     (closed)="cerrarDrawer()"
   >
     <div class="flex h-full w-full flex-col">
+      <mat-icon
+        (click)="toggle()"
+        class="material-symbols-outlined mt-5 ml-5 text-xl text-black"
+        aria-hidden="true"
+        >close</mat-icon
+      >
+      <!-- Cabecera paciente -->
       <div class="mt-5 w-full">
         <li class="flex flex-col items-center">
-          <img
-            src="https://randomuser.me/api/portraits/women/28.jpg"
-            alt=""
-            class="rounded-full object-cover p-5"
-          />
-          <h5 class="text-xl font-semibold">Dianna</h5>
+          @if (perfilUrl()) {
+            <img
+              [src]="perfilUrl()"
+              alt=""
+              class="h-28 w-28 rounded-full object-cover p-1"
+            />
+          } @else {
+            <mat-icon
+              class="material-symbols-outlined !text-zinc-400"
+              aria-hidden="true"
+              >person</mat-icon
+            >
+          }
+          <h5 class="mt-1 text-xl font-semibold text-zinc-700">
+            {{ pacienteNombre() }}
+          </h5>
         </li>
       </div>
 
       <div class="mt-2 mb-5 ml-5 h-auto items-start">
-        <p class="fuente-kengo">Ejercicios</p>
+        <p class="fuente-kengo">Ejercicios ({{ total() }})</p>
       </div>
 
-      <div class="flex w-full flex-1 flex-col">
-        @for (ejercicio of ejerciciosAdjudicados; track ejercicio.id) {
-          <div class="relative flex h-20 w-full justify-between border-t-2">
-            <p class="m-5 flex items-center">
-              {{ ejercicio.nombreCategoria }}
-            </p>
-            <button
-              class="m-5 flex items-center rounded-full text-sm text-gray-700 transition-all duration-200 hover:text-red-600"
-              aria-label="Eliminar"
+      <!-- Lista de items del carrito -->
+      <div class="flex w-full flex-1 flex-col overflow-auto">
+        @if (svc.items().length) {
+          @for (it of svc.items(); track it.ejercicio.id_ejercicio) {
+            <div
+              class="relative flex h-20 w-full items-center justify-between border-t px-3"
             >
-              <!-- Ícono SVG de papelera -->
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-10 w-10"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+              <div class="flex items-center gap-3">
+                <div class="h-12 w-16 overflow-hidden rounded-md bg-gray-100">
+                  @if (it.ejercicio.portada) {
+                    <img
+                      [src]="assetUrl(it.ejercicio.portada)"
+                      class="h-full w-full object-cover"
+                    />
+                  }
+                </div>
+                <div class="flex flex-col">
+                  <p class="line-clamp-2 text-sm font-medium">
+                    {{ it.ejercicio.nombre_ejercicio }}
+                  </p>
+                  <p class="text-[11px] text-gray-500">
+                    {{ it.series || "—" }}×{{ it.repeticiones || "—" }}
+                    @if (it.duracion_seg) {
+                      <span> • {{ it.duracion_seg }}s</span>
+                    }
+                    @if (it.veces_dia) {
+                      <span> • {{ it.veces_dia }}/día</span>
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <button
+                class="rounded-full text-sm text-gray-700 transition-all duration-200 hover:text-red-600"
+                aria-label="Eliminar"
+                (click)="eliminar(it.ejercicio.id_ejercicio)"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8m-8 0a1 1 0 011-1h4a1 1 0 011 1"
-                />
-              </svg>
-            </button>
+                <mat-icon class="material-symbols-outlined">delete</mat-icon>
+              </button>
+            </div>
+          }
+        } @else {
+          <div class="px-5 text-sm text-gray-500">
+            Aún no hay ejercicios en el plan. Añádelos desde la galería.
           </div>
         }
       </div>
 
-      <div class="mb-5 flex w-full flex-col items-center">
-        <!-- Component: Large primary button with trailing icon  -->
+      <!-- Acciones -->
+      <div class="mt-3 mb-5 flex w-full flex-col items-center gap-3">
         <button
-          class="mt-5 inline-flex h-12 w-[50%] items-center justify-center gap-2 rounded bg-orange-500 px-6 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+          class="mt-2 inline-flex h-11 w-[85%] items-center justify-center gap-2 rounded bg-orange-500 px-6 text-sm font-medium text-white transition duration-300 hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300"
+          [disabled]="!svc.items().length || !svc.paciente()"
+          (click)="configurarPlan()"
         >
-          <span>Adjudicar video</span>
-          <span class="relative only:-mx-6">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1.5"
-              role="graphics-symbol"
-              aria-labelledby="title-02 desc-02"
-            >
-              <title id="title-02">Icon title</title>
-              <desc id="desc-02">A more detailed description of the icon</desc>
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-              />
-            </svg>
-          </span>
+          <span>Configurar plan</span>
+          <mat-icon class="material-symbols-outlined">arrow_forward</mat-icon>
         </button>
-        <!-- End Large primary button with trailing icon  -->
-        <!-- Component: Large primary button with trailing icon  -->
+
         <button
-          class="mt-5 inline-flex h-12 w-[50%] items-center justify-center gap-2 rounded bg-orange-500 px-6 text-sm font-medium tracking-wide whitespace-nowrap text-white transition duration-300 hover:bg-orange-600 focus:bg-orange-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:border-orange-300 disabled:bg-orange-300 disabled:shadow-none"
+          class="inline-flex h-11 w-[85%] items-center justify-center gap-2 rounded bg-gray-200 px-6 text-sm font-medium text-gray-800 transition hover:bg-gray-300 disabled:cursor-not-allowed"
+          (click)="cambiarPaciente()"
         >
-          <span>Cambiar cliente</span>
-          <span class="relative only:-mx-6">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1.5"
-              role="graphics-symbol"
-              aria-labelledby="title-02 desc-02"
-            >
-              <title id="title-02">Icon title</title>
-              <desc id="desc-02">A more detailed description of the icon</desc>
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-              />
-            </svg>
-          </span>
+          <span>Cambiar paciente</span>
+          <mat-icon class="material-symbols-outlined">person_search</mat-icon>
         </button>
-        <!-- End Large primary button with trailing icon  -->
       </div>
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content>
-    <!-- Solo el botón -->
-    <button mat-fab class="avatar-button" (click)="drawer.toggle()">
-      <mat-icon>account_circle</mat-icon>
+    <!-- Botón flotante para abrir el drawer -->
+    <button
+      matFab
+      class="pointer-events-auto !fixed right-10 bottom-10"
+      (click)="toggle()"
+    >
+      @if (perfilUrl()) {
+        <img [src]="perfilUrl()" alt="" class="rounded-full object-cover p-1" />
+      } @else {
+        <mat-icon
+          class="material-symbols-outlined !text-white"
+          aria-hidden="true"
+          >personal_injury</mat-icon
+        >
+      }
     </button>
   </mat-sidenav-content>
 </mat-sidenav-container>

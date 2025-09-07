@@ -34,7 +34,7 @@
         <div class="py-10 text-center text-gray-500">No hay clínicas.</div>
       } @else {
         @for (c of clinicasRes(); track c?.id_clinica) {
-          <mat-card class="overflow-hidden rounded-2xl shadow-lg">
+          <mat-card class="tarjeta-kengo overflow-hidden rounded-2xl shadow-lg">
             <!-- HERO -->
             <div class="relative h-64 md:h-72">
               @if (c.imagenes?.length) {
@@ -148,7 +148,7 @@
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @for (f of fisios(c.id_clinica); track f.id) {
                   <mat-card
-                    class="rounded-2xl border bg-white/90 shadow transition-shadow hover:shadow-lg"
+                    class="tarjeta-kengo rounded-2xl border bg-white/90 shadow transition-shadow hover:shadow-lg"
                   >
                     <div class="p-4">
                       <div class="flex items-center gap-4">

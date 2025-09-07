@@ -1,9 +1,22 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+  effect,
+  DestroyRef,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { environment as env } from '../../../environments/environment';
 
 //Servicios:
 import { AppService } from '../../services/app.service';
@@ -35,109 +48,97 @@ import { Usuario } from '../../../types/global';
     MatFormFieldModule,
     MatSelectModule,
     ReactiveFormsModule,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './modificar-perfil.component.html',
   styleUrl: './modificar-perfil.component.scss',
 })
-export class ModificarPerfilComponent implements OnInit {
+export class ModificarPerfilComponent implements OnInit, OnDestroy {
   private appService = inject(AppService);
   private fb = inject(FormBuilder);
   public dialog = inject(MatDialog);
+  private destroyRef = inject(DestroyRef);
+
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   // Select Value
   genderSelected = 'option1';
 
-  // File Uploader
-  public usuario = computed(
-    () => this.appService.usuario() as Usuario | null,
-  )();
+  public usuario = computed(() => {
+    return this.appService.usuario();
+  });
 
-  public url_perfil = '';
-  public formularioCambiado = false;
+  public url_perfil = computed(() => {
+    const id_avatar = this.usuario()?.avatar;
+    return id_avatar
+      ? `${env.DIRECTUS_URL}/assets/${id_avatar}?fit=cover`
+      : null;
+  });
+
+  public formularioCambiado = signal(false);
+  public formularioInicializado = signal(false);
+
+  readonly subiendoAvatar = signal(false);
+  readonly previewUrl = signal<string | null>(null);
+
+  private cleanupPreview = effect(() => {
+    const url = this.previewUrl();
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  });
 
   //Formulario:
   public formularioUsuario = this.fb.group({
-    nombre: ['', [Validators.required]],
-    apellidos: ['', [Validators.required]],
-
-    dni: [
-      { value: '', disabled: false },
-      [Validators.required, Validators.pattern('^[XYZ]?([0-9]{7,8})([A-Z])$')],
-    ],
+    first_name: ['', [Validators.required]],
+    last_name: ['', [Validators.required]],
     email: [
       { value: '', disabled: true },
       [Validators.required, Validators.email],
     ],
-    email_aux: ['', [Validators.email]],
-
     telefono: [{ value: '', disabled: false }, [Validators.required]],
     postal: [
       '',
       [Validators.required, Validators.maxLength(5), Validators.minLength(5)],
     ],
-
     direccion: ['', [Validators.required]],
-    sexo: ['', [Validators.required]],
+  });
 
-    flag_notificacion_principal: [false, []],
-    flag_notificacion_secundario: [false, []],
+  private effectoCargaInicial = effect(() => {
+    if (this.usuario() != null && !this.formularioInicializado()) {
+      this.cargarFormulario(this.usuario() as Usuario);
+      this.formularioInicializado.set(true);
+      this.effectoCargaInicial.destroy();
+    }
   });
 
   ngOnInit() {
-    //this.appService.cargarMiDetalle();
     this.formularioUsuario.valueChanges.subscribe(() => {
-      this.formularioCambiado = true;
-    });
-
-    this.formularioUsuario.get('dni')?.valueChanges.subscribe((valor) => {
-      this.formularioUsuario
-        .get('dni')
-        ?.setValue(valor?.toUpperCase() || '', { emitEvent: false });
+      this.formularioCambiado.set(true);
     });
   }
 
-  cargarFormulario(): void {
-    /*
-    this.formularioUsuario.get('nombre')?.setValue(this.usuario.nombre);
-    this.formularioUsuario.get('apellidos')?.setValue(this.usuario.apellidos);
-    this.formularioUsuario.get('dni')?.setValue(this.usuario.dni);
-    this.formularioUsuario.get('email')?.setValue(this.usuario.email);
-    this.formularioUsuario.get('email_aux')?.setValue(this.usuario.email_aux);
-    this.formularioUsuario.get('telefono')?.setValue(this.usuario.telefono);
-    this.formularioUsuario.get('postal')?.setValue(this.usuario.postal);
-    this.formularioUsuario.get('direccion')?.setValue(this.usuario.direccion);
-    this.formularioUsuario.get('sexo')?.setValue(this.usuario.sexo);
-
-    this.formularioUsuario
-      .get('flag_notificacion_principal')
-      ?.setValue(!!Number(this.usuario.flag_notificacion_principal));
-    this.formularioUsuario
-      .get('flag_notificacion_secundario')
-      ?.setValue(!!Number(this.usuario.flag_notificacion_secundario));
-    this.formularioCambiado = false;
-    */
+  ngOnDestroy() {
+    const url = this.previewUrl();
+    if (url) URL.revokeObjectURL(url);
   }
 
-  guardarCambios() {
+  cargarFormulario(usuario: Usuario) {
+    this.formularioUsuario.patchValue(usuario, { emitEvent: false });
+  }
+
+  async guardarCambios() {
     if (this.formularioUsuario.invalid) {
-      if (this.formularioUsuario.get('dni')?.errors == null) {
-        alert(
-          'Formulario no valido. Revisa el formato de los datos aportados y vuelve a intentarlo.',
-        );
-      } else {
-        alert(
-          'Formulario no valido. Compruebe que el DNI introducido es correcto y vuelve a intentarlo.',
-        );
-      }
+      alert('Formulario no valido.');
       return;
     }
 
-    if (this.formularioCambiado == false) {
+    if (!this.formularioCambiado()) {
       alert('No se han realizado cambios.');
       return;
     }
 
-    this.dialog.open(DialogoComponent, {
+    const dialogoProcesando = this.dialog.open(DialogoComponent, {
       data: {
         tipo: 'procesando',
         titulo: 'Guardando cambios...',
@@ -145,47 +146,142 @@ export class ModificarPerfilComponent implements OnInit {
       },
     });
 
-    console.log('ENVIANDO CAMBIOS: ', this.formularioUsuario.getRawValue());
-    /*
-    this.postService
-      .peticionActualizarMiPerfil(
-        this.trimFormValues(this.formularioUsuario.getRawValue()),
-      )
-      .subscribe((response) => {
-        if (response) {
-          console.warn('Perfil guardado con exito');
-          dialogRef.close();
-        } else {
-          console.warn('Error en el guardado');
-          dialogRef.close();
-        }
+    // Casos según tu esquema:
+    const payload = this.formularioUsuario.value;
+    console.warn('Payload a enviar:', payload);
+
+    // Elige el que corresponda a tu colección de usuarios:
+    const resUser = await fetch(`${env.DIRECTUS_URL}/users/me`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resUser.ok) {
+      dialogoProcesando.close();
+      this.dialog.open(DialogoComponent, {
+        data: {
+          tipo: 'error',
+          titulo: 'Se ha producido un error',
+          mensaje: '',
+        },
       });
-    */
+      throw new Error('No se pudo actualizar el perfil');
+    } else {
+      await this.appService.refreshUsuario();
+      this.formularioCambiado.set(false);
+      dialogoProcesando.close();
+    }
   }
 
-  cambiarFoto(url_perfil: string) {
+  cambiarFotoPerfil() {
     this.dialog
       .open(ImageUploadComponent, {
         data: {
-          url_perfil: url_perfil,
+          url_perfil: this.url_perfil(), // se usa como preview inicial
+          resizeToWidth: 512,
+          format: 'jpeg',
+          quality: 80,
+          precargar: true,
         },
       })
       .afterClosed()
-      .subscribe((result) => {
-        if (!result) {
-          return;
-        }
-        /*
-        if (this.usuario.id && result.blob) {
-          let imagen = new File(result.blob, this.usuario.id_usuario + '.jpg');
-          this.postService
-            .uploadImagenPerfil(this.usuario.id_usuario, imagen)
-            .subscribe((response) => {
-              this.url_perfil = response.imageUrl;
-              this.cdr.detectChanges();
-            });
-        }
-        */
+      .subscribe(async (result?: { file: File; dataUrl: string }) => {
+        if (!result) return;
+        await this.subirAvatar(result.file);
       });
+  }
+
+  abrirSelectorArchivo() {
+    if (!this.subiendoAvatar()) this.fileInput?.nativeElement.click();
+  }
+
+  onArchivoSeleccionado(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    // Validación simple
+    const isImage = /^image\/(png|jpe?g|webp|gif|bmp|avif)$/i.test(file.type);
+    const maxSizeMB = 5;
+    if (!isImage) {
+      alert('Selecciona una imagen válida.');
+      input.value = '';
+      return;
+    }
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      alert(`La imagen supera ${maxSizeMB} MB.`);
+      input.value = '';
+      return;
+    }
+
+    // Previsualización inmediata
+    const objUrl = URL.createObjectURL(file);
+    this.previewUrl.set(objUrl);
+
+    // (Opcional) aquí podrías abrir un modal con ngx-image-cropper y, tras recortar,
+    // reemplazar `file` por el blob recortado antes de subir.
+
+    // Subir a Directus
+    this.subirAvatar(file).finally(() => {
+      // Limpia selección para permitir re-seleccionar el mismo archivo si hace falta
+      input.value = '';
+    });
+  }
+
+  private async subirAvatar(file: File) {
+    try {
+      this.subiendoAvatar.set(true);
+
+      // 1) Subida del archivo a Directus
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const resFile = await fetch(`${env.DIRECTUS_URL}/files`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // si usas cookies/sesión
+        headers: {
+          // 'Authorization': `Bearer ${token}`, // si usas token
+        },
+      });
+
+      if (!resFile.ok) throw new Error('Error subiendo el archivo');
+      const filePayload = await resFile.json();
+      const fileId = filePayload?.data?.id as string | undefined;
+      //const fileUrl = filePayload?.data?.data?.full_url || this.url_perfil(); // ajusta a tu helper
+
+      if (!fileId) throw new Error('No se recibió ID del archivo');
+
+      // 2) Actualizar el usuario con el nuevo avatar
+      const usuario = this.appService.usuario();
+      if (!usuario) throw new Error('Usuario no cargado');
+
+      // Casos según tu esquema:
+      const updatePayloadA = { avatar: fileId };
+
+      // Elige el que corresponda a tu colección de usuarios:
+      const resUser = await fetch(`${env.DIRECTUS_URL}/users/me`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json' /*, Authorization si hace falta */,
+        },
+        body: JSON.stringify(updatePayloadA),
+      });
+
+      if (!resUser.ok) throw new Error('No se pudo actualizar el perfil');
+
+      // 3) Refrescar usuario en el AppService (para propagar la nueva imagen)
+      await this.appService.refreshUsuario();
+    } catch (e) {
+      console.error(e);
+      alert('No se pudo actualizar la foto de perfil.');
+    } finally {
+      this.subiendoAvatar.set(false);
+    }
   }
 }

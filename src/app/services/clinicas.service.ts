@@ -1,4 +1,4 @@
-import { Injectable, resource, signal, inject, computed } from '@angular/core';
+import { Injectable, signal, inject, computed } from '@angular/core';
 import { environment as env } from '../../environments/environment';
 
 import { httpResource } from '@angular/common/http';
@@ -137,26 +137,7 @@ export class ClinicasService {
         const data = (v as DirectusPage<UsuarioDirectus>)?.data ?? [];
         const map: FisiosPorClinica = {};
         for (const u of data) {
-          const fisio: Usuario = {
-            id: u.id,
-            avatar: u.avatar ?? null,
-            first_name: u.first_name ?? '',
-            last_name: u.last_name ?? '',
-            email: u.email ?? '',
-            detalle: null,
-            esCliente: u.is_cliente,
-            esPaciente: u.is_paciente,
-            telefono: u.telefono || undefined,
-            clinicas:
-              u.clinicas?.map((c) => ({
-                id_clinica: c.id_clinica,
-                puestos:
-                  c.puestos?.map((p) => ({
-                    id_puesto: p.Puestos_id?.id, // asumiendo que puesto es string
-                    puesto: p.Puestos_id?.puesto || '',
-                  })) || [],
-              })) || [],
-          };
+          const fisio: Usuario = this.appService.transformarUsuarioDirectus(u);
           const rel = Array.isArray(u.clinicas) ? u.clinicas : [];
           for (const c of rel) {
             const idClin = Number(c?.id_clinica);

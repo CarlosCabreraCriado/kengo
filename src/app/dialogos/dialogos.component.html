@@ -31,7 +31,7 @@
 
       <div mat-dialog-content class="text-center">
         <mat-spinner
-          class="text-center mr-auto ml-auto mt-15 mb-15"
+          class="mt-15 mr-auto mb-15 ml-auto text-center"
         ></mat-spinner>
         <p>
           {{ data.mensaje }}
@@ -73,7 +73,7 @@
     <div class="d-flex flex-row">
       <div class="mr-15">
         <img
-          src="assets/images/icons/warning.webp"
+          src="assets/iconos/warning.webp"
           alt="warning"
           class="warning-icon"
         />
@@ -108,10 +108,10 @@
 
   <!-- Tipo Warning Confirmación -->
   @case ("link") {
-    <div class="d-flex flex-row">
+    <div class="d-flex flex-row justify-center pr-5">
       <div class="mr-15">
         <img
-          src="assets/images/icons/warning.webp"
+          src="assets/iconos/warning.webp"
           alt="warning"
           class="warning-icon"
         />
@@ -212,13 +212,9 @@
 
   <!-- Tipo ERROR -->
   @case ("exito") {
-    <div class="d-flex flex-row">
-      <div class="mr-15">
-        <img
-          src="assets/images/icons/exito.webp"
-          alt="error"
-          class="warning-icon"
-        />
+    <div class="flex flex-row justify-center p-4">
+      <div class="">
+        <img src="assets/iconos/exito.webp" alt="error" class="warning-icon" />
       </div>
       <div>
         <h1 mat-dialog-title>
@@ -231,7 +227,7 @@
           </p>
         </div>
 
-        <div mat-dialog-actions class="mt-15">
+        <div mat-dialog-actions>
           <button
             mat-flat-button
             class="daxa"

@@ -1,0 +1,172 @@
+<div
+  class="absolute top-20 m-5 grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3"
+>
+  <!-- Config plan -->
+  <section class="tarjeta-kengo h-fit rounded-xl p-4 md:col-span-1">
+    <form [formGroup]="form" class="space-y-3">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Título del plan</mat-label>
+        <input matInput formControlName="titulo" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Descripción</mat-label>
+        <textarea matInput rows="3" formControlName="descripcion"></textarea>
+      </mat-form-field>
+
+      <div class="grid grid-cols-2 gap-3">
+        <mat-form-field appearance="outline">
+          <mat-label>Inicio</mat-label>
+          <input matInput type="date" formControlName="inicio" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fin</mat-label>
+          <input matInput type="date" formControlName="fin" />
+        </mat-form-field>
+      </div>
+    </form>
+  </section>
+
+  <!-- Lista editable de ejercicios -->
+  <section class="tarjeta-kengo rounded-xl p-4 md:col-span-2">
+    <div class="mb-3 text-sm font-semibold text-zinc-700">Ejercicios</div>
+
+    <div cdkDropList class="space-y-2" (cdkDropListDropped)="onDrop($event)">
+      @for (it of svc.items(); track $index) {
+        <div class="rounded-lg bg-white/60 p-3 text-zinc-700" cdkDrag>
+          <div class="flex items-start gap-3">
+            <div class="mt-1 cursor-grab select-none" cdkDragHandle>
+              <mat-icon class="material-symbols-outlined"
+                >drag_indicator</mat-icon
+              >
+            </div>
+            <div class="h-12 w-12 overflow-hidden rounded-md bg-gray-100">
+              @if (it.ejercicio.portada) {
+                <img
+                  [src]="assetUrl(it.ejercicio.portada!)"
+                  class="h-full w-full object-cover"
+                />
+              }
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-medium">
+                {{ $index + 1 }}. {{ it.ejercicio.nombre_ejercicio }}
+              </div>
+
+              <div class="mt-2 grid grid-cols-2 gap-2">
+                <mat-form-field appearance="outline">
+                  <mat-label>Series</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [value]="it.series"
+                    (input)="
+                      update($index, {
+                        series: $any($event.target).valueAsNumber,
+                      })
+                    "
+                  />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Reps</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [value]="it.repeticiones"
+                    (input)="
+                      update($index, {
+                        repeticiones: $any($event.target).valueAsNumber,
+                      })
+                    "
+                  />
+                </mat-form-field>
+                <!--
+                <mat-form-field appearance="outline">
+                  <mat-label>Duración (s)</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [value]="it.duracion_seg ?? ''"
+                    (input)="
+                      update($index, {
+                        duracion_seg:
+                          $any($event.target).valueAsNumber || undefined,
+                      })
+                    "
+                  />
+                </mat-form-field>
+              -->
+                <mat-form-field appearance="outline">
+                  <mat-label>Descanso (s)</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [value]="it.descanso_seg ?? ''"
+                    (input)="
+                      update($index, {
+                        descanso_seg:
+                          $any($event.target).valueAsNumber || undefined,
+                      })
+                    "
+                  />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Veces/día</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [value]="it.veces_dia ?? 1"
+                    (input)="
+                      update($index, {
+                        veces_dia: $any($event.target).valueAsNumber || 1,
+                      })
+                    "
+                  />
+                </mat-form-field>
+              </div>
+
+              <div class="">
+                <label class="text-xs font-medium">Días</label>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  @for (d of dias; track d) {
+                    <button
+                      type="button"
+                      class="rounded-md border px-2 py-1 text-xs"
+                      [class.!bg-blue-600]="isDia(it, d)"
+                      [class.!text-white]="isDia(it, d)"
+                      (click)="toggleDia($index, d)"
+                    >
+                      {{ d }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline" class="mt-2 w-full">
+                <mat-label>Instrucciones para el paciente</mat-label>
+                <textarea
+                  matInput
+                  rows="2"
+                  [value]="it.instrucciones_paciente || ''"
+                  (input)="
+                    update($index, {
+                      instrucciones_paciente: $any($event.target).value,
+                    })
+                  "
+                ></textarea>
+              </mat-form-field>
+            </div>
+
+            <button
+              mat-icon-button
+              (click)="svc.removeEjercicio(it.ejercicio.id_ejercicio)"
+            >
+              <mat-icon class="material-symbols-outlined">delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+</div>

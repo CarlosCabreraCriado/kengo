@@ -35,9 +35,26 @@ body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
 }
+
 .fuente-kengo {
   font-family: "kengoFont";
   color: var(--color-primary);
+}
+
+@layer components {
+  .tarjeta-kengo {
+    /* SUGERENCIA: añade `border` para que el color se vea */
+    @apply border !border-white/20 !bg-white/50 !shadow-xl !backdrop-blur-md;
+
+    /* Fallback extra por si el navegador no aplica bien las vars de Tailwind */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* (Opcional) versión en modo oscuro */
+  .dark .tarjeta-kengo {
+    @apply !border-white/10 !bg-white/10;
+  }
 }
 
 .mdc-notched-outline__notch {

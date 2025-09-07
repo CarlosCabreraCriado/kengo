@@ -1,147 +1,140 @@
 <div class="p-5">
-  <h4 class="text-xl font-bold text-zinc-700">Mi Perfil</h4>
-
-  <div class="flex flex-row flex-wrap" [formGroup]="formularioUsuario">
-    <!-- IMAGEN PERFIL-->
-    <div class="flex w-full items-end justify-center px-3 sm:w-1/2">
-      <div class="relative sm:mb-5">
-        <button
-          type="button"
-          color="accent"
-          mat-mini-fab-button
-          class="hover:bg-primary absolute right-0 bottom-0 h-8 w-8 rounded-full border-2 border-zinc-800 text-zinc-800 hover:border-white"
-          (click)="cambiarFoto(url_perfil)"
-        >
-          <mat-icon class="material-symbols-outlined">photo_camera</mat-icon>
-        </button>
-
-        @if (url_perfil) {
-          <img
-            [src]="url_perfil"
-            class="aspect-square w-full max-w-2xs rounded-full"
-            alt="profile-image"
-          />
-        } @else {
-          <div class="foto-perfil cargando-foto rounded-full"></div>
-        }
-
-        <!--
-        <mat-menu
-          #editProfilePhotoMenu="matMenu"
-          class="card-header-menu"
-          xPosition="after"
-        >
-          <button mat-menu-item (click)="cambiarFoto()">Cambiar foto</button>
-        </mat-menu>
--->
-      </div>
+  @if (!formularioInicializado()) {
+    <mat-spinner class="mx-auto my-12"></mat-spinner>
+  } @else {
+    <div class="flex flex-row flex-wrap" [formGroup]="formularioUsuario">
+      <!-- IMAGEN PERFIL-->
       <!--
-      <div class="title">
-        <span class="d-block fw-medium"> Carlos Cabrera </span>
-        <span class="d-block text-body"> carloscabreracriadogmail.com </span>
-      </div>
-            -->
-    </div>
+      <div class="mb-5 flex w-full items-center justify-center px-3 sm:w-1/2">
+        <div class="relative aspect-square max-h-52">
+          <button
+            type="button"
+            color="accent"
+            mat-mini-fab-button
+            class="hover:bg-primary absolute right-0 bottom-0 h-8 w-8 rounded-full border-2 border-zinc-800 text-zinc-800 hover:border-white"
+          >
+            <mat-icon class="material-symbols-outlined">photo_camera</mat-icon>
+          </button>
 
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black"> Nombre </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> Nombre </mat-label>
-          <input matInput formControlName="nombre" />
-        </mat-form-field>
+          @if (url_perfil()) {
+            <img
+              [src]="url_perfil()"
+              class="aspect-square h-full w-full max-w-2xs rounded-full"
+              alt="profile-image"
+            />
+          } @else {
+            <div class="foto-perfil cargando-foto rounded-full"></div>
+          }
+        </div>
+      </div>
+-->
+
+      <div class="mb-5 flex w-full items-center justify-center px-3 sm:w-1/2">
+        <div
+          class="group relative aspect-square max-h-52 max-w-2xs cursor-pointer overflow-hidden rounded-full"
+          (click)="cambiarFotoPerfil()"
+          role="button"
+          aria-label="Cambiar foto de perfil"
+        >
+          <!-- Imagen o placeholder -->
+          @if (previewUrl() ?? url_perfil()) {
+            <img
+              [src]="previewUrl() ?? url_perfil()!"
+              class="aspect-square h-full w-full rounded-full object-cover"
+              alt="profile-image"
+            />
+          } @else {
+            <div class="foto-perfil cargando-foto rounded-full"></div>
+          }
+          <!-- Banda inferior SIEMPRE visible -->
+          <div
+            class="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-black/60 py-2 text-center text-xs font-medium text-white"
+          >
+            <mat-icon class="material-symbols-outlined">photo_camera</mat-icon>
+          </div>
+
+          <!-- Overlay "Cambiar" al pasar el ratón -->
+          <div
+            class="pointer-events-none absolute inset-0 hidden place-items-center rounded-full bg-black/40 text-white group-hover:grid"
+          >
+            <span class="rounded-full px-3 py-1 text-sm font-medium"
+              >Cambiar</span
+            >
+          </div>
+
+          <!-- Spinner subiendo -->
+          @if (subiendoAvatar()) {
+            <div
+              class="absolute inset-0 grid place-items-center rounded-full bg-black/50"
+            >
+              <mat-spinner class="mx-auto my-12"></mat-spinner>
+            </div>
+          }
+
+          <!-- Input de archivo oculto -->
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="hidden"
+            (change)="onArchivoSeleccionado($event)"
+          />
+        </div>
       </div>
 
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black"> Apellidos </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> Apellidos </mat-label>
-          <input matInput formControlName="apellidos" />
-        </mat-form-field>
-      </div>
-    </div>
+      <div class="flex w-full flex-col justify-center px-3 sm:w-1/2">
+        <div class="sm:mb-5">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label> Nombre </mat-label>
+            <input matInput formControlName="first_name" />
+          </mat-form-field>
+        </div>
 
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black">
-          Identificación
-        </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> DNI / NIF </mat-label>
-          <input matInput formControlName="dni" />
-        </mat-form-field>
+        <div class="sm:mb-5">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label> Apellidos </mat-label>
+            <input matInput formControlName="last_name" />
+          </mat-form-field>
+        </div>
       </div>
-    </div>
 
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black"> Teléfono </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> Teléfono </mat-label>
-          <input matInput formControlName="telefono" />
-        </mat-form-field>
+      <div class="w-full px-3 sm:w-1/2">
+        <div class="sm:mb-5">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label> Teléfono </mat-label>
+            <input matInput formControlName="telefono" />
+          </mat-form-field>
+        </div>
       </div>
-    </div>
 
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black">
-          Email Principal
-        </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> Email </mat-label>
-          <input matInput formControlName="email" />
-        </mat-form-field>
+      <div class="w-full px-3 sm:w-1/2">
+        <div class="sm:mb-5">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label> Email </mat-label>
+            <input matInput formControlName="email" />
+          </mat-form-field>
+        </div>
       </div>
-    </div>
 
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black">
-          Email Secundario
-        </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> Email Auxiliar </mat-label>
-          <input matInput formControlName="email_aux" />
-        </mat-form-field>
+      <div class="w-full px-3 sm:w-1/2">
+        <div class="sm:mb-5">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label> Código Postal </mat-label>
+            <input matInput formControlName="postal" />
+          </mat-form-field>
+        </div>
       </div>
-    </div>
 
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black">
-          Código Postal
-        </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> Código Postal </mat-label>
-          <input matInput formControlName="postal" />
-        </mat-form-field>
+      <div class="w-full px-3 sm:w-1/2">
+        <div class="sm:mb-5">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label> Dirección </mat-label>
+            <input matInput formControlName="direccion" />
+          </mat-form-field>
+        </div>
       </div>
-    </div>
 
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black"> Dirección </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label> Dirección </mat-label>
-          <input matInput formControlName="direccion" />
-        </mat-form-field>
-      </div>
-    </div>
-
-    <div class="w-full px-3 sm:w-1/2">
-      <div class="sm:mb-5">
-        <label class="mb-2 block leading-none text-black"> Sexo </label>
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Seleccionar</mat-label>
-          <mat-select formControlName="sexo">
-            <mat-option value="H"> Hombre </mat-option>
-            <mat-option value="M"> Mujer </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-    </div>
-
+      <!--
     <div class="w-full px-3 sm:w-1/2">
       <section class="example-section">
         <p>
@@ -156,9 +149,14 @@
         </p>
       </section>
     </div>
-  </div>
-
-  <button mat-flat-button color="warn" [disabled]="!formularioCambiado">
-    Guardar cambios
-  </button>
+    --></div>
+    <button
+      mat-flat-button
+      color="warn"
+      [disabled]="!formularioCambiado() || !formularioInicializado()"
+      (click)="guardarCambios()"
+    >
+      Guardar cambios
+    </button>
+  }
 </div>

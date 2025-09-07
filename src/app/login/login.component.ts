@@ -52,6 +52,7 @@ export class LoginComponent {
     this.error.set(null);
     this.loading.set(true);
     const { email, password } = this.loginForm.getRawValue();
+    console.log('Login', { email, password });
 
     try {
       // --- LLAMADA DE LOGIN DESDE EL COMPONENTE ---
