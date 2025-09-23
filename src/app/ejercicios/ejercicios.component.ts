@@ -6,6 +6,7 @@ import {
   ViewEncapsulation,
   Signal,
   ViewChild,
+  OnInit,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -16,6 +17,7 @@ import { Ejercicio } from '../../types/global';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 //Angular Mateiral:
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -54,9 +56,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   templateUrl: './ejercicios.component.html',
   styleUrl: './ejercicios.component.css',
 })
-export class EjerciciosComponent {
+export class EjerciciosComponent implements OnInit {
   private fb = inject(FormBuilder);
   public ejerciciosService = inject(EjerciciosService);
+  public vista = signal<'viñeta' | 'lista'>('viñeta');
 
   @ViewChild(MatMenuTrigger) menuFiltros!: MatMenuTrigger;
 
@@ -85,7 +88,7 @@ export class EjerciciosComponent {
     categories: [this.ejerciciosService.idsCategoriasSeleccionadas()],
   });
 
-  constructor() {
+  constructor(private breakpointObserver: BreakpointObserver) {
     // Búsqueda con debounce (mejor UX)
     this.formularioFiltros.controls.busqueda
       .valueChanges!.pipe(
@@ -115,6 +118,14 @@ export class EjerciciosComponent {
       .valueChanges!.pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((v) => {
         this.ejerciciosService.idsCategoriasSeleccionadas.set(v ?? []);
+      });
+  }
+
+  ngOnInit() {
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .subscribe((result) => {
+        if (result.matches) this.vista.set('lista');
       });
   }
 
