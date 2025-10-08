@@ -107,7 +107,7 @@
   <section>
     <!-- Estado + grid -->
     <section
-      class="m-5 flex max-w-7xl flex-col gap-3 md:mt-5 md:flex-row md:flex-wrap md:justify-center md:gap-0"
+      class="m-5 mb-28 flex max-w-7xl flex-col gap-3 md:mt-5 md:flex-row md:flex-wrap md:justify-center md:gap-0"
     >
       @if (ejerciciosService.listaEjerciciosRes.isLoading()) {
         <mat-spinner class="mx-auto my-12"></mat-spinner>
@@ -115,7 +115,7 @@
         <p class="text-sm text-red-600">Error cargando ejercicios</p>
       } @else {
         <section
-          class="mx-5 flex max-w-7xl flex-row flex-wrap justify-center gap-2 align-baseline md:gap-0"
+          class="flex max-w-7xl flex-row flex-wrap justify-center gap-2 align-baseline sm:mx-5 md:gap-0"
         >
           @for (
             ejercicio of ejerciciosService.ejercicios();
@@ -127,7 +127,7 @@
                   '/inicio/detalle-ejercicio',
                   ejercicio.id_ejercicio,
                 ]"
-                class="md:group block w-full md:relative md:block md:md:w-1/3 md:max-w-xs md:overflow-hidden md:rounded-2xl md:p-2 md:sm:w-1/2 md:lg:w-1/4"
+                class="md:group block w-full md:relative md:block md:w-1/3 md:max-w-xs md:overflow-hidden md:rounded-2xl md:p-2 md:sm:w-1/2"
               >
                 <!-- ===== Vista móvil: estilo lista ===== -->
                 <div
@@ -139,12 +139,19 @@
                     class="h-20 w-28 rounded-lg object-cover"
                   />
                   <div class="min-w-0 flex-1">
-                    <p class="truncate text-base font-semibold text-zinc-800">
+                    <p class="text-base font-semibold text-zinc-800">
                       {{ ejercicio.nombre_ejercicio }}
                     </p>
+                    <!--
                     <p class="mt-1 truncate text-xs text-zinc-700">
-                      {{ ejercicio.categoria || "Sin categoría" }}
+                      @for (
+                        categoria of ejercicio.categoria;
+                        track categoria.id_categoria
+                      ) {
+                        {{ categoria.nombre_categoria || "Sin categoría" }}
+                      }
                     </p>
+-->
                   </div>
                   <img
                     src="../assets/icono-play.png"
@@ -159,7 +166,7 @@
                   '/inicio/detalle-ejercicio',
                   ejercicio.id_ejercicio,
                 ]"
-                class="group relative block aspect-[1] w-full max-w-xs overflow-hidden rounded-2xl p-2 sm:w-1/2 md:w-1/3 lg:w-1/4"
+                class="group relative block aspect-[1] w-full max-w-xs overflow-hidden rounded-2xl p-2 sm:w-1/2 md:w-1/3"
               >
                 <!-- ===== Vista escritorio: tu tarjeta original ===== -->
                 <div

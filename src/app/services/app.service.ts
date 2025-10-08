@@ -14,6 +14,7 @@ import { Usuario, UsuarioDirectus } from '../../types/global';
 export class AppService {
   private _rolUsuario = signal<RolUsuario>('fisio');
   public rolUsuario = this._rolUsuario;
+  public permitirMultiRol = signal(false);
 
   //Señales privadas:
   private _usuario = signal<Usuario | null>(null);
@@ -87,6 +88,14 @@ export class AppService {
       this.router.navigate(['/login']);
       localStorage.removeItem('carrito:last_fisio_id');
     } finally {
+      if (this._usuario()?.esFisio) {
+        this._rolUsuario.set('fisio');
+        this.permitirMultiRol.set(true);
+      } else {
+        this._rolUsuario.set('paciente');
+        this.permitirMultiRol.set(false);
+      }
+
       this._loading.set(false);
     }
   }

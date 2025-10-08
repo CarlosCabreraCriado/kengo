@@ -35,8 +35,13 @@ export class DashboardComponent {
   public isFisio: Signal<boolean> = computed(
     () => this.appService.rolUsuario() === 'fisio',
   );
+
   public isPaciente = computed(
     () => this.appService.rolUsuario() === 'paciente',
+  );
+
+  public permitirMultiRol: Signal<boolean> = computed(() =>
+    this.appService.permitirMultiRol(),
   );
 
   userRole = this.appService.rolUsuario;

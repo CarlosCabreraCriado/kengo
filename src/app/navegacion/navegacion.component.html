@@ -53,9 +53,7 @@
         <mat-tab label="ejercicios">
           <ng-template mat-tab-label class="h-25">
             <div class="fuente-kengo flex flex-col items-center justify-center">
-              <mat-icon class="material-symbols-outlined"
-                >physical_therapy</mat-icon
-              >
+              <mat-icon class="material-symbols-outlined">exercise</mat-icon>
               <span class="hidden sm:block"> Ejercicios </span>
             </div>
           </ng-template>
@@ -192,7 +190,7 @@
         }
 
         @if (isMovil) {
-          <mat-tab label="clínica">
+          <mat-tab>
             <ng-template mat-tab-label>
               <div>
                 <button
@@ -203,12 +201,19 @@
                   @if (avatarUrl()) {
                     <img
                       [src]="avatarUrl()"
-                      class="aspect-square w-full max-w-2xs rounded-full"
-                      class="h-10 w-10 rounded-full border-2 border-solid"
+                      class="aspect-square h-10 w-10 max-w-2xs rounded-full border-2 border-solid"
                       alt="Avatar"
                     />
                   } @else {
-                    <div class="foto-perfil cargando-foto rounded-full">no</div>
+                    <div
+                      class="flex aspect-square h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
+                    >
+                      <mat-icon
+                        class="material-symbols-outlined !text-white"
+                        aria-hidden="true"
+                        >person</mat-icon
+                      >
+                    </div>
                   }
 
                   <!--
@@ -259,11 +264,15 @@
               alt="Avatar"
             />
           } @else {
-            <mat-icon
-              class="material-symbols-outlined !text-zinc-400"
-              aria-hidden="true"
-              >person</mat-icon
+            <div
+              class="flex aspect-square h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
             >
+              <mat-icon
+                class="material-symbols-outlined !text-white"
+                aria-hidden="true"
+                >person</mat-icon
+              >
+            </div>
           }
           <!--
           <img

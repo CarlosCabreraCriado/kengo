@@ -44,7 +44,17 @@
               alt="profile-image"
             />
           } @else {
-            <div class="foto-perfil cargando-foto rounded-full"></div>
+            <div
+              class="foto-perfil cargando-foto flex aspect-square items-center justify-center rounded-full bg-zinc-400/40 align-middle"
+            ></div>
+
+            <div
+              class="pointer-events-none absolute inset-0 grid place-items-center rounded-full bg-black/40 text-white"
+            >
+              <span class="rounded-full px-3 py-1 text-sm font-medium"
+                >Sin foto</span
+              >
+            </div>
           }
           <!-- Banda inferior SIEMPRE visible -->
           <div

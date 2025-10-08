@@ -17,7 +17,6 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialog } from '@angular/material/dialog';
 
-import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 //Componente Add-Paciente:
