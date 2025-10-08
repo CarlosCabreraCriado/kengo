@@ -58,6 +58,7 @@ export class AddPacienteDialogComponent {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private ref = inject(MatDialogRef<AddPacienteDialogComponent>);
+
   private currentLinks = new Map<ID, ID>(); // (id_clinica -> row id)
 
   private data = inject<DialogData>(MAT_DIALOG_DATA);
@@ -145,26 +146,14 @@ export class AddPacienteDialogComponent {
     this.error.set(null);
 
     const v = this.form.getRawValue();
-
+    const tempPassword = this.genTempPassword();
     const baseUser = {
       first_name: v.first_name,
       last_name: v.last_name,
       email: v.email,
       telefono: v.telefono,
+      password: tempPassword, // Directus exige password al crear usuario
     };
-
-    // Construcción del payload para Directus
-    /*
-    const payload: unknown = {
-      // status: 'active',
-      role: env.ROL_PACIENTE_ID,
-      is_cliente: true,
-      clinicas: (v.clinicas || []).map((cid: ID) => ({
-        id_clinica: cid,
-        puesto: 2,
-      })),
-    };
-    */
 
     try {
       if (!this.isEdit()) {
@@ -185,6 +174,21 @@ export class AddPacienteDialogComponent {
             payload,
             // , { withCredentials: true }
           )
+          .toPromise();
+
+        // >>> NUEVO: genera el Magic Link y abre el QR
+        const user = res?.data;
+
+        if (!user) throw new Error('No se pudo crear el usuario.');
+
+        await this.http
+          .post<{
+            url: string;
+          }>(`${env.API_URL}/crearMagicLink`, {
+            email: user.email,
+            password: tempPassword,
+            userId: user.id,
+          })
           .toPromise();
 
         this.close({ created: res?.data });
@@ -248,5 +252,24 @@ export class AddPacienteDialogComponent {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  genTempPassword(len = 12) {
+    const charset =
+      'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@$%*?';
+
+    // Web Crypto del navegador (sin import)
+    const webCrypto = globalThis.crypto;
+    if (!webCrypto?.getRandomValues) {
+      // Fallback (menos seguro). Idealmente, evita esta rama en prod.
+      return Array.from(
+        { length: len },
+        () => charset[Math.floor(Math.random() * charset.length)],
+      ).join('');
+    }
+
+    const bytes = new Uint8Array(len);
+    webCrypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => charset[b % charset.length]).join('');
   }
 }

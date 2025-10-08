@@ -17,6 +17,7 @@ export interface Usuario {
   telefono?: string;
   direccion?: string;
   avatar_url?: string;
+  magic_link_url?: string;
   clinicas: {
     id_clinica: number;
     puestos: { id_puesto: number; puesto: string }[];
@@ -36,6 +37,7 @@ export interface UsuarioDirectus {
   avatar_url?: string;
   telefono?: string;
   direccion?: string;
+  magic_link_url?: string;
   clinicas: {
     id_clinica: number;
     puestos: { Puestos_id: { puesto: string; id: number } }[];

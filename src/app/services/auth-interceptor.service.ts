@@ -1,31 +1,3 @@
-/*
-import {
-  HttpEvent,
-  HttpHandlerFn,
-  HttpRequest,
-  HttpInterceptor,
-} from '@angular/common/http';
-import { AuthService} from './auth.service';
-
-import { Observable } from 'rxjs';
-
-export const AuthInterceptorService: HttpInterceptorFn = (
-  req: HttpRequest<unknown>,
-  next: HttpHandlerFn,
-): Observable<HttpEvent<unknown>> => {
-
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    const clonedRequest = req.clone({
-      headers: req.headers.set('Authorization', 'Bearer ' + token),
-    });
-    return next(clonedRequest);
-  } else {
-    return next(req);
-  }
-};
-*/
-
 import {
   HttpInterceptorFn,
   HttpRequest,
@@ -50,7 +22,9 @@ export const authInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn,
 ) => {
   const auth = inject(AuthService);
-  const isAuthCall = /\/auth\/(login|refresh|logout)$/.test(req.url);
+  const isAuthCall =
+    /\/auth\/(login|refresh|logout|magic|consumirMagicLink)$/.test(req.url);
+  const isMagic = String(req.url).includes('/consumirMagicLink');
 
   const addAuthHeader = (r: HttpRequest<unknown>) => {
     const token = auth.accessToken();
@@ -60,7 +34,7 @@ export const authInterceptor: HttpInterceptorFn = (
   };
 
   return defer(async () => {
-    if (!isAuthCall && auth.isAccessTokenExpiredSoon()) {
+    if (!isAuthCall && !isMagic && auth.isAccessTokenExpiredSoon()) {
       await ensureRefreshed(auth);
     }
     return addAuthHeader(req);

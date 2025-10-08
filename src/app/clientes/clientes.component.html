@@ -121,6 +121,19 @@
                 <mat-icon class="material-symbols-outlined">edit</mat-icon>
               </button>
 
+              @if (p.magic_link_url) {
+                <button
+                  mat-icon-button
+                  color="primary"
+                  class=""
+                  (click)="openDialogoQR(p.magic_link_url)"
+                >
+                  <mat-icon class="material-symbols-outlined"
+                    >qr_code_scanner</mat-icon
+                  >
+                </button>
+              }
+
               <!--
               <button mat-icon-button color="warn" aria-label="Borrar">
                 <mat-icon class="material-symbols-outlined">delete</mat-icon>

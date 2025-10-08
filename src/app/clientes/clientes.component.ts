@@ -17,8 +17,12 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialog } from '@angular/material/dialog';
 
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+
 //Componente Add-Paciente:
 import { AddPacienteDialogComponent } from '../add-paciente/add-paciente.component';
+import { QrDialogComponent } from '../dialogo-qr/dialogo-qr.component';
 
 //Servicios:
 import { AppService } from '../services/app.service';
@@ -52,6 +56,7 @@ export class ClientesComponent {
   private appService = inject(AppService);
   private dialog = inject(MatDialog);
   public planBuilderService = inject(PlanBuilderService);
+  private authService = inject(AuthService);
 
   public idsClinicas = computed(() => {
     if (this.appService.usuario() == null) return null;
@@ -92,7 +97,7 @@ export class ClientesComponent {
         method: 'GET',
         params: {
           fields:
-            'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto, clinicas.puestos.Puestos_id.id, is_cliente,is_fisio, telefono, direccion',
+            'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto,magic_link_url, clinicas.puestos.Puestos_id.id, is_cliente,is_fisio, telefono, direccion',
           sort: 'first_name,last_name',
           limit: '200', // ajusta/añade paginación si lo necesitas
           filter: JSON.stringify(filter),
@@ -163,5 +168,21 @@ export class ClientesComponent {
     const fn = (u.first_name || '').trim();
     const ln = (u.last_name || '').trim();
     return fn || ln ? `${fn} ${ln}`.trim() : u.email || u.id;
+  }
+
+  async generarQr(url: string) {
+    try {
+      if (url) this.openDialogoQR(url);
+    } catch (e) {
+      console.error('Error generando QR:', e);
+    }
+  }
+
+  public openDialogoQR(url: string) {
+    this.dialog.open(QrDialogComponent, {
+      data: { url },
+      // disableClose: false, // si quieres que pueda cerrarse tocando fuera
+      // width: '360px',
+    });
   }
 }

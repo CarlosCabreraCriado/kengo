@@ -57,7 +57,6 @@ export class AppService {
   async cargarMiUsuario(): Promise<void> {
     this._loading.set(true);
     this._error.set(null);
-
     try {
       const res = await this.http
         .get<{ data: UsuarioDirectus }>(`${env.DIRECTUS_URL}/users/me`, {
@@ -119,6 +118,7 @@ export class AppService {
       email: u.email ?? '',
       telefono: u.telefono || undefined,
       direccion: u.direccion || undefined,
+      magic_link_url: u.magic_link_url || undefined,
       postal: u.postal || undefined,
       detalle: null, // aquí podrás cargar "detalle_usuario" más abajo
       clinicas:
