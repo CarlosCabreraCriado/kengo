@@ -26,6 +26,10 @@ export const authInterceptor: HttpInterceptorFn = (
     /\/auth\/(login|refresh|logout|magic|consumirMagicLink)$/.test(req.url);
   const isMagic = String(req.url).includes('/consumirMagicLink');
 
+  if (isMagic) {
+    return next(req);
+  }
+
   const addAuthHeader = (r: HttpRequest<unknown>) => {
     const token = auth.accessToken();
     return token
