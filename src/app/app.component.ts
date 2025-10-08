@@ -5,15 +5,14 @@ import { FooterComponent } from './footer/footer.component';
 import { filter } from 'rxjs/operators';
 import { CarritoEjerciciosComponent } from './carrito-ejercicios/carrito-ejercicios.component';
 
+import { AuthService } from './services/auth.service';
+
 import {
   RouterOutlet,
   Router,
   NavigationCancel,
   NavigationEnd,
 } from '@angular/router';
-
-//Servicios:
-import { AppService } from './services/app.service';
 
 @Component({
   selector: 'app-root',
@@ -35,12 +34,12 @@ export class AppComponent implements OnInit {
 
   constructor(
     public router: Router,
-    private appService: AppService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit() {
     this.recallJsFuntions();
-    this.appService.inicializarApp();
+    this.authService.iniciarApp();
   }
 
   recallJsFuntions() {

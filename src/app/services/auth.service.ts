@@ -54,10 +54,15 @@ export class AuthService {
     this.appJwt.set(localStorage.getItem(APP_JWT_KEY));
   }
 
+  iniciarApp() {
+    if (this.getAccessToken()) {
+      this.appService.inicializarApp();
+    }
+  }
+
   // =========================
   //  LOGIN / LOGOUT DIRECTUS
   // =========================
-
   async login(email: string, password: string) {
     console.warn('Login con email y password:', email, password);
     this.eliminarTokens();
