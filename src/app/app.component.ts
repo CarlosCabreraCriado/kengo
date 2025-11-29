@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 
-import { HeaderComponent } from './header/header.component';
-import { FooterComponent } from './footer/footer.component';
 import { filter } from 'rxjs/operators';
 import { CarritoEjerciciosComponent } from './carrito-ejercicios/carrito-ejercicios.component';
 
@@ -19,8 +17,6 @@ import {
   standalone: true,
   imports: [
     RouterOutlet,
-    HeaderComponent,
-    FooterComponent,
     CarritoEjerciciosComponent,
   ],
   templateUrl: './app.component.html',

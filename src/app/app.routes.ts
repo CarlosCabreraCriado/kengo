@@ -6,7 +6,6 @@ import { CategoriasComponent } from './categorias/categorias.component';
 import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
 import { PacientesComponent } from './pacientes/pacientes.component';
 import { MiClinicaComponent } from './miclinica/miclinica.component';
-import { ClientePerfilComponent } from './cliente-perfil/cliente-perfil.component';
 import { LoginComponent } from './login/login.component';
 import { MagicComponent } from './magic/magic.component';
 import { RegistroComponent } from './registro/registro.component';
@@ -129,11 +128,6 @@ export const routes: Routes = [
   { path: 'clientes', component: PacientesComponent, pathMatch: 'full' },
   { path: 'perfil', component: PerfilComponent, pathMatch: 'full' },
   { path: 'miclinica', component: MiClinicaComponent, pathMatch: 'full' },
-  {
-    path: 'cliente-perfil',
-    component: ClientePerfilComponent,
-    pathMatch: 'full',
-  },
   { path: 'login', component: LoginComponent, pathMatch: 'full' },
   { path: 'magic', component: MagicComponent, pathMatch: 'full' },
   { path: 'registro', component: RegistroComponent, pathMatch: 'full' },

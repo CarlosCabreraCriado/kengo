@@ -140,7 +140,7 @@
             <h3 class="mb-2 text-sm font-semibold text-gray-700">
               Fisioterapeutas
             </h3>
-            @if ((fisios(c.id_clinica)?.length ?? 0) === 0) {
+            @if ((fisios(c.id_clinica).length) === 0) {
               <div class="text-sm text-gray-500">
                 No hay fisioterapeutas asignados.
               </div>
