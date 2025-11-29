@@ -1,7 +1,8 @@
-<section class="absolute top-20 w-full">
-  <header class="mx-5 mt-4 max-w-7xl">
+<section class="absolute top-20 w-full px-4 pb-32">
+  <!-- Header con búsqueda -->
+  <header class="mx-auto mt-4 max-w-7xl">
     <div
-      class="relative m-auto mt-2 mb-5 flex h-fit max-w-md items-center justify-center gap-2 rounded-full border-1 pr-3 pl-3"
+      class="relative mx-auto mb-6 flex h-fit max-w-lg items-center justify-center gap-2 rounded-full border border-zinc-200/50 bg-white/60 px-3 shadow-sm backdrop-blur-sm"
     >
       <mat-form-field
         class="ff-compact my-2 w-full rounded-full"
@@ -10,8 +11,7 @@
         <input
           #buscador
           matInput
-          formControlName="busqueda"
-          placeholder="Buscar..."
+          placeholder="Buscar paciente..."
           (input)="onBuscar(buscador.value)"
         />
         <button
@@ -19,107 +19,116 @@
           matSuffix
           type="button"
           aria-label="Borrar búsqueda"
-          (click)="onBuscar('')"
+          (click)="buscador.value = ''; onBuscar('')"
         >
           <mat-icon class="material-symbols-outlined">close</mat-icon>
         </button>
       </mat-form-field>
 
       <button
-        class=""
-        matMiniFab
+        mat-mini-fab
+        class="!bg-white/80 !shadow-sm"
         aria-label="Recargar datos"
         (click)="reload()"
       >
-        <mat-icon class="material-symbols-outlined">refresh</mat-icon>
+        <mat-icon class="material-symbols-outlined text-zinc-600">refresh</mat-icon>
       </button>
 
       <button
-        mat-flat-button
+        mat-mini-fab
         color="primary"
         type="button"
-        class=""
+        aria-label="Añadir paciente"
         (click)="openAddPaciente()"
       >
         <mat-icon>person_add</mat-icon>
-        Añadir
       </button>
     </div>
   </header>
 
-  <div class="m-auto mb-32 w-[95%] max-w-7xl">
-    <!-- Estados (opcionales si tienes los httpResource) -->
+  <!-- Contenido principal -->
+  <div class="mx-auto max-w-7xl">
     @if (pacientesRes.isLoading() && idsClinicas() != null) {
-      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
     } @else if (pacientesRes.error()) {
-      <p class="text-red-600">No se pudieron cargar los pacientes.</p>
-    } @else {
-      <!-- Tabla Material -->
-      <div class="tarjeta-kengo relative m-auto w-full rounded-xl">
-        <table
-          mat-table
-          [dataSource]="pacientes()"
-          class="relative w-full !bg-transparent"
+      <div class="tarjeta-kengo rounded-2xl p-6 text-center">
+        <mat-icon class="material-symbols-outlined mb-2 text-4xl text-red-400">error</mat-icon>
+        <p class="text-red-600">No se pudieron cargar los pacientes.</p>
+      </div>
+    } @else if (pacientes().length === 0) {
+      <div class="tarjeta-kengo rounded-2xl p-8 text-center">
+        <mat-icon class="material-symbols-outlined mb-3 text-5xl text-zinc-300">group_off</mat-icon>
+        <p class="text-lg text-zinc-500">No hay pacientes para mostrar</p>
+        <button
+          mat-flat-button
+          color="primary"
+          class="mt-4"
+          (click)="openAddPaciente()"
         >
-          <!-- Col: Nombre -->
-          <ng-container matColumnDef="nombre">
-            <th mat-header-cell *matHeaderCellDef class="w-0">
-              <span class="hidden sm:inline">Nombre</span>
-            </th>
-            <td mat-cell *matCellDef="let p" class="!p-1">
-              <div class="flex items-center gap-3 px-2 text-zinc-600 md:p-5">
+          <mat-icon>person_add</mat-icon>
+          Añadir primer paciente
+        </button>
+      </div>
+    } @else {
+      <!-- Grid de Cards -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (p of pacientes(); track p.id) {
+          <article
+            class="tarjeta-kengo group relative overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
+          >
+            <!-- Contenido principal de la card -->
+            <div class="flex items-start gap-4">
+              <!-- Avatar -->
+              <div class="shrink-0">
                 @if (avatarUrl(p)) {
                   <img
                     [src]="avatarUrl(p)"
                     [alt]="fullName(p)"
-                    class="aspect-square h-10 w-10 rounded-full object-cover ring-1 ring-black/10 sm:h-full"
+                    class="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow-sm"
                   />
                 } @else {
                   <div
-                    class="flex aspect-square h-10 w-10 items-center justify-center rounded-full bg-zinc-500/40"
+                    class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
                   >
                     <mat-icon
-                      class="material-symbols-outlined !text-white"
+                      class="material-symbols-outlined text-2xl !text-white"
                       aria-hidden="true"
-                      >person</mat-icon
-                    >
+                    >person</mat-icon>
                   </div>
                 }
-
-                <span class="hidden sm:inline">
-                  {{ fullName(p) }}
-                </span>
               </div>
-            </td>
-          </ng-container>
 
-          <!-- Col: Contacto -->
-          <ng-container matColumnDef="contacto">
-            <th mat-header-cell *matHeaderCellDef>Pacientes</th>
-            <td
-              class="max-w-[20%] overflow-hidden !p-1 text-zinc-600 md:p-5"
-              mat-cell
-              *matCellDef="let p"
-            >
-              <span class="inline font-semibold sm:hidden">
-                {{ fullName(p) }}
-              </span>
-              {{ p.email || "—" }}<br />
-              {{ p.telefono || p.phone || "—" }}
-            </td>
-          </ng-container>
+              <!-- Info del paciente -->
+              <div class="min-w-0 flex-1">
+                <h3 class="truncate text-base font-semibold text-zinc-800">
+                  {{ fullName(p) }}
+                </h3>
 
-          <!-- Col: Acciones -->
-          <ng-container matColumnDef="acciones">
-            <th mat-header-cell *matHeaderCellDef class="text-right">
-              <span class="hidden sm:inline">Acciones</span>
-            </th>
+                @if (p.email) {
+                  <p class="mt-1 flex items-center gap-1.5 truncate text-sm text-zinc-500">
+                    <mat-icon class="material-symbols-outlined !text-base">mail</mat-icon>
+                    {{ p.email }}
+                  </p>
+                }
 
-            <td mat-cell *matCellDef="let p" class="text-center">
+                @if (p.telefono) {
+                  <p class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500">
+                    <mat-icon class="material-symbols-outlined !text-base">phone</mat-icon>
+                    {{ p.telefono }}
+                  </p>
+                }
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="mt-4 flex items-center justify-end gap-1 border-t border-zinc-100 pt-3">
               <button
                 mat-icon-button
-                class=""
+                class="!h-10 !w-10"
                 color="primary"
+                aria-label="Asignar ejercicios"
                 (click)="seleccionarPaciente(p)"
               >
                 <mat-icon class="material-symbols-outlined">exercise</mat-icon>
@@ -127,8 +136,9 @@
 
               <button
                 mat-icon-button
+                class="!h-10 !w-10"
                 color="primary"
-                class=""
+                aria-label="Editar paciente"
                 (click)="openEditarPaciente(p)"
               >
                 <mat-icon class="material-symbols-outlined">edit</mat-icon>
@@ -137,41 +147,17 @@
               @if (p.magic_link_url) {
                 <button
                   mat-icon-button
+                  class="!h-10 !w-10"
                   color="primary"
-                  class=""
+                  aria-label="Ver código QR"
                   (click)="openDialogoQR(p.magic_link_url)"
                 >
-                  <mat-icon class="material-symbols-outlined"
-                    >qr_code_scanner</mat-icon
-                  >
+                  <mat-icon class="material-symbols-outlined">qr_code_scanner</mat-icon>
                 </button>
               }
-
-              <!--
-              <button mat-icon-button color="warn" aria-label="Borrar">
-                <mat-icon class="material-symbols-outlined">delete</mat-icon>
-              </button>
--->
-            </td>
-          </ng-container>
-
-          <!-- Header / Rows -->
-          <tr
-            mat-header-row
-            *matHeaderRowDef="['nombre', 'contacto', 'acciones']"
-          ></tr>
-          <tr
-            mat-row
-            *matRowDef="let row; columns: ['nombre', 'contacto', 'acciones']"
-          ></tr>
-
-          <!-- Vacío -->
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell p-4 text-gray-600" colspan="4">
-              No hay pacientes para mostrar.
-            </td>
-          </tr>
-        </table>
+            </div>
+          </article>
+        }
       </div>
     }
   </div>

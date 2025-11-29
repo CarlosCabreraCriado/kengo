@@ -2,30 +2,43 @@
   --ff-height: 50px;
 }
 
+/* Form field compacto para búsqueda */
 .ff-compact .mat-mdc-text-field-wrapper {
   border-radius: calc(infinity * 1px) !important;
   height: var(--ff-height) !important;
 }
 
 .ff-compact .mat-mdc-form-field-flex {
-  align-items: center; /* centra verticalmente el contenido */
+  align-items: center;
 }
 
 .ff-compact .mat-mdc-form-field-infix {
-  /* reduce padding vertical para compactar el campo */
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  min-height: unset; /* evita mínimos heredados */
+  min-height: unset;
 }
 
 .ff-compact .mat-mdc-input-element {
-  height: var(--ff-height); /* establece la altura del input */
-
-  line-height: var(--ff-height); /* alinea el texto con la altura */
-  padding: 0; /* quita relleno adicional */
+  height: var(--ff-height);
+  line-height: var(--ff-height);
+  padding: 0;
 }
 
 .ff-compact .mat-mdc-form-field-icon-suffix,
 .ff-compact .mat-mdc-form-field-icon-prefix {
-  margin-right: 8px; /* espacio entre icono y borde del campo */
+  margin-right: 8px;
+}
+
+/* Animación sutil para las cards */
+@media (hover: hover) {
+  article.tarjeta-kengo:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Ajuste para iconos pequeños en info de contacto */
+article .mat-icon.material-symbols-outlined {
+  font-size: inherit;
+  width: auto;
+  height: auto;
 }

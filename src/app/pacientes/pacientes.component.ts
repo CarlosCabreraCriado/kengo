@@ -13,7 +13,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -42,9 +41,6 @@ interface DirectusPage<T> {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTableModule,
     MatProgressBarModule,
   ],
   encapsulation: ViewEncapsulation.None,
@@ -163,7 +159,7 @@ export class PacientesComponent {
   }
 
   // Helpers
-  fullName(u: UsuarioDirectus) {
+  fullName(u: Usuario) {
     const fn = (u.first_name || '').trim();
     const ln = (u.last_name || '').trim();
     return fn || ln ? `${fn} ${ln}`.trim() : u.email || u.id;

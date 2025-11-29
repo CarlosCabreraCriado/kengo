@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Kengo is a healthcare/physiotherapy management platform built with Angular 20. It provides exercise catalog management, patient/client management, treatment plan configuration, and clinic administration for physiotherapists. It uses tailwindcss for styling and Directus CMS as the primary backend.
+Kengo is a healthcare/physiotherapy management platform built with Angular 20. It provides exercise catalog management, patient/client management, treatment plan configuration, and clinic administration for physiotherapists. This application should prioritize viewing on mobile devices using tailwindcss for styling. This angular application uses Directus CMS for CRUD and a Node.js for custom requests.
 
 ## Build & Development Commands
 
@@ -25,6 +25,7 @@ npm run watch      # Build with watch mode (development config)
 - **Tailwind CSS 4** for utility styling
 - **TypeScript 5.8** with strict mode enabled
 - **Directus CMS** as primary backend (<https://admin.kengoapp.com>)
+- **Node.js** custom API for additional endpoints
 
 ### Key Directories
 
