@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 
 import { filter } from 'rxjs/operators';
 import { CarritoEjerciciosComponent } from './carrito-ejercicios/carrito-ejercicios.component';
+import { NavegacionComponent } from './navegacion/navegacion.component';
 
 import { AuthService } from './services/auth.service';
 
@@ -15,30 +16,31 @@ import {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
-    RouterOutlet,
-    CarritoEjerciciosComponent,
-  ],
+  imports: [RouterOutlet, CarritoEjerciciosComponent, NavegacionComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
   title = 'kengo';
 
-  private location: string | null = null;
-  public activarHeader = false;
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
-  constructor(
-    public router: Router,
-    private authService: AuthService,
-  ) {}
+  public mostrarNavegacion = false;
+
+  // Rutas donde NO se debe mostrar la navegación
+  private rutasSinNavegacion = ['/login', '/registro', '/magic'];
 
   ngOnInit() {
-    this.recallJsFuntions();
     this.authService.iniciarApp();
+    this.observarRutas();
   }
 
-  recallJsFuntions() {
+  private observarRutas() {
+    // Verificar ruta inicial
+    this.actualizarNavegacion(this.router.url);
+
+    // Observar cambios de ruta
     this.router.events
       .pipe(
         filter(
@@ -47,18 +49,15 @@ export class AppComponent implements OnInit {
         ),
       )
       .subscribe((event) => {
-        this.location = this.router.url;
-        if (this.location == '/login' || this.location == '/register') {
-          this.activarHeader = false;
-        } else {
-          this.activarHeader = true;
+        if (event instanceof NavigationEnd) {
+          this.actualizarNavegacion(event.urlAfterRedirects || event.url);
         }
-
-        if (!(event instanceof NavigationEnd)) {
-          return;
-        }
-
-        //window.scrollTo(0, 0);
       });
+  }
+
+  private actualizarNavegacion(url: string) {
+    this.mostrarNavegacion = !this.rutasSinNavegacion.some((ruta) =>
+      url.startsWith(ruta),
+    );
   }
 }

@@ -1,0 +1,206 @@
+.inicio-container {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  height: 90dvh;
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  overflow: hidden;
+}
+
+// Header
+.inicio-header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.5rem;
+}
+
+.logo {
+  height: 1.5rem;
+  width: auto;
+  filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(636%) hue-rotate(338deg) brightness(97%) contrast(89%);
+}
+
+.greeting {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #ffffff;
+  margin: 0;
+}
+
+// Carousel
+.carousel-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-height: 0; // Importante para que flex funcione correctamente
+}
+
+.carousel {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+
+  // Padding para centrar la primera y última card
+  padding-left: 5%;
+  padding-right: 5%;
+
+  // Ocultar scrollbar
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// Cards
+.card {
+  flex: 0 0 90%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always; // Fuerza a detenerse en cada card
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  height: 85%;
+  max-height: 700px;
+  cursor: pointer;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  background: #1e2330;
+
+  &:hover,
+  &.active {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.card-image-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+
+  .card:hover & {
+    transform: scale(1.05);
+  }
+}
+
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 50%,
+    rgba(0, 0, 0, 0.6) 75%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+.card-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem;
+  z-index: 1;
+}
+
+.card-title {
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0 0 0.5rem;
+}
+
+.card-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+// Pagination dots
+.pagination-dots {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 0 1.5rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(231, 92, 62, 0.3);
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 0.3s ease,
+    transform 0.3s ease,
+    width 0.3s ease;
+
+  &:hover {
+    background: rgba(231, 92, 62, 0.5);
+  }
+
+  &.active {
+    width: 24px;
+    border-radius: 4px;
+    background: #e75c3e;
+  }
+}
+
+// Responsive adjustments para tablets y desktop
+@media (min-width: 768px) {
+  .greeting {
+    font-size: 2rem;
+  }
+
+  .carousel {
+    padding-left: 15%;
+    padding-right: 15%;
+  }
+
+  .card {
+    flex: 0 0 70%;
+    max-height: 600px;
+  }
+
+  .card-title {
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .carousel {
+    padding-left: 25%;
+    padding-right: 25%;
+  }
+
+  .card {
+    flex: 0 0 50%;
+    max-height: 650px;
+  }
+}

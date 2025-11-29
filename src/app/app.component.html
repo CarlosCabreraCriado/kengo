@@ -1,23 +1,11 @@
 <section class="m-auto flex min-h-screen max-w-7xl flex-col">
-  <!--
-  @if (activarHeader) {
-    <app-header class="relative z-20 w-full"></app-header>
+  <!-- Navegación -->
+  @if (mostrarNavegacion) {
+    <app-navegacion></app-navegacion>
   }
--->
 
+  <!-- Fondo decorativo -->
   <div class="fixed top-0 left-0 -z-10 h-screen w-screen overflow-hidden">
-    <!--
-    <img
-      class="fixed top-0 left-0 -z-10 max-w-[50%] -scale-x-100 opacity-50 mix-blend-screen"
-      src="../assets/bonsai.png"
-    />
-
-    <img
-      class="fixed top-0 right-0 -z-10 max-w-[50%] opacity-50 mix-blend-screen"
-      src="../assets/bonsai.png"
-    />
--->
-
     <img
       class="fixed bottom-0 left-0 -z-10 min-w-screen rotate-180"
       src="../assets/fondo-kengo (2).svg"
@@ -33,23 +21,21 @@
     </div>
   </div>
 
-  <!--test commit emilio-->
-  <main class="main z-10 flex-grow justify-center">
-    <router-outlet> </router-outlet>
+  <!-- Contenido principal -->
+  <main
+    class="main z-10 flex-grow justify-center"
+    [class.pb-24]="mostrarNavegacion"
+    [class.md:pt-28]="mostrarNavegacion"
+  >
+    <router-outlet></router-outlet>
   </main>
 
-  @if (activarHeader) {
+  @if (mostrarNavegacion) {
     <app-carrito-ejercicios></app-carrito-ejercicios>
   }
-
-  <!--
-  <footer class="footer">
-
-    <app-footer> </app-footer>
-  </footer>
-  -->
 </section>
 
+<!-- Indicador de breakpoint (desarrollo) -->
 <div
   class="fixed right-0 bottom-0 z-50 bg-red-700 sm:bg-yellow-700 md:bg-purple-500 lg:bg-blue-700 xl:bg-green-700"
 >

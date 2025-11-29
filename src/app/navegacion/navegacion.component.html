@@ -1,292 +1,93 @@
 <!-- Navegacion -->
-<header class="fixed left-0 z-100 h-25 w-full overflow-visible p-5">
+<header
+  class="fixed left-0 z-100 w-full overflow-visible p-3 md:p-5"
+  [class.bottom-0]="isMovil"
+  [class.top-0]="!isMovil"
+>
   <div
-    class="relative m-auto flex h-full w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter sm:pr-3 sm:pl-5"
+    class="relative m-auto flex w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter md:h-full md:pr-3 md:pl-5"
+    [class.h-16]="isMovil"
+    [class.h-full]="!isMovil"
   >
-    <a routerLink="/inicio" class="hidden sm:block">
-      <div routerLink="/inicio" class="fuente-kengo text-center text-3xl">
-        Kengo
-      </div>
+    <!-- Logo (solo desktop) -->
+    <a routerLink="/inicio" class="hidden md:block">
+      <div class="fuente-kengo text-center text-3xl">Kengo</div>
     </a>
 
-    <div class="relative h-full w-full max-w-xl">
-      <mat-tab-group
-        [(selectedIndex)]="selectedTabIndex"
-        (selectedTabChange)="onTabChange($event)"
-        mat-stretch-tabs="false"
-        class="navegador-tabs tabs-scroll no-scrollbar overflow-x-auto scroll-smooth whitespace-nowrap"
+    <!-- Navegación -->
+    <nav class="nav-container" [class.nav-mobile]="isMovil">
+      <!-- INICIO -->
+      <a
+        routerLink="/inicio"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-item"
       >
-        <!-- INICIO -->
-        <mat-tab label="inicio">
-          <ng-template mat-tab-label class="h-25">
-            <div class="fuente-kengo flex flex-col items-center justify-center">
-              <img
-                src="/assets/logo.svg"
-                alt="Icono ejercicio"
-                class="h-[24px] w-[24px]"
-              />
-              <span class="hidden sm:block"> Inicio </span>
-            </div>
-          </ng-template>
+        <img
+          src="/assets/logo.svg"
+          alt="Icono inicio"
+          class="nav-icon h-6 w-6"
+        />
+        <span class="nav-label">Inicio</span>
+      </a>
 
-          <div
-            class="relative m-auto mt-2 flex h-10 w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
-          >
-            <mat-chip-listbox aria-label="Inicio">
-              @for (
-                opcion of opciones["inicio"];
-                let i = $index;
-                track opcion.nombre
-              ) {
-                <mat-chip-option
-                  (click)="onChipClick('inicio', i)"
-                  color="warn"
-                  [selected]="opcion.seleccionado"
-                  >{{ opcion.nombre }}
-                </mat-chip-option>
-              }
-            </mat-chip-listbox>
-          </div>
-        </mat-tab>
+      <!-- EJERCICIOS -->
+      <a
+        routerLink="/ejercicios"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+        <span class="material-symbols-outlined nav-icon">exercise</span>
+        <span class="nav-label">Ejercicios</span>
+      </a>
 
-        <!-- EJERCICIOS -->
-        <mat-tab label="ejercicios">
-          <ng-template mat-tab-label class="h-25">
-            <div class="fuente-kengo flex flex-col items-center justify-center">
-              <mat-icon class="material-symbols-outlined">exercise</mat-icon>
-              <span class="hidden sm:block"> Ejercicios </span>
-            </div>
-          </ng-template>
+      <!-- PACIENTES (solo fisio) -->
+      @if (isFisio()) {
+        <a
+          routerLink="/mis-pacientes"
+          routerLinkActive="active"
+          class="nav-item"
+        >
+          <span class="material-symbols-outlined nav-icon">personal_injury</span>
+          <span class="nav-label">Pacientes</span>
+        </a>
+      }
 
-          <!--
-          <div
-            class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
-          >
-            <mat-chip-listbox aria-label="Selección ejercicios">
-              @for (
-                opcion of opciones["ejercicios"];
-                let i = $index;
-                track opcion.nombre
-              ) {
-                <mat-chip-option
-                  (click)="onChipClick('ejercicios', i)"
-                  color="warn"
-                  [selected]="opcion.seleccionado"
-                  >{{ opcion.nombre }}
-                </mat-chip-option>
-              }
-            </mat-chip-listbox>
-          </div>
-            -->
-        </mat-tab>
+      <!-- CLÍNICA -->
+      <a
+        routerLink="/mi-clinica"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+        <span class="material-symbols-outlined nav-icon">business</span>
+        <span class="nav-label">Clínica</span>
+      </a>
 
-        @if (isFisio()) {
-          <mat-tab label="pacientes">
-            <ng-template mat-tab-label>
-              <div
-                class="fuente-kengo flex flex-col items-center justify-center"
-              >
-                <mat-icon class="material-symbols-outlined"
-                  >personal_injury</mat-icon
-                >
-                <span class="hidden sm:block"> Pacientes </span>
-              </div>
-            </ng-template>
-
-            <!--
-            <div
-              class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
-            >
-              <mat-chip-listbox aria-label="Selección Ejercicios">
-                @for (
-                  opcion of opciones["pacientes"];
-                  let i = $index;
-                  track opcion.nombre
-                ) {
-                  <mat-chip-option
-                    (click)="onChipClick('pacientes', i)"
-                    color="warn"
-                    [selected]="opcion.seleccionado"
-                    >{{ opcion.nombre }}</mat-chip-option
-                  >
-                }
-              </mat-chip-listbox>
-            </div>
-
--->
-          </mat-tab>
-        }
-
-        @if (isPaciente()) {
-          <mat-tab label="clínica">
-            <ng-template mat-tab-label>
-              <div
-                class="fuente-kengo flex flex-col items-center justify-center"
-              >
-                <mat-icon class="material-symbols-outlined">business</mat-icon>
-                <span class="hidden sm:block"> Clínica </span>
-              </div>
-            </ng-template>
-
-            <div
-              class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
-            >
-              <mat-chip-listbox aria-label="Selección clínica">
-                @for (
-                  opcion of opciones["clínica"];
-                  let i = $index;
-                  track opcion.nombre
-                ) {
-                  <mat-chip-option
-                    (click)="onChipClick('clínica', i)"
-                    color="warn"
-                    [selected]="opcion.seleccionado"
-                    >{{ opcion.nombre }}</mat-chip-option
-                  >
-                }
-              </mat-chip-listbox>
-            </div>
-          </mat-tab>
-        }
-
-        @if (isFisio()) {
-          <mat-tab label="clínica">
-            <ng-template mat-tab-label>
-              <!--
-              <img
-                src="/assets/iconos/icono_clinica.webp"
-                alt="Icono clinica"
-                class="h-20"
-              />
-            -->
-
-              <div
-                class="fuente-kengo flex flex-col items-center justify-center"
-              >
-                <mat-icon class="material-symbols-outlined">business</mat-icon>
-                <span class="hidden sm:block"> Clínica </span>
-              </div>
-            </ng-template>
-
-            <div
-              class="relative m-auto mt-2 flex w-fit items-center justify-center rounded-full border-2 bg-white/60 pr-5 pl-5"
-            >
-              <mat-chip-listbox aria-label="Selección clínica">
-                @for (
-                  opcion of opciones["clínica"];
-                  let i = $index;
-                  track opcion.nombre
-                ) {
-                  <mat-chip-option
-                    (click)="onChipClick('clínica', i)"
-                    color="warn"
-                    [selected]="opcion.seleccionado"
-                    >{{ opcion.nombre }}</mat-chip-option
-                  >
-                }
-              </mat-chip-listbox>
-            </div>
-          </mat-tab>
-        }
-
-        @if (isMovil) {
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <div>
-                <button
-                  mat-button
-                  [matMenuTriggerFor]="avatarMenu"
-                  class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
-                >
-                  @if (avatarUrl()) {
-                    <img
-                      [src]="avatarUrl()"
-                      class="aspect-square h-10 w-10 max-w-2xs rounded-full border-2 border-solid"
-                      alt="Avatar"
-                    />
-                  } @else {
-                    <div
-                      class="flex aspect-square h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
-                    >
-                      <mat-icon
-                        class="material-symbols-outlined !text-white"
-                        aria-hidden="true"
-                        >person</mat-icon
-                      >
-                    </div>
-                  }
-
-                  <!--
-                  <img
-                    class="h-10 w-10 rounded-full border-2 border-solid"
-                    src="../../assets/retrato.webp"
-                    alt="Avatar"
-                  />
-                --></button>
-
-                <mat-menu
-                  #avatarMenu="matMenu"
-                  xPosition="before"
-                  yPosition="below"
-                >
-                  <button mat-menu-item routerLink="/inicio/perfil">
-                    <mat-icon class="material-symbols-outlined"
-                      >account_circle</mat-icon
-                    >
-                    <span>Editar perfil</span>
-                  </button>
-
-                  <button mat-menu-item (click)="logout()">
-                    <mat-icon class="material-symbols-outlined"
-                      >logout</mat-icon
-                    >
-                    <span>Cerrar sesión</span>
-                  </button>
-                </mat-menu>
-              </div>
-            </ng-template>
-          </mat-tab>
-        }
-      </mat-tab-group>
-    </div>
-
-    @if (!isMovil) {
-      <div>
+      <!-- Avatar (solo móvil dentro del nav) -->
+      @if (isMovil) {
         <button
-          mat-button
-          [matMenuTriggerFor]="avatarMenu"
-          class="border-box rounded-full border-2 p-0 transition-colors duration-200 hover:border-orange-500"
+          type="button"
+          [matMenuTriggerFor]="avatarMenuMobile"
+          class="nav-item avatar-btn"
         >
           @if (avatarUrl()) {
             <img
               [src]="avatarUrl()"
-              class="aspect-square h-10 w-10 max-w-2xs rounded-full border-2 border-solid"
+              class="h-10 w-10 rounded-full border-2 border-solid border-white/50"
               alt="Avatar"
             />
           } @else {
             <div
-              class="flex aspect-square h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
             >
-              <mat-icon
-                class="material-symbols-outlined !text-white"
-                aria-hidden="true"
-                >person</mat-icon
-              >
+              <span class="material-symbols-outlined text-white">person</span>
             </div>
           }
-          <!--
-          <img
-            class="h-10 w-10 rounded-full border-2 border-solid"
-            src="../../assets/retrato.webp"
-            alt="Avatar"
-          />
-        --></button>
+        </button>
 
-        <mat-menu #avatarMenu="matMenu" xPosition="before" yPosition="below">
-          <button mat-menu-item routerLink="/inicio/perfil">
-            <mat-icon class="material-symbols-outlined">
-              account_circle</mat-icon
-            >
+        <mat-menu #avatarMenuMobile="matMenu" xPosition="before" yPosition="above">
+          <button mat-menu-item routerLink="/perfil">
+            <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
             <span>Editar perfil</span>
           </button>
           <button mat-menu-item (click)="logout()">
@@ -294,14 +95,41 @@
             <span>Cerrar sesión</span>
           </button>
         </mat-menu>
-      </div>
+      }
+    </nav>
+
+    <!-- Avatar (solo desktop) -->
+    @if (!isMovil) {
+      <button
+        type="button"
+        [matMenuTriggerFor]="avatarMenuDesktop"
+        class="rounded-full border-2 border-transparent p-0 transition-colors duration-200 hover:border-orange-500"
+      >
+        @if (avatarUrl()) {
+          <img
+            [src]="avatarUrl()"
+            class="h-10 w-10 rounded-full border-2 border-solid"
+            alt="Avatar"
+          />
+        } @else {
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
+          >
+            <span class="material-symbols-outlined text-white">person</span>
+          </div>
+        }
+      </button>
+
+      <mat-menu #avatarMenuDesktop="matMenu" xPosition="before" yPosition="below">
+        <button mat-menu-item routerLink="/perfil">
+          <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
+          <span>Editar perfil</span>
+        </button>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon class="material-symbols-outlined">logout</mat-icon>
+          <span>Cerrar sesión</span>
+        </button>
+      </mat-menu>
     }
   </div>
 </header>
-
-<div
-  [@routeAnimations]="routeAnimationState"
-  class="relative h-full w-full pt-30"
->
-  <router-outlet #outlet="outlet" (activate)="onActivate()"></router-outlet>
-</div>

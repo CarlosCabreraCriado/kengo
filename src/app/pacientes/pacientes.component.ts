@@ -5,14 +5,13 @@ import {
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
 import { environment as env } from '../../environments/environment';
 
 //Angular Material:
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -39,9 +38,8 @@ interface DirectusPage<T> {
   imports: [
     MatIconModule,
     MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatProgressBarModule,
+    RouterLink,
   ],
   encapsulation: ViewEncapsulation.None,
   templateUrl: './pacientes.component.html',

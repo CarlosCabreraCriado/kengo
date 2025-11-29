@@ -1,34 +1,3 @@
-:root {
-  --ff-height: 50px;
-}
-
-/* Form field compacto para búsqueda */
-.ff-compact .mat-mdc-text-field-wrapper {
-  border-radius: calc(infinity * 1px) !important;
-  height: var(--ff-height) !important;
-}
-
-.ff-compact .mat-mdc-form-field-flex {
-  align-items: center;
-}
-
-.ff-compact .mat-mdc-form-field-infix {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  min-height: unset;
-}
-
-.ff-compact .mat-mdc-input-element {
-  height: var(--ff-height);
-  line-height: var(--ff-height);
-  padding: 0;
-}
-
-.ff-compact .mat-mdc-form-field-icon-suffix,
-.ff-compact .mat-mdc-form-field-icon-prefix {
-  margin-right: 8px;
-}
-
 /* Animación sutil para las cards */
 @media (hover: hover) {
   article.tarjeta-kengo:hover {
@@ -41,4 +10,18 @@ article .mat-icon.material-symbols-outlined {
   font-size: inherit;
   width: auto;
   height: auto;
+}
+
+/* Animación de rotación para el botón refresh */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.refreshing mat-icon {
+  animation: spin 1s linear infinite;
 }
