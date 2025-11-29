@@ -1,4 +1,5 @@
 <!-- Navegacion -->
+@if (showNavbar()) {
 <header
   class="fixed left-0 z-100 w-full overflow-visible p-3 md:p-5"
   [class.bottom-0]="isMovil"
@@ -133,3 +134,4 @@
     }
   </div>
 </header>
+}

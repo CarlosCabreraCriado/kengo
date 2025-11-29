@@ -2,6 +2,7 @@ import { Component, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { environment as env } from '../../environments/environment';
 
 // Angular Material
@@ -28,6 +29,7 @@ import { Usuario, Clinica, ID } from '../../types/global';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,

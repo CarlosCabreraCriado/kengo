@@ -12,125 +12,196 @@
     (opened)="abrirDrawer()"
     (closed)="cerrarDrawer()"
   >
-    <div class="flex h-full w-full flex-col">
-      <mat-icon
-        (click)="toggle()"
-        class="material-symbols-outlined mt-5 ml-5 text-xl text-black"
-        aria-hidden="true"
-        >close</mat-icon
+    <div
+      class="flex h-full w-full flex-col border-l border-white/20 bg-white/80 backdrop-blur-xl"
+    >
+      <!-- Cabecera -->
+      <div
+        class="flex items-center justify-between border-b border-zinc-200/50 px-4 py-3"
       >
-      <!-- Cabecera paciente -->
-      <div class="mt-5 w-full">
-        <li class="flex flex-col items-center">
+        <h2 class="fuente-kengo text-lg">Plan de ejercicios</h2>
+        <button
+          mat-icon-button
+          (click)="toggle()"
+          class="!h-9 !w-9 rounded-xl !bg-zinc-100/80 transition-colors hover:!bg-zinc-200"
+          aria-label="Cerrar panel"
+        >
+          <mat-icon class="material-symbols-outlined !text-xl text-zinc-600"
+            >close</mat-icon
+          >
+        </button>
+      </div>
+
+      <!-- Paciente seleccionado -->
+      <div class="border-b border-zinc-200/50 px-4 py-4">
+        <div class="flex items-center gap-3">
           @if (perfilUrl()) {
             <img
               [src]="perfilUrl()"
-              alt=""
-              class="h-28 w-28 rounded-full object-cover p-1"
+              alt="Avatar del paciente"
+              class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-white shadow-md"
             />
           } @else {
-            <mat-icon
-              class="material-symbols-outlined !text-zinc-400"
-              aria-hidden="true"
-              >person</mat-icon
+            <div
+              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zinc-100 ring-2 ring-white shadow-md"
             >
+              <mat-icon
+                class="material-symbols-outlined !text-3xl text-zinc-400"
+                aria-hidden="true"
+                >person</mat-icon
+              >
+            </div>
           }
-          <h5 class="mt-1 text-xl font-semibold text-zinc-700">
-            {{ pacienteNombre() }}
-          </h5>
-        </li>
-      </div>
-
-      <div class="mt-2 mb-5 ml-5 h-auto items-start">
-        <p class="fuente-kengo">Ejercicios ({{ total() }})</p>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-base font-semibold text-zinc-800">
+              {{ pacienteNombre() }}
+            </p>
+            <p class="text-sm text-zinc-500">
+              {{ total() }}
+              {{ total() === 1 ? "ejercicio" : "ejercicios" }} seleccionados
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- Lista de items del carrito -->
-      <div class="flex w-full flex-1 flex-col overflow-auto">
+      <div class="flex flex-1 flex-col gap-2 overflow-auto p-4">
         @if (svc.items().length) {
           @for (it of svc.items(); track it.ejercicio.id_ejercicio) {
             <div
-              class="relative flex h-20 w-full items-center justify-between border-t px-3"
+              class="group flex items-center gap-3 rounded-xl bg-white/60 p-3 shadow-sm ring-1 ring-zinc-200/50 transition-all hover:bg-white/80 hover:shadow-md"
             >
-              <div class="flex items-center gap-3">
-                <div class="h-12 w-16 overflow-hidden rounded-md bg-gray-100">
-                  @if (it.ejercicio.portada) {
-                    <img
-                      [src]="assetUrl(it.ejercicio.portada)"
-                      class="h-full w-full object-cover"
-                    />
+              <div
+                class="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-100"
+              >
+                @if (it.ejercicio.portada) {
+                  <img
+                    [src]="assetUrl(it.ejercicio.portada)"
+                    alt=""
+                    class="h-full w-full object-cover"
+                  />
+                } @else {
+                  <div
+                    class="flex h-full w-full items-center justify-center text-zinc-300"
+                  >
+                    <mat-icon class="material-symbols-outlined"
+                      >fitness_center</mat-icon
+                    >
+                  </div>
+                }
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="line-clamp-2 text-sm font-medium text-zinc-800">
+                  {{ it.ejercicio.nombre_ejercicio }}
+                </p>
+                <p class="mt-0.5 text-xs text-zinc-500">
+                  {{ it.series || "—" }} series ×
+                  {{ it.repeticiones || "—" }} reps
+                  @if (it.duracion_seg) {
+                    <span class="text-zinc-400"> • {{ it.duracion_seg }}s</span>
                   }
-                </div>
-                <div class="flex flex-col">
-                  <p class="line-clamp-2 text-sm font-medium">
-                    {{ it.ejercicio.nombre_ejercicio }}
-                  </p>
-                  <p class="text-[11px] text-gray-500">
-                    {{ it.series || "—" }}×{{ it.repeticiones || "—" }}
-                    @if (it.duracion_seg) {
-                      <span> • {{ it.duracion_seg }}s</span>
-                    }
-                    @if (it.veces_dia) {
-                      <span> • {{ it.veces_dia }}/día</span>
-                    }
-                  </p>
-                </div>
+                  @if (it.veces_dia) {
+                    <span class="text-zinc-400">
+                      • {{ it.veces_dia }}/día</span
+                    >
+                  }
+                </p>
               </div>
 
               <button
-                class="rounded-full text-sm text-gray-700 transition-all duration-200 hover:text-red-600"
-                aria-label="Eliminar"
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 opacity-60 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
+                aria-label="Eliminar ejercicio"
                 (click)="eliminar(it.ejercicio.id_ejercicio)"
               >
-                <mat-icon class="material-symbols-outlined">delete</mat-icon>
+                <mat-icon class="material-symbols-outlined !text-xl"
+                  >delete</mat-icon
+                >
               </button>
             </div>
           }
         } @else {
-          <div class="px-5 text-sm text-gray-500">
-            Aún no hay ejercicios en el plan. Añádelos desde la galería.
+          <div
+            class="flex flex-1 flex-col items-center justify-center px-6 text-center"
+          >
+            <div
+              class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100"
+            >
+              <mat-icon
+                class="material-symbols-outlined !text-4xl text-zinc-300"
+                >fitness_center</mat-icon
+              >
+            </div>
+            <p class="text-sm font-medium text-zinc-600">
+              No hay ejercicios en el plan
+            </p>
+            <p class="mt-1 text-xs text-zinc-400">
+              Añádelos desde la galería de ejercicios
+            </p>
           </div>
         }
       </div>
 
       <!-- Acciones -->
-      <div class="mt-3 mb-5 flex w-full flex-col items-center gap-3">
+      <div
+        class="flex flex-col gap-2 border-t border-zinc-200/50 bg-white/50 p-4"
+      >
         <button
-          class="mt-2 inline-flex h-11 w-[85%] items-center justify-center gap-2 rounded bg-orange-500 px-6 text-sm font-medium text-white transition duration-300 hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300"
+          class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#e75c3e] px-6 text-sm font-semibold text-white shadow-lg shadow-[#e75c3e]/25 transition-all duration-200 hover:bg-[#d14e32] hover:shadow-xl hover:shadow-[#e75c3e]/30 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:shadow-none"
           [disabled]="!svc.items().length || !svc.paciente()"
           (click)="configurarPlan()"
         >
           <span>Configurar plan</span>
-          <mat-icon class="material-symbols-outlined">arrow_forward</mat-icon>
+          <mat-icon class="material-symbols-outlined !text-xl"
+            >arrow_forward</mat-icon
+          >
         </button>
 
         <button
-          class="inline-flex h-11 w-[85%] items-center justify-center gap-2 rounded bg-gray-200 px-6 text-sm font-medium text-gray-800 transition hover:bg-gray-300 disabled:cursor-not-allowed"
+          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-6 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50"
           (click)="cambiarPaciente()"
         >
+          <mat-icon class="material-symbols-outlined !text-xl text-zinc-500"
+            >person_search</mat-icon
+          >
           <span>Cambiar paciente</span>
-          <mat-icon class="material-symbols-outlined">person_search</mat-icon>
         </button>
       </div>
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content>
-    <!-- Botón flotante para abrir el drawer -->
-    <button
-      matFab
-      class="pointer-events-auto !fixed right-10 bottom-10"
-      (click)="toggle()"
-    >
-      @if (perfilUrl()) {
-        <img [src]="perfilUrl()" alt="" class="rounded-full object-cover p-1" />
-      } @else {
-        <mat-icon
-          class="material-symbols-outlined !text-white"
-          aria-hidden="true"
-          >personal_injury</mat-icon
-        >
-      }
+    <!-- Botón pestaña lateral para abrir el drawer (solo si hay paciente) -->
+    @if (svc.paciente()) {
+      <button
+        class="tab-carrito pointer-events-auto"
+        [class.tab-carrito--abierto]="drawerAbierto()"
+        (click)="toggle()"
+        aria-label="Abrir carrito de ejercicios"
+      >
+      <div class="tab-carrito__contenido">
+        @if (perfilUrl()) {
+          <img
+            [src]="perfilUrl()"
+            alt=""
+            class="h-10 w-10 rounded-full object-cover ring-2 ring-white"
+          />
+        } @else {
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-white/90"
+          >
+            <mat-icon
+              class="material-symbols-outlined !text-2xl text-[#e75c3e]"
+              aria-hidden="true"
+              >personal_injury</mat-icon
+            >
+          </div>
+        }
+        @if (total() > 0) {
+          <span class="tab-carrito__badge">{{ total() }}</span>
+        }
+      </div>
+      <span class="tab-carrito__label">Plan</span>
     </button>
+    }
   </mat-sidenav-content>
 </mat-sidenav-container>

@@ -1,88 +1,172 @@
-<section class="absolute top-20 mt-3 w-full max-w-7xl">
-  <div
-    class="align-center relative m-auto mt-2 flex h-10 w-[80%] max-w-2xl items-center justify-center rounded-full border-none border-white pr-5 text-center text-xl font-bold text-zinc-800"
-  >
+<section
+  class="fixed inset-0 flex flex-col"
+  (wheel)="onWheel($event)"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)"
+>
+  <!-- Header flotante sobre el video -->
+  <header class="absolute top-0 left-0 z-50 w-full px-4 pt-4">
     <button
-      [routerLink]="['/inicio/ejercicios']"
-      class="!absolute top-0 left-0"
-      mat-mini-fab
-      aria-label="Example icon button with a delete icon"
+      mat-icon-button
+      class="!bg-white/80 shadow-sm backdrop-blur-sm"
+      aria-label="Volver a ejercicios"
+      (click)="volver()"
     >
-      <mat-icon class="material-symbols-outlined m-auto">arrow_back</mat-icon>
+      <mat-icon class="material-symbols-outlined text-zinc-700">arrow_back</mat-icon>
     </button>
+  </header>
 
-    {{ ejercicio()?.nombre_ejercicio }}
-  </div>
-
-  <div class="mb-5 flex flex-col items-center justify-center">
-    <!-- Component: Image overlay card -->
-    <div class="mt-2 max-h-96 w-[80%] max-w-2xl rounded">
-      @if (ejercicio() && ejercicio()?.video) {
-        <figure class="relative flex">
-          <video
-            class="h-auto w-full rounded-2xl"
-            autoplay
-            muted
-            loop
-            controls
-            playsinline
-          >
-            <source
-              [src]="getAssetUrl(ejercicio()?.video || 0)"
-              type="video/mp4"
-            />
-            Tu navegador no soporta el tag de video.
-          </video>
-        </figure>
+  @if (loading()) {
+    <!-- Loading state -->
+    <div class="flex flex-1 items-center justify-center">
+      <div class="h-12 w-12 animate-spin rounded-full border-4 border-zinc-200 border-t-[#e75c3e]"></div>
+    </div>
+  } @else if (error()) {
+    <!-- Error state -->
+    <div class="flex flex-1 flex-col items-center justify-center px-4">
+      <mat-icon class="material-symbols-outlined mb-4 text-6xl text-red-400">error</mat-icon>
+      <p class="mb-4 text-center text-zinc-700">{{ error() }}</p>
+      <button mat-stroked-button routerLink="/inicio/ejercicios">
+        Volver a ejercicios
+      </button>
+    </div>
+  } @else if (ejercicio()) {
+    <!-- Video del ejercicio (expandible) -->
+    <div
+      class="video-container relative overflow-hidden transition-all duration-300 ease-out"
+      [class]="videoExpandido() ? 'flex-1' : 'h-[50vh]'"
+    >
+      @if (ejercicio()?.video) {
+        <video
+          #videoPlayer
+          class="h-full w-full object-cover"
+          autoplay
+          muted
+          loop
+          playsinline
+          (click)="toggleVideo()"
+        >
+          <source [src]="getAssetUrl(ejercicio()?.video || 0)" type="video/mp4" />
+        </video>
+      } @else if (ejercicio()?.portada) {
+        <img
+          [src]="getAssetUrl(ejercicio()?.portada || 0)"
+          alt="{{ ejercicio()?.nombre_ejercicio }}"
+          class="h-full w-full object-cover"
+        />
+      } @else {
+        <div class="flex h-full w-full items-center justify-center bg-zinc-100">
+          <mat-icon class="material-symbols-outlined text-8xl text-zinc-300">fitness_center</mat-icon>
+        </div>
       }
-    </div>
-    <!-- End Image overlay card -->
-  </div>
 
-  <div
-    class="m-auto mb-20 flex w-[80%] max-w-2xl flex-col justify-center"
-    [formGroup]="formularioDetalleEjercicio"
-  >
-    <!-- Component: Rounded required input -->
-    <div class="flex w-full gap-5">
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label> Series </mat-label>
-        <input matInput formControlName="series" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label> Repeticiones </mat-label>
-        <input matInput formControlName="repeticiones" />
-      </mat-form-field>
     </div>
 
-    <div class="flex w-full gap-5">
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label> Peso </mat-label>
-        <input matInput formControlName="peso" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label> Duración </mat-label>
-        <input matInput formControlName="duracion" />
-      </mat-form-field>
-    </div>
-
-    <div class="w-full">
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label> Observación </mat-label>
-        <input type="textarea" matInput formControlName="observaciones" />
-      </mat-form-field>
-    </div>
-
-    <button
-      matFab
-      extended
-      class="mx-6 !h-10 !min-w-[5rem] !px-4 !text-sm"
-      (click)="asignarEjercicio()"
+    <!-- Contenido inferior -->
+    <div
+      class="relative z-10 flex flex-col transition-all duration-300"
+      [class]="videoExpandido() ? 'flex-shrink-0' : 'flex-1'"
     >
-      <mat-icon class="material-symbols-outlined">person_edit</mat-icon>
-      Asignar al paciente
-    </button>
-  </div>
+      <!-- Información del ejercicio -->
+      <div class="flex-1 px-4 pt-4" [class.hidden]="videoExpandido()">
+        <!-- Nombre del ejercicio -->
+        <h1 class="mb-4 text-center text-2xl font-bold text-zinc-800">
+          {{ ejercicio()?.nombre_ejercicio }}
+        </h1>
+
+        <!-- Chips de duración -->
+        <div class="mb-5 flex justify-center gap-3">
+          @for (duracion of duraciones; track duracion.valor) {
+            <button
+              (click)="seleccionarDuracion(duracion.valor)"
+              class="rounded-full border-2 px-5 py-2 text-sm font-semibold transition-all"
+              [class]="
+                duracionSeleccionada() === duracion.valor
+                  ? 'border-[#e75c3e] bg-[#e75c3e] text-white shadow-md'
+                  : 'border-zinc-400 bg-white text-zinc-700 shadow-sm hover:border-zinc-500'
+              "
+            >
+              {{ duracion.label }}
+            </button>
+          }
+        </div>
+
+        <!-- Card de información -->
+        @if (ejercicio()?.descripcion || ejercicio()?.series_defecto) {
+          <div class="tarjeta-kengo rounded-2xl p-4">
+            @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
+              <p class="mb-2 text-sm text-zinc-500">
+                <span class="font-semibold text-[#e75c3e]">{{ ejercicio()?.series_defecto }}</span> series ×
+                <span class="font-semibold text-[#e75c3e]">{{ ejercicio()?.repeticiones_defecto }}</span> repeticiones
+              </p>
+            }
+            @if (ejercicio()?.descripcion) {
+              <p class="text-sm leading-relaxed text-zinc-600">
+                {{ ejercicio()?.descripcion }}
+              </p>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Info mínima cuando está expandido -->
+      @if (videoExpandido()) {
+        <div class="px-4 pt-4">
+          <h1 class="mb-3 text-center text-xl font-bold text-zinc-800">
+            {{ ejercicio()?.nombre_ejercicio }}
+          </h1>
+          <div class="flex justify-center gap-3">
+            @for (duracion of duraciones; track duracion.valor) {
+              <button
+                (click)="seleccionarDuracion(duracion.valor)"
+                class="rounded-full border-2 px-4 py-1.5 text-sm font-semibold transition-all"
+                [class]="
+                  duracionSeleccionada() === duracion.valor
+                    ? 'border-[#e75c3e] bg-[#e75c3e] text-white shadow-md'
+                    : 'border-zinc-400 bg-white text-zinc-700 shadow-sm'
+                "
+              >
+                {{ duracion.label }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Barra de acciones fija -->
+      <div class="flex shrink-0 items-center justify-center gap-6 px-4 py-4 pb-8">
+        <!-- Botón expandir/contraer -->
+        <button
+          mat-icon-button
+          class="!h-12 !w-12 !bg-white shadow-md"
+          (click)="toggleExpandido()"
+        >
+          <mat-icon class="material-symbols-outlined text-zinc-600">
+            {{ videoExpandido() ? 'close_fullscreen' : 'open_in_full' }}
+          </mat-icon>
+        </button>
+
+        <!-- Botón principal de asignar -->
+        <button
+          mat-fab
+          color="primary"
+          class="!h-16 !w-16"
+          (click)="asignarEjercicio()"
+        >
+          <mat-icon class="material-symbols-outlined !text-3xl">person_add</mat-icon>
+        </button>
+
+        <!-- Botón play/pause -->
+        <button
+          mat-icon-button
+          class="!h-12 !w-12 !bg-white shadow-md"
+          (click)="toggleVideo()"
+        >
+          <mat-icon class="material-symbols-outlined text-zinc-600">
+            {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
+          </mat-icon>
+        </button>
+      </div>
+    </div>
+  }
 </section>

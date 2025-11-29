@@ -1,0 +1,18 @@
+/* Pantalla completa con safe areas */
+:host {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+section {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Difuminado inferior del video/imagen */
+.video-container {
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+}

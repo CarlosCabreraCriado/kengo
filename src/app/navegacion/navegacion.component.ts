@@ -1,6 +1,7 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 import { environment as env } from '../../environments/environment';
 
@@ -33,6 +34,10 @@ export class NavegacionComponent implements OnInit {
   public appService = inject(AppService);
 
   public isMovil = false;
+  public isInicio = signal(false);
+
+  // Mostrar navbar: siempre en desktop, solo en /inicio en móvil
+  public showNavbar = computed(() => !this.isMovil || this.isInicio());
 
   public avatarUrl = computed(() => {
     const id_avatar = this.appService.usuario()?.avatar;
@@ -48,11 +53,24 @@ export class NavegacionComponent implements OnInit {
   public isFisio = computed(() => this.appService.rolUsuario() === 'fisio');
 
   ngOnInit() {
+    // Detectar si es móvil
     this.breakpointObserver
       .observe(['(max-width: 767.98px)'])
       .subscribe((result) => {
         this.isMovil = result.matches;
       });
+
+    // Detectar ruta actual
+    this.checkIfInicio(this.router.url);
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.checkIfInicio((event as NavigationEnd).urlAfterRedirects);
+      });
+  }
+
+  private checkIfInicio(url: string) {
+    this.isInicio.set(url === '/inicio' || url === '/');
   }
 
   logout() {

@@ -1,42 +1,100 @@
-<section class="mx-auto my-6 max-w-5xl px-5">
-  <!-- Selector de clínica (si hay varias) -->
-  @if (clinicasRes().length > 1) {
-    <div class="mb-4">
-      <mat-form-field appearance="outline">
-        <mat-label>Selecciona clínica</mat-label>
-        <mat-select
-          [value]="selectedClinicId()"
-          (selectionChange)="onClinicChange($event.value)"
-        >
-          @for (c of clinicasRes(); track c.id_clinica) {
-            <mat-option [value]="$index">{{
-              c.nombre || "Clínica " + c.id_clinica
-            }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+<section class="absolute w-full pb-32">
+  <!-- Header con navegación (sticky) -->
+  <header
+    class="sticky top-0 z-40 mx-auto mb-6 bg-gradient-to-b from-white/95 via-white/90 to-transparent px-4 pt-4 pb-2 backdrop-blur-md"
+  >
+    <div class="mx-auto max-w-7xl">
+      <!-- Título y acciones -->
+      <div class="mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button
+            mat-icon-button
+            class="!h-10 !w-10 shrink-0"
+            aria-label="Volver al inicio"
+            routerLink="/inicio"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >arrow_back</mat-icon
+            >
+          </button>
+          <div>
+            <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
+              Mi Clínica
+            </h1>
+            @if (clinicasRes().length > 0) {
+              <p class="text-sm text-zinc-500">
+                {{ clinicasRes().length }}
+                {{ clinicasRes().length === 1 ? "clínica" : "clínicas" }}
+              </p>
+            }
+          </div>
+        </div>
+
+        <!-- Selector de clínica (si hay varias) -->
+        @if (clinicasRes().length > 1) {
+          <mat-form-field
+            appearance="outline"
+            class="!m-0 w-48"
+            subscriptSizing="dynamic"
+          >
+            <mat-select
+              [value]="selectedClinicId()"
+              (selectionChange)="onClinicChange($event.value)"
+              placeholder="Seleccionar"
+            >
+              @for (c of clinicasRes(); track c.id_clinica) {
+                <mat-option [value]="$index">{{
+                  c.nombre || "Clínica " + c.id_clinica
+                }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      </div>
     </div>
-  }
+  </header>
 
-  <!-- Loaders/errores -->
-  @if (!clinicasRes()) {
-    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-  }
+  <!-- Contenido principal -->
+  <div class="mx-auto max-w-7xl px-4">
+    <!-- Loader -->
+    @if (!clinicasRes()) {
+      <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
+    }
 
-  @if (error()) {
-    <p class="mb-3 text-red-600">{{ error() }}</p>
-  }
+    <!-- Error -->
+    @if (error()) {
+      <div class="tarjeta-kengo rounded-2xl p-6 text-center">
+        <mat-icon class="material-symbols-outlined mb-2 text-4xl text-red-400"
+          >error</mat-icon
+        >
+        <p class="text-red-600">{{ error() }}</p>
+      </div>
+    }
 
-  @if (clinicasRes() && !modoEdicion()) {
-    <!-- clinicas-hero-list.component.html -->
-    <div class="space-y-6">
-      @if (!clinicasRes() || clinicasRes().length === 0) {
-        <div class="py-10 text-center text-gray-500">No hay clínicas.</div>
-      } @else {
+    <!-- Sin clínicas -->
+    @if (clinicIds() && clinicIds()?.length === 0) {
+      <div class="tarjeta-kengo rounded-2xl p-8 text-center">
+        <mat-icon class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+          >domain_disabled</mat-icon
+        >
+        <p class="text-lg text-zinc-500">
+          No estás asociado a ninguna clínica.
+        </p>
+      </div>
+    }
+
+    <!-- Lista de clínicas -->
+    @if (clinicasRes() && clinicasRes().length > 0 && !modoEdicion()) {
+      <div class="space-y-6">
         @for (c of clinicasRes(); track c?.id_clinica) {
-          <mat-card class="tarjeta-kengo overflow-hidden rounded-2xl shadow-lg">
+          <!-- Card de clínica -->
+          <article
+            class="tarjeta-kengo group relative overflow-hidden rounded-2xl transition-all duration-200 hover:shadow-lg"
+          >
             <!-- HERO -->
-            <div class="relative h-64 md:h-72">
+            <div class="relative h-48 md:h-56">
               @if (c.imagenes?.length) {
                 <img
                   [src]="assetUrl(firstImageId(c))"
@@ -46,7 +104,10 @@
               } @else {
                 <div
                   class="absolute inset-0 h-full w-full"
-                  [style.background]="c.color_primario || '#f5f5f5'"
+                  [style.background]="
+                    c.color_primario ||
+                    'linear-gradient(135deg, #e75c3e 0%, #efc048 100%)'
+                  "
                 ></div>
               }
 
@@ -55,23 +116,30 @@
                 class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
               ></div>
 
-              <!-- Contenido -->
-              <div class="absolute inset-0 flex items-end p-5 md:p-8">
+              <!-- Contenido del hero -->
+              <div class="absolute inset-0 flex items-end p-5 md:p-6">
                 <div class="flex items-center gap-4">
                   @if (c.logo) {
                     <img
                       [src]="assetUrl(c.logo)"
                       alt="logo"
-                      class="h-16 w-16 rounded-xl bg-white/70 object-cover p-1 ring-2 ring-white/70"
+                      class="h-14 w-14 rounded-xl bg-white/70 object-cover p-1 ring-2 ring-white/70"
                     />
+                  } @else {
+                    <div
+                      class="flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm"
+                    >
+                      <mat-icon
+                        class="material-symbols-outlined text-3xl !text-white"
+                        >domain</mat-icon
+                      >
+                    </div>
                   }
                   <div class="text-white">
-                    <h2
-                      class="text-2xl leading-tight font-semibold md:text-3xl"
-                    >
+                    <h2 class="text-xl leading-tight font-semibold md:text-2xl">
                       {{ c.nombre || "Clínica sin nombre" }}
                     </h2>
-                    <p class="opacity-90">
+                    <p class="text-sm opacity-90">
                       {{ c.direccion || "Dirección no disponible" }}
                       @if (c.postal) {
                         <span> · {{ c.postal }}</span>
@@ -80,336 +148,382 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Botón editar -->
               <button
-                mat-fab
+                mat-icon-button
                 disabled
-                class="!absolute top-4 right-4 shadow-lg"
+                class="!absolute top-3 right-3 !bg-white/20 backdrop-blur-sm"
                 aria-label="Editar clínica"
               >
-                <mat-icon class="material-symbols-outlined">edit</mat-icon>
+                <mat-icon class="material-symbols-outlined !text-white"
+                  >edit</mat-icon
+                >
               </button>
             </div>
 
             <!-- INFO -->
-            <mat-card-content class="my-5 p-5 text-zinc-700 md:p-6">
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div class="flex items-center gap-3">
-                  <mat-icon class="material-symbols-outlined">phone</mat-icon>
+            <div class="p-4 md:p-5">
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div class="flex items-center gap-2 text-sm text-zinc-600">
+                  <mat-icon
+                    class="material-symbols-outlined !text-lg text-zinc-400"
+                    >phone</mat-icon
+                  >
                   <span>{{ c.telefono || "—" }}</span>
                 </div>
 
-                <div class="flex items-center gap-3">
-                  <mat-icon class="material-symbols-outlined">mail</mat-icon>
-
+                <div class="flex items-center gap-2 text-sm text-zinc-600">
+                  <mat-icon
+                    class="material-symbols-outlined !text-lg text-zinc-400"
+                    >mail</mat-icon
+                  >
                   @if (c.email) {
-                    <a [href]="'mailto:' + c.email" class="underline">
+                    <a
+                      [href]="'mailto:' + c.email"
+                      class="truncate text-[#e75c3e] hover:underline"
+                    >
                       {{ c.email }}
                     </a>
                   } @else {
-                    —
+                    <span>—</span>
                   }
                 </div>
-                <div class="flex items-center gap-3">
-                  <mat-icon class="material-symbols-outlined">badge</mat-icon>
+
+                <div class="flex items-center gap-2 text-sm text-zinc-600">
+                  <mat-icon
+                    class="material-symbols-outlined !text-lg text-zinc-400"
+                    >badge</mat-icon
+                  >
                   <span>{{ c.nif || "—" }}</span>
                 </div>
               </div>
-            </mat-card-content>
 
-            <mat-divider></mat-divider>
-
-            <!-- ACCIONES -->
-            <mat-card-actions
-              class="flex flex-col justify-between p-4 sm:flex-row"
-            >
-              <button mat-button>
-                <mat-icon class="material-symbols-outlined mr-1">map</mat-icon>
-                Ver en mapa
-              </button>
-
-              <button mat-flat-button>
-                <mat-icon class="material-symbols-outlined mr-1"
-                  >chevron_right</mat-icon
+              <!-- Acciones -->
+              <div
+                class="mt-4 flex items-center justify-end gap-1 border-t border-zinc-100 pt-3"
+              >
+                <button
+                  mat-button
+                  class="!text-zinc-600"
+                  aria-label="Ver en mapa"
                 >
-                Fisioterapeutas
-              </button>
-            </mat-card-actions>
-          </mat-card>
+                  <mat-icon class="material-symbols-outlined mr-1">map</mat-icon>
+                  Ver en mapa
+                </button>
+              </div>
+            </div>
+          </article>
 
-          <div class="pb-5">
-            <h3 class="mb-2 text-sm font-semibold text-gray-700">
+          <!-- Sección Fisioterapeutas -->
+          <div class="mt-4">
+            <h3
+              class="mb-3 flex items-center gap-2 text-base font-semibold text-zinc-700"
+            >
+              <mat-icon
+                class="material-symbols-outlined !text-xl text-[#e75c3e]"
+                >groups</mat-icon
+              >
               Fisioterapeutas
             </h3>
-            @if ((fisios(c.id_clinica).length) === 0) {
-              <div class="text-sm text-gray-500">
-                No hay fisioterapeutas asignados.
+
+            @if (fisios(c.id_clinica).length === 0) {
+              <div class="tarjeta-kengo rounded-2xl p-6 text-center">
+                <mat-icon
+                  class="material-symbols-outlined mb-2 text-4xl text-zinc-300"
+                  >person_off</mat-icon
+                >
+                <p class="text-zinc-500">
+                  No hay fisioterapeutas asignados.
+                </p>
               </div>
             } @else {
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div
+                class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+              >
                 @for (f of fisios(c.id_clinica); track f.id) {
-                  <mat-card
-                    class="tarjeta-kengo rounded-2xl border bg-white/90 shadow transition-shadow hover:shadow-lg"
+                  <article
+                    class="tarjeta-kengo group relative overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
                   >
-                    <div class="p-4">
-                      <div class="flex items-center gap-4">
-                        <!-- Avatar -->
+                    <div class="flex items-start gap-4">
+                      <!-- Avatar -->
+                      <div class="shrink-0">
                         @if (f.avatar) {
                           <img
                             [src]="assetUrl(f.avatar)"
                             alt="Avatar de {{ f.first_name }} {{ f.last_name }}"
-                            class="h-14 w-14 rounded-full object-cover ring-2 shadow ring-white"
+                            class="h-14 w-14 rounded-full object-cover ring-2 shadow-sm ring-white"
                           />
                         } @else {
                           <div
-                            class="grid h-14 w-14 place-items-center rounded-full font-semibold text-white shadow"
+                            class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#e75c3e] to-[#efc048] font-semibold text-white shadow-sm"
                           >
                             {{ iniciales(f.first_name, f.last_name) }}
                           </div>
                         }
-
-                        <!-- Info básica -->
-                        <div class="min-w-0">
-                          <div
-                            class="truncate text-base font-medium text-zinc-700"
-                          >
-                            {{ f.first_name }} {{ f.last_name }}
-                          </div>
-                          <div class="truncate text-sm text-gray-600">
-                            @if (f.email) {
-                              <a
-                                class="underline"
-                                [href]="'mailto:' + f.email"
-                                >{{ f.email }}</a
-                              >
-                            } @else {
-                              <span>Sin email</span>
-                            }
-                          </div>
-                          <div class="text-sm text-gray-600">
-                            <span>{{ f.telefono || "" }}</span>
-                          </div>
-                        </div>
                       </div>
 
-                      <!-- (Opcional) chips de rol/especialidad si los tienes en f.puestos -->
-                      <div class="mt-3 flex flex-wrap gap-2">
-                        <span
-                          class="text-primary rounded-full border px-2 py-0.5 text-xs"
+                      <!-- Info del fisioterapeuta -->
+                      <div class="min-w-0 flex-1">
+                        <h4
+                          class="truncate text-base font-semibold text-zinc-800"
                         >
-                          Fisioterapeuta
-                        </span>
-                      </div>
+                          {{ f.first_name }} {{ f.last_name }}
+                        </h4>
 
-                      <!-- Acciones -->
-                      <div class="mt-4 flex items-center gap-2">
                         @if (f.email) {
-                          <button
-                            mat-stroked-button
-                            [attr.aria-label]="'Enviar email a ' + f.first_name"
+                          <p
+                            class="mt-1 flex items-center gap-1.5 truncate text-sm text-zinc-500"
                           >
-                            <mat-icon class="material-symbols-outlined mr-1"
+                            <mat-icon
+                              class="material-symbols-outlined !text-base"
                               >mail</mat-icon
                             >
-                            Contactar
-                          </button>
+                            {{ f.email }}
+                          </p>
                         }
 
                         @if (f.telefono) {
-                          <button mat-stroked-button>
-                            <mat-icon class="material-symbols-outlined mr-1"
-                              >call</mat-icon
+                          <p
+                            class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                          >
+                            <mat-icon
+                              class="material-symbols-outlined !text-base"
+                              >phone</mat-icon
                             >
-                            Llamar
-                          </button>
+                            {{ f.telefono }}
+                          </p>
                         }
+
+                        <!-- Chip de rol -->
+                        <div class="mt-2">
+                          <span
+                            class="inline-flex items-center rounded-full bg-[#e75c3e]/10 px-2.5 py-0.5 text-xs font-medium text-[#e75c3e]"
+                          >
+                            Fisioterapeuta
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </mat-card>
+
+                    <!-- Acciones -->
+                    <div
+                      class="mt-4 flex items-center justify-end gap-1 border-t border-zinc-100 pt-3"
+                    >
+                      @if (f.email) {
+                        <a
+                          mat-icon-button
+                          class="!h-10 !w-10"
+                          color="primary"
+                          [href]="'mailto:' + f.email"
+                          aria-label="Enviar email"
+                        >
+                          <mat-icon class="material-symbols-outlined"
+                            >mail</mat-icon
+                          >
+                        </a>
+                      }
+
+                      @if (f.telefono) {
+                        <a
+                          mat-icon-button
+                          class="!h-10 !w-10"
+                          color="primary"
+                          [href]="'tel:' + f.telefono"
+                          aria-label="Llamar"
+                        >
+                          <mat-icon class="material-symbols-outlined"
+                            >call</mat-icon
+                          >
+                        </a>
+                      }
+                    </div>
+                  </article>
                 }
               </div>
             }
           </div>
         }
-      }
-    </div>
-  }
+      </div>
+    }
 
-  <!-- Formulario -->
-  @if (clinicasRes() && modoEdicion()) {
-    <mat-card>
-      <mat-card-content>
-        <form [formGroup]="form" class="grid gap-4 md:grid-cols-2">
-          <mat-form-field appearance="outline">
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombre" required />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="telefono" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="md:col-span-2">
-            <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="md:col-span-2">
-            <mat-label>Dirección</mat-label>
-            <input matInput formControlName="direccion" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Código Postal</mat-label>
-            <input matInput formControlName="postal" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>NIF</mat-label>
-            <input matInput formControlName="nif" />
-          </mat-form-field>
-
-          <!-- Color primario -->
-          <div class="flex items-center gap-3">
+    <!-- Formulario de edición -->
+    @if (clinicasRes() && modoEdicion()) {
+      <article class="tarjeta-kengo overflow-hidden rounded-2xl">
+        <div class="p-4 md:p-6">
+          <form [formGroup]="form" class="grid gap-4 md:grid-cols-2">
             <mat-form-field appearance="outline">
-              <mat-label>Color primario</mat-label>
-              <input
-                matInput
-                formControlName="color_primario"
-                placeholder="#0066cc"
-              />
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombre" required />
             </mat-form-field>
-            <input
-              type="color"
-              [value]="form.get('color_primario')?.value || '#000000'"
-              (input)="
-                form.get('color_primario')?.setValue($any($event.target).value)
-              "
-            />
-          </div>
 
-          <!-- Logo -->
-          <div class="md:col-span-2">
-            <div class="mb-2 font-medium">Logo</div>
-            <div class="flex items-center gap-4">
-              <div class="h-24 w-24 overflow-hidden rounded border bg-gray-100">
-                @if (logoPreviewUrl()) {
-                  <img
-                    [src]="logoPreviewUrl()"
-                    alt="Logo"
-                    class="h-full w-full object-cover"
-                  />
-                } @else {
-                  <div
-                    class="grid h-full w-full place-items-center text-gray-400"
-                  >
-                    Sin logo
+            <mat-form-field appearance="outline">
+              <mat-label>Teléfono</mat-label>
+              <input matInput formControlName="telefono" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="md:col-span-2">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="md:col-span-2">
+              <mat-label>Dirección</mat-label>
+              <input matInput formControlName="direccion" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Código Postal</mat-label>
+              <input matInput formControlName="postal" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>NIF</mat-label>
+              <input matInput formControlName="nif" />
+            </mat-form-field>
+
+            <!-- Color primario -->
+            <div class="flex items-center gap-3">
+              <mat-form-field appearance="outline">
+                <mat-label>Color primario</mat-label>
+                <input
+                  matInput
+                  formControlName="color_primario"
+                  placeholder="#0066cc"
+                />
+              </mat-form-field>
+              <input
+                type="color"
+                class="h-10 w-10 cursor-pointer rounded-lg border border-zinc-200"
+                [value]="form.get('color_primario')?.value || '#000000'"
+                (input)="
+                  form.get('color_primario')?.setValue($any($event.target).value)
+                "
+              />
+            </div>
+
+            <!-- Logo -->
+            <div class="md:col-span-2">
+              <div class="mb-2 font-medium text-zinc-700">Logo</div>
+              <div class="flex items-center gap-4">
+                <div
+                  class="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50"
+                >
+                  @if (logoPreviewUrl()) {
+                    <img
+                      [src]="logoPreviewUrl()"
+                      alt="Logo"
+                      class="h-full w-full object-cover"
+                    />
+                  } @else {
+                    <mat-icon
+                      class="material-symbols-outlined text-4xl text-zinc-300"
+                      >image</mat-icon
+                    >
+                  }
+                </div>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="logoInput.click()"
+                >
+                  <mat-icon class="material-symbols-outlined">upload</mat-icon>
+                  Seleccionar logo
+                </button>
+                <input
+                  #logoInput
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  (change)="onLogoSelected(logoInput.files)"
+                />
+              </div>
+            </div>
+
+            <!-- Imágenes -->
+            <div class="md:col-span-2">
+              <div class="mb-2 font-medium text-zinc-700">Imágenes</div>
+
+              <!-- existentes -->
+              <div class="mb-3 flex flex-wrap gap-3">
+                @for (id of existingImagenIds(); track id) {
+                  <div class="relative">
+                    <img
+                      [src]="imagenPreviewUrl(id)"
+                      class="h-24 w-32 rounded-xl border border-zinc-200 object-cover"
+                    />
+                    <button
+                      mat-mini-fab
+                      color="warn"
+                      class="!absolute -top-2 -right-2 !h-6 !w-6"
+                      type="button"
+                    >
+                      <mat-icon
+                        class="material-symbols-outlined !text-base"
+                        >close</mat-icon
+                      >
+                    </button>
                   </div>
                 }
               </div>
+
+              <!-- nuevas -->
+              <div class="mb-3 flex flex-wrap gap-3">
+                @for (f of imagenesFiles(); track f) {
+                  <div class="relative">
+                    <button
+                      mat-mini-fab
+                      color="warn"
+                      class="!absolute -top-2 -right-2 !h-6 !w-6"
+                      type="button"
+                    >
+                      <mat-icon
+                        class="material-symbols-outlined !text-base"
+                        >close</mat-icon
+                      >
+                    </button>
+                  </div>
+                }
+              </div>
+
               <button
                 mat-stroked-button
                 type="button"
-                (click)="logoInput.click()"
+                (click)="imagenesInput.click()"
               >
                 <mat-icon class="material-symbols-outlined">upload</mat-icon>
-                Seleccionar logo
+                Añadir imágenes
               </button>
               <input
-                #logoInput
+                #imagenesInput
                 type="file"
                 accept="image/*"
                 class="hidden"
-                (change)="onLogoSelected(logoInput.files)"
+                multiple
+                (change)="onImagenesSelected(imagenesInput.files)"
               />
             </div>
-          </div>
 
-          <!-- Imágenes -->
-          <div class="md:col-span-2">
-            <div class="mb-2 font-medium">Imágenes</div>
-
-            <!-- existentes -->
-            <div class="mb-2 flex flex-wrap gap-3">
-              @for (id of existingImagenIds(); track id) {
-                <div class="relative">
-                  <img
-                    [src]="imagenPreviewUrl(id)"
-                    class="h-24 w-32 rounded border object-cover"
-                  />
-                  <button
-                    mat-mini-fab
-                    color="warn"
-                    class="!absolute -top-2 -right-2"
-                    type="button"
-                  >
-                    <mat-icon class="material-symbols-outlined">close</mat-icon>
-                  </button>
-                </div>
-              }
+            <div class="mt-2 flex gap-2 md:col-span-2">
+              <button
+                mat-flat-button
+                color="primary"
+                type="submit"
+                [disabled]="form.invalid || loading()"
+              >
+                Guardar
+              </button>
             </div>
 
-            <!-- nuevas -->
-            <div class="mb-2 flex flex-wrap gap-3">
-              @for (f of imagenesFiles(); track f) {
-                <div class="relative">
-                  <!--
-                  <img
-                    [src]="(window as any).URL.createObjectURL(f)"
-                    class="h-24 w-32 rounded border object-cover"
-                  />
-              -->
-                  <button
-                    mat-mini-fab
-                    color="warn"
-                    class="!absolute -top-2 -right-2"
-                    type="button"
-                  >
-                    <mat-icon class="material-symbols-outlined">close</mat-icon>
-                  </button>
-                </div>
-              }
-            </div>
-
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="imagenesInput.click()"
-            >
-              <mat-icon class="material-symbols-outlined">upload</mat-icon>
-              Añadir imágenes
-            </button>
-            <input
-              #imagenesInput
-              type="file"
-              accept="image/*"
-              class="hidden"
-              multiple
-              (change)="onImagenesSelected(imagenesInput.files)"
-            />
-          </div>
-
-          <div class="mt-2 flex gap-2 md:col-span-2">
-            <button
-              mat-flat-button
-              color="primary"
-              type="submit"
-              [disabled]="form.invalid || loading()"
-            >
-              Guardar
-            </button>
-          </div>
-
-          @if (loading()) {
-            <mat-progress-bar
-              mode="indeterminate"
-              class="mt-2 md:col-span-2"
-            ></mat-progress-bar>
-          }
-        </form>
-      </mat-card-content>
-    </mat-card>
-  } @else if (clinicIds() && clinicIds()?.length === 0) {
-    <p class="text-gray-600">No estás asociado a ninguna clínica.</p>
-  }
+            @if (loading()) {
+              <mat-progress-bar
+                mode="indeterminate"
+                class="mt-2 md:col-span-2"
+              ></mat-progress-bar>
+            }
+          </form>
+        </div>
+      </article>
+    }
+  </div>
 </section>

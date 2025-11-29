@@ -21,12 +21,12 @@
             <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
               Mis Pacientes
             </h1>
-          @if (pacientes().length > 0) {
-            <p class="text-sm text-zinc-500">
-              {{ pacientes().length }}
-              {{ pacientes().length === 1 ? "paciente" : "pacientes" }}
-            </p>
-          }
+            @if (pacientes().length > 0) {
+              <p class="text-sm text-zinc-500">
+                {{ pacientes().length }}
+                {{ pacientes().length === 1 ? "paciente" : "pacientes" }}
+              </p>
+            }
           </div>
         </div>
 
@@ -46,7 +46,7 @@
       <div class="search-bar relative flex items-center gap-2">
         <div class="relative flex-1">
           <mat-icon
-            class="material-symbols-outlined absolute top-1/2 left-3 z-10 -translate-y-1/2 text-zinc-400"
+            class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
             >search</mat-icon
           >
           <input
