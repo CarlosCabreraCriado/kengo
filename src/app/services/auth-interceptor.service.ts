@@ -1,64 +1,22 @@
-import {
-  HttpInterceptorFn,
-  HttpRequest,
-  HttpHandlerFn,
-  HttpErrorResponse,
-} from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AuthService } from './auth.service';
-import { defer, from, throwError } from 'rxjs';
-import { switchMap, catchError } from 'rxjs/operators';
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { environment as env } from '../../environments/environment';
 
-let refreshInFlight: Promise<void> | null = null;
-const ensureRefreshed = (auth: AuthService) => {
-  if (!refreshInFlight) {
-    refreshInFlight = auth.refresh().finally(() => (refreshInFlight = null));
-  }
-  return refreshInFlight;
-};
-
+/**
+ * Interceptor que añade withCredentials a todas las peticiones
+ * a nuestros dominios (Directus y API/BFF)
+ */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
 ) => {
-  const auth = inject(AuthService);
-  const isAuthCall =
-    /\/auth\/(login|refresh|logout|magic|consumirMagicLink)$/.test(req.url);
-  const isMagic = String(req.url).includes('/consumirMagicLink');
+  // Verificar si la petición es a nuestros dominios
+  const isOurDomain =
+    req.url.startsWith(env.DIRECTUS_URL) || req.url.startsWith(env.API_URL);
 
-  if (isMagic) {
-    return next(req);
+  if (isOurDomain) {
+    // Añadir withCredentials para enviar cookies
+    req = req.clone({ withCredentials: true });
   }
 
-  const addAuthHeader = (r: HttpRequest<unknown>) => {
-    const token = auth.accessToken();
-    return token
-      ? r.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-      : r;
-  };
-
-  return defer(async () => {
-    if (!isAuthCall && !isMagic && auth.isAccessTokenExpiredSoon()) {
-      await ensureRefreshed(auth);
-    }
-    return addAuthHeader(req);
-  }).pipe(
-    switchMap((prepared) => next(prepared)),
-    catchError((err) => {
-      if (
-        !isAuthCall &&
-        err instanceof HttpErrorResponse &&
-        err.status === 401
-      ) {
-        return from(ensureRefreshed(auth)).pipe(
-          switchMap(() => next(addAuthHeader(req))),
-          catchError((refreshErr) => {
-            auth.eliminarTokens();
-            return throwError(() => refreshErr);
-          }),
-        );
-      }
-      return throwError(() => err);
-    }),
-  );
+  return next(req);
 };

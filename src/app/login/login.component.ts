@@ -51,26 +51,14 @@ export class LoginComponent {
     if (this.loginForm.invalid || this.loading()) return;
     this.error.set(null);
     this.loading.set(true);
+
     const { email, password } = this.loginForm.getRawValue();
-    console.log('Login', { email, password });
 
     try {
-      // --- LLAMADA DE LOGIN DESDE EL COMPONENTE ---
-      // Elige una:
-      // await this.auth.loginJson(email!, password!);        // solo tokens
-      // await this.auth.loginSession(email!, password!);     // solo cookie
-      await this.auth.login(email!, password!); // híbrido recomendado si compartes dominio
-
-      // Redirige (ajusta a tu app)
+      await this.auth.login(email!, password!);
       await this.router.navigateByUrl('/inicio');
-    } catch (e: unknown) {
+    } catch {
       this.error.set('No se pudo iniciar sesión');
-      console.error('Login error', e);
-      /*
-      this.error.set(
-        e?.error?.errors?.[0]?.message ?? 'No se pudo iniciar sesión',
-      );
-      */
     } finally {
       this.loading.set(false);
     }

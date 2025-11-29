@@ -1,0 +1,15 @@
+{
+  "/directus": {
+    "target": "https://admin.kengoapp.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": { "^/directus": "" },
+    "cookieDomainRewrite": "localhost"
+  },
+  "/api": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": { "^/api": "" }
+  }
+}

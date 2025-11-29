@@ -1,9 +1,10 @@
 import { Routes } from '@angular/router';
+import { AuthGuard } from './services/auth-guard.service';
 import { EjerciciosComponent } from './ejercicios/ejercicios.component';
 import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
 import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
-import { ClientesComponent } from './clientes/clientes.component';
+import { PacientesComponent } from './pacientes/pacientes.component';
 import { MiClinicaComponent } from './miclinica/miclinica.component';
 import { ClientePerfilComponent } from './cliente-perfil/cliente-perfil.component';
 import { LoginComponent } from './login/login.component';
@@ -31,7 +32,7 @@ export const routes: Routes = [
   {
     path: 'inicio',
     component: NavegacionComponent,
-    canActivate: [],
+    canActivate: [AuthGuard],
     children: [
       //{ path: "perfil", component: InicioPerfilComponent },
       { path: 'dashboard', component: DashboardComponent },
@@ -39,7 +40,6 @@ export const routes: Routes = [
       {
         path: 'perfil',
         component: PerfilComponent,
-        canActivate: [], //Hay que colocar authguard
         children: [
           { path: '', component: ModificarPerfilComponent },
           { path: 'cambiar-password', component: CambiarPasswordComponent },
@@ -58,7 +58,7 @@ export const routes: Routes = [
       { path: 'mi-clinica', component: MiClinicaComponent, pathMatch: 'full' },
       {
         path: 'mis-pacientes',
-        component: ClientesComponent,
+        component: PacientesComponent,
         pathMatch: 'full',
       },
 
@@ -126,7 +126,7 @@ export const routes: Routes = [
   { path: 'fisios', component: FisiosComponent, pathMatch: 'full' },
   { path: 'categorias', component: CategoriasComponent, pathMatch: 'full' },
 
-  { path: 'clientes', component: ClientesComponent, pathMatch: 'full' },
+  { path: 'clientes', component: PacientesComponent, pathMatch: 'full' },
   { path: 'perfil', component: PerfilComponent, pathMatch: 'full' },
   { path: 'miclinica', component: MiClinicaComponent, pathMatch: 'full' },
   {

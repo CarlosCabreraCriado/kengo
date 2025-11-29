@@ -1,7 +1,6 @@
 export const environment = {
   production: false,
-  DIRECTUS_URL: 'https://admin.kengoapp.com',
-  API_URL: 'http://localhost:3000',
+  DIRECTUS_URL: '/directus',
+  API_URL: '/api',
   ROL_PACIENTE_ID: '690b88bb-0a9b-422c-a476-18eedbf5937b',
-  MAGIC_HASH: 'X4f7aVim9lAkt9rWyWYp1schHuz02ct9',
 };

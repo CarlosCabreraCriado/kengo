@@ -35,7 +35,7 @@ interface DirectusPage<T> {
 }
 
 @Component({
-  selector: 'app-clientes',
+  selector: 'app-pacientes',
   standalone: true,
   imports: [
     MatIconModule,
@@ -48,10 +48,10 @@ interface DirectusPage<T> {
     MatProgressBarModule,
   ],
   encapsulation: ViewEncapsulation.None,
-  templateUrl: './clientes.component.html',
-  styleUrl: './clientes.component.css',
+  templateUrl: './pacientes.component.html',
+  styleUrl: './pacientes.component.css',
 })
-export class ClientesComponent {
+export class PacientesComponent {
   private appService = inject(AppService);
   private dialog = inject(MatDialog);
   public planBuilderService = inject(PlanBuilderService);
