@@ -87,6 +87,17 @@
         </button>
 
         <mat-menu #avatarMenuMobile="matMenu" xPosition="before" yPosition="above">
+          @if (isFisio()) {
+            <button mat-menu-item routerLink="/planes">
+              <mat-icon class="material-symbols-outlined">assignment</mat-icon>
+              <span>Mis planes</span>
+            </button>
+            <button mat-menu-item routerLink="/rutinas">
+              <mat-icon class="material-symbols-outlined">bookmarks</mat-icon>
+              <span>Plantillas</span>
+            </button>
+            <mat-divider></mat-divider>
+          }
           <button mat-menu-item routerLink="/perfil">
             <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
             <span>Editar perfil</span>
@@ -122,6 +133,17 @@
       </button>
 
       <mat-menu #avatarMenuDesktop="matMenu" xPosition="before" yPosition="below">
+        @if (isFisio()) {
+          <button mat-menu-item routerLink="/planes">
+            <mat-icon class="material-symbols-outlined">assignment</mat-icon>
+            <span>Mis planes</span>
+          </button>
+          <button mat-menu-item routerLink="/rutinas">
+            <mat-icon class="material-symbols-outlined">bookmarks</mat-icon>
+            <span>Plantillas</span>
+          </button>
+          <mat-divider></mat-divider>
+        }
         <button mat-menu-item routerLink="/perfil">
           <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
           <span>Editar perfil</span>

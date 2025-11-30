@@ -1,0 +1,180 @@
+@if (isLoading()) {
+  <mat-progress-bar mode="indeterminate" class="fixed top-0 left-0 right-0 z-50"></mat-progress-bar>
+}
+
+<div class="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 p-4 md:p-6">
+  <div class="mx-auto max-w-5xl">
+
+    <!-- Header -->
+    <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-zinc-800">Mis Planes</h1>
+        <p class="text-sm text-zinc-600">
+          Gestiona los planes de tratamiento de tus pacientes
+        </p>
+      </div>
+
+      <button
+        mat-flat-button
+        (click)="crearNuevoPlan()"
+        class="!bg-orange-500 !text-white"
+      >
+        <mat-icon class="material-symbols-outlined">add</mat-icon>
+        Nuevo plan
+      </button>
+    </header>
+
+    <!-- Filters -->
+    <div class="tarjeta-kengo mb-6 rounded-xl p-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Buscar por titulo</mat-label>
+          <input
+            matInput
+            [(ngModel)]="busqueda"
+            (ngModelChange)="onBusquedaChange($event)"
+            placeholder="Buscar..."
+          />
+          <mat-icon matSuffix class="material-symbols-outlined">search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full sm:w-44">
+          <mat-label>Estado</mat-label>
+          <mat-select [(ngModel)]="filtroEstado" (ngModelChange)="onFiltroEstadoChange($event)">
+            <mat-option value="todos">Todos</mat-option>
+            <mat-option value="activo">Activos</mat-option>
+            <mat-option value="completado">Completados</mat-option>
+            <mat-option value="borrador">Borradores</mat-option>
+            <mat-option value="cancelado">Cancelados</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        @if (busqueda || filtroEstado !== 'todos') {
+          <button
+            mat-stroked-button
+            (click)="clearFilters()"
+            class="!border-zinc-300"
+          >
+            <mat-icon class="material-symbols-outlined">clear</mat-icon>
+            Limpiar
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Plans list -->
+    @if (planes().length === 0 && !isLoading()) {
+      <div class="tarjeta-kengo rounded-xl py-12 text-center">
+        <mat-icon class="material-symbols-outlined !text-6xl text-zinc-300">
+          assignment
+        </mat-icon>
+        <p class="mt-2 text-zinc-500">No se encontraron planes</p>
+        <button
+          mat-flat-button
+          (click)="crearNuevoPlan()"
+          class="mt-4 !bg-orange-500 !text-white"
+        >
+          Crear primer plan
+        </button>
+      </div>
+    } @else {
+      <div class="space-y-3">
+        @for (plan of planes(); track plan.id_plan) {
+          <div class="tarjeta-kengo rounded-xl p-4 transition-shadow hover:shadow-lg">
+            <div class="flex items-start gap-4">
+              <!-- Patient avatar -->
+              <img
+                [src]="avatarUrl(getPacienteAvatar(plan))"
+                alt="Avatar"
+                class="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+              />
+
+              <!-- Plan info -->
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <h3 class="font-semibold text-zinc-800 truncate">
+                      {{ plan.titulo }}
+                    </h3>
+                    <p class="text-sm text-zinc-500">
+                      {{ getPacienteNombre(plan) }}
+                    </p>
+                  </div>
+
+                  <!-- Status chip -->
+                  <span
+                    class="flex-shrink-0 rounded-full px-2 py-1 text-xs font-medium"
+                    [ngClass]="estadoColors[plan.estado]"
+                  >
+                    {{ estadoLabels[plan.estado] }}
+                  </span>
+                </div>
+
+                @if (plan.descripcion) {
+                  <p class="mt-1 text-sm text-zinc-600 line-clamp-1">
+                    {{ plan.descripcion }}
+                  </p>
+                }
+
+                <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+                  @if (plan.fecha_inicio) {
+                    <span class="flex items-center gap-1">
+                      <mat-icon class="material-symbols-outlined !text-sm">calendar_today</mat-icon>
+                      {{ formatDate(plan.fecha_inicio) }}
+                    </span>
+                  }
+                  @if (plan.fecha_fin) {
+                    <span class="flex items-center gap-1">
+                      <mat-icon class="material-symbols-outlined !text-sm">event</mat-icon>
+                      {{ formatDate(plan.fecha_fin) }}
+                    </span>
+                  }
+                  @if (plan.date_created) {
+                    <span class="text-zinc-400">
+                      Creado: {{ formatDate(plan.date_created) }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions menu -->
+              <button mat-icon-button [matMenuTriggerFor]="menu">
+                <mat-icon class="material-symbols-outlined">more_vert</mat-icon>
+              </button>
+
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="verResumen(plan)">
+                  <mat-icon class="material-symbols-outlined">visibility</mat-icon>
+                  <span>Ver resumen</span>
+                </button>
+                <button mat-menu-item (click)="editarPlan(plan)">
+                  <mat-icon class="material-symbols-outlined">edit</mat-icon>
+                  <span>Editar</span>
+                </button>
+                <mat-divider></mat-divider>
+                @if (plan.estado !== 'activo') {
+                  <button mat-menu-item (click)="cambiarEstado(plan, 'activo')">
+                    <mat-icon class="material-symbols-outlined text-green-600">play_arrow</mat-icon>
+                    <span>Marcar activo</span>
+                  </button>
+                }
+                @if (plan.estado !== 'completado') {
+                  <button mat-menu-item (click)="cambiarEstado(plan, 'completado')">
+                    <mat-icon class="material-symbols-outlined text-blue-600">check_circle</mat-icon>
+                    <span>Marcar completado</span>
+                  </button>
+                }
+                @if (plan.estado !== 'cancelado') {
+                  <button mat-menu-item (click)="cambiarEstado(plan, 'cancelado')">
+                    <mat-icon class="material-symbols-outlined text-red-600">cancel</mat-icon>
+                    <span>Cancelar plan</span>
+                  </button>
+                }
+              </mat-menu>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

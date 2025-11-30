@@ -1,0 +1,182 @@
+/* Tarjeta kengo - glassmorphism */
+.tarjeta-kengo {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Input compacto para edicion de ejercicios */
+.input-compact {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  color: #3f3f46;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-compact:focus {
+  outline: none;
+  border-color: #e75c3e;
+  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+}
+
+.input-compact::placeholder {
+  color: #a1a1aa;
+}
+
+/* Textarea compacto */
+textarea.input-compact {
+  height: auto;
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+/* Botones de dias de la semana */
+.dia-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e4e4e7;
+  background: white;
+  font-size: 12px;
+  font-weight: 500;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dia-btn:hover {
+  border-color: #e75c3e;
+  color: #e75c3e;
+}
+
+.dia-btn--activo {
+  background: #e75c3e;
+  border-color: #e75c3e;
+  color: white;
+}
+
+.dia-btn--activo:hover {
+  background: #d14e32;
+  border-color: #d14e32;
+  color: white;
+}
+
+/* Indicadores mini de dias (vista compacta) */
+.dia-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f4f4f5;
+  font-size: 9px;
+  font-weight: 600;
+  color: #a1a1aa;
+  transition: all 0.15s ease;
+}
+
+.dia-mini--activo {
+  background: #e75c3e;
+  color: white;
+}
+
+/* Botones de duracion */
+.duracion-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #e4e4e7;
+  background: white;
+  font-size: 13px;
+  font-weight: 500;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.duracion-btn:hover {
+  border-color: #e75c3e;
+  color: #e75c3e;
+}
+
+.duracion-btn--activo {
+  background: #e75c3e;
+  border-color: #e75c3e;
+  color: white;
+}
+
+.duracion-btn--activo:hover {
+  background: #d14e32;
+  border-color: #d14e32;
+  color: white;
+}
+
+/* Boton de rango de fechas */
+.fecha-range-btn {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #e4e4e7;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.fecha-range-btn:hover {
+  border-color: #e75c3e;
+  background: white;
+}
+
+/* Ocultar el input de fecha real */
+.hidden-date-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* CDK Drag & Drop */
+.cdk-drag-preview {
+  z-index: 1000;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drop-list-dragging .tarjeta-kengo:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Animate spinner */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Line clamp */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

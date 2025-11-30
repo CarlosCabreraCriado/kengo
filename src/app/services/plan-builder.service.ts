@@ -9,9 +9,11 @@ import {
   effect,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 import { Router } from '@angular/router';
 import { AppService } from '../services/app.service';
+import { RutinasService } from './rutinas.service';
 import { environment as env } from '../../environments/environment';
 import {
   UsuarioDirectus,
@@ -19,6 +21,10 @@ import {
   ID,
   Ejercicio,
   EjercicioPlan,
+  PlanCompleto,
+  PlanDirectus,
+  EjercicioPlanDirectus,
+  CreateRutinaPayload,
 } from '../../types/global';
 
 interface PersistedStateV1 {
@@ -45,8 +51,13 @@ const DEFAULT_TTL_DAYS = 7;
 export class PlanBuilderService {
   private http = inject(HttpClient);
   private appService = inject(AppService);
+  private rutinasService = inject(RutinasService);
   private router = inject(Router);
   private injector = inject(Injector);
+
+  // --- Modo edicion ---
+  readonly planId = signal<number | null>(null);
+  readonly isEditMode = computed(() => this.planId() !== null);
 
   readonly paciente = signal<Usuario | null>(null);
 
@@ -224,13 +235,13 @@ export class PlanBuilderService {
     if (!p) {
       this.clear();
       this.paciente.set(null);
-      this.router.navigate(['/inicio/mis-pacientes']);
+      this.router.navigate(['/mis-pacientes']);
       this.closeDrawer();
     } else {
       this.paciente.set(p);
       this.tryRestoreFor(p.id);
       localStorage.setItem('carrito:last_paciente_id', p.id);
-      this.router.navigate(['/inicio/ejercicios']);
+      this.router.navigate(['/ejercicios']);
       this.openDrawer();
     }
   }
@@ -355,13 +366,325 @@ export class PlanBuilderService {
     };
     const data = await this.http
       .post<{
-        id_plan: number;
-      }>(`${env.DIRECTUS_URL}/items/planes`, body, { withCredentials: true })
+        data: {
+          id_plan: number;
+        };
+      }>(`${env.DIRECTUS_URL}/items/Planes`, body, { withCredentials: true })
       .toPromise();
-    if (!data) {
+
+    console.log('Plan creado:', data);
+
+    if (!data?.data) {
       return null;
     } else {
-      return data.id_plan; // id del plan creado
+      return data.data.id_plan; // id del plan creado
     }
+  }
+
+  // ============================================
+  // MODO EDICION
+  // ============================================
+
+  setPlanId(id: number | null) {
+    this.planId.set(id);
+  }
+
+  /**
+   * Cargar un plan existente para editar
+   */
+  async loadPlanForEdit(planId: number): Promise<boolean> {
+    const fields = [
+      'id_plan',
+      'titulo',
+      'descripcion',
+      'estado',
+      'fecha_inicio',
+      'fecha_fin',
+      'paciente.id',
+      'paciente.first_name',
+      'paciente.last_name',
+      'paciente.email',
+      'paciente.avatar',
+      'paciente.telefono',
+      'paciente.is_fisio',
+      'paciente.is_cliente',
+      'fisio.id',
+      'items.id',
+      'items.sort',
+      'items.ejercicio.id_ejercicio',
+      'items.ejercicio.nombre_ejercicio',
+      'items.ejercicio.descripcion',
+      'items.ejercicio.portada',
+      'items.ejercicio.video',
+      'items.ejercicio.series_defecto',
+      'items.ejercicio.repeticiones_defecto',
+      'items.series',
+      'items.repeticiones',
+      'items.duracion_seg',
+      'items.descanso_seg',
+      'items.veces_dia',
+      'items.dias_semana',
+      'items.instrucciones_paciente',
+      'items.notas_fisio',
+    ].join(',');
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ data: PlanDirectus }>(
+          `${env.DIRECTUS_URL}/items/Planes/${planId}`,
+          {
+            params: { fields },
+            withCredentials: true,
+          },
+        ),
+      );
+
+      if (!response?.data) return false;
+
+      const plan = response.data;
+
+      // Cargar paciente
+      if (plan.paciente && typeof plan.paciente !== 'string') {
+        const pacienteData = plan.paciente as UsuarioDirectus;
+        this.paciente.set(
+          this.appService.transformarUsuarioDirectus(pacienteData),
+        );
+      }
+
+      // Cargar metadatos
+      this.planId.set(planId);
+      this.titulo.set(plan.titulo || '');
+      this.descripcion.set(plan.descripcion || '');
+      this.fecha_inicio.set(plan.fecha_inicio || null);
+      this.fecha_fin.set(plan.fecha_fin || null);
+
+      // Cargar ejercicios
+      const items: EjercicioPlan[] = (plan.items || [])
+        .map((item: EjercicioPlanDirectus) => ({
+          id: item.id,
+          sort: item.sort,
+          plan: planId,
+          ejercicio: item.ejercicio as Ejercicio,
+          series: item.series,
+          repeticiones: item.repeticiones,
+          duracion_seg: item.duracion_seg,
+          descanso_seg: item.descanso_seg,
+          veces_dia: item.veces_dia,
+          dias_semana: item.dias_semana,
+          instrucciones_paciente: item.instrucciones_paciente,
+          notas_fisio: item.notas_fisio,
+        }))
+        .sort((a: EjercicioPlan, b: EjercicioPlan) => a.sort - b.sort);
+
+      this.items.set(items);
+
+      return true;
+    } catch (error) {
+      console.error('Error al cargar plan para editar:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Actualizar un plan existente
+   */
+  async updatePlan(): Promise<number | null> {
+    const id = this.planId();
+    if (!id || !this.canSubmit())
+      throw new Error('Faltan datos para actualizar');
+
+    try {
+      // 1. Actualizar metadatos del plan
+      await firstValueFrom(
+        this.http.patch(
+          `${env.DIRECTUS_URL}/items/Planes/${id}`,
+          {
+            titulo: this.titulo() || 'Plan sin título',
+            descripcion: this.descripcion() || '',
+            fecha_inicio: this.fecha_inicio(),
+            fecha_fin: this.fecha_fin(),
+          },
+          { withCredentials: true },
+        ),
+      );
+
+      // 2. Eliminar ejercicios existentes
+      const existingItems = this.items().filter((i) => i.id);
+      const existingIds = existingItems.map((i) => i.id);
+
+      // Obtener IDs actuales en la BD
+      const currentResponse = await firstValueFrom(
+        this.http.get<{ data: { id: number }[] }>(
+          `${env.DIRECTUS_URL}/items/planes_ejercicios`,
+          {
+            params: {
+              filter: JSON.stringify({ plan: { _eq: id } }),
+              fields: 'id',
+            },
+            withCredentials: true,
+          },
+        ),
+      );
+
+      const currentIds = (currentResponse?.data || []).map((i) => i.id);
+      const idsToDelete = currentIds.filter(
+        (cid) => !existingIds.includes(cid),
+      );
+
+      // Eliminar los que ya no estan
+      for (const delId of idsToDelete) {
+        await firstValueFrom(
+          this.http.delete(
+            `${env.DIRECTUS_URL}/items/planes_ejercicios/${delId}`,
+            {
+              withCredentials: true,
+            },
+          ),
+        );
+      }
+
+      // 3. Actualizar/Crear ejercicios
+      for (let i = 0; i < this.items().length; i++) {
+        const item = this.items()[i];
+        const payload = {
+          plan: id,
+          ejercicio: item.ejercicio.id_ejercicio,
+          sort: i + 1,
+          series: item.series,
+          repeticiones: item.repeticiones,
+          duracion_seg: item.duracion_seg,
+          descanso_seg: item.descanso_seg,
+          veces_dia: item.veces_dia,
+          dias_semana: item.dias_semana,
+          instrucciones_paciente: item.instrucciones_paciente,
+          notas_fisio: item.notas_fisio,
+        };
+
+        if (item.id) {
+          // Actualizar existente
+          await firstValueFrom(
+            this.http.patch(
+              `${env.DIRECTUS_URL}/items/planes_ejercicios/${item.id}`,
+              payload,
+              { withCredentials: true },
+            ),
+          );
+        } else {
+          // Crear nuevo
+          await firstValueFrom(
+            this.http.post(
+              `${env.DIRECTUS_URL}/items/planes_ejercicios`,
+              payload,
+              { withCredentials: true },
+            ),
+          );
+        }
+      }
+
+      // Limpiar storage
+      const f = this.fisioId(),
+        p = this.paciente();
+      if (f && p) this.removeFromStorage(f, p.id);
+
+      return id;
+    } catch (error) {
+      console.error('Error al actualizar plan:', error);
+      return null;
+    }
+  }
+
+  // ============================================
+  // RUTINAS (Plantillas)
+  // ============================================
+
+  /**
+   * Cargar ejercicios desde una rutina
+   */
+  async loadFromRutina(rutinaId: number): Promise<boolean> {
+    try {
+      const rutina = await this.rutinasService.getRutinaById(rutinaId);
+      if (!rutina) return false;
+
+      // Convertir ejercicios de rutina a ejercicios de plan
+      const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
+        sort: idx + 1,
+        ejercicio: e.ejercicio,
+        series: e.series ?? 3,
+        repeticiones: e.repeticiones ?? 12,
+        duracion_seg: e.duracion_seg,
+        descanso_seg: e.descanso_seg ?? 45,
+        veces_dia: e.veces_dia ?? 1,
+        dias_semana: e.dias_semana ?? ['L', 'X', 'V'],
+        instrucciones_paciente: e.instrucciones_paciente,
+        notas_fisio: e.notas_fisio,
+      }));
+
+      this.items.set(items);
+
+      // Opcional: usar nombre de rutina como base para titulo
+      if (!this.titulo()) {
+        this.titulo.set(rutina.nombre);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error al cargar rutina:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Guardar la configuracion actual como rutina
+   */
+  async saveAsRutina(
+    nombre: string,
+    descripcion: string,
+    visibilidad: 'privado' | 'publico',
+  ): Promise<number | null> {
+    const fisio = this.fisioId();
+    if (!fisio || this.items().length === 0) return null;
+
+    const payload: CreateRutinaPayload = {
+      nombre,
+      descripcion,
+      autor: fisio,
+      visibilidad,
+      ejercicios: this.items().map((item, idx) => ({
+        ejercicio: item.ejercicio.id_ejercicio,
+        sort: idx + 1,
+        series: item.series,
+        repeticiones: item.repeticiones,
+        duracion_seg: item.duracion_seg,
+        descanso_seg: item.descanso_seg,
+        veces_dia: item.veces_dia,
+        dias_semana: item.dias_semana,
+        instrucciones_paciente: item.instrucciones_paciente,
+        notas_fisio: item.notas_fisio,
+      })),
+    };
+
+    return this.rutinasService.createRutina(payload);
+  }
+
+  /**
+   * Reset completo del estado (para nuevo plan)
+   */
+  resetForNewPlan() {
+    this.planId.set(null);
+    this.items.set([]);
+    this.titulo.set('');
+    this.descripcion.set('');
+    this.fecha_inicio.set(null);
+    this.fecha_fin.set(null);
+    // Mantener paciente si existe
+  }
+
+  /**
+   * Reset completo incluyendo paciente
+   */
+  resetAll() {
+    this.resetForNewPlan();
+    this.paciente.set(null);
+    this.closeDrawer();
   }
 }

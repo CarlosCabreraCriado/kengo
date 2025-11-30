@@ -9,6 +9,7 @@ import { environment as env } from '../../environments/environment';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
 
 // Servicios:
 import { AppService } from '../services/app.service';
@@ -24,6 +25,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
     MatMenuModule,
     MatButtonModule,
     MatIconModule,
+    MatDividerModule,
   ],
   templateUrl: './navegacion.component.html',
   styleUrl: './navegacion.component.scss',

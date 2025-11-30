@@ -1,0 +1,190 @@
+@if (isLoading()) {
+  <mat-progress-bar mode="indeterminate" class="fixed top-0 left-0 right-0 z-50"></mat-progress-bar>
+}
+
+<div class="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-4 md:p-6">
+  <div class="mx-auto max-w-5xl">
+
+    <!-- Header -->
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-zinc-800">Plantillas de Rutinas</h1>
+      <p class="text-sm text-zinc-600">
+        Guarda y reutiliza configuraciones de ejercicios
+      </p>
+    </header>
+
+    <!-- Filters -->
+    <div class="tarjeta-kengo mb-6 rounded-xl p-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Buscar</mat-label>
+          <input
+            matInput
+            [(ngModel)]="busqueda"
+            (ngModelChange)="onBusquedaChange($event)"
+            placeholder="Nombre de la plantilla..."
+          />
+          <mat-icon matSuffix class="material-symbols-outlined">search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full sm:w-48">
+          <mat-label>Visibilidad</mat-label>
+          <mat-select [(ngModel)]="filtroVisibilidad" (ngModelChange)="onFiltroChange($event)">
+            <mat-option value="todas">Todas</mat-option>
+            <mat-option value="privadas">Mis plantillas</mat-option>
+            <mat-option value="publicas">Publicas</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Rutinas list -->
+    @if (rutinas().length === 0 && !isLoading()) {
+      <div class="tarjeta-kengo rounded-xl py-12 text-center">
+        <mat-icon class="material-symbols-outlined !text-6xl text-zinc-300">
+          bookmarks
+        </mat-icon>
+        <p class="mt-2 text-zinc-500">No tienes plantillas guardadas</p>
+        <p class="mt-1 text-sm text-zinc-400">
+          Crea un plan y guardalo como plantilla para reutilizarlo
+        </p>
+      </div>
+    } @else {
+      <div class="space-y-3">
+        @for (rutina of rutinas(); track rutina.id_rutina) {
+          <div class="tarjeta-kengo overflow-hidden rounded-xl">
+            <!-- Header -->
+            <div class="flex items-start gap-4 p-4">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100">
+                <mat-icon class="material-symbols-outlined text-amber-600">
+                  bookmark
+                </mat-icon>
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <h3 class="font-semibold text-zinc-800">
+                      {{ rutina.nombre }}
+                    </h3>
+                    @if (rutina.descripcion) {
+                      <p class="mt-1 text-sm text-zinc-600 line-clamp-2">
+                        {{ rutina.descripcion }}
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Visibility badge -->
+                  <span
+                    class="flex-shrink-0 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
+                    [class.bg-zinc-100]="rutina.visibilidad === 'privado'"
+                    [class.text-zinc-600]="rutina.visibilidad === 'privado'"
+                    [class.bg-green-100]="rutina.visibilidad === 'publico'"
+                    [class.text-green-700]="rutina.visibilidad === 'publico'"
+                  >
+                    <mat-icon class="material-symbols-outlined !text-sm">
+                      {{ rutina.visibilidad === 'privado' ? 'lock' : 'public' }}
+                    </mat-icon>
+                    {{ rutina.visibilidad === 'privado' ? 'Privada' : 'Publica' }}
+                  </span>
+                </div>
+
+                <div class="mt-2 flex items-center gap-3 text-xs text-zinc-500">
+                  @if (rutina.date_created) {
+                    <span>Creada: {{ formatDate(rutina.date_created) }}</span>
+                  }
+                  @if (!isOwner(rutina)) {
+                    <span class="text-amber-600">Plantilla publica</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions menu -->
+              <button mat-icon-button [matMenuTriggerFor]="menu">
+                <mat-icon class="material-symbols-outlined">more_vert</mat-icon>
+              </button>
+
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="togglePreview(rutina)">
+                  <mat-icon class="material-symbols-outlined">visibility</mat-icon>
+                  <span>Ver ejercicios</span>
+                </button>
+                <button mat-menu-item (click)="usarPlantilla(rutina)">
+                  <mat-icon class="material-symbols-outlined">play_arrow</mat-icon>
+                  <span>Usar plantilla</span>
+                </button>
+                <button mat-menu-item (click)="duplicar(rutina)">
+                  <mat-icon class="material-symbols-outlined">content_copy</mat-icon>
+                  <span>Duplicar</span>
+                </button>
+                @if (isOwner(rutina)) {
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item (click)="cambiarVisibilidad(rutina)">
+                    <mat-icon class="material-symbols-outlined">
+                      {{ rutina.visibilidad === 'privado' ? 'public' : 'lock' }}
+                    </mat-icon>
+                    <span>
+                      {{ rutina.visibilidad === 'privado' ? 'Hacer publica' : 'Hacer privada' }}
+                    </span>
+                  </button>
+                  <button mat-menu-item (click)="eliminar(rutina)" class="!text-red-600">
+                    <mat-icon class="material-symbols-outlined text-red-600">delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                }
+              </mat-menu>
+            </div>
+
+            <!-- Expand button -->
+            <button
+              class="flex w-full items-center justify-center gap-1 border-t border-zinc-100 py-2 text-sm text-zinc-500 hover:bg-zinc-50"
+              (click)="togglePreview(rutina)"
+            >
+              <mat-icon class="material-symbols-outlined !text-lg">
+                {{ expandedRutinaId() === rutina.id_rutina ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+              {{ expandedRutinaId() === rutina.id_rutina ? 'Ocultar ejercicios' : 'Ver ejercicios' }}
+            </button>
+
+            <!-- Preview panel -->
+            @if (expandedRutinaId() === rutina.id_rutina) {
+              <div class="border-t border-zinc-100 bg-zinc-50 p-4">
+                @if (loadingPreview()) {
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                } @else if (previewEjercicios().length > 0) {
+                  <div class="space-y-2">
+                    @for (ej of previewEjercicios(); track ej.id; let i = $index) {
+                      <div class="flex items-center gap-3 rounded-lg bg-white p-2">
+                        <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-zinc-200">
+                          @if (ej.ejercicio.portada) {
+                            <img
+                              [src]="assetUrl(ej.ejercicio.portada)"
+                              class="h-full w-full object-cover"
+                            />
+                          }
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <p class="text-sm font-medium text-zinc-800">
+                            {{ i + 1 }}. {{ ej.ejercicio.nombre_ejercicio }}
+                          </p>
+                          <p class="text-xs text-zinc-500">
+                            {{ ej.series || 3 }} series x {{ ej.repeticiones || 12 }} reps
+                            @if (ej.descanso_seg) {
+                              · {{ ej.descanso_seg }}s descanso
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="text-center text-sm text-zinc-500">Sin ejercicios</p>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

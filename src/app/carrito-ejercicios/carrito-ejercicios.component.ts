@@ -13,8 +13,10 @@ import {
 } from '@angular/core';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PlanBuilderService } from '../services/plan-builder.service';
 
@@ -35,10 +37,12 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   private router = inject(Router);
   private snack = inject(MatSnackBar);
   private injector = inject(Injector);
+  private dialog = inject(MatDialog);
 
   readonly svc = inject(PlanBuilderService);
 
   drawerAbierto = signal(false);
+  ocultarTab = signal(false);
   @Input() autoOpen = false;
 
   // Derived
@@ -68,12 +72,24 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       { injector: this.injector },
     );
 
+    // Verificar ruta actual y ocultar tab si estamos en /planes
+    this.checkRouteForTab(this.router.url);
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.checkRouteForTab((event as NavigationEnd).urlAfterRedirects);
+      });
+
     //Lee de localStorage el último paciente seleccionado
     const lastPacienteId = localStorage.getItem('carrito:last_paciente_id');
     const lastFisioId = localStorage.getItem('carrito:last_fisio_id');
     if (lastPacienteId && lastFisioId) {
       this.svc.tryRestoreFor(lastPacienteId, lastFisioId);
     }
+  }
+
+  private checkRouteForTab(url: string) {
+    this.ocultarTab.set(url.startsWith('/planes'));
   }
 
   ngOnDestroy() {
@@ -117,6 +133,11 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  irAEjercicios() {
+    this.svc.closeDrawer();
+    this.router.navigate(['/inicio/ejercicios']);
+  }
+
   // Ir a la pantalla de configuración del plan (manteniendo el carrito en el service)
   async configurarPlan() {
     if (!this.svc.paciente()) {
@@ -130,8 +151,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const id = this.svc.paciente()!.id;
-    // Si usas el guard y la ruta propuesta en la respuesta anterior:
-    await this.router.navigate(['/inicio/planes/nuevo'], {
+    await this.router.navigate(['/planes/nuevo'], {
       queryParams: { paciente: id },
     });
 
@@ -142,5 +162,40 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   assetUrl(id: string | null | undefined, w = 160, h = 90) {
     if (!id) return '';
     return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+  }
+
+  // Cargar una plantilla (rutina) existente
+  async cargarPlantilla() {
+    if (!this.svc.paciente()) {
+      this.snack.open('Selecciona un paciente primero.', 'OK', {
+        duration: 2000,
+      });
+      return;
+    }
+
+    const { SelectorRutinaComponent } = await import(
+      '../selector-rutina/selector-rutina.component'
+    );
+
+    const dialogRef = this.dialog.open(SelectorRutinaComponent, {
+      width: '600px',
+      maxWidth: '95vw',
+      maxHeight: '80vh',
+    });
+
+    dialogRef.afterClosed().subscribe(async (rutinaId: number | undefined) => {
+      if (rutinaId) {
+        const success = await this.svc.loadFromRutina(rutinaId);
+        if (success) {
+          this.snack.open('Plantilla cargada correctamente', 'OK', {
+            duration: 2000,
+          });
+        } else {
+          this.snack.open('Error al cargar la plantilla', 'OK', {
+            duration: 2000,
+          });
+        }
+      }
+    });
   }
 }

@@ -120,3 +120,174 @@ export interface Accesos {
   isPaciente: boolean;
   isFisio: boolean;
 }
+
+// ============================================
+// PLANES
+// ============================================
+
+export type EstadoPlan = 'borrador' | 'activo' | 'completado' | 'cancelado';
+
+export interface Plan {
+  id_plan: number;
+  paciente: string | Usuario;
+  fisio: string | Usuario;
+  titulo: string;
+  descripcion?: string;
+  estado: EstadoPlan;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
+  date_created?: string;
+  date_updated?: string;
+}
+
+export interface PlanCompleto extends Plan {
+  paciente: Usuario;
+  fisio: Usuario;
+  items: EjercicioPlan[];
+}
+
+export interface PlanDirectus {
+  id_plan: number;
+  paciente: string | UsuarioDirectus;
+  fisio: string | UsuarioDirectus;
+  titulo: string;
+  descripcion?: string;
+  estado: EstadoPlan;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
+  date_created?: string;
+  date_updated?: string;
+  items?: EjercicioPlanDirectus[];
+}
+
+export interface EjercicioPlanDirectus {
+  id: number;
+  sort: number;
+  date_created?: string;
+  date_updated?: string;
+  plan: number;
+  ejercicio: number | Ejercicio;
+  instrucciones_paciente?: string;
+  notas_fisio?: string;
+  series?: number;
+  repeticiones?: number;
+  duracion_seg?: number;
+  descanso_seg?: number;
+  veces_dia?: number;
+  dias_semana?: string[];
+}
+
+// ============================================
+// RUTINAS (Plantillas)
+// ============================================
+
+export type VisibilidadRutina = 'privado' | 'publico';
+
+export interface Rutina {
+  id_rutina: number;
+  nombre: string;
+  descripcion?: string;
+  autor: string | Usuario;
+  visibilidad: VisibilidadRutina;
+  date_created?: string;
+  date_updated?: string;
+}
+
+export interface RutinaCompleta extends Rutina {
+  autor: Usuario;
+  ejercicios: EjercicioRutina[];
+}
+
+export interface RutinaDirectus {
+  id_rutina: number;
+  nombre: string;
+  descripcion?: string;
+  autor: string | UsuarioDirectus;
+  visibilidad: VisibilidadRutina;
+  date_created?: string;
+  date_updated?: string;
+  ejercicios?: EjercicioRutinaDirectus[];
+}
+
+export interface EjercicioRutina {
+  id: number;
+  sort: number;
+  rutina: number;
+  ejercicio: Ejercicio;
+  series?: number;
+  repeticiones?: number;
+  duracion_seg?: number;
+  descanso_seg?: number;
+  veces_dia?: number;
+  dias_semana?: string[];
+  instrucciones_paciente?: string;
+  notas_fisio?: string;
+  date_created?: string;
+  date_updated?: string;
+}
+
+export interface EjercicioRutinaDirectus {
+  id: number;
+  sort: number;
+  rutina: number;
+  ejercicio: number | Ejercicio;
+  series?: number;
+  repeticiones?: number;
+  duracion_seg?: number;
+  descanso_seg?: number;
+  veces_dia?: number;
+  dias_semana?: string[];
+  instrucciones_paciente?: string;
+  notas_fisio?: string;
+  date_created?: string;
+  date_updated?: string;
+}
+
+// ============================================
+// Payloads para crear/actualizar
+// ============================================
+
+export interface CreatePlanPayload {
+  paciente: string;
+  fisio: string;
+  titulo: string;
+  descripcion?: string;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
+  estado?: EstadoPlan;
+  items: CreatePlanEjercicioPayload[];
+}
+
+export interface CreatePlanEjercicioPayload {
+  ejercicio: number;
+  sort: number;
+  series?: number;
+  repeticiones?: number;
+  duracion_seg?: number;
+  descanso_seg?: number;
+  veces_dia?: number;
+  dias_semana?: string[];
+  instrucciones_paciente?: string;
+  notas_fisio?: string;
+}
+
+export interface CreateRutinaPayload {
+  nombre: string;
+  descripcion?: string;
+  autor: string;
+  visibilidad: VisibilidadRutina;
+  ejercicios: CreateRutinaEjercicioPayload[];
+}
+
+export interface CreateRutinaEjercicioPayload {
+  ejercicio: number;
+  sort: number;
+  series?: number;
+  repeticiones?: number;
+  duracion_seg?: number;
+  descanso_seg?: number;
+  veces_dia?: number;
+  dias_semana?: string[];
+  instrucciones_paciente?: string;
+  notas_fisio?: string;
+}

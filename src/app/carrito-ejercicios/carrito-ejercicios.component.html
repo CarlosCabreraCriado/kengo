@@ -119,23 +119,32 @@
               </button>
             </div>
           }
+          <!-- Botón añadir ejercicio al final de la lista -->
+          <button
+            class="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-white/40 p-3 text-zinc-500 transition-all hover:border-[#e75c3e] hover:bg-[#e75c3e]/5 hover:text-[#e75c3e]"
+            (click)="irAEjercicios()"
+            aria-label="Añadir ejercicio"
+          >
+            <mat-icon class="material-symbols-outlined !text-2xl">add</mat-icon>
+            <span class="text-sm font-medium">Añadir ejercicio</span>
+          </button>
         } @else {
           <div
             class="flex flex-1 flex-col items-center justify-center px-6 text-center"
           >
-            <div
-              class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100"
+            <!-- Botón añadir ejercicio cuando no hay ejercicios -->
+            <button
+              class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#e75c3e]/10 text-[#e75c3e] transition-all hover:bg-[#e75c3e]/20 hover:scale-105"
+              (click)="irAEjercicios()"
+              aria-label="Añadir ejercicio"
             >
-              <mat-icon
-                class="material-symbols-outlined !text-4xl text-zinc-300"
-                >fitness_center</mat-icon
-              >
-            </div>
+              <mat-icon class="material-symbols-outlined !text-4xl">add</mat-icon>
+            </button>
             <p class="text-sm font-medium text-zinc-600">
               No hay ejercicios en el plan
             </p>
             <p class="mt-1 text-xs text-zinc-400">
-              Añádelos desde la galería de ejercicios
+              Pulsa para añadir ejercicios
             </p>
           </div>
         }
@@ -156,22 +165,35 @@
           >
         </button>
 
-        <button
-          class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-6 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50"
-          (click)="cambiarPaciente()"
-        >
-          <mat-icon class="material-symbols-outlined !text-xl text-zinc-500"
-            >person_search</mat-icon
+        <div class="flex gap-2">
+          <button
+            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="!svc.paciente()"
+            (click)="cargarPlantilla()"
           >
-          <span>Cambiar paciente</span>
-        </button>
+            <mat-icon class="material-symbols-outlined !text-xl text-zinc-500"
+              >bookmarks</mat-icon
+            >
+            <span>Plantilla</span>
+          </button>
+
+          <button
+            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50"
+            (click)="cambiarPaciente()"
+          >
+            <mat-icon class="material-symbols-outlined !text-xl text-zinc-500"
+              >person_search</mat-icon
+            >
+            <span>Paciente</span>
+          </button>
+        </div>
       </div>
     </div>
   </mat-sidenav>
 
   <mat-sidenav-content>
-    <!-- Botón pestaña lateral para abrir el drawer (solo si hay paciente) -->
-    @if (svc.paciente()) {
+    <!-- Botón pestaña lateral para abrir el drawer (solo si hay paciente y no estamos en /planes) -->
+    @if (svc.paciente() && !ocultarTab()) {
       <button
         class="tab-carrito pointer-events-auto"
         [class.tab-carrito--abierto]="drawerAbierto()"
