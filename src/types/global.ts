@@ -157,7 +157,7 @@ export interface PlanDirectus {
   fecha_fin?: string | null;
   date_created?: string;
   date_updated?: string;
-  items?: EjercicioPlanDirectus[];
+  ejercicios?: EjercicioPlanDirectus[];
 }
 
 export interface EjercicioPlanDirectus {

@@ -23,6 +23,7 @@ import { PlanBuilderService } from '../services/plan-builder.service';
 import { MatButtonModule } from '@angular/material/button';
 
 import { environment as env } from '../../environments/environment';
+import { Usuario } from '../../types/global';
 
 @Component({
   selector: 'app-carrito-ejercicios',
@@ -125,17 +126,40 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     this.svc.removeEjercicio(ejercicioId);
   }
 
-  cambiarPaciente() {
-    // Limpia el carrito y des-selecciona paciente
-    this.svc.cambiarPaciente(null);
-    this.snack.open('Selecciona un paciente para continuar', 'OK', {
-      duration: 2500,
+  async cambiarPaciente() {
+    const { SelectorPacienteComponent } = await import(
+      '../selector-paciente/selector-paciente.component'
+    );
+
+    const dialogRef = this.dialog.open(SelectorPacienteComponent, {
+      width: '500px',
+      maxWidth: '95vw',
+      maxHeight: '80vh',
+    });
+
+    dialogRef.afterClosed().subscribe((paciente: Usuario | undefined) => {
+      if (paciente) {
+        // Establecer el nuevo paciente (mantiene los ejercicios del carrito)
+        this.svc.paciente.set(paciente);
+        localStorage.setItem('carrito:last_paciente_id', paciente.id);
+        const fisioId = this.svc.fisioId();
+        if (fisioId) {
+          localStorage.setItem('carrito:last_fisio_id', fisioId);
+        }
+        this.snack.open(`Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`, 'OK', {
+          duration: 2000,
+        });
+      }
     });
   }
 
   irAEjercicios() {
     this.svc.closeDrawer();
-    this.router.navigate(['/inicio/ejercicios']);
+    // Pequeño delay para permitir que el drawer se cierre antes de navegar
+    // Esto evita conflictos con el scroll restoration
+    setTimeout(() => {
+      this.router.navigate(['/ejercicios']);
+    }, 100);
   }
 
   // Ir a la pantalla de configuración del plan (manteniendo el carrito en el service)

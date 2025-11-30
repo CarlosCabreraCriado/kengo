@@ -1,36 +1,80 @@
 @if (isLoading()) {
-  <mat-progress-bar mode="indeterminate" class="fixed top-0 left-0 right-0 z-50"></mat-progress-bar>
+  <mat-progress-bar
+    mode="indeterminate"
+    class="fixed top-0 right-0 left-0 z-50"
+  ></mat-progress-bar>
 }
 
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4 pb-24 md:p-6">
-  <div class="mx-auto max-w-4xl">
+<section class="absolute w-full pb-32">
+  <!-- Header sticky -->
+  <header
+    class="sticky top-0 z-40 mx-auto mb-6 bg-gradient-to-b from-white/95 via-white/90 to-transparent px-4 pt-4 pb-2 backdrop-blur-md"
+  >
+    <div class="mx-auto max-w-4xl">
+      <div class="flex items-center gap-2">
+        <button
+          mat-icon-button
+          class="!h-10 !w-10 shrink-0"
+          aria-label="Volver al inicio"
+          routerLink="/inicio"
+        >
+          <mat-icon class="material-symbols-outlined text-zinc-600"
+            >arrow_back</mat-icon
+          >
+        </button>
+        <div>
+          <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
+            Resumen del Plan
+          </h1>
+          <p class="text-sm text-zinc-500">Plan guardado correctamente</p>
+        </div>
+      </div>
+    </div>
+  </header>
 
+  <div class="mx-auto max-w-4xl px-4">
     @if (plan(); as p) {
       <!-- Success header -->
       <div class="mb-6 text-center">
-        <div class="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-          <mat-icon class="material-symbols-outlined !text-5xl text-green-600">
+        <div
+          class="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100"
+        >
+          <mat-icon
+            class="material-symbols-outlined !text-5xl !text-emerald-600"
+          >
             check_circle
           </mat-icon>
         </div>
-        <h1 class="text-2xl font-bold text-zinc-800 md:text-3xl">
-          Plan guardado correctamente
-        </h1>
-        <p class="mt-2 text-zinc-600">
-          El plan ha sido asignado al paciente
-        </p>
+        <h2 class="text-xl font-bold text-zinc-800 md:text-2xl">¡Listo!</h2>
+        <p class="mt-2 text-zinc-600">El plan ha sido asignado al paciente</p>
       </div>
 
       <!-- Plan summary card -->
-      <div class="tarjeta-kengo mb-6 rounded-xl p-6">
+      <div class="tarjeta-kengo mb-6 rounded-2xl p-6">
         <!-- Patient info -->
         @if (paciente(); as pac) {
-          <div class="mb-6 flex items-center gap-4 border-b border-zinc-200 pb-4">
-            <img
-              [src]="avatarUrl(pac.avatar)"
-              alt="Avatar"
-              class="h-16 w-16 rounded-full object-cover ring-2 ring-green-200"
-            />
+          <div
+            class="mb-6 flex items-center gap-4 border-b border-zinc-200 pb-4"
+          >
+            <div class="shrink-0">
+              @if (pac.avatar) {
+                <img
+                  [src]="avatarUrl(pac.avatar)"
+                  alt="Avatar"
+                  class="h-14 w-14 rounded-full object-cover ring-2 shadow-sm ring-white"
+                />
+              } @else {
+                <div
+                  class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
+                >
+                  <mat-icon
+                    class="material-symbols-outlined text-2xl !text-white"
+                    aria-hidden="true"
+                    >person</mat-icon
+                  >
+                </div>
+              }
+            </div>
             <div>
               <h2 class="text-lg font-semibold text-zinc-800">
                 {{ pac.first_name }} {{ pac.last_name }}
@@ -49,21 +93,29 @@
 
           <div class="mt-4 flex flex-wrap gap-4 text-sm">
             <div class="flex items-center gap-2">
-              <mat-icon class="material-symbols-outlined text-zinc-400">calendar_today</mat-icon>
+              <mat-icon class="material-symbols-outlined !text-primary"
+                >calendar_today</mat-icon
+              >
               <span class="text-zinc-600">
                 Inicio: {{ formatDate(p.fecha_inicio) }}
               </span>
             </div>
             <div class="flex items-center gap-2">
-              <mat-icon class="material-symbols-outlined text-zinc-400">event</mat-icon>
+              <mat-icon class="material-symbols-outlined !text-primary"
+                >event</mat-icon
+              >
               <span class="text-zinc-600">
                 Fin: {{ formatDate(p.fecha_fin) }}
               </span>
             </div>
             <div class="flex items-center gap-2">
-              <mat-icon class="material-symbols-outlined text-zinc-400">fitness_center</mat-icon>
+              <mat-icon class="material-symbols-outlined !text-primary"
+                >fitness_center</mat-icon
+              >
               <span class="text-zinc-600">
-                {{ totalEjercicios() }} ejercicio{{ totalEjercicios() !== 1 ? 's' : '' }}
+                {{ totalEjercicios() }} ejercicio{{
+                  totalEjercicios() !== 1 ? "s" : ""
+                }}
               </span>
             </div>
           </div>
@@ -77,8 +129,10 @@
 
           <div class="space-y-3">
             @for (item of items(); track item.id; let i = $index) {
-              <div class="flex items-start gap-3 rounded-lg bg-zinc-50 p-3">
-                <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-200">
+              <div class="flex items-start gap-3 rounded-xl bg-zinc-50/70 p-3">
+                <div
+                  class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-zinc-200"
+                >
                   @if (item.ejercicio.portada) {
                     <img
                       [src]="assetUrl(item.ejercicio.portada)"
@@ -93,7 +147,9 @@
                     {{ i + 1 }}. {{ item.ejercicio.nombre_ejercicio }}
                   </h5>
 
-                  <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
+                  <div
+                    class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500"
+                  >
                     <span>{{ item.series || 3 }} series</span>
                     <span>{{ item.repeticiones || 12 }} reps</span>
                     @if (item.descanso_seg) {
@@ -136,30 +192,27 @@
         <button
           mat-stroked-button
           (click)="crearOtroPlan()"
-          class="!border-green-500 !text-green-600"
+          class="!border-[#e75c3e] !text-[#e75c3e]"
         >
           <mat-icon class="material-symbols-outlined">add</mat-icon>
           Crear otro plan
         </button>
 
-        <button
-          mat-flat-button
-          (click)="irAInicio()"
-          class="!bg-green-600 !text-white"
-        >
+        <button mat-flat-button color="primary" (click)="irAInicio()">
           <mat-icon class="material-symbols-outlined">home</mat-icon>
           Ir al inicio
         </button>
       </div>
     } @else if (!isLoading()) {
       <!-- Plan not found -->
-      <div class="py-12 text-center">
+      <div class="tarjeta-kengo rounded-2xl py-12 text-center">
         <mat-icon class="material-symbols-outlined !text-6xl text-zinc-300">
           error_outline
         </mat-icon>
         <p class="mt-2 text-zinc-500">Plan no encontrado</p>
         <button
           mat-flat-button
+          color="primary"
           routerLink="/planes"
           class="mt-4"
         >
@@ -168,4 +221,4 @@
       </div>
     }
   </div>
-</div>
+</section>

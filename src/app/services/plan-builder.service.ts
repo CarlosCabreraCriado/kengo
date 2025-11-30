@@ -272,7 +272,7 @@ export class PlanBuilderService {
     this.items.update((list) =>
       list
         .filter((i) => i.ejercicio.id_ejercicio !== ejercicioId)
-        .map((i, idx) => ({ ...i, orden: idx + 1 })),
+        .map((i, idx) => ({ ...i, sort: idx + 1 })),
     );
   }
 
@@ -293,7 +293,7 @@ export class PlanBuilderService {
     const arr = [...this.items()];
     const [moved] = arr.splice(fromIndex, 1);
     arr.splice(toIndex, 0, moved);
-    this.items.set(arr.map((i, idx) => ({ ...i, orden: idx + 1 })));
+    this.items.set(arr.map((i, idx) => ({ ...i, sort: idx + 1 })));
   }
 
   updateItem(idx: number, patch: Partial<EjercicioPlan>) {
@@ -313,7 +313,7 @@ export class PlanBuilderService {
       fecha_fin: this.fecha_fin(),
       items: this.items().map((i, index) => ({
         ejercicio: i.ejercicio.id_ejercicio,
-        orden: index + 1,
+        sort: index + 1,
         series: i.series,
         repeticiones: i.repeticiones,
         duracion_seg: i.duracion_seg,
@@ -342,7 +342,7 @@ export class PlanBuilderService {
     fecha_fin?: string | null;
     items: {
       ejercicio: number;
-      orden: number;
+      sort: number;
       series?: number;
       repeticiones?: number;
       duracion_seg?: number;
@@ -354,30 +354,66 @@ export class PlanBuilderService {
       media_personalizada?: string | null;
     }[];
   }): Promise<number | null> {
-    const body = {
-      paciente: payload.paciente,
-      fisio: payload.fisio,
-      titulo: payload.titulo,
-      descripcion: payload.descripcion ?? '',
-      fecha_inicio: payload.fecha_inicio,
-      fecha_fin: payload.fecha_fin,
-      items: payload.items, // deep create O2M
-      estado: 'activo',
-    };
-    const data = await this.http
-      .post<{
-        data: {
-          id_plan: number;
-        };
-      }>(`${env.DIRECTUS_URL}/items/Planes`, body, { withCredentials: true })
-      .toPromise();
+    try {
+      // 1. Crear el plan sin ejercicios
+      const planBody = {
+        paciente: payload.paciente,
+        fisio: payload.fisio,
+        titulo: payload.titulo,
+        descripcion: payload.descripcion ?? '',
+        fecha_inicio: payload.fecha_inicio,
+        fecha_fin: payload.fecha_fin,
+        estado: 'activo',
+      };
 
-    console.log('Plan creado:', data);
+      const planResponse = await firstValueFrom(
+        this.http.post<{ data: { id_plan: number } }>(
+          `${env.DIRECTUS_URL}/items/Planes`,
+          planBody,
+          { withCredentials: true },
+        ),
+      );
 
-    if (!data?.data) {
+      if (!planResponse?.data?.id_plan) {
+        console.error('Error: No se pudo crear el plan');
+        return null;
+      }
+
+      const planId = planResponse.data.id_plan;
+      console.log('Plan creado con ID:', planId);
+
+      // 2. Crear los ejercicios del plan en planes_ejercicios
+      if (payload.items.length > 0) {
+        const ejerciciosPayload = payload.items.map((item) => ({
+          plan: planId,
+          ejercicio: item.ejercicio,
+          sort: item.sort,
+          series: item.series,
+          repeticiones: item.repeticiones,
+          duracion_seg: item.duracion_seg,
+          descanso_seg: item.descanso_seg,
+          veces_dia: item.veces_dia,
+          dias_semana: item.dias_semana,
+          instrucciones_paciente: item.instrucciones_paciente,
+          notas_fisio: item.notas_fisio,
+        }));
+
+        // Crear todos los ejercicios en una sola petición (batch create)
+        const ejerciciosResponse = await firstValueFrom(
+          this.http.post<{ data: unknown[] }>(
+            `${env.DIRECTUS_URL}/items/planes_ejercicios`,
+            ejerciciosPayload,
+            { withCredentials: true },
+          ),
+        );
+
+        console.log('Ejercicios creados:', ejerciciosResponse?.data?.length ?? 0);
+      }
+
+      return planId;
+    } catch (error) {
+      console.error('Error al crear plan:', error);
       return null;
-    } else {
-      return data.data.id_plan; // id del plan creado
     }
   }
 
@@ -409,23 +445,23 @@ export class PlanBuilderService {
       'paciente.is_fisio',
       'paciente.is_cliente',
       'fisio.id',
-      'items.id',
-      'items.sort',
-      'items.ejercicio.id_ejercicio',
-      'items.ejercicio.nombre_ejercicio',
-      'items.ejercicio.descripcion',
-      'items.ejercicio.portada',
-      'items.ejercicio.video',
-      'items.ejercicio.series_defecto',
-      'items.ejercicio.repeticiones_defecto',
-      'items.series',
-      'items.repeticiones',
-      'items.duracion_seg',
-      'items.descanso_seg',
-      'items.veces_dia',
-      'items.dias_semana',
-      'items.instrucciones_paciente',
-      'items.notas_fisio',
+      'ejercicios.id',
+      'ejercicios.sort',
+      'ejercicios.ejercicio.id_ejercicio',
+      'ejercicios.ejercicio.nombre_ejercicio',
+      'ejercicios.ejercicio.descripcion',
+      'ejercicios.ejercicio.portada',
+      'ejercicios.ejercicio.video',
+      'ejercicios.ejercicio.series_defecto',
+      'ejercicios.ejercicio.repeticiones_defecto',
+      'ejercicios.series',
+      'ejercicios.repeticiones',
+      'ejercicios.duracion_seg',
+      'ejercicios.descanso_seg',
+      'ejercicios.veces_dia',
+      'ejercicios.dias_semana',
+      'ejercicios.instrucciones_paciente',
+      'ejercicios.notas_fisio',
     ].join(',');
 
     try {
@@ -459,7 +495,7 @@ export class PlanBuilderService {
       this.fecha_fin.set(plan.fecha_fin || null);
 
       // Cargar ejercicios
-      const items: EjercicioPlan[] = (plan.items || [])
+      const items: EjercicioPlan[] = (plan.ejercicios || [])
         .map((item: EjercicioPlanDirectus) => ({
           id: item.id,
           sort: item.sort,

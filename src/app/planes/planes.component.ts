@@ -1,20 +1,13 @@
 import { Component, inject, computed, OnInit } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { PlanesService } from '../services/planes.service';
-import { PlanBuilderService } from '../services/plan-builder.service';
 import { Plan, Usuario, EstadoPlan } from '../../types/global';
 import { environment as env } from '../../environments/environment';
 
@@ -23,16 +16,11 @@ import { environment as env } from '../../environments/environment';
   standalone: true,
   imports: [
     NgClass,
-    FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
+    RouterLink,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
     MatProgressBarModule,
-    MatChipsModule,
-    MatDividerModule,
   ],
   templateUrl: './planes.component.html',
   styleUrl: './planes.component.css',
@@ -41,7 +29,6 @@ export class PlanesComponent implements OnInit {
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
   planesService = inject(PlanesService);
-  private planBuilderService = inject(PlanBuilderService);
 
   busqueda = '';
   filtroEstado: 'todos' | EstadoPlan = 'todos';
@@ -69,17 +56,17 @@ export class PlanesComponent implements OnInit {
   }
 
   onBusquedaChange(value: string) {
+    this.busqueda = value;
     this.planesService.setBusqueda(value);
   }
 
   onFiltroEstadoChange(value: 'todos' | EstadoPlan) {
+    this.filtroEstado = value;
     this.planesService.setFiltroEstado(value);
   }
 
-  clearFilters() {
-    this.busqueda = '';
-    this.filtroEstado = 'todos';
-    this.planesService.clearFilters();
+  reload() {
+    this.planesService.reload();
   }
 
   crearNuevoPlan() {

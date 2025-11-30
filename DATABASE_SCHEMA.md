@@ -186,6 +186,7 @@ Planes de tratamiento asignados a pacientes.
 | `fecha_fin` | DATETIME | Fecha de finalización del plan |
 | `paciente` | CHAR(36) | FK a `directus_users` (paciente asignado) |
 | `fisio` | CHAR(36) | FK a `directus_users` (fisioterapeuta responsable) |
+| `ejercicios` | O2M (virtual) | Relación uno-a-muchos con `planes_ejercicios` (campo alias de Directus) |
 
 ---
 

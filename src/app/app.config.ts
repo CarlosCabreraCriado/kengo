@@ -1,5 +1,5 @@
 import { ApplicationConfig } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, RouteReuseStrategy } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
@@ -13,11 +13,15 @@ import { authInterceptor } from './services/auth-interceptor.service';
 
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 
+// Route caching strategy
+import { CustomRouteReuseStrategy } from './services/route-reuse-strategy.service';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
     { provide: MAT_DATE_LOCALE, useValue: 'es-ES' },
+    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
   ],
 };

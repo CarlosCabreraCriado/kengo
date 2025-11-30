@@ -1,6 +1,6 @@
 import { Component, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
-import { Ejercicio } from '../../types/global';
+import { Ejercicio, Usuario } from '../../types/global';
 
 import { PlanBuilderService } from '../services/plan-builder.service';
 import { EjerciciosService } from '../services/ejercicios.service';
@@ -9,6 +9,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 // Angular Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 
 // RxJS
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -26,6 +27,7 @@ export class DetalleEjercicioComponent {
   private location = inject(Location);
   private ejerciciosService = inject(EjerciciosService);
   private planBuilderService = inject(PlanBuilderService);
+  private dialog = inject(MatDialog);
 
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 
@@ -161,11 +163,44 @@ export class DetalleEjercicioComponent {
     }
   }
 
-  asignarEjercicio() {
+  async asignarEjercicio() {
     const ejercicio = this.ejercicio();
-    if (ejercicio) {
-      this.planBuilderService.addEjercicio(ejercicio);
+    if (!ejercicio) return;
+
+    // Si no hay paciente seleccionado, mostrar diálogo para seleccionar uno
+    if (!this.planBuilderService.paciente()) {
+      const paciente = await this.seleccionarPaciente();
+      if (!paciente) return; // Usuario canceló la selección
+
+      // Establecer el paciente seleccionado
+      this.planBuilderService.paciente.set(paciente);
+      localStorage.setItem('carrito:last_paciente_id', paciente.id);
+      const fisioId = this.planBuilderService.fisioId();
+      if (fisioId) {
+        localStorage.setItem('carrito:last_fisio_id', fisioId);
+      }
     }
+
+    // Añadir el ejercicio al carrito
+    this.planBuilderService.addEjercicio(ejercicio);
+  }
+
+  private async seleccionarPaciente(): Promise<Usuario | null> {
+    const { SelectorPacienteComponent } = await import(
+      '../selector-paciente/selector-paciente.component'
+    );
+
+    const dialogRef = this.dialog.open(SelectorPacienteComponent, {
+      width: '500px',
+      maxWidth: '95vw',
+      maxHeight: '80vh',
+    });
+
+    return new Promise((resolve) => {
+      dialogRef.afterClosed().subscribe((paciente: Usuario | undefined) => {
+        resolve(paciente || null);
+      });
+    });
   }
 
   volver() {

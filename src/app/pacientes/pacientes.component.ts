@@ -5,7 +5,7 @@ import {
   signal,
   ViewEncapsulation,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
 import { environment as env } from '../../environments/environment';
 
@@ -24,6 +24,7 @@ import { QrDialogComponent } from '../dialogo-qr/dialogo-qr.component';
 //Servicios:
 import { AppService } from '../services/app.service';
 import { PlanBuilderService } from '../services/plan-builder.service';
+import { PlanesService } from '../services/planes.service';
 
 import { Usuario, UsuarioDirectus } from '../../types/global';
 
@@ -48,7 +49,9 @@ interface DirectusPage<T> {
 export class PacientesComponent {
   private appService = inject(AppService);
   private dialog = inject(MatDialog);
+  private router = inject(Router);
   public planBuilderService = inject(PlanBuilderService);
+  private planesService = inject(PlanesService);
   private authService = inject(AuthService);
 
   public idsClinicas = computed(() => {
@@ -90,7 +93,7 @@ export class PacientesComponent {
         method: 'GET',
         params: {
           fields:
-            'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto,magic_link_url, clinicas.puestos.Puestos_id.id, is_cliente,is_fisio, telefono, direccion',
+            'id,first_name,last_name,email,avatar,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,clinicas.puestos.Puestos_id.puesto,magic_link_url,clinicas.puestos.Puestos_id.id,is_cliente,is_fisio,telefono,direccion',
           sort: 'first_name,last_name',
           limit: '200', // ajusta/añade paginación si lo necesitas
           filter: JSON.stringify(filter),
@@ -177,5 +180,18 @@ export class PacientesComponent {
       // disableClose: false, // si quieres que pueda cerrarse tocando fuera
       // width: '360px',
     });
+  }
+
+  verPlanes(p: Usuario) {
+    this.planesService.clearFilters();
+    this.planesService.setFiltroPaciente(p.id);
+    this.router.navigate(['/planes']);
+  }
+
+  getClinicaNombre(p: Usuario): string | null {
+    if (!p.clinicas || p.clinicas.length === 0) return null;
+    // Acceder al nombre de la clínica (viene como objeto anidado de Directus)
+    const clinica = p.clinicas[0] as any;
+    return clinica?.id_clinica?.nombre || null;
   }
 }
