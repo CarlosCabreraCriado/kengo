@@ -33,11 +33,6 @@ export class InicioComponent implements OnDestroy {
 
   carouselRef = viewChild<ElementRef<HTMLDivElement>>('carousel');
 
-  userName = computed(() => {
-    const user = this.appService.usuario();
-    return user?.first_name || 'Usuario';
-  });
-
   userRole = this.appService.rolUsuario;
 
   allCards: CardOption[] = [
