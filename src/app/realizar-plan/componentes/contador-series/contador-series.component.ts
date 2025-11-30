@@ -1,23 +1,26 @@
 import { Component, Input, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// Angular Material
+import { MatIconModule } from '@angular/material/icon';
+
 @Component({
   selector: 'app-contador-series',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
-    <div class="series-container">
-      <span class="series-label">Serie {{ serieActual() }} de {{ totalSeries() }}</span>
-      <div class="series-pills">
+    <div class="flex flex-col items-center gap-1.5 rounded-xl bg-white/60 px-4 py-2 shadow-sm backdrop-blur-sm">
+      <span class="text-xs font-semibold tracking-wide text-zinc-700">
+        Serie {{ serieActual() }} de {{ totalSeries() }}
+      </span>
+      <div class="flex items-center gap-2">
         @for (serie of seriesArray(); track serie) {
           <div
-            class="pill"
-            [class.completada]="serie < serieActual()"
-            [class.actual]="serie === serieActual()"
-            [class.pendiente]="serie > serieActual()"
+            class="flex h-6 w-6 items-center justify-center rounded-full border-2 border-transparent transition-all duration-300"
+            [class]="getPillClasses(serie)"
           >
             @if (serie < serieActual()) {
-              <span class="check-icon">✓</span>
+              <mat-icon class="material-symbols-outlined !text-xs text-white">check</mat-icon>
             }
           </div>
         }
@@ -25,78 +28,29 @@ import { CommonModule } from '@angular/common';
     </div>
   `,
   styles: `
-    .series-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 24px;
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-    }
-
-    .series-label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #374151;
-      letter-spacing: 0.02em;
-    }
-
-    .series-pills {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .pill {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid transparent;
-    }
-
-    .pill.completada {
+    .pill-completada {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     }
 
-    .check-icon {
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 700;
-    }
-
-    .pill.actual {
+    .pill-actual {
       background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      box-shadow:
-        0 0 0 4px rgba(231, 92, 62, 0.2),
-        0 4px 16px rgba(231, 92, 62, 0.3);
-      transform: scale(1.15);
+      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.2), 0 2px 10px rgba(231, 92, 62, 0.3);
+      transform: scale(1.1);
       animation: pulse-pill 2s ease-in-out infinite;
     }
 
-    .pill.pendiente {
+    .pill-pendiente {
       background: rgba(0, 0, 0, 0.05);
       border-color: rgba(0, 0, 0, 0.1);
     }
 
     @keyframes pulse-pill {
       0%, 100% {
-        box-shadow:
-          0 0 0 4px rgba(231, 92, 62, 0.2),
-          0 4px 16px rgba(231, 92, 62, 0.3);
+        box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.2), 0 2px 10px rgba(231, 92, 62, 0.3);
       }
       50% {
-        box-shadow:
-          0 0 0 6px rgba(231, 92, 62, 0.15),
-          0 4px 20px rgba(231, 92, 62, 0.4);
+        box-shadow: 0 0 0 4px rgba(231, 92, 62, 0.15), 0 2px 12px rgba(231, 92, 62, 0.4);
       }
     }
   `,
@@ -120,4 +74,14 @@ export class ContadorSeriesComponent {
     const total = this._totalSeries();
     return Array.from({ length: total }, (_, i) => i + 1);
   });
+
+  getPillClasses(serie: number): string {
+    if (serie < this.serieActual()) {
+      return 'pill-completada';
+    }
+    if (serie === this.serieActual()) {
+      return 'pill-actual';
+    }
+    return 'pill-pendiente';
+  }
 }

@@ -12,19 +12,37 @@ import { RegistroSesionService } from '../../../services/registro-sesion.service
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { fadeAnimation } from '../../realizar-plan.animations';
 
+// Angular Material
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+
 @Component({
   selector: 'app-descanso',
   standalone: true,
-  imports: [CommonModule, TemporizadorComponent],
+  imports: [CommonModule, MatIconModule, MatButtonModule, TemporizadorComponent],
   animations: [fadeAnimation],
   template: `
-    <div class="descanso-container">
-      <div class="header-section" @fade>
-        <h2 class="titulo">Descanso</h2>
-        <p class="subtitulo">Prepárate para la siguiente serie</p>
+    <div class="flex flex-1 flex-col items-center justify-between gap-5 overflow-hidden py-4 text-center">
+      <!-- Header -->
+      <div class="flex shrink-0 flex-col gap-2" @fade>
+        <h2 class="m-0 text-2xl font-bold text-zinc-800">Descanso</h2>
+        <p class="m-0 text-sm font-medium text-zinc-500">Prepárate para la siguiente serie</p>
+        <!-- Indicador de progreso -->
+        <div class="flex items-center justify-center gap-3 pt-1">
+          <span class="text-sm font-bold text-zinc-700">
+            {{ ejercicioActualIndex() + 1 }}/{{ totalEjercicios() }}
+          </span>
+          <div class="h-2 w-24 overflow-hidden rounded-full bg-[#e75c3e]/15">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-[#e75c3e] to-[#efc048] transition-all duration-300"
+              [style.width.%]="progresoSesion()"
+            ></div>
+          </div>
+        </div>
       </div>
 
-      <div class="timer-section">
+      <!-- Timer -->
+      <div class="timer-wrapper flex min-h-0 flex-1 items-center justify-center">
         <app-temporizador
           #temporizador
           [tiempoInicial]="tiempoDescanso()"
@@ -35,30 +53,35 @@ import { fadeAnimation } from '../../realizar-plan.animations';
         />
       </div>
 
-      <div class="info-section" @fade>
-        <div class="proxima-serie">
-          <span class="label">Próxima</span>
-          <span class="valor">Serie {{ serieActual() }} de {{ totalSeries() }}</span>
+      <!-- Info próxima serie -->
+      <div class="shrink-0" @fade>
+        <div class="flex flex-col gap-1.5 rounded-2xl bg-white/70 px-9 py-4 shadow-sm ring-1 ring-[#e75c3e]/15 backdrop-blur-sm">
+          <span class="text-xs font-semibold uppercase tracking-widest text-zinc-400">Próxima</span>
+          <span class="bg-gradient-to-br from-[#e75c3e] to-[#d14d31] bg-clip-text text-xl font-bold text-transparent">
+            Serie {{ serieActual() }} de {{ totalSeries() }}
+          </span>
         </div>
       </div>
 
-      <div class="actions-section">
+      <!-- Actions -->
+      <div class="flex w-full max-w-xs shrink-0 flex-col gap-2.5">
         <button
-          type="button"
-          class="btn-agregar"
+          mat-stroked-button
+          class="!h-12 !w-full !rounded-xl !border-zinc-200 !text-sm !font-semibold !text-zinc-700 hover:!bg-[#e75c3e]/10 hover:!text-[#e75c3e]"
           (click)="onAgregarTiempo()"
         >
-          <span class="icon">+15</span>
-          <span class="text">segundos</span>
+          <mat-icon class="material-symbols-outlined mr-1">add</mat-icon>
+          15 segundos
         </button>
 
         <button
-          type="button"
-          class="btn-saltar"
+          mat-flat-button
+          color="primary"
+          class="!h-14 !w-full !rounded-2xl !text-base !font-bold"
           (click)="saltar.emit()"
         >
           Saltar descanso
-          <span class="arrow">→</span>
+          <mat-icon class="material-symbols-outlined ml-2">arrow_forward</mat-icon>
         </button>
       </div>
     </div>
@@ -72,172 +95,25 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       overflow: hidden;
     }
 
-    .descanso-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      flex: 1;
-      min-height: 0;
-      gap: 20px;
-      text-align: center;
-      padding: 16px 0;
-      overflow: hidden;
+    /* Timer adaptable - crece con el espacio disponible */
+    .timer-wrapper {
+      container-type: size;
     }
 
-    .header-section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex-shrink: 0;
+    .timer-wrapper ::ng-deep .timer-container {
+      height: 100%;
+      aspect-ratio: 1;
+      width: auto;
+      min-height: 5rem;
+      max-height: 14rem;
     }
 
-    .titulo {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0;
+    .timer-wrapper ::ng-deep .timer-value {
+      font-size: clamp(1.75rem, 35cqh, 4.5rem);
     }
 
-    .subtitulo {
-      font-size: 0.9375rem;
-      color: #6b7280;
-      margin: 0;
-      font-weight: 500;
-    }
-
-    .timer-section {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 0;
-    }
-
-    .info-section {
-      flex-shrink: 0;
-    }
-
-    .proxima-serie {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding: 18px 36px;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 16px;
-      box-shadow:
-        0 4px 20px rgba(231, 92, 62, 0.1),
-        inset 0 0 0 1px rgba(231, 92, 62, 0.15);
-      transition: all 0.3s ease;
-    }
-
-    .proxima-serie:hover {
-      transform: translateY(-2px);
-      box-shadow:
-        0 8px 28px rgba(231, 92, 62, 0.15),
-        inset 0 0 0 1px rgba(231, 92, 62, 0.2);
-    }
-
-    .proxima-serie .label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #9ca3af;
-      font-weight: 600;
-    }
-
-    .proxima-serie .valor {
-      font-size: 1.25rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .actions-section {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-      max-width: 300px;
-      flex-shrink: 0;
-    }
-
-    .btn-agregar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 24px;
-      border: none;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      color: #374151;
-      font-size: 0.9375rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow:
-        0 4px 16px rgba(0, 0, 0, 0.06),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-    }
-
-    .btn-agregar:hover {
-      background: rgba(231, 92, 62, 0.1);
-      color: #e75c3e;
-      transform: translateY(-2px);
-      box-shadow:
-        0 8px 24px rgba(231, 92, 62, 0.12),
-        inset 0 0 0 1px rgba(231, 92, 62, 0.3);
-    }
-
-    .btn-agregar:active {
-      transform: translateY(-1px);
-    }
-
-    .btn-agregar .icon {
-      font-weight: 800;
-      font-size: 1.25rem;
-    }
-
-    .btn-saltar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 16px 28px;
-      border: none;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      color: white;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 28px rgba(231, 92, 62, 0.35);
-    }
-
-    .btn-saltar:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 14px 36px rgba(231, 92, 62, 0.45);
-    }
-
-    .btn-saltar:active {
-      transform: translateY(-1px);
-    }
-
-    .btn-saltar .arrow {
-      font-size: 1.25rem;
-      transition: transform 0.3s ease;
-    }
-
-    .btn-saltar:hover .arrow {
-      transform: translateX(6px);
+    .timer-wrapper ::ng-deep .timer-label {
+      font-size: clamp(0.5rem, 10cqh, 0.85rem);
     }
   `,
 })
@@ -255,6 +131,11 @@ export class DescansoComponent implements OnInit {
   readonly tiempoDescanso = computed(
     () => this.registroService.ejercicioActual()?.descanso_seg || 45
   );
+
+  // Progreso de la sesión
+  readonly ejercicioActualIndex = this.registroService.ejercicioActualIndex;
+  readonly totalEjercicios = this.registroService.totalEjercicios;
+  readonly progresoSesion = this.registroService.progresoSesion;
 
   ngOnInit(): void {
     // El temporizador se inicia automáticamente

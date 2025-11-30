@@ -1,75 +1,134 @@
-import { Component, Output, EventEmitter, inject, computed } from '@angular/core';
+import {
+  Component,
+  Output,
+  EventEmitter,
+  inject,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { RegistroSesionService } from '../../../services/registro-sesion.service';
 import { slideUpAnimation } from '../../realizar-plan.animations';
-import { EjercicioPlan, EjercicioSesionMultiPlan } from '../../../../types/global';
+import {
+  EjercicioPlan,
+  EjercicioSesionMultiPlan,
+} from '../../../../types/global';
+
+// Angular Material
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-resumen-sesion',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule],
   animations: [slideUpAnimation],
   template: `
-    <div class="resumen-container">
-      <!-- Titulo -->
-      <div class="header-section" @slideUp>
-        <h1 class="titulo">{{ tituloSesion() }}</h1>
-        <p class="subtitulo">{{ subtitulo() }}</p>
+    <div class="flex flex-1 flex-col gap-4 overflow-hidden">
+      <!-- Header con navegación -->
+      <div class="flex shrink-0 items-center gap-2 py-2">
+        <button
+          mat-icon-button
+          class="!h-10 !w-10 shrink-0"
+          aria-label="Volver"
+          (click)="volverAtras()"
+        >
+          <mat-icon class="material-symbols-outlined text-zinc-600"
+            >arrow_back</mat-icon
+          >
+        </button>
+        <div class="min-w-0 flex-1">
+          <h1 class="m-0 truncate text-xl font-bold text-zinc-800">
+            {{ tituloSesion() }}
+          </h1>
+          <p class="m-0 truncate text-sm font-medium text-[#e75c3e]">
+            {{ subtitulo() }}
+          </p>
+        </div>
       </div>
 
       <!-- Lista de ejercicios -->
-      <div class="ejercicios-list">
+      <div class="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
         @for (item of ejercicios(); track $index; let i = $index) {
-          <div class="ejercicio-card tarjeta-kengo" @slideUp>
-            <div class="ejercicio-imagen">
+          <div
+            class="tarjeta-kengo relative flex shrink-0 items-center gap-3 rounded-2xl p-3.5 transition-transform hover:-translate-y-0.5"
+            @slideUp
+          >
+            <div
+              class="h-[60px] w-[60px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 shadow-md"
+            >
               @if (item.ejercicio.portada) {
                 <img
                   [src]="getImageUrl(item.ejercicio.portada)"
                   [alt]="item.ejercicio.nombre_ejercicio"
+                  class="h-full w-full object-cover transition-transform hover:scale-105"
                 />
               } @else {
-                <div class="imagen-placeholder">
-                  <span class="placeholder-icon">💪</span>
+                <div
+                  class="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#e75c3e] to-[#efc048]"
+                >
+                  <mat-icon class="material-symbols-outlined text-white"
+                    >fitness_center</mat-icon
+                  >
                 </div>
               }
             </div>
 
-            <div class="ejercicio-info">
-              <h3 class="ejercicio-nombre">{{ item.ejercicio.nombre_ejercicio }}</h3>
-              <div class="ejercicio-detalles">
+            <div class="min-w-0 flex-1">
+              <h3
+                class="m-0 mb-1 truncate pr-7 text-sm font-semibold text-zinc-800"
+              >
+                {{ item.ejercicio.nombre_ejercicio }}
+              </h3>
+              <div
+                class="flex items-center gap-1.5 text-xs font-medium text-zinc-500"
+              >
                 @if (item.series && item.series > 1) {
-                  <span class="detalle">{{ item.series }} series</span>
-                  <span class="separador">x</span>
+                  <span>{{ item.series }} series</span>
+                  <span class="font-semibold text-[#e75c3e]">x</span>
                 }
                 @if (item.duracion_seg) {
-                  <span class="detalle">{{ formatDuracion(item.duracion_seg) }}</span>
+                  <span>{{ formatDuracion(item.duracion_seg) }}</span>
                 } @else {
-                  <span class="detalle">{{ item.repeticiones || 12 }} reps</span>
+                  <span>{{ item.repeticiones || 12 }} reps</span>
                 }
               </div>
               <!-- Badge de plan en modo multi-plan -->
               @if (esMultiPlan() && isEjercicioMultiPlan(item)) {
-                <div class="plan-badge">{{ getEjercicioMultiPlan(item).planTitulo }}</div>
+                <div
+                  class="mt-1.5 inline-block max-w-full truncate rounded-md bg-zinc-500/10 px-2 py-0.5 text-[0.6875rem] font-medium text-zinc-500"
+                >
+                  {{ getEjercicioMultiPlan(item).planTitulo }}
+                </div>
               }
             </div>
 
-            <div class="ejercicio-numero">{{ i + 1 }}</div>
+            <div
+              class="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#e75c3e] to-[#d14d31] text-[0.6875rem] font-bold text-white shadow-md"
+            >
+              {{ i + 1 }}
+            </div>
           </div>
         }
       </div>
 
       <!-- Contador y boton -->
-      <div class="footer-section">
-        <p class="contador">{{ ejercicios().length }} ejercicios</p>
+      <div class="flex shrink-0 flex-col items-center gap-3 py-3">
+        <p
+          class="m-0 rounded-2xl bg-white/60 px-4 py-1.5 text-xs font-medium text-zinc-500"
+        >
+          {{ ejercicios().length }} ejercicios
+        </p>
 
         <button
-          type="button"
-          class="btn-comenzar"
+          mat-flat-button
+          color="primary"
+          class="!h-14 !w-full !rounded-2xl !text-base !font-bold disabled:!opacity-50"
           (click)="comenzar.emit()"
           [disabled]="ejercicios().length === 0"
         >
-          Comenzar sesion
-          <span class="arrow">→</span>
+          Comenzar sesión
+          <mat-icon class="material-symbols-outlined ml-2">play_arrow</mat-icon>
         </button>
       </div>
     </div>
@@ -82,242 +141,12 @@ import { EjercicioPlan, EjercicioSesionMultiPlan } from '../../../../types/globa
       min-height: 0;
       overflow: hidden;
     }
-
-    .resumen-container {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      gap: 16px;
-      overflow: hidden;
-    }
-
-    .header-section {
-      text-align: center;
-      padding: 8px 0;
-      flex-shrink: 0;
-    }
-
-    .titulo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0 0 4px;
-    }
-
-    .subtitulo {
-      font-size: 0.9375rem;
-      color: #e75c3e;
-      font-weight: 500;
-      margin: 0;
-    }
-
-    .ejercicios-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-
-    .ejercicio-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 16px;
-      box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.06),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-      position: relative;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      flex-shrink: 0;
-    }
-
-    .ejercicio-card:hover {
-      transform: translateY(-2px);
-      box-shadow:
-        0 8px 28px rgba(0, 0, 0, 0.1),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
-    }
-
-    .ejercicio-imagen {
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
-      overflow: hidden;
-      flex-shrink: 0;
-      background: #f3f4f6;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .ejercicio-imagen img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-
-    .ejercicio-card:hover .ejercicio-imagen img {
-      transform: scale(1.05);
-    }
-
-    .imagen-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
-    }
-
-    .ejercicio-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .ejercicio-nombre {
-      font-size: 0.9375rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding-right: 28px;
-    }
-
-    .ejercicio-detalles {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8125rem;
-      color: #6b7280;
-      font-weight: 500;
-    }
-
-    .separador {
-      color: #e75c3e;
-      font-weight: 600;
-    }
-
-    .dias-semana {
-      display: flex;
-      gap: 4px;
-      margin-top: 6px;
-    }
-
-    .dia {
-      padding: 3px 8px;
-      background: rgba(231, 92, 62, 0.1);
-      color: #e75c3e;
-      border-radius: 6px;
-      font-size: 0.6875rem;
-      font-weight: 600;
-    }
-
-    .plan-badge {
-      margin-top: 6px;
-      padding: 3px 8px;
-      background: rgba(107, 114, 128, 0.1);
-      color: #6b7280;
-      border-radius: 6px;
-      font-size: 0.6875rem;
-      font-weight: 500;
-      display: inline-block;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .ejercicio-numero {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: white;
-      box-shadow: 0 2px 8px rgba(231, 92, 62, 0.3);
-    }
-
-    .footer-section {
-      flex-shrink: 0;
-      padding: 12px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .contador {
-      font-size: 0.8125rem;
-      color: #6b7280;
-      font-weight: 500;
-      margin: 0;
-      padding: 6px 16px;
-      background: rgba(255, 255, 255, 0.6);
-      border-radius: 16px;
-    }
-
-    .btn-comenzar {
-      width: 100%;
-      padding: 18px 32px;
-      border: none;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      color: white;
-      font-size: 1.0625rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 32px rgba(231, 92, 62, 0.35);
-    }
-
-    .btn-comenzar:hover:not(:disabled) {
-      transform: translateY(-3px);
-      box-shadow: 0 16px 40px rgba(231, 92, 62, 0.45);
-    }
-
-    .btn-comenzar:active:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    .btn-comenzar:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-comenzar .arrow {
-      font-size: 1.5rem;
-      transition: transform 0.3s ease;
-    }
-
-    .btn-comenzar:hover:not(:disabled) .arrow {
-      transform: translateX(6px);
-    }
   `,
 })
 export class ResumenSesionComponent {
   @Output() comenzar = new EventEmitter<void>();
 
+  private router = inject(Router);
   private registroService = inject(RegistroSesionService);
 
   // Titulo dinamico de la sesion
@@ -362,5 +191,10 @@ export class ResumenSesionComponent {
 
   getEjercicioMultiPlan(item: EjercicioPlan): EjercicioSesionMultiPlan {
     return item as EjercicioSesionMultiPlan;
+  }
+
+  volverAtras(): void {
+    this.registroService.resetearEstado();
+    this.router.navigate(['/actividad-diaria']);
   }
 }

@@ -48,8 +48,9 @@ import { CommonModule } from '@angular/common';
   styles: `
     .timer-container {
       position: relative;
-      width: min(160px, 35vw);
-      height: min(160px, 35vw);
+      padding: 2rem;
+      width: clamp(5rem, 25vw, 9rem);
+      height: clamp(5rem, 25vw, 9rem);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -85,7 +86,9 @@ import { CommonModule } from '@angular/common';
     .timer-progress {
       stroke: #e75c3e;
       stroke-linecap: round;
-      transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;
+      transition:
+        stroke-dashoffset 0.1s linear,
+        stroke 0.3s ease;
     }
 
     .timer-container.warning {
@@ -133,7 +136,8 @@ import { CommonModule } from '@angular/common';
     }
 
     @keyframes pulse-container {
-      0%, 100% {
+      0%,
+      100% {
         transform: scale(1);
       }
       50% {
@@ -170,7 +174,10 @@ export class TemporizadorComponent implements OnDestroy {
   });
 
   readonly esAdvertencia = computed(() => {
-    return this.tiempoRestante() <= this.umbralAdvertencia && this.tiempoRestante() > 0;
+    return (
+      this.tiempoRestante() <= this.umbralAdvertencia &&
+      this.tiempoRestante() > 0
+    );
   });
 
   readonly tiempoFormateado = computed(() => {

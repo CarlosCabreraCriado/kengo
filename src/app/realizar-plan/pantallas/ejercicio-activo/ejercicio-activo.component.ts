@@ -1,44 +1,104 @@
-import { Component, Output, EventEmitter, inject, computed, signal } from '@angular/core';
+import {
+  Component,
+  Output,
+  EventEmitter,
+  inject,
+  computed,
+  signal,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RegistroSesionService } from '../../../services/registro-sesion.service';
-import { VideoEjercicioComponent } from '../../componentes/video-ejercicio/video-ejercicio.component';
 import { ContadorSeriesComponent } from '../../componentes/contador-series/contador-series.component';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { fadeAnimation } from '../../realizar-plan.animations';
+
+// Angular Material
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-ejercicio-activo',
   standalone: true,
   imports: [
     CommonModule,
-    VideoEjercicioComponent,
+    MatIconModule,
+    MatButtonModule,
     ContadorSeriesComponent,
     TemporizadorComponent,
   ],
   animations: [fadeAnimation],
   template: `
-    <div class="ejercicio-container">
-      <!-- Video -->
-      <div class="video-section">
-        <app-video-ejercicio
-          [videoUrl]="videoUrl()"
-          [posterUrl]="posterUrl()"
-          [autoplay]="true"
-        />
+    <div class="flex flex-1 flex-col overflow-hidden">
+      <!-- Video con estilo de detalle-ejercicio -->
+      <div
+        class="video-container relative -mx-5 h-[50vh] shrink-0 overflow-hidden transition-all duration-300"
+        (click)="toggleVideo()"
+      >
+        @if (videoUrl()) {
+          <video
+            #videoPlayer
+            class="h-full w-full object-cover"
+            [src]="videoUrl()"
+            [poster]="posterUrl() || ''"
+            autoplay
+            muted
+            loop
+            playsinline
+          ></video>
+        } @else if (posterUrl()) {
+          <img
+            [src]="posterUrl()"
+            [alt]="ejercicio()?.ejercicio?.nombre_ejercicio"
+            class="h-full w-full object-cover"
+          />
+        } @else {
+          <div
+            class="flex h-full w-full items-center justify-center bg-zinc-100"
+          >
+            <mat-icon class="material-symbols-outlined !text-8xl text-zinc-300"
+              >fitness_center</mat-icon
+            >
+          </div>
+        }
+
+        <!-- Indicador de progreso - superior derecha -->
+        <div
+          class="absolute top-4 right-8 flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 backdrop-blur-sm"
+        >
+          <span class="text-xs font-bold text-white">
+            {{ ejercicioActualIndex() + 1 }}/{{ totalEjercicios() }}
+          </span>
+          <div class="h-1.5 w-16 overflow-hidden rounded-full bg-white/30">
+            <div
+              class="h-full rounded-full bg-white transition-all duration-300"
+              [style.width.%]="progresoSesion()"
+            ></div>
+          </div>
+        </div>
       </div>
 
       <!-- Info del ejercicio -->
-      <div class="info-section" @fade>
-        <h2 class="ejercicio-nombre">{{ ejercicio()?.ejercicio?.nombre_ejercicio }}</h2>
+      <div
+        class="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-evenly gap-2 overflow-hidden px-4 py-2 text-center"
+        @fade
+      >
+        <h2
+          class="m-0 shrink-0 text-xl leading-tight font-bold text-balance text-zinc-800"
+        >
+          {{ ejercicio()?.ejercicio?.nombre_ejercicio }}
+        </h2>
 
         <!-- Contador de series -->
         <app-contador-series
+          class="shrink-0"
           [serie]="serieActual()"
           [total]="totalSeries()"
         />
 
         <!-- Objetivo -->
-        <div class="objetivo-section">
+        <div class="flex min-h-0 flex-1 items-center justify-center">
           @if (esTemporizador()) {
             <app-temporizador
               [tiempoInicial]="duracionSeg()"
@@ -47,27 +107,44 @@ import { fadeAnimation } from '../../realizar-plan.animations';
               (tiempoAgotado)="onTiempoAgotado()"
             />
           } @else {
-            <div class="repeticiones-display">
-              <span class="numero">{{ repeticiones() }}</span>
-              <span class="texto">repeticiones</span>
+            <div
+              class="objetivo-circulo flex flex-col items-center justify-center gap-0.5 rounded-full bg-white/60 shadow-lg backdrop-blur-sm"
+            >
+              <span
+                class="objetivo-numero bg-gradient-to-br from-[#e75c3e] to-[#d14d31] bg-clip-text leading-none font-extrabold text-transparent"
+              >
+                {{ repeticiones() }}
+              </span>
+              <span
+                class="objetivo-label font-medium tracking-wider text-zinc-500 uppercase"
+              >
+                repeticiones
+              </span>
             </div>
           }
         </div>
 
         <!-- Instrucciones -->
         @if (instrucciones()) {
-          <div class="instrucciones tarjeta-kengo">
-            <span class="instrucciones-icon">💡</span>
-            <p class="instrucciones-texto">{{ instrucciones() }}</p>
+          <div
+            class="tarjeta-kengo flex min-h-0 w-full shrink items-start gap-2 overflow-hidden rounded-xl p-2.5 text-left"
+          >
+            <mat-icon
+              class="material-symbols-outlined shrink-0 !text-lg text-[#efc048]"
+              >lightbulb</mat-icon
+            >
+            <p class="m-0 line-clamp-2 text-xs leading-snug text-zinc-600">
+              {{ instrucciones() }}
+            </p>
           </div>
         }
       </div>
 
       <!-- Botón completar -->
-      <div class="action-section">
+      <div class="shrink-0 px-4 pt-3 pb-4">
         <button
-          type="button"
-          class="btn-completar"
+          mat-flat-button
+          class="!h-14 !w-full !rounded-2xl !bg-gradient-to-r !from-emerald-500 !to-emerald-600 !text-base !font-bold !text-white !shadow-lg hover:!shadow-xl"
           (click)="completarSerie.emit()"
         >
           @if (esUltimaSerie()) {
@@ -75,7 +152,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
           } @else {
             Completar serie
           }
-          <span class="check">✓</span>
+          <mat-icon class="material-symbols-outlined ml-2">check</mat-icon>
         </button>
       </div>
     </div>
@@ -89,176 +166,39 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       overflow: hidden;
     }
 
-    .ejercicio-container {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
+    /* Difuminado inferior del video como en detalle-ejercicio */
+    .video-container {
+      mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        black 75%,
+        transparent 100%
+      );
     }
 
-    .video-section {
-      margin: 0 -20px;
-      flex-shrink: 0;
-      max-height: 35vh;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    /* Círculo de objetivo adaptable - crece con el espacio disponible */
+    .objetivo-circulo {
+      container-type: size;
+      height: 100%;
+      aspect-ratio: 1;
+      min-height: 5rem;
+      max-height: 12rem;
     }
 
-    .info-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      text-align: center;
-      flex: 1;
-      min-height: 0;
-      padding: 16px 0;
-      overflow-y: auto;
+    .objetivo-numero {
+      font-size: clamp(1.75rem, 35cqh, 4rem);
     }
 
-    .ejercicio-nombre {
-      font-size: 1.625rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0;
-      padding: 0 8px;
-      text-wrap: balance;
-    }
-
-    .objetivo-section {
-      display: flex;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .repeticiones-display {
-      position: relative;
-      width: 140px;
-      height: 140px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 50%;
-      box-shadow:
-        0 8px 32px rgba(231, 92, 62, 0.15),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-      transition: all 0.3s ease;
-    }
-
-    .repeticiones-display:hover {
-      transform: scale(1.02);
-      box-shadow:
-        0 12px 40px rgba(231, 92, 62, 0.2),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-    }
-
-    .repeticiones-display .numero {
-      font-size: 2.75rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-      filter: drop-shadow(0 2px 4px rgba(231, 92, 62, 0.2));
-    }
-
-    .repeticiones-display .texto {
-      font-size: 0.7rem;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-weight: 500;
-    }
-
-    .instrucciones {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 18px 20px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 18px;
-      width: 100%;
-      box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.06),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-      transition: all 0.3s ease;
-    }
-
-    .instrucciones:hover {
-      transform: translateY(-2px);
-      box-shadow:
-        0 8px 28px rgba(0, 0, 0, 0.1),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
-    }
-
-    .instrucciones-icon {
-      font-size: 1.375rem;
-      flex-shrink: 0;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    }
-
-    .instrucciones-texto {
-      font-size: 0.9rem;
-      color: #4b5563;
-      margin: 0;
-      text-align: left;
-      line-height: 1.6;
-    }
-
-    .action-section {
-      flex-shrink: 0;
-      padding-top: 12px;
-    }
-
-    .btn-completar {
-      width: 100%;
-      padding: 18px 32px;
-      border: none;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      font-size: 1.0625rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.35);
-    }
-
-    .btn-completar:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 16px 40px rgba(16, 185, 129, 0.45);
-    }
-
-    .btn-completar:active {
-      transform: translateY(-1px);
-    }
-
-    .btn-completar .check {
-      font-size: 1.375rem;
-      transition: transform 0.3s ease;
-    }
-
-    .btn-completar:hover .check {
-      transform: scale(1.2);
+    .objetivo-label {
+      font-size: clamp(0.5rem, 10cqh, 0.8rem);
     }
   `,
 })
 export class EjercicioActivoComponent {
   @Output() completarSerie = new EventEmitter<void>();
   @Output() pausar = new EventEmitter<void>();
+
+  @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 
   private registroService = inject(RegistroSesionService);
 
@@ -268,6 +208,14 @@ export class EjercicioActivoComponent {
   readonly esUltimaSerie = this.registroService.esUltimaSerie;
   readonly esTemporizador = this.registroService.esTipoTemporizador;
 
+  // Progreso de la sesión
+  readonly ejercicioActualIndex = this.registroService.ejercicioActualIndex;
+  readonly totalEjercicios = this.registroService.totalEjercicios;
+  readonly progresoSesion = this.registroService.progresoSesion;
+
+  // Estado del video
+  readonly videoReproduciendo = signal<boolean>(true);
+
   readonly videoUrl = computed(() => {
     const videoId = this.ejercicio()?.ejercicio?.video;
     return videoId ? this.registroService.getVideoUrl(videoId) : null;
@@ -275,7 +223,9 @@ export class EjercicioActivoComponent {
 
   readonly posterUrl = computed(() => {
     const portadaId = this.ejercicio()?.ejercicio?.portada;
-    return portadaId ? this.registroService.getAssetUrl(portadaId, 800, 450) : null;
+    return portadaId
+      ? this.registroService.getAssetUrl(portadaId, 800, 450)
+      : null;
   });
 
   readonly duracionSeg = computed(() => this.ejercicio()?.duracion_seg || 30);
@@ -283,8 +233,21 @@ export class EjercicioActivoComponent {
   readonly repeticiones = computed(() => this.ejercicio()?.repeticiones || 12);
 
   readonly instrucciones = computed(
-    () => this.ejercicio()?.instrucciones_paciente || ''
+    () => this.ejercicio()?.instrucciones_paciente || '',
   );
+
+  toggleVideo(): void {
+    if (!this.videoPlayer?.nativeElement) return;
+
+    const video = this.videoPlayer.nativeElement;
+    if (video.paused) {
+      video.play();
+      this.videoReproduciendo.set(true);
+    } else {
+      video.pause();
+      this.videoReproduciendo.set(false);
+    }
+  }
 
   onTiempoAgotado(): void {
     // Vibrar si está disponible

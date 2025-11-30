@@ -10,20 +10,24 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// Angular Material
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+
 @Component({
   selector: 'app-video-ejercicio',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule],
   template: `
     <div
-      class="video-container"
+      class="video-container relative aspect-video w-full cursor-pointer overflow-hidden rounded-3xl bg-zinc-800 shadow-xl transition-all duration-300"
       [class.expanded]="expandido()"
       (click)="togglePausa()"
     >
       @if (videoUrl) {
         <video
           #videoElement
-          class="video-player"
+          class="h-full w-full object-cover"
           [src]="videoUrl"
           [poster]="posterUrl"
           loop
@@ -33,67 +37,47 @@ import { CommonModule } from '@angular/common';
         ></video>
       } @else if (posterUrl) {
         <img
-          class="video-poster"
+          class="h-full w-full object-cover"
           [src]="posterUrl"
           alt="Imagen del ejercicio"
         />
       } @else {
-        <div class="video-placeholder">
-          <span class="placeholder-icon">🎬</span>
-          <span class="placeholder-text">Sin video disponible</span>
+        <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#e75c3e] to-[#efc048]">
+          <mat-icon class="material-symbols-outlined !text-6xl text-white/90">videocam</mat-icon>
+          <span class="text-sm font-medium text-white/90">Sin video disponible</span>
         </div>
       }
 
       <!-- Overlay de pausa -->
       @if (pausado()) {
-        <div class="pause-overlay">
-          <div class="pause-icon">▶</div>
-          <span class="pause-text">Toca para reproducir</span>
+        <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60 backdrop-blur-sm">
+          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#e75c3e] to-[#d14d31] pl-1 shadow-xl transition-transform hover:scale-110">
+            <mat-icon class="material-symbols-outlined !text-4xl text-white">play_arrow</mat-icon>
+          </div>
+          <span class="text-sm font-medium text-white drop-shadow-md">Toca para reproducir</span>
         </div>
       }
 
       <!-- Indicador de carga -->
       @if (cargando()) {
-        <div class="loading-overlay">
-          <div class="loading-spinner"></div>
+        <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div class="h-14 w-14 animate-spin rounded-full border-4 border-white/20 border-t-[#e75c3e]"></div>
         </div>
       }
 
       <!-- Botón expandir -->
       <button
-        type="button"
-        class="expand-btn"
+        mat-icon-button
+        class="!absolute !right-4 !top-4 !h-11 !w-11 !bg-white/15 !backdrop-blur-md hover:!bg-white/25"
         (click)="toggleExpandir($event)"
       >
-        @if (expandido()) {
-          <span>↙</span>
-        } @else {
-          <span>↗</span>
-        }
+        <mat-icon class="material-symbols-outlined text-white">
+          {{ expandido() ? 'close_fullscreen' : 'open_in_full' }}
+        </mat-icon>
       </button>
     </div>
   `,
   styles: `
-    .video-container {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: #1f2937;
-      border-radius: 24px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.15),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-    }
-
-    .video-container:hover {
-      box-shadow:
-        0 12px 40px rgba(0, 0, 0, 0.2),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.15);
-    }
-
     .video-container.expanded {
       position: fixed;
       top: 0;
@@ -103,132 +87,12 @@ import { CommonModule } from '@angular/common';
       z-index: 100;
       border-radius: 0;
       aspect-ratio: auto;
-      box-shadow: none;
     }
 
-    .video-player,
-    .video-poster {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .video-container.expanded .video-player,
-    .video-container.expanded .video-poster {
+    .video-container.expanded video,
+    .video-container.expanded img {
       object-fit: contain;
       background: #000;
-    }
-
-    .video-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
-    }
-
-    .placeholder-icon {
-      font-size: 4rem;
-      opacity: 0.9;
-    }
-
-    .placeholder-text {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-
-    .pause-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    .pause-icon {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      color: white;
-      padding-left: 6px;
-      box-shadow: 0 8px 24px rgba(231, 92, 62, 0.4);
-      transition: all 0.3s ease;
-    }
-
-    .pause-overlay:hover .pause-icon {
-      transform: scale(1.1);
-      box-shadow: 0 12px 32px rgba(231, 92, 62, 0.5);
-    }
-
-    .pause-text {
-      color: white;
-      font-size: 0.875rem;
-      font-weight: 500;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(4px);
-    }
-
-    .loading-spinner {
-      width: 56px;
-      height: 56px;
-      border: 4px solid rgba(255, 255, 255, 0.2);
-      border-top-color: #e75c3e;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    .expand-btn {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      font-size: 1.25rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-
-    .expand-btn:hover {
-      background: rgba(255, 255, 255, 0.25);
-      transform: scale(1.1);
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
     }
   `,
 })

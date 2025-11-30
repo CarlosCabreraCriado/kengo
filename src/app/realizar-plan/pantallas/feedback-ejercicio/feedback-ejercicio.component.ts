@@ -12,24 +12,41 @@ import { RegistroSesionService } from '../../../services/registro-sesion.service
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
 import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animations';
 
+// Angular Material
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+
 @Component({
   selector: 'app-feedback-ejercicio',
   standalone: true,
-  imports: [CommonModule, FormsModule, EscalaDolorComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, EscalaDolorComponent],
   animations: [checkmarkAnimation, fadeAnimation],
   template: `
-    <div class="feedback-container">
-      <!-- Checkmark animado -->
-      <div class="check-section" @checkmark>
-        <div class="check-circle">
-          <span class="check-icon">✓</span>
+    <div class="flex flex-1 flex-col gap-4 overflow-y-auto pt-2">
+      <!-- Indicador de progreso -->
+      <div class="flex items-center justify-center gap-3 py-2">
+        <span class="text-sm font-bold text-zinc-700">
+          {{ ejercicioActualIndex() + 1 }}/{{ totalEjercicios() }}
+        </span>
+        <div class="h-2 w-24 overflow-hidden rounded-full bg-[#e75c3e]/15">
+          <div
+            class="h-full rounded-full bg-gradient-to-r from-[#e75c3e] to-[#efc048] transition-all duration-300"
+            [style.width.%]="progresoSesion()"
+          ></div>
         </div>
-        <h2 class="check-titulo">¡Ejercicio completado!</h2>
-        <p class="ejercicio-nombre">{{ nombreEjercicio() }}</p>
+      </div>
+
+      <!-- Checkmark animado -->
+      <div class="flex shrink-0 flex-col items-center gap-3 py-3" @checkmark>
+        <div class="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg animate-pop-in">
+          <mat-icon class="material-symbols-outlined !text-3xl text-white">check</mat-icon>
+        </div>
+        <h2 class="m-0 text-xl font-bold text-zinc-800">¡Ejercicio completado!</h2>
+        <p class="m-0 text-sm font-medium text-zinc-500">{{ nombreEjercicio() }}</p>
       </div>
 
       <!-- Escala de dolor -->
-      <div class="dolor-section" @fade>
+      <div class="shrink-0" @fade>
         <app-escala-dolor
           label="¿Sentiste dolor durante el ejercicio?"
           [valor]="dolorSeleccionado()"
@@ -38,11 +55,11 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
       </div>
 
       <!-- Notas opcionales -->
-      <div class="notas-section" @fade>
-        <label class="notas-label" for="notas">Notas (opcional)</label>
+      <div class="flex shrink-0 flex-col gap-2 px-1" @fade>
+        <label class="pl-1 text-sm font-semibold text-zinc-700" for="notas">Notas (opcional)</label>
         <textarea
           id="notas"
-          class="notas-textarea"
+          class="w-full resize-none rounded-xl bg-white/75 p-3.5 text-sm text-zinc-800 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition-shadow placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#e75c3e]/40"
           placeholder="Ej: Sentí molestia en la rodilla derecha..."
           rows="3"
           [(ngModel)]="nota"
@@ -50,10 +67,11 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
       </div>
 
       <!-- Botón continuar -->
-      <div class="action-section">
+      <div class="flex shrink-0 flex-col items-center gap-2.5 pt-2">
         <button
-          type="button"
-          class="btn-continuar"
+          mat-flat-button
+          color="primary"
+          class="!h-14 !w-full !rounded-2xl !text-base !font-bold disabled:!opacity-50"
           [disabled]="dolorSeleccionado() === null"
           (click)="onEnviar()"
         >
@@ -62,11 +80,13 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
           } @else {
             Siguiente ejercicio
           }
-          <span class="arrow">→</span>
+          <mat-icon class="material-symbols-outlined ml-2">arrow_forward</mat-icon>
         </button>
 
         @if (dolorSeleccionado() === null) {
-          <p class="hint">Selecciona un nivel de dolor para continuar</p>
+          <p class="m-0 rounded-xl bg-white/50 px-4 py-2 text-xs font-medium text-zinc-400">
+            Selecciona un nivel de dolor para continuar
+          </p>
         }
       </div>
     </div>
@@ -80,36 +100,7 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
       overflow: hidden;
     }
 
-    .feedback-container {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      gap: 16px;
-      padding-top: 8px;
-      overflow-y: auto;
-    }
-
-    .check-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 0;
-      flex-shrink: 0;
-    }
-
-    .check-circle {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow:
-        0 12px 32px rgba(16, 185, 129, 0.35),
-        inset 0 0 0 4px rgba(255, 255, 255, 0.2);
+    .animate-pop-in {
       animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
@@ -123,137 +114,6 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
         opacity: 1;
       }
     }
-
-    .check-icon {
-      font-size: 2rem;
-      color: white;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    }
-
-    .check-titulo {
-      font-size: 1.375rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0;
-    }
-
-    .ejercicio-nombre {
-      font-size: 0.9375rem;
-      color: #6b7280;
-      margin: 0;
-      font-weight: 500;
-    }
-
-    .dolor-section {
-      flex-shrink: 0;
-    }
-
-    .notas-section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 0 4px;
-      flex-shrink: 0;
-    }
-
-    .notas-label {
-      font-size: 0.9375rem;
-      font-weight: 600;
-      color: #374151;
-      padding-left: 4px;
-    }
-
-    .notas-textarea {
-      width: 100%;
-      padding: 14px 16px;
-      border: none;
-      border-radius: 14px;
-      font-size: 0.9375rem;
-      font-family: inherit;
-      resize: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.06),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-      color: #1f2937;
-      line-height: 1.5;
-    }
-
-    .notas-textarea:focus {
-      outline: none;
-      box-shadow:
-        0 8px 28px rgba(231, 92, 62, 0.12),
-        inset 0 0 0 2px rgba(231, 92, 62, 0.4);
-    }
-
-    .notas-textarea::placeholder {
-      color: #9ca3af;
-    }
-
-    .action-section {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
-      flex-shrink: 0;
-      padding-top: 8px;
-    }
-
-    .btn-continuar {
-      width: 100%;
-      padding: 18px 32px;
-      border: none;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      color: white;
-      font-size: 1.0625rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 32px rgba(231, 92, 62, 0.35);
-    }
-
-    .btn-continuar:hover:not(:disabled) {
-      transform: translateY(-3px);
-      box-shadow: 0 16px 40px rgba(231, 92, 62, 0.45);
-    }
-
-    .btn-continuar:active:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    .btn-continuar:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.2);
-    }
-
-    .btn-continuar .arrow {
-      font-size: 1.375rem;
-      transition: transform 0.3s ease;
-    }
-
-    .btn-continuar:hover:not(:disabled) .arrow {
-      transform: translateX(6px);
-    }
-
-    .hint {
-      font-size: 0.8125rem;
-      color: #9ca3af;
-      margin: 0;
-      font-weight: 500;
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.5);
-      border-radius: 12px;
-    }
   `,
 })
 export class FeedbackEjercicioComponent {
@@ -265,6 +125,11 @@ export class FeedbackEjercicioComponent {
   readonly nombreEjercicio = computed(
     () => this.registroService.ejercicioActual()?.ejercicio?.nombre_ejercicio || ''
   );
+
+  // Progreso de la sesión
+  readonly ejercicioActualIndex = this.registroService.ejercicioActualIndex;
+  readonly totalEjercicios = this.registroService.totalEjercicios;
+  readonly progresoSesion = this.registroService.progresoSesion;
 
   readonly dolorSeleccionado = signal<number | null>(null);
   nota = '';
