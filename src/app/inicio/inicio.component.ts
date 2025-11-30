@@ -37,6 +37,14 @@ export class InicioComponent implements OnDestroy {
 
   allCards: CardOption[] = [
     {
+      id: 'actividad-diaria',
+      title: 'Actividad diaria',
+      subtitle: 'Tu plan de hoy',
+      image: 'assets/portadas/camilla.PNG',
+      route: '/actividad-diaria',
+      roles: ['fisio', 'paciente'],
+    },
+    {
       id: 'ejercicios',
       title: 'Ejercicios',
       subtitle: 'Catálogo de ejercicios',

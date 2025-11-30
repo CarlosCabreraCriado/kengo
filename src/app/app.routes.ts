@@ -55,6 +55,16 @@ export const routes: Routes = [
   // Rutinas (plantillas)
   { path: 'rutinas', component: RutinasComponent, canActivate: [AuthGuard] },
 
+  // Actividad diaria (pacientes y fisios)
+  {
+    path: 'actividad-diaria',
+    loadComponent: () =>
+      import('./actividad-diaria/actividad-diaria.component').then(
+        (m) => m.ActividadDiariaComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+
   // Realizar plan (pacientes)
   {
     path: 'mi-plan',

@@ -1,0 +1,362 @@
+<section class="absolute w-full pb-32">
+  <!-- Header sticky -->
+  <header
+    class="sticky top-0 z-40 mx-auto mb-6 bg-gradient-to-b from-white/95 via-white/90 to-transparent px-4 pt-4 pb-2 backdrop-blur-md"
+  >
+    <div class="mx-auto max-w-7xl">
+      <div class="flex items-center gap-2">
+        <button
+          mat-icon-button
+          class="!h-10 !w-10 shrink-0"
+          aria-label="Volver al inicio"
+          (click)="volverInicio()"
+        >
+          <mat-icon class="material-symbols-outlined text-zinc-600"
+            >arrow_back</mat-icon
+          >
+        </button>
+        <div>
+          <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
+            Tu actividad de hoy
+          </h1>
+          <p class="text-sm text-zinc-500">{{ fechaHoy() }}</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <div class="mx-auto max-w-7xl px-4">
+    <!-- Loading State -->
+    @if (cargando()) {
+      <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <p class="mt-3 text-center text-sm text-zinc-500">
+          Cargando tu actividad...
+        </p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error()) {
+      <div class="tarjeta-kengo rounded-2xl p-6 text-center">
+        <mat-icon
+          class="material-symbols-outlined mb-2 text-4xl text-red-400"
+          >error</mat-icon
+        >
+        <p class="text-red-600">{{ error() }}</p>
+        <button
+          mat-flat-button
+          color="primary"
+          class="mt-4"
+          (click)="cargarDatos()"
+        >
+          Reintentar
+        </button>
+      </div>
+    }
+
+    <!-- Sin planes activos -->
+    @if (sinPlanesActivos()) {
+      <div class="tarjeta-kengo rounded-2xl p-8 text-center">
+        <mat-icon
+          class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+          >assignment</mat-icon
+        >
+        <h2 class="text-lg font-semibold text-zinc-700">Sin planes activos</h2>
+        <p class="mt-2 text-zinc-500">
+          No tienes planes de ejercicios asignados actualmente.
+        </p>
+        <p class="mt-1 text-sm text-zinc-400">
+          Contacta con tu fisioterapeuta para que te asigne un plan.
+        </p>
+      </div>
+    }
+
+    <!-- Contenido principal -->
+    @if (!cargando() && !error() && !sinPlanesActivos()) {
+      <!-- Estado de completado o descanso -->
+      @if (todoCompletado()) {
+        <div
+          class="mb-6 rounded-2xl border border-green-200 bg-green-50/80 p-6 text-center backdrop-blur-sm"
+        >
+          <mat-icon
+            class="material-symbols-outlined mb-2 text-5xl text-green-500"
+            >celebration</mat-icon
+          >
+          <h2 class="text-lg font-semibold text-green-700">Felicidades</h2>
+          <p class="text-green-600">Has completado todos los ejercicios de hoy</p>
+        </div>
+      } @else if (!hayActividadHoy()) {
+        <div class="tarjeta-kengo mb-6 rounded-2xl p-6 text-center">
+          <mat-icon
+            class="material-symbols-outlined mb-2 text-5xl text-zinc-300"
+            >self_improvement</mat-icon
+          >
+          <h2 class="text-lg font-semibold text-zinc-700">Dia de descanso</h2>
+          <p class="text-zinc-500">No tienes ejercicios programados para hoy</p>
+        </div>
+      } @else {
+        <!-- Badge de pendientes -->
+        <div class="mb-4 text-center">
+          <span
+            class="inline-block rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary"
+          >
+            {{ totalPendientes() }} ejercicio{{
+              totalPendientes() !== 1 ? "s" : ""
+            }}
+            pendiente{{ totalPendientes() !== 1 ? "s" : "" }}
+          </span>
+        </div>
+      }
+
+      <!-- Planes del dia -->
+      <section class="space-y-4">
+        @for (actividad of actividadHoy(); track actividad.plan.id_plan) {
+          @if (actividad.ejerciciosHoy.length > 0) {
+            <div class="tarjeta-kengo overflow-hidden rounded-2xl">
+              <!-- Header del plan -->
+              <div
+                class="flex items-center gap-3 border-b border-zinc-100 bg-zinc-50/50 px-4 py-3"
+              >
+                <h3
+                  class="flex-1 truncate text-base font-semibold text-zinc-800"
+                >
+                  {{ actividad.plan.titulo }}
+                </h3>
+                <div class="flex items-center gap-2">
+                  <div
+                    class="h-1.5 w-16 overflow-hidden rounded-full bg-zinc-200"
+                  >
+                    <div
+                      class="h-full rounded-full transition-all duration-300"
+                      [class]="
+                        actividad.progreso === 100 ? 'bg-green-500' : 'bg-primary'
+                      "
+                      [style.width.%]="actividad.progreso"
+                    ></div>
+                  </div>
+                  <span class="min-w-[40px] text-right text-xs text-zinc-500">
+                    {{ actividad.completados }}/{{ actividad.totalEjercicios }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Lista de ejercicios -->
+              <ul class="divide-y divide-zinc-100">
+                @for (ejercicio of actividad.ejerciciosHoy; track ejercicio.id) {
+                  <li class="flex items-center gap-3 p-4 transition-colors" [class.bg-zinc-50]="ejercicio.completadoHoy" [class.opacity-60]="ejercicio.completadoHoy">
+                    <!-- Indicador de estado -->
+                    <div class="shrink-0">
+                      @if (ejercicio.completadoHoy) {
+                        <div
+                          class="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white"
+                        >
+                          <mat-icon
+                            class="material-symbols-outlined !text-sm !leading-none"
+                            >check</mat-icon
+                          >
+                        </div>
+                      } @else {
+                        <div
+                          class="h-6 w-6 rounded-full border-2 border-zinc-300"
+                        ></div>
+                      }
+                    </div>
+
+                    <!-- Imagen del ejercicio -->
+                    <div
+                      class="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-zinc-100"
+                    >
+                      @if (ejercicio.ejercicio.portada) {
+                        <img
+                          [src]="getAssetUrl(ejercicio.ejercicio.portada)"
+                          [alt]="ejercicio.ejercicio.nombre_ejercicio"
+                          class="h-full w-full object-cover"
+                        />
+                      } @else {
+                        <div
+                          class="flex h-full w-full items-center justify-center"
+                        >
+                          <mat-icon
+                            class="material-symbols-outlined text-zinc-400"
+                            >fitness_center</mat-icon
+                          >
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Info del ejercicio -->
+                    <div class="min-w-0 flex-1">
+                      <span
+                        class="block truncate text-sm font-medium text-zinc-800"
+                        [class.line-through]="ejercicio.completadoHoy"
+                      >
+                        {{ ejercicio.ejercicio.nombre_ejercicio }}
+                      </span>
+                      <span class="text-xs text-zinc-500">
+                        {{ ejercicio.series ?? 3 }} series x
+                        @if (ejercicio.duracion_seg) {
+                          {{ ejercicio.duracion_seg }}s
+                        } @else {
+                          {{ ejercicio.repeticiones ?? 12 }} reps
+                        }
+                        @if ((ejercicio.veces_dia ?? 1) > 1) {
+                          ·
+                          {{ ejercicio.vecesCompletadasHoy ?? 0 }}/{{
+                            ejercicio.veces_dia
+                          }}x dia
+                        }
+                      </span>
+                    </div>
+                  </li>
+                }
+              </ul>
+
+              <!-- Boton de accion -->
+              <div class="p-4 pt-2">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  class="!h-12 w-full !rounded-xl"
+                  (click)="irAPlan(actividad.plan.id_plan)"
+                >
+                  @if (actividad.progreso === 100) {
+                    Repetir sesion
+                  } @else if (actividad.completados > 0) {
+                    Continuar sesion
+                  } @else {
+                    Comenzar sesion
+                  }
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </section>
+
+      <!-- Proximos dias -->
+      @if (proximosDias().length > 0) {
+        <section class="mt-8">
+          <h2 class="mb-4 text-base font-semibold text-zinc-600">
+            Proximos dias
+          </h2>
+          <div class="space-y-2">
+            @for (dia of proximosDias(); track dia.fecha.toISOString()) {
+              <div class="tarjeta-kengo overflow-hidden rounded-xl">
+                <!-- Header del dia (clickeable) -->
+                <button
+                  type="button"
+                  class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-zinc-50/50"
+                  (click)="toggleDia(dia.fecha)"
+                >
+                  <div class="flex items-center gap-3">
+                    <mat-icon
+                      class="material-symbols-outlined text-zinc-400 transition-transform duration-200"
+                      [class.rotate-90]="esDiaExpandido(dia.fecha)"
+                      >chevron_right</mat-icon
+                    >
+                    <div>
+                      <span class="block text-sm font-semibold text-zinc-800">
+                        {{ dia.diaSemana }}
+                      </span>
+                      <span class="text-xs text-zinc-500">
+                        {{ dia.fechaFormateada }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span class="block text-sm font-medium text-primary">
+                      {{ dia.totalEjercicios }} ejercicio{{
+                        dia.totalEjercicios !== 1 ? "s" : ""
+                      }}
+                    </span>
+                    @if (dia.planes.length > 1) {
+                      <span class="text-xs text-zinc-500">
+                        en {{ dia.planes.length }} planes
+                      </span>
+                    }
+                  </div>
+                </button>
+
+                <!-- Lista de ejercicios (desplegable) -->
+                @if (esDiaExpandido(dia.fecha)) {
+                  <div class="border-t border-zinc-100 bg-zinc-50/30">
+                    <ul class="divide-y divide-zinc-100">
+                      @for (ejercicio of dia.ejercicios; track $index) {
+                        <li class="flex items-center gap-3 px-4 py-3">
+                          <!-- Imagen del ejercicio -->
+                          <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+                            @if (ejercicio.portada) {
+                              <img
+                                [src]="getAssetUrl(ejercicio.portada)"
+                                [alt]="ejercicio.nombre"
+                                class="h-full w-full object-cover"
+                              />
+                            } @else {
+                              <div class="flex h-full w-full items-center justify-center">
+                                <mat-icon class="material-symbols-outlined text-zinc-400 !text-lg">fitness_center</mat-icon>
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Info del ejercicio -->
+                          <div class="min-w-0 flex-1">
+                            <span class="block truncate text-sm font-medium text-zinc-800">
+                              {{ ejercicio.nombre }}
+                            </span>
+                            <span class="text-xs text-zinc-500">
+                              {{ ejercicio.series }} series x
+                              @if (ejercicio.duracion_seg) {
+                                {{ ejercicio.duracion_seg }}s
+                              } @else {
+                                {{ ejercicio.repeticiones ?? 12 }} reps
+                              }
+                              @if (dia.planes.length > 1) {
+                                <span class="text-zinc-400"> · {{ ejercicio.planTitulo }}</span>
+                              }
+                            </span>
+                          </div>
+                        </li>
+                      }
+                    </ul>
+
+                    <!-- Botones para iniciar planes -->
+                    <div class="border-t border-zinc-100 p-3">
+                      @if (dia.planes.length === 1) {
+                        <button
+                          mat-stroked-button
+                          color="primary"
+                          class="w-full !rounded-lg"
+                          (click)="irAPlan(dia.planes[0].planId)"
+                        >
+                          <mat-icon class="material-symbols-outlined mr-1">play_arrow</mat-icon>
+                          Comenzar ahora
+                        </button>
+                      } @else {
+                        <p class="mb-2 text-xs font-medium text-zinc-500">Comenzar un plan:</p>
+                        <div class="flex flex-wrap gap-2">
+                          @for (plan of dia.planes; track plan.planId) {
+                            <button
+                              mat-stroked-button
+                              color="primary"
+                              class="!rounded-lg !text-sm"
+                              (click)="irAPlan(plan.planId)"
+                            >
+                              <mat-icon class="material-symbols-outlined mr-1 !text-lg">play_arrow</mat-icon>
+                              {{ plan.titulo }}
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+  </div>
+</section>

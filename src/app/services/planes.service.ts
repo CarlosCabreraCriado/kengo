@@ -298,6 +298,163 @@ export class PlanesService {
   // ========= Planes por paciente (para perfil) =========
 
   /**
+   * Obtener planes ACTIVOS de un paciente dentro de las fechas válidas (para HOY)
+   * Usado para la sección "Actividad de hoy"
+   */
+  async getPlanesActivosPaciente(pacienteId: string): Promise<PlanCompleto[]> {
+    const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    const filter = {
+      _and: [
+        { paciente: { _eq: pacienteId } },
+        { estado: { _eq: 'activo' } },
+        {
+          _or: [
+            { fecha_inicio: { _lte: hoy } },
+            { fecha_inicio: { _null: true } },
+          ],
+        },
+        {
+          _or: [
+            { fecha_fin: { _gte: hoy } },
+            { fecha_fin: { _null: true } },
+          ],
+        },
+      ],
+    };
+
+    const fields = [
+      'id_plan',
+      'titulo',
+      'descripcion',
+      'estado',
+      'fecha_inicio',
+      'fecha_fin',
+      'date_created',
+      'date_updated',
+      'paciente.id',
+      'paciente.first_name',
+      'paciente.last_name',
+      'paciente.email',
+      'paciente.avatar',
+      'fisio.id',
+      'fisio.first_name',
+      'fisio.last_name',
+      'fisio.email',
+      'ejercicios.id',
+      'ejercicios.sort',
+      'ejercicios.ejercicio.id_ejercicio',
+      'ejercicios.ejercicio.nombre_ejercicio',
+      'ejercicios.ejercicio.descripcion',
+      'ejercicios.ejercicio.portada',
+      'ejercicios.ejercicio.video',
+      'ejercicios.series',
+      'ejercicios.repeticiones',
+      'ejercicios.duracion_seg',
+      'ejercicios.descanso_seg',
+      'ejercicios.veces_dia',
+      'ejercicios.dias_semana',
+      'ejercicios.instrucciones_paciente',
+      'ejercicios.notas_fisio',
+    ].join(',');
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get<PlanesResponse>(`${env.DIRECTUS_URL}/items/Planes`, {
+          params: {
+            fields,
+            sort: '-date_created',
+            filter: JSON.stringify(filter),
+          },
+          withCredentials: true,
+        })
+      );
+
+      return (response?.data || []).map((p) => this.transformPlanCompleto(p));
+    } catch (error) {
+      console.error('Error al obtener planes activos del paciente:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtener TODOS los planes activos de un paciente (incluyendo futuros)
+   * Usado para calcular "Próximos días" en Actividad Diaria
+   * Incluye planes que aún no han comenzado pero están marcados como activos
+   */
+  async getPlanesActivosYFuturosPaciente(pacienteId: string): Promise<PlanCompleto[]> {
+    const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Solo filtramos que el plan no haya terminado (fecha_fin >= hoy o null)
+    // Incluimos planes futuros (fecha_inicio > hoy)
+    const filter = {
+      _and: [
+        { paciente: { _eq: pacienteId } },
+        { estado: { _eq: 'activo' } },
+        {
+          _or: [
+            { fecha_fin: { _gte: hoy } },
+            { fecha_fin: { _null: true } },
+          ],
+        },
+      ],
+    };
+
+    const fields = [
+      'id_plan',
+      'titulo',
+      'descripcion',
+      'estado',
+      'fecha_inicio',
+      'fecha_fin',
+      'date_created',
+      'date_updated',
+      'paciente.id',
+      'paciente.first_name',
+      'paciente.last_name',
+      'paciente.email',
+      'paciente.avatar',
+      'fisio.id',
+      'fisio.first_name',
+      'fisio.last_name',
+      'fisio.email',
+      'ejercicios.id',
+      'ejercicios.sort',
+      'ejercicios.ejercicio.id_ejercicio',
+      'ejercicios.ejercicio.nombre_ejercicio',
+      'ejercicios.ejercicio.descripcion',
+      'ejercicios.ejercicio.portada',
+      'ejercicios.ejercicio.video',
+      'ejercicios.series',
+      'ejercicios.repeticiones',
+      'ejercicios.duracion_seg',
+      'ejercicios.descanso_seg',
+      'ejercicios.veces_dia',
+      'ejercicios.dias_semana',
+      'ejercicios.instrucciones_paciente',
+      'ejercicios.notas_fisio',
+    ].join(',');
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get<PlanesResponse>(`${env.DIRECTUS_URL}/items/Planes`, {
+          params: {
+            fields,
+            sort: '-date_created',
+            filter: JSON.stringify(filter),
+          },
+          withCredentials: true,
+        })
+      );
+
+      return (response?.data || []).map((p) => this.transformPlanCompleto(p));
+    } catch (error) {
+      console.error('Error al obtener planes activos y futuros:', error);
+      return [];
+    }
+  }
+
+  /**
    * Obtener planes de un paciente especifico
    */
   async getPlanesByPaciente(pacienteId: string): Promise<Plan[]> {

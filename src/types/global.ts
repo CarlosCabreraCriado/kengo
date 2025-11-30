@@ -340,3 +340,29 @@ export interface FeedbackEjercicio {
   dolor: number;
   nota?: string;
 }
+
+// ============================================
+// ACTIVIDAD DIARIA
+// ============================================
+
+export interface ActividadPlanDia {
+  plan: PlanCompleto;
+  ejerciciosHoy: EjercicioPlanConEstado[];
+  totalEjercicios: number;
+  completados: number;
+  progreso: number; // 0-100
+}
+
+export interface EjercicioPlanConEstado extends EjercicioPlan {
+  completadoHoy: boolean;
+  registroId?: number;
+  vecesCompletadasHoy?: number;
+}
+
+export interface DiaProximo {
+  fecha: Date;
+  fechaFormateada: string;
+  diaSemana: string;
+  totalEjercicios: number;
+  planes: { planId: number; titulo: string; ejercicios: number }[];
+}
