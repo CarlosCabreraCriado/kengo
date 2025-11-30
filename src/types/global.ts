@@ -291,3 +291,52 @@ export interface CreateRutinaEjercicioPayload {
   instrucciones_paciente?: string;
   notas_fisio?: string;
 }
+
+// ============================================
+// REGISTRO DE SESIONES (Realización de planes)
+// ============================================
+
+export type EstadoPantalla =
+  | 'resumen'
+  | 'ejercicio'
+  | 'descanso'
+  | 'feedback'
+  | 'completado';
+
+export interface RegistroEjercicio {
+  id_registro?: number;
+  plan_item: number;
+  paciente: string;
+  fecha_hora: string;
+  completado: boolean;
+  repeticiones_realizadas?: number;
+  duracion_real_seg?: number;
+  dolor_escala?: number;
+  nota_paciente?: string;
+}
+
+export interface RegistroEjercicioDirectus {
+  id_registro: number;
+  plan_item: number | { id: number };
+  paciente: string | UsuarioDirectus;
+  fecha_hora: string;
+  completado: boolean;
+  repeticiones_realizadas?: number;
+  duracion_real_seg?: number;
+  dolor_escala?: number;
+  nota_paciente?: string;
+}
+
+export interface SesionLocal {
+  planId: number;
+  ejercicioIndex: number;
+  serieActual: number;
+  estado: EstadoPantalla;
+  registrosPendientes: RegistroEjercicio[];
+  timestamp: string;
+}
+
+export interface FeedbackEjercicio {
+  dolor: number;
+  nota?: string;
+}

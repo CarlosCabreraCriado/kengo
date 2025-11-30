@@ -55,6 +55,24 @@ export const routes: Routes = [
   // Rutinas (plantillas)
   { path: 'rutinas', component: RutinasComponent, canActivate: [AuthGuard] },
 
+  // Realizar plan (pacientes)
+  {
+    path: 'mi-plan',
+    loadComponent: () =>
+      import('./realizar-plan/realizar-plan.component').then(
+        (m) => m.RealizarPlanComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'mi-plan/:planId',
+    loadComponent: () =>
+      import('./realizar-plan/realizar-plan.component').then(
+        (m) => m.RealizarPlanComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+
   { path: 'fisios', component: FisiosComponent, canActivate: [AuthGuard] },
   { path: 'categorias', component: CategoriasComponent, canActivate: [AuthGuard] },
   {
