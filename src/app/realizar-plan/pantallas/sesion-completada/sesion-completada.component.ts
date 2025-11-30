@@ -80,62 +80,108 @@ import { celebrateAnimation, fadeAnimation, slideUpAnimation } from '../../reali
     </div>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .completada-container {
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      padding: 16px 0;
-      min-height: 70vh;
+      flex: 1;
+      min-height: 0;
+      gap: 16px;
+      padding: 8px 0;
+      overflow: hidden;
     }
 
     .celebracion-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 24px 0;
+      gap: 10px;
+      padding: 12px 0;
       text-align: center;
+      flex-shrink: 0;
     }
 
     .emoji-grande {
-      font-size: 4rem;
+      font-size: 3.5rem;
       line-height: 1;
+      animation: bounce 1s ease-in-out;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-20px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+      70% {
+        transform: translateY(-5px);
+      }
     }
 
     .titulo {
-      font-size: 1.75rem;
+      font-size: 1.625rem;
       font-weight: 800;
-      color: #1f2937;
+      background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin: 0;
     }
 
     .subtitulo {
-      font-size: 1rem;
+      font-size: 0.9375rem;
       color: #6b7280;
       margin: 0;
+      font-weight: 500;
     }
 
     .stats-section {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
+      flex-shrink: 0;
     }
 
     .stat-card {
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
+      padding: 14px 12px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 14px;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
     }
 
     .stat-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .stat-icon {
       font-size: 1.5rem;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
 
     .stat-info {
@@ -145,14 +191,15 @@ import { celebrateAnimation, fadeAnimation, slideUpAnimation } from '../../reali
     }
 
     .stat-label {
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       color: #6b7280;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
+      font-weight: 600;
     }
 
     .stat-valor {
-      font-size: 1.25rem;
+      font-size: 1.125rem;
       font-weight: 700;
       color: #1f2937;
     }
@@ -160,92 +207,121 @@ import { celebrateAnimation, fadeAnimation, slideUpAnimation } from '../../reali
     .resumen-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .resumen-titulo {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.9375rem;
+      font-weight: 700;
       color: #374151;
       margin: 0;
+      padding-left: 4px;
+      flex-shrink: 0;
     }
 
     .resumen-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
     }
 
     .resumen-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.8);
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-radius: 12px;
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.04),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .resumen-item:hover {
+      transform: translateX(4px);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     }
 
     .item-nombre {
-      font-size: 0.875rem;
+      font-size: 0.9375rem;
       color: #374151;
+      font-weight: 500;
       flex: 1;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-right: 12px;
+      margin-right: 16px;
     }
 
     .item-dolor {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       flex-shrink: 0;
     }
 
     .dolor-valor {
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: 0.9375rem;
+      font-weight: 700;
     }
 
     .dolor-emoji {
-      font-size: 1.25rem;
+      font-size: 1.375rem;
     }
 
     .mensaje-section {
-      padding: 16px 0;
+      flex-shrink: 0;
     }
 
     .mensaje {
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       color: #6b7280;
       text-align: center;
       margin: 0;
-      line-height: 1.6;
+      line-height: 1.5;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
     }
 
     .action-section {
-      margin-top: auto;
-      padding-top: 16px;
+      flex-shrink: 0;
+      padding-top: 8px;
     }
 
     .btn-volver {
       width: 100%;
       padding: 18px 32px;
       border: none;
-      border-radius: 16px;
+      border-radius: 18px;
       background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
       color: white;
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: 1.0625rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(31, 41, 55, 0.2);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 28px rgba(31, 41, 55, 0.25);
     }
 
     .btn-volver:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(31, 41, 55, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(31, 41, 55, 0.35);
+    }
+
+    .btn-volver:active {
+      transform: translateY(-1px);
     }
   `,
 })

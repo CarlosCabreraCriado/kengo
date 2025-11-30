@@ -29,7 +29,7 @@ export class AppComponent implements OnInit {
   public mostrarNavegacion = false;
 
   // Rutas donde NO se debe mostrar la navegación
-  private rutasSinNavegacion = ['/login', '/registro', '/magic'];
+  private rutasSinNavegacion = ['/login', '/registro', '/magic', '/mi-plan'];
 
   ngOnInit() {
     this.authService.iniciarApp();

@@ -52,8 +52,16 @@ import { CommonModule } from '@angular/common';
     .escala-container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       width: 100%;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
     }
 
     .escala-label {
@@ -66,38 +74,51 @@ import { CommonModule } from '@angular/common';
     .escala-visual {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
     .escala-bar {
       display: flex;
       justify-content: space-between;
       gap: 4px;
+      padding: 6px;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 10px;
     }
 
     .escala-btn {
       flex: 1;
       aspect-ratio: 1;
-      max-width: 40px;
+      max-width: 28px;
       border-radius: 8px;
-      border: 3px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 600;
+      border: 2px solid transparent;
+      font-size: 0.6875rem;
+      font-weight: 700;
       color: white;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .escala-btn:hover {
-      transform: scale(1.1);
+      transform: scale(1.15) translateY(-2px);
+      z-index: 1;
+    }
+
+    .escala-btn:active {
+      transform: scale(1.05);
     }
 
     .escala-btn.selected {
-      transform: scale(1.15);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transform: scale(1.2) translateY(-4px);
+      border-color: white;
+      box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.25),
+        0 0 0 3px rgba(255, 255, 255, 0.3);
+      z-index: 2;
     }
 
     .escala-labels {
@@ -112,7 +133,8 @@ import { CommonModule } from '@angular/common';
     }
 
     .escala-labels .texto {
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
       color: #6b7280;
     }
 
@@ -123,10 +145,12 @@ import { CommonModule } from '@angular/common';
     .valor-display {
       text-align: center;
       font-size: 0.875rem;
-      font-weight: 500;
-      padding: 8px 16px;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 8px;
+      font-weight: 600;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
     }
   `,
 })

@@ -127,11 +127,17 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     </div>
   `,
   styles: `
+    :host {
+      display: block;
+      height: 100%;
+    }
+
     .realizar-plan-container {
-      min-height: 100dvh;
+      height: 100%;
       display: flex;
       flex-direction: column;
-      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      background: linear-gradient(180deg, #fafbfc 0%, #f1f3f5 50%, #e8ecef 100%);
+      overflow: hidden;
     }
 
     .header {
@@ -141,67 +147,94 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px;
-      background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
-      backdrop-filter: blur(12px);
+      padding: 16px 20px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.98), rgba(255,255,255,0.85));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
     }
 
     .btn-back {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border: none;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 12px;
-      font-size: 0.875rem;
-      font-weight: 500;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 14px;
+      font-size: 0.9375rem;
+      font-weight: 600;
       color: #374151;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     }
 
     .btn-back:hover {
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateX(-2px);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+
+    .btn-back:active {
+      transform: translateX(-1px);
     }
 
     .btn-back .icon {
       font-size: 1.25rem;
+      transition: transform 0.3s ease;
+    }
+
+    .btn-back:hover .icon {
+      transform: translateX(-3px);
     }
 
     .progreso-header {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
     }
 
     .progreso-texto {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #6b7280;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: #374151;
     }
 
     .progreso-bar {
-      width: 80px;
-      height: 6px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 3px;
+      width: 100px;
+      height: 8px;
+      background: rgba(231, 92, 62, 0.15);
+      border-radius: 4px;
       overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
     }
 
     .progreso-fill {
       height: 100%;
-      background: #e75c3e;
-      border-radius: 3px;
-      transition: width 0.3s ease;
+      background: linear-gradient(90deg, #e75c3e 0%, #efc048 100%);
+      border-radius: 4px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 8px rgba(231, 92, 62, 0.3);
     }
 
     .content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: 0 16px 32px;
-      overflow-x: hidden;
+      padding: 8px 20px 20px;
+      overflow: hidden;
+      min-height: 0;
     }
 
     .loading-overlay,
@@ -213,79 +246,100 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(8px);
+      gap: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     .loading-spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid rgba(231, 92, 62, 0.2);
+      width: 56px;
+      height: 56px;
+      border: 5px solid rgba(231, 92, 62, 0.15);
       border-top-color: #e75c3e;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.2);
     }
 
     .loading-text {
-      font-size: 1rem;
+      font-size: 1.0625rem;
       color: #6b7280;
+      font-weight: 500;
     }
 
     .error-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 32px;
+      gap: 20px;
+      padding: 36px 32px;
       text-align: center;
-      max-width: 320px;
+      max-width: 340px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     }
 
     .error-icon {
-      font-size: 3rem;
+      font-size: 3.5rem;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
     }
 
     .error-card h2 {
-      font-size: 1rem;
+      font-size: 1.0625rem;
       color: #374151;
       margin: 0;
+      line-height: 1.5;
     }
 
     .btn-primary {
       width: 100%;
-      padding: 14px 24px;
+      padding: 18px 28px;
       border: none;
-      border-radius: 12px;
-      background: #e75c3e;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
       color: white;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.0625rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 24px rgba(231, 92, 62, 0.3);
     }
 
     .btn-primary:hover {
-      background: #d14d31;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(231, 92, 62, 0.4);
+    }
+
+    .btn-primary:active {
       transform: translateY(-1px);
     }
 
     .btn-secondary {
       width: 100%;
-      padding: 12px 24px;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      background: transparent;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #6b7280;
-      font-size: 0.875rem;
-      font-weight: 500;
+      font-size: 0.9375rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
     }
 
     .btn-secondary:hover {
-      border-color: #d1d5db;
-      background: rgba(0, 0, 0, 0.02);
+      background: rgba(255, 255, 255, 0.9);
+      color: #374151;
+      transform: translateY(-1px);
     }
 
     @keyframes spin {

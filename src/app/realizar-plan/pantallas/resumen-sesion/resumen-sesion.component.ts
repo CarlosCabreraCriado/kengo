@@ -77,27 +77,40 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
     </div>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .resumen-container {
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      padding-top: 16px;
+      flex: 1;
+      min-height: 0;
+      gap: 16px;
+      overflow: hidden;
     }
 
     .header-section {
       text-align: center;
+      padding: 8px 0;
+      flex-shrink: 0;
     }
 
     .titulo {
       font-size: 1.5rem;
       font-weight: 700;
       color: #1f2937;
-      margin: 0 0 8px;
+      margin: 0 0 4px;
     }
 
     .subtitulo {
-      font-size: 1rem;
-      color: #6b7280;
+      font-size: 0.9375rem;
+      color: #e75c3e;
+      font-weight: 500;
       margin: 0;
     }
 
@@ -105,33 +118,55 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
       display: flex;
       flex-direction: column;
       gap: 12px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 4px;
     }
 
     .ejercicio-card {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
+      gap: 12px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
       position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+    }
+
+    .ejercicio-card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
     }
 
     .ejercicio-imagen {
-      width: 64px;
-      height: 64px;
+      width: 60px;
+      height: 60px;
       border-radius: 12px;
       overflow: hidden;
       flex-shrink: 0;
       background: #f3f4f6;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .ejercicio-imagen img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .ejercicio-card:hover .ejercicio-imagen img {
+      transform: scale(1.05);
     }
 
     .imagen-placeholder {
@@ -150,25 +185,28 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
     }
 
     .ejercicio-nombre {
-      font-size: 1rem;
+      font-size: 0.9375rem;
       font-weight: 600;
       color: #1f2937;
       margin: 0 0 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-right: 28px;
     }
 
     .ejercicio-detalles {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       color: #6b7280;
+      font-weight: 500;
     }
 
     .separador {
-      color: #d1d5db;
+      color: #e75c3e;
+      font-weight: 600;
     }
 
     .dias-semana {
@@ -178,71 +216,75 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
     }
 
     .dia {
-      padding: 2px 8px;
+      padding: 3px 8px;
       background: rgba(231, 92, 62, 0.1);
       color: #e75c3e;
       border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      font-size: 0.6875rem;
+      font-weight: 600;
     }
 
     .ejercicio-numero {
       position: absolute;
-      top: 12px;
-      right: 12px;
+      top: 10px;
+      right: 10px;
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.05);
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #9ca3af;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 2px 8px rgba(231, 92, 62, 0.3);
     }
 
     .footer-section {
-      margin-top: auto;
-      padding-top: 16px;
+      flex-shrink: 0;
+      padding: 12px 0;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
       align-items: center;
     }
 
     .contador {
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       color: #6b7280;
+      font-weight: 500;
       margin: 0;
+      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 16px;
     }
 
     .btn-comenzar {
       width: 100%;
-      max-width: 320px;
       padding: 18px 32px;
       border: none;
-      border-radius: 16px;
+      border-radius: 18px;
       background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
       color: white;
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: 1.0625rem;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(231, 92, 62, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 32px rgba(231, 92, 62, 0.35);
     }
 
     .btn-comenzar:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(231, 92, 62, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(231, 92, 62, 0.45);
     }
 
     .btn-comenzar:active:not(:disabled) {
-      transform: translateY(0);
+      transform: translateY(-1px);
     }
 
     .btn-comenzar:disabled {
@@ -251,12 +293,12 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
     }
 
     .btn-comenzar .arrow {
-      font-size: 1.25rem;
-      transition: transform 0.2s ease;
+      font-size: 1.5rem;
+      transition: transform 0.3s ease;
     }
 
-    .btn-comenzar:hover .arrow {
-      transform: translateX(4px);
+    .btn-comenzar:hover:not(:disabled) .arrow {
+      transform: translateX(6px);
     }
   `,
 })

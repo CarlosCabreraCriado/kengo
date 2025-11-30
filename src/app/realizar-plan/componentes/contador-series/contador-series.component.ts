@@ -15,7 +15,11 @@ import { CommonModule } from '@angular/common';
             [class.completada]="serie < serieActual()"
             [class.actual]="serie === serieActual()"
             [class.pendiente]="serie > serieActual()"
-          ></div>
+          >
+            @if (serie < serieActual()) {
+              <span class="check-icon">✓</span>
+            }
+          </div>
         }
       </div>
     </div>
@@ -25,41 +29,75 @@ import { CommonModule } from '@angular/common';
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      padding: 16px 24px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
     }
 
     .series-label {
       font-size: 0.875rem;
-      font-weight: 500;
-      color: #4b5563;
+      font-weight: 600;
+      color: #374151;
+      letter-spacing: 0.02em;
     }
 
     .series-pills {
       display: flex;
-      gap: 8px;
+      gap: 12px;
       align-items: center;
     }
 
     .pill {
-      width: 12px;
-      height: 12px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid transparent;
     }
 
     .pill.completada {
-      background-color: #10b981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .check-icon {
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 700;
     }
 
     .pill.actual {
-      background-color: #e75c3e;
-      box-shadow: 0 0 0 4px rgba(231, 92, 62, 0.2);
-      transform: scale(1.2);
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
+      box-shadow:
+        0 0 0 4px rgba(231, 92, 62, 0.2),
+        0 4px 16px rgba(231, 92, 62, 0.3);
+      transform: scale(1.15);
+      animation: pulse-pill 2s ease-in-out infinite;
     }
 
     .pill.pendiente {
-      background-color: #d1d5db;
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    @keyframes pulse-pill {
+      0%, 100% {
+        box-shadow:
+          0 0 0 4px rgba(231, 92, 62, 0.2),
+          0 4px 16px rgba(231, 92, 62, 0.3);
+      }
+      50% {
+        box-shadow:
+          0 0 0 6px rgba(231, 92, 62, 0.15),
+          0 4px 20px rgba(231, 92, 62, 0.4);
+      }
     }
   `,
 })

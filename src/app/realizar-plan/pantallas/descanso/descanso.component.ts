@@ -64,71 +64,106 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     </div>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .descanso-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 70vh;
-      gap: 32px;
+      justify-content: space-between;
+      flex: 1;
+      min-height: 0;
+      gap: 20px;
       text-align: center;
+      padding: 16px 0;
+      overflow: hidden;
     }
 
     .header-section {
       display: flex;
       flex-direction: column;
       gap: 8px;
+      flex-shrink: 0;
     }
 
     .titulo {
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: #1f2937;
       margin: 0;
     }
 
     .subtitulo {
-      font-size: 1rem;
+      font-size: 0.9375rem;
       color: #6b7280;
       margin: 0;
+      font-weight: 500;
     }
 
     .timer-section {
-      padding: 16px 0;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
     }
 
     .info-section {
-      padding: 16px 0;
+      flex-shrink: 0;
     }
 
     .proxima-serie {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 16px 32px;
-      background: rgba(231, 92, 62, 0.1);
-      border-radius: 12px;
+      gap: 6px;
+      padding: 18px 36px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow:
+        0 4px 20px rgba(231, 92, 62, 0.1),
+        inset 0 0 0 1px rgba(231, 92, 62, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    .proxima-serie:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 28px rgba(231, 92, 62, 0.15),
+        inset 0 0 0 1px rgba(231, 92, 62, 0.2);
     }
 
     .proxima-serie .label {
       font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       color: #9ca3af;
+      font-weight: 600;
     }
 
     .proxima-serie .valor {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #e75c3e;
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .actions-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      max-width: 280px;
+      max-width: 300px;
+      flex-shrink: 0;
     }
 
     .btn-agregar {
@@ -137,55 +172,72 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       justify-content: center;
       gap: 8px;
       padding: 14px 24px;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      background: white;
+      border: none;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       color: #374151;
-      font-size: 1rem;
-      font-weight: 500;
+      font-size: 0.9375rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     }
 
     .btn-agregar:hover {
-      border-color: #e75c3e;
+      background: rgba(231, 92, 62, 0.1);
       color: #e75c3e;
-      background: rgba(231, 92, 62, 0.05);
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 24px rgba(231, 92, 62, 0.12),
+        inset 0 0 0 1px rgba(231, 92, 62, 0.3);
+    }
+
+    .btn-agregar:active {
+      transform: translateY(-1px);
     }
 
     .btn-agregar .icon {
-      font-weight: 700;
-      font-size: 1.125rem;
+      font-weight: 800;
+      font-size: 1.25rem;
     }
 
     .btn-saltar {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 16px 24px;
+      gap: 10px;
+      padding: 16px 28px;
       border: none;
-      border-radius: 12px;
+      border-radius: 16px;
       background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
       color: white;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(231, 92, 62, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 28px rgba(231, 92, 62, 0.35);
     }
 
     .btn-saltar:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(231, 92, 62, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(231, 92, 62, 0.45);
+    }
+
+    .btn-saltar:active {
+      transform: translateY(-1px);
     }
 
     .btn-saltar .arrow {
-      transition: transform 0.2s ease;
+      font-size: 1.25rem;
+      transition: transform 0.3s ease;
     }
 
     .btn-saltar:hover .arrow {
-      transform: translateX(4px);
+      transform: translateX(6px);
     }
   `,
 })

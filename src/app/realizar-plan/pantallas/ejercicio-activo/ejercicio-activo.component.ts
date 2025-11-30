@@ -81,117 +81,178 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     </div>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .ejercicio-container {
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      padding-bottom: 24px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .video-section {
-      margin: 0 -16px;
+      margin: 0 -20px;
+      flex-shrink: 0;
+      max-height: 35vh;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     }
 
     .info-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 16px;
       text-align: center;
+      flex: 1;
+      min-height: 0;
+      padding: 16px 0;
+      overflow-y: auto;
     }
 
     .ejercicio-nombre {
-      font-size: 1.5rem;
+      font-size: 1.625rem;
       font-weight: 700;
       color: #1f2937;
       margin: 0;
+      padding: 0 8px;
+      text-wrap: balance;
     }
 
     .objetivo-section {
       display: flex;
       justify-content: center;
-      padding: 16px 0;
+      flex-shrink: 0;
     }
 
     .repeticiones-display {
+      position: relative;
+      width: 140px;
+      height: 140px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      gap: 2px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 50%;
+      box-shadow:
+        0 8px 32px rgba(231, 92, 62, 0.15),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .repeticiones-display:hover {
+      transform: scale(1.02);
+      box-shadow:
+        0 12px 40px rgba(231, 92, 62, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     }
 
     .repeticiones-display .numero {
-      font-size: 4rem;
+      font-size: 2.75rem;
       font-weight: 800;
-      color: #e75c3e;
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(231, 92, 62, 0.2));
     }
 
     .repeticiones-display .texto {
-      font-size: 1rem;
+      font-size: 0.7rem;
       color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.1em;
+      font-weight: 500;
     }
 
     .instrucciones {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
+      gap: 14px;
+      padding: 18px 20px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 18px;
       width: 100%;
+      box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    .instrucciones:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
     }
 
     .instrucciones-icon {
-      font-size: 1.25rem;
+      font-size: 1.375rem;
       flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
 
     .instrucciones-texto {
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       color: #4b5563;
       margin: 0;
       text-align: left;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     .action-section {
-      margin-top: auto;
-      padding-top: 16px;
+      flex-shrink: 0;
+      padding-top: 12px;
     }
 
     .btn-completar {
       width: 100%;
-      padding: 20px 32px;
+      padding: 18px 32px;
       border: none;
-      border-radius: 16px;
+      border-radius: 18px;
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: white;
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: 1.0625rem;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.35);
     }
 
     .btn-completar:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(16, 185, 129, 0.45);
     }
 
     .btn-completar:active {
-      transform: translateY(0);
+      transform: translateY(-1px);
     }
 
     .btn-completar .check {
-      font-size: 1.25rem;
+      font-size: 1.375rem;
+      transition: transform 0.3s ease;
+    }
+
+    .btn-completar:hover .check {
+      transform: scale(1.2);
     }
   `,
 })

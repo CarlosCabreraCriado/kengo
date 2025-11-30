@@ -78,11 +78,20 @@ import { CommonModule } from '@angular/common';
       position: relative;
       width: 100%;
       aspect-ratio: 16/9;
-      background: #000;
-      border-radius: 16px;
+      background: #1f2937;
+      border-radius: 24px;
       overflow: hidden;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.15),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .video-container:hover {
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.15);
     }
 
     .video-container.expanded {
@@ -94,6 +103,7 @@ import { CommonModule } from '@angular/common';
       z-index: 100;
       border-radius: 0;
       aspect-ratio: auto;
+      box-shadow: none;
     }
 
     .video-player,
@@ -106,6 +116,7 @@ import { CommonModule } from '@angular/common';
     .video-container.expanded .video-player,
     .video-container.expanded .video-poster {
       object-fit: contain;
+      background: #000;
     }
 
     .video-placeholder {
@@ -115,17 +126,19 @@ import { CommonModule } from '@angular/common';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+      gap: 12px;
+      background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
     }
 
     .placeholder-icon {
-      font-size: 3rem;
+      font-size: 4rem;
+      opacity: 0.9;
     }
 
     .placeholder-text {
-      color: #9ca3af;
+      color: rgba(255, 255, 255, 0.9);
       font-size: 0.875rem;
+      font-weight: 500;
     }
 
     .pause-overlay {
@@ -135,27 +148,37 @@ import { CommonModule } from '@angular/common';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .pause-icon {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.9);
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      color: #1f2937;
-      padding-left: 4px;
+      font-size: 2rem;
+      color: white;
+      padding-left: 6px;
+      box-shadow: 0 8px 24px rgba(231, 92, 62, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .pause-overlay:hover .pause-icon {
+      transform: scale(1.1);
+      box-shadow: 0 12px 32px rgba(231, 92, 62, 0.5);
     }
 
     .pause-text {
       color: white;
       font-size: 0.875rem;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .loading-overlay {
@@ -164,38 +187,41 @@ import { CommonModule } from '@angular/common';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
     }
 
     .loading-spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
+      width: 56px;
+      height: 56px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
       border-top-color: #e75c3e;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
     }
 
     .expand-btn {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.5);
-      border: none;
+      top: 16px;
+      right: 16px;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: white;
       font-size: 1.25rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
     }
 
     .expand-btn:hover {
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(255, 255, 255, 0.25);
       transform: scale(1.1);
     }
 

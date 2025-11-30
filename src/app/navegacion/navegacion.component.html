@@ -1,12 +1,10 @@
 <!-- Navegacion -->
 @if (showNavbar()) {
 <header
-  class="fixed left-0 z-100 w-full overflow-visible p-3 md:p-5"
-  [class.bottom-0]="isMovil"
-  [class.top-0]="!isMovil"
+  class="z-100 w-full overflow-visible p-3 md:p-5"
 >
   <div
-    class="relative m-auto flex w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter md:h-full md:pr-3 md:pl-5"
+    class="relative m-auto flex w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter md:pr-3 md:pl-5"
     [class.h-16]="isMovil"
     [class.h-full]="!isMovil"
   >
@@ -40,6 +38,16 @@
       >
         <span class="material-symbols-outlined nav-icon">exercise</span>
         <span class="nav-label">Ejercicios</span>
+      </a>
+
+      <!-- MI PLAN -->
+      <a
+        routerLink="/mi-plan"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+        <span class="material-symbols-outlined nav-icon">play_circle</span>
+        <span class="nav-label">Mi plan</span>
       </a>
 
       <!-- PACIENTES (solo fisio) -->

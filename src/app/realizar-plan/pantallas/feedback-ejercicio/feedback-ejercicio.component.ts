@@ -72,82 +72,121 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
     </div>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .feedback-container {
       display: flex;
       flex-direction: column;
-      gap: 32px;
-      padding-top: 16px;
+      flex: 1;
+      min-height: 0;
+      gap: 16px;
+      padding-top: 8px;
+      overflow-y: auto;
     }
 
     .check-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 24px 0;
+      gap: 12px;
+      padding: 12px 0;
+      flex-shrink: 0;
     }
 
     .check-circle {
-      width: 80px;
-      height: 80px;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+      box-shadow:
+        0 12px 32px rgba(16, 185, 129, 0.35),
+        inset 0 0 0 4px rgba(255, 255, 255, 0.2);
+      animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes pop-in {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     .check-icon {
-      font-size: 2.5rem;
+      font-size: 2rem;
       color: white;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
 
     .check-titulo {
-      font-size: 1.5rem;
+      font-size: 1.375rem;
       font-weight: 700;
       color: #1f2937;
       margin: 0;
     }
 
     .ejercicio-nombre {
-      font-size: 1rem;
+      font-size: 0.9375rem;
       color: #6b7280;
       margin: 0;
+      font-weight: 500;
     }
 
     .dolor-section {
-      padding: 0 8px;
+      flex-shrink: 0;
     }
 
     .notas-section {
       display: flex;
       flex-direction: column;
       gap: 8px;
+      padding: 0 4px;
+      flex-shrink: 0;
     }
 
     .notas-label {
-      font-size: 0.875rem;
-      font-weight: 500;
+      font-size: 0.9375rem;
+      font-weight: 600;
       color: #374151;
+      padding-left: 4px;
     }
 
     .notas-textarea {
       width: 100%;
-      padding: 16px;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      font-size: 1rem;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 0.9375rem;
       font-family: inherit;
       resize: none;
-      transition: all 0.2s ease;
-      background: white;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      color: #1f2937;
+      line-height: 1.5;
     }
 
     .notas-textarea:focus {
       outline: none;
-      border-color: #e75c3e;
-      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+      box-shadow:
+        0 8px 28px rgba(231, 92, 62, 0.12),
+        inset 0 0 0 2px rgba(231, 92, 62, 0.4);
     }
 
     .notas-textarea::placeholder {
@@ -157,55 +196,63 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
     .action-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
-      margin-top: auto;
-      padding-top: 16px;
+      flex-shrink: 0;
+      padding-top: 8px;
     }
 
     .btn-continuar {
       width: 100%;
       padding: 18px 32px;
       border: none;
-      border-radius: 16px;
+      border-radius: 18px;
       background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
       color: white;
-      font-size: 1.125rem;
-      font-weight: 600;
+      font-size: 1.0625rem;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(231, 92, 62, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 32px rgba(231, 92, 62, 0.35);
     }
 
     .btn-continuar:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(231, 92, 62, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(231, 92, 62, 0.45);
+    }
+
+    .btn-continuar:active:not(:disabled) {
+      transform: translateY(-1px);
     }
 
     .btn-continuar:disabled {
       opacity: 0.5;
       cursor: not-allowed;
       transform: none;
-      box-shadow: none;
+      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.2);
     }
 
     .btn-continuar .arrow {
-      font-size: 1.25rem;
-      transition: transform 0.2s ease;
+      font-size: 1.375rem;
+      transition: transform 0.3s ease;
     }
 
     .btn-continuar:hover:not(:disabled) .arrow {
-      transform: translateX(4px);
+      transform: translateX(6px);
     }
 
     .hint {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       color: #9ca3af;
       margin: 0;
+      font-weight: 500;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 12px;
     }
   `,
 })

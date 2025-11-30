@@ -48,11 +48,26 @@ import { CommonModule } from '@angular/common';
   styles: `
     .timer-container {
       position: relative;
-      width: 180px;
-      height: 180px;
+      width: min(160px, 35vw);
+      height: min(160px, 35vw);
       display: flex;
       align-items: center;
       justify-content: center;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 50%;
+      box-shadow:
+        0 8px 32px rgba(231, 92, 62, 0.15),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .timer-container:hover {
+      transform: scale(1.02);
+      box-shadow:
+        0 12px 40px rgba(231, 92, 62, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     }
 
     .timer-ring {
@@ -60,21 +75,32 @@ import { CommonModule } from '@angular/common';
       width: 100%;
       height: 100%;
       transform: rotate(-90deg);
+      filter: drop-shadow(0 2px 4px rgba(231, 92, 62, 0.3));
     }
 
     .timer-bg {
-      stroke: rgba(0, 0, 0, 0.1);
+      stroke: rgba(231, 92, 62, 0.1);
     }
 
     .timer-progress {
       stroke: #e75c3e;
       stroke-linecap: round;
-      transition: stroke-dashoffset 0.1s linear;
+      transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;
+    }
+
+    .timer-container.warning {
+      animation: pulse-container 1s ease-in-out infinite;
+      box-shadow:
+        0 8px 32px rgba(239, 192, 72, 0.3),
+        inset 0 0 0 1px rgba(239, 192, 72, 0.5);
     }
 
     .timer-container.warning .timer-progress {
-      stroke: #ef4444;
-      animation: pulse-ring 1s ease-in-out infinite;
+      stroke: #efc048;
+    }
+
+    .timer-container.warning .timer-ring {
+      filter: drop-shadow(0 2px 8px rgba(239, 192, 72, 0.5));
     }
 
     .timer-content {
@@ -86,29 +112,32 @@ import { CommonModule } from '@angular/common';
     }
 
     .timer-value {
-      font-size: 2.5rem;
+      font-size: clamp(2rem, 8vw, 2.5rem);
       font-weight: 700;
       color: #1f2937;
       font-variant-numeric: tabular-nums;
+      line-height: 1;
+      transition: color 0.3s ease;
     }
 
     .timer-label {
-      font-size: 0.875rem;
+      font-size: 0.75rem;
+      font-weight: 500;
       color: #6b7280;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
     }
 
     .timer-container.warning .timer-value {
-      color: #ef4444;
+      color: #efc048;
     }
 
-    @keyframes pulse-ring {
+    @keyframes pulse-container {
       0%, 100% {
-        opacity: 1;
+        transform: scale(1);
       }
       50% {
-        opacity: 0.7;
+        transform: scale(1.03);
       }
     }
   `,
