@@ -361,7 +361,14 @@ export class RealizarPlanComponent implements OnInit {
   readonly progresoSesion = this.registroService.progresoSesion;
 
   // Estado local
-  readonly cargando = computed(() => !this.registroService.planActivo() && !this._error());
+  readonly cargando = computed(() => {
+    // En modo multi-plan, verificar ejerciciosMultiPlan
+    if (this.registroService.modoMultiPlan()) {
+      return this.registroService.ejerciciosMultiPlan().length === 0 && !this._error();
+    }
+    // En modo normal, verificar planActivo
+    return !this.registroService.planActivo() && !this._error();
+  });
   private _error = computed(() => '');
 
   readonly error = this._error;
@@ -397,6 +404,12 @@ export class RealizarPlanComponent implements OnInit {
   }
 
   private async inicializarSesion(): Promise<void> {
+    // Si ya hay una sesion multi-plan configurada, usarla
+    if (this.registroService.modoMultiPlan() && this.registroService.configSesion()) {
+      return; // La sesion ya esta lista desde actividad-diaria
+    }
+
+    // Flujo original: cargar por planId de la ruta
     const planId = this.route.snapshot.paramMap.get('planId');
     const success = await this.registroService.iniciarSesion(
       planId ? parseInt(planId, 10) : undefined

@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, inject, computed } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { RegistroSesionService } from '../../../services/registro-sesion.service';
 import { slideUpAnimation } from '../../realizar-plan.animations';
+import { EjercicioPlan, EjercicioSesionMultiPlan } from '../../../../types/global';
 
 @Component({
   selector: 'app-resumen-sesion',
@@ -10,17 +11,15 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
   animations: [slideUpAnimation],
   template: `
     <div class="resumen-container">
-      <!-- Título -->
+      <!-- Titulo -->
       <div class="header-section" @slideUp>
-        <h1 class="titulo">Tu sesión de hoy</h1>
-        @if (plan()) {
-          <p class="subtitulo">{{ plan()!.titulo }}</p>
-        }
+        <h1 class="titulo">{{ tituloSesion() }}</h1>
+        <p class="subtitulo">{{ subtitulo() }}</p>
       </div>
 
       <!-- Lista de ejercicios -->
       <div class="ejercicios-list">
-        @for (item of ejercicios(); track item.id; let i = $index) {
+        @for (item of ejercicios(); track $index; let i = $index) {
           <div class="ejercicio-card tarjeta-kengo" @slideUp>
             <div class="ejercicio-imagen">
               @if (item.ejercicio.portada) {
@@ -29,7 +28,9 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
                   [alt]="item.ejercicio.nombre_ejercicio"
                 />
               } @else {
-                <div class="imagen-placeholder">🏋️</div>
+                <div class="imagen-placeholder">
+                  <span class="placeholder-icon">💪</span>
+                </div>
               }
             </div>
 
@@ -38,7 +39,7 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
               <div class="ejercicio-detalles">
                 @if (item.series && item.series > 1) {
                   <span class="detalle">{{ item.series }} series</span>
-                  <span class="separador">×</span>
+                  <span class="separador">x</span>
                 }
                 @if (item.duracion_seg) {
                   <span class="detalle">{{ formatDuracion(item.duracion_seg) }}</span>
@@ -46,12 +47,9 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
                   <span class="detalle">{{ item.repeticiones || 12 }} reps</span>
                 }
               </div>
-              @if (item.dias_semana && item.dias_semana.length > 0) {
-                <div class="dias-semana">
-                  @for (dia of item.dias_semana; track dia) {
-                    <span class="dia">{{ dia }}</span>
-                  }
-                </div>
+              <!-- Badge de plan en modo multi-plan -->
+              @if (esMultiPlan() && isEjercicioMultiPlan(item)) {
+                <div class="plan-badge">{{ getEjercicioMultiPlan(item).planTitulo }}</div>
               }
             </div>
 
@@ -60,9 +58,9 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
         }
       </div>
 
-      <!-- Contador y botón -->
+      <!-- Contador y boton -->
       <div class="footer-section">
-        <p class="contador">{{ ejercicios().length }} ejercicios hoy</p>
+        <p class="contador">{{ ejercicios().length }} ejercicios</p>
 
         <button
           type="button"
@@ -70,7 +68,7 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
           (click)="comenzar.emit()"
           [disabled]="ejercicios().length === 0"
         >
-          Comenzar sesión
+          Comenzar sesion
           <span class="arrow">→</span>
         </button>
       </div>
@@ -224,6 +222,21 @@ import { slideUpAnimation } from '../../realizar-plan.animations';
       font-weight: 600;
     }
 
+    .plan-badge {
+      margin-top: 6px;
+      padding: 3px 8px;
+      background: rgba(107, 114, 128, 0.1);
+      color: #6b7280;
+      border-radius: 6px;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .ejercicio-numero {
       position: absolute;
       top: 10px;
@@ -307,8 +320,27 @@ export class ResumenSesionComponent {
 
   private registroService = inject(RegistroSesionService);
 
-  readonly plan = this.registroService.planActivo;
-  readonly ejercicios = computed(() => this.plan()?.items || []);
+  // Titulo dinamico de la sesion
+  readonly tituloSesion = this.registroService.tituloSesion;
+
+  // Modo multi-plan
+  readonly esMultiPlan = this.registroService.modoMultiPlan;
+
+  // Lista de ejercicios unificada
+  readonly ejercicios = this.registroService.ejerciciosList;
+
+  // Subtitulo (nombre del plan o resumen de planes)
+  readonly subtitulo = computed(() => {
+    if (this.registroService.modoMultiPlan()) {
+      const config = this.registroService.configSesion();
+      if (!config) return '';
+      if (config.planesInvolucrados.length === 1) {
+        return config.planesInvolucrados[0].titulo;
+      }
+      return `${config.planesInvolucrados.length} planes combinados`;
+    }
+    return this.registroService.planActivo()?.titulo ?? '';
+  });
 
   getImageUrl(id: string): string {
     return this.registroService.getAssetUrl(id, 128, 128);
@@ -321,5 +353,14 @@ export class ResumenSesionComponent {
     const mins = Math.floor(segundos / 60);
     const secs = segundos % 60;
     return secs > 0 ? `${mins}m ${secs}s` : `${mins} min`;
+  }
+
+  // Helpers para tipo multi-plan
+  isEjercicioMultiPlan(item: EjercicioPlan): item is EjercicioSesionMultiPlan {
+    return 'planId' in item && 'planTitulo' in item;
+  }
+
+  getEjercicioMultiPlan(item: EjercicioPlan): EjercicioSesionMultiPlan {
+    return item as EjercicioSesionMultiPlan;
   }
 }

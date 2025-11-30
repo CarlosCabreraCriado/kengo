@@ -22,6 +22,8 @@ import {
   RegistroEjercicio,
   ActividadPlanDia,
   EjercicioPlanConEstado,
+  EjercicioSesionMultiPlan,
+  ConfigSesionMultiPlan,
 } from '../../types/global';
 
 // Tipo extendido para incluir ejercicios en próximos días
@@ -302,6 +304,97 @@ export class ActividadDiariaComponent implements OnInit {
 
   getAssetUrl(id?: string, width = 80, height = 80): string {
     return this.planesService.getAssetUrl(id, width, height);
+  }
+
+  /**
+   * Inicia una sesion combinada con todos los ejercicios de hoy
+   */
+  iniciarSesionHoy(): void {
+    const actividades = this.actividadHoy();
+
+    // Construir lista de ejercicios de todos los planes
+    const ejercicios: EjercicioSesionMultiPlan[] = [];
+    const planesInvolucrados: {
+      planId: number;
+      titulo: string;
+      cantidadEjercicios: number;
+    }[] = [];
+
+    for (const actividad of actividades) {
+      if (actividad.ejerciciosHoy.length === 0) continue;
+
+      planesInvolucrados.push({
+        planId: actividad.plan.id_plan,
+        titulo: actividad.plan.titulo,
+        cantidadEjercicios: actividad.ejerciciosHoy.length,
+      });
+
+      for (const ej of actividad.ejerciciosHoy) {
+        ejercicios.push({
+          ...ej,
+          planId: actividad.plan.id_plan,
+          planTitulo: actividad.plan.titulo,
+          planItemId: ej.id!,
+        });
+      }
+    }
+
+    if (ejercicios.length === 0) return;
+
+    const config: ConfigSesionMultiPlan = {
+      titulo: 'Tu actividad de hoy',
+      fecha: new Date(),
+      esFechaProgramada: true,
+      ejercicios,
+      planesInvolucrados,
+    };
+
+    this.registroService.iniciarSesionMultiPlan(config);
+    this.router.navigate(['/mi-plan']);
+  }
+
+  /**
+   * Inicia una sesion para un dia futuro especifico
+   */
+  iniciarSesionDia(dia: DiaProximoConEjercicios): void {
+    const ejercicios: EjercicioSesionMultiPlan[] = [];
+    const planes = this.planesActivosYFuturos();
+    const diaSemana = this.DIAS_SEMANA[dia.fecha.getDay()];
+
+    for (const plan of planes) {
+      if (!this.esFechaEnRangoPlan(plan, dia.fecha)) continue;
+
+      const ejerciciosDia = plan.items.filter((item) => {
+        if (!item.dias_semana || item.dias_semana.length === 0) return true;
+        return item.dias_semana.includes(diaSemana);
+      });
+
+      for (const ej of ejerciciosDia) {
+        ejercicios.push({
+          ...ej,
+          planId: plan.id_plan,
+          planTitulo: plan.titulo,
+          planItemId: ej.id!,
+        });
+      }
+    }
+
+    if (ejercicios.length === 0) return;
+
+    const config: ConfigSesionMultiPlan = {
+      titulo: `Ejercicios del ${dia.diaSemana}`,
+      fecha: dia.fecha,
+      esFechaProgramada: false,
+      ejercicios,
+      planesInvolucrados: dia.planes.map((p) => ({
+        planId: p.planId,
+        titulo: p.titulo,
+        cantidadEjercicios: p.ejercicios,
+      })),
+    };
+
+    this.registroService.iniciarSesionMultiPlan(config);
+    this.router.navigate(['/mi-plan']);
   }
 
   // Helpers privados

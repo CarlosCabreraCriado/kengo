@@ -366,3 +366,23 @@ export interface DiaProximo {
   totalEjercicios: number;
   planes: { planId: number; titulo: string; ejercicios: number }[];
 }
+
+// Ejercicio con info del plan original (para sesiones multi-plan)
+export interface EjercicioSesionMultiPlan extends EjercicioPlan {
+  planId: number;
+  planTitulo: string;
+  planItemId: number; // ID para registro en backend
+}
+
+// Configuracion de sesion multi-plan
+export interface ConfigSesionMultiPlan {
+  titulo: string;
+  fecha: Date;
+  esFechaProgramada: boolean;
+  ejercicios: EjercicioSesionMultiPlan[];
+  planesInvolucrados: {
+    planId: number;
+    titulo: string;
+    cantidadEjercicios: number;
+  }[];
+}

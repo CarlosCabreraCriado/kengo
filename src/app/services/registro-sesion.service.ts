@@ -19,6 +19,8 @@ import {
   RegistroEjercicioDirectus,
   SesionLocal,
   FeedbackEjercicio,
+  EjercicioSesionMultiPlan,
+  ConfigSesionMultiPlan,
 } from '../../types/global';
 
 interface RegistroResponse {
@@ -52,15 +54,36 @@ export class RegistroSesionService {
   readonly tiempoRestante = signal<number>(0);
   readonly temporizadorActivo = signal<boolean>(false);
 
+  // ========= Estado Multi-Plan =========
+  readonly modoMultiPlan = signal<boolean>(false);
+  readonly configSesion = signal<ConfigSesionMultiPlan | null>(null);
+  readonly ejerciciosMultiPlan = signal<EjercicioSesionMultiPlan[]>([]);
+
   // ========= Computed =========
 
-  readonly ejercicioActual = computed<EjercicioPlan | null>(() => {
-    const plan = this.planActivo();
-    const idx = this.ejercicioActualIndex();
-    return plan?.items?.[idx] ?? null;
+  // Titulo dinamico de la sesion
+  readonly tituloSesion = computed(() => {
+    if (this.modoMultiPlan()) {
+      return this.configSesion()?.titulo ?? 'Tu sesion';
+    }
+    return this.planActivo()?.titulo ?? 'Tu sesion';
   });
 
-  readonly totalEjercicios = computed(() => this.planActivo()?.items?.length ?? 0);
+  // Lista unificada de ejercicios (funciona para ambos modos)
+  readonly ejerciciosList = computed<EjercicioPlan[]>(() => {
+    if (this.modoMultiPlan()) {
+      return this.ejerciciosMultiPlan();
+    }
+    return this.planActivo()?.items ?? [];
+  });
+
+  readonly ejercicioActual = computed<EjercicioPlan | null>(() => {
+    const lista = this.ejerciciosList();
+    const idx = this.ejercicioActualIndex();
+    return lista[idx] ?? null;
+  });
+
+  readonly totalEjercicios = computed(() => this.ejerciciosList().length);
 
   readonly totalSeries = computed(() => this.ejercicioActual()?.series ?? 1);
 
@@ -184,6 +207,33 @@ export class RegistroSesionService {
   }
 
   /**
+   * Iniciar una sesion con ejercicios de multiples planes
+   */
+  iniciarSesionMultiPlan(config: ConfigSesionMultiPlan): boolean {
+    try {
+      // Limpiar estado previo
+      this.resetearEstado();
+
+      // Configurar modo multi-plan
+      this.modoMultiPlan.set(true);
+      this.configSesion.set(config);
+      this.ejerciciosMultiPlan.set(config.ejercicios);
+
+      // Inicializar estado de sesion
+      this.ejercicioActualIndex.set(0);
+      this.serieActual.set(1);
+      this.estadoPantalla.set('resumen');
+      this.registrosSesion.set([]);
+      this.tiempoInicioSesion.set(null);
+
+      return true;
+    } catch (error) {
+      console.error('Error al iniciar sesion multi-plan:', error);
+      return false;
+    }
+  }
+
+  /**
    * Comenzar la sesión (desde resumen a primer ejercicio)
    */
   comenzarSesion(): void {
@@ -250,9 +300,14 @@ export class RegistroSesionService {
 
     if (!ejercicio?.id || !userId) return;
 
+    // En modo multi-plan, usar planItemId del ejercicio enriquecido
+    const planItemId = this.modoMultiPlan()
+      ? (ejercicio as EjercicioSesionMultiPlan).planItemId
+      : ejercicio.id;
+
     // Crear registro
     const registro: RegistroEjercicio = {
-      plan_item: ejercicio.id,
+      plan_item: planItemId,
       paciente: userId,
       fecha_hora: new Date().toISOString(),
       completado: true,
@@ -316,6 +371,9 @@ export class RegistroSesionService {
    */
   resetearEstado(): void {
     this.planActivo.set(null);
+    this.modoMultiPlan.set(false);
+    this.configSesion.set(null);
+    this.ejerciciosMultiPlan.set([]);
     this.ejercicioActualIndex.set(0);
     this.serieActual.set(1);
     this.estadoPantalla.set('resumen');

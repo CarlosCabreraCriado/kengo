@@ -108,6 +108,24 @@
             pendiente{{ totalPendientes() !== 1 ? "s" : "" }}
           </span>
         </div>
+
+        <!-- Boton principal para comenzar toda la actividad -->
+        @if (actividadHoy().length > 0 && totalPendientes() > 0) {
+          <div class="mb-6">
+            <button
+              mat-flat-button
+              color="primary"
+              class="!h-14 w-full !rounded-xl !text-base"
+              (click)="iniciarSesionHoy()"
+            >
+              <mat-icon class="material-symbols-outlined mr-2">play_arrow</mat-icon>
+              Comenzar toda la actividad
+              @if (actividadHoy().length > 1) {
+                <span class="ml-1 text-sm opacity-80">({{ actividadHoy().length }} planes)</span>
+              }
+            </button>
+          </div>
+        }
       }
 
       <!-- Planes del dia -->
@@ -321,34 +339,20 @@
                       }
                     </ul>
 
-                    <!-- Botones para iniciar planes -->
+                    <!-- Boton para iniciar sesion combinada del dia -->
                     <div class="border-t border-zinc-100 p-3">
-                      @if (dia.planes.length === 1) {
-                        <button
-                          mat-stroked-button
-                          color="primary"
-                          class="w-full !rounded-lg"
-                          (click)="irAPlan(dia.planes[0].planId)"
-                        >
-                          <mat-icon class="material-symbols-outlined mr-1">play_arrow</mat-icon>
-                          Comenzar ahora
-                        </button>
-                      } @else {
-                        <p class="mb-2 text-xs font-medium text-zinc-500">Comenzar un plan:</p>
-                        <div class="flex flex-wrap gap-2">
-                          @for (plan of dia.planes; track plan.planId) {
-                            <button
-                              mat-stroked-button
-                              color="primary"
-                              class="!rounded-lg !text-sm"
-                              (click)="irAPlan(plan.planId)"
-                            >
-                              <mat-icon class="material-symbols-outlined mr-1 !text-lg">play_arrow</mat-icon>
-                              {{ plan.titulo }}
-                            </button>
-                          }
-                        </div>
-                      }
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        class="w-full !rounded-lg"
+                        (click)="iniciarSesionDia(dia)"
+                      >
+                        <mat-icon class="material-symbols-outlined mr-1">play_arrow</mat-icon>
+                        Comenzar sesion
+                        @if (dia.planes.length > 1) {
+                          <span class="ml-1 text-sm opacity-80">({{ dia.planes.length }} planes)</span>
+                        }
+                      </button>
                     </div>
                   </div>
                 }
