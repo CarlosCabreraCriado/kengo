@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, isDevMode } from '@angular/core';
 import { provideRouter, RouteReuseStrategy } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -15,6 +15,7 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
 
 // Route caching strategy
 import { CustomRouteReuseStrategy } from './services/route-reuse-strategy.service';
+import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,6 +23,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
     { provide: MAT_DATE_LOCALE, useValue: 'es-ES' },
-    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
+    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy }, provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          }),
   ],
 };
