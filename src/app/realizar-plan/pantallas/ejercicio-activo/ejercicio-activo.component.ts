@@ -33,7 +33,7 @@ import { MatButtonModule } from '@angular/material/button';
     <div class="flex flex-1 flex-col overflow-hidden">
       <!-- Video con estilo de detalle-ejercicio -->
       <div
-        class="video-container relative -mx-5 h-[50vh] shrink-0 overflow-hidden transition-all duration-300"
+        class="video-container relative -mx-5 h-[50dvh] shrink-0 overflow-hidden transition-all duration-300"
         (click)="toggleVideo()"
       >
         @if (videoUrl()) {

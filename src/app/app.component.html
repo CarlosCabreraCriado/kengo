@@ -1,7 +1,7 @@
 <!-- Contenedor principal full-height -->
 <section class="flex h-dvh max-w-7xl flex-col m-auto overflow-hidden">
   <!-- Fondo decorativo -->
-  <div class="fixed top-0 left-0 -z-10 h-screen w-screen overflow-hidden">
+  <div class="fixed top-0 left-0 -z-10 h-dvh w-screen overflow-hidden">
     <img
       class="fixed bottom-0 left-0 -z-10 min-w-screen rotate-180"
       src="../assets/fondo-kengo (2).svg"
@@ -23,14 +23,10 @@
   }
 
   <!-- Contenido principal -->
-  <!-- Con navegación: order-1/2 y overflow-y-auto para scroll -->
-  <!-- Sin navegación: ocupa todo el alto sin scroll externo -->
   <main
-    class="main z-10 flex-1 min-h-0"
+    class="main z-10 flex-1 min-h-0 flex flex-col"
     [class.order-1]="mostrarNavegacion"
     [class.md:order-2]="mostrarNavegacion"
-    [class.overflow-y-auto]="mostrarNavegacion"
-    [class.overflow-hidden]="!mostrarNavegacion"
   >
     <router-outlet></router-outlet>
   </main>

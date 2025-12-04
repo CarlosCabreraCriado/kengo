@@ -12,6 +12,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { EjerciciosComponent } from './ejercicios/ejercicios.component';
 import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
 import { PacientesComponent } from './pacientes/pacientes.component';
+import { DetallePacienteComponent } from './detalle-paciente/detalle-paciente.component';
 import { MiClinicaComponent } from './miclinica/miclinica.component';
 import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
@@ -44,6 +45,7 @@ export const routes: Routes = [
   { path: 'ejercicios', component: EjerciciosComponent, canActivate: [AuthGuard] },
   { path: 'detalle-ejercicio/:id', component: DetalleEjercicioComponent, canActivate: [AuthGuard] },
   { path: 'mis-pacientes', component: PacientesComponent, canActivate: [AuthGuard] },
+  { path: 'mis-pacientes/:id', component: DetallePacienteComponent, canActivate: [AuthGuard] },
   { path: 'mi-clinica', component: MiClinicaComponent, canActivate: [AuthGuard] },
 
   // Planes

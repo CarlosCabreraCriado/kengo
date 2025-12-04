@@ -3,7 +3,6 @@ import {
   computed,
   inject,
   signal,
-  ViewEncapsulation,
   Signal,
   ViewChild,
   OnInit,
@@ -54,9 +53,11 @@ import { MatDividerModule } from '@angular/material/divider';
     MatProgressSpinnerModule,
     MatDividerModule,
   ],
-  encapsulation: ViewEncapsulation.None,
   templateUrl: './ejercicios.component.html',
   styleUrl: './ejercicios.component.css',
+  host: {
+    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+  },
 })
 export class EjerciciosComponent implements OnInit {
   private fb = inject(FormBuilder);

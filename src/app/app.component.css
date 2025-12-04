@@ -3,7 +3,7 @@
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(8, 1fr);
   gap: 8px;
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   padding: 16px;
 }

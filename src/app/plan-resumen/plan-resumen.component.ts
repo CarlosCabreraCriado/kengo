@@ -20,6 +20,9 @@ import { environment as env } from '../../environments/environment';
   ],
   templateUrl: './plan-resumen.component.html',
   styleUrl: './plan-resumen.component.css',
+  host: {
+    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+  },
 })
 export class PlanResumenComponent implements OnInit {
   private route = inject(ActivatedRoute);

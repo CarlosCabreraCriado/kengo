@@ -24,6 +24,9 @@ import { environment as env } from '../../environments/environment';
   ],
   templateUrl: './planes.component.html',
   styleUrl: './planes.component.css',
+  host: {
+    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+  },
 })
 export class PlanesComponent implements OnInit {
   private router = inject(Router);

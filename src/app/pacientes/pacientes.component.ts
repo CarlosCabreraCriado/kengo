@@ -3,7 +3,6 @@ import {
   computed,
   inject,
   signal,
-  ViewEncapsulation,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
@@ -42,9 +41,11 @@ interface DirectusPage<T> {
     MatProgressBarModule,
     RouterLink,
   ],
-  encapsulation: ViewEncapsulation.None,
   templateUrl: './pacientes.component.html',
   styleUrl: './pacientes.component.css',
+  host: {
+    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+  },
 })
 export class PacientesComponent {
   private appService = inject(AppService);
@@ -186,6 +187,10 @@ export class PacientesComponent {
     this.planesService.clearFilters();
     this.planesService.setFiltroPaciente(p.id);
     this.router.navigate(['/planes']);
+  }
+
+  verDetalle(p: Usuario) {
+    this.router.navigate(['/mis-pacientes', p.id]);
   }
 
   getClinicaNombre(p: Usuario): string | null {

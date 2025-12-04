@@ -5,8 +5,8 @@
 >
   <div
     class="relative m-auto flex w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter md:pr-3 md:pl-5"
-    [class.h-16]="isMovil"
-    [class.h-full]="!isMovil"
+    [class.h-16]="isMovil()"
+    [class.h-full]="!isMovil()"
   >
     <!-- Logo (solo desktop) -->
     <a routerLink="/inicio" class="hidden md:block">
@@ -14,7 +14,7 @@
     </a>
 
     <!-- Navegación -->
-    <nav class="nav-container" [class.nav-mobile]="isMovil">
+    <nav class="nav-container" [class.nav-mobile]="isMovil()">
       <!-- INICIO -->
       <a
         routerLink="/inicio"
@@ -40,14 +40,14 @@
         <span class="nav-label">Ejercicios</span>
       </a>
 
-      <!-- MI PLAN -->
+      <!-- ACTIVIDAD DIARIA -->
       <a
-        routerLink="/mi-plan"
+        routerLink="/actividad-diaria"
         routerLinkActive="active"
         class="nav-item"
       >
         <span class="material-symbols-outlined nav-icon">play_circle</span>
-        <span class="nav-label">Mi plan</span>
+        <span class="nav-label">Actividad</span>
       </a>
 
       <!-- PACIENTES (solo fisio) -->
@@ -73,7 +73,7 @@
       </a>
 
       <!-- Avatar (solo móvil dentro del nav) -->
-      @if (isMovil) {
+      @if (isMovil()) {
         <button
           type="button"
           [matMenuTriggerFor]="avatarMenuMobile"
@@ -119,7 +119,7 @@
     </nav>
 
     <!-- Avatar (solo desktop) -->
-    @if (!isMovil) {
+    @if (!isMovil()) {
       <button
         type="button"
         [matMenuTriggerFor]="avatarMenuDesktop"

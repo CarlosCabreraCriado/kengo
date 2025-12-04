@@ -56,6 +56,9 @@ import { environment as env } from '../../environments/environment';
   ],
   templateUrl: './plan-builder.component.html',
   styleUrl: './plan-builder.component.css',
+  host: {
+    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+  },
 })
 export class PlanBuilderComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);

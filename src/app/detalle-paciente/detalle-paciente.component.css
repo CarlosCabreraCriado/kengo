@@ -1,0 +1,46 @@
+/* Estilos para el acordeon */
+.detalle-accordion .mat-expansion-panel {
+  box-shadow: none !important;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.detalle-accordion .mat-expansion-panel-header {
+  padding: 0 16px;
+  height: 56px;
+  max-width: 100%;
+}
+
+.detalle-accordion .mat-expansion-panel-body {
+  padding: 0 16px 16px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Evitar overflow en el header del panel */
+:host ::ng-deep .mat-expansion-panel-header-title,
+:host ::ng-deep .mat-expansion-panel-header-description {
+  overflow: hidden;
+}
+
+/* Progress bar personalizada */
+.detalle-accordion mat-progress-bar {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Ajustes responsive */
+@media (max-width: 640px) {
+  .detalle-accordion .mat-expansion-panel-header {
+    padding: 0 12px;
+    height: 48px;
+  }
+
+  .detalle-accordion .mat-expansion-panel-body {
+    padding: 0 12px 12px;
+  }
+
+  :host ::ng-deep .mat-expansion-panel-header-title {
+    font-size: 0.875rem;
+  }
+}

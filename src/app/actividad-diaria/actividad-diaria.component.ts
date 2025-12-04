@@ -56,6 +56,9 @@ interface DiaProximoConEjercicios {
   ],
   templateUrl: './actividad-diaria.component.html',
   styleUrl: './actividad-diaria.component.scss',
+  host: {
+    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+  },
 })
 export class ActividadDiariaComponent implements OnInit {
   private appService = inject(AppService);

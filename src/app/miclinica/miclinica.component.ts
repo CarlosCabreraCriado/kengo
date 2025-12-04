@@ -41,6 +41,9 @@ import { Usuario, Clinica, ID } from '../../types/global';
     MatDividerModule,
   ],
   templateUrl: './miclinica.component.html',
+  host: {
+    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+  },
 })
 export class MiClinicaComponent {
   private http = inject(HttpClient);

@@ -35,11 +35,11 @@ export class NavegacionComponent implements OnInit {
   private router = inject(Router);
   public appService = inject(AppService);
 
-  public isMovil = false;
+  public isMovil = signal(false);
   public isInicio = signal(false);
 
   // Mostrar navbar: siempre en desktop, solo en /inicio en móvil
-  public showNavbar = computed(() => !this.isMovil || this.isInicio());
+  public showNavbar = computed(() => !this.isMovil() || this.isInicio());
 
   public avatarUrl = computed(() => {
     const id_avatar = this.appService.usuario()?.avatar;
@@ -59,7 +59,7 @@ export class NavegacionComponent implements OnInit {
     this.breakpointObserver
       .observe(['(max-width: 767.98px)'])
       .subscribe((result) => {
-        this.isMovil = result.matches;
+        this.isMovil.set(result.matches);
       });
 
     // Detectar ruta actual
