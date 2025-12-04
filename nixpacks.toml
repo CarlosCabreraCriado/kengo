@@ -10,6 +10,7 @@
 # setup phase where we add any needed packages
 [phases.setup]
     nixPkgs = ['...', 'jq'] # jq is needed to parse the outputPath from our angular.json file
+    nixpkgsArchive = "21808d22b1cda1898b71cf1a1beb524a97add2c4" # Versión exacta de 22.12
 
 # get the output path from our angular.json file
 [phases.output]
