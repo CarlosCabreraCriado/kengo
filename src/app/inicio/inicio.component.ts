@@ -14,7 +14,10 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { AppService } from '../services/app.service';
-import { ActividadHoyService, BadgeType } from '../services/actividad-hoy.service';
+import {
+  ActividadHoyService,
+  BadgeType,
+} from '../services/actividad-hoy.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -56,7 +59,7 @@ export class InicioComponent implements OnDestroy {
     this.breakpointObserver
       .observe(['(min-width: 1024px)'])
       .pipe(map((result) => result.matches)),
-    { initialValue: false }
+    { initialValue: false },
   );
 
   userRole = this.appService.rolUsuario;
@@ -82,7 +85,7 @@ export class InicioComponent implements OnDestroy {
       id: 'ejercicios',
       title: 'Ejercicios',
       subtitle: 'Catálogo de ejercicios',
-      image: 'assets/portadas/ejercicios.webp',
+      image: 'assets/portadas/catalogo-ejercicios.png',
       route: '/ejercicios',
       roles: ['fisio'],
     },
@@ -90,7 +93,7 @@ export class InicioComponent implements OnDestroy {
       id: 'pacientes',
       title: 'Mis Pacientes',
       subtitle: 'Gestiona tus pacientes',
-      image: 'assets/portadas/clientes.webp',
+      image: 'assets/portadas/pacientes.png',
       route: '/mis-pacientes',
       roles: ['fisio'],
     },
@@ -98,7 +101,7 @@ export class InicioComponent implements OnDestroy {
       id: 'clinica',
       title: 'Mi Clínica',
       subtitle: 'Administra tu centro',
-      image: 'assets/portadas/clinica.webp',
+      image: 'assets/portadas/clinica.png',
       route: '/mi-clinica',
       roles: ['fisio', 'paciente'],
     },
@@ -106,7 +109,7 @@ export class InicioComponent implements OnDestroy {
       id: 'rutinas',
       title: 'Rutinas',
       subtitle: 'Planes de tratamiento',
-      image: 'assets/portadas/rutina-horizontal.png',
+      image: 'assets/portadas/rutina.png',
       route: '/planes/nuevo',
       roles: ['fisio'],
     },
@@ -161,7 +164,9 @@ export class InicioComponent implements OnDestroy {
     return card.badgeType ? card.badgeType() : null;
   }
 
-  getCardProgreso(card: CardOption): { completados: number; total: number } | null {
+  getCardProgreso(
+    card: CardOption,
+  ): { completados: number; total: number } | null {
     return card.progreso ? card.progreso() : null;
   }
 
