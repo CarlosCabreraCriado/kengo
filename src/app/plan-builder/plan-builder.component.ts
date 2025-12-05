@@ -16,6 +16,9 @@ import {
   FormsModule,
 } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -67,7 +70,16 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private snackBar = inject(MatSnackBar);
   private fb = inject(FormBuilder);
   private appService = inject(AppService);
+  private breakpointObserver = inject(BreakpointObserver);
   svc = inject(PlanBuilderService);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   dias = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   diasNombres: Record<string, string> = {

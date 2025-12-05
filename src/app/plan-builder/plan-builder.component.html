@@ -6,73 +6,118 @@
   ></mat-progress-bar>
 }
 
-<section class="flex flex-col w-full h-full overflow-y-auto pb-24 md:pb-6">
+<section class="flex flex-col w-full h-full overflow-y-auto pb-24 lg:pb-6">
   <!-- Header sticky -->
   <header
-    class="sticky top-0 z-40 mx-auto mb-6 bg-gradient-to-b from-white/95 via-white/90 to-transparent px-4 pt-4 pb-2 backdrop-blur-md"
+    class="sticky top-0 z-40 mx-auto mb-6 px-4 pt-4 pb-2 w-full"
+    [class]="isDesktop() ? '' : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'"
   >
     <div class="mx-auto max-w-3xl">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
+      @if (isDesktop()) {
+        <!-- Header simplificado para desktop: solo menu de acciones centrado -->
+        <div class="flex items-center justify-center gap-3">
+          <!-- Menu de acciones -->
           <button
             mat-icon-button
-            class="!h-10 !w-10 shrink-0"
-            aria-label="Volver"
-            (click)="cancelar()"
+            [matMenuTriggerFor]="menuAcciones"
+            class="!h-12 !w-12 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm"
+            [disabled]="isSaving()"
           >
             <mat-icon class="material-symbols-outlined text-zinc-600"
-              >arrow_back</mat-icon
+              >more_vert</mat-icon
             >
           </button>
-          <div>
-            <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
-              {{ pageTitle() }}
-            </h1>
-            <p class="text-sm text-zinc-500">
-              {{ totalItems() }}
-              {{ totalItems() === 1 ? "ejercicio" : "ejercicios" }}
-            </p>
-          </div>
-        </div>
 
-        <!-- Menu de acciones -->
-        <button
-          mat-icon-button
-          [matMenuTriggerFor]="menuAcciones"
-          class="!h-10 !w-10 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm"
-          [disabled]="isSaving()"
-        >
-          <mat-icon class="material-symbols-outlined text-zinc-600"
-            >more_vert</mat-icon
-          >
-        </button>
-
-        <mat-menu #menuAcciones="matMenu" xPosition="before">
-          <button
-            mat-menu-item
-            (click)="cargarPlantilla()"
-            [disabled]="isLoading()"
-          >
-            <mat-icon class="material-symbols-outlined">folder_open</mat-icon>
-            <span>Cargar plantilla</span>
-          </button>
-          <button
-            mat-menu-item
-            (click)="guardarComoPlantilla()"
-            [disabled]="items().length === 0"
-          >
-            <mat-icon class="material-symbols-outlined">bookmark_add</mat-icon>
-            <span>Guardar como plantilla</span>
-          </button>
-          @if (!isEditMode()) {
-            <mat-divider></mat-divider>
-            <button mat-menu-item routerLink="/ejercicios">
-              <mat-icon class="material-symbols-outlined">add</mat-icon>
-              <span>Agregar ejercicios</span>
+          <mat-menu #menuAcciones="matMenu" xPosition="before">
+            <button
+              mat-menu-item
+              (click)="cargarPlantilla()"
+              [disabled]="isLoading()"
+            >
+              <mat-icon class="material-symbols-outlined">folder_open</mat-icon>
+              <span>Cargar plantilla</span>
             </button>
-          }
-        </mat-menu>
-      </div>
+            <button
+              mat-menu-item
+              (click)="guardarComoPlantilla()"
+              [disabled]="items().length === 0"
+            >
+              <mat-icon class="material-symbols-outlined">bookmark_add</mat-icon>
+              <span>Guardar como plantilla</span>
+            </button>
+            @if (!isEditMode()) {
+              <mat-divider></mat-divider>
+              <button mat-menu-item routerLink="/ejercicios">
+                <mat-icon class="material-symbols-outlined">add</mat-icon>
+                <span>Agregar ejercicios</span>
+              </button>
+            }
+          </mat-menu>
+        </div>
+      } @else {
+        <!-- Header completo para móvil -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button
+              mat-icon-button
+              class="!h-10 !w-10 shrink-0"
+              aria-label="Volver"
+              (click)="cancelar()"
+            >
+              <mat-icon class="material-symbols-outlined text-zinc-600"
+                >arrow_back</mat-icon
+              >
+            </button>
+            <div>
+              <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
+                {{ pageTitle() }}
+              </h1>
+              <p class="text-sm text-zinc-500">
+                {{ totalItems() }}
+                {{ totalItems() === 1 ? "ejercicio" : "ejercicios" }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Menu de acciones -->
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="menuAccionesMobile"
+            class="!h-10 !w-10 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm"
+            [disabled]="isSaving()"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >more_vert</mat-icon
+            >
+          </button>
+
+          <mat-menu #menuAccionesMobile="matMenu" xPosition="before">
+            <button
+              mat-menu-item
+              (click)="cargarPlantilla()"
+              [disabled]="isLoading()"
+            >
+              <mat-icon class="material-symbols-outlined">folder_open</mat-icon>
+              <span>Cargar plantilla</span>
+            </button>
+            <button
+              mat-menu-item
+              (click)="guardarComoPlantilla()"
+              [disabled]="items().length === 0"
+            >
+              <mat-icon class="material-symbols-outlined">bookmark_add</mat-icon>
+              <span>Guardar como plantilla</span>
+            </button>
+            @if (!isEditMode()) {
+              <mat-divider></mat-divider>
+              <button mat-menu-item routerLink="/ejercicios">
+                <mat-icon class="material-symbols-outlined">add</mat-icon>
+                <span>Agregar ejercicios</span>
+              </button>
+            }
+          </mat-menu>
+        </div>
+      }
     </div>
   </header>
 
