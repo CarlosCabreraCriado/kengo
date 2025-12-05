@@ -1,7 +1,7 @@
 <section class="inicio-container">
   <!-- Header con logo -->
   <header class="inicio-header">
-    <img src="assets/logo-texto.svg" alt="Kengo" class="logo" />
+    <img src="assets/logo-kengo-horizontal.svg" alt="Kengo" class="logo" />
 
     <!-- Botón logout -->
     <button
@@ -31,10 +31,32 @@
               loading="lazy"
             />
             <div class="card-overlay"></div>
+
+            <!-- Badge dinámico -->
+            @if (getCardBadgeType(card); as badgeType) {
+              <div class="card-badge" [attr.data-type]="badgeType">
+                @switch (badgeType) {
+                  @case ("loading") {
+                    <div class="badge-spinner"></div>
+                  }
+                  @case ("pending") {
+                    <span class="badge-number">{{
+                      getCardBadgeCount(card)
+                    }}</span>
+                  }
+                  @case ("completed") {
+                    <mat-icon class="badge-icon">check_circle</mat-icon>
+                  }
+                  @case ("rest") {
+                    <mat-icon class="badge-icon">self_improvement</mat-icon>
+                  }
+                }
+              </div>
+            }
           </div>
           <div class="card-content">
             <h2 class="card-title">{{ card.title }}</h2>
-            <p class="card-subtitle">{{ card.subtitle }}</p>
+            <p class="card-subtitle">{{ getCardSubtitle(card) }}</p>
           </div>
         </article>
       }

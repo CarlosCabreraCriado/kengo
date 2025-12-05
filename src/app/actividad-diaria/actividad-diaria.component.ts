@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { AppService } from '../services/app.service';
 import { PlanesService } from '../services/planes.service';
 import { RegistroSesionService } from '../services/registro-sesion.service';
+import { ActividadHoyService } from '../services/actividad-hoy.service';
 
 // Angular Material
 import { MatIconModule } from '@angular/material/icon';
@@ -64,6 +65,7 @@ export class ActividadDiariaComponent implements OnInit {
   private appService = inject(AppService);
   private planesService = inject(PlanesService);
   private registroService = inject(RegistroSesionService);
+  private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
 
   // Mapeo de días de la semana
@@ -92,15 +94,15 @@ export class ActividadDiariaComponent implements OnInit {
     'diciembre',
   ];
 
-  // Estado
-  readonly cargando = signal<boolean>(true);
+  // Estado - reutilizar del servicio compartido
+  readonly cargando = this.actividadHoyService.cargando;
   readonly error = signal<string | null>(null);
-  readonly planesActivos = signal<PlanCompleto[]>([]); // Planes válidos para HOY
-  readonly planesActivosYFuturos = signal<PlanCompleto[]>([]); // Todos los planes activos (incluyendo futuros)
-  readonly registrosHoy = signal<RegistroEjercicio[]>([]);
+  readonly planesActivos = this.actividadHoyService.planesActivos;
+  readonly planesActivosYFuturos = signal<PlanCompleto[]>([]); // Específico de este componente
+  readonly registrosHoy = this.actividadHoyService.registrosHoy;
   readonly diaExpandido = signal<string | null>(null); // ISO string de la fecha expandida
 
-  // Computed
+  // Computed - reutilizar del servicio compartido
   readonly usuarioId = computed(() => this.appService.usuario()?.id);
   readonly fechaHoy = computed(() => {
     const hoy = new Date();
@@ -112,68 +114,11 @@ export class ActividadDiariaComponent implements OnInit {
 
   readonly diaHoy = computed(() => this.DIAS_SEMANA[new Date().getDay()]);
 
-  readonly actividadHoy = computed<ActividadPlanDia[]>(() => {
-    const planes = this.planesActivos();
-    const registros = this.registrosHoy();
-    const hoy = this.diaHoy();
-
-    return planes.map((plan) => {
-      // Filtrar ejercicios para hoy
-      const ejerciciosHoy = plan.items.filter((item) => {
-        if (!item.dias_semana || item.dias_semana.length === 0) {
-          return true; // Sin días configurados = todos los días
-        }
-        return item.dias_semana.includes(hoy);
-      });
-
-      // Marcar estado de completado
-      const ejerciciosConEstado: EjercicioPlanConEstado[] = ejerciciosHoy.map(
-        (ej) => {
-          const registrosEjercicio = registros.filter(
-            (r) => r.plan_item === ej.id
-          );
-          const vecesCompletadas = registrosEjercicio.length;
-          const vecesRequeridas = ej.veces_dia ?? 1;
-
-          return {
-            ...ej,
-            completadoHoy: vecesCompletadas >= vecesRequeridas,
-            registroId: registrosEjercicio[0]?.id_registro,
-            vecesCompletadasHoy: vecesCompletadas,
-          };
-        }
-      );
-
-      const completados = ejerciciosConEstado.filter(
-        (e) => e.completadoHoy
-      ).length;
-      const total = ejerciciosConEstado.length;
-
-      return {
-        plan,
-        ejerciciosHoy: ejerciciosConEstado,
-        totalEjercicios: total,
-        completados,
-        progreso: total > 0 ? Math.round((completados / total) * 100) : 0,
-      };
-    });
-  });
-
-  readonly hayActividadHoy = computed(() =>
-    this.actividadHoy().some((a) => a.ejerciciosHoy.length > 0)
-  );
-
-  readonly totalPendientes = computed(() =>
-    this.actividadHoy().reduce(
-      (acc, a) =>
-        acc + a.ejerciciosHoy.filter((e) => !e.completadoHoy).length,
-      0
-    )
-  );
-
-  readonly todoCompletado = computed(
-    () => this.hayActividadHoy() && this.totalPendientes() === 0
-  );
+  // Reutilizar computed del servicio
+  readonly actividadHoy = this.actividadHoyService.actividadHoy;
+  readonly hayActividadHoy = this.actividadHoyService.hayActividadHoy;
+  readonly totalPendientes = this.actividadHoyService.totalPendientes;
+  readonly todoCompletado = this.actividadHoyService.todoCompletado;
 
   readonly proximosDias = computed<DiaProximoConEjercicios[]>(() => {
     // Usar todos los planes activos incluyendo futuros
@@ -259,29 +204,26 @@ export class ActividadDiariaComponent implements OnInit {
     const userId = this.usuarioId();
     if (!userId) {
       this.error.set('No se pudo identificar al usuario');
-      this.cargando.set(false);
       return;
     }
 
-    this.cargando.set(true);
     this.error.set(null);
 
     try {
-      const [planesHoy, planesFuturos, registros] = await Promise.all([
-        this.planesService.getPlanesActivosPaciente(userId),
-        this.planesService.getPlanesActivosYFuturosPaciente(userId),
-        this.registroService.obtenerRegistrosHoy(userId),
+      // Cargar datos compartidos (hoy) y planes futuros en paralelo
+      await Promise.all([
+        this.actividadHoyService.cargarDatos(),
+        this.cargarPlanesFuturos(userId),
       ]);
-
-      this.planesActivos.set(planesHoy);
-      this.planesActivosYFuturos.set(planesFuturos);
-      this.registrosHoy.set(registros);
     } catch (err) {
       console.error('Error al cargar datos:', err);
       this.error.set('Error al cargar la actividad. Intenta de nuevo.');
-    } finally {
-      this.cargando.set(false);
     }
+  }
+
+  private async cargarPlanesFuturos(userId: string): Promise<void> {
+    const planesFuturos = await this.planesService.getPlanesActivosYFuturosPaciente(userId);
+    this.planesActivosYFuturos.set(planesFuturos);
   }
 
   irAPlan(planId: number): void {

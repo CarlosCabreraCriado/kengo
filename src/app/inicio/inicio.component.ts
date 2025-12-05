@@ -7,9 +7,12 @@ import {
   viewChild,
   afterNextRender,
   OnDestroy,
+  Signal,
+  effect,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppService } from '../services/app.service';
+import { ActividadHoyService, BadgeType } from '../services/actividad-hoy.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -22,6 +25,10 @@ interface CardOption {
   image: string;
   route: string;
   roles: ('fisio' | 'paciente')[];
+  // Propiedades dinámicas opcionales
+  dynamicSubtitle?: Signal<string>;
+  badgeCount?: Signal<number>;
+  badgeType?: Signal<BadgeType>;
 }
 
 @Component({
@@ -33,6 +40,7 @@ interface CardOption {
 })
 export class InicioComponent implements OnDestroy {
   private appService = inject(AppService);
+  private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
 
@@ -48,6 +56,10 @@ export class InicioComponent implements OnDestroy {
       image: 'assets/portadas/camilla.PNG',
       route: '/actividad-diaria',
       roles: ['fisio', 'paciente'],
+      // Propiedades dinámicas
+      dynamicSubtitle: this.actividadHoyService.subtituloDinamico,
+      badgeCount: this.actividadHoyService.badgeCount,
+      badgeType: this.actividadHoyService.badgeType,
     },
     {
       id: 'ejercicios',
@@ -107,11 +119,29 @@ export class InicioComponent implements OnDestroy {
   currentIndex = signal(0);
 
   private scrollTimeout: ReturnType<typeof setTimeout> | null = null;
+  private scrollListenerConfigured = false;
 
   constructor() {
-    afterNextRender(() => {
-      this.setupScrollListener();
+    // Effect que configura el scroll listener cuando el carousel está disponible
+    effect(() => {
+      const carouselEl = this.carouselRef();
+      if (carouselEl && !this.scrollListenerConfigured) {
+        this.setupScrollListener();
+      }
     });
+  }
+
+  // Métodos helper para el template
+  getCardSubtitle(card: CardOption): string {
+    return card.dynamicSubtitle ? card.dynamicSubtitle() : card.subtitle;
+  }
+
+  getCardBadgeCount(card: CardOption): number {
+    return card.badgeCount ? card.badgeCount() : 0;
+  }
+
+  getCardBadgeType(card: CardOption): BadgeType {
+    return card.badgeType ? card.badgeType() : null;
   }
 
   ngOnDestroy(): void {
@@ -122,7 +152,9 @@ export class InicioComponent implements OnDestroy {
 
   private setupScrollListener(): void {
     const carousel = this.carouselRef()?.nativeElement;
-    if (!carousel) return;
+    if (!carousel || this.scrollListenerConfigured) return;
+
+    this.scrollListenerConfigured = true;
 
     carousel.addEventListener('scroll', () => {
       if (this.scrollTimeout) {
