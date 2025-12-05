@@ -9,6 +9,9 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { environment as env } from '../../environments/environment';
 
 // Angular Material
@@ -91,6 +94,15 @@ export class DetallePacienteComponent implements OnInit {
   private appService = inject(AppService);
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
+  private breakpointObserver = inject(BreakpointObserver);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   // Estado
   readonly paciente = signal<Usuario | null>(null);

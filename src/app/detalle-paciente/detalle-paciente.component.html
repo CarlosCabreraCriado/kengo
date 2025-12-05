@@ -1,22 +1,24 @@
-<section class="flex flex-col w-full h-full overflow-y-auto overflow-x-hidden pb-24 md:pb-6">
-  <!-- Header sticky -->
-  <header
-    class="sticky top-0 z-40 w-full bg-gradient-to-b from-white/95 via-white/90 to-transparent px-4 pt-4 pb-2 backdrop-blur-md"
-  >
-    <div class="mx-auto flex max-w-4xl items-center gap-3">
-      <button
-        mat-icon-button
-        class="!h-10 !w-10 shrink-0"
-        aria-label="Volver a pacientes"
-        (click)="volver()"
-      >
-        <mat-icon class="material-symbols-outlined text-zinc-600">arrow_back</mat-icon>
-      </button>
-      <div class="min-w-0 flex-1">
-        <h1 class="truncate text-lg font-bold text-zinc-800">Detalle del paciente</h1>
+<section class="flex flex-col w-full h-full overflow-y-auto overflow-x-hidden pb-24 lg:pb-6">
+  <!-- Header sticky (solo móvil) -->
+  @if (!isDesktop()) {
+    <header
+      class="sticky top-0 z-40 w-full bg-gradient-to-b from-white/95 via-white/90 to-transparent px-4 pt-4 pb-2 backdrop-blur-md"
+    >
+      <div class="mx-auto flex max-w-4xl items-center gap-3">
+        <button
+          mat-icon-button
+          class="!h-10 !w-10 shrink-0"
+          aria-label="Volver a pacientes"
+          (click)="volver()"
+        >
+          <mat-icon class="material-symbols-outlined text-zinc-600">arrow_back</mat-icon>
+        </button>
+        <div class="min-w-0 flex-1">
+          <h1 class="truncate text-lg font-bold text-zinc-800">Detalle del paciente</h1>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
+  }
 
   <!-- Contenido principal -->
   <div class="mx-auto max-w-4xl px-4">
