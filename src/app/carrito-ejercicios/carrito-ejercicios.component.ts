@@ -126,6 +126,13 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     this.svc.removeEjercicio(ejercicioId);
   }
 
+  eliminarAsignacion() {
+    localStorage.removeItem('carrito:last_paciente_id');
+    localStorage.removeItem('carrito:last_fisio_id');
+    this.svc.resetAll();
+    this.snack.open('Asignación eliminada', 'OK', { duration: 2000 });
+  }
+
   async cambiarPaciente() {
     const { SelectorPacienteComponent } =
       await import('../selector-paciente/selector-paciente.component');

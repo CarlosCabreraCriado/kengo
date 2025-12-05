@@ -61,6 +61,15 @@
               {{ total() === 1 ? "ejercicio" : "ejercicios" }} seleccionados
             </p>
           </div>
+          <button
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-all hover:bg-red-50 hover:text-red-500"
+            aria-label="Eliminar asignación"
+            (click)="eliminarAsignacion()"
+          >
+            <mat-icon class="material-symbols-outlined !text-xl"
+              >person_remove</mat-icon
+            >
+          </button>
         </div>
       </div>
 
