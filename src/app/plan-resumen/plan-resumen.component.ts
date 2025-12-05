@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,6 +26,7 @@ import { environment as env } from '../../environments/environment';
   },
 })
 export class PlanResumenComponent implements OnInit {
+  private location = inject(Location);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private planesService = inject(PlanesService);
@@ -93,6 +95,10 @@ export class PlanResumenComponent implements OnInit {
 
   irAInicio() {
     this.router.navigate(['/inicio']);
+  }
+
+  volver() {
+    this.location.back();
   }
 
   editarPlan() {

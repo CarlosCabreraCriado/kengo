@@ -89,7 +89,9 @@
   position: relative;
   border-radius: 1.5rem;
   overflow: hidden;
-  height: calc(100% - 3rem); // Dejar espacio para la sombra (1.5rem arriba + 1.5rem abajo)
+  height: calc(
+    100% - 3rem
+  ); // Dejar espacio para la sombra (1.5rem arriba + 1.5rem abajo)
   max-height: calc(100% - 3rem);
   cursor: pointer;
   transition:
@@ -127,11 +129,19 @@
 .card-overlay {
   position: absolute;
   inset: 0;
+  /*
   background: linear-gradient(
     180deg,
     transparent 50%,
     rgba(0, 0, 0, 0.6) 75%,
     rgba(0, 0, 0, 0.9) 100%
+  );
+    */
+  background: linear-gradient(
+    180deg,
+    transparent 50%,
+    #f9b87e 75%,
+    #e75c3e 100%
   );
 }
 
@@ -147,7 +157,7 @@
 .card-title {
   font-size: 1.75rem;
   font-weight: 500;
-  color: #ffffff;
+  color: #ad0000;
   margin: 0 0 0.5rem;
 }
 
@@ -155,6 +165,7 @@
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
+  color: white;
 }
 
 // Pagination dots

@@ -7,6 +7,7 @@ import {
   computed,
   ViewChild,
 } from '@angular/core';
+import { Location } from '@angular/common';
 import { MatDateRangePicker } from '@angular/material/datepicker';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -64,6 +65,7 @@ import { environment as env } from '../../environments/environment';
   },
 })
 export class PlanBuilderComponent implements OnInit, OnDestroy {
+  private location = inject(Location);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dialog = inject(MatDialog);
@@ -424,12 +426,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   }
 
   cancelar() {
-    if (this.isEditMode()) {
-      this.router.navigate(['/planes']);
-    } else {
-      this.router.navigate(['/ejercicios']);
-      this.svc.openDrawer();
-    }
+    this.location.back();
   }
 
   // ========= Helpers =========

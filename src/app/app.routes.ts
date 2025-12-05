@@ -17,11 +17,10 @@ import { MiClinicaComponent } from './miclinica/miclinica.component';
 import { FisiosComponent } from './fisios/fisios.component';
 import { CategoriasComponent } from './categorias/categorias.component';
 
-// Planes y Rutinas
+// Planes
 import { PlanBuilderComponent } from './plan-builder/plan-builder.component';
 import { PlanResumenComponent } from './plan-resumen/plan-resumen.component';
 import { PlanesComponent } from './planes/planes.component';
-import { RutinasComponent } from './rutinas/rutinas.component';
 
 // Perfil
 import { PerfilComponent } from './perfil/perfil.component';
@@ -44,14 +43,11 @@ export const routes: Routes = [
   { path: 'mis-pacientes/:id', component: DetallePacienteComponent, canActivate: [AuthGuard] },
   { path: 'mi-clinica', component: MiClinicaComponent, canActivate: [AuthGuard] },
 
-  // Planes
+  // Planes (incluye mis-planes, planes-pacientes y rutinas)
   { path: 'planes', component: PlanesComponent, canActivate: [AuthGuard] },
   { path: 'planes/nuevo', component: PlanBuilderComponent, canActivate: [AuthGuard] },
   { path: 'planes/:id/editar', component: PlanBuilderComponent, canActivate: [AuthGuard] },
   { path: 'planes/:id/resumen', component: PlanResumenComponent, canActivate: [AuthGuard] },
-
-  // Rutinas (plantillas)
-  { path: 'rutinas', component: RutinasComponent, canActivate: [AuthGuard] },
 
   // Actividad diaria (pacientes y fisios)
   {

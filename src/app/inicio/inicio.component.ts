@@ -110,7 +110,7 @@ export class InicioComponent implements OnDestroy {
       title: 'Rutinas',
       subtitle: 'Planes de tratamiento',
       image: 'assets/portadas/rutina.png',
-      route: '/planes/nuevo',
+      route: '/planes',
       roles: ['fisio'],
     },
     {

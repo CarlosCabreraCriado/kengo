@@ -1,50 +1,188 @@
-<section class="flex flex-col w-full h-full overflow-y-auto pb-24 lg:pb-6">
-  <!-- Header sticky -->
+<section class="flex h-full w-full flex-col overflow-hidden">
+  <!-- Header con tabs -->
   <header
-    class="sticky top-0 z-40 mx-auto mb-6 px-4 pt-4 pb-2 w-full"
-    [class]="isDesktop() ? '' : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'"
+    class="sticky top-0 z-40 w-full pt-4 pb-3"
+    [class]="
+      isDesktop()
+        ? ''
+        : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'
+    "
   >
-    <div class="mx-auto max-w-7xl">
-      @if (isDesktop()) {
-        <!-- Header simplificado para desktop: búsqueda + nuevo plan + filtros centrados -->
-        <div class="flex items-center justify-center gap-3">
-          <!-- Barra de búsqueda -->
-          <div class="relative w-full max-w-md">
+    <div class="mx-auto max-w-7xl px-4">
+      <!-- Titulo y boton volver (mobile) -->
+      @if (!isDesktop()) {
+        <div class="mb-4 flex items-center gap-2">
+          <button
+            mat-icon-button
+            class="!h-10 !w-10 shrink-0"
+            aria-label="Volver al inicio"
+            routerLink="/inicio"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >arrow_back</mat-icon
+            >
+          </button>
+          <h1 class="text-xl font-bold text-zinc-800">Planes y rutinas</h1>
+        </div>
+      }
+
+      <!-- Tabs estilo pill -->
+      <nav class="tabs-container">
+        <div class="tabs-wrapper">
+          <!-- Tab: Mis Planes -->
+          <button
+            type="button"
+            class="tab-pill"
+            [class.tab-pill-active]="tabActiva() === 'mis-planes'"
+            (click)="onTabChange(0)"
+          >
+            <mat-icon class="material-symbols-outlined tab-icon"
+              >assignment_ind</mat-icon
+            >
+            <span class="tab-label">Mis Planes</span>
+          </button>
+
+          <!-- Tab: Pacientes (solo fisios) -->
+          @if (isFisio()) {
+            <button
+              type="button"
+              class="tab-pill"
+              [class.tab-pill-active]="tabActiva() === 'planes-pacientes'"
+              (click)="onTabChange(1)"
+            >
+              <mat-icon class="material-symbols-outlined tab-icon"
+                >groups</mat-icon
+              >
+              <span class="tab-label">Pacientes</span>
+            </button>
+          }
+
+          <!-- Tab: Rutinas -->
+          <button
+            type="button"
+            class="tab-pill"
+            [class.tab-pill-active]="tabActiva() === 'rutinas'"
+            (click)="onTabChange(isFisio() ? 2 : 1)"
+          >
+            <mat-icon class="material-symbols-outlined tab-icon"
+              >bookmarks</mat-icon
+            >
+            <span class="tab-label">Rutinas</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Contenido principal con scroll -->
+  <div class="flex-1 overflow-y-auto pb-24 lg:pb-6">
+    <div class="mx-auto max-w-7xl px-4 py-4">
+      <!-- TAB: Mis Planes -->
+      @if (tabActiva() === "mis-planes") {
+        @if (isLoadingMisPlanes()) {
+          <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          </div>
+        } @else if (misPlanes().length === 0) {
+          <div class="tarjeta-kengo rounded-2xl p-8 text-center">
+            <mat-icon
+              class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+              >assignment</mat-icon
+            >
+            <p class="text-lg text-zinc-500">No tienes planes asignados</p>
+            <p class="mt-1 text-sm text-zinc-400">
+              Tu fisioterapeuta te asignara planes de ejercicios
+            </p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @for (plan of misPlanes(); track plan.id_plan) {
+              <article
+                class="tarjeta-kengo group relative cursor-pointer overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
+                (click)="verResumen(plan)"
+              >
+                <div class="flex items-start gap-4">
+                  <div
+                    class="bg-primary/10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
+                  >
+                    <mat-icon class="material-symbols-outlined text-primary"
+                      >assignment</mat-icon
+                    >
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-start justify-between gap-2">
+                      <h3
+                        class="truncate text-base font-semibold text-zinc-800"
+                      >
+                        {{ plan.titulo }}
+                      </h3>
+                      <span
+                        class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                        [ngClass]="estadoColors[plan.estado]"
+                      >
+                        {{ estadoLabels[plan.estado] }}
+                      </span>
+                    </div>
+                    <p
+                      class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                    >
+                      <mat-icon class="material-symbols-outlined !text-base"
+                        >medical_services</mat-icon
+                      >
+                      {{ getFisioNombre(plan) }}
+                    </p>
+                    @if (plan.fecha_inicio || plan.fecha_fin) {
+                      <p
+                        class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                      >
+                        <mat-icon class="material-symbols-outlined !text-base"
+                          >calendar_today</mat-icon
+                        >
+                        {{ formatDate(plan.fecha_inicio) }}
+                        @if (plan.fecha_fin) {
+                          - {{ formatDate(plan.fecha_fin) }}
+                        }
+                      </p>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      }
+
+      <!-- TAB: Planes de Pacientes (Solo fisios) -->
+      @if (tabActiva() === "planes-pacientes" && isFisio()) {
+        <!-- Filtros -->
+        <div class="mb-4 flex flex-row flex-wrap items-center gap-3">
+          <div class="relative min-w-0 flex-1">
             <mat-icon
               class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
-            >search</mat-icon>
+              >search</mat-icon
+            >
             <input
-              #buscadorDesktop
+              #buscador
               type="text"
               class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
-              placeholder="Buscar por título o paciente..."
+              placeholder="Buscar por titulo o paciente..."
               [value]="busqueda"
-              (input)="onBusquedaChange(buscadorDesktop.value)"
+              (input)="onBusquedaChange(buscador.value)"
             />
             @if (busqueda) {
               <button
                 type="button"
                 class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-                aria-label="Borrar búsqueda"
-                (click)="buscadorDesktop.value = ''; onBusquedaChange('')"
+                aria-label="Borrar busqueda"
+                (click)="buscador.value = ''; onBusquedaChange('')"
               >
-                <mat-icon class="material-symbols-outlined !text-xl">close</mat-icon>
+                <mat-icon class="material-symbols-outlined !text-xl"
+                  >close</mat-icon
+                >
               </button>
             }
           </div>
 
-          <!-- Botón nuevo plan -->
-          <button
-            mat-flat-button
-            color="primary"
-            class="!h-12 shrink-0"
-            (click)="crearNuevoPlan()"
-          >
-            <mat-icon class="material-symbols-outlined">add</mat-icon>
-            Nuevo plan
-          </button>
-
-          <!-- Botón filtro de estado -->
           <button
             mat-icon-button
             [matMenuTriggerFor]="menuEstado"
@@ -52,17 +190,30 @@
             [class.!border-primary]="filtroEstado !== 'todos'"
             aria-label="Filtrar por estado"
           >
-            <mat-icon class="material-symbols-outlined text-zinc-600">filter_alt</mat-icon>
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >filter_alt</mat-icon
+            >
           </button>
 
-          <!-- Botón recargar -->
           <button
             mat-icon-button
             class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
             aria-label="Recargar datos"
             (click)="reload()"
           >
-            <mat-icon class="material-symbols-outlined text-zinc-600">refresh</mat-icon>
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >refresh</mat-icon
+            >
+          </button>
+
+          <button
+            mat-flat-button
+            color="primary"
+            class="!h-12 w-full shrink-0 sm:w-auto"
+            (click)="crearNuevoPlan()"
+          >
+            <mat-icon class="material-symbols-outlined">add</mat-icon>
+            Nuevo plan
           </button>
 
           <mat-menu #menuEstado="matMenu" xPosition="before" class="mt-2">
@@ -71,266 +222,452 @@
               <span>Todos</span>
             </button>
             <button mat-menu-item (click)="onFiltroEstadoChange('activo')">
-              <mat-icon class="material-symbols-outlined text-green-600">play_arrow</mat-icon>
+              <mat-icon class="material-symbols-outlined text-green-600"
+                >play_arrow</mat-icon
+              >
               <span>Activos</span>
             </button>
             <button mat-menu-item (click)="onFiltroEstadoChange('completado')">
-              <mat-icon class="material-symbols-outlined text-blue-600">check_circle</mat-icon>
+              <mat-icon class="material-symbols-outlined text-blue-600"
+                >check_circle</mat-icon
+              >
               <span>Completados</span>
             </button>
             <button mat-menu-item (click)="onFiltroEstadoChange('borrador')">
-              <mat-icon class="material-symbols-outlined text-zinc-500">edit_note</mat-icon>
+              <mat-icon class="material-symbols-outlined text-zinc-500"
+                >edit_note</mat-icon
+              >
               <span>Borradores</span>
             </button>
             <button mat-menu-item (click)="onFiltroEstadoChange('cancelado')">
-              <mat-icon class="material-symbols-outlined text-red-600">cancel</mat-icon>
+              <mat-icon class="material-symbols-outlined text-red-600"
+                >cancel</mat-icon
+              >
               <span>Cancelados</span>
             </button>
           </mat-menu>
         </div>
-      } @else {
-        <!-- Header completo para móvil -->
-        <!-- Título y acciones -->
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <button
-              mat-icon-button
-              class="!h-10 !w-10 shrink-0"
-              aria-label="Volver al inicio"
-              routerLink="/inicio"
-            >
-              <mat-icon class="material-symbols-outlined text-zinc-600">arrow_back</mat-icon>
-            </button>
-            <div>
-              <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
-                Mis Planes
-              </h1>
-              @if (total() > 0) {
-                <p class="text-sm text-zinc-500">
-                  {{ total() }} {{ total() === 1 ? 'plan' : 'planes' }}
-                </p>
-              }
-            </div>
+
+        <!-- Lista de planes -->
+        @if (isLoadingPlanes()) {
+          <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
           </div>
-
-          <!-- Botón nuevo plan -->
-          <button
-            mat-flat-button
-            color="primary"
-            class="hidden sm:flex"
-            (click)="crearNuevoPlan()"
-          >
-            <mat-icon class="material-symbols-outlined">add</mat-icon>
-            Nuevo plan
-          </button>
-        </div>
-
-        <!-- Barra de búsqueda -->
-        <div class="relative flex items-center gap-2">
-          <div class="relative flex-1">
+        } @else if (planes().length === 0) {
+          <div class="tarjeta-kengo rounded-2xl p-8 text-center">
             <mat-icon
-              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
-            >search</mat-icon>
-            <input
-              #buscador
-              type="text"
-              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
-              placeholder="Buscar por título o paciente..."
-              [value]="busqueda"
-              (input)="onBusquedaChange(buscador.value)"
-            />
-            @if (busqueda) {
-              <button
-                type="button"
-                class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-                aria-label="Borrar búsqueda"
-                (click)="buscador.value = ''; onBusquedaChange('')"
+              class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+              >assignment</mat-icon
+            >
+            <p class="text-lg text-zinc-500">No se encontraron planes</p>
+            <button
+              mat-flat-button
+              color="primary"
+              class="mt-4"
+              (click)="crearNuevoPlan()"
+            >
+              <mat-icon class="material-symbols-outlined">add</mat-icon>
+              Crear primer plan
+            </button>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @for (plan of planes(); track plan.id_plan) {
+              <article
+                class="tarjeta-kengo group relative overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
               >
-                <mat-icon class="material-symbols-outlined !text-xl">close</mat-icon>
-              </button>
+                <div class="flex items-start gap-4">
+                  <div class="shrink-0">
+                    @if (getPacienteAvatar(plan)) {
+                      <img
+                        [src]="avatarUrl(getPacienteAvatar(plan))"
+                        [alt]="getPacienteNombre(plan)"
+                        class="h-14 w-14 rounded-full object-cover shadow-sm ring-2 ring-white"
+                      />
+                    } @else {
+                      <div
+                        class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
+                      >
+                        <mat-icon
+                          class="material-symbols-outlined text-2xl !text-white"
+                          >person</mat-icon
+                        >
+                      </div>
+                    }
+                  </div>
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-start justify-between gap-2">
+                      <h3
+                        class="truncate text-base font-semibold text-zinc-800"
+                      >
+                        {{ plan.titulo }}
+                      </h3>
+                      <span
+                        class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                        [ngClass]="estadoColors[plan.estado]"
+                      >
+                        {{ estadoLabels[plan.estado] }}
+                      </span>
+                    </div>
+
+                    <p
+                      class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                    >
+                      <mat-icon class="material-symbols-outlined !text-base"
+                        >person</mat-icon
+                      >
+                      {{ getPacienteNombre(plan) }}
+                    </p>
+
+                    @if (plan.fecha_inicio || plan.fecha_fin) {
+                      <p
+                        class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                      >
+                        <mat-icon class="material-symbols-outlined !text-base"
+                          >calendar_today</mat-icon
+                        >
+                        {{ formatDate(plan.fecha_inicio) }}
+                        @if (plan.fecha_fin) {
+                          - {{ formatDate(plan.fecha_fin) }}
+                        }
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <div
+                  class="mt-4 flex items-center justify-end gap-1 border-t border-zinc-100 pt-3"
+                >
+                  <button
+                    mat-icon-button
+                    class="!h-10 !w-10"
+                    color="primary"
+                    aria-label="Ver resumen"
+                    (click)="verResumen(plan)"
+                  >
+                    <mat-icon class="material-symbols-outlined"
+                      >visibility</mat-icon
+                    >
+                  </button>
+
+                  <button
+                    mat-icon-button
+                    class="!h-10 !w-10"
+                    color="primary"
+                    aria-label="Editar plan"
+                    (click)="editarPlan(plan)"
+                  >
+                    <mat-icon class="material-symbols-outlined">edit</mat-icon>
+                  </button>
+
+                  <button
+                    mat-icon-button
+                    class="!h-10 !w-10"
+                    [matMenuTriggerFor]="menuEstadoPlan"
+                    aria-label="Cambiar estado"
+                  >
+                    <mat-icon class="material-symbols-outlined text-zinc-600"
+                      >more_vert</mat-icon
+                    >
+                  </button>
+
+                  <mat-menu #menuEstadoPlan="matMenu">
+                    @if (plan.estado !== "activo") {
+                      <button
+                        mat-menu-item
+                        (click)="cambiarEstado(plan, 'activo')"
+                      >
+                        <mat-icon
+                          class="material-symbols-outlined text-green-600"
+                          >play_arrow</mat-icon
+                        >
+                        <span>Marcar activo</span>
+                      </button>
+                    }
+                    @if (plan.estado !== "completado") {
+                      <button
+                        mat-menu-item
+                        (click)="cambiarEstado(plan, 'completado')"
+                      >
+                        <mat-icon
+                          class="material-symbols-outlined text-blue-600"
+                          >check_circle</mat-icon
+                        >
+                        <span>Marcar completado</span>
+                      </button>
+                    }
+                    @if (plan.estado !== "cancelado") {
+                      <button
+                        mat-menu-item
+                        (click)="cambiarEstado(plan, 'cancelado')"
+                      >
+                        <mat-icon class="material-symbols-outlined text-red-600"
+                          >cancel</mat-icon
+                        >
+                        <span>Cancelar plan</span>
+                      </button>
+                    }
+                  </mat-menu>
+                </div>
+              </article>
             }
           </div>
-
-          <!-- Botón filtro de estado -->
-          <button
-            mat-icon-button
-            [matMenuTriggerFor]="menuEstadoMobile"
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-            [class.!border-primary]="filtroEstado !== 'todos'"
-            aria-label="Filtrar por estado"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600">filter_alt</mat-icon>
-          </button>
-
-          <!-- Botón recargar -->
-          <button
-            mat-icon-button
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-            aria-label="Recargar datos"
-            (click)="reload()"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600">refresh</mat-icon>
-          </button>
-
-          <mat-menu #menuEstadoMobile="matMenu" xPosition="before" class="mt-2">
-            <button mat-menu-item (click)="onFiltroEstadoChange('todos')">
-              <mat-icon class="material-symbols-outlined">list</mat-icon>
-              <span>Todos</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('activo')">
-              <mat-icon class="material-symbols-outlined text-green-600">play_arrow</mat-icon>
-              <span>Activos</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('completado')">
-              <mat-icon class="material-symbols-outlined text-blue-600">check_circle</mat-icon>
-              <span>Completados</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('borrador')">
-              <mat-icon class="material-symbols-outlined text-zinc-500">edit_note</mat-icon>
-              <span>Borradores</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('cancelado')">
-              <mat-icon class="material-symbols-outlined text-red-600">cancel</mat-icon>
-              <span>Cancelados</span>
-            </button>
-          </mat-menu>
-        </div>
+        }
       }
-    </div>
-  </header>
 
-  <!-- Contenido principal -->
-  <div class="mx-auto max-w-7xl px-4">
-    @if (isLoading()) {
-      <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      </div>
-    } @else if (planes().length === 0) {
-      <div class="tarjeta-kengo rounded-2xl p-8 text-center">
-        <mat-icon class="material-symbols-outlined mb-3 text-5xl text-zinc-300">assignment</mat-icon>
-        <p class="text-lg text-zinc-500">No se encontraron planes</p>
-        <button
-          mat-flat-button
-          color="primary"
-          class="mt-4"
-          (click)="crearNuevoPlan()"
-        >
-          <mat-icon class="material-symbols-outlined">add</mat-icon>
-          Crear primer plan
-        </button>
-      </div>
-    } @else {
-      <!-- Grid de planes -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @for (plan of planes(); track plan.id_plan) {
-          <article
-            class="tarjeta-kengo group relative overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
-          >
-            <!-- Contenido principal -->
-            <div class="flex items-start gap-4">
-              <!-- Avatar paciente -->
-              <div class="shrink-0">
-                @if (getPacienteAvatar(plan)) {
-                  <img
-                    [src]="avatarUrl(getPacienteAvatar(plan))"
-                    [alt]="getPacienteNombre(plan)"
-                    class="h-14 w-14 rounded-full object-cover ring-2 shadow-sm ring-white"
-                  />
-                } @else {
+      <!-- TAB: Rutinas -->
+      @if (tabActiva() === "rutinas") {
+        <!-- Filtros rutinas -->
+        <div class="tarjeta-kengo mb-4 rounded-xl p-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Buscar</mat-label>
+              <input
+                matInput
+                [(ngModel)]="busquedaRutinas"
+                (ngModelChange)="onBusquedaRutinasChange($event)"
+                placeholder="Nombre de la plantilla..."
+              />
+              <mat-icon matSuffix class="material-symbols-outlined"
+                >search</mat-icon
+              >
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full sm:w-48">
+              <mat-label>Visibilidad</mat-label>
+              <mat-select
+                [(ngModel)]="filtroVisibilidad"
+                (ngModelChange)="onFiltroVisibilidadChange($event)"
+              >
+                <mat-option value="todas">Todas</mat-option>
+                <mat-option value="privadas">Mis plantillas</mat-option>
+                <mat-option value="publicas">Publicas</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button
+              mat-icon-button
+              class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm"
+              aria-label="Recargar datos"
+              (click)="reload()"
+            >
+              <mat-icon class="material-symbols-outlined text-zinc-600"
+                >refresh</mat-icon
+              >
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de rutinas -->
+        @if (isLoadingRutinas()) {
+          <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          </div>
+        } @else if (rutinas().length === 0) {
+          <div class="tarjeta-kengo rounded-xl py-12 text-center">
+            <mat-icon class="material-symbols-outlined !text-6xl text-zinc-300">
+              bookmarks
+            </mat-icon>
+            <p class="mt-2 text-zinc-500">No tienes plantillas guardadas</p>
+            <p class="mt-1 text-sm text-zinc-400">
+              Crea un plan y guardalo como plantilla para reutilizarlo
+            </p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (rutina of rutinas(); track rutina.id_rutina) {
+              <div class="tarjeta-kengo overflow-hidden rounded-xl">
+                <!-- Header rutina -->
+                <div class="flex items-start gap-4 p-4">
                   <div
-                    class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
+                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100"
                   >
-                    <mat-icon class="material-symbols-outlined text-2xl !text-white">person</mat-icon>
+                    <mat-icon class="material-symbols-outlined text-amber-600">
+                      bookmark
+                    </mat-icon>
+                  </div>
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0">
+                        <h3 class="font-semibold text-zinc-800">
+                          {{ rutina.nombre }}
+                        </h3>
+                        @if (rutina.descripcion) {
+                          <p class="mt-1 line-clamp-2 text-sm text-zinc-600">
+                            {{ rutina.descripcion }}
+                          </p>
+                        }
+                      </div>
+
+                      <span
+                        class="flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
+                        [class.bg-zinc-100]="rutina.visibilidad === 'privado'"
+                        [class.text-zinc-600]="rutina.visibilidad === 'privado'"
+                        [class.bg-green-100]="rutina.visibilidad === 'publico'"
+                        [class.text-green-700]="
+                          rutina.visibilidad === 'publico'
+                        "
+                      >
+                        <mat-icon class="material-symbols-outlined !text-sm">
+                          {{
+                            rutina.visibilidad === "privado" ? "lock" : "public"
+                          }}
+                        </mat-icon>
+                        {{
+                          rutina.visibilidad === "privado"
+                            ? "Privada"
+                            : "Publica"
+                        }}
+                      </span>
+                    </div>
+
+                    <div
+                      class="mt-2 flex items-center gap-3 text-xs text-zinc-500"
+                    >
+                      @if (rutina.date_created) {
+                        <span
+                          >Creada:
+                          {{ formatDateLong(rutina.date_created) }}</span
+                        >
+                      }
+                      @if (!isOwner(rutina)) {
+                        <span class="text-amber-600">Plantilla publica</span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Menu acciones -->
+                  <button mat-icon-button [matMenuTriggerFor]="menuRutina">
+                    <mat-icon class="material-symbols-outlined"
+                      >more_vert</mat-icon
+                    >
+                  </button>
+
+                  <mat-menu #menuRutina="matMenu">
+                    <button mat-menu-item (click)="togglePreview(rutina)">
+                      <mat-icon class="material-symbols-outlined"
+                        >visibility</mat-icon
+                      >
+                      <span>Ver ejercicios</span>
+                    </button>
+                    <button mat-menu-item (click)="usarPlantilla(rutina)">
+                      <mat-icon class="material-symbols-outlined"
+                        >play_arrow</mat-icon
+                      >
+                      <span>Usar plantilla</span>
+                    </button>
+                    <button mat-menu-item (click)="duplicarRutina(rutina)">
+                      <mat-icon class="material-symbols-outlined"
+                        >content_copy</mat-icon
+                      >
+                      <span>Duplicar</span>
+                    </button>
+                    @if (isOwner(rutina)) {
+                      <mat-divider></mat-divider>
+                      <button
+                        mat-menu-item
+                        (click)="cambiarVisibilidadRutina(rutina)"
+                      >
+                        <mat-icon class="material-symbols-outlined">
+                          {{
+                            rutina.visibilidad === "privado" ? "public" : "lock"
+                          }}
+                        </mat-icon>
+                        <span>
+                          {{
+                            rutina.visibilidad === "privado"
+                              ? "Hacer publica"
+                              : "Hacer privada"
+                          }}
+                        </span>
+                      </button>
+                      <button
+                        mat-menu-item
+                        (click)="eliminarRutina(rutina)"
+                        class="!text-red-600"
+                      >
+                        <mat-icon class="material-symbols-outlined text-red-600"
+                          >delete</mat-icon
+                        >
+                        <span>Eliminar</span>
+                      </button>
+                    }
+                  </mat-menu>
+                </div>
+
+                <!-- Boton expandir -->
+                <button
+                  class="flex w-full items-center justify-center gap-1 border-t border-zinc-100 py-2 text-sm text-zinc-500 hover:bg-zinc-50"
+                  (click)="togglePreview(rutina)"
+                >
+                  <mat-icon class="material-symbols-outlined !text-lg">
+                    {{
+                      expandedRutinaId() === rutina.id_rutina
+                        ? "expand_less"
+                        : "expand_more"
+                    }}
+                  </mat-icon>
+                  {{
+                    expandedRutinaId() === rutina.id_rutina
+                      ? "Ocultar ejercicios"
+                      : "Ver ejercicios"
+                  }}
+                </button>
+
+                <!-- Panel preview -->
+                @if (expandedRutinaId() === rutina.id_rutina) {
+                  <div class="border-t border-zinc-100 bg-zinc-50 p-4">
+                    @if (loadingPreview()) {
+                      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                    } @else if (previewEjercicios().length > 0) {
+                      <div class="space-y-2">
+                        @for (
+                          ej of previewEjercicios();
+                          track ej.id;
+                          let i = $index
+                        ) {
+                          <div
+                            class="flex items-center gap-3 rounded-lg bg-white p-2"
+                          >
+                            <div
+                              class="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-zinc-200"
+                            >
+                              @if (ej.ejercicio.portada) {
+                                <img
+                                  [src]="assetUrl(ej.ejercicio.portada)"
+                                  class="h-full w-full object-cover"
+                                />
+                              }
+                            </div>
+                            <div class="min-w-0 flex-1">
+                              <p class="text-sm font-medium text-zinc-800">
+                                {{ i + 1 }}. {{ ej.ejercicio.nombre_ejercicio }}
+                              </p>
+                              <p class="text-xs text-zinc-500">
+                                {{ ej.series || 3 }} series x
+                                {{ ej.repeticiones || 12 }} reps
+                                @if (ej.descanso_seg) {
+                                  · {{ ej.descanso_seg }}s descanso
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="text-center text-sm text-zinc-500">
+                        Sin ejercicios
+                      </p>
+                    }
                   </div>
                 }
               </div>
-
-              <!-- Info del plan -->
-              <div class="min-w-0 flex-1">
-                <div class="flex items-start justify-between gap-2">
-                  <h3 class="truncate text-base font-semibold text-zinc-800">
-                    {{ plan.titulo }}
-                  </h3>
-                  <span
-                    class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
-                    [ngClass]="estadoColors[plan.estado]"
-                  >
-                    {{ estadoLabels[plan.estado] }}
-                  </span>
-                </div>
-
-                <p class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500">
-                  <mat-icon class="material-symbols-outlined !text-base">person</mat-icon>
-                  {{ getPacienteNombre(plan) }}
-                </p>
-
-                @if (plan.fecha_inicio || plan.fecha_fin) {
-                  <p class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500">
-                    <mat-icon class="material-symbols-outlined !text-base">calendar_today</mat-icon>
-                    {{ formatDate(plan.fecha_inicio) }}
-                    @if (plan.fecha_fin) {
-                      - {{ formatDate(plan.fecha_fin) }}
-                    }
-                  </p>
-                }
-              </div>
-            </div>
-
-            <!-- Acciones -->
-            <div class="mt-4 flex items-center justify-end gap-1 border-t border-zinc-100 pt-3">
-              <button
-                mat-icon-button
-                class="!h-10 !w-10"
-                color="primary"
-                aria-label="Ver resumen"
-                (click)="verResumen(plan)"
-              >
-                <mat-icon class="material-symbols-outlined">visibility</mat-icon>
-              </button>
-
-              <button
-                mat-icon-button
-                class="!h-10 !w-10"
-                color="primary"
-                aria-label="Editar plan"
-                (click)="editarPlan(plan)"
-              >
-                <mat-icon class="material-symbols-outlined">edit</mat-icon>
-              </button>
-
-              <button
-                mat-icon-button
-                class="!h-10 !w-10"
-                [matMenuTriggerFor]="menuEstadoPlan"
-                aria-label="Cambiar estado"
-              >
-                <mat-icon class="material-symbols-outlined text-zinc-600">more_vert</mat-icon>
-              </button>
-
-              <mat-menu #menuEstadoPlan="matMenu">
-                @if (plan.estado !== 'activo') {
-                  <button mat-menu-item (click)="cambiarEstado(plan, 'activo')">
-                    <mat-icon class="material-symbols-outlined text-green-600">play_arrow</mat-icon>
-                    <span>Marcar activo</span>
-                  </button>
-                }
-                @if (plan.estado !== 'completado') {
-                  <button mat-menu-item (click)="cambiarEstado(plan, 'completado')">
-                    <mat-icon class="material-symbols-outlined text-blue-600">check_circle</mat-icon>
-                    <span>Marcar completado</span>
-                  </button>
-                }
-                @if (plan.estado !== 'cancelado') {
-                  <button mat-menu-item (click)="cambiarEstado(plan, 'cancelado')">
-                    <mat-icon class="material-symbols-outlined text-red-600">cancel</mat-icon>
-                    <span>Cancelar plan</span>
-                  </button>
-                }
-              </mat-menu>
-            </div>
-          </article>
+            }
+          </div>
         }
-      </div>
-    }
+      }
+    </div>
   </div>
 </section>
