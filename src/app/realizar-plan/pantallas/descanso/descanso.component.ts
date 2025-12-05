@@ -22,7 +22,15 @@ import { MatButtonModule } from '@angular/material/button';
   imports: [CommonModule, MatIconModule, MatButtonModule, TemporizadorComponent],
   animations: [fadeAnimation],
   template: `
-    <div class="flex flex-1 flex-col items-center justify-between gap-5 overflow-hidden py-4 text-center">
+    <div class="relative flex flex-1 flex-col items-center justify-between gap-5 overflow-hidden py-4 text-center">
+      <!-- Botón salir - superior izquierda -->
+      <button
+        class="absolute top-5 left-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-zinc-200 transition-colors hover:bg-zinc-50"
+        (click)="salir.emit()"
+      >
+        <mat-icon class="material-symbols-outlined !text-[22px] text-zinc-600">close</mat-icon>
+      </button>
+
       <!-- Header -->
       <div class="flex shrink-0 flex-col gap-2" @fade>
         <h2 class="m-0 text-2xl font-bold text-zinc-800">Descanso</h2>
@@ -121,6 +129,7 @@ export class DescansoComponent implements OnInit {
   @Output() saltar = new EventEmitter<void>();
   @Output() tiempoAgotado = new EventEmitter<void>();
   @Output() agregarTiempo = new EventEmitter<number>();
+  @Output() salir = new EventEmitter<void>();
 
   @ViewChild('temporizador') temporizador!: TemporizadorComponent;
 

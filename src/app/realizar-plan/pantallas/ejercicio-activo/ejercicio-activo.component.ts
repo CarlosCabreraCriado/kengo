@@ -63,9 +63,17 @@ import { MatButtonModule } from '@angular/material/button';
           </div>
         }
 
+        <!-- Botón salir - superior izquierda -->
+        <button
+          class="absolute top-5 left-6 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 shadow-lg backdrop-blur-sm transition-colors hover:bg-black/70"
+          (click)="salir.emit(); $event.stopPropagation()"
+        >
+          <mat-icon class="material-symbols-outlined !text-[22px] text-white">close</mat-icon>
+        </button>
+
         <!-- Indicador de progreso - superior derecha -->
         <div
-          class="absolute top-4 right-8 flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 backdrop-blur-sm"
+          class="absolute top-4 right-4 flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 backdrop-blur-sm"
         >
           <span class="text-xs font-bold text-white">
             {{ ejercicioActualIndex() + 1 }}/{{ totalEjercicios() }}
@@ -197,6 +205,7 @@ import { MatButtonModule } from '@angular/material/button';
 export class EjercicioActivoComponent {
   @Output() completarSerie = new EventEmitter<void>();
   @Output() pausar = new EventEmitter<void>();
+  @Output() salir = new EventEmitter<void>();
 
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 

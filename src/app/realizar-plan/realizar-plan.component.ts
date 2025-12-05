@@ -12,6 +12,7 @@ import { RegistroSesionService } from '../services/registro-sesion.service';
 // Angular Material
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 
 // Pantallas
 import { ResumenSesionComponent } from './pantallas/resumen-sesion/resumen-sesion.component';
@@ -23,6 +24,61 @@ import { SesionCompletadaComponent } from './pantallas/sesion-completada/sesion-
 // Animaciones
 import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
 
+// Componente de diálogo de confirmación
+@Component({
+  selector: 'app-confirmar-salida-dialog',
+  standalone: true,
+  imports: [MatButtonModule, MatIconModule],
+  template: `
+    <div class="flex flex-col items-center gap-5 p-6 text-center">
+      <div class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+        <mat-icon class="material-symbols-outlined !text-4xl text-orange-600">warning</mat-icon>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <h2 class="m-0 text-lg font-bold text-zinc-800">Salir de la sesión</h2>
+        <p class="m-0 text-sm text-zinc-500">
+          Tu progreso en esta sesión se perderá. ¿Estás seguro de que quieres salir?
+        </p>
+      </div>
+
+      <div class="flex w-full flex-col gap-2">
+        <button
+          mat-flat-button
+          class="!h-12 !w-full !rounded-xl !bg-zinc-800 !text-sm !font-semibold !text-white"
+          (click)="confirmar()"
+        >
+          Sí, salir
+        </button>
+        <button
+          mat-stroked-button
+          class="!h-12 !w-full !rounded-xl !border-zinc-200 !text-sm !font-semibold !text-zinc-600"
+          (click)="cancelar()"
+        >
+          Continuar sesión
+        </button>
+      </div>
+    </div>
+  `,
+  styles: `
+    :host {
+      display: block;
+      max-width: 320px;
+    }
+  `,
+})
+export class ConfirmarSalidaDialogComponent {
+  private dialogRef = inject(MatDialogRef<ConfirmarSalidaDialogComponent>);
+
+  confirmar(): void {
+    this.dialogRef.close(true);
+  }
+
+  cancelar(): void {
+    this.dialogRef.close(false);
+  }
+}
+
 @Component({
   selector: 'app-realizar-plan',
   standalone: true,
@@ -30,6 +86,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     CommonModule,
     MatIconModule,
     MatButtonModule,
+    MatDialogModule,
     ResumenSesionComponent,
     EjercicioActivoComponent,
     DescansoComponent,
@@ -46,12 +103,13 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
       >
         @switch (estadoPantalla()) {
           @case ('resumen') {
-            <app-resumen-sesion class="p-4" (comenzar)="onComenzar()" />
+            <app-resumen-sesion (comenzar)="onComenzar()" />
           }
           @case ('ejercicio') {
             <app-ejercicio-activo
               (completarSerie)="onCompletarSerie()"
               (pausar)="onPausar()"
+              (salir)="onIntentarSalir()"
             />
           }
           @case ('descanso') {
@@ -59,6 +117,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
               (saltar)="onSaltarDescanso()"
               (tiempoAgotado)="onDescansoTerminado()"
               (agregarTiempo)="onAgregarTiempo($event)"
+              (salir)="onIntentarSalir()"
             />
           }
           @case ('feedback') {
@@ -141,6 +200,7 @@ export class RealizarPlanComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private registroService = inject(RegistroSesionService);
+  private dialog = inject(MatDialog);
 
   // Estado desde el servicio
   readonly estadoPantalla = this.registroService.estadoPantalla;
@@ -233,6 +293,19 @@ export class RealizarPlanComponent implements OnInit {
   onVolverInicio(): void {
     this.registroService.resetearEstado();
     this.router.navigate(['/inicio']);
+  }
+
+  onIntentarSalir(): void {
+    const dialogRef = this.dialog.open(ConfirmarSalidaDialogComponent, {
+      panelClass: 'confirmar-salida-dialog',
+      backdropClass: 'confirmar-salida-backdrop',
+    });
+
+    dialogRef.afterClosed().subscribe((confirmado) => {
+      if (confirmado) {
+        this.onVolverInicio();
+      }
+    });
   }
 
   reintentar(): void {

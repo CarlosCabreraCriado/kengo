@@ -24,31 +24,37 @@ import { MatButtonModule } from '@angular/material/button';
   imports: [CommonModule, MatIconModule, MatButtonModule],
   animations: [slideUpAnimation],
   template: `
-    <div class="flex flex-1 flex-col gap-4 overflow-hidden">
-      <!-- Header con navegación -->
-      <div class="flex shrink-0 items-center gap-2 py-2">
-        <button
-          mat-icon-button
-          class="!h-10 !w-10 shrink-0"
-          aria-label="Volver"
-          (click)="volverAtras()"
-        >
-          <mat-icon class="material-symbols-outlined text-zinc-600"
-            >arrow_back</mat-icon
-          >
-        </button>
-        <div class="min-w-0 flex-1">
-          <h1 class="m-0 truncate text-xl font-bold text-zinc-800">
-            {{ tituloSesion() }}
-          </h1>
-          <p class="m-0 truncate text-sm font-medium text-[#e75c3e]">
-            {{ subtitulo() }}
-          </p>
+    <div class="flex flex-1 flex-col overflow-hidden">
+      <!-- Header sticky -->
+      <header
+        class="sticky top-0 z-40 w-full mb-4 bg-gradient-to-b from-white/95 via-white/90 to-transparent pt-4 pb-2 backdrop-blur-md"
+      >
+        <div class="mx-auto max-w-7xl px-4">
+          <div class="flex items-center gap-2">
+            <button
+              mat-icon-button
+              class="!h-10 !w-10 shrink-0"
+              aria-label="Volver"
+              (click)="volverAtras()"
+            >
+              <mat-icon class="material-symbols-outlined text-zinc-600"
+                >arrow_back</mat-icon
+              >
+            </button>
+            <div class="min-w-0 flex-1">
+              <h1 class="m-0 truncate text-xl font-bold text-zinc-800 sm:text-2xl">
+                {{ tituloSesion() }}
+              </h1>
+              <p class="m-0 truncate text-sm text-zinc-500">
+                {{ subtitulo() }}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
       <!-- Lista de ejercicios -->
-      <div class="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      <div class="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pr-5">
         @for (item of ejercicios(); track $index; let i = $index) {
           <div
             class="tarjeta-kengo relative flex shrink-0 items-center gap-3 rounded-2xl p-3.5 transition-transform hover:-translate-y-0.5"
@@ -113,7 +119,7 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
 
       <!-- Contador y boton -->
-      <div class="flex shrink-0 flex-col items-center gap-3 py-3">
+      <div class="flex shrink-0 flex-col items-center gap-3 px-4 py-3">
         <p
           class="m-0 rounded-2xl bg-white/60 px-4 py-1.5 text-xs font-medium text-zinc-500"
         >
