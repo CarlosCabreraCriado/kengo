@@ -5,12 +5,14 @@ import {
   inject,
   ElementRef,
   viewChild,
-  afterNextRender,
   OnDestroy,
   Signal,
   effect,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { AppService } from '../services/app.service';
 import { ActividadHoyService, BadgeType } from '../services/actividad-hoy.service';
 import { MatButtonModule } from '@angular/material/button';
@@ -45,8 +47,17 @@ export class InicioComponent implements OnDestroy {
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
+  private breakpointObserver = inject(BreakpointObserver);
 
   carouselRef = viewChild<ElementRef<HTMLDivElement>>('carousel');
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   userRole = this.appService.rolUsuario;
   userName = computed(() => this.appService.usuario()?.first_name ?? 'Usuario');

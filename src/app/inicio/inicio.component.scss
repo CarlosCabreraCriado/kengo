@@ -190,8 +190,8 @@
   }
 }
 
-// Responsive adjustments para tablets y desktop
-@media (min-width: 768px) {
+// Responsive adjustments para tablets (solo carrusel)
+@media (min-width: 768px) and (max-width: 1023px) {
   .greeting {
     font-size: 2rem;
   }
@@ -210,14 +210,115 @@
   }
 }
 
-@media (min-width: 1024px) {
-  .carousel {
-    padding-left: 25%;
-    padding-right: 25%;
+// ============================================
+// GRID LAYOUT PARA DESKTOP (>= 1024px)
+// ============================================
+
+.cards-grid-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1400px;
+  height: 100%;
+  max-height: calc(100vh - 4rem); // Solo padding (sin header en desktop)
+}
+
+// Cards en modo grid
+.card-grid {
+  flex: 0 0 calc(50% - 1rem); // 2 columnas por defecto
+  height: auto;
+  min-height: 200px;
+  max-height: 350px;
+  aspect-ratio: 4 / 3;
+
+  .card-title {
+    font-size: 1.5rem;
   }
 
-  .card {
-    flex: 0 0 50%;
+  .card-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  // Ajustar bonsái para cards más pequeñas
+  .bonsai-image {
+    max-height: 80%;
+    right: -10%;
+  }
+
+  // Ajustar greeting para cards más pequeñas
+  .greeting-text {
+    font-size: 1.25rem;
+  }
+
+  .user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  // CTA button más compacto
+  .cta-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .completed-message {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+// Grid específico según tamaño de pantalla
+@media (min-width: 1024px) {
+  .card-grid {
+    // 2 columnas para tablets/desktop pequeño
+    flex: 0 0 calc(50% - 1rem);
+  }
+}
+
+@media (min-width: 1280px) {
+  .cards-grid {
+    gap: 2rem;
+    max-width: 1200px;
+  }
+
+  .card-grid {
+    // 3 columnas para pantallas grandes
+    flex: 0 0 calc(33.333% - 1.5rem);
+    max-height: 400px;
+
+    .card-title {
+      font-size: 1.75rem;
+    }
+  }
+}
+
+@media (min-width: 1536px) {
+  .cards-grid {
+    max-width: 1400px;
+    gap: 2.5rem;
+  }
+
+  .card-grid {
+    // Mantener 3 columnas, cards más grandes
+    flex: 0 0 calc(33.333% - 2rem);
+    max-height: 450px;
   }
 }
 
