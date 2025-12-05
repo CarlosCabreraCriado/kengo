@@ -1,6 +1,25 @@
-<div mat-dialog-content>
-  <app-tabla-usuarios
-    [modoSelector]="true"
-    (seleccionarUsuario)="seleccionarUsuario($event)"
-  ></app-tabla-usuarios>
+<div class="relative flex flex-col">
+  <!-- Header con boton cerrar -->
+  <div class="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
+    <div class="flex items-center gap-2">
+      <mat-icon class="material-symbols-outlined text-primary">person_search</mat-icon>
+      <h2 class="text-lg font-semibold text-zinc-800">Seleccionar usuario</h2>
+    </div>
+    <button
+      mat-icon-button
+      [mat-dialog-close]="null"
+      class="!-mr-2"
+      aria-label="Cerrar dialogo"
+    >
+      <mat-icon class="material-symbols-outlined text-zinc-500">close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Contenido -->
+  <div mat-dialog-content class="!max-h-[80vh] !overflow-y-auto !p-4">
+    <app-tabla-usuarios
+      [modoSelector]="true"
+      (seleccionarUsuario)="seleccionarUsuario($event)"
+    ></app-tabla-usuarios>
+  </div>
 </div>

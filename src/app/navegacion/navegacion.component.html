@@ -74,9 +74,9 @@
 
       <!-- Avatar (solo móvil dentro del nav) -->
       @if (isMovil()) {
-        <button
-          type="button"
-          [matMenuTriggerFor]="avatarMenuMobile"
+        <a
+          routerLink="/perfil"
+          routerLinkActive="active"
           class="nav-item avatar-btn"
         >
           @if (avatarUrl()) {
@@ -92,37 +92,14 @@
               <span class="material-symbols-outlined text-white">person</span>
             </div>
           }
-        </button>
-
-        <mat-menu #avatarMenuMobile="matMenu" xPosition="before" yPosition="above">
-          @if (isFisio()) {
-            <button mat-menu-item routerLink="/planes">
-              <mat-icon class="material-symbols-outlined">assignment</mat-icon>
-              <span>Mis planes</span>
-            </button>
-            <button mat-menu-item routerLink="/rutinas">
-              <mat-icon class="material-symbols-outlined">bookmarks</mat-icon>
-              <span>Plantillas</span>
-            </button>
-            <mat-divider></mat-divider>
-          }
-          <button mat-menu-item routerLink="/perfil">
-            <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
-            <span>Editar perfil</span>
-          </button>
-          <button mat-menu-item (click)="logout()">
-            <mat-icon class="material-symbols-outlined">logout</mat-icon>
-            <span>Cerrar sesión</span>
-          </button>
-        </mat-menu>
+        </a>
       }
     </nav>
 
     <!-- Avatar (solo desktop) -->
     @if (!isMovil()) {
-      <button
-        type="button"
-        [matMenuTriggerFor]="avatarMenuDesktop"
+      <a
+        routerLink="/perfil"
         class="rounded-full border-2 border-transparent p-0 transition-colors duration-200 hover:border-orange-500"
       >
         @if (avatarUrl()) {
@@ -138,29 +115,7 @@
             <span class="material-symbols-outlined text-white">person</span>
           </div>
         }
-      </button>
-
-      <mat-menu #avatarMenuDesktop="matMenu" xPosition="before" yPosition="below">
-        @if (isFisio()) {
-          <button mat-menu-item routerLink="/planes">
-            <mat-icon class="material-symbols-outlined">assignment</mat-icon>
-            <span>Mis planes</span>
-          </button>
-          <button mat-menu-item routerLink="/rutinas">
-            <mat-icon class="material-symbols-outlined">bookmarks</mat-icon>
-            <span>Plantillas</span>
-          </button>
-          <mat-divider></mat-divider>
-        }
-        <button mat-menu-item routerLink="/perfil">
-          <mat-icon class="material-symbols-outlined">account_circle</mat-icon>
-          <span>Editar perfil</span>
-        </button>
-        <button mat-menu-item (click)="logout()">
-          <mat-icon class="material-symbols-outlined">logout</mat-icon>
-          <span>Cerrar sesión</span>
-        </button>
-      </mat-menu>
+      </a>
     }
   </div>
 </header>

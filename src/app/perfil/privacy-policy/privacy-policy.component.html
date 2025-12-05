@@ -1,95 +1,118 @@
-<div class="mt-5 text-zinc-700">
-  <span class="block w-full pb-4 text-center font-bold text-zinc-800"
-    >¿QUIÉN ES EL RESPONSABLE DEL TRATAMIENTO DE SUS DATOS?</span
+<div class="flex flex-col">
+  <!-- Header -->
+  <div
+    class="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3"
   >
+    <h2 class="text-lg font-bold text-zinc-800">Política de Privacidad</h2>
+    <button mat-icon-button (click)="cerrar()" aria-label="Cerrar">
+      <mat-icon class="material-symbols-outlined">close</mat-icon>
+    </button>
+  </div>
 
-  <p>
-    IDENTIDAD: Kengo<br />
-    CIF: G-********<br />
-    DIRECCIÓN POSTAL: 38002, Santa Cruz de Tenerife, España<br />
-    TELÉFONO: --- --- ---<br />
-  </p>
+  <!-- Content -->
+  <div class="max-h-[70vh] overflow-y-auto p-4 text-zinc-700">
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">
+        ¿Quién es el responsable del tratamiento de sus datos?
+      </h3>
+      <p class="text-sm leading-relaxed">
+        IDENTIDAD: Kengo<br />
+        CIF: G-********<br />
+        DIRECCIÓN POSTAL: 38002, Santa Cruz de Tenerife, España<br />
+        TELÉFONO: --- --- ---
+      </p>
+    </section>
 
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    ¿CON QUÉ FINALIDAD TRATAMOS SUS DATOS PERSONALES?
-  </span>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">
+        ¿Con qué finalidad tratamos sus datos personales?
+      </h3>
+      <p class="text-sm leading-relaxed">
+        Tratamos los datos que nos facilitan los usuarios que se registren en la
+        plataforma de Kengo para gestionar su cuenta, proporcionar los servicios
+        solicitados y mejorar la experiencia de usuario.
+      </p>
+    </section>
 
-  <p>
-    Tratamos los datos que nos facilitan los usuarios que se registren en la
-    plataforma de Kengo para *****
-  </p>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">
+        ¿Por cuánto tiempo conservaremos sus datos?
+      </h3>
+      <p class="text-sm leading-relaxed">
+        Los datos personales proporcionados se conservarán mientras no se solicite
+        la supresión por parte del interesado, o por obligación legal.
+      </p>
+    </section>
 
-  <span class="block w-full text-center font-bold text-zinc-800">
-    ¿POR CUÁNTO TIEMPO CONSERVAREMOS SUS DATOS?
-  </span>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">
+        ¿Cuál es la legitimación para el tratamiento de sus datos?
+      </h3>
+      <p class="text-sm leading-relaxed">
+        La base legal para el tratamiento de sus datos es la relación contractual
+        y/o su consentimiento.
+      </p>
+    </section>
 
-  <p>
-    Los datos personales proporcionados se conservarán mientras no se solicite
-    la supresión por parte del interesado, o por obligación legal.
-  </p>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">
+        ¿A qué destinatarios se comunicarán sus datos?
+      </h3>
+      <p class="text-sm leading-relaxed">
+        No se cederán datos a terceros sin su previo consentimiento, salvo
+        obligación legal o contractual.
+      </p>
+    </section>
 
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    ¿CUÁL ES LA LEGITIMACIÓN PARA EL TRATAMIENTO DE SUS DATOS?
-  </span>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">
+        ¿Cuáles son sus derechos cuando nos facilita sus datos?
+      </h3>
+      <p class="text-sm leading-relaxed">
+        Cualquier persona tiene derecho a obtener confirmación sobre si estamos
+        tratando datos personales que les conciernan, o no. Las personas interesadas
+        tienen derecho a acceder a sus datos personales, así como a solicitar la
+        rectificación de los datos inexactos o, en su caso, solicitar su supresión
+        cuando, entre otros motivos, los datos ya no sean necesarios para los fines
+        que fueron recogidos.
+      </p>
+      <p class="mt-2 text-sm leading-relaxed">
+        En determinadas circunstancias, los interesados podrán solicitar la
+        limitación del tratamiento de sus datos, en cuyo caso únicamente los
+        conservaremos para el ejercicio o la defensa de reclamaciones.
+      </p>
+      <p class="mt-2 text-sm leading-relaxed">
+        En determinadas circunstancias y por motivos relacionados con su situación
+        particular, los interesados podrán oponerse al tratamiento de sus datos.
+        Dejaremos de tratar los datos, salvo por motivos legítimos imperiosos, o el
+        ejercicio o la defensa de posibles reclamaciones.
+      </p>
+    </section>
 
-  <p>
-    La base legal para el tratamiento de sus datos es la relación contractual
-    y/o su consentimiento.
-  </p>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">¿Cómo hemos obtenido sus datos?</h3>
+      <p class="text-sm leading-relaxed">
+        Los datos los hemos obtenido del propio interesado.
+      </p>
+    </section>
 
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    ¿A QUÉ DESTINATARIOS SE COMUNICARÁN SUS DATOS?
-  </span>
+    <section>
+      <h3 class="mb-2 font-bold text-zinc-800">Tipología de datos:</h3>
+      <ul class="list-inside list-disc text-sm leading-relaxed">
+        <li>Datos identificativos (nombre completo, DNI)</li>
+        <li>Datos de contacto (correo electrónico, dirección postal)</li>
+      </ul>
+    </section>
+  </div>
 
-  <p>
-    No se cederán datos a terceros sin su previo consentimiento, salvo
-    obligación legal o contractual.
-  </p>
-
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    ¿CUÁLES SON SUS DERECHOS CUANDO NOS FACILITA SUS DATOS?
-  </span>
-
-  <p>
-    Cualquier persona tiene derecho a obtener confirmación sobre si estamos
-    tratando datos personales que les conciernan, o no. Las personas interesadas
-    tienen derecho a acceder a sus datos personales, así como a solicitar la
-    rectificación de los datos inexactos o, en su caso, solicitar su supresión
-    cuando, entre otros motivos, los datos ya no sean necesarios para los fines
-    que fueron recogidos. En determinadas circunstancias, los interesados podrán
-    solicitar la limitación del tratamiento de sus datos, en cuyo caso
-    únicamente los conservaremos para el ejercicio o la defensa de
-    reclamaciones.
-  </p>
-
-  <p>
-    En determinadas circunstancias y por motivos relacionados con su situación
-    particular, los interesados podrán oponerse al tratamiento de sus datos.
-    Dejaremos de tratar los datos, salvo por motivos legítimos imperiosos, o el
-    ejercicio o la defensa de posibles reclamaciones.
-  </p>
-
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    ¿CÓMO HEMOS OBTENIDO SUS DATOS?
-  </span>
-
-  <p>Los datos los hemos obtenido del propio interesado.</p>
-
-  <span class="title fw-medium d-block">Tipología de datos: </span>
-
-  <ul>
-    <p>
-      <li>Datos identificativos (nombre completo, DNI)</li>
-      <li>Datos de contacto (correo electrónico, dirección postal)</li>
-    </p>
-  </ul>
-
-  <div class="mt-5 flex justify-center">
+  <!-- Footer -->
+  <div class="flex justify-end gap-2 border-t border-zinc-200 px-4 py-3">
     <a href="#" target="_blank">
-      <button mat-flat-button extended color="warn" class="m-auto block">
+      <button mat-stroked-button>
         <mat-icon class="material-symbols-outlined">download</mat-icon>
-        Descargar documento completo
+        Descargar PDF
       </button>
     </a>
+    <button mat-flat-button color="primary" (click)="cerrar()">Cerrar</button>
   </div>
 </div>

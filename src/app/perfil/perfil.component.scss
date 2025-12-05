@@ -1,4 +1,30 @@
-.active {
-  background-color: var(--color-primary) !important;
-  color: white;
+:host {
+  display: block;
+  height: 100%;
+}
+
+.perfil-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .mat-expansion-panel {
+    border-radius: 1rem !important;
+
+    &::before {
+      display: none; // Remove default shadow line
+    }
+  }
+
+  .mat-expansion-panel-header {
+    font-size: 1rem;
+  }
+
+  .mat-expansion-panel-body {
+    padding-top: 1rem;
+  }
+}
+
+.text-primary {
+  color: var(--color-primary, #e75c3e);
 }

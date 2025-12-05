@@ -5,11 +5,6 @@ import { filter } from 'rxjs/operators';
 
 import { environment as env } from '../../environments/environment';
 
-// Angular Material (solo para menú):
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
 
 // Servicios:
 import { AppService } from '../services/app.service';
@@ -19,14 +14,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 @Component({
   selector: 'app-navegacion',
   standalone: true,
-  imports: [
-    RouterLink,
-    RouterLinkActive,
-    MatMenuModule,
-    MatButtonModule,
-    MatIconModule,
-    MatDividerModule,
-  ],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './navegacion.component.html',
   styleUrl: './navegacion.component.scss',
 })

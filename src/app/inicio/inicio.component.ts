@@ -10,6 +10,10 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppService } from '../services/app.service';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { DialogoComponent } from '../dialogos/dialogos.component';
 
 interface CardOption {
   id: string;
@@ -23,13 +27,14 @@ interface CardOption {
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [],
+  imports: [MatButtonModule, MatIconModule, MatDialogModule],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.scss',
 })
 export class InicioComponent implements OnDestroy {
   private appService = inject(AppService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
 
   carouselRef = viewChild<ElementRef<HTMLDivElement>>('carousel');
 
@@ -152,5 +157,27 @@ export class InicioComponent implements OnDestroy {
 
   navigateToCard(card: CardOption): void {
     this.router.navigate([card.route]);
+  }
+
+  confirmarLogout(): void {
+    const dialogRef = this.dialog.open(DialogoComponent, {
+      data: {
+        tipo: 'confirmacion',
+        titulo: '¿Cerrar sesión?',
+        mensaje: '¿Estás seguro de que quieres cerrar tu sesión?',
+        botonConfirmar: 'Cerrar sesión',
+        botonCancelar: 'Cancelar',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.logout();
+      }
+    });
+  }
+
+  private logout(): void {
+    this.router.navigate(['/login']);
   }
 }

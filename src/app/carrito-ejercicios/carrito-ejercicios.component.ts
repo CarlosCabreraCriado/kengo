@@ -127,9 +127,8 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   async cambiarPaciente() {
-    const { SelectorPacienteComponent } = await import(
-      '../selector-paciente/selector-paciente.component'
-    );
+    const { SelectorPacienteComponent } =
+      await import('../selector-paciente/selector-paciente.component');
 
     const dialogRef = this.dialog.open(SelectorPacienteComponent, {
       width: '500px',
@@ -146,9 +145,13 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
         if (fisioId) {
           localStorage.setItem('carrito:last_fisio_id', fisioId);
         }
-        this.snack.open(`Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`, 'OK', {
-          duration: 2000,
-        });
+        this.snack.open(
+          `Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`,
+          'OK',
+          {
+            duration: 2000,
+          },
+        );
       }
     });
   }
@@ -188,8 +191,8 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
   }
 
-  // Cargar una plantilla (rutina) existente
-  async cargarPlantilla() {
+  // Cargar una rutina (plantilla) existente
+  async cargarRutina() {
     if (!this.svc.paciente()) {
       this.snack.open('Selecciona un paciente primero.', 'OK', {
         duration: 2000,
@@ -197,9 +200,8 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const { SelectorRutinaComponent } = await import(
-      '../selector-rutina/selector-rutina.component'
-    );
+    const { SelectorRutinaComponent } =
+      await import('../selector-rutina/selector-rutina.component');
 
     const dialogRef = this.dialog.open(SelectorRutinaComponent, {
       width: '600px',
@@ -211,11 +213,11 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       if (rutinaId) {
         const success = await this.svc.loadFromRutina(rutinaId);
         if (success) {
-          this.snack.open('Plantilla cargada correctamente', 'OK', {
+          this.snack.open('Rutina cargada correctamente', 'OK', {
             duration: 2000,
           });
         } else {
-          this.snack.open('Error al cargar la plantilla', 'OK', {
+          this.snack.open('Error al cargar la rutina', 'OK', {
             duration: 2000,
           });
         }

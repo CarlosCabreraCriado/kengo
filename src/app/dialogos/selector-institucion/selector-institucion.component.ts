@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, Inject } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { TablaInstitucionesComponent } from "../../tabla-instituciones/tabla-instituciones.component";
 import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
 
 import {
   MAT_DIALOG_DATA,
@@ -23,6 +24,7 @@ import {
     MatDialogActions,
     MatDialogClose,
     MatButtonModule,
+    MatIconModule,
   ],
   providers: [],
   templateUrl: "./selector-institucion.component.html",

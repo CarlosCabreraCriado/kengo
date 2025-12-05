@@ -1,135 +1,134 @@
 @switch (data.tipo) {
   <!-- Tipo Informativo -->
   @case ("informativo") {
-    <h1 mat-dialog-title>
-      {{ data.titulo }}
-    </h1>
+    <div class="flex flex-col p-2">
+      <h1 mat-dialog-title class="!text-lg !font-semibold text-zinc-800">
+        {{ data.titulo }}
+      </h1>
 
-    <div mat-dialog-content>
-      <p>
-        {{ data.mensaje }}
-      </p>
-    </div>
-    <div mat-dialog-actions class="mt-0">
-      <button
-        mat-flat-button
-        class="daxa"
-        [mat-dialog-close]="true"
-        cdkFocusInitial
-      >
-        Ok
-      </button>
+      <div mat-dialog-content>
+        <p class="text-sm text-zinc-600">
+          {{ data.mensaje }}
+        </p>
+      </div>
+      <div mat-dialog-actions class="!mt-4 !justify-end">
+        <button
+          mat-flat-button
+          color="primary"
+          [mat-dialog-close]="true"
+          cdkFocusInitial
+        >
+          Ok
+        </button>
+      </div>
     </div>
   }
 
   <!-- Tipo Procesando -->
   @case ("procesando") {
-    <div class="d-flex flex-column justify-content-center">
-      <h1 mat-dialog-title class="text-center">
+    <div class="flex flex-col items-center justify-center p-4">
+      <h1 mat-dialog-title class="!text-center !text-lg !font-semibold text-zinc-800">
         {{ data.titulo }}
       </h1>
 
-      <div mat-dialog-content class="text-center">
-        <mat-spinner
-          class="mt-15 mr-auto mb-15 ml-auto text-center"
-        ></mat-spinner>
-        <p>
+      <div mat-dialog-content class="flex flex-col items-center">
+        <mat-spinner class="my-4"></mat-spinner>
+        <p class="text-center text-sm text-zinc-600">
           {{ data.mensaje }}
         </p>
       </div>
     </div>
   }
 
+  <!-- Tipo Web -->
   @case ("web") {
-    <div class="d-flex flex-row">
-      <div class="mr-15">
-        <i class="material-symbols-outlined icono-web"> public </i>
+    <div class="flex flex-row gap-4 p-2">
+      <div class="flex shrink-0 items-start pt-1">
+        <mat-icon class="material-symbols-outlined !text-5xl text-blue-500">
+          public
+        </mat-icon>
       </div>
-      <div>
-        <h1 mat-dialog-title>
+      <div class="flex flex-col">
+        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p>
+          <p class="text-sm text-zinc-600">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="mt-15">
-          <button mat-flat-button class="daxa" [mat-dialog-close]="true">
-            Sí, ir a la página
-          </button>
-
-          <button mat-flat-button [mat-dialog-close]="false" cdkFocusInitial>
+        <div mat-dialog-actions class="!mt-4 !justify-end !gap-2">
+          <button mat-stroked-button [mat-dialog-close]="false" cdkFocusInitial>
             Cancelar
+          </button>
+          <button mat-flat-button color="primary" [mat-dialog-close]="true">
+            Si, ir a la pagina
           </button>
         </div>
       </div>
     </div>
   }
-  <!-- Tipo Warning Confirmación -->
+
+  <!-- Tipo Confirmacion -->
   @case ("confirmacion") {
-    <div class="d-flex flex-row">
-      <div class="mr-15">
-        <img
-          src="assets/iconos/warning.webp"
-          alt="warning"
-          class="warning-icon"
-        />
+    <div class="flex flex-row gap-4 p-2">
+      <div class="flex shrink-0 items-start pt-1">
+        <mat-icon class="material-symbols-outlined !text-5xl text-amber-500">
+          warning
+        </mat-icon>
       </div>
-      <div>
-        <h1 mat-dialog-title>
+      <div class="flex flex-col">
+        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p>
+          <p class="text-sm text-zinc-600">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="mt-15">
+        <div mat-dialog-actions class="!mt-4 !justify-end !gap-2">
           <button
-            mat-flat-button
-            class="daxa"
+            mat-stroked-button
             [mat-dialog-close]="false"
             cdkFocusInitial
           >
             Cancelar
           </button>
-          <button mat-flat-button [mat-dialog-close]="true" cdkFocusInitial>
-            Sí, estoy seguro
+          <button mat-flat-button color="warn" [mat-dialog-close]="true">
+            Si, estoy seguro
           </button>
         </div>
       </div>
     </div>
   }
 
-  <!-- Tipo Warning Confirmación -->
+  <!-- Tipo Link -->
   @case ("link") {
-    <div class="d-flex flex-row justify-center pr-5">
-      <div class="mr-15">
-        <img
-          src="assets/iconos/warning.webp"
-          alt="warning"
-          class="warning-icon"
-        />
+    <div class="flex flex-row gap-4 p-2">
+      <div class="flex shrink-0 items-start pt-1">
+        <mat-icon class="material-symbols-outlined !text-5xl text-amber-500">
+          warning
+        </mat-icon>
       </div>
-      <div>
-        <h1 mat-dialog-title>
+      <div class="flex flex-col">
+        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p>
+          <p class="text-sm text-zinc-600">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="mt-15">
+        <div mat-dialog-actions class="!mt-4 !justify-end">
           <button
             mat-flat-button
+            color="primary"
             routerLink="{{ data.routerLink }}"
             [mat-dialog-close]="true"
           >
@@ -140,31 +139,29 @@
     </div>
   }
 
-  <!-- Tipo Warning Confirmación -->
+  <!-- Tipo Warning -->
   @case ("warning") {
-    <div class="d-flex flex-row">
-      <div class="mr-15">
-        <img
-          src="assets/images/icons/warning.webp"
-          alt="warning"
-          class="warning-icon"
-        />
+    <div class="flex flex-row gap-4 p-2">
+      <div class="flex shrink-0 items-start pt-1">
+        <mat-icon class="material-symbols-outlined !text-5xl text-amber-500">
+          warning
+        </mat-icon>
       </div>
-      <div>
-        <h1 mat-dialog-title>
+      <div class="flex flex-col">
+        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p>
+          <p class="text-sm text-zinc-600">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="mt-15">
+        <div mat-dialog-actions class="!mt-4 !justify-end">
           <button
             mat-flat-button
-            class="daxa"
+            color="primary"
             [mat-dialog-close]="false"
             cdkFocusInitial
           >
@@ -177,29 +174,27 @@
 
   <!-- Tipo ERROR -->
   @case ("error") {
-    <div class="d-flex flex-row">
-      <div class="mr-15">
-        <img
-          src="assets/images/icons/error.webp"
-          alt="error"
-          class="warning-icon"
-        />
+    <div class="flex flex-row gap-4 p-2">
+      <div class="flex shrink-0 items-start pt-1">
+        <mat-icon class="material-symbols-outlined !text-5xl text-red-500">
+          error
+        </mat-icon>
       </div>
-      <div>
-        <h1 mat-dialog-title>
+      <div class="flex flex-col">
+        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p>
+          <p class="text-sm text-zinc-600">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="mt-15">
+        <div mat-dialog-actions class="!mt-4 !justify-end">
           <button
             mat-flat-button
-            class="daxa"
+            color="primary"
             [mat-dialog-close]="false"
             cdkFocusInitial
           >
@@ -210,27 +205,29 @@
     </div>
   }
 
-  <!-- Tipo ERROR -->
+  <!-- Tipo Exito -->
   @case ("exito") {
-    <div class="flex flex-row justify-center p-4">
-      <div class="">
-        <img src="assets/iconos/exito.webp" alt="error" class="warning-icon" />
+    <div class="flex flex-row gap-4 p-4">
+      <div class="flex shrink-0 items-start pt-1">
+        <mat-icon class="material-symbols-outlined !text-5xl text-green-500">
+          check_circle
+        </mat-icon>
       </div>
-      <div>
-        <h1 mat-dialog-title>
+      <div class="flex flex-col">
+        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p>
+          <p class="text-sm text-zinc-600">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions>
+        <div mat-dialog-actions class="!mt-4 !justify-end">
           <button
             mat-flat-button
-            class="daxa"
+            color="primary"
             [mat-dialog-close]="false"
             cdkFocusInitial
           >
@@ -241,4 +238,3 @@
     </div>
   }
 }
-<!-- Fin Switch -->

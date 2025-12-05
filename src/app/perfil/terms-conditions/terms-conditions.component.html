@@ -1,72 +1,70 @@
-<div class="mt-5 block text-zinc-700">
-  <span class="block w-full pb-4 text-center font-bold text-zinc-800">
-    AVISO LEGAL
-  </span>
-
-  <p>
-    En cumplimiento del artículo 10 de la Ley 34/2002, del 11 de julio, de
-    servicios de la Sociedad de la Información y Comercio Electrónico (LSSICE),
-    Kengo, facilita a continuación sus datos de contacto e información general.
-  </p>
-
-  <span class="title fw-medium d-block"> Denominación social: </span>
-
-  <p>KENGO</p>
-
-  <span class="title fw-medium d-block">Número de identificación fiscal: </span>
-
-  <p>G-***********</p>
-
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    Domicilio social:</span
+<div class="flex flex-col">
+  <!-- Header -->
+  <div
+    class="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3"
   >
+    <h2 class="text-lg font-bold text-zinc-800">Términos y Condiciones</h2>
+    <button mat-icon-button (click)="cerrar()" aria-label="Cerrar">
+      <mat-icon class="material-symbols-outlined">close</mat-icon>
+    </button>
+  </div>
 
-  <p></p>
+  <!-- Content -->
+  <div class="max-h-[70vh] overflow-y-auto p-4 text-zinc-700">
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">Aviso Legal</h3>
+      <p class="text-sm leading-relaxed">
+        En cumplimiento del artículo 10 de la Ley 34/2002, del 11 de julio, de
+        servicios de la Sociedad de la Información y Comercio Electrónico (LSSICE),
+        Kengo, facilita a continuación sus datos de contacto e información general.
+      </p>
+    </section>
 
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    Correo electrónico:
-  </span>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">Datos de la Organización</h3>
+      <div class="space-y-2 text-sm leading-relaxed">
+        <p><strong>Denominación social:</strong> KENGO</p>
+        <p><strong>NIF:</strong> G-***********</p>
+        <p><strong>Correo electrónico:</strong> info&#64;kengo.com</p>
+        <p><strong>Teléfono:</strong> +34 *** *** ***</p>
+        <p>
+          <strong>Datos registrales:</strong> Inscrita en el Registro de Fundaciones
+          de Competencia Estatal con el número ***.
+        </p>
+      </div>
+    </section>
 
-  <p>info&#64;kengo.com</p>
+    <section class="mb-6">
+      <h3 class="mb-2 font-bold text-zinc-800">
+        Términos Legales y Condiciones Generales de Uso
+      </h3>
+      <p class="text-sm leading-relaxed">
+        Este sitio web ha sido creado por KENGO con carácter informativo y para uso
+        personal de los usuarios. A través de las Condiciones Generales de uso, se
+        pretende regular el acceso y uso de este sitio web, así como la relación
+        entre el sitio web y sus usuarios.
+      </p>
+      <p class="mt-2 text-sm leading-relaxed">
+        Accediendo a este sitio web se aceptan los siguientes términos y condiciones:
+        el acceso a este sitio web es responsabilidad exclusiva de los usuarios. El
+        simple acceso a este sitio web no supone entablar ningún tipo de relación
+        comercial entre KENGO y el usuario.
+      </p>
+      <p class="mt-2 text-sm leading-relaxed">
+        El acceso y la navegación en este sitio web supone aceptar y conocer las
+        advertencias legales, condiciones y términos de uso contenidas en ella.
+      </p>
+    </section>
+  </div>
 
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    Teléfono:
-  </span>
-
-  <p>+34 *** *** ***</p>
-
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    Datos registrales
-  </span>
-
-  <p>
-    Inscrita en el Registro de Fundaciones de Competencia Estatal con el número
-    ***.
-  </p>
-
-  <span class="block w-full py-4 text-center font-bold text-zinc-800">
-    TÉRMINOS LEGALES Y CONDICIONES GENERALES DE USO
-  </span>
-
-  <p>
-    Este sitio web ha sido creado por KENGO con carácter informativo y para uso
-    personal de los usuarios. A través de las Condiciones Generales de uso, se
-    pretende regular el acceso y uso de este sitio web, así como la relación
-    entre el sitio web y sus usuarios. Accediendo a este sitio web se aceptan
-    los siguientes términos y condiciones: el acceso a este sitio web es
-    responsabilidad exclusiva de los usuarios. El simple acceso a este sitio web
-    no supone entablar ningún tipo de relación comercial entre KENGO y el
-    usuario. El acceso y la navegación en este sitio web supone aceptar y
-    conocer las advertencias legales, condiciones y términos de uso contenidas
-    en ella.
-  </p>
-
-  <div class="mt-5 flex justify-center">
+  <!-- Footer -->
+  <div class="flex justify-end gap-2 border-t border-zinc-200 px-4 py-3">
     <a href="#" target="_blank">
-      <button mat-flat-button extended color="warn" class="m-auto block">
+      <button mat-stroked-button>
         <mat-icon class="material-symbols-outlined">download</mat-icon>
-        Descargar documento completo
+        Descargar PDF
       </button>
     </a>
+    <button mat-flat-button color="primary" (click)="cerrar()">Cerrar</button>
   </div>
 </div>

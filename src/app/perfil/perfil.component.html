@@ -1,110 +1,309 @@
-<mat-card class="tarjeta-kengo m-5 rounded-2xl">
-  <mat-card-content class="rounded-2xl">
-    <ul
-      class="mt-0 hidden w-full flex-row justify-around gap-2 overflow-x-scroll pl-0 md:flex"
-    >
-      <li class="inline-block">
+<section class="flex h-full w-full flex-col overflow-y-auto pb-24 md:pb-6">
+  <!-- Header sticky -->
+  <header
+    class="sticky top-0 z-40 mb-6 w-full bg-gradient-to-b from-white/95 via-white/90 to-transparent pt-4 pb-2 backdrop-blur-md"
+  >
+    <div class="mx-auto max-w-7xl px-4">
+      <div class="flex items-center gap-2">
         <button
-          routerLink="/inicio/perfil"
-          matButton="outlined"
-          mat-button
-          class="whitespace-nowrap"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
+          mat-icon-button
+          class="!h-10 !w-10 shrink-0"
+          aria-label="Volver al inicio"
+          routerLink="/inicio"
         >
-          Ajustes de cuenta
+          <mat-icon class="material-symbols-outlined text-zinc-600"
+            >arrow_back</mat-icon
+          >
         </button>
-      </li>
-
-      <li class="inline-block">
-        <button
-          routerLink="/inicio/perfil/change-password"
-          mat-button
-          routerLinkActive="active"
-          class="whitespace-nowrap"
-          matButton="outlined"
-          [routerLinkActiveOptions]="{ exact: true }"
-        >
-          Cambiar Contraseña
-        </button>
-      </li>
-
-      <li class="inline-block">
-        <button
-          matButton="outlined"
-          mat-button
-          routerLink="/inicio/perfil/terms-conditions"
-          mat-button
-          class="whitespace-nowrap"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-        >
-          Condiciones generales
-        </button>
-      </li>
-
-      <li class="inline-block">
-        <button
-          matButton="outlined"
-          routerLink="/inicio/perfil/privacy-policy"
-          mat-button
-          class="whitespace-nowrap"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-        >
-          Protección de datos
-        </button>
-      </li>
-    </ul>
-
-    <!-- Botón hamburguesa solo visible en móvil -->
-    <div class="absolute top-2 right-2 md:hidden">
-      <button
-        class="m-auto"
-        matFab
-        [matMenuTriggerFor]="mobileMenu"
-        aria-label="Menú de navegación"
-      >
-        <mat-icon class="material-symbols-outlined">menu</mat-icon>
-      </button>
+        <div>
+          <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">Mi Perfil</h1>
+          @if (usuario()) {
+            <p class="text-sm text-zinc-500">
+              {{ usuario()?.first_name }} {{ usuario()?.last_name }}
+            </p>
+          }
+        </div>
+      </div>
     </div>
+  </header>
 
-    <mat-menu #mobileMenu="matMenu">
-      <button
-        mat-menu-item
-        routerLink="/inicio/perfil"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        Ajustes de cuenta
-      </button>
-      <button
-        mat-menu-item
-        routerLink="/inicio/perfil/change-password"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        Cambiar Contraseña
-      </button>
-      <button
-        mat-menu-item
-        routerLink="/inicio/perfil/terms-conditions"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        Condiciones generales
-      </button>
-      <button
-        mat-menu-item
-        routerLink="/inicio/perfil/privacy-policy"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        Protección de datos
-      </button>
-    </mat-menu>
+  <!-- Contenido principal -->
+  <div class="mx-auto w-full max-w-7xl px-4">
+    @if (!formularioInicializado()) {
+      <div class="flex justify-center py-12">
+        <mat-spinner></mat-spinner>
+      </div>
+    } @else {
+      <mat-accordion class="perfil-accordion" displayMode="flat">
+      <!-- SECCIÓN 1: DATOS PERSONALES -->
+      <mat-expansion-panel [expanded]="true" class="tarjeta-kengo">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="flex items-center gap-2">
+            <mat-icon class="material-symbols-outlined text-primary"
+              >person</mat-icon
+            >
+            <span class="font-semibold">Datos Personales</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
 
-    <hr class="hidden text-zinc-300 md:block" />
-    <router-outlet></router-outlet>
-  </mat-card-content>
-</mat-card>
+        <div class="flex flex-row flex-wrap" [formGroup]="formularioUsuario">
+          <!-- AVATAR -->
+          <div
+            class="mb-5 flex w-full items-center justify-center px-3 sm:w-1/2"
+          >
+            <div
+              class="group relative aspect-square max-h-52 max-w-2xs cursor-pointer overflow-hidden rounded-full"
+              (click)="cambiarFotoPerfil()"
+              role="button"
+              aria-label="Cambiar foto de perfil"
+            >
+              @if (previewUrl() ?? url_perfil()) {
+                <img
+                  [src]="previewUrl() ?? url_perfil()!"
+                  class="aspect-square h-full w-full rounded-full object-cover"
+                  alt="Foto de perfil"
+                />
+              } @else {
+                <div
+                  class="foto-perfil flex aspect-square h-52 w-52 items-center justify-center rounded-full bg-zinc-300"
+                >
+                  <mat-icon
+                    class="material-symbols-outlined text-6xl text-zinc-500"
+                    >person</mat-icon
+                  >
+                </div>
+              }
+
+              <!-- Banda inferior -->
+              <div
+                class="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-black/60 py-2 text-center text-xs font-medium text-white"
+              >
+                <mat-icon class="material-symbols-outlined">photo_camera</mat-icon>
+              </div>
+
+              <!-- Overlay hover -->
+              <div
+                class="pointer-events-none absolute inset-0 hidden place-items-center rounded-full bg-black/40 text-white group-hover:grid"
+              >
+                <span class="rounded-full px-3 py-1 text-sm font-medium"
+                  >Cambiar</span
+                >
+              </div>
+
+              <!-- Spinner subiendo -->
+              @if (subiendoAvatar()) {
+                <div
+                  class="absolute inset-0 grid place-items-center rounded-full bg-black/50"
+                >
+                  <mat-spinner diameter="40"></mat-spinner>
+                </div>
+              }
+
+              <input
+                #fileInput
+                type="file"
+                accept="image/*"
+                class="hidden"
+                (change)="onArchivoSeleccionado($event)"
+              />
+            </div>
+          </div>
+
+          <!-- NOMBRE Y APELLIDOS -->
+          <div class="flex w-full flex-col justify-center px-3 sm:w-1/2">
+            <mat-form-field appearance="outline" class="mb-2 w-full">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="first_name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="mb-2 w-full">
+              <mat-label>Apellidos</mat-label>
+              <input matInput formControlName="last_name" />
+            </mat-form-field>
+          </div>
+
+          <!-- TELÉFONO Y EMAIL -->
+          <div class="w-full px-3 sm:w-1/2">
+            <mat-form-field appearance="outline" class="mb-2 w-full">
+              <mat-label>Teléfono</mat-label>
+              <input matInput formControlName="telefono" />
+            </mat-form-field>
+          </div>
+
+          <div class="w-full px-3 sm:w-1/2">
+            <mat-form-field appearance="outline" class="mb-2 w-full">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" />
+              <mat-icon matSuffix class="material-symbols-outlined text-zinc-400"
+                >lock</mat-icon
+              >
+            </mat-form-field>
+          </div>
+
+          <!-- DIRECCIÓN Y CÓDIGO POSTAL -->
+          <div class="w-full px-3 sm:w-1/2">
+            <mat-form-field appearance="outline" class="mb-2 w-full">
+              <mat-label>Dirección</mat-label>
+              <input matInput formControlName="direccion" />
+            </mat-form-field>
+          </div>
+
+          <div class="w-full px-3 sm:w-1/2">
+            <mat-form-field appearance="outline" class="mb-2 w-full">
+              <mat-label>Código Postal</mat-label>
+              <input matInput formControlName="postal" maxlength="5" />
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- BOTÓN GUARDAR -->
+        <div class="mt-4 flex justify-end px-3">
+          <button
+            mat-flat-button
+            color="warn"
+            [disabled]="!formularioCambiado() || formularioUsuario.invalid"
+            (click)="guardarCambios()"
+          >
+            <mat-icon class="material-symbols-outlined">save</mat-icon>
+            Guardar cambios
+          </button>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- SECCIÓN 2: SEGURIDAD -->
+      <mat-expansion-panel class="tarjeta-kengo">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="flex items-center gap-2">
+            <mat-icon class="material-symbols-outlined text-primary"
+              >lock</mat-icon
+            >
+            <span class="font-semibold">Seguridad</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div [formGroup]="formularioPassword" class="space-y-4">
+          <p class="mb-4 text-sm text-zinc-600">
+            Cambia tu contraseña para mantener tu cuenta segura.
+          </p>
+
+          <!-- Contraseña actual -->
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Contraseña actual</mat-label>
+            <input
+              matInput
+              formControlName="currentPassword"
+              [type]="hideCurrentPassword() ? 'password' : 'text'"
+            />
+            <button
+              type="button"
+              mat-icon-button
+              matSuffix
+              (click)="hideCurrentPassword.set(!hideCurrentPassword())"
+            >
+              <mat-icon class="material-symbols-outlined">
+                {{ hideCurrentPassword() ? 'visibility_off' : 'visibility' }}
+              </mat-icon>
+            </button>
+          </mat-form-field>
+
+          <div class="flex flex-col gap-4 sm:flex-row">
+            <!-- Nueva contraseña -->
+            <mat-form-field appearance="outline" class="w-full sm:w-1/2">
+              <mat-label>Nueva contraseña</mat-label>
+              <input
+                matInput
+                formControlName="newPassword"
+                [type]="hideNewPassword() ? 'password' : 'text'"
+              />
+              <button
+                type="button"
+                mat-icon-button
+                matSuffix
+                (click)="hideNewPassword.set(!hideNewPassword())"
+              >
+                <mat-icon class="material-symbols-outlined">
+                  {{ hideNewPassword() ? 'visibility_off' : 'visibility' }}
+                </mat-icon>
+              </button>
+              <mat-hint>Mínimo 8 caracteres</mat-hint>
+            </mat-form-field>
+
+            <!-- Confirmar contraseña -->
+            <mat-form-field appearance="outline" class="w-full sm:w-1/2">
+              <mat-label>Confirmar contraseña</mat-label>
+              <input
+                matInput
+                formControlName="confirmPassword"
+                [type]="hideConfirmPassword() ? 'password' : 'text'"
+              />
+              <button
+                type="button"
+                mat-icon-button
+                matSuffix
+                (click)="hideConfirmPassword.set(!hideConfirmPassword())"
+              >
+                <mat-icon class="material-symbols-outlined">
+                  {{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}
+                </mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+
+          <!-- Botón cambiar -->
+          <div class="flex justify-end">
+            <button
+              mat-flat-button
+              color="warn"
+              [disabled]="formularioPassword.invalid || cambiandoPassword()"
+              (click)="cambiarPassword()"
+            >
+              @if (cambiandoPassword()) {
+                <mat-spinner diameter="20" class="mr-2"></mat-spinner>
+              }
+              Cambiar contraseña
+            </button>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- SECCIÓN 3: LEGAL -->
+      <mat-expansion-panel class="tarjeta-kengo">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="flex items-center gap-2">
+            <mat-icon class="material-symbols-outlined text-primary"
+              >description</mat-icon
+            >
+            <span class="font-semibold">Legal</span>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="space-y-4">
+          <p class="text-sm text-zinc-600">
+            Consulta nuestras políticas y términos de uso.
+          </p>
+
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <button
+              mat-stroked-button
+              class="flex-1"
+              (click)="abrirPrivacyPolicy()"
+            >
+              <mat-icon class="material-symbols-outlined">policy</mat-icon>
+              Política de Privacidad
+            </button>
+
+            <button
+              mat-stroked-button
+              class="flex-1"
+              (click)="abrirTermsConditions()"
+            >
+              <mat-icon class="material-symbols-outlined">gavel</mat-icon>
+              Términos y Condiciones
+            </button>
+          </div>
+        </div>
+      </mat-expansion-panel>
+      </mat-accordion>
+    }
+  </div>
+</section>

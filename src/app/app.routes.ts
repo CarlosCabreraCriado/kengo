@@ -25,10 +25,6 @@ import { RutinasComponent } from './rutinas/rutinas.component';
 
 // Perfil
 import { PerfilComponent } from './perfil/perfil.component';
-import { ModificarPerfilComponent } from './perfil/modificar-perfil/modificar-perfil.component';
-import { CambiarPasswordComponent } from './perfil/cambiar-password/cambiar-password.component';
-import { PrivacyPolicyComponent } from './perfil/privacy-policy/privacy-policy.component';
-import { TermsConditionsComponent } from './perfil/terms-conditions/terms-conditions.component';
 
 export const routes: Routes = [
   // Redirección raíz
@@ -87,15 +83,5 @@ export const routes: Routes = [
 
   { path: 'fisios', component: FisiosComponent, canActivate: [AuthGuard] },
   { path: 'categorias', component: CategoriasComponent, canActivate: [AuthGuard] },
-  {
-    path: 'perfil',
-    component: PerfilComponent,
-    canActivate: [AuthGuard],
-    children: [
-      { path: '', component: ModificarPerfilComponent },
-      { path: 'cambiar-password', component: CambiarPasswordComponent },
-      { path: 'privacy-policy', component: PrivacyPolicyComponent },
-      { path: 'terms-conditions', component: TermsConditionsComponent },
-    ],
-  },
+  { path: 'perfil', component: PerfilComponent, canActivate: [AuthGuard] },
 ];

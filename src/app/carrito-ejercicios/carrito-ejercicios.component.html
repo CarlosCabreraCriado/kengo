@@ -39,11 +39,11 @@
             <img
               [src]="perfilUrl()"
               alt="Avatar del paciente"
-              class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-white shadow-md"
+              class="h-14 w-14 shrink-0 rounded-full object-cover shadow-md ring-2 ring-white"
             />
           } @else {
             <div
-              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zinc-100 ring-2 ring-white shadow-md"
+              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zinc-100 shadow-md ring-2 ring-white"
             >
               <mat-icon
                 class="material-symbols-outlined !text-3xl text-zinc-400"
@@ -101,9 +101,7 @@
                     <span class="text-zinc-400"> • {{ it.duracion_seg }}s</span>
                   }
                   @if (it.veces_dia) {
-                    <span class="text-zinc-400">
-                      • {{ it.veces_dia }}/día</span
-                    >
+                    <span class="text-zinc-400"> • {{ it.veces_dia }}/día</span>
                   }
                 </p>
               </div>
@@ -134,11 +132,13 @@
           >
             <!-- Botón añadir ejercicio cuando no hay ejercicios -->
             <button
-              class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#e75c3e]/10 text-[#e75c3e] transition-all hover:bg-[#e75c3e]/20 hover:scale-105"
+              class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#e75c3e]/10 text-[#e75c3e] transition-all hover:scale-105 hover:bg-[#e75c3e]/20"
               (click)="irAEjercicios()"
               aria-label="Añadir ejercicio"
             >
-              <mat-icon class="material-symbols-outlined !text-4xl">add</mat-icon>
+              <mat-icon class="material-symbols-outlined !text-4xl"
+                >add</mat-icon
+              >
             </button>
             <p class="text-sm font-medium text-zinc-600">
               No hay ejercicios en el plan
@@ -169,12 +169,12 @@
           <button
             class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="!svc.paciente()"
-            (click)="cargarPlantilla()"
+            (click)="cargarRutina()"
           >
             <mat-icon class="material-symbols-outlined !text-xl text-zinc-500"
               >bookmarks</mat-icon
             >
-            <span>Plantilla</span>
+            <span>Rutinas</span>
           </button>
 
           <button
@@ -200,30 +200,30 @@
         (click)="toggle()"
         aria-label="Abrir carrito de ejercicios"
       >
-      <div class="tab-carrito__contenido">
-        @if (perfilUrl()) {
-          <img
-            [src]="perfilUrl()"
-            alt=""
-            class="h-10 w-10 rounded-full object-cover ring-2 ring-white"
-          />
-        } @else {
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-white/90"
-          >
-            <mat-icon
-              class="material-symbols-outlined !text-2xl text-[#e75c3e]"
-              aria-hidden="true"
-              >personal_injury</mat-icon
+        <div class="tab-carrito__contenido">
+          @if (perfilUrl()) {
+            <img
+              [src]="perfilUrl()"
+              alt=""
+              class="h-10 w-10 rounded-full object-cover ring-2 ring-white"
+            />
+          } @else {
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-white/90"
             >
-          </div>
-        }
-        @if (total() > 0) {
-          <span class="tab-carrito__badge">{{ total() }}</span>
-        }
-      </div>
-      <span class="tab-carrito__label">Plan</span>
-    </button>
+              <mat-icon
+                class="material-symbols-outlined !text-2xl text-[#e75c3e]"
+                aria-hidden="true"
+                >personal_injury</mat-icon
+              >
+            </div>
+          }
+          @if (total() > 0) {
+            <span class="tab-carrito__badge">{{ total() }}</span>
+          }
+        </div>
+        <span class="tab-carrito__label">Plan</span>
+      </button>
     }
   </mat-sidenav-content>
 </mat-sidenav-container>

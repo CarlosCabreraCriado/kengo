@@ -2,6 +2,16 @@
   <!-- Header con logo -->
   <header class="inicio-header">
     <img src="assets/logo-texto.svg" alt="Kengo" class="logo" />
+
+    <!-- Botón logout -->
+    <button
+      mat-icon-button
+      class="logout-btn"
+      aria-label="Cerrar sesión"
+      (click)="confirmarLogout()"
+    >
+      <mat-icon class="material-symbols-outlined">logout</mat-icon>
+    </button>
   </header>
 
   <!-- Carousel de cards -->

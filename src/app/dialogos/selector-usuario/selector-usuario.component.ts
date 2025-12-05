@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { TablaUsuariosComponent } from "../../tabla-usuarios/tabla-usuarios.component";
 import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
 
 import {
   MatDialogRef,
@@ -22,6 +23,7 @@ import {
     MatDialogActions,
     MatDialogClose,
     MatButtonModule,
+    MatIconModule,
   ],
   providers: [],
   templateUrl: "./selector-usuario.component.html",
