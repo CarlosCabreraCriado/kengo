@@ -27,7 +27,10 @@
   <!-- Tipo Procesando -->
   @case ("procesando") {
     <div class="flex flex-col items-center justify-center p-4">
-      <h1 mat-dialog-title class="!text-center !text-lg !font-semibold text-zinc-800">
+      <h1
+        mat-dialog-title
+        class="!text-center !text-lg !font-semibold text-zinc-800"
+      >
         {{ data.titulo }}
       </h1>
 
@@ -42,24 +45,34 @@
 
   <!-- Tipo Web -->
   @case ("web") {
-    <div class="flex flex-row gap-4 p-2">
-      <div class="flex shrink-0 items-start pt-1">
-        <mat-icon class="material-symbols-outlined !text-5xl text-blue-500">
+    <div
+      class="flex flex-col items-center gap-2 p-2 sm:flex-row sm:items-start sm:gap-4"
+    >
+      <div
+        class="flex shrink-0 items-center justify-center sm:items-start sm:pt-1"
+      >
+        <mat-icon class="material-symbols-outlined !text-5xl !text-blue-500">
           public
         </mat-icon>
       </div>
-      <div class="flex flex-col">
-        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
+      <div class="flex w-full flex-col">
+        <h1
+          mat-dialog-title
+          class="!mb-2 !text-center !text-lg !font-semibold text-zinc-800 sm:!text-left"
+        >
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p class="text-sm text-zinc-600">
+          <p class="text-center text-sm text-zinc-600 sm:text-left">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="!mt-4 !justify-end !gap-2">
+        <div
+          mat-dialog-actions
+          class="!mt-4 !flex-wrap !justify-center !gap-2 sm:!justify-end"
+        >
           <button mat-stroked-button [mat-dialog-close]="false" cdkFocusInitial>
             Cancelar
           </button>
@@ -73,29 +86,35 @@
 
   <!-- Tipo Confirmacion -->
   @case ("confirmacion") {
-    <div class="flex flex-row gap-4 p-2">
-      <div class="flex shrink-0 items-start pt-1">
-        <mat-icon class="material-symbols-outlined !text-5xl text-amber-500">
+    <div
+      class="flex flex-col items-center gap-2 p-2 sm:flex-row sm:items-start sm:gap-4"
+    >
+      <div
+        class="flex shrink-0 items-center justify-center sm:items-start sm:pt-1"
+      >
+        <mat-icon class="material-symbols-outlined !text-5xl !text-amber-500">
           warning
         </mat-icon>
       </div>
-      <div class="flex flex-col">
-        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
+      <div class="flex w-full flex-col">
+        <h1
+          mat-dialog-title
+          class="!mb-2 !text-center !text-lg !font-semibold text-zinc-800 sm:!text-left"
+        >
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p class="text-sm text-zinc-600">
+          <p class="text-center text-sm text-zinc-600 sm:text-left">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="!mt-4 !justify-end !gap-2">
-          <button
-            mat-stroked-button
-            [mat-dialog-close]="false"
-            cdkFocusInitial
-          >
+        <div
+          mat-dialog-actions
+          class="!mt-4 !flex-wrap !justify-center !gap-2 sm:!justify-end"
+        >
+          <button mat-stroked-button [mat-dialog-close]="false" cdkFocusInitial>
             Cancelar
           </button>
           <button mat-flat-button color="warn" [mat-dialog-close]="true">
@@ -108,24 +127,31 @@
 
   <!-- Tipo Link -->
   @case ("link") {
-    <div class="flex flex-row gap-4 p-2">
-      <div class="flex shrink-0 items-start pt-1">
-        <mat-icon class="material-symbols-outlined !text-5xl text-amber-500">
+    <div
+      class="flex flex-col items-center gap-2 p-2 sm:flex-row sm:items-start sm:gap-4"
+    >
+      <div
+        class="flex shrink-0 items-center justify-center sm:items-start sm:pt-1"
+      >
+        <mat-icon class="material-symbols-outlined !text-5xl !text-amber-500">
           warning
         </mat-icon>
       </div>
-      <div class="flex flex-col">
-        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
+      <div class="flex w-full flex-col">
+        <h1
+          mat-dialog-title
+          class="!mb-2 !text-center !text-lg !font-semibold text-zinc-800 sm:!text-left"
+        >
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p class="text-sm text-zinc-600">
+          <p class="text-center text-sm text-zinc-600 sm:text-left">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="!mt-4 !justify-end">
+        <div mat-dialog-actions class="!mt-4 !justify-center sm:!justify-end">
           <button
             mat-flat-button
             color="primary"
@@ -141,24 +167,31 @@
 
   <!-- Tipo Warning -->
   @case ("warning") {
-    <div class="flex flex-row gap-4 p-2">
-      <div class="flex shrink-0 items-start pt-1">
-        <mat-icon class="material-symbols-outlined !text-5xl text-amber-500">
+    <div
+      class="flex flex-col items-center gap-2 p-2 sm:flex-row sm:items-start sm:gap-4"
+    >
+      <div
+        class="flex shrink-0 items-center justify-center sm:items-start sm:pt-1"
+      >
+        <mat-icon class="material-symbols-outlined !text-5xl !text-amber-500">
           warning
         </mat-icon>
       </div>
-      <div class="flex flex-col">
-        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
+      <div class="flex w-full flex-col">
+        <h1
+          mat-dialog-title
+          class="!mb-2 !text-center !text-lg !font-semibold text-zinc-800 sm:!text-left"
+        >
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p class="text-sm text-zinc-600">
+          <p class="text-center text-sm text-zinc-600 sm:text-left">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="!mt-4 !justify-end">
+        <div mat-dialog-actions class="!mt-4 !justify-center sm:!justify-end">
           <button
             mat-flat-button
             color="primary"
@@ -174,24 +207,31 @@
 
   <!-- Tipo ERROR -->
   @case ("error") {
-    <div class="flex flex-row gap-4 p-2">
-      <div class="flex shrink-0 items-start pt-1">
-        <mat-icon class="material-symbols-outlined !text-5xl text-red-500">
+    <div
+      class="flex flex-col items-center gap-2 p-2 sm:flex-row sm:items-start sm:gap-4"
+    >
+      <div
+        class="flex shrink-0 items-center justify-center sm:items-start sm:pt-1"
+      >
+        <mat-icon class="material-symbols-outlined !text-5xl !text-red-500">
           error
         </mat-icon>
       </div>
-      <div class="flex flex-col">
-        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
+      <div class="flex w-full flex-col">
+        <h1
+          mat-dialog-title
+          class="!mb-2 !text-center !text-lg !font-semibold text-zinc-800 sm:!text-left"
+        >
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p class="text-sm text-zinc-600">
+          <p class="text-center text-sm text-zinc-600 sm:text-left">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="!mt-4 !justify-end">
+        <div mat-dialog-actions class="!mt-4 !justify-center sm:!justify-end">
           <button
             mat-flat-button
             color="primary"
@@ -207,24 +247,31 @@
 
   <!-- Tipo Exito -->
   @case ("exito") {
-    <div class="flex flex-row gap-4 p-4">
-      <div class="flex shrink-0 items-start pt-1">
-        <mat-icon class="material-symbols-outlined !text-5xl text-green-500">
+    <div
+      class="flex flex-col items-center gap-2 p-4 sm:flex-row sm:items-start sm:gap-4"
+    >
+      <div
+        class="flex shrink-0 items-center justify-center sm:items-start sm:pt-1"
+      >
+        <mat-icon class="material-symbols-outlined !text-5xl !text-green-500">
           check_circle
         </mat-icon>
       </div>
-      <div class="flex flex-col">
-        <h1 mat-dialog-title class="!mb-2 !text-lg !font-semibold text-zinc-800">
+      <div class="flex w-full flex-col">
+        <h1
+          mat-dialog-title
+          class="!mb-2 !text-center !text-lg !font-semibold text-zinc-800 sm:!text-left"
+        >
           {{ data.titulo }}
         </h1>
 
         <div mat-dialog-content>
-          <p class="text-sm text-zinc-600">
+          <p class="text-center text-sm text-zinc-600 sm:text-left">
             {{ data.mensaje }}
           </p>
         </div>
 
-        <div mat-dialog-actions class="!mt-4 !justify-end">
+        <div mat-dialog-actions class="!mt-4 !justify-center sm:!justify-end">
           <button
             mat-flat-button
             color="primary"

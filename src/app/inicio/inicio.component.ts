@@ -176,11 +176,26 @@ export class InicioComponent implements OnDestroy {
       }
 
       this.scrollTimeout = setTimeout(() => {
-        const scrollLeft = carousel.scrollLeft;
-        const cardWidth = carousel.offsetWidth * 0.9;
-        const gap = 16;
-        const index = Math.round(scrollLeft / (cardWidth + gap));
-        this.currentIndex.set(Math.max(0, Math.min(index, this.cards().length - 1)));
+        // Buscar qué card está más cerca del centro del viewport
+        const cards = carousel.querySelectorAll('.card');
+        const carouselRect = carousel.getBoundingClientRect();
+        const carouselCenter = carouselRect.left + carouselRect.width / 2;
+
+        let closestIndex = 0;
+        let closestDistance = Infinity;
+
+        cards.forEach((card: Element, index: number) => {
+          const cardRect = card.getBoundingClientRect();
+          const cardCenter = cardRect.left + cardRect.width / 2;
+          const distance = Math.abs(carouselCenter - cardCenter);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+          }
+        });
+
+        this.currentIndex.set(closestIndex);
       }, 50);
     });
   }
@@ -189,14 +204,20 @@ export class InicioComponent implements OnDestroy {
     const carousel = this.carouselRef()?.nativeElement;
     if (!carousel) return;
 
-    const cardWidth = carousel.offsetWidth * 0.9;
-    const gap = 16;
-    const scrollPosition = index * (cardWidth + gap);
+    const cards = carousel.querySelectorAll('.card');
+    if (cards[index]) {
+      const card = cards[index] as HTMLElement;
 
-    carousel.scrollTo({
-      left: scrollPosition,
-      behavior: 'smooth',
-    });
+      // Calcular el scroll necesario para centrar la card
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const carouselVisibleCenter = carousel.offsetWidth / 2;
+      const scrollPosition = cardCenter - carouselVisibleCenter;
+
+      carousel.scrollTo({
+        left: scrollPosition,
+        behavior: 'smooth',
+      });
+    }
 
     this.currentIndex.set(index);
   }

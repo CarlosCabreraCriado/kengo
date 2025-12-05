@@ -69,8 +69,7 @@
   -webkit-overflow-scrolling: touch;
 
   // Padding para centrar la primera y última card
-  padding-left: 5%;
-  padding-right: 5%;
+  padding: 2rem 5%; // Padding vertical para que la sombra tenga espacio dentro del scroll
   box-sizing: border-box;
 
   // Ocultar scrollbar
@@ -90,8 +89,8 @@
   position: relative;
   border-radius: 1.5rem;
   overflow: hidden;
-  height: 100%;
-  max-height: 100%;
+  height: calc(100% - 3rem); // Dejar espacio para la sombra (1.5rem arriba + 1.5rem abajo)
+  max-height: calc(100% - 3rem);
   cursor: pointer;
   transition:
     transform 0.3s ease,
@@ -310,7 +309,18 @@
 // ============================================
 
 .card-animated {
-  background: linear-gradient(145deg, #ffede8 0%, #fef8f7 50%, #f3eceb 100%);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 237, 232, 0.7) 0%,
+    rgba(254, 248, 247, 0.5) 50%,
+    rgba(243, 236, 235, 0.6) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 8px 32px rgba(231, 92, 62, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .animated-background {
@@ -321,41 +331,41 @@
   align-items: center;
   justify-content: center;
 
-  // Variables CSS para colores según estado (fondo claro)
-  --aurora-color-1: rgba(231, 92, 62, 0.25);
-  --aurora-color-2: rgba(239, 192, 72, 0.2);
-  --aurora-color-3: rgba(231, 92, 62, 0.15);
+  // Variables CSS para colores según estado (estilo glass)
+  --aurora-color-1: rgba(231, 92, 62, 0.4);
+  --aurora-color-2: rgba(239, 192, 72, 0.35);
+  --aurora-color-3: rgba(255, 180, 164, 0.3);
   --animation-duration: 8s;
 
-  // Estado: Pendientes - Colores coral/naranja más intensos, animación más rápida
+  // Estado: Pendientes - Colores coral/naranja vibrantes, animación más rápida
   &[data-state="pending"] {
-    --aurora-color-1: rgba(231, 92, 62, 0.35);
-    --aurora-color-2: rgba(255, 140, 100, 0.25);
-    --aurora-color-3: rgba(239, 192, 72, 0.2);
+    --aurora-color-1: rgba(231, 92, 62, 0.5);
+    --aurora-color-2: rgba(255, 120, 80, 0.4);
+    --aurora-color-3: rgba(239, 192, 72, 0.35);
     --animation-duration: 5s;
   }
 
-  // Estado: Completado - Colores dorados/verdes suaves, animación más lenta
+  // Estado: Completado - Colores dorados/verdes vibrantes, animación más lenta
   &[data-state="completed"] {
-    --aurora-color-1: rgba(239, 192, 72, 0.3);
-    --aurora-color-2: rgba(134, 239, 172, 0.25);
-    --aurora-color-3: rgba(167, 243, 208, 0.2);
+    --aurora-color-1: rgba(239, 192, 72, 0.5);
+    --aurora-color-2: rgba(134, 239, 172, 0.4);
+    --aurora-color-3: rgba(110, 231, 183, 0.35);
     --animation-duration: 12s;
   }
 
-  // Estado: Descanso - Colores grises/azulados suaves, animación muy lenta
+  // Estado: Descanso - Colores azulados suaves, animación muy lenta
   &[data-state="rest"] {
-    --aurora-color-1: rgba(148, 163, 184, 0.25);
-    --aurora-color-2: rgba(203, 213, 225, 0.2);
-    --aurora-color-3: rgba(226, 232, 240, 0.2);
+    --aurora-color-1: rgba(148, 163, 184, 0.35);
+    --aurora-color-2: rgba(165, 180, 200, 0.3);
+    --aurora-color-3: rgba(200, 210, 225, 0.25);
     --animation-duration: 15s;
   }
 
   // Estado: Cargando - Colores neutros con pulso
   &[data-state="loading"] {
-    --aurora-color-1: rgba(203, 213, 225, 0.25);
-    --aurora-color-2: rgba(226, 232, 240, 0.2);
-    --aurora-color-3: rgba(241, 245, 249, 0.2);
+    --aurora-color-1: rgba(200, 200, 210, 0.35);
+    --aurora-color-2: rgba(220, 220, 230, 0.3);
+    --aurora-color-3: rgba(230, 230, 240, 0.25);
     --animation-duration: 4s;
   }
 }
@@ -364,18 +374,23 @@
 .aurora-wave {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.8;
+  filter: blur(40px);
+  opacity: 0.9;
   animation: auroraFloat var(--animation-duration) ease-in-out infinite;
   transition:
     background 1.5s ease,
     opacity 1s ease;
+  mix-blend-mode: multiply;
 }
 
 .aurora-wave-1 {
   width: 120%;
   height: 60%;
-  background: radial-gradient(ellipse, var(--aurora-color-1) 0%, transparent 70%);
+  background: radial-gradient(
+    ellipse,
+    var(--aurora-color-1) 0%,
+    transparent 70%
+  );
   top: -20%;
   left: -10%;
   animation-delay: 0s;
@@ -384,7 +399,11 @@
 .aurora-wave-2 {
   width: 100%;
   height: 80%;
-  background: radial-gradient(ellipse, var(--aurora-color-2) 0%, transparent 70%);
+  background: radial-gradient(
+    ellipse,
+    var(--aurora-color-2) 0%,
+    transparent 70%
+  );
   bottom: -30%;
   right: -20%;
   animation-delay: calc(var(--animation-duration) * -0.33);
@@ -394,7 +413,11 @@
 .aurora-wave-3 {
   width: 80%;
   height: 50%;
-  background: radial-gradient(ellipse, var(--aurora-color-3) 0%, transparent 70%);
+  background: radial-gradient(
+    ellipse,
+    var(--aurora-color-3) 0%,
+    transparent 70%
+  );
   top: 30%;
   left: 20%;
   animation-delay: calc(var(--animation-duration) * -0.66);
@@ -407,29 +430,35 @@
   right: -5%;
   bottom: 0;
   z-index: 2;
-  width: 85%;
-  height: auto;
+  width: auto;
+  height: 100%;
   max-height: 95%;
   object-fit: contain;
-  object-position: right bottom;
-  filter: drop-shadow(0 5px 20px rgba(0, 0, 0, 0.15));
-  transition: transform 0.5s ease;
+  object-position: right center;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.2));
+  transition:
+    transform 0.5s ease,
+    filter 0.3s ease;
+  opacity: 0.6;
 
   .card:hover & {
     transform: scale(1.02) translateX(-2%);
+    filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.25)) invert(1);
   }
 }
 
-// Overlay especial para tarjeta animada
+// Overlay especial para tarjeta animada (glass effect)
 .card-overlay-animated {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    transparent 40%,
-    rgba(254, 248, 247, 0.6) 60%,
-    rgba(254, 248, 247, 0.92) 80%,
-    rgba(254, 248, 247, 0.98) 100%
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 30%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.3) 70%,
+    rgba(255, 255, 255, 0.6) 85%,
+    rgba(255, 255, 255, 0.85) 100%
   );
   z-index: 3;
 }
@@ -533,6 +562,7 @@
   justify-content: center;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(231, 92, 62, 0.3);
+  border: 2px solid #e75c3e;
 
   img {
     width: 100%;
