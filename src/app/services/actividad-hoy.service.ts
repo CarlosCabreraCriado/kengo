@@ -132,6 +132,26 @@ export class ActividadHoyService {
     return 0;
   });
 
+  // Progreso total del día (completados / total)
+  readonly progresoTotal = computed(() => {
+    const actividad = this.actividadHoy();
+    const total = actividad.reduce((acc, a) => acc + a.totalEjercicios, 0);
+    const completados = actividad.reduce((acc, a) => acc + a.completados, 0);
+    return { completados, total };
+  });
+
+  // Nombre del primer ejercicio pendiente
+  readonly primerEjercicioPendiente = computed<string | null>(() => {
+    const actividad = this.actividadHoy();
+    for (const plan of actividad) {
+      const pendiente = plan.ejerciciosHoy.find((e) => !e.completadoHoy);
+      if (pendiente) {
+        return pendiente.ejercicio?.nombre_ejercicio ?? 'Ejercicio';
+      }
+    }
+    return null;
+  });
+
   // === MÉTODOS ===
 
   /**

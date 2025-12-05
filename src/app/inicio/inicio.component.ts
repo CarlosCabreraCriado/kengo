@@ -29,6 +29,8 @@ interface CardOption {
   dynamicSubtitle?: Signal<string>;
   badgeCount?: Signal<number>;
   badgeType?: Signal<BadgeType>;
+  progreso?: Signal<{ completados: number; total: number }>;
+  siguienteEjercicio?: Signal<string | null>;
 }
 
 @Component({
@@ -47,6 +49,8 @@ export class InicioComponent implements OnDestroy {
   carouselRef = viewChild<ElementRef<HTMLDivElement>>('carousel');
 
   userRole = this.appService.rolUsuario;
+  userName = computed(() => this.appService.usuario()?.first_name ?? 'Usuario');
+  userAvatar = computed(() => this.appService.usuario()?.avatar_url ?? null);
 
   allCards: CardOption[] = [
     {
@@ -60,6 +64,8 @@ export class InicioComponent implements OnDestroy {
       dynamicSubtitle: this.actividadHoyService.subtituloDinamico,
       badgeCount: this.actividadHoyService.badgeCount,
       badgeType: this.actividadHoyService.badgeType,
+      progreso: this.actividadHoyService.progresoTotal,
+      siguienteEjercicio: this.actividadHoyService.primerEjercicioPendiente,
     },
     {
       id: 'ejercicios',
@@ -142,6 +148,14 @@ export class InicioComponent implements OnDestroy {
 
   getCardBadgeType(card: CardOption): BadgeType {
     return card.badgeType ? card.badgeType() : null;
+  }
+
+  getCardProgreso(card: CardOption): { completados: number; total: number } | null {
+    return card.progreso ? card.progreso() : null;
+  }
+
+  getCardSiguienteEjercicio(card: CardOption): string | null {
+    return card.siguienteEjercicio ? card.siguienteEjercicio() : null;
   }
 
   ngOnDestroy(): void {

@@ -142,7 +142,7 @@
   left: 0;
   right: 0;
   padding: 2rem;
-  z-index: 1;
+  z-index: 5;
 }
 
 .card-title {
@@ -230,7 +230,7 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  z-index: 10;
+  z-index: 15;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -302,5 +302,360 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+// ============================================
+// TARJETA ANIMADA - ACTIVIDAD DIARIA
+// ============================================
+
+.card-animated {
+  background: linear-gradient(145deg, #ffede8 0%, #fef8f7 50%, #f3eceb 100%);
+}
+
+.animated-background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Variables CSS para colores según estado (fondo claro)
+  --aurora-color-1: rgba(231, 92, 62, 0.25);
+  --aurora-color-2: rgba(239, 192, 72, 0.2);
+  --aurora-color-3: rgba(231, 92, 62, 0.15);
+  --animation-duration: 8s;
+
+  // Estado: Pendientes - Colores coral/naranja más intensos, animación más rápida
+  &[data-state="pending"] {
+    --aurora-color-1: rgba(231, 92, 62, 0.35);
+    --aurora-color-2: rgba(255, 140, 100, 0.25);
+    --aurora-color-3: rgba(239, 192, 72, 0.2);
+    --animation-duration: 5s;
+  }
+
+  // Estado: Completado - Colores dorados/verdes suaves, animación más lenta
+  &[data-state="completed"] {
+    --aurora-color-1: rgba(239, 192, 72, 0.3);
+    --aurora-color-2: rgba(134, 239, 172, 0.25);
+    --aurora-color-3: rgba(167, 243, 208, 0.2);
+    --animation-duration: 12s;
+  }
+
+  // Estado: Descanso - Colores grises/azulados suaves, animación muy lenta
+  &[data-state="rest"] {
+    --aurora-color-1: rgba(148, 163, 184, 0.25);
+    --aurora-color-2: rgba(203, 213, 225, 0.2);
+    --aurora-color-3: rgba(226, 232, 240, 0.2);
+    --animation-duration: 15s;
+  }
+
+  // Estado: Cargando - Colores neutros con pulso
+  &[data-state="loading"] {
+    --aurora-color-1: rgba(203, 213, 225, 0.25);
+    --aurora-color-2: rgba(226, 232, 240, 0.2);
+    --aurora-color-3: rgba(241, 245, 249, 0.2);
+    --animation-duration: 4s;
+  }
+}
+
+// Ondas de aurora
+.aurora-wave {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.8;
+  animation: auroraFloat var(--animation-duration) ease-in-out infinite;
+  transition:
+    background 1.5s ease,
+    opacity 1s ease;
+}
+
+.aurora-wave-1 {
+  width: 120%;
+  height: 60%;
+  background: radial-gradient(ellipse, var(--aurora-color-1) 0%, transparent 70%);
+  top: -20%;
+  left: -10%;
+  animation-delay: 0s;
+}
+
+.aurora-wave-2 {
+  width: 100%;
+  height: 80%;
+  background: radial-gradient(ellipse, var(--aurora-color-2) 0%, transparent 70%);
+  bottom: -30%;
+  right: -20%;
+  animation-delay: calc(var(--animation-duration) * -0.33);
+  animation-name: auroraFloat2;
+}
+
+.aurora-wave-3 {
+  width: 80%;
+  height: 50%;
+  background: radial-gradient(ellipse, var(--aurora-color-3) 0%, transparent 70%);
+  top: 30%;
+  left: 20%;
+  animation-delay: calc(var(--animation-duration) * -0.66);
+  animation-name: auroraFloat3;
+}
+
+// Imagen del bonsái
+.bonsai-image {
+  position: absolute;
+  right: -5%;
+  bottom: 0;
+  z-index: 2;
+  width: 85%;
+  height: auto;
+  max-height: 95%;
+  object-fit: contain;
+  object-position: right bottom;
+  filter: drop-shadow(0 5px 20px rgba(0, 0, 0, 0.15));
+  transition: transform 0.5s ease;
+
+  .card:hover & {
+    transform: scale(1.02) translateX(-2%);
+  }
+}
+
+// Overlay especial para tarjeta animada
+.card-overlay-animated {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 40%,
+    rgba(254, 248, 247, 0.6) 60%,
+    rgba(254, 248, 247, 0.92) 80%,
+    rgba(254, 248, 247, 0.98) 100%
+  );
+  z-index: 3;
+}
+
+// Texto oscuro para tarjeta con fondo claro
+.card-animated {
+  .card-title {
+    color: #1a1a1a;
+  }
+
+  .card-subtitle {
+    color: rgba(26, 26, 26, 0.7);
+  }
+}
+
+// Info adicional de ejercicios
+.card-extra-info {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+
+  .card-animated & {
+    background: rgba(26, 26, 26, 0.15);
+  }
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #e75c3e;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+
+  .card-animated & {
+    background: linear-gradient(90deg, #e75c3e, #efc048);
+  }
+}
+
+.progress-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+
+  .card-animated & {
+    color: rgba(26, 26, 26, 0.6);
+  }
+}
+
+.next-exercise {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-weight: 500;
+
+  .card-animated & {
+    color: #e75c3e;
+  }
+}
+
+.next-icon {
+  font-size: 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+}
+
+// Header superior de la tarjeta
+.card-header-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 1.25rem 1.5rem;
+  z-index: 10;
+}
+
+// Saludo con avatar
+.user-greeting {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e75c3e, #efc048);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(231, 92, 62, 0.3);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  mat-icon {
+    color: white;
+    font-size: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+.greeting-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+// Call to Action button
+.cta-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #e75c3e, #d14d30);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35);
+
+  mat-icon {
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(231, 92, 62, 0.45);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Mensaje de completado
+.completed-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #efc048, #d4a93d);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(239, 192, 72, 0.35);
+
+  mat-icon {
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+// Animaciones de las ondas aurora
+@keyframes auroraFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translate(5%, 10%) scale(1.1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-5%, 5%) scale(0.95);
+    opacity: 0.7;
+  }
+  75% {
+    transform: translate(3%, -5%) scale(1.05);
+    opacity: 0.85;
+  }
+}
+
+@keyframes auroraFloat2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+  33% {
+    transform: translate(-8%, -5%) scale(1.15) rotate(5deg);
+    opacity: 0.75;
+  }
+  66% {
+    transform: translate(5%, 8%) scale(0.9) rotate(-3deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes auroraFloat3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(10%, -10%) scale(1.2);
+    opacity: 0.8;
   }
 }

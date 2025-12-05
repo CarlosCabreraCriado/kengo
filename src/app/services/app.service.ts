@@ -122,6 +122,7 @@ export class AppService {
     return {
       id: u.id,
       avatar: u.avatar ?? null,
+      avatar_url: u.avatar ? `${env.DIRECTUS_URL}/assets/${u.avatar}` : undefined,
       first_name: u.first_name ?? '',
       last_name: u.last_name ?? '',
       email: u.email ?? '',
