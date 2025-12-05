@@ -15,7 +15,7 @@ import { Ejercicio } from '../../types/global';
 
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 //Angular Mateiral:
@@ -63,6 +63,15 @@ export class EjerciciosComponent implements OnInit {
   private fb = inject(FormBuilder);
   public ejerciciosService = inject(EjerciciosService);
   public vista = signal<'viñeta' | 'lista'>('viñeta');
+  private breakpointObserverService = inject(BreakpointObserver);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserverService
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   @ViewChild(MatMenuTrigger) menuFiltros!: MatMenuTrigger;
 
@@ -91,7 +100,7 @@ export class EjerciciosComponent implements OnInit {
     categories: [this.ejerciciosService.idsCategoriasSeleccionadas()],
   });
 
-  constructor(private breakpointObserver: BreakpointObserver) {
+  constructor() {
     // Búsqueda con debounce (mejor UX)
     this.formularioFiltros.controls.busqueda
       .valueChanges!.pipe(
@@ -125,7 +134,7 @@ export class EjerciciosComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.breakpointObserver
+    this.breakpointObserverService
       .observe([Breakpoints.Handset])
       .subscribe((result) => {
         if (result.matches) this.vista.set('lista');
