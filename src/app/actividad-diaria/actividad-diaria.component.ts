@@ -7,6 +7,9 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { AppService } from '../services/app.service';
 import { PlanesService } from '../services/planes.service';
 import { RegistroSesionService } from '../services/registro-sesion.service';
@@ -67,6 +70,15 @@ export class ActividadDiariaComponent implements OnInit {
   private registroService = inject(RegistroSesionService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
+  private breakpointObserver = inject(BreakpointObserver);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   // Mapeo de días de la semana
   private readonly DIAS_SEMANA = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
