@@ -1,6 +1,9 @@
 import { Component, inject, computed, OnInit } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -31,7 +34,16 @@ import { environment as env } from '../../environments/environment';
 export class PlanesComponent implements OnInit {
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
+  private breakpointObserver = inject(BreakpointObserver);
   planesService = inject(PlanesService);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   busqueda = '';
   filtroEstado: 'todos' | EstadoPlan = 'todos';
