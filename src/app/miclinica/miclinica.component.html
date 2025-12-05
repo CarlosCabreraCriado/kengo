@@ -1,56 +1,83 @@
-<section class="flex flex-col w-full h-full overflow-y-auto pb-24 md:pb-6">
+<section class="flex flex-col w-full h-full overflow-y-auto pb-24 lg:pb-6">
   <!-- Header con navegación (sticky) -->
   <header
-    class="sticky top-0 z-40 w-full mb-6 bg-gradient-to-b from-white/95 via-white/90 to-transparent pt-4 pb-2 backdrop-blur-md"
+    class="sticky top-0 z-40 w-full mb-6 pt-4 pb-2"
+    [class]="isDesktop() ? '' : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'"
   >
     <div class="mx-auto max-w-7xl px-4">
-      <!-- Título y acciones -->
-      <div class="mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <button
-            mat-icon-button
-            class="!h-10 !w-10 shrink-0"
-            aria-label="Volver al inicio"
-            routerLink="/inicio"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >arrow_back</mat-icon
-            >
-          </button>
-          <div>
-            <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
-              Mi Clínica
-            </h1>
-            @if (clinicasRes().length > 0) {
-              <p class="text-sm text-zinc-500">
-                {{ clinicasRes().length }}
-                {{ clinicasRes().length === 1 ? "clínica" : "clínicas" }}
-              </p>
-            }
-          </div>
-        </div>
-
-        <!-- Selector de clínica (si hay varias) -->
+      @if (isDesktop()) {
+        <!-- Header simplificado para desktop: solo selector de clínica centrado -->
         @if (clinicasRes().length > 1) {
-          <mat-form-field
-            appearance="outline"
-            class="!m-0 w-48"
-            subscriptSizing="dynamic"
-          >
-            <mat-select
-              [value]="selectedClinicId()"
-              (selectionChange)="onClinicChange($event.value)"
-              placeholder="Seleccionar"
+          <div class="flex items-center justify-center">
+            <mat-form-field
+              appearance="outline"
+              class="!m-0 w-64"
+              subscriptSizing="dynamic"
             >
-              @for (c of clinicasRes(); track c.id_clinica) {
-                <mat-option [value]="$index">{{
-                  c.nombre || "Clínica " + c.id_clinica
-                }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+              <mat-select
+                [value]="selectedClinicId()"
+                (selectionChange)="onClinicChange($event.value)"
+                placeholder="Seleccionar clínica"
+              >
+                @for (c of clinicasRes(); track c.id_clinica) {
+                  <mat-option [value]="$index">{{
+                    c.nombre || "Clínica " + c.id_clinica
+                  }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
         }
-      </div>
+      } @else {
+        <!-- Header completo para móvil -->
+        <!-- Título y acciones -->
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button
+              mat-icon-button
+              class="!h-10 !w-10 shrink-0"
+              aria-label="Volver al inicio"
+              routerLink="/inicio"
+            >
+              <mat-icon class="material-symbols-outlined text-zinc-600"
+                >arrow_back</mat-icon
+              >
+            </button>
+            <div>
+              <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
+                Mi Clínica
+              </h1>
+              @if (clinicasRes().length > 0) {
+                <p class="text-sm text-zinc-500">
+                  {{ clinicasRes().length }}
+                  {{ clinicasRes().length === 1 ? "clínica" : "clínicas" }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- Selector de clínica (si hay varias) -->
+          @if (clinicasRes().length > 1) {
+            <mat-form-field
+              appearance="outline"
+              class="!m-0 w-48"
+              subscriptSizing="dynamic"
+            >
+              <mat-select
+                [value]="selectedClinicId()"
+                (selectionChange)="onClinicChange($event.value)"
+                placeholder="Seleccionar"
+              >
+                @for (c of clinicasRes(); track c.id_clinica) {
+                  <mat-option [value]="$index">{{
+                    c.nombre || "Clínica " + c.id_clinica
+                  }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+      }
     </div>
   </header>
 

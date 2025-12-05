@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { environment as env } from '../../environments/environment';
 
 // Angular Material
@@ -51,6 +54,15 @@ export class MiClinicaComponent {
   private snack = inject(MatSnackBar);
   private appService = inject(AppService);
   public clinicasService = inject(ClinicasService);
+  private breakpointObserver = inject(BreakpointObserver);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   public usuario = computed(
     () => this.appService.usuario() as Usuario | null,
