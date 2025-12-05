@@ -6,6 +6,9 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { environment as env } from '../../environments/environment';
 
 //Angular Material:
@@ -54,6 +57,15 @@ export class PacientesComponent {
   public planBuilderService = inject(PlanBuilderService);
   private planesService = inject(PlanesService);
   private authService = inject(AuthService);
+  private breakpointObserver = inject(BreakpointObserver);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   public idsClinicas = computed(() => {
     if (this.appService.usuario() == null) return null;

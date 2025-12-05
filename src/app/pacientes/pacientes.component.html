@@ -1,87 +1,144 @@
-<section class="flex flex-col w-full h-full overflow-y-auto pb-24 md:pb-6">
+<section class="flex flex-col w-full h-full overflow-y-auto pb-24 lg:pb-6">
   <!-- Header con búsqueda (sticky) -->
   <header
-    class="sticky top-0 z-40 w-full mb-6 bg-gradient-to-b from-white/95 via-white/90 to-transparent pt-4 pb-2 backdrop-blur-md"
+    class="sticky top-0 z-40 w-full mb-6 pt-4 pb-2"
+    [class]="isDesktop() ? '' : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'"
   >
     <div class="mx-auto max-w-7xl px-4">
-      <!-- Título y acciones -->
-      <div class="mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <button
-            mat-icon-button
-            class="!h-10 !w-10 shrink-0"
-            aria-label="Volver al inicio"
-            routerLink="/inicio"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >arrow_back</mat-icon
+      @if (isDesktop()) {
+        <!-- Header simplificado para desktop: búsqueda + nuevo + refresh en línea -->
+        <div class="flex items-center justify-center gap-3">
+          <!-- Barra de búsqueda -->
+          <div class="relative w-full max-w-md">
+            <mat-icon
+              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
+              >search</mat-icon
             >
-          </button>
-          <div>
-            <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
-              Mis Pacientes
-            </h1>
-            @if (pacientes().length > 0) {
-              <p class="text-sm text-zinc-500">
-                {{ pacientes().length }}
-                {{ pacientes().length === 1 ? "paciente" : "pacientes" }}
-              </p>
+            <input
+              #buscadorDesktop
+              type="text"
+              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+              placeholder="Buscar por nombre, email..."
+              (input)="onBuscar(buscadorDesktop.value)"
+            />
+            @if (buscadorDesktop.value) {
+              <button
+                type="button"
+                class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                aria-label="Borrar búsqueda"
+                (click)="buscadorDesktop.value = ''; onBuscar('')"
+              >
+                <mat-icon class="material-symbols-outlined !text-xl"
+                  >close</mat-icon
+                >
+              </button>
             }
           </div>
-        </div>
 
-        <!-- Botón añadir (visible en móvil como FAB, en desktop inline) -->
-        <button
-          mat-flat-button
-          color="primary"
-          class="hidden sm:flex"
-          (click)="openAddPaciente()"
-        >
-          <mat-icon class="material-symbols-outlined">person_add</mat-icon>
-          Nuevo paciente
-        </button>
-      </div>
-
-      <!-- Barra de búsqueda -->
-      <div class="search-bar relative flex items-center gap-2">
-        <div class="relative flex-1">
-          <mat-icon
-            class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
-            >search</mat-icon
+          <!-- Botón nuevo paciente -->
+          <button
+            mat-flat-button
+            color="primary"
+            class="!h-12 shrink-0"
+            (click)="openAddPaciente()"
           >
-          <input
-            #buscador
-            type="text"
-            class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
-            placeholder="Buscar por nombre, email..."
-            (input)="onBuscar(buscador.value)"
-          />
-          @if (buscador.value) {
-            <button
-              type="button"
-              class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-              aria-label="Borrar búsqueda"
-              (click)="buscador.value = ''; onBuscar('')"
+            <mat-icon class="material-symbols-outlined">person_add</mat-icon>
+            Nuevo paciente
+          </button>
+
+          <!-- Botón recargar -->
+          <button
+            mat-icon-button
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Recargar datos"
+            (click)="reload()"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >refresh</mat-icon
             >
-              <mat-icon class="material-symbols-outlined !text-xl"
-                >close</mat-icon
+          </button>
+        </div>
+      } @else {
+        <!-- Header completo para móvil -->
+        <!-- Título y acciones -->
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button
+              mat-icon-button
+              class="!h-10 !w-10 shrink-0"
+              aria-label="Volver al inicio"
+              routerLink="/inicio"
+            >
+              <mat-icon class="material-symbols-outlined text-zinc-600"
+                >arrow_back</mat-icon
               >
             </button>
-          }
+            <div>
+              <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">
+                Mis Pacientes
+              </h1>
+              @if (pacientes().length > 0) {
+                <p class="text-sm text-zinc-500">
+                  {{ pacientes().length }}
+                  {{ pacientes().length === 1 ? "paciente" : "pacientes" }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- Botón añadir (visible en tablet) -->
+          <button
+            mat-flat-button
+            color="primary"
+            class="hidden sm:flex"
+            (click)="openAddPaciente()"
+          >
+            <mat-icon class="material-symbols-outlined">person_add</mat-icon>
+            Nuevo paciente
+          </button>
         </div>
 
-        <!-- Botón recargar -->
-        <button
-          mat-icon-button
-          class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-          aria-label="Recargar datos"
-          (click)="reload()"
-        >
-          <mat-icon class="material-symbols-outlined text-zinc-600"
-            >refresh</mat-icon
+        <!-- Barra de búsqueda -->
+        <div class="search-bar relative flex items-center gap-2">
+          <div class="relative flex-1">
+            <mat-icon
+              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
+              >search</mat-icon
+            >
+            <input
+              #buscador
+              type="text"
+              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+              placeholder="Buscar por nombre, email..."
+              (input)="onBuscar(buscador.value)"
+            />
+            @if (buscador.value) {
+              <button
+                type="button"
+                class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                aria-label="Borrar búsqueda"
+                (click)="buscador.value = ''; onBuscar('')"
+              >
+                <mat-icon class="material-symbols-outlined !text-xl"
+                  >close</mat-icon
+                >
+              </button>
+            }
+          </div>
+
+          <!-- Botón recargar -->
+          <button
+            mat-icon-button
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Recargar datos"
+            (click)="reload()"
           >
-        </button>
-      </div>
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >refresh</mat-icon
+            >
+          </button>
+        </div>
+      }
     </div>
   </header>
 
