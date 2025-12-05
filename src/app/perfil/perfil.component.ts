@@ -12,6 +12,9 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 
 // Angular Material
 import { MatButtonModule } from '@angular/material/button';
@@ -59,6 +62,15 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   public dialog = inject(MatDialog);
   private destroyRef = inject(DestroyRef);
+  private breakpointObserver = inject(BreakpointObserver);
+
+  // Detectar si estamos en desktop (>= 1024px)
+  isDesktop = toSignal(
+    this.breakpointObserver
+      .observe(['(min-width: 1024px)'])
+      .pipe(map((result) => result.matches)),
+    { initialValue: false }
+  );
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 

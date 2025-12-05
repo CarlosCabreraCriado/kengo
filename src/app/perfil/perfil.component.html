@@ -1,34 +1,36 @@
-<section class="flex h-full w-full flex-col overflow-y-auto pb-24 md:pb-6">
-  <!-- Header sticky -->
-  <header
-    class="sticky top-0 z-40 mb-6 w-full bg-gradient-to-b from-white/95 via-white/90 to-transparent pt-4 pb-2 backdrop-blur-md"
-  >
-    <div class="mx-auto max-w-7xl px-4">
-      <div class="flex items-center gap-2">
-        <button
-          mat-icon-button
-          class="!h-10 !w-10 shrink-0"
-          aria-label="Volver al inicio"
-          routerLink="/inicio"
-        >
-          <mat-icon class="material-symbols-outlined text-zinc-600"
-            >arrow_back</mat-icon
+<section class="flex h-full w-full flex-col overflow-y-auto pb-24 lg:pb-6">
+  <!-- Header sticky (solo móvil) -->
+  @if (!isDesktop()) {
+    <header
+      class="sticky top-0 z-40 mb-6 w-full bg-gradient-to-b from-white/95 via-white/90 to-transparent pt-4 pb-2 backdrop-blur-md"
+    >
+      <div class="mx-auto max-w-7xl px-4">
+        <div class="flex items-center gap-2">
+          <button
+            mat-icon-button
+            class="!h-10 !w-10 shrink-0"
+            aria-label="Volver al inicio"
+            routerLink="/inicio"
           >
-        </button>
-        <div>
-          <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">Mi Perfil</h1>
-          @if (usuario()) {
-            <p class="text-sm text-zinc-500">
-              {{ usuario()?.first_name }} {{ usuario()?.last_name }}
-            </p>
-          }
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >arrow_back</mat-icon
+            >
+          </button>
+          <div>
+            <h1 class="text-xl font-bold text-zinc-800 sm:text-2xl">Mi Perfil</h1>
+            @if (usuario()) {
+              <p class="text-sm text-zinc-500">
+                {{ usuario()?.first_name }} {{ usuario()?.last_name }}
+              </p>
+            }
+          </div>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
+  }
 
   <!-- Contenido principal -->
-  <div class="mx-auto w-full max-w-7xl px-4">
+  <div class="mx-auto w-full max-w-7xl px-4" [class.pt-6]="isDesktop()">
     @if (!formularioInicializado()) {
       <div class="flex justify-center py-12">
         <mat-spinner></mat-spinner>
