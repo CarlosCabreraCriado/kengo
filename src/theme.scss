@@ -22,7 +22,7 @@ html {
   @include mat.theme(
     (
       color: mat.$violet-palette,
-      typography: Roboto,
+      typography: Galvji,
       density: 0,
     )
   );
@@ -161,16 +161,16 @@ html {
 :root,
 :host {
   /* core typography tokens are not generating css variables, hence below */
-  --mat-sys-brand-font-family: Roboto;
-  --mat-sys-plain-font-family: Roboto;
+  --mat-sys-brand-font-family: Galvji;
+  --mat-sys-plain-font-family: Galvji;
   --mat-sys-bold-font-weight: 700;
   --mat-sys-medium-font-weight: 500;
   --mat-sys-regular-font-weight: 400;
 
   @include mat.theme-overrides(
     (
-      brand-family: Roboto,
-      plain-family: Roboto,
+      brand-family: Galvji,
+      plain-family: Galvji,
       bold-weight: 700,
       medium-weight: 500,
       regular-weight: 400,

@@ -53,6 +53,7 @@ export class RegistroSesionService {
   // Estado del temporizador
   readonly tiempoRestante = signal<number>(0);
   readonly temporizadorActivo = signal<boolean>(false);
+  readonly descansoEntreEjercicios = signal<boolean>(false);
 
   // ========= Estado Multi-Plan =========
   readonly modoMultiPlan = signal<boolean>(false);
@@ -124,7 +125,7 @@ export class RegistroSesionService {
     effect(() => {
       const plan = this.planActivo();
       const estado = this.estadoPantalla();
-      if (plan && estado !== 'resumen' && estado !== 'completado') {
+      if (plan && estado !== 'resumen' && estado !== 'feedback-final') {
         this.guardarProgresoLocal();
       }
     });
@@ -255,24 +256,43 @@ export class RegistroSesionService {
     const descanso = ejercicio.descanso_seg ?? 45;
 
     if (serieActual < totalSeries) {
-      // Hay más series: ir a descanso
+      // Hay más series: ir a descanso entre series
       this.serieActual.update((s) => s + 1);
+      this.descansoEntreEjercicios.set(false);
       this.tiempoRestante.set(descanso);
       this.estadoPantalla.set('descanso');
     } else {
-      // Última serie: ir a feedback
-      this.estadoPantalla.set('feedback');
+      // Última serie del ejercicio: registrar y descanso antes del siguiente
+      this.registrarEjercicioCompletado();
+
+      if (this.esUltimoEjercicio()) {
+        // Era el último ejercicio: ir directo al feedback final
+        this.avanzarEjercicio();
+      } else {
+        // Hay más ejercicios: descanso entre ejercicios
+        this.descansoEntreEjercicios.set(true);
+        this.tiempoRestante.set(descanso);
+        this.estadoPantalla.set('descanso');
+      }
     }
 
     this.guardarProgresoLocal();
   }
 
   /**
-   * Saltar el descanso y continuar con la siguiente serie
+   * Saltar el descanso y continuar
    */
   saltarDescanso(): void {
     this.temporizadorActivo.set(false);
-    this.estadoPantalla.set('ejercicio');
+
+    if (this.descansoEntreEjercicios()) {
+      // Descanso entre ejercicios: avanzar al siguiente
+      this.descansoEntreEjercicios.set(false);
+      this.avanzarEjercicio();
+    } else {
+      // Descanso entre series: continuar con el ejercicio actual
+      this.estadoPantalla.set('ejercicio');
+    }
     this.guardarProgresoLocal();
   }
 
@@ -287,14 +307,21 @@ export class RegistroSesionService {
    * Cuando termina el descanso automáticamente
    */
   finalizarDescanso(): void {
-    this.estadoPantalla.set('ejercicio');
+    if (this.descansoEntreEjercicios()) {
+      // Descanso entre ejercicios: avanzar al siguiente
+      this.descansoEntreEjercicios.set(false);
+      this.avanzarEjercicio();
+    } else {
+      // Descanso entre series: continuar con el ejercicio actual
+      this.estadoPantalla.set('ejercicio');
+    }
     this.guardarProgresoLocal();
   }
 
   /**
-   * Registrar feedback del ejercicio y avanzar
+   * Registrar ejercicio completado (sin dolor, se agrega al final)
    */
-  registrarFeedback(dolor: number, nota?: string): void {
+  registrarEjercicioCompletado(): void {
     const ejercicio = this.ejercicioActual();
     const userId = this.usuarioId();
 
@@ -305,7 +332,7 @@ export class RegistroSesionService {
       ? (ejercicio as EjercicioSesionMultiPlan).planItemId
       : ejercicio.id;
 
-    // Crear registro
+    // Crear registro sin dolor (se añade al final en feedback-final)
     const registro: RegistroEjercicio = {
       plan_item: planItemId,
       paciente: userId,
@@ -313,15 +340,37 @@ export class RegistroSesionService {
       completado: true,
       repeticiones_realizadas: ejercicio.repeticiones,
       duracion_real_seg: ejercicio.duracion_seg,
-      dolor_escala: dolor,
-      nota_paciente: nota,
     };
 
     // Añadir a registros pendientes
     this.registrosSesion.update((regs) => [...regs, registro]);
+  }
 
-    // Avanzar al siguiente ejercicio o finalizar
-    this.avanzarEjercicio();
+  /**
+   * Aplicar feedback final de todos los ejercicios y guardar
+   */
+  async aplicarFeedbackFinal(data: {
+    feedbacks: Array<{ planItemId: number; dolor: number; nota?: string }>;
+    observacionesGenerales?: string;
+  }): Promise<void> {
+    // Actualizar cada registro con su dolor y nota
+    this.registrosSesion.update((regs) =>
+      regs.map((reg) => {
+        const feedback = data.feedbacks.find((f) => f.planItemId === reg.plan_item);
+        if (feedback) {
+          return {
+            ...reg,
+            dolor_escala: feedback.dolor,
+            nota_paciente: feedback.nota,
+          };
+        }
+        return reg;
+      })
+    );
+
+    // Guardar en Directus
+    await this.guardarRegistrosEnDirectus();
+    this.limpiarProgresoLocal();
   }
 
   /**
@@ -329,10 +378,8 @@ export class RegistroSesionService {
    */
   avanzarEjercicio(): void {
     if (this.esUltimoEjercicio()) {
-      // Sesión completada
-      this.estadoPantalla.set('completado');
-      this.guardarRegistrosEnDirectus();
-      this.limpiarProgresoLocal();
+      // Todos los ejercicios completados: ir a feedback final
+      this.estadoPantalla.set('feedback-final');
     } else {
       // Siguiente ejercicio
       this.ejercicioActualIndex.update((i) => i + 1);
@@ -382,6 +429,7 @@ export class RegistroSesionService {
     this.feedbackActual.set(null);
     this.tiempoRestante.set(0);
     this.temporizadorActivo.set(false);
+    this.descansoEntreEjercicios.set(false);
   }
 
   // ========= Persistencia local =========

@@ -18,8 +18,10 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { ResumenSesionComponent } from './pantallas/resumen-sesion/resumen-sesion.component';
 import { EjercicioActivoComponent } from './pantallas/ejercicio-activo/ejercicio-activo.component';
 import { DescansoComponent } from './pantallas/descanso/descanso.component';
-import { FeedbackEjercicioComponent } from './pantallas/feedback-ejercicio/feedback-ejercicio.component';
-import { SesionCompletadaComponent } from './pantallas/sesion-completada/sesion-completada.component';
+import {
+  FeedbackFinalComponent,
+  FeedbackFinalData,
+} from './pantallas/feedback-final/feedback-final.component';
 
 // Animaciones
 import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
@@ -90,8 +92,7 @@ export class ConfirmarSalidaDialogComponent {
     ResumenSesionComponent,
     EjercicioActivoComponent,
     DescansoComponent,
-    FeedbackEjercicioComponent,
-    SesionCompletadaComponent,
+    FeedbackFinalComponent,
   ],
   animations: [slideAnimation, fadeAnimation],
   template: `
@@ -120,16 +121,9 @@ export class ConfirmarSalidaDialogComponent {
               (salir)="onIntentarSalir()"
             />
           }
-          @case ('feedback') {
-            <app-feedback-ejercicio
-              class="p-4"
-              (enviarFeedback)="onEnviarFeedback($event)"
-            />
-          }
-          @case ('completado') {
-            <app-sesion-completada
-              class="p-4"
-              (volverInicio)="onVolverInicio()"
+          @case ('feedback-final') {
+            <app-feedback-final
+              (enviarFeedback)="onEnviarFeedbackFinal($event)"
             />
           }
         }
@@ -223,13 +217,7 @@ export class RealizarPlanComponent implements OnInit {
 
   // Para la animación de slide
   readonly pantallaIndex = computed(() => {
-    const estados = [
-      'resumen',
-      'ejercicio',
-      'descanso',
-      'feedback',
-      'completado',
-    ];
+    const estados = ['resumen', 'ejercicio', 'descanso', 'feedback-final'];
     return estados.indexOf(this.estadoPantalla());
   });
 
@@ -286,8 +274,9 @@ export class RealizarPlanComponent implements OnInit {
     this.registroService.agregarTiempoDescanso(segundos);
   }
 
-  onEnviarFeedback(feedback: { dolor: number; nota?: string }): void {
-    this.registroService.registrarFeedback(feedback.dolor, feedback.nota);
+  async onEnviarFeedbackFinal(data: FeedbackFinalData): Promise<void> {
+    await this.registroService.aplicarFeedbackFinal(data);
+    this.onVolverInicio();
   }
 
   onVolverInicio(): void {

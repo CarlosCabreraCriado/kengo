@@ -300,8 +300,7 @@ export type EstadoPantalla =
   | 'resumen'
   | 'ejercicio'
   | 'descanso'
-  | 'feedback'
-  | 'completado';
+  | 'feedback-final';
 
 export interface RegistroEjercicio {
   id_registro?: number;
