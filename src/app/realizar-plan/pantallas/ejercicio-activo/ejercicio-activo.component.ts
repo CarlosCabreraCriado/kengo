@@ -176,10 +176,10 @@ import { MatButtonModule } from '@angular/material/button';
 
     /* Difuminado inferior del video como en detalle-ejercicio */
     .video-container {
-      mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+      mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
       -webkit-mask-image: linear-gradient(
         to bottom,
-        black 75%,
+        black 90%,
         transparent 100%
       );
     }

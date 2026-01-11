@@ -1,88 +1,101 @@
 <!-- Navegacion -->
 @if (showNavbar()) {
-<header
-  class="z-100 w-full overflow-visible p-3 md:p-5"
->
-  <div
-    class="relative m-auto flex w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter md:pr-3 md:pl-5"
-    [class.h-16]="isMovil()"
-    [class.h-full]="!isMovil()"
-  >
-    <!-- Logo (solo desktop) -->
-    <a routerLink="/inicio" class="hidden md:block">
-      <div class="fuente-kengo text-center text-3xl">Kengo</div>
-    </a>
-
-    <!-- Navegación -->
-    <nav class="nav-container" [class.nav-mobile]="isMovil()">
-      <!-- INICIO -->
-      <a
-        routerLink="/inicio"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="nav-item"
-      >
-        <img
-          src="/assets/logo.svg"
-          alt="Icono inicio"
-          class="nav-icon h-6 w-6"
-        />
-        <span class="nav-label">Inicio</span>
+  <header class="z-100 w-full overflow-visible p-3 md:p-5">
+    <div
+      class="relative m-auto flex w-full max-w-7xl items-center justify-between rounded-full border-white/20 bg-white/60 shadow-xl backdrop-blur-md backdrop-filter md:pr-3 md:pl-5"
+      [class.h-16]="isMovil()"
+      [class.h-full]="!isMovil()"
+    >
+      <!-- Logo (solo desktop) -->
+      <a routerLink="/inicio" class="hidden md:block">
+        <div class="fuente-kengo text-center text-3xl">Kengo</div>
       </a>
 
-      <!-- EJERCICIOS -->
-      <a
-        routerLink="/ejercicios"
-        routerLinkActive="active"
-        class="nav-item"
-      >
-        <span class="material-symbols-outlined nav-icon">exercise</span>
-        <span class="nav-label">Ejercicios</span>
-      </a>
-
-      <!-- ACTIVIDAD DIARIA -->
-      <a
-        routerLink="/actividad-diaria"
-        routerLinkActive="active"
-        class="nav-item"
-      >
-        <span class="material-symbols-outlined nav-icon">play_circle</span>
-        <span class="nav-label">Actividad</span>
-      </a>
-
-      <!-- PACIENTES (solo fisio) -->
-      @if (isFisio()) {
+      <!-- Navegación -->
+      <nav class="nav-container" [class.nav-mobile]="isMovil()">
+        <!-- INICIO -->
         <a
-          routerLink="/mis-pacientes"
+          routerLink="/inicio"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-item"
+        >
+          <img
+            src="/assets/logo.svg"
+            alt="Icono inicio"
+            class="nav-icon h-6 w-6"
+          />
+          <span class="nav-label">Inicio</span>
+        </a>
+
+        <!-- EJERCICIOS -->
+        <a routerLink="/ejercicios" routerLinkActive="active" class="nav-item">
+          <span class="material-symbols-outlined nav-icon">exercise</span>
+          <span class="nav-label">Ejercicios</span>
+        </a>
+
+        <!-- ACTIVIDAD DIARIA -->
+        <a
+          routerLink="/actividad-diaria"
           routerLinkActive="active"
           class="nav-item"
         >
-          <span class="material-symbols-outlined nav-icon">personal_injury</span>
-          <span class="nav-label">Pacientes</span>
+          <span class="material-symbols-outlined nav-icon">play_circle</span>
+          <span class="nav-label">Actividad</span>
         </a>
-      }
 
-      <!-- CLÍNICA -->
-      <a
-        routerLink="/mi-clinica"
-        routerLinkActive="active"
-        class="nav-item"
-      >
-        <span class="material-symbols-outlined nav-icon">business</span>
-        <span class="nav-label">Clínica</span>
-      </a>
+        <!-- PACIENTES (solo fisio) -->
+        @if (isFisio()) {
+          <a
+            routerLink="/mis-pacientes"
+            routerLinkActive="active"
+            class="nav-item"
+          >
+            <span class="material-symbols-outlined nav-icon">person_heart</span>
+            <span class="nav-label">Pacientes</span>
+          </a>
+        }
 
-      <!-- Avatar (solo móvil dentro del nav) -->
-      @if (isMovil()) {
+        <!-- CLÍNICA -->
+        <a routerLink="/mi-clinica" routerLinkActive="active" class="nav-item">
+          <span class="material-symbols-outlined nav-icon">business</span>
+          <span class="nav-label">Clínica</span>
+        </a>
+
+        <!-- Avatar (solo móvil dentro del nav) -->
+        @if (isMovil()) {
+          <a
+            routerLink="/perfil"
+            routerLinkActive="active"
+            class="nav-item avatar-btn"
+          >
+            @if (avatarUrl()) {
+              <img
+                [src]="avatarUrl()"
+                class="h-10 w-10 rounded-full border-2 border-solid border-white/50"
+                alt="Avatar"
+              />
+            } @else {
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
+              >
+                <span class="material-symbols-outlined text-white">person</span>
+              </div>
+            }
+          </a>
+        }
+      </nav>
+
+      <!-- Avatar (solo desktop) -->
+      @if (!isMovil()) {
         <a
           routerLink="/perfil"
-          routerLinkActive="active"
-          class="nav-item avatar-btn"
+          class="rounded-full border-2 border-transparent p-0 transition-colors duration-200 hover:border-orange-500"
         >
           @if (avatarUrl()) {
             <img
               [src]="avatarUrl()"
-              class="h-10 w-10 rounded-full border-2 border-solid border-white/50"
+              class="h-10 w-10 rounded-full border-2 border-solid"
               alt="Avatar"
             />
           } @else {
@@ -94,29 +107,6 @@
           }
         </a>
       }
-    </nav>
-
-    <!-- Avatar (solo desktop) -->
-    @if (!isMovil()) {
-      <a
-        routerLink="/perfil"
-        class="rounded-full border-2 border-transparent p-0 transition-colors duration-200 hover:border-orange-500"
-      >
-        @if (avatarUrl()) {
-          <img
-            [src]="avatarUrl()"
-            class="h-10 w-10 rounded-full border-2 border-solid"
-            alt="Avatar"
-          />
-        } @else {
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-400/40"
-          >
-            <span class="material-symbols-outlined text-white">person</span>
-          </div>
-        }
-      </a>
-    }
-  </div>
-</header>
+    </div>
+  </header>
 }

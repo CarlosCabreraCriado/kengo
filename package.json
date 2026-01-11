@@ -41,6 +41,7 @@
     "@types/jasmine": "~5.1.0",
     "@types/qrcode": "^1.5.5",
     "angular-eslint": "^20.0.0",
+    "docx": "^9.5.1",
     "eslint": "^9.20.0",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
