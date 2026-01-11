@@ -73,6 +73,10 @@ mat-icon {
   display: inline-flex;
 }
 
+.titulo-kengo {
+  font-family: "kengoFont" !important;
+}
+
 .fuente-kengo {
   font-family: "kengoFont";
   color: var(--color-primary);
@@ -223,4 +227,24 @@ mat-icon {
   animation-delay: -78s;
   transform-origin: 18vw -2vh;
   box-shadow: -100vmin 0 12.537243324389731vmin currentColor;
+}
+
+/* Angular Material Typography Override - Galvji */
+.mat-typography,
+.mat-mdc-button,
+.mat-mdc-form-field,
+.mat-mdc-input-element,
+.mat-mdc-select,
+.mat-mdc-option,
+.mat-mdc-menu-item,
+.mat-mdc-dialog-container,
+.mat-mdc-snack-bar-container,
+.mat-mdc-tooltip,
+.mat-mdc-card,
+.mat-mdc-tab,
+.mat-mdc-chip,
+.mdc-text-field__input,
+.mdc-floating-label,
+.mdc-button__label {
+  font-family: Galvji, "Helvetica Neue", sans-serif !important;
 }
