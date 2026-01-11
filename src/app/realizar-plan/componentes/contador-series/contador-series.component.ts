@@ -9,18 +9,18 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [CommonModule, MatIconModule],
   template: `
-    <div class="flex flex-col items-center gap-1.5 rounded-xl bg-white/60 px-4 py-2 shadow-sm backdrop-blur-sm">
-      <span class="text-xs font-semibold tracking-wide text-zinc-700">
+    <div class="flex flex-col items-center gap-2 rounded-2xl bg-white/60 px-6 py-3 shadow-md backdrop-blur-sm">
+      <span class="text-sm font-semibold tracking-wide text-zinc-700">
         Serie {{ serieActual() }} de {{ totalSeries() }}
       </span>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         @for (serie of seriesArray(); track serie) {
           <div
-            class="flex h-6 w-6 items-center justify-center rounded-full border-2 border-transparent transition-all duration-300"
+            class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-transparent transition-all duration-300"
             [class]="getPillClasses(serie)"
           >
             @if (serie < serieActual()) {
-              <mat-icon class="material-symbols-outlined !text-xs text-white">check</mat-icon>
+              <mat-icon class="material-symbols-outlined !text-sm text-white">check</mat-icon>
             }
           </div>
         }

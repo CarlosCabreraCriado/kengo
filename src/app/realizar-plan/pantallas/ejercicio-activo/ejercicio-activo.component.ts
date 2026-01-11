@@ -30,12 +30,27 @@ import { MatButtonModule } from '@angular/material/button';
   ],
   animations: [fadeAnimation],
   template: `
-    <div class="flex flex-1 flex-col overflow-hidden">
-      <!-- Video con estilo de detalle-ejercicio -->
-      <div
-        class="video-container relative -mx-5 h-[50dvh] shrink-0 overflow-hidden transition-all duration-300"
-        (click)="toggleVideo()"
-      >
+    <!-- Contenedor principal: vertical en móvil, horizontal centrado en desktop -->
+    <div class="flex flex-1 flex-col overflow-hidden lg:flex-row lg:items-center lg:justify-center lg:gap-8 lg:overflow-visible lg:p-8">
+
+      <!-- Columna del video con botón encima en desktop -->
+      <div class="contents lg:flex lg:w-[55%] lg:max-w-3xl lg:flex-col lg:gap-3">
+
+        <!-- Botón terminar rutina - solo desktop -->
+        <button
+          class="hidden items-center gap-2 self-start rounded-full border border-red-200/50 bg-white/40 px-4 py-2 text-sm font-medium text-red-500 shadow-sm backdrop-blur-sm transition-colors hover:bg-red-50/60 hover:text-red-600 lg:flex"
+          (click)="salir.emit()"
+        >
+          <mat-icon class="material-symbols-outlined !text-xl">close</mat-icon>
+          Salir
+        </button>
+
+        <!-- Video: full width en móvil, 16:9 en desktop -->
+        <div
+          class="video-container relative -mx-5 h-[50dvh] shrink-0 overflow-hidden transition-all duration-300
+                 lg:mx-0 lg:h-auto lg:w-full lg:aspect-video lg:rounded-3xl lg:shadow-2xl"
+          (click)="toggleVideo()"
+        >
         @if (videoUrl()) {
           <video
             #videoPlayer
@@ -63,9 +78,9 @@ import { MatButtonModule } from '@angular/material/button';
           </div>
         }
 
-        <!-- Botón salir - superior izquierda -->
+        <!-- Botón salir - superior izquierda (solo móvil) -->
         <button
-          class="absolute top-5 left-6 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 shadow-lg backdrop-blur-sm transition-colors hover:bg-black/70"
+          class="absolute top-5 left-6 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 shadow-lg backdrop-blur-sm transition-colors hover:bg-black/70 lg:hidden"
           (click)="salir.emit(); $event.stopPropagation()"
         >
           <mat-icon class="material-symbols-outlined !text-[22px] text-white">close</mat-icon>
@@ -85,15 +100,17 @@ import { MatButtonModule } from '@angular/material/button';
             ></div>
           </div>
         </div>
+        </div>
       </div>
 
-      <!-- Info del ejercicio -->
+      <!-- Panel de info: flex-1 en móvil, ancho fijo en desktop -->
       <div
-        class="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-evenly gap-2 overflow-hidden px-4 py-2 text-center"
+        class="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-evenly gap-2 overflow-hidden px-4 py-2 text-center
+               lg:w-72 lg:max-w-xs lg:shrink-0 lg:justify-center lg:gap-5 lg:overflow-visible lg:py-0"
         @fade
       >
         <h2
-          class="m-0 shrink-0 text-xl leading-tight font-bold text-balance text-zinc-800"
+          class="m-0 shrink-0 text-xl leading-tight font-bold text-balance text-zinc-800 lg:text-2xl"
         >
           {{ ejercicio()?.ejercicio?.nombre_ejercicio }}
         </h2>
@@ -106,7 +123,7 @@ import { MatButtonModule } from '@angular/material/button';
         />
 
         <!-- Objetivo -->
-        <div class="flex min-h-0 flex-1 items-center justify-center">
+        <div class="flex min-h-0 flex-1 items-center justify-center lg:flex-none lg:py-2">
           @if (esTemporizador()) {
             <app-temporizador
               [tiempoInicial]="duracionSeg()"
@@ -135,7 +152,7 @@ import { MatButtonModule } from '@angular/material/button';
         <!-- Instrucciones -->
         @if (instrucciones()) {
           <div
-            class="tarjeta-kengo flex min-h-0 w-full shrink items-start gap-2 overflow-hidden rounded-xl p-2.5 text-left"
+            class="tarjeta-kengo flex min-h-0 w-full shrink items-start gap-2 overflow-hidden rounded-xl p-2.5 text-left lg:max-w-full"
           >
             <mat-icon
               class="material-symbols-outlined shrink-0 !text-lg text-[#efc048]"
@@ -146,10 +163,26 @@ import { MatButtonModule } from '@angular/material/button';
             </p>
           </div>
         }
+
+        <!-- Botón completar: fuera del panel en móvil, dentro en desktop -->
+        <div class="hidden w-full pt-4 lg:block">
+          <button
+            mat-flat-button
+            class="!h-14 !w-full !rounded-2xl !bg-gradient-to-r !from-emerald-500 !to-emerald-600 !text-base !font-bold !text-white !shadow-lg hover:!shadow-xl"
+            (click)="completarSerie.emit()"
+          >
+            @if (esUltimaSerie()) {
+              Completar ejercicio
+            } @else {
+              Completar serie
+            }
+            <mat-icon class="material-symbols-outlined ml-2">check</mat-icon>
+          </button>
+        </div>
       </div>
 
-      <!-- Botón completar -->
-      <div class="shrink-0 px-4 pt-3 pb-4">
+      <!-- Botón completar móvil (fuera del contenedor flex principal) -->
+      <div class="shrink-0 px-4 pt-3 pb-4 lg:hidden">
         <button
           mat-flat-button
           class="!h-14 !w-full !rounded-2xl !bg-gradient-to-r !from-emerald-500 !to-emerald-600 !text-base !font-bold !text-white !shadow-lg hover:!shadow-xl"
@@ -174,7 +207,7 @@ import { MatButtonModule } from '@angular/material/button';
       overflow: hidden;
     }
 
-    /* Difuminado inferior del video como en detalle-ejercicio */
+    /* Difuminado inferior del video - solo en móvil */
     .video-container {
       mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
       -webkit-mask-image: linear-gradient(
@@ -189,16 +222,42 @@ import { MatButtonModule } from '@angular/material/button';
       container-type: size;
       height: 100%;
       aspect-ratio: 1;
-      min-height: 5rem;
-      max-height: 12rem;
+      min-height: 4.5rem;
+      max-height: 9rem;
     }
 
     .objetivo-numero {
-      font-size: clamp(1.75rem, 35cqh, 4rem);
+      font-size: clamp(1.5rem, 32cqh, 3rem);
     }
 
     .objetivo-label {
-      font-size: clamp(0.5rem, 10cqh, 0.8rem);
+      font-size: clamp(0.45rem, 9cqh, 0.7rem);
+    }
+
+    /* Desktop: quitar mask del video y ajustar tamaños */
+    @media (min-width: 1024px) {
+      :host {
+        overflow: visible;
+      }
+
+      .video-container {
+        mask-image: none;
+        -webkit-mask-image: none;
+      }
+
+      .objetivo-circulo {
+        height: 7rem;
+        min-height: 7rem;
+        max-height: 7rem;
+      }
+
+      .objetivo-numero {
+        font-size: 2.25rem;
+      }
+
+      .objetivo-label {
+        font-size: 0.65rem;
+      }
     }
   `,
 })
