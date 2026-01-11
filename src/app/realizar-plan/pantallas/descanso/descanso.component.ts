@@ -19,22 +19,33 @@ import { MatButtonModule } from '@angular/material/button';
 @Component({
   selector: 'app-descanso',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, TemporizadorComponent],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatButtonModule,
+    TemporizadorComponent,
+  ],
   animations: [fadeAnimation],
   template: `
-    <div class="relative flex flex-1 flex-col items-center justify-between gap-5 overflow-hidden py-4 text-center">
+    <div
+      class="relative flex flex-1 flex-col items-center justify-between gap-5 overflow-hidden py-4 text-center"
+    >
       <!-- Botón salir - superior izquierda -->
       <button
-        class="absolute top-5 left-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-zinc-200 transition-colors hover:bg-zinc-50"
+        class="absolute top-5 left-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/40 shadow-md ring-1 ring-[#e75c3e]/20 backdrop-blur-md transition-colors hover:bg-white/60"
         (click)="salir.emit()"
       >
-        <mat-icon class="material-symbols-outlined !text-[22px] text-zinc-600">close</mat-icon>
+        <mat-icon class="material-symbols-outlined !text-[22px] !text-[#e75c3e]"
+          >close</mat-icon
+        >
       </button>
 
       <!-- Header -->
       <div class="flex shrink-0 flex-col gap-2" @fade>
         <h2 class="m-0 text-2xl font-bold text-zinc-800">Descanso</h2>
-        <p class="m-0 text-sm font-medium text-zinc-500">Prepárate para la siguiente serie</p>
+        <p class="m-0 text-sm font-medium text-zinc-500">
+          Prepárate para la siguiente serie
+        </p>
         <!-- Indicador de progreso -->
         <div class="flex items-center justify-center gap-3 pt-1">
           <span class="text-sm font-bold text-zinc-700">
@@ -50,7 +61,9 @@ import { MatButtonModule } from '@angular/material/button';
       </div>
 
       <!-- Timer -->
-      <div class="timer-wrapper flex min-h-0 flex-1 items-center justify-center">
+      <div
+        class="timer-wrapper flex min-h-0 flex-1 items-center justify-center"
+      >
         <app-temporizador
           #temporizador
           [tiempoInicial]="tiempoDescanso()"
@@ -63,9 +76,16 @@ import { MatButtonModule } from '@angular/material/button';
 
       <!-- Info próxima serie -->
       <div class="shrink-0" @fade>
-        <div class="flex flex-col gap-1.5 rounded-2xl bg-white/70 px-9 py-4 shadow-sm ring-1 ring-[#e75c3e]/15 backdrop-blur-sm">
-          <span class="text-xs font-semibold uppercase tracking-widest text-zinc-400">Próxima</span>
-          <span class="bg-gradient-to-br from-[#e75c3e] to-[#d14d31] bg-clip-text text-xl font-bold text-transparent">
+        <div
+          class="flex flex-col gap-1.5 rounded-2xl bg-white/70 px-9 py-4 shadow-sm ring-1 ring-[#e75c3e]/15 backdrop-blur-sm"
+        >
+          <span
+            class="text-xs font-semibold tracking-widest text-zinc-400 uppercase"
+            >Próxima</span
+          >
+          <span
+            class="bg-gradient-to-br from-[#e75c3e] to-[#d14d31] bg-clip-text text-xl font-bold text-transparent"
+          >
             Serie {{ serieActual() }} de {{ totalSeries() }}
           </span>
         </div>
@@ -75,7 +95,7 @@ import { MatButtonModule } from '@angular/material/button';
       <div class="flex w-full max-w-xs shrink-0 flex-col gap-2.5">
         <button
           mat-stroked-button
-          class="!h-12 !w-full !rounded-xl !border-zinc-200 !text-sm !font-semibold !text-zinc-700 hover:!bg-[#e75c3e]/10 hover:!text-[#e75c3e]"
+          class="!h-12 !w-full !rounded-xl !border-[#e75c3e] !text-sm !font-semibold !text-zinc-700 hover:!bg-[#e75c3e]/10 hover:!text-[#e75c3e]"
           (click)="onAgregarTiempo()"
         >
           <mat-icon class="material-symbols-outlined mr-1">add</mat-icon>
@@ -89,7 +109,9 @@ import { MatButtonModule } from '@angular/material/button';
           (click)="saltar.emit()"
         >
           Saltar descanso
-          <mat-icon class="material-symbols-outlined ml-2">arrow_forward</mat-icon>
+          <mat-icon class="material-symbols-outlined ml-2"
+            >arrow_forward</mat-icon
+          >
         </button>
       </div>
     </div>
@@ -109,15 +131,13 @@ import { MatButtonModule } from '@angular/material/button';
     }
 
     .timer-wrapper ::ng-deep .timer-container {
-      height: 100%;
+      width: clamp(14rem, 50cqmin, 18rem);
+      height: auto;
       aspect-ratio: 1;
-      width: auto;
-      min-height: 5rem;
-      max-height: 14rem;
     }
 
     .timer-wrapper ::ng-deep .timer-value {
-      font-size: clamp(1.75rem, 35cqh, 4.5rem);
+      font-size: clamp(1.75rem, 28cqh, 3.5rem);
     }
 
     .timer-wrapper ::ng-deep .timer-label {
@@ -138,7 +158,7 @@ export class DescansoComponent implements OnInit {
   readonly serieActual = this.registroService.serieActual;
   readonly totalSeries = this.registroService.totalSeries;
   readonly tiempoDescanso = computed(
-    () => this.registroService.ejercicioActual()?.descanso_seg || 45
+    () => this.registroService.ejercicioActual()?.descanso_seg || 45,
   );
 
   // Progreso de la sesión
