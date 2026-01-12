@@ -55,6 +55,26 @@
             >
           </button>
 
+          <!-- Botón filtro favoritos -->
+          <button
+            mat-icon-button
+            (click)="toggleSoloFavoritos()"
+            class="!h-12 !w-12 shrink-0 rounded-xl border shadow-sm backdrop-blur-sm transition-colors"
+            [class]="
+              soloFavoritos()
+                ? '!border-[#e75c3e] !bg-[#e75c3e]'
+                : 'border-zinc-200/80 !bg-white/70'
+            "
+            aria-label="Mostrar solo favoritos"
+          >
+            <mat-icon
+              class="material-symbols-outlined transition-colors"
+              [class]="soloFavoritos() ? 'text-white' : 'text-zinc-600'"
+            >
+              {{ soloFavoritos() ? "star" : "star_border" }}
+            </mat-icon>
+          </button>
+
           <!-- Botón cambio de vista -->
           <button
             mat-icon-button
@@ -158,7 +178,9 @@
               >
             </button>
             <div>
-              <h1 class="titulo-kengo text-xl font-bold text-zinc-800 sm:text-2xl">
+              <h1
+                class="titulo-kengo text-xl font-bold text-zinc-800 sm:text-2xl"
+              >
                 Ejercicios
               </h1>
               @if (ejerciciosService.total() > 0) {
@@ -227,6 +249,26 @@
             <mat-icon class="material-symbols-outlined text-zinc-600"
               >filter_alt</mat-icon
             >
+          </button>
+
+          <!-- Botón filtro favoritos (mobile) -->
+          <button
+            mat-icon-button
+            (click)="toggleSoloFavoritos()"
+            class="!h-12 !w-12 shrink-0 rounded-xl border shadow-sm backdrop-blur-sm transition-colors"
+            [class]="
+              soloFavoritos()
+                ? '!border-[#e75c3e] !bg-[#e75c3e]'
+                : 'border-zinc-200/80 !bg-white/70'
+            "
+            aria-label="Mostrar solo favoritos"
+          >
+            <mat-icon
+              class="material-symbols-outlined transition-colors"
+              [class]="soloFavoritos() ? 'text-white' : 'text-zinc-600'"
+            >
+              {{ soloFavoritos() ? "star" : "star_border" }}
+            </mat-icon>
           </button>
 
           <!-- Botón recargar -->
@@ -327,10 +369,29 @@
       </div>
     } @else if (ejerciciosService.ejercicios().length === 0) {
       <div class="tarjeta-kengo rounded-2xl p-8 text-center">
-        <mat-icon class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
-          >fitness_center</mat-icon
-        >
-        <p class="text-lg text-zinc-500">No se encontraron ejercicios</p>
+        @if (soloFavoritos()) {
+          <mat-icon
+            class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+            >star_border</mat-icon
+          >
+          <p class="text-lg text-zinc-500">No tienes ejercicios favoritos</p>
+          <p class="mt-2 text-sm text-zinc-400">
+            Marca ejercicios como favoritos para verlos aqui
+          </p>
+          <button
+            mat-stroked-button
+            class="mt-4"
+            (click)="toggleSoloFavoritos()"
+          >
+            Ver todos los ejercicios
+          </button>
+        } @else {
+          <mat-icon
+            class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+            >fitness_center</mat-icon
+          >
+          <p class="text-lg text-zinc-500">No se encontraron ejercicios</p>
+        }
       </div>
     } @else {
       <!-- Grid de ejercicios -->
@@ -365,10 +426,38 @@
                     ></div>
                   }
                 </div>
-                <mat-icon
-                  class="material-symbols-outlined !text-primary shrink-0 transition-colors group-hover:text-[#e75c3e]"
-                  >play_circle</mat-icon
+
+                <!-- Botón favorito -->
+                <button
+                  type="button"
+                  class="shrink-0 rounded-full p-2 transition-colors hover:bg-zinc-100"
+                  (click)="toggleFavorito($event, ejercicio.id_ejercicio)"
+                  [disabled]="favoritoEnProceso(ejercicio.id_ejercicio)"
+                  [attr.aria-label]="
+                    esFavorito(ejercicio.id_ejercicio)
+                      ? 'Quitar de favoritos'
+                      : 'Agregar a favoritos'
+                  "
                 >
+                  @if (favoritoEnProceso(ejercicio.id_ejercicio)) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                  } @else {
+                    <mat-icon
+                      class="material-symbols-outlined transition-colors"
+                      [class]="
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? '!text-[#e75c3e]'
+                          : 'text-zinc-400 hover:text-[#e75c3e]'
+                      "
+                    >
+                      {{
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? "star"
+                          : "star_border"
+                      }}
+                    </mat-icon>
+                  }
+                </button>
               </article>
             </a>
           } @else {
@@ -384,6 +473,42 @@
                   alt="{{ ejercicio.nombre_ejercicio }}"
                   class="absolute inset-0 h-full w-full object-cover opacity-75 transition-opacity group-hover:opacity-50"
                 />
+
+                <!-- Botón favorito (esquina superior derecha) -->
+                <button
+                  type="button"
+                  class="absolute top-3 right-3 z-10 rounded-full bg-black/30 p-2 backdrop-blur-sm transition-all hover:bg-black/50"
+                  (click)="toggleFavorito($event, ejercicio.id_ejercicio)"
+                  [disabled]="favoritoEnProceso(ejercicio.id_ejercicio)"
+                  [attr.aria-label]="
+                    esFavorito(ejercicio.id_ejercicio)
+                      ? 'Quitar de favoritos'
+                      : 'Agregar a favoritos'
+                  "
+                >
+                  @if (favoritoEnProceso(ejercicio.id_ejercicio)) {
+                    <mat-spinner
+                      diameter="18"
+                      class="!text-white"
+                    ></mat-spinner>
+                  } @else {
+                    <mat-icon
+                      class="material-symbols-outlined !text-xl transition-colors"
+                      [class]="
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? '!text-[#e75c3e]'
+                          : 'text-white/80 hover:text-white'
+                      "
+                    >
+                      {{
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? "star"
+                          : "star_border"
+                      }}
+                    </mat-icon>
+                  }
+                </button>
+
                 <div class="relative flex h-full flex-col justify-end p-4">
                   <h3 class="text-lg font-bold text-white sm:text-xl">
                     {{ ejercicio.nombre_ejercicio }}
@@ -395,10 +520,6 @@
                     ></div>
                   }
                 </div>
-                <mat-icon
-                  class="material-symbols-outlined pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl text-white/30 transition-colors group-hover:text-white/50"
-                  >play_circle</mat-icon
-                >
               </article>
             </a>
           }

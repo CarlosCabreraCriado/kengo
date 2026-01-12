@@ -3,6 +3,7 @@ import {
   computed,
   inject,
   signal,
+  untracked,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
@@ -11,8 +12,9 @@ import { httpResource } from '@angular/common/http';
 
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { environment as env } from '../../environments/environment';
+import { AppService } from './app.service';
 
 //Tipos:
 import { Ejercicio } from '../../types/global';
@@ -46,11 +48,13 @@ export interface PeticionCategoria {
 interface FiltroEjercicios {
   nombre_ejercicio?: { _icontains: string };
   categoria?: { categorias_id_categoria: { _in: (string | number)[] } };
+  id_ejercicio?: { _in: number[] };
 }
 
 @Injectable({ providedIn: 'root' })
 export class EjerciciosService {
   private http = inject(HttpClient);
+  private appService = inject(AppService);
 
   // --- Filtros / paginación como señales puras ---
   readonly busqueda: WritableSignal<string> = signal('');
@@ -59,6 +63,11 @@ export class EjerciciosService {
   readonly page: WritableSignal<number> = signal(1);
   readonly pageSize: WritableSignal<number> = signal(24);
   readonly sort: WritableSignal<string> = signal('nombre_ejercicio');
+
+  // --- Favoritos ---
+  readonly idsFavoritos: WritableSignal<Set<number>> = signal(new Set());
+  readonly soloFavoritos: WritableSignal<boolean> = signal(false);
+  readonly favoritoEnProceso: WritableSignal<number | null> = signal(null);
 
   // Query derivada para exercises
   private readonly query: Signal<ExerciseQuery> = computed(() => ({
@@ -122,15 +131,24 @@ export class EjerciciosService {
     const p = this.page();
     const ps = this.pageSize();
     const so = this.sort();
+    const soloFavs = this.soloFavoritos();
 
     const filter: FiltroEjercicios = {};
     if (name) filter['nombre_ejercicio'] = { _icontains: name };
 
     if (cats.length) {
-      // Ajusta a tu esquema M2M si difiere:
       filter['categoria'] = { categorias_id_categoria: { _in: cats } };
-      // Alternativas:
-      // filter['categories'] = { id: { _in: cats } };
+    }
+
+    // Filtro de favoritos - solo crear dependencia reactiva si está activo
+    if (soloFavs) {
+      const favIds = this.idsFavoritos();
+      if (favIds.size > 0) {
+        filter['id_ejercicio'] = { _in: [...favIds] };
+      } else {
+        // Sin favoritos, devolver array vacío
+        filter['id_ejercicio'] = { _in: [-1] };
+      }
     }
 
     return {
@@ -173,7 +191,9 @@ export class EjerciciosService {
   );
   readonly hasActiveFilters = computed(
     () =>
-      !!this.busqueda().trim() || this.idsCategoriasSeleccionadas().length > 0,
+      !!this.busqueda().trim() ||
+      this.idsCategoriasSeleccionadas().length > 0 ||
+      this.soloFavoritos(),
   );
 
   // ========= Recargas manuales =========
@@ -210,6 +230,7 @@ export class EjerciciosService {
   clearFilters() {
     this.busqueda.set('');
     this.idsCategoriasSeleccionadas.set([]);
+    this.soloFavoritos.set(false);
     this.page.set(1);
   }
 
@@ -231,5 +252,128 @@ export class EjerciciosService {
   // ========= Helper de assets (ajusta si usas tokens/cookies/blob) =========
   getAssetUrl(id?: string) {
     return id ? `${env.DIRECTUS_URL}/assets/${id}` : '';
+  }
+
+  // ========= Favoritos =========
+
+  async cargarFavoritos(): Promise<void> {
+    const usuario = this.appService.usuario();
+    if (!usuario) return;
+
+    try {
+      const res = await firstValueFrom(
+        this.http.get<{ data: { id_ejercicio: number }[] }>(
+          `${env.DIRECTUS_URL}/items/ejercicios_favoritos`,
+          {
+            params: {
+              filter: JSON.stringify({
+                id_usuario: { _eq: usuario.id },
+              }),
+              fields: 'id_ejercicio',
+              limit: '1000',
+            },
+            withCredentials: true,
+          },
+        ),
+      );
+
+      const ids = new Set(res.data.map((f) => f.id_ejercicio));
+      this.idsFavoritos.set(ids);
+    } catch (error) {
+      console.error('Error cargando favoritos:', error);
+    }
+  }
+
+  async toggleFavorito(idEjercicio: number): Promise<void> {
+    const usuario = this.appService.usuario();
+    if (!usuario) return;
+
+    const esFavorito = this.idsFavoritos().has(idEjercicio);
+    this.favoritoEnProceso.set(idEjercicio);
+
+    // Optimistic update
+    const nuevoSet = new Set(this.idsFavoritos());
+    if (esFavorito) {
+      nuevoSet.delete(idEjercicio);
+    } else {
+      nuevoSet.add(idEjercicio);
+    }
+    this.idsFavoritos.set(nuevoSet);
+
+    try {
+      if (esFavorito) {
+        await this.eliminarFavorito(usuario.id, idEjercicio);
+      } else {
+        await this.agregarFavorito(usuario.id, idEjercicio);
+      }
+    } catch (error) {
+      console.error('Error toggling favorito:', error);
+      // Revertir optimistic update
+      const revertSet = new Set(this.idsFavoritos());
+      if (esFavorito) {
+        revertSet.add(idEjercicio);
+      } else {
+        revertSet.delete(idEjercicio);
+      }
+      this.idsFavoritos.set(revertSet);
+    } finally {
+      this.favoritoEnProceso.set(null);
+    }
+  }
+
+  private async agregarFavorito(
+    userId: string,
+    ejercicioId: number,
+  ): Promise<void> {
+    await firstValueFrom(
+      this.http.post(
+        `${env.DIRECTUS_URL}/items/ejercicios_favoritos`,
+        {
+          id_usuario: userId,
+          id_ejercicio: ejercicioId,
+        },
+        { withCredentials: true },
+      ),
+    );
+  }
+
+  private async eliminarFavorito(
+    userId: string,
+    ejercicioId: number,
+  ): Promise<void> {
+    const res = await firstValueFrom(
+      this.http.get<{ data: { id: number }[] }>(
+        `${env.DIRECTUS_URL}/items/ejercicios_favoritos`,
+        {
+          params: {
+            filter: JSON.stringify({
+              id_usuario: { _eq: userId },
+              id_ejercicio: { _eq: ejercicioId },
+            }),
+            fields: 'id',
+            limit: '1',
+          },
+          withCredentials: true,
+        },
+      ),
+    );
+
+    if (res.data.length > 0) {
+      await firstValueFrom(
+        this.http.delete(
+          `${env.DIRECTUS_URL}/items/ejercicios_favoritos/${res.data[0].id}`,
+          { withCredentials: true },
+        ),
+      );
+    }
+  }
+
+  esFavorito(idEjercicio: number): boolean {
+    return this.idsFavoritos().has(idEjercicio);
+  }
+
+  toggleSoloFavoritos(): void {
+    this.soloFavoritos.update((v) => !v);
+    this.page.set(1);
   }
 }

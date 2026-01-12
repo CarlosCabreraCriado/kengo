@@ -118,6 +118,12 @@ export interface Categoria {
   nombre_categoria: string;
 }
 
+export interface EjercicioFavorito {
+  id: number;
+  id_usuario: string;
+  id_ejercicio: number;
+}
+
 export interface Accesos {
   isPaciente: boolean;
   isFisio: boolean;

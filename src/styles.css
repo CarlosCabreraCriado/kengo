@@ -69,6 +69,15 @@ mat-icon {
   width: auto !important;
   height: auto !important;
 }
+
+.relleno {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
 .mat-mdc-icon-button {
   display: inline-flex;
 }

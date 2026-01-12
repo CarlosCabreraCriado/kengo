@@ -141,6 +141,9 @@ export class EjerciciosComponent implements OnInit {
       .subscribe((result) => {
         if (result.matches) this.vista.set('lista');
       });
+
+    // Cargar favoritos del usuario
+    this.ejerciciosService.cargarFavoritos();
   }
 
   getAssetUrl(id: number | string) {
@@ -219,5 +222,24 @@ export class EjerciciosComponent implements OnInit {
     this.ejerciciosService.reloadEjercicios();
   }
 
-  //reload() { this.ejerciciosService.reloadExercises(); }
+  // ========= Favoritos =========
+  soloFavoritos = computed(() => this.ejerciciosService.soloFavoritos());
+
+  toggleFavorito(event: Event, idEjercicio: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.ejerciciosService.toggleFavorito(idEjercicio);
+  }
+
+  toggleSoloFavoritos(): void {
+    this.ejerciciosService.toggleSoloFavoritos();
+  }
+
+  esFavorito(idEjercicio: number): boolean {
+    return this.ejerciciosService.esFavorito(idEjercicio);
+  }
+
+  favoritoEnProceso(idEjercicio: number): boolean {
+    return this.ejerciciosService.favoritoEnProceso() === idEjercicio;
+  }
 }
