@@ -25,6 +25,7 @@ export interface Usuario {
   postal?: string;
   esFisio: boolean;
   esPaciente: boolean;
+  numero_colegiado?: string;
 }
 
 export interface UsuarioDirectus {
@@ -45,6 +46,7 @@ export interface UsuarioDirectus {
   postal?: string;
   is_fisio: boolean;
   is_cliente: boolean;
+  numero_colegiado?: string;
 }
 
 export interface DetalleUsuario {

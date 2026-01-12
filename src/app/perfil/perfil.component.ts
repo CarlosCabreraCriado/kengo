@@ -76,6 +76,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   // === DATOS PERSONALES ===
   public usuario = computed(() => this.appService.usuario());
+  public esFisio = computed(() => this.appService.usuario()?.esFisio ?? false);
 
   public url_perfil = computed(() => {
     const id_avatar = this.usuario()?.avatar;
@@ -109,6 +110,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
       [Validators.required, Validators.maxLength(5), Validators.minLength(5)],
     ],
     direccion: ['', [Validators.required]],
+    numero_colegiado: [''],
   });
 
   private effectoCargaInicial = effect(() => {

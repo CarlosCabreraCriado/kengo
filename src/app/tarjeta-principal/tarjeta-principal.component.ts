@@ -2,11 +2,12 @@ import { Component, Signal, signal } from '@angular/core';
 import { AppService } from '../services/app.service';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
+import { SafeHtmlPipe } from '../pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-tarjeta-principal',
   standalone: true,
-  imports: [MatButtonModule, RouterLink],
+  imports: [MatButtonModule, RouterLink, SafeHtmlPipe],
   templateUrl: './tarjeta-principal.component.html',
   styleUrl: './tarjeta-principal.component.css',
 })

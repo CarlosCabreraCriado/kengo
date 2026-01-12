@@ -359,9 +359,10 @@
                     {{ ejercicio.nombre_ejercicio }}
                   </h3>
                   @if (ejercicio.descripcion) {
-                    <p class="mt-1 line-clamp-2 text-sm text-zinc-500">
-                      {{ ejercicio.descripcion }}
-                    </p>
+                    <div
+                      class="prose prose-sm mt-1 line-clamp-2 text-sm text-zinc-500"
+                      [innerHTML]="ejercicio.descripcion | safeHtml"
+                    ></div>
                   }
                 </div>
                 <mat-icon
@@ -388,11 +389,10 @@
                     {{ ejercicio.nombre_ejercicio }}
                   </h3>
                   @if (ejercicio.descripcion) {
-                    <p
-                      class="mt-1 line-clamp-2 translate-y-4 text-sm text-white/80 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
-                    >
-                      {{ ejercicio.descripcion }}
-                    </p>
+                    <div
+                      class="prose prose-sm prose-invert mt-1 line-clamp-2 translate-y-4 text-sm text-white/80 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
+                      [innerHTML]="ejercicio.descripcion | safeHtml"
+                    ></div>
                   }
                 </div>
                 <mat-icon

@@ -1,80 +1,78 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment as env } from '../../environments/environment';
+import { Usuario, UsuarioDirectus } from '../../types/global';
+import { AppService } from '../services/app.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+interface DirectusResponse<T> {
+  data: T[];
+}
 
 @Component({
   selector: 'app-fisios',
   standalone: true,
-  imports: [],
+  imports: [MatProgressSpinnerModule],
   templateUrl: './fisios.component.html',
   styleUrl: './fisios.component.css',
 })
-export class FisiosComponent implements OnInit {
-  public datosCargados = false;
-  public fisios = [
-    {
-      id: 1,
-      nombre: 'Emilio',
-      apellidos: 'Diaz Tejera',
-      puesto: 'Fisioterapeuta',
-    },
-    {
-      id: 2,
-      nombre: 'Carlos',
-      apellidos: 'Cabrera',
-      puesto: 'Fisioterapeuta',
-      altura: '1.80m',
-    },
-    {
-      id: 3,
-      nombre: 'Emilio',
-      apellidos: 'González',
-      puesto: 'Fisioterapeuta',
-    },
-    {
-      id: 4,
-      nombre: 'Carlos',
-      apellidos: 'Cabrera',
-      puesto: 'Fisioterapeuta',
-    },
-    {
-      id: 5,
-      nombre: 'Emilio',
-      apellidos: 'González',
-      puesto: 'Fisioterapeuta',
-    },
-    {
-      id: 6,
-      nombre: 'Carlos',
-      apellidos: 'Cabrera',
-      puesto: 'Fisioterapeuta',
-    },
-    {
-      id: 7,
-      nombre: 'Emilio',
-      apellidos: 'González',
-      puesto: 'Fisioterapeuta',
-    },
-    {
-      id: 8,
-      nombre: 'Carlos',
-      apellidos: 'Cabrera',
-      puesto: 'Fisioterapeuta',
-    },
-  ];
+export class FisiosComponent {
+  private http = inject(HttpClient);
+  private appService = inject(AppService);
 
-  ngOnInit() {
-    console.log('HOLA EMI');
-    console.log(this.fisios);
-    console.log(this.fisios[0]);
-    console.log(this.fisios[0].apellidos[1]);
-    console.log(this.fisios[0]['altura']);
+  public cargando = signal(true);
+  public fisios = signal<Usuario[]>([]);
+  public error = signal<string | null>(null);
 
-    console.log(23); //--> NUMBER
-    console.log(false, true); //--> BOOLEAN
-    console.log('EMILIO'); //--> STRING
-    console.log(null); //--> NULL
-    console.log(undefined); //--> UNDEFINED
+  constructor() {
+    this.cargarFisios();
+  }
 
-    console.log([]); //--> ARRAY
-    console.log({}); //--> OBJETO
+  private async cargarFisios(): Promise<void> {
+    try {
+      this.cargando.set(true);
+      this.error.set(null);
+
+      const params = {
+        fields: [
+          'id',
+          'first_name',
+          'last_name',
+          'email',
+          'avatar',
+          'telefono',
+          'numero_colegiado',
+          'clinicas.id_clinica',
+          'clinicas.puestos.Puestos_id.id',
+          'clinicas.puestos.Puestos_id.puesto',
+          'is_fisio',
+          'is_cliente',
+        ].join(','),
+        filter: JSON.stringify({
+          is_fisio: { _eq: true },
+        }),
+        sort: 'first_name,last_name',
+        limit: '100',
+      };
+
+      const response = await this.http
+        .get<DirectusResponse<UsuarioDirectus>>(`${env.DIRECTUS_URL}/users`, {
+          params,
+          withCredentials: true,
+        })
+        .toPromise();
+
+      if (response?.data) {
+        const fisiosTransformados = response.data.map((u) =>
+          this.appService.transformarUsuarioDirectus(u)
+        );
+        this.fisios.set(fisiosTransformados);
+      }
+    } catch (err) {
+      console.error('Error al cargar fisioterapeutas:', err);
+      this.error.set('No se pudieron cargar los fisioterapeutas');
+    } finally {
+      this.cargando.set(false);
+    }
   }
 }

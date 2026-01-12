@@ -10,6 +10,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
+import { SafeHtmlPipe } from '../pipes/safe-html.pipe';
 
 // RxJS
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,7 +19,7 @@ import { map } from 'rxjs/operators';
 @Component({
   selector: 'app-detalle-ejercicio',
   standalone: true,
-  imports: [MatIconModule, MatButtonModule, RouterLink],
+  imports: [MatIconModule, MatButtonModule, RouterLink, SafeHtmlPipe],
   templateUrl: './detalle-ejercicio.component.html',
   styleUrl: './detalle-ejercicio.component.css',
 })

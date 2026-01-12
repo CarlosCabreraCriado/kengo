@@ -156,6 +156,17 @@
               <input matInput formControlName="postal" maxlength="5" />
             </mat-form-field>
           </div>
+
+          <!-- NUMERO COLEGIADO (solo para fisioterapeutas) -->
+          @if (esFisio()) {
+            <div class="w-full px-3 sm:w-1/2">
+              <mat-form-field appearance="outline" class="mb-2 w-full">
+                <mat-label>Numero de Colegiado</mat-label>
+                <input matInput formControlName="numero_colegiado" />
+                <mat-hint>Opcional - Tu numero de colegiado profesional</mat-hint>
+              </mat-form-field>
+            </div>
+          }
         </div>
 
         <!-- BOTÓN GUARDAR -->

@@ -110,9 +110,10 @@
                 <div
                   class="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
                 >
-                  <p class="text-sm text-white">
-                    {{ ejercicio.descripcion }}
-                  </p>
+                  <div
+                    class="prose prose-sm prose-invert text-sm text-white"
+                    [innerHTML]="ejercicio.descripcion | safeHtml"
+                  ></div>
                 </div>
               </div>
             </div>

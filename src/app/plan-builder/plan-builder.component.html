@@ -445,9 +445,10 @@
                       {{ it.ejercicio.nombre_ejercicio }}
                     </h3>
                     @if (it.ejercicio.descripcion) {
-                      <p class="mt-1 line-clamp-2 text-sm text-zinc-500">
-                        {{ it.ejercicio.descripcion }}
-                      </p>
+                      <div
+                        class="prose prose-sm mt-1 line-clamp-2 text-sm text-zinc-500"
+                        [innerHTML]="it.ejercicio.descripcion | safeHtml"
+                      ></div>
                     }
                   </div>
                 </div>

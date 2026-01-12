@@ -322,6 +322,18 @@
                           </p>
                         }
 
+                        @if (f.numero_colegiado) {
+                          <p
+                            class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                          >
+                            <mat-icon
+                              class="material-symbols-outlined !text-base"
+                              >badge</mat-icon
+                            >
+                            Col. {{ f.numero_colegiado }}
+                          </p>
+                        }
+
                         <!-- Chip de rol -->
                         <div class="mt-2">
                           <span

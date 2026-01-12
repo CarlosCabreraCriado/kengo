@@ -116,6 +116,7 @@ export class ClinicasService {
             'email',
             'avatar',
             'telefono',
+            'numero_colegiado',
             'clinicas.id_clinica', // Variante A (como en tus fields previos)
             'clinicas.puestos.Puestos_id.id',
             'clinicas.puestos.Puestos_id.puesto',

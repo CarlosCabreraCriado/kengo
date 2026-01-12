@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 
 import { EjerciciosService } from '../services/ejercicios.service';
 import { Ejercicio } from '../../types/global';
+import { SafeHtmlPipe } from '../pipes/safe-html.pipe';
 
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
@@ -52,6 +53,7 @@ import { MatDividerModule } from '@angular/material/divider';
     MatListModule,
     MatProgressSpinnerModule,
     MatDividerModule,
+    SafeHtmlPipe,
   ],
   templateUrl: './ejercicios.component.html',
   styleUrl: './ejercicios.component.css',
@@ -62,7 +64,7 @@ import { MatDividerModule } from '@angular/material/divider';
 export class EjerciciosComponent implements OnInit {
   private fb = inject(FormBuilder);
   public ejerciciosService = inject(EjerciciosService);
-  public vista = signal<'viñeta' | 'lista'>('viñeta');
+  public vista = signal<'viñeta' | 'lista'>('lista');
   private breakpointObserverService = inject(BreakpointObserver);
 
   // Detectar si estamos en desktop (>= 1024px)
@@ -70,7 +72,7 @@ export class EjerciciosComponent implements OnInit {
     this.breakpointObserverService
       .observe(['(min-width: 1024px)'])
       .pipe(map((result) => result.matches)),
-    { initialValue: false }
+    { initialValue: false },
   );
 
   @ViewChild(MatMenuTrigger) menuFiltros!: MatMenuTrigger;

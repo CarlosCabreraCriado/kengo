@@ -63,7 +63,7 @@ export class AppService {
         .get<{ data: UsuarioDirectus }>(`${env.DIRECTUS_URL}/users/me`, {
           params: {
             fields:
-              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto,clinicas.puestos.Puestos_id.id,is_cliente,is_fisio,telefono,direccion,postal',
+              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto,clinicas.puestos.Puestos_id.id,is_cliente,is_fisio,telefono,direccion,postal,numero_colegiado',
           },
         })
         .toPromise();
@@ -142,6 +142,7 @@ export class AppService {
         })) || [],
       esFisio: !!u.is_fisio,
       esPaciente: !!u.is_cliente,
+      numero_colegiado: u.numero_colegiado || undefined,
     };
   }
 

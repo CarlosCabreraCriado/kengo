@@ -38,6 +38,7 @@ import { PlanBuilderService } from '../services/plan-builder.service';
 import { AppService } from '../services/app.service';
 import { EjercicioPlan } from '../../types/global';
 import { environment as env } from '../../environments/environment';
+import { SafeHtmlPipe } from '../pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-plan-builder',
@@ -57,6 +58,7 @@ import { environment as env } from '../../environments/environment';
     MatDividerModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    SafeHtmlPipe,
   ],
   templateUrl: './plan-builder.component.html',
   styleUrl: './plan-builder.component.css',
