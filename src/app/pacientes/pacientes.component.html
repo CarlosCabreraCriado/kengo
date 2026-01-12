@@ -35,6 +35,18 @@
             }
           </div>
 
+          <!-- Botón cambio de vista -->
+          <button
+            mat-icon-button
+            (click)="vista.set(vista() === 'card' ? 'lista' : 'card')"
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Cambiar vista"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600">
+              {{ vista() === "card" ? "view_list" : "grid_view" }}
+            </mat-icon>
+          </button>
+
           <!-- Botón nuevo paciente -->
           <button
             mat-flat-button
@@ -126,6 +138,18 @@
             }
           </div>
 
+          <!-- Botón cambio de vista -->
+          <button
+            mat-icon-button
+            (click)="vista.set(vista() === 'card' ? 'lista' : 'card')"
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Cambiar vista"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600">
+              {{ vista() === "card" ? "view_list" : "grid_view" }}
+            </mat-icon>
+          </button>
+
           <!-- Botón recargar -->
           <button
             mat-icon-button
@@ -172,79 +196,124 @@
         </button>
       </div>
     } @else {
-      <!-- Grid de Cards -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- Grid de pacientes -->
+      <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @for (p of pacientes(); track p.id) {
-          <article
-            class="tarjeta-kengo group relative cursor-pointer overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
-            (click)="verDetalle(p)"
-          >
-            <!-- Header con avatar e info -->
-            <div class="flex items-start gap-4">
+          @if (vista() === "lista") {
+            <!-- Vista Lista -->
+            <article
+              class="tarjeta-kengo group flex cursor-pointer items-center gap-4 overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
+              (click)="verDetalle(p)"
+            >
               <!-- Avatar -->
-              <div class="shrink-0">
-                @if (avatarUrl(p)) {
-                  <img
-                    [src]="avatarUrl(p)"
-                    [alt]="fullName(p)"
-                    class="h-14 w-14 rounded-full object-cover ring-2 shadow-sm ring-white"
-                  />
-                } @else {
-                  <div
-                    class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
+              @if (avatarUrl(p)) {
+                <img
+                  [src]="avatarUrl(p)"
+                  [alt]="fullName(p)"
+                  class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 shadow-sm ring-white"
+                />
+              } @else {
+                <div
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
+                >
+                  <mat-icon
+                    class="material-symbols-outlined text-xl !text-white"
+                    aria-hidden="true"
+                    >person</mat-icon
                   >
-                    <mat-icon
-                      class="material-symbols-outlined text-2xl !text-white"
-                      aria-hidden="true"
-                      >person</mat-icon
-                    >
-                  </div>
-                }
-              </div>
+                </div>
+              }
 
-              <!-- Info del paciente -->
+              <!-- Info compacta -->
               <div class="min-w-0 flex-1">
                 <h3 class="truncate text-base font-semibold text-zinc-800">
                   {{ fullName(p) }}
                 </h3>
-
                 @if (p.email) {
-                  <p
-                    class="mt-1 flex items-center gap-1.5 truncate text-sm text-zinc-500"
-                  >
-                    <mat-icon class="material-symbols-outlined !text-base"
-                      >mail</mat-icon
-                    >
+                  <p class="truncate text-sm text-zinc-500">
                     {{ p.email }}
                   </p>
                 }
-
-                @if (p.telefono) {
-                  <p
-                    class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
-                  >
-                    <mat-icon class="material-symbols-outlined !text-base"
-                      >phone</mat-icon
-                    >
-                    {{ p.telefono }}
-                  </p>
-                }
-
-                @if (getClinicaNombre(p)) {
-                  <p
-                    class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
-                  >
-                    <mat-icon class="material-symbols-outlined !text-base"
-                      >location_city</mat-icon
-                    >
-                    {{ getClinicaNombre(p) }}
-                  </p>
-                }
               </div>
-            </div>
-          </article>
+
+              <!-- Icono flecha -->
+              <mat-icon class="material-symbols-outlined shrink-0 text-zinc-400 group-hover:text-zinc-600">
+                chevron_right
+              </mat-icon>
+            </article>
+          } @else {
+            <!-- Vista Card -->
+            <article
+              class="tarjeta-kengo group relative cursor-pointer overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
+              (click)="verDetalle(p)"
+            >
+              <!-- Header con avatar e info -->
+              <div class="flex items-start gap-4">
+                <!-- Avatar -->
+                <div class="shrink-0">
+                  @if (avatarUrl(p)) {
+                    <img
+                      [src]="avatarUrl(p)"
+                      [alt]="fullName(p)"
+                      class="h-14 w-14 rounded-full object-cover ring-2 shadow-sm ring-white"
+                    />
+                  } @else {
+                    <div
+                      class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
+                    >
+                      <mat-icon
+                        class="material-symbols-outlined text-2xl !text-white"
+                        aria-hidden="true"
+                        >person</mat-icon
+                      >
+                    </div>
+                  }
+                </div>
+
+                <!-- Info del paciente -->
+                <div class="min-w-0 flex-1">
+                  <h3 class="truncate text-base font-semibold text-zinc-800">
+                    {{ fullName(p) }}
+                  </h3>
+
+                  @if (p.email) {
+                    <p
+                      class="mt-1 flex items-center gap-1.5 truncate text-sm text-zinc-500"
+                    >
+                      <mat-icon class="material-symbols-outlined !text-base"
+                        >mail</mat-icon
+                      >
+                      {{ p.email }}
+                    </p>
+                  }
+
+                  @if (p.telefono) {
+                    <p
+                      class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                    >
+                      <mat-icon class="material-symbols-outlined !text-base"
+                        >phone</mat-icon
+                      >
+                      {{ p.telefono }}
+                    </p>
+                  }
+
+                  @if (getClinicaNombre(p)) {
+                    <p
+                      class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
+                    >
+                      <mat-icon class="material-symbols-outlined !text-base"
+                        >location_city</mat-icon
+                      >
+                      {{ getClinicaNombre(p) }}
+                    </p>
+                  }
+                </div>
+              </div>
+            </article>
+          }
         }
-      </div>
+      </section>
     }
   </div>
 </section>

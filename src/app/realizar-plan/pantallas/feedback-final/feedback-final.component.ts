@@ -40,6 +40,7 @@ export interface FeedbackFinalData {
   animations: [fadeAnimation, staggerAnimation],
   template: `
     <div class="flex flex-1 flex-col overflow-hidden bg-gradient-to-b from-zinc-50 to-white">
+      <div class="mx-auto flex w-full max-w-2xl flex-1 flex-col overflow-hidden">
       <!-- Header -->
       <div class="shrink-0 px-4 pt-6 pb-4 text-center">
         <div class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg">
@@ -132,6 +133,7 @@ export interface FeedbackFinalData {
             Completa la escala de dolor de todos los ejercicios ({{ ejerciciosConDolor() }}/{{ totalEjercicios() }})
           </p>
         }
+      </div>
       </div>
     </div>
   `,

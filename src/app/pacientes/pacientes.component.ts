@@ -59,6 +59,9 @@ export class PacientesComponent {
   private authService = inject(AuthService);
   private breakpointObserver = inject(BreakpointObserver);
 
+  // Signal para alternar vista card/lista
+  public vista = signal<'card' | 'lista'>('card');
+
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
     this.breakpointObserver
