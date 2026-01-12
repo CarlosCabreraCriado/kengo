@@ -102,10 +102,11 @@
         </div>
       </div>
 
-      <!-- Acordeones -->
-      <mat-accordion class="detalle-accordion" multi>
-        <!-- Acordeon: Planes -->
-        <mat-expansion-panel [expanded]="true" class="!rounded-2xl !mb-3 tarjeta-kengo">
+      <!-- Acordeones en grid para desktop -->
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <!-- Columna izquierda: Planes -->
+        <mat-accordion class="detalle-accordion" multi>
+          <mat-expansion-panel [expanded]="true" class="!rounded-2xl tarjeta-kengo">
           <mat-expansion-panel-header>
             <mat-panel-title class="!font-semibold !flex-shrink-0">
               <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">assignment</mat-icon>
@@ -210,15 +211,19 @@
             }
           </div>
         </mat-expansion-panel>
+        </mat-accordion>
 
-        <!-- Acordeon: Estadisticas -->
-        <mat-expansion-panel class="!rounded-2xl !mb-3 tarjeta-kengo">
-          <mat-expansion-panel-header>
-            <mat-panel-title class="!font-semibold">
-              <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">analytics</mat-icon>
-              Estadisticas
-            </mat-panel-title>
-          </mat-expansion-panel-header>
+        <!-- Columna derecha: Estadísticas y Actividad -->
+        <div class="flex flex-col gap-4">
+          <mat-accordion class="detalle-accordion" multi>
+            <!-- Acordeon: Estadisticas -->
+            <mat-expansion-panel [expanded]="true" class="!rounded-2xl !mb-4 tarjeta-kengo">
+              <mat-expansion-panel-header>
+                <mat-panel-title class="!font-semibold">
+                  <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">analytics</mat-icon>
+                  Estadísticas
+                </mat-panel-title>
+              </mat-expansion-panel-header>
 
           <div class="py-2">
             @if (isLoadingEstadisticas()) {
@@ -311,63 +316,65 @@
                 <p class="text-sm text-zinc-500">Sin datos suficientes</p>
               </div>
             }
-          </div>
-        </mat-expansion-panel>
+            </div>
+            </mat-expansion-panel>
 
-        <!-- Acordeon: Actividad Reciente -->
-        <mat-expansion-panel class="!rounded-2xl !mb-3 tarjeta-kengo">
-          <mat-expansion-panel-header>
-            <mat-panel-title class="!font-semibold">
-              <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">history</mat-icon>
-              Actividad Reciente
-            </mat-panel-title>
-          </mat-expansion-panel-header>
+            <!-- Acordeon: Actividad Reciente -->
+            <mat-expansion-panel class="!rounded-2xl tarjeta-kengo">
+              <mat-expansion-panel-header>
+                <mat-panel-title class="!font-semibold">
+                  <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">history</mat-icon>
+                  Actividad Reciente
+                </mat-panel-title>
+              </mat-expansion-panel-header>
 
-          <div class="py-2">
-            @if (isLoadingSesiones()) {
-              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-            } @else if (sesiones().length === 0) {
-              <div class="py-6 text-center">
-                <mat-icon class="material-symbols-outlined mb-2 text-4xl text-zinc-300">event_busy</mat-icon>
-                <p class="text-sm text-zinc-500">Sin actividad registrada</p>
-              </div>
-            } @else {
-              <div class="space-y-3">
-                @for (sesion of sesiones().slice(0, 10); track sesion.fecha) {
-                  <div class="rounded-xl bg-zinc-50/70 p-3">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <mat-icon class="material-symbols-outlined text-[#e75c3e]">event</mat-icon>
-                        <span class="font-medium text-zinc-800">{{ sesion.fechaFormateada }}</span>
-                      </div>
-                      <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                        {{ sesion.totalEjercicios }} ejercicio{{ sesion.totalEjercicios !== 1 ? 's' : '' }}
-                      </span>
-                    </div>
+              <div class="py-2">
+                @if (isLoadingSesiones()) {
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                } @else if (sesiones().length === 0) {
+                  <div class="py-6 text-center">
+                    <mat-icon class="material-symbols-outlined mb-2 text-4xl text-zinc-300">event_busy</mat-icon>
+                    <p class="text-sm text-zinc-500">Sin actividad registrada</p>
+                  </div>
+                } @else {
+                  <div class="space-y-3">
+                    @for (sesion of sesiones().slice(0, 10); track sesion.fecha) {
+                      <div class="rounded-xl bg-zinc-50/70 p-3">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <mat-icon class="material-symbols-outlined text-[#e75c3e]">event</mat-icon>
+                            <span class="font-medium text-zinc-800">{{ sesion.fechaFormateada }}</span>
+                          </div>
+                          <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                            {{ sesion.totalEjercicios }} ejercicio{{ sesion.totalEjercicios !== 1 ? 's' : '' }}
+                          </span>
+                        </div>
 
-                    @if (sesion.promedioDolorValue !== null) {
-                      <div class="mt-2 flex items-center gap-2 text-sm">
-                        <mat-icon class="material-symbols-outlined !text-base" [class]="getDolorColor(sesion.promedioDolorValue)">
-                          sentiment_dissatisfied
-                        </mat-icon>
-                        <span class="text-zinc-600">
-                          Dolor promedio: <strong [class]="getDolorColor(sesion.promedioDolorValue)">{{ sesion.promedioDolorValue | number:'1.0-1' }}/10</strong>
-                        </span>
+                        @if (sesion.promedioDolorValue !== null) {
+                          <div class="mt-2 flex items-center gap-2 text-sm">
+                            <mat-icon class="material-symbols-outlined !text-base" [class]="getDolorColor(sesion.promedioDolorValue)">
+                              sentiment_dissatisfied
+                            </mat-icon>
+                            <span class="text-zinc-600">
+                              Dolor promedio: <strong [class]="getDolorColor(sesion.promedioDolorValue)">{{ sesion.promedioDolorValue | number:'1.0-1' }}/10</strong>
+                            </span>
+                          </div>
+                        }
                       </div>
                     }
                   </div>
+
+                  @if (sesiones().length > 10) {
+                    <p class="mt-3 text-center text-xs text-zinc-500">
+                      Mostrando las últimas 10 sesiones de {{ sesiones().length }} totales
+                    </p>
+                  }
                 }
               </div>
-
-              @if (sesiones().length > 10) {
-                <p class="mt-3 text-center text-xs text-zinc-500">
-                  Mostrando las ultimas 10 sesiones de {{ sesiones().length }} totales
-                </p>
-              }
-            }
-          </div>
-        </mat-expansion-panel>
-      </mat-accordion>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </div>
+      </div>
     }
   </div>
 
