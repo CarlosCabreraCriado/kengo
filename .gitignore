@@ -11,6 +11,15 @@
 npm-debug.log
 yarn-error.log
 
+# Nx
+.nx/cache
+.nx/workspace-data
+.nx/installation
+nxcloud.env
+
+# Claude Code
+.claude/
+
 # IDEs and editors
 .idea/
 .project

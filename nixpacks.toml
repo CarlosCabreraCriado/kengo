@@ -12,11 +12,11 @@
     nixPkgs = ['...', 'jq'] # jq is needed to parse the outputPath from our angular.json file
     nixpkgsArchive = "21808d22b1cda1898b71cf1a1beb524a97add2c4" # Versión exacta de 22.12
 
-# get the output path from our angular.json file
+# get the output path from our project.json file
 [phases.output]
     dependsOn = ['setup']
     cmds = [
-        'jq -r "[.projects[] | .architect.build.options.outputPath][0]" angular.json > angular_output_path' # save the resulting value into a file so that we can load the file into a variable in the final image
+        'jq -r ".targets.build.options.outputPath" apps/app/project.json > angular_output_path' # save the resulting value into a file so that we can load the file into a variable in the final image
     ]
 
 # download and untar caddy
@@ -36,5 +36,5 @@
 # copy caddy and build artifacts to a new image and start the caddy web server
 [start]
     runImage = 'ubuntu:20.04' # use a new ubuntu image to run the caddy server in
-    onlyIncludeFiles = ['angular_output_path', 'caddy', 'Caddyfile', 'dist'] # copy only the needed files and folders into the new image (Angular is configured to build to a 'dist' folder)
+    onlyIncludeFiles = ['angular_output_path', 'caddy', 'Caddyfile', 'dist/apps/app'] # copy only the needed files and folders into the new image (Angular is configured to build to a 'dist/apps/app' folder)
     cmd = 'export ANGULAR_OUTPUT_PATH=$(cat angular_output_path); ./caddy run --config Caddyfile --adapter caddyfile 2>&1' # load the contents of the output file into a variable and start caddy using the Caddyfile config and caddyfile adapter
