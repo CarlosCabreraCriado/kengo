@@ -1,4 +1,5 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
+.env
 
 # Compiled output
 /dist
@@ -10,15 +11,6 @@
 /node_modules
 npm-debug.log
 yarn-error.log
-
-# Nx
-.nx/cache
-.nx/workspace-data
-.nx/installation
-nxcloud.env
-
-# Claude Code
-.claude/
 
 # IDEs and editors
 .idea/
@@ -50,5 +42,3 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md

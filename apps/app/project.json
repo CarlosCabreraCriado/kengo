@@ -4,7 +4,6 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "apps/app/src",
-  "root": "apps/app",
   "tags": [],
   "targets": {
     "build": {
@@ -20,7 +19,11 @@
         "assets": [
           "apps/app/src/favicon.ico",
           "apps/app/src/assets",
-          { "glob": "**/*", "input": "apps/app/public", "output": "/" }
+          {
+            "glob": "**/*",
+            "input": "apps/app/public",
+            "output": "/"
+          }
         ],
         "styles": ["apps/app/src/styles.css", "apps/app/src/theme.scss"],
         "scripts": []
@@ -28,12 +31,23 @@
       "configurations": {
         "production": {
           "budgets": [
-            { "type": "initial", "maximumWarning": "500kb", "maximumError": "2mb" },
-            { "type": "anyComponentStyle", "maximumWarning": "6kb", "maximumError": "12kb" }
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "2mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "6kb",
+              "maximumError": "12kb"
+            }
           ],
           "outputHashing": "all",
           "fileReplacements": [
-            { "replace": "apps/app/src/environments/environment.ts", "with": "apps/app/src/environments/environment.prod.ts" }
+            {
+              "replace": "apps/app/src/environments/environment.ts",
+              "with": "apps/app/src/environments/environment.prod.ts"
+            }
           ],
           "serviceWorker": "apps/app/ngsw-config.json"
         },
@@ -47,16 +61,24 @@
     },
     "serve": {
       "executor": "@angular/build:dev-server",
-      "options": { "proxyConfig": "apps/app/proxy.conf.json" },
+      "options": {
+        "proxyConfig": "apps/app/proxy.conf.json"
+      },
       "configurations": {
-        "production": { "buildTarget": "app:build:production" },
-        "development": { "buildTarget": "app:build:development" }
+        "production": {
+          "buildTarget": "app:build:production"
+        },
+        "development": {
+          "buildTarget": "app:build:development"
+        }
       },
       "defaultConfiguration": "development"
     },
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",
-      "options": { "buildTarget": "app:build" }
+      "options": {
+        "buildTarget": "app:build"
+      }
     },
     "test": {
       "executor": "@angular/build:karma",
@@ -67,7 +89,11 @@
         "assets": [
           "apps/app/src/favicon.ico",
           "apps/app/src/assets",
-          { "glob": "**/*", "input": "apps/app/public", "output": "/" }
+          {
+            "glob": "**/*",
+            "input": "apps/app/public",
+            "output": "/"
+          }
         ],
         "styles": ["apps/app/src/styles.css", "apps/app/src/theme.scss"],
         "scripts": []
@@ -75,7 +101,9 @@
     },
     "lint": {
       "executor": "@angular-eslint/builder:lint",
-      "options": { "lintFilePatterns": ["apps/app/src/**/*.ts", "apps/app/src/**/*.html"] }
+      "options": {
+        "lintFilePatterns": ["apps/app/src/**/*.ts", "apps/app/src/**/*.html"]
+      }
     }
   }
 }

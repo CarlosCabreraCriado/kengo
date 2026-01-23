@@ -3,12 +3,29 @@
   "defaultProject": "app",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "sharedGlobals": ["{workspaceRoot}/.postcssrc.json", "{workspaceRoot}/tsconfig.json"],
-    "production": ["default", "!{projectRoot}/**/*.spec.ts", "!{projectRoot}/tsconfig.spec.json"]
+    "sharedGlobals": [
+      "{workspaceRoot}/.postcssrc.json",
+      "{workspaceRoot}/tsconfig.json"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/tsconfig.spec.json"
+    ]
   },
   "targetDefaults": {
-    "build": { "dependsOn": ["^build"], "inputs": ["production", "^production"], "cache": true },
-    "test": { "inputs": ["default", "^production"], "cache": true },
-    "lint": { "inputs": ["default"], "cache": true }
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "cache": true
+    },
+    "test": {
+      "inputs": ["default", "^production"],
+      "cache": true
+    },
+    "lint": {
+      "inputs": ["default"],
+      "cache": true
+    }
   }
 }
