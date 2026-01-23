@@ -7,7 +7,6 @@ import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 // Angular Material
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
@@ -19,7 +18,7 @@ import { map } from 'rxjs/operators';
 @Component({
   selector: 'app-ejercicio-detail',
   standalone: true,
-  imports: [MatIconModule, MatButtonModule, RouterLink, SafeHtmlPipe],
+  imports: [MatIconModule, RouterLink, SafeHtmlPipe],
   templateUrl: './ejercicio-detail.component.html',
   styleUrl: './ejercicio-detail.component.css',
 })
