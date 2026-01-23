@@ -8,7 +8,6 @@ import { RegistroComponent } from './registro/registro.component';
 
 // Componentes protegidos
 import { InicioComponent } from './inicio/inicio.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
 import { EjerciciosComponent } from './ejercicios/ejercicios.component';
 import { DetalleEjercicioComponent } from './detalle-ejercicio/detalle-ejercicio.component';
 import { PacientesComponent } from './pacientes/pacientes.component';
@@ -36,7 +35,6 @@ export const routes: Routes = [
 
   // Rutas protegidas (con navegación)
   { path: 'inicio', component: InicioComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'ejercicios', component: EjerciciosComponent, canActivate: [AuthGuard] },
   { path: 'detalle-ejercicio/:id', component: DetalleEjercicioComponent, canActivate: [AuthGuard] },
   { path: 'mis-pacientes', component: PacientesComponent, canActivate: [AuthGuard] },

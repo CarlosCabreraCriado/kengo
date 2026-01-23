@@ -59,7 +59,7 @@ interface DiaProximoConEjercicios {
     MatProgressBarModule,
   ],
   templateUrl: './actividad-diaria.component.html',
-  styleUrl: './actividad-diaria.component.scss',
+  styleUrl: './actividad-diaria.component.css',
   host: {
     class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
   },

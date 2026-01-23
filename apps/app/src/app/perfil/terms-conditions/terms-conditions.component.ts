@@ -8,7 +8,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
   standalone: true,
   imports: [MatButtonModule, MatIconModule, MatDialogModule],
   templateUrl: './terms-conditions.component.html',
-  styleUrl: './terms-conditions.component.scss',
+  styleUrl: './terms-conditions.component.css',
 })
 export class TermsConditionsComponent {
   private dialogRef = inject(MatDialogRef<TermsConditionsComponent>);

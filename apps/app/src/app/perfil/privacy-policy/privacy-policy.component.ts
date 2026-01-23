@@ -8,7 +8,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
   standalone: true,
   imports: [MatButtonModule, MatIconModule, MatDialogModule],
   templateUrl: './privacy-policy.component.html',
-  styleUrl: './privacy-policy.component.scss',
+  styleUrl: './privacy-policy.component.css',
 })
 export class PrivacyPolicyComponent {
   private dialogRef = inject(MatDialogRef<PrivacyPolicyComponent>);

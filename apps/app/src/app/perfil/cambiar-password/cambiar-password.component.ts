@@ -14,7 +14,7 @@ import { MatSelectModule } from '@angular/material/select';
     MatSelectModule,
   ],
   templateUrl: './cambiar-password.component.html',
-  styleUrl: './cambiar-password.component.scss',
+  styleUrl: './cambiar-password.component.css',
 })
 export class CambiarPasswordComponent {
   // Password Hide

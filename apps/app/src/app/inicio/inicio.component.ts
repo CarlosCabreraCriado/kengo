@@ -21,7 +21,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { DialogoComponent } from '../dialogos/dialogos.component';
+//import { DialogoComponent } from '../dialogos/dialogos.component';
 
 interface CardOption {
   id: string;
@@ -43,7 +43,7 @@ interface CardOption {
   standalone: true,
   imports: [MatButtonModule, MatIconModule, MatDialogModule],
   templateUrl: './inicio.component.html',
-  styleUrl: './inicio.component.scss',
+  styleUrl: './inicio.component.css',
 })
 export class InicioComponent implements OnDestroy {
   private appService = inject(AppService);
@@ -243,6 +243,7 @@ export class InicioComponent implements OnDestroy {
   }
 
   confirmarLogout(): void {
+    /*
     const dialogRef = this.dialog.open(DialogoComponent, {
       data: {
         tipo: 'confirmacion',
@@ -258,6 +259,7 @@ export class InicioComponent implements OnDestroy {
         this.logout();
       }
     });
+    */
   }
 
   private logout(): void {

@@ -128,7 +128,7 @@ mat-icon {
   }
 }
 
-.background {
+.kengoBackground {
   position: fixed;
   width: 100vw;
   height: 100dvh;
@@ -171,7 +171,7 @@ mat-icon {
   );
 }
 
-.background span {
+.kengoBackground span {
   width: 70vmin;
   height: 70vmin;
   border-radius: 70vmin;
@@ -183,7 +183,7 @@ mat-icon {
   animation-iteration-count: infinite;
 }
 
-.background span:nth-child(0) {
+.kengoBackground span:nth-child(0) {
   color: #f9b87e;
   top: 46%;
   left: 7%;
@@ -192,7 +192,7 @@ mat-icon {
   transform-origin: -15vw -15vh;
   box-shadow: -100vmin 0 13.499747275504223vmin currentColor;
 }
-.background span:nth-child(1) {
+.kengoBackground span:nth-child(1) {
   color: #f9b87e;
   top: 31%;
   left: 30%;
@@ -201,7 +201,7 @@ mat-icon {
   transform-origin: -8vw 6vh;
   box-shadow: 100vmin 0 12.507264709743446vmin currentColor;
 }
-.background span:nth-child(2) {
+.kengoBackground span:nth-child(2) {
   color: #f9b87e;
   top: 96%;
   left: 63%;
@@ -210,7 +210,7 @@ mat-icon {
   transform-origin: 18vw -24vh;
   box-shadow: 100vmin 0 13.242136647822383vmin currentColor;
 }
-.background span:nth-child(3) {
+.kengoBackground span:nth-child(3) {
   color: #f9b87e;
   top: 19%;
   left: 50%;
@@ -219,7 +219,7 @@ mat-icon {
   transform-origin: 19vw 14vh;
   box-shadow: -100vmin 0 12.72707917166243vmin currentColor;
 }
-.background span:nth-child(4) {
+.kengoBackground span:nth-child(4) {
   color: #f9b87e;
   top: 89%;
   left: 69%;
@@ -228,7 +228,7 @@ mat-icon {
   transform-origin: -5vw 25vh;
   box-shadow: -100vmin 0 12.927843565603542vmin currentColor;
 }
-.background span:nth-child(5) {
+.kengoBackground span:nth-child(5) {
   color: #f9b87e;
   top: 17%;
   left: 47%;

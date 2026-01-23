@@ -12,7 +12,7 @@
     border-radius: 1rem !important;
 
     &::before {
-      display: none; // Remove default shadow line
+      display: none;
     }
   }
 

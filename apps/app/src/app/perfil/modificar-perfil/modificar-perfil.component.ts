@@ -51,7 +51,7 @@ import { Usuario } from '../../../types/global';
     MatProgressSpinnerModule,
   ],
   templateUrl: './modificar-perfil.component.html',
-  styleUrl: './modificar-perfil.component.scss',
+  styleUrl: './modificar-perfil.component.css',
 })
 export class ModificarPerfilComponent implements OnInit, OnDestroy {
   private appService = inject(AppService);

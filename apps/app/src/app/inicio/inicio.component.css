@@ -16,7 +16,7 @@
   overflow: hidden;
 }
 
-// Header
+/* Header */
 .inicio-header {
   flex-shrink: 0;
   display: flex;
@@ -45,13 +45,13 @@
   }
 }
 
-// Carousel
+/* Carousel */
 .carousel-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
   overflow: hidden;
-  min-height: 0; // Importante para que flex funcione correctamente
+  min-height: 0; /* Importante para que flex funcione correctamente */
   width: 100%;
   max-width: 100vw;
 }
@@ -68,11 +68,11 @@
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 
-  // Padding para centrar la primera y última card
-  padding: 2rem 5%; // Padding vertical para que la sombra tenga espacio dentro del scroll
+  /* Padding para centrar la primera y última card */
+  padding: 2rem 5%; /* Padding vertical para que la sombra tenga espacio dentro del scroll */
   box-sizing: border-box;
 
-  // Ocultar scrollbar
+  /* Ocultar scrollbar */
   scrollbar-width: none;
   -ms-overflow-style: none;
 
@@ -81,17 +81,17 @@
   }
 }
 
-// Cards
+/* Cards */
 .card {
   flex: 0 0 90%;
   scroll-snap-align: center;
-  scroll-snap-stop: always; // Fuerza a detenerse en cada card
+  scroll-snap-stop: always; /* Fuerza a detenerse en cada card */
   position: relative;
   border-radius: 1.5rem;
   overflow: hidden;
   height: calc(
     100% - 3rem
-  ); // Dejar espacio para la sombra (1.5rem arriba + 1.5rem abajo)
+  ); /* Dejar espacio para la sombra (1.5rem arriba + 1.5rem abajo) */
   max-height: calc(100% - 3rem);
   cursor: pointer;
   transition:
@@ -168,7 +168,7 @@
   color: white;
 }
 
-// Pagination dots
+/* Pagination dots */
 .pagination-dots {
   flex-shrink: 0;
   display: flex;
@@ -201,7 +201,7 @@
   }
 }
 
-// Responsive adjustments para tablets (solo carrusel)
+/* Responsive adjustments para tablets (solo carrusel) */
 @media (min-width: 768px) and (max-width: 1023px) {
   .greeting {
     font-size: 2rem;
@@ -221,9 +221,9 @@
   }
 }
 
-// ============================================
+/* ============================================
 // GRID LAYOUT PARA DESKTOP (>= 1024px)
-// ============================================
+// ============================================ */
 
 .cards-grid-wrapper {
   flex: 1;
@@ -244,12 +244,12 @@
   width: 100%;
   max-width: 1400px;
   height: 100%;
-  max-height: calc(100vh - 4rem); // Solo padding (sin header en desktop)
+  max-height: calc(100vh - 4rem); /* Solo padding (sin header en desktop) */
 }
 
-// Cards en modo grid
+/* Cards en modo grid */
 .card-grid {
-  flex: 0 0 calc(50% - 1rem); // 2 columnas por defecto
+  flex: 0 0 calc(50% - 1rem); /* 2 columnas por defecto */
   height: auto;
   min-height: 200px;
   max-height: 350px;
@@ -267,13 +267,13 @@
     padding: 1.5rem;
   }
 
-  // Ajustar bonsái para cards más pequeñas
+  /* Ajustar bonsái para cards más pequeñas */
   .bonsai-image {
     max-height: 80%;
     right: -10%;
   }
 
-  // Ajustar greeting para cards más pequeñas
+  /* Ajustar greeting para cards más pequeñas */
   .greeting-text {
     font-size: 1.25rem;
   }
@@ -283,7 +283,7 @@
     height: 2.5rem;
   }
 
-  // CTA button más compacto
+  /* CTA button más compacto */
   .cta-button {
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
@@ -295,10 +295,10 @@
   }
 }
 
-// Grid específico según tamaño de pantalla
+/* Grid específico según tamaño de pantalla */
 @media (min-width: 1024px) {
   .card-grid {
-    // 2 columnas para tablets/desktop pequeño
+    /* 2 columnas para tablets/desktop pequeño */
     flex: 0 0 calc(50% - 1rem);
   }
 }
@@ -310,7 +310,7 @@
   }
 
   .card-grid {
-    // 3 columnas para pantallas grandes
+    /* 3 columnas para pantallas grandes */
     flex: 0 0 calc(33.333% - 1.5rem);
     max-height: 400px;
 
@@ -327,15 +327,15 @@
   }
 
   .card-grid {
-    // Mantener 3 columnas, cards más grandes
+    /* Mantener 3 columnas, cards más grandes */
     flex: 0 0 calc(33.333% - 2rem);
     max-height: 450px;
   }
 }
 
-// ============================================
+/* ============================================
 // BADGE DINÁMICO EN TARJETA
-// ============================================
+// ============================================ */
 
 .card-badge {
   position: absolute;
@@ -351,25 +351,25 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   animation: fadeInScale 0.3s ease-out;
 
-  // Estado: Cargando
+  /* Estado: Cargando */
   &[data-type="loading"] {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(8px);
   }
 
-  // Estado: Pendientes (coral)
+  /* Estado: Pendientes (coral) */
   &[data-type="pending"] {
     background: #e75c3e;
     padding: 0.5rem 0.75rem;
     border-radius: 1rem;
   }
 
-  // Estado: Completado (gold)
+  /* Estado: Completado (gold) */
   &[data-type="completed"] {
     background: #efc048;
   }
 
-  // Estado: Descanso
+  /* Estado: Descanso */
   &[data-type="rest"] {
     background: rgba(100, 116, 139, 0.8);
     backdrop-filter: blur(8px);
@@ -416,9 +416,9 @@
   }
 }
 
-// ============================================
+/* ============================================
 // TARJETA ANIMADA - ACTIVIDAD DIARIA
-// ============================================
+// ============================================ */
 
 .card-animated {
   background: linear-gradient(
@@ -443,13 +443,13 @@
   align-items: center;
   justify-content: center;
 
-  // Variables CSS para colores según estado (estilo glass)
+  /* Variables CSS para colores según estado (estilo glass) */
   --aurora-color-1: rgba(231, 92, 62, 0.4);
   --aurora-color-2: rgba(239, 192, 72, 0.35);
   --aurora-color-3: rgba(255, 180, 164, 0.3);
   --animation-duration: 8s;
 
-  // Estado: Pendientes - Colores coral/naranja vibrantes, animación más rápida
+  /* Estado: Pendientes - Colores coral/naranja vibrantes, animación más rápida */
   &[data-state="pending"] {
     --aurora-color-1: rgba(231, 92, 62, 0.5);
     --aurora-color-2: rgba(255, 120, 80, 0.4);
@@ -457,7 +457,7 @@
     --animation-duration: 5s;
   }
 
-  // Estado: Completado - Colores dorados/verdes vibrantes, animación más lenta
+  /* Estado: Completado - Colores dorados/verdes vibrantes, animación más lenta */
   &[data-state="completed"] {
     --aurora-color-1: rgba(239, 192, 72, 0.5);
     --aurora-color-2: rgba(134, 239, 172, 0.4);
@@ -465,7 +465,7 @@
     --animation-duration: 12s;
   }
 
-  // Estado: Descanso - Colores azulados suaves, animación muy lenta
+  /* Estado: Descanso - Colores azulados suaves, animación muy lenta */
   &[data-state="rest"] {
     --aurora-color-1: rgba(148, 163, 184, 0.35);
     --aurora-color-2: rgba(165, 180, 200, 0.3);
@@ -473,7 +473,7 @@
     --animation-duration: 15s;
   }
 
-  // Estado: Cargando - Colores neutros con pulso
+  /* Estado: Cargando - Colores neutros con pulso */
   &[data-state="loading"] {
     --aurora-color-1: rgba(200, 200, 210, 0.35);
     --aurora-color-2: rgba(220, 220, 230, 0.3);
@@ -482,7 +482,7 @@
   }
 }
 
-// Ondas de aurora
+/* Ondas de aurora */
 .aurora-wave {
   position: absolute;
   border-radius: 50%;
@@ -536,7 +536,7 @@
   animation-name: auroraFloat3;
 }
 
-// Imagen del bonsái
+/* Imagen del bonsái */
 .bonsai-image {
   position: absolute;
   right: -5%;
@@ -559,7 +559,7 @@
   }
 }
 
-// Overlay especial para tarjeta animada (glass effect)
+/* Overlay especial para tarjeta animada (glass effect) */
 .card-overlay-animated {
   position: absolute;
   inset: 0;
@@ -575,7 +575,7 @@
   z-index: 3;
 }
 
-// Texto oscuro para tarjeta con fondo claro
+/* Texto oscuro para tarjeta con fondo claro */
 .card-animated {
   .card-title {
     color: #1a1a1a;
@@ -586,7 +586,7 @@
   }
 }
 
-// Info adicional de ejercicios
+/* Info adicional de ejercicios */
 .card-extra-info {
   margin-top: 0.75rem;
   display: flex;
@@ -646,7 +646,7 @@
   height: 1.1rem !important;
 }
 
-// Header superior de la tarjeta
+/* Header superior de la tarjeta */
 .card-header-top {
   position: absolute;
   top: 0;
@@ -656,7 +656,7 @@
   z-index: 10;
 }
 
-// Saludo con avatar
+/* Saludo con avatar */
 .user-greeting {
   display: flex;
   align-items: center;
@@ -697,7 +697,7 @@
   margin: 0;
 }
 
-// Call to Action button
+/* Call to Action button */
 .cta-button {
   display: flex;
   align-items: center;
@@ -732,7 +732,7 @@
   }
 }
 
-// Mensaje de completado
+/* Mensaje de completado */
 .completed-message {
   display: flex;
   align-items: center;
@@ -753,7 +753,7 @@
   }
 }
 
-// Animaciones de las ondas aurora
+/* Animaciones de las ondas aurora */
 @keyframes auroraFloat {
   0%,
   100% {

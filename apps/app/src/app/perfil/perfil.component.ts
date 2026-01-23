@@ -30,7 +30,6 @@ import { AppService } from '../services/app.service';
 
 // Componentes
 import { ImageUploadComponent } from '../image-upload/image-upload.component';
-import { DialogoComponent } from '../dialogos/dialogos.component';
 import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
 import { TermsConditionsComponent } from './terms-conditions/terms-conditions.component';
 
@@ -55,7 +54,7 @@ import { environment as env } from '../../environments/environment';
     MatDialogModule,
   ],
   templateUrl: './perfil.component.html',
-  styleUrl: './perfil.component.scss',
+  styleUrl: './perfil.component.css',
 })
 export class PerfilComponent implements OnInit, OnDestroy {
   private appService = inject(AppService);
@@ -152,6 +151,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   async guardarCambios() {
     if (this.formularioUsuario.invalid) {
+      /*
       this.dialog.open(DialogoComponent, {
         data: {
           tipo: 'error',
@@ -159,6 +159,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
           mensaje: 'Por favor, revisa los campos marcados en rojo.',
         },
       });
+      */
       return;
     }
 
@@ -166,6 +167,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
       return;
     }
 
+    /*
     const dialogoProcesando = this.dialog.open(DialogoComponent, {
       data: {
         tipo: 'procesando',
@@ -173,6 +175,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
         mensaje: '',
       },
     });
+    */
 
     const payload = this.formularioUsuario.value;
 
@@ -186,6 +189,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
     });
 
     if (!resUser.ok) {
+      /*
       dialogoProcesando.close();
       this.dialog.open(DialogoComponent, {
         data: {
@@ -194,10 +198,11 @@ export class PerfilComponent implements OnInit, OnDestroy {
           mensaje: 'No se pudieron guardar los cambios.',
         },
       });
+      */
     } else {
       await this.appService.refreshUsuario();
       this.formularioCambiado.set(false);
-      dialogoProcesando.close();
+      //dialogoProcesando.close();
     }
   }
 
@@ -300,6 +305,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
       this.formularioPassword.value;
 
     if (this.formularioPassword.invalid) {
+      /*
       this.dialog.open(DialogoComponent, {
         data: {
           tipo: 'error',
@@ -307,10 +313,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
           mensaje: 'Por favor, completa todos los campos correctamente.',
         },
       });
+      */
       return;
     }
 
     if (newPassword !== confirmPassword) {
+      /*
       this.dialog.open(DialogoComponent, {
         data: {
           tipo: 'error',
@@ -318,11 +326,13 @@ export class PerfilComponent implements OnInit, OnDestroy {
           mensaje: 'La nueva contraseña y su confirmación deben ser iguales.',
         },
       });
+      */
       return;
     }
 
     this.cambiandoPassword.set(true);
 
+    /*
     const dialogoProcesando = this.dialog.open(DialogoComponent, {
       data: {
         tipo: 'procesando',
@@ -330,6 +340,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
         mensaje: '',
       },
     });
+    */
 
     try {
       const res = await fetch(`${env.DIRECTUS_URL}/users/me`, {
@@ -343,13 +354,14 @@ export class PerfilComponent implements OnInit, OnDestroy {
         }),
       });
 
-      dialogoProcesando.close();
+      //dialogoProcesando.close();
 
       if (!res.ok) {
         throw new Error('Error al cambiar la contraseña');
       }
 
       this.formularioPassword.reset();
+      /*
       this.dialog.open(DialogoComponent, {
         data: {
           tipo: 'exito',
@@ -357,8 +369,10 @@ export class PerfilComponent implements OnInit, OnDestroy {
           mensaje: 'Tu contraseña ha sido cambiada correctamente.',
         },
       });
+      */
     } catch (e) {
-      dialogoProcesando.close();
+      //dialogoProcesando.close();
+      /*
       this.dialog.open(DialogoComponent, {
         data: {
           tipo: 'error',
@@ -366,6 +380,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
           mensaje: 'No se pudo cambiar la contraseña. Inténtalo de nuevo.',
         },
       });
+      */
     } finally {
       this.cambiandoPassword.set(false);
     }

@@ -35,7 +35,7 @@ interface DialogData {
 @Component({
   selector: 'app-image-upload',
   templateUrl: './image-upload.component.html',
-  styleUrls: ['./image-upload.component.scss'],
+  styleUrls: ['./image-upload.component.css'],
   standalone: true,
   imports: [
     MatButtonModule,
