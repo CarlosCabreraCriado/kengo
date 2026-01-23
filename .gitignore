@@ -52,3 +52,9 @@ testem.log
 Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Playwright
+/e2e/.auth/
+/playwright-report/
+/test-results/
+.env.e2e

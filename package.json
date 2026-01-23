@@ -15,7 +15,11 @@
     "watch": "nx build app --watch --configuration development",
     "test": "nx test app",
     "lint": "nx lint app",
-    "graph": "nx graph"
+    "graph": "nx graph",
+    "e2e": "playwright test",
+    "e2e:screenshots": "playwright test e2e/screenshots",
+    "e2e:ui": "playwright test --ui",
+    "e2e:setup": "playwright test --project=setup"
   },
   "private": true,
   "dependencies": {
@@ -53,6 +57,7 @@
     "@angular/compiler-cli": "^20.0.0",
     "@nx/angular": "^21.6.10",
     "@nx/workspace": "^21.6.10",
+    "@playwright/test": "^1.58.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
