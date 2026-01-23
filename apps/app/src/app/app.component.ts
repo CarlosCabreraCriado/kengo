@@ -1,17 +1,14 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
-
-import { filter } from 'rxjs/operators';
-import { CarritoEjerciciosComponent } from './carrito-ejercicios/carrito-ejercicios.component';
-import { NavegacionComponent } from './navegacion/navegacion.component';
-
-import { AuthService } from './services/auth.service';
-
+import { Component, OnInit, inject } from '@angular/core';
 import {
   RouterOutlet,
   Router,
   NavigationCancel,
   NavigationEnd,
 } from '@angular/router';
+import { filter } from 'rxjs/operators';
+
+import { AuthService, NavegacionComponent } from './core';
+import { CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios/carrito-ejercicios.component';
 
 @Component({
   selector: 'app-root',

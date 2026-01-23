@@ -1,0 +1,559 @@
+<section class="flex h-full w-full flex-col overflow-y-auto pb-24 lg:pb-6">
+  <!-- Header con busqueda (sticky) -->
+  <header
+    class="sticky top-0 z-40 mx-auto mb-6 w-full px-4 pt-4 pb-2"
+    [class]="
+      isDesktop()
+        ? ''
+        : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'
+    "
+  >
+    <div class="mx-auto max-w-7xl">
+      @if (isDesktop()) {
+        <!-- Header simplificado para desktop: busqueda + filtros centrados -->
+        <form
+          [formGroup]="formularioFiltros"
+          (ngSubmit)="$event.preventDefault()"
+          class="flex items-center justify-center gap-3"
+        >
+          <!-- Barra de busqueda -->
+          <div class="relative w-full max-w-md">
+            <mat-icon
+              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
+              >search</mat-icon
+            >
+            <input
+              #buscadorDesktop
+              type="text"
+              formControlName="busqueda"
+              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+              placeholder="Buscar ejercicio..."
+            />
+            @if (formularioFiltros.get("busqueda")?.value) {
+              <button
+                type="button"
+                class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                aria-label="Borrar busqueda"
+                (click)="formularioFiltros.get('busqueda')?.setValue('')"
+              >
+                <mat-icon class="material-symbols-outlined !text-xl"
+                  >close</mat-icon
+                >
+              </button>
+            }
+          </div>
+
+          <!-- Boton filtro de categorias -->
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="menuCategorias"
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Filtrar por categorias"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >filter_alt</mat-icon
+            >
+          </button>
+
+          <!-- Boton filtro favoritos -->
+          <button
+            mat-icon-button
+            (click)="toggleSoloFavoritos()"
+            class="!h-12 !w-12 shrink-0 rounded-xl border shadow-sm backdrop-blur-sm transition-colors"
+            [class]="
+              soloFavoritos()
+                ? '!border-[#e75c3e] !bg-[#e75c3e]'
+                : 'border-zinc-200/80 !bg-white/70'
+            "
+            aria-label="Mostrar solo favoritos"
+          >
+            <mat-icon
+              class="material-symbols-outlined transition-colors"
+              [class]="soloFavoritos() ? 'text-white' : 'text-zinc-600'"
+            >
+              {{ soloFavoritos() ? "star" : "star_border" }}
+            </mat-icon>
+          </button>
+
+          <!-- Boton cambio de vista -->
+          <button
+            mat-icon-button
+            (click)="vista.set(vista() === 'vineta' ? 'lista' : 'vineta')"
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Cambiar vista"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600">
+              {{ vista() === "vineta" ? "view_list" : "grid_view" }}
+            </mat-icon>
+          </button>
+
+          <!-- Boton recargar -->
+          <button
+            mat-icon-button
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Recargar datos"
+            (click)="reloadEjercicios()"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >refresh</mat-icon
+            >
+          </button>
+
+          <mat-menu #menuCategorias="matMenu" xPosition="before" class="mt-2">
+            <div
+              mat-menu-content
+              class="w-72 p-3"
+              (click)="$event.stopPropagation()"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-lg font-semibold text-zinc-800"
+                  >Categorias</span
+                >
+              </div>
+              <mat-divider class="my-2"></mat-divider>
+
+              @if (ejerciciosService.categoriasRes.isLoading()) {
+                <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+              } @else if (ejerciciosService.categoriasRes.error()) {
+                <div class="text-sm text-red-600">
+                  Error cargando categorias
+                </div>
+              } @else {
+                <div (click)="$event.stopPropagation()">
+                  <mat-selection-list
+                    formControlName="categories"
+                    [multiple]="true"
+                    class="block max-h-64 overflow-auto"
+                  >
+                    @for (
+                      cat of ejerciciosService.categoriasRes.value();
+                      track cat.id_categoria
+                    ) {
+                      <mat-list-option
+                        [value]="cat.id_categoria"
+                        [selected]="
+                          isCatSelected(
+                            cat.id_categoria,
+                            categoriasSeleccionadas
+                          )
+                        "
+                      >
+                        {{ cat.nombre_categoria }}
+                      </mat-list-option>
+                    }
+                  </mat-selection-list>
+                </div>
+              }
+
+              <mat-divider class="my-2"></mat-divider>
+              <div class="flex justify-end gap-2">
+                <button mat-button type="button" (click)="limpiarCategorias()">
+                  Limpiar
+                </button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="closeMenu()"
+                >
+                  Aplicar
+                </button>
+              </div>
+            </div>
+          </mat-menu>
+        </form>
+      } @else {
+        <!-- Header completo para movil -->
+        <!-- Titulo y acciones -->
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button
+              mat-icon-button
+              class="!h-10 !w-10 shrink-0"
+              aria-label="Volver al inicio"
+              routerLink="/inicio"
+            >
+              <mat-icon class="material-symbols-outlined text-zinc-600"
+                >arrow_back</mat-icon
+              >
+            </button>
+            <div>
+              <h1
+                class="titulo-kengo text-xl font-bold text-zinc-800 sm:text-2xl"
+              >
+                Ejercicios
+              </h1>
+              @if (ejerciciosService.total() > 0) {
+                <p class="text-sm text-zinc-500">
+                  {{ ejerciciosService.total() }}
+                  {{
+                    ejerciciosService.total() === 1 ? "ejercicio" : "ejercicios"
+                  }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- Boton cambio de vista -->
+          <button
+            mat-icon-button
+            (click)="vista.set(vista() === 'vineta' ? 'lista' : 'vineta')"
+            class="!h-10 !w-10 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Cambiar vista"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600">
+              {{ vista() === "vineta" ? "view_list" : "grid_view" }}
+            </mat-icon>
+          </button>
+        </div>
+
+        <!-- Barra de busqueda -->
+        <form
+          [formGroup]="formularioFiltros"
+          (ngSubmit)="$event.preventDefault()"
+          class="search-bar relative flex items-center gap-2"
+        >
+          <div class="relative flex-1">
+            <mat-icon
+              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
+              >search</mat-icon
+            >
+            <input
+              #buscador
+              type="text"
+              formControlName="busqueda"
+              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+              placeholder="Buscar ejercicio..."
+            />
+            @if (formularioFiltros.get("busqueda")?.value) {
+              <button
+                type="button"
+                class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                aria-label="Borrar busqueda"
+                (click)="formularioFiltros.get('busqueda')?.setValue('')"
+              >
+                <mat-icon class="material-symbols-outlined !text-xl"
+                  >close</mat-icon
+                >
+              </button>
+            }
+          </div>
+
+          <!-- Boton filtro de categorias -->
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="menuCategoriasMobile"
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Filtrar por categorias"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >filter_alt</mat-icon
+            >
+          </button>
+
+          <!-- Boton filtro favoritos (mobile) -->
+          <button
+            mat-icon-button
+            (click)="toggleSoloFavoritos()"
+            class="!h-12 !w-12 shrink-0 rounded-xl border shadow-sm backdrop-blur-sm transition-colors"
+            [class]="
+              soloFavoritos()
+                ? '!border-[#e75c3e] !bg-[#e75c3e]'
+                : 'border-zinc-200/80 !bg-white/70'
+            "
+            aria-label="Mostrar solo favoritos"
+          >
+            <mat-icon
+              class="material-symbols-outlined transition-colors"
+              [class]="soloFavoritos() ? 'text-white' : 'text-zinc-600'"
+            >
+              {{ soloFavoritos() ? "star" : "star_border" }}
+            </mat-icon>
+          </button>
+
+          <!-- Boton recargar -->
+          <button
+            mat-icon-button
+            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            aria-label="Recargar datos"
+            (click)="reloadEjercicios()"
+          >
+            <mat-icon class="material-symbols-outlined text-zinc-600"
+              >refresh</mat-icon
+            >
+          </button>
+
+          <mat-menu
+            #menuCategoriasMobile="matMenu"
+            xPosition="before"
+            class="mt-2"
+          >
+            <div
+              mat-menu-content
+              class="w-72 p-3"
+              (click)="$event.stopPropagation()"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-lg font-semibold text-zinc-800"
+                  >Categorias</span
+                >
+              </div>
+              <mat-divider class="my-2"></mat-divider>
+
+              @if (ejerciciosService.categoriasRes.isLoading()) {
+                <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+              } @else if (ejerciciosService.categoriasRes.error()) {
+                <div class="text-sm text-red-600">
+                  Error cargando categorias
+                </div>
+              } @else {
+                <div (click)="$event.stopPropagation()">
+                  <mat-selection-list
+                    formControlName="categories"
+                    [multiple]="true"
+                    class="block max-h-64 overflow-auto"
+                  >
+                    @for (
+                      cat of ejerciciosService.categoriasRes.value();
+                      track cat.id_categoria
+                    ) {
+                      <mat-list-option
+                        [value]="cat.id_categoria"
+                        [selected]="
+                          isCatSelected(
+                            cat.id_categoria,
+                            categoriasSeleccionadas
+                          )
+                        "
+                      >
+                        {{ cat.nombre_categoria }}
+                      </mat-list-option>
+                    }
+                  </mat-selection-list>
+                </div>
+              }
+
+              <mat-divider class="my-2"></mat-divider>
+              <div class="flex justify-end gap-2">
+                <button mat-button type="button" (click)="limpiarCategorias()">
+                  Limpiar
+                </button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="closeMenu()"
+                >
+                  Aplicar
+                </button>
+              </div>
+            </div>
+          </mat-menu>
+        </form>
+      }
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <div class="mx-auto max-w-7xl px-4">
+    @if (ejerciciosService.listaEjerciciosRes.isLoading()) {
+      <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
+    } @else if (ejerciciosService.listaEjerciciosRes.error()) {
+      <div class="tarjeta-kengo rounded-2xl p-6 text-center">
+        <mat-icon class="material-symbols-outlined mb-2 text-4xl text-red-400"
+          >error</mat-icon
+        >
+        <p class="text-red-600">No se pudieron cargar los ejercicios.</p>
+      </div>
+    } @else if (ejerciciosService.ejercicios().length === 0) {
+      <div class="tarjeta-kengo rounded-2xl p-8 text-center">
+        @if (soloFavoritos()) {
+          <mat-icon
+            class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+            >star_border</mat-icon
+          >
+          <p class="text-lg text-zinc-500">No tienes ejercicios favoritos</p>
+          <p class="mt-2 text-sm text-zinc-400">
+            Marca ejercicios como favoritos para verlos aqui
+          </p>
+          <button
+            mat-stroked-button
+            class="mt-4"
+            (click)="toggleSoloFavoritos()"
+          >
+            Ver todos los ejercicios
+          </button>
+        } @else {
+          <mat-icon
+            class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
+            >fitness_center</mat-icon
+          >
+          <p class="text-lg text-zinc-500">No se encontraron ejercicios</p>
+        }
+      </div>
+    } @else {
+      <!-- Grid de ejercicios -->
+      <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (
+          ejercicio of ejerciciosService.ejercicios();
+          track ejercicio.id_ejercicio
+        ) {
+          @if (vista() === "lista") {
+            <a
+              [routerLink]="['/ejercicios', ejercicio.id_ejercicio]"
+              class="group block"
+            >
+              <article
+                class="tarjeta-kengo flex items-center gap-4 overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
+              >
+                <img
+                  [src]="getAssetUrl(ejercicio.portada)"
+                  alt="{{ ejercicio.nombre_ejercicio }}"
+                  class="h-16 w-24 shrink-0 rounded-xl object-cover shadow-sm ring-2 ring-white"
+                />
+                <div class="min-w-0 flex-1">
+                  <h3
+                    class="texto-kengo truncate text-base font-semibold text-zinc-800"
+                  >
+                    {{ ejercicio.nombre_ejercicio }}
+                  </h3>
+                  @if (ejercicio.descripcion) {
+                    <div
+                      class="prose prose-sm mt-1 line-clamp-2 text-sm text-zinc-500"
+                      [innerHTML]="ejercicio.descripcion | safeHtml"
+                    ></div>
+                  }
+                </div>
+
+                <!-- Boton favorito -->
+                <button
+                  type="button"
+                  class="shrink-0 rounded-full p-2 transition-colors hover:bg-zinc-100"
+                  (click)="toggleFavorito($event, ejercicio.id_ejercicio)"
+                  [disabled]="favoritoEnProceso(ejercicio.id_ejercicio)"
+                  [attr.aria-label]="
+                    esFavorito(ejercicio.id_ejercicio)
+                      ? 'Quitar de favoritos'
+                      : 'Agregar a favoritos'
+                  "
+                >
+                  @if (favoritoEnProceso(ejercicio.id_ejercicio)) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                  } @else {
+                    <mat-icon
+                      class="material-symbols-outlined transition-colors"
+                      [class]="
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? '!text-[#e75c3e]'
+                          : 'text-zinc-400 hover:text-[#e75c3e]'
+                      "
+                    >
+                      {{
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? "star"
+                          : "star_border"
+                      }}
+                    </mat-icon>
+                  }
+                </button>
+              </article>
+            </a>
+          } @else {
+            <a
+              [routerLink]="['/ejercicios', ejercicio.id_ejercicio]"
+              class="group block"
+            >
+              <article
+                class="relative aspect-square overflow-hidden rounded-2xl bg-black shadow-sm transition-all duration-200 hover:shadow-lg"
+              >
+                <img
+                  [src]="getAssetUrl(ejercicio.portada)"
+                  alt="{{ ejercicio.nombre_ejercicio }}"
+                  class="absolute inset-0 h-full w-full object-cover opacity-75 transition-opacity group-hover:opacity-50"
+                />
+
+                <!-- Boton favorito (esquina superior derecha) -->
+                <button
+                  type="button"
+                  class="absolute top-3 right-3 z-10 rounded-full bg-black/30 p-2 backdrop-blur-sm transition-all hover:bg-black/50"
+                  (click)="toggleFavorito($event, ejercicio.id_ejercicio)"
+                  [disabled]="favoritoEnProceso(ejercicio.id_ejercicio)"
+                  [attr.aria-label]="
+                    esFavorito(ejercicio.id_ejercicio)
+                      ? 'Quitar de favoritos'
+                      : 'Agregar a favoritos'
+                  "
+                >
+                  @if (favoritoEnProceso(ejercicio.id_ejercicio)) {
+                    <mat-spinner
+                      diameter="18"
+                      class="!text-white"
+                    ></mat-spinner>
+                  } @else {
+                    <mat-icon
+                      class="material-symbols-outlined !text-xl transition-colors"
+                      [class]="
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? '!text-[#e75c3e]'
+                          : 'text-white/80 hover:text-white'
+                      "
+                    >
+                      {{
+                        esFavorito(ejercicio.id_ejercicio)
+                          ? "star"
+                          : "star_border"
+                      }}
+                    </mat-icon>
+                  }
+                </button>
+
+                <div class="relative flex h-full flex-col justify-end p-4">
+                  <h3 class="text-lg font-bold text-white sm:text-xl">
+                    {{ ejercicio.nombre_ejercicio }}
+                  </h3>
+                  @if (ejercicio.descripcion) {
+                    <div
+                      class="prose prose-sm prose-invert mt-1 line-clamp-2 translate-y-4 text-sm text-white/80 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
+                      [innerHTML]="ejercicio.descripcion | safeHtml"
+                    ></div>
+                  }
+                </div>
+              </article>
+            </a>
+          }
+        }
+      </section>
+
+      <!-- Paginacion -->
+      @if (ejerciciosService.total() > 0) {
+        <div class="my-6 flex items-center justify-center gap-2">
+          <button
+            mat-stroked-button
+            class="rounded-xl"
+            (click)="paginaAnterior()"
+            [disabled]="ejerciciosService.page() <= 1"
+          >
+            Anterior
+          </button>
+          <span class="text-sm text-zinc-700">
+            <span class="hidden sm:inline-block">Pagina </span>
+            {{ ejerciciosService.page() }} de
+            {{ ejerciciosService.totalPages() }}
+          </span>
+          <button
+            mat-stroked-button
+            class="rounded-xl"
+            (click)="siguientePagina()"
+            [disabled]="
+              ejerciciosService.page() >= ejerciciosService.totalPages()
+            "
+          >
+            Siguiente
+          </button>
+        </div>
+      }
+    }
+  </div>
+</section>
