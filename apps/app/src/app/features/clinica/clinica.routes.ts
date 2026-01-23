@@ -10,12 +10,4 @@ export const CLINICA_ROUTES: Routes = [
       ),
     canActivate: [AuthGuard],
   },
-  {
-    path: 'fisios',
-    loadComponent: () =>
-      import('./components/fisios/fisios.component').then(
-        (m) => m.FisiosComponent
-      ),
-    canActivate: [AuthGuard],
-  },
 ];

@@ -5,7 +5,6 @@ export { CLINICA_ROUTES } from './clinica.routes';
 export { MiClinicaComponent } from './pages/miclinica/miclinica.component';
 
 // Components
-export { FisiosComponent } from './components/fisios/fisios.component';
 export { TarjetaFisioComponent } from './components/tarjeta-fisio/tarjeta-fisio.component';
 
 // Services

@@ -47,16 +47,6 @@ export const routes: Routes = [
       ),
   },
 
-  // Categorias (lazy loaded)
-  {
-    path: 'categorias',
-    loadComponent: () =>
-      import('./features/ejercicios/pages/categorias/categorias.component').then(
-        (m) => m.CategoriasComponent
-      ),
-    canActivate: [AuthGuard],
-  },
-
   // Pacientes (lazy loaded feature)
   {
     path: 'mis-pacientes',
@@ -72,14 +62,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/clinica/pages/miclinica/miclinica.component').then(
         (m) => m.MiClinicaComponent
-      ),
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'fisios',
-    loadComponent: () =>
-      import('./features/clinica/components/fisios/fisios/fisios.component').then(
-        (m) => m.FisiosComponent
       ),
     canActivate: [AuthGuard],
   },
