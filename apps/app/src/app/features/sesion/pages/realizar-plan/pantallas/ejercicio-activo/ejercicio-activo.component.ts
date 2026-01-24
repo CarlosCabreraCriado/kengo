@@ -14,17 +14,11 @@ import { ContadorSeriesComponent } from '../../componentes/contador-series/conta
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { fadeAnimation } from '../../realizar-plan.animations';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-
 @Component({
   selector: 'app-ejercicio-activo',
   standalone: true,
   imports: [
     CommonModule,
-    MatIconModule,
-    MatButtonModule,
     ContadorSeriesComponent,
     TemporizadorComponent,
   ],
@@ -38,10 +32,11 @@ import { MatButtonModule } from '@angular/material/button';
 
         <!-- Botón terminar rutina - solo desktop -->
         <button
+          type="button"
           class="hidden items-center gap-2 self-start rounded-full border border-red-200/50 bg-white/40 px-4 py-2 text-sm font-medium text-red-500 shadow-sm backdrop-blur-sm transition-colors hover:bg-red-50/60 hover:text-red-600 lg:flex"
           (click)="salir.emit()"
         >
-          <mat-icon class="material-symbols-outlined !text-xl">close</mat-icon>
+          <span class="material-symbols-outlined text-xl">close</span>
           Salir
         </button>
 
@@ -72,18 +67,17 @@ import { MatButtonModule } from '@angular/material/button';
           <div
             class="flex h-full w-full items-center justify-center bg-zinc-100"
           >
-            <mat-icon class="material-symbols-outlined !text-8xl text-zinc-300"
-              >fitness_center</mat-icon
-            >
+            <span class="material-symbols-outlined text-8xl text-zinc-300">fitness_center</span>
           </div>
         }
 
         <!-- Botón salir - superior izquierda (solo móvil) -->
         <button
+          type="button"
           class="absolute top-5 left-6 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 shadow-lg backdrop-blur-sm transition-colors hover:bg-black/70 lg:hidden"
           (click)="salir.emit(); $event.stopPropagation()"
         >
-          <mat-icon class="material-symbols-outlined !text-[22px] text-white">close</mat-icon>
+          <span class="material-symbols-outlined text-[22px] text-white">close</span>
         </button>
 
         <!-- Indicador de progreso - superior derecha -->
@@ -154,10 +148,7 @@ import { MatButtonModule } from '@angular/material/button';
           <div
             class="tarjeta-kengo flex min-h-0 w-full shrink items-start gap-2 overflow-hidden rounded-xl p-2.5 text-left lg:max-w-full"
           >
-            <mat-icon
-              class="material-symbols-outlined shrink-0 !text-lg text-[#efc048]"
-              >lightbulb</mat-icon
-            >
+            <span class="material-symbols-outlined shrink-0 text-lg text-[#efc048]">lightbulb</span>
             <p class="m-0 line-clamp-2 text-xs leading-snug text-zinc-600">
               {{ instrucciones() }}
             </p>
@@ -167,8 +158,8 @@ import { MatButtonModule } from '@angular/material/button';
         <!-- Botón completar: fuera del panel en móvil, dentro en desktop -->
         <div class="hidden w-full pt-4 lg:block">
           <button
-            mat-flat-button
-            class="!h-14 !w-full !rounded-2xl !bg-gradient-to-r !from-emerald-500 !to-emerald-600 !text-base !font-bold !text-white !shadow-lg hover:!shadow-xl"
+            type="button"
+            class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-base font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-[0.98]"
             (click)="completarSerie.emit()"
           >
             @if (esUltimaSerie()) {
@@ -176,7 +167,7 @@ import { MatButtonModule } from '@angular/material/button';
             } @else {
               Completar serie
             }
-            <mat-icon class="material-symbols-outlined ml-2">check</mat-icon>
+            <span class="material-symbols-outlined">check</span>
           </button>
         </div>
       </div>
@@ -184,8 +175,8 @@ import { MatButtonModule } from '@angular/material/button';
       <!-- Botón completar móvil (fuera del contenedor flex principal) -->
       <div class="shrink-0 px-4 pt-3 pb-4 lg:hidden">
         <button
-          mat-flat-button
-          class="!h-14 !w-full !rounded-2xl !bg-gradient-to-r !from-emerald-500 !to-emerald-600 !text-base !font-bold !text-white !shadow-lg hover:!shadow-xl"
+          type="button"
+          class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-base font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-[0.98]"
           (click)="completarSerie.emit()"
         >
           @if (esUltimaSerie()) {
@@ -193,7 +184,7 @@ import { MatButtonModule } from '@angular/material/button';
           } @else {
             Completar serie
           }
-          <mat-icon class="material-symbols-outlined ml-2">check</mat-icon>
+          <span class="material-symbols-outlined">check</span>
         </button>
       </div>
     </div>

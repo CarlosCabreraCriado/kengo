@@ -12,17 +12,11 @@ import { RegistroSesionService } from '../../../../data-access/registro-sesion.s
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { fadeAnimation } from '../../realizar-plan.animations';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-
 @Component({
   selector: 'app-descanso',
   standalone: true,
   imports: [
     CommonModule,
-    MatIconModule,
-    MatButtonModule,
     TemporizadorComponent,
   ],
   animations: [fadeAnimation],
@@ -32,12 +26,11 @@ import { MatButtonModule } from '@angular/material/button';
     >
       <!-- Botón salir - superior izquierda -->
       <button
+        type="button"
         class="absolute top-5 left-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/40 shadow-md ring-1 ring-[#e75c3e]/20 backdrop-blur-md transition-colors hover:bg-white/60"
         (click)="salir.emit()"
       >
-        <mat-icon class="material-symbols-outlined !text-[22px] !text-[#e75c3e]"
-          >close</mat-icon
-        >
+        <span class="material-symbols-outlined text-[22px] text-[#e75c3e]">close</span>
       </button>
 
       <!-- Header -->
@@ -94,24 +87,21 @@ import { MatButtonModule } from '@angular/material/button';
       <!-- Actions -->
       <div class="flex w-full max-w-xs shrink-0 flex-col gap-2.5">
         <button
-          mat-stroked-button
-          class="!h-12 !w-full !rounded-xl !border-[#e75c3e] !text-sm !font-semibold !text-zinc-700 hover:!bg-[#e75c3e]/10 hover:!text-[#e75c3e]"
+          type="button"
+          class="flex h-12 w-full items-center justify-center gap-1 rounded-xl border-[1.5px] border-[#e75c3e]/30 bg-transparent text-sm font-semibold text-zinc-700 transition-all hover:border-[#e75c3e] hover:bg-[#e75c3e]/10 hover:text-[#e75c3e]"
           (click)="onAgregarTiempo()"
         >
-          <mat-icon class="material-symbols-outlined mr-1">add</mat-icon>
+          <span class="material-symbols-outlined text-lg">add</span>
           15 segundos
         </button>
 
         <button
-          mat-flat-button
-          color="primary"
-          class="!h-14 !w-full !rounded-2xl !text-base !font-bold"
+          type="button"
+          class="cta-button flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold text-white transition-all active:scale-[0.98]"
           (click)="saltar.emit()"
         >
           Saltar descanso
-          <mat-icon class="material-symbols-outlined ml-2"
-            >arrow_forward</mat-icon
-          >
+          <span class="material-symbols-outlined">arrow_forward</span>
         </button>
       </div>
     </div>
@@ -123,6 +113,15 @@ import { MatButtonModule } from '@angular/material/button';
       flex: 1;
       min-height: 0;
       overflow: hidden;
+    }
+
+    .cta-button {
+      background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
+      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.35);
+    }
+
+    .cta-button:hover {
+      box-shadow: 0 6px 20px rgba(231, 92, 62, 0.45);
     }
 
     /* Timer adaptable - crece con el espacio disponible */

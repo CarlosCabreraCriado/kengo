@@ -4,15 +4,11 @@ import {
   OnInit,
   computed,
   HostListener,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { RegistroSesionService } from '../../data-access/registro-sesion.service';
-
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 
 // Pantallas
 import { ResumenSesionComponent } from './pantallas/resumen-sesion/resumen-sesion.component';
@@ -26,69 +22,11 @@ import {
 // Animaciones
 import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
 
-// Componente de diálogo de confirmación
-@Component({
-  selector: 'app-confirmar-salida-dialog',
-  standalone: true,
-  imports: [MatButtonModule, MatIconModule],
-  template: `
-    <div class="flex flex-col items-center gap-5 p-6 text-center">
-      <div class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
-        <mat-icon class="material-symbols-outlined !text-4xl text-orange-600">warning</mat-icon>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <h2 class="m-0 text-lg font-bold text-zinc-800">Salir de la sesión</h2>
-        <p class="m-0 text-sm text-zinc-500">
-          Tu progreso en esta sesión se perderá. ¿Estás seguro de que quieres salir?
-        </p>
-      </div>
-
-      <div class="flex w-full flex-col gap-2">
-        <button
-          mat-flat-button
-          class="!h-12 !w-full !rounded-xl !bg-zinc-800 !text-sm !font-semibold !text-white"
-          (click)="confirmar()"
-        >
-          Sí, salir
-        </button>
-        <button
-          mat-stroked-button
-          class="!h-12 !w-full !rounded-xl !border-zinc-200 !text-sm !font-semibold !text-zinc-600"
-          (click)="cancelar()"
-        >
-          Continuar sesión
-        </button>
-      </div>
-    </div>
-  `,
-  styles: `
-    :host {
-      display: block;
-      max-width: 320px;
-    }
-  `,
-})
-export class ConfirmarSalidaDialogComponent {
-  private dialogRef = inject(MatDialogRef<ConfirmarSalidaDialogComponent>);
-
-  confirmar(): void {
-    this.dialogRef.close(true);
-  }
-
-  cancelar(): void {
-    this.dialogRef.close(false);
-  }
-}
-
 @Component({
   selector: 'app-realizar-plan',
   standalone: true,
   imports: [
     CommonModule,
-    MatIconModule,
-    MatButtonModule,
-    MatDialogModule,
     ResumenSesionComponent,
     EjercicioActivoComponent,
     DescansoComponent,
@@ -152,25 +90,64 @@ export class ConfirmarSalidaDialogComponent {
           <div
             class="tarjeta-kengo flex max-w-sm flex-col items-center gap-5 rounded-3xl p-8 text-center"
           >
-            <mat-icon class="material-symbols-outlined !text-6xl text-red-400"
-              >sentiment_dissatisfied</mat-icon
-            >
+            <span class="material-symbols-outlined text-6xl text-red-400">sentiment_dissatisfied</span>
             <h2 class="text-base font-medium text-zinc-700">{{ error() }}</h2>
             <button
-              mat-flat-button
-              color="primary"
-              class="!w-full !rounded-2xl !py-4 !text-base !font-bold"
+              type="button"
+              class="cta-button flex h-14 w-full items-center justify-center rounded-2xl text-base font-bold text-white"
               (click)="reintentar()"
             >
               Reintentar
             </button>
             <button
-              mat-stroked-button
-              class="!w-full !rounded-xl !py-3 !text-sm !font-semibold !text-zinc-500"
+              type="button"
+              class="flex h-12 w-full items-center justify-center rounded-xl border-[1.5px] border-zinc-200 text-sm font-semibold text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-600"
               (click)="onVolverInicio()"
             >
               Volver al inicio
             </button>
+          </div>
+        </div>
+      }
+
+      <!-- Modal de confirmación de salida -->
+      @if (mostrarConfirmacionSalida()) {
+        <div
+          class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          (click)="cancelarSalida()"
+          @fade
+        >
+          <div
+            class="flex max-w-[320px] flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-2xl"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+              <span class="material-symbols-outlined text-4xl text-orange-600">warning</span>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <h2 class="m-0 text-lg font-bold text-zinc-800">Salir de la sesión</h2>
+              <p class="m-0 text-sm text-zinc-500">
+                Tu progreso en esta sesión se perderá. ¿Estás seguro de que quieres salir?
+              </p>
+            </div>
+
+            <div class="flex w-full flex-col gap-2">
+              <button
+                type="button"
+                class="flex h-12 w-full items-center justify-center rounded-xl bg-zinc-800 text-sm font-semibold text-white transition-colors hover:bg-zinc-700"
+                (click)="confirmarSalida()"
+              >
+                Sí, salir
+              </button>
+              <button
+                type="button"
+                class="flex h-12 w-full items-center justify-center rounded-xl border-[1.5px] border-zinc-200 text-sm font-semibold text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                (click)="cancelarSalida()"
+              >
+                Continuar sesión
+              </button>
+            </div>
           </div>
         </div>
       }
@@ -188,13 +165,21 @@ export class ConfirmarSalidaDialogComponent {
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
     }
+
+    .cta-button {
+      background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
+      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.35);
+    }
+
+    .cta-button:hover {
+      box-shadow: 0 6px 20px rgba(231, 92, 62, 0.45);
+    }
   `,
 })
 export class RealizarPlanComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private registroService = inject(RegistroSesionService);
-  private dialog = inject(MatDialog);
 
   // Estado desde el servicio
   readonly estadoPantalla = this.registroService.estadoPantalla;
@@ -214,6 +199,9 @@ export class RealizarPlanComponent implements OnInit {
   private _error = computed(() => '');
 
   readonly error = this._error;
+
+  // Modal de confirmación
+  readonly mostrarConfirmacionSalida = signal(false);
 
   // Para la animación de slide
   readonly pantallaIndex = computed(() => {
@@ -285,16 +273,16 @@ export class RealizarPlanComponent implements OnInit {
   }
 
   onIntentarSalir(): void {
-    const dialogRef = this.dialog.open(ConfirmarSalidaDialogComponent, {
-      panelClass: 'confirmar-salida-dialog',
-      backdropClass: 'confirmar-salida-backdrop',
-    });
+    this.mostrarConfirmacionSalida.set(true);
+  }
 
-    dialogRef.afterClosed().subscribe((confirmado) => {
-      if (confirmado) {
-        this.onVolverInicio();
-      }
-    });
+  confirmarSalida(): void {
+    this.mostrarConfirmacionSalida.set(false);
+    this.onVolverInicio();
+  }
+
+  cancelarSalida(): void {
+    this.mostrarConfirmacionSalida.set(false);
   }
 
   reintentar(): void {

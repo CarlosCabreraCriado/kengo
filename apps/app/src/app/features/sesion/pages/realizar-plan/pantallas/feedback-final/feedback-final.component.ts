@@ -12,11 +12,6 @@ import { RegistroSesionService } from '../../../../data-access/registro-sesion.s
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
 import { fadeAnimation, staggerAnimation } from '../../realizar-plan.animations';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatExpansionModule } from '@angular/material/expansion';
-
 export interface FeedbackFinalData {
   feedbacks: Array<{
     planItemId: number;
@@ -32,9 +27,6 @@ export interface FeedbackFinalData {
   imports: [
     CommonModule,
     FormsModule,
-    MatIconModule,
-    MatButtonModule,
-    MatExpansionModule,
     EscalaDolorComponent,
   ],
   animations: [fadeAnimation, staggerAnimation],
@@ -44,7 +36,7 @@ export interface FeedbackFinalData {
       <!-- Header -->
       <div class="shrink-0 px-4 pt-6 pb-4 text-center">
         <div class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg">
-          <mat-icon class="material-symbols-outlined !text-3xl text-white">sentiment_satisfied</mat-icon>
+          <span class="material-symbols-outlined text-3xl text-white">sentiment_satisfied</span>
         </div>
         <h1 class="m-0 text-xl font-bold text-zinc-800">¡Sesión completada!</h1>
         <p class="m-0 mt-1 text-sm text-zinc-500">
@@ -69,7 +61,7 @@ export interface FeedbackFinalData {
                   {{ ejercicio.nombre }}
                 </span>
                 @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
-                  <mat-icon class="material-symbols-outlined ml-auto !text-xl text-emerald-500">check_circle</mat-icon>
+                  <span class="material-symbols-outlined icon-filled ml-auto text-xl text-emerald-500">check_circle</span>
                 }
               </div>
 
@@ -80,29 +72,39 @@ export interface FeedbackFinalData {
                 (valorChange)="onDolorChange(ejercicio.planItemId, $event)"
               />
 
-              <!-- Nota individual (colapsable) -->
-              <mat-expansion-panel class="!mt-3 !rounded-xl !bg-zinc-50 !shadow-none">
-                <mat-expansion-panel-header class="!h-10 !px-3">
-                  <mat-panel-title class="!text-xs !font-medium !text-zinc-500">
-                    <mat-icon class="material-symbols-outlined mr-1.5 !text-base">edit_note</mat-icon>
-                    Agregar nota (opcional)
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <textarea
-                  class="w-full resize-none rounded-lg border-0 bg-white p-3 text-sm text-zinc-700 ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#e75c3e]/40"
-                  placeholder="Ej: Sentí molestia al estirar..."
-                  rows="2"
-                  [ngModel]="notasPorEjercicio().get(ejercicio.planItemId) || ''"
-                  (ngModelChange)="onNotaChange(ejercicio.planItemId, $event)"
-                ></textarea>
-              </mat-expansion-panel>
+              <!-- Nota individual (colapsable custom) -->
+              <div class="mt-3 rounded-xl bg-zinc-50 overflow-hidden">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-1.5 px-3 py-2.5 text-left text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100"
+                  (click)="toggleNota(ejercicio.planItemId)"
+                >
+                  <span class="material-symbols-outlined text-base">edit_note</span>
+                  Agregar nota (opcional)
+                  <span
+                    class="material-symbols-outlined ml-auto text-base transition-transform"
+                    [class.rotate-180]="notasExpandidas().has(ejercicio.planItemId)"
+                  >expand_more</span>
+                </button>
+                @if (notasExpandidas().has(ejercicio.planItemId)) {
+                  <div class="px-3 pb-3">
+                    <textarea
+                      class="w-full resize-none rounded-lg border-0 bg-white p-3 text-sm text-zinc-700 ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#e75c3e]/40"
+                      placeholder="Ej: Sentí molestia al estirar..."
+                      rows="2"
+                      [ngModel]="notasPorEjercicio().get(ejercicio.planItemId) || ''"
+                      (ngModelChange)="onNotaChange(ejercicio.planItemId, $event)"
+                    ></textarea>
+                  </div>
+                }
+              </div>
             </div>
           }
 
           <!-- Observaciones generales -->
           <div class="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-black/5 backdrop-blur-sm" @fade>
-            <label class="mb-2 block text-sm font-semibold text-zinc-700">
-              <mat-icon class="material-symbols-outlined mr-1 align-middle !text-lg text-zinc-400">comment</mat-icon>
+            <label class="mb-2 flex items-center gap-1 text-sm font-semibold text-zinc-700">
+              <span class="material-symbols-outlined text-lg text-zinc-400">comment</span>
               Observaciones generales (opcional)
             </label>
             <textarea
@@ -118,14 +120,13 @@ export interface FeedbackFinalData {
       <!-- Botón finalizar -->
       <div class="shrink-0 border-t border-zinc-100 bg-white/80 px-4 py-4 backdrop-blur-sm">
         <button
-          mat-flat-button
-          color="primary"
-          class="!h-14 !w-full !rounded-2xl !text-base !font-bold disabled:!opacity-50"
+          type="button"
+          class="cta-button flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold text-white transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           [disabled]="!todosCompletados()"
           (click)="onFinalizar()"
         >
           Finalizar sesión
-          <mat-icon class="material-symbols-outlined ml-2">check</mat-icon>
+          <span class="material-symbols-outlined">check</span>
         </button>
 
         @if (!todosCompletados()) {
@@ -146,12 +147,17 @@ export interface FeedbackFinalData {
       overflow: hidden;
     }
 
-    ::ng-deep .mat-expansion-panel-body {
-      padding: 0 0 12px 0 !important;
+    .cta-button {
+      background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
+      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.35);
     }
 
-    ::ng-deep .mat-expansion-panel-header.mat-expanded {
-      height: 40px !important;
+    .cta-button:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(231, 92, 62, 0.45);
+    }
+
+    .icon-filled {
+      font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
     }
   `,
 })
@@ -163,6 +169,7 @@ export class FeedbackFinalComponent {
   // Estado interno
   private _dolorPorEjercicio = signal<Map<number, number>>(new Map());
   private _notasPorEjercicio = signal<Map<number, string>>(new Map());
+  private _notasExpandidas = signal<Set<number>>(new Set());
   observacionesGenerales = '';
 
   // Computed - lista de ejercicios completados
@@ -180,6 +187,7 @@ export class FeedbackFinalComponent {
 
   readonly dolorPorEjercicio = this._dolorPorEjercicio.asReadonly();
   readonly notasPorEjercicio = this._notasPorEjercicio.asReadonly();
+  readonly notasExpandidas = this._notasExpandidas.asReadonly();
 
   readonly ejerciciosConDolor = computed(() => this._dolorPorEjercicio().size);
 
@@ -188,6 +196,18 @@ export class FeedbackFinalComponent {
     const completados = this._dolorPorEjercicio().size;
     return total > 0 && completados === total;
   });
+
+  toggleNota(planItemId: number): void {
+    this._notasExpandidas.update((set) => {
+      const newSet = new Set(set);
+      if (newSet.has(planItemId)) {
+        newSet.delete(planItemId);
+      } else {
+        newSet.add(planItemId);
+      }
+      return newSet;
+    });
+  }
 
   onDolorChange(planItemId: number, dolor: number): void {
     this._dolorPorEjercicio.update((map) => {

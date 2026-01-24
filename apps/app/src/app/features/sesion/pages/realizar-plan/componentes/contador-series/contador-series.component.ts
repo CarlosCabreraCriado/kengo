@@ -1,13 +1,10 @@
 import { Component, Input, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-
 @Component({
   selector: 'app-contador-series',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule],
   template: `
     <div class="flex flex-col items-center gap-2 rounded-2xl bg-white/60 px-6 py-3 shadow-md backdrop-blur-sm">
       <span class="text-sm font-semibold tracking-wide text-zinc-700">
@@ -20,7 +17,7 @@ import { MatIconModule } from '@angular/material/icon';
             [class]="getPillClasses(serie)"
           >
             @if (serie < serieActual()) {
-              <mat-icon class="material-symbols-outlined !text-sm text-white">check</mat-icon>
+              <span class="material-symbols-outlined text-sm text-white">check</span>
             }
           </div>
         }

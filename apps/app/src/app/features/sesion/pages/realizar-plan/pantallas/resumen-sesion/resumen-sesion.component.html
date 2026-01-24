@@ -1,0 +1,163 @@
+<section class="session-page">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
+
+  <!-- Compact Header -->
+  <header class="session-header">
+    <div class="header-content">
+      <button
+        type="button"
+        class="back-btn"
+        aria-label="Volver"
+        (click)="volverAtras()"
+      >
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div class="header-title-group">
+        <h1 class="titulo-kengo header-title">{{ tituloSesion() }}</h1>
+        <p class="header-subtitle">{{ subtitulo() }}</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="session-main">
+    <!-- Hero Card: Session Overview -->
+    <article class="hero-card animate-in">
+      <div class="hero-visual">
+        <div class="hero-gradient"></div>
+        <div class="hero-pattern" aria-hidden="true"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="badge-count">{{ ejercicios().length }}</span>
+          <span class="badge-label">ejercicio{{ ejercicios().length !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="hero-info">
+          <h2 class="hero-title">Tu sesión</h2>
+          <p class="hero-subtitle">
+            @if (esMultiPlan() && planesInvolucrados().length > 1) {
+              {{ planesInvolucrados().length }} planes combinados
+            } @else {
+              Listo para comenzar
+            }
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <span class="material-symbols-outlined">exercise</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ totalSeries() }}</span>
+            <span class="stat-label">series</span>
+          </div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <span class="material-symbols-outlined">timer</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ tiempoEstimado() }}</span>
+            <span class="stat-label">estimado</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Exercises List -->
+    <section class="exercises-section animate-in" style="--delay: 0.1s">
+      <header class="section-header">
+        <h2 class="section-title">Ejercicios de la sesión</h2>
+        @if (esMultiPlan() && planesInvolucrados().length > 1) {
+          <span class="section-badge">{{ planesInvolucrados().length }} planes</span>
+        }
+      </header>
+
+      <div class="exercises-list">
+        @for (item of ejercicios(); track $index; let i = $index) {
+          <article
+            class="exercise-card animate-in"
+            [style.--delay]="(0.15 + i * 0.04) + 's'"
+          >
+            <!-- Order Number -->
+            <div class="exercise-order">
+              <span class="order-number">{{ i + 1 }}</span>
+            </div>
+
+            <!-- Exercise Image -->
+            <div class="exercise-thumb">
+              @if (item.ejercicio.portada) {
+                <img
+                  [src]="getImageUrl(item.ejercicio.portada)"
+                  [alt]="item.ejercicio.nombre_ejercicio"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="thumb-placeholder">
+                  <span class="material-symbols-outlined">fitness_center</span>
+                </div>
+              }
+            </div>
+
+            <!-- Exercise Info -->
+            <div class="exercise-info">
+              <h3 class="exercise-name">{{ item.ejercicio.nombre_ejercicio }}</h3>
+              <div class="exercise-details">
+                @if (item.series && item.series > 1) {
+                  <span class="detail-chip">
+                    <span class="material-symbols-outlined">repeat</span>
+                    {{ item.series }} series
+                  </span>
+                }
+                @if (item.duracion_seg) {
+                  <span class="detail-chip">
+                    <span class="material-symbols-outlined">timer</span>
+                    {{ formatDuracion(item.duracion_seg) }}
+                  </span>
+                } @else {
+                  <span class="detail-chip">
+                    <span class="material-symbols-outlined">fitness_center</span>
+                    {{ item.repeticiones || 12 }} reps
+                  </span>
+                }
+              </div>
+              <!-- Plan badge in multi-plan mode -->
+              @if (esMultiPlan() && isEjercicioMultiPlan(item)) {
+                <span class="plan-tag">{{ getEjercicioMultiPlan(item).planTitulo }}</span>
+              }
+            </div>
+
+            <!-- Arrow indicator -->
+            <div class="exercise-arrow">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky Bottom CTA -->
+  <footer class="session-footer">
+    <div class="footer-content">
+      <button
+        type="button"
+        class="cta-button"
+        (click)="comenzar.emit()"
+        [disabled]="ejercicios().length === 0"
+      >
+        <span class="material-symbols-outlined icon-filled">play_arrow</span>
+        <span class="cta-text">Comenzar sesión</span>
+      </button>
+    </div>
+  </footer>
+</section>
