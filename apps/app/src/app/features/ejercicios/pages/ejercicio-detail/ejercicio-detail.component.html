@@ -1,54 +1,74 @@
 <section
-  class="fixed inset-0 flex flex-col"
+  class="exercise-page"
   (wheel)="onWheel($event)"
   (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)"
 >
-  <!-- Header flotante sobre el video -->
-  <header class="absolute top-0 left-0 z-50 w-full px-4 pt-4">
-    <button
-      type="button"
-      class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:bg-zinc-50 active:bg-zinc-100"
-      aria-label="Volver a ejercicios"
-      (click)="volver()"
-    >
-      <mat-icon class="material-symbols-outlined text-zinc-800">arrow_back</mat-icon>
-    </button>
-  </header>
+  <!-- Aurora Background (visible cuando no hay video) -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+  </div>
 
   @if (loading()) {
-    <!-- Loading state -->
-    <div class="flex flex-1 items-center justify-center">
-      <div class="h-12 w-12 animate-spin rounded-full border-4 border-zinc-200 border-t-[#e75c3e]"></div>
+    <!-- Loading State -->
+    <div class="loading-container">
+      <div class="loading-card">
+        <div class="shimmer-effect"></div>
+        <div class="loading-icon">
+          <span class="material-symbols-outlined icon-filled">fitness_center</span>
+        </div>
+        <p class="loading-text">Cargando ejercicio...</p>
+      </div>
     </div>
   } @else if (error()) {
-    <!-- Error state -->
-    <div class="flex flex-1 flex-col items-center justify-center px-4">
-      <mat-icon class="material-symbols-outlined mb-4 text-6xl text-red-400">error</mat-icon>
-      <p class="mb-4 text-center text-zinc-700">{{ error() }}</p>
-      <button
-        type="button"
-        class="rounded-lg border-2 border-zinc-300 bg-white px-6 py-2 font-medium text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50 active:bg-zinc-100"
-        routerLink="/ejercicios"
-      >
-        Volver a ejercicios
-      </button>
+    <!-- Error State -->
+    <div class="error-container">
+      <div class="error-card">
+        <div class="error-icon">
+          <span class="material-symbols-outlined">error</span>
+        </div>
+        <p class="error-text">{{ error() }}</p>
+        <button type="button" class="error-btn" routerLink="/inicio/ejercicios">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Volver a ejercicios
+        </button>
+      </div>
     </div>
   } @else if (ejercicio()) {
-    <!-- Video del ejercicio (expandible) -->
+    <!-- Floating Header -->
+    <header class="floating-header" [class.scrolled]="videoExpandido()">
+      <button
+        type="button"
+        class="header-btn back"
+        aria-label="Volver a ejercicios"
+        (click)="volver()"
+      >
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+
+      <div class="header-center" [class.visible]="videoExpandido()">
+        <h1 class="header-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
+      </div>
+
+      <!-- Spacer para mantener el título centrado -->
+      <div class="w-11"></div>
+    </header>
+
+    <!-- Video/Media Container -->
     <div
-      class="video-container relative overflow-hidden transition-all duration-300 ease-out"
-      [class]="videoExpandido() ? 'flex-1' : 'h-[50dvh]'"
+      class="media-container"
+      [class.expanded]="videoExpandido()"
+      (click)="toggleVideo()"
     >
       @if (ejercicio()?.video) {
         <video
           #videoPlayer
-          class="h-full w-full object-cover"
+          class="media-video"
           autoplay
           muted
           loop
           playsinline
-          (click)="toggleVideo()"
         >
           <source [src]="getAssetUrl(ejercicio()?.video || 0)" type="video/mp4" />
         </video>
@@ -56,123 +76,144 @@
         <img
           [src]="getAssetUrl(ejercicio()?.portada || 0)"
           alt="{{ ejercicio()?.nombre_ejercicio }}"
-          class="h-full w-full object-cover"
+          class="media-image"
         />
       } @else {
-        <div class="flex h-full w-full items-center justify-center bg-zinc-100">
-          <mat-icon class="material-symbols-outlined text-8xl text-zinc-300">fitness_center</mat-icon>
+        <div class="media-placeholder">
+          <span class="material-symbols-outlined icon-filled">fitness_center</span>
         </div>
       }
 
+      <!-- Video Overlay Gradient -->
+      <div class="media-overlay"></div>
+
+      <!-- Play/Pause Indicator (aparece brevemente) -->
+      @if (showPlayIndicator()) {
+        <div class="play-indicator">
+          <span class="material-symbols-outlined icon-filled">
+            {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
+          </span>
+        </div>
+      }
+
+      <!-- Swipe Hint (solo cuando el video no está expandido) -->
+      @if (!videoExpandido() && ejercicio()?.video) {
+        <div class="swipe-hint">
+          <span class="material-symbols-outlined">keyboard_arrow_down</span>
+          <span class="hint-text">Desliza para ver más</span>
+        </div>
+      }
     </div>
 
-    <!-- Contenido inferior -->
-    <div
-      class="relative z-10 flex flex-col transition-all duration-300"
-      [class]="videoExpandido() ? 'flex-shrink-0' : 'flex-1'"
-    >
-      <!-- Informacion del ejercicio -->
-      <div class="flex-1 px-4 pt-4" [class.hidden]="videoExpandido()">
-        <!-- Nombre del ejercicio -->
-        <h1 class="titulo-kengo mb-4 text-center text-2xl font-bold text-zinc-800">
-          {{ ejercicio()?.nombre_ejercicio }}
-        </h1>
-
-        <!-- Chips de duracion -->
-        <div class="mb-5 flex justify-center gap-3">
-          @for (duracion of duraciones; track duracion.valor) {
-            <button
-              (click)="seleccionarDuracion(duracion.valor)"
-              class="rounded-full border-2 px-5 py-2 text-sm font-semibold transition-all"
-              [class]="
-                duracionSeleccionada() === duracion.valor
-                  ? 'border-[#e75c3e] bg-[#e75c3e] text-white shadow-md'
-                  : 'border-zinc-400 bg-white text-zinc-700 shadow-sm hover:border-zinc-500'
-              "
-            >
-              {{ duracion.label }}
-            </button>
-          }
-        </div>
-
-        <!-- Card de informacion -->
-        @if (ejercicio()?.descripcion || ejercicio()?.series_defecto) {
-          <div class="tarjeta-kengo rounded-2xl p-4">
-            @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
-              <p class="mb-2 text-sm text-zinc-500">
-                <span class="font-semibold text-[#e75c3e]">{{ ejercicio()?.series_defecto }}</span> series x
-                <span class="font-semibold text-[#e75c3e]">{{ ejercicio()?.repeticiones_defecto }}</span> repeticiones
-              </p>
-            }
-            @if (ejercicio()?.descripcion) {
-              <div
-                class="prose prose-sm text-sm leading-relaxed text-zinc-600"
-                [innerHTML]="ejercicio()?.descripcion | safeHtml"
-              ></div>
-            }
-          </div>
-        }
+    <!-- Bottom Panel -->
+    <div class="bottom-panel" [class.minimized]="videoExpandido()">
+      <!-- Panel Handle -->
+      <div class="panel-handle" (click)="toggleExpandido()">
+        <div class="handle-bar"></div>
       </div>
 
-      <!-- Info minima cuando esta expandido -->
-      @if (videoExpandido()) {
-        <div class="px-4 pt-4">
-          <h1 class="titulo-kengo mb-3 text-center text-xl font-bold text-zinc-800">
-            {{ ejercicio()?.nombre_ejercicio }}
-          </h1>
-          <div class="flex justify-center gap-3">
-            @for (duracion of duraciones; track duracion.valor) {
-              <button
-                (click)="seleccionarDuracion(duracion.valor)"
-                class="rounded-full border-2 px-4 py-1.5 text-sm font-semibold transition-all"
-                [class]="
-                  duracionSeleccionada() === duracion.valor
-                    ? 'border-[#e75c3e] bg-[#e75c3e] text-white shadow-md'
-                    : 'border-zinc-400 bg-white text-zinc-700 shadow-sm'
-                "
-              >
-                {{ duracion.label }}
-              </button>
+      <!-- Exercise Info (visible cuando no está minimizado) -->
+      @if (!videoExpandido()) {
+        <div class="exercise-content animate-content">
+          <!-- Exercise Title -->
+          <div class="exercise-header">
+            <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
+
+            @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
+              <div class="exercise-meta">
+                <span class="meta-badge">
+                  <span class="material-symbols-outlined">replay</span>
+                  {{ ejercicio()?.series_defecto || 3 }} series
+                </span>
+                <span class="meta-divider">×</span>
+                <span class="meta-badge">
+                  <span class="material-symbols-outlined">counter_1</span>
+                  {{ ejercicio()?.repeticiones_defecto || 10 }} reps
+                </span>
+              </div>
             }
           </div>
+
+          <!-- Duration Chips -->
+          <div class="duration-selector">
+            <span class="duration-label">Duración:</span>
+            <div class="duration-chips">
+              @for (duracion of duraciones; track duracion.valor) {
+                <button
+                  type="button"
+                  class="duration-chip"
+                  [class.active]="duracionSeleccionada() === duracion.valor"
+                  (click)="seleccionarDuracion(duracion.valor)"
+                >
+                  {{ duracion.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Description Card -->
+          @if (ejercicio()?.descripcion) {
+            <div class="description-card">
+              <div class="description-header">
+                <span class="material-symbols-outlined">info</span>
+                <span>Instrucciones</span>
+              </div>
+              <div
+                class="description-content"
+                [innerHTML]="ejercicio()?.descripcion | safeHtml"
+              ></div>
+            </div>
+          }
         </div>
       }
 
-      <!-- Barra de acciones fija -->
-      <div
-        class="flex shrink-0 items-center justify-center gap-6 px-4 transition-all duration-300"
-        [class]="videoExpandido() ? 'py-6 pb-10' : 'py-4 pb-8'"
-      >
-        <!-- Boton expandir/contraer -->
-        <button
-          type="button"
-          class="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:bg-zinc-50 active:bg-zinc-100"
-          (click)="toggleExpandido()"
-        >
-          <mat-icon class="material-symbols-outlined text-zinc-700">
-            {{ videoExpandido() ? 'close_fullscreen' : 'open_in_full' }}
-          </mat-icon>
-        </button>
+      <!-- Quick Actions Bar -->
+      <div class="actions-bar" [class.compact]="videoExpandido()">
+        @if (videoExpandido()) {
+          <!-- Minimal info when expanded -->
+          <div class="minimal-info">
+            <span class="minimal-title">{{ ejercicio()?.nombre_ejercicio }}</span>
+          </div>
+        }
 
-        <!-- Boton principal de asignar -->
-        <button
-          type="button"
-          class="flex h-16 w-16 items-center justify-center rounded-full bg-[#e75c3e] shadow-lg transition-all hover:bg-[#d4533a] hover:shadow-xl active:bg-[#c04a32] active:shadow-md"
-          (click)="asignarEjercicio()"
-        >
-          <mat-icon class="material-symbols-outlined text-3xl text-white">person_add</mat-icon>
-        </button>
+        <div class="action-buttons">
+          <!-- Expand/Collapse Button -->
+          <button
+            type="button"
+            class="action-btn secondary"
+            (click)="toggleExpandido()"
+            [attr.aria-label]="videoExpandido() ? 'Mostrar detalles' : 'Pantalla completa'"
+          >
+            <span class="material-symbols-outlined">
+              {{ videoExpandido() ? 'expand_more' : 'expand_less' }}
+            </span>
+          </button>
 
-        <!-- Boton play/pause -->
-        <button
-          type="button"
-          class="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:bg-zinc-50 active:bg-zinc-100"
-          (click)="toggleVideo()"
-        >
-          <mat-icon class="material-symbols-outlined text-zinc-700">
-            {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
-          </mat-icon>
-        </button>
+          <!-- Primary Action: Assign -->
+          <button
+            type="button"
+            class="action-btn primary"
+            (click)="asignarEjercicio()"
+            aria-label="Asignar ejercicio"
+          >
+            <span class="material-symbols-outlined icon-filled">person_add</span>
+            @if (!videoExpandido()) {
+              <span class="btn-label">Asignar</span>
+            }
+          </button>
+
+          <!-- Play/Pause Button -->
+          <button
+            type="button"
+            class="action-btn secondary"
+            (click)="toggleVideo(); $event.stopPropagation()"
+            [attr.aria-label]="videoReproduciendo() ? 'Pausar' : 'Reproducir'"
+          >
+            <span class="material-symbols-outlined">
+              {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   }

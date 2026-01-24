@@ -1,24 +1,20 @@
 import { Component, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
+import { Dialog } from '@angular/cdk/dialog';
 import { Ejercicio, Usuario } from '../../../../../types/global';
 
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatDialog } from '@angular/material/dialog';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 
-// RxJS
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-ejercicio-detail',
   standalone: true,
-  imports: [MatIconModule, RouterLink, SafeHtmlPipe],
+  imports: [RouterLink, SafeHtmlPipe],
   templateUrl: './ejercicio-detail.component.html',
   styleUrl: './ejercicio-detail.component.css',
 })
@@ -27,7 +23,7 @@ export class EjercicioDetailComponent {
   private location = inject(Location);
   private ejerciciosService = inject(EjerciciosService);
   private planBuilderService = inject(PlanBuilderService);
-  private dialog = inject(MatDialog);
+  private dialog = inject(Dialog);
 
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 
@@ -41,6 +37,7 @@ export class EjercicioDetailComponent {
   videoExpandido = signal<boolean>(false);
   videoReproduciendo = signal<boolean>(true);
   duracionSeleccionada = signal<number>(60);
+  showPlayIndicator = signal<boolean>(false);
 
   // Control de gestos tactiles
   private touchStartY = 0;
@@ -126,6 +123,10 @@ export class EjercicioDetailComponent {
       video.pause();
       this.videoReproduciendo.set(false);
     }
+
+    // Mostrar indicador de play/pause brevemente
+    this.showPlayIndicator.set(true);
+    setTimeout(() => this.showPlayIndicator.set(false), 600);
   }
 
   seleccionarDuracion(valor: number) {
@@ -134,12 +135,12 @@ export class EjercicioDetailComponent {
 
   // Scroll con rueda del raton (desktop)
   onWheel(event: WheelEvent) {
-    // Scroll hacia abajo -> expandir
-    if (event.deltaY > 30 && !this.videoExpandido()) {
+    // Scroll hacia arriba -> expandir video (ocultar panel)
+    if (event.deltaY < -30 && !this.videoExpandido()) {
       this.videoExpandido.set(true);
     }
-    // Scroll hacia arriba -> contraer
-    if (event.deltaY < -30 && this.videoExpandido()) {
+    // Scroll hacia abajo -> contraer video (mostrar panel)
+    if (event.deltaY > 30 && this.videoExpandido()) {
       this.videoExpandido.set(false);
     }
   }
@@ -153,12 +154,12 @@ export class EjercicioDetailComponent {
     const touchEndY = event.changedTouches[0].clientY;
     const deltaY = this.touchStartY - touchEndY;
 
-    // Swipe hacia arriba (deltaY > 0) -> expandir
-    if (deltaY > 50 && !this.videoExpandido()) {
+    // Swipe hacia abajo (deltaY < 0) -> expandir video (ocultar panel)
+    if (deltaY < -50 && !this.videoExpandido()) {
       this.videoExpandido.set(true);
     }
-    // Swipe hacia abajo (deltaY < 0) -> contraer
-    if (deltaY < -50 && this.videoExpandido()) {
+    // Swipe hacia arriba (deltaY > 0) -> contraer video (mostrar panel)
+    if (deltaY > 50 && this.videoExpandido()) {
       this.videoExpandido.set(false);
     }
   }
@@ -190,14 +191,14 @@ export class EjercicioDetailComponent {
       '../../../../shared/ui/selector-paciente/selector-paciente.component'
     );
 
-    const dialogRef = this.dialog.open(SelectorPacienteComponent, {
+    const dialogRef = this.dialog.open<Usuario>(SelectorPacienteComponent, {
       width: '500px',
       maxWidth: '95vw',
-      maxHeight: '80vh',
+      panelClass: 'selector-paciente-dialog',
     });
 
     return new Promise((resolve) => {
-      dialogRef.afterClosed().subscribe((paciente: Usuario | undefined) => {
+      dialogRef.closed.subscribe((paciente) => {
         resolve(paciente || null);
       });
     });
