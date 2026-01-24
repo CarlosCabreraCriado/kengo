@@ -1,319 +1,225 @@
-<section class="flex flex-col w-full h-full overflow-y-auto pb-24 lg:pb-6">
-  <!-- Header con búsqueda (sticky) -->
-  <header
-    class="sticky top-0 z-40 w-full mb-6 pt-4 pb-2"
-    [class]="isDesktop() ? '' : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'"
-  >
-    <div class="mx-auto max-w-7xl px-4">
-      @if (isDesktop()) {
-        <!-- Header simplificado para desktop: búsqueda + nuevo + refresh en línea -->
-        <div class="flex items-center justify-center gap-3">
-          <!-- Barra de búsqueda -->
-          <div class="relative w-full max-w-md">
-            <mat-icon
-              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
-              >search</mat-icon
-            >
-            <input
-              #buscadorDesktop
-              type="text"
-              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
-              placeholder="Buscar por nombre, email..."
-              (input)="onBuscar(buscadorDesktop.value)"
-            />
-            @if (buscadorDesktop.value) {
-              <button
-                type="button"
-                class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-                aria-label="Borrar búsqueda"
-                (click)="buscadorDesktop.value = ''; onBuscar('')"
-              >
-                <mat-icon class="material-symbols-outlined !text-xl"
-                  >close</mat-icon
-                >
-              </button>
-            }
-          </div>
+<section class="patients-page">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
 
-          <!-- Botón cambio de vista -->
-          <button
-            mat-icon-button
-            (click)="vista.set(vista() === 'card' ? 'lista' : 'card')"
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-            aria-label="Cambiar vista"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600">
-              {{ vista() === "card" ? "view_list" : "grid_view" }}
-            </mat-icon>
-          </button>
-
-          <!-- Botón nuevo paciente -->
-          <button
-            mat-flat-button
-            color="primary"
-            class="!h-12 shrink-0"
-            (click)="openAddPaciente()"
-          >
-            <mat-icon class="material-symbols-outlined">person_add</mat-icon>
-            Nuevo paciente
-          </button>
-
-          <!-- Botón recargar -->
-          <button
-            mat-icon-button
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-            aria-label="Recargar datos"
-            (click)="reload()"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >refresh</mat-icon
-            >
-          </button>
+  <!-- Compact Header -->
+  <header class="patients-header">
+    <div class="header-content">
+      <div class="header-left">
+        @if (!isDesktop()) {
+          <a class="back-btn" aria-label="Volver" routerLink="/inicio">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </a>
+        }
+        <div class="header-title-group">
+          <h1 class="titulo-kengo header-title">Mis Pacientes</h1>
+          @if (pacientes().length > 0) {
+            <span class="patient-count">{{ pacientes().length }} {{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}</span>
+          }
         </div>
-      } @else {
-        <!-- Header completo para móvil -->
-        <!-- Título y acciones -->
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <button
-              mat-icon-button
-              class="!h-10 !w-10 shrink-0"
-              aria-label="Volver al inicio"
-              routerLink="/inicio"
-            >
-              <mat-icon class="material-symbols-outlined text-zinc-600"
-                >arrow_back</mat-icon
-              >
-            </button>
-            <div>
-              <h1 class="titulo-kengo text-xl font-bold text-zinc-800 sm:text-2xl">
-                Mis Pacientes
-              </h1>
-              @if (pacientes().length > 0) {
-                <p class="text-sm text-zinc-500">
-                  {{ pacientes().length }}
-                  {{ pacientes().length === 1 ? "paciente" : "pacientes" }}
-                </p>
-              }
-            </div>
-          </div>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn" aria-label="Recargar" (click)="reload()">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+        <button class="action-btn primary-action" (click)="openAddPaciente()" aria-label="Añadir paciente">
+          <span class="material-symbols-outlined icon-filled">person_add</span>
+        </button>
+      </div>
+    </div>
 
-          <!-- Botón añadir (visible en tablet) -->
-          <button
-            mat-flat-button
-            color="primary"
-            class="hidden sm:flex"
-            (click)="openAddPaciente()"
-          >
-            <mat-icon class="material-symbols-outlined">person_add</mat-icon>
-            Nuevo paciente
+    <!-- Search Bar -->
+    <div class="search-container">
+      <div class="search-bar">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          #buscador
+          type="text"
+          class="search-input"
+          placeholder="Buscar por nombre, email..."
+          (input)="onBuscar(buscador.value)"
+        />
+        @if (buscador.value) {
+          <button class="clear-btn" aria-label="Borrar búsqueda" (click)="buscador.value = ''; onBuscar('')">
+            <span class="material-symbols-outlined">close</span>
           </button>
-        </div>
-
-        <!-- Barra de búsqueda -->
-        <div class="search-bar relative flex items-center gap-2">
-          <div class="relative flex-1">
-            <mat-icon
-              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
-              >search</mat-icon
-            >
-            <input
-              #buscador
-              type="text"
-              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/70 pr-10 pl-10 text-zinc-700 shadow-sm backdrop-blur-sm transition-all placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
-              placeholder="Buscar por nombre, email..."
-              (input)="onBuscar(buscador.value)"
-            />
-            @if (buscador.value) {
-              <button
-                type="button"
-                class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-                aria-label="Borrar búsqueda"
-                (click)="buscador.value = ''; onBuscar('')"
-              >
-                <mat-icon class="material-symbols-outlined !text-xl"
-                  >close</mat-icon
-                >
-              </button>
-            }
-          </div>
-
-          <!-- Botón cambio de vista -->
-          <button
-            mat-icon-button
-            (click)="vista.set(vista() === 'card' ? 'lista' : 'card')"
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-            aria-label="Cambiar vista"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600">
-              {{ vista() === "card" ? "view_list" : "grid_view" }}
-            </mat-icon>
-          </button>
-
-          <!-- Botón recargar -->
-          <button
-            mat-icon-button
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-            aria-label="Recargar datos"
-            (click)="reload()"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >refresh</mat-icon
-            >
-          </button>
-        </div>
-      }
+        }
+      </div>
+      <button class="view-toggle" (click)="vista.set(vista() === 'card' ? 'lista' : 'card')" aria-label="Cambiar vista">
+        <span class="material-symbols-outlined">{{ vista() === 'card' ? 'view_list' : 'grid_view' }}</span>
+      </button>
     </div>
   </header>
 
-  <!-- Contenido principal -->
-  <div class="mx-auto max-w-7xl px-4">
+  <!-- Main Content -->
+  <main class="patients-main">
+    <!-- Loading State -->
     @if (pacientesRes.isLoading() && idsClinicas() !== null) {
-      <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <div class="state-card loading-state">
+        <div class="shimmer-effect"></div>
+        <div class="state-icon pulse">
+          <span class="material-symbols-outlined">groups</span>
+        </div>
+        <p class="state-text">Cargando pacientes...</p>
       </div>
-    } @else if (pacientesRes.error()) {
-      <div class="tarjeta-kengo rounded-2xl p-6 text-center">
-        <mat-icon class="material-symbols-outlined mb-2 text-4xl text-red-400"
-          >error</mat-icon
-        >
-        <p class="text-red-600">No se pudieron cargar los pacientes.</p>
+    }
+
+    <!-- Error State -->
+    @else if (pacientesRes.error()) {
+      <div class="state-card error-state">
+        <div class="state-icon error">
+          <span class="material-symbols-outlined">error</span>
+        </div>
+        <p class="state-text error">No se pudieron cargar los pacientes</p>
+        <button class="retry-btn" (click)="reload()">
+          <span class="material-symbols-outlined">refresh</span>
+          Reintentar
+        </button>
       </div>
-    } @else if (pacientes().length === 0) {
-      <div class="tarjeta-kengo rounded-2xl p-8 text-center">
-        <mat-icon class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
-          >group_off</mat-icon
-        >
-        <p class="text-lg text-zinc-500">No hay pacientes para mostrar</p>
-        <button
-          mat-flat-button
-          color="primary"
-          class="mt-4"
-          (click)="openAddPaciente()"
-        >
-          <mat-icon>person_add</mat-icon>
+    }
+
+    <!-- Empty State -->
+    @else if (pacientes().length === 0 && !pacientesRes.isLoading()) {
+      <div class="state-card empty-state">
+        <div class="state-icon empty">
+          <span class="material-symbols-outlined">group_off</span>
+        </div>
+        <h3 class="state-title">Sin pacientes</h3>
+        <p class="state-text">Aún no tienes pacientes registrados. Añade tu primer paciente para comenzar.</p>
+        <button class="cta-btn" (click)="openAddPaciente()">
+          <span class="material-symbols-outlined icon-filled">person_add</span>
           Añadir primer paciente
         </button>
       </div>
-    } @else {
-      <!-- Grid de pacientes -->
-      <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @for (p of pacientes(); track p.id) {
-          @if (vista() === "lista") {
-            <!-- Vista Lista -->
-            <article
-              class="tarjeta-kengo group flex cursor-pointer items-center gap-4 overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
-              (click)="verDetalle(p)"
-            >
-              <!-- Avatar -->
-              @if (avatarUrl(p)) {
-                <img
-                  [src]="avatarUrl(p)"
-                  [alt]="fullName(p)"
-                  class="h-12 w-12 shrink-0 rounded-full object-cover ring-2 shadow-sm ring-white"
-                />
-              } @else {
-                <div
-                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
-                >
-                  <mat-icon
-                    class="material-symbols-outlined text-xl !text-white"
-                    aria-hidden="true"
-                    >person</mat-icon
-                  >
-                </div>
-              }
+    }
 
-              <!-- Info compacta -->
-              <div class="min-w-0 flex-1">
-                <h3 class="truncate text-base font-semibold text-zinc-800">
-                  {{ fullName(p) }}
-                </h3>
-                @if (p.email) {
-                  <p class="truncate text-sm text-zinc-500">
-                    {{ p.email }}
-                  </p>
-                }
-              </div>
+    <!-- Patients Content -->
+    @else if (pacientes().length > 0) {
+      <!-- Quick Stats Bar -->
+      <section class="stats-bar animate-in">
+        <div class="stat-pill">
+          <span class="material-symbols-outlined stat-icon">groups</span>
+          <span class="stat-value">{{ pacientes().length }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-pill accent">
+          <span class="material-symbols-outlined stat-icon icon-filled">favorite</span>
+          <span class="stat-value">{{ pacientes().length }}</span>
+          <span class="stat-label">Activos</span>
+        </div>
+      </section>
 
-              <!-- Icono flecha -->
-              <mat-icon class="material-symbols-outlined shrink-0 text-zinc-400 group-hover:text-zinc-600">
-                chevron_right
-              </mat-icon>
-            </article>
-          } @else {
-            <!-- Vista Card -->
-            <article
-              class="tarjeta-kengo group relative cursor-pointer overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:shadow-lg"
-              (click)="verDetalle(p)"
-            >
-              <!-- Header con avatar e info -->
-              <div class="flex items-start gap-4">
+      <!-- Patients Grid/List -->
+      @if (vista() === 'card') {
+        <section class="patients-grid animate-in" style="--delay: 0.1s">
+          @for (p of pacientes(); track p.id; let i = $index) {
+            <article class="patient-card" [style.--card-delay]="(i * 0.03) + 's'" (click)="verDetalle(p)">
+              <div class="card-content">
                 <!-- Avatar -->
-                <div class="shrink-0">
+                <div class="patient-avatar">
                   @if (avatarUrl(p)) {
-                    <img
-                      [src]="avatarUrl(p)"
-                      [alt]="fullName(p)"
-                      class="h-14 w-14 rounded-full object-cover ring-2 shadow-sm ring-white"
-                    />
+                    <img [src]="avatarUrl(p)" [alt]="fullName(p)" class="avatar-img"/>
                   } @else {
-                    <div
-                      class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
-                    >
-                      <mat-icon
-                        class="material-symbols-outlined text-2xl !text-white"
-                        aria-hidden="true"
-                        >person</mat-icon
-                      >
-                    </div>
+                    <span class="avatar-initials">{{ getInitials(p) }}</span>
                   }
+                  <span class="online-dot"></span>
                 </div>
 
-                <!-- Info del paciente -->
-                <div class="min-w-0 flex-1">
-                  <h3 class="truncate text-base font-semibold text-zinc-800">
-                    {{ fullName(p) }}
-                  </h3>
+                <!-- Info -->
+                <div class="patient-info">
+                  <h3 class="patient-name">{{ fullName(p) }}</h3>
 
                   @if (p.email) {
-                    <p
-                      class="mt-1 flex items-center gap-1.5 truncate text-sm text-zinc-500"
-                    >
-                      <mat-icon class="material-symbols-outlined !text-base"
-                        >mail</mat-icon
-                      >
-                      {{ p.email }}
-                    </p>
+                    <div class="info-row">
+                      <span class="material-symbols-outlined info-icon">mail</span>
+                      <span class="info-text">{{ p.email }}</span>
+                    </div>
                   }
 
                   @if (p.telefono) {
-                    <p
-                      class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
-                    >
-                      <mat-icon class="material-symbols-outlined !text-base"
-                        >phone</mat-icon
-                      >
-                      {{ p.telefono }}
-                    </p>
+                    <div class="info-row">
+                      <span class="material-symbols-outlined info-icon">phone</span>
+                      <span class="info-text">{{ p.telefono }}</span>
+                    </div>
                   }
 
                   @if (getClinicaNombre(p)) {
-                    <p
-                      class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
-                    >
-                      <mat-icon class="material-symbols-outlined !text-base"
-                        >location_city</mat-icon
-                      >
+                    <span class="clinic-badge">
+                      <span class="material-symbols-outlined">domain</span>
                       {{ getClinicaNombre(p) }}
-                    </p>
+                    </span>
                   }
                 </div>
+
+                <!-- Arrow -->
+                <span class="material-symbols-outlined card-arrow">chevron_right</span>
+              </div>
+
+              <!-- Quick Actions (on hover/press) -->
+              <div class="card-actions">
+                @if (p.telefono) {
+                  <a [href]="'tel:' + p.telefono" class="mini-action" (click)="$event.stopPropagation()" aria-label="Llamar">
+                    <span class="material-symbols-outlined icon-filled">call</span>
+                  </a>
+                }
+                @if (p.email) {
+                  <a [href]="'mailto:' + p.email" class="mini-action" (click)="$event.stopPropagation()" aria-label="Email">
+                    <span class="material-symbols-outlined">mail</span>
+                  </a>
+                }
+                <button class="mini-action" (click)="$event.stopPropagation(); generarQr(p.magic_link_url || '')" aria-label="QR Code">
+                  <span class="material-symbols-outlined">qr_code_2</span>
+                </button>
               </div>
             </article>
           }
-        }
-      </section>
+        </section>
+      } @else {
+        <!-- List View -->
+        <section class="patients-list animate-in" style="--delay: 0.1s">
+          @for (p of pacientes(); track p.id; let i = $index) {
+            <article class="patient-row" [style.--row-delay]="(i * 0.02) + 's'" (click)="verDetalle(p)">
+              <!-- Avatar -->
+              <div class="row-avatar">
+                @if (avatarUrl(p)) {
+                  <img [src]="avatarUrl(p)" [alt]="fullName(p)" class="avatar-img"/>
+                } @else {
+                  <span class="avatar-initials">{{ getInitials(p) }}</span>
+                }
+              </div>
+
+              <!-- Info -->
+              <div class="row-info">
+                <h4 class="row-name">{{ fullName(p) }}</h4>
+                <span class="row-detail">{{ p.email || p.telefono || 'Sin contacto' }}</span>
+              </div>
+
+              <!-- Quick Actions -->
+              <div class="row-actions">
+                @if (p.telefono) {
+                  <a [href]="'tel:' + p.telefono" class="row-action" (click)="$event.stopPropagation()" aria-label="Llamar">
+                    <span class="material-symbols-outlined icon-filled">call</span>
+                  </a>
+                }
+              </div>
+
+              <!-- Arrow -->
+              <span class="material-symbols-outlined row-arrow">chevron_right</span>
+            </article>
+          }
+        </section>
+      }
     }
-  </div>
+  </main>
+
+  <!-- Floating Action Button (Mobile only) -->
+  @if (!isDesktop() && pacientes().length > 0) {
+    <button class="fab" (click)="openAddPaciente()" aria-label="Añadir paciente">
+      <span class="material-symbols-outlined icon-filled">person_add</span>
+    </button>
+  }
 </section>

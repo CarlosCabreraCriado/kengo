@@ -182,6 +182,16 @@ export class PacientesListComponent {
     return fn || ln ? `${fn} ${ln}`.trim() : u.email || u.id;
   }
 
+  getInitials(u: Usuario): string {
+    const fn = (u.first_name || '').trim();
+    const ln = (u.last_name || '').trim();
+    if (fn && ln) return `${fn[0]}${ln[0]}`.toUpperCase();
+    if (fn) return fn.substring(0, 2).toUpperCase();
+    if (ln) return ln.substring(0, 2).toUpperCase();
+    if (u.email) return u.email.substring(0, 2).toUpperCase();
+    return '??';
+  }
+
   async generarQr(url: string) {
     try {
       if (url) this.openDialogoQR(url);

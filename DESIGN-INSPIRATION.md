@@ -15,6 +15,7 @@ Este documento captura la esencia del estilo visual de Kengo, una aplicación de
 - **Calidez**: Paleta cálida que transmite confianza y profesionalismo en el ámbito de la salud
 - **Simplicidad**: Interfaces limpias que no abruman al usuario
 - **Fluidez**: Animaciones sutiles que guían la atención sin distraer
+- **Solo Light Mode**: La aplicación NO soporta dark mode. Siempre debe mostrarse en modo claro, independientemente de las preferencias del sistema del usuario
 
 ### Sensación Buscada
 
@@ -675,46 +676,47 @@ mat-icon.on-dark {
 
 ---
 
-## 9. Modo Oscuro
+## 9. Solo Light Mode (Sin Dark Mode)
 
-### Activación
+### Política de Tema
+
+**IMPORTANTE**: Kengo es una aplicación **exclusivamente light mode**. No se debe implementar soporte para dark mode.
+
+#### Razones de esta decisión:
+
+1. **Identidad de marca**: La paleta cálida (coral, dorado, melocotón) está diseñada específicamente para fondos claros y pierde su impacto visual en modo oscuro.
+
+2. **Glassmorphism**: Los efectos de cristal y transparencias funcionan mejor sobre fondos claros donde el contraste es más sutil y elegante.
+
+3. **Contexto de uso**: Como aplicación de fisioterapia/salud, el modo claro transmite mejor la sensación de limpieza, profesionalismo y confianza.
+
+4. **Consistencia**: Mantener un único tema garantiza una experiencia visual coherente para todos los usuarios.
+
+#### Reglas de implementación:
 
 ```css
-/* Clase .dark en el elemento raíz */
-.dark {
-  /* Sobrescribir variables de tema */
-}
-
-/* O mediante media query del sistema */
+/* ❌ NO usar media queries de dark mode */
 @media (prefers-color-scheme: dark) {
-  :root {
-    /* Variables oscuras */
-  }
+  /* NO IMPLEMENTAR */
 }
-```
 
-### Ajustes Clave
-
-```css
+/* ❌ NO usar clases .dark */
 .dark {
-  /* Superficies */
-  --background: #151313;
-  --surface: #151313;
+  /* NO IMPLEMENTAR */
+}
 
-  /* Colores primarios más suaves */
-  --primary: #ffb4a4;
-  --tertiary: #efc048;
-
-  /* Texto */
-  --on-surface: #e7e1e0;
-
-  /* Glassmorphism ajustado */
-  .tarjeta-kengo {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.1);
-  }
+/* ✅ SIEMPRE usar los colores light mode */
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-tertiary: #efc048;
+  --kengo-glass: rgba(255, 255, 255, 0.5);
+  --kengo-border: rgba(255, 255, 255, 0.25);
 }
 ```
+
+#### Ignorar preferencias del sistema:
+
+La aplicación debe mostrar siempre el tema claro, independientemente de la configuración del sistema operativo del usuario (`prefers-color-scheme`).
 
 ---
 
@@ -1031,6 +1033,7 @@ Reservar CSS custom (en archivos `.component.css`) para:
 | **Componente estrella** | Tarjetas con backdrop-blur y bordes translúcidos |
 | **Animaciones** | Sutiles, orgánicas (aurora waves), transiciones suaves |
 | **Responsive** | Mobile-first con grid adaptativo 1-2-3 columnas |
+| **Tema** | Solo Light Mode (sin soporte para dark mode) |
 
 ---
 
