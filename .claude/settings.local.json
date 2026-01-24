@@ -3,7 +3,13 @@
     "allow": [
       "Bash(npx ng build:*)",
       "Bash(npm run build:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(tree:*)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(git mv apps/app/src/app/services/app.service.ts apps/app/src/app/core/auth/services/session.service.ts)",
+      "Bash(git mv apps/app/src/app/services/auth-guard.service.ts apps/app/src/app/core/guards/auth.guard.ts)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

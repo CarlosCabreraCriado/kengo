@@ -1,0 +1,142 @@
+@reference "tailwindcss";
+/* ============================================
+   MI CLÍNICA - KENGO DESIGN SYSTEM
+   Optimizado para bundle size
+   ============================================ */
+
+
+/* Animaciones de entrada */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes progressIndeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.animate-fade-in { animation: fadeInUp 0.4s ease-out forwards; }
+.animate-fade-in-up { opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+
+/* Loader shimmer */
+.loader-shimmer {
+  @apply absolute inset-0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Progress bar */
+.progress-bar-track {
+  @apply absolute h-full rounded-sm;
+  width: 30%;
+  background: linear-gradient(90deg, #e75c3e, #efc048);
+  animation: progressIndeterminate 1.5s ease-in-out infinite;
+}
+
+/* Spinner */
+.save-spinner {
+  @apply w-[18px] h-[18px] rounded-full animate-spin;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+}
+
+/* Select */
+.custom-select {
+  @apply appearance-none w-full min-w-[200px] py-2.5 pl-4 pr-10
+         border-[1.5px] border-black/10 rounded-xl
+         bg-white/70 backdrop-blur-sm font-medium text-sm text-zinc-800
+         cursor-pointer transition-all hover:border-[#e75c3e]
+         focus:outline-none focus:border-[#e75c3e] focus:ring-[3px] focus:ring-[#e75c3e]/15;
+}
+
+.custom-select-sm { @apply min-w-[100px] py-2 pl-3 pr-8 text-xs; }
+
+/* Form input */
+.form-input {
+  @apply w-full py-3 pl-11 pr-4 border-[1.5px] border-black/10 rounded-xl
+         bg-white/60 backdrop-blur-sm text-sm text-zinc-800 placeholder:text-zinc-400
+         transition-all hover:border-black/20
+         focus:outline-none focus:border-[#e75c3e] focus:ring-[3px] focus:ring-[#e75c3e]/10;
+}
+
+.input-wrapper:focus-within .input-icon { @apply text-[#e75c3e]; }
+
+/* Color input */
+.color-input {
+  @apply w-12 h-12 border-none rounded-xl cursor-pointer overflow-hidden shadow-sm;
+}
+.color-input::-webkit-color-swatch-wrapper { padding: 0; }
+.color-input::-webkit-color-swatch { border: none; border-radius: 12px; }
+
+/* Hero overlay */
+.clinic-hero-overlay {
+  @apply absolute inset-0;
+  background: linear-gradient(180deg, transparent 0%, transparent 30%, rgba(0, 0, 0, 0.2) 60%, rgba(0, 0, 0, 0.65) 100%);
+}
+
+.clinic-card:hover .clinic-hero-image { @apply scale-105; }
+
+/* Fisio card */
+.fisio-card {
+  @apply opacity-0;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+.fisio-card:hover .fisio-actions { @apply opacity-100; }
+
+/* Links */
+.stat-link { @apply text-[#e75c3e] no-underline transition-colors hover:text-[#c94a2f] hover:underline; }
+
+/* Gradientes consolidados */
+.gradient-primary { background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%); }
+.gradient-primary-light { background: linear-gradient(135deg, #e75c3e 0%, #ff8a6b 100%); }
+.gradient-avatar { background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%); }
+.gradient-icon-phone { background: linear-gradient(135deg, rgba(231, 92, 62, 0.15) 0%, rgba(231, 92, 62, 0.05) 100%); }
+.gradient-icon-email { background: linear-gradient(135deg, rgba(239, 192, 72, 0.2) 0%, rgba(239, 192, 72, 0.08) 100%); }
+.gradient-icon-slate { background: linear-gradient(135deg, rgba(100, 116, 139, 0.15) 0%, rgba(100, 116, 139, 0.05) 100%); }
+.gradient-fisios-icon { background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%); }
+.gradient-role-badge { background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(231, 92, 62, 0.06) 100%); }
+.gradient-empty-icon { background: linear-gradient(135deg, #f4f4f5 0%, white 100%); }
+.gradient-surface { background: linear-gradient(135deg, #ffede8 0%, white 100%); }
+
+/* Shadows */
+.shadow-primary { box-shadow: 0 8px 24px rgba(231, 92, 62, 0.25); }
+.avatar-shadow { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+.avatar-shadow-primary { box-shadow: 0 4px 12px rgba(231, 92, 62, 0.25); }
+.logo-shadow { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); }
+
+/* Glass */
+.glass {
+  @apply bg-white/55 backdrop-blur-md border border-white/25;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.glass-card {
+  @apply bg-white/55 backdrop-blur-md border border-white/25 rounded-3xl overflow-hidden
+         transition-transform hover:-translate-y-1;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+.glass-card:hover { box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18); }
+
+/* Status indicators */
+.status-dot-glow {
+  @apply w-2 h-2 rounded-full bg-green-300;
+  box-shadow: 0 0 8px rgba(134, 239, 172, 0.6);
+}
+
+.fisio-status-glow {
+  @apply absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-green-300 border-[3px] border-white;
+  box-shadow: 0 2px 6px rgba(134, 239, 172, 0.4);
+}

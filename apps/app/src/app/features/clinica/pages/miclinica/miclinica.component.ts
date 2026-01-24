@@ -1,23 +1,7 @@
-import { Component, computed, inject, signal, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import { environment as env } from '../../../../../environments/environment';
-
-// Angular Material
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDividerModule } from '@angular/material/divider';
 
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -29,40 +13,33 @@ import { Usuario, Clinica, ID } from '../../../../../types/global';
 @Component({
   standalone: true,
   selector: 'app-mi-clinica',
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    RouterLink,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressBarModule,
-    MatSnackBarModule,
-    MatDividerModule,
-  ],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './miclinica.component.html',
+  styleUrl: './miclinica.component.css',
   host: {
     class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
   },
 })
-export class MiClinicaComponent {
-  private http = inject(HttpClient);
+export class MiClinicaComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
-  private snack = inject(MatSnackBar);
   private sessionService = inject(SessionService);
   public clinicasService = inject(ClinicasService);
-  private breakpointObserver = inject(BreakpointObserver);
 
-  // Detectar si estamos en desktop (>= 1024px)
-  isDesktop = toSignal(
-    this.breakpointObserver
-      .observe(['(min-width: 1024px)'])
-      .pipe(map((result) => result.matches)),
-    { initialValue: false }
-  );
+  // Media query para detectar desktop
+  private mediaQuery = window.matchMedia('(min-width: 1024px)');
+  isDesktop = signal(this.mediaQuery.matches);
+
+  private mediaQueryHandler = (e: MediaQueryListEvent) => {
+    this.isDesktop.set(e.matches);
+  };
+
+  ngOnInit() {
+    this.mediaQuery.addEventListener('change', this.mediaQueryHandler);
+  }
+
+  ngOnDestroy() {
+    this.mediaQuery.removeEventListener('change', this.mediaQueryHandler);
+  }
 
   public usuario = computed(
     () => this.sessionService.usuario() as Usuario | null,
@@ -75,13 +52,12 @@ export class MiClinicaComponent {
   readonly clinicIds = computed<ID[] | null>(() => {
     const uc = this.sessionService.usuario()?.clinicas ?? null;
     if (!uc) return null;
-    const ids = uc.map((x) => x.id_clinica);
-    console.log('IDs de mis clínicas:', ids);
-    return ids;
+    return uc.map((x) => x.id_clinica);
   });
 
   // Selector de clínica activa
   selectedClinicId = signal<ID | null>(null);
+  selectedClinicIndex = signal<number>(0);
 
   clinicasRes = computed(() => this.clinicasService.misClinicasRes.value());
 
@@ -94,7 +70,6 @@ export class MiClinicaComponent {
     postal: [''],
     nif: [''],
     color_primario: ['#000000'],
-    // No meto logo/imagenes en el form (manejo por archivo), pero puedes añadirlos si prefieres.
   });
 
   loading = signal(false);
@@ -107,6 +82,16 @@ export class MiClinicaComponent {
   // IDs existentes (para mantenerlos si no cambias)
   existingLogoId = signal<ID | null>(null);
   existingImagenIds = signal<ID[]>([]);
+
+  // Snackbar nativo
+  snackbarVisible = signal(false);
+  snackbarMessage = signal('');
+
+  showSnackbar(message: string) {
+    this.snackbarMessage.set(message);
+    this.snackbarVisible.set(true);
+    setTimeout(() => this.snackbarVisible.set(false), 3000);
+  }
 
   cargarFormulario(indexClinica: number) {
     if (this.clinicasRes().length == 0) return;
@@ -125,14 +110,12 @@ export class MiClinicaComponent {
     );
   }
 
-  onClinicChange(indexClinica: number) {
-    console.warn('clinica cambiada:', indexClinica);
+  onClinicChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const indexClinica = parseInt(select.value, 10);
+    this.selectedClinicIndex.set(indexClinica);
     this.cargarFormulario(indexClinica);
     this.selectedClinicId.set(this.clinicasRes()[indexClinica].id_clinica);
-    //this.form.reset();
-    //this.logoFile.set(null);
-    //this.imagenesFiles.set([]);
-    //this.error.set(null);
   }
 
   // ==== Handlers de inputs file ====
@@ -172,48 +155,3 @@ export class MiClinicaComponent {
     return ((n[0] || '') + (a[0] || '')).toUpperCase();
   }
 }
-
-// ===== Effect para inicializar el formulario cuando llega la clínica =====
-/*
-function clinicaEffect(ctx: MiClinicaComponent) {
-  //const unsub = setInterval(() => {}, 1); // no usado, evitamos warnings
-  //const ref = ctx;
-  // simple watcher manual basado en polling mínimo del resource (alternativa: computed+effect si gestionas señales derivadas)
-  //let lastId: ID | null = null;
-  const tick = () => {
-    const id = ref.selectedClinicId();
-    if (id !== lastId && id != null) {
-      lastId = id;
-      ref.clinicaRes.reload();
-    }
-    const c = ref.clinicaRes.value?.();
-    if (c) {
-      // Inicializa form
-      ref.form.patchValue(
-        {
-          nombre: c.nombre ?? '',
-          telefono: c.telefono ?? '',
-          email: c.email ?? '',
-          direccion: c.direccion ?? '',
-          postal: c.postal ?? '',
-          nif: c.nif ?? '',
-          color_primario: c.color_primario ?? '#000000',
-        },
-        { emitEvent: false },
-      );
-
-      // IDs existentes (para mantener si no cambian)
-      const logoId = typeof c.logo === 'object' ? c.logo?.id : c.logo;
-      ref.existingLogoId.set(logoId ?? null);
-
-      const imgIds = (c.imagenes ?? [])
-        .map((x) => (typeof x === 'object' ? x.id : x))
-        .filter(Boolean) as ID[];
-      ref.existingImagenIds.set(imgIds);
-    }
-  };
-  // pequeño interval para sincronizar (puedes cambiarlo por un `effect()` propio si centralizas señales)
-  //const interval = setInterval(tick, 150);
-  //(ref).__cleanup = () => clearInterval(interval);
-}
-*/

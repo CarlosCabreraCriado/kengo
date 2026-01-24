@@ -57,4 +57,5 @@ Thumbs.db
 /e2e/.auth/
 /playwright-report/
 /test-results/
+/screenshots/
 .env.e2e
