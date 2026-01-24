@@ -1,5 +1,10 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import {
+  RouterLink,
+  RouterLinkActive,
+  Router,
+  NavigationEnd,
+} from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { BreakpointObserver } from '@angular/cdk/layout';
 
@@ -20,9 +25,29 @@ export class NavegacionComponent implements OnInit {
 
   public isMovil = signal(false);
   public isInicio = signal(false);
+  private currentRoute = signal('/inicio');
 
   // Mostrar navbar: siempre en desktop, solo en /inicio en móvil
   public showNavbar = computed(() => !this.isMovil() || this.isInicio());
+
+  // Índice activo para la animación del indicador
+  public activeIndex = computed(() => {
+    const route = this.currentRoute();
+    const isFisio = this.isFisio();
+
+    // Mapeo de rutas a índices (considerando si hay sección de pacientes)
+    const routeMap: Record<string, number> = {
+      '/inicio': 0,
+      '/': 0,
+      '/ejercicios': 1,
+      '/actividad-diaria': 2,
+      '/mis-pacientes': isFisio ? 3 : -1,
+      '/mi-clinica': isFisio ? 4 : 3,
+      '/perfil': isFisio ? 5 : 4,
+    };
+
+    return routeMap[route] ?? 0;
+  });
 
   public avatarUrl = computed(() => {
     const id_avatar = this.sessionService.usuario()?.avatar;
@@ -46,16 +71,19 @@ export class NavegacionComponent implements OnInit {
       });
 
     // Detectar ruta actual
-    this.checkIfInicio(this.router.url);
+    this.updateRouteState(this.router.url);
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event) => {
-        this.checkIfInicio((event as NavigationEnd).urlAfterRedirects);
+        this.updateRouteState((event as NavigationEnd).urlAfterRedirects);
       });
   }
 
-  private checkIfInicio(url: string) {
-    this.isInicio.set(url === '/inicio' || url === '/');
+  private updateRouteState(url: string) {
+    // Extraer la ruta base (sin query params)
+    const baseRoute = url.split('?')[0];
+    this.currentRoute.set(baseRoute);
+    this.isInicio.set(baseRoute === '/inicio' || baseRoute === '/');
   }
 
   logout() {
