@@ -48,6 +48,14 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   public modoEdicion = signal(false);
   public fisios = (id: ID) => this.clinicasService.fisiosDeClinica(id)();
 
+  // UI State
+  showClinicPicker = false;
+  teamExpanded = signal(false);
+
+  toggleTeamExpanded() {
+    this.teamExpanded.update((v) => !v);
+  }
+
   // IDs de clínicas normalizados
   readonly clinicIds = computed<ID[] | null>(() => {
     const uc = this.sessionService.usuario()?.clinicas ?? null;
@@ -60,6 +68,24 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   selectedClinicIndex = signal<number>(0);
 
   clinicasRes = computed(() => this.clinicasService.misClinicasRes.value());
+
+  // Computed para la clínica actual
+  currentClinic = computed<Clinica | null>(() => {
+    const clinicas = this.clinicasRes();
+    if (!clinicas || clinicas.length === 0) return null;
+    return clinicas[this.selectedClinicIndex()] ?? null;
+  });
+
+  selectClinic(index: number) {
+    this.selectedClinicIndex.set(index);
+    const clinica = this.clinicasRes()[index];
+    if (clinica) {
+      this.selectedClinicId.set(clinica.id_clinica);
+      this.cargarFormulario(index);
+    }
+    this.showClinicPicker = false;
+    this.teamExpanded.set(false);
+  }
 
   // ===== 3) Form & estado =====
   form = this.fb.group({

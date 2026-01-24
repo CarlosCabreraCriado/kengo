@@ -1,456 +1,311 @@
-<section class="relative flex flex-col w-full h-full overflow-y-auto overflow-x-hidden">
+<section class="clinic-page">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-40 w-full pt-4 pb-3">
-    <div class="glass mx-4 rounded-2xl px-4 py-3 lg:mx-auto lg:max-w-7xl">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          @if (isDesktop()) {
-            <div class="w-11 h-11 rounded-xl gradient-primary-light flex items-center justify-center shadow-primary">
-              <span class="material-symbols-outlined icon-filled text-white text-[22px]">domain</span>
-            </div>
-          } @else {
-            <a class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/50 border border-white/30 text-zinc-600 transition-all hover:bg-white/80 hover:text-[#e75c3e] active:scale-95"
-               aria-label="Volver al inicio" routerLink="/inicio">
-              <span class="material-symbols-outlined text-xl">arrow_back</span>
-            </a>
+  <!-- Compact Header -->
+  <header class="clinic-header">
+    <div class="header-content">
+      <div class="header-left">
+        @if (!isDesktop()) {
+          <a class="back-btn" aria-label="Volver" routerLink="/inicio">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </a>
+        }
+        <div class="header-title-group">
+          <h1 class="titulo-kengo header-title">Mi Clínica</h1>
+          @if (clinicasRes().length > 1) {
+            <button class="clinic-switcher" (click)="showClinicPicker = !showClinicPicker">
+              <span class="current-clinic-name">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
+              <span class="material-symbols-outlined switcher-icon" [class.rotated]="showClinicPicker">expand_more</span>
+            </button>
           }
-          <div>
-            <h1 class="titulo-kengo text-[#e75c3e]" [class]="isDesktop() ? 'text-2xl' : 'text-xl'">Mi Clínica</h1>
-            @if (clinicasRes().length > 0) {
-              <p class="text-zinc-500/80" [class]="isDesktop() ? 'text-sm' : 'text-xs'">
-                @if (isDesktop()) { Gestiona tu espacio de trabajo }
-                @else { {{ clinicasRes().length }} {{ clinicasRes().length === 1 ? "clínica" : "clínicas" }} }
-              </p>
-            }
-          </div>
         </div>
+      </div>
+      @if (currentClinic()) {
+        <div class="header-actions">
+          <button class="action-btn" disabled aria-label="Editar clínica">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+        </div>
+      }
+    </div>
 
-        @if (clinicasRes().length > 1) {
-          <div class="relative inline-flex" [class.w-36]="!isDesktop()">
-            <select [class]="isDesktop() ? 'custom-select' : 'custom-select custom-select-sm'"
-                    [value]="selectedClinicIndex()" (change)="onClinicChange($event)">
-              @for (c of clinicasRes(); track c.id_clinica) {
-                <option [value]="$index">{{ c.nombre || "Clínica " + c.id_clinica }}</option>
+    <!-- Clinic Picker Dropdown -->
+    @if (showClinicPicker && clinicasRes().length > 1) {
+      <div class="clinic-picker-overlay" (click)="showClinicPicker = false"></div>
+      <div class="clinic-picker">
+        @for (c of clinicasRes(); track c.id_clinica; let i = $index) {
+          <button class="picker-option" [class.active]="i === selectedClinicIndex()" (click)="selectClinic(i)">
+            <div class="picker-logo">
+              @if (c.logo) {
+                <img [src]="assetUrl(c.logo)" [alt]="c.nombre"/>
+              } @else {
+                <span class="material-symbols-outlined icon-filled">domain</span>
               }
-            </select>
-            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-xl text-zinc-500 pointer-events-none">expand_more</span>
-          </div>
+            </div>
+            <div class="picker-info">
+              <span class="picker-name">{{ c.nombre || 'Clínica ' + c.id_clinica }}</span>
+              <span class="picker-location">{{ c.direccion || 'Sin dirección' }}</span>
+            </div>
+            @if (i === selectedClinicIndex()) {
+              <span class="material-symbols-outlined picker-check">check_circle</span>
+            }
+          </button>
         }
       </div>
-    </div>
+    }
   </header>
 
-  <!-- Contenido principal -->
-  <div class="flex-1 px-4 pb-32 lg:mx-auto lg:max-w-7xl lg:pb-8 lg:pt-4">
-    <!-- Loader -->
+  <!-- Main Content -->
+  <main class="clinic-main">
+    <!-- Loading State -->
     @if (!clinicasRes()) {
-      <div class="relative glass-card p-12 animate-fade-in">
-        <div class="loader-shimmer"></div>
-        <div class="relative flex flex-col items-center gap-4">
-          <div class="w-20 h-20 rounded-2xl gradient-surface flex items-center justify-center animate-pulse">
-            <span class="material-symbols-outlined text-4xl text-[#e75c3e]/60">domain</span>
-          </div>
-          <p class="text-zinc-500">Cargando clínicas...</p>
+      <div class="state-card loading-state">
+        <div class="shimmer-effect"></div>
+        <div class="state-icon pulse">
+          <span class="material-symbols-outlined">domain</span>
         </div>
+        <p class="state-text">Cargando clínica...</p>
       </div>
     }
 
-    <!-- Error -->
+    <!-- Error State -->
     @if (error()) {
-      <div class="glass-card p-10 text-center border-red-600/15 animate-fade-in">
-        <div class="w-[72px] h-[72px] mx-auto mb-4 rounded-full bg-red-600/10 flex items-center justify-center">
-          <span class="material-symbols-outlined text-4xl text-red-400">error_outline</span>
+      <div class="state-card error-state">
+        <div class="state-icon error">
+          <span class="material-symbols-outlined">error</span>
         </div>
-        <p class="text-red-600 font-medium">{{ error() }}</p>
-        <button type="button"
-                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 mt-3 border-[1.5px] border-red-600/30 rounded-xl bg-transparent text-red-600 text-sm font-medium cursor-pointer transition-all hover:border-red-600 hover:bg-red-600/5">
-          <span class="material-symbols-outlined text-lg">refresh</span>
+        <p class="state-text error">{{ error() }}</p>
+        <button class="retry-btn">
+          <span class="material-symbols-outlined">refresh</span>
           Reintentar
         </button>
       </div>
     }
 
-    <!-- Sin clínicas -->
+    <!-- Empty State -->
     @if (clinicIds() && clinicIds()?.length === 0) {
-      <div class="glass-card p-16 flex flex-col items-center animate-fade-in">
-        <div class="w-[100px] h-[100px] rounded-3xl gradient-empty-icon flex items-center justify-center">
-          <span class="material-symbols-outlined text-6xl text-zinc-300">domain_disabled</span>
+      <div class="state-card empty-state">
+        <div class="state-icon empty">
+          <span class="material-symbols-outlined">domain_disabled</span>
         </div>
-        <h3 class="text-lg font-semibold text-zinc-700 mt-4">Sin clínicas asociadas</h3>
-        <p class="text-zinc-500 mt-2 max-w-xs text-center">Aún no estás vinculado a ninguna clínica. Contacta con el administrador.</p>
+        <h3 class="state-title">Sin clínicas</h3>
+        <p class="state-text">No estás vinculado a ninguna clínica. Contacta con el administrador.</p>
       </div>
     }
 
-    <!-- Lista de clínicas -->
-    @if (clinicasRes() && clinicasRes().length > 0 && !modoEdicion()) {
-      <div class="space-y-8">
-        @for (c of clinicasRes(); track c?.id_clinica; let i = $index) {
-          <!-- Card principal -->
-          <article class="clinic-card glass-card group animate-fade-in-up" [style.animation-delay]="(i * 100) + 'ms'">
-            <!-- Hero Section -->
-            <div class="relative h-[220px] md:h-[280px] overflow-hidden">
-              @if (c.imagenes?.length) {
-                <img [src]="assetUrl(firstImageId(c))" [alt]="c.nombre || 'Clínica'"
-                     class="clinic-hero-image absolute inset-0 w-full h-full object-cover transition-transform duration-500"/>
-              } @else {
-                <div class="absolute inset-0 w-full h-full"
-                     [style.background]="c.color_primario ? 'linear-gradient(135deg, ' + c.color_primario + ' 0%, #efc048 100%)' : 'linear-gradient(135deg, #e75c3e 0%, #f9b87e 50%, #efc048 100%)'"></div>
-              }
+    <!-- Clinic Content -->
+    @if (currentClinic(); as c) {
+      <!-- Hero Card -->
+      <article class="hero-card animate-in">
+        <div class="hero-visual">
+          @if (c.imagenes?.length) {
+            <img [src]="assetUrl(firstImageId(c))" [alt]="c.nombre" class="hero-image"/>
+          } @else {
+            <div class="hero-gradient" [style.--clinic-color]="c.color_primario || '#e75c3e'"></div>
+          }
+          <div class="hero-overlay"></div>
 
-              <div class="clinic-hero-overlay"></div>
-
-              <!-- Decorative circles -->
-              <div class="absolute inset-0 pointer-events-none overflow-hidden">
-                <div class="absolute rounded-full bg-white/10 w-[200px] h-[200px] -top-20 -right-15"></div>
-                <div class="absolute rounded-full bg-white/10 w-[120px] h-[120px] bottom-10 -left-10"></div>
-              </div>
-
-              <!-- Hero content -->
-              <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 flex items-end gap-4 md:gap-5">
-                <div class="shrink-0">
-                  @if (c.logo) {
-                    <img [src]="assetUrl(c.logo)" alt="Logo de {{ c.nombre }}"
-                         class="w-16 h-16 md:w-[72px] md:h-[72px] rounded-2xl md:rounded-[18px] object-cover bg-white/90 p-1 logo-shadow border-2 border-white/60"/>
-                  } @else {
-                    <div class="w-16 h-16 md:w-[72px] md:h-[72px] rounded-2xl md:rounded-[18px] bg-white/15 backdrop-blur-sm flex items-center justify-center border-2 border-white/25">
-                      <span class="material-symbols-outlined icon-filled text-3xl text-white">domain</span>
-                    </div>
-                  }
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h2 class="text-2xl md:text-[1.75rem] font-bold text-white leading-tight drop-shadow-md m-0">{{ c.nombre || "Clínica sin nombre" }}</h2>
-                  <p class="flex items-center gap-1 text-sm text-white/90 mt-1.5 drop-shadow">
-                    <span class="material-symbols-outlined text-sm opacity-80">location_on</span>
-                    {{ c.direccion || "Dirección no disponible" }}
-                    @if (c.postal) { <span class="ml-2 pl-2 border-l border-white/40">{{ c.postal }}</span> }
-                  </p>
-                </div>
-              </div>
-
-              <!-- Badge activo -->
-              <div class="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-2xl text-xs font-semibold text-white border border-white/25">
-                <span class="status-dot-glow"></span>
-                Activa
-              </div>
-
-              <!-- Botón editar -->
-              <button type="button" disabled
-                      class="absolute top-4 right-4 inline-flex items-center justify-center w-10 h-10 border-none rounded-full bg-white/20 backdrop-blur-sm border border-white/25 text-white cursor-pointer transition-all hover:bg-white/35 disabled:opacity-60 disabled:cursor-not-allowed"
-                      aria-label="Editar clínica">
-                <span class="material-symbols-outlined text-xl">edit</span>
-              </button>
-            </div>
-
-            <!-- Info Section -->
-            <div class="p-5 md:p-6">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <!-- Teléfono -->
-                <div class="flex items-center gap-3 p-3.5 bg-white/50 border border-white/40 rounded-[14px] transition-all hover:bg-white/70 hover:-translate-y-0.5">
-                  <div class="w-10 h-10 rounded-[10px] gradient-icon-phone flex items-center justify-center shrink-0 text-[#e75c3e]">
-                    <span class="material-symbols-outlined text-xl">phone</span>
-                  </div>
-                  <div class="flex flex-col min-w-0">
-                    <span class="text-[0.7rem] font-medium text-zinc-400 uppercase tracking-wide">Teléfono</span>
-                    <span class="text-sm font-medium text-zinc-700 mt-0.5 truncate">{{ c.telefono || "No disponible" }}</span>
-                  </div>
-                </div>
-
-                <!-- Email -->
-                <div class="flex items-center gap-3 p-3.5 bg-white/50 border border-white/40 rounded-[14px] transition-all hover:bg-white/70 hover:-translate-y-0.5">
-                  <div class="w-10 h-10 rounded-[10px] gradient-icon-email flex items-center justify-center shrink-0 text-amber-700">
-                    <span class="material-symbols-outlined text-xl">mail</span>
-                  </div>
-                  <div class="flex flex-col min-w-0">
-                    <span class="text-[0.7rem] font-medium text-zinc-400 uppercase tracking-wide">Email</span>
-                    @if (c.email) {
-                      <a [href]="'mailto:' + c.email" class="stat-link text-sm font-medium mt-0.5 truncate">{{ c.email }}</a>
-                    } @else {
-                      <span class="text-sm font-medium text-zinc-700 mt-0.5">No disponible</span>
-                    }
-                  </div>
-                </div>
-
-                <!-- NIF -->
-                <div class="flex items-center gap-3 p-3.5 bg-white/50 border border-white/40 rounded-[14px] transition-all hover:bg-white/70 hover:-translate-y-0.5">
-                  <div class="w-10 h-10 rounded-[10px] gradient-icon-slate flex items-center justify-center shrink-0 text-slate-500">
-                    <span class="material-symbols-outlined text-xl">badge</span>
-                  </div>
-                  <div class="flex flex-col min-w-0">
-                    <span class="text-[0.7rem] font-medium text-zinc-400 uppercase tracking-wide">NIF</span>
-                    <span class="text-sm font-medium text-zinc-700 mt-0.5 truncate">{{ c.nif || "No disponible" }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Acciones -->
-              <div class="flex gap-3 mt-5 pt-5 border-t border-black/5">
-                @if (c.direccion) {
-                  <button type="button"
-                          class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border-[1.5px] border-slate-400/30 rounded-xl bg-transparent text-slate-500 text-sm font-medium cursor-pointer transition-all hover:bg-slate-500/10 hover:border-slate-500 active:scale-[0.98]">
-                    <span class="material-symbols-outlined text-lg">map</span>
-                    Ver en mapa
-                  </button>
-                }
-                @if (c.telefono) {
-                  <a [href]="'tel:' + c.telefono"
-                     class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border-[1.5px] border-[#e75c3e]/30 rounded-xl bg-transparent text-[#e75c3e] text-sm font-medium cursor-pointer no-underline transition-all hover:bg-[#e75c3e]/10 hover:border-[#e75c3e] active:scale-[0.98]">
-                    <span class="material-symbols-outlined text-lg">call</span>
-                    Llamar
-                  </a>
-                }
-              </div>
-            </div>
-          </article>
-
-          <!-- Sección Fisioterapeutas -->
-          <section class="mt-2 animate-fade-in-up" [style.animation-delay]="((i * 100) + 150) + 'ms'">
-            <header class="mb-4">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-xl gradient-fisios-icon flex items-center justify-center text-[#e75c3e]">
-                  <span class="material-symbols-outlined icon-filled text-[22px]">groups</span>
-                </div>
-                <div>
-                  <h3 class="text-lg font-semibold text-zinc-700 m-0">Equipo de fisioterapeutas</h3>
-                  <p class="text-sm text-zinc-400 mt-0.5 m-0">{{ fisios(c.id_clinica).length }} profesionales</p>
-                </div>
-              </div>
-            </header>
-
-            @if (fisios(c.id_clinica).length === 0) {
-              <div class="glass-card p-10 text-center">
-                <div class="w-20 h-20 mx-auto rounded-2xl gradient-empty-icon flex items-center justify-center">
-                  <span class="material-symbols-outlined text-5xl text-zinc-300">person_off</span>
-                </div>
-                <p class="text-zinc-500 mt-2">No hay fisioterapeutas asignados</p>
-              </div>
+          <!-- Floating Logo -->
+          <div class="hero-logo">
+            @if (c.logo) {
+              <img [src]="assetUrl(c.logo)" [alt]="c.nombre"/>
             } @else {
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                @for (f of fisios(c.id_clinica); track f.id; let j = $index) {
-                  <article class="fisio-card relative glass-card p-5 group" [style.animation-delay]="((j * 50) + 200) + 'ms'">
-                    <!-- Avatar -->
-                    <div class="relative w-14 h-14 mx-auto mb-4">
-                      @if (f.avatar) {
-                        <img [src]="assetUrl(f.avatar)" [alt]="f.first_name + ' ' + f.last_name"
-                             class="w-full h-full rounded-full object-cover border-[3px] border-white avatar-shadow"/>
-                      } @else {
-                        <div class="w-full h-full rounded-full gradient-avatar flex items-center justify-center text-xl font-bold text-white border-[3px] border-white avatar-shadow-primary">
-                          {{ iniciales(f.first_name, f.last_name) }}
-                        </div>
-                      }
-                      <div class="fisio-status-glow"></div>
-                    </div>
-
-                    <!-- Info -->
-                    <div class="text-center">
-                      <h4 class="text-base font-semibold text-zinc-800 m-0 truncate">{{ f.first_name }} {{ f.last_name }}</h4>
-                      <div class="inline-flex items-center gap-1 mt-2 px-2.5 py-1 gradient-role-badge rounded-2xl text-[0.7rem] font-semibold text-[#e75c3e]">
-                        <span class="material-symbols-outlined text-xs">medical_services</span>
-                        Fisioterapeuta
-                      </div>
-                      <div class="mt-3.5 flex flex-col gap-1.5">
-                        @if (f.email) {
-                          <div class="flex items-center justify-center gap-1.5 text-sm text-zinc-500">
-                            <span class="material-symbols-outlined text-sm text-zinc-400">mail</span>
-                            <span class="truncate">{{ f.email }}</span>
-                          </div>
-                        }
-                        @if (f.telefono) {
-                          <div class="flex items-center justify-center gap-1.5 text-sm text-zinc-500">
-                            <span class="material-symbols-outlined text-sm text-zinc-400">phone</span>
-                            <span>{{ f.telefono }}</span>
-                          </div>
-                        }
-                        @if (f.numero_colegiado) {
-                          <div class="flex items-center justify-center gap-1.5 text-sm text-[#e75c3e]">
-                            <span class="material-symbols-outlined text-sm text-[#efc048]">verified</span>
-                            <span>Col. {{ f.numero_colegiado }}</span>
-                          </div>
-                        }
-                      </div>
-                    </div>
-
-                    <!-- Acciones -->
-                    <div class="fisio-actions flex justify-center gap-2 mt-4 pt-4 border-t border-black/5 opacity-70 transition-opacity">
-                      @if (f.email) {
-                        <a class="inline-flex items-center justify-center w-10 h-10 border-none rounded-full bg-[#e75c3e]/10 text-[#e75c3e] cursor-pointer no-underline transition-all hover:bg-[#e75c3e] hover:text-white hover:scale-110"
-                           [href]="'mailto:' + f.email" aria-label="Enviar email a {{ f.first_name }}">
-                          <span class="material-symbols-outlined text-lg">mail</span>
-                        </a>
-                      }
-                      @if (f.telefono) {
-                        <a class="inline-flex items-center justify-center w-10 h-10 border-none rounded-full bg-[#e75c3e]/10 text-[#e75c3e] cursor-pointer no-underline transition-all hover:bg-[#e75c3e] hover:text-white hover:scale-110"
-                           [href]="'tel:' + f.telefono" aria-label="Llamar a {{ f.first_name }}">
-                          <span class="material-symbols-outlined text-lg">call</span>
-                        </a>
-                      }
-                    </div>
-                  </article>
-                }
-              </div>
+              <span class="material-symbols-outlined icon-filled">domain</span>
             }
-          </section>
-        }
-      </div>
-    }
+          </div>
 
-    <!-- Formulario de edición -->
-    @if (clinicasRes() && modoEdicion()) {
-      <article class="glass-card animate-fade-in">
-        <header class="flex items-center justify-between px-6 py-5 border-b border-black/5 bg-white/30">
-          <h2 class="text-xl font-semibold text-zinc-800">Editar clínica</h2>
-          <button type="button"
-                  class="inline-flex items-center justify-center w-10 h-10 border-none rounded-full bg-transparent text-zinc-600 cursor-pointer transition-all hover:bg-black/5 hover:text-[#e75c3e] active:scale-95"
-                  (click)="modoEdicion.set(false)">
-            <span class="material-symbols-outlined text-xl">close</span>
+          <!-- Status Badge -->
+          <div class="status-badge">
+            <span class="status-dot"></span>
+            Activa
+          </div>
+        </div>
+
+        <div class="hero-info">
+          <h2 class="clinic-name">{{ c.nombre || 'Mi Clínica' }}</h2>
+          <p class="clinic-address">
+            <span class="material-symbols-outlined">location_on</span>
+            {{ c.direccion || 'Sin dirección' }}
+            @if (c.postal) {
+              <span class="postal-badge">{{ c.postal }}</span>
+            }
+          </p>
+        </div>
+      </article>
+
+      <!-- Quick Actions -->
+      <section class="quick-actions animate-in" style="--delay: 0.1s">
+        @if (c.telefono) {
+          <a [href]="'tel:' + c.telefono" class="quick-action primary">
+            <div class="action-icon">
+              <span class="material-symbols-outlined icon-filled">call</span>
+            </div>
+            <span class="action-label">Llamar</span>
+          </a>
+        }
+        @if (c.email) {
+          <a [href]="'mailto:' + c.email" class="quick-action secondary">
+            <div class="action-icon">
+              <span class="material-symbols-outlined">mail</span>
+            </div>
+            <span class="action-label">Email</span>
+          </a>
+        }
+        @if (c.direccion) {
+          <button type="button" class="quick-action tertiary">
+            <div class="action-icon">
+              <span class="material-symbols-outlined">map</span>
+            </div>
+            <span class="action-label">Mapa</span>
           </button>
+        }
+        <button type="button" class="quick-action neutral">
+          <div class="action-icon">
+            <span class="material-symbols-outlined">share</span>
+          </div>
+          <span class="action-label">Compartir</span>
+        </button>
+      </section>
+
+      <!-- Info Cards Grid -->
+      <section class="info-grid animate-in" style="--delay: 0.15s">
+        <!-- Contact Card -->
+        <div class="info-card">
+          <div class="info-card-header">
+            <span class="material-symbols-outlined info-icon">contact_phone</span>
+            <span class="info-card-title">Contacto</span>
+          </div>
+          <div class="info-card-body">
+            <div class="info-row">
+              <span class="info-label">Teléfono</span>
+              <span class="info-value">{{ c.telefono || '—' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-value truncate">{{ c.email || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legal Card -->
+        <div class="info-card">
+          <div class="info-card-header">
+            <span class="material-symbols-outlined info-icon">badge</span>
+            <span class="info-card-title">Fiscal</span>
+          </div>
+          <div class="info-card-body">
+            <div class="info-row">
+              <span class="info-label">NIF</span>
+              <span class="info-value mono">{{ c.nif || '—' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">C.P.</span>
+              <span class="info-value">{{ c.postal || '—' }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Team Section -->
+      <section class="team-section animate-in" style="--delay: 0.2s">
+        <header class="section-header" (click)="toggleTeamExpanded()">
+          <div class="section-title-group">
+            <div class="section-icon">
+              <span class="material-symbols-outlined icon-filled">groups</span>
+            </div>
+            <div>
+              <h3 class="section-title">Equipo</h3>
+              <p class="section-subtitle">{{ fisios(c.id_clinica).length }} fisioterapeutas</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined expand-icon" [class.rotated]="teamExpanded()">expand_more</span>
         </header>
 
-        <form [formGroup]="form" class="p-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-zinc-600 ml-1" for="nombre">Nombre</label>
-              <div class="input-wrapper relative flex items-center">
-                <span class="input-icon absolute left-3.5 text-xl text-zinc-400 pointer-events-none transition-colors material-symbols-outlined">business</span>
-                <input type="text" id="nombre" class="form-input" formControlName="nombre" placeholder="Nombre de la clínica" required/>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-zinc-600 ml-1" for="telefono">Teléfono</label>
-              <div class="input-wrapper relative flex items-center">
-                <span class="input-icon absolute left-3.5 text-xl text-zinc-400 pointer-events-none transition-colors material-symbols-outlined">phone</span>
-                <input type="tel" id="telefono" class="form-input" formControlName="telefono" placeholder="Teléfono de contacto"/>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1.5 md:col-span-2">
-              <label class="text-sm font-semibold text-zinc-600 ml-1" for="email">Email</label>
-              <div class="input-wrapper relative flex items-center">
-                <span class="input-icon absolute left-3.5 text-xl text-zinc-400 pointer-events-none transition-colors material-symbols-outlined">mail</span>
-                <input type="email" id="email" class="form-input" formControlName="email" placeholder="correo@clinica.com"/>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1.5 md:col-span-2">
-              <label class="text-sm font-semibold text-zinc-600 ml-1" for="direccion">Dirección</label>
-              <div class="input-wrapper relative flex items-center">
-                <span class="input-icon absolute left-3.5 text-xl text-zinc-400 pointer-events-none transition-colors material-symbols-outlined">location_on</span>
-                <input type="text" id="direccion" class="form-input" formControlName="direccion" placeholder="Dirección completa"/>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-zinc-600 ml-1" for="postal">Código Postal</label>
-              <div class="input-wrapper relative flex items-center">
-                <span class="input-icon absolute left-3.5 text-xl text-zinc-400 pointer-events-none transition-colors material-symbols-outlined">markunread_mailbox</span>
-                <input type="text" id="postal" class="form-input" formControlName="postal" placeholder="00000"/>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-zinc-600 ml-1" for="nif">NIF</label>
-              <div class="input-wrapper relative flex items-center">
-                <span class="input-icon absolute left-3.5 text-xl text-zinc-400 pointer-events-none transition-colors material-symbols-outlined">badge</span>
-                <input type="text" id="nif" class="form-input" formControlName="nif" placeholder="B12345678"/>
-              </div>
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <label class="text-sm font-semibold text-zinc-600 ml-1">Color primario</label>
-              <div class="flex items-center gap-3">
-                <input type="color" class="color-input" [value]="form.get('color_primario')?.value || '#e75c3e'"
-                       (input)="form.get('color_primario')?.setValue($any($event.target).value)"/>
-                <span class="text-sm font-mono text-zinc-500 bg-black/5 px-3 py-1.5 rounded-lg">{{ form.get('color_primario')?.value || '#e75c3e' }}</span>
-              </div>
-            </div>
+        @if (fisios(c.id_clinica).length === 0) {
+          <div class="empty-team">
+            <span class="material-symbols-outlined">person_off</span>
+            <p>Sin fisioterapeutas asignados</p>
           </div>
-
-          <!-- Logo upload -->
-          <div class="mt-6 pt-6 border-t border-black/5">
-            <label class="block text-sm font-semibold text-zinc-700 mb-3">Logo de la clínica</label>
-            <div class="flex items-center gap-4">
-              <div class="w-20 h-20 rounded-2xl gradient-empty-icon border-2 border-dashed border-zinc-300 flex items-center justify-center overflow-hidden">
-                @if (logoPreviewUrl()) {
-                  <img [src]="logoPreviewUrl()" alt="Logo" class="w-full h-full object-cover"/>
-                } @else {
-                  <span class="material-symbols-outlined text-4xl text-zinc-300">add_photo_alternate</span>
+        } @else {
+          <!-- Collapsed: Avatar Stack -->
+          @if (!teamExpanded()) {
+            <div class="team-preview">
+              <div class="avatar-stack">
+                @for (f of fisios(c.id_clinica).slice(0, 4); track f.id; let i = $index) {
+                  <div class="stacked-avatar" [style.--stack-index]="i">
+                    @if (f.avatar) {
+                      <img [src]="assetUrl(f.avatar)" [alt]="f.first_name"/>
+                    } @else {
+                      <span class="avatar-initials">{{ iniciales(f.first_name, f.last_name) }}</span>
+                    }
+                  </div>
+                }
+                @if (fisios(c.id_clinica).length > 4) {
+                  <div class="stacked-avatar more" [style.--stack-index]="4">
+                    +{{ fisios(c.id_clinica).length - 4 }}
+                  </div>
                 }
               </div>
-              <button type="button"
-                      class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border-[1.5px] border-[#e75c3e] rounded-xl bg-transparent text-[#e75c3e] text-sm font-medium cursor-pointer transition-all hover:bg-[#e75c3e]/10"
-                      (click)="logoInput.click()">
-                <span class="material-symbols-outlined text-lg">upload</span>
-                Seleccionar logo
-              </button>
-              <input #logoInput type="file" accept="image/*" class="hidden" (change)="onLogoSelected(logoInput.files)"/>
-            </div>
-          </div>
-
-          <!-- Imágenes upload -->
-          <div class="mt-6 pt-6 border-t border-black/5">
-            <label class="block text-sm font-semibold text-zinc-700 mb-3">Imágenes de la clínica</label>
-            <div class="flex flex-wrap gap-3 mb-3">
-              @for (id of existingImagenIds(); track id) {
-                <div class="relative">
-                  <img [src]="imagenPreviewUrl(id)" class="w-[100px] h-[75px] rounded-xl object-cover border-2 border-white shadow-sm"/>
-                  <button type="button"
-                          class="absolute -top-2 -right-2 inline-flex items-center justify-center w-7 h-7 border-none rounded-full bg-red-600 text-white cursor-pointer transition-all shadow-sm hover:scale-110">
-                    <span class="material-symbols-outlined text-base">close</span>
-                  </button>
-                </div>
-              }
-              @for (f of imagenesFiles(); track f) {
-                <div class="relative">
-                  <button type="button"
-                          class="absolute -top-2 -right-2 inline-flex items-center justify-center w-7 h-7 border-none rounded-full bg-red-600 text-white cursor-pointer transition-all shadow-sm hover:scale-110">
-                    <span class="material-symbols-outlined text-base">close</span>
-                  </button>
-                </div>
-              }
-            </div>
-            <button type="button"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 mt-3 border-[1.5px] border-[#e75c3e] rounded-xl bg-transparent text-[#e75c3e] text-sm font-medium cursor-pointer transition-all hover:bg-[#e75c3e]/10"
-                    (click)="imagenesInput.click()">
-              <span class="material-symbols-outlined text-lg">add_photo_alternate</span>
-              Añadir imágenes
-            </button>
-            <input #imagenesInput type="file" accept="image/*" class="hidden" multiple (change)="onImagenesSelected(imagenesInput.files)"/>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-black/5">
-            <button type="button"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border-none rounded-lg bg-transparent text-zinc-600 text-sm font-medium cursor-pointer transition-all hover:bg-black/5 hover:text-zinc-800"
-                    (click)="modoEdicion.set(false)">
-              Cancelar
-            </button>
-            <button type="submit"
-                    class="inline-flex items-center justify-center gap-2 px-6 py-3 border-none rounded-xl gradient-primary text-white text-sm font-semibold cursor-pointer transition-all shadow-primary hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                    [disabled]="form.invalid || loading()">
-              @if (loading()) {
-                <div class="save-spinner"></div>
-              } @else {
-                <span class="material-symbols-outlined text-lg">save</span>
-              }
-              Guardar cambios
-            </button>
-          </div>
-
-          @if (loading()) {
-            <div class="relative w-full h-1 mt-4 rounded-sm bg-[#e75c3e]/15 overflow-hidden">
-              <div class="progress-bar-track"></div>
+              <span class="preview-hint">Toca para ver el equipo</span>
             </div>
           }
-        </form>
-      </article>
+
+          <!-- Expanded: Team List -->
+          @if (teamExpanded()) {
+            <div class="team-list">
+              @for (f of fisios(c.id_clinica); track f.id; let j = $index) {
+                <article class="team-member" [style.--member-delay]="(j * 0.05) + 's'">
+                  <div class="member-avatar">
+                    @if (f.avatar) {
+                      <img [src]="assetUrl(f.avatar)" [alt]="f.first_name + ' ' + f.last_name"/>
+                    } @else {
+                      <span class="avatar-initials">{{ iniciales(f.first_name, f.last_name) }}</span>
+                    }
+                    <span class="online-indicator"></span>
+                  </div>
+
+                  <div class="member-info">
+                    <h4 class="member-name">{{ f.first_name }} {{ f.last_name }}</h4>
+                    <div class="member-meta">
+                      @if (f.numero_colegiado) {
+                        <span class="colegiado-badge">
+                          <span class="material-symbols-outlined">verified</span>
+                          Col. {{ f.numero_colegiado }}
+                        </span>
+                      } @else {
+                        <span class="role-badge">Fisioterapeuta</span>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="member-actions">
+                    @if (f.telefono) {
+                      <a [href]="'tel:' + f.telefono" class="member-action" aria-label="Llamar">
+                        <span class="material-symbols-outlined">call</span>
+                      </a>
+                    }
+                    @if (f.email) {
+                      <a [href]="'mailto:' + f.email" class="member-action" aria-label="Email">
+                        <span class="material-symbols-outlined">mail</span>
+                      </a>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
     }
-  </div>
+  </main>
 
   <!-- Snackbar -->
   @if (snackbarVisible()) {
-    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3.5 bg-zinc-800 text-white text-sm font-medium rounded-xl shadow-lg z-[1000] animate-slide-up">
-      {{ snackbarMessage() }}
-    </div>
+    <div class="snackbar">{{ snackbarMessage() }}</div>
   }
 </section>

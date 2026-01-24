@@ -9,6 +9,8 @@ Este documento captura la esencia del estilo visual de Kengo, una aplicación de
 ### Principios Fundamentales
 
 - **Mobile-first**: La interfaz prioriza la experiencia en dispositivos móviles
+- **App-like**: La UI debe sentirse como una aplicación nativa, no como una web tradicional. Esto implica navegación por gestos, acciones rápidas accesibles, información compacta y feedback táctil inmediato
+- **Tailwind-first**: Los estilos deben implementarse con clases de Tailwind CSS siempre que sea posible, reservando CSS personalizado solo para casos que Tailwind no cubra (animaciones complejas, gradientes específicos, etc.)
 - **Glassmorphism**: Transparencias y desenfoque como firma visual distintiva
 - **Calidez**: Paleta cálida que transmite confianza y profesionalismo en el ámbito de la salud
 - **Simplicidad**: Interfaces limpias que no abruman al usuario
@@ -151,41 +153,6 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.1);
 }
-```
-
-### Tarjeta Animada con Aurora
-
-Para estados dinámicos (como actividad diaria), se usa un fondo con ondas de color animadas:
-
-```css
-.card-animated {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 237, 232, 0.7) 0%,
-    rgba(254, 248, 247, 0.5) 50%,
-    rgba(243, 236, 235, 0.6) 100%
-  );
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow:
-    0 8px 32px rgba(231, 92, 62, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-/* Ondas de aurora animadas */
-.aurora-wave {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.9;
-  mix-blend-mode: multiply;
-  animation: auroraFloat 8s ease-in-out infinite;
-}
-
-/* Colores de aurora según estado */
---aurora-color-1: rgba(231, 92, 62, 0.4);  /* Coral */
---aurora-color-2: rgba(239, 192, 72, 0.35); /* Gold */
---aurora-color-3: rgba(255, 180, 164, 0.3); /* Peach */
 ```
 
 ### Botones
@@ -374,7 +341,177 @@ input:-webkit-autofill {
 
 ---
 
-## 6. Animaciones y Transiciones
+## 6. Enfoque App-Like
+
+### Filosofía de Diseño de Aplicación
+
+Kengo debe sentirse como una **aplicación nativa**, no como una página web tradicional. Esto significa priorizar la usabilidad táctil, la densidad de información adecuada y patrones de interacción familiares para usuarios de iOS/Android.
+
+### Principios App-Like
+
+#### 1. Información Compacta y Jerarquizada
+
+- **Evitar scroll infinito**: Organizar el contenido en secciones colapsables/expandibles
+- **Priorizar lo importante**: La información crítica debe ser visible sin scroll
+- **Densidad adecuada**: Ni demasiado espaciado (web) ni demasiado denso (ilegible)
+
+```html
+<!-- Sección colapsable -->
+<section class="rounded-3xl bg-white/50 backdrop-blur-md overflow-hidden">
+  <header class="flex items-center justify-between p-4 cursor-pointer"
+          (click)="toggleSection()">
+    <h3 class="font-semibold">Título de sección</h3>
+    <span class="material-symbols-outlined transition-transform"
+          [class.rotate-180]="expanded">expand_more</span>
+  </header>
+  @if (expanded) {
+    <div class="px-4 pb-4"><!-- contenido --></div>
+  }
+</section>
+```
+
+#### 2. Quick Actions Prominentes
+
+Las acciones principales deben estar siempre accesibles con un solo toque:
+
+```html
+<!-- Grid de acciones rápidas -->
+<div class="grid grid-cols-4 gap-2">
+  <button class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl
+                 bg-white/50 border border-white/40 active:scale-95">
+    <div class="w-11 h-11 rounded-xl bg-[#e75c3e] flex items-center justify-center">
+      <span class="material-symbols-outlined text-white">call</span>
+    </div>
+    <span class="text-xs font-medium text-zinc-600">Llamar</span>
+  </button>
+  <!-- más acciones... -->
+</div>
+```
+
+#### 3. Navegación Tipo App
+
+- **Headers compactos**: Título + acciones, sin navegación redundante
+- **Bottom sheets** para selección en lugar de dropdowns tradicionales
+- **Gestos de swipe** donde sea apropiado
+- **Pull to refresh** en listas
+
+```html
+<!-- Header estilo app -->
+<header class="sticky top-0 z-50 px-4 py-3 bg-white/80 backdrop-blur-xl">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <button class="w-10 h-10 rounded-full bg-white/60 active:scale-95">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <h1 class="titulo-kengo text-xl text-[#e75c3e]">Título</h1>
+    </div>
+    <button class="w-10 h-10 rounded-full bg-white/60">
+      <span class="material-symbols-outlined">more_vert</span>
+    </button>
+  </div>
+</header>
+```
+
+#### 4. Feedback Táctil Inmediato
+
+Cada interacción debe tener respuesta visual instantánea:
+
+```html
+<!-- Elemento con feedback táctil -->
+<button class="transition-all duration-150
+               active:scale-95 active:opacity-80
+               hover:bg-white/70 hover:-translate-y-0.5">
+  Acción
+</button>
+```
+
+#### 5. Estados de Carga Inline
+
+Mostrar estados de carga dentro del contexto, no modales bloqueantes:
+
+```html
+<!-- Skeleton loading inline -->
+<div class="animate-pulse">
+  <div class="h-4 bg-zinc-200/50 rounded-lg w-3/4 mb-2"></div>
+  <div class="h-3 bg-zinc-200/50 rounded-lg w-1/2"></div>
+</div>
+
+<!-- Shimmer effect -->
+<div class="relative overflow-hidden">
+  <div class="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite]
+              bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+</div>
+```
+
+#### 6. Listas Compactas con Avatar Stack
+
+Para mostrar múltiples elementos (usuarios, items) de forma compacta:
+
+```html
+<!-- Avatar stack -->
+<div class="flex items-center">
+  @for (item of items.slice(0, 4); track item.id; let i = $index) {
+    <div class="w-10 h-10 rounded-full border-[3px] border-white -ml-3 first:ml-0"
+         [style.z-index]="10 - i">
+      <img [src]="item.avatar" class="w-full h-full rounded-full object-cover"/>
+    </div>
+  }
+  @if (items.length > 4) {
+    <div class="w-10 h-10 rounded-full border-[3px] border-white -ml-3
+                bg-zinc-600 text-white text-xs font-bold
+                flex items-center justify-center">
+      +{{ items.length - 4 }}
+    </div>
+  }
+</div>
+```
+
+### Patrones Anti-Web (Evitar)
+
+| ❌ Patrón Web Tradicional | ✅ Patrón App-Like |
+|---------------------------|-------------------|
+| Páginas con mucho scroll vertical | Secciones colapsables y tabs |
+| Formularios largos en una página | Formularios paso a paso (wizard) |
+| Dropdowns/selects nativos | Bottom sheets o pickers custom |
+| Modales centrados grandes | Sheets que emergen desde abajo |
+| Hover states como única interacción | Estados active/pressed para touch |
+| Breadcrumbs | Navegación con back button |
+| Sidebars siempre visibles | Menús que se ocultan/muestran |
+| Links de texto subrayados | Botones y cards tocables |
+
+### Ejemplo de Estructura de Página App-Like
+
+```html
+<section class="flex flex-col h-full">
+  <!-- Header fijo compacto -->
+  <header class="sticky top-0 z-50 shrink-0">...</header>
+
+  <!-- Contenido scrolleable -->
+  <main class="flex-1 overflow-y-auto px-4 pb-safe">
+    <!-- Hero/Card principal compacto -->
+    <article class="rounded-3xl overflow-hidden mb-4">...</article>
+
+    <!-- Quick actions siempre visibles -->
+    <section class="grid grid-cols-4 gap-2 mb-4">...</section>
+
+    <!-- Info cards en grid compacto -->
+    <section class="grid grid-cols-2 gap-3 mb-4">...</section>
+
+    <!-- Secciones colapsables para contenido secundario -->
+    <section class="rounded-3xl overflow-hidden">
+      <header (click)="toggle()">...</header>
+      @if (expanded) { <div>...</div> }
+    </section>
+  </main>
+
+  <!-- Navegación inferior (si aplica) -->
+  <nav class="sticky bottom-0 shrink-0 pb-safe">...</nav>
+</section>
+```
+
+---
+
+## 7. Animaciones y Transiciones
 
 ### Transiciones Estándar
 
@@ -492,7 +629,7 @@ transition: transform 0.5s ease;
 
 ---
 
-## 7. Iconografía
+## 8. Iconografía
 
 ### Sistema de Iconos
 
@@ -538,7 +675,7 @@ mat-icon.on-dark {
 
 ---
 
-## 8. Modo Oscuro
+## 9. Modo Oscuro
 
 ### Activación
 
@@ -581,7 +718,7 @@ mat-icon.on-dark {
 
 ---
 
-## 9. Código CSS de Referencia Completo
+## 10. Código CSS de Referencia Completo
 
 ### Variables CSS Globales
 
@@ -675,7 +812,7 @@ mat-icon.on-dark {
 
 ---
 
-## 10. Recursos y Assets
+## 11. Recursos y Assets
 
 ### Fuentes Requeridas
 
@@ -693,6 +830,193 @@ mat-icon.on-dark {
 - Fondos con gradientes cálidos
 - Ilustraciones de línea simple
 - Iconos monocromáticos que se pueden colorear con filtros CSS
+
+---
+
+## 12. Implementación con Tailwind CSS
+
+### Filosofía Tailwind-First
+
+**IMPORTANTE**: Todos los estilos deben implementarse prioritariamente con clases de Tailwind CSS. Solo se debe recurrir a CSS personalizado cuando:
+
+1. Tailwind no tenga una utilidad equivalente (ej: `backdrop-filter`, gradientes complejos)
+2. Se necesiten animaciones con `@keyframes`
+3. Se requieran pseudo-elementos complejos (`:before`, `:after`)
+4. Estilos que dependan de variables CSS dinámicas
+
+### Equivalencias Tailwind para Estilos Kengo
+
+#### Glassmorphism
+
+```html
+<!-- Tarjeta Kengo en Tailwind -->
+<div class="bg-white/50 backdrop-blur-md border border-white/20 rounded-3xl shadow-xl">
+  <!-- contenido -->
+</div>
+
+<!-- Con hover -->
+<div class="bg-white/50 backdrop-blur-md border border-white/20 rounded-3xl
+            shadow-xl transition-all hover:-translate-y-1 hover:shadow-2xl">
+  <!-- contenido -->
+</div>
+```
+
+#### Colores de Marca (usar valores arbitrarios)
+
+```html
+<!-- Primary coral -->
+<button class="bg-[#e75c3e] text-white hover:bg-[#c94a2f]">
+  Botón primario
+</button>
+
+<!-- Tertiary gold -->
+<span class="text-[#efc048]">Completado</span>
+
+<!-- Background cálido -->
+<div class="bg-[#fef8f7]">...</div>
+```
+
+#### Tipografía
+
+```html
+<!-- Título de marca -->
+<h1 class="titulo-kengo text-[#e75c3e] text-2xl">Mi Título</h1>
+
+<!-- Texto UI -->
+<p class="text-sm font-medium text-zinc-700">Texto normal</p>
+
+<!-- Caption -->
+<span class="text-xs font-medium text-zinc-400 uppercase tracking-wide">Label</span>
+```
+
+#### Botones
+
+```html
+<!-- CTA Primary -->
+<button class="inline-flex items-center justify-center gap-2
+               px-6 py-3 rounded-xl
+               bg-gradient-to-br from-[#e75c3e] to-[#c94a2f]
+               text-white font-semibold
+               shadow-[0_4px_12px_rgba(231,92,62,0.35)]
+               transition-all hover:-translate-y-0.5 hover:shadow-lg
+               active:scale-[0.98]">
+  <span class="material-symbols-outlined">check</span>
+  Confirmar
+</button>
+
+<!-- Secondary/Ghost -->
+<button class="inline-flex items-center justify-center gap-2
+               px-4 py-2.5 rounded-xl
+               bg-transparent border-[1.5px] border-[#e75c3e]/30
+               text-[#e75c3e] text-sm font-medium
+               transition-all hover:bg-[#e75c3e]/10 hover:border-[#e75c3e]">
+  Cancelar
+</button>
+```
+
+#### Layout Responsivo
+
+```html
+<!-- Grid responsivo 1-2-3 columnas -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+  <!-- cards -->
+</div>
+
+<!-- Padding con safe areas -->
+<main class="px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] lg:pb-8">
+  <!-- contenido -->
+</main>
+```
+
+#### Cards de Información
+
+```html
+<div class="flex items-center gap-3 p-3.5
+            bg-white/50 border border-white/40 rounded-2xl
+            transition-all hover:bg-white/70 hover:-translate-y-0.5">
+  <div class="w-10 h-10 rounded-xl bg-[#e75c3e]/10
+              flex items-center justify-center shrink-0">
+    <span class="material-symbols-outlined text-xl text-[#e75c3e]">phone</span>
+  </div>
+  <div class="flex flex-col min-w-0">
+    <span class="text-[0.7rem] font-medium text-zinc-400 uppercase tracking-wide">Teléfono</span>
+    <span class="text-sm font-medium text-zinc-700 truncate">+34 612 345 678</span>
+  </div>
+</div>
+```
+
+#### Avatares
+
+```html
+<!-- Avatar con imagen -->
+<div class="w-12 h-12 rounded-full overflow-hidden border-[3px] border-white shadow-md">
+  <img src="..." class="w-full h-full object-cover" alt="..."/>
+</div>
+
+<!-- Avatar con iniciales -->
+<div class="w-12 h-12 rounded-full
+            bg-gradient-to-br from-[#e75c3e] to-[#efc048]
+            flex items-center justify-center
+            text-white font-bold text-lg
+            border-[3px] border-white shadow-md">
+  AB
+</div>
+```
+
+### Cuándo Usar CSS Personalizado
+
+Reservar CSS custom (en archivos `.component.css`) para:
+
+```css
+/* 1. Animaciones complejas */
+@keyframes auroraFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 40px) scale(1.15); }
+}
+
+/* 2. Gradientes que no se pueden expresar en Tailwind */
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--clinic-color, #e75c3e) 0%,
+    #f9b87e 50%,
+    #efc048 100%
+  );
+}
+
+/* 3. Efectos especiales */
+.status-dot {
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* 4. Fuentes personalizadas */
+.titulo-kengo {
+  font-family: "kengoFont", sans-serif;
+}
+```
+
+### Estructura Recomendada de Archivos CSS
+
+```css
+@reference "tailwindcss";
+
+/* === Variables CSS (solo las necesarias) === */
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-tertiary: #efc048;
+}
+
+/* === Animaciones === */
+@keyframes fadeInUp { ... }
+@keyframes shimmer { ... }
+
+/* === Clases que requieren CSS puro === */
+.titulo-kengo { font-family: "kengoFont", sans-serif; }
+.gradient-primary { background: linear-gradient(135deg, #e75c3e, #c94a2f); }
+
+/* === El resto debe estar en el HTML con Tailwind === */
+```
 
 ---
 
