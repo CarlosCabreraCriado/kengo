@@ -16,22 +16,8 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
-// Angular Material
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-
 // Servicios
 import { SessionService } from '../../../../../core/auth/services/session.service';
-
-// Componentes
-import { ImageUploadComponent } from '../../../../../shared/ui/image-upload/image-upload.component';
-import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
-import { TermsConditionsComponent } from './terms-conditions/terms-conditions.component';
 
 // Types
 import { Usuario } from '../../../../../../types/global';
@@ -45,13 +31,6 @@ import { environment as env } from '../../../../../../environments/environment';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatIconModule,
-    MatExpansionModule,
-    MatProgressSpinnerModule,
-    MatDialogModule,
   ],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css',
@@ -59,7 +38,6 @@ import { environment as env } from '../../../../../../environments/environment';
 export class PerfilComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private fb = inject(FormBuilder);
-  public dialog = inject(MatDialog);
   private destroyRef = inject(DestroyRef);
   private breakpointObserver = inject(BreakpointObserver);
 
@@ -72,6 +50,18 @@ export class PerfilComponent implements OnInit, OnDestroy {
   );
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
+  // === SECTION TOGGLE STATES ===
+  public personalExpanded = signal(true);
+  public securityExpanded = signal(false);
+  public legalExpanded = signal(false);
+
+  // === OVERLAY PANELS ===
+  public showPrivacyPolicy = signal(false);
+  public showTermsConditions = signal(false);
+
+  @ViewChild('personalSection') personalSection!: ElementRef<HTMLElement>;
+  @ViewChild('securitySection') securitySection!: ElementRef<HTMLElement>;
 
   // === DATOS PERSONALES ===
   public usuario = computed(() => this.sessionService.usuario());
@@ -207,21 +197,10 @@ export class PerfilComponent implements OnInit, OnDestroy {
   }
 
   cambiarFotoPerfil() {
-    this.dialog
-      .open(ImageUploadComponent, {
-        data: {
-          url_perfil: this.url_perfil(),
-          resizeToWidth: 512,
-          format: 'jpeg',
-          quality: 80,
-          precargar: true,
-        },
-      })
-      .afterClosed()
-      .subscribe(async (result?: { file: File; dataUrl: string }) => {
-        if (!result) return;
-        await this.subirAvatar(result.file);
-      });
+    // Usar el input nativo de archivos
+    if (!this.subiendoAvatar()) {
+      this.fileInput?.nativeElement.click();
+    }
   }
 
   abrirSelectorArchivo() {
@@ -389,18 +368,52 @@ export class PerfilComponent implements OnInit, OnDestroy {
   // === MÉTODOS DE LEGAL ===
 
   abrirPrivacyPolicy() {
-    this.dialog.open(PrivacyPolicyComponent, {
-      width: '90vw',
-      maxWidth: '800px',
-      maxHeight: '90vh',
-    });
+    this.showPrivacyPolicy.set(true);
+  }
+
+  cerrarPrivacyPolicy() {
+    this.showPrivacyPolicy.set(false);
   }
 
   abrirTermsConditions() {
-    this.dialog.open(TermsConditionsComponent, {
-      width: '90vw',
-      maxWidth: '800px',
-      maxHeight: '90vh',
-    });
+    this.showTermsConditions.set(true);
+  }
+
+  cerrarTermsConditions() {
+    this.showTermsConditions.set(false);
+  }
+
+  // === MÉTODOS DE SECCIONES COLAPSABLES ===
+
+  togglePersonal() {
+    this.personalExpanded.update((v) => !v);
+  }
+
+  toggleSecurity() {
+    this.securityExpanded.update((v) => !v);
+  }
+
+  toggleLegal() {
+    this.legalExpanded.update((v) => !v);
+  }
+
+  scrollToSection(section: 'personal' | 'security') {
+    if (section === 'personal') {
+      this.personalExpanded.set(true);
+      setTimeout(() => {
+        this.personalSection?.nativeElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 100);
+    } else if (section === 'security') {
+      this.securityExpanded.set(true);
+      setTimeout(() => {
+        this.securitySection?.nativeElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 100);
+    }
   }
 }

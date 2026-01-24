@@ -1,322 +1,613 @@
-<section class="flex h-full w-full flex-col overflow-y-auto pb-24 lg:pb-6">
-  <!-- Header sticky (solo móvil) -->
-  @if (!isDesktop()) {
-    <header
-      class="sticky top-0 z-40 mb-6 w-full bg-gradient-to-b from-white/95 via-white/90 to-transparent pt-4 pb-2 backdrop-blur-md"
-    >
-      <div class="mx-auto max-w-7xl px-4">
-        <div class="flex items-center gap-2">
+<section class="profile-page">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
+
+  <!-- Compact Header -->
+  <header class="profile-header">
+    <div class="header-content">
+      <div class="header-left">
+        @if (!isDesktop()) {
+          <a class="back-btn" aria-label="Volver" routerLink="/inicio">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </a>
+        }
+        <div class="header-title-group">
+          <h1 class="titulo-kengo header-title">Mi Perfil</h1>
+          @if (usuario()) {
+            <p class="header-subtitle">Gestiona tu cuenta</p>
+          }
+        </div>
+      </div>
+      @if (usuario()) {
+        <div class="header-actions">
           <button
-            mat-icon-button
-            class="!h-10 !w-10 shrink-0"
-            aria-label="Volver al inicio"
-            routerLink="/inicio"
+            class="action-btn save-btn"
+            [class.has-changes]="formularioCambiado()"
+            [disabled]="!formularioCambiado() || formularioUsuario.invalid"
+            (click)="guardarCambios()"
+            aria-label="Guardar cambios"
           >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >arrow_back</mat-icon
-            >
+            <span class="material-symbols-outlined">{{ formularioCambiado() ? 'save' : 'check' }}</span>
           </button>
-          <div>
-            <h1 class="titulo-kengo text-xl font-bold text-zinc-800 sm:text-2xl">Mi Perfil</h1>
-            @if (usuario()) {
-              <p class="text-sm text-zinc-500">
-                {{ usuario()?.first_name }} {{ usuario()?.last_name }}
-              </p>
+        </div>
+      }
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="profile-main">
+    <!-- Loading State -->
+    @if (!formularioInicializado()) {
+      <div class="state-card loading-state">
+        <div class="shimmer-effect"></div>
+        <div class="state-icon pulse">
+          <span class="material-symbols-outlined">person</span>
+        </div>
+        <p class="state-text">Cargando perfil...</p>
+      </div>
+    } @else {
+      <!-- Hero Card with Avatar -->
+      <article class="hero-card animate-in">
+        <div class="hero-visual">
+          <div class="hero-gradient"></div>
+          <div class="hero-pattern" aria-hidden="true"></div>
+        </div>
+
+        <div class="hero-content">
+          <!-- Avatar -->
+          <button
+            type="button"
+            class="avatar-container"
+            (click)="cambiarFotoPerfil()"
+            [disabled]="subiendoAvatar()"
+            aria-label="Cambiar foto de perfil"
+          >
+            @if (previewUrl() ?? url_perfil()) {
+              <img
+                [src]="previewUrl() ?? url_perfil()!"
+                alt="Foto de perfil"
+                class="avatar-image"
+              />
+            } @else {
+              <div class="avatar-placeholder">
+                <span class="material-symbols-outlined icon-filled">person</span>
+              </div>
+            }
+
+            <!-- Camera overlay -->
+            <div class="avatar-overlay">
+              <span class="material-symbols-outlined">photo_camera</span>
+            </div>
+
+            <!-- Upload spinner -->
+            @if (subiendoAvatar()) {
+              <div class="avatar-loading">
+                <div class="avatar-spinner"></div>
+              </div>
+            }
+
+            <input
+              #fileInput
+              type="file"
+              accept="image/*"
+              class="hidden"
+              (change)="onArchivoSeleccionado($event)"
+            />
+          </button>
+
+          <!-- User Info -->
+          <div class="hero-info">
+            <h2 class="user-name">{{ usuario()?.first_name }} {{ usuario()?.last_name }}</h2>
+            <p class="user-email">{{ usuario()?.email }}</p>
+            @if (esFisio()) {
+              <span class="role-badge">
+                <span class="material-symbols-outlined icon-filled">verified</span>
+                Fisioterapeuta
+              </span>
             }
           </div>
         </div>
+      </article>
+
+      <!-- Quick Actions -->
+      <section class="quick-actions animate-in" style="--delay: 0.1s">
+        <button type="button" class="quick-action primary" (click)="scrollToSection('personal')">
+          <div class="action-icon">
+            <span class="material-symbols-outlined icon-filled">edit</span>
+          </div>
+          <span class="action-label">Editar</span>
+        </button>
+        <button type="button" class="quick-action secondary" (click)="scrollToSection('security')">
+          <div class="action-icon">
+            <span class="material-symbols-outlined">lock</span>
+          </div>
+          <span class="action-label">Seguridad</span>
+        </button>
+        <button type="button" class="quick-action tertiary" (click)="abrirPrivacyPolicy()">
+          <div class="action-icon">
+            <span class="material-symbols-outlined">policy</span>
+          </div>
+          <span class="action-label">Privacidad</span>
+        </button>
+        <button type="button" class="quick-action neutral" (click)="abrirTermsConditions()">
+          <div class="action-icon">
+            <span class="material-symbols-outlined">gavel</span>
+          </div>
+          <span class="action-label">Términos</span>
+        </button>
+      </section>
+
+      <!-- Personal Data Section -->
+      <section
+        #personalSection
+        class="data-section animate-in"
+        style="--delay: 0.15s"
+        [class.expanded]="personalExpanded()"
+      >
+        <header class="section-header" (click)="togglePersonal()">
+          <div class="section-title-group">
+            <div class="section-icon">
+              <span class="material-symbols-outlined icon-filled">person</span>
+            </div>
+            <div>
+              <h3 class="section-title">Datos Personales</h3>
+              <p class="section-subtitle">Información de tu cuenta</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined expand-icon" [class.rotated]="personalExpanded()">expand_more</span>
+        </header>
+
+        @if (personalExpanded()) {
+          <div class="section-content" [formGroup]="formularioUsuario">
+            <!-- Name fields in grid -->
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="field-label">Nombre</label>
+                <div class="input-wrapper">
+                  <span class="material-symbols-outlined input-icon">badge</span>
+                  <input
+                    type="text"
+                    formControlName="first_name"
+                    class="field-input"
+                    placeholder="Tu nombre"
+                  />
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Apellidos</label>
+                <div class="input-wrapper">
+                  <span class="material-symbols-outlined input-icon">badge</span>
+                  <input
+                    type="text"
+                    formControlName="last_name"
+                    class="field-input"
+                    placeholder="Tus apellidos"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact fields -->
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="field-label">Teléfono</label>
+                <div class="input-wrapper">
+                  <span class="material-symbols-outlined input-icon">phone</span>
+                  <input
+                    type="tel"
+                    formControlName="telefono"
+                    class="field-input"
+                    placeholder="+34 600 000 000"
+                  />
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Email</label>
+                <div class="input-wrapper locked">
+                  <span class="material-symbols-outlined input-icon">mail</span>
+                  <input
+                    type="email"
+                    formControlName="email"
+                    class="field-input"
+                    placeholder="tu@email.com"
+                  />
+                  <span class="material-symbols-outlined lock-icon">lock</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address fields -->
+            <div class="form-field full-width">
+              <label class="field-label">Dirección</label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">location_on</span>
+                <input
+                  type="text"
+                  formControlName="direccion"
+                  class="field-input"
+                  placeholder="Tu dirección completa"
+                />
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="field-label">Código Postal</label>
+                <div class="input-wrapper">
+                  <span class="material-symbols-outlined input-icon">pin_drop</span>
+                  <input
+                    type="text"
+                    formControlName="postal"
+                    class="field-input"
+                    placeholder="00000"
+                    maxlength="5"
+                  />
+                </div>
+              </div>
+
+              @if (esFisio()) {
+                <div class="form-field">
+                  <label class="field-label">Nº Colegiado</label>
+                  <div class="input-wrapper">
+                    <span class="material-symbols-outlined input-icon">verified</span>
+                    <input
+                      type="text"
+                      formControlName="numero_colegiado"
+                      class="field-input"
+                      placeholder="Opcional"
+                    />
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Save Button (visible on expanded) -->
+            @if (formularioCambiado()) {
+              <div class="section-actions">
+                <button
+                  type="button"
+                  class="save-button"
+                  [disabled]="formularioUsuario.invalid"
+                  (click)="guardarCambios()"
+                >
+                  <span class="material-symbols-outlined">save</span>
+                  Guardar cambios
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Security Section -->
+      <section
+        #securitySection
+        class="data-section animate-in"
+        style="--delay: 0.2s"
+        [class.expanded]="securityExpanded()"
+      >
+        <header class="section-header" (click)="toggleSecurity()">
+          <div class="section-title-group">
+            <div class="section-icon security">
+              <span class="material-symbols-outlined">lock</span>
+            </div>
+            <div>
+              <h3 class="section-title">Seguridad</h3>
+              <p class="section-subtitle">Contraseña y acceso</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined expand-icon" [class.rotated]="securityExpanded()">expand_more</span>
+        </header>
+
+        @if (securityExpanded()) {
+          <div class="section-content" [formGroup]="formularioPassword">
+            <p class="section-hint">
+              <span class="material-symbols-outlined">info</span>
+              Cambia tu contraseña para mantener tu cuenta segura
+            </p>
+
+            <!-- Current Password -->
+            <div class="form-field full-width">
+              <label class="field-label">Contraseña actual</label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">key</span>
+                <input
+                  [type]="hideCurrentPassword() ? 'password' : 'text'"
+                  formControlName="currentPassword"
+                  class="field-input"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  class="visibility-toggle"
+                  (click)="hideCurrentPassword.set(!hideCurrentPassword())"
+                >
+                  <span class="material-symbols-outlined">
+                    {{ hideCurrentPassword() ? 'visibility_off' : 'visibility' }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- New Password fields -->
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="field-label">Nueva contraseña</label>
+                <div class="input-wrapper">
+                  <span class="material-symbols-outlined input-icon">lock</span>
+                  <input
+                    [type]="hideNewPassword() ? 'password' : 'text'"
+                    formControlName="newPassword"
+                    class="field-input"
+                    placeholder="Mínimo 8 caracteres"
+                  />
+                  <button
+                    type="button"
+                    class="visibility-toggle"
+                    (click)="hideNewPassword.set(!hideNewPassword())"
+                  >
+                    <span class="material-symbols-outlined">
+                      {{ hideNewPassword() ? 'visibility_off' : 'visibility' }}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Confirmar</label>
+                <div class="input-wrapper">
+                  <span class="material-symbols-outlined input-icon">lock</span>
+                  <input
+                    [type]="hideConfirmPassword() ? 'password' : 'text'"
+                    formControlName="confirmPassword"
+                    class="field-input"
+                    placeholder="Repetir contraseña"
+                  />
+                  <button
+                    type="button"
+                    class="visibility-toggle"
+                    (click)="hideConfirmPassword.set(!hideConfirmPassword())"
+                  >
+                    <span class="material-symbols-outlined">
+                      {{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Change Password Button -->
+            <div class="section-actions">
+              <button
+                type="button"
+                class="save-button secondary"
+                [disabled]="formularioPassword.invalid || cambiandoPassword()"
+                (click)="cambiarPassword()"
+              >
+                @if (cambiandoPassword()) {
+                  <div class="button-spinner"></div>
+                } @else {
+                  <span class="material-symbols-outlined">lock_reset</span>
+                }
+                Cambiar contraseña
+              </button>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- Legal Section -->
+      <section class="data-section animate-in" style="--delay: 0.25s" [class.expanded]="legalExpanded()">
+        <header class="section-header" (click)="toggleLegal()">
+          <div class="section-title-group">
+            <div class="section-icon legal">
+              <span class="material-symbols-outlined">description</span>
+            </div>
+            <div>
+              <h3 class="section-title">Legal</h3>
+              <p class="section-subtitle">Políticas y términos</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined expand-icon" [class.rotated]="legalExpanded()">expand_more</span>
+        </header>
+
+        @if (legalExpanded()) {
+          <div class="section-content">
+            <div class="legal-cards">
+              <button type="button" class="legal-card" (click)="abrirPrivacyPolicy()">
+                <div class="legal-icon">
+                  <span class="material-symbols-outlined">policy</span>
+                </div>
+                <div class="legal-info">
+                  <h4 class="legal-title">Política de Privacidad</h4>
+                  <p class="legal-desc">Cómo protegemos tus datos</p>
+                </div>
+                <span class="material-symbols-outlined legal-arrow">chevron_right</span>
+              </button>
+
+              <button type="button" class="legal-card" (click)="abrirTermsConditions()">
+                <div class="legal-icon">
+                  <span class="material-symbols-outlined">gavel</span>
+                </div>
+                <div class="legal-info">
+                  <h4 class="legal-title">Términos y Condiciones</h4>
+                  <p class="legal-desc">Condiciones de uso del servicio</p>
+                </div>
+                <span class="material-symbols-outlined legal-arrow">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- App Info Footer -->
+      <footer class="app-footer animate-in" style="--delay: 0.3s">
+        <div class="app-logo">
+          <span class="titulo-kengo">KENGO</span>
+        </div>
+        <p class="app-version">Versión 1.0.0</p>
+        <p class="app-copyright">© 2026 Kengo Health</p>
+      </footer>
+    }
+  </main>
+
+  <!-- Privacy Policy Overlay -->
+  @if (showPrivacyPolicy()) {
+    <div class="overlay-panel" (click)="cerrarPrivacyPolicy()">
+      <div class="overlay-sheet" (click)="$event.stopPropagation()">
+        <header class="overlay-header">
+          <h2 class="overlay-title">Política de Privacidad</h2>
+          <button type="button" class="overlay-close" (click)="cerrarPrivacyPolicy()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </header>
+        <div class="overlay-content">
+          <section class="legal-section">
+            <h3>¿Quién es el responsable del tratamiento de sus datos?</h3>
+            <p>
+              IDENTIDAD: Kengo<br />
+              CIF: G-********<br />
+              DIRECCIÓN POSTAL: 38002, Santa Cruz de Tenerife, España<br />
+              TELÉFONO: --- --- ---
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>¿Con qué finalidad tratamos sus datos personales?</h3>
+            <p>
+              Tratamos los datos que nos facilitan los usuarios que se registren en la
+              plataforma de Kengo para gestionar su cuenta, proporcionar los servicios
+              solicitados y mejorar la experiencia de usuario.
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>¿Por cuánto tiempo conservaremos sus datos?</h3>
+            <p>
+              Los datos personales proporcionados se conservarán mientras no se solicite
+              la supresión por parte del interesado, o por obligación legal.
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>¿Cuál es la legitimación para el tratamiento de sus datos?</h3>
+            <p>
+              La base legal para el tratamiento de sus datos es la relación contractual
+              y/o su consentimiento.
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>¿A qué destinatarios se comunicarán sus datos?</h3>
+            <p>
+              No se cederán datos a terceros sin su previo consentimiento, salvo
+              obligación legal o contractual.
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>¿Cuáles son sus derechos cuando nos facilita sus datos?</h3>
+            <p>
+              Cualquier persona tiene derecho a obtener confirmación sobre si estamos
+              tratando datos personales que les conciernan, o no. Las personas interesadas
+              tienen derecho a acceder a sus datos personales, así como a solicitar la
+              rectificación de los datos inexactos o, en su caso, solicitar su supresión
+              cuando, entre otros motivos, los datos ya no sean necesarios para los fines
+              que fueron recogidos.
+            </p>
+            <p>
+              En determinadas circunstancias, los interesados podrán solicitar la
+              limitación del tratamiento de sus datos, en cuyo caso únicamente los
+              conservaremos para el ejercicio o la defensa de reclamaciones.
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>¿Cómo hemos obtenido sus datos?</h3>
+            <p>Los datos los hemos obtenido del propio interesado.</p>
+          </section>
+
+          <section class="legal-section">
+            <h3>Tipología de datos:</h3>
+            <ul>
+              <li>Datos identificativos (nombre completo, DNI)</li>
+              <li>Datos de contacto (correo electrónico, dirección postal)</li>
+            </ul>
+          </section>
+        </div>
+        <footer class="overlay-footer">
+          <button type="button" class="overlay-btn primary" (click)="cerrarPrivacyPolicy()">
+            Entendido
+          </button>
+        </footer>
       </div>
-    </header>
+    </div>
   }
 
-  <!-- Contenido principal -->
-  <div class="mx-auto w-full max-w-7xl px-4" [class.pt-6]="isDesktop()">
-    @if (!formularioInicializado()) {
-      <div class="flex justify-center py-12">
-        <mat-spinner></mat-spinner>
-      </div>
-    } @else {
-      <mat-accordion class="perfil-accordion" displayMode="flat">
-      <!-- SECCIÓN 1: DATOS PERSONALES -->
-      <mat-expansion-panel [expanded]="true" class="tarjeta-kengo">
-        <mat-expansion-panel-header>
-          <mat-panel-title class="flex items-center gap-2">
-            <mat-icon class="material-symbols-outlined text-primary"
-              >person</mat-icon
-            >
-            <span class="font-semibold">Datos Personales</span>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <div class="flex flex-row flex-wrap" [formGroup]="formularioUsuario">
-          <!-- AVATAR -->
-          <div
-            class="mb-5 flex w-full items-center justify-center px-3 sm:w-1/2"
-          >
-            <div
-              class="group relative aspect-square max-h-52 max-w-2xs cursor-pointer overflow-hidden rounded-full"
-              (click)="cambiarFotoPerfil()"
-              role="button"
-              aria-label="Cambiar foto de perfil"
-            >
-              @if (previewUrl() ?? url_perfil()) {
-                <img
-                  [src]="previewUrl() ?? url_perfil()!"
-                  class="aspect-square h-full w-full rounded-full object-cover"
-                  alt="Foto de perfil"
-                />
-              } @else {
-                <div
-                  class="foto-perfil flex aspect-square h-52 w-52 items-center justify-center rounded-full bg-zinc-300"
-                >
-                  <mat-icon
-                    class="material-symbols-outlined text-6xl text-zinc-500"
-                    >person</mat-icon
-                  >
-                </div>
-              }
-
-              <!-- Banda inferior -->
-              <div
-                class="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-black/60 py-2 text-center text-xs font-medium text-white"
-              >
-                <mat-icon class="material-symbols-outlined">photo_camera</mat-icon>
-              </div>
-
-              <!-- Overlay hover -->
-              <div
-                class="pointer-events-none absolute inset-0 hidden place-items-center rounded-full bg-black/40 text-white group-hover:grid"
-              >
-                <span class="rounded-full px-3 py-1 text-sm font-medium"
-                  >Cambiar</span
-                >
-              </div>
-
-              <!-- Spinner subiendo -->
-              @if (subiendoAvatar()) {
-                <div
-                  class="absolute inset-0 grid place-items-center rounded-full bg-black/50"
-                >
-                  <mat-spinner diameter="40"></mat-spinner>
-                </div>
-              }
-
-              <input
-                #fileInput
-                type="file"
-                accept="image/*"
-                class="hidden"
-                (change)="onArchivoSeleccionado($event)"
-              />
-            </div>
-          </div>
-
-          <!-- NOMBRE Y APELLIDOS -->
-          <div class="flex w-full flex-col justify-center px-3 sm:w-1/2">
-            <mat-form-field appearance="outline" class="mb-2 w-full">
-              <mat-label>Nombre</mat-label>
-              <input matInput formControlName="first_name" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="mb-2 w-full">
-              <mat-label>Apellidos</mat-label>
-              <input matInput formControlName="last_name" />
-            </mat-form-field>
-          </div>
-
-          <!-- TELÉFONO Y EMAIL -->
-          <div class="w-full px-3 sm:w-1/2">
-            <mat-form-field appearance="outline" class="mb-2 w-full">
-              <mat-label>Teléfono</mat-label>
-              <input matInput formControlName="telefono" />
-            </mat-form-field>
-          </div>
-
-          <div class="w-full px-3 sm:w-1/2">
-            <mat-form-field appearance="outline" class="mb-2 w-full">
-              <mat-label>Email</mat-label>
-              <input matInput formControlName="email" />
-              <mat-icon matSuffix class="material-symbols-outlined text-zinc-400"
-                >lock</mat-icon
-              >
-            </mat-form-field>
-          </div>
-
-          <!-- DIRECCIÓN Y CÓDIGO POSTAL -->
-          <div class="w-full px-3 sm:w-1/2">
-            <mat-form-field appearance="outline" class="mb-2 w-full">
-              <mat-label>Dirección</mat-label>
-              <input matInput formControlName="direccion" />
-            </mat-form-field>
-          </div>
-
-          <div class="w-full px-3 sm:w-1/2">
-            <mat-form-field appearance="outline" class="mb-2 w-full">
-              <mat-label>Código Postal</mat-label>
-              <input matInput formControlName="postal" maxlength="5" />
-            </mat-form-field>
-          </div>
-
-          <!-- NUMERO COLEGIADO (solo para fisioterapeutas) -->
-          @if (esFisio()) {
-            <div class="w-full px-3 sm:w-1/2">
-              <mat-form-field appearance="outline" class="mb-2 w-full">
-                <mat-label>Numero de Colegiado</mat-label>
-                <input matInput formControlName="numero_colegiado" />
-                <mat-hint>Opcional - Tu numero de colegiado profesional</mat-hint>
-              </mat-form-field>
-            </div>
-          }
-        </div>
-
-        <!-- BOTÓN GUARDAR -->
-        <div class="mt-4 flex justify-end px-3">
-          <button
-            mat-flat-button
-            color="warn"
-            [disabled]="!formularioCambiado() || formularioUsuario.invalid"
-            (click)="guardarCambios()"
-          >
-            <mat-icon class="material-symbols-outlined">save</mat-icon>
-            Guardar cambios
+  <!-- Terms & Conditions Overlay -->
+  @if (showTermsConditions()) {
+    <div class="overlay-panel" (click)="cerrarTermsConditions()">
+      <div class="overlay-sheet" (click)="$event.stopPropagation()">
+        <header class="overlay-header">
+          <h2 class="overlay-title">Términos y Condiciones</h2>
+          <button type="button" class="overlay-close" (click)="cerrarTermsConditions()">
+            <span class="material-symbols-outlined">close</span>
           </button>
+        </header>
+        <div class="overlay-content">
+          <section class="legal-section">
+            <h3>Aviso Legal</h3>
+            <p>
+              En cumplimiento del artículo 10 de la Ley 34/2002, del 11 de julio, de
+              servicios de la Sociedad de la Información y Comercio Electrónico (LSSICE),
+              Kengo, facilita a continuación sus datos de contacto e información general.
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>Datos de la Organización</h3>
+            <p><strong>Denominación social:</strong> KENGO</p>
+            <p><strong>NIF:</strong> G-***********</p>
+            <p><strong>Correo electrónico:</strong> info&#64;kengo.com</p>
+            <p><strong>Teléfono:</strong> +34 *** *** ***</p>
+            <p>
+              <strong>Datos registrales:</strong> Inscrita en el Registro de Fundaciones
+              de Competencia Estatal con el número ***.
+            </p>
+          </section>
+
+          <section class="legal-section">
+            <h3>Términos Legales y Condiciones Generales de Uso</h3>
+            <p>
+              Este sitio web ha sido creado por KENGO con carácter informativo y para uso
+              personal de los usuarios. A través de las Condiciones Generales de uso, se
+              pretende regular el acceso y uso de este sitio web, así como la relación
+              entre el sitio web y sus usuarios.
+            </p>
+            <p>
+              Accediendo a este sitio web se aceptan los siguientes términos y condiciones:
+              el acceso a este sitio web es responsabilidad exclusiva de los usuarios. El
+              simple acceso a este sitio web no supone entablar ningún tipo de relación
+              comercial entre KENGO y el usuario.
+            </p>
+            <p>
+              El acceso y la navegación en este sitio web supone aceptar y conocer las
+              advertencias legales, condiciones y términos de uso contenidas en ella.
+            </p>
+          </section>
         </div>
-      </mat-expansion-panel>
-
-      <!-- SECCIÓN 2: SEGURIDAD -->
-      <mat-expansion-panel class="tarjeta-kengo">
-        <mat-expansion-panel-header>
-          <mat-panel-title class="flex items-center gap-2">
-            <mat-icon class="material-symbols-outlined text-primary"
-              >lock</mat-icon
-            >
-            <span class="font-semibold">Seguridad</span>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <div [formGroup]="formularioPassword" class="space-y-4">
-          <p class="mb-4 text-sm text-zinc-600">
-            Cambia tu contraseña para mantener tu cuenta segura.
-          </p>
-
-          <!-- Contraseña actual -->
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Contraseña actual</mat-label>
-            <input
-              matInput
-              formControlName="currentPassword"
-              [type]="hideCurrentPassword() ? 'password' : 'text'"
-            />
-            <button
-              type="button"
-              mat-icon-button
-              matSuffix
-              (click)="hideCurrentPassword.set(!hideCurrentPassword())"
-            >
-              <mat-icon class="material-symbols-outlined">
-                {{ hideCurrentPassword() ? 'visibility_off' : 'visibility' }}
-              </mat-icon>
-            </button>
-          </mat-form-field>
-
-          <div class="flex flex-col gap-4 sm:flex-row">
-            <!-- Nueva contraseña -->
-            <mat-form-field appearance="outline" class="w-full sm:w-1/2">
-              <mat-label>Nueva contraseña</mat-label>
-              <input
-                matInput
-                formControlName="newPassword"
-                [type]="hideNewPassword() ? 'password' : 'text'"
-              />
-              <button
-                type="button"
-                mat-icon-button
-                matSuffix
-                (click)="hideNewPassword.set(!hideNewPassword())"
-              >
-                <mat-icon class="material-symbols-outlined">
-                  {{ hideNewPassword() ? 'visibility_off' : 'visibility' }}
-                </mat-icon>
-              </button>
-              <mat-hint>Mínimo 8 caracteres</mat-hint>
-            </mat-form-field>
-
-            <!-- Confirmar contraseña -->
-            <mat-form-field appearance="outline" class="w-full sm:w-1/2">
-              <mat-label>Confirmar contraseña</mat-label>
-              <input
-                matInput
-                formControlName="confirmPassword"
-                [type]="hideConfirmPassword() ? 'password' : 'text'"
-              />
-              <button
-                type="button"
-                mat-icon-button
-                matSuffix
-                (click)="hideConfirmPassword.set(!hideConfirmPassword())"
-              >
-                <mat-icon class="material-symbols-outlined">
-                  {{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}
-                </mat-icon>
-              </button>
-            </mat-form-field>
-          </div>
-
-          <!-- Botón cambiar -->
-          <div class="flex justify-end">
-            <button
-              mat-flat-button
-              color="warn"
-              [disabled]="formularioPassword.invalid || cambiandoPassword()"
-              (click)="cambiarPassword()"
-            >
-              @if (cambiandoPassword()) {
-                <mat-spinner diameter="20" class="mr-2"></mat-spinner>
-              }
-              Cambiar contraseña
-            </button>
-          </div>
-        </div>
-      </mat-expansion-panel>
-
-      <!-- SECCIÓN 3: LEGAL -->
-      <mat-expansion-panel class="tarjeta-kengo">
-        <mat-expansion-panel-header>
-          <mat-panel-title class="flex items-center gap-2">
-            <mat-icon class="material-symbols-outlined text-primary"
-              >description</mat-icon
-            >
-            <span class="font-semibold">Legal</span>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <div class="space-y-4">
-          <p class="text-sm text-zinc-600">
-            Consulta nuestras políticas y términos de uso.
-          </p>
-
-          <div class="flex flex-col gap-3 sm:flex-row">
-            <button
-              mat-stroked-button
-              class="flex-1"
-              (click)="abrirPrivacyPolicy()"
-            >
-              <mat-icon class="material-symbols-outlined">policy</mat-icon>
-              Política de Privacidad
-            </button>
-
-            <button
-              mat-stroked-button
-              class="flex-1"
-              (click)="abrirTermsConditions()"
-            >
-              <mat-icon class="material-symbols-outlined">gavel</mat-icon>
-              Términos y Condiciones
-            </button>
-          </div>
-        </div>
-      </mat-expansion-panel>
-      </mat-accordion>
-    }
-  </div>
+        <footer class="overlay-footer">
+          <button type="button" class="overlay-btn primary" (click)="cerrarTermsConditions()">
+            Entendido
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
 </section>
