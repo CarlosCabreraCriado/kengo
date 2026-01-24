@@ -10,7 +10,7 @@ import {
   effect,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { SessionService } from '../../../../../core/auth/services/session.service';
@@ -18,10 +18,6 @@ import {
   ActividadHoyService,
   BadgeType,
 } from '../../../../actividad/data-access/actividad-hoy.service';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-//import { DialogoComponent } from '../dialogos/dialogos.component';
 
 interface CardOption {
   id: string;
@@ -41,7 +37,7 @@ interface CardOption {
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatDialogModule],
+  imports: [],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.css',
 })
@@ -49,7 +45,6 @@ export class InicioComponent implements OnDestroy {
   private sessionService = inject(SessionService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
-  private dialog = inject(MatDialog);
   private breakpointObserver = inject(BreakpointObserver);
 
   carouselRef = viewChild<ElementRef<HTMLDivElement>>('carousel');
@@ -242,27 +237,4 @@ export class InicioComponent implements OnDestroy {
     this.router.navigate([card.route]);
   }
 
-  confirmarLogout(): void {
-    /*
-    const dialogRef = this.dialog.open(DialogoComponent, {
-      data: {
-        tipo: 'confirmacion',
-        titulo: '¿Cerrar sesión?',
-        mensaje: '¿Estás seguro de que quieres cerrar tu sesión?',
-        botonConfirmar: 'Cerrar sesión',
-        botonCancelar: 'Cancelar',
-      },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.logout();
-      }
-    });
-    */
-  }
-
-  private logout(): void {
-    this.router.navigate(['/login']);
-  }
 }

@@ -1,338 +1,215 @@
-<section class="inicio-container">
-  <!-- Header con logo (solo móvil) -->
-  @if (!isDesktop()) {
-    <header class="inicio-header">
-      <img src="assets/logo-kengo-horizontal.svg" alt="Kengo" class="logo" />
+<section class="dashboard-page">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
 
-      <!-- Botón logout -->
-      <button
-        mat-icon-button
-        class="logout-btn"
-        aria-label="Cerrar sesión"
-        (click)="confirmarLogout()"
-      >
-        <mat-icon class="material-symbols-outlined !text-primary"
-          >logout</mat-icon
-        >
-      </button>
-    </header>
-  }
-
-  <!-- Layout condicional: Grid para desktop, Carousel para móvil -->
-  @if (isDesktop()) {
-    <!-- Grid de cards para desktop -->
-    <div class="cards-grid-wrapper">
-      <div class="cards-grid">
-        @for (card of cards(); track card.id) {
-          <article
-            class="card card-grid"
-            [class.card-animated]="card.id === 'actividad-diaria'"
-            (click)="navigateToCard(card)"
-          >
-            <!-- Tarjeta animada para Actividad Diaria -->
-            @if (card.id === "actividad-diaria") {
-              <div
-                class="animated-background"
-                [attr.data-state]="getCardBadgeType(card) || 'loading'"
-              >
-                <!-- Ondas aurora -->
-                <div class="aurora-wave aurora-wave-1"></div>
-                <div class="aurora-wave aurora-wave-2"></div>
-                <div class="aurora-wave aurora-wave-3"></div>
-
-                <!-- Bonsái central -->
-                <img
-                  src="assets/bonsai.png"
-                  alt="Bonsái"
-                  class="bonsai-image"
-                />
-              </div>
-              <div class="card-overlay card-overlay-animated"></div>
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <!-- Logo (mobile) / User greeting (desktop) -->
+      @if (!isDesktop()) {
+        <img src="assets/logo-kengo-horizontal.svg" alt="Kengo" class="logo" />
+      } @else {
+        <div class="greeting-section">
+          <div class="user-avatar-large">
+            @if (userAvatar()) {
+              <img [src]="userAvatar()" alt="Avatar" />
             } @else {
-              <!-- Tarjeta estándar con imagen -->
-              <div class="card-image-container">
+              <span class="material-symbols-outlined">person</span>
+            }
+          </div>
+          <div class="greeting-text">
+            <h1 class="titulo-kengo greeting-name">Hola, {{ userName() }}</h1>
+            <p class="greeting-subtitle">¿Qué quieres hacer hoy?</p>
+          </div>
+        </div>
+      }
+
+      <!-- User avatar (mobile) -->
+      @if (!isDesktop()) {
+        <button
+          type="button"
+          class="avatar-btn"
+          aria-label="Ver perfil"
+        >
+          @if (userAvatar()) {
+            <img [src]="userAvatar()" alt="Avatar" class="avatar-img" />
+          } @else {
+            <span class="material-symbols-outlined">person</span>
+          }
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <!-- Mobile Greeting Card -->
+    @if (!isDesktop()) {
+      <section class="greeting-card animate-in">
+        <div class="greeting-card-content">
+          <h2 class="titulo-kengo greeting-title">Hola, {{ userName() }}</h2>
+          <p class="greeting-message">¿Listo para tu entrenamiento?</p>
+        </div>
+        <div class="greeting-decoration" aria-hidden="true">
+          <img src="assets/bonsai.png" alt="" class="bonsai-small" />
+        </div>
+      </section>
+    }
+
+    <!-- Activity Card (Featured) -->
+    @for (card of cards(); track card.id) {
+      @if (card.id === 'actividad-diaria') {
+        <article
+          class="activity-hero animate-in"
+          [attr.data-state]="getCardBadgeType(card) || 'loading'"
+          style="--delay: 0.05s"
+          (click)="navigateToCard(card)"
+        >
+          <!-- Background Effect -->
+          <div class="activity-bg">
+            <div class="activity-wave activity-wave-1"></div>
+            <div class="activity-wave activity-wave-2"></div>
+            <img src="assets/bonsai.png" alt="" class="bonsai-hero" aria-hidden="true" />
+          </div>
+
+          <!-- Badge -->
+          <div class="activity-badge" [attr.data-type]="getCardBadgeType(card)">
+            @switch (getCardBadgeType(card)) {
+              @case ('loading') {
+                <div class="badge-spinner"></div>
+              }
+              @case ('pending') {
+                <span class="badge-number">{{ getCardBadgeCount(card) }}</span>
+                <span class="badge-label">pendiente{{ getCardBadgeCount(card) !== 1 ? 's' : '' }}</span>
+              }
+              @case ('completed') {
+                <span class="material-symbols-outlined icon-filled">check_circle</span>
+              }
+              @case ('rest') {
+                <span class="material-symbols-outlined">self_improvement</span>
+              }
+            }
+          </div>
+
+          <!-- Content -->
+          <div class="activity-content">
+            <div class="activity-info">
+              <h3 class="activity-title">{{ card.title }}</h3>
+              <p class="activity-subtitle">{{ getCardSubtitle(card) }}</p>
+            </div>
+
+            @if (getCardProgreso(card); as progreso) {
+              @if (progreso.total > 0) {
+                <!-- Progress -->
+                <div class="activity-progress">
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      [style.width.%]="(progreso.completados / progreso.total) * 100"
+                    ></div>
+                  </div>
+                  <span class="progress-text">
+                    {{ progreso.completados }}/{{ progreso.total }} ejercicios
+                  </span>
+                </div>
+
+                <!-- Next Exercise -->
+                @if (getCardSiguienteEjercicio(card); as siguiente) {
+                  <div class="next-exercise">
+                    <span class="material-symbols-outlined icon-filled">play_circle</span>
+                    <span>Siguiente: {{ siguiente }}</span>
+                  </div>
+                }
+
+                <!-- CTA -->
+                @if (progreso.completados < progreso.total) {
+                  <button
+                    type="button"
+                    class="activity-cta"
+                    (click)="navigateToCard(card); $event.stopPropagation()"
+                  >
+                    <span class="material-symbols-outlined icon-filled">play_arrow</span>
+                    <span>{{ progreso.completados > 0 ? 'Continuar' : 'Empezar' }} sesión</span>
+                  </button>
+                } @else {
+                  <div class="activity-completed">
+                    <span class="material-symbols-outlined icon-filled">celebration</span>
+                    <span>¡Buen trabajo hoy!</span>
+                  </div>
+                }
+              }
+            }
+          </div>
+        </article>
+      }
+    }
+
+    <!-- Quick Actions Grid -->
+    <section class="actions-section animate-in" style="--delay: 0.1s">
+      <h2 class="section-title">Accesos rápidos</h2>
+      <div class="actions-grid">
+        @for (card of cards(); track card.id; let i = $index) {
+          @if (card.id !== 'actividad-diaria') {
+            <article
+              class="action-card animate-in"
+              [style.--delay]="(0.15 + i * 0.03) + 's'"
+              (click)="navigateToCard(card)"
+            >
+              <div class="action-image">
                 <img
                   [src]="card.image"
                   [alt]="card.title"
-                  class="card-image"
                   loading="lazy"
                 />
-                <div class="card-overlay"></div>
+                <div class="action-overlay"></div>
               </div>
-            }
-
-            <!-- Header superior para tarjeta de actividad diaria -->
-            @if (card.id === "actividad-diaria") {
-              <div class="card-header-top">
-                <div class="user-greeting">
-                  <div class="user-avatar">
-                    @if (userAvatar()) {
-                      <img [src]="userAvatar()" alt="Avatar" />
-                    } @else {
-                      <mat-icon class="material-symbols-outlined"
-                        >person</mat-icon
-                      >
-                    }
-                  </div>
-                  <h2 class="titulo-kengo greeting-text">Hola, {{ userName() }}</h2>
-                </div>
+              <div class="action-content">
+                <h3 class="titulo-kengo action-title">{{ card.title }}</h3>
+                <p class="action-subtitle">{{ card.subtitle }}</p>
               </div>
-            }
-
-            <!-- Badge dinámico -->
-            @if (getCardBadgeType(card); as badgeType) {
-              <div class="card-badge" [attr.data-type]="badgeType">
-                @switch (badgeType) {
-                  @case ("loading") {
-                    <div class="badge-spinner"></div>
-                  }
-                  @case ("pending") {
-                    <span class="badge-number">{{
-                      getCardBadgeCount(card)
-                    }}</span>
-                  }
-                  @case ("completed") {
-                    <mat-icon class="badge-icon material-symbols-outlined"
-                      >check_circle</mat-icon
-                    >
-                  }
-                  @case ("rest") {
-                    <mat-icon class="badge-icon material-symbols-outlined"
-                      >self_improvement</mat-icon
-                    >
-                  }
-                }
+              <div class="action-arrow">
+                <span class="material-symbols-outlined">arrow_forward</span>
               </div>
-            }
-
-            <div class="card-content">
-              <!-- Contenido especial para tarjeta de actividad diaria -->
-              @if (card.id === "actividad-diaria") {
-                <p class="card-subtitle">{{ getCardSubtitle(card) }}</p>
-
-                @if (getCardProgreso(card); as progreso) {
-                  @if (progreso.total > 0) {
-                    <div class="card-extra-info">
-                      <!-- Barra de progreso -->
-                      <div class="progress-bar-container">
-                        <div
-                          class="progress-bar-fill"
-                          [style.width.%]="
-                            (progreso.completados / progreso.total) * 100
-                          "
-                        ></div>
-                      </div>
-                      <span class="progress-text">
-                        {{ progreso.completados }} de
-                        {{ progreso.total }} completados
-                      </span>
-
-                      <!-- Siguiente ejercicio -->
-                      @if (getCardSiguienteEjercicio(card); as siguiente) {
-                        <p class="next-exercise">
-                          <mat-icon class="next-icon material-symbols-outlined"
-                            >play_circle</mat-icon
-                          >
-                          Siguiente: {{ siguiente }}
-                        </p>
-                      }
-                    </div>
-
-                    <!-- Call to Action -->
-                    @if (progreso.completados < progreso.total) {
-                      <button
-                        class="cta-button"
-                        (click)="navigateToCard(card); $event.stopPropagation()"
-                      >
-                        <mat-icon class="material-symbols-outlined"
-                          >fitness_center</mat-icon
-                        >
-                        Empezar entrenamiento
-                      </button>
-                    } @else {
-                      <div class="completed-message">
-                        <mat-icon class="material-symbols-outlined"
-                          >celebration</mat-icon
-                        >
-                        <span>¡Buen trabajo hoy!</span>
-                      </div>
-                    }
-                  }
-                }
-              } @else {
-                <!-- Contenido estándar para otras tarjetas -->
-                <h2 class="titulo-kengo card-title">{{ card.title }}</h2>
-                <p class="card-subtitle">{{ getCardSubtitle(card) }}</p>
-              }
-            </div>
-          </article>
+            </article>
+          }
         }
       </div>
-    </div>
-  } @else {
-    <!-- Carousel de cards para móvil -->
+    </section>
+  </main>
+
+  <!-- Mobile Carousel View (Alternative layout kept for reference, hidden) -->
+  @if (false && !isDesktop()) {
     <div class="carousel-wrapper">
       <div #carousel class="carousel">
         @for (card of cards(); track card.id; let i = $index) {
           <article
-            class="card"
+            class="carousel-card"
             [class.active]="currentIndex() === i"
-            [class.card-animated]="card.id === 'actividad-diaria'"
             (click)="navigateToCard(card)"
           >
-            <!-- Tarjeta animada para Actividad Diaria -->
-            @if (card.id === "actividad-diaria") {
-              <div
-                class="animated-background"
-                [attr.data-state]="getCardBadgeType(card) || 'loading'"
-              >
-                <!-- Ondas aurora -->
-                <div class="aurora-wave aurora-wave-1"></div>
-                <div class="aurora-wave aurora-wave-2"></div>
-                <div class="aurora-wave aurora-wave-3"></div>
-
-                <!-- Bonsái central -->
-                <img
-                  src="assets/bonsai.png"
-                  alt="Bonsái"
-                  class="bonsai-image"
-                />
-              </div>
-              <div class="card-overlay card-overlay-animated"></div>
-            } @else {
-              <!-- Tarjeta estándar con imagen -->
-              <div class="card-image-container">
-                <img
-                  [src]="card.image"
-                  [alt]="card.title"
-                  class="card-image"
-                  loading="lazy"
-                />
-                <div class="card-overlay"></div>
-              </div>
-            }
-
-            <!-- Header superior para tarjeta de actividad diaria -->
-            @if (card.id === "actividad-diaria") {
-              <div class="card-header-top">
-                <div class="user-greeting">
-                  <div class="user-avatar">
-                    @if (userAvatar()) {
-                      <img [src]="userAvatar()" alt="Avatar" />
-                    } @else {
-                      <mat-icon class="material-symbols-outlined"
-                        >person</mat-icon
-                      >
-                    }
-                  </div>
-                  <h2 class="titulo-kengo greeting-text">Hola, {{ userName() }}</h2>
-                </div>
-              </div>
-            }
-
-            <!-- Badge dinámico -->
-            @if (getCardBadgeType(card); as badgeType) {
-              <div class="card-badge" [attr.data-type]="badgeType">
-                @switch (badgeType) {
-                  @case ("loading") {
-                    <div class="badge-spinner"></div>
-                  }
-                  @case ("pending") {
-                    <span class="badge-number">{{
-                      getCardBadgeCount(card)
-                    }}</span>
-                  }
-                  @case ("completed") {
-                    <mat-icon class="badge-icon material-symbols-outlined"
-                      >check_circle</mat-icon
-                    >
-                  }
-                  @case ("rest") {
-                    <mat-icon class="badge-icon material-symbols-outlined"
-                      >self_improvement</mat-icon
-                    >
-                  }
-                }
-              </div>
-            }
-
-            <div class="card-content">
-              <!-- Contenido especial para tarjeta de actividad diaria -->
-              @if (card.id === "actividad-diaria") {
-                <p class="card-subtitle">{{ getCardSubtitle(card) }}</p>
-
-                @if (getCardProgreso(card); as progreso) {
-                  @if (progreso.total > 0) {
-                    <div class="card-extra-info">
-                      <!-- Barra de progreso -->
-                      <div class="progress-bar-container">
-                        <div
-                          class="progress-bar-fill"
-                          [style.width.%]="
-                            (progreso.completados / progreso.total) * 100
-                          "
-                        ></div>
-                      </div>
-                      <span class="progress-text">
-                        {{ progreso.completados }} de
-                        {{ progreso.total }} completados
-                      </span>
-
-                      <!-- Siguiente ejercicio -->
-                      @if (getCardSiguienteEjercicio(card); as siguiente) {
-                        <p class="next-exercise">
-                          <mat-icon class="next-icon material-symbols-outlined"
-                            >play_circle</mat-icon
-                          >
-                          Siguiente: {{ siguiente }}
-                        </p>
-                      }
-                    </div>
-
-                    <!-- Call to Action -->
-                    @if (progreso.completados < progreso.total) {
-                      <button
-                        class="cta-button"
-                        (click)="navigateToCard(card); $event.stopPropagation()"
-                      >
-                        <mat-icon class="material-symbols-outlined"
-                          >fitness_center</mat-icon
-                        >
-                        Empezar entrenamiento
-                      </button>
-                    } @else {
-                      <div class="completed-message">
-                        <mat-icon class="material-symbols-outlined"
-                          >celebration</mat-icon
-                        >
-                        <span>¡Buen trabajo hoy!</span>
-                      </div>
-                    }
-                  }
-                }
-              } @else {
-                <!-- Contenido estándar para otras tarjetas -->
-                <h2 class="titulo-kengo card-title">{{ card.title }}</h2>
-                <p class="card-subtitle">{{ getCardSubtitle(card) }}</p>
-              }
+            <img [src]="card.image" [alt]="card.title" class="carousel-image" />
+            <div class="carousel-overlay"></div>
+            <div class="carousel-content">
+              <h2 class="titulo-kengo carousel-title">{{ card.title }}</h2>
+              <p class="carousel-subtitle">{{ card.subtitle }}</p>
             </div>
           </article>
         }
       </div>
+      <nav class="pagination-dots">
+        @for (card of cards(); track card.id; let i = $index) {
+          <button
+            type="button"
+            class="dot"
+            [class.active]="currentIndex() === i"
+            (click)="scrollToCard(i)"
+          ></button>
+        }
+      </nav>
     </div>
-
-    <!-- Indicadores de paginación (solo móvil) -->
-    <nav class="pagination-dots" aria-label="Navegación del carousel">
-      @for (card of cards(); track card.id; let i = $index) {
-        <button
-          type="button"
-          class="dot"
-          [class.active]="currentIndex() === i"
-          (click)="scrollToCard(i)"
-          [attr.aria-label]="'Ir a ' + card.title"
-          [attr.aria-current]="currentIndex() === i ? 'true' : null"
-        ></button>
-      }
-    </nav>
   }
 </section>
