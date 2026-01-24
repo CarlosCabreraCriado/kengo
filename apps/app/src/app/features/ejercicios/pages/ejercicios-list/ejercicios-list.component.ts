@@ -4,11 +4,11 @@ import {
   inject,
   signal,
   Signal,
-  ViewChild,
   OnInit,
+  ElementRef,
+  HostListener,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { Ejercicio } from '../../../../../types/global';
@@ -19,42 +19,10 @@ import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
-//Angular Mateiral:
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatIconModule } from '@angular/material/icon';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatListModule } from '@angular/material/list';
-import { MatMenuTrigger } from '@angular/material/menu';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-
 @Component({
   selector: 'app-ejercicios-list',
   standalone: true,
-  imports: [
-    RouterLink,
-    MatCardModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatChipsModule,
-    MatProgressBarModule,
-    MatIconModule,
-    MatExpansionModule,
-    MatMenuModule,
-    MatListModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
-    SafeHtmlPipe,
-  ],
+  imports: [RouterLink, ReactiveFormsModule, SafeHtmlPipe],
   templateUrl: './ejercicios-list.component.html',
   styleUrl: './ejercicios-list.component.css',
   host: {
@@ -63,6 +31,7 @@ import { MatDividerModule } from '@angular/material/divider';
 })
 export class EjerciciosListComponent implements OnInit {
   private fb = inject(FormBuilder);
+  private elementRef = inject(ElementRef);
   public ejerciciosService = inject(EjerciciosService);
   public vista = signal<'vineta' | 'lista'>('lista');
   private breakpointObserverService = inject(BreakpointObserver);
@@ -75,10 +44,27 @@ export class EjerciciosListComponent implements OnInit {
     { initialValue: false },
   );
 
-  @ViewChild(MatMenuTrigger) menuFiltros!: MatMenuTrigger;
+  // Estado del menú de categorías
+  menuAbierto = signal(false);
+
+  // Cerrar menú al hacer click fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const menuContainer = this.elementRef.nativeElement.querySelector(
+      '.categories-dropdown-container',
+    );
+    if (menuContainer && !menuContainer.contains(target)) {
+      this.menuAbierto.set(false);
+    }
+  }
+
+  toggleMenu() {
+    this.menuAbierto.update((v) => !v);
+  }
 
   closeMenu() {
-    this.menuFiltros.closeMenu();
+    this.menuAbierto.set(false);
   }
 
   filtrosAbiertos = signal(false);
@@ -127,7 +113,7 @@ export class EjerciciosListComponent implements OnInit {
       .valueChanges!.pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((v) => this.ejerciciosService.setPageSize(Number(v)));
 
-    // Tamano de pagina
+    // Categorias
     this.formularioFiltros.controls.categories
       .valueChanges!.pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((v) => {
@@ -158,15 +144,6 @@ export class EjerciciosListComponent implements OnInit {
     return this.ejerciciosService.listaEjerciciosRes.error();
   }
 
-  // ---- Helpers de UI (manejados por el form) ----
-  /*
-  isCatSelected(id: string | number) {
-    return (this.formularioFiltros.controls.categories.value ?? []).includes(
-      id,
-    );
-  }
-  */
-
   // Opcional: helper usado en [selected]
   isCatSelected(
     id_categoria: number,
@@ -176,8 +153,22 @@ export class EjerciciosListComponent implements OnInit {
     return Array.isArray(arr) && arr.includes(id_categoria);
   }
 
+  // Toggle categoria individual (para checkboxes nativos)
+  onCategoriaChange(id: number, checked: boolean) {
+    const current = this.formularioFiltros.controls.categories.value ?? [];
+    let updated: (number | string)[];
+
+    if (checked) {
+      updated = [...current, id];
+    } else {
+      updated = current.filter((c) => c !== id);
+    }
+
+    this.formularioFiltros.controls.categories.setValue(updated);
+  }
+
   toggleCategoria(id: string | number) {
-    this.ejerciciosService.toggleCategoria(id); // actualiza el service (y resetea a pagina 1)
+    this.ejerciciosService.toggleCategoria(id);
   }
 
   limpiarCategorias() {
@@ -188,25 +179,21 @@ export class EjerciciosListComponent implements OnInit {
       { emitEvent: false },
     );
 
-    this.ejerciciosService.limpiarCategorias(); // actualiza el service (y resetea a pagina 1)
+    this.ejerciciosService.limpiarCategorias();
   }
 
   borrarFiltros() {
-    // Resetea formulario y service
     this.formularioFiltros.patchValue(
       {
         busqueda: '',
         categories: [],
-        // si quieres resetear orden/pageSize, descomenta:
-        // sort: 'nombre_ejercicio',
-        // pageSize: 12,
       },
       { emitEvent: true },
     );
     this.ejerciciosService.clearFilters();
   }
 
-  // Paginacion (no forma parte del form, pero actualiza senal y resource)
+  // Paginacion
   paginaAnterior() {
     this.ejerciciosService.goToPage(this.ejerciciosService.page() - 1);
   }

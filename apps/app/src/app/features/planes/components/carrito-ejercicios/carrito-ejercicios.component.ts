@@ -14,7 +14,7 @@ import {
 
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialog } from '@angular/material/dialog';
+import { Dialog } from '@angular/cdk/dialog';
 
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -39,7 +39,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   private router = inject(Router);
   private snack = inject(MatSnackBar);
   private injector = inject(Injector);
-  private dialog = inject(MatDialog);
+  private dialog = inject(Dialog);
 
   readonly svc = inject(PlanBuilderService);
 
@@ -138,13 +138,13 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     const { SelectorPacienteComponent } =
       await import('../../../../shared/ui/selector-paciente/selector-paciente.component');
 
-    const dialogRef = this.dialog.open(SelectorPacienteComponent, {
+    const dialogRef = this.dialog.open<Usuario>(SelectorPacienteComponent, {
       width: '500px',
       maxWidth: '95vw',
-      maxHeight: '80vh',
+      panelClass: 'selector-paciente-dialog',
     });
 
-    dialogRef.afterClosed().subscribe((paciente: Usuario | undefined) => {
+    dialogRef.closed.subscribe((paciente) => {
       if (paciente) {
         // Establecer el nuevo paciente (mantiene los ejercicios del carrito)
         this.svc.paciente.set(paciente);
@@ -211,13 +211,13 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     const { SelectorRutinaComponent } =
       await import('../../../rutinas/components/selector-rutina/selector-rutina.component');
 
-    const dialogRef = this.dialog.open(SelectorRutinaComponent, {
+    const dialogRef = this.dialog.open<number>(SelectorRutinaComponent, {
       width: '600px',
       maxWidth: '95vw',
-      maxHeight: '80vh',
+      panelClass: 'selector-rutina-dialog',
     });
 
-    dialogRef.afterClosed().subscribe(async (rutinaId: number | undefined) => {
+    dialogRef.closed.subscribe(async (rutinaId) => {
       if (rutinaId) {
         const success = await this.svc.loadFromRutina(rutinaId);
         if (success) {

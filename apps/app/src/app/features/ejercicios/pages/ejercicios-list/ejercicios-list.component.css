@@ -1,34 +1,235 @@
-/* Altura objetivo (ajustala a tu gusto) */
+@reference "tailwindcss";
 
-:root {
-  --ff-height: 50px;
+/* ============================================
+   EJERCICIOS LIST - KENGO DESIGN SYSTEM
+   Premium App-Like Experience (Sin Angular Material)
+   ============================================ */
+
+/* === Variables locales === */
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-primary-dark: #d14d30;
+  --kengo-tertiary: #efc048;
+  --kengo-glow: rgba(231, 92, 62, 0.4);
 }
 
-.ff-compact .mat-mdc-text-field-wrapper {
-  border-radius: calc(infinity * 1px) !important;
-  height: var(--ff-height) !important;
+/* === Header con glassmorphism === */
+.header-glass {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.85) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-.ff-compact .mat-mdc-form-field-flex {
-  align-items: center; /* centra verticalmente el contenido */
-  justify-content: center;
+/* === Búsqueda con glow effect === */
+.search-container:focus-within .search-glow {
+  opacity: 1;
 }
 
-.ff-compact .mat-mdc-form-field-infix {
-  /* reduce padding vertical para compactar el campo */
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  min-height: unset; /* evita minimos heredados */
+.search-input:focus {
+  transform: scale(1.01);
 }
 
-.ff-compact .mat-mdc-input-element {
-  height: var(--ff-height); /* establece la altura del input */
-
-  line-height: var(--ff-height); /* alinea el texto con la altura */
-  padding: 0; /* quita relleno adicional */
+/* === Iconos rellenos (Material Symbols) === */
+.relleno {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
 }
 
-.ff-compact .mat-mdc-form-field-icon-suffix,
-.ff-compact .mat-mdc-form-field-icon-prefix {
-  margin-right: 8px; /* espacio entre icono y borde del campo */
+/* === Dropdown de categorías === */
+.categories-dropdown {
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === Custom checkbox styles === */
+.categories-dropdown label input[type="checkbox"]:checked + div {
+  border-color: var(--kengo-primary);
+  background-color: var(--kengo-primary);
+}
+
+.categories-dropdown label input[type="checkbox"]:checked + div span {
+  opacity: 1;
+}
+
+/* === Animación de entrada para cards === */
+.ejercicio-card {
+  animation: cardFadeIn 0.4s ease-out backwards;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === Skeleton shimmer effect === */
+.skeleton-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* === Loading spinners === */
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid rgba(231, 92, 62, 0.2);
+  border-top-color: var(--kengo-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner-small {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(231, 92, 62, 0.2);
+  border-top-color: var(--kengo-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner-small-white {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === Bounce sutil para badges === */
+.animate-bounce-subtle {
+  animation: bounceSoft 2s ease-in-out infinite;
+}
+
+@keyframes bounceSoft {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* === Empty state icon animation === */
+.empty-state-icon {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 192, 72, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(239, 192, 72, 0);
+  }
+}
+
+/* === Custom scrollbar === */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(231, 92, 62, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(231, 92, 62, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(231, 92, 62, 0.5);
+}
+
+/* === Hover scale utilities === */
+.active\:scale-98:active {
+  transform: scale(0.98);
+}
+
+/* === Responsive adjustments === */
+@media (max-width: 640px) {
+  .ejercicio-card {
+    animation-delay: 0ms !important;
+  }
+}
+
+/* === Safe area padding for mobile nav === */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  main {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 7rem);
+  }
+
+  @media (min-width: 1024px) {
+    main {
+      padding-bottom: 2rem;
+    }
+  }
+}
+
+/* === Prose overrides for descriptions === */
+:host ::ng-deep .line-clamp-2 p {
+  margin: 0;
+}
+
+:host ::ng-deep .line-clamp-2 * {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
 }

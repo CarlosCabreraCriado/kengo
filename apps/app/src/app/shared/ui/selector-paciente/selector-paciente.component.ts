@@ -1,11 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { DialogRef } from '@angular/cdk/dialog';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
@@ -20,136 +15,423 @@ interface DirectusPage<T> {
 @Component({
   selector: 'app-selector-paciente',
   standalone: true,
-  imports: [
-    FormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressBarModule,
-  ],
+  imports: [FormsModule],
   template: `
-    <h2 mat-dialog-title class="dialog-title">
-      <mat-icon class="material-symbols-outlined text-[#e75c3e]">person_search</mat-icon>
-      Seleccionar paciente
-    </h2>
+    <div class="selector-dialog">
+      <!-- Header -->
+      <header class="dialog-header">
+        <div class="header-icon">
+          <span class="material-symbols-outlined">person_search</span>
+        </div>
+        <h2 class="header-title">Seleccionar paciente</h2>
+        <button type="button" class="close-btn" (click)="cerrar()" aria-label="Cerrar">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </header>
 
-    <mat-dialog-content class="dialog-content">
       <!-- Search -->
-      <div class="mb-4">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Buscar paciente</mat-label>
-          <input
-            matInput
-            [(ngModel)]="busqueda"
-            (ngModelChange)="onBusquedaChange($event)"
-            placeholder="Nombre o email..."
-          />
-          <mat-icon matSuffix class="material-symbols-outlined">search</mat-icon>
-        </mat-form-field>
+      <div class="search-container">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          class="search-input"
+          [(ngModel)]="busqueda"
+          placeholder="Buscar por nombre o email..."
+        />
+        @if (busqueda) {
+          <button type="button" class="clear-btn" (click)="busqueda = ''">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
       </div>
 
-      @if (isLoading()) {
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      }
-
-      <!-- Pacientes list -->
-      @if (pacientesFiltrados().length === 0 && !isLoading()) {
-        <div class="py-8 text-center">
-          <mat-icon class="material-symbols-outlined icon-large text-zinc-300">
-            person_off
-          </mat-icon>
-          <p class="mt-2 text-zinc-500">No se encontraron pacientes</p>
-        </div>
-      } @else {
-        <div class="space-y-2">
-          @for (paciente of pacientesFiltrados(); track paciente.id) {
-            <button
-              type="button"
-              class="paciente-btn w-full rounded-lg border p-3 text-left transition-colors hover:border-[#e75c3e]/50 hover:bg-[#e75c3e]/5"
-              [class.selected]="selectedId() === paciente.id"
-              (click)="selectPaciente(paciente)"
-            >
-              <div class="flex items-center gap-3">
+      <!-- Content -->
+      <div class="dialog-content">
+        @if (isLoading()) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <span>Cargando pacientes...</span>
+          </div>
+        } @else if (pacientesFiltrados().length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">person_off</span>
+            <p>No se encontraron pacientes</p>
+          </div>
+        } @else {
+          <div class="pacientes-list">
+            @for (paciente of pacientesFiltrados(); track paciente.id) {
+              <button
+                type="button"
+                class="paciente-item"
+                [class.selected]="selectedId() === paciente.id"
+                (click)="selectPaciente(paciente)"
+              >
                 @if (avatarUrl(paciente)) {
                   <img
                     [src]="avatarUrl(paciente)"
                     alt=""
-                    class="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                    class="paciente-avatar"
                   />
                 } @else {
-                  <div
-                    class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 ring-2 ring-white shadow-sm"
-                  >
-                    <mat-icon class="material-symbols-outlined icon-medium text-zinc-400">
-                      person
-                    </mat-icon>
+                  <div class="paciente-avatar-placeholder">
+                    <span class="material-symbols-outlined">person</span>
                   </div>
                 }
-                <div class="min-w-0 flex-1">
-                  <h4 class="font-medium text-zinc-800">
+                <div class="paciente-info">
+                  <span class="paciente-name">
                     {{ paciente.first_name }} {{ paciente.last_name }}
-                  </h4>
+                  </span>
                   @if (paciente.email) {
-                    <p class="text-sm text-zinc-500 truncate">{{ paciente.email }}</p>
+                    <span class="paciente-email">{{ paciente.email }}</span>
                   }
                 </div>
                 @if (selectedId() === paciente.id) {
-                  <mat-icon class="material-symbols-outlined text-[#e75c3e]">
-                    check_circle
-                  </mat-icon>
+                  <span class="material-symbols-outlined check-icon">check_circle</span>
                 }
-              </div>
-            </button>
-          }
-        </div>
-      }
-    </mat-dialog-content>
+              </button>
+            }
+          </div>
+        }
+      </div>
 
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button
-        mat-flat-button
-        [disabled]="!selectedId()"
-        (click)="confirmar()"
-        class="btn-confirmar"
-      >
-        <mat-icon class="material-symbols-outlined">check</mat-icon>
-        Seleccionar
-      </button>
-    </mat-dialog-actions>
+      <!-- Footer -->
+      <footer class="dialog-footer">
+        <button type="button" class="btn-cancel" (click)="cerrar()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn-confirm"
+          [disabled]="!selectedId()"
+          (click)="confirmar()"
+        >
+          <span class="material-symbols-outlined">check</span>
+          Seleccionar
+        </button>
+      </footer>
+    </div>
   `,
   styles: [`
     :host {
       display: block;
     }
-    .dialog-title {
-      display: flex !important;
+
+    .selector-dialog {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 500px;
+      max-height: 80vh;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+
+    .dialog-header {
+      display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
+
+    .header-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
+    }
+
+    .header-icon .material-symbols-outlined {
+      font-size: 1.25rem;
+      color: #e75c3e;
+    }
+
+    .header-title {
+      flex: 1;
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #27272a;
+    }
+
+    .close-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: #71717a;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #27272a;
+    }
+
+    .search-container {
+      position: relative;
+      margin: 1rem 1.5rem;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.25rem;
+      color: #a1a1aa;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.875rem 2.75rem 0.875rem 3rem;
+      border: 1.5px solid rgba(0, 0, 0, 0.08);
+      border-radius: 9999px;
+      font-size: 0.9375rem;
+      background: rgba(255, 255, 255, 0.8);
+      color: #27272a;
+      transition: all 0.2s ease;
+    }
+
+    .search-input::placeholder {
+      color: #a1a1aa;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #e75c3e;
+      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.75rem;
+      height: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.05);
+      color: #71717a;
+      cursor: pointer;
+    }
+
+    .clear-btn .material-symbols-outlined {
+      font-size: 1rem;
+    }
+
     .dialog-content {
-      max-height: 60vh !important;
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 1.5rem;
+      max-height: 50vh;
     }
-    .icon-large {
-      font-size: 3rem !important;
+
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      gap: 1rem;
+      color: #71717a;
     }
-    .icon-medium {
-      font-size: 1.5rem !important;
+
+    .spinner {
+      width: 2rem;
+      height: 2rem;
+      border: 3px solid rgba(231, 92, 62, 0.2);
+      border-top-color: #e75c3e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
-    .paciente-btn.selected {
-      border-color: #e75c3e !important;
-      background-color: rgba(231, 92, 62, 0.1) !important;
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
-    .btn-confirmar {
-      background-color: #e75c3e !important;
-      color: white !important;
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 3.5rem;
+      color: #d4d4d8;
+      margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+      margin: 0;
+      color: #71717a;
+    }
+
+    .pacientes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-bottom: 1rem;
+    }
+
+    .paciente-item {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      width: 100%;
+      padding: 0.875rem;
+      border: 1.5px solid rgba(0, 0, 0, 0.06);
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+
+    .paciente-item:hover {
+      border-color: rgba(231, 92, 62, 0.3);
+      background: rgba(231, 92, 62, 0.04);
+    }
+
+    .paciente-item.selected {
+      border-color: #e75c3e;
+      background: rgba(231, 92, 62, 0.08);
+    }
+
+    .paciente-avatar {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .paciente-avatar-placeholder {
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e4e4e7 0%, #d4d4d8 100%);
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .paciente-avatar-placeholder .material-symbols-outlined {
+      font-size: 1.5rem;
+      color: #a1a1aa;
+    }
+
+    .paciente-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .paciente-name {
+      font-weight: 500;
+      color: #27272a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .paciente-email {
+      font-size: 0.8125rem;
+      color: #71717a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .check-icon {
+      font-size: 1.5rem;
+      color: #e75c3e;
+      font-variation-settings: "FILL" 1;
+    }
+
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .btn-cancel,
+    .btn-confirm {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.75rem;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      border: 1.5px solid rgba(0, 0, 0, 0.1);
+      color: #52525b;
+    }
+
+    .btn-cancel:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-confirm {
+      background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
+      border: none;
+      color: white;
+      box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35);
+    }
+
+    .btn-confirm:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(231, 92, 62, 0.45);
+    }
+
+    .btn-confirm:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-confirm .material-symbols-outlined {
+      font-size: 1.125rem;
     }
   `],
 })
 export class SelectorPacienteComponent implements OnInit {
-  private dialogRef = inject(MatDialogRef<SelectorPacienteComponent>);
+  private dialogRef = inject(DialogRef<Usuario>);
   private http = inject(HttpClient);
   private sessionService = inject(SessionService);
 
@@ -213,19 +495,20 @@ export class SelectorPacienteComponent implements OnInit {
     }
   }
 
-  onBusquedaChange(_value: string) {
-    // La busqueda ya es reactiva via computed
-  }
-
   selectPaciente(paciente: Usuario) {
     this.selectedId.set(paciente.id);
     this.selectedPaciente.set(paciente);
   }
 
   confirmar() {
-    if (this.selectedPaciente()) {
-      this.dialogRef.close(this.selectedPaciente());
+    const paciente = this.selectedPaciente();
+    if (paciente) {
+      this.dialogRef.close(paciente);
     }
+  }
+
+  cerrar() {
+    this.dialogRef.close();
   }
 
   avatarUrl(p: Usuario): string | null {

@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { DialogRef } from '@angular/cdk/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -18,7 +18,6 @@ import { environment as env } from '../../../../../environments/environment';
   standalone: true,
   imports: [
     FormsModule,
-    MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -28,12 +27,16 @@ import { environment as env } from '../../../../../environments/environment';
     MatChipsModule,
   ],
   template: `
-    <h2 mat-dialog-title class="!flex items-center gap-2">
-      <mat-icon class="material-symbols-outlined text-orange-500">folder_open</mat-icon>
-      Seleccionar plantilla
-    </h2>
+    <div class="selector-rutina-container">
+      <header class="dialog-header">
+        <mat-icon class="material-symbols-outlined text-orange-500">folder_open</mat-icon>
+        <h2 class="dialog-title">Seleccionar plantilla</h2>
+        <button type="button" class="close-btn" (click)="cerrar()">
+          <mat-icon class="material-symbols-outlined">close</mat-icon>
+        </button>
+      </header>
 
-    <mat-dialog-content class="!max-h-[60vh]">
+      <div class="dialog-content">
       <!-- Search and filters -->
       <div class="mb-4 flex flex-col gap-3 sm:flex-row">
         <mat-form-field appearance="outline" class="flex-1">
@@ -134,24 +137,112 @@ import { environment as env } from '../../../../../environments/environment';
           }
         </div>
       }
-    </mat-dialog-content>
+      </div>
 
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button
-        mat-flat-button
-        [disabled]="!selectedId()"
-        (click)="confirmar()"
-        class="!bg-orange-500 !text-white"
-      >
-        <mat-icon class="material-symbols-outlined">check</mat-icon>
-        Usar plantilla
-      </button>
-    </mat-dialog-actions>
+      <footer class="dialog-footer">
+        <button type="button" class="btn-cancel" (click)="cerrar()">Cancelar</button>
+        <button
+          type="button"
+          class="btn-confirm"
+          [disabled]="!selectedId()"
+          (click)="confirmar()"
+        >
+          <mat-icon class="material-symbols-outlined">check</mat-icon>
+          Usar plantilla
+        </button>
+      </footer>
+    </div>
   `,
   styles: [`
     :host {
       display: block;
+    }
+    .selector-rutina-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 600px;
+      max-height: 80vh;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .dialog-title {
+      flex: 1;
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #27272a;
+    }
+    .close-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: #71717a;
+      cursor: pointer;
+    }
+    .close-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    .dialog-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.5rem;
+      max-height: 60vh;
+    }
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .btn-cancel {
+      padding: 0.625rem 1rem;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+      background: transparent;
+      color: #52525b;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-cancel:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    .btn-confirm {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background: #f97316;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-confirm:hover:not(:disabled) {
+      background: #ea580c;
+    }
+    .btn-confirm:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     .line-clamp-2 {
       display: -webkit-box;
@@ -162,7 +253,7 @@ import { environment as env } from '../../../../../environments/environment';
   `],
 })
 export class SelectorRutinaComponent implements OnInit {
-  private dialogRef = inject(MatDialogRef<SelectorRutinaComponent>);
+  private dialogRef = inject(DialogRef<number>);
   rutinasService = inject(RutinasService);
 
   busqueda = '';
@@ -205,9 +296,14 @@ export class SelectorRutinaComponent implements OnInit {
   }
 
   confirmar() {
-    if (this.selectedId()) {
-      this.dialogRef.close(this.selectedId());
+    const id = this.selectedId();
+    if (id) {
+      this.dialogRef.close(id);
     }
+  }
+
+  cerrar() {
+    this.dialogRef.close();
   }
 
   assetUrl(id: string | null | undefined): string {
