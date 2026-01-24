@@ -15,11 +15,6 @@ import { PlanesService } from '../../../planes/data-access/planes.service';
 import { RegistroSesionService } from '../../../sesion/data-access/registro-sesion.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-
 import {
   PlanCompleto,
   EjercicioPlan,
@@ -52,12 +47,7 @@ interface DiaProximoConEjercicios {
 @Component({
   selector: 'app-actividad-diaria',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressBarModule,
-  ],
+  imports: [CommonModule],
   templateUrl: './actividad-diaria.component.html',
   styleUrl: './actividad-diaria.component.css',
   host: {
@@ -131,6 +121,7 @@ export class ActividadDiariaComponent implements OnInit {
   readonly hayActividadHoy = this.actividadHoyService.hayActividadHoy;
   readonly totalPendientes = this.actividadHoyService.totalPendientes;
   readonly todoCompletado = this.actividadHoyService.todoCompletado;
+  readonly progresoTotal = this.actividadHoyService.progresoTotal;
 
   readonly proximosDias = computed<DiaProximoConEjercicios[]>(() => {
     // Usar todos los planes activos incluyendo futuros
