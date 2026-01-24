@@ -1,381 +1,507 @@
-<section class="flex flex-col w-full h-full overflow-y-auto overflow-x-hidden pb-24 lg:pb-6">
-  <!-- Header sticky (solo móvil) -->
+<section class="detail-page">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
+
+  <!-- Compact Header (mobile only) -->
   @if (!isDesktop()) {
-    <header
-      class="sticky top-0 z-40 w-full bg-gradient-to-b from-white/95 via-white/90 to-transparent px-4 pt-4 pb-2 backdrop-blur-md"
-    >
-      <div class="mx-auto flex max-w-4xl items-center gap-3">
-        <button
-          mat-icon-button
-          class="!h-10 !w-10 shrink-0"
-          aria-label="Volver a pacientes"
-          (click)="volver()"
-        >
-          <mat-icon class="material-symbols-outlined text-zinc-600">arrow_back</mat-icon>
-        </button>
-        <div class="min-w-0 flex-1">
-          <h1 class="titulo-kengo truncate text-lg font-bold text-zinc-800">Detalle del paciente</h1>
+    <header class="detail-header">
+      <div class="header-content">
+        <div class="header-left">
+          <button
+            type="button"
+            class="back-btn"
+            aria-label="Volver a pacientes"
+            (click)="volver()"
+          >
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 class="titulo-kengo header-title">Paciente</h1>
         </div>
+        @if (paciente()?.magic_link_url) {
+          <button
+            type="button"
+            class="header-action"
+            aria-label="Ver código QR"
+            (click)="abrirQR()"
+          >
+            <span class="material-symbols-outlined">qr_code_2</span>
+          </button>
+        }
       </div>
     </header>
   }
 
-  <!-- Contenido principal -->
-  <div class="mx-auto max-w-4xl px-4">
-    <!-- Loading paciente -->
+  <!-- Main Content -->
+  <main class="detail-main" [class.pt-desktop]="isDesktop()">
+    <!-- Loading State -->
     @if (isLoadingPaciente()) {
-      <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <div class="state-card loading-state">
+        <div class="shimmer-effect"></div>
+        <div class="state-icon pulse">
+          <span class="material-symbols-outlined">person</span>
+        </div>
+        <p class="state-text">Cargando paciente...</p>
       </div>
-    } @else if (error()) {
-      <!-- Error -->
-      <div class="tarjeta-kengo rounded-2xl p-6 text-center">
-        <mat-icon class="material-symbols-outlined mb-2 text-4xl text-red-400">error</mat-icon>
-        <p class="text-red-600">{{ error() }}</p>
-        <button mat-flat-button color="primary" class="mt-4" (click)="volver()">
+    }
+
+    <!-- Error State -->
+    @if (error()) {
+      <div class="state-card error-state animate-in">
+        <div class="state-icon error">
+          <span class="material-symbols-outlined">error</span>
+        </div>
+        <h2 class="state-title">Algo salió mal</h2>
+        <p class="state-text">{{ error() }}</p>
+        <button type="button" class="retry-btn" (click)="volver()">
+          <span class="material-symbols-outlined">arrow_back</span>
           Volver a pacientes
         </button>
       </div>
-    } @else if (paciente()) {
-      <!-- Card del paciente -->
-      <div class="tarjeta-kengo mb-4 rounded-2xl p-4">
-        <div class="flex items-start gap-4">
-          <!-- Avatar -->
-          <div class="shrink-0">
-            @if (avatarUrl()) {
-              <img
-                [src]="avatarUrl()"
-                [alt]="fullName()"
-                class="h-16 w-16 rounded-full object-cover ring-2 shadow-sm ring-white"
-              />
-            } @else {
-              <div
-                class="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
-              >
-                <mat-icon class="material-symbols-outlined text-3xl !text-white">person</mat-icon>
-              </div>
-            }
-          </div>
+    }
 
-          <!-- Info -->
-          <div class="min-w-0 flex-1">
-            <h2 class="titulo-kengo truncate text-xl font-bold text-zinc-800">{{ fullName() }}</h2>
-
-            @if (paciente()?.email) {
-              <p class="mt-1 flex items-center gap-1.5 truncate text-sm text-zinc-600">
-                <mat-icon class="material-symbols-outlined !text-base">mail</mat-icon>
-                {{ paciente()?.email }}
-              </p>
-            }
-
-            @if (paciente()?.telefono) {
-              <p class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500">
-                <mat-icon class="material-symbols-outlined !text-base">phone</mat-icon>
-                {{ paciente()?.telefono }}
-              </p>
-            }
-
-            @if (getClinicaNombre()) {
-              <p class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500">
-                <mat-icon class="material-symbols-outlined !text-base">location_city</mat-icon>
-                {{ getClinicaNombre() }}
-              </p>
-            }
-          </div>
-
-          <!-- Menu de acciones -->
-          <button mat-icon-button [matMenuTriggerFor]="menuAcciones" class="!-mt-1 !-mr-1">
-            <mat-icon class="material-symbols-outlined text-zinc-500">more_vert</mat-icon>
-          </button>
-          <mat-menu #menuAcciones="matMenu">
-            <button mat-menu-item (click)="editarPaciente()">
-              <mat-icon class="material-symbols-outlined">edit</mat-icon>
-              <span>Editar datos</span>
-            </button>
-            @if (paciente()?.magic_link_url) {
-              <button mat-menu-item (click)="abrirQR()">
-                <mat-icon class="material-symbols-outlined">qr_code_2</mat-icon>
-                <span>Ver QR de acceso</span>
-              </button>
-            }
-          </mat-menu>
-        </div>
-      </div>
-
-      <!-- Acordeones en grid para desktop -->
-      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <!-- Columna izquierda: Planes -->
-        <mat-accordion class="detalle-accordion" multi>
-          <mat-expansion-panel [expanded]="true" class="!rounded-2xl tarjeta-kengo">
-          <mat-expansion-panel-header>
-            <mat-panel-title class="!font-semibold !flex-shrink-0">
-              <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">assignment</mat-icon>
-              <span class="whitespace-nowrap">Planes ({{ planes().length }})</span>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="py-2">
-            <!-- Boton crear plan -->
-            <button
-              mat-flat-button
-              color="primary"
-              class="!mb-3 w-full"
-              (click)="crearPlan()"
-            >
-              <mat-icon class="material-symbols-outlined">add</mat-icon>
-              Crear nuevo plan
-            </button>
-
-            @if (isLoadingPlanes()) {
-              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-            } @else if (planes().length === 0) {
-              <div class="py-6 text-center">
-                <mat-icon class="material-symbols-outlined mb-2 text-4xl text-zinc-300">content_paste_off</mat-icon>
-                <p class="text-sm text-zinc-500">No hay planes asignados</p>
-              </div>
-            } @else {
-              <div class="space-y-2">
-                @for (plan of planes(); track plan.id_plan) {
-                  <div
-                    class="flex items-center gap-2 sm:gap-3 rounded-xl bg-zinc-50/70 p-2 sm:p-3 transition-colors hover:bg-zinc-100/70"
-                  >
-                    <div class="min-w-0 flex-1">
-                      <div class="flex flex-wrap items-center gap-1 sm:gap-2">
-                        <h4 class="truncate font-medium text-zinc-800 text-sm sm:text-base">{{ plan.titulo }}</h4>
-                        <span
-                          class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
-                          [class]="getEstadoClass(plan.estado)"
-                        >
-                          {{ getEstadoLabel(plan.estado) }}
-                        </span>
-                      </div>
-                      @if (plan.fecha_inicio || plan.fecha_fin) {
-                        <p class="mt-0.5 text-xs text-zinc-500">
-                          @if (plan.fecha_inicio) {
-                            {{ formatearFecha(plan.fecha_inicio) }}
-                          }
-                          @if (plan.fecha_inicio && plan.fecha_fin) {
-                            <span class="mx-1">-</span>
-                          }
-                          @if (plan.fecha_fin) {
-                            {{ formatearFecha(plan.fecha_fin) }}
-                          }
-                        </p>
-                      }
-                    </div>
-                    <div class="flex shrink-0 gap-0.5 sm:gap-1">
-                      <button
-                        mat-icon-button
-                        class="!h-7 !w-7 sm:!h-8 sm:!w-8"
-                        aria-label="Ver plan"
-                        (click)="verPlan(plan)"
-                      >
-                        <mat-icon class="material-symbols-outlined !text-base sm:!text-lg text-zinc-500">visibility</mat-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        class="!h-7 !w-7 sm:!h-8 sm:!w-8"
-                        aria-label="Editar plan"
-                        (click)="editarPlan(plan)"
-                      >
-                        <mat-icon class="material-symbols-outlined !text-base sm:!text-lg text-zinc-500">edit</mat-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        class="!h-7 !w-7 sm:!h-8 sm:!w-8"
-                        aria-label="Descargar informe PDF"
-                        [disabled]="descargandoInforme() !== null"
-                        (click)="descargarInforme(plan)"
-                      >
-                        @if (descargandoInforme() === plan.id_plan) {
-                          <mat-icon class="material-symbols-outlined !text-base sm:!text-lg text-[#e75c3e] animate-spin">progress_activity</mat-icon>
-                        } @else {
-                          <mat-icon class="material-symbols-outlined !text-base sm:!text-lg text-zinc-500">picture_as_pdf</mat-icon>
-                        }
-                      </button>
-                    </div>
+    <!-- Patient Content -->
+    @if (!isLoadingPaciente() && !error() && paciente()) {
+      <div class="content-grid">
+        <!-- Main Column -->
+        <div class="main-column">
+          <!-- Hero Card: Patient Info -->
+          <article class="hero-card animate-in">
+            <div class="hero-visual">
+              <div class="hero-gradient"></div>
+              <div class="hero-pattern" aria-hidden="true"></div>
+            </div>
+            <div class="hero-content">
+              <!-- Avatar -->
+              <div class="hero-avatar">
+                @if (avatarUrl()) {
+                  <img
+                    [src]="avatarUrl()"
+                    [alt]="fullName()"
+                    class="avatar-img"
+                  />
+                } @else {
+                  <div class="avatar-placeholder">
+                    <span class="material-symbols-outlined">person</span>
                   </div>
                 }
               </div>
+              <!-- Info -->
+              <div class="hero-info">
+                <h2 class="hero-name">{{ fullName() }}</h2>
+                @if (getClinicaNombre()) {
+                  <p class="hero-clinic">
+                    <span class="material-symbols-outlined icon-sm">location_city</span>
+                    {{ getClinicaNombre() }}
+                  </p>
+                }
+              </div>
+              <!-- Edit Button -->
+              <button
+                type="button"
+                class="edit-btn"
+                aria-label="Editar paciente"
+                (click)="editarPaciente()"
+              >
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+            </div>
 
-              @if (planes().length > 3) {
-                <button
-                  mat-button
-                  class="!mt-3 w-full"
-                  (click)="verTodosPlanes()"
+            <!-- Contact Info -->
+            <div class="contact-grid">
+              @if (paciente()?.email) {
+                <a
+                  [href]="'mailto:' + paciente()?.email"
+                  class="contact-item"
                 >
-                  Ver todos los planes
-                  <mat-icon class="material-symbols-outlined">arrow_forward</mat-icon>
+                  <div class="contact-icon">
+                    <span class="material-symbols-outlined">mail</span>
+                  </div>
+                  <div class="contact-info">
+                    <span class="contact-label">Email</span>
+                    <span class="contact-value">{{ paciente()?.email }}</span>
+                  </div>
+                </a>
+              }
+              @if (paciente()?.telefono) {
+                <a
+                  [href]="'tel:' + paciente()?.telefono"
+                  class="contact-item"
+                >
+                  <div class="contact-icon">
+                    <span class="material-symbols-outlined">phone</span>
+                  </div>
+                  <div class="contact-info">
+                    <span class="contact-label">Teléfono</span>
+                    <span class="contact-value">{{ paciente()?.telefono }}</span>
+                  </div>
+                </a>
+              }
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+              <button
+                type="button"
+                class="action-btn primary"
+                (click)="crearPlan()"
+              >
+                <span class="material-symbols-outlined icon-filled">add</span>
+                <span class="action-label">Nuevo Plan</span>
+              </button>
+              @if (paciente()?.magic_link_url) {
+                <button
+                  type="button"
+                  class="action-btn"
+                  (click)="abrirQR()"
+                >
+                  <span class="material-symbols-outlined">qr_code_2</span>
+                  <span class="action-label">Ver QR</span>
                 </button>
               }
-            }
-          </div>
-        </mat-expansion-panel>
-        </mat-accordion>
+            </div>
+          </article>
 
-        <!-- Columna derecha: Estadísticas y Actividad -->
-        <div class="flex flex-col gap-4">
-          <mat-accordion class="detalle-accordion" multi>
-            <!-- Acordeon: Estadisticas -->
-            <mat-expansion-panel [expanded]="true" class="!rounded-2xl !mb-4 tarjeta-kengo">
-              <mat-expansion-panel-header>
-                <mat-panel-title class="!font-semibold">
-                  <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">analytics</mat-icon>
-                  Estadísticas
-                </mat-panel-title>
-              </mat-expansion-panel-header>
+          <!-- Plans Section -->
+          <section class="content-section animate-in" style="--delay: 0.1s">
+            <header
+              class="section-header clickable"
+              (click)="planesExpanded = !planesExpanded"
+            >
+              <div class="section-header-left">
+                <div class="section-icon">
+                  <span class="material-symbols-outlined">assignment</span>
+                </div>
+                <div>
+                  <h2 class="section-title">Planes de tratamiento</h2>
+                  <p class="section-subtitle">{{ planes().length }} plan{{ planes().length !== 1 ? 'es' : '' }} asignado{{ planes().length !== 1 ? 's' : '' }}</p>
+                </div>
+              </div>
+              <span
+                class="material-symbols-outlined expand-icon"
+                [class.rotated]="planesExpanded"
+              >expand_more</span>
+            </header>
 
-          <div class="py-2">
-            @if (isLoadingEstadisticas()) {
-              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-            } @else if (estadisticas()) {
-              <div class="space-y-4">
-                <!-- Metricas principales -->
-                <div class="grid grid-cols-2 gap-3">
-                  <!-- Adherencia general -->
-                  <div class="rounded-xl bg-zinc-50/70 p-3">
-                    <p class="text-xs font-medium text-zinc-500">Adherencia (30 dias)</p>
-                    <p class="mt-1 text-2xl font-bold text-[#e75c3e]">{{ estadisticas()?.adherenciaGeneral }}%</p>
-                    <mat-progress-bar
-                      mode="determinate"
-                      [value]="estadisticas()?.adherenciaGeneral ?? 0"
-                      class="!mt-2"
-                    ></mat-progress-bar>
+            @if (planesExpanded) {
+              <div class="section-content">
+                @if (isLoadingPlanes()) {
+                  <div class="loading-inline">
+                    <div class="shimmer-bar"></div>
+                    <div class="shimmer-bar short"></div>
                   </div>
-
-                  <!-- Total sesiones -->
-                  <div class="rounded-xl bg-zinc-50/70 p-3">
-                    <p class="text-xs font-medium text-zinc-500">Total sesiones</p>
-                    <p class="mt-1 text-2xl font-bold text-zinc-800">{{ estadisticas()?.totalSesiones }}</p>
-                    <p class="mt-1 text-xs text-zinc-500">dias con actividad</p>
+                } @else if (planes().length === 0) {
+                  <div class="empty-state-inline">
+                    <div class="empty-icon">
+                      <span class="material-symbols-outlined">content_paste_off</span>
+                    </div>
+                    <p class="empty-text">No hay planes asignados</p>
+                    <button
+                      type="button"
+                      class="empty-action"
+                      (click)="crearPlan()"
+                    >
+                      <span class="material-symbols-outlined">add</span>
+                      Crear primer plan
+                    </button>
                   </div>
-
-                  <!-- Dolor promedio -->
-                  <div class="rounded-xl bg-zinc-50/70 p-3">
-                    <p class="text-xs font-medium text-zinc-500">Dolor promedio</p>
-                    @if (estadisticas()?.promedioDolorGeneral !== null && estadisticas()?.promedioDolorGeneral !== undefined) {
-                      <p class="mt-1 text-2xl font-bold" [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)">
-                        {{ estadisticas()?.promedioDolorGeneral }}/10
-                      </p>
-                    } @else {
-                      <p class="mt-1 text-lg text-zinc-400">Sin datos</p>
+                } @else {
+                  <div class="plans-list">
+                    @for (plan of planes(); track plan.id_plan) {
+                      <article class="plan-card" [class.completed]="plan.estado === 'completado'">
+                        <div class="plan-main">
+                          <div class="plan-info">
+                            <div class="plan-header-row">
+                              <h3 class="plan-title">{{ plan.titulo }}</h3>
+                              <span class="plan-badge" [class]="getEstadoClass(plan.estado)">
+                                {{ getEstadoLabel(plan.estado) }}
+                              </span>
+                            </div>
+                            @if (plan.fecha_inicio || plan.fecha_fin) {
+                              <p class="plan-dates">
+                                <span class="material-symbols-outlined icon-xs">calendar_today</span>
+                                @if (plan.fecha_inicio) {
+                                  {{ formatearFecha(plan.fecha_inicio) }}
+                                }
+                                @if (plan.fecha_inicio && plan.fecha_fin) {
+                                  <span class="date-separator">→</span>
+                                }
+                                @if (plan.fecha_fin) {
+                                  {{ formatearFecha(plan.fecha_fin) }}
+                                }
+                              </p>
+                            }
+                          </div>
+                          <div class="plan-actions">
+                            <button
+                              type="button"
+                              class="plan-action-btn"
+                              aria-label="Ver plan"
+                              (click)="verPlan(plan)"
+                            >
+                              <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                            <button
+                              type="button"
+                              class="plan-action-btn"
+                              aria-label="Editar plan"
+                              (click)="editarPlan(plan)"
+                            >
+                              <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              class="plan-action-btn"
+                              aria-label="Descargar PDF"
+                              [disabled]="descargandoInforme() !== null"
+                              (click)="descargarInforme(plan)"
+                            >
+                              @if (descargandoInforme() === plan.id_plan) {
+                                <span class="material-symbols-outlined spin">progress_activity</span>
+                              } @else {
+                                <span class="material-symbols-outlined">picture_as_pdf</span>
+                              }
+                            </button>
+                          </div>
+                        </div>
+                      </article>
                     }
                   </div>
 
-                  <!-- Racha -->
-                  <div class="rounded-xl bg-zinc-50/70 p-3">
-                    <p class="text-xs font-medium text-zinc-500">Racha actual</p>
-                    <p class="mt-1 text-2xl font-bold text-[#efc048]">{{ estadisticas()?.rachaActual }}</p>
-                    <p class="mt-1 text-xs text-zinc-500">dias consecutivos</p>
-                  </div>
-                </div>
-
-                <!-- Adherencia semanal -->
-                @if (estadisticas()?.adherenciaSemanal && estadisticas()!.adherenciaSemanal.length > 0) {
-                  <div class="rounded-xl bg-zinc-50/70 p-3">
-                    <p class="mb-3 text-xs font-medium text-zinc-500">Adherencia ultimas 4 semanas</p>
-                    <div class="flex items-end justify-between gap-2">
-                      @for (semana of estadisticas()!.adherenciaSemanal; track semana.semana) {
-                        <div class="flex flex-1 flex-col items-center gap-1">
-                          <div
-                            class="w-full rounded-t bg-[#e75c3e]/20 transition-all"
-                            [style.height.px]="Math.max(4, semana.porcentaje * 0.6)"
-                          >
-                            <div
-                              class="h-full w-full rounded-t bg-[#e75c3e]"
-                              [style.height.%]="100"
-                            ></div>
-                          </div>
-                          <span class="text-[10px] font-medium text-zinc-500">{{ semana.semana }}</span>
-                          <span class="text-xs font-bold text-zinc-700">{{ semana.porcentaje }}%</span>
-                        </div>
-                      }
-                    </div>
-                  </div>
+                  @if (planes().length > 3) {
+                    <button
+                      type="button"
+                      class="see-all-btn"
+                      (click)="verTodosPlanes()"
+                    >
+                      Ver todos los planes
+                      <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                  }
                 }
-
-                <!-- Ultima actividad -->
-                @if (estadisticas()?.diasDesdeUltimaSesion !== null && estadisticas()?.diasDesdeUltimaSesion !== undefined) {
-                  <div class="flex items-center gap-2 rounded-xl bg-zinc-50/70 p-3">
-                    <mat-icon class="material-symbols-outlined text-zinc-400">schedule</mat-icon>
-                    <span class="text-sm text-zinc-600">
-                      @if (estadisticas()?.diasDesdeUltimaSesion === 0) {
-                        Ultima actividad: <strong class="text-green-600">Hoy</strong>
-                      } @else if (estadisticas()?.diasDesdeUltimaSesion === 1) {
-                        Ultima actividad: <strong>Ayer</strong>
-                      } @else {
-                        Ultima actividad: <strong>hace {{ estadisticas()?.diasDesdeUltimaSesion }} dias</strong>
-                      }
-                    </span>
-                  </div>
-                }
-              </div>
-            } @else {
-              <div class="py-6 text-center">
-                <mat-icon class="material-symbols-outlined mb-2 text-4xl text-zinc-300">bar_chart</mat-icon>
-                <p class="text-sm text-zinc-500">Sin datos suficientes</p>
               </div>
             }
-            </div>
-            </mat-expansion-panel>
+          </section>
+        </div>
 
-            <!-- Acordeon: Actividad Reciente -->
-            <mat-expansion-panel class="!rounded-2xl tarjeta-kengo">
-              <mat-expansion-panel-header>
-                <mat-panel-title class="!font-semibold">
-                  <mat-icon class="material-symbols-outlined mr-2 text-[#e75c3e]">history</mat-icon>
-                  Actividad Reciente
-                </mat-panel-title>
-              </mat-expansion-panel-header>
+        <!-- Sidebar Column -->
+        <aside class="sidebar-column">
+          <!-- Statistics Section -->
+          <section class="content-section stats-section animate-in" style="--delay: 0.15s">
+            <header
+              class="section-header clickable"
+              (click)="statsExpanded = !statsExpanded"
+            >
+              <div class="section-header-left">
+                <div class="section-icon gold">
+                  <span class="material-symbols-outlined">analytics</span>
+                </div>
+                <div>
+                  <h2 class="section-title">Estadísticas</h2>
+                  <p class="section-subtitle">Últimos 30 días</p>
+                </div>
+              </div>
+              <span
+                class="material-symbols-outlined expand-icon"
+                [class.rotated]="statsExpanded"
+              >expand_more</span>
+            </header>
 
-              <div class="py-2">
-                @if (isLoadingSesiones()) {
-                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-                } @else if (sesiones().length === 0) {
-                  <div class="py-6 text-center">
-                    <mat-icon class="material-symbols-outlined mb-2 text-4xl text-zinc-300">event_busy</mat-icon>
-                    <p class="text-sm text-zinc-500">Sin actividad registrada</p>
+            @if (statsExpanded) {
+              <div class="section-content">
+                @if (isLoadingEstadisticas()) {
+                  <div class="loading-inline">
+                    <div class="shimmer-bar"></div>
+                    <div class="shimmer-bar short"></div>
                   </div>
-                } @else {
-                  <div class="space-y-3">
-                    @for (sesion of sesiones().slice(0, 10); track sesion.fecha) {
-                      <div class="rounded-xl bg-zinc-50/70 p-3">
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2">
-                            <mat-icon class="material-symbols-outlined text-[#e75c3e]">event</mat-icon>
-                            <span class="font-medium text-zinc-800">{{ sesion.fechaFormateada }}</span>
-                          </div>
-                          <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                            {{ sesion.totalEjercicios }} ejercicio{{ sesion.totalEjercicios !== 1 ? 's' : '' }}
-                          </span>
-                        </div>
+                } @else if (estadisticas()) {
+                  <!-- Main Stats Grid -->
+                  <div class="stats-grid">
+                    <!-- Adherence -->
+                    <div class="stat-card primary">
+                      <div class="stat-header">
+                        <span class="stat-label">Adherencia</span>
+                        <span class="material-symbols-outlined stat-icon">trending_up</span>
+                      </div>
+                      <div class="stat-value-large">{{ estadisticas()?.adherenciaGeneral }}%</div>
+                      <div class="stat-progress">
+                        <div
+                          class="stat-progress-fill"
+                          [style.width.%]="estadisticas()?.adherenciaGeneral ?? 0"
+                        ></div>
+                      </div>
+                    </div>
 
-                        @if (sesion.promedioDolorValue !== null) {
-                          <div class="mt-2 flex items-center gap-2 text-sm">
-                            <mat-icon class="material-symbols-outlined !text-base" [class]="getDolorColor(sesion.promedioDolorValue)">
-                              sentiment_dissatisfied
-                            </mat-icon>
-                            <span class="text-zinc-600">
-                              Dolor promedio: <strong [class]="getDolorColor(sesion.promedioDolorValue)">{{ sesion.promedioDolorValue | number:'1.0-1' }}/10</strong>
-                            </span>
+                    <!-- Total Sessions -->
+                    <div class="stat-card">
+                      <div class="stat-header">
+                        <span class="stat-label">Sesiones</span>
+                        <span class="material-symbols-outlined stat-icon">event_available</span>
+                      </div>
+                      <div class="stat-value-large">{{ estadisticas()?.totalSesiones }}</div>
+                      <span class="stat-hint">días con actividad</span>
+                    </div>
+
+                    <!-- Pain Average -->
+                    <div class="stat-card">
+                      <div class="stat-header">
+                        <span class="stat-label">Dolor promedio</span>
+                        <span
+                          class="material-symbols-outlined stat-icon"
+                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
+                        >sentiment_dissatisfied</span>
+                      </div>
+                      @if (estadisticas()?.promedioDolorGeneral !== null && estadisticas()?.promedioDolorGeneral !== undefined) {
+                        <div
+                          class="stat-value-large"
+                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
+                        >{{ estadisticas()?.promedioDolorGeneral }}<span class="stat-unit">/10</span></div>
+                      } @else {
+                        <div class="stat-value-large muted">—</div>
+                        <span class="stat-hint">Sin datos</span>
+                      }
+                    </div>
+
+                    <!-- Streak -->
+                    <div class="stat-card gold">
+                      <div class="stat-header">
+                        <span class="stat-label">Racha actual</span>
+                        <span class="material-symbols-outlined stat-icon icon-filled">local_fire_department</span>
+                      </div>
+                      <div class="stat-value-large">{{ estadisticas()?.rachaActual }}</div>
+                      <span class="stat-hint">días seguidos</span>
+                    </div>
+                  </div>
+
+                  <!-- Weekly Adherence Chart -->
+                  @if (estadisticas()?.adherenciaSemanal && estadisticas()!.adherenciaSemanal.length > 0) {
+                    <div class="weekly-chart">
+                      <h4 class="chart-title">Adherencia semanal</h4>
+                      <div class="chart-bars">
+                        @for (semana of estadisticas()!.adherenciaSemanal; track semana.semana) {
+                          <div class="chart-bar-container">
+                            <div class="chart-bar-bg">
+                              <div
+                                class="chart-bar-fill"
+                                [style.height.%]="semana.porcentaje"
+                              ></div>
+                            </div>
+                            <span class="chart-bar-label">{{ semana.semana }}</span>
+                            <span class="chart-bar-value">{{ semana.porcentaje }}%</span>
                           </div>
                         }
                       </div>
+                    </div>
+                  }
+
+                  <!-- Last Activity -->
+                  @if (estadisticas()?.diasDesdeUltimaSesion !== null && estadisticas()?.diasDesdeUltimaSesion !== undefined) {
+                    <div class="last-activity">
+                      <span class="material-symbols-outlined activity-icon">schedule</span>
+                      <span class="activity-text">
+                        Última actividad:
+                        @if (estadisticas()?.diasDesdeUltimaSesion === 0) {
+                          <strong class="text-success">Hoy</strong>
+                        } @else if (estadisticas()?.diasDesdeUltimaSesion === 1) {
+                          <strong>Ayer</strong>
+                        } @else {
+                          <strong>hace {{ estadisticas()?.diasDesdeUltimaSesion }} días</strong>
+                        }
+                      </span>
+                    </div>
+                  }
+                } @else {
+                  <div class="empty-state-inline">
+                    <div class="empty-icon">
+                      <span class="material-symbols-outlined">bar_chart</span>
+                    </div>
+                    <p class="empty-text">Sin datos suficientes</p>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <!-- Recent Activity Section -->
+          <section class="content-section animate-in" style="--delay: 0.2s">
+            <header
+              class="section-header clickable"
+              (click)="activityExpanded = !activityExpanded"
+            >
+              <div class="section-header-left">
+                <div class="section-icon">
+                  <span class="material-symbols-outlined">history</span>
+                </div>
+                <div>
+                  <h2 class="section-title">Actividad reciente</h2>
+                  <p class="section-subtitle">{{ sesiones().length }} sesión{{ sesiones().length !== 1 ? 'es' : '' }} registrada{{ sesiones().length !== 1 ? 's' : '' }}</p>
+                </div>
+              </div>
+              <span
+                class="material-symbols-outlined expand-icon"
+                [class.rotated]="activityExpanded"
+              >expand_more</span>
+            </header>
+
+            @if (activityExpanded) {
+              <div class="section-content">
+                @if (isLoadingSesiones()) {
+                  <div class="loading-inline">
+                    <div class="shimmer-bar"></div>
+                    <div class="shimmer-bar short"></div>
+                  </div>
+                } @else if (sesiones().length === 0) {
+                  <div class="empty-state-inline">
+                    <div class="empty-icon">
+                      <span class="material-symbols-outlined">event_busy</span>
+                    </div>
+                    <p class="empty-text">Sin actividad registrada</p>
+                  </div>
+                } @else {
+                  <div class="activity-list">
+                    @for (sesion of sesiones().slice(0, 10); track sesion.fecha; let i = $index) {
+                      <article
+                        class="activity-item"
+                        [style.--delay]="(0.25 + i * 0.03) + 's'"
+                      >
+                        <div class="activity-date-badge">
+                          <span class="activity-day">{{ sesion.fechaFormateada }}</span>
+                        </div>
+                        <div class="activity-details">
+                          <div class="activity-exercises">
+                            <span class="material-symbols-outlined icon-filled text-success">check_circle</span>
+                            <span>{{ sesion.totalEjercicios }} ejercicio{{ sesion.totalEjercicios !== 1 ? 's' : '' }}</span>
+                          </div>
+                          @if (sesion.promedioDolorValue !== null) {
+                            <div class="activity-pain">
+                              <span
+                                class="material-symbols-outlined"
+                                [class]="getDolorColor(sesion.promedioDolorValue)"
+                              >sentiment_dissatisfied</span>
+                              <span [class]="getDolorColor(sesion.promedioDolorValue)">
+                                {{ sesion.promedioDolorValue | number:'1.0-1' }}/10
+                              </span>
+                            </div>
+                          }
+                        </div>
+                      </article>
                     }
                   </div>
 
                   @if (sesiones().length > 10) {
-                    <p class="mt-3 text-center text-xs text-zinc-500">
-                      Mostrando las últimas 10 sesiones de {{ sesiones().length }} totales
+                    <p class="activity-footer">
+                      Mostrando las últimas 10 de {{ sesiones().length }} sesiones
                     </p>
                   }
                 }
               </div>
-            </mat-expansion-panel>
-          </mat-accordion>
-        </div>
+            }
+          </section>
+        </aside>
       </div>
     }
-  </div>
-
+  </main>
 </section>

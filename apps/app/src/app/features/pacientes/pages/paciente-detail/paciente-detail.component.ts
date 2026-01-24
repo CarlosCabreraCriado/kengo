@@ -14,13 +14,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { environment as env } from '../../../../../environments/environment';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatMenuModule } from '@angular/material/menu';
+// Angular Material (only dialog)
 import { MatDialog } from '@angular/material/dialog';
 
 // Servicios
@@ -71,12 +65,6 @@ interface EstadisticasPaciente {
   standalone: true,
   imports: [
     DecimalPipe,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressBarModule,
-    MatExpansionModule,
-    MatChipsModule,
-    MatMenuModule,
   ],
   templateUrl: './paciente-detail.component.html',
   styleUrl: './paciente-detail.component.css',
@@ -121,6 +109,11 @@ export class PacienteDetailComponent implements OnInit {
 
   // Error state
   readonly error = signal<string | null>(null);
+
+  // Section expansion states
+  planesExpanded = true;
+  statsExpanded = true;
+  activityExpanded = false;
 
   // Computed
   readonly idsClinicas = computed(() => {
