@@ -106,14 +106,19 @@ mat-icon {
     @apply !border-white/10 !bg-white/10;
   }
 
-  /* Padding para contenido con navegación inferior en móvil */
+  /* Padding inferior estándar (ya no hay nav móvil) */
   .pb-nav {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6rem);
+    padding-bottom: 1.5rem;
+  }
+
+  /* Padding superior para compensar header de navegación fijo en desktop */
+  .pt-nav {
+    padding-top: 0;
   }
 
   @media (min-width: 768px) {
-    .pb-nav {
-      padding-bottom: 1.5rem;
+    .pt-nav {
+      padding-top: 5.5rem; /* ~88px = header height + padding */
     }
   }
 }

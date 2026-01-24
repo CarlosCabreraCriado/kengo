@@ -1,207 +1,101 @@
-<!-- Navegación Kengo - Glassmorphism App-Like -->
+<!-- Navegación Kengo - Desktop Only -->
 @if (showNavbar()) {
-  <!-- MOBILE: Bottom Navigation Bar -->
-  @if (isMovil()) {
-    <nav
-      class="fixed bottom-0 left-0 right-0 z-50 px-3"
-      style="padding-bottom: env(safe-area-inset-bottom, 0.5rem)"
-    >
-      <div class="nav-glass-mobile">
-        <!-- Indicador activo animado -->
-        <div class="active-pill" [style.--active-index]="activeIndex()"></div>
+  <!-- DESKTOP: Top Navigation Bar -->
+  <header class="fixed top-0 left-0 right-0 z-50 p-4 lg:p-5">
+    <div class="nav-glass-desktop">
+      <!-- Logo -->
+      <a routerLink="/inicio" class="logo-container group">
+        <span class="titulo-kengo text-2xl lg:text-3xl">Kengo</span>
+        <div class="logo-glow"></div>
+      </a>
 
-        <!-- Items de navegación -->
+      <!-- Navegación central -->
+      <nav class="nav-center">
         <a
           routerLink="/inicio"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
-          class="nav-item-mobile"
+          class="nav-item-desktop"
         >
-          <div class="icon-wrapper">
-            <img
-              src="/assets/logo.svg"
-              alt="Inicio"
-              class="nav-icon-img"
-            />
-          </div>
-          <span class="nav-label-mobile">Inicio</span>
+          <img
+            src="/assets/logo.svg"
+            alt="Inicio"
+            class="nav-icon-desktop"
+          />
+          <span class="nav-label-desktop">Inicio</span>
         </a>
 
         <a
           routerLink="/ejercicios"
           routerLinkActive="active"
-          class="nav-item-mobile"
+          class="nav-item-desktop"
         >
-          <div class="icon-wrapper">
-            <span class="material-symbols-outlined icon-default">exercise</span>
-            <span class="material-symbols-outlined icon-active relleno"
-              >exercise</span
-            >
-          </div>
-          <span class="nav-label-mobile">Ejercicios</span>
+          <span class="material-symbols-outlined icon-default">exercise</span>
+          <span class="material-symbols-outlined icon-active relleno"
+            >exercise</span
+          >
+          <span class="nav-label-desktop">Ejercicios</span>
         </a>
 
         <a
           routerLink="/actividad-diaria"
           routerLinkActive="active"
-          class="nav-item-mobile"
+          class="nav-item-desktop"
         >
-          <div class="icon-wrapper">
-            <span class="material-symbols-outlined icon-default"
-              >play_circle</span
-            >
-            <span class="material-symbols-outlined icon-active relleno"
-              >play_circle</span
-            >
-          </div>
-          <span class="nav-label-mobile">Actividad</span>
+          <span class="material-symbols-outlined icon-default"
+            >play_circle</span
+          >
+          <span class="material-symbols-outlined icon-active relleno"
+            >play_circle</span
+          >
+          <span class="nav-label-desktop">Actividad</span>
         </a>
 
         @if (isFisio()) {
           <a
             routerLink="/mis-pacientes"
             routerLinkActive="active"
-            class="nav-item-mobile"
+            class="nav-item-desktop"
           >
-            <div class="icon-wrapper">
-              <span class="material-symbols-outlined icon-default"
-                >group</span
-              >
-              <span class="material-symbols-outlined icon-active relleno"
-                >group</span
-              >
-            </div>
-            <span class="nav-label-mobile">Pacientes</span>
+            <span class="material-symbols-outlined icon-default"
+              >group</span
+            >
+            <span class="material-symbols-outlined icon-active relleno"
+              >group</span
+            >
+            <span class="nav-label-desktop">Pacientes</span>
           </a>
         }
 
         <a
           routerLink="/mi-clinica"
           routerLinkActive="active"
-          class="nav-item-mobile"
+          class="nav-item-desktop"
         >
-          <div class="icon-wrapper">
-            <span class="material-symbols-outlined icon-default">apartment</span>
-            <span class="material-symbols-outlined icon-active relleno"
-              >apartment</span
-            >
-          </div>
-          <span class="nav-label-mobile">Clínica</span>
-        </a>
-
-        <!-- Avatar móvil -->
-        <a routerLink="/perfil" routerLinkActive="active" class="nav-item-mobile avatar-mobile">
-          <div class="avatar-container-mobile">
-            @if (avatarUrl()) {
-              <img [src]="avatarUrl()" alt="Perfil" class="avatar-img" />
-            } @else {
-              <div class="avatar-placeholder">
-                <span class="material-symbols-outlined">person</span>
-              </div>
-            }
-            <div class="avatar-ring"></div>
-          </div>
-        </a>
-      </div>
-    </nav>
-  } @else {
-    <!-- DESKTOP: Top Navigation Bar -->
-    <header class="fixed top-0 left-0 right-0 z-50 p-4 lg:p-5">
-      <div class="nav-glass-desktop">
-        <!-- Logo -->
-        <a routerLink="/inicio" class="logo-container group">
-          <span class="titulo-kengo text-2xl lg:text-3xl">Kengo</span>
-          <div class="logo-glow"></div>
-        </a>
-
-        <!-- Navegación central -->
-        <nav class="nav-center">
-          <a
-            routerLink="/inicio"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="nav-item-desktop"
+          <span class="material-symbols-outlined icon-default"
+            >apartment</span
           >
-            <img
-              src="/assets/logo.svg"
-              alt="Inicio"
-              class="nav-icon-desktop"
-            />
-            <span class="nav-label-desktop">Inicio</span>
-          </a>
-
-          <a
-            routerLink="/ejercicios"
-            routerLinkActive="active"
-            class="nav-item-desktop"
+          <span class="material-symbols-outlined icon-active relleno"
+            >apartment</span
           >
-            <span class="material-symbols-outlined icon-default">exercise</span>
-            <span class="material-symbols-outlined icon-active relleno"
-              >exercise</span
-            >
-            <span class="nav-label-desktop">Ejercicios</span>
-          </a>
+          <span class="nav-label-desktop">Clínica</span>
+        </a>
+      </nav>
 
-          <a
-            routerLink="/actividad-diaria"
-            routerLinkActive="active"
-            class="nav-item-desktop"
-          >
-            <span class="material-symbols-outlined icon-default"
-              >play_circle</span
-            >
-            <span class="material-symbols-outlined icon-active relleno"
-              >play_circle</span
-            >
-            <span class="nav-label-desktop">Actividad</span>
-          </a>
-
-          @if (isFisio()) {
-            <a
-              routerLink="/mis-pacientes"
-              routerLinkActive="active"
-              class="nav-item-desktop"
-            >
-              <span class="material-symbols-outlined icon-default"
-                >group</span
-              >
-              <span class="material-symbols-outlined icon-active relleno"
-                >group</span
-              >
-              <span class="nav-label-desktop">Pacientes</span>
-            </a>
+      <!-- Avatar desktop -->
+      <a routerLink="/perfil" class="avatar-desktop group">
+        <div class="avatar-container-desktop">
+          @if (avatarUrl()) {
+            <img [src]="avatarUrl()" alt="Perfil" class="avatar-img" />
+          } @else {
+            <div class="avatar-placeholder">
+              <span class="material-symbols-outlined text-lg">person</span>
+            </div>
           }
-
-          <a
-            routerLink="/mi-clinica"
-            routerLinkActive="active"
-            class="nav-item-desktop"
-          >
-            <span class="material-symbols-outlined icon-default"
-              >apartment</span
-            >
-            <span class="material-symbols-outlined icon-active relleno"
-              >apartment</span
-            >
-            <span class="nav-label-desktop">Clínica</span>
-          </a>
-        </nav>
-
-        <!-- Avatar desktop -->
-        <a routerLink="/perfil" class="avatar-desktop group">
-          <div class="avatar-container-desktop">
-            @if (avatarUrl()) {
-              <img [src]="avatarUrl()" alt="Perfil" class="avatar-img" />
-            } @else {
-              <div class="avatar-placeholder">
-                <span class="material-symbols-outlined text-lg">person</span>
-              </div>
-            }
-            <div class="avatar-ring-desktop"></div>
-          </div>
-          <div class="avatar-glow"></div>
-        </a>
-      </div>
-    </header>
-  }
+          <div class="avatar-ring-desktop"></div>
+        </div>
+        <div class="avatar-glow"></div>
+      </a>
+    </div>
+  </header>
 }

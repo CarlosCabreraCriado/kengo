@@ -1,7 +1,7 @@
 @reference "tailwindcss";
 
 // ============================================
-// KENGO NAVIGATION - GLASSMORPHISM APP-LIKE
+// KENGO NAVIGATION - DESKTOP ONLY
 // ============================================
 
 // Variables
@@ -15,143 +15,10 @@ $kengo-text: #475569;
 $kengo-text-muted: #94a3b8;
 
 // ============================================
-// MOBILE NAVIGATION (Bottom Bar)
+// DESKTOP NAVIGATION (Top Bar)
 // ============================================
 
-.nav-glass-mobile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 0.5rem 0.75rem;
-  margin-bottom: 0.5rem;
-  background: $kengo-glass;
-  border: 1px solid $kengo-glass-border;
-  border-radius: 1.75rem;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 -4px 30px rgba(0, 0, 0, 0.08),
-    0 4px 20px rgba(231, 92, 62, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-// Item de navegación móvil
-.nav-item-mobile {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.125rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: 1.25rem;
-  text-decoration: none;
-  color: $kengo-text-muted;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  -webkit-tap-highlight-color: transparent;
-
-  // Feedback táctil
-  &:active {
-    transform: scale(0.92);
-  }
-
-  // Hover (desktop touch simulation)
-  @media (hover: hover) {
-    &:hover {
-      color: $kengo-primary;
-      background: $kengo-primary-light;
-    }
-  }
-
-  // Estado activo
-  &.active {
-    color: $kengo-primary;
-
-    .icon-wrapper {
-      .icon-default {
-        opacity: 0;
-        transform: scale(0.8);
-      }
-
-      .icon-active {
-        opacity: 1;
-        transform: scale(1);
-      }
-
-      .nav-icon-img {
-        transform: scale(1.1);
-        filter: brightness(0) saturate(100%) invert(42%) sepia(93%)
-          saturate(636%) hue-rotate(338deg) brightness(97%) contrast(89%);
-      }
-    }
-
-    .nav-label-mobile {
-      font-weight: 600;
-      color: $kengo-primary;
-    }
-  }
-}
-
-// Contenedor de icono con transición
-.icon-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.625rem;
-  height: 1.625rem;
-
-  .icon-default,
-  .icon-active {
-    position: absolute;
-    font-size: 1.5rem;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .icon-default {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  .icon-active {
-    opacity: 0;
-    transform: scale(0.8);
-    color: $kengo-primary;
-  }
-
-  .nav-icon-img {
-    width: 1.375rem;
-    height: 1.375rem;
-    object-fit: contain;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-}
-
-// Label móvil
-.nav-label-mobile {
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: all 0.2s ease;
-}
-
-// Avatar móvil
-.avatar-mobile {
-  padding: 0.25rem !important;
-
-  &:hover {
-    background: transparent !important;
-  }
-}
-
-.avatar-container-mobile {
-  position: relative;
-  width: 2.25rem;
-  height: 2.25rem;
-}
-
+// Estilos compartidos para avatar
 .avatar-img {
   width: 100%;
   height: 100%;
@@ -178,24 +45,6 @@ $kengo-text-muted: #94a3b8;
     font-size: 1.125rem;
   }
 }
-
-.avatar-ring {
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.avatar-mobile.active .avatar-ring {
-  border-color: $kengo-primary;
-  box-shadow: 0 0 12px $kengo-primary-glow;
-}
-
-// ============================================
-// DESKTOP NAVIGATION (Top Bar)
-// ============================================
 
 .nav-glass-desktop {
   display: flex;

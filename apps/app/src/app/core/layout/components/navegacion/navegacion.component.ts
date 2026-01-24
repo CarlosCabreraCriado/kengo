@@ -27,8 +27,8 @@ export class NavegacionComponent implements OnInit {
   public isInicio = signal(false);
   private currentRoute = signal('/inicio');
 
-  // Mostrar navbar: siempre en desktop, solo en /inicio en móvil
-  public showNavbar = computed(() => !this.isMovil() || this.isInicio());
+  // Mostrar navbar: solo en desktop (768px+)
+  public showNavbar = computed(() => !this.isMovil());
 
   // Índice activo para la animación del indicador
   public activeIndex = computed(() => {
