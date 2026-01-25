@@ -1,4 +1,23 @@
-/* === Header con glassmorphism (solo móvil) === */
+@reference "tailwindcss";
+
+/* ========================================
+   PLANES LIST - Kengo Design System
+   ======================================== */
+
+/* === Variables CSS === */
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-primary-dark: #c94a2f;
+  --kengo-tertiary: #efc048;
+  --kengo-glass: rgba(255, 255, 255, 0.65);
+  --kengo-glass-strong: rgba(255, 255, 255, 0.85);
+  --kengo-border: rgba(255, 255, 255, 0.25);
+  --kengo-border-strong: rgba(255, 255, 255, 0.4);
+  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --kengo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* === Header con glassmorphism refinado === */
 .header-glass {
   background: transparent;
   backdrop-filter: none;
@@ -9,31 +28,62 @@
   .header-glass {
     background: linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.85) 60%,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.92) 50%,
       rgba(255, 255, 255, 0) 100%
     );
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
 }
 
-/* Tarjeta Kengo - glassmorphism */
+/* === Tarjeta Kengo Premium === */
 .tarjeta-kengo {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: var(--kengo-glass-strong);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--kengo-border-strong);
+  box-shadow: var(--kengo-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.tarjeta-kengo:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--kengo-shadow-lg);
+  border-color: rgba(231, 92, 62, 0.2);
+}
+
+.tarjeta-kengo:active {
+  transform: scale(0.98);
+}
+
+/* === Hero Card para estadísticas === */
+.hero-stats-card {
+  background: linear-gradient(
+    135deg,
+    var(--kengo-primary) 0%,
+    #f67c5c 50%,
+    var(--kengo-tertiary) 100%
+  );
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  color: white;
+  position: relative;
   overflow: hidden;
 }
 
-/* ========== Tabs estilo Pill ========== */
+.hero-stats-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  animation: auroraFloat 8s ease-in-out infinite;
+}
+
+/* === Tabs estilo Pill Premium === */
 .tabs-container {
   display: flex;
   justify-content: center;
@@ -42,63 +92,88 @@
 
 .tabs-wrapper {
   display: inline-flex;
-  gap: 0.5rem;
+  gap: 0.375rem;
   padding: 0.375rem;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 1rem;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--kengo-border-strong);
+  border-radius: 1.25rem;
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.08),
-    0 2px 4px -1px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 4px 16px -2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .tab-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.625rem 1rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   background: transparent;
-  color: #71717a; /* zinc-500 */
+  color: #71717a;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  border-radius: inherit;
 }
 
 .tab-pill:hover:not(.tab-pill-active) {
-  background: rgba(0, 0, 0, 0.04);
-  color: #52525b; /* zinc-600 */
+  background: rgba(231, 92, 62, 0.08);
+  color: var(--kengo-primary);
 }
 
 .tab-pill-active {
-  background: #e75c3e;
   color: white;
   box-shadow:
-    0 2px 4px rgba(231, 92, 62, 0.3),
-    0 1px 2px rgba(231, 92, 62, 0.2);
+    0 4px 12px rgba(231, 92, 62, 0.4),
+    0 2px 4px rgba(231, 92, 62, 0.2);
 }
 
-.tab-pill-active:hover {
-  background: #d4533a;
+.tab-pill-active::before {
+  opacity: 1;
+}
+
+.tab-pill-active .tab-icon,
+.tab-pill-active .tab-label {
+  position: relative;
+  z-index: 1;
+}
+
+.tab-pill:active {
+  transform: scale(0.96);
 }
 
 .tab-icon {
-  font-size: 1.125rem !important;
-  width: 1.125rem !important;
-  height: 1.125rem !important;
+  font-size: 1.25rem !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  transition: transform 0.2s ease;
+}
+
+.tab-pill-active .tab-icon {
+  transform: scale(1.1);
 }
 
 .tab-label {
   line-height: 1;
 }
 
-/* Mobile: tabs mas compactos (alineado con breakpoint de navegación 768px) */
+/* Mobile: tabs más compactos */
 @media (max-width: 767.98px) {
   .tabs-wrapper {
     width: 100%;
@@ -108,7 +183,7 @@
   .tab-pill {
     flex: 1;
     justify-content: center;
-    padding: 0.625rem 0.75rem;
+    padding: 0.75rem 0.625rem;
     font-size: 0.8125rem;
   }
 
@@ -121,9 +196,359 @@
   }
 }
 
-/* Desktop (>= 768px): mostrar labels */
 @media (min-width: 768px) {
   .tab-label {
     display: inline;
   }
 }
+
+/* === Plan Cards con efecto hover === */
+.plan-card {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.plan-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: linear-gradient(
+    135deg,
+    rgba(231, 92, 62, 0.05) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+.plan-card:hover::after {
+  opacity: 1;
+}
+
+/* === Status Badges con brillo === */
+.status-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.status-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* === Quick Action Buttons === */
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  background: var(--kengo-glass);
+  border: 1px solid var(--kengo-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #52525b;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.quick-action-btn:hover {
+  background: rgba(231, 92, 62, 0.1);
+  border-color: rgba(231, 92, 62, 0.3);
+  color: var(--kengo-primary);
+  transform: translateY(-2px);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* === CTA Button Premium === */
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(231, 92, 62, 0.4);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.15) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 92, 62, 0.5);
+}
+
+.cta-button:hover::before {
+  opacity: 1;
+}
+
+.cta-button:active {
+  transform: scale(0.98);
+}
+
+/* === Search Input Premium === */
+.search-input-container {
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  height: 3rem;
+  padding: 0 2.75rem 0 2.75rem;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(228, 228, 231, 0.8);
+  background: var(--kengo-glass-strong);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 0.9375rem;
+  color: #3f3f46;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--kengo-primary);
+  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.15);
+}
+
+.search-input::placeholder {
+  color: #a1a1aa;
+}
+
+/* === Dropdown Menu Premium === */
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  min-width: 12rem;
+  padding: 0.375rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow:
+    0 20px 40px -8px rgba(0, 0, 0, 0.15),
+    0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.625rem;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #3f3f46;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: rgba(231, 92, 62, 0.08);
+  color: var(--kengo-primary);
+}
+
+.dropdown-item:active {
+  background: rgba(231, 92, 62, 0.15);
+}
+
+/* === Rutina Card Expanded === */
+.rutina-card {
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rutina-card.expanded {
+  box-shadow: var(--kengo-shadow-lg);
+}
+
+.rutina-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.625rem;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: transparent;
+  color: #71717a;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rutina-expand-btn:hover {
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--kengo-primary);
+}
+
+/* === Visibility Badge === */
+.visibility-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.visibility-badge.private {
+  background: linear-gradient(135deg, #f4f4f5, #e4e4e7);
+  color: #52525b;
+}
+
+.visibility-badge.public {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #16a34a;
+}
+
+/* === Empty State === */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 5rem;
+  height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1), rgba(239, 192, 72, 0.1));
+  margin-bottom: 1rem;
+}
+
+.empty-state-icon .material-symbols-outlined {
+  font-size: 2.5rem;
+  color: var(--kengo-primary);
+}
+
+/* === Progress Bar Indeterminate === */
+.progress-bar-indeterminate {
+  animation: progressIndeterminate 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--kengo-primary), var(--kengo-tertiary), var(--kengo-primary));
+  background-size: 200% 100%;
+}
+
+/* === Line Clamp === */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* === Animaciones === */
+@keyframes auroraFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(-20px, 30px) scale(1.1);
+    opacity: 0.25;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes progressIndeterminate {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Staggered Animation for Cards === */
+.plan-card {
+  animation: fadeInUp 0.4s ease-out backwards;
+}
+
+.plan-card:nth-child(1) { animation-delay: 0.05s; }
+.plan-card:nth-child(2) { animation-delay: 0.1s; }
+.plan-card:nth-child(3) { animation-delay: 0.15s; }
+.plan-card:nth-child(4) { animation-delay: 0.2s; }
+.plan-card:nth-child(5) { animation-delay: 0.25s; }
+.plan-card:nth-child(6) { animation-delay: 0.3s; }

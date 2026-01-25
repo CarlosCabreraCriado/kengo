@@ -1,6 +1,226 @@
+@reference "tailwindcss";
+
+/* ========================================
+   PLAN RESUMEN - Kengo Design System
+   ======================================== */
+
+/* === Variables CSS === */
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-primary-dark: #c94a2f;
+  --kengo-tertiary: #efc048;
+  --kengo-glass: rgba(255, 255, 255, 0.65);
+  --kengo-glass-strong: rgba(255, 255, 255, 0.85);
+  --kengo-border: rgba(255, 255, 255, 0.25);
+  --kengo-border-strong: rgba(255, 255, 255, 0.4);
+  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --kengo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* === Tarjeta Kengo Premium === */
 .tarjeta-kengo {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: var(--kengo-glass-strong);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--kengo-border-strong);
+  box-shadow: var(--kengo-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === Success Hero Section === */
+.success-hero {
+  text-align: center;
+  padding: 2rem 1rem;
+  animation: fadeInDown 0.5s ease-out;
+}
+
+.success-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
+  animation: successPulse 2s ease-in-out infinite;
+}
+
+.success-icon .material-symbols-outlined {
+  font-size: 48px;
+  color: white;
+}
+
+/* === Info Stat Card === */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.06), rgba(239, 192, 72, 0.04));
+  border: 1px solid rgba(231, 92, 62, 0.1);
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1), rgba(239, 192, 72, 0.06));
+  border-color: rgba(231, 92, 62, 0.2);
+}
+
+/* === Exercise Item Card === */
+.exercise-item {
+  display: flex;
+  align-items: start;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  animation: fadeInUp 0.4s ease-out backwards;
+}
+
+.exercise-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.exercise-item:nth-child(1) { animation-delay: 0.05s; }
+.exercise-item:nth-child(2) { animation-delay: 0.1s; }
+.exercise-item:nth-child(3) { animation-delay: 0.15s; }
+.exercise-item:nth-child(4) { animation-delay: 0.2s; }
+.exercise-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* === Action Buttons === */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+}
+
+.action-btn:active {
+  transform: scale(0.98);
+}
+
+.action-btn-secondary {
+  background: white;
+  border: 1.5px solid #e4e4e7;
+  color: #52525b;
+}
+
+.action-btn-secondary:hover {
+  background: #fafafa;
+  border-color: #d4d4d8;
+  color: #3f3f46;
+}
+
+.action-btn-outline {
+  background: white;
+  border: 1.5px solid var(--kengo-primary);
+  color: var(--kengo-primary);
+}
+
+.action-btn-outline:hover {
+  background: rgba(231, 92, 62, 0.05);
+}
+
+.action-btn-primary {
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  color: white;
+  box-shadow: 0 4px 14px rgba(231, 92, 62, 0.4);
+}
+
+.action-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 92, 62, 0.5);
+}
+
+/* === Progress Bar === */
+.progress-bar-indeterminate {
+  animation: progressIndeterminate 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--kengo-primary), var(--kengo-tertiary), var(--kengo-primary));
+  background-size: 200% 100%;
+}
+
+/* === Animaciones === */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes successPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 16px 40px rgba(16, 185, 129, 0.45);
+  }
+}
+
+@keyframes progressIndeterminate {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* === Empty State === */
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1), rgba(239, 192, 72, 0.1));
+  margin: 0 auto 1rem;
+}
+
+.empty-state-icon .material-symbols-outlined {
+  font-size: 40px;
+  color: var(--kengo-primary);
 }

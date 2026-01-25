@@ -1,154 +1,252 @@
-/* Tarjeta kengo - glassmorphism */
-.tarjeta-kengo {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+@reference "tailwindcss";
+
+/* ========================================
+   PLAN BUILDER - Kengo Design System
+   ======================================== */
+
+/* === Variables CSS === */
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-primary-dark: #c94a2f;
+  --kengo-tertiary: #efc048;
+  --kengo-glass: rgba(255, 255, 255, 0.65);
+  --kengo-glass-strong: rgba(255, 255, 255, 0.85);
+  --kengo-border: rgba(255, 255, 255, 0.25);
+  --kengo-border-strong: rgba(255, 255, 255, 0.4);
+  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --kengo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
 }
 
-/* Input compacto para edicion de ejercicios */
+/* === Tarjeta Kengo Premium === */
+.tarjeta-kengo {
+  background: var(--kengo-glass-strong);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--kengo-border-strong);
+  box-shadow: var(--kengo-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === Input Compacto Premium === */
 .input-compact {
   width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #e4e4e7;
-  border-radius: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #e4e4e7;
+  border-radius: 12px;
   background: white;
   font-size: 14px;
+  font-weight: 500;
   color: #3f3f46;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-compact:hover {
+  border-color: #d4d4d8;
 }
 
 .input-compact:focus {
   outline: none;
-  border-color: #e75c3e;
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+  border-color: var(--kengo-primary);
+  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.12);
 }
 
 .input-compact::placeholder {
   color: #a1a1aa;
+  font-weight: 400;
 }
 
-/* Textarea compacto */
 textarea.input-compact {
   height: auto;
-  padding: 10px 12px;
+  padding: 12px 14px;
   line-height: 1.5;
+  resize: none;
 }
 
-/* Botones de dias de la semana */
+/* === Botones de días de la semana === */
 .dia-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid #e4e4e7;
+  border: 2px solid #e4e4e7;
   background: white;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #71717a;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dia-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: inherit;
 }
 
 .dia-btn:hover {
-  border-color: #e75c3e;
-  color: #e75c3e;
+  border-color: var(--kengo-primary);
+  color: var(--kengo-primary);
+  transform: scale(1.05);
+}
+
+.dia-btn:active {
+  transform: scale(0.95);
 }
 
 .dia-btn--activo {
-  background: #e75c3e;
-  border-color: #e75c3e;
+  border-color: transparent;
   color: white;
+  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.4);
 }
 
-.dia-btn--activo:hover {
-  background: #d14e32;
-  border-color: #d14e32;
-  color: white;
+.dia-btn--activo::before {
+  opacity: 1;
 }
 
-/* Indicadores mini de dias (vista compacta) */
+.dia-btn--activo span,
+.dia-btn--activo {
+  position: relative;
+  z-index: 1;
+}
+
+/* === Indicadores mini de días (vista compacta) === */
 .dia-mini {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #f4f4f5;
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
   color: #a1a1aa;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .dia-mini--activo {
-  background: #e75c3e;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
   color: white;
+  box-shadow: 0 2px 6px rgba(231, 92, 62, 0.3);
 }
 
-/* Botones de duracion */
+/* === Botones de duración === */
 .duracion-btn {
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid #e4e4e7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1.5px solid #e4e4e7;
   background: white;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #71717a;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .duracion-btn:hover {
-  border-color: #e75c3e;
-  color: #e75c3e;
+  border-color: var(--kengo-primary);
+  color: var(--kengo-primary);
+  background: rgba(231, 92, 62, 0.05);
+}
+
+.duracion-btn:active {
+  transform: scale(0.97);
 }
 
 .duracion-btn--activo {
-  background: #e75c3e;
-  border-color: #e75c3e;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  border-color: transparent;
   color: white;
+  box-shadow: 0 4px 14px rgba(231, 92, 62, 0.4);
 }
 
 .duracion-btn--activo:hover {
-  background: #d14e32;
-  border-color: #d14e32;
+  background: linear-gradient(135deg, var(--kengo-primary-dark), #b03d28);
   color: white;
 }
 
-/* Boton de rango de fechas */
-.fecha-range-btn {
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #e4e4e7;
-  background: #fafafa;
+/* === Dropdown Menu Premium === */
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  min-width: 13rem;
+  padding: 0.375rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow:
+    0 20px 40px -8px rgba(0, 0, 0, 0.15),
+    0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.625rem;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #3f3f46;
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
+  text-decoration: none;
 }
 
-.fecha-range-btn:hover {
-  border-color: #e75c3e;
-  background: white;
+.dropdown-item:hover {
+  background: rgba(231, 92, 62, 0.08);
+  color: var(--kengo-primary);
 }
 
-/* Ocultar el input de fecha real */
-.hidden-date-input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
+.dropdown-item:active {
+  background: rgba(231, 92, 62, 0.15);
 }
 
-/* CDK Drag & Drop */
+/* === Exercise Card en modo edición === */
+.exercise-card-editing {
+  border: 2px solid var(--kengo-primary);
+  box-shadow: 0 8px 32px rgba(231, 92, 62, 0.15);
+}
+
+/* === Drag Handle === */
+.drag-handle {
+  cursor: grab;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* === CDK Drag & Drop === */
 .cdk-drag-preview {
   z-index: 1000;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
 }
 
 .cdk-drag-placeholder {
@@ -156,27 +254,204 @@ textarea.input-compact {
 }
 
 .cdk-drag-animating {
-  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cdk-drop-list-dragging .tarjeta-kengo:not(.cdk-drag-placeholder) {
-  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Animate spinner */
+/* === Progress Bar Indeterminate === */
+.progress-bar-indeterminate {
+  animation: progressIndeterminate 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--kengo-primary), var(--kengo-tertiary), var(--kengo-primary));
+  background-size: 200% 100%;
+}
+
+/* === CTA Button fijo === */
+.cta-button-fixed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 52px;
+  padding: 0 2rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(231, 92, 62, 0.45);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-button-fixed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.cta-button-fixed:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(231, 92, 62, 0.55);
+}
+
+.cta-button-fixed:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.cta-button-fixed:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.cta-button-fixed:disabled {
+  background: #d4d4d8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* === Spinner animation === */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
 .animate-spin {
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
-/* Line clamp */
+/* === Line clamp === */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* === Animaciones === */
+@keyframes progressIndeterminate {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95);
+    transform-origin: top;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+/* === Staggered animation para ejercicios === */
+.exercise-item {
+  animation: fadeInUp 0.35s ease-out backwards;
+}
+
+.exercise-item:nth-child(1) { animation-delay: 0.05s; }
+.exercise-item:nth-child(2) { animation-delay: 0.1s; }
+.exercise-item:nth-child(3) { animation-delay: 0.15s; }
+.exercise-item:nth-child(4) { animation-delay: 0.2s; }
+.exercise-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* === Empty State Icon === */
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1), rgba(239, 192, 72, 0.1));
+  margin-bottom: 1rem;
+}
+
+.empty-state-icon .material-symbols-outlined {
+  font-size: 40px;
+  color: var(--kengo-primary);
+}
+
+/* === Date Range Box === */
+.date-range-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #e4e4e7;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.03), rgba(239, 192, 72, 0.03));
+  transition: all 0.2s ease;
+}
+
+.date-range-box:hover {
+  border-color: rgba(231, 92, 62, 0.3);
+}
+
+.date-range-box:focus-within {
+  border-color: var(--kengo-primary);
+  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+}
+
+/* === Quick Action Button === */
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--kengo-glass);
+  border: 1px solid var(--kengo-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #52525b;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.quick-action-btn:hover {
+  background: rgba(231, 92, 62, 0.1);
+  border-color: rgba(231, 92, 62, 0.3);
+  color: var(--kengo-primary);
+  transform: translateY(-2px);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.95);
 }
