@@ -281,7 +281,7 @@
 .overlay-btn.primary { @apply bg-gradient-to-br from-[#e75c3e] to-[#c94a2f] text-white; box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35); }
 .overlay-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(231, 92, 62, 0.45); }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .profile-main { padding-bottom: 32px; }
 
   /* En desktop: header integrado al contenido, no sticky separado */

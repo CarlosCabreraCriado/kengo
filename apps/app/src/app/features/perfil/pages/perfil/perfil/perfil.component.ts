@@ -42,12 +42,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
   private breakpointObserver = inject(BreakpointObserver);
 
-  // Detectar si estamos en desktop (>= 1024px)
-  isDesktop = toSignal(
+  // Detectar si estamos en móvil (< 768px) - alineado con navegación general
+  isMobile = toSignal(
     this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.DESKTOP])
+      .observe([KENGO_BREAKPOINTS.MOBILE])
       .pipe(map((result) => result.matches)),
-    { initialValue: false }
+    { initialValue: true }
   );
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;

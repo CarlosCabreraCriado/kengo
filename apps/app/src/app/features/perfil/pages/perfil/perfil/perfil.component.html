@@ -10,18 +10,18 @@
   <header class="profile-header">
     <div class="header-content">
       <div class="header-left">
-        @if (!isDesktop()) {
+        @if (isMobile()) {
           <a class="back-btn" aria-label="Volver" routerLink="/inicio">
             <span class="material-symbols-outlined">arrow_back</span>
           </a>
         }
         <div class="header-title-group">
           <h1 class="titulo-kengo header-title">Mi Perfil</h1>
-          @if (usuario() && !isDesktop()) {
+          @if (usuario() && isMobile()) {
             <p class="header-subtitle">Gestiona tu cuenta</p>
           }
         </div>
-        @if (usuario() && isDesktop()) {
+        @if (usuario() && !isMobile()) {
           <div class="header-actions">
             <button
               class="action-btn save-btn"
@@ -36,7 +36,7 @@
           </div>
         }
       </div>
-      @if (usuario() && !isDesktop()) {
+      @if (usuario() && isMobile()) {
         <div class="header-actions">
           <button
             class="action-btn save-btn"
