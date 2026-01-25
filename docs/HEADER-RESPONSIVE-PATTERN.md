@@ -166,7 +166,7 @@ export class MiComponente {
 ## Componentes Aplicados
 
 - [x] `ejercicios-list` - Catálogo de ejercicios
-- [ ] `pacientes-list` - Lista de pacientes
+- [x] `pacientes-list` - Lista de pacientes
 - [ ] `planes` - Gestión de planes
 - [ ] `ejercicio-detail` - Detalle de ejercicio
 - [ ] `perfil` - Perfil de usuario

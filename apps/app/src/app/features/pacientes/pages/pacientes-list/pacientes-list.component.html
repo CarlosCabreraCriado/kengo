@@ -6,52 +6,145 @@
     <div class="aurora-wave aurora-wave-3"></div>
   </div>
 
-  <!-- Compact Header -->
-  <header class="patients-header">
-    <div class="header-content">
-      <div class="header-left">
-        @if (!isDesktop()) {
-          <a class="back-btn" aria-label="Volver" routerLink="/inicio">
-            <span class="material-symbols-outlined">arrow_back</span>
-          </a>
+  <!-- Header Responsivo Alineado con Navegación -->
+  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+    <div class="mx-auto max-w-6xl">
+
+      <!-- MÓVIL: Header completo con título y navegación -->
+      @if (isMovil()) {
+        <div class="mb-4 flex items-center justify-between">
+          <!-- Botón volver + Título -->
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              routerLink="/inicio"
+              class="flex h-10 w-10 items-center justify-center rounded-xl
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-600 transition-all duration-200
+                     hover:bg-white/80 hover:scale-105 active:scale-95"
+              aria-label="Volver al inicio"
+            >
+              <span class="material-symbols-outlined text-xl">arrow_back</span>
+            </button>
+            <div>
+              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Mis Pacientes</h1>
+              @if (pacientes().length > 0) {
+                <p class="text-xs font-medium text-zinc-500">
+                  {{ pacientes().length }} {{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- Acciones rápidas (solo iconos en móvil) -->
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-xl
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-500 transition-all duration-200
+                     hover:bg-white/80 hover:text-[#e75c3e] active:scale-95"
+              aria-label="Recargar"
+              (click)="reload()"
+            >
+              <span class="material-symbols-outlined text-xl">refresh</span>
+            </button>
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-xl
+                     bg-[#e75c3e] text-white transition-all duration-200
+                     hover:bg-[#c94a2f] hover:scale-105 active:scale-95
+                     shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
+              aria-label="Añadir paciente"
+              (click)="openAddPaciente()"
+            >
+              <span class="material-symbols-outlined text-xl icon-filled">person_add</span>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Barra de controles (siempre visible) -->
+      <div class="flex items-center gap-2">
+        <!-- DESKTOP: Información compacta al inicio -->
+        @if (!isMovil() && pacientes().length > 0) {
+          <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
+            <span class="text-sm font-bold text-[#e75c3e]">{{ pacientes().length }}</span>
+            <span class="text-xs text-zinc-500">{{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}</span>
+          </div>
         }
-        <div class="header-title-group">
-          <h1 class="titulo-kengo header-title">Mis Pacientes</h1>
-          @if (pacientes().length > 0) {
-            <span class="patient-count">{{ pacientes().length }} {{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}</span>
+
+        <!-- Barra de búsqueda -->
+        <div class="relative flex-1">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#e75c3e] text-xl pointer-events-none">search</span>
+          <input
+            #buscador
+            type="text"
+            class="w-full h-12 pl-11 pr-10 rounded-2xl
+                   bg-white/70 border border-white/40
+                   text-zinc-700 text-sm
+                   transition-all outline-none
+                   focus:border-[#e75c3e]/40 focus:bg-white/90
+                   backdrop-blur-sm"
+            placeholder="Buscar por nombre, email..."
+            (input)="onBuscar(buscador.value)"
+          />
+          @if (buscador.value) {
+            <button
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full
+                     bg-transparent text-zinc-400 flex items-center justify-center
+                     cursor-pointer transition-all border-none hover:bg-zinc-100 hover:text-zinc-600"
+              aria-label="Borrar búsqueda"
+              (click)="buscador.value = ''; onBuscar('')"
+            >
+              <span class="material-symbols-outlined text-lg">close</span>
+            </button>
           }
         </div>
-      </div>
-      <div class="header-actions">
-        <button class="action-btn" aria-label="Recargar" (click)="reload()">
-          <span class="material-symbols-outlined">refresh</span>
-        </button>
-        <button class="action-btn primary-action" (click)="openAddPaciente()" aria-label="Añadir paciente">
-          <span class="material-symbols-outlined icon-filled">person_add</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- Search Bar -->
-    <div class="search-container">
-      <div class="search-bar">
-        <span class="material-symbols-outlined search-icon">search</span>
-        <input
-          #buscador
-          type="text"
-          class="search-input"
-          placeholder="Buscar por nombre, email..."
-          (input)="onBuscar(buscador.value)"
-        />
-        @if (buscador.value) {
-          <button class="clear-btn" aria-label="Borrar búsqueda" (click)="buscador.value = ''; onBuscar('')">
-            <span class="material-symbols-outlined">close</span>
-          </button>
+        <!-- Toggle de vista -->
+        <button
+          type="button"
+          class="flex h-12 w-12 items-center justify-center rounded-2xl
+                 bg-white/70 backdrop-blur-md border border-white/40
+                 text-zinc-600 transition-all duration-200
+                 hover:bg-white/90 hover:text-[#e75c3e] active:scale-95"
+          (click)="vista.set(vista() === 'card' ? 'lista' : 'card')"
+          aria-label="Cambiar vista"
+        >
+          <span class="material-symbols-outlined text-xl">{{ vista() === 'card' ? 'view_list' : 'grid_view' }}</span>
+        </button>
+
+        <!-- DESKTOP: Acciones con etiquetas de texto -->
+        @if (!isMovil()) {
+          <div class="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200/50">
+            <button
+              type="button"
+              class="flex h-10 items-center gap-1.5 rounded-full px-3
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-600 transition-all duration-200
+                     hover:bg-white/80 hover:text-[#e75c3e] active:scale-95"
+              (click)="reload()"
+            >
+              <span class="material-symbols-outlined text-lg">refresh</span>
+              <span class="text-xs font-semibold">Recargar</span>
+            </button>
+            <button
+              type="button"
+              class="flex h-10 items-center gap-1.5 rounded-full px-4
+                     bg-[#e75c3e] text-white transition-all duration-200
+                     hover:bg-[#c94a2f] hover:scale-105 active:scale-95
+                     shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
+              (click)="openAddPaciente()"
+            >
+              <span class="material-symbols-outlined text-lg icon-filled">person_add</span>
+              <span class="text-xs font-semibold">Añadir</span>
+            </button>
+          </div>
         }
       </div>
-      <button class="view-toggle" (click)="vista.set(vista() === 'card' ? 'lista' : 'card')" aria-label="Cambiar vista">
-        <span class="material-symbols-outlined">{{ vista() === 'card' ? 'view_list' : 'grid_view' }}</span>
-      </button>
+
     </div>
   </header>
 
@@ -217,7 +310,7 @@
   </main>
 
   <!-- Floating Action Button (Mobile only) -->
-  @if (!isDesktop() && pacientes().length > 0) {
+  @if (isMovil() && pacientes().length > 0) {
     <button class="fab" (click)="openAddPaciente()" aria-label="Añadir paciente">
       <span class="material-symbols-outlined icon-filled">person_add</span>
     </button>
