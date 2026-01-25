@@ -10,14 +10,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
-import { ContadorSeriesComponent } from '../../componentes/contador-series/contador-series.component';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { fadeAnimation } from '../../realizar-plan.animations';
 
 @Component({
   selector: 'app-ejercicio-activo',
   standalone: true,
-  imports: [CommonModule, ContadorSeriesComponent, TemporizadorComponent],
+  imports: [CommonModule, TemporizadorComponent],
   animations: [fadeAnimation],
   template: `
     <!-- Contenedor principal con gestos -->
