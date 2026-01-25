@@ -26,61 +26,30 @@
 }
 
 /* ============================================
-   AURORA BACKGROUND
-   ============================================ */
-.aurora-bg {
-  @apply fixed inset-0 pointer-events-none overflow-hidden z-0;
-}
-
-.aurora-wave {
-  @apply absolute rounded-full;
-  filter: blur(70px);
-  opacity: 0.5;
-  mix-blend-mode: multiply;
-}
-
-.aurora-wave-1 {
-  @apply w-[350px] h-[350px] -top-24 -right-24;
-  background: radial-gradient(circle, rgba(231, 92, 62, 0.45) 0%, transparent 70%);
-  animation: auroraFloat1 14s ease-in-out infinite;
-}
-
-.aurora-wave-2 {
-  @apply w-[280px] h-[280px] top-1/2 -left-24;
-  background: radial-gradient(circle, rgba(239, 192, 72, 0.4) 0%, transparent 70%);
-  animation: auroraFloat2 18s ease-in-out infinite;
-}
-
-.aurora-wave-3 {
-  @apply w-[220px] h-[220px] bottom-40 right-16;
-  background: radial-gradient(circle, rgba(255, 180, 164, 0.35) 0%, transparent 70%);
-  animation: auroraFloat3 12s ease-in-out infinite;
-}
-
-@keyframes auroraFloat1 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-  50% { transform: translate(-40px, 50px) scale(1.2); opacity: 0.7; }
-}
-
-@keyframes auroraFloat2 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
-  50% { transform: translate(50px, -30px) scale(1.15); opacity: 0.6; }
-}
-
-@keyframes auroraFloat3 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
-  50% { transform: translate(-30px, -40px) scale(1.25); opacity: 0.55; }
-}
-
-/* ============================================
    HEADER
    ============================================ */
 .dashboard-header {
   @apply sticky top-0 z-50 w-full shrink-0;
   padding: env(safe-area-inset-top, 12px) 16px 12px;
-  background: linear-gradient(180deg, rgba(254, 248, 247, 0.95) 0%, rgba(254, 248, 247, 0.7) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* Desktop: transparente, móvil aplica glassmorphism vía media query */
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Glassmorphism y padding aumentado en móvil */
+@media (max-width: 767.98px) {
+  .dashboard-header {
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px 16px;
+    background: linear-gradient(
+      to bottom,
+      rgba(254, 248, 247, 0.95) 0%,
+      rgba(254, 248, 247, 0.85) 60%,
+      rgba(254, 248, 247, 0) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }
 
 .header-content {
@@ -107,6 +76,83 @@
 
 .avatar-btn .material-symbols-outlined {
   @apply text-white text-xl;
+}
+
+.avatar-btn.menu-open {
+  @apply ring-2 ring-[#e75c3e]/50 ring-offset-2;
+}
+
+/* Avatar Menu Container */
+.avatar-menu-container {
+  @apply relative;
+}
+
+/* Menú desplegable de usuario */
+.user-menu {
+  @apply absolute top-full right-0 mt-2 w-48 z-[100]
+         rounded-2xl overflow-hidden
+         flex flex-col;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: menuSlideIn 0.2s ease-out;
+}
+
+@keyframes menuSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.menu-item {
+  @apply flex items-center gap-3 px-4 py-3
+         text-sm font-medium text-zinc-700
+         cursor-pointer transition-all
+         border-none bg-transparent w-full text-left;
+}
+
+.menu-item:hover {
+  @apply bg-zinc-100;
+}
+
+.menu-item:active {
+  @apply bg-zinc-200;
+}
+
+.menu-item .material-symbols-outlined {
+  @apply text-xl text-zinc-500;
+}
+
+.menu-item:hover .material-symbols-outlined {
+  @apply text-[#e75c3e];
+}
+
+.menu-item-danger {
+  @apply text-red-600 border-t border-zinc-100;
+}
+
+.menu-item-danger .material-symbols-outlined {
+  @apply text-red-500;
+}
+
+.menu-item-danger:hover {
+  @apply bg-red-50;
+}
+
+.menu-item-danger:hover .material-symbols-outlined {
+  @apply text-red-600;
+}
+
+/* Backdrop para cerrar menú */
+.menu-backdrop {
+  @apply fixed inset-0 z-[99];
 }
 
 /* Desktop Greeting Section */
@@ -139,6 +185,33 @@
 
 .greeting-subtitle {
   @apply text-sm text-zinc-500 m-0 mt-0.5;
+}
+
+/* Botón logout desktop */
+.logout-btn-desktop {
+  @apply flex items-center gap-2 h-10 px-4
+         rounded-xl border-none cursor-pointer
+         text-sm font-medium text-zinc-600
+         transition-all duration-200;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.logout-btn-desktop:hover {
+  @apply text-red-600 bg-red-50;
+  border-color: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.logout-btn-desktop:active {
+  @apply scale-95;
+}
+
+.logout-btn-desktop .material-symbols-outlined {
+  @apply text-lg;
 }
 
 /* ============================================
@@ -573,6 +646,16 @@
   .actions-grid {
     @apply grid-cols-2;
   }
+
+  /* Ocultar tarjeta de saludo en desktop (navegación ya provee contexto) */
+  .greeting-card {
+    @apply hidden;
+  }
+
+  /* Header con más padding en desktop */
+  .dashboard-header {
+    @apply py-5;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -583,11 +666,6 @@
   .dashboard-main {
     @apply px-8 pt-0 gap-6;
     padding-bottom: 32px;
-  }
-
-  /* Hide mobile greeting card on desktop */
-  .greeting-card {
-    @apply hidden;
   }
 
   /* Activity Hero - larger on desktop */

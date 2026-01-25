@@ -14,6 +14,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { SessionService } from '../../../../../core/auth/services/session.service';
+import { AuthService } from '../../../../../core/auth/services/auth.service';
 import {
   ActividadHoyService,
   BadgeType,
@@ -44,18 +45,22 @@ interface CardOption {
 })
 export class InicioComponent implements OnDestroy {
   private sessionService = inject(SessionService);
+  private authService = inject(AuthService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
 
   carouselRef = viewChild<ElementRef<HTMLDivElement>>('carousel');
 
-  // Detectar si estamos en desktop (>= 1024px)
-  isDesktop = toSignal(
+  // Estado del menú de usuario
+  menuAbierto = signal(false);
+
+  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
+  isMovil = toSignal(
     this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.DESKTOP])
+      .observe([KENGO_BREAKPOINTS.MOBILE])
       .pipe(map((result) => result.matches)),
-    { initialValue: false },
+    { initialValue: true },
   );
 
   userRole = this.sessionService.rolUsuario;
@@ -238,4 +243,22 @@ export class InicioComponent implements OnDestroy {
     this.router.navigate([card.route]);
   }
 
+  // Métodos del menú de usuario
+  toggleMenu(): void {
+    this.menuAbierto.update((v) => !v);
+  }
+
+  cerrarMenu(): void {
+    this.menuAbierto.set(false);
+  }
+
+  irAPerfil(): void {
+    this.cerrarMenu();
+    this.router.navigate(['/perfil']);
+  }
+
+  async cerrarSesion(): Promise<void> {
+    this.cerrarMenu();
+    await this.authService.logout();
+  }
 }

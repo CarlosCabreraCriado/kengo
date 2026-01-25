@@ -1,18 +1,12 @@
 <section class="dashboard-page">
-  <!-- Aurora Background -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-    <div class="aurora-wave aurora-wave-3"></div>
-  </div>
-
   <!-- Header -->
   <header class="dashboard-header">
     <div class="header-content">
-      <!-- Logo (mobile) / User greeting (desktop) -->
-      @if (!isDesktop()) {
+      <!-- MÓVIL: Logo + Avatar -->
+      @if (isMovil()) {
         <img src="assets/logo-kengo-horizontal.svg" alt="Kengo" class="logo" />
       } @else {
+        <!-- DESKTOP: Saludo con avatar grande -->
         <div class="greeting-section">
           <div class="user-avatar-large">
             @if (userAvatar()) {
@@ -26,29 +20,76 @@
             <p class="greeting-subtitle">¿Qué quieres hacer hoy?</p>
           </div>
         </div>
-      }
 
-      <!-- User avatar (mobile) -->
-      @if (!isDesktop()) {
+        <!-- DESKTOP: Botón logout -->
         <button
           type="button"
-          class="avatar-btn"
-          aria-label="Ver perfil"
+          class="logout-btn-desktop"
+          (click)="cerrarSesion()"
+          aria-label="Cerrar sesión"
         >
-          @if (userAvatar()) {
-            <img [src]="userAvatar()" alt="Avatar" class="avatar-img" />
-          } @else {
-            <span class="material-symbols-outlined">person</span>
-          }
+          <span class="material-symbols-outlined">logout</span>
+          <span>Salir</span>
         </button>
+      }
+
+      <!-- Avatar con menú desplegable (solo móvil) -->
+      @if (isMovil()) {
+        <div class="avatar-menu-container">
+          <button
+            type="button"
+            class="avatar-btn"
+            [class.menu-open]="menuAbierto()"
+            (click)="toggleMenu()"
+            aria-label="Abrir menú de usuario"
+            [attr.aria-expanded]="menuAbierto()"
+          >
+            @if (userAvatar()) {
+              <img [src]="userAvatar()" alt="Avatar" class="avatar-img" />
+            } @else {
+              <span class="material-symbols-outlined">person</span>
+            }
+          </button>
+
+          <!-- Menú desplegable -->
+          @if (menuAbierto()) {
+            <div class="user-menu" role="menu">
+              <button
+                type="button"
+                class="menu-item"
+                role="menuitem"
+                (click)="irAPerfil()"
+              >
+                <span class="material-symbols-outlined">person</span>
+                <span>Mi perfil</span>
+              </button>
+              <button
+                type="button"
+                class="menu-item menu-item-danger"
+                role="menuitem"
+                (click)="cerrarSesion()"
+              >
+                <span class="material-symbols-outlined">logout</span>
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
+
+            <!-- Backdrop para cerrar el menú -->
+            <div
+              class="menu-backdrop"
+              (click)="cerrarMenu()"
+              aria-hidden="true"
+            ></div>
+          }
+        </div>
       }
     </div>
   </header>
 
   <!-- Main Content -->
   <main class="dashboard-main">
-    <!-- Mobile Greeting Card -->
-    @if (!isDesktop()) {
+    <!-- Tarjeta de saludo (solo móvil) -->
+    @if (isMovil()) {
       <section class="greeting-card animate-in">
         <div class="greeting-card-content">
           <h2 class="titulo-kengo greeting-title">Hola, {{ userName() }}</h2>
@@ -181,8 +222,8 @@
     </section>
   </main>
 
-  <!-- Mobile Carousel View (Alternative layout kept for reference, hidden) -->
-  @if (false && !isDesktop()) {
+  <!-- Vista carrusel móvil (layout alternativo, oculto) -->
+  @if (false && isMovil()) {
     <div class="carousel-wrapper">
       <div #carousel class="carousel">
         @for (card of cards(); track card.id; let i = $index) {
