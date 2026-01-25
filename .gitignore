@@ -28,7 +28,6 @@ nxcloud.env
 *.launch
 .settings/
 *.sublime-workspace
-/docs
 
 # Visual Studio Code
 .vscode/*
