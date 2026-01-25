@@ -6,9 +6,9 @@
     <div class="aurora-wave aurora-wave-3"></div>
   </div>
 
-  <!-- Compact Header -->
-  @if (!isDesktop()) {
-    <header class="activity-header">
+  <!-- Compact Header - Solo móvil (< 768px) -->
+  @if (isMovil()) {
+    <header class="activity-header header-glass">
       <div class="header-content">
         <div class="header-left">
           <button
@@ -39,7 +39,7 @@
   }
 
   <!-- Main Content -->
-  <main class="activity-main" [class.pt-desktop]="isDesktop()">
+  <main class="activity-main" [class.pt-desktop]="!isMovil()">
     <!-- Loading State -->
     @if (cargando()) {
       <div class="state-card loading-state">
