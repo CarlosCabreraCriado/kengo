@@ -12,16 +12,13 @@
       <!-- Titulo y boton volver (mobile) -->
       @if (!isDesktop()) {
         <div class="mb-4 flex items-center gap-2">
-          <button
-            mat-icon-button
-            class="!h-10 !w-10 shrink-0"
-            aria-label="Volver al inicio"
+          <a
             routerLink="/inicio"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-zinc-100"
+            aria-label="Volver al inicio"
           >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >arrow_back</mat-icon
-            >
-          </button>
+            <span class="material-symbols-outlined text-zinc-600">arrow_back</span>
+          </a>
           <h1 class="titulo-kengo text-xl font-bold text-zinc-800">Planes y rutinas</h1>
         </div>
       }
@@ -36,9 +33,7 @@
             [class.tab-pill-active]="tabActiva() === 'mis-planes'"
             (click)="onTabChange(0)"
           >
-            <mat-icon class="material-symbols-outlined tab-icon"
-              >assignment_ind</mat-icon
-            >
+            <span class="material-symbols-outlined tab-icon">assignment_ind</span>
             <span class="tab-label">Mis Planes</span>
           </button>
 
@@ -50,9 +45,7 @@
               [class.tab-pill-active]="tabActiva() === 'planes-pacientes'"
               (click)="onTabChange(1)"
             >
-              <mat-icon class="material-symbols-outlined tab-icon"
-                >groups</mat-icon
-              >
+              <span class="material-symbols-outlined tab-icon">groups</span>
               <span class="tab-label">Pacientes</span>
             </button>
           }
@@ -64,9 +57,7 @@
             [class.tab-pill-active]="tabActiva() === 'rutinas'"
             (click)="onTabChange(isFisio() ? 2 : 1)"
           >
-            <mat-icon class="material-symbols-outlined tab-icon"
-              >bookmarks</mat-icon
-            >
+            <span class="material-symbols-outlined tab-icon">bookmarks</span>
             <span class="tab-label">Rutinas</span>
           </button>
         </div>
@@ -81,14 +72,13 @@
       @if (tabActiva() === "mis-planes") {
         @if (isLoadingMisPlanes()) {
           <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <div class="h-1 overflow-hidden rounded-full bg-zinc-200">
+              <div class="progress-bar-indeterminate h-full w-1/3 bg-[#e75c3e]"></div>
+            </div>
           </div>
         } @else if (misPlanes().length === 0) {
           <div class="tarjeta-kengo rounded-2xl p-8 text-center">
-            <mat-icon
-              class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
-              >assignment</mat-icon
-            >
+            <span class="material-symbols-outlined mb-3 text-5xl text-zinc-300">assignment</span>
             <p class="text-lg text-zinc-500">No tienes planes asignados</p>
             <p class="mt-1 text-sm text-zinc-400">
               Tu fisioterapeuta te asignara planes de ejercicios
@@ -103,11 +93,9 @@
               >
                 <div class="flex items-start gap-4">
                   <div
-                    class="bg-primary/10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
+                    class="bg-[#e75c3e]/10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
                   >
-                    <mat-icon class="material-symbols-outlined text-primary"
-                      >assignment</mat-icon
-                    >
+                    <span class="material-symbols-outlined text-[#e75c3e]">assignment</span>
                   </div>
                   <div class="min-w-0 flex-1">
                     <div class="flex items-start justify-between gap-2">
@@ -126,18 +114,14 @@
                     <p
                       class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
                     >
-                      <mat-icon class="material-symbols-outlined !text-base"
-                        >medical_services</mat-icon
-                      >
+                      <span class="material-symbols-outlined text-base">medical_services</span>
                       {{ getFisioNombre(plan) }}
                     </p>
                     @if (plan.fecha_inicio || plan.fecha_fin) {
                       <p
                         class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
                       >
-                        <mat-icon class="material-symbols-outlined !text-base"
-                          >calendar_today</mat-icon
-                        >
+                        <span class="material-symbols-outlined text-base">calendar_today</span>
                         {{ formatDate(plan.fecha_inicio) }}
                         @if (plan.fecha_fin) {
                           - {{ formatDate(plan.fecha_fin) }}
@@ -157,10 +141,7 @@
         <!-- Filtros -->
         <div class="mb-4 flex flex-row flex-wrap items-center gap-3">
           <div class="relative min-w-0 flex-1">
-            <mat-icon
-              class="material-symbols-outlined !text-primary absolute top-1/2 left-3 z-10 -translate-y-1/2"
-              >search</mat-icon
-            >
+            <span class="material-symbols-outlined absolute top-1/2 left-3 z-10 -translate-y-1/2 text-[#e75c3e]">search</span>
             <input
               #buscador
               type="text"
@@ -176,97 +157,104 @@
                 aria-label="Borrar busqueda"
                 (click)="buscador.value = ''; onBusquedaChange('')"
               >
-                <mat-icon class="material-symbols-outlined !text-xl"
-                  >close</mat-icon
-                >
+                <span class="material-symbols-outlined text-xl">close</span>
               </button>
             }
           </div>
 
-          <button
-            mat-icon-button
-            [matMenuTriggerFor]="menuEstado"
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
-            [class.!border-primary]="filtroEstado !== 'todos'"
-            aria-label="Filtrar por estado"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >filter_alt</mat-icon
+          <!-- Filter dropdown -->
+          <div class="relative">
+            <button
+              type="button"
+              class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-white/70 shadow-sm backdrop-blur-sm hover:bg-zinc-50"
+              [class.border-[#e75c3e]]="filtroEstado !== 'todos'"
+              aria-label="Filtrar por estado"
+              (click)="menuEstadoOpen = !menuEstadoOpen"
             >
-          </button>
+              <span class="material-symbols-outlined text-zinc-600">filter_alt</span>
+            </button>
+            @if (menuEstadoOpen) {
+              <div class="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-xl bg-white py-1 shadow-lg ring-1 ring-zinc-200">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                  (click)="onFiltroEstadoChange('todos'); menuEstadoOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl">list</span>
+                  <span>Todos</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                  (click)="onFiltroEstadoChange('activo'); menuEstadoOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl text-green-600">play_arrow</span>
+                  <span>Activos</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                  (click)="onFiltroEstadoChange('completado'); menuEstadoOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl text-blue-600">check_circle</span>
+                  <span>Completados</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                  (click)="onFiltroEstadoChange('borrador'); menuEstadoOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl text-zinc-500">edit_note</span>
+                  <span>Borradores</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                  (click)="onFiltroEstadoChange('cancelado'); menuEstadoOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl text-red-600">cancel</span>
+                  <span>Cancelados</span>
+                </button>
+              </div>
+            }
+          </div>
 
           <button
-            mat-icon-button
-            class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm backdrop-blur-sm"
+            type="button"
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-white/70 shadow-sm backdrop-blur-sm hover:bg-zinc-50"
             aria-label="Recargar datos"
             (click)="reload()"
           >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >refresh</mat-icon
-            >
+            <span class="material-symbols-outlined text-zinc-600">refresh</span>
           </button>
 
           <button
-            mat-flat-button
-            color="primary"
-            class="!h-12 w-full shrink-0 sm:w-auto"
+            type="button"
+            class="inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#e75c3e] px-4 text-sm font-medium text-white shadow-sm hover:bg-[#d14e32] sm:w-auto"
             (click)="crearNuevoPlan()"
           >
-            <mat-icon class="material-symbols-outlined">add</mat-icon>
+            <span class="material-symbols-outlined">add</span>
             Nuevo plan
           </button>
-
-          <mat-menu #menuEstado="matMenu" xPosition="before" class="mt-2">
-            <button mat-menu-item (click)="onFiltroEstadoChange('todos')">
-              <mat-icon class="material-symbols-outlined">list</mat-icon>
-              <span>Todos</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('activo')">
-              <mat-icon class="material-symbols-outlined text-green-600"
-                >play_arrow</mat-icon
-              >
-              <span>Activos</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('completado')">
-              <mat-icon class="material-symbols-outlined text-blue-600"
-                >check_circle</mat-icon
-              >
-              <span>Completados</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('borrador')">
-              <mat-icon class="material-symbols-outlined text-zinc-500"
-                >edit_note</mat-icon
-              >
-              <span>Borradores</span>
-            </button>
-            <button mat-menu-item (click)="onFiltroEstadoChange('cancelado')">
-              <mat-icon class="material-symbols-outlined text-red-600"
-                >cancel</mat-icon
-              >
-              <span>Cancelados</span>
-            </button>
-          </mat-menu>
         </div>
 
         <!-- Lista de planes -->
         @if (isLoadingPlanes()) {
           <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <div class="h-1 overflow-hidden rounded-full bg-zinc-200">
+              <div class="progress-bar-indeterminate h-full w-1/3 bg-[#e75c3e]"></div>
+            </div>
           </div>
         } @else if (planes().length === 0) {
           <div class="tarjeta-kengo rounded-2xl p-8 text-center">
-            <mat-icon
-              class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
-              >assignment</mat-icon
-            >
+            <span class="material-symbols-outlined mb-3 text-5xl text-zinc-300">assignment</span>
             <p class="text-lg text-zinc-500">No se encontraron planes</p>
             <button
-              mat-flat-button
-              color="primary"
-              class="mt-4"
+              type="button"
+              class="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#e75c3e] px-6 text-sm font-medium text-white hover:bg-[#d14e32]"
               (click)="crearNuevoPlan()"
             >
-              <mat-icon class="material-symbols-outlined">add</mat-icon>
+              <span class="material-symbols-outlined">add</span>
               Crear primer plan
             </button>
           </div>
@@ -288,10 +276,7 @@
                       <div
                         class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-500 shadow-sm"
                       >
-                        <mat-icon
-                          class="material-symbols-outlined text-2xl !text-white"
-                          >person</mat-icon
-                        >
+                        <span class="material-symbols-outlined text-2xl text-white">person</span>
                       </div>
                     }
                   </div>
@@ -314,9 +299,7 @@
                     <p
                       class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
                     >
-                      <mat-icon class="material-symbols-outlined !text-base"
-                        >person</mat-icon
-                      >
+                      <span class="material-symbols-outlined text-base">person</span>
                       {{ getPacienteNombre(plan) }}
                     </p>
 
@@ -324,9 +307,7 @@
                       <p
                         class="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-500"
                       >
-                        <mat-icon class="material-symbols-outlined !text-base"
-                          >calendar_today</mat-icon
-                        >
+                        <span class="material-symbols-outlined text-base">calendar_today</span>
                         {{ formatDate(plan.fecha_inicio) }}
                         @if (plan.fecha_fin) {
                           - {{ formatDate(plan.fecha_fin) }}
@@ -340,75 +321,68 @@
                   class="mt-4 flex items-center justify-end gap-1 border-t border-zinc-100 pt-3"
                 >
                   <button
-                    mat-icon-button
-                    class="!h-10 !w-10"
-                    color="primary"
+                    type="button"
+                    class="flex h-10 w-10 items-center justify-center rounded-full text-[#e75c3e] hover:bg-[#e75c3e]/10"
                     aria-label="Ver resumen"
                     (click)="verResumen(plan)"
                   >
-                    <mat-icon class="material-symbols-outlined"
-                      >visibility</mat-icon
-                    >
+                    <span class="material-symbols-outlined">visibility</span>
                   </button>
 
                   <button
-                    mat-icon-button
-                    class="!h-10 !w-10"
-                    color="primary"
+                    type="button"
+                    class="flex h-10 w-10 items-center justify-center rounded-full text-[#e75c3e] hover:bg-[#e75c3e]/10"
                     aria-label="Editar plan"
                     (click)="editarPlan(plan)"
                   >
-                    <mat-icon class="material-symbols-outlined">edit</mat-icon>
+                    <span class="material-symbols-outlined">edit</span>
                   </button>
 
-                  <button
-                    mat-icon-button
-                    class="!h-10 !w-10"
-                    [matMenuTriggerFor]="menuEstadoPlan"
-                    aria-label="Cambiar estado"
-                  >
-                    <mat-icon class="material-symbols-outlined text-zinc-600"
-                      >more_vert</mat-icon
+                  <!-- More menu for plan status -->
+                  <div class="relative">
+                    <button
+                      type="button"
+                      class="flex h-10 w-10 items-center justify-center rounded-full text-zinc-600 hover:bg-zinc-100"
+                      aria-label="Cambiar estado"
+                      (click)="togglePlanMenu(plan.id_plan)"
                     >
-                  </button>
-
-                  <mat-menu #menuEstadoPlan="matMenu">
-                    @if (plan.estado !== "activo") {
-                      <button
-                        mat-menu-item
-                        (click)="cambiarEstado(plan, 'activo')"
-                      >
-                        <mat-icon
-                          class="material-symbols-outlined text-green-600"
-                          >play_arrow</mat-icon
-                        >
-                        <span>Marcar activo</span>
-                      </button>
+                      <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+                    @if (openPlanMenuId === plan.id_plan) {
+                      <div class="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-xl bg-white py-1 shadow-lg ring-1 ring-zinc-200">
+                        @if (plan.estado !== "activo") {
+                          <button
+                            type="button"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                            (click)="cambiarEstado(plan, 'activo'); openPlanMenuId = null"
+                          >
+                            <span class="material-symbols-outlined text-xl text-green-600">play_arrow</span>
+                            <span>Marcar activo</span>
+                          </button>
+                        }
+                        @if (plan.estado !== "completado") {
+                          <button
+                            type="button"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                            (click)="cambiarEstado(plan, 'completado'); openPlanMenuId = null"
+                          >
+                            <span class="material-symbols-outlined text-xl text-blue-600">check_circle</span>
+                            <span>Marcar completado</span>
+                          </button>
+                        }
+                        @if (plan.estado !== "cancelado") {
+                          <button
+                            type="button"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                            (click)="cambiarEstado(plan, 'cancelado'); openPlanMenuId = null"
+                          >
+                            <span class="material-symbols-outlined text-xl text-red-600">cancel</span>
+                            <span>Cancelar plan</span>
+                          </button>
+                        }
+                      </div>
                     }
-                    @if (plan.estado !== "completado") {
-                      <button
-                        mat-menu-item
-                        (click)="cambiarEstado(plan, 'completado')"
-                      >
-                        <mat-icon
-                          class="material-symbols-outlined text-blue-600"
-                          >check_circle</mat-icon
-                        >
-                        <span>Marcar completado</span>
-                      </button>
-                    }
-                    @if (plan.estado !== "cancelado") {
-                      <button
-                        mat-menu-item
-                        (click)="cambiarEstado(plan, 'cancelado')"
-                      >
-                        <mat-icon class="material-symbols-outlined text-red-600"
-                          >cancel</mat-icon
-                        >
-                        <span>Cancelar plan</span>
-                      </button>
-                    }
-                  </mat-menu>
+                  </div>
                 </div>
               </article>
             }
@@ -421,40 +395,39 @@
         <!-- Filtros rutinas -->
         <div class="tarjeta-kengo mb-4 rounded-xl p-4">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <mat-form-field appearance="outline" class="flex-1">
-              <mat-label>Buscar</mat-label>
+            <!-- Search input -->
+            <div class="relative flex-1">
               <input
-                matInput
+                type="text"
+                class="h-12 w-full rounded-xl border border-zinc-200 bg-white pr-10 pl-4 text-zinc-700 placeholder:text-zinc-400 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+                placeholder="Nombre de la plantilla..."
                 [(ngModel)]="busquedaRutinas"
                 (ngModelChange)="onBusquedaRutinasChange($event)"
-                placeholder="Nombre de la plantilla..."
               />
-              <mat-icon matSuffix class="material-symbols-outlined"
-                >search</mat-icon
-              >
-            </mat-form-field>
+              <span class="material-symbols-outlined absolute top-1/2 right-3 -translate-y-1/2 text-zinc-400">search</span>
+            </div>
 
-            <mat-form-field appearance="outline" class="w-full sm:w-48">
-              <mat-label>Visibilidad</mat-label>
-              <mat-select
+            <!-- Visibility select -->
+            <div class="relative w-full sm:w-48">
+              <select
+                class="h-12 w-full appearance-none rounded-xl border border-zinc-200 bg-white px-4 pr-10 text-zinc-700 focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
                 [(ngModel)]="filtroVisibilidad"
                 (ngModelChange)="onFiltroVisibilidadChange($event)"
               >
-                <mat-option value="todas">Todas</mat-option>
-                <mat-option value="privadas">Mis plantillas</mat-option>
-                <mat-option value="publicas">Publicas</mat-option>
-              </mat-select>
-            </mat-form-field>
+                <option value="todas">Todas</option>
+                <option value="privadas">Mis plantillas</option>
+                <option value="publicas">Publicas</option>
+              </select>
+              <span class="material-symbols-outlined absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-zinc-400">expand_more</span>
+            </div>
 
             <button
-              mat-icon-button
-              class="!h-12 !w-12 shrink-0 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm"
+              type="button"
+              class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200/80 bg-white/70 shadow-sm hover:bg-zinc-50"
               aria-label="Recargar datos"
               (click)="reload()"
             >
-              <mat-icon class="material-symbols-outlined text-zinc-600"
-                >refresh</mat-icon
-              >
+              <span class="material-symbols-outlined text-zinc-600">refresh</span>
             </button>
           </div>
         </div>
@@ -462,13 +435,15 @@
         <!-- Lista de rutinas -->
         @if (isLoadingRutinas()) {
           <div class="rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <div class="h-1 overflow-hidden rounded-full bg-zinc-200">
+              <div class="progress-bar-indeterminate h-full w-1/3 bg-[#e75c3e]"></div>
+            </div>
           </div>
         } @else if (rutinas().length === 0) {
           <div class="tarjeta-kengo rounded-xl py-12 text-center">
-            <mat-icon class="material-symbols-outlined !text-6xl text-zinc-300">
+            <span class="material-symbols-outlined text-6xl text-zinc-300">
               bookmarks
-            </mat-icon>
+            </span>
             <p class="mt-2 text-zinc-500">No tienes plantillas guardadas</p>
             <p class="mt-1 text-sm text-zinc-400">
               Crea un plan y guardalo como plantilla para reutilizarlo
@@ -483,9 +458,7 @@
                   <div
                     class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100"
                   >
-                    <mat-icon class="material-symbols-outlined text-amber-600">
-                      bookmark
-                    </mat-icon>
+                    <span class="material-symbols-outlined text-amber-600">bookmark</span>
                   </div>
 
                   <div class="min-w-0 flex-1">
@@ -510,11 +483,11 @@
                           rutina.visibilidad === 'publico'
                         "
                       >
-                        <mat-icon class="material-symbols-outlined !text-sm">
+                        <span class="material-symbols-outlined text-sm">
                           {{
                             rutina.visibilidad === "privado" ? "lock" : "public"
                           }}
-                        </mat-icon>
+                        </span>
                         {{
                           rutina.visibilidad === "privado"
                             ? "Privada"
@@ -538,77 +511,88 @@
                     </div>
                   </div>
 
-                  <!-- Menu acciones -->
-                  <button mat-icon-button [matMenuTriggerFor]="menuRutina">
-                    <mat-icon class="material-symbols-outlined"
-                      >more_vert</mat-icon
+                  <!-- Menu acciones rutina -->
+                  <div class="relative">
+                    <button
+                      type="button"
+                      class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-zinc-100"
+                      (click)="toggleRutinaMenu(rutina.id_rutina)"
                     >
-                  </button>
-
-                  <mat-menu #menuRutina="matMenu">
-                    <button mat-menu-item (click)="togglePreview(rutina)">
-                      <mat-icon class="material-symbols-outlined"
-                        >visibility</mat-icon
-                      >
-                      <span>Ver ejercicios</span>
+                      <span class="material-symbols-outlined">more_vert</span>
                     </button>
-                    <button mat-menu-item (click)="usarPlantilla(rutina)">
-                      <mat-icon class="material-symbols-outlined"
-                        >play_arrow</mat-icon
-                      >
-                      <span>Usar plantilla</span>
-                    </button>
-                    <button mat-menu-item (click)="duplicarRutina(rutina)">
-                      <mat-icon class="material-symbols-outlined"
-                        >content_copy</mat-icon
-                      >
-                      <span>Duplicar</span>
-                    </button>
-                    @if (isOwner(rutina)) {
-                      <mat-divider></mat-divider>
-                      <button
-                        mat-menu-item
-                        (click)="cambiarVisibilidadRutina(rutina)"
-                      >
-                        <mat-icon class="material-symbols-outlined">
-                          {{
-                            rutina.visibilidad === "privado" ? "public" : "lock"
-                          }}
-                        </mat-icon>
-                        <span>
-                          {{
-                            rutina.visibilidad === "privado"
-                              ? "Hacer publica"
-                              : "Hacer privada"
-                          }}
-                        </span>
-                      </button>
-                      <button
-                        mat-menu-item
-                        (click)="eliminarRutina(rutina)"
-                        class="!text-red-600"
-                      >
-                        <mat-icon class="material-symbols-outlined text-red-600"
-                          >delete</mat-icon
+                    @if (openRutinaMenuId === rutina.id_rutina) {
+                      <div class="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-xl bg-white py-1 shadow-lg ring-1 ring-zinc-200">
+                        <button
+                          type="button"
+                          class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                          (click)="togglePreview(rutina); openRutinaMenuId = null"
                         >
-                        <span>Eliminar</span>
-                      </button>
+                          <span class="material-symbols-outlined text-xl">visibility</span>
+                          <span>Ver ejercicios</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                          (click)="usarPlantilla(rutina); openRutinaMenuId = null"
+                        >
+                          <span class="material-symbols-outlined text-xl">play_arrow</span>
+                          <span>Usar plantilla</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                          (click)="duplicarRutina(rutina); openRutinaMenuId = null"
+                        >
+                          <span class="material-symbols-outlined text-xl">content_copy</span>
+                          <span>Duplicar</span>
+                        </button>
+                        @if (isOwner(rutina)) {
+                          <hr class="my-1 border-zinc-100" />
+                          <button
+                            type="button"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                            (click)="cambiarVisibilidadRutina(rutina); openRutinaMenuId = null"
+                          >
+                            <span class="material-symbols-outlined text-xl">
+                              {{
+                                rutina.visibilidad === "privado" ? "public" : "lock"
+                              }}
+                            </span>
+                            <span>
+                              {{
+                                rutina.visibilidad === "privado"
+                                  ? "Hacer publica"
+                                  : "Hacer privada"
+                              }}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-zinc-50"
+                            (click)="eliminarRutina(rutina); openRutinaMenuId = null"
+                          >
+                            <span class="material-symbols-outlined text-xl text-red-600">delete</span>
+                            <span>Eliminar</span>
+                          </button>
+                        }
+                      </div>
                     }
-                  </mat-menu>
+                  </div>
                 </div>
 
                 <!-- Boton expandir -->
                 <button
+                  type="button"
                   class="flex w-full items-center justify-center gap-1 border-t border-zinc-100 py-2 text-sm text-zinc-500 hover:bg-zinc-50"
                   (click)="togglePreview(rutina)"
                 >
-                  <mat-icon class="material-symbols-outlined !text-lg">
+                  <span class="material-symbols-outlined text-lg">
                     {{
                       expandedRutinaId() === rutina.id_rutina
                         ? "expand_less"
                         : "expand_more"
                     }}
-                  </mat-icon>
+                  </span>
                   {{
                     expandedRutinaId() === rutina.id_rutina
                       ? "Ocultar ejercicios"
@@ -620,7 +604,9 @@
                 @if (expandedRutinaId() === rutina.id_rutina) {
                   <div class="border-t border-zinc-100 bg-zinc-50 p-4">
                     @if (loadingPreview()) {
-                      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                      <div class="h-1 overflow-hidden rounded-full bg-zinc-200">
+                        <div class="progress-bar-indeterminate h-full w-1/3 bg-[#e75c3e]"></div>
+                      </div>
                     } @else if (previewEjercicios().length > 0) {
                       <div class="space-y-2">
                         @for (

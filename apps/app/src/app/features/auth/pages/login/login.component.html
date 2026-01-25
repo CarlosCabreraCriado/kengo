@@ -17,58 +17,68 @@
         [class.invisible]="loading()"
         [attr.aria-hidden]="loading() ? 'true' : null"
         (ngSubmit)="onSubmit()"
-        class="flex w-full flex-col"
+        class="flex w-full flex-col gap-4"
       >
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Email</mat-label>
-
-          <input matInput type="email" formControlName="email" />
-
-          @if (loginForm.get("email")?.hasError("required")) {
-            <mat-error> El email es obligatorio. </mat-error>
+        <!-- Email field -->
+        <div class="flex flex-col gap-1.5">
+          <label for="email" class="text-sm font-medium text-gray-700">Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            [class.border-red-500]="email.invalid && email.touched"
+          />
+          @if (email.hasError('required') && email.touched) {
+            <span class="text-xs text-red-600">El email es obligatorio.</span>
           }
-
-          @if (loginForm.get("email")?.hasError("email")) {
-            <mat-error> Ingresa un email válido. </mat-error>
+          @if (email.hasError('email') && email.touched) {
+            <span class="text-xs text-red-600">Ingresa un email válido.</span>
           }
-        </mat-form-field>
+        </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Contraseña</mat-label>
-          <input matInput type="password" formControlName="password" />
-
-          @if (loginForm.get("password")?.hasError("required")) {
-            <mat-error> La contraseña es obligatoria. </mat-error>
+        <!-- Password field -->
+        <div class="flex flex-col gap-1.5">
+          <label for="password" class="text-sm font-medium text-gray-700">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            [class.border-red-500]="password.invalid && password.touched"
+          />
+          @if (password.hasError('required') && password.touched) {
+            <span class="text-xs text-red-600">La contraseña es obligatoria.</span>
           }
-        </mat-form-field>
+        </div>
 
         <button
-          matButton="outlined"
           type="submit"
           [disabled]="loginForm.invalid || loading()"
+          class="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Iniciar sesión
         </button>
 
-        <button
-          mat-button
-          color="primary"
-          type="submit"
-          class="mt-2"
+        <a
           routerLink="/registro"
-          [disabled]="loading()"
+          class="flex h-10 w-full items-center justify-center rounded-xl text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+          [class.pointer-events-none]="loading()"
+          [class.opacity-50]="loading()"
         >
           ¿No tienes cuenta? Registrate
-        </button>
+        </a>
 
         @if (error()) {
-          <div class="error-msg">{{ error() }}</div>
+          <div class="rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-600">
+            {{ error() }}
+          </div>
         }
       </form>
 
       @if (loading()) {
         <div class="absolute inset-0 flex items-center justify-center">
-          <mat-spinner></mat-spinner>
+          <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary"></div>
         </div>
       }
     </div>

@@ -14,13 +14,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { environment as env } from '../../../../../environments/environment';
 
-// Angular Material (only dialog)
-import { MatDialog } from '@angular/material/dialog';
-
 // Servicios
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
+import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -79,7 +77,7 @@ export class PacienteDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
-  private dialog = inject(MatDialog);
+  private dialogService = inject(DialogService);
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
@@ -423,13 +421,13 @@ export class PacienteDetailComponent implements OnInit {
     const p = this.paciente();
     if (!p) return;
 
-    this.dialog
+    this.dialogService
       .open(AddPacienteDialogComponent, {
-        width: '520px',
+        maxWidth: '520px',
         data: { clinicIds: this.idsClinicas(), usuario: p },
       })
-      .afterClosed()
-      .subscribe((r) => {
+      .closed
+      .subscribe((r: any) => {
         if (r?.updated) {
           this.cargarPaciente(p.id);
         }
@@ -439,7 +437,7 @@ export class PacienteDetailComponent implements OnInit {
   abrirQR() {
     const p = this.paciente();
     if (p?.magic_link_url) {
-      this.dialog.open(QrDialogComponent, {
+      this.dialogService.open(QrDialogComponent, {
         data: { url: p.magic_link_url },
       });
     }

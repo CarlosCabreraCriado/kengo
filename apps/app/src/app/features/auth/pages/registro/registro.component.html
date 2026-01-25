@@ -2,122 +2,227 @@
   class="absolute top-0 left-0 flex h-dvh w-screen items-center justify-center px-2"
 >
   <div
-    class="flex w-full max-w-7xl flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-3 shadow-xl backdrop-blur-md backdrop-filter md:w-2/3"
+    class="flex w-full max-w-lg flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-5 shadow-xl backdrop-blur-md backdrop-filter"
   >
-    <div
-      class="baseline-end relative flex h-15 w-full items-end justify-center"
-    >
-      <img src="../../assets/logo.svg" class="relative h-[175%]" />
+    <div class="baseline-end relative flex h-15 w-full items-end justify-center">
+      <img src="../../assets/logo.svg" class="relative h-[175%]" alt="Kengo logo" />
     </div>
 
-    <div class="fuente-kengo mb-1 w-full text-center text-3xl">Registro</div>
+    <div class="fuente-kengo mb-4 w-full text-center text-3xl">Registro</div>
 
-    <mat-horizontal-stepper linear class="min-h-72 bg-transparent!">
+    <ui-stepper #stepper [selectedIndex]="currentStep()" (selectionChange)="onStepChange($event)">
       <!-- Paso 1: Datos -->
-      <mat-step [stepControl]="datosForm">
-        <form class="mt-2" [formGroup]="datosForm">
-          <ng-template matStepLabel>Datos</ng-template>
+      <ui-step label="Datos">
+        <form [formGroup]="datosForm" class="flex flex-col gap-4 pt-4">
+          <div class="flex flex-col gap-1.5">
+            <label for="nombre" class="text-sm font-medium text-gray-700">Nombre</label>
+            <input
+              id="nombre"
+              type="text"
+              formControlName="nombre"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombre" />
-          </mat-form-field>
+          <div class="flex flex-col gap-1.5">
+            <label for="apellidos" class="text-sm font-medium text-gray-700">Apellidos</label>
+            <input
+              id="apellidos"
+              type="text"
+              formControlName="apellidos"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Apellidos</mat-label>
-            <input matInput formControlName="apellidos" />
-          </mat-form-field>
+          <div class="flex flex-col gap-1.5">
+            <label for="email" class="text-sm font-medium text-gray-700">Email</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" />
-          </mat-form-field>
-
-          <div class="mt-4">
-            <button mat-button matStepperNext [disabled]="!datosForm.valid">
+          <div class="mt-2 flex justify-end">
+            <button
+              type="button"
+              (click)="nextStep()"
+              [disabled]="!datosForm.valid"
+              class="flex h-10 items-center gap-1 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               Siguiente
+              <span class="material-symbols-outlined text-lg">arrow_forward</span>
             </button>
           </div>
         </form>
-      </mat-step>
+      </ui-step>
 
       <!-- Paso 2: Tipo de usuario -->
-      <mat-step [stepControl]="tipoUsuarioForm">
-        <form class="mt-2" [formGroup]="tipoUsuarioForm">
-          <ng-template matStepLabel>Tipo</ng-template>
+      <ui-step label="Tipo">
+        <form [formGroup]="tipoUsuarioForm" class="flex flex-col gap-4 pt-4">
+          <fieldset class="flex flex-col gap-3">
+            <legend class="mb-2 text-sm font-medium text-gray-700">Selecciona tu rol</legend>
 
-          <mat-radio-group formControlName="tipo">
-            <mat-radio-button value="fisioterapeuta"
-              >Fisioterapeuta</mat-radio-button
-            ><br />
-            <mat-radio-button value="paciente">Paciente</mat-radio-button>
-          </mat-radio-group>
+            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-primary/30"
+                   [class.border-primary]="tipoUsuarioForm.value.tipo === 'fisioterapeuta'"
+                   [class.bg-primary/5]="tipoUsuarioForm.value.tipo === 'fisioterapeuta'">
+              <input
+                type="radio"
+                formControlName="tipo"
+                value="fisioterapeuta"
+                class="sr-only"
+              />
+              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300"
+                   [class.border-primary]="tipoUsuarioForm.value.tipo === 'fisioterapeuta'">
+                @if (tipoUsuarioForm.value.tipo === 'fisioterapeuta') {
+                  <div class="h-2.5 w-2.5 rounded-full bg-primary"></div>
+                }
+              </div>
+              <div class="flex flex-col">
+                <span class="font-medium text-gray-900">Fisioterapeuta</span>
+                <span class="text-sm text-gray-500">Gestiona pacientes y planes de tratamiento</span>
+              </div>
+            </label>
 
-          <div class="mt-4">
-            <button mat-button matStepperPrevious>Anterior</button>
+            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-primary/30"
+                   [class.border-primary]="tipoUsuarioForm.value.tipo === 'paciente'"
+                   [class.bg-primary/5]="tipoUsuarioForm.value.tipo === 'paciente'">
+              <input
+                type="radio"
+                formControlName="tipo"
+                value="paciente"
+                class="sr-only"
+              />
+              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300"
+                   [class.border-primary]="tipoUsuarioForm.value.tipo === 'paciente'">
+                @if (tipoUsuarioForm.value.tipo === 'paciente') {
+                  <div class="h-2.5 w-2.5 rounded-full bg-primary"></div>
+                }
+              </div>
+              <div class="flex flex-col">
+                <span class="font-medium text-gray-900">Paciente</span>
+                <span class="text-sm text-gray-500">Realiza ejercicios y sigue tu progreso</span>
+              </div>
+            </label>
+          </fieldset>
+
+          <div class="mt-2 flex justify-between">
             <button
-              mat-button
-              matStepperNext
+              type="button"
+              (click)="previousStep()"
+              class="flex h-10 items-center gap-1 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              <span class="material-symbols-outlined text-lg">arrow_back</span>
+              Anterior
+            </button>
+            <button
+              type="button"
+              (click)="nextStep()"
               [disabled]="!tipoUsuarioForm.valid"
+              class="flex h-10 items-center gap-1 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Siguiente
+              <span class="material-symbols-outlined text-lg">arrow_forward</span>
             </button>
           </div>
         </form>
-      </mat-step>
+      </ui-step>
 
       <!-- Paso 3: Código clínica -->
-      <mat-step [stepControl]="codigoClinicaForm">
-        <form class="mt-2" [formGroup]="codigoClinicaForm">
-          <ng-template matStepLabel>Código</ng-template>
+      <ui-step label="Código" [optional]="true">
+        <form [formGroup]="codigoClinicaForm" class="flex flex-col gap-4 pt-4">
+          <div class="flex flex-col gap-1.5">
+            <label for="codigo" class="text-sm font-medium text-gray-700">Código de clínica (opcional)</label>
+            <input
+              id="codigo"
+              type="text"
+              formControlName="codigo"
+              placeholder="Ingresa el código si te lo proporcionaron"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <p class="text-xs text-gray-500">Si tu fisioterapeuta te dio un código, ingrésalo aquí</p>
+          </div>
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Código de clínica</mat-label>
-            <input matInput formControlName="codigo" />
-          </mat-form-field>
-
-          <div class="mt-4">
-            <button mat-button matStepperPrevious>Anterior</button>
-            <button mat-button matStepperNext>Siguiente</button>
+          <div class="mt-2 flex justify-between">
+            <button
+              type="button"
+              (click)="previousStep()"
+              class="flex h-10 items-center gap-1 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              <span class="material-symbols-outlined text-lg">arrow_back</span>
+              Anterior
+            </button>
+            <button
+              type="button"
+              (click)="nextStep()"
+              class="flex h-10 items-center gap-1 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+            >
+              Siguiente
+              <span class="material-symbols-outlined text-lg">arrow_forward</span>
+            </button>
           </div>
         </form>
-      </mat-step>
+      </ui-step>
 
       <!-- Paso 4: Contraseña -->
-      <mat-step [stepControl]="passwordForm">
-        <form class="mt-2" [formGroup]="passwordForm">
-          <ng-template matStepLabel>Seguridad</ng-template>
+      <ui-step label="Seguridad">
+        <form [formGroup]="passwordForm" class="flex flex-col gap-4 pt-4">
+          <div class="flex flex-col gap-1.5">
+            <label for="password" class="text-sm font-medium text-gray-700">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              formControlName="password"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            @if (passwordForm.get('password')?.hasError('minlength') && passwordForm.get('password')?.touched) {
+              <span class="text-xs text-red-600">La contraseña debe tener al menos 6 caracteres</span>
+            }
+          </div>
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Contraseña</mat-label>
-            <input matInput type="password" formControlName="password" />
-          </mat-form-field>
+          <div class="flex flex-col gap-1.5">
+            <label for="repetir" class="text-sm font-medium text-gray-700">Repetir contraseña</label>
+            <input
+              id="repetir"
+              type="password"
+              formControlName="repetir"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              [class.border-red-500]="!passwordsMatch && passwordForm.get('repetir')?.touched"
+            />
+            @if (!passwordsMatch && passwordForm.get('repetir')?.touched) {
+              <span class="text-xs text-red-600">Las contraseñas no coinciden</span>
+            }
+          </div>
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Repetir contraseña</mat-label>
-            <input matInput type="password" formControlName="repetir" />
-          </mat-form-field>
-
-          <div class="mt-4">
-            <button mat-button matStepperPrevious>Anterior</button>
+          <div class="mt-2 flex justify-between">
             <button
-              mat-button
-              [disabled]="
-                !passwordForm.valid ||
-                passwordForm.value.password !== passwordForm.value.repetir
-              "
-              (click)="completarRegistro()"
+              type="button"
+              (click)="previousStep()"
+              class="flex h-10 items-center gap-1 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
+              <span class="material-symbols-outlined text-lg">arrow_back</span>
+              Anterior
+            </button>
+            <button
+              type="button"
+              [disabled]="!passwordForm.valid || !passwordsMatch"
+              (click)="completarRegistro()"
+              class="flex h-10 items-center gap-1 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span class="material-symbols-outlined text-lg">check</span>
               Finalizar
             </button>
           </div>
         </form>
-      </mat-step>
-    </mat-horizontal-stepper>
+      </ui-step>
+    </ui-stepper>
+
     <a
-      class="text-primary m-auto block underline underline-offset-2"
+      class="mt-4 block text-center text-sm font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
       routerLink="/login"
-      >Ya tengo cuenta</a
     >
+      Ya tengo cuenta
+    </a>
   </div>
 </section>

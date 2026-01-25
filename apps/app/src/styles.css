@@ -65,9 +65,23 @@ body {
   font-family: Galvji, "Helvetica Neue", sans-serif;
 }
 
-mat-icon {
-  width: auto !important;
-  height: auto !important;
+/* Material Symbols icon styles */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
 }
 
 .relleno {
@@ -76,10 +90,6 @@ mat-icon {
     "wght" 400,
     "GRAD" 0,
     "opsz" 24;
-}
-
-.mat-mdc-icon-button {
-  display: inline-flex;
 }
 
 .titulo-kengo {
@@ -123,8 +133,18 @@ mat-icon {
   }
 }
 
-.mdc-notched-outline__notch {
-  border-right: none !important;
+/* Progress bar indeterminate animation */
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.progress-bar-indeterminate {
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
 }
 
 @keyframes move {
@@ -243,25 +263,6 @@ mat-icon {
   box-shadow: -100vmin 0 12.537243324389731vmin currentColor;
 }
 
-/* Angular Material Typography Override - Galvji */
-.mat-typography,
-.mat-mdc-button,
-.mat-mdc-form-field,
-.mat-mdc-input-element,
-.mat-mdc-select,
-.mat-mdc-option,
-.mat-mdc-menu-item,
-.mat-mdc-dialog-container,
-.mat-mdc-snack-bar-container,
-.mat-mdc-tooltip,
-.mat-mdc-card,
-.mat-mdc-tab,
-.mat-mdc-chip,
-.mdc-text-field__input,
-.mdc-floating-label,
-.mdc-button__label {
-  font-family: Galvji, "Helvetica Neue", sans-serif !important;
-}
 
 /* CDK Dialog Overlay Styles */
 .cdk-overlay-backdrop {

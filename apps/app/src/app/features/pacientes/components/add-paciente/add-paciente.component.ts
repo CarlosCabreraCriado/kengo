@@ -1,22 +1,18 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogModule,
-} from '@angular/material/dialog';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { httpResource } from '@angular/common/http';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment as env } from '../../../../../environments/environment';
 
-// Material
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import {
+  DialogContainerComponent,
+  DialogHeaderComponent,
+  DialogContentComponent,
+  DialogActionsComponent,
+  ProgressBarComponent,
+} from '../../../../shared';
 
 import { Usuario, UsuarioDirectus } from '../../../../../types/global';
 
@@ -40,16 +36,15 @@ interface DirectusItem<T> {
 
 @Component({
   selector: 'app-add-paciente',
+  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressBarModule,
+    DialogContainerComponent,
+    DialogHeaderComponent,
+    DialogContentComponent,
+    DialogActionsComponent,
+    ProgressBarComponent,
   ],
   templateUrl: './add-paciente.component.html',
   styleUrl: './add-paciente.component.css',
@@ -57,11 +52,10 @@ interface DirectusItem<T> {
 export class AddPacienteDialogComponent {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
-  private ref = inject(MatDialogRef<AddPacienteDialogComponent>);
+  private dialogRef = inject(DialogRef<{ created?: unknown; updated?: boolean }>);
+  private data = inject<DialogData>(DIALOG_DATA);
 
   private currentLinks = new Map<ID, ID>(); // (id_clinica -> row id)
-
-  private data = inject<DialogData>(MAT_DIALOG_DATA);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -110,8 +104,8 @@ export class AddPacienteDialogComponent {
     }
   }
 
-  close(result?: unknown) {
-    this.ref.close(result);
+  close(result?: { created?: unknown; updated?: boolean }) {
+    this.dialogRef.close(result);
   }
 
   // ====== Carga enlaces actuales (solo edición) ======
@@ -172,7 +166,6 @@ export class AddPacienteDialogComponent {
           .post<DirectusItem<UsuarioDirectus>>(
             `${env.DIRECTUS_URL}/users`,
             payload,
-            // , { withCredentials: true }
           )
           .toPromise();
 
@@ -201,7 +194,6 @@ export class AddPacienteDialogComponent {
           .patch<DirectusItem<UsuarioDirectus>>(
             `${env.DIRECTUS_URL}/users/${userId}`,
             baseUser,
-            // , { withCredentials: true }
           )
           .toPromise();
 
@@ -219,7 +211,6 @@ export class AddPacienteDialogComponent {
               .post(
                 `${env.DIRECTUS_URL}/items/usuarios_clinicas`,
                 { id_usuario: userId, id_clinica: cid, puesto: 2 },
-                // , { withCredentials: true }
               )
               .toPromise(),
           ),
@@ -233,7 +224,6 @@ export class AddPacienteDialogComponent {
               ? this.http
                   .delete(
                     `${env.DIRECTUS_URL}/items/usuarios_clinicas/${rowId}`,
-                    // , { withCredentials: true }
                   )
                   .toPromise()
               : Promise.resolve();
@@ -244,11 +234,7 @@ export class AddPacienteDialogComponent {
       }
     } catch (e: unknown) {
       console.error(e);
-      /*
-      this.error.set(
-        e?.error?.errors?.[0]?.message ?? 'No se pudieron guardar los cambios.',
-      );
-      */
+      this.error.set('No se pudieron guardar los cambios.');
     } finally {
       this.loading.set(false);
     }

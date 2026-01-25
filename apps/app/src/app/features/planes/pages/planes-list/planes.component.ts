@@ -5,19 +5,11 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDividerModule } from '@angular/material/divider';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { Plan, Usuario, EstadoPlan, Rutina, EjercicioRutina } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
@@ -31,14 +23,6 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
     NgClass,
     RouterLink,
     FormsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-    MatProgressBarModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDividerModule,
   ],
   templateUrl: './planes.component.html',
   styleUrl: './planes.component.css',
@@ -48,7 +32,7 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
 })
 export class PlanesComponent implements OnInit {
   private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
   private breakpointObserver = inject(BreakpointObserver);
   planesService = inject(PlanesService);
   rutinasService = inject(RutinasService);
@@ -91,6 +75,11 @@ export class PlanesComponent implements OnInit {
   expandedRutinaId = signal<number | null>(null);
   loadingPreview = signal(false);
   previewEjercicios = signal<EjercicioRutina[]>([]);
+
+  // Menu state for custom dropdowns
+  menuEstadoOpen = false;
+  openPlanMenuId: number | null = null;
+  openRutinaMenuId: number | null = null;
 
   estadoLabels: Record<EstadoPlan, string> = {
     borrador: 'Borrador',
@@ -200,11 +189,9 @@ export class PlanesComponent implements OnInit {
   async cambiarEstado(plan: Plan, nuevoEstado: EstadoPlan) {
     const success = await this.planesService.updateEstado(plan.id_plan, nuevoEstado);
     if (success) {
-      this.snackBar.open(`Estado cambiado a ${this.estadoLabels[nuevoEstado]}`, 'OK', {
-        duration: 2000,
-      });
+      this.toastService.show(`Estado cambiado a ${this.estadoLabels[nuevoEstado]}`);
     } else {
-      this.snackBar.open('Error al cambiar estado', 'OK', { duration: 3000 });
+      this.toastService.show('Error al cambiar estado', 'error');
     }
   }
 
@@ -265,9 +252,7 @@ export class PlanesComponent implements OnInit {
   }
 
   usarPlantilla(rutina: Rutina) {
-    this.snackBar.open('Selecciona un paciente para usar esta plantilla', 'OK', {
-      duration: 3000,
-    });
+    this.toastService.show('Selecciona un paciente para usar esta plantilla');
     this.router.navigate(['/mis-pacientes']);
   }
 
@@ -276,9 +261,9 @@ export class PlanesComponent implements OnInit {
     const id = await this.rutinasService.duplicarRutina(rutina.id_rutina, nuevoNombre);
 
     if (id) {
-      this.snackBar.open('Plantilla duplicada', 'OK', { duration: 2000 });
+      this.toastService.show('Plantilla duplicada');
     } else {
-      this.snackBar.open('Error al duplicar', 'OK', { duration: 3000 });
+      this.toastService.show('Error al duplicar', 'error');
     }
   }
 
@@ -287,9 +272,9 @@ export class PlanesComponent implements OnInit {
 
     const success = await this.rutinasService.deleteRutina(rutina.id_rutina);
     if (success) {
-      this.snackBar.open('Plantilla eliminada', 'OK', { duration: 2000 });
+      this.toastService.show('Plantilla eliminada');
     } else {
-      this.snackBar.open('Error al eliminar', 'OK', { duration: 3000 });
+      this.toastService.show('Error al eliminar', 'error');
     }
   }
 
@@ -300,14 +285,23 @@ export class PlanesComponent implements OnInit {
     });
 
     if (success) {
-      this.snackBar.open(
-        `Plantilla ahora es ${nuevaVisibilidad === 'publico' ? 'publica' : 'privada'}`,
-        'OK',
-        { duration: 2000 }
+      this.toastService.show(
+        `Plantilla ahora es ${nuevaVisibilidad === 'publico' ? 'pública' : 'privada'}`
       );
     } else {
-      this.snackBar.open('Error al cambiar visibilidad', 'OK', { duration: 3000 });
+      this.toastService.show('Error al cambiar visibilidad', 'error');
     }
+  }
+
+  // === Menu helpers ===
+  togglePlanMenu(planId: number) {
+    this.openPlanMenuId = this.openPlanMenuId === planId ? null : planId;
+    this.openRutinaMenuId = null;
+  }
+
+  toggleRutinaMenu(rutinaId: number) {
+    this.openRutinaMenuId = this.openRutinaMenuId === rutinaId ? null : rutinaId;
+    this.openPlanMenuId = null;
   }
 
   // === Utilidades ===

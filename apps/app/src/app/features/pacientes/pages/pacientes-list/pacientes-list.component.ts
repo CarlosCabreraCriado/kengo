@@ -4,18 +4,13 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { environment as env } from '../../../../../environments/environment';
-
-//Angular Material:
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatDialog } from '@angular/material/dialog';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
 
@@ -27,6 +22,7 @@ import { QrDialogComponent } from '../../../../shared/ui/dialogo-qr/dialogo-qr.c
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
+import { DialogService } from '../../../../shared';
 
 import { Usuario, UsuarioDirectus } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
@@ -40,9 +36,7 @@ interface DirectusPage<T> {
   selector: 'app-pacientes-list',
   standalone: true,
   imports: [
-    MatIconModule,
-    MatButtonModule,
-    MatProgressBarModule,
+    CommonModule,
     RouterLink,
   ],
   templateUrl: './pacientes-list.component.html',
@@ -53,7 +47,7 @@ interface DirectusPage<T> {
 })
 export class PacientesListComponent {
   private sessionService = inject(SessionService);
-  private dialog = inject(MatDialog);
+  private dialogService = inject(DialogService);
   private router = inject(Router);
   public planBuilderService = inject(PlanBuilderService);
   private planesService = inject(PlanesService);
@@ -149,27 +143,27 @@ export class PacientesListComponent {
   }
 
   openAddPaciente() {
-    this.dialog
-      .open(AddPacienteDialogComponent, {
-        width: '520px',
-        data: { clinicIds: this.idsClinicas() }, // clínicas del usuario actual
-      })
-      .afterClosed()
-      .subscribe((r) => {
-        if (r?.created || r?.updated) this.pacientesRes.reload();
-      });
+    const dialogRef = this.dialogService.open(AddPacienteDialogComponent, {
+      maxWidth: '520px',
+      data: { idsClinicas: this.idsClinicas() },
+    });
+
+    dialogRef.closed.subscribe((r: unknown) => {
+      const result = r as { created?: boolean; updated?: boolean } | undefined;
+      if (result?.created || result?.updated) this.pacientesRes.reload();
+    });
   }
 
   openEditarPaciente(p: Usuario) {
-    this.dialog
-      .open(AddPacienteDialogComponent, {
-        width: '520px',
-        data: { clinicIds: this.idsClinicas(), usuario: p }, // pasa el usuario a editar
-      })
-      .afterClosed()
-      .subscribe((r) => {
-        if (r?.updated) this.pacientesRes.reload();
-      });
+    const dialogRef = this.dialogService.open(AddPacienteDialogComponent, {
+      maxWidth: '520px',
+      data: { idsClinicas: this.idsClinicas(), usuario: p },
+    });
+
+    dialogRef.closed.subscribe((r: unknown) => {
+      const result = r as { updated?: boolean } | undefined;
+      if (result?.updated) this.pacientesRes.reload();
+    });
   }
 
   reload() {
@@ -202,10 +196,9 @@ export class PacientesListComponent {
   }
 
   public openDialogoQR(url: string) {
-    this.dialog.open(QrDialogComponent, {
+    this.dialogService.open(QrDialogComponent, {
       data: { url },
-      // disableClose: false, // si quieres que pueda cerrarse tocando fuera
-      // width: '360px',
+      maxWidth: '360px',
     });
   }
 

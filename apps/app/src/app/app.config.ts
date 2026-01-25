@@ -7,7 +7,6 @@ import {
   withInterceptors,
   withFetch,
 } from '@angular/common/http';
-import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { provideServiceWorker } from '@angular/service-worker';
 
 // Core imports
@@ -17,11 +16,11 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    provideAnimationsAsync(),
-    { provide: MAT_DATE_LOCALE, useValue: 'es-ES' },
-    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy }, provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-          }),
+    provideAnimationsAsync(), // Still needed for CDK animations
+    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
   ],
 };

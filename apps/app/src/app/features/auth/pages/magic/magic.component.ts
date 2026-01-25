@@ -1,15 +1,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
-
-// UI Angular Material:
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   standalone: true,
   selector: 'app-magic',
-  imports: [MatButtonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './magic.component.html',
   styleUrl: './magic.component.css',
 })

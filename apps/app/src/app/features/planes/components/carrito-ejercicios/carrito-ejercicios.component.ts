@@ -10,18 +10,15 @@ import {
   EffectRef,
   Injector,
   OnDestroy,
+  ElementRef,
 } from '@angular/core';
 
-import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
-import { MatIconModule } from '@angular/material/icon';
 import { Dialog } from '@angular/cdk/dialog';
 
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
-
-import { MatButtonModule } from '@angular/material/button';
+import { ToastService } from '../../../../shared/ui/toast/toast.service';
 
 import { environment as env } from '../../../../../environments/environment';
 import { Usuario } from '../../../../../types/global';
@@ -29,15 +26,15 @@ import { Usuario } from '../../../../../types/global';
 @Component({
   selector: 'app-carrito-ejercicios',
   standalone: true,
-  imports: [MatSidenavModule, MatIconModule, MatButtonModule],
+  imports: [],
   templateUrl: './carrito-ejercicios.component.html',
   styleUrls: ['./carrito-ejercicios.component.css'],
 })
 export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('drawer') drawer!: MatSidenav;
+  @ViewChild('drawerEl') drawerEl!: ElementRef<HTMLElement>;
 
   private router = inject(Router);
-  private snack = inject(MatSnackBar);
+  private toastService = inject(ToastService);
   private injector = inject(Injector);
   private dialog = inject(Dialog);
 
@@ -64,12 +61,8 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     if (this.autoOpen) this.open();
     this.drawerEff = effect(
       () => {
-        if (!this.drawer) return; // por si acaso
         const shouldOpen = this.svc.drawerOpen();
-
-        // Evita llamadas redundantes (menos animaciones innecesarias)
-        if (shouldOpen && !this.drawer.opened) this.drawer.open();
-        else if (!shouldOpen && this.drawer.opened) this.drawer.close();
+        this.drawerAbierto.set(shouldOpen);
       },
       { injector: this.injector },
     );
@@ -95,15 +88,15 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.drawerEff?.destroy(); // no es obligatorio: al pasar 'injector' ya se limpia solo
+    this.drawerEff?.destroy();
   }
 
   open() {
-    this.drawer?.open();
+    this.drawerAbierto.set(true);
   }
 
   close() {
-    this.drawer?.close();
+    this.drawerAbierto.set(false);
   }
 
   toggle() {
@@ -115,11 +108,9 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   abrirDrawer() {
-    //this.svc.openDrawer();
     this.drawerAbierto.set(true);
   }
   cerrarDrawer() {
-    //this.svc.closeDrawer();
     this.drawerAbierto.set(false);
   }
 
@@ -131,7 +122,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     localStorage.removeItem('carrito:last_paciente_id');
     localStorage.removeItem('carrito:last_fisio_id');
     this.svc.resetAll();
-    this.snack.open('Asignación eliminada', 'OK', { duration: 2000 });
+    this.toastService.show('Asignación eliminada');
   }
 
   async cambiarPaciente() {
@@ -153,12 +144,8 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
         if (fisioId) {
           localStorage.setItem('carrito:last_fisio_id', fisioId);
         }
-        this.snack.open(
-          `Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`,
-          'OK',
-          {
-            duration: 2000,
-          },
+        this.toastService.show(
+          `Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`
         );
       }
     });
@@ -176,13 +163,11 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   // Ir a la pantalla de configuración del plan (manteniendo el carrito en el service)
   async configurarPlan() {
     if (!this.svc.paciente()) {
-      this.snack.open('Selecciona un paciente primero.', 'OK', {
-        duration: 2000,
-      });
+      this.toastService.show('Selecciona un paciente primero.');
       return;
     }
     if (this.svc.items().length === 0) {
-      this.snack.open('Añade ejercicios al plan.', 'OK', { duration: 2000 });
+      this.toastService.show('Añade ejercicios al plan.');
       return;
     }
     const id = this.svc.paciente()!.id;
@@ -202,9 +187,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   // Cargar una rutina (plantilla) existente
   async cargarRutina() {
     if (!this.svc.paciente()) {
-      this.snack.open('Selecciona un paciente primero.', 'OK', {
-        duration: 2000,
-      });
+      this.toastService.show('Selecciona un paciente primero.');
       return;
     }
 
@@ -221,13 +204,9 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       if (rutinaId) {
         const success = await this.svc.loadFromRutina(rutinaId);
         if (success) {
-          this.snack.open('Rutina cargada correctamente', 'OK', {
-            duration: 2000,
-          });
+          this.toastService.show('Rutina cargada correctamente');
         } else {
-          this.snack.open('Error al cargar la rutina', 'OK', {
-            duration: 2000,
-          });
+          this.toastService.show('Error al cargar la rutina', 'error');
         }
       }
     });

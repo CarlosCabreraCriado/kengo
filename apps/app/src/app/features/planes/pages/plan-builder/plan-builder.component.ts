@@ -5,10 +5,8 @@ import {
   OnDestroy,
   signal,
   computed,
-  ViewChild,
 } from '@angular/core';
 import { Location } from '@angular/common';
-import { MatDateRangePicker } from '@angular/material/datepicker';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   FormBuilder,
@@ -18,24 +16,13 @@ import {
 } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { Dialog } from '@angular/cdk/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
 import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
@@ -48,16 +35,6 @@ import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
     FormsModule,
     DragDropModule,
     RouterLink,
-    MatFormFieldModule,
-    MatInputModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressBarModule,
-    MatTooltipModule,
-    MatMenuModule,
-    MatDividerModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     SafeHtmlPipe,
   ],
   templateUrl: './plan-builder.component.html',
@@ -70,8 +47,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private location = inject(Location);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
+  private dialog = inject(Dialog);
+  private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
   private sessionService = inject(SessionService);
   private breakpointObserver = inject(BreakpointObserver);
@@ -99,6 +76,10 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   isLoading = signal(false);
   isSaving = signal(false);
 
+  // Menu state for custom dropdowns
+  menuAccionesOpen = false;
+  menuAccionesMobileOpen = false;
+
   // Signals para modo edicion por seccion
   editandoDetalles = signal(false);
   ejercicioEditando = signal<number | null>(null);
@@ -112,11 +93,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   ];
   duracionSeleccionada = signal<number | 'custom'>(30); // 1 mes por defecto
 
-  // Date range picker
-  @ViewChild('rangePicker') rangePicker!: MatDateRangePicker<Date>;
-  minDate = new Date(); // No permitir fechas anteriores a hoy
-  rangeStart: Date | null = null;
-  rangeEnd: Date | null = null;
+  // Date range
+  minDate = new Date().toISOString().split('T')[0]; // No permitir fechas anteriores a hoy
 
   // Computed para UI
   isEditMode = computed(() => this.svc.isEditMode());
@@ -150,11 +128,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     } else {
       // Verificar que hay paciente y ejercicios
       if (!this.svc.paciente() || this.svc.items().length === 0) {
-        this.snackBar.open(
-          'Selecciona un paciente y ejercicios primero',
-          'OK',
-          { duration: 3000 },
-        );
+        this.toastService.show('Selecciona un paciente y ejercicios primero');
         this.router.navigate(['/mis-pacientes']);
         return;
       }
@@ -174,9 +148,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       if (success) {
         this.syncFormFromService();
       } else {
-        this.snackBar.open('No se pudo cargar el plan', 'OK', {
-          duration: 3000,
-        });
+        this.toastService.show('No se pudo cargar el plan', 'error');
         this.router.navigate(['/planes']);
       }
     } finally {
@@ -315,16 +287,14 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   async guardarPlan() {
     if (!this.form.valid) {
       this.form.markAllAsTouched();
-      this.snackBar.open('Completa los campos requeridos', 'OK', {
-        duration: 3000,
-      });
+      this.toastService.show('Completa los campos requeridos');
       return;
     }
 
     this.syncServiceFromForm();
 
     if (!this.canSubmit()) {
-      this.snackBar.open('Faltan datos para guardar', 'OK', { duration: 3000 });
+      this.toastService.show('Faltan datos para guardar');
       return;
     }
 
@@ -340,20 +310,16 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       console.warn('Plan ID recibido', planId);
 
       if (planId) {
-        this.snackBar.open(
-          this.isEditMode() ? 'Plan actualizado' : 'Plan creado',
-          'OK',
-          { duration: 2000 },
+        this.toastService.show(
+          this.isEditMode() ? 'Plan actualizado' : 'Plan creado'
         );
         this.router.navigate(['/planes', planId, 'resumen']);
       } else {
-        this.snackBar.open('Error al guardar el plan', 'OK', {
-          duration: 3000,
-        });
+        this.toastService.show('Error al guardar el plan', 'error');
       }
     } catch (error) {
       console.error('Error guardando plan:', error);
-      this.snackBar.open('Error al guardar', 'OK', { duration: 3000 });
+      this.toastService.show('Error al guardar', 'error');
     } finally {
       this.isSaving.set(false);
     }
@@ -370,7 +336,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       data: { nombreSugerido: this.form.value.titulo || '' },
     });
 
-    dialogRef.afterClosed().subscribe(async (result) => {
+    dialogRef.closed.subscribe(async (result: any) => {
       if (result) {
         this.isSaving.set(true);
         try {
@@ -381,11 +347,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
           );
 
           if (rutinaId) {
-            this.snackBar.open('Plantilla guardada', 'OK', { duration: 2000 });
+            this.toastService.show('Plantilla guardada');
           } else {
-            this.snackBar.open('Error al guardar plantilla', 'OK', {
-              duration: 3000,
-            });
+            this.toastService.show('Error al guardar plantilla', 'error');
           }
         } finally {
           this.isSaving.set(false);
@@ -404,21 +368,19 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       maxHeight: '80vh',
     });
 
-    dialogRef.afterClosed().subscribe(async (rutinaId) => {
+    dialogRef.closed.subscribe(async (rutinaId: any) => {
       if (rutinaId) {
         this.isLoading.set(true);
         try {
           const success = await this.svc.loadFromRutina(rutinaId);
           if (success) {
-            this.snackBar.open('Plantilla cargada', 'OK', { duration: 2000 });
+            this.toastService.show('Plantilla cargada');
             // Actualizar titulo si estaba vacio
             if (!this.form.value.titulo && this.svc.titulo()) {
               this.form.patchValue({ titulo: this.svc.titulo() });
             }
           } else {
-            this.snackBar.open('Error al cargar plantilla', 'OK', {
-              duration: 3000,
-            });
+            this.toastService.show('Error al cargar plantilla', 'error');
           }
         } finally {
           this.isLoading.set(false);
@@ -462,29 +424,18 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.calcularFechaFin();
   }
 
-  seleccionarPersonalizado() {
-    // Inicializar las fechas del range picker
-    const fechaInicio = this.form.value.fecha_inicio;
-    const fechaFin = this.form.value.fecha_fin;
-
-    this.rangeStart = fechaInicio ? new Date(fechaInicio) : new Date();
-    this.rangeEnd = fechaFin ? new Date(fechaFin) : null;
-
-    // Abrir el picker
-    setTimeout(() => this.rangePicker?.open(), 0);
-  }
-
-  onStartDateChange(date: Date | null) {
-    if (date) {
-      this.rangeStart = date;
-      this.form.patchValue({ fecha_inicio: this.toDateString(date) });
+  onFechaInicioChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.value) {
+      this.form.patchValue({ fecha_inicio: input.value });
+      this.calcularFechaFin();
     }
   }
 
-  onEndDateChange(date: Date | null) {
-    if (date) {
-      this.rangeEnd = date;
-      this.form.patchValue({ fecha_fin: this.toDateString(date) });
+  onFechaFinChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.value) {
+      this.form.patchValue({ fecha_fin: input.value });
       this.duracionSeleccionada.set('custom');
     }
   }

@@ -25,7 +25,7 @@
             "output": "/"
           }
         ],
-        "styles": ["apps/app/src/styles.css", "apps/app/src/theme.scss"],
+        "styles": ["apps/app/src/styles.css"],
         "scripts": []
       },
       "configurations": {
@@ -38,8 +38,8 @@
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "20kb",
-              "maximumError": "40kb"
+              "maximumWarning": "40kb",
+              "maximumError": "60kb"
             }
           ],
           "outputHashing": "all",
@@ -95,7 +95,7 @@
             "output": "/"
           }
         ],
-        "styles": ["apps/app/src/styles.css", "apps/app/src/theme.scss"],
+        "styles": ["apps/app/src/styles.css"],
         "scripts": []
       }
     },

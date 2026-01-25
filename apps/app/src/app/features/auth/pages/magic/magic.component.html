@@ -11,10 +11,24 @@
     </div>
 
     <div class="fuente-kengo mb-2 w-full text-center text-3xl">Kengo</div>
-    <div class="relative">
+    <div class="relative min-h-[60px] flex items-center justify-center">
       @if (loading()) {
-        <div class="absolute inset-0 flex items-center justify-center">
-          <mat-spinner></mat-spinner>
+        <div class="flex flex-col items-center gap-3">
+          <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary"></div>
+          <span class="text-sm text-gray-500">Verificando enlace...</span>
+        </div>
+      }
+
+      @if (error()) {
+        <div class="flex flex-col items-center gap-3 text-center">
+          <span class="material-symbols-outlined text-4xl text-red-400">error</span>
+          <span class="text-sm text-red-600">{{ error() }}</span>
+          <a
+            routerLink="/login"
+            class="mt-2 text-sm font-medium text-primary hover:underline"
+          >
+            Volver al inicio
+          </a>
         </div>
       }
     </div>

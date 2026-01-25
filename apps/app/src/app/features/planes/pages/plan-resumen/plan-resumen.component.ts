@@ -1,9 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
@@ -15,9 +12,6 @@ import { environment as env } from '../../../../../environments/environment';
   standalone: true,
   imports: [
     RouterLink,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressBarModule,
   ],
   templateUrl: './plan-resumen.component.html',
   styleUrl: './plan-resumen.component.css',

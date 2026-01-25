@@ -13,14 +13,10 @@ import {
   slideUpAnimation,
 } from '../../realizar-plan.animations';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-
 @Component({
   selector: 'app-sesion-completada',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule],
   animations: [celebrateAnimation, fadeAnimation, slideUpAnimation],
   template: `
     <div class="flex flex-1 flex-col gap-4 overflow-hidden py-2">
@@ -29,10 +25,7 @@ import { MatButtonModule } from '@angular/material/button';
         class="flex shrink-0 flex-col items-center gap-2.5 py-3 text-center"
         @celebrate
       >
-        <mat-icon
-          class="material-symbols-outlined !text-primary animate-bounce !text-6xl"
-          >celebration</mat-icon
-        >
+        <span class="material-symbols-outlined text-primary animate-bounce text-6xl">celebration</span>
         <h1
           class="m-0 bg-gradient-to-r from-[#e75c3e] to-[#efc048] bg-clip-text text-2xl font-extrabold text-transparent"
         >
@@ -47,9 +40,7 @@ import { MatButtonModule } from '@angular/material/button';
       <div class="grid shrink-0 grid-cols-2 gap-3" @slideUp>
         <div class="tarjeta-kengo rounded-xl p-3.5">
           <div class="flex items-center gap-3.5">
-            <mat-icon class="material-symbols-outlined !text-primary"
-              >timer</mat-icon
-            >
+            <span class="material-symbols-outlined text-primary text-2xl">timer</span>
             <div class="flex flex-col gap-0.5">
               <span
                 class="text-[0.6875rem] font-semibold tracking-wider text-zinc-500 uppercase"
@@ -64,9 +55,7 @@ import { MatButtonModule } from '@angular/material/button';
 
         <div class="tarjeta-kengo rounded-xl p-3.5">
           <div class="flex items-center gap-3.5">
-            <mat-icon class="material-symbols-outlined !text-emerald-500"
-              >check_circle</mat-icon
-            >
+            <span class="material-symbols-outlined text-emerald-500 text-2xl">check_circle</span>
             <div class="flex flex-col gap-0.5">
               <span
                 class="text-[0.6875rem] font-semibold tracking-wider text-zinc-500 uppercase"
@@ -102,12 +91,12 @@ import { MatButtonModule } from '@angular/material/button';
                   >
                     {{ registro.dolor_escala }}/10
                   </span>
-                  <mat-icon
-                    class="material-symbols-outlined !text-xl"
+                  <span
+                    class="material-symbols-outlined text-xl"
                     [style.color]="getDolorColor(registro.dolor_escala || 0)"
                   >
                     {{ getDolorIcon(registro.dolor_escala || 0) }}
-                  </mat-icon>
+                  </span>
                 </div>
               </div>
             }
@@ -128,11 +117,11 @@ import { MatButtonModule } from '@angular/material/button';
       <!-- Botón volver -->
       <div class="shrink-0 pt-2">
         <button
-          mat-flat-button
-          class="!from-primary !h-14 !w-full !rounded-2xl !bg-gradient-to-r to-amber-600 !text-base !font-bold !text-white"
+          type="button"
+          class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-amber-600 text-base font-bold text-white transition-opacity hover:opacity-90"
           (click)="volverInicio.emit()"
         >
-          <mat-icon class="material-symbols-outlined mr-2">home</mat-icon>
+          <span class="material-symbols-outlined">home</span>
           Volver al inicio
         </button>
       </div>

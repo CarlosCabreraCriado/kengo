@@ -1,48 +1,35 @@
-import { Component } from '@angular/core';
+import { Component, signal, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router } from '@angular/router';
-
-// Formulario Angular:
-import { ReactiveFormsModule } from '@angular/forms';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-
-// UI Angular Material:
-import { MatButtonModule } from '@angular/material/button';
-import { MatStepperModule } from '@angular/material/stepper';
-import { MatRadioModule } from '@angular/material/radio';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { StepperComponent, StepComponent } from '../../../../shared';
 
 @Component({
   standalone: true,
   selector: 'app-registro',
   imports: [
-    MatStepperModule,
-    MatButtonModule,
-    MatRadioModule,
+    CommonModule,
     RouterLink,
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    ReactiveFormsModule,
+    StepperComponent,
+    StepComponent,
   ],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.css',
 })
 export class RegistroComponent {
-  public loginForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
-  });
+  @ViewChild('stepper') stepper!: StepperComponent;
 
-  public error = '';
+  currentStep = signal(0);
+  error = signal<string | null>(null);
 
-  //Formularios:
-  public datosForm: FormGroup;
-  public tipoUsuarioForm: FormGroup;
-  public codigoClinicaForm: FormGroup;
-  public passwordForm: FormGroup;
+  // Formularios:
+  datosForm: FormGroup;
+  tipoUsuarioForm: FormGroup;
+  codigoClinicaForm: FormGroup;
+  passwordForm: FormGroup;
 
   constructor(
     private authService: AuthService,
@@ -69,7 +56,25 @@ export class RegistroComponent {
     });
   }
 
-  completarRegistro() {
+  nextStep(): void {
+    if (this.stepper) {
+      this.stepper.next();
+      this.currentStep.set(this.stepper.selectedIndex);
+    }
+  }
+
+  previousStep(): void {
+    if (this.stepper) {
+      this.stepper.previous();
+      this.currentStep.set(this.stepper.selectedIndex);
+    }
+  }
+
+  onStepChange(event: { selectedIndex: number }): void {
+    this.currentStep.set(event.selectedIndex);
+  }
+
+  completarRegistro(): void {
     if (
       this.passwordForm.valid &&
       this.passwordForm.value.password === this.passwordForm.value.repetir
@@ -83,5 +88,9 @@ export class RegistroComponent {
       console.log('Formulario completo:', registroCompleto);
       // aquí podrías llamar a tu API
     }
+  }
+
+  get passwordsMatch(): boolean {
+    return this.passwordForm.value.password === this.passwordForm.value.repetir;
   }
 }

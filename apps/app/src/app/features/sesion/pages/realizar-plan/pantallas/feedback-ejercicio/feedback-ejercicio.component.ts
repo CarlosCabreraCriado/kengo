@@ -12,14 +12,10 @@ import { RegistroSesionService } from '../../../../data-access/registro-sesion.s
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
 import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animations';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-
 @Component({
   selector: 'app-feedback-ejercicio',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, EscalaDolorComponent],
+  imports: [CommonModule, FormsModule, EscalaDolorComponent],
   animations: [checkmarkAnimation, fadeAnimation],
   template: `
     <div class="flex flex-1 flex-col gap-4 overflow-y-auto pt-2">
@@ -39,7 +35,7 @@ import { MatButtonModule } from '@angular/material/button';
       <!-- Checkmark animado -->
       <div class="flex shrink-0 flex-col items-center gap-3 py-3" @checkmark>
         <div class="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg animate-pop-in">
-          <mat-icon class="material-symbols-outlined !text-3xl text-white">check</mat-icon>
+          <span class="material-symbols-outlined text-3xl text-white">check</span>
         </div>
         <h2 class="m-0 text-xl font-bold text-zinc-800">¡Ejercicio completado!</h2>
         <p class="m-0 text-sm font-medium text-zinc-500">{{ nombreEjercicio() }}</p>
@@ -69,9 +65,8 @@ import { MatButtonModule } from '@angular/material/button';
       <!-- Botón continuar -->
       <div class="flex shrink-0 flex-col items-center gap-2.5 pt-2">
         <button
-          mat-flat-button
-          color="primary"
-          class="!h-14 !w-full !rounded-2xl !text-base !font-bold disabled:!opacity-50"
+          type="button"
+          class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-bold text-white transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           [disabled]="dolorSeleccionado() === null"
           (click)="onEnviar()"
         >
@@ -80,7 +75,7 @@ import { MatButtonModule } from '@angular/material/button';
           } @else {
             Siguiente ejercicio
           }
-          <mat-icon class="material-symbols-outlined ml-2">arrow_forward</mat-icon>
+          <span class="material-symbols-outlined">arrow_forward</span>
         </button>
 
         @if (dolorSeleccionado() === null) {

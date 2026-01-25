@@ -1,91 +1,101 @@
-@if (!isEdit()) {
-  <h2 class="titulo-kengo relative my-5 h-5 w-full text-center text-3xl">
-    Nuevo paciente
-  </h2>
-} @else {
-  <h2 class="titulo-kengo relative my-5 h-5 w-full text-center text-3xl">
-    Editar paciente
-  </h2>
-}
+<ui-dialog-container>
+  <ui-dialog-header
+    [title]="isEdit() ? 'Editar paciente' : 'Nuevo paciente'"
+    (closeClick)="close()"
+  ></ui-dialog-header>
 
-<form class="grid gap-3 p-2" [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div class="grid gap-3 md:grid-cols-2">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>Nombre</mat-label>
-      <input matInput formControlName="first_name" required />
-    </mat-form-field>
+  <ui-dialog-content>
+    <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-1.5">
+          <label for="first_name" class="text-sm font-medium text-gray-700">Nombre *</label>
+          <input
+            id="first_name"
+            type="text"
+            formControlName="first_name"
+            class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
 
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>Apellidos</mat-label>
-      <input matInput formControlName="last_name" />
-    </mat-form-field>
-  </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="last_name" class="text-sm font-medium text-gray-700">Apellidos</label>
+          <input
+            id="last_name"
+            type="text"
+            formControlName="last_name"
+            class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </div>
 
-  <mat-form-field appearance="outline" subscriptSizing="dynamic">
-    <mat-label>Email</mat-label>
-    <input matInput formControlName="email" type="email" required />
-    <mat-error
-      *ngIf="form.controls.email.invalid && form.controls.email.touched"
-    >
-      Email inválido
-    </mat-error>
-  </mat-form-field>
-
-  <mat-form-field appearance="outline" subscriptSizing="dynamic">
-    <mat-label>Teléfono</mat-label>
-    <input matInput formControlName="telefono" />
-  </mat-form-field>
-
-  <mat-form-field appearance="outline" subscriptSizing="dynamic">
-    <mat-label>Clínicas</mat-label>
-    <mat-select formControlName="clinicas" multiple>
-      @if (clinicasRes.isLoading()) {
-        <mat-option disabled>Cargando clínicas…</mat-option>
-      } @else {
-        @for (c of clinicasRes.value(); track c.id_clinica) {
-          <mat-option [value]="c.id_clinica">{{
-            c.nombre || "Clínica " + c.id_clinica
-          }}</mat-option>
+      <div class="flex flex-col gap-1.5">
+        <label for="email" class="text-sm font-medium text-gray-700">Email *</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          [class.border-red-500]="form.controls.email.invalid && form.controls.email.touched"
+        />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <span class="text-xs text-red-600">Email inválido</span>
         }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="telefono" class="text-sm font-medium text-gray-700">Teléfono</label>
+        <input
+          id="telefono"
+          type="tel"
+          formControlName="telefono"
+          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="clinicas" class="text-sm font-medium text-gray-700">Clínicas</label>
+        <select
+          id="clinicas"
+          formControlName="clinicas"
+          multiple
+          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[80px]"
+        >
+          @if (clinicasRes.isLoading()) {
+            <option disabled>Cargando clínicas…</option>
+          } @else {
+            @for (c of clinicasRes.value(); track c.id_clinica) {
+              <option [value]="c.id_clinica">{{ c.nombre || 'Clínica ' + c.id_clinica }}</option>
+            }
+          }
+        </select>
+        <span class="text-xs text-gray-500">Mantén presionado Ctrl/Cmd para seleccionar múltiples</span>
+      </div>
+
+      @if (loading()) {
+        <ui-progress-bar mode="indeterminate" class="mt-2"></ui-progress-bar>
       }
-    </mat-select>
-  </mat-form-field>
 
-  <!-- Si quieres crear con password en lugar de invitación, añade este campo
-    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-      <mat-label>Contraseña (opcional)</mat-label>
-      <input matInput type="password" formControlName="password" />
-    </mat-form-field>
-    -->
+      @if (error()) {
+        <p class="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error() }}</p>
+      }
+    </form>
+  </ui-dialog-content>
 
-  <div class="mt-2 flex items-center gap-2">
-    @if (isEdit()) {
-      <button
-        mat-flat-button
-        color="primary"
-        type="submit"
-        [disabled]="form.invalid || loading()"
-      >
-        Guardar
-      </button>
-    } @else {
-      <button
-        mat-flat-button
-        color="primary"
-        type="submit"
-        [disabled]="form.invalid || loading()"
-      >
-        Crear
-      </button>
-    }
-
-    <button mat-button type="button" (click)="close()">Cancelar</button>
-  </div>
-
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" class="mt-2"></mat-progress-bar>
-  }
-  @if (error()) {
-    <p class="mt-2 text-red-600">{{ error() }}</p>
-  }
-</form>
+  <ui-dialog-actions>
+    <button
+      type="button"
+      class="flex h-10 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+      (click)="close()"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+      [disabled]="form.invalid || loading()"
+      (click)="onSubmit()"
+    >
+      {{ isEdit() ? 'Guardar' : 'Crear' }}
+    </button>
+  </ui-dialog-actions>
+</ui-dialog-container>

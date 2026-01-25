@@ -10,28 +10,17 @@ import {
   ElementRef,
   ViewChild,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { environment as env } from '../../../environments/environment';
 
 //Servicios:
 import { AppService } from '../../services/app.service';
 
-//Material:
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatIconModule } from '@angular/material/icon';
-
 //Upload:
 import { ImageUploadComponent } from '../../image-upload/image-upload.component';
 
 //Dialogos:
-import { MatDialog } from '@angular/material/dialog';
-import { DialogoComponent } from '../../dialogos/dialogos.component';
+import { DialogService } from '../../../../../../shared/ui/dialog/dialog.service';
 
 //Types:
 import { Usuario } from '../../../types/global';
@@ -40,15 +29,7 @@ import { Usuario } from '../../../types/global';
   selector: 'app-modificar-perfil',
   standalone: true,
   imports: [
-    MatIconModule,
-    MatCheckboxModule,
-    MatMenuModule,
-    MatButtonModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSelectModule,
     ReactiveFormsModule,
-    MatProgressSpinnerModule,
   ],
   templateUrl: './modificar-perfil.component.html',
   styleUrl: './modificar-perfil.component.css',
@@ -56,7 +37,7 @@ import { Usuario } from '../../../types/global';
 export class ModificarPerfilComponent implements OnInit, OnDestroy {
   private appService = inject(AppService);
   private fb = inject(FormBuilder);
-  public dialog = inject(MatDialog);
+  private dialogService = inject(DialogService);
   private destroyRef = inject(DestroyRef);
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -138,14 +119,6 @@ export class ModificarPerfilComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogoProcesando = this.dialog.open(DialogoComponent, {
-      data: {
-        tipo: 'procesando',
-        titulo: 'Guardando cambios...',
-        mensaje: '',
-      },
-    });
-
     // Casos según tu esquema:
     const payload = this.formularioUsuario.value;
     console.warn('Payload a enviar:', payload);
@@ -161,34 +134,26 @@ export class ModificarPerfilComponent implements OnInit, OnDestroy {
     });
 
     if (!resUser.ok) {
-      dialogoProcesando.close();
-      this.dialog.open(DialogoComponent, {
-        data: {
-          tipo: 'error',
-          titulo: 'Se ha producido un error',
-          mensaje: '',
-        },
-      });
+      alert('Se ha producido un error');
       throw new Error('No se pudo actualizar el perfil');
     } else {
       await this.appService.refreshUsuario();
       this.formularioCambiado.set(false);
-      dialogoProcesando.close();
     }
   }
 
   cambiarFotoPerfil() {
-    this.dialog
+    this.dialogService
       .open(ImageUploadComponent, {
         data: {
-          url_perfil: this.url_perfil(), // se usa como preview inicial
+          url_perfil: this.url_perfil(),
           resizeToWidth: 512,
           format: 'jpeg',
           quality: 80,
           precargar: true,
         },
       })
-      .afterClosed()
+      .closed
       .subscribe(async (result?: { file: File; dataUrl: string }) => {
         if (!result) return;
         await this.subirAvatar(result.file);
@@ -222,9 +187,6 @@ export class ModificarPerfilComponent implements OnInit, OnDestroy {
     const objUrl = URL.createObjectURL(file);
     this.previewUrl.set(objUrl);
 
-    // (Opcional) aquí podrías abrir un modal con ngx-image-cropper y, tras recortar,
-    // reemplazar `file` por el blob recortado antes de subir.
-
     // Subir a Directus
     this.subirAvatar(file).finally(() => {
       // Limpia selección para permitir re-seleccionar el mismo archivo si hace falta
@@ -243,7 +205,7 @@ export class ModificarPerfilComponent implements OnInit, OnDestroy {
       const resFile = await fetch(`${env.DIRECTUS_URL}/files`, {
         method: 'POST',
         body: formData,
-        credentials: 'include', // si usas cookies/sesión
+        credentials: 'include',
         headers: {
           // 'Authorization': `Bearer ${token}`, // si usas token
         },
@@ -252,7 +214,6 @@ export class ModificarPerfilComponent implements OnInit, OnDestroy {
       if (!resFile.ok) throw new Error('Error subiendo el archivo');
       const filePayload = await resFile.json();
       const fileId = filePayload?.data?.id as string | undefined;
-      //const fileUrl = filePayload?.data?.data?.full_url || this.url_perfil(); // ajusta a tu helper
 
       if (!fileId) throw new Error('No se recibió ID del archivo');
 
@@ -268,7 +229,7 @@ export class ModificarPerfilComponent implements OnInit, OnDestroy {
         method: 'PATCH',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json' /*, Authorization si hace falta */,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(updatePayloadA),
       });

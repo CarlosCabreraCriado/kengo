@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+
+import {
+  DialogContainerComponent,
+  DialogHeaderComponent,
+  DialogContentComponent,
+  DialogActionsComponent,
+} from '../../../../shared/ui/dialog';
 
 export interface DialogoGuardarRutinaData {
   nombreSugerido?: string;
@@ -22,78 +24,81 @@ export interface DialogoGuardarRutinaResult {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatIconModule,
+    DialogContainerComponent,
+    DialogHeaderComponent,
+    DialogContentComponent,
+    DialogActionsComponent,
   ],
   template: `
-    <h2 mat-dialog-title class="!flex items-center gap-2">
-      <mat-icon class="material-symbols-outlined text-amber-500">bookmark_add</mat-icon>
-      Guardar como plantilla
-    </h2>
+    <ui-dialog-container>
+      <ui-dialog-header title="Guardar como plantilla" (closeClick)="cancelar()">
+        <span class="material-symbols-outlined text-amber-500">bookmark_add</span>
+      </ui-dialog-header>
 
-    <mat-dialog-content>
-      <form [formGroup]="form" class="space-y-4">
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Nombre de la plantilla</mat-label>
-          <input
-            matInput
-            formControlName="nombre"
-            placeholder="Ej: Rutina fortalecimiento rodilla"
-          />
-          @if (form.controls.nombre.hasError('required')) {
-            <mat-error>El nombre es requerido</mat-error>
-          }
-          @if (form.controls.nombre.hasError('minlength')) {
-            <mat-error>Minimo 3 caracteres</mat-error>
-          }
-        </mat-form-field>
+      <ui-dialog-content>
+        <form [formGroup]="form" class="space-y-4">
+          <div class="flex flex-col gap-1.5">
+            <label for="nombre" class="text-sm font-medium text-gray-700">Nombre de la plantilla</label>
+            <input
+              id="nombre"
+              type="text"
+              formControlName="nombre"
+              placeholder="Ej: Rutina fortalecimiento rodilla"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              [class.border-red-500]="form.controls.nombre.invalid && form.controls.nombre.touched"
+            />
+            @if (form.controls.nombre.hasError('required') && form.controls.nombre.touched) {
+              <span class="text-xs text-red-600">El nombre es requerido</span>
+            }
+            @if (form.controls.nombre.hasError('minlength') && form.controls.nombre.touched) {
+              <span class="text-xs text-red-600">Mínimo 3 caracteres</span>
+            }
+          </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Descripcion</mat-label>
-          <textarea
-            matInput
-            formControlName="descripcion"
-            rows="3"
-            placeholder="Descripcion de la plantilla..."
-          ></textarea>
-        </mat-form-field>
+          <div class="flex flex-col gap-1.5">
+            <label for="descripcion" class="text-sm font-medium text-gray-700">Descripción</label>
+            <textarea
+              id="descripcion"
+              formControlName="descripcion"
+              rows="3"
+              placeholder="Descripción de la plantilla..."
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            ></textarea>
+          </div>
 
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Visibilidad</mat-label>
-          <mat-select formControlName="visibilidad">
-            <mat-option value="privado">
-              <div class="flex items-center gap-2">
-                <mat-icon class="material-symbols-outlined !text-lg">lock</mat-icon>
-                Privada - Solo yo puedo verla
-              </div>
-            </mat-option>
-            <mat-option value="publico">
-              <div class="flex items-center gap-2">
-                <mat-icon class="material-symbols-outlined !text-lg">public</mat-icon>
-                Publica - Otros fisios pueden usarla
-              </div>
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </form>
-    </mat-dialog-content>
+          <div class="flex flex-col gap-1.5">
+            <label for="visibilidad" class="text-sm font-medium text-gray-700">Visibilidad</label>
+            <select
+              id="visibilidad"
+              formControlName="visibilidad"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="privado">🔒 Privada - Solo yo puedo verla</option>
+              <option value="publico">🌐 Pública - Otros fisios pueden usarla</option>
+            </select>
+          </div>
+        </form>
+      </ui-dialog-content>
 
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button
-        mat-flat-button
-        [disabled]="!form.valid"
-        (click)="guardar()"
-        class="!bg-amber-500 !text-white"
-      >
-        <mat-icon class="material-symbols-outlined">save</mat-icon>
-        Guardar plantilla
-      </button>
-    </mat-dialog-actions>
+      <ui-dialog-actions>
+        <button
+          type="button"
+          class="flex h-10 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          (click)="cancelar()"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="flex h-10 items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+          [disabled]="!form.valid"
+          (click)="guardar()"
+        >
+          <span class="material-symbols-outlined text-lg">save</span>
+          Guardar plantilla
+        </button>
+      </ui-dialog-actions>
+    </ui-dialog-container>
   `,
   styles: [`
     :host {
@@ -102,8 +107,8 @@ export interface DialogoGuardarRutinaResult {
   `],
 })
 export class DialogoGuardarRutinaComponent {
-  private dialogRef = inject(MatDialogRef<DialogoGuardarRutinaComponent>);
-  private data = inject<DialogoGuardarRutinaData>(MAT_DIALOG_DATA, { optional: true });
+  private dialogRef = inject(DialogRef);
+  private data = inject<DialogoGuardarRutinaData>(DIALOG_DATA, { optional: true });
   private fb = inject(FormBuilder);
 
   form = this.fb.group({
@@ -121,5 +126,9 @@ export class DialogoGuardarRutinaComponent {
       };
       this.dialogRef.close(result);
     }
+  }
+
+  cancelar() {
+    this.dialogRef.close();
   }
 }

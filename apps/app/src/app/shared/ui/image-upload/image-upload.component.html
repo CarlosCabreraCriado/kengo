@@ -1,52 +1,4 @@
-<!--
-<h2 mat-dialog-title class="text-center">Foto de perfil</h2>
-
-<button mat-raised-button color="warn" (click)="fileInput.click()">
-  Subir Archivo
-</button>
-
-<input
-  #fileInput
-  hidden
-  mat-flat-button
-  type="file"
-  (change)="fileChangeEvent($event)"
-  accept="image/*"
-/>
-
-<div class="position-relative">
-  <image-cropper
-    class="cropper"
-    [imageChangedEvent]="imageChangedEvent"
-    [maintainAspectRatio]="true"
-    [aspectRatio]="1 / 1"
-    format="jpeg"
-    (imageCropped)="imageCroppedEvent($event)"
-  >
-  </image-cropper>
-
-  @if (croppedImage) {
-    <img class="imagen" [src]="croppedImage" />
-  }
-</div>
-
-<div mat-dialog-actions class="mt-15">
-  <button mat-flat-button class="daxa" cdkFocusInitial (click)="guardar()">
-    Guardar
-  </button>
-  <button mat-flat-button cdkFocusInitial [mat-dialog-close]="true">
-    Cancelar
-  </button>
-</div>
--->
-
-<!--
-<h2 mat-dialog-title>Editar foto de perfil</h2>
--->
-
-<mat-dialog-content class="space-y-3">
-  <!-- Zona de arrastre/selección -->
-
+<div class="space-y-3 p-4">
   <!-- Errores de carga -->
   @if (loadError()) {
     <div class="text-sm text-red-600">
@@ -70,7 +22,7 @@
         (change)="onFileSelected($event)"
       />
       <div class="flex flex-col items-center gap-2">
-        <mat-icon class="material-symbols-outlined">upload</mat-icon>
+        <span class="material-symbols-outlined text-3xl text-gray-400">upload</span>
         <div class="text-sm">
           Haz clic para seleccionar una imagen o arrástrala aquí
         </div>
@@ -84,31 +36,55 @@
     ) {
       <!-- Controles -->
       <div class="flex flex-wrap items-center justify-center gap-2">
-        <button matMiniFab (click)="zoomOut()">
-          <mat-icon class="material-symbols-outlined">zoom_out</mat-icon>
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="zoomOut()"
+        >
+          <span class="material-symbols-outlined">zoom_out</span>
         </button>
-        <button matMiniFab (click)="zoomIn()">
-          <mat-icon class="material-symbols-outlined">zoom_in</mat-icon>
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="zoomIn()"
+        >
+          <span class="material-symbols-outlined">zoom_in</span>
         </button>
-        <button matMiniFab (click)="rotateLeft()">
-          <mat-icon class="material-symbols-outlined">rotate_left</mat-icon>
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="rotateLeft()"
+        >
+          <span class="material-symbols-outlined">rotate_left</span>
         </button>
-        <button matMiniFab (click)="rotateRight()">
-          <mat-icon class="material-symbols-outlined">rotate_right</mat-icon>
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="rotateRight()"
+        >
+          <span class="material-symbols-outlined">rotate_right</span>
         </button>
-        <button matMiniFab (click)="toggleFlipH()">
-          <mat-icon class="material-symbols-outlined">swap_horiz</mat-icon>
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="toggleFlipH()"
+        >
+          <span class="material-symbols-outlined">swap_horiz</span>
         </button>
-        <button matMiniFab (click)="toggleFlipV()">
-          <mat-icon class="material-symbols-outlined">swap_vert</mat-icon>
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="toggleFlipV()"
+        >
+          <span class="material-symbols-outlined">swap_vert</span>
         </button>
 
         <button
-          mat-stroked-button
-          extended
+          type="button"
+          class="flex h-10 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           (click)="pantallaCargarArchivo.set(true)"
         >
-          <mat-icon class="material-symbols-outlined">upload</mat-icon>
+          <span class="material-symbols-outlined text-lg">upload</span>
           Cargar
         </button>
       </div>
@@ -151,9 +127,21 @@
       <div class="text-xs text-gray-500">Vista previa del recorte</div>
     </div>
   }
-</mat-dialog-content>
+</div>
 
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-flat-button color="primary" (click)="guardar()">Guardar</button>
-</mat-dialog-actions>
+<div class="flex justify-end gap-2 border-t border-zinc-200 px-4 py-3">
+  <button
+    type="button"
+    class="flex h-10 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+    (click)="cancelar()"
+  >
+    Cancelar
+  </button>
+  <button
+    type="button"
+    class="flex h-10 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+    (click)="guardar()"
+  >
+    Guardar
+  </button>
+</div>

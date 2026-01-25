@@ -10,14 +10,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// Angular Material
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-
 @Component({
   selector: 'app-video-ejercicio',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule],
   template: `
     <div
       class="video-container relative aspect-video w-full cursor-pointer overflow-hidden rounded-3xl bg-zinc-800 shadow-xl transition-all duration-300"
@@ -43,7 +39,7 @@ import { MatButtonModule } from '@angular/material/button';
         />
       } @else {
         <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#e75c3e] to-[#efc048]">
-          <mat-icon class="material-symbols-outlined !text-6xl text-white/90">videocam</mat-icon>
+          <span class="material-symbols-outlined text-6xl text-white/90">videocam</span>
           <span class="text-sm font-medium text-white/90">Sin video disponible</span>
         </div>
       }
@@ -52,7 +48,7 @@ import { MatButtonModule } from '@angular/material/button';
       @if (pausado()) {
         <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60 backdrop-blur-sm">
           <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#e75c3e] to-[#d14d31] pl-1 shadow-xl transition-transform hover:scale-110">
-            <mat-icon class="material-symbols-outlined !text-4xl text-white">play_arrow</mat-icon>
+            <span class="material-symbols-outlined text-4xl text-white">play_arrow</span>
           </div>
           <span class="text-sm font-medium text-white drop-shadow-md">Toca para reproducir</span>
         </div>
@@ -67,13 +63,13 @@ import { MatButtonModule } from '@angular/material/button';
 
       <!-- Botón expandir -->
       <button
-        mat-icon-button
-        class="!absolute !right-4 !top-4 !h-11 !w-11 !bg-white/15 !backdrop-blur-md hover:!bg-white/25"
+        type="button"
+        class="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-md transition-colors hover:bg-white/25"
         (click)="toggleExpandir($event)"
       >
-        <mat-icon class="material-symbols-outlined text-white">
+        <span class="material-symbols-outlined text-white">
           {{ expandido() ? 'close_fullscreen' : 'open_in_full' }}
-        </mat-icon>
+        </span>
       </button>
     </div>
   `,

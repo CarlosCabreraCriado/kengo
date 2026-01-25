@@ -2,22 +2,14 @@ import {
   Component,
   EventEmitter,
   Output,
-  Inject,
+  inject,
   signal,
   ElementRef,
   ViewChild,
   OnInit,
   OnDestroy,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogContent,
-  MatDialogActions,
-  MatDialogClose,
-} from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import {
   ImageCropperComponent,
   ImageCroppedEvent,
@@ -38,16 +30,14 @@ interface DialogData {
   styleUrls: ['./image-upload.component.css'],
   standalone: true,
   imports: [
-    MatButtonModule,
-    MatDialogClose,
-    MatIconModule,
     ImageCropperComponent,
-    MatDialogContent,
-    MatDialogActions,
   ],
 })
 export class ImageUploadComponent implements OnInit, OnDestroy {
   @Output() imageCropped = new EventEmitter<File>();
+
+  private dialogRef = inject(DialogRef);
+  data = inject<DialogData>(DIALOG_DATA);
 
   public archivoPrecargado = signal(false);
 
@@ -76,7 +66,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     scale: 1,
     translateH: 0,
     translateV: 0,
-    // translateUnit: '%', // opcional
   };
 
   // Configuración
@@ -87,21 +76,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild(ImageCropperComponent) cropper?: ImageCropperComponent;
-
-  constructor(
-    /*
-    public dialogRef: MatDialogRef<ImageUploadComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { url_perfil: string },
-    */
-    @Inject(MAT_DIALOG_DATA) public data: DialogData,
-    private dialogRef: MatDialogRef<ImageUploadComponent>,
-  ) {
-    /*
-    if (data.url_perfil) {
-      this.croppedImage = data.url_perfil;
-    }
-    */
-  }
 
   async ngOnInit() {
     // Si te pasan la URL del avatar actual y es privada, la cargamos como blob
@@ -124,9 +98,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
   private async precargarDesdeDirectus(url: string) {
     this.loading.set(true);
 
-    // 🔐 Elige UNO de los dos métodos de auth según tu proyecto:
-
-    // 1) Si usas sesión por cookies con el dominio correcto y CORS:
     const res = await fetch(url, {
       mode: 'cors',
       credentials: 'include',
@@ -152,17 +123,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
   fileChangeEvent(event: Event): void {
     this.imageChangedEvent = event;
   }
-
-  /*
-  guardar() {
-    if (this.base64) {
-      this.reducirResolucion(this.base64, 300, 300) // Reducir a 300x300px
-        .then((blob) => {
-          this.dialogRef.close({ blob: blob });
-        });
-    }
-  }
-  */
 
   async reducirResolucion(
     blob: Blob,
@@ -244,7 +204,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     this.lastCroppedBlob = null;
 
     // Para activar el cropper con el archivo local:
-    // opción A) usar imageChangedEvent (deja que el cropper lea del input)
     this.imageChangedEvent = null;
     this.imageURL = null;
     this.imageFile = file;
@@ -269,7 +228,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     if (dt.files && dt.files.length) {
       const file = dt.files[0];
       if (!this.esImagenValida(file)) return;
-      this.imageFile = file; // 👈 alimentar directamente
+      this.imageFile = file;
       this.imageChangedEvent = null;
       this.imageURL = null;
       this.pantallaCargarArchivo.set(false);
@@ -281,7 +240,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     const url = dt.getData('text/uri-list') || dt.getData('text/plain');
     if (url && /^https?:\/\//i.test(url)) {
       try {
-        // ⚠️ Necesita CORS permitido en el origen de esa imagen
         const res = await fetch(url, { mode: 'cors' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
@@ -297,7 +255,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
           return;
         }
 
-        this.imageFile = file; // 👈 alimentar directamente
+        this.imageFile = file;
         this.imageChangedEvent = null;
         this.imageURL = null;
         this.pantallaCargarArchivo.set(false);
@@ -358,7 +316,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
 
     this.imageFile = null;
     this.imageChangedEvent = null;
-    // mantenemos imageURL si vinieras de precarga; si quieres, ponla a null también
   }
 
   /** Evento de recorte del cropper */
@@ -427,29 +384,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     };
   }
 
-  /** Guardar: devuelve File optimizado al componente padre */
-  /*
-  async guardar() {
-    const base64 = this.croppedBase64();
-    if (!base64) {
-      this.loadError.set('Primero selecciona y recorta una imagen.');
-      return;
-    }
-
-    const file = await this.base64ToFile(
-      base64,
-      `avatar.${this.data.format === 'jpeg' ? 'jpg' : this.data.format}`,
-      this.data.format ?? 'jpeg',
-      this.data.quality ?? 0.8,
-    );
-
-    this.dialogRef.close({
-      file,
-      dataUrl: base64, // por si quieres pintar preview inmediata
-    });
-  }
-  */
-
   // === Guardar: recorte programático a Blob ===
   async guardar() {
     try {
@@ -470,8 +404,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
         : mime.split('/')[1] ||
           (this.data.format === 'jpeg' ? 'jpg' : this.data.format);
 
-      // OJO: si quieres forzar el formato/calidad final, puedes re-encodear aquí con canvas.
-      // En la mayoría de casos, ngx-image-cropper ya respeta [format] y [imageQuality].
       const file = new File([blob], `avatar.${ext}`, { type: mime });
 
       this.dialogRef.close({ file });
@@ -496,7 +428,6 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     let blob = await res.blob();
 
     // (Opcional) Fuerza recomprimir con el formato/calidad deseados
-    // creando un canvas intermedio. Útil si quieres garantizar el mime final.
     blob = await this.reencodeBlob(blob, `image/${format}`, quality);
 
     return new File([blob], filename, { type: `image/${format}` });

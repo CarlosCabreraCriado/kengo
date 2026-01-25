@@ -1,17 +1,15 @@
 import { Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { DialogRef } from '@angular/cdk/dialog';
 
 @Component({
   selector: 'app-privacy-policy',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatDialogModule],
+  imports: [],
   templateUrl: './privacy-policy.component.html',
   styleUrl: './privacy-policy.component.css',
 })
 export class PrivacyPolicyComponent {
-  private dialogRef = inject(MatDialogRef<PrivacyPolicyComponent>);
+  private dialogRef = inject(DialogRef);
 
   cerrar() {
     this.dialogRef.close();

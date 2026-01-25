@@ -1,9 +1,8 @@
 <!-- Loading bar -->
 @if (isLoading() || isSaving()) {
-  <mat-progress-bar
-    mode="indeterminate"
-    class="fixed top-0 right-0 left-0 z-50"
-  ></mat-progress-bar>
+  <div class="fixed top-0 right-0 left-0 z-50 h-1 overflow-hidden bg-zinc-200">
+    <div class="progress-bar-indeterminate h-full w-1/3 bg-[#e75c3e]"></div>
+  </div>
 }
 
 <section class="flex flex-col w-full h-full overflow-y-auto pb-24 lg:pb-6">
@@ -17,56 +16,66 @@
         <!-- Header simplificado para desktop: solo menu de acciones centrado -->
         <div class="flex items-center justify-center gap-3">
           <!-- Menu de acciones -->
-          <button
-            mat-icon-button
-            [matMenuTriggerFor]="menuAcciones"
-            class="!h-12 !w-12 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm"
-            [disabled]="isSaving()"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >more_vert</mat-icon
+          <div class="relative">
+            <button
+              #menuAccionesBtn
+              type="button"
+              class="flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200/80 bg-white/70 shadow-sm hover:bg-zinc-50"
+              [disabled]="isSaving()"
+              (click)="menuAccionesOpen = !menuAccionesOpen"
             >
-          </button>
+              <span class="material-symbols-outlined text-zinc-600">more_vert</span>
+            </button>
 
-          <mat-menu #menuAcciones="matMenu" xPosition="before">
-            <button
-              mat-menu-item
-              (click)="cargarPlantilla()"
-              [disabled]="isLoading()"
-            >
-              <mat-icon class="material-symbols-outlined">folder_open</mat-icon>
-              <span>Cargar plantilla</span>
-            </button>
-            <button
-              mat-menu-item
-              (click)="guardarComoPlantilla()"
-              [disabled]="items().length === 0"
-            >
-              <mat-icon class="material-symbols-outlined">bookmark_add</mat-icon>
-              <span>Guardar como plantilla</span>
-            </button>
-            @if (!isEditMode()) {
-              <mat-divider></mat-divider>
-              <button mat-menu-item routerLink="/ejercicios">
-                <mat-icon class="material-symbols-outlined">add</mat-icon>
-                <span>Agregar ejercicios</span>
-              </button>
+            @if (menuAccionesOpen) {
+              <div
+                class="absolute right-0 top-full mt-1 z-50 min-w-[200px] rounded-xl bg-white py-1 shadow-lg ring-1 ring-zinc-200"
+                (clickOutside)="menuAccionesOpen = false"
+              >
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                  [disabled]="isLoading()"
+                  (click)="cargarPlantilla(); menuAccionesOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl">folder_open</span>
+                  <span>Cargar plantilla</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  [disabled]="items().length === 0"
+                  (click)="guardarComoPlantilla(); menuAccionesOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl">bookmark_add</span>
+                  <span>Guardar como plantilla</span>
+                </button>
+                @if (!isEditMode()) {
+                  <hr class="my-1 border-zinc-100" />
+                  <a
+                    routerLink="/ejercicios"
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                    (click)="menuAccionesOpen = false"
+                  >
+                    <span class="material-symbols-outlined text-xl">add</span>
+                    <span>Agregar ejercicios</span>
+                  </a>
+                }
+              </div>
             }
-          </mat-menu>
+          </div>
         </div>
       } @else {
         <!-- Header completo para móvil -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <button
-              mat-icon-button
-              class="!h-10 !w-10 shrink-0"
+              type="button"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-zinc-100"
               aria-label="Volver"
               (click)="cancelar()"
             >
-              <mat-icon class="material-symbols-outlined text-zinc-600"
-                >arrow_back</mat-icon
-              >
+              <span class="material-symbols-outlined text-zinc-600">arrow_back</span>
             </button>
             <div>
               <h1 class="titulo-kengo text-xl font-bold text-zinc-800 sm:text-2xl">
@@ -79,43 +88,55 @@
             </div>
           </div>
 
-          <!-- Menu de acciones -->
-          <button
-            mat-icon-button
-            [matMenuTriggerFor]="menuAccionesMobile"
-            class="!h-10 !w-10 rounded-xl border border-zinc-200/80 !bg-white/70 shadow-sm"
-            [disabled]="isSaving()"
-          >
-            <mat-icon class="material-symbols-outlined text-zinc-600"
-              >more_vert</mat-icon
+          <!-- Menu de acciones mobile -->
+          <div class="relative">
+            <button
+              #menuAccionesMobileBtn
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200/80 bg-white/70 shadow-sm"
+              [disabled]="isSaving()"
+              (click)="menuAccionesMobileOpen = !menuAccionesMobileOpen"
             >
-          </button>
+              <span class="material-symbols-outlined text-zinc-600">more_vert</span>
+            </button>
 
-          <mat-menu #menuAccionesMobile="matMenu" xPosition="before">
-            <button
-              mat-menu-item
-              (click)="cargarPlantilla()"
-              [disabled]="isLoading()"
-            >
-              <mat-icon class="material-symbols-outlined">folder_open</mat-icon>
-              <span>Cargar plantilla</span>
-            </button>
-            <button
-              mat-menu-item
-              (click)="guardarComoPlantilla()"
-              [disabled]="items().length === 0"
-            >
-              <mat-icon class="material-symbols-outlined">bookmark_add</mat-icon>
-              <span>Guardar como plantilla</span>
-            </button>
-            @if (!isEditMode()) {
-              <mat-divider></mat-divider>
-              <button mat-menu-item routerLink="/ejercicios">
-                <mat-icon class="material-symbols-outlined">add</mat-icon>
-                <span>Agregar ejercicios</span>
-              </button>
+            @if (menuAccionesMobileOpen) {
+              <div
+                class="absolute right-0 top-full mt-1 z-50 min-w-[200px] rounded-xl bg-white py-1 shadow-lg ring-1 ring-zinc-200"
+                (clickOutside)="menuAccionesMobileOpen = false"
+              >
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                  [disabled]="isLoading()"
+                  (click)="cargarPlantilla(); menuAccionesMobileOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl">folder_open</span>
+                  <span>Cargar plantilla</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  [disabled]="items().length === 0"
+                  (click)="guardarComoPlantilla(); menuAccionesMobileOpen = false"
+                >
+                  <span class="material-symbols-outlined text-xl">bookmark_add</span>
+                  <span>Guardar como plantilla</span>
+                </button>
+                @if (!isEditMode()) {
+                  <hr class="my-1 border-zinc-100" />
+                  <a
+                    routerLink="/ejercicios"
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                    (click)="menuAccionesMobileOpen = false"
+                  >
+                    <span class="material-symbols-outlined text-xl">add</span>
+                    <span>Agregar ejercicios</span>
+                  </a>
+                }
+              </div>
             }
-          </mat-menu>
+          </div>
         </div>
       }
     </div>
@@ -138,9 +159,7 @@
             <div
               class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-200"
             >
-              <mat-icon class="material-symbols-outlined text-zinc-500"
-                >person</mat-icon
-              >
+              <span class="material-symbols-outlined text-zinc-500">person</span>
             </div>
           }
           <div class="min-w-0 flex-1">
@@ -168,14 +187,12 @@
               }
             </div>
             <button
-              mat-icon-button
-              class="!h-9 !w-9 shrink-0"
+              type="button"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-zinc-100"
               (click)="editandoDetalles.set(true)"
-              matTooltip="Editar titulo y descripcion"
+              title="Editar titulo y descripcion"
             >
-              <mat-icon class="material-symbols-outlined !text-xl text-zinc-500"
-                >edit</mat-icon
-              >
+              <span class="material-symbols-outlined text-xl text-zinc-500">edit</span>
             </button>
           </div>
         } @else {
@@ -213,9 +230,8 @@
 
             <div class="flex justify-end">
               <button
-                mat-flat-button
                 type="button"
-                class="!bg-zinc-800 !text-white"
+                class="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-800 px-4 text-sm font-medium text-white hover:bg-zinc-700"
                 (click)="editandoDetalles.set(false)"
               >
                 Listo
@@ -225,61 +241,29 @@
         }
       </div>
 
-      <!-- Selector de fechas (siempre visible) -->
+      <!-- Selector de fechas -->
       <div class="p-4">
-        <!-- Rango de fechas visual -->
-        <button
-          type="button"
-          class="fecha-range-btn w-full"
-          (click)="seleccionarPersonalizado()"
-        >
-          <div class="flex items-center gap-3">
-            <mat-icon class="material-symbols-outlined !text-primary !text-xl"
-              >calendar_today</mat-icon
-            >
-            <div class="flex flex-1 items-center justify-around gap-2">
-              <span class="font-medium text-zinc-800">
-                {{
-                  form.value.fecha_inicio
-                    ? formatDate(form.value.fecha_inicio)
-                    : "Inicio"
-                }}
-              </span>
-              <mat-icon class="material-symbols-outlined !text-primary !text-lg"
-                >arrow_forward</mat-icon
-              >
-              <span class="font-medium text-zinc-800">
-                {{
-                  form.value.fecha_fin
-                    ? formatDate(form.value.fecha_fin)
-                    : "Fin"
-                }}
-              </span>
-            </div>
-            <mat-icon class="material-symbols-outlined !text-primary !text-xl"
-              >edit_calendar</mat-icon
-            >
+        <!-- Rango de fechas con inputs nativos -->
+        <div class="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+          <span class="material-symbols-outlined text-xl text-[#e75c3e]">calendar_today</span>
+          <div class="flex flex-1 items-center gap-2">
+            <input
+              type="date"
+              class="flex-1 rounded-lg border-0 bg-transparent px-2 py-1 text-center text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+              [min]="minDate"
+              [value]="form.value.fecha_inicio"
+              (change)="onFechaInicioChange($event)"
+            />
+            <span class="material-symbols-outlined text-lg text-[#e75c3e]">arrow_forward</span>
+            <input
+              type="date"
+              class="flex-1 rounded-lg border-0 bg-transparent px-2 py-1 text-center text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+              [min]="form.value.fecha_inicio || minDate"
+              [value]="form.value.fecha_fin"
+              (change)="onFechaFinChange($event)"
+            />
           </div>
-        </button>
-
-        <!-- Date Range Picker oculto -->
-        <mat-date-range-input
-          [rangePicker]="rangePicker"
-          [min]="minDate"
-          class="hidden-date-input"
-        >
-          <input
-            matStartDate
-            [(ngModel)]="rangeStart"
-            (dateChange)="onStartDateChange($event.value)"
-          />
-          <input
-            matEndDate
-            [(ngModel)]="rangeEnd"
-            (dateChange)="onEndDateChange($event.value)"
-          />
-        </mat-date-range-input>
-        <mat-date-range-picker #rangePicker></mat-date-range-picker>
+        </div>
 
         <!-- Chips de duracion -->
         <div class="mt-3">
@@ -303,11 +287,8 @@
               type="button"
               class="duracion-btn"
               [class.duracion-btn--activo]="duracionSeleccionada() === 'custom'"
-              (click)="seleccionarPersonalizado()"
             >
-              <mat-icon class="material-symbols-outlined !text-base"
-                >tune</mat-icon
-              >
+              <span class="material-symbols-outlined text-base">tune</span>
               Personalizado
             </button>
           </div>
@@ -318,17 +299,14 @@
     <!-- Lista de ejercicios -->
     @if (items().length === 0) {
       <article class="tarjeta-kengo rounded-2xl p-8 text-center">
-        <mat-icon class="material-symbols-outlined mb-3 text-5xl text-zinc-300"
-          >fitness_center</mat-icon
-        >
+        <span class="material-symbols-outlined mb-3 text-5xl text-zinc-300">fitness_center</span>
         <p class="text-lg text-zinc-500">No hay ejercicios en el plan</p>
-        <button
-          mat-flat-button
+        <a
           routerLink="/ejercicios"
-          class="mt-4 !bg-[#e75c3e] !text-white"
+          class="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-[#e75c3e] px-6 text-sm font-medium text-white hover:bg-[#d14e32]"
         >
           Agregar ejercicios
-        </button>
+        </a>
       </article>
     } @else {
       <div cdkDropList class="space-y-3" (cdkDropListDropped)="onDrop($event)">
@@ -366,9 +344,7 @@
                   class="cursor-grab text-zinc-300 hover:text-zinc-500"
                   cdkDragHandle
                 >
-                  <mat-icon class="material-symbols-outlined !text-primary"
-                    >drag_indicator</mat-icon
-                  >
+                  <span class="material-symbols-outlined text-[#e75c3e]">drag_indicator</span>
                 </div>
 
                 <div
@@ -382,9 +358,7 @@
                     />
                   } @else {
                     <div class="flex h-full w-full items-center justify-center">
-                      <mat-icon class="material-symbols-outlined text-zinc-300"
-                        >fitness_center</mat-icon
-                      >
+                      <span class="material-symbols-outlined text-zinc-300">fitness_center</span>
                     </div>
                   }
                 </div>
@@ -414,15 +388,12 @@
                 </div>
 
                 <button
-                  mat-icon-button
-                  class="!h-9 !w-9 shrink-0"
+                  type="button"
+                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-zinc-100"
                   (click)="ejercicioEditando.set(i)"
-                  matTooltip="Editar"
+                  title="Editar"
                 >
-                  <mat-icon
-                    class="material-symbols-outlined !text-xl text-zinc-500"
-                    >edit</mat-icon
-                  >
+                  <span class="material-symbols-outlined text-xl text-zinc-500">edit</span>
                 </button>
               </div>
             } @else {
@@ -561,18 +532,16 @@
                   class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3"
                 >
                   <button
-                    mat-button
-                    class="!text-red-500"
+                    type="button"
+                    class="inline-flex items-center gap-1 text-sm font-medium text-red-500 hover:text-red-600"
                     (click)="removeEjercicio(it.ejercicio.id_ejercicio)"
                   >
-                    <mat-icon class="material-symbols-outlined !text-xl"
-                      >delete</mat-icon
-                    >
+                    <span class="material-symbols-outlined text-xl">delete</span>
                     Eliminar
                   </button>
                   <button
-                    mat-flat-button
-                    class="!bg-zinc-800 !text-white"
+                    type="button"
+                    class="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-800 px-4 text-sm font-medium text-white hover:bg-zinc-700"
                     (click)="ejercicioEditando.set(null)"
                   >
                     Listo
@@ -591,16 +560,14 @@
 <div class="fixed right-0 bottom-0 left-0 z-40 p-4">
   <div class="mx-auto flex max-w-3xl items-center justify-center">
     <button
-      mat-flat-button
-      class="!h-12 w-full max-w-sm !bg-[#e75c3e] !text-white disabled:!bg-zinc-300"
+      type="button"
+      class="inline-flex h-12 w-full max-w-sm items-center justify-center rounded-xl bg-[#e75c3e] text-sm font-semibold text-white transition-colors hover:bg-[#d14e32] disabled:bg-zinc-300 disabled:cursor-not-allowed"
       (click)="guardarPlan()"
       [disabled]="!canSubmit() || isSaving()"
     >
       @if (isSaving()) {
         <span class="flex items-center justify-center gap-2">
-          <mat-icon class="material-symbols-outlined animate-spin"
-            >progress_activity</mat-icon
-          >
+          <span class="material-symbols-outlined animate-spin">progress_activity</span>
           Guardando...
         </span>
       } @else {

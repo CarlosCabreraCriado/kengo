@@ -1,13 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatChipsModule } from '@angular/material/chips';
 
 import { RutinasService } from '../../data-access/rutinas.service';
 import { Rutina, RutinaCompleta } from '../../../../../types/global';
@@ -18,58 +11,56 @@ import { environment as env } from '../../../../../environments/environment';
   standalone: true,
   imports: [
     FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressBarModule,
-    MatChipsModule,
   ],
   template: `
     <div class="selector-rutina-container">
       <header class="dialog-header">
-        <mat-icon class="material-symbols-outlined text-orange-500">folder_open</mat-icon>
+        <span class="material-symbols-outlined text-2xl text-orange-500">folder_open</span>
         <h2 class="dialog-title">Seleccionar plantilla</h2>
         <button type="button" class="close-btn" (click)="cerrar()">
-          <mat-icon class="material-symbols-outlined">close</mat-icon>
+          <span class="material-symbols-outlined">close</span>
         </button>
       </header>
 
       <div class="dialog-content">
       <!-- Search and filters -->
       <div class="mb-4 flex flex-col gap-3 sm:flex-row">
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Buscar</mat-label>
-          <input
-            matInput
-            [(ngModel)]="busqueda"
-            (ngModelChange)="onBusquedaChange($event)"
-            placeholder="Nombre de la plantilla..."
-          />
-          <mat-icon matSuffix class="material-symbols-outlined">search</mat-icon>
-        </mat-form-field>
+        <div class="flex-1">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="busqueda"
+              (ngModelChange)="onBusquedaChange($event)"
+              placeholder="Nombre de la plantilla..."
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 pr-10 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+          </div>
+        </div>
 
-        <mat-form-field appearance="outline" class="w-full sm:w-40">
-          <mat-label>Filtrar</mat-label>
-          <mat-select [(ngModel)]="filtro" (ngModelChange)="onFiltroChange($event)">
-            <mat-option value="todas">Todas</mat-option>
-            <mat-option value="privadas">Mis plantillas</mat-option>
-            <mat-option value="publicas">Publicas</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <select
+          [(ngModel)]="filtro"
+          (ngModelChange)="onFiltroChange($event)"
+          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:w-40"
+        >
+          <option value="todas">Todas</option>
+          <option value="privadas">Mis plantillas</option>
+          <option value="publicas">Públicas</option>
+        </select>
       </div>
 
       @if (rutinasService.isLoading()) {
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200">
+          <div class="h-full w-1/3 animate-[shimmer_1.5s_infinite] bg-primary"></div>
+        </div>
       }
 
       <!-- Rutinas list -->
       @if (rutinas().length === 0 && !rutinasService.isLoading()) {
         <div class="py-8 text-center">
-          <mat-icon class="material-symbols-outlined !text-5xl text-zinc-300">
+          <span class="material-symbols-outlined text-5xl text-zinc-300">
             folder_off
-          </mat-icon>
+          </span>
           <p class="mt-2 text-zinc-500">No se encontraron plantillas</p>
         </div>
       } @else {
@@ -91,13 +82,13 @@ import { environment as env } from '../../../../../environments/environment';
                     </p>
                   }
                 </div>
-                <mat-icon
+                <span
                   class="material-symbols-outlined flex-shrink-0"
                   [class.text-zinc-300]="rutina.visibilidad === 'privado'"
                   [class.text-green-500]="rutina.visibilidad === 'publico'"
                 >
                   {{ rutina.visibilidad === 'privado' ? 'lock' : 'public' }}
-                </mat-icon>
+                </span>
               </div>
             </button>
           }
@@ -112,7 +103,9 @@ import { environment as env } from '../../../../../environments/environment';
           </h4>
 
           @if (isLoadingPreview()) {
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200">
+              <div class="h-full w-1/3 animate-[shimmer_1.5s_infinite] bg-primary"></div>
+            </div>
           } @else if (previewEjercicios().length > 0) {
             <div class="space-y-2">
               @for (ej of previewEjercicios(); track ej.id; let i = $index) {
@@ -147,7 +140,7 @@ import { environment as env } from '../../../../../environments/environment';
           [disabled]="!selectedId()"
           (click)="confirmar()"
         >
-          <mat-icon class="material-symbols-outlined">check</mat-icon>
+          <span class="material-symbols-outlined">check</span>
           Usar plantilla
         </button>
       </footer>
@@ -249,6 +242,10 @@ import { environment as env } from '../../../../../environments/environment';
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
     }
   `],
 })
