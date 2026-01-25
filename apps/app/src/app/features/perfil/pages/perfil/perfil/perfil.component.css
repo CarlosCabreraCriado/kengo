@@ -78,6 +78,7 @@
   box-shadow: var(--kengo-shadow-primary);
 }
 .action-btn.save-btn.has-changes:hover { @apply bg-[#c94a2f]; transform: scale(1.05); }
+.save-text { @apply hidden; }
 
 .profile-main {
   @apply relative flex-1 px-4 pt-2 z-10;
@@ -282,9 +283,65 @@
 
 @media (min-width: 1024px) {
   .profile-main { padding-bottom: 32px; }
-  .profile-header { @apply py-4 px-8; }
-  .header-content { @apply max-w-4xl; }
-  .header-title { @apply text-2xl; }
+
+  /* En desktop: header integrado al contenido, no sticky separado */
+  .profile-header {
+    @apply relative py-2 px-8 mb-2;
+    position: relative;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .header-content {
+    @apply max-w-none flex-col items-start gap-4;
+  }
+
+  .header-left {
+    @apply w-full justify-between;
+  }
+
+  .header-title-group {
+    @apply flex-row items-center gap-3;
+  }
+
+  .header-title {
+    @apply text-3xl font-bold;
+    background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-subtitle {
+    @apply text-sm text-zinc-500 mt-0;
+    -webkit-text-fill-color: initial;
+  }
+
+  .header-actions {
+    @apply gap-3;
+  }
+
+  .action-btn {
+    @apply w-auto h-auto px-4 py-2 rounded-xl gap-2;
+  }
+
+  .action-btn.save-btn {
+    @apply flex items-center gap-2;
+  }
+
+  .save-text {
+    @apply text-sm font-medium;
+    display: none;
+  }
+
+  .action-btn.save-btn.has-changes .save-text {
+    display: inline;
+  }
+
   .profile-main { @apply px-8 pt-4; max-width: 800px; }
   .hero-visual { @apply h-32; }
   .avatar-container { @apply w-28 h-28; }

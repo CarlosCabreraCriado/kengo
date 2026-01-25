@@ -6,7 +6,7 @@
     <div class="aurora-wave aurora-wave-3"></div>
   </div>
 
-  <!-- Compact Header -->
+  <!-- Compact Header (móvil) / Inline Header (desktop) -->
   <header class="profile-header">
     <div class="header-content">
       <div class="header-left">
@@ -17,12 +17,26 @@
         }
         <div class="header-title-group">
           <h1 class="titulo-kengo header-title">Mi Perfil</h1>
-          @if (usuario()) {
+          @if (usuario() && !isDesktop()) {
             <p class="header-subtitle">Gestiona tu cuenta</p>
           }
         </div>
+        @if (usuario() && isDesktop()) {
+          <div class="header-actions">
+            <button
+              class="action-btn save-btn"
+              [class.has-changes]="formularioCambiado()"
+              [disabled]="!formularioCambiado() || formularioUsuario.invalid"
+              (click)="guardarCambios()"
+              aria-label="Guardar cambios"
+            >
+              <span class="material-symbols-outlined">{{ formularioCambiado() ? 'save' : 'check' }}</span>
+              <span class="save-text">Guardar</span>
+            </button>
+          </div>
+        }
       </div>
-      @if (usuario()) {
+      @if (usuario() && !isDesktop()) {
         <div class="header-actions">
           <button
             class="action-btn save-btn"
