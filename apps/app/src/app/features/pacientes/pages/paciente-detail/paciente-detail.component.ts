@@ -83,12 +83,12 @@ export class PacienteDetailComponent implements OnInit {
   private planBuilderService = inject(PlanBuilderService);
   private breakpointObserver = inject(BreakpointObserver);
 
-  // Detectar si estamos en desktop (>= 1024px)
-  isDesktop = toSignal(
+  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
+  isMovil = toSignal(
     this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.DESKTOP])
+      .observe([KENGO_BREAKPOINTS.MOBILE])
       .pipe(map((result) => result.matches)),
-    { initialValue: false }
+    { initialValue: true },
   );
 
   // Estado
