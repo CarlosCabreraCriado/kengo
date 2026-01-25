@@ -1,25 +1,28 @@
 <section class="flex h-full w-full flex-col overflow-hidden">
   <!-- Header con tabs -->
-  <header
-    class="sticky top-0 z-40 w-full pt-4 pb-3"
-    [class]="
-      isDesktop()
-        ? ''
-        : 'bg-gradient-to-b from-white/95 via-white/90 to-transparent backdrop-blur-md'
-    "
-  >
-    <div class="mx-auto max-w-7xl px-4">
-      <!-- Titulo y boton volver (mobile) -->
-      @if (!isDesktop()) {
-        <div class="mb-4 flex items-center gap-2">
-          <a
-            routerLink="/inicio"
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-zinc-100"
-            aria-label="Volver al inicio"
-          >
-            <span class="material-symbols-outlined text-zinc-600">arrow_back</span>
-          </a>
-          <h1 class="titulo-kengo text-xl font-bold text-zinc-800">Planes y rutinas</h1>
+  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+    <div class="mx-auto max-w-7xl">
+      <!-- MÓVIL: Titulo y boton volver -->
+      @if (isMovil()) {
+        <div class="mb-4 flex items-center justify-between">
+          <!-- Botón volver + Título -->
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              routerLink="/inicio"
+              class="flex h-10 w-10 items-center justify-center rounded-xl
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-600 transition-all duration-200
+                     hover:bg-white/80 hover:scale-105 active:scale-95"
+              aria-label="Volver al inicio"
+            >
+              <span class="material-symbols-outlined text-xl">arrow_back</span>
+            </button>
+            <div>
+              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Planes</h1>
+              <p class="text-xs font-medium text-zinc-500">Gestión de planes y rutinas</p>
+            </div>
+          </div>
         </div>
       }
 
