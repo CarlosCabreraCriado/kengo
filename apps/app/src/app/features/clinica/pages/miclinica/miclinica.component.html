@@ -6,32 +6,57 @@
     <div class="aurora-wave aurora-wave-3"></div>
   </div>
 
-  <!-- Compact Header -->
-  <header class="clinic-header">
-    <div class="header-content">
-      <div class="header-left">
-        @if (!isDesktop()) {
-          <a class="back-btn" aria-label="Volver" routerLink="/inicio">
-            <span class="material-symbols-outlined">arrow_back</span>
-          </a>
-        }
-        <div class="header-title-group">
-          <h1 class="titulo-kengo header-title">Mi Clínica</h1>
-          @if (clinicasRes().length > 1) {
-            <button class="clinic-switcher" (click)="showClinicPicker = !showClinicPicker">
-              <span class="current-clinic-name">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
-              <span class="material-symbols-outlined switcher-icon" [class.rotated]="showClinicPicker">expand_more</span>
+  <!-- Header Responsivo -->
+  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+    <div class="mx-auto max-w-2xl">
+
+      <!-- MÓVIL: Header completo con título y navegación -->
+      @if (isMovil()) {
+        <div class="mb-4 flex items-center justify-between">
+          <!-- Botón volver + Título -->
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              routerLink="/inicio"
+              class="flex h-10 w-10 items-center justify-center rounded-xl
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-600 transition-all duration-200
+                     hover:bg-white/80 hover:scale-105 active:scale-95"
+              aria-label="Volver al inicio"
+            >
+              <span class="material-symbols-outlined text-xl">arrow_back</span>
             </button>
-          }
-        </div>
-      </div>
-      @if (currentClinic()) {
-        <div class="header-actions">
-          <button class="action-btn" disabled aria-label="Editar clínica">
-            <span class="material-symbols-outlined">edit</span>
-          </button>
+            <div>
+              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Mi Clínica</h1>
+              @if (clinicasRes().length > 1) {
+                <button class="clinic-switcher" (click)="showClinicPicker = !showClinicPicker">
+                  <span class="current-clinic-name">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
+                  <span class="material-symbols-outlined switcher-icon" [class.rotated]="showClinicPicker">expand_more</span>
+                </button>
+              }
+            </div>
+          </div>
         </div>
       }
+
+      <!-- Barra de controles (siempre visible) -->
+      <div class="flex items-center gap-2">
+        <!-- DESKTOP: Selector de clínica compacto -->
+        @if (!isMovil() && clinicasRes().length > 1) {
+          <button
+            class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md
+                   border border-white/40 text-sm font-medium text-zinc-700
+                   hover:bg-white/70 transition-all shrink-0"
+            (click)="showClinicPicker = !showClinicPicker"
+          >
+            <span class="material-symbols-outlined text-lg text-[#e75c3e]">domain</span>
+            <span class="max-w-[150px] truncate">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
+            <span class="material-symbols-outlined text-base text-zinc-400" [class.rotate-180]="showClinicPicker">expand_more</span>
+          </button>
+        }
+
+      </div>
+
     </div>
 
     <!-- Clinic Picker Dropdown -->
@@ -127,14 +152,27 @@
         </div>
 
         <div class="hero-info">
-          <h2 class="clinic-name">{{ c.nombre || 'Mi Clínica' }}</h2>
-          <p class="clinic-address">
-            <span class="material-symbols-outlined">location_on</span>
-            {{ c.direccion || 'Sin dirección' }}
-            @if (c.postal) {
-              <span class="postal-badge">{{ c.postal }}</span>
-            }
-          </p>
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <h2 class="clinic-name">{{ c.nombre || 'Mi Clínica' }}</h2>
+              <p class="clinic-address">
+                <span class="material-symbols-outlined">location_on</span>
+                {{ c.direccion || 'Sin dirección' }}
+                @if (c.postal) {
+                  <span class="postal-badge">{{ c.postal }}</span>
+                }
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled
+              class="edit-clinic-btn"
+              aria-label="Editar clínica"
+            >
+              <span class="material-symbols-outlined">edit</span>
+              <span class="edit-label">Editar</span>
+            </button>
+          </div>
         </div>
       </article>
 

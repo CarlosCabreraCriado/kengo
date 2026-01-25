@@ -1,6 +1,9 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { environment as env } from '../../../../../environments/environment';
 
 // Servicios:
@@ -21,26 +24,19 @@ import { KENGO_BREAKPOINTS } from '../../../../shared';
     class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
   },
 })
-export class MiClinicaComponent implements OnInit, OnDestroy {
+export class MiClinicaComponent {
   private fb = inject(FormBuilder);
   private sessionService = inject(SessionService);
   public clinicasService = inject(ClinicasService);
+  private breakpointObserver = inject(BreakpointObserver);
 
-  // Media query para detectar desktop
-  private mediaQuery = window.matchMedia(KENGO_BREAKPOINTS.DESKTOP);
-  isDesktop = signal(this.mediaQuery.matches);
-
-  private mediaQueryHandler = (e: MediaQueryListEvent) => {
-    this.isDesktop.set(e.matches);
-  };
-
-  ngOnInit() {
-    this.mediaQuery.addEventListener('change', this.mediaQueryHandler);
-  }
-
-  ngOnDestroy() {
-    this.mediaQuery.removeEventListener('change', this.mediaQueryHandler);
-  }
+  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
+  isMovil = toSignal(
+    this.breakpointObserver
+      .observe([KENGO_BREAKPOINTS.MOBILE])
+      .pipe(map((result) => result.matches)),
+    { initialValue: true },
+  );
 
   public usuario = computed(
     () => this.sessionService.usuario() as Usuario | null,
