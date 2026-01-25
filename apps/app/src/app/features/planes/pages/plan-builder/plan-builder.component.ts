@@ -38,7 +38,7 @@ import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { EjercicioPlan } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
-import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
+import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
 
 @Component({
   selector: 'app-plan-builder',
@@ -80,7 +80,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
     this.breakpointObserver
-      .observe(['(min-width: 1024px)'])
+      .observe([KENGO_BREAKPOINTS.DESKTOP])
       .pipe(map((result) => result.matches)),
     { initialValue: false }
   );

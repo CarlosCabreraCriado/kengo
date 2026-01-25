@@ -18,6 +18,7 @@ import {
   ActividadHoyService,
   BadgeType,
 } from '../../../../actividad/data-access/actividad-hoy.service';
+import { KENGO_BREAKPOINTS } from '../../../../../shared';
 
 interface CardOption {
   id: string;
@@ -52,7 +53,7 @@ export class InicioComponent implements OnDestroy {
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
     this.breakpointObserver
-      .observe(['(min-width: 1024px)'])
+      .observe([KENGO_BREAKPOINTS.DESKTOP])
       .pipe(map((result) => result.matches)),
     { initialValue: false },
   );

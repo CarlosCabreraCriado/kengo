@@ -1,3 +1,6 @@
+// Utils
+export { KENGO_BREAKPOINTS, type BreakpointKey } from './utils/breakpoints';
+
 // Pipes
 export { SafeHtmlPipe } from './pipes/safe-html.pipe';
 

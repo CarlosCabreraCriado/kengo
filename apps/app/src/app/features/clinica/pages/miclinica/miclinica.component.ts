@@ -9,6 +9,7 @@ import { ClinicasService } from '../../data-access/clinicas.service';
 
 // Types:
 import { Usuario, Clinica, ID } from '../../../../../types/global';
+import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 @Component({
   standalone: true,
@@ -26,7 +27,7 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   public clinicasService = inject(ClinicasService);
 
   // Media query para detectar desktop
-  private mediaQuery = window.matchMedia('(min-width: 1024px)');
+  private mediaQuery = window.matchMedia(KENGO_BREAKPOINTS.DESKTOP);
   isDesktop = signal(this.mediaQuery.matches);
 
   private mediaQueryHandler = (e: MediaQueryListEvent) => {

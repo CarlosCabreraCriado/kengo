@@ -18,6 +18,7 @@ import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 @Component({
   selector: 'app-ejercicios-list',
@@ -39,7 +40,7 @@ export class EjerciciosListComponent implements OnInit {
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
     this.breakpointObserverService
-      .observe(['(min-width: 1024px)'])
+      .observe([KENGO_BREAKPOINTS.DESKTOP])
       .pipe(map((result) => result.matches)),
     { initialValue: false },
   );

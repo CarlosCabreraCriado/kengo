@@ -10,6 +10,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 
 import { environment as env } from '../../../../../environments/environment';
 import { SessionService } from '../../../auth/services/session.service';
+import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 @Component({
   selector: 'app-navegacion',
@@ -65,7 +66,7 @@ export class NavegacionComponent implements OnInit {
   ngOnInit() {
     // Detectar si es móvil
     this.breakpointObserver
-      .observe(['(max-width: 767.98px)'])
+      .observe([KENGO_BREAKPOINTS.MOBILE])
       .subscribe((result) => {
         this.isMovil.set(result.matches);
       });

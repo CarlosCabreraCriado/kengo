@@ -29,6 +29,7 @@ import { PlanBuilderService } from '../../../planes/data-access/plan-builder.ser
 import { PlanesService } from '../../../planes/data-access/planes.service';
 
 import { Usuario, UsuarioDirectus } from '../../../../../types/global';
+import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 interface DirectusPage<T> {
   data: T[];
@@ -65,7 +66,7 @@ export class PacientesListComponent {
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
     this.breakpointObserver
-      .observe(['(min-width: 1024px)'])
+      .observe([KENGO_BREAKPOINTS.DESKTOP])
       .pipe(map((result) => result.matches)),
     { initialValue: false }
   );

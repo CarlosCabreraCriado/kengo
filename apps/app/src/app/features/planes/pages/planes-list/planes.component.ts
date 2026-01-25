@@ -20,6 +20,7 @@ import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { Plan, Usuario, EstadoPlan, Rutina, EjercicioRutina } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
+import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
 
@@ -56,7 +57,7 @@ export class PlanesComponent implements OnInit {
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
     this.breakpointObserver
-      .observe(['(min-width: 1024px)'])
+      .observe([KENGO_BREAKPOINTS.DESKTOP])
       .pipe(map((result) => result.matches)),
     { initialValue: false }
   );

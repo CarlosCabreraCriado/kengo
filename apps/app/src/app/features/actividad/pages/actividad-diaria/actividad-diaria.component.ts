@@ -24,6 +24,7 @@ import {
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
 } from '../../../../../types/global';
+import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 // Tipo extendido para incluir ejercicios en próximos días
 interface EjercicioProximo {
@@ -65,7 +66,7 @@ export class ActividadDiariaComponent implements OnInit {
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
     this.breakpointObserver
-      .observe(['(min-width: 1024px)'])
+      .observe([KENGO_BREAKPOINTS.DESKTOP])
       .pipe(map((result) => result.matches)),
     { initialValue: false }
   );

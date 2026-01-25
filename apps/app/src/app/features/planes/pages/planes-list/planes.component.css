@@ -101,8 +101,8 @@
   }
 }
 
-/* Tablet y superior: mostrar labels */
-@media (min-width: 641px) {
+/* Tablet y superior (sm): mostrar labels */
+@media (min-width: 640px) {
   .tab-label {
     display: inline;
   }
