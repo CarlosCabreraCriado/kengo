@@ -21,6 +21,7 @@ import {
   FeedbackEjercicio,
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
+  DiaSemana,
 } from '../../../../types/global';
 
 interface RegistroResponse {
@@ -588,7 +589,7 @@ export class RegistroSesionService {
    * Filtrar ejercicios que corresponden al día de hoy
    */
   private filtrarEjerciciosHoy(items: EjercicioPlan[]): EjercicioPlan[] {
-    const diasSemana = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+    const diasSemana: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
     const hoy = diasSemana[new Date().getDay()];
 
     return items.filter((item) => {

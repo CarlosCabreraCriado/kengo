@@ -26,13 +26,60 @@ npm run watch      # Build with watch mode (development config)
 - **TypeScript 5.8** with strict mode enabled
 - **Directus CMS** as primary backend (<https://admin.kengoapp.com>)
 - **Node.js** custom API for additional endpoints
+- **Nx Monorepo** for workspace management
 
-### Key Directories
+### Monorepo Structure
 
-- `src/app/services/` - 8 core services (auth, ejercicios, clinicas, plan-builder, etc.)
-- `src/app/Components/` - 34 standalone components organized by domain
-- `src/types/global.ts` - Shared TypeScript interfaces and types
-- `src/environments/` - Environment-specific configuration
+```
+kengo/
+├── apps/
+│   ├── app/                    # Angular frontend application
+│   │   └── src/
+│   │       ├── app/
+│   │       │   ├── core/       # Auth, guards, interceptors
+│   │       │   ├── features/   # Feature modules (planes, ejercicios, etc.)
+│   │       │   └── shared/     # Shared components and utilities
+│   │       ├── types/global.ts # Re-exports from @kengo/shared-models
+│   │       └── environments/   # Environment configs
+│   └── backend/                # Node.js/Express API
+│       └── src/
+│           ├── controllers/
+│           ├── models/
+│           ├── routes/
+│           └── types/          # Re-exports from @kengo/shared-models
+└── libs/
+    └── shared/
+        └── models/             # @kengo/shared-models library
+            └── src/lib/
+                ├── types/      # Base types (ID, UUID, DiaSemana)
+                ├── database/   # DB schema types (*.db.ts)
+                ├── directus/   # Directus SDK response types
+                ├── domain/     # Transformed domain types
+                └── payloads/   # Create/update DTOs
+```
+
+### Shared Models Library (`@kengo/shared-models`)
+
+Tipos TypeScript sincronizados entre frontend y backend:
+
+```typescript
+import { Usuario, Plan, Ejercicio, DiaSemana } from '@kengo/shared-models';
+```
+
+**Categorías de tipos:**
+
+| Carpeta | Propósito | Ejemplo |
+|---------|-----------|---------|
+| `types/` | Tipos base utilitarios | `ID`, `UUID`, `DiaSemana`, `Timestamp` |
+| `database/` | Reflejan esquema BD exacto | `PlanDB`, `EjercicioDB`, `ClinicaDB` |
+| `directus/` | Respuestas del SDK Directus | `PlanDirectus`, `UsuarioDirectus` |
+| `domain/` | Tipos transformados para apps | `Plan`, `Usuario`, `PlanCompleto` |
+| `payloads/` | DTOs para crear/actualizar | `CreatePlanPayload`, `CreateRutinaPayload` |
+
+**Tipo DiaSemana:**
+```typescript
+type DiaSemana = 'L' | 'M' | 'X' | 'J' | 'V' | 'S' | 'D';
+```
 
 ### Routing Structure
 
@@ -68,6 +115,18 @@ Routes are defined in `app.routes.ts`:
 - Reactive Forms preferred over template-driven
 - Use `takeUntilDestroyed()` for RxJS subscription cleanup
 - Angular CDK breakpoints for responsive layouts
+
+### Type Imports
+
+Importar tipos desde `@kengo/shared-models` o desde `types/global.ts` (que re-exporta la librería):
+
+```typescript
+// Opción 1: Directo desde librería compartida
+import { Usuario, Plan } from '@kengo/shared-models';
+
+// Opción 2: Desde global.ts (incluye tipos específicos de frontend)
+import { Usuario, Plan, SeccionPrincipal } from '../types/global';
+```
 
 ## Backend Integration
 

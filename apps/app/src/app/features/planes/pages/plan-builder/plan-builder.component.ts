@@ -36,7 +36,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
-import { EjercicioPlan } from '../../../../../types/global';
+import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
 import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
 
@@ -85,8 +85,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     { initialValue: false }
   );
 
-  dias = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  diasNombres: Record<string, string> = {
+  dias: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  diasNombres: Record<DiaSemana, string> = {
     L: 'Lunes',
     M: 'Martes',
     X: 'Miercoles',
@@ -291,11 +291,11 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.svc.updateItem(i, patch);
   }
 
-  isDia(it: EjercicioPlan, d: string) {
+  isDia(it: EjercicioPlan, d: DiaSemana) {
     return it.dias_semana?.includes(d);
   }
 
-  toggleDia(i: number, d: string) {
+  toggleDia(i: number, d: DiaSemana) {
     const it = this.svc.items()[i];
     const set = new Set(it.dias_semana || []);
     if (set.has(d)) {
@@ -303,7 +303,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     } else {
       set.add(d);
     }
-    this.svc.updateItem(i, { dias_semana: Array.from(set) });
+    this.svc.updateItem(i, { dias_semana: Array.from(set) as DiaSemana[] });
   }
 
   removeEjercicio(ejercicioId: number) {

@@ -23,7 +23,9 @@
       "ES2022",
       "dom"
     ],
-    "paths": {}
+    "paths": {
+      "@kengo/shared-models": ["libs/shared/models/src/index.ts"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

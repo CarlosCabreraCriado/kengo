@@ -562,7 +562,7 @@ export class PlanesService {
       instrucciones_paciente: e.instrucciones_paciente,
       notas_fisio: e.notas_fisio,
       date_created: e.date_created,
-      data_updated: e.date_updated,
+      date_updated: e.date_updated,
     };
   }
 

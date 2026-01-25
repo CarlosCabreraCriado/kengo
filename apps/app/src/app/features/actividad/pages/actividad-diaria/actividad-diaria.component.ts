@@ -23,6 +23,7 @@ import {
   EjercicioPlanConEstado,
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
+  DiaSemana,
 } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
@@ -72,7 +73,7 @@ export class ActividadDiariaComponent implements OnInit {
   );
 
   // Mapeo de días de la semana
-  private readonly DIAS_SEMANA = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   private readonly NOMBRES_DIAS = [
     'Domingo',
     'Lunes',

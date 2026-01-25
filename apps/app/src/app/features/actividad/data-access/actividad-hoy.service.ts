@@ -7,6 +7,7 @@ import {
   RegistroEjercicio,
   ActividadPlanDia,
   EjercicioPlanConEstado,
+  DiaSemana,
 } from '../../../../types/global';
 
 export type BadgeType = 'pending' | 'completed' | 'rest' | 'loading' | null;
@@ -18,7 +19,7 @@ export class ActividadHoyService {
   private registroService = inject(RegistroSesionService);
 
   // Mapeo de días de la semana
-  private readonly DIAS_SEMANA = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
   // Estado interno
   readonly cargando = signal<boolean>(false);
