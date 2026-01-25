@@ -72,9 +72,14 @@ $kengo-text-muted: #94a3b8;
   text-decoration: none;
   transition: all 0.3s ease;
 
-  .titulo-kengo {
-    color: $kengo-primary;
-    font-family: 'kengoFont', sans-serif;
+  .logo-img {
+    height: 2rem;
+    width: auto;
+    transition: transform 0.3s ease;
+
+    @media (min-width: 1024px) {
+      height: 2.25rem;
+    }
   }
 
   .logo-glow {
@@ -93,6 +98,10 @@ $kengo-text-muted: #94a3b8;
 
   &:hover .logo-glow {
     opacity: 1;
+  }
+
+  &:hover .logo-img {
+    transform: scale(1.03);
   }
 }
 
@@ -212,6 +221,26 @@ $kengo-text-muted: #94a3b8;
   &:hover .avatar-ring-desktop {
     border-color: $kengo-primary;
     transform: scale(1.05);
+  }
+
+  // Estado activo cuando se está en /perfil
+  &.active {
+    .avatar-glow {
+      opacity: 1;
+    }
+
+    .avatar-ring-desktop {
+      border-color: $kengo-primary;
+      box-shadow: 0 0 0 3px $kengo-primary-light;
+    }
+
+    .avatar-img {
+      border-color: $kengo-primary;
+    }
+
+    .avatar-placeholder {
+      box-shadow: 0 0 0 3px $kengo-primary-light, 0 2px 8px rgba(231, 92, 62, 0.35);
+    }
   }
 }
 

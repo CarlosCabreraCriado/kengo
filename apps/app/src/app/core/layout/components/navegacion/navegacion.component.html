@@ -5,7 +5,11 @@
     <div class="nav-glass-desktop">
       <!-- Logo -->
       <a routerLink="/inicio" class="logo-container group">
-        <span class="titulo-kengo text-2xl lg:text-3xl">Kengo</span>
+        <img
+          src="assets/logo-kengo-horizontal.svg"
+          alt="Kengo"
+          class="logo-img"
+        />
         <div class="logo-glow"></div>
       </a>
 
@@ -83,7 +87,7 @@
       </nav>
 
       <!-- Avatar desktop -->
-      <a routerLink="/perfil" class="avatar-desktop group">
+      <a routerLink="/perfil" routerLinkActive="active" class="avatar-desktop group">
         <div class="avatar-container-desktop">
           @if (avatarUrl()) {
             <img [src]="avatarUrl()" alt="Perfil" class="avatar-img" />
