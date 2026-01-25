@@ -6,49 +6,30 @@
     <div class="aurora-wave aurora-wave-3"></div>
   </div>
 
-  <!-- Compact Header (móvil) / Inline Header (desktop) -->
-  <header class="profile-header">
-    <div class="header-content">
-      <div class="header-left">
-        @if (isMobile()) {
-          <a class="back-btn" aria-label="Volver" routerLink="/inicio">
-            <span class="material-symbols-outlined">arrow_back</span>
-          </a>
-        }
-        <div class="header-title-group">
-          <h1 class="titulo-kengo header-title">Mi Perfil</h1>
-          @if (usuario() && isMobile()) {
-            <p class="header-subtitle">Gestiona tu cuenta</p>
-          }
-        </div>
-        @if (usuario() && !isMobile()) {
-          <div class="header-actions">
-            <button
-              class="action-btn save-btn"
-              [class.has-changes]="formularioCambiado()"
-              [disabled]="!formularioCambiado() || formularioUsuario.invalid"
-              (click)="guardarCambios()"
-              aria-label="Guardar cambios"
-            >
-              <span class="material-symbols-outlined">{{ formularioCambiado() ? 'save' : 'check' }}</span>
-              <span class="save-text">Guardar</span>
-            </button>
-          </div>
-        }
-      </div>
-      @if (usuario() && isMobile()) {
-        <div class="header-actions">
-          <button
-            class="action-btn save-btn"
-            [class.has-changes]="formularioCambiado()"
-            [disabled]="!formularioCambiado() || formularioUsuario.invalid"
-            (click)="guardarCambios()"
-            aria-label="Guardar cambios"
+  <!-- Header responsivo alineado con navegación -->
+  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+    <div class="mx-auto max-w-2xl">
+
+      <!-- MÓVIL: Header con título y navegación -->
+      @if (isMobile()) {
+        <div class="flex items-center gap-3">
+          <a
+            routerLink="/inicio"
+            class="flex h-10 w-10 items-center justify-center rounded-xl
+                   bg-white/60 backdrop-blur-md border border-white/40
+                   text-zinc-600 transition-all duration-200
+                   hover:bg-white/80 hover:scale-105 active:scale-95"
+            aria-label="Volver al inicio"
           >
-            <span class="material-symbols-outlined">{{ formularioCambiado() ? 'save' : 'check' }}</span>
-          </button>
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+          </a>
+          <div>
+            <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Mi Perfil</h1>
+            <p class="text-xs font-medium text-zinc-500">Gestiona tu cuenta</p>
+          </div>
         </div>
       }
+
     </div>
   </header>
 
@@ -69,6 +50,22 @@
         <div class="hero-visual">
           <div class="hero-gradient"></div>
           <div class="hero-pattern" aria-hidden="true"></div>
+
+          <!-- Botón guardar en la esquina superior derecha -->
+          <button
+            type="button"
+            class="absolute top-3 right-3 flex items-center gap-1.5 rounded-full px-3 py-2
+                   transition-all duration-200 active:scale-95 z-10"
+            [class]="formularioCambiado()
+              ? 'bg-white text-[#e75c3e] shadow-lg hover:bg-white/90'
+              : 'bg-white/30 backdrop-blur-md text-white/70 cursor-default'"
+            [disabled]="!formularioCambiado() || formularioUsuario.invalid"
+            (click)="guardarCambios()"
+            aria-label="Guardar cambios"
+          >
+            <span class="material-symbols-outlined text-lg">{{ formularioCambiado() ? 'save' : 'check' }}</span>
+            <span class="text-xs font-semibold">{{ formularioCambiado() ? 'Guardar' : 'Guardado' }}</span>
+          </button>
         </div>
 
         <div class="hero-content">

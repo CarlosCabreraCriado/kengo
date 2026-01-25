@@ -52,33 +52,26 @@
   50% { transform: translate(-20px, -30px) scale(1.2); opacity: 0.55; }
 }
 
-.profile-header {
-  @apply sticky top-0 z-50 w-full;
-  padding: env(safe-area-inset-top, 12px) 16px 12px;
-  background: linear-gradient(180deg, rgba(254, 248, 247, 0.95) 0%, rgba(254, 248, 247, 0.8) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* === Header con glassmorphism (solo móvil) === */
+.header-glass {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
-.header-content { @apply flex items-center justify-between max-w-2xl mx-auto; }
-.header-left { @apply flex items-center gap-3; }
-.back-btn {
-  @apply inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/60 border border-white/40 text-zinc-600 no-underline transition-all active:scale-95;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+@media (max-width: 767.98px) {
+  .header-glass {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.85) 60%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding-top: env(safe-area-inset-top, 12px);
+  }
 }
-.back-btn:hover { @apply bg-white/80 text-[#e75c3e]; }
-.header-title-group { @apply flex flex-col; }
-.header-title { @apply text-xl text-[#e75c3e] leading-tight m-0; }
-.header-subtitle { @apply text-xs text-zinc-500 mt-0.5 m-0; }
-.header-actions { @apply flex items-center gap-2; }
-.action-btn {
-  @apply inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/60 border border-white/40 text-zinc-400 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed;
-}
-.action-btn.save-btn.has-changes {
-  @apply bg-[#e75c3e] border-[#e75c3e] text-white;
-  box-shadow: var(--kengo-shadow-primary);
-}
-.action-btn.save-btn.has-changes:hover { @apply bg-[#c94a2f]; transform: scale(1.05); }
-.save-text { @apply hidden; }
 
 .profile-main {
   @apply relative flex-1 px-4 pt-2 z-10;
@@ -282,67 +275,7 @@
 .overlay-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(231, 92, 62, 0.45); }
 
 @media (min-width: 768px) {
-  .profile-main { padding-bottom: 32px; }
-
-  /* En desktop: header integrado al contenido, no sticky separado */
-  .profile-header {
-    @apply relative py-2 px-8 mb-2;
-    position: relative;
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .header-content {
-    @apply max-w-none flex-col items-start gap-4;
-  }
-
-  .header-left {
-    @apply w-full justify-between;
-  }
-
-  .header-title-group {
-    @apply flex-row items-center gap-3;
-  }
-
-  .header-title {
-    @apply text-3xl font-bold;
-    background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .header-subtitle {
-    @apply text-sm text-zinc-500 mt-0;
-    -webkit-text-fill-color: initial;
-  }
-
-  .header-actions {
-    @apply gap-3;
-  }
-
-  .action-btn {
-    @apply w-auto h-auto px-4 py-2 rounded-xl gap-2;
-  }
-
-  .action-btn.save-btn {
-    @apply flex items-center gap-2;
-  }
-
-  .save-text {
-    @apply text-sm font-medium;
-    display: none;
-  }
-
-  .action-btn.save-btn.has-changes .save-text {
-    display: inline;
-  }
-
-  .profile-main { @apply px-8 pt-4; max-width: 800px; }
+  .profile-main { @apply px-8 pt-4; max-width: 800px; padding-bottom: 32px; }
   .hero-visual { @apply h-32; }
   .avatar-container { @apply w-28 h-28; }
   .hero-content { @apply -mt-12; }

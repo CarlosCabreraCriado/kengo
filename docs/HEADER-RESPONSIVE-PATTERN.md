@@ -168,9 +168,9 @@ export class MiComponente {
 - [x] `ejercicios-list` - Catálogo de ejercicios
 - [x] `pacientes-list` - Lista de pacientes
 - [x] `mi-clinica` - Gestión de clínica
+- [x] `perfil` - Perfil de usuario
 - [ ] `planes` - Gestión de planes
 - [ ] `ejercicio-detail` - Detalle de ejercicio
-- [ ] `perfil` - Perfil de usuario
 
 ---
 
