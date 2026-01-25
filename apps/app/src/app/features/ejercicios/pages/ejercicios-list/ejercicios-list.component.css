@@ -13,16 +13,24 @@
   --kengo-glow: rgba(231, 92, 62, 0.4);
 }
 
-/* === Header con glassmorphism === */
+/* === Header con glassmorphism (solo móvil) === */
 .header-glass {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.85) 60%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@media (max-width: 767.98px) {
+  .header-glass {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.85) 60%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }
 
 /* === Búsqueda con glow effect === */
