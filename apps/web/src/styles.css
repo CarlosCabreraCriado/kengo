@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #e75c3e;
+  --color-tertiary: #efc048;
+}
+
+@font-face {
+  font-family: kengoFont;
+  src: url(./assets/fonts/FieldGothic-45.otf);
+}
+
+@font-face {
+  font-family: Galvji;
+  src: url(./assets/fonts/galvji.ttf) format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Galvji;
+  src: url(./assets/fonts/galvji-bold.ttf) format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Galvji;
+  src: url(./assets/fonts/galvji-oblique.ttf) format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: Galvji;
+  src: url(./assets/fonts/galvji-bold-oblique.ttf) format("truetype");
+  font-weight: 700;
+  font-style: italic;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: Galvji, "Helvetica Neue", sans-serif;
+}
+
+.titulo-kengo {
+  font-family: "kengoFont" !important;
+}
+
+.fuente-kengo {
+  font-family: "kengoFont";
+  color: var(--color-primary);
+}
+
+@layer components {
+  .tarjeta-kengo {
+    @apply border !border-white/20 !bg-white/50 !shadow-xl !backdrop-blur-md;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .kengo-gradient {
+    background-image: linear-gradient(
+      to right top,
+      #ffab6a,
+      #ffb372,
+      #ffba7a,
+      #ffc282,
+      #ffc98b,
+      #ffce94,
+      #ffd49e,
+      #ffd9a7,
+      #ffdeb3,
+      #ffe3be,
+      #ffe8ca,
+      #ffedd6
+    );
+  }
+}
