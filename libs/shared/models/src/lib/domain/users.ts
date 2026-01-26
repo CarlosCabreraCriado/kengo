@@ -6,6 +6,13 @@
 import { UUID } from '../types/common';
 
 /**
+ * Constantes de puestos dentro de una clínica
+ */
+export const PUESTO_FISIOTERAPEUTA = 1;
+export const PUESTO_PACIENTE = 2;
+export const PUESTO_ADMINISTRADOR = 4;
+
+/**
  * Detalle de usuario transformado
  */
 export interface DetalleUsuario {

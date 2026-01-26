@@ -33,8 +33,42 @@ export type Schema = {
     id_clinica: ID; // relación a clinicas
     puesto: number; // 2 = paciente (tu caso)
   };
+  // Tabla puente usuarios_clinicas_Puestos
+  usuarios_clinicas_Puestos: {
+    id: ID;
+    usuarios_clinicas_id: ID;
+    Puestos_id: number;
+  };
   directus_users: {
     first_name: string;
+  };
+  // Tabla de clínicas
+  clinicas: {
+    id_clinica: number;
+    nombre: string | null;
+    telefono: string | null;
+    email: string | null;
+    direccion: string | null;
+    postal: string | null;
+    nif: string | null;
+    logo: ID | null;
+    color_primario: string | null;
+    color_secundario: string | null;
+    user_created: ID | null;
+    date_created: string | null;
+  };
+  // Tabla de códigos de acceso
+  codigos_acceso: {
+    id: number;
+    id_clinica: number;
+    codigo: string;
+    tipo: 'fisioterapeuta' | 'paciente';
+    activo: boolean;
+    usos_maximos: number | null;
+    usos_actuales: number;
+    fecha_expiracion: string | null;
+    creado_por: ID;
+    date_created: string;
   };
   // Si quieres tipar más colecciones, añádelas aquí...
 };
@@ -244,10 +278,323 @@ export async function createUsuarioClinica(
   userId: ID,
   clinicaId: ID,
   puesto: number
-): Promise<void> {
-  await createOne('usuarios_clinicas', {
+): Promise<{ id: ID }> {
+  const result = await createOne('usuarios_clinicas', {
     id_usuario: userId,
     id_clinica: clinicaId,
-    puesto,
   });
+
+  // Crear la relación con el puesto en usuarios_clinicas_Puestos
+  if (result && result.id) {
+    await createOne('usuarios_clinicas_Puestos', {
+      usuarios_clinicas_id: result.id,
+      Puestos_id: puesto,
+    });
+  }
+
+  return { id: result?.id || 0 };
+}
+
+// =========================
+//  FUNCIONES DE CLÍNICAS
+// =========================
+
+/**
+ * Genera un código alfanumérico único de 8 caracteres
+ */
+function generateAccessCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sin I, O, 0, 1 para evitar confusión
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+/**
+ * Obtiene un código de acceso por su código
+ */
+export async function getCodigoAcceso(codigo: string): Promise<Schema['codigos_acceso'] | null> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/codigos_acceso?filter[codigo][_eq]=${encodeURIComponent(codigo)}&filter[activo][_eq]=true&limit=1&fields=*,id_clinica.id_clinica,id_clinica.nombre`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error buscando código: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data && json.data.length > 0 ? json.data[0] : null;
+}
+
+/**
+ * Valida un código de acceso y retorna información de validación
+ */
+export async function validarCodigoAcceso(codigo: string): Promise<{
+  valido: boolean;
+  error?: 'CODIGO_NO_ENCONTRADO' | 'CODIGO_INACTIVO' | 'CODIGO_EXPIRADO' | 'CODIGO_AGOTADO';
+  codigoData?: Schema['codigos_acceso'] & { id_clinica: { id_clinica: number; nombre: string } };
+}> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/codigos_acceso?filter[codigo][_eq]=${encodeURIComponent(codigo)}&limit=1&fields=*,id_clinica.id_clinica,id_clinica.nombre`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error buscando código: ${res.status}`);
+  }
+
+  const json = await res.json();
+  const codigoData = json.data && json.data.length > 0 ? json.data[0] : null;
+
+  if (!codigoData) {
+    return { valido: false, error: 'CODIGO_NO_ENCONTRADO' };
+  }
+
+  if (!codigoData.activo) {
+    return { valido: false, error: 'CODIGO_INACTIVO' };
+  }
+
+  if (codigoData.fecha_expiracion && new Date(codigoData.fecha_expiracion) < new Date()) {
+    return { valido: false, error: 'CODIGO_EXPIRADO' };
+  }
+
+  if (codigoData.usos_maximos !== null && codigoData.usos_actuales >= codigoData.usos_maximos) {
+    return { valido: false, error: 'CODIGO_AGOTADO' };
+  }
+
+  return { valido: true, codigoData };
+}
+
+/**
+ * Incrementa el contador de usos de un código
+ */
+export async function incrementarUsoCodigo(codigoId: number): Promise<void> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/codigos_acceso/${codigoId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+      body: JSON.stringify({
+        usos_actuales: { _inc: 1 },
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    // Intentar con incremento manual
+    const getRes = await fetch(
+      `${process.env.DIRECTUS_URL}/items/codigos_acceso/${codigoId}?fields=usos_actuales`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+        },
+      }
+    );
+    if (getRes.ok) {
+      const { data } = await getRes.json();
+      await fetch(
+        `${process.env.DIRECTUS_URL}/items/codigos_acceso/${codigoId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+          },
+          body: JSON.stringify({
+            usos_actuales: (data.usos_actuales || 0) + 1,
+          }),
+        }
+      );
+    }
+  }
+}
+
+/**
+ * Crea una nueva clínica
+ */
+export async function createClinica(data: {
+  nombre: string;
+  telefono?: string;
+  email?: string;
+  direccion?: string;
+  postal?: string;
+  nif?: string;
+  color_primario?: string;
+}, creadorId: ID): Promise<{ id_clinica: number }> {
+  const res = await fetch(`${process.env.DIRECTUS_URL}/items/clinicas`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+    body: JSON.stringify({
+      ...data,
+      user_created: creadorId,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Error creando clínica: ${res.status} - ${text}`);
+  }
+
+  const json = await res.json();
+  return { id_clinica: json.data.id_clinica };
+}
+
+/**
+ * Genera un nuevo código de acceso para una clínica
+ */
+export async function createCodigoAcceso(data: {
+  id_clinica: number;
+  tipo: 'fisioterapeuta' | 'paciente';
+  usos_maximos?: number | null;
+  dias_expiracion?: number | null;
+}, creadoPor: ID): Promise<{ codigo: string; id: number }> {
+  const codigo = generateAccessCode();
+
+  let fechaExpiracion: string | null = null;
+  if (data.dias_expiracion && data.dias_expiracion > 0) {
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + data.dias_expiracion);
+    fechaExpiracion = expDate.toISOString();
+  }
+
+  const res = await fetch(`${process.env.DIRECTUS_URL}/items/codigos_acceso`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+    body: JSON.stringify({
+      id_clinica: data.id_clinica,
+      codigo,
+      tipo: data.tipo,
+      activo: true,
+      usos_maximos: data.usos_maximos ?? null,
+      usos_actuales: 0,
+      fecha_expiracion: fechaExpiracion,
+      creado_por: creadoPor,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Error creando código: ${res.status} - ${text}`);
+  }
+
+  const json = await res.json();
+  return { codigo, id: json.data.id };
+}
+
+/**
+ * Obtiene los códigos de acceso de una clínica
+ */
+export async function getCodigosClinica(clinicaId: number): Promise<Schema['codigos_acceso'][]> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/codigos_acceso?filter[id_clinica][_eq]=${clinicaId}&sort=-date_created`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error obteniendo códigos: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data || [];
+}
+
+/**
+ * Desactiva un código de acceso
+ */
+export async function desactivarCodigo(codigoId: number): Promise<void> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/codigos_acceso/${codigoId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+      body: JSON.stringify({ activo: false }),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error desactivando código: ${res.status}`);
+  }
+}
+
+/**
+ * Obtiene el puesto de un usuario en una clínica
+ */
+export async function getPuestoUsuarioEnClinica(userId: ID, clinicaId: number): Promise<number[]> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/usuarios_clinicas?filter[id_usuario][_eq]=${userId}&filter[id_clinica][_eq]=${clinicaId}&fields=id,usuarios_clinicas_Puestos.Puestos_id`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    return [];
+  }
+
+  const json = await res.json();
+  if (!json.data || json.data.length === 0) {
+    return [];
+  }
+
+  // Extraer los IDs de puestos
+  const puestos: number[] = [];
+  for (const uc of json.data) {
+    if (uc.usuarios_clinicas_Puestos) {
+      for (const p of uc.usuarios_clinicas_Puestos) {
+        if (p.Puestos_id) {
+          puestos.push(p.Puestos_id);
+        }
+      }
+    }
+  }
+  return puestos;
+}
+
+/**
+ * Verifica si un usuario ya está vinculado a una clínica
+ */
+export async function usuarioYaVinculado(userId: ID, clinicaId: number): Promise<boolean> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/usuarios_clinicas?filter[id_usuario][_eq]=${userId}&filter[id_clinica][_eq]=${clinicaId}&limit=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    return false;
+  }
+
+  const json = await res.json();
+  return json.data && json.data.length > 0;
 }

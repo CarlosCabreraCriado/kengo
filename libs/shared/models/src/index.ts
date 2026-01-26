@@ -14,6 +14,7 @@ export * from './lib/database/exercises.db';
 export * from './lib/database/plans.db';
 export * from './lib/database/routines.db';
 export * from './lib/database/clinics.db';
+export * from './lib/database/access-codes.db';
 
 // Tipos para respuestas del SDK Directus
 export * from './lib/directus/users.directus';
@@ -29,8 +30,10 @@ export * from './lib/domain/plans';
 export * from './lib/domain/routines';
 export * from './lib/domain/clinics';
 export * from './lib/domain/sessions';
+export * from './lib/domain/access-codes';
 
 // DTOs para operaciones de crear/actualizar
 export * from './lib/payloads/plans.payload';
 export * from './lib/payloads/routines.payload';
 export * from './lib/payloads/users.payload';
+export * from './lib/payloads/clinics.payload';

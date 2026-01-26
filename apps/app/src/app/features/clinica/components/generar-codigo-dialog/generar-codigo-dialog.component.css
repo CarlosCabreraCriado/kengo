@@ -1,0 +1,279 @@
+@reference "tailwindcss";
+
+/* === Dialog Overlay === */
+.dialog-overlay {
+  @apply fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === Dialog Content === */
+.dialog-content {
+  @apply w-full max-w-md my-8 rounded-3xl overflow-hidden;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === Dialog Header === */
+.dialog-header {
+  @apply relative p-6 pb-4 text-center;
+}
+
+.dialog-icon {
+  @apply w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+}
+
+.dialog-icon .material-symbols-outlined {
+  @apply text-3xl text-purple-600;
+}
+
+.dialog-title {
+  @apply text-xl font-bold text-zinc-800 m-0;
+}
+
+.dialog-subtitle {
+  @apply text-sm text-zinc-500 mt-1 m-0;
+}
+
+.close-btn {
+  @apply absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full
+         bg-zinc-100 text-zinc-500 cursor-pointer transition-all border-none;
+}
+
+.close-btn:hover {
+  @apply bg-zinc-200 text-zinc-700;
+}
+
+.close-btn .material-symbols-outlined {
+  @apply text-xl;
+}
+
+/* === Dialog Body === */
+.dialog-body {
+  @apply px-6 pb-6;
+}
+
+/* === Form Group === */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-zinc-700 mb-2;
+}
+
+.form-input {
+  @apply w-full px-4 py-2.5 rounded-xl bg-zinc-50 border border-zinc-200
+         text-sm text-zinc-800 outline-none transition-all;
+}
+
+.form-input:focus {
+  @apply border-[#e75c3e] bg-white;
+  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+}
+
+.form-hint {
+  @apply block text-xs text-zinc-400 mt-1;
+}
+
+/* === Radio Group === */
+.radio-group {
+  @apply flex flex-col gap-2;
+}
+
+.radio-option {
+  @apply relative cursor-pointer;
+}
+
+.radio-option input {
+  @apply absolute opacity-0 w-0 h-0;
+}
+
+.radio-content {
+  @apply flex items-center gap-3 p-3 rounded-xl border border-zinc-200 bg-zinc-50
+         transition-all;
+}
+
+.radio-option:hover .radio-content {
+  @apply border-zinc-300 bg-white;
+}
+
+.radio-option.active .radio-content {
+  @apply border-[#e75c3e] bg-[#e75c3e]/5;
+}
+
+.radio-icon {
+  @apply w-10 h-10 rounded-lg flex items-center justify-center shrink-0;
+  background: linear-gradient(135deg, rgba(239, 192, 72, 0.2) 0%, rgba(239, 192, 72, 0.1) 100%);
+}
+
+.radio-icon .material-symbols-outlined {
+  @apply text-xl text-amber-600;
+}
+
+.radio-icon.fisio {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
+}
+
+.radio-icon.fisio .material-symbols-outlined {
+  @apply text-purple-600;
+}
+
+.radio-info {
+  @apply flex flex-col;
+}
+
+.radio-title {
+  @apply text-sm font-semibold text-zinc-800;
+}
+
+.radio-desc {
+  @apply text-xs text-zinc-500;
+}
+
+/* === Advanced Options === */
+.advanced-options {
+  @apply mb-4 rounded-xl bg-zinc-50 border border-zinc-200 overflow-hidden;
+}
+
+.options-summary {
+  @apply flex items-center gap-2 px-4 py-3 text-sm font-medium text-zinc-600
+         cursor-pointer transition-colors list-none;
+}
+
+.options-summary:hover {
+  @apply bg-zinc-100;
+}
+
+.options-summary .material-symbols-outlined {
+  @apply text-lg text-zinc-400;
+}
+
+.options-summary::-webkit-details-marker {
+  display: none;
+}
+
+.options-content {
+  @apply px-4 pb-4 pt-2 border-t border-zinc-200;
+}
+
+/* === Error Message === */
+.error-message {
+  @apply flex items-center gap-2 p-3 mb-4 rounded-xl bg-red-50 text-red-600 text-sm;
+}
+
+.error-message .material-symbols-outlined {
+  @apply text-lg;
+}
+
+/* === Dialog Actions === */
+.dialog-actions {
+  @apply flex gap-3 mt-6;
+}
+
+.btn-secondary {
+  @apply flex-1 px-4 py-3 rounded-xl bg-zinc-100 text-zinc-700
+         text-sm font-semibold cursor-pointer transition-all border-none;
+}
+
+.btn-secondary:hover {
+  @apply bg-zinc-200;
+}
+
+.btn-primary {
+  @apply flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+         bg-[#e75c3e] text-white text-sm font-semibold cursor-pointer
+         transition-all border-none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  @apply bg-[#c94a2f];
+}
+
+.btn-primary:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.btn-primary.full {
+  @apply w-full;
+}
+
+/* === Success State === */
+.success-body {
+  @apply text-center;
+}
+
+.success-icon {
+  @apply w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
+}
+
+.success-icon .material-symbols-outlined {
+  @apply text-5xl text-green-500;
+}
+
+.success-text {
+  @apply text-lg font-semibold text-zinc-800 mb-4;
+}
+
+.code-display {
+  @apply flex flex-col items-center gap-3 p-4 rounded-2xl bg-zinc-50 border border-zinc-200;
+}
+
+.code-value {
+  @apply text-3xl font-mono font-bold tracking-[0.2em] text-zinc-800;
+}
+
+.copy-btn {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg
+         bg-zinc-200 text-zinc-700 text-sm font-medium
+         cursor-pointer transition-all border-none;
+}
+
+.copy-btn:hover {
+  @apply bg-zinc-300;
+}
+
+.copy-btn .material-symbols-outlined {
+  @apply text-base;
+}
+
+.code-hint {
+  @apply text-sm text-zinc-500 mt-4;
+}
+
+/* === Spinner === */
+.spinner {
+  @apply w-4 h-4 border-2 border-white/30 border-t-white rounded-full;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === Icon Filled === */
+.icon-filled {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}

@@ -112,14 +112,36 @@
       </div>
     }
 
-    <!-- Empty State -->
+    <!-- Empty State - Options to link or create clinic -->
     @if (clinicIds() && clinicIds()?.length === 0) {
-      <div class="state-card empty-state">
-        <div class="state-icon empty">
-          <span class="material-symbols-outlined">domain_disabled</span>
+      <div class="no-clinic-container animate-in">
+        <!-- Welcome Card -->
+        <article class="welcome-card">
+          <div class="welcome-icon">
+            <span class="material-symbols-outlined icon-filled">domain_add</span>
+          </div>
+          <h2 class="welcome-title">Bienvenido a Kengo</h2>
+          <p class="welcome-text">Aún no estás vinculado a ninguna clínica. Elige una opción para comenzar:</p>
+        </article>
+
+        <!-- Options Grid -->
+        <div class="options-grid">
+          <button type="button" class="option-card" (click)="abrirVincularClinica()">
+            <div class="option-icon link">
+              <span class="material-symbols-outlined icon-filled">link</span>
+            </div>
+            <h3 class="option-title">Vincularme a una clínica</h3>
+            <p class="option-desc">Tengo un código de acceso</p>
+          </button>
+
+          <button type="button" class="option-card" (click)="abrirCrearClinica()">
+            <div class="option-icon create">
+              <span class="material-symbols-outlined icon-filled">add_business</span>
+            </div>
+            <h3 class="option-title">Crear nueva clínica</h3>
+            <p class="option-desc">Soy propietario y quiero gestionar mi clínica</p>
+          </button>
         </div>
-        <h3 class="state-title">Sin clínicas</h3>
-        <p class="state-text">No estás vinculado a ninguna clínica. Contacta con el administrador.</p>
       </div>
     }
 
@@ -339,11 +361,131 @@
           }
         }
       </section>
+
+      <!-- Códigos de Acceso Section (visible para admin/fisio) -->
+      @if (esFisioOAdmin()) {
+        <section class="codes-section animate-in" style="--delay: 0.25s">
+          <header class="section-header" (click)="toggleCodigosExpanded()">
+            <div class="section-title-group">
+              <div class="section-icon codes">
+                <span class="material-symbols-outlined icon-filled">key</span>
+              </div>
+              <div>
+                <h3 class="section-title">Códigos de Acceso</h3>
+                <p class="section-subtitle">Invita pacientes y fisioterapeutas</p>
+              </div>
+            </div>
+            <div class="codes-header-actions">
+              <button
+                type="button"
+                class="generate-code-btn"
+                (click)="abrirGenerarCodigo(); $event.stopPropagation()"
+                aria-label="Generar código"
+              >
+                <span class="material-symbols-outlined">add</span>
+                <span class="btn-label">Generar</span>
+              </button>
+              <span class="material-symbols-outlined expand-icon" [class.rotated]="codigosExpanded()">expand_more</span>
+            </div>
+          </header>
+
+          @if (codigosExpanded()) {
+            <div class="codes-content">
+              @if (codigosLoading()) {
+                <div class="codes-loading">
+                  <div class="shimmer-effect"></div>
+                  <p>Cargando códigos...</p>
+                </div>
+              } @else if (codigosClinica().length === 0) {
+                <div class="empty-codes">
+                  <span class="material-symbols-outlined">vpn_key_off</span>
+                  <p>No hay códigos activos</p>
+                  <button type="button" class="generate-empty-btn" (click)="abrirGenerarCodigo()">
+                    <span class="material-symbols-outlined">add</span>
+                    Generar primer código
+                  </button>
+                </div>
+              } @else {
+                <div class="codes-list">
+                  @for (codigo of codigosClinica(); track codigo.id) {
+                    <article class="code-item" [class.inactive]="!codigo.activo">
+                      <div class="code-info">
+                        <div class="code-value">
+                          <span class="code-text">{{ codigo.codigo }}</span>
+                          <button
+                            type="button"
+                            class="copy-btn"
+                            (click)="copiarCodigo(codigo.codigo)"
+                            aria-label="Copiar código"
+                          >
+                            <span class="material-symbols-outlined">content_copy</span>
+                          </button>
+                        </div>
+                        <div class="code-meta">
+                          <span class="code-type" [class.fisio]="codigo.tipo === 'fisioterapeuta'">
+                            {{ codigo.tipo === 'fisioterapeuta' ? 'Fisioterapeuta' : 'Paciente' }}
+                          </span>
+                          @if (codigo.usosMaximos) {
+                            <span class="code-uses">{{ codigo.usosActuales }}/{{ codigo.usosMaximos }} usos</span>
+                          } @else {
+                            <span class="code-uses">{{ codigo.usosActuales }} usos</span>
+                          }
+                          @if (codigo.fechaExpiracion) {
+                            <span class="code-expiry">
+                              Expira: {{ codigo.fechaExpiracion | date:'dd/MM/yyyy' }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                      @if (codigo.activo) {
+                        <button
+                          type="button"
+                          class="deactivate-btn"
+                          (click)="desactivarCodigo(codigo.id)"
+                          aria-label="Desactivar código"
+                        >
+                          <span class="material-symbols-outlined">block</span>
+                        </button>
+                      } @else {
+                        <span class="inactive-badge">Inactivo</span>
+                      }
+                    </article>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </section>
+      }
     }
   </main>
 
   <!-- Snackbar -->
   @if (snackbarVisible()) {
     <div class="snackbar">{{ snackbarMessage() }}</div>
+  }
+
+  <!-- Dialogs -->
+  @if (mostrarModalVincular()) {
+    <app-vincular-clinica-dialog
+      (cerrar)="cerrarVincularClinica()"
+      (vinculacionExitosa)="onVinculacionExitosa()"
+    />
+  }
+
+  @if (mostrarModalCrear()) {
+    <app-crear-clinica-dialog
+      (cerrar)="cerrarCrearClinica()"
+      (clinicaCreada)="onClinicaCreada()"
+    />
+  }
+
+  @if (mostrarModalGenerarCodigo() && currentClinic()) {
+    <app-generar-codigo-dialog
+      [clinicaId]="currentClinic()!.id_clinica"
+      [esAdmin]="esAdmin()"
+      (cerrar)="cerrarGenerarCodigo()"
+      (codigoGenerado)="onCodigoGenerado($event)"
+    />
   }
 </section>

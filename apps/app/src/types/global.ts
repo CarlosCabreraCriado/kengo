@@ -90,6 +90,13 @@ export {
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
   PlanPDFData,
+  // Access codes
+  CodigoAcceso,
+  TipoCodigoAcceso,
+  ValidacionCodigo,
+  PUESTO_FISIOTERAPEUTA,
+  PUESTO_PACIENTE,
+  PUESTO_ADMINISTRADOR,
 } from '@kengo/shared-models';
 
 // Payloads
@@ -103,6 +110,13 @@ export {
   CreateRutinaEjercicioPayload,
   UpdateRutinaPayload,
   UpdateRutinaEjercicioPayload,
+  // Clinic payloads
+  CreateClinicaPayload,
+  VincularClinicaPayload,
+  VincularClinicaResponse,
+  CrearClinicaResponse,
+  GenerarCodigoPayload,
+  GenerarCodigoResponse,
 } from '@kengo/shared-models';
 
 // ============================================

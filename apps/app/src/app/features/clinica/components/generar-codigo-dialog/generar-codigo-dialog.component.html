@@ -1,0 +1,148 @@
+<div class="dialog-overlay" (click)="onOverlayClick($event)">
+  <div class="dialog-content">
+    <header class="dialog-header">
+      <div class="dialog-icon">
+        <span class="material-symbols-outlined icon-filled">key</span>
+      </div>
+      <h2 class="dialog-title">Generar código de acceso</h2>
+      <p class="dialog-subtitle">Crea un código para invitar usuarios</p>
+      <button type="button" class="close-btn" (click)="terminar()" aria-label="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    @if (!codigoResult()) {
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="dialog-body">
+        <!-- Tipo de código -->
+        <div class="form-group">
+          <label class="form-label">Tipo de usuario</label>
+          <div class="radio-group">
+            <label class="radio-option" [class.active]="form.value.tipo === 'paciente'">
+              <input type="radio" formControlName="tipo" value="paciente" />
+              <div class="radio-content">
+                <span class="radio-icon">
+                  <span class="material-symbols-outlined icon-filled">person</span>
+                </span>
+                <div class="radio-info">
+                  <span class="radio-title">Paciente</span>
+                  <span class="radio-desc">Se unirá como paciente de la clínica</span>
+                </div>
+              </div>
+            </label>
+
+            @if (esAdmin) {
+              <label class="radio-option" [class.active]="form.value.tipo === 'fisioterapeuta'">
+                <input type="radio" formControlName="tipo" value="fisioterapeuta" />
+                <div class="radio-content">
+                  <span class="radio-icon fisio">
+                    <span class="material-symbols-outlined icon-filled">medical_services</span>
+                  </span>
+                  <div class="radio-info">
+                    <span class="radio-title">Fisioterapeuta</span>
+                    <span class="radio-desc">Podrá gestionar pacientes</span>
+                  </div>
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+
+        <!-- Opciones avanzadas -->
+        <details class="advanced-options">
+          <summary class="options-summary">
+            <span class="material-symbols-outlined">tune</span>
+            Opciones avanzadas
+          </summary>
+
+          <div class="options-content">
+            <div class="form-group">
+              <label for="usosMaximos" class="form-label">Límite de usos</label>
+              <input
+                id="usosMaximos"
+                type="number"
+                formControlName="usosMaximos"
+                class="form-input"
+                placeholder="Sin límite"
+                min="1"
+                max="100"
+              />
+              <span class="form-hint">Número máximo de personas que pueden usar este código</span>
+            </div>
+
+            <div class="form-group">
+              <label for="diasExpiracion" class="form-label">Días hasta expiración</label>
+              <input
+                id="diasExpiracion"
+                type="number"
+                formControlName="diasExpiracion"
+                class="form-input"
+                placeholder="Sin expiración"
+                min="1"
+                max="365"
+              />
+              <span class="form-hint">Después de estos días el código dejará de funcionar</span>
+            </div>
+          </div>
+        </details>
+
+        @if (error()) {
+          <div class="error-message">
+            <span class="material-symbols-outlined">error</span>
+            {{ error() }}
+          </div>
+        }
+
+        <div class="dialog-actions">
+          <button type="button" class="btn-secondary" (click)="cerrar.emit()">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="form.invalid || loading()"
+          >
+            @if (loading()) {
+              <span class="spinner"></span>
+              Generando...
+            } @else {
+              Generar código
+            }
+          </button>
+        </div>
+      </form>
+    } @else {
+      <!-- Código generado exitosamente -->
+      <div class="dialog-body success-body">
+        <div class="success-icon">
+          <span class="material-symbols-outlined icon-filled">check_circle</span>
+        </div>
+
+        <p class="success-text">Código generado exitosamente</p>
+
+        <div class="code-display">
+          <span class="code-value">{{ codigoResult() }}</span>
+          <button type="button" class="copy-btn" (click)="copiarCodigo()">
+            <span class="material-symbols-outlined">content_copy</span>
+            Copiar
+          </button>
+        </div>
+
+        <p class="code-hint">
+          Comparte este código con
+          @if (form.value.tipo === 'fisioterapeuta') {
+            el fisioterapeuta
+          } @else {
+            el paciente
+          }
+          para que pueda unirse a tu clínica.
+        </p>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn-primary full" (click)="terminar()">
+            Aceptar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

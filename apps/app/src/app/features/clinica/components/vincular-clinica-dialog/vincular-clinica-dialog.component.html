@@ -1,0 +1,62 @@
+<div class="dialog-overlay" (click)="onOverlayClick($event)">
+  <div class="dialog-content">
+    <header class="dialog-header">
+      <div class="dialog-icon">
+        <span class="material-symbols-outlined icon-filled">link</span>
+      </div>
+      <h2 class="dialog-title">Vincularme a una clínica</h2>
+      <p class="dialog-subtitle">Introduce el código de acceso que te han proporcionado</p>
+      <button type="button" class="close-btn" (click)="cerrar.emit()" aria-label="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="dialog-body">
+      <div class="form-group">
+        <label for="codigo" class="form-label">Código de acceso</label>
+        <input
+          id="codigo"
+          type="text"
+          formControlName="codigo"
+          class="form-input code-input"
+          placeholder="XXXXXXXX"
+          maxlength="8"
+          autocomplete="off"
+          (input)="formatCodigo($event)"
+          [class.error]="form.get('codigo')?.touched && form.get('codigo')?.invalid"
+        />
+        @if (form.get('codigo')?.touched && form.get('codigo')?.errors?.['required']) {
+          <span class="field-error">El código es requerido</span>
+        }
+        @if (form.get('codigo')?.touched && form.get('codigo')?.errors?.['minlength']) {
+          <span class="field-error">El código debe tener 8 caracteres</span>
+        }
+      </div>
+
+      @if (error()) {
+        <div class="error-message">
+          <span class="material-symbols-outlined">error</span>
+          {{ error() }}
+        </div>
+      }
+
+      <div class="dialog-actions">
+        <button type="button" class="btn-secondary" (click)="cerrar.emit()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="form.invalid || loading()"
+        >
+          @if (loading()) {
+            <span class="spinner"></span>
+            Vinculando...
+          } @else {
+            Vincularme
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
