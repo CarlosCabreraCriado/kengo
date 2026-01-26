@@ -8,6 +8,7 @@ import {
   createCodigoAcceso,
   getCodigosClinica,
   desactivarCodigo,
+  reactivarCodigo,
   getPuestoUsuarioEnClinica,
   usuarioYaVinculado,
   getUserById,
@@ -363,6 +364,51 @@ export class clinicaController {
       res.json({ success: true });
     } catch (error: any) {
       console.error('[Clinica] Error desactivando código:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+
+  /**
+   * PATCH /api/clinica/codigo/:id/reactivar
+   * Reactiva un código de acceso
+   */
+  static async reactivarCodigoAcceso(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const idParam = req.params.id as string;
+      const codigoId = parseInt(idParam, 10);
+      const userId = req.user?.id;
+      const { clinicaId } = req.body as { clinicaId: number };
+
+      if (!userId) {
+        res.status(401).json({ error: 'No autenticado' });
+        return;
+      }
+
+      if (isNaN(codigoId)) {
+        res.status(400).json({ error: 'ID de código inválido' });
+        return;
+      }
+
+      if (!clinicaId) {
+        res.status(400).json({ error: 'ID de clínica requerido' });
+        return;
+      }
+
+      // Verificar permisos
+      const puesto = await getPuestoUsuarioEnClinica(userId, clinicaId);
+      const esAdmin = puesto === PUESTO_ADMIN;
+      const esFisio = puesto === PUESTO_FISIO;
+
+      if (!esAdmin && !esFisio) {
+        res.status(403).json({ error: 'No tienes permisos para reactivar códigos' });
+        return;
+      }
+
+      await reactivarCodigo(codigoId);
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[Clinica] Error reactivando código:', error);
       res.status(500).json({ error: 'Error interno del servidor' });
     }
   }

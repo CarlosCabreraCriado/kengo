@@ -16,16 +16,15 @@ export interface DetalleUsuarioDirectus {
 }
 
 /**
- * Estructura de clínica con puestos como viene de Directus
+ * Estructura de clínica con puesto como viene de Directus
  */
 export interface ClinicaUsuarioDirectus {
   id_clinica: number;
-  puestos: {
-    Puestos_id: {
-      puesto: string;
-      id: number;
-    };
-  }[];
+  id_puesto: number | null;
+  puesto?: {
+    id: number;
+    puesto: string;
+  };
 }
 
 /**

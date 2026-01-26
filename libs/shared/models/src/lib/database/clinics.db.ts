@@ -28,22 +28,13 @@ export interface ClinicaDB {
 
 /**
  * Tabla: usuarios_clinicas
- * Relación entre usuarios y clínicas
+ * Relación entre usuarios y clínicas (con puesto directo)
  */
 export interface UsuarioClinicaDB {
   id: number;
   id_usuario: UUID | null;
   id_clinica: number | null;
-}
-
-/**
- * Tabla: usuarios_clinicas_Puestos
- * Relación entre usuarios_clinicas y puestos
- */
-export interface UsuarioClinicaPuestoDB {
-  id: number;
-  usuarios_clinicas_id: number | null;
-  Puestos_id: number | null;
+  id_puesto: number | null;
 }
 
 /**

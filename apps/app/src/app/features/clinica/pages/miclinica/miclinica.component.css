@@ -1003,9 +1003,17 @@
   @apply text-lg;
 }
 
-.inactive-badge {
-  @apply inline-flex px-2 py-1 rounded-md
-         bg-zinc-100 text-zinc-500 text-xs font-medium;
+.reactivate-btn {
+  @apply inline-flex items-center justify-center w-9 h-9 rounded-full
+         bg-green-50 text-green-500 cursor-pointer transition-all border-none;
+}
+
+.reactivate-btn:hover {
+  @apply bg-green-100 text-green-600;
+}
+
+.reactivate-btn .material-symbols-outlined {
+  @apply text-lg;
 }
 
 /* === Desktop Adjustments (>= 768px, alineado con navegación) === */

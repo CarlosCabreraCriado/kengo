@@ -25,5 +25,6 @@ router.post("/clinica/crear", authMiddleware, clinicaController.crearClinica);
 router.post("/clinica/codigo/generar", authMiddleware, clinicaController.generarCodigo);
 router.get("/clinica/:id/codigos", authMiddleware, clinicaController.listarCodigos);
 router.patch("/clinica/codigo/:id/desactivar", authMiddleware, clinicaController.desactivarCodigoAcceso);
+router.patch("/clinica/codigo/:id/reactivar", authMiddleware, clinicaController.reactivarCodigoAcceso);
 
 export default router;

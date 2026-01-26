@@ -459,7 +459,14 @@
                           <span class="material-symbols-outlined">block</span>
                         </button>
                       } @else {
-                        <span class="inactive-badge">Inactivo</span>
+                        <button
+                          type="button"
+                          class="reactivate-btn"
+                          (click)="reactivarCodigo(codigo.id)"
+                          aria-label="Reactivar código"
+                        >
+                          <span class="material-symbols-outlined">check_circle</span>
+                        </button>
                       }
                     </article>
                   }

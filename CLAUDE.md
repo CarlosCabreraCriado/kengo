@@ -98,13 +98,17 @@ Routes are defined in `app.routes.ts`:
 
 ### Roles de Usuario en Clínica (Puestos)
 
-Los usuarios se vinculan a clínicas mediante la tabla `usuarios_clinicas` y sus roles se definen en `usuarios_clinicas_Puestos`:
+Los usuarios se vinculan a clínicas mediante la tabla `usuarios_clinicas` con un campo `id_puesto` directo que referencia a `Puestos`:
 
 | ID | Puesto | Descripción |
 |----|--------|-------------|
 | 1 | Fisioterapeuta | Puede gestionar pacientes, crear planes y generar códigos de paciente |
 | 2 | Paciente | Usuario que recibe tratamiento, acceso limitado a sus propios planes |
 | 4 | Administrador | Control total de la clínica, puede generar códigos de fisio y paciente |
+
+**Estructura simplificada:**
+- `usuarios` → `usuarios_clinicas` (con `id_puesto`) → `Puestos`
+- Cada usuario tiene un único puesto por clínica
 
 **Constantes en código:**
 ```typescript
@@ -180,6 +184,10 @@ import { Usuario, Plan, SeccionPrincipal } from '../types/global';
 - **Directus CMS**: Primary data source
 - **Custom API**: Secondary endpoint at `API_URL` (localhost:3000 in dev, system.kengoapp.com in prod)
 - **Magic Link Auth**: Authentication via magic links with `MAGIC_HASH`
+
+## Database
+
+Para información detallada sobre la estructura de la base de datos (tablas, columnas, relaciones, constraints), consultar el archivo `docs/DATABASE_SCHEMA.ddl`.
 
 ## Deployment
 

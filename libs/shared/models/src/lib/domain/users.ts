@@ -31,11 +31,12 @@ export interface Puesto {
 }
 
 /**
- * Relación usuario-clínica transformada
+ * Relación usuario-clínica transformada (con puesto único)
  */
 export interface ClinicaUsuario {
   id_clinica: number;
-  puestos: Puesto[];
+  id_puesto: number | null;
+  puesto: string | null;
 }
 
 /**

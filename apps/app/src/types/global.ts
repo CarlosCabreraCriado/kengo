@@ -37,7 +37,6 @@ export type {
   RutinaEjercicioDB,
   ClinicaDB,
   UsuarioClinicaDB,
-  UsuarioClinicaPuestoDB,
   ClinicaFilesDB,
 } from '@kengo/shared-models';
 

@@ -551,6 +551,27 @@ export async function desactivarCodigo(codigoId: number): Promise<void> {
 }
 
 /**
+ * Reactiva un código de acceso
+ */
+export async function reactivarCodigo(codigoId: number): Promise<void> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/codigos_acceso/${codigoId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+      body: JSON.stringify({ activo: true }),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error reactivando código: ${res.status}`);
+  }
+}
+
+/**
  * Obtiene el puesto de un usuario en una clínica
  */
 export async function getPuestoUsuarioEnClinica(userId: ID, clinicaId: number): Promise<number | null> {

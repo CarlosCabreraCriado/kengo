@@ -117,9 +117,10 @@ export class ClinicasService {
             'avatar',
             'telefono',
             'numero_colegiado',
-            'clinicas.id_clinica', // Variante A (como en tus fields previos)
-            'clinicas.puestos.Puestos_id.id',
-            'clinicas.puestos.Puestos_id.puesto',
+            'clinicas.id_clinica',
+            'clinicas.id_puesto',
+            'clinicas.puesto.id',
+            'clinicas.puesto.puesto',
           ].join(','),
           filter: JSON.stringify({
             _and: [

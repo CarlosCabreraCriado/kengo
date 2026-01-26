@@ -88,6 +88,24 @@ export class MiClinicaComponent {
     return this.clinicaGestionService.puedeGestionarCodigos(clinica.id_clinica);
   });
 
+  // Rol del usuario en la clínica actual
+  rolEnClinica = computed<{ nombre: string; icono: string } | null>(() => {
+    const clinica = this.currentClinic();
+    const usuario = this.sessionService.usuario();
+    if (!clinica || !usuario) return null;
+
+    const clinicaUsuario = usuario.clinicas.find(c => c.id_clinica === clinica.id_clinica);
+    if (!clinicaUsuario || clinicaUsuario.id_puesto === null) return null;
+
+    // Mapear id_puesto a nombre e icono
+    const puesto = clinicaUsuario.id_puesto;
+    if (puesto === 4) return { nombre: 'Administrador', icono: 'admin_panel_settings' };
+    if (puesto === 1) return { nombre: 'Fisioterapeuta', icono: 'medical_services' };
+    if (puesto === 2) return { nombre: 'Paciente', icono: 'person' };
+
+    return null;
+  });
+
   toggleTeamExpanded() {
     this.teamExpanded.update((v) => !v);
   }
@@ -168,6 +186,17 @@ export class MiClinicaComponent {
     const result = await this.clinicaGestionService.desactivarCodigo(codigoId, clinica.id_clinica);
     if (result.success) {
       this.showSnackbar('Código desactivado');
+      this.cargarCodigos();
+    }
+  }
+
+  async reactivarCodigo(codigoId: number) {
+    const clinica = this.currentClinic();
+    if (!clinica) return;
+
+    const result = await this.clinicaGestionService.reactivarCodigo(codigoId, clinica.id_clinica);
+    if (result.success) {
+      this.showSnackbar('Código reactivado');
       this.cargarCodigos();
     }
   }

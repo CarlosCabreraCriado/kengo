@@ -63,7 +63,7 @@ export class SessionService {
         .get<{ data: UsuarioDirectus }>(`${env.DIRECTUS_URL}/users/me`, {
           params: {
             fields:
-              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.puestos.Puestos_id.puesto,clinicas.puestos.Puestos_id.id,is_cliente,is_fisio,telefono,direccion,postal,numero_colegiado',
+              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,is_cliente,is_fisio,telefono,direccion,postal,numero_colegiado',
           },
         })
         .toPromise();
@@ -134,11 +134,8 @@ export class SessionService {
       clinicas:
         u.clinicas?.map((c) => ({
           id_clinica: c.id_clinica,
-          puestos:
-            c.puestos?.map((p) => ({
-              id_puesto: p.Puestos_id?.id, // asumiendo que puesto es string
-              puesto: p.Puestos_id?.puesto || '',
-            })) || [],
+          id_puesto: c.id_puesto ?? null,
+          puesto: c.puesto?.puesto ?? null,
         })) || [],
       esFisio: !!u.is_fisio,
       esPaciente: !!u.is_cliente,

@@ -173,6 +173,32 @@ export class ClinicaGestionService {
     }
   }
 
+  /**
+   * Reactiva un código de acceso
+   */
+  async reactivarCodigo(codigoId: number, clinicaId: number): Promise<{ success: boolean }> {
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.patch<{ success: boolean }>(
+          `${env.API_URL}/clinica/codigo/${codigoId}/reactivar`,
+          { clinicaId },
+          { withCredentials: true }
+        )
+      );
+
+      return response;
+    } catch (err: any) {
+      const errorMsg = err?.error?.error || 'Error al reactivar código';
+      this.error.set(errorMsg);
+      return { success: false };
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   // =========================
   //  HELPERS DE PERMISOS
   // =========================
