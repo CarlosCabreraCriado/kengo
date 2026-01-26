@@ -3,21 +3,41 @@
 /* === Variables === */
 :host {
   --kengo-primary: #e75c3e;
+  --kengo-tertiary: #efc048;
   --kengo-glass: rgba(255, 255, 255, 0.65);
+  --kengo-glass-strong: rgba(255, 255, 255, 0.85);
   --kengo-border: rgba(255, 255, 255, 0.3);
   --kengo-shadow-primary: 0 6px 24px rgba(231, 92, 62, 0.4);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: block;
+  /* Mobile: fullscreen fixed overlay */
   position: fixed;
   inset: 0;
   z-index: 100;
 }
 
+/* Desktop: normal flow, respect navigation (768px+ matches nav breakpoint) */
+@media (min-width: 768px) {
+  :host {
+    position: relative;
+    inset: auto;
+    z-index: 1;
+    min-height: calc(100dvh - 80px); /* Account for nav height */
+  }
+}
+
 .exercise-page {
   @apply relative flex flex-col w-full h-full overflow-hidden;
-  background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+}
+
+/* Desktop: warm gradient background instead of dark */
+@media (min-width: 768px) {
+  .exercise-page {
+    @apply overflow-y-auto;
+    min-height: 100%;
+  }
 }
 
 /* === Aurora === */
@@ -35,6 +55,11 @@
 }
 @keyframes auroraFloat1 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-40px, 60px) scale(1.2); } }
 @keyframes auroraFloat2 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(50px, -40px) scale(1.15); } }
+
+/* Desktop: hide aurora, use gradient bg instead */
+@media (min-width: 768px) {
+  .aurora-bg { @apply hidden; }
+}
 
 /* === States === */
 .loading-container, .error-container { @apply flex-1 flex items-center justify-center p-6; }
@@ -86,6 +111,90 @@
 .header-center.visible { @apply opacity-100; transform: translateY(0); }
 .header-title { @apply text-white text-lg truncate; }
 
+/* Hide mobile header on desktop */
+@media (min-width: 768px) {
+  .floating-header {
+    @apply hidden;
+  }
+}
+
+/* Desktop back button with text */
+.back-btn-desktop {
+  @apply inline-flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl
+         text-sm font-medium text-zinc-600
+         cursor-pointer transition-all active:scale-95;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.back-btn-desktop:hover {
+  @apply text-[#e75c3e];
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.back-btn-desktop .material-symbols-outlined {
+  @apply text-lg;
+  transition: transform 0.2s ease;
+}
+
+.back-btn-desktop:hover .material-symbols-outlined {
+  transform: translateX(-2px);
+}
+
+/* Desktop Header Card */
+.desktop-header-card {
+  @apply flex items-center gap-4 mt-6 p-4 mx-6 rounded-2xl;
+  max-width: 1400px;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  background: var(--kengo-glass-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.desktop-header-card .back-btn-desktop {
+  @apply mb-0 shrink-0;
+}
+
+.desktop-header-title {
+  @apply flex flex-col gap-1 min-w-0;
+}
+
+.desktop-header-title h1 {
+  @apply text-2xl text-[#e75c3e] truncate;
+}
+
+.desktop-header-meta {
+  @apply inline-flex items-center gap-2;
+}
+
+.desktop-header-meta .meta-badge {
+  @apply inline-flex items-center gap-1 text-sm font-medium text-zinc-600;
+}
+
+.desktop-header-meta .meta-badge .material-symbols-outlined {
+  @apply text-sm text-[#e75c3e];
+}
+
+.desktop-header-meta .meta-divider {
+  @apply text-zinc-400 text-sm;
+}
+
+@media (min-width: 1024px) {
+  .desktop-header-card {
+    @apply gap-6 p-5;
+  }
+
+  .desktop-header-title h1 {
+    @apply text-3xl;
+  }
+}
+
 /* === Media === */
 .media-container { @apply relative flex-shrink-0 overflow-hidden cursor-pointer; height: 55dvh; transition: height var(--transition); }
 .media-container.expanded { height: calc(100dvh - 120px - var(--safe-bottom)); }
@@ -101,6 +210,34 @@
 .swipe-hint .material-symbols-outlined { @apply text-2xl; }
 .hint-text { @apply text-xs font-medium; }
 @keyframes hintBounce { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(-8px); opacity: 1; } }
+
+/* Desktop: video in a contained card, not full-screen */
+@media (min-width: 768px) {
+  .media-container {
+    @apply rounded-3xl shadow-2xl;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 70vh;
+  }
+  .media-container.expanded {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 80vh;
+  }
+  .media-overlay {
+    background: linear-gradient(180deg, transparent 0%, transparent 70%, rgba(0, 0, 0, 0.3) 100%);
+    border-radius: 1.5rem;
+  }
+  .media-video, .media-image {
+    @apply rounded-3xl;
+  }
+  .media-placeholder {
+    @apply rounded-3xl;
+    background: linear-gradient(135deg, #f3eceb 0%, #ffede8 100%);
+  }
+  .media-placeholder .material-symbols-outlined { @apply text-zinc-300; }
+  .swipe-hint { @apply hidden; }
+}
 
 /* === Bottom Panel === */
 .bottom-panel {
@@ -119,6 +256,23 @@
 .panel-handle { @apply flex justify-center py-3 cursor-pointer; }
 .handle-bar { @apply w-12 h-1.5 rounded-full bg-zinc-300/60; transition: all 0.2s ease; }
 .panel-handle:hover .handle-bar { @apply bg-zinc-400 w-16; }
+
+/* Desktop: panel as a side card, not bottom sheet */
+@media (min-width: 768px) {
+  .bottom-panel {
+    @apply rounded-3xl flex-none overflow-y-auto;
+    border-radius: 1.5rem;
+    border: 1px solid var(--kengo-border);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+    margin-top: 0;
+    max-height: calc(100vh - 160px);
+    background: var(--kengo-glass-strong);
+  }
+  .bottom-panel.minimized {
+    @apply flex-1;
+  }
+  .panel-handle { @apply hidden; }
+}
 
 /* === Content === */
 .exercise-content { @apply flex-1 overflow-y-auto px-5 pb-4; scrollbar-width: none; -ms-overflow-style: none; }
@@ -167,15 +321,148 @@
 
 .icon-filled { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
 
-/* === Desktop === */
+/* === Desktop Two-Column Layout (768px+ to match navigation breakpoint) === */
 @media (min-width: 768px) {
-  .media-container { height: 60dvh; }
-  .media-container.expanded { height: calc(100dvh - 140px); }
-  .bottom-panel { @apply max-w-2xl mx-auto; border-radius: 32px 32px 0 0; }
-  .exercise-content { @apply px-8; }
-  .exercise-title { @apply text-3xl; }
-  .duration-chip { @apply px-6 py-2.5 text-base; }
-  .actions-bar { @apply gap-6 py-6; }
-  .action-btn.secondary { @apply w-14 h-14; }
-  .action-btn.primary { @apply h-16 px-8; }
+  /* Main layout container for desktop */
+  .desktop-layout {
+    @apply flex gap-6 items-start;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem 2rem;
+  }
+
+  /* Video column */
+  .desktop-video-column {
+    @apply flex-1 sticky;
+    top: 1.5rem;
+    min-width: 0;
+  }
+
+  /* Info column - narrower on tablet */
+  .desktop-info-column {
+    @apply w-[320px] flex-shrink-0;
+  }
+
+  /* Always show content on desktop */
+  .exercise-content {
+    @apply px-5 py-2;
+    animation: none;
+  }
+
+  .exercise-header {
+    @apply text-left mb-5;
+  }
+
+  .exercise-title {
+    @apply text-2xl mb-3;
+  }
+
+  .exercise-meta {
+    @apply inline-flex;
+  }
+
+  .duration-selector {
+    @apply flex-row items-center gap-3 mb-5;
+  }
+
+  .duration-chips {
+    @apply flex-wrap;
+  }
+
+  .duration-chip {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .description-card {
+    @apply mb-5;
+  }
+
+  /* Actions at bottom of info panel */
+  .actions-bar {
+    @apply flex-row justify-start gap-3 px-5 py-4 border-t border-zinc-200/50;
+    padding-bottom: 1.25rem;
+  }
+
+  .actions-bar.compact {
+    @apply flex-row py-4;
+    padding-bottom: 1.25rem;
+  }
+
+  .minimal-info {
+    @apply hidden;
+  }
+
+  .action-buttons {
+    @apply w-full justify-between;
+  }
+
+  .action-btn.secondary {
+    @apply w-11 h-11;
+  }
+
+  .action-btn.primary {
+    @apply h-12 px-6 flex-1 max-w-[200px];
+  }
+
+  .action-btn.primary .btn-label {
+    @apply inline text-sm;
+  }
+
+  /* Hide mobile-only elements */
+  .actions-bar .action-btn.secondary:has(.material-symbols-outlined:is([class*="expand"])) {
+    @apply hidden;
+  }
+}
+
+/* Larger desktop (1024px+): more spacious layout */
+@media (min-width: 1024px) {
+  .desktop-layout {
+    @apply gap-8;
+    padding: 1.5rem 2rem 2rem;
+  }
+
+  .desktop-info-column {
+    @apply w-[420px];
+  }
+
+  .exercise-content {
+    @apply px-6;
+  }
+
+  .exercise-header {
+    @apply mb-6;
+  }
+
+  .exercise-title {
+    @apply text-3xl mb-4;
+  }
+
+  .duration-selector {
+    @apply gap-4 mb-6;
+  }
+
+  .duration-chip {
+    @apply px-5 py-2.5;
+  }
+
+  .description-card {
+    @apply mb-6;
+  }
+
+  .actions-bar {
+    @apply gap-4 px-6 py-5;
+    padding-bottom: 1.5rem;
+  }
+
+  .action-btn.secondary {
+    @apply w-12 h-12;
+  }
+
+  .action-btn.primary {
+    @apply h-14 px-8 max-w-xs;
+  }
+
+  .action-btn.primary .btn-label {
+    @apply text-base;
+  }
 }

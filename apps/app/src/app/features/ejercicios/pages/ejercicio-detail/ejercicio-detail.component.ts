@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, effect, ViewChildren, ElementRef, QueryList } from '@angular/core';
 import { Location } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { Ejercicio, Usuario } from '../../../../../types/global';
@@ -25,7 +25,7 @@ export class EjercicioDetailComponent {
   private planBuilderService = inject(PlanBuilderService);
   private dialog = inject(Dialog);
 
-  @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
+  @ViewChildren('videoPlayer') videoPlayers!: QueryList<ElementRef<HTMLVideoElement>>;
 
   // Estado del ejercicio
   id_ejercicio = signal<string | number | null>(null);
@@ -113,16 +113,22 @@ export class EjercicioDetailComponent {
   }
 
   toggleVideo() {
-    if (!this.videoPlayer?.nativeElement) return;
+    const players = this.videoPlayers?.toArray();
+    if (!players || players.length === 0) return;
 
-    const video = this.videoPlayer.nativeElement;
-    if (video.paused) {
-      video.play();
-      this.videoReproduciendo.set(true);
-    } else {
-      video.pause();
-      this.videoReproduciendo.set(false);
-    }
+    // Toggle all video players (mobile and desktop)
+    players.forEach((playerRef) => {
+      const video = playerRef.nativeElement;
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+
+    // Update state based on first player
+    const firstVideo = players[0].nativeElement;
+    this.videoReproduciendo.set(!firstVideo.paused);
 
     // Mostrar indicador de play/pause brevemente
     this.showPlayIndicator.set(true);

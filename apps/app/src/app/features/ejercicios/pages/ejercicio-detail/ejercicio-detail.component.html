@@ -4,7 +4,7 @@
   (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)"
 >
-  <!-- Aurora Background (visible cuando no hay video) -->
+  <!-- Aurora Background (visible cuando no hay video) - Mobile only -->
   <div class="aurora-bg" aria-hidden="true">
     <div class="aurora-wave aurora-wave-1"></div>
     <div class="aurora-wave aurora-wave-2"></div>
@@ -36,8 +36,8 @@
       </div>
     </div>
   } @else if (ejercicio()) {
-    <!-- Floating Header -->
-    <header class="floating-header" [class.scrolled]="videoExpandido()">
+    <!-- Floating Header (Mobile only) -->
+    <header class="floating-header md:hidden" [class.scrolled]="videoExpandido()">
       <button
         type="button"
         class="header-btn back"
@@ -55,164 +55,303 @@
       <div class="w-11"></div>
     </header>
 
-    <!-- Video/Media Container -->
-    <div
-      class="media-container"
-      [class.expanded]="videoExpandido()"
-      (click)="toggleVideo()"
-    >
-      @if (ejercicio()?.video) {
-        <video
-          #videoPlayer
-          class="media-video"
-          autoplay
-          muted
-          loop
-          playsinline
-        >
-          <source [src]="getAssetUrl(ejercicio()?.video || 0)" type="video/mp4" />
-        </video>
-      } @else if (ejercicio()?.portada) {
-        <img
-          [src]="getAssetUrl(ejercicio()?.portada || 0)"
-          alt="{{ ejercicio()?.nombre_ejercicio }}"
-          class="media-image"
-        />
-      } @else {
-        <div class="media-placeholder">
-          <span class="material-symbols-outlined icon-filled">fitness_center</span>
-        </div>
-      }
-
-      <!-- Video Overlay Gradient -->
-      <div class="media-overlay"></div>
-
-      <!-- Play/Pause Indicator (aparece brevemente) -->
-      @if (showPlayIndicator()) {
-        <div class="play-indicator">
-          <span class="material-symbols-outlined icon-filled">
-            {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
-          </span>
-        </div>
-      }
-
-      <!-- Swipe Hint (solo cuando el video no está expandido) -->
-      @if (!videoExpandido() && ejercicio()?.video) {
-        <div class="swipe-hint">
-          <span class="material-symbols-outlined">keyboard_arrow_down</span>
-          <span class="hint-text">Desliza para ver más</span>
-        </div>
-      }
-    </div>
-
-    <!-- Bottom Panel -->
-    <div class="bottom-panel" [class.minimized]="videoExpandido()">
-      <!-- Panel Handle -->
-      <div class="panel-handle" (click)="toggleExpandido()">
-        <div class="handle-bar"></div>
-      </div>
-
-      <!-- Exercise Info (visible cuando no está minimizado) -->
-      @if (!videoExpandido()) {
-        <div class="exercise-content animate-content">
-          <!-- Exercise Title -->
-          <div class="exercise-header">
-            <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
-
-            @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
-              <div class="exercise-meta">
-                <span class="meta-badge">
-                  <span class="material-symbols-outlined">replay</span>
-                  {{ ejercicio()?.series_defecto || 3 }} series
-                </span>
-                <span class="meta-divider">×</span>
-                <span class="meta-badge">
-                  <span class="material-symbols-outlined">counter_1</span>
-                  {{ ejercicio()?.repeticiones_defecto || 10 }} reps
-                </span>
-              </div>
-            }
-          </div>
-
-          <!-- Duration Chips -->
-          <div class="duration-selector">
-            <span class="duration-label">Duración:</span>
-            <div class="duration-chips">
-              @for (duracion of duraciones; track duracion.valor) {
-                <button
-                  type="button"
-                  class="duration-chip"
-                  [class.active]="duracionSeleccionada() === duracion.valor"
-                  (click)="seleccionarDuracion(duracion.valor)"
-                >
-                  {{ duracion.label }}
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- Description Card -->
-          @if (ejercicio()?.descripcion) {
-            <div class="description-card">
-              <div class="description-header">
-                <span class="material-symbols-outlined">info</span>
-                <span>Instrucciones</span>
-              </div>
-              <div
-                class="description-content"
-                [innerHTML]="ejercicio()?.descripcion | safeHtml"
-              ></div>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Quick Actions Bar -->
-      <div class="actions-bar" [class.compact]="videoExpandido()">
-        @if (videoExpandido()) {
-          <!-- Minimal info when expanded -->
-          <div class="minimal-info">
-            <span class="minimal-title">{{ ejercicio()?.nombre_ejercicio }}</span>
+    <!-- ============================================== -->
+    <!-- MOBILE LAYOUT (< 768px) - Original behavior   -->
+    <!-- ============================================== -->
+    <div class="md:hidden contents">
+      <!-- Video/Media Container -->
+      <div
+        class="media-container"
+        [class.expanded]="videoExpandido()"
+        (click)="toggleVideo()"
+      >
+        @if (ejercicio()?.video) {
+          <video
+            #videoPlayer
+            class="media-video"
+            autoplay
+            muted
+            loop
+            playsinline
+          >
+            <source [src]="getAssetUrl(ejercicio()?.video || 0)" type="video/mp4" />
+          </video>
+        } @else if (ejercicio()?.portada) {
+          <img
+            [src]="getAssetUrl(ejercicio()?.portada || 0)"
+            alt="{{ ejercicio()?.nombre_ejercicio }}"
+            class="media-image"
+          />
+        } @else {
+          <div class="media-placeholder">
+            <span class="material-symbols-outlined icon-filled">fitness_center</span>
           </div>
         }
 
-        <div class="action-buttons">
-          <!-- Expand/Collapse Button -->
-          <button
-            type="button"
-            class="action-btn secondary"
-            (click)="toggleExpandido()"
-            [attr.aria-label]="videoExpandido() ? 'Mostrar detalles' : 'Pantalla completa'"
-          >
-            <span class="material-symbols-outlined">
-              {{ videoExpandido() ? 'expand_more' : 'expand_less' }}
-            </span>
-          </button>
+        <!-- Video Overlay Gradient -->
+        <div class="media-overlay"></div>
 
-          <!-- Primary Action: Assign -->
-          <button
-            type="button"
-            class="action-btn primary"
-            (click)="asignarEjercicio()"
-            aria-label="Asignar ejercicio"
-          >
-            <span class="material-symbols-outlined icon-filled">person_add</span>
-            @if (!videoExpandido()) {
-              <span class="btn-label">Asignar</span>
-            }
-          </button>
-
-          <!-- Play/Pause Button -->
-          <button
-            type="button"
-            class="action-btn secondary"
-            (click)="toggleVideo(); $event.stopPropagation()"
-            [attr.aria-label]="videoReproduciendo() ? 'Pausar' : 'Reproducir'"
-          >
-            <span class="material-symbols-outlined">
+        <!-- Play/Pause Indicator (aparece brevemente) -->
+        @if (showPlayIndicator()) {
+          <div class="play-indicator">
+            <span class="material-symbols-outlined icon-filled">
               {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
             </span>
-          </button>
+          </div>
+        }
+
+        <!-- Swipe Hint (solo cuando el video no está expandido) -->
+        @if (!videoExpandido() && ejercicio()?.video) {
+          <div class="swipe-hint">
+            <span class="material-symbols-outlined">keyboard_arrow_down</span>
+            <span class="hint-text">Desliza para ver más</span>
+          </div>
+        }
+      </div>
+
+      <!-- Bottom Panel -->
+      <div class="bottom-panel" [class.minimized]="videoExpandido()">
+        <!-- Panel Handle -->
+        <div class="panel-handle" (click)="toggleExpandido()">
+          <div class="handle-bar"></div>
+        </div>
+
+        <!-- Exercise Info (visible cuando no está minimizado) -->
+        @if (!videoExpandido()) {
+          <div class="exercise-content animate-content">
+            <!-- Exercise Title -->
+            <div class="exercise-header">
+              <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
+
+              @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
+                <div class="exercise-meta">
+                  <span class="meta-badge">
+                    <span class="material-symbols-outlined">replay</span>
+                    {{ ejercicio()?.series_defecto || 3 }} series
+                  </span>
+                  <span class="meta-divider">×</span>
+                  <span class="meta-badge">
+                    <span class="material-symbols-outlined">counter_1</span>
+                    {{ ejercicio()?.repeticiones_defecto || 10 }} reps
+                  </span>
+                </div>
+              }
+            </div>
+
+            <!-- Duration Chips -->
+            <div class="duration-selector">
+              <span class="duration-label">Duración:</span>
+              <div class="duration-chips">
+                @for (duracion of duraciones; track duracion.valor) {
+                  <button
+                    type="button"
+                    class="duration-chip"
+                    [class.active]="duracionSeleccionada() === duracion.valor"
+                    (click)="seleccionarDuracion(duracion.valor)"
+                  >
+                    {{ duracion.label }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Description Card -->
+            @if (ejercicio()?.descripcion) {
+              <div class="description-card">
+                <div class="description-header">
+                  <span class="material-symbols-outlined">info</span>
+                  <span>Instrucciones</span>
+                </div>
+                <div
+                  class="description-content"
+                  [innerHTML]="ejercicio()?.descripcion | safeHtml"
+                ></div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Quick Actions Bar -->
+        <div class="actions-bar" [class.compact]="videoExpandido()">
+          @if (videoExpandido()) {
+            <!-- Minimal info when expanded -->
+            <div class="minimal-info">
+              <span class="minimal-title">{{ ejercicio()?.nombre_ejercicio }}</span>
+            </div>
+          }
+
+          <div class="action-buttons">
+            <!-- Expand/Collapse Button -->
+            <button
+              type="button"
+              class="action-btn secondary"
+              (click)="toggleExpandido()"
+              [attr.aria-label]="videoExpandido() ? 'Mostrar detalles' : 'Pantalla completa'"
+            >
+              <span class="material-symbols-outlined">
+                {{ videoExpandido() ? 'expand_more' : 'expand_less' }}
+              </span>
+            </button>
+
+            <!-- Primary Action: Assign -->
+            <button
+              type="button"
+              class="action-btn primary"
+              (click)="asignarEjercicio()"
+              aria-label="Asignar ejercicio"
+            >
+              <span class="material-symbols-outlined icon-filled">person_add</span>
+              @if (!videoExpandido()) {
+                <span class="btn-label">Asignar</span>
+              }
+            </button>
+
+            <!-- Play/Pause Button -->
+            <button
+              type="button"
+              class="action-btn secondary"
+              (click)="toggleVideo(); $event.stopPropagation()"
+              [attr.aria-label]="videoReproduciendo() ? 'Pausar' : 'Reproducir'"
+            >
+              <span class="material-symbols-outlined">
+                {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- DESKTOP LAYOUT (>= 768px) - Two columns       -->
+    <!-- ============================================== -->
+    <div class="hidden md:block">
+      <!-- Desktop Header Card: Back button + Title -->
+      <header class="desktop-header-card">
+        <button
+          type="button"
+          class="back-btn-desktop"
+          (click)="volver()"
+        >
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Volver</span>
+        </button>
+
+        <div class="desktop-header-title">
+          <h1 class="titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
+          @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
+            <div class="desktop-header-meta">
+              <span class="meta-badge">
+                <span class="material-symbols-outlined">replay</span>
+                {{ ejercicio()?.series_defecto || 3 }} series
+              </span>
+              <span class="meta-divider">×</span>
+              <span class="meta-badge">
+                <span class="material-symbols-outlined">counter_1</span>
+                {{ ejercicio()?.repeticiones_defecto || 10 }} reps
+              </span>
+            </div>
+          }
+        </div>
+      </header>
+
+      <div class="desktop-layout">
+        <!-- Left Column: Video -->
+        <div class="desktop-video-column">
+          <div
+            class="media-container"
+            (click)="toggleVideo()"
+          >
+            @if (ejercicio()?.video) {
+              <video
+                #videoPlayer
+                class="media-video"
+                autoplay
+                muted
+                loop
+                playsinline
+              >
+                <source [src]="getAssetUrl(ejercicio()?.video || 0)" type="video/mp4" />
+              </video>
+            } @else if (ejercicio()?.portada) {
+              <img
+                [src]="getAssetUrl(ejercicio()?.portada || 0)"
+                alt="{{ ejercicio()?.nombre_ejercicio }}"
+                class="media-image"
+              />
+            } @else {
+              <div class="media-placeholder">
+                <span class="material-symbols-outlined icon-filled">fitness_center</span>
+              </div>
+            }
+
+            <!-- Video Overlay Gradient -->
+            <div class="media-overlay"></div>
+
+            <!-- Play/Pause Indicator -->
+            @if (showPlayIndicator()) {
+              <div class="play-indicator">
+                <span class="material-symbols-outlined icon-filled">
+                  {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
+                </span>
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <!-- Right Column: Exercise Info -->
+        <div class="desktop-info-column">
+          <div class="bottom-panel">
+            <div class="exercise-content">
+              <!-- Duration Chips -->
+              <div class="duration-selector">
+                <span class="duration-label">Duración:</span>
+                <div class="duration-chips">
+                  @for (duracion of duraciones; track duracion.valor) {
+                    <button
+                      type="button"
+                      class="duration-chip"
+                      [class.active]="duracionSeleccionada() === duracion.valor"
+                      (click)="seleccionarDuracion(duracion.valor)"
+                    >
+                      {{ duracion.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Description Card -->
+              @if (ejercicio()?.descripcion) {
+                <div class="description-card">
+                  <div class="description-header">
+                    <span class="material-symbols-outlined">info</span>
+                    <span>Instrucciones</span>
+                  </div>
+                  <div
+                    class="description-content"
+                    [innerHTML]="ejercicio()?.descripcion | safeHtml"
+                  ></div>
+                </div>
+              }
+            </div>
+
+            <!-- Actions Bar -->
+            <div class="actions-bar">
+              <div class="action-buttons">
+                <!-- Primary Action: Assign -->
+                <button
+                  type="button"
+                  class="action-btn primary"
+                  (click)="asignarEjercicio()"
+                  aria-label="Asignar ejercicio"
+                >
+                  <span class="material-symbols-outlined icon-filled">person_add</span>
+                  <span class="btn-label">Asignar a paciente</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
