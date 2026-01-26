@@ -19,7 +19,11 @@
     "e2e": "playwright test",
     "e2e:screenshots": "playwright test e2e/screenshots",
     "e2e:ui": "playwright test --ui",
-    "e2e:setup": "playwright test --project=setup"
+    "e2e:setup": "playwright test --project=setup",
+    "railway:build:frontend": "nx build app --configuration production",
+    "railway:start:frontend": "node apps/app/server.js",
+    "railway:build:backend": "nx build backend",
+    "railway:start:backend": "node dist/apps/backend/app.js"
   },
   "private": true,
   "dependencies": {

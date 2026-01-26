@@ -1,0 +1,16 @@
+# Railway configuration for Kengo monorepo
+# https://docs.railway.app/reference/config-as-code
+
+# Configuración base para todos los servicios
+[build]
+builder = "railpack"
+
+# Los comandos específicos se configuran en cada servicio de Railway:
+#
+# FRONTEND (app.kengoapp.com):
+#   Build Command:  npm run railway:build:frontend
+#   Start Command:  npm run railway:start:frontend
+#
+# BACKEND (system.kengoapp.com):
+#   Build Command:  npm run railway:build:backend
+#   Start Command:  npm run railway:start:backend
