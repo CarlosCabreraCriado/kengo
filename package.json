@@ -23,7 +23,7 @@
     "railway:build:frontend": "nx build app --configuration production",
     "railway:start:frontend": "node apps/app/server.js",
     "railway:build:backend": "nx build backend",
-    "railway:start:backend": "node dist/apps/backend/app.js"
+    "railway:start:backend": "node dist/apps/backend/apps/backend/src/app.js"
   },
   "private": true,
   "dependencies": {

@@ -2,9 +2,12 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/apps/backend",
-    "rootDir": "src",
+    "rootDir": "../..",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../libs/shared/models/src/**/*.ts"
+  ],
   "exclude": ["src/**/*.spec.ts"]
 }
