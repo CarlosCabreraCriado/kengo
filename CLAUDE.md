@@ -94,6 +94,54 @@ Routes are defined in `app.routes.ts`:
 - **RxJS** for HTTP operations and complex async flows
 - Auth state managed in `auth.service.ts` using signals (accessToken, refreshToken, isLoggedIn)
 
+## Domain: Clínicas y Roles
+
+### Roles de Usuario en Clínica (Puestos)
+
+Los usuarios se vinculan a clínicas mediante la tabla `usuarios_clinicas` y sus roles se definen en `usuarios_clinicas_Puestos`:
+
+| ID | Puesto | Descripción |
+|----|--------|-------------|
+| 1 | Fisioterapeuta | Puede gestionar pacientes, crear planes y generar códigos de paciente |
+| 2 | Paciente | Usuario que recibe tratamiento, acceso limitado a sus propios planes |
+| 4 | Administrador | Control total de la clínica, puede generar códigos de fisio y paciente |
+
+**Constantes en código:**
+```typescript
+import { PUESTO_FISIOTERAPEUTA, PUESTO_PACIENTE, PUESTO_ADMINISTRADOR } from '@kengo/shared-models';
+// PUESTO_FISIOTERAPEUTA = 1
+// PUESTO_PACIENTE = 2
+// PUESTO_ADMINISTRADOR = 4
+```
+
+### Sistema de Códigos de Acceso
+
+Los códigos de acceso permiten vincular usuarios a clínicas. Se almacenan en la tabla `codigos_acceso`:
+
+- **Código**: 8 caracteres alfanuméricos (ej: `A2B3C4D5`)
+- **Tipos**: `'fisioterapeuta'` o `'paciente'`
+- **Opciones**: límite de usos, fecha de expiración
+
+**Permisos para generar códigos:**
+- Administrador → puede generar códigos de fisioterapeuta y paciente
+- Fisioterapeuta → solo puede generar códigos de paciente
+
+**Flujo de vinculación:**
+1. Admin/Fisio genera código desde Mi Clínica
+2. Usuario nuevo introduce código en registro o Mi Clínica
+3. Sistema valida código (activo, no expirado, usos disponibles)
+4. Usuario queda vinculado con el puesto correspondiente
+
+### Endpoints de Clínica (Backend)
+
+```
+POST /api/clinica/vincular          # Vincular usuario con código
+POST /api/clinica/crear             # Crear clínica (creador = admin)
+POST /api/clinica/codigo/generar    # Generar código de acceso
+GET  /api/clinica/:id/codigos       # Listar códigos de clínica
+PATCH /api/clinica/codigo/:id/desactivar  # Desactivar código
+```
+
 ## Code Conventions
 
 ### Component Selectors
