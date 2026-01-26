@@ -19,6 +19,7 @@ export interface CodigoAcceso {
   usosMaximos: number | null;
   usosActuales: number;
   fechaExpiracion: Date | null;
+  email: string | null;
   fechaCreacion: Date;
 }
 
@@ -27,7 +28,7 @@ export interface CodigoAcceso {
  */
 export interface ValidacionCodigo {
   valido: boolean;
-  error?: 'CODIGO_NO_ENCONTRADO' | 'CODIGO_INACTIVO' | 'CODIGO_EXPIRADO' | 'CODIGO_AGOTADO';
+  error?: 'CODIGO_NO_ENCONTRADO' | 'CODIGO_INACTIVO' | 'CODIGO_EXPIRADO' | 'CODIGO_AGOTADO' | 'EMAIL_NO_COINCIDE';
   tipo?: TipoCodigoAcceso;
   nombreClinica?: string;
 }

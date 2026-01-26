@@ -363,6 +363,20 @@
   @apply ml-2 px-2 py-0.5 rounded-md bg-zinc-100 text-xs font-medium text-zinc-600;
 }
 
+/* === Role User Badge === */
+.role-user-badge {
+  @apply inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-full
+         text-xs font-semibold;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
+  color: #c94a2f;
+  border: 1px solid rgba(231, 92, 62, 0.2);
+}
+
+.role-user-badge .material-symbols-outlined {
+  @apply text-sm;
+  color: #e75c3e;
+}
+
 /* === Edit Clinic Button === */
 .edit-clinic-btn {
   @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-xl shrink-0
@@ -961,6 +975,15 @@
 
 .code-uses {
   @apply text-xs text-zinc-500;
+}
+
+.code-email-badge {
+  @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md
+         bg-blue-50 text-blue-600 text-[0.65rem] font-medium cursor-help;
+}
+
+.code-email-badge .material-symbols-outlined {
+  @apply text-xs;
 }
 
 .code-expiry {

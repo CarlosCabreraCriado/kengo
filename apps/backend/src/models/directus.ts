@@ -26,18 +26,12 @@ export type Schema = {
     consumed_at: string | null;
     created_at: string;
   };
-  // Tabla puente usuarios_clinicas que mencionas
+  // Tabla puente usuarios_clinicas (con puesto directo)
   usuarios_clinicas: {
     id: ID;
     id_usuario: ID; // relación a users
     id_clinica: ID; // relación a clinicas
-    puesto: number; // 2 = paciente (tu caso)
-  };
-  // Tabla puente usuarios_clinicas_Puestos
-  usuarios_clinicas_Puestos: {
-    id: ID;
-    usuarios_clinicas_id: ID;
-    Puestos_id: number;
+    id_puesto: number | null; // relación a Puestos
   };
   directus_users: {
     first_name: string;
@@ -67,6 +61,7 @@ export type Schema = {
     usos_maximos: number | null;
     usos_actuales: number;
     fecha_expiracion: string | null;
+    email: string | null;
     creado_por: ID;
     date_created: string;
   };
@@ -133,7 +128,8 @@ export async function createOne<T extends keyof Schema>(
 
     return directus.request(createItem(collection, data as any));
   } catch (error) {
-    console.error("Error creando item en Directus:", error);
+    console.error("Error creando item en Directus:", collection, error);
+    throw error; // Re-lanzar para que el llamador maneje el error
   }
 }
 
@@ -272,25 +268,22 @@ export async function createUserInDirectus(userData: CreateUserData): Promise<{ 
 }
 
 /**
- * Crea la relacion usuario-clinica en la tabla puente
+ * Crea la relacion usuario-clinica con puesto directo
  */
 export async function createUsuarioClinica(
   userId: ID,
   clinicaId: ID,
   puesto: number
 ): Promise<{ id: ID }> {
+  console.log('[createUsuarioClinica] Creando relación:', { userId, clinicaId, puesto });
+
   const result = await createOne('usuarios_clinicas', {
     id_usuario: userId,
     id_clinica: clinicaId,
+    id_puesto: puesto,
   });
 
-  // Crear la relación con el puesto en usuarios_clinicas_Puestos
-  if (result && result.id) {
-    await createOne('usuarios_clinicas_Puestos', {
-      usuarios_clinicas_id: result.id,
-      Puestos_id: puesto,
-    });
-  }
+  console.log('[createUsuarioClinica] Resultado:', result);
 
   return { id: result?.id || 0 };
 }
@@ -334,10 +327,11 @@ export async function getCodigoAcceso(codigo: string): Promise<Schema['codigos_a
 
 /**
  * Valida un código de acceso y retorna información de validación
+ * @param userEmail - Email del usuario que intenta usar el código (para validar códigos vinculados)
  */
-export async function validarCodigoAcceso(codigo: string): Promise<{
+export async function validarCodigoAcceso(codigo: string, userEmail?: string): Promise<{
   valido: boolean;
-  error?: 'CODIGO_NO_ENCONTRADO' | 'CODIGO_INACTIVO' | 'CODIGO_EXPIRADO' | 'CODIGO_AGOTADO';
+  error?: 'CODIGO_NO_ENCONTRADO' | 'CODIGO_INACTIVO' | 'CODIGO_EXPIRADO' | 'CODIGO_AGOTADO' | 'EMAIL_NO_COINCIDE';
   codigoData?: Schema['codigos_acceso'] & { id_clinica: { id_clinica: number; nombre: string } };
 }> {
   const res = await fetch(
@@ -370,6 +364,15 @@ export async function validarCodigoAcceso(codigo: string): Promise<{
 
   if (codigoData.usos_maximos !== null && codigoData.usos_actuales >= codigoData.usos_maximos) {
     return { valido: false, error: 'CODIGO_AGOTADO' };
+  }
+
+  // Verificar email vinculado si el código tiene uno
+  if (codigoData.email && userEmail) {
+    const codigoEmail = codigoData.email.toLowerCase().trim();
+    const usuarioEmail = userEmail.toLowerCase().trim();
+    if (codigoEmail !== usuarioEmail) {
+      return { valido: false, error: 'EMAIL_NO_COINCIDE' };
+    }
   }
 
   return { valido: true, codigoData };
@@ -463,6 +466,7 @@ export async function createCodigoAcceso(data: {
   tipo: 'fisioterapeuta' | 'paciente';
   usos_maximos?: number | null;
   dias_expiracion?: number | null;
+  email?: string | null;
 }, creadoPor: ID): Promise<{ codigo: string; id: number }> {
   const codigo = generateAccessCode();
 
@@ -472,6 +476,9 @@ export async function createCodigoAcceso(data: {
     expDate.setDate(expDate.getDate() + data.dias_expiracion);
     fechaExpiracion = expDate.toISOString();
   }
+
+  // Normalizar email a minúsculas si existe
+  const emailNormalizado = data.email ? data.email.toLowerCase().trim() : null;
 
   const res = await fetch(`${process.env.DIRECTUS_URL}/items/codigos_acceso`, {
     method: 'POST',
@@ -487,6 +494,7 @@ export async function createCodigoAcceso(data: {
       usos_maximos: data.usos_maximos ?? null,
       usos_actuales: 0,
       fecha_expiracion: fechaExpiracion,
+      email: emailNormalizado,
       creado_por: creadoPor,
     }),
   });
@@ -545,37 +553,32 @@ export async function desactivarCodigo(codigoId: number): Promise<void> {
 /**
  * Obtiene el puesto de un usuario en una clínica
  */
-export async function getPuestoUsuarioEnClinica(userId: ID, clinicaId: number): Promise<number[]> {
-  const res = await fetch(
-    `${process.env.DIRECTUS_URL}/items/usuarios_clinicas?filter[id_usuario][_eq]=${userId}&filter[id_clinica][_eq]=${clinicaId}&fields=id,usuarios_clinicas_Puestos.Puestos_id`,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
-      },
-    }
-  );
+export async function getPuestoUsuarioEnClinica(userId: ID, clinicaId: number): Promise<number | null> {
+  const url = `${process.env.DIRECTUS_URL}/items/usuarios_clinicas?filter[id_usuario][_eq]=${userId}&filter[id_clinica][_eq]=${clinicaId}&fields=id,id_puesto&limit=1`;
+  console.log('[getPuestoUsuarioEnClinica] URL:', url);
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+  });
 
   if (!res.ok) {
-    return [];
+    console.log('[getPuestoUsuarioEnClinica] Fetch error:', res.status, res.statusText);
+    return null;
   }
 
   const json = await res.json();
+  console.log('[getPuestoUsuarioEnClinica] Response:', JSON.stringify(json, null, 2));
+
   if (!json.data || json.data.length === 0) {
-    return [];
+    console.log('[getPuestoUsuarioEnClinica] No data found');
+    return null;
   }
 
-  // Extraer los IDs de puestos
-  const puestos: number[] = [];
-  for (const uc of json.data) {
-    if (uc.usuarios_clinicas_Puestos) {
-      for (const p of uc.usuarios_clinicas_Puestos) {
-        if (p.Puestos_id) {
-          puestos.push(p.Puestos_id);
-        }
-      }
-    }
-  }
-  return puestos;
+  const puesto = json.data[0].id_puesto;
+  console.log('[getPuestoUsuarioEnClinica] Puesto:', puesto);
+  return puesto;
 }
 
 /**

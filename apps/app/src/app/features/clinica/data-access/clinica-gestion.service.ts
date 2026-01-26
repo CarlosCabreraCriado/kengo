@@ -99,7 +99,7 @@ export class ClinicaGestionService {
   async generarCodigo(
     clinicaId: number,
     tipo: TipoCodigoAcceso,
-    opciones?: { usosMaximos?: number | null; diasExpiracion?: number | null }
+    opciones?: { usosMaximos?: number | null; diasExpiracion?: number | null; email?: string | null }
   ): Promise<GenerarCodigoResponse> {
     this.loading.set(true);
     this.error.set(null);
@@ -110,6 +110,7 @@ export class ClinicaGestionService {
         tipo,
         usos_maximos: opciones?.usosMaximos,
         dias_expiracion: opciones?.diasExpiracion,
+        email: opciones?.email,
       };
 
       const response = await firstValueFrom(
@@ -186,7 +187,7 @@ export class ClinicaGestionService {
     const clinica = usuario.clinicas.find(c => c.id_clinica === clinicaId);
     if (!clinica) return false;
 
-    return clinica.puestos.some(p => p.id_puesto === puestoId);
+    return clinica.id_puesto === puestoId;
   }
 
   /**

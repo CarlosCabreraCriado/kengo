@@ -47,6 +47,54 @@
           </div>
         </div>
 
+        <!-- Invitar por email (sección principal) -->
+        <div class="email-section">
+          <div class="email-header">
+            <div class="email-header-info">
+              <span class="material-symbols-outlined email-header-icon">mail</span>
+              <div>
+                <span class="email-header-title">Invitar por email</span>
+                <span class="email-header-desc">Se enviará notificación automática</span>
+              </div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="vincularEmail" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          @if (form.value.vincularEmail) {
+            <div class="email-input-wrapper">
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                class="form-input email-input"
+                [class.input-error]="!emailValido() && form.value.email !== ''"
+                placeholder="ejemplo@email.com"
+              />
+              @if (!emailValido() && form.value.email === '') {
+                <span class="form-hint required-hint">
+                  <span class="material-symbols-outlined">error</span>
+                  Email requerido para enviar invitación
+                </span>
+              } @else if (!emailValido()) {
+                <span class="form-hint required-hint">
+                  <span class="material-symbols-outlined">error</span>
+                  Introduce un email válido
+                </span>
+              } @else {
+                <span class="form-hint">Solo este email podrá usar el código</span>
+              }
+            </div>
+          } @else {
+            <p class="email-disabled-hint">
+              <span class="material-symbols-outlined">info</span>
+              Cualquier persona con el código podrá usarlo
+            </p>
+          }
+        </div>
+
         <!-- Opciones avanzadas -->
         <details class="advanced-options">
           <summary class="options-summary">
@@ -99,7 +147,7 @@
           <button
             type="submit"
             class="btn-primary"
-            [disabled]="form.invalid || loading()"
+            [disabled]="!formValido() || loading()"
           >
             @if (loading()) {
               <span class="spinner"></span>
@@ -119,6 +167,13 @@
 
         <p class="success-text">Código generado exitosamente</p>
 
+        @if (emailEnviado()) {
+          <div class="email-sent-badge">
+            <span class="material-symbols-outlined">mail</span>
+            <span>Notificación enviada a {{ form.value.email }}</span>
+          </div>
+        }
+
         <div class="code-display">
           <span class="code-value">{{ codigoResult() }}</span>
           <button type="button" class="copy-btn" (click)="copiarCodigo()">
@@ -128,13 +183,17 @@
         </div>
 
         <p class="code-hint">
-          Comparte este código con
-          @if (form.value.tipo === 'fisioterapeuta') {
-            el fisioterapeuta
+          @if (form.value.email?.trim()) {
+            Este código está vinculado a <strong>{{ form.value.email }}</strong> y solo podrá ser usado con ese email.
           } @else {
-            el paciente
+            Comparte este código con
+            @if (form.value.tipo === 'fisioterapeuta') {
+              el fisioterapeuta
+            } @else {
+              el paciente
+            }
+            para que pueda unirse a tu clínica.
           }
-          para que pueda unirse a tu clínica.
         </p>
 
         <div class="dialog-actions">

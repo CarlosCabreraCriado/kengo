@@ -31,7 +31,7 @@ CREATE TABLE `directus_activity` (
   PRIMARY KEY (`id`),
   KEY `directus_activity_collection_foreign` (`collection`),
   KEY `directus_activity_timestamp_index` (`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=4078 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4144 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_extensions definition
@@ -71,7 +71,7 @@ CREATE TABLE `directus_fields` (
   `searchable` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `directus_fields_collection_foreign` (`collection`)
-) ENGINE=InnoDB AUTO_INCREMENT=290 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=300 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_migrations definition
@@ -115,7 +115,7 @@ CREATE TABLE `directus_relations` (
   PRIMARY KEY (`id`),
   KEY `directus_relations_many_collection_foreign` (`many_collection`),
   KEY `directus_relations_one_collection_foreign` (`one_collection`)
-) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_translations definition
@@ -318,7 +318,7 @@ CREATE TABLE `Planes` (
   CONSTRAINT `planes_paciente_foreign` FOREIGN KEY (`paciente`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `planes_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`),
   CONSTRAINT `planes_user_updated_foreign` FOREIGN KEY (`user_updated`) REFERENCES `directus_users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.detalle_usuario definition
@@ -335,7 +335,7 @@ CREATE TABLE `detalle_usuario` (
   PRIMARY KEY (`id_detalle_usuario`),
   KEY `detalle_usuario_id_usuario_foreign` (`id_usuario`),
   CONSTRAINT `detalle_usuario_id_usuario_foreign` FOREIGN KEY (`id_usuario`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.detalle_usuario_clinica definition
@@ -558,7 +558,7 @@ CREATE TABLE `directus_presets` (
   KEY `directus_presets_role_foreign` (`role`),
   CONSTRAINT `directus_presets_role_foreign` FOREIGN KEY (`role`) REFERENCES `directus_roles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `directus_presets_user_foreign` FOREIGN KEY (`user`) REFERENCES `directus_users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_revisions definition
@@ -580,7 +580,7 @@ CREATE TABLE `directus_revisions` (
   CONSTRAINT `directus_revisions_activity_foreign` FOREIGN KEY (`activity`) REFERENCES `directus_activity` (`id`) ON DELETE CASCADE,
   CONSTRAINT `directus_revisions_parent_foreign` FOREIGN KEY (`parent`) REFERENCES `directus_revisions` (`id`),
   CONSTRAINT `directus_revisions_version_foreign` FOREIGN KEY (`version`) REFERENCES `directus_versions` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2973 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3006 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_settings definition
@@ -744,7 +744,7 @@ CREATE TABLE `planes_ejercicios` (
   KEY `planes_ejercicios_plan_foreign` (`plan`),
   CONSTRAINT `planes_ejercicios_ejercicio_foreign` FOREIGN KEY (`ejercicio`) REFERENCES `ejercicios` (`id_ejercicio`) ON DELETE SET NULL,
   CONSTRAINT `planes_ejercicios_plan_foreign` FOREIGN KEY (`plan`) REFERENCES `Planes` (`id_plan`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.planes_registros definition
@@ -818,7 +818,7 @@ CREATE TABLE `clinicas` (
   CONSTRAINT `clinicas_logo_foreign` FOREIGN KEY (`logo`) REFERENCES `directus_files` (`id`) ON DELETE SET NULL,
   CONSTRAINT `clinicas_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`),
   CONSTRAINT `clinicas_user_updated_foreign` FOREIGN KEY (`user_updated`) REFERENCES `directus_users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.clinicas_files definition
@@ -833,6 +833,32 @@ CREATE TABLE `clinicas_files` (
   CONSTRAINT `clinicas_files_clinicas_id_clinica_foreign` FOREIGN KEY (`clinicas_id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE SET NULL,
   CONSTRAINT `clinicas_files_directus_files_id_foreign` FOREIGN KEY (`directus_files_id`) REFERENCES `directus_files` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- kengoDB.codigos_acceso definition
+
+CREATE TABLE `codigos_acceso` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `date_created` timestamp NULL DEFAULT NULL,
+  `id_clinica` int unsigned DEFAULT NULL,
+  `codigo` varchar(255) DEFAULT NULL,
+  `tipo` varchar(255) DEFAULT NULL,
+  `usos_maximos` int DEFAULT '1',
+  `usos_actuales` int DEFAULT '0',
+  `fecha_expiracion` datetime DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `activo` tinyint(1) DEFAULT '1',
+  `creado_por` char(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `codigos_acceso_codigo_unique` (`codigo`),
+  KEY `codigos_acceso_id_clinica_foreign` (`id_clinica`),
+  KEY `codigos_acceso_creado_por_foreign` (`creado_por`),
+  CONSTRAINT `codigos_acceso_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `codigos_acceso_id_clinica_foreign` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-- NOTA: El campo `email` permite vincular un código a un email específico.
+-- Si está definido, solo usuarios con ese email podrán usar el código.
+-- Se usa para invitaciones personalizadas con notificación automática.
 
 
 -- kengoDB.directus_sessions definition
@@ -860,23 +886,12 @@ CREATE TABLE `usuarios_clinicas` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `id_usuario` char(36) DEFAULT NULL,
   `id_clinica` int unsigned DEFAULT NULL,
+  `id_puesto` int unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `usuarios_clinicas_id_usuario_foreign` (`id_usuario`),
   KEY `usuarios_clinicas_id_clinica_foreign` (`id_clinica`),
+  KEY `usuarios_clinicas_id_puesto_foreign` (`id_puesto`),
   CONSTRAINT `usuarios_clinicas_id_clinica_foreign` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE SET NULL,
+  CONSTRAINT `usuarios_clinicas_id_puesto_foreign` FOREIGN KEY (`id_puesto`) REFERENCES `Puestos` (`id`) ON DELETE SET NULL,
   CONSTRAINT `usuarios_clinicas_id_usuario_foreign` FOREIGN KEY (`id_usuario`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-
--- kengoDB.usuarios_clinicas_Puestos definition
-
-CREATE TABLE `usuarios_clinicas_Puestos` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `usuarios_clinicas_id` int unsigned DEFAULT NULL,
-  `Puestos_id` int unsigned DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `usuarios_clinicas_puestos_puestos_id_foreign` (`Puestos_id`),
-  KEY `usuarios_clinicas_puestos_usuarios_clinicas_id_foreign` (`usuarios_clinicas_id`),
-  CONSTRAINT `usuarios_clinicas_puestos_puestos_id_foreign` FOREIGN KEY (`Puestos_id`) REFERENCES `Puestos` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `usuarios_clinicas_puestos_usuarios_clinicas_id_foreign` FOREIGN KEY (`usuarios_clinicas_id`) REFERENCES `usuarios_clinicas` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

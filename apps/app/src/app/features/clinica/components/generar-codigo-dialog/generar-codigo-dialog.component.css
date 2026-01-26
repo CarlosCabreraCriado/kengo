@@ -152,6 +152,103 @@
   @apply text-xs text-zinc-500;
 }
 
+/* === Email Section === */
+.email-section {
+  @apply mb-4 p-4 rounded-2xl;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.03) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.email-header {
+  @apply flex items-center justify-between gap-3;
+}
+
+.email-header-info {
+  @apply flex items-center gap-3;
+}
+
+.email-header-icon {
+  @apply text-2xl text-blue-500;
+}
+
+.email-header-title {
+  @apply block text-sm font-semibold text-zinc-800;
+}
+
+.email-header-desc {
+  @apply block text-xs text-zinc-500;
+}
+
+.email-input-wrapper {
+  @apply mt-3;
+}
+
+.email-input {
+  @apply bg-white border-blue-200;
+}
+
+.email-input:focus {
+  @apply border-blue-400;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.email-input.input-error {
+  @apply border-red-400 bg-red-50;
+}
+
+.email-input.input-error:focus {
+  @apply border-red-400;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.required-hint {
+  @apply flex items-center gap-1 text-amber-600;
+}
+
+.required-hint .material-symbols-outlined {
+  @apply text-sm;
+}
+
+.email-disabled-hint {
+  @apply flex items-center gap-2 mt-3 text-xs text-zinc-500 m-0;
+}
+
+.email-disabled-hint .material-symbols-outlined {
+  @apply text-sm text-zinc-400;
+}
+
+/* === Toggle Switch === */
+.toggle-switch {
+  @apply relative inline-flex items-center cursor-pointer;
+}
+
+.toggle-switch input {
+  @apply sr-only;
+}
+
+.toggle-slider {
+  @apply relative w-11 h-6 rounded-full transition-colors;
+  background-color: #d1d5db;
+}
+
+.toggle-slider::before {
+  @apply absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white
+         transition-transform shadow-sm;
+  content: '';
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #3b82f6;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(1.25rem);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 /* === Advanced Options === */
 .advanced-options {
   @apply mb-4 rounded-xl bg-zinc-50 border border-zinc-200 overflow-hidden;
@@ -261,6 +358,21 @@
 
 .code-hint {
   @apply text-sm text-zinc-500 mt-4;
+}
+
+.code-hint strong {
+  @apply font-semibold text-zinc-700;
+}
+
+/* === Email Sent Badge === */
+.email-sent-badge {
+  @apply inline-flex items-center gap-2 px-4 py-2 mb-4 rounded-full
+         bg-green-50 text-green-700 text-sm font-medium;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.email-sent-badge .material-symbols-outlined {
+  @apply text-base text-green-600;
 }
 
 /* === Spinner === */

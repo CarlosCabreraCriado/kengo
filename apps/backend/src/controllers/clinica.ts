@@ -10,7 +10,9 @@ import {
   desactivarCodigo,
   getPuestoUsuarioEnClinica,
   usuarioYaVinculado,
+  getUserById,
 } from '../models/directus';
+import { sendCodigoAccesoEmail } from '../services/email.service';
 import type {
   CreateClinicaPayload,
   VincularClinicaPayload,
@@ -52,8 +54,12 @@ export class clinicaController {
         return;
       }
 
-      // Validar código
-      const validacion = await validarCodigoAcceso(codigo.trim().toUpperCase());
+      // Obtener email del usuario para validar códigos vinculados
+      const userData = await getUserById(userId);
+      const userEmail = userData?.email || undefined;
+
+      // Validar código (pasando email del usuario para verificar vinculación)
+      const validacion = await validarCodigoAcceso(codigo.trim().toUpperCase(), userEmail);
 
       if (!validacion.valido || !validacion.codigoData) {
         const mensajesError: Record<string, string> = {
@@ -61,6 +67,7 @@ export class clinicaController {
           CODIGO_INACTIVO: 'El código ha sido desactivado',
           CODIGO_EXPIRADO: 'El código ha expirado',
           CODIGO_AGOTADO: 'El código ha alcanzado el límite de usos',
+          EMAIL_NO_COINCIDE: 'Este código está vinculado a otro email',
         };
         res.status(400).json({
           success: false,
@@ -174,15 +181,15 @@ export class clinicaController {
       }
 
       // Verificar permisos del usuario en la clínica
-      const puestos = await getPuestoUsuarioEnClinica(userId, payload.id_clinica);
+      const puesto = await getPuestoUsuarioEnClinica(userId, payload.id_clinica);
 
-      if (puestos.length === 0) {
+      if (puesto === null) {
         res.status(403).json({ success: false, error: 'No tienes acceso a esta clínica' } as GenerarCodigoResponse);
         return;
       }
 
-      const esAdmin = puestos.includes(PUESTO_ADMIN);
-      const esFisio = puestos.includes(PUESTO_FISIO);
+      const esAdmin = puesto === PUESTO_ADMIN;
+      const esFisio = puesto === PUESTO_FISIO;
 
       // Verificar permisos según tipo de código
       if (payload.tipo === 'fisioterapeuta' && !esAdmin) {
@@ -201,17 +208,52 @@ export class clinicaController {
         return;
       }
 
+      // Validar email si se proporciona
+      const emailNormalizado = payload.email?.trim().toLowerCase() || null;
+      if (emailNormalizado && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNormalizado)) {
+        res.status(400).json({ success: false, error: 'El email proporcionado no es válido' } as GenerarCodigoResponse);
+        return;
+      }
+
       // Generar código
       const { codigo } = await createCodigoAcceso({
         id_clinica: payload.id_clinica,
         tipo: payload.tipo,
         usos_maximos: payload.usos_maximos,
         dias_expiracion: payload.dias_expiracion,
+        email: emailNormalizado,
       }, userId);
+
+      // Enviar email de notificación si hay email vinculado
+      let emailEnviado = false;
+      if (emailNormalizado) {
+        // Obtener nombre de la clínica para el email
+        const clinicaRes = await fetch(
+          `${process.env.DIRECTUS_URL}/items/clinicas/${payload.id_clinica}?fields=nombre`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+            },
+          }
+        );
+        let nombreClinica = 'tu clínica';
+        if (clinicaRes.ok) {
+          const clinicaData = await clinicaRes.json();
+          nombreClinica = clinicaData.data?.nombre || nombreClinica;
+        }
+
+        emailEnviado = await sendCodigoAccesoEmail({
+          email: emailNormalizado,
+          codigo,
+          nombreClinica,
+          tipo: payload.tipo,
+        });
+      }
 
       res.status(201).json({
         success: true,
         codigo,
+        emailEnviado,
       } as GenerarCodigoResponse);
     } catch (error: any) {
       console.error('[Clinica] Error generando código:', error);
@@ -229,6 +271,8 @@ export class clinicaController {
       const clinicaId = parseInt(idParam, 10);
       const userId = req.user?.id;
 
+      console.log('[listarCodigos] userId:', userId, 'clinicaId:', clinicaId);
+
       if (!userId) {
         res.status(401).json({ error: 'No autenticado' });
         return;
@@ -240,11 +284,13 @@ export class clinicaController {
       }
 
       // Verificar permisos
-      const puestos = await getPuestoUsuarioEnClinica(userId, clinicaId);
-      const esAdmin = puestos.includes(PUESTO_ADMIN);
-      const esFisio = puestos.includes(PUESTO_FISIO);
+      const puesto = await getPuestoUsuarioEnClinica(userId, clinicaId);
+      console.log('[listarCodigos] puesto encontrado:', puesto);
+      const esAdmin = puesto === PUESTO_ADMIN;
+      const esFisio = puesto === PUESTO_FISIO;
 
       if (!esAdmin && !esFisio) {
+        console.log('[listarCodigos] Sin permisos - esAdmin:', esAdmin, 'esFisio:', esFisio);
         res.status(403).json({ error: 'No tienes permisos para ver los códigos' });
         return;
       }
@@ -260,6 +306,7 @@ export class clinicaController {
         usosMaximos: c.usos_maximos,
         usosActuales: c.usos_actuales,
         fechaExpiracion: c.fecha_expiracion ? new Date(c.fecha_expiracion) : null,
+        email: c.email || null,
         fechaCreacion: new Date(c.date_created),
       }));
 
@@ -302,9 +349,9 @@ export class clinicaController {
       }
 
       // Verificar permisos
-      const puestos = await getPuestoUsuarioEnClinica(userId, clinicaId);
-      const esAdmin = puestos.includes(PUESTO_ADMIN);
-      const esFisio = puestos.includes(PUESTO_FISIO);
+      const puesto = await getPuestoUsuarioEnClinica(userId, clinicaId);
+      const esAdmin = puesto === PUESTO_ADMIN;
+      const esFisio = puesto === PUESTO_FISIO;
 
       if (!esAdmin && !esFisio) {
         res.status(403).json({ error: 'No tienes permisos para desactivar códigos' });
@@ -319,4 +366,5 @@ export class clinicaController {
       res.status(500).json({ error: 'Error interno del servidor' });
     }
   }
+
 }

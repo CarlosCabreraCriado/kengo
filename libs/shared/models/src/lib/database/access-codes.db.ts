@@ -23,6 +23,7 @@ export interface CodigoAccesoDB {
   usos_maximos: number | null;
   usos_actuales: number;
   fecha_expiracion: string | null;
+  email: string | null;
   creado_por: UUID;
   date_created: string;
 }

@@ -53,6 +53,7 @@ export interface GenerarCodigoPayload {
   tipo: TipoCodigoAcceso;
   usos_maximos?: number | null;
   dias_expiracion?: number | null;
+  email?: string | null;
 }
 
 /**
@@ -61,5 +62,6 @@ export interface GenerarCodigoPayload {
 export interface GenerarCodigoResponse {
   success: boolean;
   codigo?: string;
+  emailEnviado?: boolean;
   error?: string;
 }

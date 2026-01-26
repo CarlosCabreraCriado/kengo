@@ -82,6 +82,128 @@ function getWelcomeEmailTemplate(nombre: string, tipo: 'fisioterapeuta' | 'pacie
   `.trim();
 }
 
+interface CodigoAccesoEmailParams {
+  email: string;
+  codigo: string;
+  nombreClinica: string;
+  tipo: 'fisioterapeuta' | 'paciente';
+}
+
+/**
+ * Genera el template HTML para el email de código de acceso
+ */
+function getCodigoAccesoEmailTemplate(codigo: string, nombreClinica: string, tipo: 'fisioterapeuta' | 'paciente'): string {
+  const rolText = tipo === 'fisioterapeuta'
+    ? 'Has sido invitado a unirte como <strong>fisioterapeuta</strong>. Podrás gestionar pacientes, crear planes de tratamiento y hacer seguimiento de su progreso.'
+    : 'Has sido invitado a unirte como <strong>paciente</strong>. Podrás acceder a tus ejercicios asignados y registrar tu progreso.';
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitación a ${nombreClinica}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #e75c3e 0%, #d4503a 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">Kengo</h1>
+              <p style="margin: 10px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">Tu plataforma de fisioterapia</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+                Invitación a ${nombreClinica}
+              </h2>
+              <p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                ${rolText}
+              </p>
+
+              <!-- Código de acceso -->
+              <div style="background-color: #f8f8f8; border: 2px dashed #e75c3e; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+                <p style="margin: 0 0 8px 0; color: #666666; font-size: 14px;">Tu código de acceso:</p>
+                <p style="margin: 0; font-family: ui-monospace, monospace; font-size: 32px; font-weight: 700; letter-spacing: 0.15em; color: #1a1a1a;">${codigo}</p>
+              </div>
+
+              <p style="margin: 0 0 24px 0; color: #4a4a4a; font-size: 14px; line-height: 1.6;">
+                Este código está vinculado a tu email y solo podrás usarlo tú.
+              </p>
+
+              <!-- CTA Button -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td align="center">
+                    <a href="${process.env.APP_URL || 'https://kengoapp.com'}/login"
+                       style="display: inline-block; background-color: #e75c3e; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                      Ir a Kengo
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5;">
+                Una vez en la app, ve a <strong>Mi Clínica</strong> e introduce el código para vincularte.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9f9f9; padding: 24px 30px; border-top: 1px solid #eaeaea;">
+              <p style="margin: 0; color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
+                Este email fue enviado por Kengo.<br>
+                Si no esperabas esta invitación, puedes ignorar este mensaje.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+/**
+ * Envía un email con el código de acceso al destinatario
+ */
+export async function sendCodigoAccesoEmail({ email, codigo, nombreClinica, tipo }: CodigoAccesoEmailParams): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[Email] RESEND_API_KEY no configurada, omitiendo envío de email');
+    return false;
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'Kengo <noreply@kengoapp.com>',
+      to: email,
+      subject: `Invitación a ${nombreClinica} - Kengo`,
+      html: getCodigoAccesoEmailTemplate(codigo, nombreClinica, tipo),
+    });
+
+    if (error) {
+      console.error('[Email] Error enviando email de código de acceso:', error);
+      return false;
+    }
+
+    console.log(`[Email] Email de código de acceso enviado a ${email}`);
+    return true;
+  } catch (err) {
+    console.error('[Email] Error inesperado enviando email:', err);
+    return false;
+  }
+}
+
 /**
  * Envia un email de bienvenida al nuevo usuario
  * No bloquea el registro si falla el envio

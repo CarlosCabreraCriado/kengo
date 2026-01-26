@@ -177,6 +177,12 @@
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1 min-w-0">
               <h2 class="clinic-name">{{ c.nombre || 'Mi Clínica' }}</h2>
+              @if (rolEnClinica(); as rol) {
+                <div class="role-user-badge">
+                  <span class="material-symbols-outlined">{{ rol.icono }}</span>
+                  <span>{{ rol.nombre }}</span>
+                </div>
+              }
               <p class="clinic-address">
                 <span class="material-symbols-outlined">location_on</span>
                 {{ c.direccion || 'Sin dirección' }}
@@ -425,6 +431,12 @@
                           <span class="code-type" [class.fisio]="codigo.tipo === 'fisioterapeuta'">
                             {{ codigo.tipo === 'fisioterapeuta' ? 'Fisioterapeuta' : 'Paciente' }}
                           </span>
+                          @if (codigo.email) {
+                            <span class="code-email-badge" [title]="codigo.email">
+                              <span class="material-symbols-outlined">mail</span>
+                              Vinculado
+                            </span>
+                          }
                           @if (codigo.usosMaximos) {
                             <span class="code-uses">{{ codigo.usosActuales }}/{{ codigo.usosMaximos }} usos</span>
                           } @else {
