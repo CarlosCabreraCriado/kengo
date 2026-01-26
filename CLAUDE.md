@@ -21,7 +21,6 @@ npm run watch      # Build with watch mode (development config)
 ### Technology Stack
 
 - **Angular 20** with standalone components and Signals
-- **Angular Material 20** for UI components
 - **Tailwind CSS 4** for utility styling
 - **TypeScript 5.8** with strict mode enabled
 - **Directus CMS** as primary backend (<https://admin.kengoapp.com>)
