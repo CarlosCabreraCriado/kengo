@@ -1,6 +1,9 @@
 // Utils
 export { KENGO_BREAKPOINTS, type BreakpointKey } from './utils/breakpoints';
 
+// Validators
+export { passwordMatchValidator } from './validators/password-match.validator';
+
 // Pipes
 export { SafeHtmlPipe } from './pipes/safe-html.pipe';
 

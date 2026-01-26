@@ -160,3 +160,94 @@ export async function getUserById(userId: string): Promise<DirectusUserData | nu
 export function getFileUrl(fileId: string): string {
   return `${process.env.DIRECTUS_URL}/assets/${fileId}`;
 }
+
+// =========================
+//  FUNCIONES DE REGISTRO
+// =========================
+
+/**
+ * Verifica si un email ya existe en Directus
+ */
+export async function checkEmailExists(email: string): Promise<boolean> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(email)}&limit=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error verificando email: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data && json.data.length > 0;
+}
+
+/**
+ * Obtiene una clinica por su codigo
+ */
+export async function getClinicaByCode(codigo: string): Promise<{ id: ID; nombre: string } | null> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/clinicas?filter[codigo][_eq]=${encodeURIComponent(codigo)}&limit=1&fields=id,nombre`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error buscando clinica: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data && json.data.length > 0 ? json.data[0] : null;
+}
+
+export interface CreateUserData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
+/**
+ * Crea un usuario en Directus
+ */
+export async function createUserInDirectus(userData: CreateUserData): Promise<{ id: string }> {
+  const res = await fetch(`${process.env.DIRECTUS_URL}/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+    body: JSON.stringify(userData),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Error creando usuario: ${res.status} - ${text}`);
+  }
+
+  const json = await res.json();
+  return { id: json.data.id };
+}
+
+/**
+ * Crea la relacion usuario-clinica en la tabla puente
+ */
+export async function createUsuarioClinica(
+  userId: ID,
+  clinicaId: ID,
+  puesto: number
+): Promise<void> {
+  await createOne('usuarios_clinicas', {
+    id_usuario: userId,
+    id_clinica: clinicaId,
+    puesto,
+  });
+}

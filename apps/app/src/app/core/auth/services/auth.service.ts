@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { environment as env } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { SessionService } from './session.service';
+import type { CreateUsuarioPayload, RegistroResult } from '@kengo/shared-models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -135,6 +136,23 @@ export class AuthService {
       this.http.post(
         `${env.DIRECTUS_URL}/users/invite/accept`,
         { token, password },
+        { withCredentials: true },
+      ),
+    );
+  }
+
+  // =========================
+  //  REGISTRO
+  // =========================
+
+  /**
+   * Registra un nuevo usuario en el sistema
+   */
+  async register(payload: CreateUsuarioPayload): Promise<RegistroResult> {
+    return firstValueFrom(
+      this.http.post<RegistroResult>(
+        `${env.API_URL}/registro`,
+        payload,
         { withCredentials: true },
       ),
     );

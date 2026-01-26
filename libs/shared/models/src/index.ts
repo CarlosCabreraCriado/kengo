@@ -33,3 +33,4 @@ export * from './lib/domain/sessions';
 // DTOs para operaciones de crear/actualizar
 export * from './lib/payloads/plans.payload';
 export * from './lib/payloads/routines.payload';
+export * from './lib/payloads/users.payload';
