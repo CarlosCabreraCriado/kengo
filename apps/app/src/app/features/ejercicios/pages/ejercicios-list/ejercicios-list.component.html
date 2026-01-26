@@ -387,11 +387,18 @@
                                hover:-translate-y-1 active:scale-[0.98]">
                   <!-- Imagen con overlay gradiente -->
                   <div class="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl">
+                    <!-- Placeholder skeleton mientras carga -->
+                    @if (!isImageLoaded(ejercicio.id_ejercicio)) {
+                      <div class="absolute inset-0 image-skeleton"></div>
+                    }
                     <img
                       [src]="getAssetUrl(ejercicio.portada)"
                       [alt]="ejercicio.nombre_ejercicio"
-                      class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      class="h-full w-full object-cover transition-all duration-500 group-hover:scale-110"
+                      [class.opacity-0]="!isImageLoaded(ejercicio.id_ejercicio)"
+                      [class.opacity-100]="isImageLoaded(ejercicio.id_ejercicio)"
                       loading="lazy"
+                      (load)="onImageLoad(ejercicio.id_ejercicio)"
                     />
                     <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
@@ -448,12 +455,19 @@
                                transition-all duration-300
                                hover:shadow-2xl hover:shadow-black/20
                                hover:-translate-y-2 active:scale-[0.98]">
+                  <!-- Placeholder skeleton mientras carga -->
+                  @if (!isImageLoaded(ejercicio.id_ejercicio)) {
+                    <div class="absolute inset-0 image-skeleton"></div>
+                  }
                   <!-- Imagen de fondo -->
                   <img
                     [src]="getAssetUrl(ejercicio.portada)"
                     [alt]="ejercicio.nombre_ejercicio"
-                    class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    class="absolute inset-0 h-full w-full object-cover transition-all duration-700 group-hover:scale-110"
+                    [class.opacity-0]="!isImageLoaded(ejercicio.id_ejercicio)"
+                    [class.opacity-100]="isImageLoaded(ejercicio.id_ejercicio)"
                     loading="lazy"
+                    (load)="onImageLoad(ejercicio.id_ejercicio)"
                   />
 
                   <!-- Overlay gradiente -->

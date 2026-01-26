@@ -37,6 +37,21 @@ export class EjerciciosListComponent implements OnInit {
   private elementRef = inject(ElementRef);
   public ejerciciosService = inject(EjerciciosService);
   public vista = signal<'vineta' | 'lista'>('lista');
+
+  // Set para rastrear qué imágenes ya cargaron
+  public imagenesLoaded = signal<Set<number>>(new Set());
+
+  onImageLoad(idEjercicio: number): void {
+    this.imagenesLoaded.update((set) => {
+      const newSet = new Set(set);
+      newSet.add(idEjercicio);
+      return newSet;
+    });
+  }
+
+  isImageLoaded(idEjercicio: number): boolean {
+    return this.imagenesLoaded().has(idEjercicio);
+  }
   private breakpointObserverService = inject(BreakpointObserver);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
