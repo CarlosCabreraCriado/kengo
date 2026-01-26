@@ -32,7 +32,7 @@ import { CommonModule } from '@angular/common';
 
         <!-- Benefits Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          @for (segment of segments; track segment.title; let i = $index) {
+          @for (segment of segments; track segment.id; let i = $index) {
             <div
               class="animate-in benefit-card group"
               [style.animation-delay]="(i * 0.15) + 's'"
@@ -44,7 +44,34 @@ import { CommonModule } from '@angular/common';
               <div class="relative z-10">
                 <!-- Icon -->
                 <div class="benefit-icon-wrapper" [style.background]="segment.iconBg">
-                  <span class="text-4xl">{{ segment.icon }}</span>
+                  @switch (segment.id) {
+                    @case ('pacientes') {
+                      <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+                        <path d="M20 21c0-4.418-3.582-7-8-7s-8 2.582-8 7"/>
+                        <path d="M12 17v4"/>
+                        <path d="M10 19h4"/>
+                      </svg>
+                    }
+                    @case ('fisioterapeutas') {
+                      <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="6" r="4"/>
+                        <path d="M12 10v12"/>
+                        <path d="M8 14h8"/>
+                        <path d="M17 18c0-1.657-2.239-3-5-3s-5 1.343-5 3"/>
+                        <path d="M20 8l-2 2-2-2"/>
+                      </svg>
+                    }
+                    @case ('clinicas') {
+                      <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="8" width="18" height="13" rx="2"/>
+                        <path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+                        <path d="M12 12v4"/>
+                        <path d="M10 14h4"/>
+                        <circle cx="12" cy="14" r="4" stroke-opacity="0.3"/>
+                      </svg>
+                    }
+                  }
                 </div>
 
                 <!-- Title & Tag -->
@@ -188,7 +215,7 @@ import { CommonModule } from '@angular/common';
 export class BenefitsComponent {
   segments = [
     {
-      icon: '🧘',
+      id: 'pacientes',
       title: 'Para Pacientes',
       tag: 'Gratis',
       tagBg: 'rgba(34, 197, 94, 0.1)',
@@ -208,7 +235,7 @@ export class BenefitsComponent {
       ],
     },
     {
-      icon: '👨‍⚕️',
+      id: 'fisioterapeutas',
       title: 'Para Fisioterapeutas',
       tag: 'Pro',
       tagBg: 'rgba(231, 92, 62, 0.1)',
@@ -228,7 +255,7 @@ export class BenefitsComponent {
       ],
     },
     {
-      icon: '🏥',
+      id: 'clinicas',
       title: 'Para Clinicas',
       tag: 'Enterprise',
       tagBg: 'rgba(99, 102, 241, 0.1)',

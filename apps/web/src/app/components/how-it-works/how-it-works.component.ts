@@ -40,7 +40,7 @@ import { CommonModule } from '@angular/common';
           <div class="connection-line hidden lg:block"></div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
-            @for (step of steps; track step.number; let i = $index) {
+            @for (step of steps; track step.id; let i = $index) {
               <div
                 class="animate-in step-card"
                 [style.animation-delay]="(i * 0.15) + 's'"
@@ -58,7 +58,43 @@ import { CommonModule } from '@angular/common';
                 <div class="step-content">
                   <!-- Icon -->
                   <div class="step-icon">
-                    <span class="text-4xl">{{ step.icon }}</span>
+                    @switch (step.id) {
+                      @case ('plan') {
+                        <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="4" y="3" width="16" height="18" rx="2"/>
+                          <path d="M8 7h8"/>
+                          <path d="M8 11h8"/>
+                          <path d="M8 15h5"/>
+                          <circle cx="17" cy="15" r="2" fill="#22c55e" stroke="#22c55e"/>
+                          <path d="M16 15l1 1 2-2" stroke="#fff" stroke-width="1.5"/>
+                        </svg>
+                      }
+                      @case ('actividad') {
+                        <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="5" y="2" width="14" height="20" rx="3"/>
+                          <path d="M9 2v2h6V2"/>
+                          <circle cx="12" cy="18" r="1" fill="#e75c3e"/>
+                          <path d="M9 8h6"/>
+                          <path d="M9 11h4"/>
+                        </svg>
+                      }
+                      @case ('sesion') {
+                        <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="4" width="20" height="16" rx="3"/>
+                          <polygon points="10,8 16,12 10,16" fill="#e75c3e" stroke="none"/>
+                          <path d="M2 18h20"/>
+                          <circle cx="6" cy="18" r="1" fill="#efc048"/>
+                        </svg>
+                      }
+                      @case ('feedback') {
+                        <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                          <circle cx="9" cy="12" r="1" fill="#e75c3e"/>
+                          <circle cx="12" cy="12" r="1" fill="#e75c3e"/>
+                          <circle cx="15" cy="12" r="1" fill="#e75c3e"/>
+                        </svg>
+                      }
+                    }
                   </div>
 
                   <!-- Text -->
@@ -312,29 +348,29 @@ import { CommonModule } from '@angular/common';
 export class HowItWorksComponent {
   steps = [
     {
+      id: 'plan',
       number: 1,
-      icon: '📋',
       title: 'El fisio crea tu plan',
       description: 'Selecciona ejercicios personalizados para tu lesion, adaptados a tu ritmo de vida y objetivos.',
       tags: ['Personalizado', 'Rapido'],
     },
     {
+      id: 'actividad',
       number: 2,
-      icon: '📱',
       title: 'Recibe tu actividad',
       description: 'Ve que ejercicios tocan cada dia con videos incluidos, directamente en tu movil.',
       tags: ['Notificaciones', 'Calendario'],
     },
     {
+      id: 'sesion',
       number: 3,
-      icon: '🎬',
       title: 'Sesion guiada',
       description: 'Sigue el video HD, las series y los descansos paso a paso. Como tener al fisio en casa.',
       tags: ['Video HD', 'Temporizador'],
     },
     {
+      id: 'feedback',
       number: 4,
-      icon: '💬',
       title: 'Feedback instantaneo',
       description: 'Registra como te sientes y tu fisio ajusta el tratamiento en tiempo real.',
       tags: ['Dolor', 'Progreso'],

@@ -31,14 +31,61 @@ import { CommonModule } from '@angular/common';
 
         <!-- Features Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          @for (feature of features; track feature.title; let i = $index) {
+          @for (feature of features; track feature.id; let i = $index) {
             <div
               class="animate-in feature-card group"
               [style.animation-delay]="(i * 0.1) + 's'"
             >
               <!-- Icon -->
               <div class="feature-icon-wrapper" [class]="feature.iconClass">
-                <span class="text-3xl">{{ feature.icon }}</span>
+                @switch (feature.id) {
+                  @case ('videos') {
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="4" width="20" height="16" rx="3"/>
+                      <polygon points="10,8 16,12 10,16" fill="#e75c3e" stroke="none"/>
+                    </svg>
+                  }
+                  @case ('planes') {
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="4" y="3" width="16" height="18" rx="2"/>
+                      <path d="M8 7h8"/>
+                      <path d="M8 11h8"/>
+                      <path d="M8 15h5"/>
+                      <path d="M16 15l2 2 4-4" stroke="#22c55e"/>
+                    </svg>
+                  }
+                  @case ('seguimiento') {
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 3v18h18"/>
+                      <path d="M7 16l4-4 4 4 5-6"/>
+                      <circle cx="20" cy="6" r="2" fill="#22c55e" stroke="none"/>
+                    </svg>
+                  }
+                  @case ('recordatorios') {
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                      <circle cx="18" cy="5" r="3" fill="#ef4444" stroke="#ef4444"/>
+                    </svg>
+                  }
+                  @case ('multiclinica') {
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="8" width="7" height="13" rx="1"/>
+                      <rect x="14" y="8" width="7" height="13" rx="1"/>
+                      <path d="M6.5 5a2.5 2.5 0 0 1 5 0v3h-5V5z"/>
+                      <path d="M12.5 5a2.5 2.5 0 0 1 5 0v3h-5V5z"/>
+                      <path d="M12 12v4" stroke-dasharray="2 2"/>
+                    </svg>
+                  }
+                  @case ('codigos') {
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="10" rx="2"/>
+                      <circle cx="12" cy="16" r="2"/>
+                      <path d="M12 14v-2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  }
+                }
               </div>
 
               <!-- Content -->
@@ -314,42 +361,42 @@ import { CommonModule } from '@angular/common';
 export class FeaturesComponent {
   features = [
     {
-      icon: '🎬',
+      id: 'videos',
       title: 'Videos profesionales',
       description: 'Mas de 500 ejercicios grabados por fisioterapeutas con instrucciones claras y demostraciones en HD.',
       iconClass: 'icon-coral',
       stat: { value: '+500', label: 'ejercicios' },
     },
     {
-      icon: '📋',
+      id: 'planes',
       title: 'Planes personalizados',
       description: 'Ejercicios adaptados a tu lesion y horario, asignados por dias de la semana segun tus necesidades.',
       iconClass: 'icon-gold',
       stat: null,
     },
     {
-      icon: '📊',
+      id: 'seguimiento',
       title: 'Seguimiento de dolor',
       description: 'Registra como te sientes en cada sesion para que tu fisio ajuste el tratamiento de forma precisa.',
       iconClass: 'icon-green',
       stat: null,
     },
     {
-      icon: '🔔',
+      id: 'recordatorios',
       title: 'Recordatorios',
       description: 'Nunca olvides tu rutina de ejercicios gracias a las notificaciones diarias personalizadas.',
       iconClass: 'icon-blue',
       stat: null,
     },
     {
-      icon: '🏥',
+      id: 'multiclinica',
       title: 'Multi-clinica',
       description: 'Un fisioterapeuta puede gestionar varias clinicas y pacientes desde una sola cuenta profesional.',
       iconClass: 'icon-purple',
       stat: null,
     },
     {
-      icon: '🔐',
+      id: 'codigos',
       title: 'Codigos de acceso',
       description: 'Invita pacientes de forma segura con codigos unicos de 8 caracteres, sin compartir datos sensibles.',
       iconClass: 'icon-pink',

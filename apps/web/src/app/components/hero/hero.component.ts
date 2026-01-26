@@ -149,10 +149,38 @@ import { CommonModule } from '@angular/common';
 
                   <!-- Quick Actions -->
                   <div class="quick-actions-preview">
-                    @for (action of quickActions; track action.title) {
+                    @for (action of quickActions; track action.id) {
                       <div class="action-card-preview">
                         <div class="action-icon-preview">
-                          <span>{{ action.icon }}</span>
+                          @switch (action.id) {
+                            @case ('planes') {
+                              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="4" y="3" width="16" height="18" rx="2"/>
+                                <path d="M8 7h8"/>
+                                <path d="M8 11h8"/>
+                                <path d="M8 15h5"/>
+                              </svg>
+                            }
+                            @case ('ejercicios') {
+                              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="3"/>
+                                <polygon points="10,8 16,12 10,16" fill="#e75c3e" stroke="none"/>
+                              </svg>
+                            }
+                            @case ('progreso') {
+                              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3v18h18"/>
+                                <path d="M7 16l4-4 4 4 5-6"/>
+                              </svg>
+                            }
+                            @case ('fisio') {
+                              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="6" r="4"/>
+                                <path d="M12 10v8"/>
+                                <path d="M8 14h8"/>
+                              </svg>
+                            }
+                          }
                         </div>
                         <span class="action-title-preview">{{ action.title }}</span>
                       </div>
@@ -525,9 +553,9 @@ import { CommonModule } from '@angular/common';
 })
 export class HeroComponent {
   quickActions = [
-    { icon: '📋', title: 'Mis planes' },
-    { icon: '🎬', title: 'Ejercicios' },
-    { icon: '📊', title: 'Progreso' },
-    { icon: '👨‍⚕️', title: 'Mi fisio' },
+    { id: 'planes', title: 'Mis planes' },
+    { id: 'ejercicios', title: 'Ejercicios' },
+    { id: 'progreso', title: 'Progreso' },
+    { id: 'fisio', title: 'Mi fisio' },
   ];
 }
