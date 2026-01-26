@@ -38,6 +38,11 @@ export class EjercicioDetailComponent {
   videoReproduciendo = signal<boolean>(true);
   duracionSeleccionada = signal<number>(60);
   showPlayIndicator = signal<boolean>(false);
+  videoLoaded = signal<boolean>(false);
+
+  onVideoLoad(): void {
+    this.videoLoaded.set(true);
+  }
 
   // Control de gestos tactiles
   private touchStartY = 0;
@@ -59,6 +64,7 @@ export class EjercicioDetailComponent {
       .subscribe((idParam) => {
         this.error.set(null);
         this.ejercicio.set(null);
+        this.videoLoaded.set(false);
         this.id_ejercicio.set(idParam ?? null);
         this.cargar();
       });

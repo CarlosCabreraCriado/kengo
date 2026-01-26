@@ -66,13 +66,20 @@
         (click)="toggleVideo()"
       >
         @if (ejercicio()?.video) {
+          <!-- Placeholder mientras carga el video -->
+          @if (!videoLoaded()) {
+            <div class="video-placeholder"></div>
+          }
           <video
             #videoPlayer
             class="media-video"
+            [class.opacity-0]="!videoLoaded()"
+            [class.opacity-100]="videoLoaded()"
             autoplay
             muted
             loop
             playsinline
+            (loadeddata)="onVideoLoad()"
           >
             <source [src]="getAssetUrl(ejercicio()?.video || 0)" type="video/mp4" />
           </video>
@@ -263,13 +270,20 @@
             (click)="toggleVideo()"
           >
             @if (ejercicio()?.video) {
+              <!-- Placeholder mientras carga el video -->
+              @if (!videoLoaded()) {
+                <div class="video-placeholder"></div>
+              }
               <video
                 #videoPlayer
                 class="media-video"
+                [class.opacity-0]="!videoLoaded()"
+                [class.opacity-100]="videoLoaded()"
                 autoplay
                 muted
                 loop
                 playsinline
+                (loadeddata)="onVideoLoad()"
               >
                 <source [src]="getAssetUrl(ejercicio()?.video || 0)" type="video/mp4" />
               </video>
