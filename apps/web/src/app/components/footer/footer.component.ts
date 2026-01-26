@@ -12,15 +12,15 @@ import { CommonModule } from '@angular/common';
           <div class="col-span-1 md:col-span-2">
             <span class="titulo-kengo text-4xl text-primary">KENGO</span>
             <p class="mt-4 text-gray-400 max-w-md">
-              La plataforma que ayuda a fisioterapeutas a gestionar ejercicios, pacientes y planes de tratamiento de manera eficiente.
+              Tu fisio, siempre contigo. Planes de ejercicios personalizados con videos guiados y conexion directa con tu fisioterapeuta.
             </p>
           </div>
           <div>
             <h4 class="font-bold mb-4">Enlaces</h4>
             <ul class="space-y-2 text-gray-400">
+              <li><a href="#beneficios" class="hover:text-white transition-colors">Beneficios</a></li>
+              <li><a href="#como-funciona" class="hover:text-white transition-colors">Como funciona</a></li>
               <li><a href="#features" class="hover:text-white transition-colors">Funcionalidades</a></li>
-              <li><a href="#about" class="hover:text-white transition-colors">Nosotros</a></li>
-              <li><a href="#contact" class="hover:text-white transition-colors">Contacto</a></li>
             </ul>
           </div>
           <div>

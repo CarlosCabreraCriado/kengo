@@ -10,10 +10,10 @@ import { CommonModule } from '@angular/common';
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Todo lo que necesitas para tu clinica
+            Funcionalidades que marcan la diferencia
           </h2>
           <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-            Herramientas disenadas para fisioterapeutas que quieren optimizar su trabajo.
+            Herramientas disenadas para mejorar la adherencia y el seguimiento de tratamientos.
           </p>
         </div>
 
@@ -35,34 +35,34 @@ import { CommonModule } from '@angular/common';
 export class FeaturesComponent {
   features = [
     {
-      icon: '📚',
-      title: 'Catalogo de ejercicios',
-      description: 'Accede a una amplia biblioteca de ejercicios con instrucciones detalladas y videos demostrativos.',
+      icon: '🎬',
+      title: 'Videos profesionales',
+      description: 'Mas de 500 ejercicios grabados por fisioterapeutas con instrucciones claras y demostraciones en HD.',
     },
     {
       icon: '📋',
       title: 'Planes personalizados',
-      description: 'Crea planes de tratamiento adaptados a las necesidades de cada paciente.',
-    },
-    {
-      icon: '👥',
-      title: 'Gestion de pacientes',
-      description: 'Mantiene un registro organizado de todos tus pacientes y su historial.',
-    },
-    {
-      icon: '🏥',
-      title: 'Gestion de clinica',
-      description: 'Administra tu clinica, fisioterapeutas y codigos de acceso facilmente.',
-    },
-    {
-      icon: '📱',
-      title: 'App para pacientes',
-      description: 'Tus pacientes pueden ver sus ejercicios desde cualquier dispositivo.',
+      description: 'Ejercicios adaptados a tu lesion y horario, asignados por dias de la semana.',
     },
     {
       icon: '📊',
-      title: 'Seguimiento',
-      description: 'Monitorea el progreso de tus pacientes y ajusta los planes segun sea necesario.',
+      title: 'Seguimiento de dolor',
+      description: 'Registra como te sientes en cada sesion para que tu fisio ajuste el tratamiento.',
+    },
+    {
+      icon: '🔔',
+      title: 'Recordatorios',
+      description: 'Nunca olvides tu rutina de ejercicios gracias a las notificaciones diarias.',
+    },
+    {
+      icon: '🏥',
+      title: 'Multi-clinica',
+      description: 'Un fisioterapeuta puede gestionar varias clinicas y pacientes desde una sola cuenta.',
+    },
+    {
+      icon: '🔐',
+      title: 'Codigos de acceso',
+      description: 'Invita pacientes de forma segura con codigos unicos de 8 caracteres.',
     },
   ];
 }

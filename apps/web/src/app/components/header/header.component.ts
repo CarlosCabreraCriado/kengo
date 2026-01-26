@@ -13,9 +13,9 @@ import { CommonModule } from '@angular/common';
             <span class="titulo-kengo text-3xl text-primary">KENGO</span>
           </a>
           <nav class="hidden md:flex items-center gap-8">
+            <a href="#beneficios" class="text-gray-600 hover:text-primary transition-colors">Beneficios</a>
+            <a href="#como-funciona" class="text-gray-600 hover:text-primary transition-colors">Como funciona</a>
             <a href="#features" class="text-gray-600 hover:text-primary transition-colors">Funcionalidades</a>
-            <a href="#about" class="text-gray-600 hover:text-primary transition-colors">Nosotros</a>
-            <a href="#contact" class="text-gray-600 hover:text-primary transition-colors">Contacto</a>
           </nav>
           <div class="flex items-center gap-4">
             <a href="https://app.kengoapp.com/login" class="hidden sm:block text-gray-600 hover:text-primary transition-colors">
