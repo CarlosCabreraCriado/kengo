@@ -118,11 +118,13 @@ export class tokenAccesoController {
       }
 
       const tokens = await getTokensUsuario(id);
+      const appUrl = process.env.APP_URL || 'https://kengoapp.com';
 
-      // No devolver el token completo por seguridad, solo últimos 8 caracteres
+      // Incluir URL completa para QR, pero solo preview del token por seguridad en logs
       const tokensSanitizados = tokens.map((t) => ({
         id: t.id,
         tokenPreview: `...${t.token.slice(-8)}`,
+        url: `${appUrl}/magic?t=${t.token}`,
         usos_actuales: t.usos_actuales,
         usos_maximos: t.usos_maximos,
         fecha_expiracion: t.fecha_expiracion,

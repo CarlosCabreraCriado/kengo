@@ -41,6 +41,7 @@ interface TokensResponse {
   data: {
     id: string;
     tokenPreview: string;
+    url: string;
     usos_actuales: number;
     usos_maximos: number | null;
     fecha_expiracion: string | null;
@@ -108,9 +109,8 @@ export class GestionAccesoDialogComponent implements OnInit {
       const tokenActivo = response.data?.find((t) => t.activo);
 
       if (tokenActivo) {
-        // Construir URL del token (la preview no tiene el token completo por seguridad)
-        // Usamos la magic_link_url del paciente si está disponible
-        const url = this.paciente.magic_link_url || '';
+        // Usar URL del token devuelta por el backend (siempre tiene el dominio correcto)
+        const url = tokenActivo.url;
 
         this.tokenInfo.set({
           id: tokenActivo.id,
