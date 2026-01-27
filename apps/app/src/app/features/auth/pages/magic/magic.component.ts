@@ -1,8 +1,25 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
+
+type TokenError =
+  | 'TOKEN_NO_PROPORCIONADO'
+  | 'TOKEN_NO_ENCONTRADO'
+  | 'TOKEN_INACTIVO'
+  | 'TOKEN_EXPIRADO'
+  | 'TOKEN_AGOTADO'
+  | 'ERROR_DESCONOCIDO';
+
+const ERROR_MESSAGES: Record<TokenError, string> = {
+  TOKEN_NO_PROPORCIONADO: 'No se proporcionó un enlace válido',
+  TOKEN_NO_ENCONTRADO: 'Este enlace no existe o ya fue utilizado',
+  TOKEN_INACTIVO: 'Este enlace ha sido desactivado',
+  TOKEN_EXPIRADO: 'Este enlace ha expirado',
+  TOKEN_AGOTADO: 'Este enlace ya no tiene más usos disponibles',
+  ERROR_DESCONOCIDO: 'Ocurrió un error al procesar el enlace',
+};
 
 @Component({
   standalone: true,
@@ -17,13 +34,21 @@ export class MagicComponent implements OnInit {
   private router = inject(Router);
 
   loading = signal(true);
-  error = signal<string | null>(null);
+  errorCode = signal<TokenError | null>(null);
+
+  errorMessage = computed(() => {
+    const code = this.errorCode();
+    return code ? ERROR_MESSAGES[code] : null;
+  });
 
   async ngOnInit() {
-    const token = this.route.snapshot.queryParamMap.get('token');
+    // Soportar tanto 't' (nuevo) como 'token' (legacy) como parámetros
+    const token =
+      this.route.snapshot.queryParamMap.get('t') ||
+      this.route.snapshot.queryParamMap.get('token');
 
     if (!token) {
-      this.error.set('Token no proporcionado');
+      this.errorCode.set('TOKEN_NO_PROPORCIONADO');
       this.loading.set(false);
       return;
     }
@@ -32,13 +57,15 @@ export class MagicComponent implements OnInit {
       // Limpiar sesión previa si existe
       await this.authService.logout(true);
 
-      // Consumir magic link (el BFF establece la cookie)
-      await this.authService.consumeMagic(token);
+      // Consumir token de acceso (el BFF establece la cookie)
+      await this.authService.consumirTokenAcceso(token);
 
       // Redirigir a inicio
       this.router.navigateByUrl('/inicio');
-    } catch {
-      this.error.set('Enlace inválido o expirado');
+    } catch (err: unknown) {
+      const httpError = err as { error?: { error?: string } };
+      const errorFromServer = httpError?.error?.error as TokenError | undefined;
+      this.errorCode.set(errorFromServer || 'ERROR_DESCONOCIDO');
       this.loading.set(false);
     }
   }

@@ -94,27 +94,27 @@ export class AuthService {
   }
 
   // =========================
-  //  MAGIC LINK (QR)
+  //  TOKENS DE ACCESO (QR)
   // =========================
 
   /**
-   * Genera un magic link para el usuario
+   * Crea un token de acceso para el usuario
    */
-  initMagic(userId: string) {
-    return this.http.post<{ url: string }>(
-      `${env.API_URL}/crearMagicLink`,
-      { userId },
+  crearTokenAcceso(userId: string, opciones?: { usosMaximos?: number; diasExpiracion?: number }) {
+    return this.http.post<{ id: string; url: string }>(
+      `${env.API_URL}/usuario/token-acceso`,
+      { idUsuario: userId, ...opciones },
       { withCredentials: true },
     );
   }
 
   /**
-   * Consume un magic link y establece la sesión via cookie
+   * Consume un token de acceso y establece la sesión via cookie
    */
-  async consumeMagic(token: string): Promise<void> {
+  async consumirTokenAcceso(token: string): Promise<void> {
     await firstValueFrom(
       this.http.post(
-        `${env.API_URL}/consumirMagicLink`,
+        `${env.API_URL}/auth/token-acceso`,
         { token },
         { withCredentials: true },
       ),

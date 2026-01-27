@@ -166,22 +166,24 @@ export class AddPacienteDialogComponent {
           .post<DirectusItem<UsuarioDirectus>>(
             `${env.DIRECTUS_URL}/users`,
             payload,
+            { withCredentials: true },
           )
           .toPromise();
 
-        // >>> NUEVO: genera el Magic Link y abre el QR
         const user = res?.data;
 
         if (!user) throw new Error('No se pudo crear el usuario.');
 
+        // Crear token de acceso para el paciente (sin password embebido)
         await this.http
           .post<{
+            id: string;
             url: string;
-          }>(`${env.API_URL}/crearMagicLink`, {
-            email: user.email,
-            password: tempPassword,
-            userId: user.id,
-          })
+          }>(
+            `${env.API_URL}/usuario/token-acceso`,
+            { idUsuario: user.id },
+            { withCredentials: true },
+          )
           .toPromise();
 
         this.close({ created: res?.data });
