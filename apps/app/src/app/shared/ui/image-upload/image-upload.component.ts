@@ -87,7 +87,12 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
           'No se pudo precargar el avatar (403). Selecciona una imagen.',
         );
         console.error(e);
+        // Si falla la precarga, mostrar pantalla de carga
+        this.pantallaCargarArchivo.set(true);
       }
+    } else if (!this.data?.url_perfil) {
+      // Si no hay imagen preexistente, mostrar pantalla de carga directamente
+      this.pantallaCargarArchivo.set(true);
     }
   }
 

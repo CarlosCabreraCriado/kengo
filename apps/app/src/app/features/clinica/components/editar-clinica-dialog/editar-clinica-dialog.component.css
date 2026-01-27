@@ -183,3 +183,152 @@
 .icon-filled {
   font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
 }
+
+/* === Media Sections (Logo & Gallery) === */
+.media-section {
+  @apply mb-5;
+}
+
+/* === Logo Section === */
+.logo-container {
+  @apply flex items-center justify-center;
+}
+
+.logo-preview {
+  @apply relative;
+}
+
+.logo-image {
+  @apply w-24 h-24 rounded-2xl object-cover border border-zinc-200;
+}
+
+.logo-actions {
+  @apply absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1;
+}
+
+.logo-action-btn {
+  @apply w-8 h-8 flex items-center justify-center rounded-full
+         bg-white border border-zinc-200 text-zinc-600
+         cursor-pointer transition-all shadow-sm;
+}
+
+.logo-action-btn:hover {
+  @apply bg-zinc-50 border-zinc-300;
+}
+
+.logo-action-btn.danger:hover {
+  @apply bg-red-50 border-red-300 text-red-600;
+}
+
+.logo-action-btn .material-symbols-outlined {
+  @apply text-base;
+}
+
+.logo-upload-btn {
+  @apply flex flex-col items-center justify-center gap-2
+         w-24 h-24 rounded-2xl border-2 border-dashed border-zinc-300
+         bg-zinc-50 text-zinc-500 cursor-pointer transition-all;
+}
+
+.logo-upload-btn:hover {
+  @apply border-[#e75c3e] bg-[#e75c3e]/5 text-[#e75c3e];
+}
+
+.logo-upload-btn .material-symbols-outlined {
+  @apply text-2xl;
+}
+
+.logo-upload-btn span:last-child {
+  @apply text-xs font-medium;
+}
+
+/* === Gallery Section === */
+.gallery-header {
+  @apply flex items-center justify-between mb-2;
+}
+
+.gallery-count {
+  @apply text-xs text-zinc-500 font-medium;
+}
+
+.gallery-grid {
+  @apply grid grid-cols-3 gap-2;
+}
+
+.gallery-item {
+  @apply relative aspect-[4/3] rounded-xl overflow-hidden border border-zinc-200;
+}
+
+.gallery-item.marked-for-deletion {
+  @apply opacity-60;
+}
+
+.gallery-item.new-image {
+  @apply border-[#e75c3e] border-2;
+}
+
+.gallery-image {
+  @apply w-full h-full object-cover;
+}
+
+.gallery-delete-btn {
+  @apply absolute top-1 right-1 w-6 h-6 flex items-center justify-center
+         rounded-full bg-black/50 text-white cursor-pointer transition-all;
+}
+
+.gallery-delete-btn:hover {
+  @apply bg-red-500;
+}
+
+.gallery-delete-btn .material-symbols-outlined {
+  @apply text-sm;
+}
+
+.gallery-item-overlay {
+  @apply absolute inset-0 flex flex-col items-center justify-center gap-2
+         bg-black/60 text-white;
+}
+
+.gallery-item-overlay.deleted .material-symbols-outlined {
+  @apply text-2xl text-red-400;
+}
+
+.restore-btn {
+  @apply px-2 py-1 rounded-lg bg-white/20 text-xs font-medium
+         cursor-pointer transition-all border-none;
+}
+
+.restore-btn:hover {
+  @apply bg-white/30;
+}
+
+.new-badge {
+  @apply absolute bottom-1 left-1 px-2 py-0.5 rounded-md
+         bg-[#e75c3e] text-white text-[10px] font-semibold;
+}
+
+.gallery-add-btn {
+  @apply flex flex-col items-center justify-center gap-1 aspect-[4/3]
+         rounded-xl border-2 border-dashed border-zinc-300
+         bg-zinc-50 text-zinc-500 cursor-pointer transition-all;
+}
+
+.gallery-add-btn:hover {
+  @apply border-[#e75c3e] bg-[#e75c3e]/5 text-[#e75c3e];
+}
+
+.gallery-add-btn .material-symbols-outlined {
+  @apply text-xl;
+}
+
+.add-text {
+  @apply text-xs font-medium;
+}
+
+.hidden-input {
+  @apply hidden;
+}
+
+.gallery-hint {
+  @apply mt-2 text-xs text-zinc-400;
+}

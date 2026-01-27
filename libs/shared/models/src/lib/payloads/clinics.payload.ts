@@ -29,6 +29,13 @@ export interface UpdateClinicaPayload {
   postal?: string | null;
   nif?: string | null;
   color_primario?: string | null;
+  /** UUID del archivo de logo, null para eliminar */
+  logo?: string | null;
+  /** Operaciones M2M para imágenes de galería */
+  imagenes?: {
+    create?: { directus_files_id: string }[];
+    delete?: number[];
+  };
 }
 
 /**

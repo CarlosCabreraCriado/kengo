@@ -19,5 +19,6 @@ export interface ClinicaDirectus {
   color_primario?: string | null;
   color_secundario?: string | null;
   logo?: { id: ID } | null;
-  imagenes?: { directus_files_id: ID }[] | null;
+  /** Imágenes de galería con ID de junction y file ID */
+  imagenes?: { id: ID; directus_files_id: ID }[] | null;
 }

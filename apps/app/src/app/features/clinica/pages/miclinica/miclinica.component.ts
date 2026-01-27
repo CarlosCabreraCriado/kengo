@@ -331,14 +331,14 @@ export class MiClinicaComponent {
     return `${env.DIRECTUS_URL}/assets/${id}?fit=cover&width=200&height=150`;
   }
 
-  assetUrl(id?: string) {
+  assetUrl(id?: string | null) {
     if (!id) return '';
     return `${env.DIRECTUS_URL}/assets/${id}`;
   }
 
-  firstImageId(c: Clinica) {
-    const f = c?.imagenes?.[0];
-    return f;
+  firstImageId(c: Clinica): string | undefined {
+    const img = c?.imagenes?.[0];
+    return img?.fileId ?? undefined;
   }
 
   iniciales(nombre?: string, apellidos?: string): string {

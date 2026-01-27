@@ -13,14 +13,17 @@ import type {
   GenerarCodigoResponse,
   CodigoAcceso,
   TipoCodigoAcceso,
-  PUESTO_ADMINISTRADOR,
-  PUESTO_FISIOTERAPEUTA,
 } from '@kengo/shared-models';
 
 // Constantes de puestos
 const PUESTO_FISIO = 1;
-const PUESTO_PAC = 2;
 const PUESTO_ADMIN = 4;
+
+export interface UploadFileResult {
+  success: boolean;
+  fileId?: string;
+  error?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ClinicaGestionService {
@@ -283,5 +286,32 @@ export class ClinicaGestionService {
    */
   puedeGestionarCodigos(clinicaId: number): boolean {
     return this.esAdminEnClinica(clinicaId) || this.esFisioEnClinica(clinicaId);
+  }
+
+  /**
+   * Sube un archivo a Directus y devuelve el ID del archivo
+   */
+  async uploadFile(file: File): Promise<UploadFileResult> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await firstValueFrom(
+        this.http.post<{ data: { id: string } }>(
+          `${env.DIRECTUS_URL}/files`,
+          formData
+        )
+      );
+
+      const fileId = response?.data?.id;
+      if (!fileId) {
+        return { success: false, error: 'No se recibió ID del archivo' };
+      }
+
+      return { success: true, fileId };
+    } catch (err: unknown) {
+      const errorMsg = (err as { message?: string })?.message || 'Error al subir el archivo';
+      return { success: false, error: errorMsg };
+    }
   }
 }

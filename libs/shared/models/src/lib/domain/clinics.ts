@@ -4,6 +4,16 @@
  */
 
 /**
+ * Imagen de galería de clínica con ID de junction para operaciones M2M
+ */
+export interface ClinicaImagen {
+  /** ID del registro en la tabla junction (clinicas_files) */
+  junctionId: number;
+  /** UUID del archivo en directus_files */
+  fileId: string;
+}
+
+/**
  * Clínica transformada para uso en la aplicación
  */
 export interface Clinica {
@@ -17,7 +27,7 @@ export interface Clinica {
   color_primario?: string | null;
   color_secundario?: string | null;
   logo?: string | null;
-  imagenes?: string[] | null;
+  imagenes?: ClinicaImagen[] | null;
 }
 
 /**

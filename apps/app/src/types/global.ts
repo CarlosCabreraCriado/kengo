@@ -79,6 +79,7 @@ export {
   RutinaCompleta,
   EjercicioRutina,
   Clinica,
+  ClinicaImagen,
   ClinicaData,
   EstadoPantalla,
   SesionLocal,
@@ -111,6 +112,7 @@ export {
   UpdateRutinaEjercicioPayload,
   // Clinic payloads
   CreateClinicaPayload,
+  UpdateClinicaPayload,
   VincularClinicaPayload,
   VincularClinicaResponse,
   CrearClinicaResponse,

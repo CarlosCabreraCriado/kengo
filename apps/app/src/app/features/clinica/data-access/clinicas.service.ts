@@ -12,6 +12,7 @@ import {
   UsuarioDirectus,
   Clinica,
   ClinicaDirectus,
+  ClinicaImagen,
   ID,
   PUESTO_FISIOTERAPEUTA,
   PUESTO_ADMINISTRADOR,
@@ -60,6 +61,7 @@ export class ClinicasService {
             'color_primario',
             'logo',
             'logo.id',
+            'imagenes.id',
             'imagenes.directus_files_id',
           ].join(','),
           filter: JSON.stringify({ id_clinica: { _in: ids } }),
@@ -84,8 +86,11 @@ export class ClinicasService {
             color_primario: clinica.color_primario ?? null,
             logo: clinica.logo?.id.toString() ?? null,
             imagenes: (clinica.imagenes ?? [])
-              .map((f) => f.directus_files_id?.toString() ?? '')
-              .filter(Boolean),
+              .filter((f) => f.id && f.directus_files_id)
+              .map((f): ClinicaImagen => ({
+                junctionId: Number(f.id),
+                fileId: f.directus_files_id.toString(),
+              })),
           });
         }
 
