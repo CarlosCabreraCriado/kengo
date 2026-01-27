@@ -3,6 +3,7 @@ import { usuarioController } from "../controllers/usuario";
 import { pdfController } from "../controllers/pdf";
 import { registroController } from "../controllers/registro";
 import { clinicaController } from "../controllers/clinica";
+import { tokenAccesoController } from "../controllers/tokenAcceso";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
@@ -12,9 +13,12 @@ router.post("/registro", registroController.registrar);
 
 router.post("/getUsuarioById", usuarioController.getUsuarioById);
 
-//Magic Link:
-router.post("/crearMagicLink", usuarioController.crearMagicLink);
-router.post("/consumirMagicLink", usuarioController.consumirMagicLink);
+// Tokens de acceso (reemplaza magic links)
+router.post("/usuario/token-acceso", authMiddleware, tokenAccesoController.crearToken);
+router.post("/auth/token-acceso", tokenAccesoController.consumirToken);
+router.get("/usuario/:id/tokens-acceso", authMiddleware, tokenAccesoController.listarTokens);
+router.delete("/usuario/token-acceso/:id", authMiddleware, tokenAccesoController.revocarToken);
+router.post("/usuario/:id/token-acceso/enviar-email", authMiddleware, tokenAccesoController.enviarPorEmail);
 
 //PDF:
 router.get("/plan/:id/pdf", authMiddleware, pdfController.generarPlanPDF);

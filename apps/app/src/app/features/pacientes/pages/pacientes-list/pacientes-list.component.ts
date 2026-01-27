@@ -16,7 +16,6 @@ import { AuthService } from '../../../../core/auth/services/auth.service';
 
 //Componente Add-Paciente:
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
-import { QrDialogComponent } from '../../../../shared/ui/dialogo-qr/dialogo-qr.component';
 
 //Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -185,21 +184,6 @@ export class PacientesListComponent {
     if (ln) return ln.substring(0, 2).toUpperCase();
     if (u.email) return u.email.substring(0, 2).toUpperCase();
     return '??';
-  }
-
-  async generarQr(url: string) {
-    try {
-      if (url) this.openDialogoQR(url);
-    } catch (e) {
-      console.error('Error generando QR:', e);
-    }
-  }
-
-  public openDialogoQR(url: string) {
-    this.dialogService.open(QrDialogComponent, {
-      data: { url },
-      maxWidth: '360px',
-    });
   }
 
   verPlanes(p: Usuario) {

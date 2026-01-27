@@ -1,0 +1,219 @@
+@reference "tailwindcss";
+
+/* === Loading State === */
+.loading-container {
+  @apply flex flex-col items-center justify-center py-8;
+}
+
+.loading-qr {
+  @apply w-20 h-20 rounded-2xl flex items-center justify-center mb-4;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(231, 92, 62, 0.05) 100%);
+}
+
+.loading-qr .material-symbols-outlined {
+  @apply text-4xl text-[#e75c3e];
+}
+
+.loading-text {
+  @apply text-sm text-zinc-500 m-0;
+}
+
+.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* === Error State === */
+.error-container {
+  @apply flex flex-col items-center justify-center py-8 text-center;
+}
+
+.error-icon {
+  @apply text-4xl text-red-400 mb-3;
+}
+
+.error-text {
+  @apply text-sm text-zinc-600 mb-4 m-0;
+}
+
+.btn-retry {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg
+         bg-zinc-100 text-zinc-700 text-sm font-medium
+         cursor-pointer transition-all border-none;
+}
+
+.btn-retry:hover {
+  @apply bg-zinc-200;
+}
+
+.btn-retry .material-symbols-outlined {
+  @apply text-lg;
+}
+
+/* === Token Content === */
+.token-content {
+  @apply flex flex-col gap-4;
+}
+
+/* === QR Container === */
+.qr-container {
+  @apply flex justify-center py-4;
+}
+
+.qr-canvas {
+  @apply rounded-xl;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* === Token Stats === */
+.token-stats {
+  @apply flex justify-center gap-6 py-3 px-4 rounded-xl bg-zinc-50;
+}
+
+.stat-item {
+  @apply flex items-center gap-2;
+}
+
+.stat-icon {
+  @apply text-xl text-zinc-400;
+}
+
+.stat-info {
+  @apply flex flex-col;
+}
+
+.stat-label {
+  @apply text-xs text-zinc-500;
+}
+
+.stat-value {
+  @apply text-sm font-semibold text-zinc-800;
+}
+
+.stat-max {
+  @apply text-zinc-400 font-normal;
+}
+
+/* === Success Message === */
+.success-message {
+  @apply flex items-center justify-center gap-2 py-2 px-4 rounded-lg
+         bg-green-50 text-green-700 text-sm font-medium;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.success-message .material-symbols-outlined {
+  @apply text-lg text-green-600;
+  font-variation-settings: "FILL" 1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === Actions Grid === */
+.actions-grid {
+  @apply grid grid-cols-3 gap-3;
+}
+
+.action-card {
+  @apply flex flex-col items-center gap-2 p-4 rounded-xl
+         bg-zinc-50 border border-zinc-200
+         cursor-pointer transition-all;
+}
+
+.action-card:hover:not(:disabled) {
+  @apply bg-white border-zinc-300;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.action-card:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.action-card.warning {
+  @apply bg-amber-50 border-amber-200;
+}
+
+.action-card.warning:hover:not(:disabled) {
+  @apply bg-amber-100 border-amber-300;
+}
+
+.action-icon {
+  @apply w-10 h-10 rounded-lg flex items-center justify-center;
+}
+
+.action-icon.email {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+}
+
+.action-icon.email .material-symbols-outlined {
+  @apply text-xl text-blue-600;
+}
+
+.action-icon.copy {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+}
+
+.action-icon.copy .material-symbols-outlined {
+  @apply text-xl text-purple-600;
+}
+
+.action-icon.regenerate {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%);
+}
+
+.action-icon.regenerate .material-symbols-outlined {
+  @apply text-xl text-amber-600;
+}
+
+.action-icon.loading {
+  @apply bg-zinc-100;
+}
+
+.action-text {
+  @apply text-xs font-medium text-zinc-700 text-center;
+}
+
+.action-hint {
+  @apply text-[10px] text-zinc-400 text-center -mt-1;
+}
+
+/* === Hint Text === */
+.hint-text {
+  @apply flex items-start gap-2 text-xs text-zinc-500 m-0 mt-2;
+}
+
+.hint-text .material-symbols-outlined {
+  @apply text-sm text-zinc-400 shrink-0;
+}
+
+/* === Close Button === */
+.btn-close {
+  @apply flex h-10 items-center justify-center rounded-xl
+         bg-[#e75c3e] px-6 text-sm font-semibold text-white
+         transition-colors border-none cursor-pointer;
+}
+
+.btn-close:hover {
+  @apply bg-[#c94a2f];
+}
+
+/* === Spinner === */
+.spinner {
+  @apply w-5 h-5 border-2 border-zinc-300 border-t-zinc-600 rounded-full;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === Icon Filled === */
+.icon-filled {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}

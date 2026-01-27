@@ -252,22 +252,6 @@
                 <span class="material-symbols-outlined card-arrow">chevron_right</span>
               </div>
 
-              <!-- Quick Actions (on hover/press) -->
-              <div class="card-actions">
-                @if (p.telefono) {
-                  <a [href]="'tel:' + p.telefono" class="mini-action" (click)="$event.stopPropagation()" aria-label="Llamar">
-                    <span class="material-symbols-outlined icon-filled">call</span>
-                  </a>
-                }
-                @if (p.email) {
-                  <a [href]="'mailto:' + p.email" class="mini-action" (click)="$event.stopPropagation()" aria-label="Email">
-                    <span class="material-symbols-outlined">mail</span>
-                  </a>
-                }
-                <button class="mini-action" (click)="$event.stopPropagation(); generarQr(p.magic_link_url || '')" aria-label="QR Code">
-                  <span class="material-symbols-outlined">qr_code_2</span>
-                </button>
-              </div>
             </article>
           }
         </section>
@@ -289,15 +273,6 @@
               <div class="row-info">
                 <h4 class="row-name">{{ fullName(p) }}</h4>
                 <span class="row-detail">{{ p.email || p.telefono || 'Sin contacto' }}</span>
-              </div>
-
-              <!-- Quick Actions -->
-              <div class="row-actions">
-                @if (p.telefono) {
-                  <a [href]="'tel:' + p.telefono" class="row-action" (click)="$event.stopPropagation()" aria-label="Llamar">
-                    <span class="material-symbols-outlined icon-filled">call</span>
-                  </a>
-                }
               </div>
 
               <!-- Arrow -->

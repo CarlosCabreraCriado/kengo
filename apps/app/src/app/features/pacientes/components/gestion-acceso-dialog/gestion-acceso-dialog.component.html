@@ -1,0 +1,151 @@
+<ui-dialog-container>
+  <ui-dialog-header title="Acceso del paciente" (closeClick)="close()"></ui-dialog-header>
+
+  <ui-dialog-content>
+    <!-- Loading State -->
+    @if (isLoadingToken()) {
+      <div class="loading-container">
+        <div class="loading-qr">
+          <span class="material-symbols-outlined pulse">qr_code_2</span>
+        </div>
+        <p class="loading-text">Cargando información de acceso...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error() && !isLoadingToken()) {
+      <div class="error-container">
+        <span class="material-symbols-outlined error-icon">error</span>
+        <p class="error-text">{{ error() }}</p>
+        <button type="button" class="btn-retry" (click)="cargarTokenActivo()">
+          <span class="material-symbols-outlined">refresh</span>
+          Reintentar
+        </button>
+      </div>
+    }
+
+    <!-- Token Info -->
+    @if (tokenInfo() && !isLoadingToken()) {
+      <div class="token-content">
+        <!-- QR Code -->
+        <div class="qr-container">
+          <canvas #qrCanvas width="200" height="200" class="qr-canvas"></canvas>
+        </div>
+
+        <!-- Token Stats -->
+        <div class="token-stats">
+          <div class="stat-item">
+            <span class="material-symbols-outlined stat-icon">schedule</span>
+            <div class="stat-info">
+              <span class="stat-label">Último acceso</span>
+              <span class="stat-value">{{ formatearUltimoUso(tokenInfo()!.ultimo_uso) }}</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <span class="material-symbols-outlined stat-icon">touch_app</span>
+            <div class="stat-info">
+              <span class="stat-label">Usos</span>
+              <span class="stat-value">
+                {{ tokenInfo()!.usos_actuales }}
+                @if (tokenInfo()!.usos_maximos !== null) {
+                  <span class="stat-max">/ {{ tokenInfo()!.usos_maximos }}</span>
+                } @else {
+                  <span class="stat-max">/ ilimitado</span>
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Messages -->
+        @if (emailSent()) {
+          <div class="success-message">
+            <span class="material-symbols-outlined">check_circle</span>
+            Email enviado correctamente
+          </div>
+        }
+
+        @if (linkCopied()) {
+          <div class="success-message">
+            <span class="material-symbols-outlined">check_circle</span>
+            Enlace copiado al portapapeles
+          </div>
+        }
+
+        <!-- Actions -->
+        <div class="actions-grid">
+          <!-- Enviar por email -->
+          <button
+            type="button"
+            class="action-card"
+            [disabled]="isSendingEmail() || !paciente.email"
+            (click)="enviarPorEmail()"
+          >
+            @if (isSendingEmail()) {
+              <div class="action-icon loading">
+                <span class="spinner"></span>
+              </div>
+              <span class="action-text">Enviando...</span>
+            } @else {
+              <div class="action-icon email">
+                <span class="material-symbols-outlined">mail</span>
+              </div>
+              <span class="action-text">Enviar por email</span>
+              @if (!paciente.email) {
+                <span class="action-hint">Sin email registrado</span>
+              }
+            }
+          </button>
+
+          <!-- Copiar enlace -->
+          <button
+            type="button"
+            class="action-card"
+            [disabled]="!tokenInfo()?.url"
+            (click)="copiarEnlace()"
+          >
+            <div class="action-icon copy">
+              <span class="material-symbols-outlined">content_copy</span>
+            </div>
+            <span class="action-text">Copiar enlace</span>
+          </button>
+
+          <!-- Regenerar token -->
+          <button
+            type="button"
+            class="action-card warning"
+            [disabled]="isRegenerating()"
+            (click)="regenerarToken()"
+          >
+            @if (isRegenerating()) {
+              <div class="action-icon loading">
+                <span class="spinner"></span>
+              </div>
+              <span class="action-text">Regenerando...</span>
+            } @else {
+              <div class="action-icon regenerate">
+                <span class="material-symbols-outlined">refresh</span>
+              </div>
+              <span class="action-text">Regenerar token</span>
+            }
+          </button>
+        </div>
+
+        <p class="hint-text">
+          <span class="material-symbols-outlined">info</span>
+          El paciente puede escanear el QR o usar el enlace para acceder sin contraseña.
+        </p>
+      </div>
+    }
+  </ui-dialog-content>
+
+  <ui-dialog-actions align="center">
+    <button
+      type="button"
+      class="btn-close"
+      (click)="close()"
+    >
+      Cerrar
+    </button>
+  </ui-dialog-actions>
+</ui-dialog-container>

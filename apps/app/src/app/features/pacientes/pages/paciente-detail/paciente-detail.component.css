@@ -229,12 +229,30 @@
    HERO CARD (Patient Info)
    ============================================ */
 .hero-card {
-  @apply rounded-3xl overflow-hidden;
+  @apply relative rounded-3xl overflow-hidden;
   background: var(--kengo-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--kengo-border);
   box-shadow: var(--kengo-shadow);
+}
+
+.hero-back-btn {
+  @apply absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+         bg-white/80 text-zinc-600 text-xs font-medium
+         cursor-pointer transition-all border-none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hero-back-btn:hover {
+  @apply bg-white text-[#e75c3e];
+  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.2);
+}
+
+.hero-back-btn .material-symbols-outlined {
+  @apply text-base;
 }
 
 .hero-visual {

@@ -21,16 +21,14 @@
           </button>
           <h1 class="titulo-kengo header-title">Paciente</h1>
         </div>
-        @if (paciente()?.magic_link_url) {
-          <button
-            type="button"
-            class="header-action"
-            aria-label="Ver código QR"
-            (click)="abrirQR()"
-          >
-            <span class="material-symbols-outlined">qr_code_2</span>
-          </button>
-        }
+        <button
+          type="button"
+          class="header-action"
+          aria-label="Gestionar acceso"
+          (click)="gestionarAcceso()"
+        >
+          <span class="material-symbols-outlined">key</span>
+        </button>
       </div>
     </header>
   }
@@ -74,6 +72,20 @@
               <div class="hero-gradient"></div>
               <div class="hero-pattern" aria-hidden="true"></div>
             </div>
+
+            <!-- Back Button (desktop only) -->
+            @if (!isMovil()) {
+              <button
+                type="button"
+                class="hero-back-btn"
+                aria-label="Volver a pacientes"
+                (click)="volver()"
+              >
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span>Mis pacientes</span>
+              </button>
+            }
+
             <div class="hero-content">
               <!-- Avatar -->
               <div class="hero-avatar">
@@ -152,16 +164,14 @@
                 <span class="material-symbols-outlined icon-filled">add</span>
                 <span class="action-label">Nuevo Plan</span>
               </button>
-              @if (paciente()?.magic_link_url) {
-                <button
-                  type="button"
-                  class="action-btn"
-                  (click)="abrirQR()"
-                >
-                  <span class="material-symbols-outlined">qr_code_2</span>
-                  <span class="action-label">Ver QR</span>
-                </button>
-              }
+              <button
+                type="button"
+                class="action-btn"
+                (click)="gestionarAcceso()"
+              >
+                <span class="material-symbols-outlined">key</span>
+                <span class="action-label">Gestionar acceso</span>
+              </button>
             </div>
           </article>
 

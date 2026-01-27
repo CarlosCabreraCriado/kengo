@@ -22,7 +22,7 @@ import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
-import { QrDialogComponent } from '../../../../shared/ui/dialogo-qr/dialogo-qr.component';
+import { GestionAccesoDialogComponent } from '../../components/gestion-acceso-dialog/gestion-acceso-dialog.component';
 
 // Tipos
 import {
@@ -434,13 +434,14 @@ export class PacienteDetailComponent implements OnInit {
       });
   }
 
-  abrirQR() {
+  gestionarAcceso() {
     const p = this.paciente();
-    if (p?.magic_link_url) {
-      this.dialogService.open(QrDialogComponent, {
-        data: { url: p.magic_link_url },
-      });
-    }
+    if (!p) return;
+
+    this.dialogService.open(GestionAccesoDialogComponent, {
+      data: { paciente: p },
+      maxWidth: '400px',
+    });
   }
 
   crearPlan() {
