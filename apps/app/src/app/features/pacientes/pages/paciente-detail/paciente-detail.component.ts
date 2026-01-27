@@ -209,7 +209,7 @@ export class PacienteDetailComponent implements OnInit {
   }
 
   private agruparPorFecha(registros: RegistroEjercicioDirectus[]): SesionAgrupada[] {
-    const grupos: Map<string, RegistroEjercicioDirectus[]> = new Map();
+    const grupos = new Map<string, RegistroEjercicioDirectus[]>();
 
     for (const reg of registros) {
       const fecha = reg.fecha_hora.split('T')[0];

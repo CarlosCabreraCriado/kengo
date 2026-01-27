@@ -300,7 +300,7 @@ export class RegistroSesionService {
   /**
    * Añadir tiempo al descanso
    */
-  agregarTiempoDescanso(segundos: number = 15): void {
+  agregarTiempoDescanso(segundos = 15): void {
     this.tiempoRestante.update((t) => t + segundos);
   }
 
@@ -351,7 +351,7 @@ export class RegistroSesionService {
    * Aplicar feedback final de todos los ejercicios y guardar
    */
   async aplicarFeedbackFinal(data: {
-    feedbacks: Array<{ planItemId: number; dolor: number; nota?: string }>;
+    feedbacks: { planItemId: number; dolor: number; nota?: string }[];
     observacionesGenerales?: string;
   }): Promise<void> {
     // Actualizar cada registro con su dolor y nota

@@ -13,11 +13,11 @@ import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolo
 import { fadeAnimation, staggerAnimation } from '../../realizar-plan.animations';
 
 export interface FeedbackFinalData {
-  feedbacks: Array<{
+  feedbacks: {
     planItemId: number;
     dolor: number;
     nota?: string;
-  }>;
+  }[];
   observacionesGenerales?: string;
 }
 
