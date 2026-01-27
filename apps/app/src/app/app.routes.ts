@@ -117,11 +117,10 @@ export const routes: Routes = [
   // Actividad personal
   {
     path: 'actividad-personal',
-    loadComponent: () =>
-      import('./features/actividad/pages/actividad-personal/actividad-personal.component').then(
-        (m) => m.ActividadPersonalComponent
+    loadChildren: () =>
+      import('./features/actividad/actividad.routes').then(
+        (m) => m.ACTIVIDAD_ROUTES
       ),
-    canActivate: [AuthGuard],
   },
 
   // Sesión / Realizar plan

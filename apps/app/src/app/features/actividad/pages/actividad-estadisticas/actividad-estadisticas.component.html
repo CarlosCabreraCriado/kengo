@@ -1,0 +1,205 @@
+<div class="estadisticas-container">
+  <!-- Loading State -->
+  @if (cargando()) {
+    <div class="state-card loading-state">
+      <div class="shimmer-effect"></div>
+      <div class="state-icon pulse">
+        <span class="material-symbols-outlined">analytics</span>
+      </div>
+      <p class="state-text">Cargando estadísticas...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="state-card error-state animate-in">
+      <div class="state-icon error">
+        <span class="material-symbols-outlined">error</span>
+      </div>
+      <h2 class="state-title">Algo salió mal</h2>
+      <p class="state-text">{{ error() }}</p>
+      <button type="button" class="retry-btn" (click)="cargarDatos()">
+        <span class="material-symbols-outlined">refresh</span>
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- Sin datos -->
+  @if (sinDatos()) {
+    <div class="state-card empty-state animate-in">
+      <div class="state-visual">
+        <div class="empty-illustration">
+          <span class="material-symbols-outlined main-icon">monitoring</span>
+          <span class="material-symbols-outlined accent-icon">fitness_center</span>
+        </div>
+      </div>
+      <h2 class="state-title">Sin actividad registrada</h2>
+      <p class="state-text">
+        Completa ejercicios para ver tus estadísticas de progreso.
+      </p>
+      <p class="state-hint">
+        Las estadísticas se actualizarán automáticamente.
+      </p>
+    </div>
+  }
+
+  <!-- Contenido principal -->
+  @if (!cargando() && !error() && !sinDatos()) {
+    <div class="stats-grid">
+      <!-- Resumen semanal -->
+      <div class="stats-card summary-card animate-in">
+        <header class="card-header">
+          <div class="card-icon">
+            <span class="material-symbols-outlined">calendar_view_week</span>
+          </div>
+          <div>
+            <h2 class="card-title">Esta semana</h2>
+            <p class="card-subtitle">Tu actividad de los últimos 7 días</p>
+          </div>
+        </header>
+
+        <div class="summary-content">
+          <div class="summary-stats">
+            <div class="summary-stat">
+              <span class="stat-number">{{ totalEjerciciosSemana() }}</span>
+              <span class="stat-label">ejercicios</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="summary-stat">
+              <span class="stat-number">{{ diasConActividadSemana() }}</span>
+              <span class="stat-label">días activos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Racha -->
+      <div class="stats-card streak-card animate-in" style="--delay: 0.05s">
+        <div class="streak-content">
+          <div class="streak-icon" [class.active]="rachaActual() > 0">
+            <span class="material-symbols-outlined icon-filled">local_fire_department</span>
+          </div>
+          <div class="streak-info">
+            <span class="streak-number">{{ rachaActual() }}</span>
+            <span class="streak-label">día{{ rachaActual() !== 1 ? 's' : '' }} de racha</span>
+          </div>
+        </div>
+        @if (rachaActual() > 0) {
+          <p class="streak-message">¡Sigue así!</p>
+        } @else {
+          <p class="streak-message">Completa ejercicios hoy para iniciar tu racha</p>
+        }
+      </div>
+
+      <!-- Gráfico semanal -->
+      <div class="stats-card chart-card animate-in" style="--delay: 0.1s">
+        <header class="card-header">
+          <h2 class="card-title">Actividad semanal</h2>
+        </header>
+
+        <div class="chart-container">
+          <div class="chart-bars">
+            @for (dia of estadisticasSemana(); track dia.diaCorto) {
+              <div class="chart-bar-wrapper">
+                <div class="chart-bar-container">
+                  <div
+                    class="chart-bar"
+                    [class.has-activity]="dia.tieneActividad"
+                    [class.today]="esHoy(dia.fecha)"
+                    [style.height.%]="getBarHeight(dia.ejerciciosCompletados)"
+                  >
+                    @if (dia.ejerciciosCompletados > 0) {
+                      <span class="bar-value">{{ dia.ejerciciosCompletados }}</span>
+                    }
+                  </div>
+                </div>
+                <span class="chart-label" [class.today]="esHoy(dia.fecha)">{{ dia.diaCorto }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Progreso mensual -->
+      <div class="stats-card monthly-card animate-in" style="--delay: 0.15s">
+        <header class="card-header">
+          <div class="card-icon">
+            <span class="material-symbols-outlined">calendar_month</span>
+          </div>
+          <div>
+            <h2 class="card-title">Este mes</h2>
+            <p class="card-subtitle">{{ progresoMensual().diasConActividad }} de {{ progresoMensual().diasTranscurridos }} días</p>
+          </div>
+        </header>
+
+        <div class="monthly-content">
+          <div class="progress-circle">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+              <path
+                class="circle-bg"
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                class="circle"
+                [attr.stroke-dasharray]="progresoMensual().porcentaje + ', 100'"
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <span class="progress-value">{{ progresoMensual().porcentaje }}%</span>
+          </div>
+          <div class="monthly-stats">
+            <div class="monthly-stat">
+              <span class="material-symbols-outlined">check_circle</span>
+              <span>{{ progresoMensual().totalEjercicios }} ejercicios completados</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ejercicios recientes -->
+      @if (ejerciciosRecientes().length > 0) {
+        <div class="stats-card recent-card animate-in" style="--delay: 0.2s">
+          <header class="card-header">
+            <div class="card-icon">
+              <span class="material-symbols-outlined">history</span>
+            </div>
+            <div>
+              <h2 class="card-title">Completados recientemente</h2>
+              <p class="card-subtitle">Tus últimos ejercicios</p>
+            </div>
+          </header>
+
+          <ul class="recent-list">
+            @for (ejercicio of ejerciciosRecientes(); track $index) {
+              <li class="recent-item">
+                <div class="recent-thumb">
+                  @if (ejercicio.portada) {
+                    <img
+                      [src]="getAssetUrl(ejercicio.portada)"
+                      [alt]="ejercicio.nombre"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <div class="thumb-placeholder">
+                      <span class="material-symbols-outlined">fitness_center</span>
+                    </div>
+                  }
+                </div>
+                <div class="recent-info">
+                  <span class="recent-name">{{ ejercicio.nombre }}</span>
+                  <span class="recent-time">{{ ejercicio.tiempoRelativo }}</span>
+                </div>
+                <span class="material-symbols-outlined recent-check icon-filled">check_circle</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  }
+</div>

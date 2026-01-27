@@ -1,0 +1,444 @@
+@reference "tailwindcss";
+
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-primary-dark: #c94a2f;
+  --kengo-tertiary: #efc048;
+  --kengo-success: #22c55e;
+  --kengo-glass: rgba(255, 255, 255, 0.5);
+  --kengo-border: rgba(255, 255, 255, 0.25);
+  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --kengo-shadow-primary: 0 4px 16px rgba(231, 92, 62, 0.35);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  display: block;
+}
+
+.calendario-container {
+  @apply relative flex flex-col px-4 pt-2;
+  padding-bottom: calc(var(--safe-area-bottom) + 100px);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* State Cards */
+.state-card {
+  @apply relative p-8 rounded-3xl text-center overflow-hidden;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: var(--kengo-shadow);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.shimmer-effect {
+  @apply absolute inset-0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.state-icon {
+  @apply w-20 h-20 mx-auto rounded-2xl flex items-center justify-center;
+  background: linear-gradient(135deg, #ffede8 0%, white 100%);
+}
+
+.state-icon .material-symbols-outlined {
+  @apply text-5xl text-[#e75c3e]/50;
+}
+
+.state-icon.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.state-icon.error {
+  background: linear-gradient(135deg, #fee2e2 0%, white 100%);
+}
+
+.state-icon.error .material-symbols-outlined {
+  @apply text-red-400;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.state-title {
+  @apply text-lg font-bold text-zinc-800 mt-4 mb-2;
+}
+
+.state-text {
+  @apply text-sm text-zinc-500 m-0;
+}
+
+.state-hint {
+  @apply text-xs text-zinc-400 mt-2 m-0;
+}
+
+.retry-btn {
+  @apply inline-flex items-center justify-center gap-2 mt-4 px-5 py-2.5 rounded-xl bg-[#e75c3e] text-white text-sm font-semibold cursor-pointer transition-all active:scale-95;
+  box-shadow: var(--kengo-shadow-primary);
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+}
+
+.state-visual {
+  @apply mb-4;
+}
+
+.empty-illustration {
+  @apply relative w-24 h-24 mx-auto flex items-center justify-center;
+}
+
+.empty-illustration .main-icon {
+  @apply text-6xl text-zinc-300;
+}
+
+.empty-illustration .accent-icon {
+  @apply absolute -bottom-1 -right-1 text-2xl text-[#e75c3e]/60 bg-white rounded-full p-1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Content Grid */
+.content-grid {
+  @apply grid grid-cols-1 gap-6;
+}
+
+.calendar-column {
+  @apply flex flex-col;
+}
+
+.upcoming-column {
+  @apply flex flex-col;
+}
+
+/* Calendar Card */
+.calendar-card {
+  @apply rounded-3xl overflow-hidden;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: var(--kengo-shadow);
+}
+
+.calendar-header {
+  @apply flex items-center justify-between p-4 border-b border-white/20;
+}
+
+.nav-btn {
+  @apply w-10 h-10 rounded-full flex items-center justify-center bg-white/40 text-zinc-600 cursor-pointer transition-all active:scale-95;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.nav-btn:hover {
+  @apply bg-white/60 text-[#e75c3e];
+}
+
+.nav-btn .material-symbols-outlined {
+  @apply text-xl;
+}
+
+.calendar-title {
+  @apply text-lg font-semibold text-zinc-800 m-0;
+}
+
+/* Weekday Headers */
+.calendar-weekdays {
+  @apply grid grid-cols-7 gap-1 px-3 py-2 border-b border-white/10;
+}
+
+.weekday-header {
+  @apply text-xs font-medium text-zinc-400 text-center;
+}
+
+/* Calendar Grid */
+.calendar-grid {
+  @apply grid grid-cols-7 gap-1 p-3;
+}
+
+.calendar-day {
+  @apply relative aspect-square flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all bg-transparent border-none;
+}
+
+.calendar-day:hover {
+  @apply bg-white/40;
+}
+
+.calendar-day.other-month {
+  @apply opacity-40;
+}
+
+.calendar-day.today {
+  @apply bg-[#e75c3e]/10;
+}
+
+.calendar-day.today .day-number {
+  @apply text-[#e75c3e] font-bold;
+}
+
+.calendar-day.selected {
+  @apply bg-[#e75c3e];
+}
+
+.calendar-day.selected .day-number {
+  @apply text-white font-bold;
+}
+
+.calendar-day.selected .activity-dot {
+  @apply bg-white;
+}
+
+.day-number {
+  @apply text-sm text-zinc-700;
+}
+
+.activity-dot {
+  @apply absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-[#e75c3e];
+}
+
+/* Selected Day Detail */
+.selected-day-detail {
+  @apply border-t border-white/20 p-4;
+}
+
+.detail-header {
+  @apply flex items-center justify-between mb-3;
+}
+
+.detail-date {
+  @apply flex items-center gap-2;
+}
+
+.detail-icon {
+  @apply text-xl text-[#e75c3e];
+}
+
+.detail-title {
+  @apply text-base font-semibold text-zinc-800;
+}
+
+.detail-badge {
+  @apply px-2.5 py-1 rounded-full bg-[#e75c3e]/10 text-xs font-semibold text-[#e75c3e];
+}
+
+.no-exercises {
+  @apply flex flex-col items-center gap-2 py-6 text-zinc-400;
+}
+
+.no-exercises .material-symbols-outlined {
+  @apply text-4xl;
+}
+
+.no-exercises p {
+  @apply text-sm m-0;
+}
+
+.detail-exercises {
+  @apply list-none m-0 p-0 space-y-2 mb-4;
+}
+
+.detail-exercise-item {
+  @apply flex items-center gap-3 p-2.5 rounded-xl bg-white/40 border border-white/30;
+}
+
+.detail-exercise-thumb {
+  @apply w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 shrink-0;
+}
+
+.detail-exercise-thumb img {
+  @apply w-full h-full object-cover;
+}
+
+.thumb-placeholder {
+  @apply w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-50;
+}
+
+.thumb-placeholder .material-symbols-outlined {
+  @apply text-lg text-zinc-400;
+}
+
+.detail-exercise-info {
+  @apply flex flex-col min-w-0 flex-1;
+}
+
+.detail-exercise-name {
+  @apply text-sm font-medium text-zinc-800 truncate;
+}
+
+.detail-exercise-details {
+  @apply text-xs text-zinc-500 mt-0.5;
+}
+
+.plan-tag {
+  @apply ml-1 px-1.5 py-0.5 rounded bg-[#e75c3e]/10 text-[#e75c3e] text-[0.65rem] font-medium;
+}
+
+.detail-action {
+  @apply flex items-center justify-center gap-2 w-full h-11 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all active:scale-[0.98];
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  box-shadow: 0 2px 8px rgba(231, 92, 62, 0.25);
+}
+
+.detail-action:hover {
+  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35);
+}
+
+.detail-action .material-symbols-outlined {
+  @apply text-lg;
+}
+
+.action-badge {
+  @apply ml-1 px-2 py-0.5 rounded-full bg-white/20 text-xs;
+}
+
+/* Upcoming Section */
+.upcoming-section {
+  @apply rounded-3xl overflow-hidden;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: var(--kengo-shadow);
+}
+
+.section-header {
+  @apply flex items-center gap-3 p-4 border-b border-white/20 bg-white/20;
+}
+
+.section-icon {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center shrink-0;
+  background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
+}
+
+.section-icon .material-symbols-outlined {
+  @apply text-xl text-[#e75c3e];
+}
+
+.section-title {
+  @apply text-base font-semibold text-zinc-700 m-0;
+}
+
+.section-subtitle {
+  @apply text-xs text-zinc-400 m-0 mt-0.5;
+}
+
+.upcoming-list {
+  @apply divide-y divide-black/5;
+}
+
+.upcoming-day {
+  @apply flex items-center justify-between gap-3 px-4 py-3;
+}
+
+.upcoming-day-header {
+  @apply flex flex-col;
+}
+
+.upcoming-date {
+  @apply flex flex-col;
+}
+
+.upcoming-day-name {
+  @apply text-sm font-semibold text-zinc-800;
+}
+
+.upcoming-day-number {
+  @apply text-xs text-zinc-500;
+}
+
+.upcoming-summary {
+  @apply flex items-center gap-1 mt-1;
+}
+
+.upcoming-count {
+  @apply text-sm font-semibold text-[#e75c3e];
+}
+
+.upcoming-label {
+  @apply text-xs text-zinc-500;
+}
+
+.upcoming-action {
+  @apply flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium cursor-pointer transition-all active:scale-95;
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  box-shadow: 0 2px 8px rgba(231, 92, 62, 0.25);
+}
+
+.upcoming-action:hover {
+  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35);
+}
+
+.upcoming-action .material-symbols-outlined {
+  @apply text-lg;
+}
+
+/* Animations & Utilities */
+.animate-in {
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.icon-filled {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* Desktop (>= 768px) */
+@media (min-width: 768px) {
+  .calendario-container {
+    @apply px-8 pt-4;
+    padding-bottom: 32px;
+  }
+
+  .content-grid {
+    @apply grid-cols-5 gap-8;
+  }
+
+  .calendar-column {
+    @apply col-span-3;
+  }
+
+  .upcoming-column {
+    @apply col-span-2;
+  }
+
+  .upcoming-section {
+    @apply sticky top-4;
+  }
+
+  .calendar-title {
+    @apply text-xl;
+  }
+
+  .calendar-grid {
+    @apply gap-2 p-4;
+  }
+
+  .calendar-day {
+    @apply rounded-2xl;
+  }
+
+  .day-number {
+    @apply text-base;
+  }
+
+  .state-card {
+    max-width: 480px;
+  }
+}

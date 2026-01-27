@@ -1,0 +1,69 @@
+<section class="activity-shell">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
+
+  <!-- Header with Toggle Navigation -->
+  @if (isMovil()) {
+    <header class="shell-header header-glass">
+      <div class="header-content">
+        <div class="header-left">
+          <button
+            type="button"
+            class="back-btn"
+            aria-label="Volver al inicio"
+            (click)="volverInicio()"
+          >
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 class="titulo-kengo header-title">Mi Actividad</h1>
+        </div>
+      </div>
+
+      <!-- Toggle Navigation -->
+      <nav class="toggle-nav" aria-label="Navegación de actividad">
+        @for (tab of tabs; track tab.path) {
+          <a
+            [routerLink]="tab.path"
+            routerLinkActive="active"
+            class="toggle-item"
+            [attr.aria-current]="router.isActive('/actividad-personal/' + tab.path, true) ? 'page' : null"
+          >
+            <span class="material-symbols-outlined toggle-icon">{{ tab.icon }}</span>
+            <span class="toggle-label">{{ tab.label }}</span>
+          </a>
+        }
+      </nav>
+    </header>
+  } @else {
+    <!-- Desktop Header -->
+    <header class="shell-header shell-header-desktop">
+      <div class="header-content-desktop">
+        <h1 class="titulo-kengo header-title-desktop">Mi Actividad</h1>
+
+        <!-- Toggle Navigation Desktop -->
+        <nav class="toggle-nav toggle-nav-desktop" aria-label="Navegación de actividad">
+          @for (tab of tabs; track tab.path) {
+            <a
+              [routerLink]="tab.path"
+              routerLinkActive="active"
+              class="toggle-item"
+              [attr.aria-current]="router.isActive('/actividad-personal/' + tab.path, true) ? 'page' : null"
+            >
+              <span class="material-symbols-outlined toggle-icon">{{ tab.icon }}</span>
+              <span class="toggle-label">{{ tab.label }}</span>
+            </a>
+          }
+        </nav>
+      </div>
+    </header>
+  }
+
+  <!-- Router Outlet for Child Routes -->
+  <main class="shell-content">
+    <router-outlet />
+  </main>
+</section>

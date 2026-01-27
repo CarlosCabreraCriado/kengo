@@ -1,0 +1,221 @@
+<div class="calendario-container">
+  <!-- Loading State -->
+  @if (cargando()) {
+    <div class="state-card loading-state">
+      <div class="shimmer-effect"></div>
+      <div class="state-icon pulse">
+        <span class="material-symbols-outlined">calendar_month</span>
+      </div>
+      <p class="state-text">Cargando calendario...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="state-card error-state animate-in">
+      <div class="state-icon error">
+        <span class="material-symbols-outlined">error</span>
+      </div>
+      <h2 class="state-title">Algo salió mal</h2>
+      <p class="state-text">{{ error() }}</p>
+      <button type="button" class="retry-btn" (click)="cargarDatos()">
+        <span class="material-symbols-outlined">refresh</span>
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- Sin planes activos -->
+  @if (sinPlanesActivos()) {
+    <div class="state-card empty-state animate-in">
+      <div class="state-visual">
+        <div class="empty-illustration">
+          <span class="material-symbols-outlined main-icon">calendar_today</span>
+          <span class="material-symbols-outlined accent-icon">add</span>
+        </div>
+      </div>
+      <h2 class="state-title">Sin planes activos</h2>
+      <p class="state-text">
+        No tienes planes de ejercicios asignados actualmente.
+      </p>
+      <p class="state-hint">
+        Contacta con tu fisioterapeuta para que te asigne un plan personalizado.
+      </p>
+    </div>
+  }
+
+  <!-- Contenido principal -->
+  @if (!cargando() && !error() && !sinPlanesActivos()) {
+    <div class="content-grid">
+      <!-- Calendario -->
+      <div class="calendar-column">
+        <div class="calendar-card animate-in">
+          <!-- Calendar Header -->
+          <header class="calendar-header">
+            <button
+              type="button"
+              class="nav-btn"
+              (click)="mesAnterior()"
+              aria-label="Mes anterior"
+            >
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <h2 class="calendar-title">{{ tituloMes() }}</h2>
+            <button
+              type="button"
+              class="nav-btn"
+              (click)="mesSiguiente()"
+              aria-label="Mes siguiente"
+            >
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </header>
+
+          <!-- Days of week header -->
+          <div class="calendar-weekdays">
+            @for (dia of diasSemanaHeaders; track dia) {
+              <span class="weekday-header">{{ dia }}</span>
+            }
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="calendar-grid">
+            @for (dia of diasCalendario(); track dia.fecha.toISOString()) {
+              <button
+                type="button"
+                class="calendar-day"
+                [class.other-month]="!dia.esMesActual"
+                [class.today]="dia.esHoy"
+                [class.has-activity]="dia.tieneActividad"
+                [class.selected]="esDiaSeleccionado(dia)"
+                (click)="seleccionarDia(dia)"
+                [attr.aria-label]="dia.diaNumero + (dia.tieneActividad ? ', tiene actividad' : '')"
+              >
+                <span class="day-number">{{ dia.diaNumero }}</span>
+                @if (dia.tieneActividad) {
+                  <span class="activity-dot"></span>
+                }
+              </button>
+            }
+          </div>
+
+          <!-- Selected Day Detail -->
+          @if (diaSeleccionado()) {
+            <div class="selected-day-detail animate-in">
+              <header class="detail-header">
+                <div class="detail-date">
+                  <span class="material-symbols-outlined detail-icon">event</span>
+                  <span class="detail-title">{{ formatearFechaSeleccionada() }}</span>
+                </div>
+                @if (diaSeleccionado()!.totalEjercicios > 0) {
+                  <span class="detail-badge">
+                    {{ diaSeleccionado()!.totalEjercicios }} ejercicio{{ diaSeleccionado()!.totalEjercicios !== 1 ? 's' : '' }}
+                  </span>
+                }
+              </header>
+
+              @if (diaSeleccionado()!.ejercicios.length === 0) {
+                <div class="no-exercises">
+                  <span class="material-symbols-outlined">self_improvement</span>
+                  <p>No hay ejercicios programados para este día</p>
+                </div>
+              } @else {
+                <ul class="detail-exercises">
+                  @for (ejercicio of diaSeleccionado()!.ejercicios; track $index) {
+                    <li class="detail-exercise-item">
+                      <div class="detail-exercise-thumb">
+                        @if (ejercicio.portada) {
+                          <img
+                            [src]="getAssetUrl(ejercicio.portada)"
+                            [alt]="ejercicio.nombre"
+                            loading="lazy"
+                          />
+                        } @else {
+                          <div class="thumb-placeholder">
+                            <span class="material-symbols-outlined">fitness_center</span>
+                          </div>
+                        }
+                      </div>
+                      <div class="detail-exercise-info">
+                        <span class="detail-exercise-name">{{ ejercicio.nombre }}</span>
+                        <span class="detail-exercise-details">
+                          {{ ejercicio.series }} series ×
+                          @if (ejercicio.duracion_seg) {
+                            {{ ejercicio.duracion_seg }}s
+                          } @else {
+                            {{ ejercicio.repeticiones ?? 12 }} reps
+                          }
+                          @if (diaSeleccionado()!.planes.length > 1) {
+                            <span class="plan-tag">{{ ejercicio.planTitulo }}</span>
+                          }
+                        </span>
+                      </div>
+                    </li>
+                  }
+                </ul>
+
+                <button
+                  type="button"
+                  class="detail-action"
+                  (click)="iniciarSesionDia(diaSeleccionado()!)"
+                >
+                  <span class="material-symbols-outlined icon-filled">play_arrow</span>
+                  Iniciar sesión
+                  @if (diaSeleccionado()!.planes.length > 1) {
+                    <span class="action-badge">{{ diaSeleccionado()!.planes.length }} planes</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Próximos días -->
+      @if (proximosDias().length > 0) {
+        <aside class="upcoming-column">
+          <section class="upcoming-section animate-in" style="--delay: 0.1s">
+            <header class="section-header">
+              <div class="section-icon">
+                <span class="material-symbols-outlined">schedule</span>
+              </div>
+              <div>
+                <h2 class="section-title">Próximos días</h2>
+                <p class="section-subtitle">Tu agenda de ejercicios</p>
+              </div>
+            </header>
+
+            <div class="upcoming-list">
+              @for (dia of proximosDias(); track dia.fecha.toISOString(); let i = $index) {
+                <article
+                  class="upcoming-day animate-in"
+                  [style.--delay]="(0.15 + i * 0.05) + 's'"
+                >
+                  <div class="upcoming-day-header">
+                    <div class="upcoming-date">
+                      <span class="upcoming-day-name">{{ dia.diaSemana }}</span>
+                      <span class="upcoming-day-number">{{ dia.fechaFormateada }}</span>
+                    </div>
+                    <div class="upcoming-summary">
+                      <span class="upcoming-count">{{ dia.totalEjercicios }}</span>
+                      <span class="upcoming-label">ejercicio{{ dia.totalEjercicios !== 1 ? 's' : '' }}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="upcoming-action"
+                    (click)="iniciarSesionDia(dia)"
+                  >
+                    <span class="material-symbols-outlined icon-filled">play_arrow</span>
+                    Comenzar
+                  </button>
+                </article>
+              }
+            </div>
+          </section>
+        </aside>
+      }
+    </div>
+  }
+</div>

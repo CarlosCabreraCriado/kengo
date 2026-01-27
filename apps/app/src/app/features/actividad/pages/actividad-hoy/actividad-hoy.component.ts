@@ -17,17 +17,12 @@ import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
 
 import {
   PlanCompleto,
-  EjercicioPlan,
-  RegistroEjercicio,
-  ActividadPlanDia,
-  EjercicioPlanConEstado,
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
   DiaSemana,
 } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
-// Tipo extendido para incluir ejercicios en próximos días
 interface EjercicioProximo {
   nombre: string;
   portada?: string;
@@ -47,16 +42,16 @@ interface DiaProximoConEjercicios {
 }
 
 @Component({
-  selector: 'app-actividad-personal',
+  selector: 'app-actividad-hoy',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './actividad-personal.component.html',
-  styleUrl: './actividad-personal.component.css',
+  templateUrl: './actividad-hoy.component.html',
+  styleUrl: './actividad-hoy.component.css',
   host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+    class: 'flex flex-col flex-1 min-h-0 w-full',
   },
 })
-export class ActividadPersonalComponent implements OnInit {
+export class ActividadHoyComponent implements OnInit {
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
   private registroService = inject(RegistroSesionService);
@@ -64,7 +59,6 @@ export class ActividadPersonalComponent implements OnInit {
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
   isMovil = toSignal(
     this.breakpointObserver
       .observe([KENGO_BREAKPOINTS.MOBILE])
@@ -72,7 +66,6 @@ export class ActividadPersonalComponent implements OnInit {
     { initialValue: true }
   );
 
-  // Mapeo de días de la semana
   private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   private readonly NOMBRES_DIAS = [
     'Domingo',
@@ -98,15 +91,13 @@ export class ActividadPersonalComponent implements OnInit {
     'diciembre',
   ];
 
-  // Estado - reutilizar del servicio compartido
   readonly cargando = this.actividadHoyService.cargando;
   readonly error = signal<string | null>(null);
   readonly planesActivos = this.actividadHoyService.planesActivos;
-  readonly planesActivosYFuturos = signal<PlanCompleto[]>([]); // Específico de este componente
+  readonly planesActivosYFuturos = signal<PlanCompleto[]>([]);
   readonly registrosHoy = this.actividadHoyService.registrosHoy;
-  readonly diaExpandido = signal<string | null>(null); // ISO string de la fecha expandida
+  readonly diaExpandido = signal<string | null>(null);
 
-  // Computed - reutilizar del servicio compartido
   readonly usuarioId = computed(() => this.sessionService.usuario()?.id);
   readonly fechaHoy = computed(() => {
     const hoy = new Date();
@@ -118,7 +109,6 @@ export class ActividadPersonalComponent implements OnInit {
 
   readonly diaHoy = computed(() => this.DIAS_SEMANA[new Date().getDay()]);
 
-  // Reutilizar computed del servicio
   readonly actividadHoy = this.actividadHoyService.actividadHoy;
   readonly hayActividadHoy = this.actividadHoyService.hayActividadHoy;
   readonly totalPendientes = this.actividadHoyService.totalPendientes;
@@ -126,12 +116,10 @@ export class ActividadPersonalComponent implements OnInit {
   readonly progresoTotal = this.actividadHoyService.progresoTotal;
 
   readonly proximosDias = computed<DiaProximoConEjercicios[]>(() => {
-    // Usar todos los planes activos incluyendo futuros
     const planes = this.planesActivosYFuturos();
     const resultado: DiaProximoConEjercicios[] = [];
     const hoy = new Date();
 
-    // Buscar en los próximos 14 días, encontrar 7 con ejercicios
     for (let i = 1; i <= 14 && resultado.length < 7; i++) {
       const fecha = new Date(hoy);
       fecha.setDate(hoy.getDate() + i);
@@ -147,10 +135,8 @@ export class ActividadPersonalComponent implements OnInit {
       let totalEjerciciosDia = 0;
 
       for (const plan of planes) {
-        // Verificar si la fecha está dentro del rango del plan
         if (!this.esFechaEnRangoPlan(plan, fecha)) continue;
 
-        // Obtener ejercicios para este día
         const ejerciciosDia = plan.items.filter((item) => {
           if (!item.dias_semana || item.dias_semana.length === 0) {
             return true;
@@ -166,7 +152,6 @@ export class ActividadPersonalComponent implements OnInit {
           });
           totalEjerciciosDia += ejerciciosDia.length;
 
-          // Agregar ejercicios detallados
           for (const ej of ejerciciosDia) {
             ejerciciosDelDia.push({
               nombre: ej.ejercicio.nombre_ejercicio,
@@ -215,7 +200,6 @@ export class ActividadPersonalComponent implements OnInit {
     this.error.set(null);
 
     try {
-      // Cargar datos compartidos (hoy) y planes futuros en paralelo
       await Promise.all([
         this.actividadHoyService.cargarDatos(),
         this.cargarPlanesFuturos(userId),
@@ -235,10 +219,6 @@ export class ActividadPersonalComponent implements OnInit {
     this.router.navigate(['/mi-plan', planId]);
   }
 
-  volverInicio(): void {
-    this.router.navigate(['/inicio']);
-  }
-
   toggleDia(fecha: Date): void {
     const fechaStr = fecha.toISOString();
     if (this.diaExpandido() === fechaStr) {
@@ -256,13 +236,9 @@ export class ActividadPersonalComponent implements OnInit {
     return this.planesService.getAssetUrl(id, width, height);
   }
 
-  /**
-   * Inicia una sesion combinada con todos los ejercicios de hoy
-   */
   iniciarSesionHoy(): void {
     const actividades = this.actividadHoy();
 
-    // Construir lista de ejercicios de todos los planes
     const ejercicios: EjercicioSesionMultiPlan[] = [];
     const planesInvolucrados: {
       planId: number;
@@ -303,9 +279,6 @@ export class ActividadPersonalComponent implements OnInit {
     this.router.navigate(['/mi-plan']);
   }
 
-  /**
-   * Inicia una sesion para un dia futuro especifico
-   */
   iniciarSesionDia(dia: DiaProximoConEjercicios): void {
     const ejercicios: EjercicioSesionMultiPlan[] = [];
     const planes = this.planesActivosYFuturos();
@@ -346,8 +319,6 @@ export class ActividadPersonalComponent implements OnInit {
     this.registroService.iniciarSesionMultiPlan(config);
     this.router.navigate(['/mi-plan']);
   }
-
-  // Helpers privados
 
   private esFechaEnRangoPlan(plan: PlanCompleto, fecha: Date): boolean {
     const fechaStr = fecha.toISOString().split('T')[0];
