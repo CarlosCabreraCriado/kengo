@@ -14,17 +14,22 @@ import {
   type DirectusClient,
   UnpackList,
 } from "@directus/sdk";
+import crypto from "crypto";
 
 export type ID = string | number;
 export type Schema = {
-  // Colección personalizada para magic link / QR
-  login_tokens: {
-    id: ID;
-    user: ID; // relación a directus.users
-    token: string; // aleatorio (único)
-    expires_at: string; // ISO datetime
-    consumed_at: string | null;
-    created_at: string;
+  // Tokens de acceso para pacientes (reemplaza magic links)
+  tokens_acceso_usuario: {
+    id: string; // UUID
+    id_usuario: string; // FK → directus_users
+    token: string; // Token opaco (32 bytes hex = 64 chars)
+    usos_actuales: number;
+    usos_maximos: number | null; // NULL = ilimitado
+    fecha_expiracion: string | null; // NULL = no expira
+    user_created: string; // FK → directus_users
+    date_created: string;
+    ultimo_uso: string | null;
+    activo: boolean;
   };
   // Tabla puente usuarios_clinicas (con puesto directo)
   usuarios_clinicas: {
@@ -621,4 +626,243 @@ export async function usuarioYaVinculado(userId: ID, clinicaId: number): Promise
 
   const json = await res.json();
   return json.data && json.data.length > 0;
+}
+
+// =========================
+//  TOKENS DE ACCESO USUARIO
+// =========================
+
+export type TokenAccesoUsuario = Schema['tokens_acceso_usuario'];
+
+export type TokenValidationError =
+  | 'TOKEN_NO_ENCONTRADO'
+  | 'TOKEN_INACTIVO'
+  | 'TOKEN_EXPIRADO'
+  | 'TOKEN_AGOTADO';
+
+/**
+ * Genera un token seguro de 32 bytes (64 caracteres hex)
+ */
+function generateSecureToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Crea un token de acceso para un usuario
+ */
+export async function createTokenAccesoUsuario(
+  idUsuario: string,
+  creadoPor: string,
+  opciones?: { usosMaximos?: number; diasExpiracion?: number }
+): Promise<{ id: string; token: string; url: string }> {
+  const token = generateSecureToken();
+
+  let fechaExpiracion: string | null = null;
+  if (opciones?.diasExpiracion && opciones.diasExpiracion > 0) {
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + opciones.diasExpiracion);
+    fechaExpiracion = expDate.toISOString();
+  }
+
+  const res = await fetch(`${process.env.DIRECTUS_URL}/items/tokens_acceso_usuario`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+    body: JSON.stringify({
+      id_usuario: idUsuario,
+      token,
+      usos_actuales: 0,
+      usos_maximos: opciones?.usosMaximos ?? null,
+      fecha_expiracion: fechaExpiracion,
+      user_created: creadoPor,
+      activo: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Error creando token de acceso: ${res.status} - ${text}`);
+  }
+
+  const json = await res.json();
+  const url = `${process.env.APP_URL}/magic?t=${token}`;
+
+  // Actualizar magic_link_url en el usuario para mantener compatibilidad con QR existente
+  await patchUserMagicFields(idUsuario, { url });
+
+  return { id: json.data.id, token, url };
+}
+
+/**
+ * Busca un token de acceso por su valor
+ */
+export async function getTokenAccesoByToken(token: string): Promise<TokenAccesoUsuario | null> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/tokens_acceso_usuario?filter[token][_eq]=${encodeURIComponent(token)}&limit=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error buscando token: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data && json.data.length > 0 ? json.data[0] : null;
+}
+
+/**
+ * Valida un token de acceso (activo, no expirado, usos disponibles)
+ */
+export async function validarTokenAcceso(token: string): Promise<{
+  valido: boolean;
+  error?: TokenValidationError;
+  tokenData?: TokenAccesoUsuario;
+}> {
+  const tokenData = await getTokenAccesoByToken(token);
+
+  if (!tokenData) {
+    return { valido: false, error: 'TOKEN_NO_ENCONTRADO' };
+  }
+
+  if (!tokenData.activo) {
+    return { valido: false, error: 'TOKEN_INACTIVO' };
+  }
+
+  if (tokenData.fecha_expiracion && new Date(tokenData.fecha_expiracion) < new Date()) {
+    return { valido: false, error: 'TOKEN_EXPIRADO' };
+  }
+
+  if (tokenData.usos_maximos !== null && tokenData.usos_actuales >= tokenData.usos_maximos) {
+    return { valido: false, error: 'TOKEN_AGOTADO' };
+  }
+
+  return { valido: true, tokenData };
+}
+
+/**
+ * Registra el uso de un token (incrementa contador y actualiza ultimo_uso)
+ */
+export async function registrarUsoToken(tokenId: string): Promise<void> {
+  // Primero obtener el valor actual de usos_actuales
+  const getRes = await fetch(
+    `${process.env.DIRECTUS_URL}/items/tokens_acceso_usuario/${tokenId}?fields=usos_actuales`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!getRes.ok) {
+    throw new Error(`Error obteniendo token: ${getRes.status}`);
+  }
+
+  const { data } = await getRes.json();
+
+  // Actualizar con el nuevo valor
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/tokens_acceso_usuario/${tokenId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+      body: JSON.stringify({
+        usos_actuales: (data.usos_actuales || 0) + 1,
+        ultimo_uso: new Date().toISOString(),
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error actualizando uso de token: ${res.status}`);
+  }
+}
+
+/**
+ * Obtiene todos los tokens de un usuario
+ */
+export async function getTokensUsuario(userId: string): Promise<TokenAccesoUsuario[]> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/tokens_acceso_usuario?filter[id_usuario][_eq]=${userId}&sort=-date_created`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error obteniendo tokens: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data || [];
+}
+
+/**
+ * Revoca un token (activo = false)
+ */
+export async function revocarToken(tokenId: string): Promise<void> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/tokens_acceso_usuario/${tokenId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+      body: JSON.stringify({ activo: false }),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error revocando token: ${res.status}`);
+  }
+}
+
+/**
+ * Crea una sesión de Directus para un usuario (sin necesidad de password)
+ * Inserta directamente en directus_sessions via API admin
+ */
+export async function createDirectusSessionForUser(
+  userId: string,
+  clientIp?: string,
+  userAgent?: string
+): Promise<{ sessionToken: string; expires: Date }> {
+  // Generar token de sesión (base64url-safe)
+  const sessionToken = crypto.randomBytes(32).toString('base64url');
+
+  // Expiración: 7 días desde ahora
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 7);
+
+  const res = await fetch(`${process.env.DIRECTUS_URL}/items/directus_sessions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+    body: JSON.stringify({
+      token: sessionToken,
+      user: userId,
+      expires: expires.toISOString(),
+      ip: clientIp || null,
+      user_agent: userAgent || null,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Error creando sesión Directus: ${res.status} - ${text}`);
+  }
+
+  return { sessionToken, expires };
 }
