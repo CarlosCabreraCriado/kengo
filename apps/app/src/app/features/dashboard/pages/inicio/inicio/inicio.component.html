@@ -103,7 +103,7 @@
 
     <!-- Activity Card (Featured) -->
     @for (card of cards(); track card.id) {
-      @if (card.id === 'actividad-diaria') {
+      @if (card.id === 'actividad-personal') {
         <article
           class="activity-hero animate-in"
           [attr.data-state]="getCardBadgeType(card) || 'loading'"
@@ -194,7 +194,7 @@
       <h2 class="section-title">Accesos rápidos</h2>
       <div class="actions-grid">
         @for (card of cards(); track card.id; let i = $index) {
-          @if (card.id !== 'actividad-diaria') {
+          @if (card.id !== 'actividad-personal') {
             <article
               class="action-card animate-in"
               [style.--delay]="(0.15 + i * 0.03) + 's'"

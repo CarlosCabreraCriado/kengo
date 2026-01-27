@@ -114,12 +114,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
 
-  // Actividad diaria
+  // Actividad personal
   {
-    path: 'actividad-diaria',
+    path: 'actividad-personal',
     loadComponent: () =>
-      import('./features/actividad/pages/actividad-diaria/actividad-diaria.component').then(
-        (m) => m.ActividadDiariaComponent
+      import('./features/actividad/pages/actividad-personal/actividad-personal.component').then(
+        (m) => m.ActividadPersonalComponent
       ),
     canActivate: [AuthGuard],
   },

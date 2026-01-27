@@ -125,6 +125,6 @@ export class ResumenSesionComponent {
 
   volverAtras(): void {
     this.registroService.resetearEstado();
-    this.router.navigate(['/actividad-diaria']);
+    this.router.navigate(['/actividad-personal']);
   }
 }

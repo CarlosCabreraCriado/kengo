@@ -41,7 +41,7 @@ export class NavegacionComponent implements OnInit {
       '/inicio': 0,
       '/': 0,
       '/ejercicios': 1,
-      '/actividad-diaria': 2,
+      '/actividad-personal': 2,
       '/mis-pacientes': isFisio ? 3 : -1,
       '/mi-clinica': isFisio ? 4 : 3,
       '/perfil': isFisio ? 5 : 4,

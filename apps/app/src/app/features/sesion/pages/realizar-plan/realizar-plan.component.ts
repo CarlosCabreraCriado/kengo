@@ -223,7 +223,7 @@ export class RealizarPlanComponent implements OnInit {
       this.registroService.modoMultiPlan() &&
       this.registroService.configSesion()
     ) {
-      return; // La sesion ya esta lista desde actividad-diaria
+      return; // La sesion ya esta lista desde actividad-personal
     }
 
     // Flujo original: cargar por planId de la ruta

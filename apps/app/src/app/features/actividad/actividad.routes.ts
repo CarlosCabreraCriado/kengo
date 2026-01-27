@@ -5,8 +5,8 @@ export const ACTIVIDAD_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/actividad-diaria/actividad-diaria.component').then(
-        (m) => m.ActividadDiariaComponent
+      import('./pages/actividad-personal/actividad-personal.component').then(
+        (m) => m.ActividadPersonalComponent
       ),
     canActivate: [AuthGuard],
   },

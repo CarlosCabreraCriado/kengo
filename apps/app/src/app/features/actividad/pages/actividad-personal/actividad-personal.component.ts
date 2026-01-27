@@ -47,16 +47,16 @@ interface DiaProximoConEjercicios {
 }
 
 @Component({
-  selector: 'app-actividad-diaria',
+  selector: 'app-actividad-personal',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './actividad-diaria.component.html',
-  styleUrl: './actividad-diaria.component.css',
+  templateUrl: './actividad-personal.component.html',
+  styleUrl: './actividad-personal.component.css',
   host: {
     class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
   },
 })
-export class ActividadDiariaComponent implements OnInit {
+export class ActividadPersonalComponent implements OnInit {
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
   private registroService = inject(RegistroSesionService);

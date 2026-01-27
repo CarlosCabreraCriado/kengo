@@ -69,11 +69,11 @@ export class InicioComponent implements OnDestroy {
 
   allCards: CardOption[] = [
     {
-      id: 'actividad-diaria',
-      title: 'Actividad diaria',
+      id: 'actividad-personal',
+      title: 'Actividad personal',
       subtitle: 'Tu plan de hoy',
       image: 'assets/portadas/camilla.PNG',
-      route: '/actividad-diaria',
+      route: '/actividad-personal',
       roles: ['fisio', 'paciente'],
       // Propiedades dinámicas
       dynamicSubtitle: this.actividadHoyService.subtituloDinamico,
