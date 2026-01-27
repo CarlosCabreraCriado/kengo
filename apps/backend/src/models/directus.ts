@@ -831,13 +831,16 @@ export async function revocarToken(tokenId: string): Promise<void> {
 
 /**
  * Crea una sesión de Directus para un usuario (sin necesidad de password)
- * Inserta directamente en directus_sessions via API admin
+ * Inserta directamente en directus_sessions via SQL (la API REST no lo permite)
  */
 export async function createDirectusSessionForUser(
   userId: string,
   clientIp?: string,
   userAgent?: string
 ): Promise<{ sessionToken: string; expires: Date }> {
+  // Importar pool de conexión MySQL
+  const pool = (await import('../utils/database')).default;
+
   // Generar token de sesión (base64url-safe)
   const sessionToken = crypto.randomBytes(32).toString('base64url');
 
@@ -845,25 +848,12 @@ export async function createDirectusSessionForUser(
   const expires = new Date();
   expires.setDate(expires.getDate() + 7);
 
-  const res = await fetch(`${process.env.DIRECTUS_URL}/items/directus_sessions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
-    },
-    body: JSON.stringify({
-      token: sessionToken,
-      user: userId,
-      expires: expires.toISOString(),
-      ip: clientIp || null,
-      user_agent: userAgent || null,
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Error creando sesión Directus: ${res.status} - ${text}`);
-  }
+  // Insertar sesión directamente en la base de datos
+  await pool.execute(
+    `INSERT INTO directus_sessions (token, user, expires, ip, user_agent)
+     VALUES (?, ?, ?, ?, ?)`,
+    [sessionToken, userId, expires, clientIp || null, userAgent || null]
+  );
 
   return { sessionToken, expires };
 }
