@@ -1,0 +1,139 @@
+<div class="dialog-overlay" (click)="onOverlayClick($event)">
+  <div class="dialog-content">
+    <header class="dialog-header">
+      <div class="dialog-icon">
+        <span class="material-symbols-outlined icon-filled">edit</span>
+      </div>
+      <h2 class="dialog-title">Editar clínica</h2>
+      <p class="dialog-subtitle">Actualiza los datos de tu clínica</p>
+      <button type="button" class="close-btn" (click)="cerrar.emit()" aria-label="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="dialog-body">
+      <!-- Nombre (required) -->
+      <div class="form-group">
+        <label for="nombre" class="form-label">
+          Nombre de la clínica <span class="required">*</span>
+        </label>
+        <input
+          id="nombre"
+          type="text"
+          formControlName="nombre"
+          class="form-input"
+          placeholder="Clínica Ejemplo"
+          [class.error]="form.get('nombre')?.touched && form.get('nombre')?.invalid"
+        />
+        @if (form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']) {
+          <span class="field-error">El nombre es requerido</span>
+        }
+      </div>
+
+      <!-- Row: Teléfono + Email -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="telefono" class="form-label">Teléfono</label>
+          <input
+            id="telefono"
+            type="tel"
+            formControlName="telefono"
+            class="form-input"
+            placeholder="612 345 678"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="form-input"
+            placeholder="clinica@ejemplo.com"
+            [class.error]="form.get('email')?.touched && form.get('email')?.invalid"
+          />
+          @if (form.get('email')?.touched && form.get('email')?.errors?.['email']) {
+            <span class="field-error">Email no válido</span>
+          }
+        </div>
+      </div>
+
+      <!-- Dirección -->
+      <div class="form-group">
+        <label for="direccion" class="form-label">Dirección</label>
+        <input
+          id="direccion"
+          type="text"
+          formControlName="direccion"
+          class="form-input"
+          placeholder="Calle Ejemplo 123, Ciudad"
+        />
+      </div>
+
+      <!-- Row: C.P. + NIF -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="postal" class="form-label">Código Postal</label>
+          <input
+            id="postal"
+            type="text"
+            formControlName="postal"
+            class="form-input"
+            placeholder="28001"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="nif" class="form-label">NIF/CIF</label>
+          <input
+            id="nif"
+            type="text"
+            formControlName="nif"
+            class="form-input"
+            placeholder="B12345678"
+          />
+        </div>
+      </div>
+
+      <!-- Color primario -->
+      <div class="form-group">
+        <label for="color" class="form-label">Color corporativo</label>
+        <div class="color-picker-wrapper">
+          <input
+            id="color"
+            type="color"
+            formControlName="color_primario"
+            class="color-input"
+          />
+          <span class="color-value">{{ form.value.color_primario }}</span>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="error-message">
+          <span class="material-symbols-outlined">error</span>
+          {{ error() }}
+        </div>
+      }
+
+      <div class="dialog-actions">
+        <button type="button" class="btn-secondary" (click)="cerrar.emit()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="form.invalid || loading()"
+        >
+          @if (loading()) {
+            <span class="spinner"></span>
+            Guardando...
+          } @else {
+            Guardar cambios
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -19,6 +19,7 @@ import { KENGO_BREAKPOINTS } from '../../../../shared';
 import { VincularClinicaDialogComponent } from '../../components/vincular-clinica-dialog/vincular-clinica-dialog.component';
 import { CrearClinicaDialogComponent } from '../../components/crear-clinica-dialog/crear-clinica-dialog.component';
 import { GenerarCodigoDialogComponent } from '../../components/generar-codigo-dialog/generar-codigo-dialog.component';
+import { EditarClinicaDialogComponent } from '../../components/editar-clinica-dialog/editar-clinica-dialog.component';
 
 import { DatePipe } from '@angular/common';
 
@@ -32,6 +33,7 @@ import { DatePipe } from '@angular/common';
     VincularClinicaDialogComponent,
     CrearClinicaDialogComponent,
     GenerarCodigoDialogComponent,
+    EditarClinicaDialogComponent,
   ],
   templateUrl: './miclinica.component.html',
   styleUrl: './miclinica.component.css',
@@ -69,6 +71,7 @@ export class MiClinicaComponent {
   mostrarModalVincular = signal(false);
   mostrarModalCrear = signal(false);
   mostrarModalGenerarCodigo = signal(false);
+  mostrarModalEditar = signal(false);
 
   // Códigos de acceso
   codigosClinica = signal<CodigoAcceso[]>([]);
@@ -133,6 +136,19 @@ export class MiClinicaComponent {
 
   cerrarGenerarCodigo() {
     this.mostrarModalGenerarCodigo.set(false);
+  }
+
+  abrirEditarClinica() {
+    this.mostrarModalEditar.set(true);
+  }
+
+  cerrarEditarClinica() {
+    this.mostrarModalEditar.set(false);
+  }
+
+  onClinicaActualizada() {
+    this.cerrarEditarClinica();
+    this.showSnackbar('Clínica actualizada exitosamente');
   }
 
   onVinculacionExitosa() {

@@ -191,15 +191,17 @@
                 }
               </p>
             </div>
-            <button
-              type="button"
-              disabled
-              class="edit-clinic-btn"
-              aria-label="Editar clínica"
-            >
-              <span class="material-symbols-outlined">edit</span>
-              <span class="edit-label">Editar</span>
-            </button>
+            @if (esAdmin()) {
+              <button
+                type="button"
+                class="edit-clinic-btn"
+                (click)="abrirEditarClinica()"
+                aria-label="Editar clínica"
+              >
+                <span class="material-symbols-outlined">edit</span>
+                <span class="edit-label">Editar</span>
+              </button>
+            }
           </div>
         </div>
       </article>
@@ -505,6 +507,14 @@
       [esAdmin]="esAdmin()"
       (cerrar)="cerrarGenerarCodigo()"
       (codigoGenerado)="onCodigoGenerado($event)"
+    />
+  }
+
+  @if (mostrarModalEditar() && currentClinic()) {
+    <app-editar-clinica-dialog
+      [clinica]="currentClinic()!"
+      (cerrar)="cerrarEditarClinica()"
+      (clinicaActualizada)="onClinicaActualizada()"
     />
   }
 </section>

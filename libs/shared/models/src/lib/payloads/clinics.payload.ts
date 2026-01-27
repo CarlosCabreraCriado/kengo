@@ -19,6 +19,19 @@ export interface CreateClinicaPayload {
 }
 
 /**
+ * Payload para actualizar una clínica existente
+ */
+export interface UpdateClinicaPayload {
+  nombre?: string;
+  telefono?: string | null;
+  email?: string | null;
+  direccion?: string | null;
+  postal?: string | null;
+  nif?: string | null;
+  color_primario?: string | null;
+}
+
+/**
  * Payload para vincular usuario a clínica mediante código
  */
 export interface VincularClinicaPayload {

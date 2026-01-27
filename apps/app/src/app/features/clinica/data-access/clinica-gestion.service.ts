@@ -5,6 +5,7 @@ import { environment as env } from '../../../../environments/environment';
 import { SessionService } from '../../../core/auth/services/session.service';
 import type {
   CreateClinicaPayload,
+  UpdateClinicaPayload,
   VincularClinicaPayload,
   VincularClinicaResponse,
   CrearClinicaResponse,
@@ -86,6 +87,38 @@ export class ClinicaGestionService {
       return response;
     } catch (err: any) {
       const errorMsg = err?.error?.error || 'Error al crear la clínica';
+      this.error.set(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  /**
+   * Actualiza los datos de una clínica existente (solo para administradores)
+   */
+  async actualizarClinica(
+    clinicaId: number,
+    payload: UpdateClinicaPayload
+  ): Promise<{ success: boolean; error?: string }> {
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.patch<{ data: unknown }>(
+          `${env.DIRECTUS_URL}/items/clinicas/${clinicaId}`,
+          payload
+        )
+      );
+
+      if (response?.data) {
+        return { success: true };
+      }
+
+      return { success: false, error: 'Error al actualizar la clínica' };
+    } catch (err: any) {
+      const errorMsg = err?.error?.errors?.[0]?.message || err?.message || 'Error al actualizar la clínica';
       this.error.set(errorMsg);
       return { success: false, error: errorMsg };
     } finally {
