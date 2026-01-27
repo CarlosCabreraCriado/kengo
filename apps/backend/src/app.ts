@@ -13,6 +13,8 @@ const PORT = 3000;
 // CORS configurado para cookies
 app.use(cors({
   origin: [
+    'https://kengoapp.com',
+    'https://www.kengoapp.com',
     'https://app.kengoapp.com',
     'https://admin.kengoapp.com',
     'http://localhost:4200'
