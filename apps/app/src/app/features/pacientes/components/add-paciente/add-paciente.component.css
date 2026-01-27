@@ -1,1 +1,24 @@
 /* Estilos específicos del diálogo add-paciente */
+
+/* Dropdown de clínicas */
+.clinicas-dropdown-container {
+  position: relative;
+}
+
+.clinicas-dropdown-container .max-h-48 {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.clinicas-dropdown-container .max-h-48::-webkit-scrollbar {
+  width: 6px;
+}
+
+.clinicas-dropdown-container .max-h-48::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.clinicas-dropdown-container .max-h-48::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}

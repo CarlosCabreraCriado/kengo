@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -54,12 +54,43 @@ export class AddPacienteDialogComponent {
   private http = inject(HttpClient);
   private dialogRef = inject(DialogRef<{ created?: unknown; updated?: boolean }>);
   private data = inject<DialogData>(DIALOG_DATA);
+  private elementRef = inject(ElementRef);
 
   private currentLinks = new Map<ID, ID>(); // (id_clinica -> row id)
 
   loading = signal(false);
   error = signal<string | null>(null);
   isEdit = computed(() => !!this.data.usuario);
+
+  // Estado del desplegable de clínicas
+  clinicasDropdownOpen = signal(false);
+
+  // Texto a mostrar en el campo de clínicas
+  clinicasDisplayText = computed(() => {
+    const selectedIds = this.form.get('clinicas')?.value as ID[] ?? [];
+    const clinicas = this.clinicasRes.value() ?? [];
+
+    if (selectedIds.length === 0) return 'Seleccionar clínicas...';
+
+    const nombres = selectedIds
+      .map(id => clinicas.find(c => c.id_clinica === id)?.nombre ?? `Clínica ${id}`)
+      .slice(0, 2);
+
+    if (selectedIds.length > 2) {
+      return `${nombres.join(', ')} +${selectedIds.length - 2}`;
+    }
+    return nombres.join(', ');
+  });
+
+  // Cerrar dropdown al hacer click fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const dropdown = this.elementRef.nativeElement.querySelector('.clinicas-dropdown-container');
+    if (dropdown && !dropdown.contains(target)) {
+      this.clinicasDropdownOpen.set(false);
+    }
+  }
 
   // Carga de clínicas disponibles (filtradas por las del usuario actual)
   readonly clinicasRes = httpResource<Clinica[]>(
@@ -69,7 +100,7 @@ export class AddPacienteDialogComponent {
       params: {
         fields: 'id_clinica,nombre',
         ...(this.data.idsClinicas?.length
-          ? { filter: JSON.stringify({ id: { _in: this.data.idsClinicas } }) }
+          ? { filter: JSON.stringify({ id_clinica: { _in: this.data.idsClinicas } }) }
           : {}),
       },
     }),
@@ -106,6 +137,30 @@ export class AddPacienteDialogComponent {
 
   close(result?: { created?: unknown; updated?: boolean }) {
     this.dialogRef.close(result);
+  }
+
+  toggleClinicasDropdown() {
+    if (this.form.get('clinicas')?.disabled) return;
+    this.clinicasDropdownOpen.update(v => !v);
+  }
+
+  isClinicaSelected(id: ID): boolean {
+    const selected = this.form.get('clinicas')?.value as ID[] ?? [];
+    return selected.some(s => s === id || String(s) === String(id));
+  }
+
+  toggleClinica(id: ID) {
+    const control = this.form.get('clinicas');
+    if (!control) return;
+
+    const current = (control.value as ID[]) ?? [];
+    const isSelected = current.some(s => s === id || String(s) === String(id));
+
+    if (isSelected) {
+      control.setValue(current.filter(s => s !== id && String(s) !== String(id)));
+    } else {
+      control.setValue([...current, id]);
+    }
   }
 
   // ====== Carga enlaces actuales (solo edición) ======
