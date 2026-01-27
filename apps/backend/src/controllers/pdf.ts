@@ -92,7 +92,8 @@ export class pdfController {
       expiresIn: "30d",
     });
 
-    const url = `${process.env.APP_URL}/magic?token=${encodeURIComponent(token)}`;
+    const appUrl = process.env.APP_URL || 'https://kengoapp.com';
+    const url = `${appUrl}/magic?token=${encodeURIComponent(token)}`;
 
     await patchUserMagicFields(userId, { url });
 

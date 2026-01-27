@@ -687,7 +687,8 @@ export async function createTokenAccesoUsuario(
   }
 
   const json = await res.json();
-  const url = `${process.env.APP_URL}/magic?t=${token}`;
+  const appUrl = process.env.APP_URL || 'https://kengoapp.com';
+  const url = `${appUrl}/magic?t=${token}`;
 
   // Actualizar magic_link_url en el usuario para mantener compatibilidad con QR existente
   await patchUserMagicFields(idUsuario, { url });

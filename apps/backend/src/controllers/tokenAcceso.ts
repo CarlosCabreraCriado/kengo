@@ -193,7 +193,8 @@ export class tokenAccesoController {
 
       if (tokenActivo) {
         // Reconstruir URL del token activo
-        accessUrl = `${process.env.APP_URL}/magic?t=${tokenActivo.token}`;
+        const appUrl = process.env.APP_URL || 'https://kengoapp.com';
+        accessUrl = `${appUrl}/magic?t=${tokenActivo.token}`;
       } else {
         // Crear nuevo token si no hay uno activo
         const creadoPor = req.user!.id;
