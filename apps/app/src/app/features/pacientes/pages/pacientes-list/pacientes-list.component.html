@@ -36,31 +36,18 @@
             </div>
           </div>
 
-          <!-- Acciones rápidas (solo iconos en móvil) -->
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-xl
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-500 transition-all duration-200
-                     hover:bg-white/80 hover:text-[#e75c3e] active:scale-95"
-              aria-label="Recargar"
-              (click)="reload()"
-            >
-              <span class="material-symbols-outlined text-xl">refresh</span>
-            </button>
-            <button
-              type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-xl
-                     bg-[#e75c3e] text-white transition-all duration-200
-                     hover:bg-[#c94a2f] hover:scale-105 active:scale-95
-                     shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
-              aria-label="Añadir paciente"
-              (click)="openAddPaciente()"
-            >
-              <span class="material-symbols-outlined text-xl icon-filled">person_add</span>
-            </button>
-          </div>
+          <!-- Acción añadir paciente (móvil) -->
+          <button
+            type="button"
+            class="flex h-10 w-10 items-center justify-center rounded-xl
+                   bg-[#e75c3e] text-white transition-all duration-200
+                   hover:bg-[#c94a2f] hover:scale-105 active:scale-95
+                   shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
+            aria-label="Añadir paciente"
+            (click)="openAddPaciente()"
+          >
+            <span class="material-symbols-outlined text-xl icon-filled">person_add</span>
+          </button>
         </div>
       }
 
@@ -76,7 +63,7 @@
 
         <!-- Barra de búsqueda -->
         <div class="relative flex-1">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#e75c3e] text-xl pointer-events-none">search</span>
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#e75c3e] text-xl pointer-events-none z-10">search</span>
           <input
             #buscador
             type="text"
@@ -116,32 +103,19 @@
           <span class="material-symbols-outlined text-xl">{{ vista() === 'card' ? 'view_list' : 'grid_view' }}</span>
         </button>
 
-        <!-- DESKTOP: Acciones con etiquetas de texto -->
+        <!-- DESKTOP: Botón añadir -->
         @if (!isMovil()) {
-          <div class="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200/50">
-            <button
-              type="button"
-              class="flex h-10 items-center gap-1.5 rounded-full px-3
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-600 transition-all duration-200
-                     hover:bg-white/80 hover:text-[#e75c3e] active:scale-95"
-              (click)="reload()"
-            >
-              <span class="material-symbols-outlined text-lg">refresh</span>
-              <span class="text-xs font-semibold">Recargar</span>
-            </button>
-            <button
-              type="button"
-              class="flex h-10 items-center gap-1.5 rounded-full px-4
-                     bg-[#e75c3e] text-white transition-all duration-200
-                     hover:bg-[#c94a2f] hover:scale-105 active:scale-95
-                     shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
-              (click)="openAddPaciente()"
-            >
-              <span class="material-symbols-outlined text-lg icon-filled">person_add</span>
-              <span class="text-xs font-semibold">Añadir</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            class="flex h-10 items-center gap-1.5 rounded-full px-4 ml-2
+                   bg-[#e75c3e] text-white transition-all duration-200
+                   hover:bg-[#c94a2f] hover:scale-105 active:scale-95
+                   shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
+            (click)="openAddPaciente()"
+          >
+            <span class="material-symbols-outlined text-lg icon-filled">person_add</span>
+            <span class="text-xs font-semibold">Añadir</span>
+          </button>
         }
       </div>
 
@@ -233,12 +207,10 @@
                     </div>
                   }
 
-                  @if (p.telefono) {
-                    <div class="info-row">
-                      <span class="material-symbols-outlined info-icon">phone</span>
-                      <span class="info-text">{{ p.telefono }}</span>
-                    </div>
-                  }
+                  <div class="info-row">
+                    <span class="material-symbols-outlined info-icon">phone</span>
+                    <span class="info-text" [class.text-zinc-400]="!p.telefono">{{ p.telefono || 'Sin teléfono' }}</span>
+                  </div>
 
                   @if (getClinicaNombre(p)) {
                     <span class="clinic-badge">
@@ -254,6 +226,20 @@
 
             </article>
           }
+
+          <!-- Card: Nuevo Paciente (al final) -->
+          <article class="patient-card add-patient-card" (click)="openAddPaciente()">
+            <div class="card-content">
+              <div class="patient-avatar add-avatar">
+                <span class="material-symbols-outlined text-2xl icon-filled">person_add</span>
+              </div>
+              <div class="patient-info">
+                <h3 class="patient-name text-[#e75c3e]">Nuevo paciente</h3>
+                <p class="text-xs text-zinc-500 mt-1">Añadir a la lista</p>
+              </div>
+              <span class="material-symbols-outlined card-arrow">add</span>
+            </div>
+          </article>
         </section>
       } @else {
         <!-- List View -->
@@ -279,6 +265,18 @@
               <span class="material-symbols-outlined row-arrow">chevron_right</span>
             </article>
           }
+
+          <!-- Row: Nuevo Paciente (al final) -->
+          <article class="patient-row add-patient-row" (click)="openAddPaciente()">
+            <div class="row-avatar add-avatar">
+              <span class="material-symbols-outlined text-lg icon-filled">person_add</span>
+            </div>
+            <div class="row-info">
+              <h4 class="row-name text-[#e75c3e]">Nuevo paciente</h4>
+              <span class="row-detail">Añadir a la lista</span>
+            </div>
+            <span class="material-symbols-outlined row-arrow">add</span>
+          </article>
         </section>
       }
     }
