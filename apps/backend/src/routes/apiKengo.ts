@@ -4,12 +4,17 @@ import { pdfController } from "../controllers/pdf";
 import { registroController } from "../controllers/registro";
 import { clinicaController } from "../controllers/clinica";
 import { tokenAccesoController } from "../controllers/tokenAcceso";
+import { passwordResetController } from "../controllers/passwordReset";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
 // Registro de usuarios (no requiere auth)
 router.post("/registro", registroController.registrar);
+
+// Recuperacion de contrasena (no requiere auth)
+router.post("/auth/recuperar-password", passwordResetController.solicitarCodigo);
+router.post("/auth/reset-password", passwordResetController.resetPassword);
 
 router.post("/getUsuarioById", usuarioController.getUsuarioById);
 

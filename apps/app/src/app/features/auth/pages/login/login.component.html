@@ -50,6 +50,13 @@
           @if (password.hasError('required') && password.touched) {
             <span class="text-xs text-red-600">La contraseña es obligatoria.</span>
           }
+          <a
+            routerLink="/recuperar-password"
+            class="self-end text-sm font-medium text-primary hover:underline"
+            [class.pointer-events-none]="loading()"
+          >
+            He olvidado mi contraseña
+          </a>
         </div>
 
         <button

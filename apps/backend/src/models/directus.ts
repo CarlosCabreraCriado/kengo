@@ -857,3 +857,157 @@ export async function createDirectusSessionForUser(
 
   return { sessionToken, expires };
 }
+
+// =========================
+//  RECUPERACIÓN DE CONTRASEÑA
+// =========================
+
+export type CodigoRecuperacionError =
+  | 'CODIGO_INVALIDO'
+  | 'CODIGO_EXPIRADO'
+  | 'INTENTOS_AGOTADOS';
+
+/**
+ * Genera un código de recuperación de 6 dígitos
+ */
+export function generateRecoveryCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+/**
+ * Obtiene un usuario por su email
+ */
+export async function getUserByEmail(email: string): Promise<DirectusUserData | null> {
+  const normalizedEmail = email.toLowerCase().trim();
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/users?filter[email][_eq]=${encodeURIComponent(normalizedEmail)}&limit=1&fields=id,first_name,last_name,email,telefono,direccion`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.data && json.data.length > 0 ? json.data[0] : null;
+}
+
+/**
+ * Cuenta las solicitudes de recuperación de un email en la última hora (rate limiting)
+ */
+export async function countRecentRecoveryRequests(email: string): Promise<number> {
+  const pool = (await import('../utils/database')).default;
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const [rows] = await pool.execute(
+    `SELECT COUNT(*) as count FROM codigos_recuperacion
+     WHERE email = ? AND date_created > ?`,
+    [normalizedEmail, oneHourAgo]
+  );
+
+  return (rows as any)[0].count;
+}
+
+/**
+ * Crea un código de recuperación de contraseña
+ */
+export async function createCodigoRecuperacion(
+  email: string,
+  ip?: string
+): Promise<{ codigo: string; expira: Date }> {
+  const pool = (await import('../utils/database')).default;
+  const codigo = generateRecoveryCode();
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Expiración: 15 minutos desde ahora
+  const expira = new Date();
+  expira.setMinutes(expira.getMinutes() + 15);
+
+  await pool.execute(
+    `INSERT INTO codigos_recuperacion (email, codigo, fecha_expiracion, intentos_fallidos, usado, ip_solicitante, date_created)
+     VALUES (?, ?, ?, 0, false, ?, NOW())`,
+    [normalizedEmail, codigo, expira, ip || null]
+  );
+
+  return { codigo, expira };
+}
+
+/**
+ * Valida un código de recuperación
+ */
+export async function validarCodigoRecuperacion(
+  email: string,
+  codigo: string
+): Promise<{ valido: boolean; error?: CodigoRecuperacionError; codigoId?: number }> {
+  const pool = (await import('../utils/database')).default;
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const [rows] = await pool.execute(
+    `SELECT id, codigo, fecha_expiracion, intentos_fallidos, usado
+     FROM codigos_recuperacion
+     WHERE email = ? AND usado = false
+     ORDER BY date_created DESC
+     LIMIT 1`,
+    [normalizedEmail]
+  );
+
+  const codigoData = (rows as any[])[0];
+
+  if (!codigoData) {
+    return { valido: false, error: 'CODIGO_INVALIDO' };
+  }
+
+  // Verificar si el código ha expirado
+  if (new Date(codigoData.fecha_expiracion) < new Date()) {
+    return { valido: false, error: 'CODIGO_EXPIRADO', codigoId: codigoData.id };
+  }
+
+  // Verificar intentos fallidos (máximo 3)
+  if (codigoData.intentos_fallidos >= 3) {
+    return { valido: false, error: 'INTENTOS_AGOTADOS', codigoId: codigoData.id };
+  }
+
+  // Verificar si el código coincide
+  if (codigoData.codigo !== codigo) {
+    // Incrementar intentos fallidos
+    await pool.execute(
+      `UPDATE codigos_recuperacion SET intentos_fallidos = intentos_fallidos + 1 WHERE id = ?`,
+      [codigoData.id]
+    );
+    return { valido: false, error: 'CODIGO_INVALIDO', codigoId: codigoData.id };
+  }
+
+  return { valido: true, codigoId: codigoData.id };
+}
+
+/**
+ * Marca un código de recuperación como usado
+ */
+export async function marcarCodigoUsado(codigoId: number): Promise<void> {
+  const pool = (await import('../utils/database')).default;
+  await pool.execute(
+    `UPDATE codigos_recuperacion SET usado = true WHERE id = ?`,
+    [codigoId]
+  );
+}
+
+/**
+ * Actualiza la contraseña de un usuario en Directus
+ */
+export async function updateUserPassword(userId: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${process.env.DIRECTUS_URL}/users/${userId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+    body: JSON.stringify({ password: newPassword }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Error actualizando contraseña: ${res.status} - ${text}`);
+  }
+}

@@ -27,6 +27,20 @@ export const routes: Routes = [
         (m) => m.RegistroComponent
       ),
   },
+  {
+    path: 'recuperar-password',
+    loadComponent: () =>
+      import('./features/auth/pages/recuperar-password/recuperar-password.component').then(
+        (m) => m.RecuperarPasswordComponent
+      ),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/auth/pages/reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent
+      ),
+  },
 
   // Dashboard (inicio)
   {
