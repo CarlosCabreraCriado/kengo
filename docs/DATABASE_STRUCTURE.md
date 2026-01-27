@@ -364,8 +364,6 @@ Tabla principal de usuarios del sistema, extendida con campos especificos de Ken
 | `last_access` | TIMESTAMP | Ultimo acceso |
 | `provider` | VARCHAR(128) | Proveedor de autenticacion (default: 'default') |
 | **Campos Kengo:** | | |
-| `is_fisio` | TINYINT(1) | Es fisioterapeuta (default: 0) |
-| `is_cliente` | TINYINT(1) | Es cliente/paciente (default: 0) |
 | `telefono` | VARCHAR(255) | Telefono de contacto |
 | `direccion` | VARCHAR(255) | Direccion |
 | `postal` | VARCHAR(255) | Codigo postal |

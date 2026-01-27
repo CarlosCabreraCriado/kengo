@@ -283,8 +283,6 @@ Tabla principal de usuarios del sistema (extendida con campos personalizados).
 
 | Campo Personalizado | Tipo | Descripción |
 |---------------------|------|-------------|
-| `is_fisio` | TINYINT(1) | Es fisioterapeuta (default: 0) |
-| `is_cliente` | TINYINT(1) | Es cliente/paciente (default: 0) |
 | `telefono` | VARCHAR(255) | Teléfono del usuario |
 | `direccion` | VARCHAR(255) | Dirección del usuario |
 | `postal` | VARCHAR(255) | Código postal |

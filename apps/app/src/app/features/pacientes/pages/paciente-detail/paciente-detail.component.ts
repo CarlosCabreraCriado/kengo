@@ -140,7 +140,7 @@ export class PacienteDetailComponent implements OnInit {
       const response = await firstValueFrom(
         this.http.get<DirectusUserResponse>(`${env.DIRECTUS_URL}/users/${id}`, {
           params: {
-            fields: 'id,first_name,last_name,email,avatar,telefono,direccion,magic_link_url,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,is_cliente,is_fisio',
+            fields: 'id,first_name,last_name,email,avatar,telefono,direccion,magic_link_url,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,clinicas.id_puesto',
           },
           withCredentials: true,
         })

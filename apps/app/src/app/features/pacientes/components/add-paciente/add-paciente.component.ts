@@ -14,7 +14,7 @@ import {
   ProgressBarComponent,
 } from '../../../../shared';
 
-import { Usuario, UsuarioDirectus } from '../../../../../types/global';
+import { Usuario, UsuarioDirectus, PUESTO_PACIENTE } from '../../../../../types/global';
 
 interface DialogData {
   idsClinicas: ID[]; // clínicas que puede ver/asignar el usuario actual
@@ -152,13 +152,13 @@ export class AddPacienteDialogComponent {
     try {
       if (!this.isEdit()) {
         // ---- CREAR
+        // Role is determined by id_puesto in clinic relationship, not is_cliente flag
         const payload = {
           ...baseUser,
           role: env.ROL_PACIENTE_ID,
-          is_cliente: true,
           clinicas: (v.clinicas || []).map((cid: ID) => ({
             id_clinica: cid,
-            puesto: 2,
+            id_puesto: PUESTO_PACIENTE,
           })),
         };
 
@@ -204,13 +204,13 @@ export class AddPacienteDialogComponent {
         const toAdd: ID[] = [...targetIds].filter((x) => !currentIds.has(x));
         const toRemove: ID[] = [...currentIds].filter((x) => !targetIds.has(x));
 
-        // Crear enlaces nuevos (puesto=2)
+        // Crear enlaces nuevos (id_puesto = PUESTO_PACIENTE)
         await Promise.all(
           toAdd.map((cid) =>
             this.http
               .post(
                 `${env.DIRECTUS_URL}/items/usuarios_clinicas`,
-                { id_usuario: userId, id_clinica: cid, puesto: 2 },
+                { id_usuario: userId, id_clinica: cid, id_puesto: PUESTO_PACIENTE },
               )
               .toPromise(),
           ),

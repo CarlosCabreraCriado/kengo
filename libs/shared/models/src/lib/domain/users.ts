@@ -55,7 +55,9 @@ export interface Usuario {
   magic_link_url?: string;
   clinicas: ClinicaUsuario[];
   postal?: string;
+  /** @computed Derivado de clinicas[].id_puesto - true si fisioterapeuta(1) o admin(4) en alguna clínica */
   esFisio: boolean;
+  /** @computed Derivado de clinicas[].id_puesto - true si paciente(2) en alguna clínica o sin acceso fisio */
   esPaciente: boolean;
   numero_colegiado?: string;
 }

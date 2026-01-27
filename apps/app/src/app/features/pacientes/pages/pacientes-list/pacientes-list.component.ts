@@ -104,7 +104,7 @@ export class PacientesListComponent {
         method: 'GET',
         params: {
           fields:
-            'id,first_name,last_name,email,avatar,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,magic_link_url,is_cliente,is_fisio,telefono,direccion',
+            'id,first_name,last_name,email,avatar,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,magic_link_url,telefono,direccion',
           sort: 'first_name,last_name',
           limit: '200', // ajusta/añade paginación si lo necesitas
           filter: JSON.stringify(filter),

@@ -3,7 +3,15 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { signal, computed, inject } from '@angular/core';
 import { environment as env } from '../../../../environments/environment';
-import { RolUsuario, Usuario, UsuarioDirectus } from '../../../../types/global';
+import {
+  RolUsuario,
+  Usuario,
+  UsuarioDirectus,
+  ClinicaUsuarioDirectus,
+  PUESTO_FISIOTERAPEUTA,
+  PUESTO_PACIENTE,
+  PUESTO_ADMINISTRADOR,
+} from '../../../../types/global';
 import { firstValueFrom } from 'rxjs';
 
 /**
@@ -63,7 +71,7 @@ export class SessionService {
         .get<{ data: UsuarioDirectus }>(`${env.DIRECTUS_URL}/users/me`, {
           params: {
             fields:
-              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,is_cliente,is_fisio,telefono,direccion,postal,numero_colegiado',
+              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,telefono,direccion,postal,numero_colegiado',
           },
         })
         .toPromise();
@@ -88,9 +96,14 @@ export class SessionService {
       this.router.navigate(['/login']);
       localStorage.removeItem('carrito:last_fisio_id');
     } finally {
-      if (this._usuario()?.esFisio) {
-        this._rolUsuario.set('fisio');
+      const u = this._usuario();
+      if (u?.esFisio && u?.esPaciente) {
+        // Usuario con roles mixtos (fisio en una clínica, paciente en otra)
+        this._rolUsuario.set('fisio'); // Default a fisio
         this.permitirMultiRol.set(true);
+      } else if (u?.esFisio) {
+        this._rolUsuario.set('fisio');
+        this.permitirMultiRol.set(false);
       } else {
         this._rolUsuario.set('paciente');
         this.permitirMultiRol.set(false);
@@ -119,6 +132,16 @@ export class SessionService {
   }
 
   transformarUsuarioDirectus(u: UsuarioDirectus): Usuario {
+    const clinicas =
+      u.clinicas?.map((c) => ({
+        id_clinica: c.id_clinica,
+        id_puesto: c.id_puesto ?? null,
+        puesto: c.puesto?.puesto ?? null,
+      })) || [];
+
+    // Compute roles from clinic relationships
+    const { esFisio, esPaciente } = this.computeRoleFromClinics(u.clinicas || []);
+
     return {
       id: u.id,
       avatar: u.avatar ?? null,
@@ -131,15 +154,34 @@ export class SessionService {
       magic_link_url: u.magic_link_url || undefined,
       postal: u.postal || undefined,
       detalle: null, // aquí podrás cargar "detalle_usuario" más abajo
-      clinicas:
-        u.clinicas?.map((c) => ({
-          id_clinica: c.id_clinica,
-          id_puesto: c.id_puesto ?? null,
-          puesto: c.puesto?.puesto ?? null,
-        })) || [],
-      esFisio: !!u.is_fisio,
-      esPaciente: !!u.is_cliente,
+      clinicas,
+      esFisio,
+      esPaciente,
       numero_colegiado: u.numero_colegiado || undefined,
+    };
+  }
+
+  /**
+   * Computes user role based on clinic relationships (id_puesto)
+   * - Fisioterapeuta (1) or Administrador (4) → esFisio = true
+   * - Paciente (2) → esPaciente = true
+   * - No clinics → defaults to paciente view
+   */
+  private computeRoleFromClinics(
+    clinicas: ClinicaUsuarioDirectus[],
+  ): { esFisio: boolean; esPaciente: boolean } {
+    if (!clinicas || clinicas.length === 0) {
+      return { esFisio: false, esPaciente: true }; // Sin clínica = paciente
+    }
+
+    const hasFisioAccess = clinicas.some(
+      (c) => c.id_puesto === PUESTO_FISIOTERAPEUTA || c.id_puesto === PUESTO_ADMINISTRADOR,
+    );
+    const hasPacienteAccess = clinicas.some((c) => c.id_puesto === PUESTO_PACIENTE);
+
+    return {
+      esFisio: hasFisioAccess,
+      esPaciente: hasPacienteAccess || !hasFisioAccess,
     };
   }
 

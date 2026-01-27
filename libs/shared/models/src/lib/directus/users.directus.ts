@@ -43,7 +43,5 @@ export interface UsuarioDirectus {
   magic_link_url?: string;
   clinicas: ClinicaUsuarioDirectus[];
   postal?: string;
-  is_fisio: boolean;
-  is_cliente: boolean;
   numero_colegiado?: string;
 }

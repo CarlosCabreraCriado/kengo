@@ -219,7 +219,7 @@ export class PlanBuilderService {
         {
           params: {
             fields:
-              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,is_cliente,is_fisio,telefono,direccion,postal',
+              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,telefono,direccion,postal',
           },
         },
       )
@@ -442,8 +442,8 @@ export class PlanBuilderService {
       'paciente.email',
       'paciente.avatar',
       'paciente.telefono',
-      'paciente.is_fisio',
-      'paciente.is_cliente',
+      'paciente.clinicas.id_clinica',
+      'paciente.clinicas.id_puesto',
       'fisio.id',
       'ejercicios.id',
       'ejercicios.sort',

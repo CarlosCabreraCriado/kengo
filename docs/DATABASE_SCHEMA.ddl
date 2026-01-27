@@ -231,8 +231,6 @@ CREATE TABLE `directus_users` (
   `theme_light` varchar(255) DEFAULT NULL,
   `theme_light_overrides` json DEFAULT NULL,
   `theme_dark_overrides` json DEFAULT NULL,
-  `is_fisio` tinyint(1) DEFAULT '0',
-  `is_cliente` tinyint(1) DEFAULT '0',
   `text_direction` varchar(255) NOT NULL DEFAULT 'auto',
   `telefono` varchar(255) DEFAULT NULL,
   `direccion` varchar(255) DEFAULT NULL,

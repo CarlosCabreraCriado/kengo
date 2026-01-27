@@ -13,6 +13,8 @@ import {
   Clinica,
   ClinicaDirectus,
   ID,
+  PUESTO_FISIOTERAPEUTA,
+  PUESTO_ADMINISTRADOR,
 } from '../../../../types/global';
 
 interface DirectusPage<T> {
@@ -122,11 +124,14 @@ export class ClinicasService {
             'clinicas.puesto.id',
             'clinicas.puesto.puesto',
           ].join(','),
+          // Filter by puesto in clinic (fisioterapeuta or administrador)
           filter: JSON.stringify({
-            _and: [
-              { is_fisio: { _eq: true } },
-              { clinicas: { id_clinica: { _in: ids } } }, // Variante A
-            ],
+            clinicas: {
+              _and: [
+                { id_clinica: { _in: ids } },
+                { id_puesto: { _in: [PUESTO_FISIOTERAPEUTA, PUESTO_ADMINISTRADOR] } },
+              ],
+            },
           }),
           limit: '500',
           sort: 'first_name,last_name',
