@@ -234,21 +234,6 @@
           }
         </div>
 
-        <!-- Botón Recargar -->
-        <button
-          type="button"
-          class="flex h-12 w-12 items-center justify-center
-                 rounded-2xl bg-white/70 backdrop-blur-xl
-                 border border-white/50 shadow-sm
-                 text-zinc-600 transition-all duration-200
-                 hover:bg-white/90 hover:shadow-md active:scale-95
-                 group"
-          (click)="reloadEjercicios()"
-          aria-label="Recargar ejercicios"
-        >
-          <span class="material-symbols-outlined text-xl transition-transform duration-500 group-hover:rotate-180">refresh</span>
-        </button>
-
         <!-- DESKTOP: Controles de vista y favoritos -->
         @if (!isMovil()) {
           <div class="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200/50">
