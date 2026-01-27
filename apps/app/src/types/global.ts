@@ -118,6 +118,12 @@ export {
   CrearClinicaResponse,
   GenerarCodigoPayload,
   GenerarCodigoResponse,
+  // Email verification payloads
+  EnviarVerificacionPayload,
+  VerificarEmailPayload,
+  VerificacionEmailErrorCode,
+  EnviarVerificacionResult,
+  VerificarEmailResult,
 } from '@kengo/shared-models';
 
 // ============================================

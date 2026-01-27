@@ -18,6 +18,7 @@ import { map } from 'rxjs/operators';
 
 // Servicios
 import { SessionService } from '../../../../../core/auth/services/session.service';
+import { EmailVerificationService } from '../../../../../core/auth/services/email-verification.service';
 
 // Types
 import { Usuario } from '../../../../../../types/global';
@@ -38,6 +39,7 @@ import { KENGO_BREAKPOINTS } from '../../../../../shared';
 })
 export class PerfilComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
+  private emailVerificationService = inject(EmailVerificationService);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
   private breakpointObserver = inject(BreakpointObserver);
@@ -60,6 +62,15 @@ export class PerfilComponent implements OnInit, OnDestroy {
   // === OVERLAY PANELS ===
   public showPrivacyPolicy = signal(false);
   public showTermsConditions = signal(false);
+
+  // === EMAIL VERIFICATION ===
+  public emailVerified = computed(() => this.sessionService.usuario()?.email_verified ?? false);
+  public showVerificationPanel = signal(false);
+  public verificationCode = signal('');
+  public sendingCode = signal(false);
+  public verifyingCode = signal(false);
+  public verificationMessage = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+  public codeSent = signal(false);
 
   @ViewChild('personalSection') personalSection!: ElementRef<HTMLElement>;
   @ViewChild('securitySection') securitySection!: ElementRef<HTMLElement>;
@@ -415,6 +426,102 @@ export class PerfilComponent implements OnInit, OnDestroy {
           block: 'start',
         });
       }, 100);
+    }
+  }
+
+  // === MÉTODOS DE VERIFICACIÓN DE EMAIL ===
+
+  toggleVerificationPanel() {
+    this.showVerificationPanel.update((v) => !v);
+    if (!this.showVerificationPanel()) {
+      this.resetVerificationState();
+    }
+  }
+
+  private resetVerificationState() {
+    this.verificationCode.set('');
+    this.verificationMessage.set(null);
+    this.codeSent.set(false);
+  }
+
+  async enviarCodigoVerificacion() {
+    this.sendingCode.set(true);
+    this.verificationMessage.set(null);
+
+    try {
+      const result = await this.emailVerificationService.enviarCodigo();
+
+      if (result.success) {
+        this.codeSent.set(true);
+        this.verificationMessage.set({
+          type: 'success',
+          text: 'Código enviado. Revisa tu email.',
+        });
+      } else {
+        this.verificationMessage.set({
+          type: 'error',
+          text: result.message || 'Error enviando el código',
+        });
+      }
+    } catch {
+      this.verificationMessage.set({
+        type: 'error',
+        text: 'Error enviando el código',
+      });
+    } finally {
+      this.sendingCode.set(false);
+    }
+  }
+
+  onCodeInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    // Solo permitir dígitos y máximo 6 caracteres
+    const value = input.value.replace(/\D/g, '').slice(0, 6);
+    this.verificationCode.set(value);
+    input.value = value;
+  }
+
+  async verificarEmail() {
+    const code = this.verificationCode();
+    if (code.length !== 6) {
+      this.verificationMessage.set({
+        type: 'error',
+        text: 'Introduce el código de 6 dígitos',
+      });
+      return;
+    }
+
+    this.verifyingCode.set(true);
+    this.verificationMessage.set(null);
+
+    try {
+      const result = await this.emailVerificationService.verificarEmail(code);
+
+      if (result.success) {
+        this.verificationMessage.set({
+          type: 'success',
+          text: 'Email verificado correctamente',
+        });
+        // Recargar usuario para actualizar el estado
+        await this.sessionService.refreshUsuario();
+        // Cerrar panel después de un momento
+        setTimeout(() => {
+          this.showVerificationPanel.set(false);
+          this.resetVerificationState();
+        }, 1500);
+      } else {
+        this.verificationMessage.set({
+          type: 'error',
+          text: result.message || 'Código incorrecto',
+        });
+      }
+    } catch {
+      this.verificationMessage.set({
+        type: 'error',
+        text: 'Error verificando el código',
+      });
+    } finally {
+      this.verifyingCode.set(false);
     }
   }
 }

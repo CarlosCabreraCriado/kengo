@@ -71,7 +71,7 @@ export class SessionService {
         .get<{ data: UsuarioDirectus }>(`${env.DIRECTUS_URL}/users/me`, {
           params: {
             fields:
-              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,telefono,direccion,postal,numero_colegiado',
+              'id,first_name,last_name,email,email_verified,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,telefono,direccion,postal,numero_colegiado',
           },
         })
         .toPromise();
@@ -149,6 +149,7 @@ export class SessionService {
       first_name: u.first_name ?? '',
       last_name: u.last_name ?? '',
       email: u.email ?? '',
+      email_verified: u.email_verified ?? false,
       telefono: u.telefono || undefined,
       direccion: u.direccion || undefined,
       magic_link_url: u.magic_link_url || undefined,

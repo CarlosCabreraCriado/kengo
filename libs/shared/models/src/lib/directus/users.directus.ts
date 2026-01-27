@@ -36,6 +36,7 @@ export interface UsuarioDirectus {
   first_name: string;
   last_name: string;
   email: string;
+  email_verified?: boolean;
   detalle: DetalleUsuarioDirectus | null;
   avatar_url?: string;
   telefono?: string;

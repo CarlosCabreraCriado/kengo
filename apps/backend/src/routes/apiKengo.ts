@@ -5,6 +5,7 @@ import { registroController } from "../controllers/registro";
 import { clinicaController } from "../controllers/clinica";
 import { tokenAccesoController } from "../controllers/tokenAcceso";
 import { passwordResetController } from "../controllers/passwordReset";
+import { emailVerificationController } from "../controllers/emailVerification";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
@@ -15,6 +16,10 @@ router.post("/registro", registroController.registrar);
 // Recuperacion de contrasena (no requiere auth)
 router.post("/auth/recuperar-password", passwordResetController.solicitarCodigo);
 router.post("/auth/reset-password", passwordResetController.resetPassword);
+
+// Verificacion de email (requiere auth)
+router.post("/auth/enviar-verificacion", authMiddleware, emailVerificationController.enviarCodigo);
+router.post("/auth/verificar-email", authMiddleware, emailVerificationController.verificarEmail);
 
 router.post("/getUsuarioById", usuarioController.getUsuarioById);
 

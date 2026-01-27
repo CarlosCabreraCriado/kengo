@@ -38,3 +38,4 @@ export * from './lib/payloads/routines.payload';
 export * from './lib/payloads/users.payload';
 export * from './lib/payloads/clinics.payload';
 export * from './lib/payloads/password-reset.payload';
+export * from './lib/payloads/email-verification.payload';

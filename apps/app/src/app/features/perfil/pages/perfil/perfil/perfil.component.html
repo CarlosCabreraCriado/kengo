@@ -124,6 +124,102 @@
         </div>
       </article>
 
+      <!-- Email Verification Banner -->
+      @if (!emailVerified()) {
+        <section class="email-verification-banner animate-in" style="--delay: 0.05s">
+          <div class="banner-header" (click)="toggleVerificationPanel()">
+            <div class="banner-icon">
+              <span class="material-symbols-outlined">warning</span>
+            </div>
+            <div class="banner-content">
+              <h4 class="banner-title">Email no verificado</h4>
+              <p class="banner-subtitle">Verifica tu email para mayor seguridad</p>
+            </div>
+            <span class="material-symbols-outlined banner-arrow" [class.rotated]="showVerificationPanel()">
+              expand_more
+            </span>
+          </div>
+
+          @if (showVerificationPanel()) {
+            <div class="banner-panel">
+              <!-- Message feedback -->
+              @if (verificationMessage()) {
+                <div class="verification-message" [class.success]="verificationMessage()?.type === 'success'" [class.error]="verificationMessage()?.type === 'error'">
+                  <span class="material-symbols-outlined">
+                    {{ verificationMessage()?.type === 'success' ? 'check_circle' : 'error' }}
+                  </span>
+                  {{ verificationMessage()?.text }}
+                </div>
+              }
+
+              @if (!codeSent()) {
+                <!-- Step 1: Send code -->
+                <p class="panel-text">
+                  Te enviaremos un código de 6 dígitos a <strong>{{ usuario()?.email }}</strong>
+                </p>
+                <button
+                  type="button"
+                  class="verification-btn primary"
+                  [disabled]="sendingCode()"
+                  (click)="enviarCodigoVerificacion()"
+                >
+                  @if (sendingCode()) {
+                    <div class="btn-spinner"></div>
+                  } @else {
+                    <span class="material-symbols-outlined">send</span>
+                  }
+                  Enviar código
+                </button>
+              } @else {
+                <!-- Step 2: Enter code -->
+                <p class="panel-text">
+                  Introduce el código que hemos enviado a tu email
+                </p>
+                <div class="code-input-wrapper">
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="6"
+                    placeholder="000000"
+                    class="code-input"
+                    [value]="verificationCode()"
+                    (input)="onCodeInput($event)"
+                  />
+                </div>
+                <div class="panel-actions">
+                  <button
+                    type="button"
+                    class="verification-btn secondary"
+                    [disabled]="sendingCode()"
+                    (click)="enviarCodigoVerificacion()"
+                  >
+                    @if (sendingCode()) {
+                      <div class="btn-spinner"></div>
+                    } @else {
+                      <span class="material-symbols-outlined">refresh</span>
+                    }
+                    Reenviar
+                  </button>
+                  <button
+                    type="button"
+                    class="verification-btn primary"
+                    [disabled]="verifyingCode() || verificationCode().length !== 6"
+                    (click)="verificarEmail()"
+                  >
+                    @if (verifyingCode()) {
+                      <div class="btn-spinner"></div>
+                    } @else {
+                      <span class="material-symbols-outlined">verified</span>
+                    }
+                    Verificar
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      }
+
       <!-- Quick Actions -->
       <section class="quick-actions animate-in" style="--delay: 0.1s">
         <button type="button" class="quick-action primary" (click)="scrollToSection('personal')">

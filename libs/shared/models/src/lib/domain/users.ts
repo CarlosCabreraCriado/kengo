@@ -48,6 +48,7 @@ export interface Usuario {
   first_name: string;
   last_name: string;
   email: string;
+  email_verified: boolean;
   detalle: DetalleUsuario | null;
   telefono?: string;
   direccion?: string;

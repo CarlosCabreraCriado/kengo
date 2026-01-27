@@ -539,6 +539,7 @@ export class PlanesService {
       first_name: u.first_name || '',
       last_name: u.last_name || '',
       email: u.email || '',
+      email_verified: u.email_verified ?? false,
       avatar: u.avatar || '',
       detalle: null,
       clinicas: [],

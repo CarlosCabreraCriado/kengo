@@ -1011,3 +1011,138 @@ export async function updateUserPassword(userId: string, newPassword: string): P
     throw new Error(`Error actualizando contraseña: ${res.status} - ${text}`);
   }
 }
+
+// =========================
+//  VERIFICACIÓN DE EMAIL
+// =========================
+
+export type CodigoVerificacionError =
+  | 'CODIGO_INVALIDO'
+  | 'CODIGO_EXPIRADO'
+  | 'INTENTOS_AGOTADOS';
+
+/**
+ * Genera un código de verificación de 6 dígitos
+ */
+export function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+/**
+ * Cuenta las solicitudes de verificación de un email en la última hora (rate limiting)
+ */
+export async function countRecentVerificationRequests(email: string): Promise<number> {
+  const pool = (await import('../utils/database')).default;
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const [rows] = await pool.execute(
+    `SELECT COUNT(*) as count FROM codigos_verificacion_email
+     WHERE email = ? AND date_created > ?`,
+    [normalizedEmail, oneHourAgo]
+  );
+
+  return (rows as any)[0].count;
+}
+
+/**
+ * Crea un código de verificación de email
+ */
+export async function createCodigoVerificacion(
+  email: string,
+  ip?: string
+): Promise<{ codigo: string; expira: Date }> {
+  const pool = (await import('../utils/database')).default;
+  const codigo = generateVerificationCode();
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Expiración: 15 minutos desde ahora
+  const expira = new Date();
+  expira.setMinutes(expira.getMinutes() + 15);
+
+  await pool.execute(
+    `INSERT INTO codigos_verificacion_email (email, codigo, fecha_expiracion, intentos_fallidos, usado, ip_solicitante, date_created)
+     VALUES (?, ?, ?, 0, false, ?, NOW())`,
+    [normalizedEmail, codigo, expira, ip || null]
+  );
+
+  return { codigo, expira };
+}
+
+/**
+ * Valida un código de verificación de email
+ */
+export async function validarCodigoVerificacion(
+  email: string,
+  codigo: string
+): Promise<{ valido: boolean; error?: CodigoVerificacionError; codigoId?: number }> {
+  const pool = (await import('../utils/database')).default;
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const [rows] = await pool.execute(
+    `SELECT id, codigo, fecha_expiracion, intentos_fallidos, usado
+     FROM codigos_verificacion_email
+     WHERE email = ? AND usado = false
+     ORDER BY date_created DESC
+     LIMIT 1`,
+    [normalizedEmail]
+  );
+
+  const codigoData = (rows as any[])[0];
+
+  if (!codigoData) {
+    return { valido: false, error: 'CODIGO_INVALIDO' };
+  }
+
+  // Verificar si el código ha expirado
+  if (new Date(codigoData.fecha_expiracion) < new Date()) {
+    return { valido: false, error: 'CODIGO_EXPIRADO', codigoId: codigoData.id };
+  }
+
+  // Verificar intentos fallidos (máximo 3)
+  if (codigoData.intentos_fallidos >= 3) {
+    return { valido: false, error: 'INTENTOS_AGOTADOS', codigoId: codigoData.id };
+  }
+
+  // Verificar si el código coincide
+  if (codigoData.codigo !== codigo) {
+    // Incrementar intentos fallidos
+    await pool.execute(
+      `UPDATE codigos_verificacion_email SET intentos_fallidos = intentos_fallidos + 1 WHERE id = ?`,
+      [codigoData.id]
+    );
+    return { valido: false, error: 'CODIGO_INVALIDO', codigoId: codigoData.id };
+  }
+
+  return { valido: true, codigoId: codigoData.id };
+}
+
+/**
+ * Marca un código de verificación como usado
+ */
+export async function marcarCodigoVerificacionUsado(codigoId: number): Promise<void> {
+  const pool = (await import('../utils/database')).default;
+  await pool.execute(
+    `UPDATE codigos_verificacion_email SET usado = true WHERE id = ?`,
+    [codigoId]
+  );
+}
+
+/**
+ * Actualiza el campo email_verified de un usuario
+ */
+export async function updateUserEmailVerified(userId: string, verified: boolean): Promise<void> {
+  const res = await fetch(`${process.env.DIRECTUS_URL}/users/${userId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+    },
+    body: JSON.stringify({ email_verified: verified }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Error actualizando email_verified: ${res.status} - ${text}`);
+  }
+}

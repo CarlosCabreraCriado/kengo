@@ -37,6 +37,7 @@ export interface DirectusUserDB {
   theme_light_overrides: unknown | null;
   theme_dark_overrides: unknown | null;
   text_direction: string;
+  email_verified: boolean;
   telefono: string | null;
   direccion: string | null;
   postal: string | null;

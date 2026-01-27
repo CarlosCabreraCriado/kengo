@@ -459,3 +459,118 @@ export async function sendPasswordResetEmail({ email, codigo, nombre }: Password
     return false;
   }
 }
+
+// =========================
+//  VERIFICACIÓN DE EMAIL
+// =========================
+
+interface EmailVerificationParams {
+  email: string;
+  codigo: string;
+  nombre?: string;
+}
+
+/**
+ * Genera el template HTML para el email de verificación
+ */
+function getEmailVerificationTemplate(codigo: string, nombre?: string): string {
+  const greeting = nombre ? `¡Hola ${nombre}!` : '¡Hola!';
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifica tu email - Kengo</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #e75c3e 0%, #d4503a 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">Kengo</h1>
+              <p style="margin: 10px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">Tu plataforma de fisioterapia</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+                ${greeting}
+              </h2>
+              <p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Utiliza el siguiente código para verificar tu dirección de email en <strong style="color: #e75c3e;">Kengo</strong>.
+              </p>
+
+              <!-- Código de verificación -->
+              <div style="background-color: #f8f8f8; border: 2px dashed #e75c3e; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+                <p style="margin: 0 0 8px 0; color: #666666; font-size: 14px;">Tu código de verificación:</p>
+                <p style="margin: 0; font-family: ui-monospace, monospace; font-size: 40px; font-weight: 700; letter-spacing: 0.2em; color: #1a1a1a;">${codigo}</p>
+              </div>
+
+              <p style="margin: 0 0 12px 0; color: #4a4a4a; font-size: 14px; line-height: 1.6;">
+                Introduce este código en la aplicación para completar la verificación de tu email.
+              </p>
+
+              <p style="margin: 0 0 24px 0; color: #e75c3e; font-size: 14px; font-weight: 500; line-height: 1.6;">
+                Este código expira en 15 minutos.
+              </p>
+
+              <p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5;">
+                Si no solicitaste verificar tu email, puedes ignorar este mensaje.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9f9f9; padding: 24px 30px; border-top: 1px solid #eaeaea;">
+              <p style="margin: 0; color: #888888; font-size: 12px; text-align: center; line-height: 1.5;">
+                Este email fue enviado por Kengo.<br>
+                Por seguridad, nunca compartas este código con nadie.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+/**
+ * Envía un email con el código de verificación
+ */
+export async function sendEmailVerificationEmail({ email, codigo, nombre }: EmailVerificationParams): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[Email] RESEND_API_KEY no configurada, omitiendo envío de email');
+    return false;
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'Kengo <noreply@kengoapp.com>',
+      to: email,
+      subject: `${codigo} - Verifica tu email en Kengo`,
+      html: getEmailVerificationTemplate(codigo, nombre),
+    });
+
+    if (error) {
+      console.error('[Email] Error enviando email de verificación:', error);
+      return false;
+    }
+
+    console.log(`[Email] Email de verificación enviado a ${email}`);
+    return true;
+  } catch (err) {
+    console.error('[Email] Error inesperado enviando email:', err);
+    return false;
+  }
+}
