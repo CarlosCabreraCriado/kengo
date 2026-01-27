@@ -855,7 +855,4 @@
     @apply inline;
   }
 
-  .stats-section {
-    @apply sticky top-4;
-  }
 }
