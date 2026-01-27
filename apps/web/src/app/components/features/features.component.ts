@@ -7,178 +7,264 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section id="features" class="features-section">
-      <!-- Animated Wave Background -->
-      <div class="wave-container">
-        <svg class="wave wave-1" viewBox="0 0 1440 320" preserveAspectRatio="none">
-          <path fill="rgba(231, 92, 62, 0.08)" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,181.3C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-        </svg>
-        <svg class="wave wave-2" viewBox="0 0 1440 320" preserveAspectRatio="none">
-          <path fill="rgba(239, 192, 72, 0.06)" d="M0,64L48,96C96,128,192,192,288,202.7C384,213,480,171,576,144C672,117,768,107,864,128C960,149,1056,203,1152,208C1248,213,1344,171,1392,149.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-        </svg>
-        <svg class="wave wave-3" viewBox="0 0 1440 320" preserveAspectRatio="none">
-          <path fill="rgba(231, 92, 62, 0.05)" d="M0,256L48,234.7C96,213,192,171,288,165.3C384,160,480,192,576,208C672,224,768,224,864,197.3C960,171,1056,117,1152,112C1248,107,1344,149,1392,170.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-        </svg>
+      <!-- Mesh Gradient Background -->
+      <div class="mesh-bg">
+        <div class="mesh-blob mesh-1"></div>
+        <div class="mesh-blob mesh-2"></div>
+        <div class="mesh-blob mesh-3"></div>
       </div>
 
-      <!-- Aurora Orbs -->
-      <div class="aurora-orb aurora-orb-1"></div>
-      <div class="aurora-orb aurora-orb-2"></div>
-      <div class="aurora-orb aurora-orb-3"></div>
+      <!-- Floating Grid Pattern -->
+      <div class="grid-pattern"></div>
 
       <div class="features-content">
-        <!-- Section Header -->
-        <header class="section-header">
-          <div class="badge-container">
-            <span class="section-badge">
-              <span class="badge-dot"></span>
-              Funcionalidades
-            </span>
+        <!-- Editorial Header -->
+        <header class="editorial-header">
+          <div class="header-layout">
+            <div class="header-left">
+              <span class="issue-label">Funcionalidades</span>
+              <h2 class="mega-title">
+                <span class="title-line">Herramientas</span>
+                <span class="title-line accent">que curan</span>
+              </h2>
+            </div>
+            <div class="header-right">
+              <p class="header-description">
+                Tecnologia disenada por fisioterapeutas para transformar la recuperacion de tus pacientes.
+              </p>
+              <div class="stat-pill">
+                <span class="stat-number">+500</span>
+                <span class="stat-text">ejercicios HD</span>
+              </div>
+            </div>
           </div>
-          <h2 class="section-title">
-            Todo lo que necesitas para
-            <span class="title-highlight">mejorar</span>
-          </h2>
-          <p class="section-description">
-            Herramientas disenadas para mejorar la adherencia y el seguimiento de tratamientos de fisioterapia.
-          </p>
+          <div class="header-divider">
+            <div class="divider-line"></div>
+            <div class="divider-dot"></div>
+          </div>
         </header>
 
-        <!-- Features Grid -->
-        <div class="features-grid">
-          @for (feature of features; track feature.id; let i = $index) {
-            <article
-              class="feature-card"
-              [style.--delay]="(i * 0.08) + 's'"
-            >
-              <!-- Glow Effect -->
-              <div class="card-glow" [style.--glow-color]="feature.glowColor"></div>
+        <!-- Bento Grid Layout -->
+        <div class="bento-grid">
+          <!-- Featured Card - Videos -->
+          <article class="bento-card featured" data-feature="videos">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="video-preview">
+                  <div class="preview-frame">
+                    <div class="frame-content">
+                      <div class="play-button">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <polygon points="8,5 19,12 8,19"/>
+                        </svg>
+                      </div>
+                      <div class="video-waves">
+                        <span></span><span></span><span></span><span></span><span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview-glow"></div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="card-badge">Catalogo</div>
+                <h3 class="card-title">Videos profesionales</h3>
+                <p class="card-description">
+                  Biblioteca curada con ejercicios grabados por fisioterapeutas. Instrucciones claras, demostraciones en HD.
+                </p>
+              </div>
+              <div class="card-number">01</div>
+            </div>
+          </article>
 
-              <!-- Icon Container -->
-              <div class="icon-container" [style.--icon-gradient]="feature.iconGradient">
-                <div class="icon-inner">
-                  @switch (feature.id) {
-                    @case ('videos') {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="4" width="20" height="16" rx="3"/>
-                        <polygon points="10,8 16,12 10,16" fill="currentColor" stroke="none"/>
-                      </svg>
+          <!-- Planes Card -->
+          <article class="bento-card vertical" data-feature="planes">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="calendar-visual">
+                  <div class="week-row">
+                    @for (day of weekDays; track day) {
+                      <div class="day-cell" [class.active]="day.active" [class.today]="day.today">
+                        <span class="day-letter">{{ day.letter }}</span>
+                        <span class="day-dot" *ngIf="day.active"></span>
+                      </div>
                     }
-                    @case ('planes') {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="4" y="3" width="16" height="18" rx="2"/>
-                        <path d="M8 7h8"/>
-                        <path d="M8 11h8"/>
-                        <path d="M8 15h5"/>
-                        <path d="M15 15l2 2 3-3" stroke="#22c55e" stroke-width="2"/>
-                      </svg>
-                    }
-                    @case ('seguimiento') {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 3v18h18"/>
-                        <path d="M7 16l4-4 4 4 5-6"/>
-                        <circle cx="20" cy="6" r="2.5" fill="#22c55e" stroke="none"/>
-                      </svg>
-                    }
-                    @case ('recordatorios') {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="card-badge gold">Personalizacion</div>
+                <h3 class="card-title">Planes a medida</h3>
+                <p class="card-description">
+                  Rutinas adaptadas a cada paciente, organizadas por dias de la semana.
+                </p>
+              </div>
+              <div class="card-number">02</div>
+            </div>
+          </article>
+
+          <!-- Seguimiento Card -->
+          <article class="bento-card" data-feature="seguimiento">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="chart-visual">
+                  <svg viewBox="0 0 120 60" class="mini-chart">
+                    <defs>
+                      <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#e75c3e" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="#e75c3e" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path class="chart-area" d="M0,45 Q20,40 30,35 T60,25 T90,15 T120,20 L120,60 L0,60 Z" fill="url(#chartGradient)"/>
+                    <path class="chart-line" d="M0,45 Q20,40 30,35 T60,25 T90,15 T120,20" fill="none" stroke="#e75c3e" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle class="chart-dot" cx="120" cy="20" r="4" fill="#e75c3e"/>
+                  </svg>
+                  <div class="trend-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M7 17l5-5 5 5"/>
+                      <path d="M7 11l5-5 5 5"/>
+                    </svg>
+                    Mejorando
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="card-badge green">Progreso</div>
+                <h3 class="card-title">Seguimiento del dolor</h3>
+                <p class="card-description">
+                  El paciente registra como se siente. Tu ajustas el tratamiento.
+                </p>
+              </div>
+              <div class="card-number">03</div>
+            </div>
+          </article>
+
+          <!-- Recordatorios Card -->
+          <article class="bento-card" data-feature="recordatorios">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="notification-visual">
+                  <div class="notif-card">
+                    <div class="notif-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        <circle cx="18" cy="5" r="3" fill="#ef4444" stroke="none"/>
                       </svg>
-                    }
-                    @case ('multiclinica') {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="8" width="7" height="13" rx="1"/>
-                        <rect x="14" y="8" width="7" height="13" rx="1"/>
-                        <path d="M6.5 5a2.5 2.5 0 0 1 5 0v3h-5V5z"/>
-                        <path d="M12.5 5a2.5 2.5 0 0 1 5 0v3h-5V5z"/>
-                        <path d="M12 12v4" stroke-dasharray="2 2"/>
-                      </svg>
-                    }
-                    @case ('codigos') {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="11" width="18" height="10" rx="2"/>
-                        <circle cx="12" cy="16" r="2"/>
-                        <path d="M12 14v-2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                      </svg>
-                    }
-                  }
+                    </div>
+                    <div class="notif-content">
+                      <span class="notif-title">Hora de ejercicios</span>
+                      <span class="notif-time">Ahora</span>
+                    </div>
+                    <div class="notif-pulse"></div>
+                  </div>
                 </div>
               </div>
-
-              <!-- Content -->
               <div class="card-content">
-                <h3 class="feature-title">{{ feature.title }}</h3>
-                <p class="feature-description">{{ feature.description }}</p>
+                <div class="card-badge blue">Automatico</div>
+                <h3 class="card-title">Recordatorios</h3>
+                <p class="card-description">
+                  Notificaciones inteligentes para que nunca olviden su rutina.
+                </p>
               </div>
+              <div class="card-number">04</div>
+            </div>
+          </article>
 
-              <!-- Stats Badge -->
-              @if (feature.stat) {
-                <div class="stat-badge">
-                  <span class="stat-value">{{ feature.stat.value }}</span>
-                  <span class="stat-label">{{ feature.stat.label }}</span>
+          <!-- Multi-clinica Card -->
+          <article class="bento-card wide" data-feature="multiclinica">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="clinics-visual">
+                  <div class="clinic-node main">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2a3 3 0 0 0-3 3v1H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v1h-2V5a1 1 0 0 1 1-1zm-1 7h2v2h2v2h-2v2h-2v-2H9v-2h2v-2z"/>
+                    </svg>
+                  </div>
+                  <div class="clinic-connections">
+                    <div class="connection-line line-1"></div>
+                    <div class="connection-line line-2"></div>
+                  </div>
+                  <div class="clinic-node sub node-1">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    </svg>
+                  </div>
+                  <div class="clinic-node sub node-2">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    </svg>
+                  </div>
                 </div>
-              }
+              </div>
+              <div class="card-content">
+                <div class="card-badge purple">Escalable</div>
+                <h3 class="card-title">Gestion multi-clinica</h3>
+                <p class="card-description">
+                  Una cuenta, multiples clinicas. Gestiona todos tus pacientes desde un solo lugar con acceso diferenciado.
+                </p>
+              </div>
+              <div class="card-number">05</div>
+            </div>
+          </article>
 
-              <!-- Decorative Corner -->
-              <div class="corner-decoration"></div>
-            </article>
-          }
+          <!-- Codigos Card -->
+          <article class="bento-card" data-feature="codigos">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="code-visual">
+                  <div class="code-display">
+                    <span class="code-char">K</span>
+                    <span class="code-char">3</span>
+                    <span class="code-char">N</span>
+                    <span class="code-char">G</span>
+                    <span class="code-char">0</span>
+                    <span class="code-char accent">2</span>
+                    <span class="code-char accent">4</span>
+                    <span class="code-char accent">X</span>
+                  </div>
+                  <div class="code-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                    Codigo seguro
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="card-badge pink">Seguridad</div>
+                <h3 class="card-title">Codigos de acceso</h3>
+                <p class="card-description">
+                  Invita pacientes de forma segura con codigos unicos de 8 caracteres.
+                </p>
+              </div>
+              <div class="card-number">06</div>
+            </div>
+          </article>
         </div>
 
-        <!-- Highlight Banner -->
-        <div class="highlight-banner">
-          <!-- Animated Background -->
-          <div class="banner-bg">
-            <div class="bg-wave bg-wave-1"></div>
-            <div class="bg-wave bg-wave-2"></div>
-            <div class="bg-orb bg-orb-1"></div>
-            <div class="bg-orb bg-orb-2"></div>
-          </div>
-
-          <div class="banner-content">
-            <!-- Icon -->
-            <div class="banner-icon">
-              <div class="icon-pulse"></div>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
+        <!-- Bottom CTA Strip -->
+        <div class="cta-strip">
+          <div class="cta-content">
+            <div class="cta-text">
+              <span class="cta-label">Mobile-first</span>
+              <h3 class="cta-title">Experiencia nativa en cualquier dispositivo</h3>
             </div>
-
-            <!-- Text -->
-            <div class="banner-text">
-              <h3 class="banner-title">Experiencia movil nativa</h3>
-              <p class="banner-description">
-                Disenado mobile-first para que tus pacientes tengan la mejor experiencia desde cualquier dispositivo. Instalable como app, funciona sin conexion.
-              </p>
-            </div>
-
-            <!-- CTA -->
-            <a href="https://app.kengoapp.com/registro" class="banner-cta">
-              <span>Probar gratis</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14"/>
-                <path d="M12 5l7 7-7 7"/>
-              </svg>
+            <a href="https://app.kengoapp.com/registro" class="cta-button">
+              <span>Comenzar gratis</span>
+              <div class="button-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
             </a>
           </div>
-
-          <!-- Floating Elements -->
-          <div class="floating-element floating-1">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <div class="floating-element floating-2">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10"/>
-            </svg>
-          </div>
-          <div class="floating-element floating-3">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="12,2 22,22 2,22"/>
-            </svg>
+          <div class="cta-decoration">
+            <div class="deco-ring ring-1"></div>
+            <div class="deco-ring ring-2"></div>
+            <div class="deco-ring ring-3"></div>
           </div>
         </div>
       </div>
@@ -186,133 +272,103 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [`
     /* ========================================
-       FEATURES SECTION - Kengo Style
-       Glassmorphism + Warm Waves
+       FEATURES SECTION - Editorial Bento Style
+       Premium Glassmorphism + Magazine Layout
     ======================================== */
 
     .features-section {
       position: relative;
-      padding: 6rem 0 7rem;
+      padding: 5rem 0 6rem;
       overflow: hidden;
       background: linear-gradient(
-        180deg,
-        #fff9f5 0%,
-        #fffbf7 40%,
+        165deg,
+        #fffcf9 0%,
+        #fff8f3 25%,
+        #fffaf6 50%,
         #fff 100%
       );
     }
 
     @media (min-width: 1024px) {
       .features-section {
-        padding: 8rem 0 10rem;
+        padding: 7rem 0 8rem;
       }
     }
 
     /* ----------------------------------------
-       Animated Wave Background
+       Mesh Gradient Background
     ---------------------------------------- */
-    .wave-container {
+    .mesh-bg {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60%;
+      inset: 0;
+      overflow: hidden;
       pointer-events: none;
-      z-index: 0;
     }
 
-    .wave {
+    .mesh-blob {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: auto;
-      min-height: 200px;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.6;
+      will-change: transform;
     }
 
-    .wave-1 {
-      animation: waveFloat1 20s ease-in-out infinite;
+    .mesh-1 {
+      width: 600px;
+      height: 600px;
+      top: -15%;
+      right: -10%;
+      background: radial-gradient(circle, rgba(231, 92, 62, 0.18) 0%, transparent 70%);
+      animation: meshFloat1 25s ease-in-out infinite;
     }
 
-    .wave-2 {
-      animation: waveFloat2 25s ease-in-out infinite;
-      animation-delay: -5s;
+    .mesh-2 {
+      width: 500px;
+      height: 500px;
+      bottom: 10%;
+      left: -12%;
+      background: radial-gradient(circle, rgba(239, 192, 72, 0.15) 0%, transparent 70%);
+      animation: meshFloat2 30s ease-in-out infinite;
     }
 
-    .wave-3 {
-      animation: waveFloat3 18s ease-in-out infinite;
-      animation-delay: -10s;
+    .mesh-3 {
+      width: 400px;
+      height: 400px;
+      top: 45%;
+      right: 25%;
+      background: radial-gradient(circle, rgba(231, 92, 62, 0.1) 0%, transparent 70%);
+      animation: meshFloat3 20s ease-in-out infinite;
     }
 
-    @keyframes waveFloat1 {
-      0%, 100% { transform: translateX(0) translateY(0); }
-      50% { transform: translateX(-2%) translateY(-8px); }
+    @keyframes meshFloat1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-40px, 60px) scale(1.1); }
+      66% { transform: translate(30px, -30px) scale(0.95); }
     }
 
-    @keyframes waveFloat2 {
-      0%, 100% { transform: translateX(0) translateY(0); }
-      50% { transform: translateX(3%) translateY(-12px); }
+    @keyframes meshFloat2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, -40px) scale(1.08); }
     }
 
-    @keyframes waveFloat3 {
-      0%, 100% { transform: translateX(0) translateY(0); }
-      50% { transform: translateX(-1.5%) translateY(-6px); }
+    @keyframes meshFloat3 {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+      50% { transform: translate(-30px, 50px) scale(1.15) rotate(5deg); }
     }
 
     /* ----------------------------------------
-       Aurora Orbs
+       Grid Pattern Overlay
     ---------------------------------------- */
-    .aurora-orb {
+    .grid-pattern {
       position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.5;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(231, 92, 62, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(231, 92, 62, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
       pointer-events: none;
-      z-index: 0;
-    }
-
-    .aurora-orb-1 {
-      width: 400px;
-      height: 400px;
-      top: 10%;
-      right: -10%;
-      background: radial-gradient(circle, rgba(231, 92, 62, 0.25) 0%, transparent 70%);
-      animation: auroraFloat1 20s ease-in-out infinite;
-    }
-
-    .aurora-orb-2 {
-      width: 350px;
-      height: 350px;
-      bottom: 20%;
-      left: -8%;
-      background: radial-gradient(circle, rgba(239, 192, 72, 0.2) 0%, transparent 70%);
-      animation: auroraFloat2 25s ease-in-out infinite;
-    }
-
-    .aurora-orb-3 {
-      width: 250px;
-      height: 250px;
-      top: 50%;
-      left: 40%;
-      background: radial-gradient(circle, rgba(231, 92, 62, 0.15) 0%, transparent 70%);
-      animation: auroraFloat3 18s ease-in-out infinite;
-    }
-
-    @keyframes auroraFloat1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(-30px, 40px) scale(1.1); }
-      66% { transform: translate(20px, -20px) scale(0.95); }
-    }
-
-    @keyframes auroraFloat2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(40px, -30px) scale(1.05); }
-      66% { transform: translate(-20px, 50px) scale(1.1); }
-    }
-
-    @keyframes auroraFloat3 {
-      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-      50% { transform: translate(-40px, 30px) scale(1.2); opacity: 0.7; }
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
     }
 
     /* ----------------------------------------
@@ -321,9 +377,9 @@ import { CommonModule } from '@angular/common';
     .features-content {
       position: relative;
       z-index: 1;
-      max-width: 1280px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 0 1.5rem;
+      padding: 0 1.25rem;
     }
 
     @media (min-width: 640px) {
@@ -334,152 +390,239 @@ import { CommonModule } from '@angular/common';
 
     @media (min-width: 1024px) {
       .features-content {
-        padding: 0 3rem;
+        padding: 0 2.5rem;
       }
     }
 
-    /* ----------------------------------------
-       Section Header
-    ---------------------------------------- */
-    .section-header {
-      text-align: center;
-      max-width: 680px;
-      margin: 0 auto 4rem;
+    /* ========================================
+       EDITORIAL HEADER
+    ======================================== */
+    .editorial-header {
+      margin-bottom: 3.5rem;
     }
 
     @media (min-width: 1024px) {
-      .section-header {
-        margin-bottom: 5rem;
+      .editorial-header {
+        margin-bottom: 4.5rem;
       }
     }
 
-    .badge-container {
-      margin-bottom: 1.5rem;
-      animation: fadeInUp 0.6s ease-out backwards;
+    .header-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
     }
 
-    .section-badge {
+    @media (min-width: 768px) {
+      .header-layout {
+        grid-template-columns: 1.2fr 1fr;
+        gap: 3rem;
+        align-items: end;
+      }
+    }
+
+    .header-left {
+      animation: slideInLeft 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .issue-label {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.5rem 1.25rem;
-      background: rgba(231, 92, 62, 0.1);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #e75c3e;
+      margin-bottom: 1rem;
+    }
+
+    .issue-label::before {
+      content: '';
+      width: 24px;
+      height: 2px;
+      background: linear-gradient(90deg, #e75c3e, #efc048);
+      border-radius: 1px;
+    }
+
+    .mega-title {
+      font-family: "kengoFont", system-ui, sans-serif;
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      font-weight: 400;
+      line-height: 0.95;
+      color: #1a1a1a;
+      letter-spacing: -0.02em;
+    }
+
+    .title-line {
+      display: block;
+    }
+
+    .title-line.accent {
+      color: #e75c3e;
+      position: relative;
+    }
+
+    .title-line.accent::after {
+      content: '';
+      position: absolute;
+      bottom: 0.05em;
+      left: 0;
+      width: 100%;
+      height: 0.08em;
+      background: linear-gradient(90deg, rgba(231, 92, 62, 0.3), rgba(239, 192, 72, 0.2));
+      border-radius: 4px;
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: lineGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+    }
+
+    @keyframes lineGrow {
+      to { transform: scaleX(1); }
+    }
+
+    .header-right {
+      animation: slideInRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s backwards;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .header-description {
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+      max-width: 380px;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.06) 100%);
       border: 1px solid rgba(231, 92, 62, 0.15);
       border-radius: 100px;
-      font-size: 0.875rem;
-      font-weight: 600;
+    }
+
+    .stat-number {
+      font-family: "kengoFont", system-ui, sans-serif;
+      font-size: 1.5rem;
       color: #e75c3e;
+    }
+
+    .stat-text {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #94a3b8;
       letter-spacing: 0.02em;
     }
 
-    .badge-dot {
+    .header-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      animation: fadeIn 0.6s ease-out 0.3s backwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(231, 92, 62, 0.2), rgba(231, 92, 62, 0.05));
+    }
+
+    .divider-dot {
       width: 6px;
       height: 6px;
       background: #e75c3e;
       border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
+      animation: dotPulse 2s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.2); }
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
     }
 
-    .section-title {
-      font-family: "kengoFont", system-ui, sans-serif;
-      font-size: clamp(2rem, 5vw, 3rem);
-      font-weight: 700;
-      color: #1f2937;
-      line-height: 1.15;
-      margin-bottom: 1.25rem;
-      animation: fadeInUp 0.6s ease-out 0.1s backwards;
-    }
-
-    .title-highlight {
-      color: #e75c3e;
-      position: relative;
-    }
-
-    .title-highlight::after {
-      content: '';
-      position: absolute;
-      bottom: 0.1em;
-      left: 0;
-      right: 0;
-      height: 0.12em;
-      background: linear-gradient(90deg, rgba(231, 92, 62, 0.4), rgba(239, 192, 72, 0.3));
-      border-radius: 4px;
-      transform: scaleX(0);
-      transform-origin: left;
-      animation: underlineGrow 0.8s ease-out 0.6s forwards;
-    }
-
-    @keyframes underlineGrow {
-      to { transform: scaleX(1); }
-    }
-
-    .section-description {
-      font-size: 1.125rem;
-      color: #6b7280;
-      line-height: 1.7;
-      animation: fadeInUp 0.6s ease-out 0.2s backwards;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* ----------------------------------------
-       Features Grid
-    ---------------------------------------- */
-    .features-grid {
+    /* ========================================
+       BENTO GRID
+    ======================================== */
+    .bento-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 1.25rem;
+      gap: 1rem;
     }
 
     @media (min-width: 640px) {
-      .features-grid {
+      .bento-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
+        gap: 1.25rem;
       }
     }
 
     @media (min-width: 1024px) {
-      .features-grid {
+      .bento-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 1.75rem;
+        grid-template-rows: auto auto auto;
+        gap: 1.5rem;
       }
     }
 
-    /* ----------------------------------------
-       Feature Card
-    ---------------------------------------- */
-    .feature-card {
+    /* ========================================
+       BENTO CARD BASE
+    ======================================== */
+    .bento-card {
       position: relative;
-      padding: 2rem;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
       border-radius: 24px;
       overflow: hidden;
-      cursor: default;
-      animation: cardFadeIn 0.5s ease-out var(--delay, 0s) backwards;
-      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.02),
+        0 4px 16px rgba(0, 0, 0, 0.04);
+      transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: cardReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
     }
 
-    @keyframes cardFadeIn {
+    .bento-card:nth-child(1) { animation-delay: 0.1s; }
+    .bento-card:nth-child(2) { animation-delay: 0.15s; }
+    .bento-card:nth-child(3) { animation-delay: 0.2s; }
+    .bento-card:nth-child(4) { animation-delay: 0.25s; }
+    .bento-card:nth-child(5) { animation-delay: 0.3s; }
+    .bento-card:nth-child(6) { animation-delay: 0.35s; }
+
+    @keyframes cardReveal {
       from {
         opacity: 0;
-        transform: translateY(24px) scale(0.96);
+        transform: translateY(30px) scale(0.96);
       }
       to {
         opacity: 1;
@@ -487,483 +630,823 @@ import { CommonModule } from '@angular/common';
       }
     }
 
-    .feature-card:hover {
-      transform: translateY(-6px);
+    .bento-card:hover {
+      transform: translateY(-8px);
       background: rgba(255, 255, 255, 0.85);
-      border-color: rgba(231, 92, 62, 0.2);
+      border-color: rgba(231, 92, 62, 0.15);
       box-shadow:
-        0 20px 40px rgba(231, 92, 62, 0.1),
-        0 8px 16px rgba(0, 0, 0, 0.06);
+        0 4px 8px rgba(0, 0, 0, 0.02),
+        0 16px 48px rgba(231, 92, 62, 0.12),
+        0 8px 24px rgba(0, 0, 0, 0.06);
     }
 
-    /* Card Glow Effect */
-    .card-glow {
+    /* Card Variants */
+    .bento-card.featured {
+      grid-column: 1;
+    }
+
+    @media (min-width: 1024px) {
+      .bento-card.featured {
+        grid-column: 1;
+        grid-row: 1 / 3;
+      }
+
+      .bento-card.vertical {
+        grid-row: span 1;
+      }
+
+      .bento-card.wide {
+        grid-column: span 2;
+      }
+    }
+
+    .card-inner {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 1.75rem;
+    }
+
+    @media (min-width: 1024px) {
+      .card-inner {
+        padding: 2rem;
+      }
+
+      .bento-card.featured .card-inner {
+        padding: 2.5rem;
+      }
+    }
+
+    /* Card Number */
+    .card-number {
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(
-        circle at center,
-        var(--glow-color, rgba(231, 92, 62, 0.08)) 0%,
-        transparent 50%
-      );
-      opacity: 0;
-      transition: opacity 0.5s ease;
-      pointer-events: none;
+      top: 1.5rem;
+      right: 1.5rem;
+      font-family: "kengoFont", system-ui, sans-serif;
+      font-size: 0.875rem;
+      color: rgba(231, 92, 62, 0.2);
+      transition: all 0.4s ease;
     }
 
-    .feature-card:hover .card-glow {
-      opacity: 1;
-    }
-
-    /* Corner Decoration */
-    .corner-decoration {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(
-        135deg,
-        transparent 50%,
-        rgba(231, 92, 62, 0.03) 50%
-      );
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .feature-card:hover .corner-decoration {
-      opacity: 1;
+    .bento-card:hover .card-number {
+      color: rgba(231, 92, 62, 0.4);
+      transform: translateX(-4px);
     }
 
     /* ----------------------------------------
-       Icon Container
+       Card Visual Area
     ---------------------------------------- */
-    .icon-container {
-      position: relative;
-      width: 64px;
-      height: 64px;
+    .card-visual {
       margin-bottom: 1.5rem;
-      z-index: 1;
     }
 
-    .icon-inner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--icon-gradient, linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(255, 200, 180, 0.08) 100%));
-      border-radius: 18px;
-      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    .feature-card:hover .icon-inner {
-      transform: scale(1.08) rotate(-3deg);
-      box-shadow: 0 8px 24px rgba(231, 92, 62, 0.15);
-    }
-
-    .icon-inner svg {
-      width: 28px;
-      height: 28px;
-      color: #e75c3e;
-      transition: transform 0.3s ease;
-    }
-
-    .feature-card:hover .icon-inner svg {
-      transform: scale(1.1);
+    @media (min-width: 1024px) {
+      .bento-card.featured .card-visual {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
     }
 
     /* ----------------------------------------
        Card Content
     ---------------------------------------- */
     .card-content {
-      position: relative;
-      z-index: 1;
+      margin-top: auto;
     }
 
-    .feature-title {
-      font-family: "Galvji", system-ui, sans-serif;
-      font-size: 1.25rem;
+    .card-badge {
+      display: inline-block;
+      padding: 0.375rem 0.875rem;
+      font-size: 0.6875rem;
       font-weight: 700;
-      color: #1f2937;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #e75c3e;
+      background: rgba(231, 92, 62, 0.08);
+      border-radius: 100px;
+      margin-bottom: 0.875rem;
+    }
+
+    .card-badge.gold {
+      color: #b8860b;
+      background: rgba(239, 192, 72, 0.12);
+    }
+
+    .card-badge.green {
+      color: #16a34a;
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .card-badge.blue {
+      color: #2563eb;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .card-badge.purple {
+      color: #7c3aed;
+      background: rgba(139, 92, 246, 0.1);
+    }
+
+    .card-badge.pink {
+      color: #db2777;
+      background: rgba(236, 72, 153, 0.1);
+    }
+
+    .card-title {
+      font-family: "kengoFont", system-ui, sans-serif;
+      font-size: 1.375rem;
+      font-weight: 400;
+      color: #1a1a1a;
       margin-bottom: 0.625rem;
+      line-height: 1.2;
       transition: color 0.3s ease;
     }
 
-    .feature-card:hover .feature-title {
+    @media (min-width: 1024px) {
+      .bento-card.featured .card-title {
+        font-size: 1.625rem;
+      }
+    }
+
+    .bento-card:hover .card-title {
       color: #e75c3e;
     }
 
-    .feature-description {
+    .card-description {
       font-size: 0.9375rem;
-      color: #6b7280;
-      line-height: 1.65;
+      line-height: 1.6;
+      color: #64748b;
     }
 
-    /* ----------------------------------------
-       Stat Badge
-    ---------------------------------------- */
-    .stat-badge {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 0.375rem;
-      margin-top: 1.25rem;
-      padding: 0.5rem 1rem;
-      background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.08) 100%);
-      border: 1px solid rgba(231, 92, 62, 0.12);
-      border-radius: 100px;
+    /* ========================================
+       FEATURE-SPECIFIC VISUALS
+    ======================================== */
+
+    /* Video Preview */
+    .video-preview {
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 0;
+    }
+
+    .preview-frame {
+      position: relative;
+      width: 140px;
+      height: 100px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @media (min-width: 1024px) {
+      .preview-frame {
+        width: 180px;
+        height: 130px;
+        border-radius: 16px;
+      }
+    }
+
+    .bento-card:hover .preview-frame {
+      transform: scale(1.05) rotate(-2deg);
+    }
+
+    .frame-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .play-button {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .play-button svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+      margin-left: 2px;
+    }
+
+    .bento-card:hover .play-button {
+      transform: scale(1.1);
+      box-shadow: 0 6px 24px rgba(231, 92, 62, 0.5);
+    }
+
+    .video-waves {
+      display: flex;
+      align-items: end;
+      gap: 3px;
+      height: 16px;
+    }
+
+    .video-waves span {
+      width: 3px;
+      background: rgba(231, 92, 62, 0.6);
+      border-radius: 2px;
+      animation: waveBar 1.2s ease-in-out infinite;
+    }
+
+    .video-waves span:nth-child(1) { height: 40%; animation-delay: 0s; }
+    .video-waves span:nth-child(2) { height: 70%; animation-delay: 0.1s; }
+    .video-waves span:nth-child(3) { height: 100%; animation-delay: 0.2s; }
+    .video-waves span:nth-child(4) { height: 60%; animation-delay: 0.3s; }
+    .video-waves span:nth-child(5) { height: 30%; animation-delay: 0.4s; }
+
+    @keyframes waveBar {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.5); }
+    }
+
+    .preview-glow {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(231, 92, 62, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(30px);
+      z-index: -1;
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.1); }
+    }
+
+    /* Calendar Visual */
+    .calendar-visual {
+      padding: 1rem 0;
+    }
+
+    .week-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .day-cell {
+      width: 36px;
+      height: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .day-cell.active {
+      background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.05) 100%);
+      border-color: rgba(231, 92, 62, 0.15);
+    }
+
+    .day-cell.today {
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(231, 92, 62, 0.3);
+    }
+
+    .day-letter {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .day-cell.today .day-letter {
+      color: white;
+    }
+
+    .day-cell.active .day-letter {
+      color: #e75c3e;
+    }
+
+    .day-dot {
+      width: 4px;
+      height: 4px;
+      background: #e75c3e;
+      border-radius: 50%;
+    }
+
+    .day-cell.today .day-dot {
+      background: white;
+    }
+
+    .bento-card:hover .day-cell.active {
+      transform: translateY(-2px);
+    }
+
+    /* Chart Visual */
+    .chart-visual {
+      position: relative;
+      padding: 1rem 0;
+    }
+
+    .mini-chart {
+      width: 100%;
+      height: 60px;
+    }
+
+    .chart-line {
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      animation: drawLine 1.5s ease-out 0.5s forwards;
+    }
+
+    @keyframes drawLine {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .chart-dot {
+      opacity: 0;
+      animation: dotAppear 0.3s ease-out 1.8s forwards;
+    }
+
+    @keyframes dotAppear {
+      to { opacity: 1; }
+    }
+
+    .trend-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      background: rgba(34, 197, 94, 0.1);
+      border-radius: 100px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: #16a34a;
+    }
+
+    .trend-badge svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Notification Visual */
+    .notification-visual {
+      padding: 1rem 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .notif-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 0.875rem 1.25rem;
+      background: white;
+      border-radius: 14px;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        0 8px 24px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s ease;
+    }
+
+    .bento-card:hover .notif-card {
+      transform: translateX(4px);
+    }
+
+    .notif-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+      border-radius: 10px;
+    }
+
+    .notif-icon svg {
+      width: 18px;
+      height: 18px;
+      color: #3b82f6;
+    }
+
+    .notif-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .notif-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .notif-time {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+    }
+
+    .notif-pulse {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 12px;
+      height: 12px;
+      background: #ef4444;
+      border: 2px solid white;
+      border-radius: 50%;
+      animation: notifPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes notifPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* Clinics Visual */
+    .clinics-visual {
+      position: relative;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .clinic-node {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .clinic-node.main {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
+      box-shadow: 0 4px 20px rgba(231, 92, 62, 0.35);
+      z-index: 2;
+    }
+
+    .clinic-node.main svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    .clinic-node.sub {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 2px solid rgba(231, 92, 62, 0.15);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .clinic-node.sub svg {
+      width: 18px;
+      height: 18px;
+      color: #64748b;
+    }
+
+    .clinic-node.node-1 {
+      left: calc(50% - 70px);
+      top: calc(50% - 30px);
+    }
+
+    .clinic-node.node-2 {
+      right: calc(50% - 70px);
+      top: calc(50% + 10px);
+    }
+
+    .clinic-connections {
+      position: absolute;
+      inset: 0;
       z-index: 1;
     }
 
-    .stat-value {
-      font-size: 1.125rem;
-      font-weight: 800;
+    .connection-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(231, 92, 62, 0.3), rgba(231, 92, 62, 0.1));
+      border-radius: 1px;
+      transform-origin: left center;
+    }
+
+    .connection-line.line-1 {
+      transform: rotate(-150deg) translateY(-50%);
+    }
+
+    .connection-line.line-2 {
+      transform: rotate(-30deg) translateY(-50%);
+    }
+
+    .bento-card:hover .clinic-node.main {
+      transform: scale(1.1);
+    }
+
+    .bento-card:hover .clinic-node.sub {
+      border-color: rgba(231, 92, 62, 0.3);
+    }
+
+    .bento-card:hover .clinic-node.node-1 {
+      transform: translate(-4px, -4px);
+    }
+
+    .bento-card:hover .clinic-node.node-2 {
+      transform: translate(4px, 4px);
+    }
+
+    /* Code Visual */
+    .code-visual {
+      padding: 1rem 0;
+    }
+
+    .code-display {
+      display: flex;
+      justify-content: center;
+      gap: 0.375rem;
+      margin-bottom: 1rem;
+    }
+
+    .code-char {
+      width: 28px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 8px;
+      font-family: "kengoFont", monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+    }
+
+    .code-char.accent {
+      background: linear-gradient(135deg, rgba(231, 92, 62, 0.08) 0%, rgba(239, 192, 72, 0.04) 100%);
+      border-color: rgba(231, 92, 62, 0.12);
       color: #e75c3e;
     }
 
-    .stat-label {
+    .bento-card:hover .code-char {
+      transform: translateY(-2px);
+    }
+
+    .bento-card:hover .code-char:nth-child(1) { transition-delay: 0s; }
+    .bento-card:hover .code-char:nth-child(2) { transition-delay: 0.02s; }
+    .bento-card:hover .code-char:nth-child(3) { transition-delay: 0.04s; }
+    .bento-card:hover .code-char:nth-child(4) { transition-delay: 0.06s; }
+    .bento-card:hover .code-char:nth-child(5) { transition-delay: 0.08s; }
+    .bento-card:hover .code-char:nth-child(6) { transition-delay: 0.1s; }
+    .bento-card:hover .code-char:nth-child(7) { transition-delay: 0.12s; }
+    .bento-card:hover .code-char:nth-child(8) { transition-delay: 0.14s; }
+
+    .code-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
       font-size: 0.75rem;
       font-weight: 600;
-      color: #e75c3e;
-      opacity: 0.75;
-      text-transform: lowercase;
+      color: #16a34a;
     }
 
-    /* ----------------------------------------
-       Highlight Banner
-    ---------------------------------------- */
-    .highlight-banner {
+    .code-label svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ========================================
+       CTA STRIP
+    ======================================== */
+    .cta-strip {
       position: relative;
-      margin-top: 4rem;
-      padding: 3rem 2rem;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 40%, #c94a2f 100%);
-      border-radius: 28px;
+      margin-top: 3rem;
+      padding: 2.5rem 2rem;
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 50%, #c44a2d 100%);
+      border-radius: 24px;
       overflow: hidden;
       animation: fadeInUp 0.6s ease-out 0.5s backwards;
     }
 
-    @media (min-width: 1024px) {
-      .highlight-banner {
-        margin-top: 5rem;
-        padding: 3.5rem 4rem;
-        border-radius: 32px;
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
-    /* Banner Background Effects */
-    .banner-bg {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      pointer-events: none;
+    @media (min-width: 1024px) {
+      .cta-strip {
+        margin-top: 4rem;
+        padding: 3rem 3.5rem;
+        border-radius: 28px;
+      }
     }
 
-    .bg-wave {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 100%;
-      background: linear-gradient(
-        180deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.03) 100%
-      );
-    }
-
-    .bg-wave-1 {
-      transform: skewY(-3deg);
-      transform-origin: bottom left;
-    }
-
-    .bg-wave-2 {
-      transform: skewY(2deg);
-      transform-origin: bottom right;
-      background: linear-gradient(
-        180deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.02) 100%
-      );
-    }
-
-    .bg-orb {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .bg-orb-1 {
-      width: 300px;
-      height: 300px;
-      top: -120px;
-      right: -60px;
-      animation: orbFloat1 15s ease-in-out infinite;
-    }
-
-    .bg-orb-2 {
-      width: 200px;
-      height: 200px;
-      bottom: -80px;
-      left: 15%;
-      animation: orbFloat2 18s ease-in-out infinite;
-    }
-
-    @keyframes orbFloat1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-20px, 30px) scale(1.1); }
-    }
-
-    @keyframes orbFloat2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(30px, -20px) scale(1.05); }
-    }
-
-    /* Banner Content */
-    .banner-content {
+    .cta-content {
       position: relative;
       z-index: 2;
       display: flex;
       flex-direction: column;
       align-items: center;
-      text-align: center;
       gap: 1.5rem;
+      text-align: center;
     }
 
-    @media (min-width: 1024px) {
-      .banner-content {
+    @media (min-width: 768px) {
+      .cta-content {
         flex-direction: row;
+        justify-content: space-between;
         text-align: left;
-        gap: 2.5rem;
       }
     }
 
-    /* Banner Icon */
-    .banner-icon {
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .banner-icon svg {
-      position: relative;
-      z-index: 1;
-      width: 40px;
-      height: 40px;
-      color: white;
-    }
-
-    .icon-pulse {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 72px;
-      height: 72px;
-      transform: translate(-50%, -50%);
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      animation: iconPulse 3s ease-in-out infinite;
-    }
-
-    @keyframes iconPulse {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.15; }
-      50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.25; }
-    }
-
-    /* Banner Text */
-    .banner-text {
-      flex: 1;
-    }
-
-    .banner-title {
-      font-family: "kengoFont", system-ui, sans-serif;
-      font-size: 1.625rem;
+    .cta-label {
+      display: inline-block;
+      font-size: 0.6875rem;
       font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 0.5rem;
+    }
+
+    .cta-title {
+      font-family: "kengoFont", system-ui, sans-serif;
+      font-size: clamp(1.375rem, 3vw, 1.75rem);
+      font-weight: 400;
       color: white;
-      margin-bottom: 0.625rem;
+      line-height: 1.2;
+      max-width: 420px;
     }
 
-    @media (min-width: 1024px) {
-      .banner-title {
-        font-size: 1.875rem;
-      }
-    }
-
-    .banner-description {
-      font-size: 1rem;
-      color: rgba(255, 255, 255, 0.85);
-      line-height: 1.65;
-      max-width: 560px;
-    }
-
-    /* Banner CTA */
-    .banner-cta {
+    .cta-button {
       display: inline-flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.875rem 1.75rem;
+      gap: 0.875rem;
+      padding: 1rem 1.75rem;
       background: white;
-      color: #1f2937;
+      color: #1a1a1a;
       font-size: 0.9375rem;
       font-weight: 700;
-      border-radius: 14px;
       text-decoration: none;
+      border-radius: 14px;
       flex-shrink: 0;
-      transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
 
-    .banner-cta:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    .cta-button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     }
 
-    .banner-cta:active {
+    .cta-button:active {
       transform: scale(0.98);
     }
 
-    .banner-cta svg {
-      width: 18px;
-      height: 18px;
+    .button-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.05) 100%);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .button-arrow svg {
+      width: 16px;
+      height: 16px;
+      color: #e75c3e;
       transition: transform 0.3s ease;
     }
 
-    .banner-cta:hover svg {
-      transform: translateX(4px);
+    .cta-button:hover .button-arrow {
+      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
     }
 
-    /* Floating Elements */
-    .floating-element {
+    .cta-button:hover .button-arrow svg {
+      color: white;
+      transform: translateX(3px);
+    }
+
+    /* CTA Decorations */
+    .cta-decoration {
       position: absolute;
-      z-index: 1;
-      opacity: 0.1;
+      top: 50%;
+      right: 5%;
+      transform: translateY(-50%);
       pointer-events: none;
     }
 
-    .floating-element svg {
-      width: 100%;
-      height: 100%;
-      fill: white;
+    .deco-ring {
+      position: absolute;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
     }
 
-    .floating-1 {
-      width: 32px;
-      height: 32px;
-      top: 20%;
-      right: 12%;
-      animation: float1 12s ease-in-out infinite;
+    .ring-1 {
+      width: 120px;
+      height: 120px;
+      top: -60px;
+      left: -60px;
+      animation: ringPulse 4s ease-in-out infinite;
     }
 
-    .floating-2 {
-      width: 20px;
-      height: 20px;
-      bottom: 25%;
-      right: 25%;
-      animation: float2 15s ease-in-out infinite;
+    .ring-2 {
+      width: 200px;
+      height: 200px;
+      top: -100px;
+      left: -100px;
+      animation: ringPulse 4s ease-in-out 1s infinite;
     }
 
-    .floating-3 {
-      width: 24px;
-      height: 24px;
-      top: 60%;
-      left: 8%;
-      animation: float3 10s ease-in-out infinite;
+    .ring-3 {
+      width: 280px;
+      height: 280px;
+      top: -140px;
+      left: -140px;
+      animation: ringPulse 4s ease-in-out 2s infinite;
     }
 
-    @keyframes float1 {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      50% { transform: translate(-10px, 15px) rotate(180deg); }
+    @keyframes ringPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.2; transform: scale(1.05); }
     }
 
-    @keyframes float2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(15px, -10px) scale(1.2); }
-    }
-
-    @keyframes float3 {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      50% { transform: translate(8px, -12px) rotate(-90deg); }
-    }
-
-    /* ----------------------------------------
-       Reduced Motion
-    ---------------------------------------- */
+    /* ========================================
+       REDUCED MOTION
+    ======================================== */
     @media (prefers-reduced-motion: reduce) {
-      .wave,
-      .aurora-orb,
-      .bg-orb,
-      .floating-element,
-      .badge-dot,
-      .icon-pulse {
+      .mesh-blob,
+      .bento-card,
+      .chart-line,
+      .chart-dot,
+      .video-waves span,
+      .preview-glow,
+      .notif-pulse,
+      .divider-dot,
+      .deco-ring {
         animation: none;
       }
 
-      .feature-card,
-      .title-highlight::after {
+      .bento-card,
+      .cta-strip {
         animation: none;
         opacity: 1;
         transform: none;
       }
 
-      .section-badge,
-      .section-title,
-      .section-description,
-      .highlight-banner {
+      .title-line.accent::after {
         animation: none;
+        transform: scaleX(1);
       }
     }
   `]
 })
 export class FeaturesComponent {
-  features = [
-    {
-      id: 'videos',
-      title: 'Videos profesionales',
-      description: 'Mas de 500 ejercicios grabados por fisioterapeutas con instrucciones claras y demostraciones en HD.',
-      iconGradient: 'linear-gradient(135deg, rgba(231, 92, 62, 0.15) 0%, rgba(255, 180, 160, 0.08) 100%)',
-      glowColor: 'rgba(231, 92, 62, 0.12)',
-      stat: { value: '+500', label: 'ejercicios' },
-    },
-    {
-      id: 'planes',
-      title: 'Planes personalizados',
-      description: 'Ejercicios adaptados a tu lesion y horario, asignados por dias de la semana segun tus necesidades.',
-      iconGradient: 'linear-gradient(135deg, rgba(239, 192, 72, 0.18) 0%, rgba(255, 220, 150, 0.08) 100%)',
-      glowColor: 'rgba(239, 192, 72, 0.12)',
-      stat: null,
-    },
-    {
-      id: 'seguimiento',
-      title: 'Seguimiento de dolor',
-      description: 'Registra como te sientes en cada sesion para que tu fisio ajuste el tratamiento de forma precisa.',
-      iconGradient: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(134, 239, 172, 0.08) 100%)',
-      glowColor: 'rgba(34, 197, 94, 0.1)',
-      stat: null,
-    },
-    {
-      id: 'recordatorios',
-      title: 'Recordatorios',
-      description: 'Nunca olvides tu rutina de ejercicios gracias a las notificaciones diarias personalizadas.',
-      iconGradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 197, 253, 0.08) 100%)',
-      glowColor: 'rgba(59, 130, 246, 0.1)',
-      stat: null,
-    },
-    {
-      id: 'multiclinica',
-      title: 'Multi-clinica',
-      description: 'Un fisioterapeuta puede gestionar varias clinicas y pacientes desde una sola cuenta profesional.',
-      iconGradient: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(196, 181, 253, 0.08) 100%)',
-      glowColor: 'rgba(139, 92, 246, 0.1)',
-      stat: null,
-    },
-    {
-      id: 'codigos',
-      title: 'Codigos de acceso',
-      description: 'Invita pacientes de forma segura con codigos unicos de 8 caracteres, sin compartir datos sensibles.',
-      iconGradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(249, 168, 212, 0.08) 100%)',
-      glowColor: 'rgba(236, 72, 153, 0.1)',
-      stat: null,
-    },
+  weekDays = [
+    { letter: 'L', active: true, today: false },
+    { letter: 'M', active: true, today: false },
+    { letter: 'X', active: false, today: false },
+    { letter: 'J', active: true, today: true },
+    { letter: 'V', active: true, today: false },
+    { letter: 'S', active: false, today: false },
+    { letter: 'D', active: false, today: false },
   ];
 }
