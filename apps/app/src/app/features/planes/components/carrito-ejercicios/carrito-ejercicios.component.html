@@ -1,7 +1,7 @@
 <!-- Backdrop overlay -->
 @if (drawerAbierto()) {
   <div
-    class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+    class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300"
     (click)="toggle()"
   ></div>
 }
@@ -9,7 +9,7 @@
 <!-- Drawer panel -->
 <div
   #drawerEl
-  class="fixed top-0 right-0 z-50 h-full w-80 transform transition-transform duration-300 ease-out"
+  class="fixed top-0 right-0 z-[70] h-full w-80 transform transition-transform duration-300 ease-out"
   [class.translate-x-0]="drawerAbierto()"
   [class.translate-x-full]="!drawerAbierto()"
 >
