@@ -83,7 +83,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
     descripcion: [''],
-    visibilidad: ['privado' as 'privado' | 'publico'],
+    visibilidad: ['privado' as 'privado' | 'clinica'],
   });
 
   ngOnInit() {

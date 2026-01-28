@@ -766,7 +766,7 @@ export class PlanBuilderService {
   async saveAsRutina(
     nombre: string,
     descripcion: string,
-    visibilidad: 'privado' | 'publico',
+    visibilidad: 'privado' | 'clinica',
   ): Promise<number | null> {
     const fisio = this.fisioId();
     if (!fisio || this.items().length === 0) return null;

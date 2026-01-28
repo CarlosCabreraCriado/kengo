@@ -18,7 +18,7 @@ export interface Rutina {
   nombre: string;
   descripcion?: string;
   autor: UUID | Usuario;
-  visibilidad: 'privado' | 'publico';
+  visibilidad: 'privado' | 'clinica';
   date_created?: string;
   date_updated?: string;
 }

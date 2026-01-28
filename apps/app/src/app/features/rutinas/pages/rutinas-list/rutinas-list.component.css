@@ -95,7 +95,7 @@
     0 20px 40px -8px rgba(0, 0, 0, 0.15),
     0 8px 16px -4px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  z-index: 50;
+  z-index: 100;
   animation: dropdownFadeIn 0.2s ease-out;
 }
 
@@ -126,13 +126,17 @@
 
 /* === Rutina Card Expanded === */
 .rutina-card {
+  position: relative;
   border-radius: 1rem;
-  overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rutina-card.expanded {
   box-shadow: var(--kengo-shadow-lg);
+}
+
+.rutina-card.menu-open {
+  z-index: 10;
 }
 
 .rutina-expand-btn {
@@ -176,8 +180,8 @@
 }
 
 .visibility-badge.public {
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-  color: #16a34a;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #d97706;
 }
 
 /* === Empty State === */

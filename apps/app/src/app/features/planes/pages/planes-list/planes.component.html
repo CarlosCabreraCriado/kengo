@@ -538,11 +538,11 @@
                       <!-- Badge visibilidad -->
                       <span class="visibility-badge shrink-0"
                             [class.private]="rutina.visibilidad === 'privado'"
-                            [class.public]="rutina.visibilidad === 'publico'">
+                            [class.public]="rutina.visibilidad === 'clinica'">
                         <span class="material-symbols-outlined text-xs">
-                          {{ rutina.visibilidad === "privado" ? "lock" : "public" }}
+                          {{ rutina.visibilidad === "privado" ? "lock" : "domain" }}
                         </span>
-                        {{ rutina.visibilidad === "privado" ? "Privada" : "Pública" }}
+                        {{ rutina.visibilidad === "privado" ? "Privada" : "Clínica" }}
                       </span>
                     </div>
 

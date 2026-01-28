@@ -31,7 +31,7 @@ interface RutinaResponse {
   data: RutinaDirectus;
 }
 
-type FiltroVisibilidad = 'todas' | 'privadas' | 'publicas';
+type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
 
 @Injectable({ providedIn: 'root' })
 export class RutinasService {
@@ -47,9 +47,18 @@ export class RutinasService {
   // ID del usuario actual (fisio)
   private readonly usuarioId = computed(() => this.sessionService.usuario()?.id ?? null);
 
+  // ID de la clínica del usuario (primera clínica donde es fisio)
+  private readonly clinicaId = computed(() => {
+    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
+    // Buscar la primera clínica donde el usuario es fisio (id_puesto 1 o 4)
+    const clinicaFisio = clinicas.find((c) => c.id_puesto === 1 || c.id_puesto === 4);
+    return clinicaFisio?.id_clinica ?? null;
+  });
+
   // Request para listar rutinas
   private readonly peticionRutinas = () => {
     const userId = this.usuarioId();
+    const clinicaId = this.clinicaId();
     if (!userId) return undefined; // No cargar si no hay usuario
 
     const nombre = this.busqueda().trim();
@@ -57,8 +66,10 @@ export class RutinasService {
     const p = this.page();
     const ps = this.pageSize();
 
-    // Filtro: mis rutinas privadas + todas las publicas
-    // O segun el filtro seleccionado
+    // Filtros de visibilidad:
+    // - privadas: solo mis rutinas con visibilidad='privado'
+    // - clinica: rutinas con visibilidad='clinica' de autores de mi clínica
+    // - todas: mis privadas + las de mi clínica
     const filter: Record<string, unknown> = {};
 
     if (vis === 'privadas') {
@@ -67,15 +78,34 @@ export class RutinasService {
         { autor: { _eq: userId } },
         { visibilidad: { _eq: 'privado' } },
       ];
-    } else if (vis === 'publicas') {
-      // Solo rutinas publicas
-      filter['visibilidad'] = { _eq: 'publico' };
+    } else if (vis === 'clinica') {
+      // Solo rutinas de clínica (de autores que pertenecen a mi clínica)
+      if (clinicaId) {
+        filter['_and'] = [
+          { visibilidad: { _eq: 'clinica' } },
+          { autor: { clinicas: { id_clinica: { _eq: clinicaId } } } },
+        ];
+      } else {
+        // Sin clínica, no mostrar nada
+        filter['id_rutina'] = { _eq: -1 };
+      }
     } else {
-      // Todas: mis privadas + todas las publicas
-      filter['_or'] = [
-        { autor: { _eq: userId } },
-        { visibilidad: { _eq: 'publico' } },
+      // Todas: mis privadas + las de mi clínica
+      const orConditions: unknown[] = [
+        { autor: { _eq: userId } }, // Mis rutinas (privadas o de clínica)
       ];
+
+      // Agregar rutinas de clínica si tengo una clínica
+      if (clinicaId) {
+        orConditions.push({
+          _and: [
+            { visibilidad: { _eq: 'clinica' } },
+            { autor: { clinicas: { id_clinica: { _eq: clinicaId } } } },
+          ],
+        });
+      }
+
+      filter['_or'] = orConditions;
     }
 
     if (nombre) {

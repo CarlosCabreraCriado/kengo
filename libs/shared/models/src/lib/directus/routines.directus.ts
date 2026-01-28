@@ -9,8 +9,10 @@ import { Ejercicio } from '../domain/exercises';
 
 /**
  * Visibilidad de rutina
+ * - privado: solo visible para el autor
+ * - clinica: visible para todos los fisios de la misma clínica
  */
-export type VisibilidadRutina = 'privado' | 'publico';
+export type VisibilidadRutina = 'privado' | 'clinica';
 
 /**
  * Rutina como viene del SDK Directus

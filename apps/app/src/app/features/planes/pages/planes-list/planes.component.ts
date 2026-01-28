@@ -67,7 +67,7 @@ export class PlanesComponent implements OnInit {
 
   // Rutinas
   busquedaRutinas = '';
-  filtroVisibilidad: 'todas' | 'privadas' | 'publicas' = 'todas';
+  filtroVisibilidad: 'todas' | 'privadas' | 'clinica' = 'todas';
   rutinas = computed(() => this.rutinasService.rutinas());
   isLoadingRutinas = computed(() => this.rutinasService.isLoading());
 
@@ -220,7 +220,7 @@ export class PlanesComponent implements OnInit {
     this.rutinasService.setBusqueda(value);
   }
 
-  onFiltroVisibilidadChange(value: 'todas' | 'privadas' | 'publicas') {
+  onFiltroVisibilidadChange(value: 'todas' | 'privadas' | 'clinica') {
     this.filtroVisibilidad = value;
     this.rutinasService.setFiltroVisibilidad(value);
   }
@@ -279,14 +279,14 @@ export class PlanesComponent implements OnInit {
   }
 
   async cambiarVisibilidadRutina(rutina: Rutina) {
-    const nuevaVisibilidad = rutina.visibilidad === 'privado' ? 'publico' : 'privado';
+    const nuevaVisibilidad = rutina.visibilidad === 'privado' ? 'clinica' : 'privado';
     const success = await this.rutinasService.updateRutina(rutina.id_rutina, {
       visibilidad: nuevaVisibilidad,
     });
 
     if (success) {
       this.toastService.show(
-        `Plantilla ahora es ${nuevaVisibilidad === 'publico' ? 'pública' : 'privada'}`
+        nuevaVisibilidad === 'clinica' ? 'Plantilla compartida con la clínica' : 'Plantilla ahora es privada'
       );
     } else {
       this.toastService.show('Error al cambiar visibilidad', 'error');

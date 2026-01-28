@@ -8,7 +8,7 @@ import { UUID, DiaSemana } from '../types/common';
 /**
  * Visibilidad de una rutina según la BD
  */
-export type VisibilidadRutinaDB = 'privado' | 'publico';
+export type VisibilidadRutinaDB = 'privado' | 'clinica';
 
 /**
  * Tabla: rutinas
