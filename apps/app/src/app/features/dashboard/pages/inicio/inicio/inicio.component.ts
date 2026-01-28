@@ -69,6 +69,14 @@ export class InicioComponent implements OnDestroy {
 
   allCards: CardOption[] = [
     {
+      id: 'mi-actividad',
+      title: 'Mi actividad',
+      subtitle: 'Tu progreso diario',
+      image: 'assets/portadas/mi-actividad.png',
+      route: '/actividad-personal/hoy',
+      roles: ['fisio', 'paciente'],
+    },
+    {
       id: 'actividad-personal',
       title: 'Actividad personal',
       subtitle: 'Tu plan de hoy',
@@ -110,7 +118,7 @@ export class InicioComponent implements OnDestroy {
       id: 'rutinas',
       title: 'Rutinas',
       subtitle: 'Plantillas de ejercicios',
-      image: 'assets/portadas/rutina.png',
+      image: 'assets/portadas/rutina.webp',
       route: '/galeria/rutinas',
       roles: ['fisio'],
     },
