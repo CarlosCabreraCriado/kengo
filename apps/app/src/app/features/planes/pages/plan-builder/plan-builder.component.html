@@ -1,561 +1,621 @@
-<!-- Loading bar -->
+<!-- Loading bar premium -->
 @if (isLoading() || isSaving()) {
-  <div class="fixed top-0 right-0 left-0 z-50 h-1.5 overflow-hidden bg-zinc-100">
-    <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
+  <div class="loading-bar-container">
+    <div class="loading-bar-track">
+      <div class="loading-bar-fill"></div>
+    </div>
   </div>
 }
 
-<section class="flex flex-col w-full h-full overflow-y-auto pb-28 lg:pb-8">
-  <!-- Header sticky -->
-  <header
-    class="sticky top-0 z-40 mx-auto mb-6 px-4 pt-4 pb-2 w-full"
-    [class]="isDesktop() ? '' : 'bg-gradient-to-b from-white/98 via-white/95 to-transparent backdrop-blur-xl'"
-  >
-    <div class="mx-auto max-w-3xl">
-      @if (isDesktop()) {
-        <!-- Header simplificado para desktop: solo menu de acciones centrado -->
-        <div class="flex items-center justify-center gap-3">
-          <div class="relative">
-            <button
-              #menuAccionesBtn
-              type="button"
-              class="quick-action-btn"
-              [disabled]="isSaving()"
-              (click)="menuAccionesOpen = !menuAccionesOpen"
-            >
-              <span class="material-symbols-outlined">more_vert</span>
-            </button>
+<section class="plan-builder-container">
+  <!-- Header con glassmorfismo (solo mobile < 768px) -->
+  @if (isMovil()) {
+    <header class="plan-header">
+      <div class="plan-header__inner">
+        <div class="plan-header__mobile">
+          <button
+            type="button"
+            class="btn-icon-glass"
+            aria-label="Volver"
+            (click)="cancelar()"
+          >
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
 
-            @if (menuAccionesOpen) {
-              <div class="dropdown-menu" (clickOutside)="menuAccionesOpen = false">
-                <button
-                  type="button"
-                  class="dropdown-item"
-                  [disabled]="isLoading()"
-                  (click)="cargarPlantilla(); menuAccionesOpen = false"
-                >
-                  <span class="material-symbols-outlined text-xl text-[#efc048]">folder_open</span>
-                  <span>Cargar plantilla</span>
-                </button>
-                <button
-                  type="button"
-                  class="dropdown-item disabled:opacity-50"
-                  [disabled]="items().length === 0"
-                  (click)="guardarComoPlantilla(); menuAccionesOpen = false"
-                >
-                  <span class="material-symbols-outlined text-xl text-[#e75c3e]">bookmark_add</span>
-                  <span>Guardar como plantilla</span>
-                </button>
-                @if (!isEditMode()) {
-                  <hr class="my-1.5 border-zinc-100" />
-                  <a
-                    routerLink="/galeria/ejercicios"
-                    class="dropdown-item"
-                    (click)="menuAccionesOpen = false"
-                  >
-                    <span class="material-symbols-outlined text-xl text-green-500">add</span>
-                    <span>Agregar ejercicios</span>
-                  </a>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      } @else {
-        <!-- Header completo para móvil -->
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <button
-              type="button"
-              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-600 transition-all duration-200
-                     hover:bg-white/80 active:scale-95 shadow-sm"
-              aria-label="Volver"
-              (click)="cancelar()"
-            >
-              <span class="material-symbols-outlined text-xl">arrow_back</span>
-            </button>
-            <div>
-              <h1 class="titulo-kengo text-xl font-bold text-[#e75c3e]">
-                {{ pageTitle() }}
-              </h1>
-              <p class="text-xs font-medium text-zinc-500">
-                {{ totalItems() }}
-                {{ totalItems() === 1 ? "ejercicio" : "ejercicios" }}
-              </p>
+          <div class="plan-header__title-group">
+            <h1 class="plan-header__title">{{ pageTitle() }}</h1>
+            <div class="plan-header__badge">
+              <span class="plan-header__badge-dot"></span>
+              <span class="plan-header__badge-text">
+                {{ totalItems() }} {{ totalItems() === 1 ? "ejercicio" : "ejercicios" }}
+              </span>
             </div>
           </div>
 
-          <!-- Menu de acciones mobile -->
           <div class="relative">
             <button
               #menuAccionesMobileBtn
               type="button"
-              class="quick-action-btn"
+              class="btn-icon-glass"
               [disabled]="isSaving()"
               (click)="menuAccionesMobileOpen = !menuAccionesMobileOpen"
+              aria-label="Más opciones"
             >
               <span class="material-symbols-outlined">more_vert</span>
             </button>
 
             @if (menuAccionesMobileOpen) {
-              <div class="dropdown-menu" (clickOutside)="menuAccionesMobileOpen = false">
-                <button
-                  type="button"
-                  class="dropdown-item"
-                  [disabled]="isLoading()"
-                  (click)="cargarPlantilla(); menuAccionesMobileOpen = false"
-                >
-                  <span class="material-symbols-outlined text-xl text-[#efc048]">folder_open</span>
-                  <span>Cargar plantilla</span>
-                </button>
-                <button
-                  type="button"
-                  class="dropdown-item disabled:opacity-50"
-                  [disabled]="items().length === 0"
-                  (click)="guardarComoPlantilla(); menuAccionesMobileOpen = false"
-                >
-                  <span class="material-symbols-outlined text-xl text-[#e75c3e]">bookmark_add</span>
-                  <span>Guardar como plantilla</span>
-                </button>
-                @if (!isEditMode()) {
-                  <hr class="my-1.5 border-zinc-100" />
-                  <a
-                    routerLink="/galeria/ejercicios"
-                    class="dropdown-item"
-                    (click)="menuAccionesMobileOpen = false"
-                  >
-                    <span class="material-symbols-outlined text-xl text-green-500">add</span>
-                    <span>Agregar ejercicios</span>
-                  </a>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-  </header>
-
-  <!-- Contenido principal -->
-  <div class="mx-auto max-w-3xl px-4">
-    <!-- Card: Paciente + Detalles del plan -->
-    <article class="tarjeta-kengo mb-5 overflow-hidden rounded-2xl">
-      <!-- Paciente -->
-      @if (paciente(); as p) {
-        <div class="flex items-center gap-4 border-b border-zinc-100/80 p-5">
-          @if (p.avatar) {
-            <img
-              [src]="avatarUrl(p.avatar)"
-              alt="Avatar"
-              class="h-14 w-14 rounded-full object-cover ring-[3px] ring-white shadow-md"
-            />
-          } @else {
-            <div class="flex h-14 w-14 items-center justify-center rounded-full
-                        bg-gradient-to-br from-[#e75c3e] to-[#efc048] shadow-md
-                        ring-[3px] ring-white">
-              <span class="material-symbols-outlined text-2xl text-white">person</span>
-            </div>
-          }
-          <div class="min-w-0 flex-1">
-            <h3 class="truncate font-bold text-zinc-800 text-lg">
-              {{ p.first_name }} {{ p.last_name }}
-            </h3>
-            <p class="truncate text-sm text-zinc-500">{{ p.email }}</p>
-          </div>
-        </div>
-      }
-
-      <!-- Detalles del plan (titulo y descripcion) -->
-      <div class="border-b border-zinc-100/80 p-5">
-        @if (!editandoDetalles()) {
-          <!-- Modo vista -->
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <h2 class="text-lg font-bold text-zinc-800">
-                {{ form.value.titulo || "Sin título" }}
-              </h2>
-              @if (form.value.descripcion) {
-                <p class="mt-1.5 text-sm text-zinc-600 leading-relaxed">
-                  {{ form.value.descripcion }}
-                </p>
-              }
-            </div>
-            <button
-              type="button"
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
-                     text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-600"
-              (click)="editandoDetalles.set(true)"
-              title="Editar título y descripción"
-            >
-              <span class="material-symbols-outlined text-xl">edit</span>
-            </button>
-          </div>
-        } @else {
-          <!-- Modo edición titulo/descripcion -->
-          <form [formGroup]="form" class="space-y-4">
-            <div>
-              <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                Título del plan
-              </label>
-              <input
-                type="text"
-                class="input-compact w-full"
-                formControlName="titulo"
-                placeholder="Ej: Rehabilitación rodilla"
-              />
-              @if (form.controls.titulo.hasError("required") && form.controls.titulo.touched) {
-                <p class="mt-1.5 text-xs font-medium text-red-500">El título es requerido</p>
-              }
-            </div>
-
-            <div>
-              <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                Descripción (opcional)
-              </label>
-              <textarea
-                rows="2"
-                class="input-compact w-full resize-none"
-                formControlName="descripcion"
-                placeholder="Breve descripción del plan..."
-              ></textarea>
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                type="button"
-                class="inline-flex h-10 items-center justify-center rounded-xl
-                       bg-zinc-800 px-5 text-sm font-semibold text-white
-                       transition-all hover:bg-zinc-700 active:scale-98"
-                (click)="editandoDetalles.set(false)"
-              >
-                Listo
-              </button>
-            </div>
-          </form>
-        }
-      </div>
-
-      <!-- Selector de fechas -->
-      <div class="p-5">
-        <!-- Rango de fechas con inputs nativos -->
-        <div class="date-range-box">
-          <span class="material-symbols-outlined text-xl text-[#e75c3e]">calendar_today</span>
-          <div class="flex flex-1 items-center gap-3">
-            <input
-              type="date"
-              class="flex-1 rounded-lg border-0 bg-transparent px-2 py-1.5 text-center
-                     text-sm font-semibold text-zinc-800
-                     focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
-              [min]="minDate"
-              [value]="form.value.fecha_inicio"
-              (change)="onFechaInicioChange($event)"
-            />
-            <span class="material-symbols-outlined text-lg text-[#efc048]">arrow_forward</span>
-            <input
-              type="date"
-              class="flex-1 rounded-lg border-0 bg-transparent px-2 py-1.5 text-center
-                     text-sm font-semibold text-zinc-800
-                     focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
-              [min]="form.value.fecha_inicio || minDate"
-              [value]="form.value.fecha_fin"
-              (change)="onFechaFinChange($event)"
-            />
-          </div>
-        </div>
-
-        <!-- Chips de duración -->
-        <div class="mt-4">
-          <label class="mb-2 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-            Duración
-          </label>
-          <div class="flex flex-wrap gap-2">
-            @for (preset of duracionPresets; track preset.dias) {
-              <button
-                type="button"
-                class="duracion-btn"
-                [class.duracion-btn--activo]="duracionSeleccionada() === preset.dias"
-                (click)="seleccionarDuracion(preset.dias)"
-              >
-                {{ preset.label }}
-              </button>
-            }
-            <button
-              type="button"
-              class="duracion-btn"
-              [class.duracion-btn--activo]="duracionSeleccionada() === 'custom'"
-            >
-              <span class="material-symbols-outlined text-base">tune</span>
-              Personalizado
-            </button>
-          </div>
-        </div>
-      </div>
-    </article>
-
-    <!-- Lista de ejercicios -->
-    @if (items().length === 0) {
-      <article class="tarjeta-kengo rounded-2xl p-8 text-center">
-        <div class="empty-state-icon mx-auto">
-          <span class="material-symbols-outlined">fitness_center</span>
-        </div>
-        <h3 class="text-lg font-bold text-zinc-700">No hay ejercicios en el plan</h3>
-        <p class="mt-2 text-sm text-zinc-500">
-          Agrega ejercicios del catálogo para comenzar
-        </p>
-        <a
-          routerLink="/galeria/ejercicios"
-          class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl
-                 bg-gradient-to-r from-[#e75c3e] to-[#c94a2f] px-6
-                 text-sm font-semibold text-white shadow-lg shadow-[#e75c3e]/30
-                 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#e75c3e]/40
-                 active:scale-98"
-        >
-          <span class="material-symbols-outlined text-xl">add</span>
-          Agregar ejercicios
-        </a>
-      </article>
-    } @else {
-      <div cdkDropList class="space-y-4" (cdkDropListDropped)="onDrop($event)">
-        @for (it of items(); track trackByIndex($index); let i = $index) {
-          <article
-            class="tarjeta-kengo exercise-item overflow-hidden rounded-2xl transition-all"
-            [class.exercise-card-editing]="ejercicioEditando() === i"
-            cdkDrag
-            [cdkDragDisabled]="ejercicioEditando() === i"
-          >
-            <!-- Drag preview -->
-            <div *cdkDragPreview class="rounded-2xl bg-white p-4 shadow-2xl">
-              <div class="flex items-center gap-3">
-                @if (it.ejercicio.portada) {
-                  <img
-                    [src]="assetUrl(it.ejercicio.portada, 48, 48)"
-                    class="h-12 w-12 rounded-xl object-cover"
-                  />
-                }
-                <span class="font-bold text-zinc-800">{{ it.ejercicio.nombre_ejercicio }}</span>
-              </div>
-            </div>
-
-            <!-- Placeholder -->
-            <div
-              *cdkDragPlaceholder
-              class="h-24 rounded-2xl border-2 border-dashed border-[#e75c3e]/30 bg-[#e75c3e]/5"
-            ></div>
-
-            @if (ejercicioEditando() !== i) {
-              <!-- Modo vista compacto -->
-              <div class="flex items-center gap-4 p-4">
-                <div class="drag-handle text-[#e75c3e]" cdkDragHandle>
-                  <span class="material-symbols-outlined text-2xl">drag_indicator</span>
+              <div class="dropdown-panel" (clickOutside)="menuAccionesMobileOpen = false">
+                <div class="dropdown-panel__header">
+                  <span class="dropdown-panel__title">Acciones</span>
                 </div>
+                <div class="dropdown-panel__body">
+                  <button
+                    type="button"
+                    class="dropdown-action"
+                    [disabled]="isLoading()"
+                    (click)="cargarPlantilla(); menuAccionesMobileOpen = false"
+                  >
+                    <span class="dropdown-action__icon dropdown-action__icon--gold">
+                      <span class="material-symbols-outlined">folder_open</span>
+                    </span>
+                    <span class="dropdown-action__content">
+                      <span class="dropdown-action__label">Cargar plantilla</span>
+                      <span class="dropdown-action__hint">Usar rutina existente</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    class="dropdown-action"
+                    [disabled]="items().length === 0"
+                    (click)="guardarComoPlantilla(); menuAccionesMobileOpen = false"
+                  >
+                    <span class="dropdown-action__icon dropdown-action__icon--coral">
+                      <span class="material-symbols-outlined">bookmark_add</span>
+                    </span>
+                    <span class="dropdown-action__content">
+                      <span class="dropdown-action__label">Guardar como plantilla</span>
+                      <span class="dropdown-action__hint">Reutilizar este plan</span>
+                    </span>
+                  </button>
+                  @if (!isEditMode()) {
+                    <div class="dropdown-panel__divider"></div>
+                    <a
+                      routerLink="/galeria/ejercicios"
+                      class="dropdown-action"
+                      (click)="menuAccionesMobileOpen = false"
+                    >
+                      <span class="dropdown-action__icon dropdown-action__icon--green">
+                        <span class="material-symbols-outlined">add</span>
+                      </span>
+                      <span class="dropdown-action__content">
+                        <span class="dropdown-action__label">Agregar ejercicios</span>
+                        <span class="dropdown-action__hint">Desde el catálogo</span>
+                      </span>
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </header>
+  }
 
-                <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-100 shadow-sm">
-                  @if (it.ejercicio.portada) {
-                    <img
-                      [src]="assetUrl(it.ejercicio.portada, 80, 80)"
-                      [alt]="it.ejercicio.nombre_ejercicio"
-                      class="h-full w-full object-cover"
-                    />
-                  } @else {
-                    <div class="flex h-full w-full items-center justify-center">
-                      <span class="material-symbols-outlined text-2xl text-zinc-300">fitness_center</span>
+  <!-- Main content -->
+  <div class="plan-content">
+    <div class="plan-content__inner">
+
+      <!-- Card principal del plan -->
+      <article class="plan-card plan-card--main">
+        <!-- Paciente section -->
+        @if (paciente(); as p) {
+          <div class="plan-card__section plan-card__section--patient">
+            <div class="patient-info">
+              <div class="patient-avatar">
+                @if (p.avatar) {
+                  <img
+                    [src]="avatarUrl(p.avatar)"
+                    alt="Avatar de {{ p.first_name }}"
+                    class="patient-avatar__img"
+                  />
+                } @else {
+                  <div class="patient-avatar__fallback">
+                    <span class="material-symbols-outlined">person</span>
+                  </div>
+                }
+                <span class="patient-avatar__status"></span>
+              </div>
+              <div class="patient-details">
+                <h3 class="patient-name">{{ p.first_name }} {{ p.last_name }}</h3>
+                <p class="patient-email">{{ p.email }}</p>
+              </div>
+            </div>
+            <div class="patient-section__actions">
+              <div class="patient-badge">
+                <span class="material-symbols-outlined">healing</span>
+                Paciente
+              </div>
+              <!-- Menu acciones rápidas (solo desktop >= 768px) -->
+              @if (!isMovil()) {
+                <div class="relative">
+                  <button
+                    #menuAccionesBtn
+                    type="button"
+                    class="btn-icon-subtle"
+                    [disabled]="isSaving()"
+                    (click)="menuAccionesOpen = !menuAccionesOpen"
+                    aria-label="Más opciones"
+                  >
+                    <span class="material-symbols-outlined">more_vert</span>
+                  </button>
+
+                  @if (menuAccionesOpen) {
+                    <div class="dropdown-panel dropdown-panel--right" (clickOutside)="menuAccionesOpen = false">
+                      <div class="dropdown-panel__header">
+                        <span class="dropdown-panel__title">Acciones rápidas</span>
+                      </div>
+                      <div class="dropdown-panel__body">
+                        <button
+                          type="button"
+                          class="dropdown-action"
+                          [disabled]="isLoading()"
+                          (click)="cargarPlantilla(); menuAccionesOpen = false"
+                        >
+                          <span class="dropdown-action__icon dropdown-action__icon--gold">
+                            <span class="material-symbols-outlined">folder_open</span>
+                          </span>
+                          <span class="dropdown-action__content">
+                            <span class="dropdown-action__label">Cargar plantilla</span>
+                            <span class="dropdown-action__hint">Usar rutina existente</span>
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          class="dropdown-action"
+                          [disabled]="items().length === 0"
+                          (click)="guardarComoPlantilla(); menuAccionesOpen = false"
+                        >
+                          <span class="dropdown-action__icon dropdown-action__icon--coral">
+                            <span class="material-symbols-outlined">bookmark_add</span>
+                          </span>
+                          <span class="dropdown-action__content">
+                            <span class="dropdown-action__label">Guardar como plantilla</span>
+                            <span class="dropdown-action__hint">Reutilizar este plan</span>
+                          </span>
+                        </button>
+                        @if (!isEditMode()) {
+                          <div class="dropdown-panel__divider"></div>
+                          <a
+                            routerLink="/galeria/ejercicios"
+                            class="dropdown-action"
+                            (click)="menuAccionesOpen = false"
+                          >
+                            <span class="dropdown-action__icon dropdown-action__icon--green">
+                              <span class="material-symbols-outlined">add</span>
+                            </span>
+                            <span class="dropdown-action__content">
+                              <span class="dropdown-action__label">Agregar ejercicios</span>
+                              <span class="dropdown-action__hint">Desde el catálogo</span>
+                            </span>
+                          </a>
+                        }
+                      </div>
                     </div>
                   }
                 </div>
+              }
+            </div>
+          </div>
+        }
 
-                <div class="min-w-0 flex-1">
-                  <h3 class="truncate font-bold text-zinc-800">
-                    {{ it.ejercicio.nombre_ejercicio }}
-                  </h3>
-                  <p class="mt-1 text-sm text-zinc-500">
-                    <span class="font-semibold text-[#e75c3e]">{{ it.series || 3 }}×{{ it.repeticiones || 10 }}</span>
-                    @if (it.descanso_seg) {
-                      <span class="text-zinc-400"> · {{ it.descanso_seg }}s</span>
-                    }
-                    @if (it.veces_dia && it.veces_dia > 1) {
-                      <span class="text-zinc-400"> · {{ it.veces_dia }}/día</span>
-                    }
+        <!-- Detalles del plan -->
+        <div class="plan-card__section plan-card__section--details">
+          @if (!editandoDetalles()) {
+            <!-- Vista mode -->
+            <div class="plan-details-view">
+              <div class="plan-details-view__content">
+                <h2 class="plan-title">{{ form.value.titulo || "Sin título" }}</h2>
+                @if (form.value.descripcion) {
+                  <p class="plan-description">{{ form.value.descripcion }}</p>
+                }
+              </div>
+              <button
+                type="button"
+                class="btn-edit-subtle"
+                (click)="editandoDetalles.set(true)"
+                title="Editar título y descripción"
+              >
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+            </div>
+          } @else {
+            <!-- Edit mode -->
+            <form [formGroup]="form" class="plan-details-form">
+              <div class="form-field">
+                <label class="form-label">
+                  <span class="form-label__icon material-symbols-outlined">title</span>
+                  Título del plan
+                </label>
+                <input
+                  type="text"
+                  class="form-input"
+                  formControlName="titulo"
+                  placeholder="Ej: Rehabilitación rodilla derecha"
+                />
+                @if (form.controls.titulo.hasError("required") && form.controls.titulo.touched) {
+                  <p class="form-error">
+                    <span class="material-symbols-outlined">error</span>
+                    El título es requerido
                   </p>
-                  <!-- Días de la semana visual -->
-                  <div class="mt-2 flex gap-1">
-                    @for (d of dias; track d) {
-                      <span class="dia-mini" [class.dia-mini--activo]="isDia(it, d)">{{ d }}</span>
-                    }
-                  </div>
-                </div>
+                }
+              </div>
 
+              <div class="form-field">
+                <label class="form-label">
+                  <span class="form-label__icon material-symbols-outlined">description</span>
+                  Descripción
+                  <span class="form-label__optional">(opcional)</span>
+                </label>
+                <textarea
+                  rows="2"
+                  class="form-input form-input--textarea"
+                  formControlName="descripcion"
+                  placeholder="Breve descripción del plan de tratamiento..."
+                ></textarea>
+              </div>
+
+              <div class="form-actions">
                 <button
                   type="button"
-                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
-                         text-zinc-400 transition-all hover:bg-[#e75c3e]/10 hover:text-[#e75c3e]"
-                  (click)="ejercicioEditando.set(i)"
-                  title="Editar"
+                  class="btn-primary btn-primary--sm"
+                  (click)="editandoDetalles.set(false)"
                 >
-                  <span class="material-symbols-outlined text-xl">edit</span>
+                  <span class="material-symbols-outlined">check</span>
+                  Listo
                 </button>
               </div>
-            } @else {
-              <!-- Modo edición expandido -->
-              <div class="p-5">
-                <div class="mb-5 flex items-start gap-4">
-                  <div class="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 shadow-md">
+            </form>
+          }
+        </div>
+
+        <!-- Selector de fechas -->
+        <div class="plan-card__section plan-card__section--dates">
+          <div class="date-selector">
+            <div class="date-selector__header">
+              <span class="date-selector__icon material-symbols-outlined">calendar_month</span>
+              <span class="date-selector__title">Duración del plan</span>
+            </div>
+
+            <div class="date-range">
+              <div class="date-input-group">
+                <label class="date-input-label">Inicio</label>
+                <input
+                  type="date"
+                  class="date-input"
+                  [min]="minDate"
+                  [value]="form.value.fecha_inicio"
+                  (change)="onFechaInicioChange($event)"
+                />
+              </div>
+              <div class="date-range__arrow">
+                <span class="material-symbols-outlined">trending_flat</span>
+              </div>
+              <div class="date-input-group">
+                <label class="date-input-label">Fin</label>
+                <input
+                  type="date"
+                  class="date-input"
+                  [min]="form.value.fecha_inicio || minDate"
+                  [value]="form.value.fecha_fin"
+                  (change)="onFechaFinChange($event)"
+                />
+              </div>
+            </div>
+
+            <div class="duration-presets">
+              @for (preset of duracionPresets; track preset.dias) {
+                <button
+                  type="button"
+                  class="duration-chip"
+                  [class.duration-chip--active]="duracionSeleccionada() === preset.dias"
+                  (click)="seleccionarDuracion(preset.dias)"
+                >
+                  {{ preset.label }}
+                </button>
+              }
+              <button
+                type="button"
+                class="duration-chip duration-chip--custom"
+                [class.duration-chip--active]="duracionSeleccionada() === 'custom'"
+              >
+                <span class="material-symbols-outlined">tune</span>
+                Otro
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Sección de ejercicios -->
+      <div class="exercises-section">
+        <div class="exercises-header">
+          <h2 class="exercises-title">
+            <span class="exercises-title__icon material-symbols-outlined">fitness_center</span>
+            Ejercicios del plan
+          </h2>
+          <span class="exercises-count">{{ totalItems() }}</span>
+        </div>
+
+        @if (items().length === 0) {
+          <!-- Empty state -->
+          <article class="empty-state-card">
+            <div class="empty-state-card__visual">
+              <div class="empty-state-card__circles">
+                <span class="empty-state-card__circle empty-state-card__circle--1"></span>
+                <span class="empty-state-card__circle empty-state-card__circle--2"></span>
+                <span class="empty-state-card__circle empty-state-card__circle--3"></span>
+              </div>
+              <span class="material-symbols-outlined empty-state-card__icon">fitness_center</span>
+            </div>
+            <h3 class="empty-state-card__title">Sin ejercicios todavía</h3>
+            <p class="empty-state-card__text">
+              Añade ejercicios del catálogo para crear el plan de tratamiento
+            </p>
+            <a routerLink="/galeria/ejercicios" class="btn-primary btn-primary--glow">
+              <span class="material-symbols-outlined">add</span>
+              Agregar ejercicios
+            </a>
+          </article>
+        } @else {
+          <!-- Lista de ejercicios -->
+          <div cdkDropList class="exercises-list" (cdkDropListDropped)="onDrop($event)">
+            @for (it of items(); track trackByIndex($index); let i = $index) {
+              <article
+                class="exercise-card"
+                [class.exercise-card--editing]="ejercicioEditando() === i"
+                cdkDrag
+                [cdkDragDisabled]="ejercicioEditando() === i"
+              >
+                <!-- Drag preview -->
+                <div *cdkDragPreview class="exercise-card-preview">
+                  <div class="exercise-card-preview__inner">
                     @if (it.ejercicio.portada) {
                       <img
-                        [src]="assetUrl(it.ejercicio.portada, 120, 120)"
-                        [alt]="it.ejercicio.nombre_ejercicio"
-                        class="h-full w-full object-cover"
+                        [src]="assetUrl(it.ejercicio.portada, 56, 56)"
+                        class="exercise-card-preview__img"
+                        alt=""
                       />
+                    } @else {
+                      <div class="exercise-card-preview__placeholder">
+                        <span class="material-symbols-outlined">fitness_center</span>
+                      </div>
                     }
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <h3 class="font-bold text-lg text-zinc-800">
-                      {{ it.ejercicio.nombre_ejercicio }}
-                    </h3>
-                    @if (it.ejercicio.descripcion) {
-                      <div
-                        class="prose prose-sm mt-1 line-clamp-2 text-sm text-zinc-500"
-                        [innerHTML]="it.ejercicio.descripcion | safeHtml"
-                      ></div>
-                    }
+                    <span class="exercise-card-preview__name">{{ it.ejercicio.nombre_ejercicio }}</span>
                   </div>
                 </div>
 
-                <!-- Dosificación -->
-                <div class="grid grid-cols-4 gap-3">
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Series
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      class="input-compact text-center"
-                      [value]="it.series || 3"
-                      (input)="update(i, { series: +$any($event.target).value || 1 })"
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Reps
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      class="input-compact text-center"
-                      [value]="it.repeticiones || 10"
-                      (input)="update(i, { repeticiones: +$any($event.target).value || 1 })"
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Desc (s)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      class="input-compact text-center"
-                      [value]="it.descanso_seg ?? 45"
-                      (input)="update(i, { descanso_seg: +$any($event.target).value || 0 })"
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Veces/día
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      class="input-compact text-center"
-                      [value]="it.veces_dia ?? 1"
-                      (input)="update(i, { veces_dia: +$any($event.target).value || 1 })"
-                    />
-                  </div>
-                </div>
+                <!-- Placeholder -->
+                <div *cdkDragPlaceholder class="exercise-card-placeholder"></div>
 
-                <!-- Días de la semana -->
-                <div class="mt-5">
-                  <label class="mb-2 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                    Días de la semana
-                  </label>
-                  <div class="flex justify-center gap-2">
-                    @for (d of dias; track d) {
+                @if (ejercicioEditando() !== i) {
+                  <!-- Vista compacta -->
+                  <div class="exercise-card__compact">
+                    <div class="exercise-drag" cdkDragHandle>
+                      <span class="material-symbols-outlined">drag_indicator</span>
+                    </div>
+
+                    <div class="exercise-thumb">
+                      @if (it.ejercicio.portada) {
+                        <img
+                          [src]="assetUrl(it.ejercicio.portada, 80, 80)"
+                          [alt]="it.ejercicio.nombre_ejercicio"
+                          class="exercise-thumb__img"
+                        />
+                      } @else {
+                        <div class="exercise-thumb__fallback">
+                          <span class="material-symbols-outlined">fitness_center</span>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="exercise-info">
+                      <h3 class="exercise-name">{{ it.ejercicio.nombre_ejercicio }}</h3>
+                      <div class="exercise-meta">
+                        <span class="exercise-dosage">
+                          <span class="exercise-dosage__value">{{ it.series || 3 }}</span>
+                          <span class="exercise-dosage__sep">×</span>
+                          <span class="exercise-dosage__value">{{ it.repeticiones || 10 }}</span>
+                        </span>
+                        @if (it.descanso_seg) {
+                          <span class="exercise-meta__divider">·</span>
+                          <span class="exercise-rest">{{ it.descanso_seg }}s</span>
+                        }
+                        @if (it.veces_dia && it.veces_dia > 1) {
+                          <span class="exercise-meta__divider">·</span>
+                          <span class="exercise-frequency">{{ it.veces_dia }}/día</span>
+                        }
+                      </div>
+                      <div class="exercise-days">
+                        @for (d of dias; track d) {
+                          <span class="day-dot" [class.day-dot--active]="isDia(it, d)">{{ d }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="btn-edit-exercise"
+                      (click)="ejercicioEditando.set(i)"
+                      title="Editar ejercicio"
+                    >
+                      <span class="material-symbols-outlined">edit</span>
+                    </button>
+                  </div>
+                } @else {
+                  <!-- Vista expandida (edición) -->
+                  <div class="exercise-card__expanded">
+                    <div class="exercise-edit-header">
+                      <div class="exercise-edit-thumb">
+                        @if (it.ejercicio.portada) {
+                          <img
+                            [src]="assetUrl(it.ejercicio.portada, 120, 120)"
+                            [alt]="it.ejercicio.nombre_ejercicio"
+                          />
+                        } @else {
+                          <div class="exercise-edit-thumb__fallback">
+                            <span class="material-symbols-outlined">fitness_center</span>
+                          </div>
+                        }
+                      </div>
+                      <div class="exercise-edit-info">
+                        <h3 class="exercise-edit-name">{{ it.ejercicio.nombre_ejercicio }}</h3>
+                        @if (it.ejercicio.descripcion) {
+                          <div
+                            class="exercise-edit-desc"
+                            [innerHTML]="it.ejercicio.descripcion | safeHtml"
+                          ></div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Dosificación -->
+                    <div class="dosage-grid">
+                      <div class="dosage-field">
+                        <label class="dosage-label">Series</label>
+                        <div class="dosage-input-wrap">
+                          <input
+                            type="number"
+                            min="1"
+                            class="dosage-input"
+                            [value]="it.series || 3"
+                            (input)="update(i, { series: +$any($event.target).value || 1 })"
+                          />
+                        </div>
+                      </div>
+                      <div class="dosage-field">
+                        <label class="dosage-label">Repeticiones</label>
+                        <div class="dosage-input-wrap">
+                          <input
+                            type="number"
+                            min="1"
+                            class="dosage-input"
+                            [value]="it.repeticiones || 10"
+                            (input)="update(i, { repeticiones: +$any($event.target).value || 1 })"
+                          />
+                        </div>
+                      </div>
+                      <div class="dosage-field">
+                        <label class="dosage-label">Descanso</label>
+                        <div class="dosage-input-wrap dosage-input-wrap--suffix">
+                          <input
+                            type="number"
+                            min="0"
+                            class="dosage-input"
+                            [value]="it.descanso_seg ?? 45"
+                            (input)="update(i, { descanso_seg: +$any($event.target).value || 0 })"
+                          />
+                          <span class="dosage-suffix">seg</span>
+                        </div>
+                      </div>
+                      <div class="dosage-field">
+                        <label class="dosage-label">Veces/día</label>
+                        <div class="dosage-input-wrap">
+                          <input
+                            type="number"
+                            min="1"
+                            class="dosage-input"
+                            [value]="it.veces_dia ?? 1"
+                            (input)="update(i, { veces_dia: +$any($event.target).value || 1 })"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Días de la semana -->
+                    <div class="days-selector">
+                      <label class="days-selector__label">Días de la semana</label>
+                      <div class="days-selector__grid">
+                        @for (d of dias; track d) {
+                          <button
+                            type="button"
+                            class="day-btn"
+                            [class.day-btn--active]="isDia(it, d)"
+                            (click)="toggleDia(i, d)"
+                          >
+                            <span class="day-btn__letter">{{ d }}</span>
+                            <span class="day-btn__name">{{ diasNombres[d] }}</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Instrucciones -->
+                    <div class="instructions-field">
+                      <label class="form-label">
+                        <span class="form-label__icon material-symbols-outlined">note</span>
+                        Instrucciones para el paciente
+                        <span class="form-label__optional">(opcional)</span>
+                      </label>
+                      <textarea
+                        rows="2"
+                        class="form-input form-input--textarea"
+                        placeholder="Indicaciones especiales, precauciones, consejos..."
+                        [value]="it.instrucciones_paciente || ''"
+                        (input)="update(i, { instrucciones_paciente: $any($event.target).value })"
+                      ></textarea>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="exercise-edit-actions">
                       <button
                         type="button"
-                        class="dia-btn"
-                        [class.dia-btn--activo]="isDia(it, d)"
-                        (click)="toggleDia(i, d)"
+                        class="btn-delete"
+                        (click)="removeEjercicio(it.ejercicio.id_ejercicio)"
                       >
-                        {{ d }}
+                        <span class="material-symbols-outlined">delete</span>
+                        Eliminar
                       </button>
-                    }
+                      <button
+                        type="button"
+                        class="btn-primary btn-primary--sm"
+                        (click)="ejercicioEditando.set(null)"
+                      >
+                        <span class="material-symbols-outlined">check</span>
+                        Listo
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <!-- Instrucciones -->
-                <div class="mt-5">
-                  <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                    Instrucciones (opcional)
-                  </label>
-                  <textarea
-                    rows="2"
-                    class="input-compact w-full resize-none"
-                    placeholder="Indicaciones especiales para el paciente..."
-                    [value]="it.instrucciones_paciente || ''"
-                    (input)="update(i, { instrucciones_paciente: $any($event.target).value })"
-                  ></textarea>
-                </div>
-
-                <!-- Acciones -->
-                <div class="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-red-500
-                           transition-all hover:text-red-600 active:scale-98"
-                    (click)="removeEjercicio(it.ejercicio.id_ejercicio)"
-                  >
-                    <span class="material-symbols-outlined text-xl">delete</span>
-                    Eliminar
-                  </button>
-                  <button
-                    type="button"
-                    class="inline-flex h-10 items-center justify-center rounded-xl
-                           bg-zinc-800 px-5 text-sm font-semibold text-white
-                           transition-all hover:bg-zinc-700 active:scale-98"
-                    (click)="ejercicioEditando.set(null)"
-                  >
-                    Listo
-                  </button>
-                </div>
-              </div>
+                }
+              </article>
             }
-          </article>
+          </div>
         }
       </div>
-    }
+    </div>
   </div>
 </section>
 
-<!-- Barra de acción fija -->
-<div class="fixed right-0 bottom-0 left-0 z-40 p-4
-            bg-gradient-to-t from-white via-white/95 to-transparent
-            pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-  <div class="mx-auto flex max-w-3xl items-center justify-center">
+<!-- Floating action bar -->
+<div class="floating-action-bar">
+  <div class="floating-action-bar__inner">
     <button
       type="button"
-      class="cta-button-fixed w-full max-w-md"
+      class="btn-save"
       (click)="guardarPlan()"
       [disabled]="!canSubmit() || isSaving()"
     >
       @if (isSaving()) {
-        <span class="flex items-center justify-center gap-2">
-          <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
-          Guardando...
+        <span class="btn-save__loading">
+          <span class="btn-save__spinner"></span>
+          <span>Guardando...</span>
         </span>
       } @else {
-        <span class="material-symbols-outlined text-xl">check</span>
-        {{ isEditMode() ? "Actualizar plan" : "Guardar plan" }}
+        <span class="btn-save__content">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>{{ isEditMode() ? "Actualizar plan" : "Guardar plan" }}</span>
+        </span>
       }
     </button>
   </div>

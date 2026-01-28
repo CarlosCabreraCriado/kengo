@@ -54,12 +54,12 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
   svc = inject(PlanBuilderService);
 
-  // Detectar si estamos en desktop (>= 1024px)
-  isDesktop = toSignal(
+  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
+  isMovil = toSignal(
     this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.DESKTOP])
+      .observe([KENGO_BREAKPOINTS.MOBILE])
       .pipe(map((result) => result.matches)),
-    { initialValue: false }
+    { initialValue: true }
   );
 
   dias: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
