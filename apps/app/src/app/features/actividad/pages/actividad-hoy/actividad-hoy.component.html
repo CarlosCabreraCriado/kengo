@@ -1,21 +1,4 @@
 <div class="activity-hoy">
-  <!-- Fecha del día (solo móvil) -->
-  @if (isMovil()) {
-    <div class="fecha-header">
-      <p class="fecha-text">{{ fechaHoy() }}</p>
-      @if (hayActividadHoy() && !todoCompletado() && totalPendientes() > 0) {
-        <button
-          type="button"
-          class="header-cta"
-          (click)="iniciarSesionHoy()"
-          aria-label="Comenzar actividad"
-        >
-          <span class="material-symbols-outlined icon-filled">play_arrow</span>
-        </button>
-      }
-    </div>
-  }
-
   <!-- Loading State -->
   @if (cargando()) {
     <div class="state-card loading-state">
@@ -80,6 +63,7 @@
                 <span class="material-symbols-outlined icon-filled">celebration</span>
               </div>
               <div class="hero-info">
+                <span class="hero-date">{{ fechaHoy() }}</span>
                 <h2 class="hero-title">¡Felicidades!</h2>
                 <p class="hero-subtitle">Has completado todos los ejercicios de hoy</p>
               </div>
@@ -106,6 +90,7 @@
                 <span class="material-symbols-outlined">self_improvement</span>
               </div>
               <div class="hero-info">
+                <span class="hero-date">{{ fechaHoy() }}</span>
                 <h2 class="hero-title">Día de descanso</h2>
                 <p class="hero-subtitle">No tienes ejercicios programados para hoy</p>
               </div>
@@ -124,6 +109,7 @@
                 <span class="badge-label">pendiente{{ totalPendientes() !== 1 ? 's' : '' }}</span>
               </div>
               <div class="hero-info">
+                <span class="hero-date">{{ fechaHoy() }}</span>
                 <h2 class="hero-title">Tu actividad de hoy</h2>
                 @if (actividadHoy().length === 1) {
                   <p class="hero-subtitle">{{ actividadHoy()[0].plan.titulo }}</p>

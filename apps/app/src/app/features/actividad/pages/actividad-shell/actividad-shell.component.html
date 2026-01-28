@@ -8,23 +8,27 @@
 
   <!-- Header with Toggle Navigation -->
   @if (isMovil()) {
-    <header class="shell-header header-glass">
-      <div class="header-content">
-        <div class="header-left">
-          <button
-            type="button"
-            class="back-btn"
-            aria-label="Volver al inicio"
-            (click)="volverInicio()"
-          >
-            <span class="material-symbols-outlined">arrow_back</span>
-          </button>
-          <h1 class="titulo-kengo header-title">Mi Actividad</h1>
+    <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+      <div class="mx-auto max-w-2xl">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-xl
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-600 transition-all duration-200
+                     hover:bg-white/80 hover:scale-105 active:scale-95"
+              aria-label="Volver al inicio"
+              (click)="volverInicio()"
+            >
+              <span class="material-symbols-outlined text-xl">arrow_back</span>
+            </button>
+            <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Mi Actividad</h1>
+          </div>
         </div>
-      </div>
 
-      <!-- Toggle Navigation -->
-      <nav class="toggle-nav" aria-label="Navegación de actividad">
+        <!-- Toggle Navigation -->
+        <nav class="toggle-nav" aria-label="Navegación de actividad">
         @for (tab of tabs; track tab.path) {
           <a
             [routerLink]="tab.path"
@@ -36,13 +40,13 @@
             <span class="toggle-label">{{ tab.label }}</span>
           </a>
         }
-      </nav>
+        </nav>
+      </div>
     </header>
   } @else {
     <!-- Desktop Header -->
     <header class="shell-header shell-header-desktop">
       <div class="header-content-desktop">
-        <h1 class="titulo-kengo header-title-desktop">Mi Actividad</h1>
 
         <!-- Toggle Navigation Desktop -->
         <nav class="toggle-nav toggle-nav-desktop" aria-label="Navegación de actividad">

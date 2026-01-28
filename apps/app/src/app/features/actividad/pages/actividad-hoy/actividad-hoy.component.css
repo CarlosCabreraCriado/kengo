@@ -21,29 +21,6 @@
   width: 100%;
 }
 
-/* Fecha Header (móvil) */
-.fecha-header {
-  @apply flex items-center justify-between mb-4;
-}
-
-.fecha-text {
-  @apply text-sm text-zinc-500 m-0;
-}
-
-.header-cta {
-  @apply inline-flex items-center justify-center w-12 h-12 rounded-full text-white cursor-pointer transition-all active:scale-95;
-  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
-  box-shadow: var(--kengo-shadow-primary);
-}
-
-.header-cta:hover {
-  transform: scale(1.05);
-}
-
-.header-cta .material-symbols-outlined {
-  @apply text-2xl;
-}
-
 /* State Cards */
 .state-card {
   @apply relative p-8 rounded-3xl text-center overflow-hidden;
@@ -135,14 +112,17 @@
 /* Content Grid */
 .content-grid {
   @apply grid grid-cols-1 gap-6;
+  justify-items: center;
 }
 
 .main-column {
-  @apply flex flex-col gap-4;
+  @apply flex flex-col gap-4 w-full;
+  max-width: 600px;
 }
 
 .sidebar-column {
-  @apply flex flex-col;
+  @apply flex flex-col w-full;
+  max-width: 400px;
 }
 
 /* Hero Card */
@@ -201,7 +181,7 @@
 }
 
 .hero-content {
-  @apply relative flex items-center gap-4 p-4 -mt-6;
+  @apply relative flex items-center gap-4 p-4 -mt-4;
 }
 
 .hero-icon {
@@ -239,6 +219,10 @@
   @apply flex flex-col min-w-0 flex-1;
 }
 
+.hero-date {
+  @apply text-xs font-medium text-zinc-500 uppercase tracking-wide;
+}
+
 .hero-title {
   @apply text-lg font-bold text-zinc-800 m-0;
 }
@@ -265,7 +249,7 @@
 }
 
 .hero-cta {
-  @apply flex items-center justify-center gap-2 mx-4 mb-4 h-14 rounded-2xl text-white font-semibold cursor-pointer transition-all active:scale-[0.98];
+  @apply flex items-center justify-center gap-2 mx-4 mb-4 px-6 h-14 rounded-2xl text-white font-semibold cursor-pointer transition-all active:scale-[0.98];
   background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
   box-shadow: var(--kengo-shadow-primary);
 }
@@ -646,20 +630,23 @@
     padding-bottom: 32px;
   }
 
-  .fecha-header {
-    @apply hidden;
+  .content-grid {
+    @apply gap-8;
+    grid-template-columns: minmax(auto, 600px) minmax(auto, 380px);
+    justify-content: center;
   }
 
-  .content-grid {
-    @apply grid-cols-5 gap-8;
+  /* Cuando solo hay main-column (sin sidebar), centra la columna única */
+  .content-grid:has(.main-column:only-child) {
+    grid-template-columns: minmax(auto, 600px);
   }
 
   .main-column {
-    @apply col-span-3;
+    max-width: none;
   }
 
   .sidebar-column {
-    @apply col-span-2;
+    max-width: none;
   }
 
   .upcoming-section {
@@ -671,7 +658,7 @@
   }
 
   .hero-content {
-    @apply -mt-8;
+    @apply -mt-6;
   }
 
   .hero-icon, .hero-badge {
