@@ -69,117 +69,172 @@ export interface FeedbackFinalData {
             <p class="header-subtitle">Cuéntanos cómo te sentiste</p>
           </div>
 
-          <!-- Indicador de progreso circular -->
-          <div class="progress-ring-container">
-            <svg class="progress-ring" viewBox="0 0 44 44">
-              <circle
-                class="progress-ring-bg"
-                cx="22"
-                cy="22"
-                r="18"
-                fill="none"
-                stroke-width="4"
-              />
-              <circle
-                class="progress-ring-fill"
-                cx="22"
-                cy="22"
-                r="18"
-                fill="none"
-                stroke-width="4"
-                [style.stroke-dasharray]="circumference"
-                [style.stroke-dashoffset]="progressOffset()"
-              />
-            </svg>
-            <span class="progress-text">{{ ejerciciosConDolor() }}/{{ totalEjercicios() }}</span>
-          </div>
+          <!-- Indicador de progreso circular - solo en modo detallado -->
+          @if (modoDetallado()) {
+            <div class="progress-ring-container">
+              <svg class="progress-ring" viewBox="0 0 44 44">
+                <circle
+                  class="progress-ring-bg"
+                  cx="22"
+                  cy="22"
+                  r="18"
+                  fill="none"
+                  stroke-width="4"
+                />
+                <circle
+                  class="progress-ring-fill"
+                  cx="22"
+                  cy="22"
+                  r="18"
+                  fill="none"
+                  stroke-width="4"
+                  [style.stroke-dasharray]="circumference"
+                  [style.stroke-dashoffset]="progressOffset()"
+                />
+              </svg>
+              <span class="progress-text">{{ ejerciciosConDolor() }}/{{ totalEjercicios() }}</span>
+            </div>
+          }
         </div>
       </header>
 
       <!-- Contenido scrolleable -->
       <main class="main-content">
         <div class="exercises-list">
-          @for (ejercicio of ejerciciosCompletados(); track ejercicio.planItemId; let i = $index) {
-            <article
-              class="exercise-card"
-              [class.completed]="dolorPorEjercicio().get(ejercicio.planItemId) !== undefined"
-              @fade
-            >
-              <!-- Header del ejercicio -->
-              <div class="exercise-header">
-                <div class="exercise-number">
-                  @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
-                    <span class="material-symbols-outlined icon-filled check-icon">check</span>
-                  } @else {
-                    {{ i + 1 }}
-                  }
-                </div>
-                <div class="exercise-info">
-                  <span class="exercise-name">{{ ejercicio.nombre }}</span>
-                  @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
-                    <span
-                      class="dolor-badge"
-                      [style.background]="getDolorColor(dolorPorEjercicio().get(ejercicio.planItemId)!)"
-                    >
-                      {{ dolorPorEjercicio().get(ejercicio.planItemId) }}/10
-                    </span>
-                  }
-                </div>
+          @if (!modoDetallado()) {
+            <!-- ========== MODO SIMPLIFICADO (por defecto) ========== -->
+            <article class="global-feedback-card" @fade>
+              <div class="session-summary">
+                <span class="material-symbols-outlined summary-icon">fitness_center</span>
+                <span class="summary-text">{{ totalEjercicios() }} ejercicios completados</span>
               </div>
 
-              <!-- Escala de dolor -->
               <app-escala-dolor
-                label="Nivel de dolor"
-                [valor]="dolorPorEjercicio().get(ejercicio.planItemId) ?? null"
-                (valorChange)="onDolorChange(ejercicio.planItemId, $event)"
+                label="¿Cómo te sentiste durante la sesión?"
+                [valor]="dolorGlobal()"
+                (valorChange)="onDolorGlobalChange($event)"
               />
+            </article>
 
-              <!-- Sección de nota (colapsable) -->
-              <div class="note-section">
-                <button
-                  type="button"
-                  class="note-toggle"
-                  (click)="toggleNota(ejercicio.planItemId)"
-                >
-                  <span class="material-symbols-outlined note-icon">edit_note</span>
-                  <span class="note-label">
-                    {{ notasPorEjercicio().get(ejercicio.planItemId) ? 'Editar nota' : 'Agregar nota' }}
-                  </span>
-                  <span
-                    class="material-symbols-outlined expand-icon"
-                    [class.rotated]="notasExpandidas().has(ejercicio.planItemId)"
-                  >expand_more</span>
-                </button>
+            <!-- Botón para expandir a modo detallado -->
+            <button
+              type="button"
+              class="expand-detail-btn"
+              (click)="activarModoDetallado()"
+            >
+              <span class="material-symbols-outlined detail-icon">tune</span>
+              <span class="detail-text">Dar feedback detallado por ejercicio</span>
+              <span class="material-symbols-outlined arrow-icon">chevron_right</span>
+            </button>
 
-                @if (notasExpandidas().has(ejercicio.planItemId)) {
-                  <div class="note-input-container" @fade>
-                    <textarea
-                      class="note-input"
-                      placeholder="Describe cómo te sentiste durante este ejercicio..."
-                      rows="3"
-                      [ngModel]="notasPorEjercicio().get(ejercicio.planItemId) || ''"
-                      (ngModelChange)="onNotaChange(ejercicio.planItemId, $event)"
-                    ></textarea>
-                  </div>
-                }
+            <!-- Observaciones generales -->
+            <article class="observations-card" @fade>
+              <div class="observations-header">
+                <span class="material-symbols-outlined observations-icon">forum</span>
+                <span class="observations-title">Observaciones generales</span>
+                <span class="observations-optional">(opcional)</span>
               </div>
+              <textarea
+                class="observations-input"
+                placeholder="¿Algún comentario para tu fisioterapeuta?"
+                rows="4"
+                [(ngModel)]="observacionesGenerales"
+              ></textarea>
+            </article>
+          } @else {
+            <!-- ========== MODO DETALLADO ========== -->
+            <!-- Botón para volver a modo simplificado -->
+            <button
+              type="button"
+              class="collapse-detail-btn"
+              (click)="desactivarModoDetallado()"
+            >
+              <span class="material-symbols-outlined arrow-icon">chevron_left</span>
+              <span class="detail-text">Volver a feedback simplificado</span>
+            </button>
+
+            @for (ejercicio of ejerciciosCompletados(); track ejercicio.planItemId; let i = $index) {
+              <article
+                class="exercise-card"
+                [class.completed]="dolorPorEjercicio().get(ejercicio.planItemId) !== undefined"
+                @fade
+              >
+                <!-- Header del ejercicio -->
+                <div class="exercise-header">
+                  <div class="exercise-number">
+                    @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
+                      <span class="material-symbols-outlined icon-filled check-icon">check</span>
+                    } @else {
+                      {{ i + 1 }}
+                    }
+                  </div>
+                  <div class="exercise-info">
+                    <span class="exercise-name">{{ ejercicio.nombre }}</span>
+                    @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
+                      <span
+                        class="dolor-badge"
+                        [style.background]="getDolorColor(dolorPorEjercicio().get(ejercicio.planItemId)!)"
+                      >
+                        {{ dolorPorEjercicio().get(ejercicio.planItemId) }}/10
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Escala de dolor -->
+                <app-escala-dolor
+                  label="Nivel de dolor"
+                  [valor]="dolorPorEjercicio().get(ejercicio.planItemId) ?? null"
+                  (valorChange)="onDolorChange(ejercicio.planItemId, $event)"
+                />
+
+                <!-- Sección de nota (colapsable) -->
+                <div class="note-section">
+                  <button
+                    type="button"
+                    class="note-toggle"
+                    (click)="toggleNota(ejercicio.planItemId)"
+                  >
+                    <span class="material-symbols-outlined note-icon">edit_note</span>
+                    <span class="note-label">
+                      {{ notasPorEjercicio().get(ejercicio.planItemId) ? 'Editar nota' : 'Agregar nota' }}
+                    </span>
+                    <span
+                      class="material-symbols-outlined expand-icon"
+                      [class.rotated]="notasExpandidas().has(ejercicio.planItemId)"
+                    >expand_more</span>
+                  </button>
+
+                  @if (notasExpandidas().has(ejercicio.planItemId)) {
+                    <div class="note-input-container" @fade>
+                      <textarea
+                        class="note-input"
+                        placeholder="Describe cómo te sentiste durante este ejercicio..."
+                        rows="3"
+                        [ngModel]="notasPorEjercicio().get(ejercicio.planItemId) || ''"
+                        (ngModelChange)="onNotaChange(ejercicio.planItemId, $event)"
+                      ></textarea>
+                    </div>
+                  }
+                </div>
+              </article>
+            }
+
+            <!-- Observaciones generales -->
+            <article class="observations-card" @fade>
+              <div class="observations-header">
+                <span class="material-symbols-outlined observations-icon">forum</span>
+                <span class="observations-title">Observaciones generales</span>
+                <span class="observations-optional">(opcional)</span>
+              </div>
+              <textarea
+                class="observations-input"
+                placeholder="¿Cómo te sentiste durante la sesión en general? ¿Algún comentario para tu fisioterapeuta?"
+                rows="4"
+                [(ngModel)]="observacionesGenerales"
+              ></textarea>
             </article>
           }
-
-          <!-- Observaciones generales -->
-          <article class="observations-card" @fade>
-            <div class="observations-header">
-              <span class="material-symbols-outlined observations-icon">forum</span>
-              <span class="observations-title">Observaciones generales</span>
-              <span class="observations-optional">(opcional)</span>
-            </div>
-            <textarea
-              class="observations-input"
-              placeholder="¿Cómo te sentiste durante la sesión en general? ¿Algún comentario para tu fisioterapeuta?"
-              rows="4"
-              [(ngModel)]="observacionesGenerales"
-            ></textarea>
-          </article>
         </div>
       </main>
 
@@ -189,7 +244,11 @@ export interface FeedbackFinalData {
           @if (!todosCompletados()) {
             <div class="incomplete-hint">
               <span class="material-symbols-outlined hint-icon">info</span>
-              <span>Completa la escala de dolor de todos los ejercicios</span>
+              @if (modoDetallado()) {
+                <span>Completa la escala de dolor de todos los ejercicios</span>
+              } @else {
+                <span>Indica cómo te sentiste durante la sesión</span>
+              }
             </div>
           }
 
@@ -517,6 +576,102 @@ export interface FeedbackFinalData {
       gap: 16px;
       max-width: 600px;
       margin: 0 auto;
+    }
+
+    /* === Tarjeta de feedback global (modo simplificado) === */
+    .global-feedback-card {
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .session-summary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, rgba(231, 92, 62, 0.08) 0%, rgba(239, 192, 72, 0.06) 100%);
+      border-radius: 14px;
+      border: 1px solid rgba(231, 92, 62, 0.1);
+    }
+
+    .summary-icon {
+      font-size: 1.3rem;
+      color: var(--primary);
+    }
+
+    .summary-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    /* === Botones de expansión/colapso === */
+    .expand-detail-btn,
+    .collapse-detail-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(231, 92, 62, 0.12);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .expand-detail-btn:hover,
+    .collapse-detail-btn:hover {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: rgba(231, 92, 62, 0.2);
+    }
+
+    .expand-detail-btn:active,
+    .collapse-detail-btn:active {
+      transform: scale(0.99);
+    }
+
+    .detail-icon {
+      font-size: 1.25rem;
+      color: var(--primary);
+    }
+
+    .detail-text {
+      flex: 1;
+      text-align: left;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #4b5563;
+    }
+
+    .arrow-icon {
+      font-size: 1.25rem;
+      color: #9ca3af;
+    }
+
+    .collapse-detail-btn {
+      margin-bottom: 8px;
+    }
+
+    .collapse-detail-btn .arrow-icon {
+      color: var(--primary);
+    }
+
+    .collapse-detail-btn .detail-text {
+      text-align: center;
+      color: var(--primary);
+      font-weight: 600;
     }
 
     /* === Tarjeta de ejercicio === */
@@ -893,9 +1048,16 @@ export interface FeedbackFinalData {
       }
 
       .exercise-card,
-      .observations-card {
+      .observations-card,
+      .global-feedback-card {
         padding: 24px;
         border-radius: 28px;
+      }
+
+      .expand-detail-btn,
+      .collapse-detail-btn {
+        padding: 18px 20px;
+        border-radius: 18px;
       }
 
       .actions-footer {
@@ -930,7 +1092,15 @@ export class FeedbackFinalComponent {
 
   private registroService = inject(RegistroSesionService);
 
-  // Estado interno
+  // Estado interno - modo de feedback
+  private _modoDetallado = signal(false);
+  readonly modoDetallado = this._modoDetallado.asReadonly();
+
+  // Dolor global para modo simplificado
+  private _dolorGlobal = signal<number | null>(null);
+  readonly dolorGlobal = this._dolorGlobal.asReadonly();
+
+  // Estado interno - modo detallado
   private _dolorPorEjercicio = signal<Map<number, number>>(new Map());
   private _notasPorEjercicio = signal<Map<number, string>>(new Map());
   private _notasExpandidas = signal<Set<number>>(new Set());
@@ -961,11 +1131,24 @@ export class FeedbackFinalComponent {
 
   readonly ejerciciosConDolor = computed(() => this._dolorPorEjercicio().size);
 
-  readonly todosCompletados = computed(() => {
+  // Validación para modo detallado (todos los ejercicios con dolor)
+  readonly todosCompletadosDetallado = computed(() => {
     const total = this.ejerciciosCompletados().length;
     const completados = this._dolorPorEjercicio().size;
     return total > 0 && completados === total;
   });
+
+  // Validación para modo simplificado (solo dolor global)
+  readonly puedeFinalizarSimplificado = computed(() =>
+    this._dolorGlobal() !== null
+  );
+
+  // Validación unificada según el modo activo
+  readonly todosCompletados = computed(() =>
+    this._modoDetallado()
+      ? this.todosCompletadosDetallado()
+      : this.puedeFinalizarSimplificado()
+  );
 
   // Progreso para el anillo circular (stroke-dashoffset)
   readonly progressOffset = computed(() => {
@@ -1035,14 +1218,53 @@ export class FeedbackFinalComponent {
     });
   }
 
+  // Métodos para el modo simplificado/detallado
+  onDolorGlobalChange(dolor: number): void {
+    this._dolorGlobal.set(dolor);
+  }
+
+  activarModoDetallado(): void {
+    // Si hay dolor global, copiarlo a todos los ejercicios sin valor
+    const dolorGlobal = this._dolorGlobal();
+    if (dolorGlobal !== null) {
+      this._dolorPorEjercicio.update((map) => {
+        const newMap = new Map(map);
+        this.ejerciciosCompletados().forEach((ej) => {
+          if (!newMap.has(ej.planItemId)) {
+            newMap.set(ej.planItemId, dolorGlobal);
+          }
+        });
+        return newMap;
+      });
+    }
+    this._modoDetallado.set(true);
+  }
+
+  desactivarModoDetallado(): void {
+    this._modoDetallado.set(false);
+  }
+
   onFinalizar(): void {
     if (!this.todosCompletados()) return;
 
-    const feedbacks = this.ejerciciosCompletados().map((ej) => ({
-      planItemId: ej.planItemId,
-      dolor: this._dolorPorEjercicio().get(ej.planItemId)!,
-      nota: this._notasPorEjercicio().get(ej.planItemId),
-    }));
+    let feedbacks: FeedbackFinalData['feedbacks'];
+
+    if (this._modoDetallado()) {
+      // Modo detallado: comportamiento actual
+      feedbacks = this.ejerciciosCompletados().map((ej) => ({
+        planItemId: ej.planItemId,
+        dolor: this._dolorPorEjercicio().get(ej.planItemId)!,
+        nota: this._notasPorEjercicio().get(ej.planItemId),
+      }));
+    } else {
+      // Modo simplificado: aplicar dolor global a todos
+      const dolorGlobal = this._dolorGlobal()!;
+      feedbacks = this.ejerciciosCompletados().map((ej) => ({
+        planItemId: ej.planItemId,
+        dolor: dolorGlobal,
+        nota: undefined,
+      }));
+    }
 
     this.enviarFeedback.emit({
       feedbacks,

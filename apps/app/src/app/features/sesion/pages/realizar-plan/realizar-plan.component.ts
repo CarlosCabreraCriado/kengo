@@ -238,8 +238,8 @@ export class RealizarPlanComponent implements OnInit {
   }
 
   // Handlers de eventos
-  onComenzar(): void {
-    this.registroService.comenzarSesion();
+  async onComenzar(): Promise<void> {
+    await this.registroService.comenzarSesion();
   }
 
   onCompletarSerie(): void {

@@ -32,6 +32,20 @@ interface RegistrosResponse {
   data: RegistroEjercicioDirectus[];
 }
 
+interface SesionDirectus {
+  id: number;
+  date_created?: string;
+  paciente: string;
+  fecha_inicio: string;
+  fecha_fin?: string;
+  observaciones_generales?: string;
+  completada: boolean;
+}
+
+interface SesionResponse {
+  data: SesionDirectus;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RegistroSesionService {
   private http = inject(HttpClient);
@@ -50,6 +64,7 @@ export class RegistroSesionService {
   readonly registrosSesion = signal<RegistroEjercicio[]>([]);
   readonly tiempoInicioSesion = signal<Date | null>(null);
   readonly feedbackActual = signal<FeedbackEjercicio | null>(null);
+  readonly sesionActualId = signal<number | null>(null);
 
   // Estado del temporizador
   readonly tiempoRestante = signal<number>(0);
@@ -238,10 +253,15 @@ export class RegistroSesionService {
   /**
    * Comenzar la sesión (desde resumen a primer ejercicio)
    */
-  comenzarSesion(): void {
-    this.tiempoInicioSesion.set(new Date());
+  async comenzarSesion(): Promise<void> {
+    const ahora = new Date();
+    this.tiempoInicioSesion.set(ahora);
     this.estadoPantalla.set('ejercicio');
     this.serieActual.set(1);
+
+    // Crear sesión en Directus
+    await this.crearSesionEnDirectus(ahora);
+
     this.guardarProgresoLocal();
   }
 
@@ -369,8 +389,12 @@ export class RegistroSesionService {
       })
     );
 
-    // Guardar en Directus
+    // Guardar registros en Directus
     await this.guardarRegistrosEnDirectus();
+
+    // Finalizar sesión con observaciones generales
+    await this.finalizarSesionEnDirectus(data.observacionesGenerales);
+
     this.limpiarProgresoLocal();
   }
 
@@ -431,6 +455,7 @@ export class RegistroSesionService {
     this.tiempoRestante.set(0);
     this.temporizadorActivo.set(false);
     this.descansoEntreEjercicios.set(false);
+    this.sesionActualId.set(null);
   }
 
   // ========= Persistencia local =========
@@ -503,6 +528,66 @@ export class RegistroSesionService {
   // ========= CRUD Directus =========
 
   /**
+   * Crear una sesión en Directus al comenzar
+   */
+  private async crearSesionEnDirectus(fechaInicio: Date): Promise<number | null> {
+    const userId = this.usuarioId();
+    if (!userId) return null;
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<SesionResponse>(
+          `${env.DIRECTUS_URL}/items/sesiones`,
+          {
+            paciente: userId,
+            fecha_inicio: fechaInicio.toISOString(),
+            completada: false,
+          },
+          { withCredentials: true }
+        )
+      );
+
+      const sesionId = response?.data?.id ?? null;
+      if (sesionId) {
+        this.sesionActualId.set(sesionId);
+      }
+      return sesionId;
+    } catch (error) {
+      console.error('Error al crear sesión:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Finalizar la sesión en Directus con observaciones
+   */
+  private async finalizarSesionEnDirectus(
+    observacionesGenerales?: string
+  ): Promise<boolean> {
+    const sesionId = this.sesionActualId();
+    if (!sesionId) return false;
+
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${env.DIRECTUS_URL}/items/sesiones/${sesionId}`,
+          {
+            fecha_fin: new Date().toISOString(),
+            observaciones_generales: observacionesGenerales || null,
+            completada: true,
+          },
+          { withCredentials: true }
+        )
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Error al finalizar sesión:', error);
+      return false;
+    }
+  }
+
+  /**
    * Crear un registro de ejercicio en Directus
    */
   async crearRegistro(
@@ -531,12 +616,20 @@ export class RegistroSesionService {
     const registros = this.registrosSesion();
     if (registros.length === 0) return true;
 
+    const sesionId = this.sesionActualId();
+
     try {
+      // Agregar sesion ID a cada registro si existe
+      const registrosConSesion = registros.map((reg) => ({
+        ...reg,
+        ...(sesionId && { sesion: sesionId }),
+      }));
+
       // Crear registros en batch
       await firstValueFrom(
         this.http.post(
           `${env.DIRECTUS_URL}/items/planes_registros`,
-          registros,
+          registrosConSesion,
           { withCredentials: true }
         )
       );
