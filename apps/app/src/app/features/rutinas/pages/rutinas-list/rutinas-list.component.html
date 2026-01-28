@@ -33,13 +33,14 @@
             type="button"
             (click)="crearRutina()"
             class="flex h-10 items-center justify-center gap-1.5 rounded-full
-                   bg-amber-500 px-4 text-white font-medium text-sm
-                   shadow-md shadow-amber-500/25
+                   bg-[#e75c3e] px-4 text-white font-medium text-sm
+                   shadow-md shadow-[#e75c3e]/25
                    transition-all duration-200
-                   hover:bg-amber-600 hover:shadow-lg active:scale-95"
+                   hover:bg-[#d14d30] hover:shadow-lg active:scale-95"
             aria-label="Crear rutina"
           >
             <span class="material-symbols-outlined text-xl">add</span>
+            <span>Crear rutina</span>
           </button>
         </div>
       }
@@ -212,10 +213,10 @@
             <button
               type="button"
               class="inline-flex h-10 items-center justify-center gap-2 rounded-xl
-                     bg-amber-500 px-4 text-sm font-semibold text-white
-                     shadow-md shadow-amber-500/25
+                     bg-[#e75c3e] px-4 text-sm font-semibold text-white
+                     shadow-md shadow-[#e75c3e]/25
                      transition-all duration-200
-                     hover:bg-amber-600 hover:shadow-lg active:scale-95"
+                     hover:bg-[#d14d30] hover:shadow-lg active:scale-95"
               (click)="crearRutina()"
             >
               <span class="material-symbols-outlined text-xl">add</span>
@@ -252,10 +253,10 @@
           <button
             type="button"
             class="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-xl
-                   bg-amber-500 px-6 text-sm font-semibold text-white
-                   shadow-lg shadow-amber-500/30
+                   bg-[#e75c3e] px-6 text-sm font-semibold text-white
+                   shadow-lg shadow-[#e75c3e]/30
                    transition-all duration-200
-                   hover:bg-amber-600 hover:shadow-xl hover:shadow-amber-500/40
+                   hover:bg-[#d14d30] hover:shadow-xl hover:shadow-[#e75c3e]/40
                    active:scale-98"
             (click)="crearRutina()"
           >
@@ -267,9 +268,10 @@
         <!-- Lista de rutinas -->
         <div class="space-y-4">
           @for (rutina of rutinas(); track rutina.id_rutina) {
-            <div class="tarjeta-kengo rutina-card rounded-2xl"
+            <div class="tarjeta-kengo rutina-card rounded-2xl cursor-pointer"
                  [class.expanded]="expandedRutinaId() === rutina.id_rutina"
-                 [class.menu-open]="openRutinaMenuId === rutina.id_rutina">
+                 [class.menu-open]="openRutinaMenuId === rutina.id_rutina"
+                 (click)="togglePreview(rutina)">
               <!-- Header rutina -->
               <div class="flex items-start gap-4 p-5">
                 <!-- Icono -->
@@ -287,10 +289,19 @@
                           {{ rutina.descripcion }}
                         </p>
                       }
+                      <!-- Badge visibilidad (móvil: debajo de descripción) -->
+                      <span class="visibility-badge mt-2 inline-flex lg:hidden"
+                            [class.private]="rutina.visibilidad === 'privado'"
+                            [class.public]="rutina.visibilidad === 'clinica'">
+                        <span class="material-symbols-outlined text-xs">
+                          {{ rutina.visibilidad === "privado" ? "lock" : "domain" }}
+                        </span>
+                        {{ rutina.visibilidad === "privado" ? "Privada" : "Clínica" }}
+                      </span>
                     </div>
 
-                    <!-- Badge visibilidad -->
-                    <span class="visibility-badge shrink-0"
+                    <!-- Badge visibilidad (desktop: en línea) -->
+                    <span class="visibility-badge hidden shrink-0 lg:inline-flex"
                           [class.private]="rutina.visibilidad === 'privado'"
                           [class.public]="rutina.visibilidad === 'clinica'">
                       <span class="material-symbols-outlined text-xs">
@@ -317,7 +328,7 @@
                 </div>
 
                 <!-- Menu acciones rutina -->
-                <div class="relative shrink-0">
+                <div class="relative shrink-0" (click)="$event.stopPropagation()">
                   <button
                     type="button"
                     class="flex h-10 w-10 items-center justify-center rounded-xl
@@ -331,10 +342,10 @@
                       <button
                         type="button"
                         class="dropdown-item"
-                        (click)="togglePreview(rutina); openRutinaMenuId = null"
+                        (click)="asignarAPaciente(rutina); openRutinaMenuId = null"
                       >
-                        <span class="material-symbols-outlined text-xl">visibility</span>
-                        <span>Ver ejercicios</span>
+                        <span class="material-symbols-outlined text-xl">assignment_ind</span>
+                        <span>Asignar a paciente</span>
                       </button>
                       <button
                         type="button"
@@ -371,19 +382,6 @@
                   }
                 </div>
               </div>
-
-              <!-- Boton expandir -->
-              <button
-                type="button"
-                class="rutina-expand-btn"
-                (click)="togglePreview(rutina)"
-              >
-                <span class="material-symbols-outlined text-lg transition-transform duration-200"
-                      [class.rotate-180]="expandedRutinaId() === rutina.id_rutina">
-                  expand_more
-                </span>
-                {{ expandedRutinaId() === rutina.id_rutina ? "Ocultar ejercicios" : "Ver ejercicios" }}
-              </button>
 
               <!-- Panel preview -->
               @if (expandedRutinaId() === rutina.id_rutina) {
@@ -423,6 +421,19 @@
                         </div>
                       }
                     </div>
+                    <!-- Botón asignar a paciente -->
+                    <button
+                      type="button"
+                      class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl
+                             bg-[#e75c3e] px-4 py-3 text-sm font-semibold text-white
+                             shadow-md shadow-[#e75c3e]/25
+                             transition-all duration-200
+                             hover:bg-[#d14d30] hover:shadow-lg active:scale-[0.98]"
+                      (click)="asignarAPaciente(rutina); $event.stopPropagation()"
+                    >
+                      <span class="material-symbols-outlined text-xl">assignment_ind</span>
+                      <span>Asignar a paciente</span>
+                    </button>
                   } @else {
                     <p class="py-4 text-center text-sm text-zinc-500">
                       Esta rutina no tiene ejercicios

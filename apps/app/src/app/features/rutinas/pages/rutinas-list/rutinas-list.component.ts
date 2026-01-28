@@ -2,6 +2,7 @@ import { Component, inject, computed, signal, HostListener } from '@angular/core
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { Dialog } from '@angular/cdk/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
@@ -11,7 +12,7 @@ import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { ToggleGaleriaComponent } from '../../../../shared/ui/toggle-galeria/toggle-galeria.component';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
-import { Rutina, EjercicioRutina } from '../../../../../types/global';
+import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
 
 @Component({
@@ -29,6 +30,7 @@ export class RutinasListComponent {
   private toastService = inject(ToastService);
   private breakpointObserver = inject(BreakpointObserver);
   private planBuilderService = inject(PlanBuilderService);
+  private dialog = inject(Dialog);
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
 
@@ -186,6 +188,53 @@ export class RutinasListComponent {
   assetUrl(id: string | null | undefined, w = 60, h = 60): string {
     if (!id) return '';
     return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+  }
+
+  // === Asignar a Paciente ===
+  async asignarAPaciente(rutina: Rutina) {
+    // 1. Abrir diálogo de selección de paciente
+    const paciente = await this.seleccionarPaciente();
+    if (!paciente) return; // Usuario canceló
+
+    // 2. Establecer paciente en PlanBuilderService
+    this.planBuilderService.paciente.set(paciente);
+
+    // 3. Guardar en localStorage para persistencia
+    localStorage.setItem('carrito:last_paciente_id', paciente.id);
+    const fisioId = this.planBuilderService.fisioId();
+    if (fisioId) {
+      localStorage.setItem('carrito:last_fisio_id', fisioId);
+    }
+
+    // 4. Cargar ejercicios de la rutina en el carrito
+    const success = await this.planBuilderService.loadFromRutina(rutina.id_rutina);
+
+    if (success) {
+      // 5. Abrir el drawer del carrito
+      this.planBuilderService.openDrawer();
+      // 6. Mostrar notificación de éxito
+      this.toastService.show(`Rutina "${rutina.nombre}" cargada para ${paciente.first_name}`);
+    } else {
+      this.toastService.show('Error al cargar la rutina', 'error');
+    }
+  }
+
+  private async seleccionarPaciente(): Promise<Usuario | null> {
+    const { SelectorPacienteComponent } = await import(
+      '../../../../shared/ui/selector-paciente/selector-paciente.component'
+    );
+
+    const dialogRef = this.dialog.open<Usuario>(SelectorPacienteComponent, {
+      width: '500px',
+      maxWidth: '95vw',
+      panelClass: 'selector-paciente-dialog',
+    });
+
+    return new Promise((resolve) => {
+      dialogRef.closed.subscribe((paciente) => {
+        resolve(paciente || null);
+      });
+    });
   }
 
   // === Crear Rutina ===
