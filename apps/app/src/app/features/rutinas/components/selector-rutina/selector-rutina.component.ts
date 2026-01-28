@@ -16,7 +16,7 @@ import { environment as env } from '../../../../../environments/environment';
     <div class="selector-rutina-container">
       <header class="dialog-header">
         <span class="material-symbols-outlined text-2xl text-orange-500">folder_open</span>
-        <h2 class="dialog-title">Seleccionar plantilla</h2>
+        <h2 class="dialog-title">Seleccionar rutina</h2>
         <button type="button" class="close-btn" (click)="cerrar()">
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -31,7 +31,7 @@ import { environment as env } from '../../../../../environments/environment';
               type="text"
               [(ngModel)]="busqueda"
               (ngModelChange)="onBusquedaChange($event)"
-              placeholder="Nombre de la plantilla..."
+              placeholder="Nombre de la rutina..."
               class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 pr-10 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
@@ -44,7 +44,7 @@ import { environment as env } from '../../../../../environments/environment';
           class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:w-40"
         >
           <option value="todas">Todas</option>
-          <option value="privadas">Mis plantillas</option>
+          <option value="privadas">Mis rutinas</option>
           <option value="publicas">Públicas</option>
         </select>
       </div>
@@ -61,7 +61,7 @@ import { environment as env } from '../../../../../environments/environment';
           <span class="material-symbols-outlined text-5xl text-zinc-300">
             folder_off
           </span>
-          <p class="mt-2 text-zinc-500">No se encontraron plantillas</p>
+          <p class="mt-2 text-zinc-500">No se encontraron rutinas</p>
         </div>
       } @else {
         <div class="space-y-2">
@@ -85,9 +85,9 @@ import { environment as env } from '../../../../../environments/environment';
                 <span
                   class="material-symbols-outlined flex-shrink-0"
                   [class.text-zinc-300]="rutina.visibilidad === 'privado'"
-                  [class.text-green-500]="rutina.visibilidad === 'publico'"
+                  [class.text-amber-500]="rutina.visibilidad === 'clinica'"
                 >
-                  {{ rutina.visibilidad === 'privado' ? 'lock' : 'public' }}
+                  {{ rutina.visibilidad === 'privado' ? 'lock' : 'domain' }}
                 </span>
               </div>
             </button>
@@ -141,7 +141,7 @@ import { environment as env } from '../../../../../environments/environment';
           (click)="confirmar()"
         >
           <span class="material-symbols-outlined">check</span>
-          Usar plantilla
+          Usar rutina
         </button>
       </footer>
     </div>
@@ -272,7 +272,7 @@ export class SelectorRutinaComponent implements OnInit {
     this.rutinasService.setBusqueda(value);
   }
 
-  onFiltroChange(value: 'todas' | 'privadas' | 'publicas') {
+  onFiltroChange(value: 'todas' | 'privadas' | 'clinica') {
     this.rutinasService.setFiltroVisibilidad(value);
   }
 

@@ -192,7 +192,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
   }
 
-  // Cargar una rutina (plantilla) existente
+  // Cargar una rutina existente
   async cargarRutina() {
     // En modo rutina no se requiere paciente
     if (!this.isRutinaMode() && !this.svc.paciente()) {
@@ -244,7 +244,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Guardar plantilla directamente desde el carrito
+   * Guardar rutina directamente desde el carrito
    */
   async guardarRutinaDirectamente() {
     if (this.svc.items().length === 0) {
@@ -263,7 +263,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
 
     dialogRef.closed.subscribe(async (result) => {
       const data = result as
-        | { nombre: string; descripcion: string; visibilidad: 'privado' | 'publico' }
+        | { nombre: string; descripcion: string; visibilidad: 'privado' | 'clinica' }
         | undefined;
       if (data) {
         const rutinaId = await this.svc.saveAsRutina(
@@ -273,11 +273,11 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
         );
 
         if (rutinaId) {
-          this.toastService.show('Plantilla guardada');
+          this.toastService.show('Rutina guardada');
           this.svc.exitRutinaMode();
           this.router.navigate(['/galeria/rutinas']);
         } else {
-          this.toastService.show('Error al guardar plantilla', 'error');
+          this.toastService.show('Error al guardar rutina', 'error');
         }
       }
     });

@@ -22,7 +22,7 @@
               <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Galería</h1>
               @if (rutinas().length > 0) {
                 <p class="text-xs font-medium text-zinc-500 tracking-wide">
-                  {{ rutinas().length }} {{ rutinas().length === 1 ? 'plantilla' : 'plantillas' }}
+                  {{ rutinas().length }} {{ rutinas().length === 1 ? 'rutina' : 'rutinas' }}
                 </p>
               }
             </div>
@@ -38,7 +38,7 @@
                      shadow-md shadow-amber-500/25
                      transition-all duration-200
                      hover:bg-amber-600 hover:shadow-lg active:scale-95"
-              aria-label="Crear plantilla"
+              aria-label="Crear rutina"
             >
               <span class="material-symbols-outlined text-xl">add</span>
             </button>
@@ -72,7 +72,7 @@
                    pr-4 pl-11 text-zinc-700 placeholder:text-zinc-400
                    transition-all focus:border-[#e75c3e]/50 focus:ring-2
                    focus:ring-[#e75c3e]/20 focus:outline-none backdrop-blur-sm"
-            placeholder="Buscar plantilla..."
+            placeholder="Buscar rutina..."
             [(ngModel)]="busquedaRutinas"
             (ngModelChange)="onBusquedaRutinasChange($event)"
           />
@@ -88,9 +88,9 @@
             [(ngModel)]="filtroVisibilidad"
             (ngModelChange)="onFiltroVisibilidadChange($event)"
           >
-            <option value="todas">Todas las plantillas</option>
-            <option value="privadas">Mis plantillas</option>
-            <option value="publicas">Plantillas públicas</option>
+            <option value="todas">Todas las rutinas</option>
+            <option value="privadas">Solo privadas</option>
+            <option value="clinica">De mi clínica</option>
           </select>
           <span class="material-symbols-outlined absolute top-1/2 right-3 -translate-y-1/2
                        pointer-events-none text-zinc-400">expand_more</span>
@@ -102,7 +102,7 @@
             @if (rutinas().length > 0) {
               <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
                 <span class="text-sm font-bold text-[#e75c3e]">{{ rutinas().length }}</span>
-                <span class="text-xs text-zinc-500">{{ rutinas().length === 1 ? 'plantilla' : 'plantillas' }}</span>
+                <span class="text-xs text-zinc-500">{{ rutinas().length === 1 ? 'rutina' : 'rutinas' }}</span>
               </div>
             }
             <button
@@ -115,7 +115,7 @@
               (click)="crearRutina()"
             >
               <span class="material-symbols-outlined text-xl">add</span>
-              <span>Crear plantilla</span>
+              <span>Crear rutina</span>
             </button>
             <button
               type="button"
@@ -149,9 +149,9 @@
           <div class="empty-state-icon">
             <span class="material-symbols-outlined">bookmarks</span>
           </div>
-          <h3 class="text-lg font-semibold text-zinc-700">No tienes plantillas guardadas</h3>
+          <h3 class="text-lg font-semibold text-zinc-700">No tienes rutinas guardadas</h3>
           <p class="mt-2 max-w-xs text-sm text-zinc-500">
-            Crea tu primera plantilla de ejercicios para reutilizarla con tus pacientes
+            Crea tu primera rutina de ejercicios para reutilizarla con tus pacientes
           </p>
           <button
             type="button"
@@ -164,15 +164,16 @@
             (click)="crearRutina()"
           >
             <span class="material-symbols-outlined text-xl">add</span>
-            Crear primera plantilla
+            Crear primera rutina
           </button>
         </div>
       } @else {
         <!-- Lista de rutinas -->
         <div class="space-y-4">
           @for (rutina of rutinas(); track rutina.id_rutina) {
-            <div class="tarjeta-kengo rutina-card overflow-hidden rounded-2xl"
-                 [class.expanded]="expandedRutinaId() === rutina.id_rutina">
+            <div class="tarjeta-kengo rutina-card rounded-2xl"
+                 [class.expanded]="expandedRutinaId() === rutina.id_rutina"
+                 [class.menu-open]="openRutinaMenuId === rutina.id_rutina">
               <!-- Header rutina -->
               <div class="flex items-start gap-4 p-5">
                 <!-- Icono -->
@@ -195,11 +196,11 @@
                     <!-- Badge visibilidad -->
                     <span class="visibility-badge shrink-0"
                           [class.private]="rutina.visibilidad === 'privado'"
-                          [class.public]="rutina.visibilidad === 'publico'">
+                          [class.public]="rutina.visibilidad === 'clinica'">
                       <span class="material-symbols-outlined text-xs">
-                        {{ rutina.visibilidad === "privado" ? "lock" : "public" }}
+                        {{ rutina.visibilidad === "privado" ? "lock" : "domain" }}
                       </span>
-                      {{ rutina.visibilidad === "privado" ? "Privada" : "Pública" }}
+                      {{ rutina.visibilidad === "privado" ? "Privada" : "Clínica" }}
                     </span>
                   </div>
 
@@ -213,7 +214,7 @@
                     }
                     @if (!isOwner(rutina)) {
                       <span class="rounded-full bg-[#efc048]/10 px-2 py-0.5 text-[#efc048] font-medium">
-                        Plantilla pública
+                        De otro fisio
                       </span>
                     }
                   </div>
@@ -242,14 +243,6 @@
                       <button
                         type="button"
                         class="dropdown-item"
-                        (click)="usarPlantilla(rutina); openRutinaMenuId = null"
-                      >
-                        <span class="material-symbols-outlined text-xl text-green-500">play_arrow</span>
-                        <span>Usar plantilla</span>
-                      </button>
-                      <button
-                        type="button"
-                        class="dropdown-item"
                         (click)="duplicarRutina(rutina); openRutinaMenuId = null"
                       >
                         <span class="material-symbols-outlined text-xl">content_copy</span>
@@ -263,10 +256,10 @@
                           (click)="cambiarVisibilidadRutina(rutina); openRutinaMenuId = null"
                         >
                           <span class="material-symbols-outlined text-xl">
-                            {{ rutina.visibilidad === "privado" ? "public" : "lock" }}
+                            {{ rutina.visibilidad === "privado" ? "domain" : "lock" }}
                           </span>
                           <span>
-                            {{ rutina.visibilidad === "privado" ? "Hacer pública" : "Hacer privada" }}
+                            {{ rutina.visibilidad === "privado" ? "Compartir con clínica" : "Hacer privada" }}
                           </span>
                         </button>
                         <button
@@ -336,7 +329,7 @@
                     </div>
                   } @else {
                     <p class="py-4 text-center text-sm text-zinc-500">
-                      Esta plantilla no tiene ejercicios
+                      Esta rutina no tiene ejercicios
                     </p>
                   }
                 </div>

@@ -45,7 +45,7 @@ export class RutinasListComponent {
 
   // Rutinas
   busquedaRutinas = '';
-  filtroVisibilidad: 'todas' | 'privadas' | 'publicas' = 'todas';
+  filtroVisibilidad: 'todas' | 'privadas' | 'clinica' = 'todas';
   rutinas = computed(() => this.rutinasService.rutinas());
   isLoadingRutinas = computed(() => this.rutinasService.isLoading());
 
@@ -68,7 +68,7 @@ export class RutinasListComponent {
     this.rutinasService.setBusqueda(value);
   }
 
-  onFiltroVisibilidadChange(value: 'todas' | 'privadas' | 'publicas') {
+  onFiltroVisibilidadChange(value: 'todas' | 'privadas' | 'clinica') {
     this.filtroVisibilidad = value;
     this.rutinasService.setFiltroVisibilidad(value);
   }
@@ -104,7 +104,7 @@ export class RutinasListComponent {
   }
 
   usarPlantilla(rutina: Rutina) {
-    this.toastService.show('Selecciona un paciente para usar esta plantilla');
+    this.toastService.show('Selecciona un paciente para usar esta rutina');
     this.router.navigate(['/mis-pacientes']);
   }
 
@@ -113,32 +113,34 @@ export class RutinasListComponent {
     const id = await this.rutinasService.duplicarRutina(rutina.id_rutina, nuevoNombre);
 
     if (id) {
-      this.toastService.show('Plantilla duplicada');
+      this.toastService.show('Rutina duplicada');
     } else {
       this.toastService.show('Error al duplicar', 'error');
     }
   }
 
   async eliminarRutina(rutina: Rutina) {
-    if (!confirm(`¿Eliminar la plantilla "${rutina.nombre}"?`)) return;
+    if (!confirm(`¿Eliminar la rutina "${rutina.nombre}"?`)) return;
 
     const success = await this.rutinasService.deleteRutina(rutina.id_rutina);
     if (success) {
-      this.toastService.show('Plantilla eliminada');
+      this.toastService.show('Rutina eliminada');
     } else {
       this.toastService.show('Error al eliminar', 'error');
     }
   }
 
   async cambiarVisibilidadRutina(rutina: Rutina) {
-    const nuevaVisibilidad = rutina.visibilidad === 'privado' ? 'publico' : 'privado';
+    const nuevaVisibilidad = rutina.visibilidad === 'privado' ? 'clinica' : 'privado';
     const success = await this.rutinasService.updateRutina(rutina.id_rutina, {
       visibilidad: nuevaVisibilidad,
     });
 
     if (success) {
       this.toastService.show(
-        `Plantilla ahora es ${nuevaVisibilidad === 'publico' ? 'pública' : 'privada'}`
+        nuevaVisibilidad === 'clinica'
+          ? 'Rutina compartida con la clínica'
+          : 'Rutina ahora es privada'
       );
     } else {
       this.toastService.show('Error al cambiar visibilidad', 'error');

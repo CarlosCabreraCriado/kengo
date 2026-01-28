@@ -22,7 +22,7 @@
       [class.bg-amber-50/50]="isRutinaMode()"
     >
       <h2 class="titulo-kengo text-lg" [class.text-amber-600]="isRutinaMode()">
-        {{ isRutinaMode() ? 'Nueva plantilla' : 'Plan de ejercicios' }}
+        {{ isRutinaMode() ? 'Nueva rutina' : 'Plan de ejercicios' }}
       </h2>
       <button
         type="button"
@@ -50,7 +50,7 @@
           </div>
           <div class="min-w-0 flex-1">
             <p class="truncate text-base font-semibold text-zinc-800">
-              Creando plantilla
+              Creando rutina
             </p>
             <p class="text-sm text-zinc-500">
               {{ total() }}
@@ -203,7 +203,7 @@
           (click)="guardarRutinaDirectamente()"
         >
           <span class="material-symbols-outlined text-xl">bookmark_add</span>
-          <span>Guardar plantilla</span>
+          <span>Guardar rutina</span>
         </button>
 
         <div class="flex gap-2">
@@ -271,7 +271,7 @@
     [class.tab-carrito--abierto]="drawerAbierto()"
     [class.tab-carrito--rutina]="isRutinaMode()"
     (click)="toggle()"
-    [attr.aria-label]="isRutinaMode() ? 'Abrir carrito de plantilla' : 'Abrir carrito de ejercicios'"
+    [attr.aria-label]="isRutinaMode() ? 'Abrir carrito de rutina' : 'Abrir carrito de ejercicios'"
   >
     <div class="tab-carrito__contenido">
       @if (isRutinaMode()) {
@@ -306,6 +306,6 @@
         <span class="tab-carrito__badge" [class.tab-carrito__badge--rutina]="isRutinaMode()">{{ total() }}</span>
       }
     </div>
-    <span class="tab-carrito__label">{{ isRutinaMode() ? 'Plantilla' : 'Asignar' }}</span>
+    <span class="tab-carrito__label">{{ isRutinaMode() ? 'Rutina' : 'Asignar' }}</span>
   </button>
 }
