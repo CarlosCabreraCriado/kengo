@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, ViewChildren, ElementRef, QueryList } from '@angular/core';
+import { Component, inject, signal, effect, ViewChildren, ElementRef, QueryList, computed } from '@angular/core';
 import { Location } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { Ejercicio, Usuario } from '../../../../../types/global';
@@ -54,6 +54,9 @@ export class EjercicioDetailComponent {
     { label: '2 min', valor: 120 },
     { label: '3 min', valor: 180 },
   ];
+
+  // Detectar modo rutina (crear plantilla sin paciente)
+  readonly isRutinaMode = computed(() => this.planBuilderService.isRutinaMode());
 
   constructor() {
     this.route.paramMap
@@ -180,7 +183,13 @@ export class EjercicioDetailComponent {
     const ejercicio = this.ejercicio();
     if (!ejercicio) return;
 
-    // Si no hay paciente seleccionado, mostrar dialogo para seleccionar uno
+    // En modo rutina, añadir directamente sin pedir paciente
+    if (this.isRutinaMode()) {
+      this.planBuilderService.addEjercicio(ejercicio);
+      return;
+    }
+
+    // Modo plan: Si no hay paciente seleccionado, mostrar dialogo para seleccionar uno
     if (!this.planBuilderService.paciente()) {
       const paciente = await this.seleccionarPaciente();
       if (!paciente) return; // Usuario cancelo la seleccion

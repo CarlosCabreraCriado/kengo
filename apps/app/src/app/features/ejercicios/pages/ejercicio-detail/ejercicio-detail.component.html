@@ -204,12 +204,15 @@
             <button
               type="button"
               class="action-btn primary"
+              [class.rutina-mode]="isRutinaMode()"
               (click)="asignarEjercicio()"
-              aria-label="Asignar ejercicio"
+              [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
             >
-              <span class="material-symbols-outlined icon-filled">person_add</span>
+              <span class="material-symbols-outlined icon-filled">
+                {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
+              </span>
               @if (!videoExpandido()) {
-                <span class="btn-label">Asignar</span>
+                <span class="btn-label">{{ isRutinaMode() ? 'Añadir' : 'Asignar' }}</span>
               }
             </button>
 
@@ -357,11 +360,16 @@
                 <button
                   type="button"
                   class="action-btn primary"
+                  [class.rutina-mode]="isRutinaMode()"
                   (click)="asignarEjercicio()"
-                  aria-label="Asignar ejercicio"
+                  [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
                 >
-                  <span class="material-symbols-outlined icon-filled">person_add</span>
-                  <span class="btn-label">Asignar a paciente</span>
+                  <span class="material-symbols-outlined icon-filled">
+                    {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
+                  </span>
+                  <span class="btn-label">
+                    {{ isRutinaMode() ? 'Añadir a plantilla' : 'Asignar a paciente' }}
+                  </span>
                 </button>
               </div>
             </div>
