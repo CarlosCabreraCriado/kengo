@@ -29,6 +29,26 @@ export class PlanResumenComponent implements OnInit {
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);
 
+  // Action type from queryParams (created, updated, or null for view-only)
+  actionType = signal<'created' | 'updated' | null>(null);
+
+  // Computed for success hero visibility
+  showSuccessHero = computed(() => this.actionType() !== null);
+
+  heroTitle = computed(() => {
+    const action = this.actionType();
+    if (action === 'created') return 'Plan Creado';
+    if (action === 'updated') return 'Plan Actualizado';
+    return '';
+  });
+
+  heroSubtitle = computed(() => {
+    const action = this.actionType();
+    if (action === 'created') return 'El plan ha sido asignado correctamente al paciente';
+    if (action === 'updated') return 'Los cambios se han guardado correctamente';
+    return '';
+  });
+
   // Computed
   paciente = computed(() => {
     const p = this.plan();
@@ -49,6 +69,12 @@ export class PlanResumenComponent implements OnInit {
   };
 
   ngOnInit() {
+    // Read action from queryParams
+    const action = this.route.snapshot.queryParams['action'];
+    if (action === 'created' || action === 'updated') {
+      this.actionType.set(action);
+    }
+
     const planId = this.route.snapshot.params['id'];
     if (planId) {
       this.loadPlan(+planId);

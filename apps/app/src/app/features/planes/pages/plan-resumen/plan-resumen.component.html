@@ -32,14 +32,16 @@
 
   <div class="mx-auto max-w-4xl px-4">
     @if (plan(); as p) {
-      <!-- Success Hero -->
-      <div class="success-hero">
-        <div class="success-icon">
-          <span class="material-symbols-outlined">check</span>
+      <!-- Success Hero (only shown after create/update) -->
+      @if (showSuccessHero()) {
+        <div class="success-hero">
+          <div class="success-icon">
+            <span class="material-symbols-outlined">check</span>
+          </div>
+          <h2 class="titulo-kengo text-2xl font-bold text-zinc-800">{{ heroTitle() }}</h2>
+          <p class="mt-2 text-zinc-600">{{ heroSubtitle() }}</p>
         </div>
-        <h2 class="titulo-kengo text-2xl font-bold text-zinc-800">Plan Creado</h2>
-        <p class="mt-2 text-zinc-600">El plan ha sido asignado correctamente al paciente</p>
-      </div>
+      }
 
       <!-- Plan Summary Card -->
       <div class="tarjeta-kengo mb-6 rounded-2xl overflow-hidden">

@@ -313,7 +313,10 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
         this.toastService.show(
           this.isEditMode() ? 'Plan actualizado' : 'Plan creado'
         );
-        this.router.navigate(['/planes', planId, 'resumen']);
+        const action = this.isEditMode() ? 'updated' : 'created';
+        this.router.navigate(['/planes', planId, 'resumen'], {
+          queryParams: { action }
+        });
       } else {
         this.toastService.show('Error al guardar el plan', 'error');
       }
