@@ -1,223 +1,327 @@
 @if (isLoading()) {
-  <div class="fixed top-0 right-0 left-0 z-50 h-1.5 overflow-hidden bg-zinc-100">
-    <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
+  <div class="loading-overlay">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+      </div>
+      <p class="loading-text">Cargando plan...</p>
+    </div>
   </div>
 }
 
-<section class="flex flex-col w-full h-full overflow-y-auto pb-24 md:pb-8">
-  <!-- Header sticky -->
-  <header class="sticky top-0 z-40 w-full bg-gradient-to-b from-white/98 via-white/95 to-transparent pt-4 pb-3 backdrop-blur-xl">
-    <div class="mx-auto max-w-4xl px-4">
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
-                 bg-white/60 backdrop-blur-md border border-white/40
-                 text-zinc-600 transition-all duration-200
-                 hover:bg-white/80 active:scale-95 shadow-sm"
-          aria-label="Volver"
-          (click)="volver()"
-        >
-          <span class="material-symbols-outlined text-xl">arrow_back</span>
-        </button>
-        <div>
-          <h1 class="titulo-kengo text-xl font-bold text-[#e75c3e]">
-            Resumen del Plan
-          </h1>
-          <p class="text-xs font-medium text-zinc-500">Detalles y ejercicios asignados</p>
-        </div>
-      </div>
-    </div>
-  </header>
+<section class="plan-detail-container">
+  <!-- Decorative background elements -->
+  <div class="bg-decoration">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-mesh"></div>
+  </div>
 
-  <div class="mx-auto max-w-4xl px-4">
-    @if (plan(); as p) {
-      <!-- Success Hero (only shown after create/update) -->
-      @if (showSuccessHero()) {
-        <div class="success-hero">
-          <div class="success-icon">
-            <span class="material-symbols-outlined">check</span>
+  <!-- Floating Header -->
+  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+    <div class="mx-auto max-w-4xl">
+
+      <!-- MÓVIL: Header completo con título y navegación -->
+      @if (isMovil()) {
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="header-btn"
+              aria-label="Volver"
+              (click)="volver()"
+            >
+              <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div>
+              <h1 class="header-title titulo-kengo">Plan de Tratamiento</h1>
+              @if (plan(); as p) {
+                <p class="text-xs font-medium text-zinc-500">{{ totalEjercicios() }} ejercicios</p>
+              }
+            </div>
           </div>
-          <h2 class="titulo-kengo text-2xl font-bold text-zinc-800">{{ heroTitle() }}</h2>
-          <p class="mt-2 text-zinc-600">{{ heroSubtitle() }}</p>
+
+          <button
+            type="button"
+            class="header-btn header-btn-edit"
+            aria-label="Editar plan"
+            (click)="editarPlan()"
+          >
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+        </div>
+      } @else {
+        <!-- DESKTOP: Header simplificado (solo controles) -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            @if (plan(); as p) {
+              <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/50 backdrop-blur-md">
+                <span class="material-symbols-outlined text-lg text-[#e75c3e]">assignment</span>
+                <span class="text-sm font-bold text-zinc-700 truncate max-w-[200px]">{{ p.titulo }}</span>
+                <span class="text-zinc-300">|</span>
+                <span class="text-sm font-semibold text-[#e75c3e]">{{ totalEjercicios() }}</span>
+                <span class="text-xs text-zinc-500">ejercicios</span>
+              </div>
+            }
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="header-btn-desktop"
+              (click)="editarPlan()"
+            >
+              <span class="material-symbols-outlined text-lg">edit</span>
+              <span class="text-xs font-semibold">Editar</span>
+            </button>
+
+            <button
+              type="button"
+              class="header-btn-desktop header-btn-desktop-primary"
+              (click)="crearOtroPlan()"
+            >
+              <span class="material-symbols-outlined text-lg">add</span>
+              <span class="text-xs font-semibold">Nuevo plan</span>
+            </button>
+          </div>
         </div>
       }
 
-      <!-- Plan Summary Card -->
-      <div class="tarjeta-kengo mb-6 rounded-2xl overflow-hidden">
-        <!-- Patient info -->
-        @if (paciente(); as pac) {
-          <div class="flex items-center gap-4 border-b border-zinc-100/80 p-5">
-            <div class="shrink-0">
-              @if (pac.avatar) {
-                <img
-                  [src]="avatarUrl(pac.avatar)"
-                  alt="Avatar"
-                  class="h-16 w-16 rounded-full object-cover ring-[3px] ring-white shadow-lg"
-                />
-              } @else {
-                <div class="flex h-16 w-16 items-center justify-center rounded-full
-                            bg-gradient-to-br from-[#e75c3e] to-[#efc048] shadow-lg
-                            ring-[3px] ring-white">
-                  <span class="material-symbols-outlined text-3xl text-white">person</span>
-                </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    @if (plan(); as p) {
+      <!-- Success Hero (only shown after create/update) -->
+      @if (showSuccessHero()) {
+        <div class="success-hero animate-in" style="--delay: 0s">
+          <div class="success-badge">
+            <div class="success-icon-wrapper">
+              <div class="success-icon">
+                <span class="material-symbols-outlined relleno">check_circle</span>
+              </div>
+              <div class="success-rings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+              </div>
+            </div>
+            <div class="success-confetti">
+              @for (i of [1,2,3,4,5,6,7,8]; track i) {
+                <div class="confetti-piece" [style.--i]="i"></div>
               }
             </div>
-            <div class="min-w-0 flex-1">
-              <h2 class="text-lg font-bold text-zinc-800">
-                {{ pac.first_name }} {{ pac.last_name }}
-              </h2>
-              <p class="text-sm text-zinc-500">{{ pac.email }}</p>
-            </div>
           </div>
-        }
+          <h2 class="success-title titulo-kengo">{{ heroTitle() }}</h2>
+          <p class="success-subtitle">{{ heroSubtitle() }}</p>
+        </div>
+      }
 
-        <!-- Plan details -->
-        <div class="p-5">
-          <h3 class="text-xl font-bold text-zinc-800">{{ p.titulo }}</h3>
-          @if (p.descripcion) {
-            <p class="mt-2 text-zinc-600 leading-relaxed">{{ p.descripcion }}</p>
-          }
+      <!-- Patient Card -->
+      @if (paciente(); as pac) {
+        <div
+          class="patient-card animate-in"
+          [style.--delay]="showSuccessHero() ? '0.15s' : '0s'"
+          (click)="verPerfilPaciente()"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="verPerfilPaciente()"
+        >
+          <div class="patient-avatar-wrapper">
+            @if (pac.avatar) {
+              <img
+                [src]="avatarUrl(pac.avatar)"
+                alt="Avatar de {{ pac.first_name }}"
+                class="patient-avatar"
+              />
+            } @else {
+              <div class="patient-avatar patient-avatar-placeholder">
+                <span class="material-symbols-outlined">person</span>
+              </div>
+            }
+            <div class="patient-status-dot"></div>
+          </div>
+          <div class="patient-info">
+            <span class="patient-label">Paciente</span>
+            <h3 class="patient-name">{{ pac.first_name }} {{ pac.last_name }}</h3>
+            <p class="patient-email">{{ pac.email }}</p>
+          </div>
+          <div class="patient-action-icon">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </div>
+        </div>
+      }
 
-          <!-- Stats Grid -->
-          <div class="mt-5 grid grid-cols-3 gap-3">
-            <div class="stat-card">
-              <span class="material-symbols-outlined text-2xl text-[#e75c3e]">calendar_today</span>
-              <div>
-                <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Inicio</p>
-                <p class="text-sm font-bold text-zinc-800">{{ formatDate(p.fecha_inicio) }}</p>
-              </div>
-            </div>
-            <div class="stat-card">
-              <span class="material-symbols-outlined text-2xl text-[#efc048]">event</span>
-              <div>
-                <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Fin</p>
-                <p class="text-sm font-bold text-zinc-800">{{ formatDate(p.fecha_fin) }}</p>
-              </div>
-            </div>
-            <div class="stat-card">
-              <span class="material-symbols-outlined text-2xl text-emerald-500">fitness_center</span>
-              <div>
-                <p class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">Ejercicios</p>
-                <p class="text-sm font-bold text-zinc-800">{{ totalEjercicios() }}</p>
-              </div>
-            </div>
+      <!-- Plan Info Card -->
+      <div class="plan-card animate-in" [style.--delay]="showSuccessHero() ? '0.25s' : '0.1s'">
+        <div class="plan-header">
+          <div class="plan-badge">
+            <span class="material-symbols-outlined">assignment</span>
+          </div>
+          <div class="plan-title-group">
+            <h2 class="plan-title">{{ p.titulo }}</h2>
+            @if (p.descripcion) {
+              <p class="plan-description">{{ p.descripcion }}</p>
+            }
           </div>
         </div>
 
-        <!-- Exercises list -->
-        <div class="border-t border-zinc-100/80 p-5">
-          <h4 class="mb-4 text-xs font-bold text-zinc-500 uppercase tracking-wide">
-            Ejercicios del plan
-          </h4>
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-icon stat-icon-start">
+              <span class="material-symbols-outlined">event_available</span>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Inicio</span>
+              <span class="stat-value">{{ formatDate(p.fecha_inicio) }}</span>
+            </div>
+          </div>
 
-          <div class="space-y-3">
-            @for (item of items(); track item.id; let i = $index) {
-              <div class="exercise-item">
-                <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-100 shadow-sm">
-                  @if (item.ejercicio.portada) {
-                    <img
-                      [src]="assetUrl(item.ejercicio.portada)"
-                      [alt]="item.ejercicio.nombre_ejercicio"
-                      class="h-full w-full object-cover"
-                    />
-                  } @else {
-                    <div class="flex h-full w-full items-center justify-center">
-                      <span class="material-symbols-outlined text-2xl text-zinc-300">fitness_center</span>
+          <div class="stat-divider"></div>
+
+          <div class="stat-item">
+            <div class="stat-icon stat-icon-end">
+              <span class="material-symbols-outlined">event_busy</span>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Fin</span>
+              <span class="stat-value">{{ formatDate(p.fecha_fin) }}</span>
+            </div>
+          </div>
+
+          <div class="stat-divider"></div>
+
+          <div class="stat-item">
+            <div class="stat-icon stat-icon-exercises">
+              <span class="material-symbols-outlined">fitness_center</span>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Ejercicios</span>
+              <span class="stat-value stat-value-highlight">{{ totalEjercicios() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exercises Section -->
+      <div class="exercises-section animate-in" [style.--delay]="showSuccessHero() ? '0.35s' : '0.2s'">
+        <div class="section-header">
+          <h3 class="section-title">
+            <span class="section-icon">
+              <span class="material-symbols-outlined">list_alt</span>
+            </span>
+            Rutina de ejercicios
+          </h3>
+          <span class="exercise-count">{{ totalEjercicios() }} ejercicios</span>
+        </div>
+
+        <div class="exercises-list">
+          @for (item of items(); track item.id; let i = $index) {
+            <div
+              class="exercise-card"
+              [style.--index]="i"
+              [style.animation-delay]="(showSuccessHero() ? 0.4 : 0.25) + (i * 0.06) + 's'"
+            >
+              <div class="exercise-number">{{ i + 1 }}</div>
+
+              <div class="exercise-thumbnail">
+                @if (item.ejercicio.portada) {
+                  <img
+                    [src]="assetUrl(item.ejercicio.portada, 120, 120)"
+                    [alt]="item.ejercicio.nombre_ejercicio"
+                    loading="lazy"
+                  />
+                } @else {
+                  <div class="exercise-thumbnail-placeholder">
+                    <span class="material-symbols-outlined">fitness_center</span>
+                  </div>
+                }
+              </div>
+
+              <div class="exercise-content">
+                <h4 class="exercise-name">{{ item.ejercicio.nombre_ejercicio }}</h4>
+
+                <div class="exercise-params">
+                  <div class="param-chip param-chip-primary">
+                    <span class="material-symbols-outlined">repeat</span>
+                    <span>{{ item.series || 3 }} × {{ item.repeticiones || 12 }}</span>
+                  </div>
+
+                  @if (item.descanso_seg) {
+                    <div class="param-chip param-chip-neutral">
+                      <span class="material-symbols-outlined">timer</span>
+                      <span>{{ item.descanso_seg }}s</span>
+                    </div>
+                  }
+
+                  @if (item.veces_dia && item.veces_dia > 1) {
+                    <div class="param-chip param-chip-accent">
+                      <span class="material-symbols-outlined">schedule</span>
+                      <span>{{ item.veces_dia }}×/día</span>
                     </div>
                   }
                 </div>
 
-                <div class="min-w-0 flex-1">
-                  <h5 class="font-bold text-zinc-800">
-                    <span class="text-[#e75c3e]">{{ i + 1 }}.</span>
-                    {{ item.ejercicio.nombre_ejercicio }}
-                  </h5>
-
-                  <div class="mt-1.5 flex flex-wrap gap-2">
-                    <span class="inline-flex items-center gap-1 rounded-full bg-[#e75c3e]/10 px-2.5 py-0.5
-                                 text-xs font-semibold text-[#e75c3e]">
-                      {{ item.series || 3 }} × {{ item.repeticiones || 12 }}
-                    </span>
-                    @if (item.descanso_seg) {
-                      <span class="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5
-                                   text-xs font-medium text-zinc-600">
-                        <span class="material-symbols-outlined text-xs">timer</span>
-                        {{ item.descanso_seg }}s
-                      </span>
-                    }
-                    @if (item.veces_dia && item.veces_dia > 1) {
-                      <span class="inline-flex items-center gap-1 rounded-full bg-[#efc048]/10 px-2.5 py-0.5
-                                   text-xs font-semibold text-[#efc048]">
-                        {{ item.veces_dia }}×/día
+                @if (item.dias_semana && item.dias_semana.length > 0) {
+                  <div class="exercise-days">
+                    @for (dia of diasSemanaArray; track dia) {
+                      <span
+                        class="day-badge"
+                        [class.day-badge-active]="item.dias_semana.includes(dia)"
+                      >
+                        {{ dia }}
                       </span>
                     }
                   </div>
+                }
 
-                  @if (item.dias_semana && item.dias_semana.length > 0) {
-                    <p class="mt-1.5 text-xs text-zinc-500">
-                      <span class="font-medium">Días:</span>
-                      {{ getDiasDisplay(item.dias_semana) }}
-                    </p>
-                  }
-
-                  @if (item.instrucciones_paciente) {
-                    <p class="mt-1.5 text-xs text-zinc-600 italic line-clamp-2">
-                      "{{ item.instrucciones_paciente }}"
-                    </p>
-                  }
-                </div>
+                @if (item.instrucciones_paciente) {
+                  <p class="exercise-instructions">
+                    <span class="material-symbols-outlined">info</span>
+                    {{ item.instrucciones_paciente }}
+                  </p>
+                }
               </div>
-            }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="actions-section animate-in" [style.--delay]="showSuccessHero() ? '0.5s' : '0.35s'">
+        <button
+          type="button"
+          class="action-btn action-btn-primary"
+          (click)="irAInicio()"
+        >
+          <span class="material-symbols-outlined">home</span>
+          <span>Volver al inicio</span>
+        </button>
+      </div>
+
+    } @else if (!isLoading()) {
+      <!-- Empty State -->
+      <div class="empty-state animate-in">
+        <div class="empty-icon-wrapper">
+          <div class="empty-icon">
+            <span class="material-symbols-outlined">search_off</span>
           </div>
         </div>
-      </div>
-
-      <!-- Action buttons -->
-      <div class="flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <button
-          type="button"
-          (click)="editarPlan()"
-          class="action-btn action-btn-secondary w-full sm:w-auto"
-        >
-          <span class="material-symbols-outlined text-xl">edit</span>
-          Editar plan
-        </button>
-
-        <button
-          type="button"
-          (click)="crearOtroPlan()"
-          class="action-btn action-btn-outline w-full sm:w-auto"
-        >
-          <span class="material-symbols-outlined text-xl">add</span>
-          Crear otro plan
-        </button>
-
-        <button
-          type="button"
-          (click)="irAInicio()"
-          class="action-btn action-btn-primary w-full sm:w-auto"
-        >
-          <span class="material-symbols-outlined text-xl">home</span>
-          Ir al inicio
-        </button>
-      </div>
-    } @else if (!isLoading()) {
-      <!-- Plan not found -->
-      <div class="tarjeta-kengo rounded-2xl py-12 text-center">
-        <div class="empty-state-icon">
-          <span class="material-symbols-outlined">error_outline</span>
-        </div>
-        <h3 class="text-lg font-bold text-zinc-700">Plan no encontrado</h3>
-        <p class="mt-2 text-sm text-zinc-500">
-          No pudimos encontrar el plan que buscas
+        <h3 class="empty-title">Plan no encontrado</h3>
+        <p class="empty-description">
+          No pudimos encontrar el plan que buscas. Es posible que haya sido eliminado o que no tengas acceso.
         </p>
         <a
-          routerLink="/planes"
-          class="action-btn action-btn-primary mt-5 inline-flex"
+          routerLink="/inicio/planes"
+          class="action-btn action-btn-primary"
         >
-          <span class="material-symbols-outlined text-xl">arrow_back</span>
-          Ver mis planes
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Ver mis planes</span>
         </a>
       </div>
     }

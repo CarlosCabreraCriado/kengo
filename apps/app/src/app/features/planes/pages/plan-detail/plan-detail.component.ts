@@ -1,11 +1,15 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
-import { PlanCompleto, Usuario } from '../../../../../types/global';
+import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
+import { KENGO_BREAKPOINTS } from '../../../../../app/shared';
 
 @Component({
   selector: 'app-plan-detail',
@@ -25,6 +29,15 @@ export class PlanDetailComponent implements OnInit {
   private router = inject(Router);
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
+  private breakpointObserver = inject(BreakpointObserver);
+
+  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
+  isMovil = toSignal(
+    this.breakpointObserver
+      .observe([KENGO_BREAKPOINTS.MOBILE])
+      .pipe(map((result) => result.matches)),
+    { initialValue: true },
+  );
 
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);
@@ -68,6 +81,9 @@ export class PlanDetailComponent implements OnInit {
     D: 'Dom',
   };
 
+  // Array tipado para el template
+  diasSemanaArray: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
   ngOnInit() {
     // Read action from queryParams
     const action = this.route.snapshot.queryParams['action'];
@@ -109,8 +125,10 @@ export class PlanDetailComponent implements OnInit {
   }
 
   verPerfilPaciente() {
-    // Por ahora ir a pacientes
-    this.router.navigate(['/mis-pacientes']);
+    const pac = this.paciente();
+    if (pac?.id) {
+      this.router.navigate(['/mis-pacientes', pac.id]);
+    }
   }
 
   irAInicio() {
