@@ -225,7 +225,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
               }}</span>
               @if (!videoExpandido()) {
                 <span class="btn-label">{{
-                  esUltimaSerie() ? 'Completar' : 'Serie lista'
+                  esUltimaSerie() ? 'Completar' : 'Serie completada'
                 }}</span>
               }
             </button>
@@ -268,7 +268,6 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       flex: 1;
       min-height: 0;
       overflow: hidden;
-      background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
     }
 
     /* === Sección del video === */
@@ -854,10 +853,6 @@ import { fadeAnimation } from '../../realizar-plan.animations';
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
       color: white;
 
-      span {
-        font-size: 1.5rem;
-      }
-
       &:hover {
         transform: translateY(-2px);
         box-shadow:
@@ -880,7 +875,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     }
 
     .btn-label {
-      font-size: 1rem;
+      font-size: 0.875rem;
       font-weight: 700;
     }
 
@@ -901,7 +896,6 @@ import { fadeAnimation } from '../../realizar-plan.animations';
         flex-direction: row;
         padding: 32px;
         gap: 40px;
-        background: linear-gradient(135deg, #fef8f7 0%, #ffede8 100%);
       }
 
       .video-section {
