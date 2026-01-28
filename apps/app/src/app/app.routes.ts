@@ -61,6 +61,16 @@ export const routes: Routes = [
       ),
   },
 
+  // Rutina Builder (crear plantilla)
+  {
+    path: 'rutinas/nueva',
+    loadComponent: () =>
+      import('./features/rutinas/pages/rutina-builder/rutina-builder.component').then(
+        (m) => m.RutinaBuilderComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+
   // Pacientes (lazy loaded feature)
   {
     path: 'mis-pacientes',

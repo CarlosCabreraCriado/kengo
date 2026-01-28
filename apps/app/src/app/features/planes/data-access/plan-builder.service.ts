@@ -41,10 +41,26 @@ interface PersistedStateV1 {
   drawerOpen: boolean;
 }
 
+// Estado para modo rutina (sin paciente)
+interface PersistedRutinaStateV1 {
+  v: 1;
+  updatedAt: string;
+  expiresAt?: string | null;
+  fisioId: string;
+  items: EjercicioPlan[];
+  drawerOpen: boolean;
+}
+
 //Persistencia localStorage
 const STORAGE_PREFIX = 'kengo:plan_builder:v1:';
 const storageKey = (fisioId: string, pacienteId: string) =>
   `${STORAGE_PREFIX}f=${fisioId}:p=${pacienteId}`;
+
+// Persistencia para modo rutina
+const STORAGE_PREFIX_RUTINA = 'kengo:rutina_builder:v1:';
+const storageKeyRutina = (fisioId: string) =>
+  `${STORAGE_PREFIX_RUTINA}f=${fisioId}`;
+
 const DEFAULT_TTL_DAYS = 7;
 
 @Injectable({ providedIn: 'root' })
@@ -58,6 +74,15 @@ export class PlanBuilderService {
   // --- Modo edicion ---
   readonly planId = signal<number | null>(null);
   readonly isEditMode = computed(() => this.planId() !== null);
+
+  // --- Modo rutina (sin paciente) ---
+  readonly mode = signal<'plan' | 'rutina'>('plan');
+  readonly isRutinaMode = computed(() => this.mode() === 'rutina');
+
+  // Computed para validar guardado de rutina (sin requerir paciente)
+  readonly canSaveAsRutina = computed(
+    () => !!this.fisioId() && this.items().length > 0,
+  );
 
   readonly paciente = signal<Usuario | null>(null);
 
@@ -93,6 +118,7 @@ export class PlanBuilderService {
         // leemos las señales (dispara el effect ante cambios)
         const p = this.paciente();
         const f = this.fisioId();
+        const rutinaMode = this.isRutinaMode();
 
         const _ = [
           this.titulo(),
@@ -101,9 +127,16 @@ export class PlanBuilderService {
           this.fecha_fin(),
           ...this.items(), // ojo: si es array de objetos, el trigger será por referencia; suele bastar
         ];
-        // si no hay paciente/fisio no guardamos
-        if (!p || !f) return;
-        this.scheduleSave(350); // guarda a los ~350ms de la última edición
+
+        // En modo rutina solo necesitamos fisioId
+        if (rutinaMode) {
+          if (!f) return;
+          this.scheduleSaveRutina(350);
+        } else {
+          // Modo plan: requiere paciente y fisio
+          if (!p || !f) return;
+          this.scheduleSave(350);
+        }
       },
       { injector: this.injector },
     );
@@ -113,6 +146,14 @@ export class PlanBuilderService {
     clearTimeout(this.saveTimer);
     this.saveTimer = setTimeout(
       () => this.saveToStorage().catch(console.warn),
+      ms,
+    );
+  }
+
+  private scheduleSaveRutina(ms: number) {
+    clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(
+      () => this.saveRutinaToStorage().catch(console.warn),
       ms,
     );
   }
@@ -146,6 +187,56 @@ export class PlanBuilderService {
     if (!snap || !snap.paciente?.id) return;
     const key = storageKey(snap.fisioId, snap.paciente.id);
     localStorage.setItem(key, JSON.stringify(snap));
+  }
+
+  // Persistencia para modo rutina
+  private makePersistedRutina(): PersistedRutinaStateV1 | null {
+    const f = this.fisioId();
+    if (!f) return null;
+
+    const now = new Date();
+    const expires = new Date(now.getTime() + DEFAULT_TTL_DAYS * 864e5);
+
+    return {
+      v: 1,
+      updatedAt: now.toISOString(),
+      expiresAt: expires.toISOString(),
+      fisioId: f,
+      items: this.items(),
+      drawerOpen: this.drawerOpen(),
+    };
+  }
+
+  private async saveRutinaToStorage() {
+    const snap = this.makePersistedRutina();
+    if (!snap) return;
+    const key = storageKeyRutina(snap.fisioId);
+    localStorage.setItem(key, JSON.stringify(snap));
+  }
+
+  private readRutinaFromStorage(fisioId: string): PersistedRutinaStateV1 | null {
+    const key = storageKeyRutina(fisioId);
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      const json = JSON.parse(raw) as PersistedRutinaStateV1;
+      if (json.v !== 1) return null;
+      if (json.expiresAt && Date.now() > Date.parse(json.expiresAt)) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      return json;
+    } catch {
+      localStorage.removeItem(key);
+      return null;
+    }
+  }
+
+  private clearRutinaStorage() {
+    const f = this.fisioId();
+    if (f) {
+      localStorage.removeItem(storageKeyRutina(f));
+    }
   }
 
   async tryRestoreFor(pacienteId: string, fisioId?: string) {
@@ -722,5 +813,55 @@ export class PlanBuilderService {
     this.resetForNewPlan();
     this.paciente.set(null);
     this.closeDrawer();
+  }
+
+  // ============================================
+  // MODO RUTINA (crear plantillas sin paciente)
+  // ============================================
+
+  /**
+   * Activa modo rutina: limpia paciente, abre drawer
+   */
+  startRutinaMode() {
+    this.mode.set('rutina');
+    this.paciente.set(null);
+    this.planId.set(null);
+    this.items.set([]);
+    this.titulo.set('');
+    this.descripcion.set('');
+    this.fecha_inicio.set(null);
+    this.fecha_fin.set(null);
+    this.openDrawer();
+  }
+
+  /**
+   * Sale del modo rutina y vuelve a modo plan
+   */
+  exitRutinaMode() {
+    this.clearRutinaStorage();
+    this.mode.set('plan');
+    this.items.set([]);
+    this.titulo.set('');
+    this.descripcion.set('');
+    this.closeDrawer();
+  }
+
+  /**
+   * Intenta restaurar estado de modo rutina desde localStorage
+   */
+  tryRestoreRutinaMode(): boolean {
+    const f = this.fisioId();
+    if (!f) return false;
+
+    const persisted = this.readRutinaFromStorage(f);
+    if (!persisted || persisted.items.length === 0) return false;
+
+    // Restaurar estado
+    this.mode.set('rutina');
+    this.paciente.set(null);
+    this.items.set(persisted.items);
+    this.drawerOpen.set(persisted.drawerOpen);
+
+    return true;
   }
 }

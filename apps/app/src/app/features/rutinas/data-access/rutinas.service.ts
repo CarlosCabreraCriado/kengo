@@ -208,11 +208,15 @@ export class RutinasService {
   }
 
   /**
-   * Crear una nueva rutina
+   * Crear una nueva rutina con sus ejercicios
+   * Usa un enfoque de dos pasos:
+   * 1. Crear la rutina
+   * 2. Crear los ejercicios en rutinas_ejercicios
    */
   async createRutina(payload: CreateRutinaPayload): Promise<number | null> {
     try {
-      const response = await firstValueFrom(
+      // 1. Crear la rutina sin ejercicios
+      const rutinaResponse = await firstValueFrom(
         this.http.post<{ data: { id_rutina: number } }>(
           `${env.DIRECTUS_URL}/items/rutinas`,
           {
@@ -220,14 +224,49 @@ export class RutinasService {
             descripcion: payload.descripcion || '',
             autor: payload.autor,
             visibilidad: payload.visibilidad,
-            ejercicios: payload.ejercicios,
           },
           { withCredentials: true }
         )
       );
 
+      const rutinaId = rutinaResponse?.data?.id_rutina;
+      if (!rutinaId) {
+        console.error('Error: No se pudo crear la rutina');
+        return null;
+      }
+
+      console.log('Rutina creada con ID:', rutinaId);
+
+      // 2. Crear los ejercicios en rutinas_ejercicios
+      if (payload.ejercicios && payload.ejercicios.length > 0) {
+        const ejerciciosPayload = payload.ejercicios.map((item) => ({
+          rutina: rutinaId,
+          ejercicio: item.ejercicio,
+          sort: item.sort,
+          series: item.series,
+          repeticiones: item.repeticiones,
+          duracion_seg: item.duracion_seg,
+          descanso_seg: item.descanso_seg,
+          veces_dia: item.veces_dia,
+          dias_semana: item.dias_semana,
+          instrucciones_paciente: item.instrucciones_paciente,
+          notas_fisio: item.notas_fisio,
+        }));
+
+        // Crear todos los ejercicios en una sola petición (batch create)
+        const ejerciciosResponse = await firstValueFrom(
+          this.http.post<{ data: unknown[] }>(
+            `${env.DIRECTUS_URL}/items/rutinas_ejercicios`,
+            ejerciciosPayload,
+            { withCredentials: true }
+          )
+        );
+
+        console.log('Ejercicios creados:', ejerciciosResponse?.data?.length ?? 0);
+      }
+
       this.reload();
-      return response?.data?.id_rutina ?? null;
+      return rutinaId;
     } catch (error) {
       console.error('Error al crear rutina:', error);
       return null;

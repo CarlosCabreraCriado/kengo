@@ -1,0 +1,331 @@
+@reference "tailwindcss";
+
+/* ========================================
+   RUTINA BUILDER - Kengo Design System
+   Basado en plan-builder con color amber
+   ======================================== */
+
+/* === Variables CSS === */
+:host {
+  --kengo-amber: #f59e0b;
+  --kengo-amber-dark: #d97706;
+  --kengo-primary: #e75c3e;
+  --kengo-tertiary: #efc048;
+  --kengo-glass: rgba(255, 255, 255, 0.65);
+  --kengo-glass-strong: rgba(255, 255, 255, 0.85);
+  --kengo-border: rgba(255, 255, 255, 0.25);
+  --kengo-border-strong: rgba(255, 255, 255, 0.4);
+  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --kengo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* === Tarjeta Kengo Premium === */
+.tarjeta-kengo {
+  background: var(--kengo-glass-strong);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--kengo-border-strong);
+  box-shadow: var(--kengo-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === Input Compacto Premium === */
+.input-compact {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #e4e4e7;
+  border-radius: 12px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3f3f46;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-compact:hover {
+  border-color: #d4d4d8;
+}
+
+.input-compact:focus {
+  outline: none;
+  border-color: var(--kengo-amber);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+.input-compact::placeholder {
+  color: #a1a1aa;
+  font-weight: 400;
+}
+
+textarea.input-compact {
+  height: auto;
+  padding: 12px 14px;
+  line-height: 1.5;
+  resize: none;
+}
+
+/* === Opciones de visibilidad === */
+.visibilidad-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid #e4e4e7;
+  background: white;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.visibilidad-option:hover {
+  border-color: var(--kengo-amber);
+  color: var(--kengo-amber);
+}
+
+.visibilidad-option--active {
+  border-color: var(--kengo-amber);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+  color: var(--kengo-amber-dark);
+}
+
+/* === Botones de días de la semana === */
+.dia-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #e4e4e7;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dia-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--kengo-amber), var(--kengo-amber-dark));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: inherit;
+}
+
+.dia-btn:hover {
+  border-color: var(--kengo-amber);
+  color: var(--kengo-amber);
+  transform: scale(1.05);
+}
+
+.dia-btn:active {
+  transform: scale(0.95);
+}
+
+.dia-btn--activo {
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.dia-btn--activo::before {
+  opacity: 1;
+}
+
+.dia-btn--activo span,
+.dia-btn--activo {
+  position: relative;
+  z-index: 1;
+}
+
+/* === Indicadores mini de días (vista compacta) === */
+.dia-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f4f4f5;
+  font-size: 9px;
+  font-weight: 700;
+  color: #a1a1aa;
+  transition: all 0.2s ease;
+}
+
+.dia-mini--activo {
+  background: linear-gradient(135deg, var(--kengo-amber), var(--kengo-amber-dark));
+  color: white;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+}
+
+/* === Exercise Card en modo edición === */
+.exercise-card-editing {
+  border: 2px solid var(--kengo-amber);
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15);
+}
+
+/* === Drag Handle === */
+.drag-handle {
+  cursor: grab;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* === CDK Drag & Drop === */
+.cdk-drag-preview {
+  z-index: 1000;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cdk-drop-list-dragging .tarjeta-kengo:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === Progress Bar Indeterminate === */
+.progress-bar-indeterminate {
+  animation: progressIndeterminate 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--kengo-amber), var(--kengo-tertiary), var(--kengo-amber));
+  background-size: 200% 100%;
+}
+
+/* === CTA Button fijo - Amber === */
+.cta-button-fixed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 52px;
+  padding: 0 2rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--kengo-amber), var(--kengo-amber-dark));
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.45);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-button-fixed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.cta-button-fixed:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.55);
+}
+
+.cta-button-fixed:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.cta-button-fixed:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.cta-button-fixed:disabled {
+  background: #d4d4d8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* === Spinner animation === */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* === Line clamp === */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* === Animaciones === */
+@keyframes progressIndeterminate {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Staggered animation para ejercicios === */
+.exercise-item {
+  animation: fadeInUp 0.35s ease-out backwards;
+}
+
+.exercise-item:nth-child(1) { animation-delay: 0.05s; }
+.exercise-item:nth-child(2) { animation-delay: 0.1s; }
+.exercise-item:nth-child(3) { animation-delay: 0.15s; }
+.exercise-item:nth-child(4) { animation-delay: 0.2s; }
+.exercise-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* === Empty State Icon === */
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+  margin-bottom: 1rem;
+}
+
+.empty-state-icon .material-symbols-outlined {
+  font-size: 40px;
+  color: var(--kengo-amber);
+}

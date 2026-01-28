@@ -19,8 +19,11 @@
     <!-- Cabecera -->
     <div
       class="flex items-center justify-between border-b border-zinc-200/50 px-4 py-3"
+      [class.bg-amber-50/50]="isRutinaMode()"
     >
-      <h2 class="titulo-kengo text-lg">Plan de ejercicios</h2>
+      <h2 class="titulo-kengo text-lg" [class.text-amber-600]="isRutinaMode()">
+        {{ isRutinaMode() ? 'Nueva plantilla' : 'Plan de ejercicios' }}
+      </h2>
       <button
         type="button"
         (click)="toggle()"
@@ -31,44 +34,77 @@
       </button>
     </div>
 
-    <!-- Paciente seleccionado -->
+    <!-- Paciente seleccionado / Modo Rutina -->
     <div class="border-b border-zinc-200/50 px-4 py-4">
-      <div class="flex items-center gap-3">
-        @if (perfilUrl()) {
-          <img
-            [src]="perfilUrl()"
-            alt="Avatar del paciente"
-            class="h-14 w-14 shrink-0 rounded-full object-cover shadow-md ring-2 ring-white"
-          />
-        } @else {
+      @if (isRutinaMode()) {
+        <!-- Modo Rutina: sin paciente -->
+        <div class="flex items-center gap-3">
           <div
-            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zinc-100 shadow-md ring-2 ring-white"
+            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-amber-100 shadow-md ring-2 ring-white"
           >
             <span
-              class="material-symbols-outlined text-3xl text-zinc-400"
+              class="material-symbols-outlined text-3xl text-amber-600"
               aria-hidden="true"
-              >person</span
+              >bookmark_add</span
             >
           </div>
-        }
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-base font-semibold text-zinc-800">
-            {{ pacienteNombre() }}
-          </p>
-          <p class="text-sm text-zinc-500">
-            {{ total() }}
-            {{ total() === 1 ? "ejercicio" : "ejercicios" }} seleccionados
-          </p>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-base font-semibold text-zinc-800">
+              Creando plantilla
+            </p>
+            <p class="text-sm text-zinc-500">
+              {{ total() }}
+              {{ total() === 1 ? "ejercicio" : "ejercicios" }} seleccionados
+            </p>
+          </div>
+          <button
+            type="button"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-all hover:bg-red-50 hover:text-red-500"
+            aria-label="Salir modo rutina"
+            (click)="salirModoRutina()"
+          >
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
         </div>
-        <button
-          type="button"
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-all hover:bg-red-50 hover:text-red-500"
-          aria-label="Eliminar asignación"
-          (click)="eliminarAsignacion()"
-        >
-          <span class="material-symbols-outlined text-xl">person_remove</span>
-        </button>
-      </div>
+      } @else {
+        <!-- Modo Plan: con paciente -->
+        <div class="flex items-center gap-3">
+          @if (perfilUrl()) {
+            <img
+              [src]="perfilUrl()"
+              alt="Avatar del paciente"
+              class="h-14 w-14 shrink-0 rounded-full object-cover shadow-md ring-2 ring-white"
+            />
+          } @else {
+            <div
+              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zinc-100 shadow-md ring-2 ring-white"
+            >
+              <span
+                class="material-symbols-outlined text-3xl text-zinc-400"
+                aria-hidden="true"
+                >person</span
+              >
+            </div>
+          }
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-base font-semibold text-zinc-800">
+              {{ pacienteNombre() }}
+            </p>
+            <p class="text-sm text-zinc-500">
+              {{ total() }}
+              {{ total() === 1 ? "ejercicio" : "ejercicios" }} seleccionados
+            </p>
+          </div>
+          <button
+            type="button"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-all hover:bg-red-50 hover:text-red-500"
+            aria-label="Eliminar asignación"
+            (click)="eliminarAsignacion()"
+          >
+            <span class="material-symbols-outlined text-xl">person_remove</span>
+          </button>
+        </div>
+      }
     </div>
 
     <!-- Lista de items del carrito -->
@@ -158,51 +194,98 @@
     <div
       class="flex flex-col gap-2 border-t border-zinc-200/50 bg-white/50 p-4"
     >
-      <button
-        type="button"
-        class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#e75c3e] px-6 text-sm font-semibold text-white shadow-lg shadow-[#e75c3e]/25 transition-all duration-200 hover:bg-[#d14e32] hover:shadow-xl hover:shadow-[#e75c3e]/30 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:shadow-none"
-        [disabled]="!svc.items().length || !svc.paciente()"
-        (click)="configurarPlan()"
-      >
-        <span>Configurar plan</span>
-        <span class="material-symbols-outlined text-xl">arrow_forward</span>
-      </button>
-
-      <div class="flex gap-2">
+      @if (isRutinaMode()) {
+        <!-- Acciones para modo Rutina -->
         <button
           type="button"
-          class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-          [disabled]="!svc.paciente()"
-          (click)="cargarRutina()"
+          class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition-all duration-200 hover:bg-amber-600 hover:shadow-xl hover:shadow-amber-500/30 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:shadow-none"
+          [disabled]="!svc.items().length"
+          (click)="guardarRutinaDirectamente()"
         >
-          <span class="material-symbols-outlined text-xl text-zinc-500">bookmarks</span>
-          <span>Rutinas</span>
+          <span class="material-symbols-outlined text-xl">bookmark_add</span>
+          <span>Guardar plantilla</span>
         </button>
 
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="!svc.items().length"
+            (click)="configurarRutina()"
+          >
+            <span class="material-symbols-outlined text-xl text-amber-500">tune</span>
+            <span>Dosificación</span>
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50"
+            (click)="cargarRutina()"
+          >
+            <span class="material-symbols-outlined text-xl text-zinc-500">folder_open</span>
+            <span>Cargar</span>
+          </button>
+        </div>
+      } @else {
+        <!-- Acciones para modo Plan -->
         <button
           type="button"
-          class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50"
-          (click)="cambiarPaciente()"
+          class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#e75c3e] px-6 text-sm font-semibold text-white shadow-lg shadow-[#e75c3e]/25 transition-all duration-200 hover:bg-[#d14e32] hover:shadow-xl hover:shadow-[#e75c3e]/30 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:shadow-none"
+          [disabled]="!svc.items().length || !svc.paciente()"
+          (click)="configurarPlan()"
         >
-          <span class="material-symbols-outlined text-xl text-zinc-500">person_search</span>
-          <span>Paciente</span>
+          <span>Configurar plan</span>
+          <span class="material-symbols-outlined text-xl">arrow_forward</span>
         </button>
-      </div>
+
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="!svc.paciente()"
+            (click)="cargarRutina()"
+          >
+            <span class="material-symbols-outlined text-xl text-zinc-500">bookmarks</span>
+            <span>Rutinas</span>
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50"
+            (click)="cambiarPaciente()"
+          >
+            <span class="material-symbols-outlined text-xl text-zinc-500">person_search</span>
+            <span>Paciente</span>
+          </button>
+        </div>
+      }
     </div>
   </div>
 </div>
 
-<!-- Botón pestaña lateral para abrir el drawer (solo si hay paciente y no estamos en /planes) -->
-@if (svc.paciente() && !ocultarTab()) {
+<!-- Botón pestaña lateral para abrir el drawer (si hay paciente O modo rutina, y no estamos en /planes) -->
+@if ((svc.paciente() || isRutinaMode()) && !ocultarTab()) {
   <button
     type="button"
     class="tab-carrito pointer-events-auto"
     [class.tab-carrito--abierto]="drawerAbierto()"
+    [class.tab-carrito--rutina]="isRutinaMode()"
     (click)="toggle()"
-    aria-label="Abrir carrito de ejercicios"
+    [attr.aria-label]="isRutinaMode() ? 'Abrir carrito de plantilla' : 'Abrir carrito de ejercicios'"
   >
     <div class="tab-carrito__contenido">
-      @if (perfilUrl()) {
+      @if (isRutinaMode()) {
+        <!-- Modo Rutina: icono bookmark -->
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-white/90"
+        >
+          <span
+            class="material-symbols-outlined text-2xl text-amber-500"
+            aria-hidden="true"
+            >bookmark_add</span
+          >
+        </div>
+      } @else if (perfilUrl()) {
         <img
           [src]="perfilUrl()"
           alt=""
@@ -220,9 +303,9 @@
         </div>
       }
       @if (total() > 0) {
-        <span class="tab-carrito__badge">{{ total() }}</span>
+        <span class="tab-carrito__badge" [class.tab-carrito__badge--rutina]="isRutinaMode()">{{ total() }}</span>
       }
     </div>
-    <span class="tab-carrito__label">Asignar</span>
+    <span class="tab-carrito__label">{{ isRutinaMode() ? 'Plantilla' : 'Asignar' }}</span>
   </button>
 }

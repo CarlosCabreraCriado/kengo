@@ -28,18 +28,32 @@
             </div>
           </div>
 
-          <!-- Refresh button -->
-          <button
-            type="button"
-            (click)="reload()"
-            class="flex h-10 w-10 items-center justify-center rounded-full
-                   bg-white/60 backdrop-blur-md border border-white/40
-                   text-zinc-600 transition-all duration-200
-                   hover:bg-white/80 active:scale-95"
-            aria-label="Recargar"
-          >
-            <span class="material-symbols-outlined text-xl">refresh</span>
-          </button>
+          <!-- Actions: Create + Refresh -->
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="crearRutina()"
+              class="flex h-10 items-center justify-center gap-1.5 rounded-full
+                     bg-amber-500 px-4 text-white font-medium text-sm
+                     shadow-md shadow-amber-500/25
+                     transition-all duration-200
+                     hover:bg-amber-600 hover:shadow-lg active:scale-95"
+              aria-label="Crear plantilla"
+            >
+              <span class="material-symbols-outlined text-xl">add</span>
+            </button>
+            <button
+              type="button"
+              (click)="reload()"
+              class="flex h-10 w-10 items-center justify-center rounded-full
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-600 transition-all duration-200
+                     hover:bg-white/80 active:scale-95"
+              aria-label="Recargar"
+            >
+              <span class="material-symbols-outlined text-xl">refresh</span>
+            </button>
+          </div>
         </div>
       }
 
@@ -82,7 +96,7 @@
                        pointer-events-none text-zinc-400">expand_more</span>
         </div>
 
-        <!-- DESKTOP: Refresh y contador -->
+        <!-- DESKTOP: Crear, Refresh y contador -->
         @if (!isMovil()) {
           <div class="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200/50">
             @if (rutinas().length > 0) {
@@ -91,6 +105,18 @@
                 <span class="text-xs text-zinc-500">{{ rutinas().length === 1 ? 'plantilla' : 'plantillas' }}</span>
               </div>
             }
+            <button
+              type="button"
+              class="inline-flex h-10 items-center justify-center gap-2 rounded-xl
+                     bg-amber-500 px-4 text-sm font-semibold text-white
+                     shadow-md shadow-amber-500/25
+                     transition-all duration-200
+                     hover:bg-amber-600 hover:shadow-lg active:scale-95"
+              (click)="crearRutina()"
+            >
+              <span class="material-symbols-outlined text-xl">add</span>
+              <span>Crear plantilla</span>
+            </button>
             <button
               type="button"
               class="quick-action-btn"
@@ -125,8 +151,21 @@
           </div>
           <h3 class="text-lg font-semibold text-zinc-700">No tienes plantillas guardadas</h3>
           <p class="mt-2 max-w-xs text-sm text-zinc-500">
-            Crea un plan y guárdalo como plantilla para reutilizarlo fácilmente
+            Crea tu primera plantilla de ejercicios para reutilizarla con tus pacientes
           </p>
+          <button
+            type="button"
+            class="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-xl
+                   bg-amber-500 px-6 text-sm font-semibold text-white
+                   shadow-lg shadow-amber-500/30
+                   transition-all duration-200
+                   hover:bg-amber-600 hover:shadow-xl hover:shadow-amber-500/40
+                   active:scale-98"
+            (click)="crearRutina()"
+          >
+            <span class="material-symbols-outlined text-xl">add</span>
+            Crear primera plantilla
+          </button>
         </div>
       } @else {
         <!-- Lista de rutinas -->

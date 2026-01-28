@@ -22,6 +22,7 @@ import { ToastService } from '../../../../shared/ui/toast/toast.service';
 
 import { environment as env } from '../../../../../environments/environment';
 import { Usuario } from '../../../../../types/global';
+import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 
 @Component({
   selector: 'app-carrito-ejercicios',
@@ -37,8 +38,12 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   private toastService = inject(ToastService);
   private injector = inject(Injector);
   private dialog = inject(Dialog);
+  private rutinasService = inject(RutinasService);
 
   readonly svc = inject(PlanBuilderService);
+
+  // Modo rutina
+  readonly isRutinaMode = computed(() => this.svc.isRutinaMode());
 
   drawerAbierto = signal(false);
   ocultarTab = signal(false);
@@ -84,7 +89,10 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   private checkRouteForTab(url: string) {
-    this.ocultarTab.set(url.startsWith('/planes'));
+    // Ocultar tab en /planes y /rutinas/nueva
+    this.ocultarTab.set(
+      url.startsWith('/planes') || url.startsWith('/rutinas/nueva'),
+    );
   }
 
   ngOnDestroy() {
@@ -186,7 +194,8 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
 
   // Cargar una rutina (plantilla) existente
   async cargarRutina() {
-    if (!this.svc.paciente()) {
+    // En modo rutina no se requiere paciente
+    if (!this.isRutinaMode() && !this.svc.paciente()) {
       this.toastService.show('Selecciona un paciente primero.');
       return;
     }
@@ -207,6 +216,68 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
           this.toastService.show('Rutina cargada correctamente');
         } else {
           this.toastService.show('Error al cargar la rutina', 'error');
+        }
+      }
+    });
+  }
+
+  // ========= Modo Rutina =========
+
+  /**
+   * Salir del modo rutina
+   */
+  salirModoRutina() {
+    this.svc.exitRutinaMode();
+    this.router.navigate(['/galeria/rutinas']);
+  }
+
+  /**
+   * Navegar a configurar dosificación de rutina
+   */
+  configurarRutina() {
+    if (this.svc.items().length === 0) {
+      this.toastService.show('Añade ejercicios primero.');
+      return;
+    }
+    this.svc.closeDrawer();
+    this.router.navigate(['/rutinas/nueva']);
+  }
+
+  /**
+   * Guardar plantilla directamente desde el carrito
+   */
+  async guardarRutinaDirectamente() {
+    if (this.svc.items().length === 0) {
+      this.toastService.show('Añade ejercicios primero.');
+      return;
+    }
+
+    const { DialogoGuardarRutinaComponent } = await import(
+      '../../../rutinas/components/dialogo-guardar-rutina/dialogo-guardar-rutina.component'
+    );
+
+    const dialogRef = this.dialog.open(DialogoGuardarRutinaComponent, {
+      width: '400px',
+      data: { nombreSugerido: '' },
+    });
+
+    dialogRef.closed.subscribe(async (result) => {
+      const data = result as
+        | { nombre: string; descripcion: string; visibilidad: 'privado' | 'publico' }
+        | undefined;
+      if (data) {
+        const rutinaId = await this.svc.saveAsRutina(
+          data.nombre,
+          data.descripcion,
+          data.visibilidad,
+        );
+
+        if (rutinaId) {
+          this.toastService.show('Plantilla guardada');
+          this.svc.exitRutinaMode();
+          this.router.navigate(['/galeria/rutinas']);
+        } else {
+          this.toastService.show('Error al guardar plantilla', 'error');
         }
       }
     });

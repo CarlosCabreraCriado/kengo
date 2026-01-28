@@ -1,0 +1,402 @@
+<!-- Loading bar -->
+@if (isSaving()) {
+  <div class="fixed top-0 right-0 left-0 z-50 h-1.5 overflow-hidden bg-zinc-100">
+    <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
+  </div>
+}
+
+<section class="flex flex-col w-full h-full overflow-y-auto pb-28 lg:pb-8">
+  <!-- Header sticky -->
+  <header
+    class="sticky top-0 z-40 mx-auto mb-6 px-4 pt-4 pb-2 w-full"
+    [class]="isDesktop() ? '' : 'bg-gradient-to-b from-amber-50/98 via-white/95 to-transparent backdrop-blur-xl'"
+  >
+    <div class="mx-auto max-w-3xl">
+      <!-- Header para móvil y desktop -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
+                   bg-white/60 backdrop-blur-md border border-white/40
+                   text-zinc-600 transition-all duration-200
+                   hover:bg-white/80 active:scale-95 shadow-sm"
+            aria-label="Volver"
+            (click)="cancelar()"
+          >
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+          </button>
+          <div>
+            <h1 class="titulo-kengo text-xl font-bold text-amber-600">
+              Configurar plantilla
+            </h1>
+            <p class="text-xs font-medium text-zinc-500">
+              {{ totalItems() }}
+              {{ totalItems() === 1 ? "ejercicio" : "ejercicios" }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Botón cerrar modo rutina -->
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-xl
+                 text-zinc-400 transition-all hover:bg-red-50 hover:text-red-500"
+          aria-label="Salir modo rutina"
+          (click)="salirModoRutina()"
+        >
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <div class="mx-auto max-w-3xl px-4">
+    <!-- Card: Detalles de la plantilla -->
+    <article class="tarjeta-kengo mb-5 overflow-hidden rounded-2xl">
+      <!-- Icono plantilla -->
+      <div class="flex items-center gap-4 border-b border-zinc-100/80 p-5 bg-amber-50/30">
+        <div class="flex h-14 w-14 items-center justify-center rounded-full
+                    bg-gradient-to-br from-amber-400 to-amber-500 shadow-md
+                    ring-[3px] ring-white">
+          <span class="material-symbols-outlined text-2xl text-white">bookmark_add</span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 class="truncate font-bold text-zinc-800 text-lg">
+            Nueva plantilla
+          </h3>
+          <p class="text-sm text-zinc-500">Define nombre y visibilidad</p>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="p-5">
+        <form [formGroup]="form" class="space-y-4">
+          <div>
+            <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+              Nombre de la plantilla
+            </label>
+            <input
+              type="text"
+              class="input-compact w-full"
+              formControlName="nombre"
+              placeholder="Ej: Fortalecimiento lumbar"
+            />
+            @if (form.controls.nombre.hasError("required") && form.controls.nombre.touched) {
+              <p class="mt-1.5 text-xs font-medium text-red-500">El nombre es requerido</p>
+            }
+          </div>
+
+          <div>
+            <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+              Descripcion (opcional)
+            </label>
+            <textarea
+              rows="2"
+              class="input-compact w-full resize-none"
+              formControlName="descripcion"
+              placeholder="Breve descripcion de la plantilla..."
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="mb-2 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+              Visibilidad
+            </label>
+            <div class="flex gap-3">
+              <label class="visibilidad-option flex-1"
+                     [class.visibilidad-option--active]="form.value.visibilidad === 'privado'">
+                <input type="radio" formControlName="visibilidad" value="privado" class="sr-only" />
+                <span class="material-symbols-outlined text-lg">lock</span>
+                <span class="font-medium">Privada</span>
+              </label>
+              <label class="visibilidad-option flex-1"
+                     [class.visibilidad-option--active]="form.value.visibilidad === 'publico'">
+                <input type="radio" formControlName="visibilidad" value="publico" class="sr-only" />
+                <span class="material-symbols-outlined text-lg">public</span>
+                <span class="font-medium">Publica</span>
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+    </article>
+
+    <!-- Lista de ejercicios -->
+    @if (items().length === 0) {
+      <article class="tarjeta-kengo rounded-2xl p-8 text-center">
+        <div class="empty-state-icon mx-auto">
+          <span class="material-symbols-outlined">fitness_center</span>
+        </div>
+        <h3 class="text-lg font-bold text-zinc-700">No hay ejercicios en la plantilla</h3>
+        <p class="mt-2 text-sm text-zinc-500">
+          Agrega ejercicios del catalogo para comenzar
+        </p>
+        <a
+          routerLink="/galeria/ejercicios"
+          class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl
+                 bg-gradient-to-r from-amber-500 to-amber-600 px-6
+                 text-sm font-semibold text-white shadow-lg shadow-amber-500/30
+                 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-500/40
+                 active:scale-98"
+        >
+          <span class="material-symbols-outlined text-xl">add</span>
+          Agregar ejercicios
+        </a>
+      </article>
+    } @else {
+      <div cdkDropList class="space-y-4" (cdkDropListDropped)="onDrop($event)">
+        @for (it of items(); track trackByIndex($index); let i = $index) {
+          <article
+            class="tarjeta-kengo exercise-item overflow-hidden rounded-2xl transition-all"
+            [class.exercise-card-editing]="ejercicioEditando() === i"
+            cdkDrag
+            [cdkDragDisabled]="ejercicioEditando() === i"
+          >
+            <!-- Drag preview -->
+            <div *cdkDragPreview class="rounded-2xl bg-white p-4 shadow-2xl">
+              <div class="flex items-center gap-3">
+                @if (it.ejercicio.portada) {
+                  <img
+                    [src]="assetUrl(it.ejercicio.portada, 48, 48)"
+                    class="h-12 w-12 rounded-xl object-cover"
+                  />
+                }
+                <span class="font-bold text-zinc-800">{{ it.ejercicio.nombre_ejercicio }}</span>
+              </div>
+            </div>
+
+            <!-- Placeholder -->
+            <div
+              *cdkDragPlaceholder
+              class="h-24 rounded-2xl border-2 border-dashed border-amber-500/30 bg-amber-500/5"
+            ></div>
+
+            @if (ejercicioEditando() !== i) {
+              <!-- Modo vista compacto -->
+              <div class="flex items-center gap-4 p-4">
+                <div class="drag-handle text-amber-500" cdkDragHandle>
+                  <span class="material-symbols-outlined text-2xl">drag_indicator</span>
+                </div>
+
+                <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-100 shadow-sm">
+                  @if (it.ejercicio.portada) {
+                    <img
+                      [src]="assetUrl(it.ejercicio.portada, 80, 80)"
+                      [alt]="it.ejercicio.nombre_ejercicio"
+                      class="h-full w-full object-cover"
+                    />
+                  } @else {
+                    <div class="flex h-full w-full items-center justify-center">
+                      <span class="material-symbols-outlined text-2xl text-zinc-300">fitness_center</span>
+                    </div>
+                  }
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <h3 class="truncate font-bold text-zinc-800">
+                    {{ it.ejercicio.nombre_ejercicio }}
+                  </h3>
+                  <p class="mt-1 text-sm text-zinc-500">
+                    <span class="font-semibold text-amber-600">{{ it.series || 3 }}x{{ it.repeticiones || 10 }}</span>
+                    @if (it.descanso_seg) {
+                      <span class="text-zinc-400"> · {{ it.descanso_seg }}s</span>
+                    }
+                    @if (it.veces_dia && it.veces_dia > 1) {
+                      <span class="text-zinc-400"> · {{ it.veces_dia }}/dia</span>
+                    }
+                  </p>
+                  <!-- Días de la semana visual -->
+                  <div class="mt-2 flex gap-1">
+                    @for (d of dias; track d) {
+                      <span class="dia-mini" [class.dia-mini--activo]="isDia(it, d)">{{ d }}</span>
+                    }
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
+                         text-zinc-400 transition-all hover:bg-amber-500/10 hover:text-amber-600"
+                  (click)="ejercicioEditando.set(i)"
+                  title="Editar"
+                >
+                  <span class="material-symbols-outlined text-xl">edit</span>
+                </button>
+              </div>
+            } @else {
+              <!-- Modo edición expandido -->
+              <div class="p-5">
+                <div class="mb-5 flex items-start gap-4">
+                  <div class="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 shadow-md">
+                    @if (it.ejercicio.portada) {
+                      <img
+                        [src]="assetUrl(it.ejercicio.portada, 120, 120)"
+                        [alt]="it.ejercicio.nombre_ejercicio"
+                        class="h-full w-full object-cover"
+                      />
+                    }
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h3 class="font-bold text-lg text-zinc-800">
+                      {{ it.ejercicio.nombre_ejercicio }}
+                    </h3>
+                    @if (it.ejercicio.descripcion) {
+                      <div
+                        class="prose prose-sm mt-1 line-clamp-2 text-sm text-zinc-500"
+                        [innerHTML]="it.ejercicio.descripcion | safeHtml"
+                      ></div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Dosificación -->
+                <div class="grid grid-cols-4 gap-3">
+                  <div class="col-span-1">
+                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                      Series
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      class="input-compact text-center"
+                      [value]="it.series || 3"
+                      (input)="update(i, { series: +$any($event.target).value || 1 })"
+                    />
+                  </div>
+                  <div class="col-span-1">
+                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                      Reps
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      class="input-compact text-center"
+                      [value]="it.repeticiones || 10"
+                      (input)="update(i, { repeticiones: +$any($event.target).value || 1 })"
+                    />
+                  </div>
+                  <div class="col-span-1">
+                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                      Desc (s)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      class="input-compact text-center"
+                      [value]="it.descanso_seg ?? 45"
+                      (input)="update(i, { descanso_seg: +$any($event.target).value || 0 })"
+                    />
+                  </div>
+                  <div class="col-span-1">
+                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                      Veces/dia
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      class="input-compact text-center"
+                      [value]="it.veces_dia ?? 1"
+                      (input)="update(i, { veces_dia: +$any($event.target).value || 1 })"
+                    />
+                  </div>
+                </div>
+
+                <!-- Días de la semana -->
+                <div class="mt-5">
+                  <label class="mb-2 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                    Días de la semana
+                  </label>
+                  <div class="flex justify-center gap-2">
+                    @for (d of dias; track d) {
+                      <button
+                        type="button"
+                        class="dia-btn"
+                        [class.dia-btn--activo]="isDia(it, d)"
+                        (click)="toggleDia(i, d)"
+                      >
+                        {{ d }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Instrucciones -->
+                <div class="mt-5">
+                  <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                    Instrucciones (opcional)
+                  </label>
+                  <textarea
+                    rows="2"
+                    class="input-compact w-full resize-none"
+                    placeholder="Indicaciones especiales..."
+                    [value]="it.instrucciones_paciente || ''"
+                    (input)="update(i, { instrucciones_paciente: $any($event.target).value })"
+                  ></textarea>
+                </div>
+
+                <!-- Acciones -->
+                <div class="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-red-500
+                           transition-all hover:text-red-600 active:scale-98"
+                    (click)="removeEjercicio(it.ejercicio.id_ejercicio)"
+                  >
+                    <span class="material-symbols-outlined text-xl">delete</span>
+                    Eliminar
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex h-10 items-center justify-center rounded-xl
+                           bg-zinc-800 px-5 text-sm font-semibold text-white
+                           transition-all hover:bg-zinc-700 active:scale-98"
+                    (click)="ejercicioEditando.set(null)"
+                  >
+                    Listo
+                  </button>
+                </div>
+              </div>
+            }
+          </article>
+        }
+      </div>
+
+      <!-- Botón añadir más ejercicios -->
+      <a
+        routerLink="/galeria/ejercicios"
+        class="mt-4 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed
+               border-zinc-300 bg-white/40 p-4 text-zinc-500
+               transition-all hover:border-amber-500 hover:bg-amber-500/5 hover:text-amber-600"
+      >
+        <span class="material-symbols-outlined text-2xl">add</span>
+        <span class="text-sm font-medium">Añadir más ejercicios</span>
+      </a>
+    }
+  </div>
+</section>
+
+<!-- Barra de acción fija -->
+<div class="fixed right-0 bottom-0 left-0 z-40 p-4
+            bg-gradient-to-t from-white via-white/95 to-transparent
+            pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+  <div class="mx-auto flex max-w-3xl items-center justify-center">
+    <button
+      type="button"
+      class="cta-button-fixed cta-button-amber w-full max-w-md"
+      (click)="guardarPlantilla()"
+      [disabled]="!canSave() || isSaving()"
+    >
+      @if (isSaving()) {
+        <span class="flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+          Guardando...
+        </span>
+      } @else {
+        <span class="material-symbols-outlined text-xl">bookmark_add</span>
+        Guardar plantilla
+      }
+    </button>
+  </div>
+</div>

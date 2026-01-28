@@ -9,6 +9,7 @@ import { RutinasService } from '../../data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { ToggleGaleriaComponent } from '../../../../shared/ui/toggle-galeria/toggle-galeria.component';
+import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 import { Rutina, EjercicioRutina } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
@@ -27,6 +28,7 @@ export class RutinasListComponent {
   private router = inject(Router);
   private toastService = inject(ToastService);
   private breakpointObserver = inject(BreakpointObserver);
+  private planBuilderService = inject(PlanBuilderService);
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
 
@@ -160,5 +162,11 @@ export class RutinasListComponent {
   assetUrl(id: string | null | undefined, w = 60, h = 60): string {
     if (!id) return '';
     return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+  }
+
+  // === Crear Rutina ===
+  crearRutina() {
+    this.planBuilderService.startRutinaMode();
+    this.router.navigate(['/galeria/ejercicios']);
   }
 }
