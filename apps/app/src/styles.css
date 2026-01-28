@@ -4,6 +4,348 @@
   --color-primary: #e75c3e;
 }
 
+/* =========================================
+   Kengo Theme Variables (Dynamic White-Labeling)
+   ========================================= */
+:root {
+  /* Primary colors - will be overwritten by ThemeService */
+  --kengo-primary: #e75c3e;
+  --kengo-primary-dark: #c94a2f;
+  --kengo-primary-light: #f47d63;
+  --kengo-primary-alpha-10: rgba(231, 92, 62, 0.1);
+  --kengo-primary-alpha-20: rgba(231, 92, 62, 0.2);
+  --kengo-primary-alpha-30: rgba(231, 92, 62, 0.3);
+  --kengo-primary-rgb: 231, 92, 62;
+  --kengo-shadow-primary: 0 4px 16px rgba(231, 92, 62, 0.3);
+
+  /* Tertiary colors */
+  --kengo-tertiary: #efc048;
+  --kengo-tertiary-dark: #d9a832;
+  --kengo-tertiary-light: #f5d06e;
+  --kengo-tertiary-rgb: 239, 192, 72;
+
+  /* Background gradient colors - derived from primary for animated background */
+  /* These are default values; ThemeService will calculate and override them based on the primary color */
+  --kengo-bg-gradient-1: rgb(205, 135, 101);
+  --kengo-bg-gradient-2: rgb(218, 153, 108);
+  --kengo-bg-gradient-3: rgb(230, 171, 116);
+  --kengo-bg-gradient-4: rgb(243, 189, 123);
+  --kengo-bg-gradient-5: rgb(246, 202, 152);
+  --kengo-bg-gradient-6: rgb(248, 216, 166);
+  --kengo-bg-gradient-7: rgb(251, 228, 192);
+  --kengo-bg-gradient-8: rgb(253, 234, 199);
+
+  /* Bubble color for animated background spans */
+  --kengo-bg-bubble: rgb(224, 165, 112);
+
+  /* Autofill background - very light tint of primary */
+  --kengo-autofill-bg: rgb(254, 246, 244);
+}
+
+/* =========================================
+   Utility Classes for Kengo Theme Colors
+   ========================================= */
+@layer utilities {
+  /* Background colors */
+  .bg-kengo-primary {
+    background-color: var(--kengo-primary);
+  }
+  .bg-kengo-primary-dark {
+    background-color: var(--kengo-primary-dark);
+  }
+  .bg-kengo-primary-light {
+    background-color: var(--kengo-primary-light);
+  }
+  .bg-kengo-primary-alpha-10 {
+    background-color: var(--kengo-primary-alpha-10);
+  }
+  .bg-kengo-primary-alpha-20 {
+    background-color: var(--kengo-primary-alpha-20);
+  }
+  .bg-kengo-primary-alpha-30 {
+    background-color: var(--kengo-primary-alpha-30);
+  }
+  .bg-kengo-tertiary {
+    background-color: var(--kengo-tertiary);
+  }
+  .bg-kengo-tertiary-dark {
+    background-color: var(--kengo-tertiary-dark);
+  }
+
+  /* Text colors */
+  .text-kengo-primary {
+    color: var(--kengo-primary);
+  }
+  .text-kengo-primary-dark {
+    color: var(--kengo-primary-dark);
+  }
+  .text-kengo-primary-light {
+    color: var(--kengo-primary-light);
+  }
+  .text-kengo-tertiary {
+    color: var(--kengo-tertiary);
+  }
+
+  /* Border colors */
+  .border-kengo-primary {
+    border-color: var(--kengo-primary);
+  }
+  .border-kengo-primary-dark {
+    border-color: var(--kengo-primary-dark);
+  }
+  .border-kengo-primary-light {
+    border-color: var(--kengo-primary-light);
+  }
+  .border-kengo-tertiary {
+    border-color: var(--kengo-tertiary);
+  }
+
+  /* Ring/outline colors */
+  .ring-kengo-primary {
+    --tw-ring-color: var(--kengo-primary);
+  }
+  .ring-kengo-primary-alpha-30 {
+    --tw-ring-color: var(--kengo-primary-alpha-30);
+  }
+
+  /* Shadow */
+  .shadow-kengo-primary {
+    box-shadow: var(--kengo-shadow-primary);
+  }
+
+  /* Hover states */
+  .hover\:bg-kengo-primary:hover {
+    background-color: var(--kengo-primary);
+  }
+  .hover\:bg-kengo-primary-dark:hover {
+    background-color: var(--kengo-primary-dark);
+  }
+  .hover\:bg-kengo-primary-light:hover {
+    background-color: var(--kengo-primary-light);
+  }
+  .hover\:bg-kengo-primary-alpha-10:hover {
+    background-color: var(--kengo-primary-alpha-10);
+  }
+  .hover\:bg-kengo-primary-alpha-20:hover {
+    background-color: var(--kengo-primary-alpha-20);
+  }
+  .hover\:text-kengo-primary:hover {
+    color: var(--kengo-primary);
+  }
+  .hover\:text-kengo-primary-dark:hover {
+    color: var(--kengo-primary-dark);
+  }
+  .hover\:border-kengo-primary:hover {
+    border-color: var(--kengo-primary);
+  }
+
+  /* Focus states */
+  .focus\:ring-kengo-primary:focus {
+    --tw-ring-color: var(--kengo-primary);
+  }
+  .focus\:ring-kengo-primary-alpha-30:focus {
+    --tw-ring-color: var(--kengo-primary-alpha-30);
+  }
+  .focus\:border-kengo-primary:focus {
+    border-color: var(--kengo-primary);
+  }
+
+  /* Active states */
+  .active\:bg-kengo-primary-dark:active {
+    background-color: var(--kengo-primary-dark);
+  }
+
+  /* Fill for SVG */
+  .fill-kengo-primary {
+    fill: var(--kengo-primary);
+  }
+  .fill-kengo-tertiary {
+    fill: var(--kengo-tertiary);
+  }
+
+  /* Stroke for SVG */
+  .stroke-kengo-primary {
+    stroke: var(--kengo-primary);
+  }
+
+  /* Gradient utilities */
+  .from-kengo-primary {
+    --tw-gradient-from: var(--kengo-primary);
+    --tw-gradient-to: rgb(255 255 255 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  .to-kengo-primary-dark {
+    --tw-gradient-to: var(--kengo-primary-dark);
+  }
+  .to-kengo-primary-light {
+    --tw-gradient-to: var(--kengo-primary-light);
+  }
+  .from-kengo-tertiary {
+    --tw-gradient-from: var(--kengo-tertiary);
+    --tw-gradient-to: rgb(255 255 255 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  .to-kengo-tertiary {
+    --tw-gradient-to: var(--kengo-tertiary);
+  }
+
+  /* Shadow utilities with opacity */
+  .shadow-kengo-primary\/25 {
+    --tw-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.25), 0 4px 6px -4px rgba(var(--kengo-primary-rgb), 0.25);
+    --tw-shadow-colored: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.25), 0 4px 6px -4px rgba(var(--kengo-primary-rgb), 0.25);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+  .shadow-kengo-primary\/30 {
+    --tw-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.3), 0 4px 6px -4px rgba(var(--kengo-primary-rgb), 0.3);
+    --tw-shadow-colored: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.3), 0 4px 6px -4px rgba(var(--kengo-primary-rgb), 0.3);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+  .shadow-kengo-primary\/40 {
+    --tw-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.4), 0 4px 6px -4px rgba(var(--kengo-primary-rgb), 0.4);
+    --tw-shadow-colored: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.4), 0 4px 6px -4px rgba(var(--kengo-primary-rgb), 0.4);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+  .shadow-lg-kengo-primary\/25 {
+    box-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.25);
+  }
+  .shadow-lg-kengo-primary\/30 {
+    box-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.3);
+  }
+  .shadow-lg-kengo-primary\/40 {
+    box-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.4);
+  }
+  .shadow-md-kengo-primary\/25 {
+    box-shadow: 0 4px 6px -1px rgba(var(--kengo-primary-rgb), 0.25);
+  }
+  .shadow-xl-kengo-primary\/30 {
+    box-shadow: 0 20px 25px -5px rgba(var(--kengo-primary-rgb), 0.3);
+  }
+  .shadow-xl-kengo-primary\/40 {
+    box-shadow: 0 20px 25px -5px rgba(var(--kengo-primary-rgb), 0.4);
+  }
+  .hover\:shadow-lg-kengo-primary\/30:hover {
+    box-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.3);
+  }
+  .hover\:shadow-xl-kengo-primary\/40:hover {
+    box-shadow: 0 20px 25px -5px rgba(var(--kengo-primary-rgb), 0.4);
+  }
+  .hover\:shadow-xl-kengo-primary\/30:hover {
+    box-shadow: 0 20px 25px -5px rgba(var(--kengo-primary-rgb), 0.3);
+  }
+
+  /* Ring with opacity */
+  .ring-kengo-primary\/10 {
+    --tw-ring-color: rgba(var(--kengo-primary-rgb), 0.1);
+  }
+  .ring-kengo-primary\/20 {
+    --tw-ring-color: rgba(var(--kengo-primary-rgb), 0.2);
+  }
+  .ring-kengo-primary\/30 {
+    --tw-ring-color: rgba(var(--kengo-primary-rgb), 0.3);
+  }
+
+  /* Focus shadow */
+  .focus\:shadow-lg-kengo-primary\/10:focus {
+    box-shadow: 0 10px 15px -3px rgba(var(--kengo-primary-rgb), 0.1);
+  }
+
+  /* Gradients with from/to using opacity */
+  .from-kengo-primary\/10 {
+    --tw-gradient-from: rgba(var(--kengo-primary-rgb), 0.1);
+    --tw-gradient-to: rgb(255 255 255 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  .from-kengo-primary\/20 {
+    --tw-gradient-from: rgba(var(--kengo-primary-rgb), 0.2);
+    --tw-gradient-to: rgb(255 255 255 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  .to-kengo-tertiary\/10 {
+    --tw-gradient-to: rgba(var(--kengo-tertiary-rgb), 0.1);
+  }
+  .to-kengo-tertiary\/20 {
+    --tw-gradient-to: rgba(var(--kengo-tertiary-rgb), 0.2);
+  }
+  .to-kengo-primary\/10 {
+    --tw-gradient-to: rgba(var(--kengo-primary-rgb), 0.1);
+  }
+  .to-kengo-primary\/20 {
+    --tw-gradient-to: rgba(var(--kengo-primary-rgb), 0.2);
+  }
+  .from-kengo-tertiary\/20 {
+    --tw-gradient-from: rgba(var(--kengo-tertiary-rgb), 0.2);
+    --tw-gradient-to: rgb(255 255 255 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  /* Primary gradient background */
+  .bg-gradient-kengo-primary {
+    background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  }
+  .bg-gradient-kengo-primary-horizontal {
+    background: linear-gradient(to right, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  }
+
+  /* Border with opacity */
+  .border-kengo-primary\/10 {
+    border-color: rgba(var(--kengo-primary-rgb), 0.1);
+  }
+  .border-kengo-primary\/20 {
+    border-color: rgba(var(--kengo-primary-rgb), 0.2);
+  }
+  .border-kengo-primary\/30 {
+    border-color: rgba(var(--kengo-primary-rgb), 0.3);
+  }
+  .border-kengo-primary\/40 {
+    border-color: rgba(var(--kengo-primary-rgb), 0.4);
+  }
+  .focus\:border-kengo-primary\/40:focus {
+    border-color: rgba(var(--kengo-primary-rgb), 0.4);
+  }
+  .focus\:border-kengo-primary\/50:focus {
+    border-color: rgba(var(--kengo-primary-rgb), 0.5);
+  }
+  .hover\:border-kengo-primary\/30:hover {
+    border-color: rgba(var(--kengo-primary-rgb), 0.3);
+  }
+
+  /* Background with opacity */
+  .bg-kengo-primary\/5 {
+    background-color: rgba(var(--kengo-primary-rgb), 0.05);
+  }
+  .bg-kengo-primary\/10 {
+    background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  }
+  .bg-kengo-primary\/20 {
+    background-color: rgba(var(--kengo-primary-rgb), 0.2);
+  }
+  .bg-kengo-tertiary\/10 {
+    background-color: rgba(var(--kengo-tertiary-rgb), 0.1);
+  }
+  .bg-kengo-tertiary\/20 {
+    background-color: rgba(var(--kengo-tertiary-rgb), 0.2);
+  }
+  .hover\:bg-kengo-primary\/5:hover {
+    background-color: rgba(var(--kengo-primary-rgb), 0.05);
+  }
+  .hover\:bg-kengo-primary\/10:hover {
+    background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  }
+
+  /* Peer checked states */
+  .peer-checked\:border-kengo-primary:is(:where(.peer):checked ~ *) {
+    border-color: var(--kengo-primary);
+  }
+  .peer-checked\:bg-kengo-primary:is(:where(.peer):checked ~ *) {
+    background-color: var(--kengo-primary);
+  }
+
+  /* Focus ring with opacity */
+  .focus\:ring-kengo-primary\/20:focus {
+    --tw-ring-color: rgba(var(--kengo-primary-rgb), 0.2);
+  }
+}
+
 @font-face {
   font-family: kengoFont;
   src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
@@ -50,13 +392,13 @@ body {
 }
 
 input:-webkit-autofill {
-  box-shadow: 0 0 0px 1000px #e9fcff inset !important;
-  -webkit-box-shadow: 0 0 0px 1000px #e9fcff inset !important;
+  box-shadow: 0 0 0px 1000px var(--kengo-autofill-bg) inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--kengo-autofill-bg) inset !important;
   -webkit-text-fill-color: #000 !important;
 }
 
 input.mat-input-element:-webkit-autofill {
-  box-shadow: 0 0 0px 1000px #e9fcff inset; /* por ejemplo, bg-gray-100 */
+  box-shadow: 0 0 0px 1000px var(--kengo-autofill-bg) inset;
   -webkit-text-fill-color: #111827; /* text-gray-900 */
 }
 
@@ -161,38 +503,17 @@ body {
   left: 0;
   overflow: hidden;
 
-  /*
+  /* Dynamic gradient based on primary color */
   background-image: linear-gradient(
     to right top,
-    #ff9c50,
-    #ffa456,
-    #ffab5c,
-    #ffb262,
-    #ffb969,
-    #ffbd6f,
-    #ffc276,
-    #ffc67c,
-    #ffc983,
-    #ffcd8a,
-    #ffd092,
-    #ffd399
-  );
-  */
-
-  background-image: linear-gradient(
-    to right top,
-    #ffab6a,
-    #ffb372,
-    #ffba7a,
-    #ffc282,
-    #ffc98b,
-    #ffce94,
-    #ffd49e,
-    #ffd9a7,
-    #ffdeb3,
-    #ffe3be,
-    #ffe8ca,
-    #ffedd6
+    var(--kengo-bg-gradient-1),
+    var(--kengo-bg-gradient-2),
+    var(--kengo-bg-gradient-3),
+    var(--kengo-bg-gradient-4),
+    var(--kengo-bg-gradient-5),
+    var(--kengo-bg-gradient-6),
+    var(--kengo-bg-gradient-7),
+    var(--kengo-bg-gradient-8)
   );
 }
 
@@ -209,7 +530,7 @@ body {
 }
 
 .kengoBackground span:nth-child(0) {
-  color: #f9b87e;
+  color: var(--kengo-bg-bubble);
   top: 46%;
   left: 7%;
   animation-duration: 110s;
@@ -218,7 +539,7 @@ body {
   box-shadow: -100vmin 0 13.499747275504223vmin currentColor;
 }
 .kengoBackground span:nth-child(1) {
-  color: #f9b87e;
+  color: var(--kengo-bg-bubble);
   top: 31%;
   left: 30%;
   animation-duration: 15s;
@@ -227,7 +548,7 @@ body {
   box-shadow: 100vmin 0 12.507264709743446vmin currentColor;
 }
 .kengoBackground span:nth-child(2) {
-  color: #f9b87e;
+  color: var(--kengo-bg-bubble);
   top: 96%;
   left: 63%;
   animation-duration: 63s;
@@ -236,7 +557,7 @@ body {
   box-shadow: 100vmin 0 13.242136647822383vmin currentColor;
 }
 .kengoBackground span:nth-child(3) {
-  color: #f9b87e;
+  color: var(--kengo-bg-bubble);
   top: 19%;
   left: 50%;
   animation-duration: 108s;
@@ -245,7 +566,7 @@ body {
   box-shadow: -100vmin 0 12.72707917166243vmin currentColor;
 }
 .kengoBackground span:nth-child(4) {
-  color: #f9b87e;
+  color: var(--kengo-bg-bubble);
   top: 89%;
   left: 69%;
   animation-duration: 55s;
@@ -254,7 +575,7 @@ body {
   box-shadow: -100vmin 0 12.927843565603542vmin currentColor;
 }
 .kengoBackground span:nth-child(5) {
-  color: #f9b87e;
+  color: var(--kengo-bg-bubble);
   top: 17%;
   left: 47%;
   animation-duration: 111s;
