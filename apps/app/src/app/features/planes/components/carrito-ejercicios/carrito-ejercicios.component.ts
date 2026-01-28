@@ -156,7 +156,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     // Pequeño delay para permitir que el drawer se cierre antes de navegar
     // Esto evita conflictos con el scroll restoration
     setTimeout(() => {
-      this.router.navigate(['/ejercicios']);
+      this.router.navigate(['/galeria/ejercicios']);
     }, 100);
   }
 

@@ -40,7 +40,7 @@ export class NavegacionComponent implements OnInit {
     const routeMap: Record<string, number> = {
       '/inicio': 0,
       '/': 0,
-      '/ejercicios': 1,
+      '/galeria': 1,
       '/actividad-personal': 2,
       '/mis-pacientes': isFisio ? 3 : -1,
       '/mi-clinica': isFisio ? 4 : 3,

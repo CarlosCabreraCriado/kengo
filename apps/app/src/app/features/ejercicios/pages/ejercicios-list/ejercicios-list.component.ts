@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { Ejercicio } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
+import { ToggleGaleriaComponent } from '../../../../shared/ui/toggle-galeria/toggle-galeria.component';
 
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
@@ -25,7 +26,7 @@ import { KENGO_BREAKPOINTS } from '../../../../shared';
 @Component({
   selector: 'app-ejercicios-list',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, SafeHtmlPipe],
+  imports: [RouterLink, ReactiveFormsModule, SafeHtmlPipe, ToggleGaleriaComponent],
   templateUrl: './ejercicios-list.component.html',
   styleUrl: './ejercicios-list.component.css',
   host: {

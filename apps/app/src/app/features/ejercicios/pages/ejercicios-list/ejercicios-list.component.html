@@ -19,7 +19,7 @@
               <span class="material-symbols-outlined text-xl">arrow_back</span>
             </button>
             <div>
-              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Ejercicios</h1>
+              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Galería</h1>
               @if (ejerciciosService.total() > 0) {
                 <p class="text-xs font-medium text-zinc-500 tracking-wide">
                   {{ ejerciciosService.total() }} {{ ejerciciosService.total() === 1 ? 'ejercicio' : 'ejercicios' }}
@@ -65,12 +65,14 @@
         </div>
       }
 
-      <!-- Barra de búsqueda y filtros -->
+      <!-- Toggle + Barra de búsqueda y filtros -->
       <form
         [formGroup]="formularioFiltros"
         (ngSubmit)="$event.preventDefault()"
         class="flex items-center gap-2"
       >
+        <!-- Toggle Galería -->
+        <app-toggle-galeria />
         <!-- DESKTOP: Contador de ejercicios -->
         @if (!isMovil() && ejerciciosService.total() > 0) {
           <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
@@ -359,7 +361,7 @@
             @if (vista() === 'lista') {
               <!-- Vista Lista: Card horizontal con glassmorphism -->
               <a
-                [routerLink]="['/ejercicios', ejercicio.id_ejercicio]"
+                [routerLink]="['/galeria/ejercicios', ejercicio.id_ejercicio]"
                 class="ejercicio-card group block"
                 [style.animation-delay]="(i * 50) + 'ms'"
               >
@@ -431,7 +433,7 @@
             } @else {
               <!-- Vista Viñeta: Card vertical con imagen grande -->
               <a
-                [routerLink]="['/ejercicios', ejercicio.id_ejercicio]"
+                [routerLink]="['/galeria/ejercicios', ejercicio.id_ejercicio]"
                 class="ejercicio-card group block"
                 [style.animation-delay]="(i * 50) + 'ms'"
               >

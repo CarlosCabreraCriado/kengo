@@ -52,12 +52,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
 
-  // Ejercicios (lazy loaded feature)
+  // Galería (ejercicios + rutinas)
   {
-    path: 'ejercicios',
+    path: 'galeria',
     loadChildren: () =>
-      import('./features/ejercicios/ejercicios.routes').then(
-        (m) => m.EJERCICIOS_ROUTES
+      import('./features/galeria/galeria.routes').then(
+        (m) => m.GALERIA_ROUTES
       ),
   },
 

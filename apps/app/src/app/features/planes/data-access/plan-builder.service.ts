@@ -241,7 +241,7 @@ export class PlanBuilderService {
       this.paciente.set(p);
       this.tryRestoreFor(p.id);
       localStorage.setItem('carrito:last_paciente_id', p.id);
-      this.router.navigate(['/ejercicios']);
+      this.router.navigate(['/galeria/ejercicios']);
       this.openDrawer();
     }
   }

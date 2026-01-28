@@ -1,0 +1,311 @@
+<section class="rutinas-page flex h-full w-full flex-col overflow-hidden">
+  <!-- Header sticky con glassmorphism -->
+  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+    <div class="mx-auto max-w-6xl">
+      @if (isMovil()) {
+        <!-- MÓVIL: Header con título y navegación -->
+        <div class="mb-4 flex items-center justify-between">
+          <!-- Back + Título -->
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              routerLink="/inicio"
+              class="flex h-10 w-10 items-center justify-center rounded-xl
+                     bg-white/60 backdrop-blur-md border border-white/40
+                     text-zinc-600 transition-all duration-200
+                     hover:bg-white/80 hover:scale-105 active:scale-95"
+              aria-label="Volver al inicio"
+            >
+              <span class="material-symbols-outlined text-xl">arrow_back</span>
+            </button>
+            <div>
+              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Galería</h1>
+              @if (rutinas().length > 0) {
+                <p class="text-xs font-medium text-zinc-500 tracking-wide">
+                  {{ rutinas().length }} {{ rutinas().length === 1 ? 'plantilla' : 'plantillas' }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- Refresh button -->
+          <button
+            type="button"
+            (click)="reload()"
+            class="flex h-10 w-10 items-center justify-center rounded-full
+                   bg-white/60 backdrop-blur-md border border-white/40
+                   text-zinc-600 transition-all duration-200
+                   hover:bg-white/80 active:scale-95"
+            aria-label="Recargar"
+          >
+            <span class="material-symbols-outlined text-xl">refresh</span>
+          </button>
+        </div>
+      }
+
+      <!-- Toggle + Búsqueda -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <!-- Toggle Galería -->
+        <app-toggle-galeria />
+
+        <!-- Buscador -->
+        <div class="relative flex-1">
+          <span class="material-symbols-outlined absolute top-1/2 left-3.5 z-10 -translate-y-1/2
+                       text-[#e75c3e]">search</span>
+          <input
+            type="text"
+            class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/80
+                   pr-4 pl-11 text-zinc-700 placeholder:text-zinc-400
+                   transition-all focus:border-[#e75c3e]/50 focus:ring-2
+                   focus:ring-[#e75c3e]/20 focus:outline-none backdrop-blur-sm"
+            placeholder="Buscar plantilla..."
+            [(ngModel)]="busquedaRutinas"
+            (ngModelChange)="onBusquedaRutinasChange($event)"
+          />
+        </div>
+
+        <!-- Filtro de visibilidad -->
+        <div class="relative w-full sm:w-52">
+          <select
+            class="h-12 w-full appearance-none rounded-xl border border-zinc-200/80
+                   bg-white/80 px-4 pr-10 text-zinc-700 cursor-pointer backdrop-blur-sm
+                   transition-all focus:border-[#e75c3e]/50 focus:ring-2
+                   focus:ring-[#e75c3e]/20 focus:outline-none"
+            [(ngModel)]="filtroVisibilidad"
+            (ngModelChange)="onFiltroVisibilidadChange($event)"
+          >
+            <option value="todas">Todas las plantillas</option>
+            <option value="privadas">Mis plantillas</option>
+            <option value="publicas">Plantillas públicas</option>
+          </select>
+          <span class="material-symbols-outlined absolute top-1/2 right-3 -translate-y-1/2
+                       pointer-events-none text-zinc-400">expand_more</span>
+        </div>
+
+        <!-- DESKTOP: Refresh y contador -->
+        @if (!isMovil()) {
+          <div class="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200/50">
+            @if (rutinas().length > 0) {
+              <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
+                <span class="text-sm font-bold text-[#e75c3e]">{{ rutinas().length }}</span>
+                <span class="text-xs text-zinc-500">{{ rutinas().length === 1 ? 'plantilla' : 'plantillas' }}</span>
+              </div>
+            }
+            <button
+              type="button"
+              class="quick-action-btn"
+              aria-label="Recargar datos"
+              (click)="reload()"
+            >
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido principal con scroll -->
+  <main class="flex-1 overflow-y-auto px-4 pb-28 lg:pb-8">
+    <div class="mx-auto max-w-6xl">
+      @if (isLoadingRutinas()) {
+        <!-- Loading State -->
+        <div class="tarjeta-kengo rounded-2xl p-6">
+          <div class="flex items-center justify-center gap-3">
+            <div class="h-1.5 w-48 overflow-hidden rounded-full bg-zinc-100">
+              <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      } @else if (rutinas().length === 0) {
+        <!-- Empty State -->
+        <div class="tarjeta-kengo empty-state rounded-3xl">
+          <div class="empty-state-icon">
+            <span class="material-symbols-outlined">bookmarks</span>
+          </div>
+          <h3 class="text-lg font-semibold text-zinc-700">No tienes plantillas guardadas</h3>
+          <p class="mt-2 max-w-xs text-sm text-zinc-500">
+            Crea un plan y guárdalo como plantilla para reutilizarlo fácilmente
+          </p>
+        </div>
+      } @else {
+        <!-- Lista de rutinas -->
+        <div class="space-y-4">
+          @for (rutina of rutinas(); track rutina.id_rutina) {
+            <div class="tarjeta-kengo rutina-card overflow-hidden rounded-2xl"
+                 [class.expanded]="expandedRutinaId() === rutina.id_rutina">
+              <!-- Header rutina -->
+              <div class="flex items-start gap-4 p-5">
+                <!-- Icono -->
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
+                            bg-gradient-to-br from-[#efc048]/20 to-[#e75c3e]/10">
+                  <span class="material-symbols-outlined text-2xl text-[#efc048]">bookmark</span>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <h3 class="font-bold text-zinc-800">{{ rutina.nombre }}</h3>
+                      @if (rutina.descripcion) {
+                        <p class="mt-1 line-clamp-2 text-sm text-zinc-600">
+                          {{ rutina.descripcion }}
+                        </p>
+                      }
+                    </div>
+
+                    <!-- Badge visibilidad -->
+                    <span class="visibility-badge shrink-0"
+                          [class.private]="rutina.visibilidad === 'privado'"
+                          [class.public]="rutina.visibilidad === 'publico'">
+                      <span class="material-symbols-outlined text-xs">
+                        {{ rutina.visibilidad === "privado" ? "lock" : "public" }}
+                      </span>
+                      {{ rutina.visibilidad === "privado" ? "Privada" : "Pública" }}
+                    </span>
+                  </div>
+
+                  <!-- Metadata -->
+                  <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+                    @if (rutina.date_created) {
+                      <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">schedule</span>
+                        {{ formatDateLong(rutina.date_created) }}
+                      </span>
+                    }
+                    @if (!isOwner(rutina)) {
+                      <span class="rounded-full bg-[#efc048]/10 px-2 py-0.5 text-[#efc048] font-medium">
+                        Plantilla pública
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Menu acciones rutina -->
+                <div class="relative shrink-0">
+                  <button
+                    type="button"
+                    class="flex h-10 w-10 items-center justify-center rounded-xl
+                           text-zinc-500 transition-all hover:bg-zinc-100"
+                    (click)="toggleRutinaMenu(rutina.id_rutina)"
+                  >
+                    <span class="material-symbols-outlined">more_vert</span>
+                  </button>
+                  @if (openRutinaMenuId === rutina.id_rutina) {
+                    <div class="dropdown-menu right-0">
+                      <button
+                        type="button"
+                        class="dropdown-item"
+                        (click)="togglePreview(rutina); openRutinaMenuId = null"
+                      >
+                        <span class="material-symbols-outlined text-xl">visibility</span>
+                        <span>Ver ejercicios</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="dropdown-item"
+                        (click)="usarPlantilla(rutina); openRutinaMenuId = null"
+                      >
+                        <span class="material-symbols-outlined text-xl text-green-500">play_arrow</span>
+                        <span>Usar plantilla</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="dropdown-item"
+                        (click)="duplicarRutina(rutina); openRutinaMenuId = null"
+                      >
+                        <span class="material-symbols-outlined text-xl">content_copy</span>
+                        <span>Duplicar</span>
+                      </button>
+                      @if (isOwner(rutina)) {
+                        <hr class="my-1.5 border-zinc-100" />
+                        <button
+                          type="button"
+                          class="dropdown-item"
+                          (click)="cambiarVisibilidadRutina(rutina); openRutinaMenuId = null"
+                        >
+                          <span class="material-symbols-outlined text-xl">
+                            {{ rutina.visibilidad === "privado" ? "public" : "lock" }}
+                          </span>
+                          <span>
+                            {{ rutina.visibilidad === "privado" ? "Hacer pública" : "Hacer privada" }}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          class="dropdown-item text-red-500"
+                          (click)="eliminarRutina(rutina); openRutinaMenuId = null"
+                        >
+                          <span class="material-symbols-outlined text-xl">delete</span>
+                          <span>Eliminar</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Boton expandir -->
+              <button
+                type="button"
+                class="rutina-expand-btn"
+                (click)="togglePreview(rutina)"
+              >
+                <span class="material-symbols-outlined text-lg transition-transform duration-200"
+                      [class.rotate-180]="expandedRutinaId() === rutina.id_rutina">
+                  expand_more
+                </span>
+                {{ expandedRutinaId() === rutina.id_rutina ? "Ocultar ejercicios" : "Ver ejercicios" }}
+              </button>
+
+              <!-- Panel preview -->
+              @if (expandedRutinaId() === rutina.id_rutina) {
+                <div class="border-t border-zinc-100 bg-zinc-50/50 p-4">
+                  @if (loadingPreview()) {
+                    <div class="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+                      <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
+                    </div>
+                  } @else if (previewEjercicios().length > 0) {
+                    <div class="space-y-2.5">
+                      @for (ej of previewEjercicios(); track ej.id; let i = $index) {
+                        <div class="flex items-center gap-3 rounded-xl bg-white p-3
+                                    shadow-sm ring-1 ring-zinc-100">
+                          <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+                            @if (ej.ejercicio.portada) {
+                              <img
+                                [src]="assetUrl(ej.ejercicio.portada)"
+                                class="h-full w-full object-cover"
+                              />
+                            } @else {
+                              <div class="flex h-full w-full items-center justify-center">
+                                <span class="material-symbols-outlined text-zinc-300">fitness_center</span>
+                              </div>
+                            }
+                          </div>
+                          <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-zinc-800">
+                              {{ i + 1 }}. {{ ej.ejercicio.nombre_ejercicio }}
+                            </p>
+                            <p class="mt-0.5 text-xs text-zinc-500">
+                              {{ ej.series || 3 }} series x {{ ej.repeticiones || 12 }} reps
+                              @if (ej.descanso_seg) {
+                                <span class="text-zinc-400">· {{ ej.descanso_seg }}s descanso</span>
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="py-4 text-center text-sm text-zinc-500">
+                      Esta plantilla no tiene ejercicios
+                    </p>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+</section>

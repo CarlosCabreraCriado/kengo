@@ -1,0 +1,46 @@
+@reference "tailwindcss";
+
+:host {
+  --kengo-primary: #e75c3e;
+  --kengo-primary-dark: #c94a2f;
+  display: block;
+}
+
+/* Toggle Navigation */
+.toggle-nav {
+  @apply flex items-center gap-1 p-1 rounded-2xl;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.toggle-item {
+  @apply flex items-center gap-1.5 px-4 py-2 rounded-xl text-zinc-500 text-sm font-medium transition-all cursor-pointer no-underline;
+}
+
+.toggle-item:hover:not(.active) {
+  @apply bg-white/50 text-zinc-700;
+}
+
+.toggle-item.active {
+  @apply text-white;
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  box-shadow: 0 2px 8px rgba(231, 92, 62, 0.3);
+}
+
+.toggle-icon {
+  @apply text-lg;
+}
+
+.toggle-label {
+  @apply hidden;
+}
+
+/* Show labels on screens >= 400px */
+@media (min-width: 400px) {
+  .toggle-label {
+    @apply inline;
+  }
+}

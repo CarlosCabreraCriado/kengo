@@ -1,0 +1,12 @@
+<nav class="toggle-nav" aria-label="Navegación de galería">
+  @for (tab of tabs; track tab.path) {
+    <a
+      [routerLink]="'/galeria/' + tab.path"
+      routerLinkActive="active"
+      class="toggle-item"
+    >
+      <span class="material-symbols-outlined toggle-icon">{{ tab.icon }}</span>
+      <span class="toggle-label">{{ tab.label }}</span>
+    </a>
+  }
+</nav>

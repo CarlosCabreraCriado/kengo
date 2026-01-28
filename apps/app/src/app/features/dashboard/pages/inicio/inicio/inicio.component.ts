@@ -84,10 +84,10 @@ export class InicioComponent implements OnDestroy {
     },
     {
       id: 'ejercicios',
-      title: 'Ejercicios',
-      subtitle: 'Catálogo de ejercicios',
+      title: 'Galería',
+      subtitle: 'Ejercicios y plantillas',
       image: 'assets/portadas/catalogo-ejercicios.png',
-      route: '/ejercicios',
+      route: '/galeria',
       roles: ['fisio'],
     },
     {
@@ -109,9 +109,9 @@ export class InicioComponent implements OnDestroy {
     {
       id: 'rutinas',
       title: 'Rutinas',
-      subtitle: 'Planes de tratamiento',
+      subtitle: 'Plantillas de ejercicios',
       image: 'assets/portadas/rutina.png',
-      route: '/planes',
+      route: '/galeria/rutinas',
       roles: ['fisio'],
     },
     {
