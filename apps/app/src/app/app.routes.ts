@@ -116,10 +116,10 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
-    path: 'planes/:id/resumen',
+    path: 'planes/:id',
     loadComponent: () =>
-      import('./features/planes/pages/plan-resumen/plan-resumen.component').then(
-        (m) => m.PlanResumenComponent
+      import('./features/planes/pages/plan-detail/plan-detail.component').then(
+        (m) => m.PlanDetailComponent
       ),
     canActivate: [AuthGuard],
   },

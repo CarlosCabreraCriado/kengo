@@ -314,7 +314,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
           this.isEditMode() ? 'Plan actualizado' : 'Plan creado'
         );
         const action = this.isEditMode() ? 'updated' : 'created';
-        this.router.navigate(['/planes', planId, 'resumen'], {
+        this.router.navigate(['/planes', planId], {
           queryParams: { action }
         });
       } else {

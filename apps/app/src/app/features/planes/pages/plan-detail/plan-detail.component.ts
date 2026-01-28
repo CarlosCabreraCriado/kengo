@@ -8,18 +8,18 @@ import { PlanCompleto, Usuario } from '../../../../../types/global';
 import { environment as env } from '../../../../../environments/environment';
 
 @Component({
-  selector: 'app-plan-resumen',
+  selector: 'app-plan-detail',
   standalone: true,
   imports: [
     RouterLink,
   ],
-  templateUrl: './plan-resumen.component.html',
-  styleUrl: './plan-resumen.component.css',
+  templateUrl: './plan-detail.component.html',
+  styleUrl: './plan-detail.component.css',
   host: {
     class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
   },
 })
-export class PlanResumenComponent implements OnInit {
+export class PlanDetailComponent implements OnInit {
   private location = inject(Location);
   private route = inject(ActivatedRoute);
   private router = inject(Router);

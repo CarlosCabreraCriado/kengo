@@ -452,7 +452,7 @@ export class PacienteDetailComponent implements OnInit {
   }
 
   verPlan(plan: Plan) {
-    this.router.navigate(['/planes', plan.id_plan, 'resumen']);
+    this.router.navigate(['/planes', plan.id_plan]);
   }
 
   editarPlan(plan: Plan) {
