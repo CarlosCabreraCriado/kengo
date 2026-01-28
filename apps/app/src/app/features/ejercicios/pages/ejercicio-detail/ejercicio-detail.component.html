@@ -129,35 +129,72 @@
             <!-- Exercise Title -->
             <div class="exercise-header">
               <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
-
-              @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
-                <div class="exercise-meta">
-                  <span class="meta-badge">
-                    <span class="material-symbols-outlined">replay</span>
-                    {{ ejercicio()?.series_defecto || 3 }} series
-                  </span>
-                  <span class="meta-divider">×</span>
-                  <span class="meta-badge">
-                    <span class="material-symbols-outlined">counter_1</span>
-                    {{ ejercicio()?.repeticiones_defecto || 10 }} reps
-                  </span>
-                </div>
-              }
             </div>
 
-            <!-- Duration Chips -->
-            <div class="duration-selector">
-              <span class="duration-label">Duración:</span>
-              <div class="duration-chips">
-                @for (duracion of duraciones; track duracion.valor) {
+            <!-- Selector de Series -->
+            <div class="preset-selector">
+              <span class="preset-label">Series:</span>
+              <div class="preset-chips">
+                @for (serie of seriesPresets; track serie) {
                   <button
                     type="button"
-                    class="duration-chip"
-                    [class.active]="duracionSeleccionada() === duracion.valor"
-                    (click)="seleccionarDuracion(duracion.valor)"
+                    class="preset-chip"
+                    [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
+                    (click)="seleccionarSeries(serie)"
                   >
-                    {{ duracion.label }}
+                    {{ serie }}
                   </button>
+                }
+                <button
+                  type="button"
+                  class="preset-chip"
+                  [class.active]="mostrarOtroSeries()"
+                  (click)="seleccionarSeries('otro')"
+                >
+                  Otro
+                </button>
+                @if (mostrarOtroSeries()) {
+                  <input
+                    type="number"
+                    min="1"
+                    class="preset-input"
+                    [value]="seriesSeleccionadas()"
+                    (change)="onSeriesOtroChange($event)"
+                  />
+                }
+              </div>
+            </div>
+
+            <!-- Selector de Repeticiones -->
+            <div class="preset-selector">
+              <span class="preset-label">Repeticiones:</span>
+              <div class="preset-chips">
+                @for (rep of repeticionesPresets; track rep) {
+                  <button
+                    type="button"
+                    class="preset-chip"
+                    [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                    (click)="seleccionarRepeticiones(rep)"
+                  >
+                    {{ rep }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="preset-chip"
+                  [class.active]="mostrarOtroRepeticiones()"
+                  (click)="seleccionarRepeticiones('otro')"
+                >
+                  Otro
+                </button>
+                @if (mostrarOtroRepeticiones()) {
+                  <input
+                    type="number"
+                    min="1"
+                    class="preset-input"
+                    [value]="repeticionesSeleccionadas()"
+                    (change)="onRepeticionesOtroChange($event)"
+                  />
                 }
               </div>
             </div>
@@ -249,19 +286,6 @@
 
         <div class="desktop-header-title">
           <h1 class="titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
-          @if (ejercicio()?.series_defecto || ejercicio()?.repeticiones_defecto) {
-            <div class="desktop-header-meta">
-              <span class="meta-badge">
-                <span class="material-symbols-outlined">replay</span>
-                {{ ejercicio()?.series_defecto || 3 }} series
-              </span>
-              <span class="meta-divider">×</span>
-              <span class="meta-badge">
-                <span class="material-symbols-outlined">counter_1</span>
-                {{ ejercicio()?.repeticiones_defecto || 10 }} reps
-              </span>
-            </div>
-          }
         </div>
       </header>
 
@@ -321,19 +345,70 @@
         <div class="desktop-info-column">
           <div class="bottom-panel">
             <div class="exercise-content">
-              <!-- Duration Chips -->
-              <div class="duration-selector">
-                <span class="duration-label">Duración:</span>
-                <div class="duration-chips">
-                  @for (duracion of duraciones; track duracion.valor) {
+              <!-- Selector de Series -->
+              <div class="preset-selector">
+                <span class="preset-label">Series:</span>
+                <div class="preset-chips">
+                  @for (serie of seriesPresets; track serie) {
                     <button
                       type="button"
-                      class="duration-chip"
-                      [class.active]="duracionSeleccionada() === duracion.valor"
-                      (click)="seleccionarDuracion(duracion.valor)"
+                      class="preset-chip"
+                      [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
+                      (click)="seleccionarSeries(serie)"
                     >
-                      {{ duracion.label }}
+                      {{ serie }}
                     </button>
+                  }
+                  <button
+                    type="button"
+                    class="preset-chip"
+                    [class.active]="mostrarOtroSeries()"
+                    (click)="seleccionarSeries('otro')"
+                  >
+                    Otro
+                  </button>
+                  @if (mostrarOtroSeries()) {
+                    <input
+                      type="number"
+                      min="1"
+                      class="preset-input"
+                      [value]="seriesSeleccionadas()"
+                      (change)="onSeriesOtroChange($event)"
+                    />
+                  }
+                </div>
+              </div>
+
+              <!-- Selector de Repeticiones -->
+              <div class="preset-selector">
+                <span class="preset-label">Repeticiones:</span>
+                <div class="preset-chips">
+                  @for (rep of repeticionesPresets; track rep) {
+                    <button
+                      type="button"
+                      class="preset-chip"
+                      [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                      (click)="seleccionarRepeticiones(rep)"
+                    >
+                      {{ rep }}
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="preset-chip"
+                    [class.active]="mostrarOtroRepeticiones()"
+                    (click)="seleccionarRepeticiones('otro')"
+                  >
+                    Otro
+                  </button>
+                  @if (mostrarOtroRepeticiones()) {
+                    <input
+                      type="number"
+                      min="1"
+                      class="preset-input"
+                      [value]="repeticionesSeleccionadas()"
+                      (change)="onRepeticionesOtroChange($event)"
+                    />
                   }
                 </div>
               </div>

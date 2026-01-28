@@ -337,19 +337,23 @@ export class PlanBuilderService {
     }
   }
 
-  addEjercicio(e: Ejercicio) {
+  addEjercicio(e: Ejercicio, options?: { series?: number; repeticiones?: number }) {
     const exists = this.items().some(
       (i) => i.ejercicio.id_ejercicio === e.id_ejercicio,
     );
     if (exists) return; // evita duplicado; si quieres permitir, elimina este guard
     const orden = this.items().length + 1;
+
+    const series = options?.series ?? (parseInt(e.series_defecto) || 3);
+    const repeticiones = options?.repeticiones ?? (parseInt(e.repeticiones_defecto) || 12);
+
     this.items.update((list) => [
       ...list,
       {
         ejercicio: e,
         sort: orden,
-        series: 3,
-        repeticiones: 12,
+        series,
+        repeticiones,
         duracion_seg: undefined,
         descanso_seg: 45,
         veces_dia: 1,

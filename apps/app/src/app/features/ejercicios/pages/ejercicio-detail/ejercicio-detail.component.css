@@ -310,13 +310,24 @@
 .meta-badge .material-symbols-outlined { @apply text-base text-[#e75c3e]; }
 .meta-divider { @apply text-zinc-400 font-bold; }
 
-/* === Duration === */
-.duration-selector { @apply flex flex-col items-center gap-3 mb-5; }
-.duration-label { @apply text-xs font-semibold text-zinc-400 uppercase tracking-wider; }
-.duration-chips { @apply flex items-center gap-2; }
-.duration-chip { @apply px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all active:scale-95; background: rgba(255, 255, 255, 0.6); border: 1.5px solid rgba(0, 0, 0, 0.08); color: #64748b; }
-.duration-chip:hover { background: rgba(255, 255, 255, 0.9); border-color: rgba(231, 92, 62, 0.3); color: #e75c3e; }
-.duration-chip.active { background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%); border-color: transparent; color: white; box-shadow: var(--kengo-shadow-primary); }
+/* === Presets (Series/Repeticiones) === */
+.preset-selector { @apply flex flex-col items-center gap-3 mb-5; }
+.preset-label { @apply text-xs font-semibold text-zinc-400 uppercase tracking-wider; }
+.preset-chips { @apply flex items-center gap-2 flex-wrap justify-center; }
+.preset-chip { @apply px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all active:scale-95; background: rgba(255, 255, 255, 0.6); border: 1.5px solid rgba(0, 0, 0, 0.08); color: #64748b; }
+.preset-chip:hover { background: rgba(255, 255, 255, 0.9); border-color: rgba(231, 92, 62, 0.3); color: #e75c3e; }
+.preset-chip.active { background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%); border-color: transparent; color: white; box-shadow: var(--kengo-shadow-primary); }
+.preset-input {
+  @apply w-16 px-2 py-2 rounded-xl text-sm font-semibold text-center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(231, 92, 62, 0.3);
+  color: #e75c3e;
+  outline: none;
+}
+.preset-input:focus {
+  border-color: #e75c3e;
+  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.15);
+}
 
 /* === Description === */
 .description-card { @apply rounded-2xl overflow-hidden; background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.4); }
@@ -374,7 +385,7 @@
   }
 
   .exercise-header {
-    @apply text-left mb-5;
+    @apply text-center mb-5;
   }
 
   .exercise-title {
@@ -385,15 +396,15 @@
     @apply inline-flex;
   }
 
-  .duration-selector {
-    @apply flex-row items-center gap-3 mb-5;
+  .preset-selector {
+    @apply flex-col items-center gap-3 mb-5;
   }
 
-  .duration-chips {
-    @apply flex-wrap;
+  .preset-chips {
+    @apply flex-wrap justify-center;
   }
 
-  .duration-chip {
+  .preset-chip {
     @apply px-4 py-2 text-sm;
   }
 
@@ -417,7 +428,7 @@
   }
 
   .action-buttons {
-    @apply w-full justify-between;
+    @apply w-full justify-center;
   }
 
   .action-btn.secondary {
@@ -461,11 +472,11 @@
     @apply text-3xl mb-4;
   }
 
-  .duration-selector {
+  .preset-selector {
     @apply gap-4 mb-6;
   }
 
-  .duration-chip {
+  .preset-chip {
     @apply px-5 py-2.5;
   }
 

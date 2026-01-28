@@ -36,9 +36,20 @@ export class EjercicioDetailComponent {
   // Estado de la UI
   videoExpandido = signal<boolean>(false);
   videoReproduciendo = signal<boolean>(true);
-  duracionSeleccionada = signal<number>(60);
   showPlayIndicator = signal<boolean>(false);
   videoLoaded = signal<boolean>(false);
+
+  // Presets de series y repeticiones
+  readonly seriesPresets = [1, 3, 5];
+  readonly repeticionesPresets = [10, 15, 20];
+
+  // Signals para selección (inicializados con defaults del ejercicio)
+  seriesSeleccionadas = signal<number | null>(null);
+  repeticionesSeleccionadas = signal<number | null>(null);
+
+  // Flags para mostrar input "Otro"
+  mostrarOtroSeries = signal<boolean>(false);
+  mostrarOtroRepeticiones = signal<boolean>(false);
 
   onVideoLoad(): void {
     this.videoLoaded.set(true);
@@ -46,14 +57,6 @@ export class EjercicioDetailComponent {
 
   // Control de gestos tactiles
   private touchStartY = 0;
-
-  // Opciones de duracion
-  readonly duraciones = [
-    { label: '30 seg', valor: 30 },
-    { label: '1 min', valor: 60 },
-    { label: '2 min', valor: 120 },
-    { label: '3 min', valor: 180 },
-  ];
 
   // Detectar modo rutina (crear plantilla sin paciente)
   readonly isRutinaMode = computed(() => this.planBuilderService.isRutinaMode());
@@ -93,6 +96,7 @@ export class EjercicioDetailComponent {
     const cached = this.ejerciciosService.findInCacheById(id);
     if (cached) {
       this.ejercicio.set(cached);
+      this.inicializarPresets();
       this.loading.set(false);
       return;
     }
@@ -102,6 +106,7 @@ export class EjercicioDetailComponent {
     this.ejerciciosService.getEjercicioById$(id).subscribe({
       next: (ex: Ejercicio) => {
         this.ejercicio.set(ex);
+        this.inicializarPresets();
         this.loading.set(false);
       },
       error: (err: Error) => {
@@ -110,6 +115,22 @@ export class EjercicioDetailComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  // Inicializar con valores por defecto del ejercicio
+  private inicializarPresets() {
+    const ej = this.ejercicio();
+    if (ej) {
+      const seriesDefault = parseInt(ej.series_defecto) || 3;
+      const repsDefault = parseInt(ej.repeticiones_defecto) || 10;
+
+      this.seriesSeleccionadas.set(seriesDefault);
+      this.repeticionesSeleccionadas.set(repsDefault);
+
+      // Si el valor no está en presets, mostrar "Otro"
+      this.mostrarOtroSeries.set(!this.seriesPresets.includes(seriesDefault));
+      this.mostrarOtroRepeticiones.set(!this.repeticionesPresets.includes(repsDefault));
+    }
   }
 
   getAssetUrl(id: number | string) {
@@ -144,8 +165,32 @@ export class EjercicioDetailComponent {
     setTimeout(() => this.showPlayIndicator.set(false), 600);
   }
 
-  seleccionarDuracion(valor: number) {
-    this.duracionSeleccionada.set(valor);
+  seleccionarSeries(valor: number | 'otro') {
+    if (valor === 'otro') {
+      this.mostrarOtroSeries.set(true);
+    } else {
+      this.seriesSeleccionadas.set(valor);
+      this.mostrarOtroSeries.set(false);
+    }
+  }
+
+  seleccionarRepeticiones(valor: number | 'otro') {
+    if (valor === 'otro') {
+      this.mostrarOtroRepeticiones.set(true);
+    } else {
+      this.repeticionesSeleccionadas.set(valor);
+      this.mostrarOtroRepeticiones.set(false);
+    }
+  }
+
+  onSeriesOtroChange(event: Event) {
+    const val = parseInt((event.target as HTMLInputElement).value);
+    if (val > 0) this.seriesSeleccionadas.set(val);
+  }
+
+  onRepeticionesOtroChange(event: Event) {
+    const val = parseInt((event.target as HTMLInputElement).value);
+    if (val > 0) this.repeticionesSeleccionadas.set(val);
   }
 
   // Scroll con rueda del raton (desktop)
@@ -183,9 +228,14 @@ export class EjercicioDetailComponent {
     const ejercicio = this.ejercicio();
     if (!ejercicio) return;
 
+    const options = {
+      series: this.seriesSeleccionadas() ?? 3,
+      repeticiones: this.repeticionesSeleccionadas() ?? 10,
+    };
+
     // En modo rutina, añadir directamente sin pedir paciente
     if (this.isRutinaMode()) {
-      this.planBuilderService.addEjercicio(ejercicio);
+      this.planBuilderService.addEjercicio(ejercicio, options);
       return;
     }
 
@@ -204,7 +254,7 @@ export class EjercicioDetailComponent {
     }
 
     // Anadir el ejercicio al carrito
-    this.planBuilderService.addEjercicio(ejercicio);
+    this.planBuilderService.addEjercicio(ejercicio, options);
   }
 
   private async seleccionarPaciente(): Promise<Usuario | null> {
