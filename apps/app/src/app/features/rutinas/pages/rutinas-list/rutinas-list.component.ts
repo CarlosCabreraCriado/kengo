@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, HostListener } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -56,10 +56,23 @@ export class RutinasListComponent {
 
   // Menu state
   openRutinaMenuId: number | null = null;
+  filtroMenuAbierto = signal(false);
+
+  // Opciones del filtro de visibilidad
+  opcionesFiltro = [
+    { value: 'todas' as const, label: 'Todas las rutinas', icon: 'view_list' },
+    { value: 'privadas' as const, label: 'Solo privadas', icon: 'lock' },
+    { value: 'clinica' as const, label: 'De mi clínica', icon: 'domain' },
+  ];
 
   constructor() {
     // Cargar rutinas al iniciar
     this.rutinasService.reload();
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.filtroMenuAbierto.set(false);
   }
 
   // === Rutinas ===
@@ -71,10 +84,6 @@ export class RutinasListComponent {
   onFiltroVisibilidadChange(value: 'todas' | 'privadas' | 'clinica') {
     this.filtroVisibilidad = value;
     this.rutinasService.setFiltroVisibilidad(value);
-  }
-
-  reload() {
-    this.rutinasService.reload();
   }
 
   async togglePreview(rutina: Rutina) {
@@ -149,6 +158,19 @@ export class RutinasListComponent {
 
   toggleRutinaMenu(rutinaId: number) {
     this.openRutinaMenuId = this.openRutinaMenuId === rutinaId ? null : rutinaId;
+  }
+
+  toggleFiltroMenu() {
+    this.filtroMenuAbierto.update((v) => !v);
+  }
+
+  cerrarFiltroMenu() {
+    this.filtroMenuAbierto.set(false);
+  }
+
+  limpiarFiltro() {
+    this.filtroVisibilidad = 'todas';
+    this.rutinasService.setFiltroVisibilidad('todas');
   }
 
   // === Utilidades ===

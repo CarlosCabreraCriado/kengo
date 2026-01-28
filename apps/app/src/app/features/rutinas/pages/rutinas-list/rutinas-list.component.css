@@ -32,8 +32,6 @@
       rgba(255, 255, 255, 0.92) 50%,
       rgba(255, 255, 255, 0) 100%
     );
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
 }
 
@@ -53,32 +51,46 @@
   border-color: rgba(231, 92, 62, 0.2);
 }
 
-/* === Quick Action Buttons === */
-.quick-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.875rem;
-  background: var(--kengo-glass);
-  border: 1px solid var(--kengo-border);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #52525b;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
+/* === Búsqueda con glow effect === */
+.search-container:focus-within .search-glow {
+  opacity: 1;
 }
 
-.quick-action-btn:hover {
-  background: rgba(231, 92, 62, 0.1);
-  border-color: rgba(231, 92, 62, 0.3);
-  color: var(--kengo-primary);
-  transform: translateY(-2px);
+.search-input:focus {
+  transform: scale(1.01);
 }
 
-.quick-action-btn:active {
-  transform: scale(0.95);
+/* === Dropdown de filtros === */
+.filter-dropdown {
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+/* === Custom radio button styles === */
+.filter-dropdown label input[type="radio"]:checked + div {
+  border-color: var(--kengo-primary);
+}
+
+.filter-dropdown label input[type="radio"]:checked + div div {
+  transform: scale(1);
+}
+
+/* === Bounce sutil para badges === */
+.animate-bounce-subtle {
+  animation: bounceSoft 2s ease-in-out infinite;
+}
+
+@keyframes bounceSoft {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* === Active scale utility === */
+.active\:scale-98:active {
+  transform: scale(0.98);
 }
 
 /* === Dropdown Menu Premium === */
