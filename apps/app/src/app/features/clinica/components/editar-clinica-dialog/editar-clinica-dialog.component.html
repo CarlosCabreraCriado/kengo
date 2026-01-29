@@ -177,14 +177,62 @@
       <!-- Color primario -->
       <div class="form-group">
         <label for="color" class="form-label">Color corporativo</label>
-        <div class="color-picker-wrapper">
-          <input
-            id="color"
-            type="color"
-            formControlName="color_primario"
-            class="color-input"
-          />
-          <span class="color-value">{{ form.value.color_primario }}</span>
+        <div class="color-section">
+          <!-- Paleta de colores predefinidos -->
+          <div class="color-presets">
+            @for (color of colorPresets; track color) {
+              <button
+                type="button"
+                class="color-preset"
+                [style.background-color]="color"
+                [class.active]="form.value.color_primario === color"
+                (click)="selectColor(color)"
+                [title]="color"
+              >
+                @if (form.value.color_primario === color) {
+                  <span class="material-symbols-outlined check-icon">check</span>
+                }
+              </button>
+            }
+          </div>
+
+          <!-- Color picker y valor actual -->
+          <div class="color-picker-wrapper">
+            <input
+              id="color"
+              type="color"
+              formControlName="color_primario"
+              class="color-input"
+            />
+            <span class="color-value">{{ form.value.color_primario }}</span>
+          </div>
+
+          <!-- Preview de elementos con el color -->
+          <div class="color-preview-section">
+            <span class="preview-label">Vista previa:</span>
+            <div class="preview-items">
+              <button
+                type="button"
+                class="preview-button"
+                [style.background]="'linear-gradient(135deg, ' + form.value.color_primario + ', ' + getDarkerColor(form.value.color_primario) + ')'"
+              >
+                Botón
+              </button>
+              <span
+                class="preview-badge"
+                [style.background-color]="form.value.color_primario + '20'"
+                [style.color]="form.value.color_primario"
+              >
+                Badge
+              </span>
+              <span
+                class="preview-icon"
+                [style.color]="form.value.color_primario"
+              >
+                <span class="material-symbols-outlined icon-filled">favorite</span>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

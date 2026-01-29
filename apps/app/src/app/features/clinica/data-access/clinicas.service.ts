@@ -170,4 +170,15 @@ export class ClinicasService {
     computed<Usuario[]>(() => {
       return this.fisiosEnMisClinicaRes.value()[Number(idClinica)] ?? [];
     });
+
+  // Computed para obtener la clínica actualmente seleccionada
+  readonly selectedClinica = computed<Clinica | null>(() => {
+    const clinicas = this.misClinicasRes.value();
+    const id = this.selectedClinicaId();
+
+    if (!clinicas || clinicas.length === 0) return null;
+    if (!id) return clinicas[0] ?? null;
+
+    return clinicas.find(c => c.id_clinica === id) ?? clinicas[0] ?? null;
+  });
 }

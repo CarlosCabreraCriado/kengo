@@ -41,11 +41,12 @@
 
 .dialog-icon {
   @apply w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.15) 0%, rgba(231, 92, 62, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.15) 0%, rgba(var(--kengo-primary-rgb), 0.08) 100%);
 }
 
 .dialog-icon .material-symbols-outlined {
-  @apply text-3xl text-[#e75c3e];
+  @apply text-3xl;
+  color: var(--kengo-primary);
 }
 
 .dialog-title {
@@ -97,8 +98,9 @@
 }
 
 .form-input:focus {
-  @apply border-[#e75c3e] bg-white;
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+  @apply bg-white;
+  border-color: var(--kengo-primary);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .form-input.error {
@@ -109,7 +111,38 @@
   @apply block text-xs text-red-500 mt-1;
 }
 
-/* === Color Picker === */
+/* === Color Picker Section === */
+.color-section {
+  @apply flex flex-col gap-4;
+}
+
+/* Preset colors grid */
+.color-presets {
+  @apply flex flex-wrap gap-2;
+}
+
+.color-preset {
+  @apply w-10 h-10 rounded-xl border-2 border-transparent cursor-pointer transition-all
+         flex items-center justify-center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.color-preset:hover {
+  @apply scale-110;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.color-preset.active {
+  @apply border-zinc-800 scale-110;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.color-preset .check-icon {
+  @apply text-white text-lg;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Color picker wrapper */
 .color-picker-wrapper {
   @apply flex items-center gap-3;
 }
@@ -130,6 +163,33 @@
 
 .color-value {
   @apply text-sm font-mono text-zinc-500;
+}
+
+/* Color preview section */
+.color-preview-section {
+  @apply pt-3 border-t border-zinc-100;
+}
+
+.preview-label {
+  @apply text-xs font-medium text-zinc-500 block mb-2;
+}
+
+.preview-items {
+  @apply flex items-center gap-3;
+}
+
+.preview-button {
+  @apply px-4 py-2 rounded-xl text-white text-sm font-semibold
+         border-none cursor-default;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.preview-badge {
+  @apply px-3 py-1.5 rounded-full text-xs font-semibold;
+}
+
+.preview-icon {
+  @apply w-9 h-9 rounded-xl flex items-center justify-center bg-zinc-100;
 }
 
 /* === Error Message === */
@@ -157,12 +217,13 @@
 
 .btn-primary {
   @apply flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl
-         bg-[#e75c3e] text-white text-sm font-semibold cursor-pointer
+         text-white text-sm font-semibold cursor-pointer
          transition-all border-none;
+  background-color: var(--kengo-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
-  @apply bg-[#c94a2f];
+  background-color: var(--kengo-primary-dark);
 }
 
 .btn-primary:disabled {
@@ -231,7 +292,9 @@
 }
 
 .logo-upload-btn:hover {
-  @apply border-[#e75c3e] bg-[#e75c3e]/5 text-[#e75c3e];
+  border-color: var(--kengo-primary);
+  background-color: rgba(var(--kengo-primary-rgb), 0.05);
+  color: var(--kengo-primary);
 }
 
 .logo-upload-btn .material-symbols-outlined {
@@ -264,7 +327,8 @@
 }
 
 .gallery-item.new-image {
-  @apply border-[#e75c3e] border-2;
+  @apply border-2;
+  border-color: var(--kengo-primary);
 }
 
 .gallery-image {
@@ -304,7 +368,8 @@
 
 .new-badge {
   @apply absolute bottom-1 left-1 px-2 py-0.5 rounded-md
-         bg-[#e75c3e] text-white text-[10px] font-semibold;
+         text-white text-[10px] font-semibold;
+  background-color: var(--kengo-primary);
 }
 
 .gallery-add-btn {
@@ -314,7 +379,9 @@
 }
 
 .gallery-add-btn:hover {
-  @apply border-[#e75c3e] bg-[#e75c3e]/5 text-[#e75c3e];
+  border-color: var(--kengo-primary);
+  background-color: rgba(var(--kengo-primary-rgb), 0.05);
+  color: var(--kengo-primary);
 }
 
 .gallery-add-btn .material-symbols-outlined {

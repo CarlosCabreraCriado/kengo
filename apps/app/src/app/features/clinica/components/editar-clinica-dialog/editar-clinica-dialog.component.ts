@@ -12,6 +12,18 @@ const MAX_GALLERY_IMAGES = 5;
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_FORMATS = ['image/png', 'image/jpeg', 'image/webp'];
 
+/** Paleta de colores predefinidos para selección rápida */
+const COLOR_PRESETS = [
+  '#e75c3e', // Kengo default (coral)
+  '#3b82f6', // Blue
+  '#10b981', // Emerald
+  '#8b5cf6', // Purple
+  '#f59e0b', // Amber
+  '#ec4899', // Pink
+  '#6366f1', // Indigo
+  '#14b8a6', // Teal
+];
+
 @Component({
   standalone: true,
   selector: 'app-editar-clinica-dialog',
@@ -54,6 +66,9 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
 
   // Preview URLs for cleanup
   private previewUrls: string[] = [];
+
+  // Color presets for quick selection
+  readonly colorPresets = COLOR_PRESETS;
 
   // Computed: Logo preview URL
   logoPreviewUrl = computed(() => {
@@ -289,5 +304,42 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     if ((event.target as HTMLElement).classList.contains('dialog-overlay')) {
       this.cerrar.emit();
     }
+  }
+
+  // === Color Methods ===
+
+  selectColor(color: string) {
+    this.form.patchValue({ color_primario: color });
+  }
+
+  /**
+   * Calcula una versión más oscura del color hex proporcionado
+   */
+  getDarkerColor(hex: string | null | undefined): string {
+    if (!hex) return '#c94a2f';
+    const rgb = this.hexToRgb(hex);
+    // Oscurecer un 15%
+    const darker = {
+      r: Math.max(0, Math.round(rgb.r * 0.85)),
+      g: Math.max(0, Math.round(rgb.g * 0.85)),
+      b: Math.max(0, Math.round(rgb.b * 0.85)),
+    };
+    return `#${this.componentToHex(darker.r)}${this.componentToHex(darker.g)}${this.componentToHex(darker.b)}`;
+  }
+
+  private hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 231, g: 92, b: 62 };
+  }
+
+  private componentToHex(c: number): string {
+    const hex = c.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
   }
 }
