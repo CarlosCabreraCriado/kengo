@@ -19,7 +19,7 @@
               <span class="material-symbols-outlined text-xl">arrow_back</span>
             </button>
             <div>
-              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Galería</h1>
+              <h1 class="titulo-kengo text-2xl text-kengo-primary">Galería</h1>
               @if (ejerciciosService.total() > 0) {
                 <p class="text-xs font-medium text-zinc-500 tracking-wide">
                   {{ ejerciciosService.total() }} {{ ejerciciosService.total() === 1 ? 'ejercicio' : 'ejercicios' }}
@@ -38,7 +38,7 @@
                      border transition-all duration-200
                      active:scale-95"
               [class]="soloFavoritos()
-                ? 'bg-gradient-to-r from-[#e75c3e] to-[#d14d30] border-transparent text-white shadow-lg shadow-[#e75c3e]/30'
+                ? 'bg-gradient-kengo-primary-horizontal border-transparent text-white shadow-lg-kengo-primary/30'
                 : 'bg-white/60 backdrop-blur-md border-white/40 text-zinc-600 hover:bg-white/80'"
               aria-label="Mostrar solo favoritos"
             >
@@ -76,15 +76,15 @@
         <!-- DESKTOP: Contador de ejercicios -->
         @if (!isMovil() && ejerciciosService.total() > 0) {
           <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
-            <span class="text-sm font-bold text-[#e75c3e]">{{ ejerciciosService.total() }}</span>
+            <span class="text-sm font-bold text-kengo-primary">{{ ejerciciosService.total() }}</span>
             <span class="text-xs text-zinc-500">{{ ejerciciosService.total() === 1 ? 'ejercicio' : 'ejercicios' }}</span>
           </div>
         }
         <!-- Input de búsqueda con glassmorphism -->
         <div class="search-container relative flex-1">
-          <div class="search-glow absolute -inset-1 rounded-2xl bg-gradient-to-r from-[#e75c3e]/20 to-[#efc048]/20 blur-lg opacity-0 transition-opacity"></div>
+          <div class="search-glow absolute -inset-1 rounded-2xl bg-gradient-to-r from-kengo-primary/20 to-kengo-tertiary/20 blur-lg opacity-0 transition-opacity"></div>
           <div class="relative flex items-center">
-            <span class="material-symbols-outlined absolute left-3.5 text-[#e75c3e] text-xl z-10">search</span>
+            <span class="material-symbols-outlined absolute left-3.5 text-kengo-primary text-xl z-10">search</span>
             <input
               #buscador
               type="text"
@@ -97,8 +97,8 @@
                      placeholder:text-zinc-400 placeholder:font-normal
                      shadow-sm shadow-black/5
                      transition-all duration-300
-                     focus:bg-white/90 focus:border-[#e75c3e]/40
-                     focus:shadow-lg focus:shadow-[#e75c3e]/10
+                     focus:bg-white/90 focus:border-kengo-primary/40
+                     focus:shadow-lg-kengo-primary/10
                      focus:outline-none"
               placeholder="Buscar ejercicio..."
             />
@@ -128,15 +128,15 @@
                    text-zinc-600 transition-all duration-200
                    hover:bg-white/90 hover:shadow-md active:scale-95"
             [class.ring-2]="menuAbierto()"
-            [class.ring-[#e75c3e]/30]="menuAbierto()"
+            [class.ring-kengo-primary/30]="menuAbierto()"
             aria-label="Filtrar por categorías"
             [attr.aria-expanded]="menuAbierto()"
           >
             <span class="material-symbols-outlined text-xl">tune</span>
             @if (categoriasSeleccionadas().length > 0) {
               <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center
-                           rounded-full bg-[#e75c3e] text-[10px] font-bold text-white
-                           shadow-lg shadow-[#e75c3e]/40 animate-bounce-subtle">
+                           rounded-full bg-kengo-primary text-[10px] font-bold text-white
+                           shadow-lg-kengo-primary/40 animate-bounce-subtle">
                 {{ categoriasSeleccionadas().length }}
               </span>
             }
@@ -154,13 +154,13 @@
             >
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
-                  <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e75c3e]/10">
-                    <span class="material-symbols-outlined text-lg text-[#e75c3e]">category</span>
+                  <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-kengo-primary/10">
+                    <span class="material-symbols-outlined text-lg text-kengo-primary">category</span>
                   </div>
                   <span class="text-base font-bold text-zinc-800">Categorías</span>
                 </div>
                 @if (categoriasSeleccionadas().length > 0) {
-                  <span class="text-xs font-medium text-[#e75c3e] bg-[#e75c3e]/10 px-2 py-1 rounded-full">
+                  <span class="text-xs font-medium text-kengo-primary bg-kengo-primary/10 px-2 py-1 rounded-full">
                     {{ categoriasSeleccionadas().length }} seleccionadas
                   </span>
                 }
@@ -182,8 +182,8 @@
                   @for (cat of ejerciciosService.categoriasRes.value(); track cat.id_categoria) {
                     <label
                       class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer
-                             transition-colors hover:bg-[#e75c3e]/5"
-                      [class.bg-[#e75c3e]/10]="isCatSelected(cat.id_categoria, categoriasSeleccionadas)"
+                             transition-colors hover:bg-kengo-primary/5"
+                      [class.bg-kengo-primary/10]="isCatSelected(cat.id_categoria, categoriasSeleccionadas)"
                     >
                       <div class="relative flex items-center justify-center">
                         <input
@@ -193,7 +193,7 @@
                           class="peer sr-only"
                         />
                         <div class="h-5 w-5 rounded-md border-2 border-zinc-300
-                                    peer-checked:border-[#e75c3e] peer-checked:bg-[#e75c3e]
+                                    peer-checked:border-kengo-primary peer-checked:bg-kengo-primary
                                     transition-all duration-200
                                     flex items-center justify-center">
                           <span class="material-symbols-outlined text-sm text-white opacity-0 peer-checked:opacity-100 transition-opacity">
@@ -223,10 +223,10 @@
                   type="button"
                   (click)="closeMenu()"
                   class="flex-1 h-10 rounded-xl
-                         bg-gradient-to-r from-[#e75c3e] to-[#d14d30]
+                         bg-gradient-kengo-primary-horizontal
                          text-sm font-semibold text-white
-                         shadow-lg shadow-[#e75c3e]/30
-                         transition-all hover:shadow-xl hover:shadow-[#e75c3e]/40
+                         shadow-lg-kengo-primary/30
+                         transition-all hover:shadow-xl-kengo-primary/40
                          active:scale-98"
                 >
                   Aplicar
@@ -247,7 +247,7 @@
                      border transition-all duration-200
                      active:scale-95"
               [class]="soloFavoritos()
-                ? 'bg-gradient-to-r from-[#e75c3e] to-[#d14d30] border-transparent text-white shadow-lg shadow-[#e75c3e]/30'
+                ? 'bg-gradient-kengo-primary-horizontal border-transparent text-white shadow-lg-kengo-primary/30'
                 : 'bg-white/60 backdrop-blur-md border-white/40 text-zinc-600 hover:bg-white/80'"
               aria-label="Mostrar solo favoritos"
             >
@@ -308,9 +308,9 @@
             type="button"
             (click)="reloadEjercicios()"
             class="flex items-center gap-2 h-11 px-6 rounded-xl
-                   bg-gradient-to-r from-[#e75c3e] to-[#d14d30]
+                   bg-gradient-kengo-primary-horizontal
                    text-sm font-semibold text-white
-                   shadow-lg shadow-[#e75c3e]/30
+                   shadow-lg-kengo-primary/30
                    transition-all hover:shadow-xl active:scale-95"
           >
             <span class="material-symbols-outlined text-lg">refresh</span>
@@ -321,8 +321,8 @@
         <!-- Empty State -->
         <div class="flex flex-col items-center justify-center py-16 px-4">
           @if (soloFavoritos()) {
-            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-[#efc048]/20 to-[#e75c3e]/20 flex items-center justify-center mb-6 empty-state-icon">
-              <span class="material-symbols-outlined text-5xl text-[#efc048]">star</span>
+            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-kengo-tertiary/20 to-kengo-primary/20 flex items-center justify-center mb-6 empty-state-icon">
+              <span class="material-symbols-outlined text-5xl text-kengo-tertiary">star</span>
             </div>
             <h3 class="text-xl font-bold text-zinc-800 mb-2">Sin favoritos aún</h3>
             <p class="text-sm text-zinc-500 text-center max-w-xs mb-6">
@@ -332,9 +332,9 @@
               type="button"
               (click)="toggleSoloFavoritos()"
               class="flex items-center gap-2 h-11 px-6 rounded-xl
-                     border-2 border-[#e75c3e]/30 bg-white/70 backdrop-blur-md
-                     text-sm font-semibold text-[#e75c3e]
-                     transition-all hover:bg-[#e75c3e]/10 active:scale-95"
+                     border-2 border-kengo-primary/30 bg-white/70 backdrop-blur-md
+                     text-sm font-semibold text-kengo-primary
+                     transition-all hover:bg-kengo-primary/10 active:scale-95"
             >
               <span class="material-symbols-outlined text-lg">grid_view</span>
               Ver todos los ejercicios
@@ -392,7 +392,7 @@
 
                   <!-- Contenido -->
                   <div class="flex-1 min-w-0 py-1">
-                    <h3 class="text-sm font-bold text-zinc-800 truncate mb-1 group-hover:text-[#e75c3e] transition-colors">
+                    <h3 class="text-sm font-bold text-zinc-800 truncate mb-1 group-hover:text-kengo-primary transition-colors">
                       {{ ejercicio.nombre_ejercicio }}
                     </h3>
                     @if (ejercicio.descripcion) {
@@ -408,7 +408,7 @@
                     type="button"
                     class="shrink-0 flex h-10 w-10 items-center justify-center
                            rounded-xl transition-all duration-200
-                           hover:bg-[#e75c3e]/10 active:scale-90"
+                           hover:bg-kengo-primary/10 active:scale-90"
                     (click)="toggleFavorito($event, ejercicio.id_ejercicio)"
                     [disabled]="favoritoEnProceso(ejercicio.id_ejercicio)"
                     [attr.aria-label]="esFavorito(ejercicio.id_ejercicio) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
@@ -419,10 +419,10 @@
                       <span
                         class="material-symbols-outlined text-xl transition-all duration-200"
                         [class.relleno]="esFavorito(ejercicio.id_ejercicio)"
-                        [class.text-[#efc048]]="esFavorito(ejercicio.id_ejercicio)"
+                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id_ejercicio)"
                         [class.scale-110]="esFavorito(ejercicio.id_ejercicio)"
                         [class.text-zinc-400]="!esFavorito(ejercicio.id_ejercicio)"
-                        [class.group-hover:text-[#e75c3e]]="!esFavorito(ejercicio.id_ejercicio)"
+                        [class.group-hover:text-kengo-primary]="!esFavorito(ejercicio.id_ejercicio)"
                       >
                         star
                       </span>
@@ -479,7 +479,7 @@
                       <span
                         class="material-symbols-outlined text-lg transition-all duration-200"
                         [class.relleno]="esFavorito(ejercicio.id_ejercicio)"
-                        [class.text-[#efc048]]="esFavorito(ejercicio.id_ejercicio)"
+                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id_ejercicio)"
                         [class.text-white/90]="!esFavorito(ejercicio.id_ejercicio)"
                       >
                         star
@@ -528,7 +528,7 @@
 
             <!-- Indicador de página -->
             <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/50 backdrop-blur-md">
-              <span class="text-sm font-bold text-[#e75c3e]">{{ ejerciciosService.page() }}</span>
+              <span class="text-sm font-bold text-kengo-primary">{{ ejerciciosService.page() }}</span>
               <span class="text-xs text-zinc-400">de</span>
               <span class="text-sm font-medium text-zinc-600">{{ ejerciciosService.totalPages() }}</span>
             </div>
@@ -539,11 +539,11 @@
               (click)="siguientePagina()"
               [disabled]="ejerciciosService.page() >= ejerciciosService.totalPages()"
               class="flex h-11 items-center gap-2 px-4 rounded-xl
-                     bg-gradient-to-r from-[#e75c3e] to-[#d14d30]
+                     bg-gradient-kengo-primary-horizontal
                      text-sm font-medium text-white
-                     shadow-lg shadow-[#e75c3e]/30
+                     shadow-lg-kengo-primary/30
                      transition-all duration-200
-                     hover:shadow-xl hover:shadow-[#e75c3e]/40 active:scale-95
+                     hover:shadow-xl-kengo-primary/40 active:scale-95
                      disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
             >
               <span class="hidden sm:inline">Siguiente</span>

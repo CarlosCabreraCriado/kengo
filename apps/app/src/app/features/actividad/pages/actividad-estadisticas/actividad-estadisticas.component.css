@@ -1,14 +1,11 @@
 @reference "tailwindcss";
 
 :host {
-  --kengo-primary: #e75c3e;
-  --kengo-primary-dark: #c94a2f;
-  --kengo-tertiary: #efc048;
+  /* Color variables now defined globally via ThemeService */
   --kengo-success: #22c55e;
   --kengo-glass: rgba(255, 255, 255, 0.5);
   --kengo-border: rgba(255, 255, 255, 0.25);
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --kengo-shadow-primary: 0 4px 16px rgba(231, 92, 62, 0.35);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   display: block;
 }
@@ -51,7 +48,8 @@
 }
 
 .state-icon .material-symbols-outlined {
-  @apply text-5xl text-[#e75c3e]/50;
+  @apply text-5xl;
+  color: rgba(var(--kengo-primary-rgb), 0.5);
 }
 
 .state-icon.pulse {
@@ -84,7 +82,8 @@
 }
 
 .retry-btn {
-  @apply inline-flex items-center justify-center gap-2 mt-4 px-5 py-2.5 rounded-xl bg-[#e75c3e] text-white text-sm font-semibold cursor-pointer transition-all active:scale-95;
+  @apply inline-flex items-center justify-center gap-2 mt-4 px-5 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all active:scale-95;
+  background-color: var(--kengo-primary);
   box-shadow: var(--kengo-shadow-primary);
 }
 
@@ -105,7 +104,8 @@
 }
 
 .empty-illustration .accent-icon {
-  @apply absolute -bottom-1 -right-1 text-2xl text-[#e75c3e]/60 bg-white rounded-full p-1;
+  @apply absolute -bottom-1 -right-1 text-2xl bg-white rounded-full p-1;
+  color: rgba(var(--kengo-primary-rgb), 0.6);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -130,11 +130,12 @@
 
 .card-icon {
   @apply w-10 h-10 rounded-xl flex items-center justify-center shrink-0;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.08) 100%);
 }
 
 .card-icon .material-symbols-outlined {
-  @apply text-xl text-[#e75c3e];
+  @apply text-xl;
+  color: var(--kengo-primary);
 }
 
 .card-title {
@@ -159,7 +160,8 @@
 }
 
 .stat-number {
-  @apply text-3xl font-bold text-[#e75c3e];
+  @apply text-3xl font-bold;
+  color: var(--kengo-primary);
 }
 
 .stat-label {
@@ -254,11 +256,12 @@
 }
 
 .chart-bar.today {
-  box-shadow: 0 2px 8px rgba(231, 92, 62, 0.3);
+  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.3);
 }
 
 .bar-value {
-  @apply absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-semibold text-[#e75c3e];
+  @apply absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-semibold;
+  color: var(--kengo-primary);
 }
 
 .chart-label {
@@ -266,7 +269,8 @@
 }
 
 .chart-label.today {
-  @apply text-[#e75c3e] font-semibold;
+  @apply font-semibold;
+  color: var(--kengo-primary);
 }
 
 /* Monthly Card */

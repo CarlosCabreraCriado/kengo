@@ -1,15 +1,12 @@
 @reference "tailwindcss";
 
 :host {
-  --kengo-primary: #e75c3e;
-  --kengo-primary-dark: #c94a2f;
-  --kengo-tertiary: #efc048;
+  /* Color variables now defined globally via ThemeService */
   --kengo-success: #22c55e;
   --kengo-glass: rgba(255, 255, 255, 0.5);
   --kengo-glass-strong: rgba(255, 255, 255, 0.7);
   --kengo-border: rgba(255, 255, 255, 0.25);
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --kengo-shadow-primary: 0 4px 16px rgba(231, 92, 62, 0.35);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   display: flex;
   flex-direction: column;
@@ -64,10 +61,10 @@
 
 .avatar-btn {
   @apply w-10 h-10 rounded-full overflow-hidden
-         bg-gradient-to-br from-[#e75c3e] to-[#efc048]
          flex items-center justify-center
          border-2 border-white shadow-md
          cursor-pointer transition-all active:scale-95;
+  background: linear-gradient(to bottom right, var(--kengo-primary), var(--kengo-tertiary));
 }
 
 .avatar-btn .avatar-img {
@@ -79,7 +76,8 @@
 }
 
 .avatar-btn.menu-open {
-  @apply ring-2 ring-[#e75c3e]/50 ring-offset-2;
+  @apply ring-2 ring-offset-2;
+  --tw-ring-color: rgba(var(--kengo-primary-rgb), 0.5);
 }
 
 /* Avatar Menu Container */
@@ -131,7 +129,7 @@
 }
 
 .menu-item:hover .material-symbols-outlined {
-  @apply text-[#e75c3e];
+  color: var(--kengo-primary);
 }
 
 .menu-item-danger {
@@ -162,9 +160,9 @@
 
 .user-avatar-large {
   @apply w-14 h-14 rounded-2xl overflow-hidden
-         bg-gradient-to-br from-[#e75c3e] to-[#efc048]
          flex items-center justify-center
          border-[3px] border-white shadow-lg;
+  background: linear-gradient(to bottom right, var(--kengo-primary), var(--kengo-tertiary));
 }
 
 .user-avatar-large img {
@@ -180,7 +178,8 @@
 }
 
 .greeting-name {
-  @apply text-2xl text-[#e75c3e] m-0;
+  @apply text-2xl m-0;
+  color: var(--kengo-primary);
 }
 
 .greeting-subtitle {
@@ -243,7 +242,8 @@
 }
 
 .greeting-title {
-  @apply text-2xl text-[#e75c3e] m-0;
+  @apply text-2xl m-0;
+  color: var(--kengo-primary);
 }
 
 .greeting-message {
@@ -285,19 +285,19 @@
   @apply absolute inset-0 overflow-hidden;
 
   /* State-based colors */
-  --wave-color-1: rgba(231, 92, 62, 0.3);
-  --wave-color-2: rgba(239, 192, 72, 0.25);
+  --wave-color-1: rgba(var(--kengo-primary-rgb), 0.3);
+  --wave-color-2: rgba(var(--kengo-tertiary-rgb), 0.25);
   --wave-duration: 10s;
 }
 
 .activity-hero[data-state="pending"] .activity-bg {
-  --wave-color-1: rgba(231, 92, 62, 0.4);
+  --wave-color-1: rgba(var(--kengo-primary-rgb), 0.4);
   --wave-color-2: rgba(255, 120, 80, 0.3);
   --wave-duration: 6s;
 }
 
 .activity-hero[data-state="completed"] .activity-bg {
-  --wave-color-1: rgba(239, 192, 72, 0.4);
+  --wave-color-1: rgba(var(--kengo-tertiary-rgb), 0.4);
   --wave-color-2: rgba(134, 239, 172, 0.3);
   --wave-duration: 14s;
 }
@@ -438,7 +438,8 @@
 
 /* Next Exercise */
 .next-exercise {
-  @apply flex items-center gap-2 text-sm text-[#e75c3e] font-medium;
+  @apply flex items-center gap-2 text-sm font-medium;
+  color: var(--kengo-primary);
 }
 
 .next-exercise .material-symbols-outlined {
@@ -455,7 +456,7 @@
 
 .activity-cta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(231, 92, 62, 0.45);
+  box-shadow: 0 6px 24px rgba(var(--kengo-primary-rgb), 0.45);
 }
 
 .activity-cta .material-symbols-outlined {
@@ -467,7 +468,7 @@
   @apply flex items-center justify-center gap-2 w-full h-12 rounded-xl
          text-white font-semibold;
   background: linear-gradient(135deg, var(--kengo-tertiary) 0%, #d4a93d 100%);
-  box-shadow: 0 4px 16px rgba(239, 192, 72, 0.35);
+  box-shadow: 0 4px 16px rgba(var(--kengo-tertiary-rgb), 0.35);
 }
 
 .activity-completed .material-symbols-outlined {
@@ -522,7 +523,7 @@
 
 .action-overlay {
   @apply absolute inset-0 rounded-xl;
-  background: linear-gradient(135deg, transparent 50%, rgba(231, 92, 62, 0.2) 100%);
+  background: linear-gradient(135deg, transparent 50%, rgba(var(--kengo-primary-rgb), 0.2) 100%);
 }
 
 .action-content {
@@ -530,7 +531,8 @@
 }
 
 .action-title {
-  @apply text-base text-[#e75c3e] m-0 truncate;
+  @apply text-base m-0 truncate;
+  color: var(--kengo-primary);
 }
 
 .action-subtitle {
@@ -539,11 +541,14 @@
 
 .action-arrow {
   @apply w-8 h-8 rounded-full flex items-center justify-center shrink-0
-         bg-[#e75c3e]/10 text-[#e75c3e] transition-all;
+         transition-all;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  color: var(--kengo-primary);
 }
 
 .action-card:hover .action-arrow {
-  @apply bg-[#e75c3e] text-white;
+  @apply text-white;
+  background-color: var(--kengo-primary);
 }
 
 .action-arrow .material-symbols-outlined {
@@ -586,7 +591,7 @@
 
 .carousel-overlay {
   @apply absolute inset-0;
-  background: linear-gradient(180deg, transparent 50%, #f9b87e 75%, #e75c3e 100%);
+  background: linear-gradient(180deg, transparent 50%, #f9b87e 75%, var(--kengo-primary) 100%);
 }
 
 .carousel-content {
@@ -594,7 +599,8 @@
 }
 
 .carousel-title {
-  @apply text-2xl text-[#ad0000] m-0;
+  @apply text-2xl m-0;
+  color: var(--kengo-primary-dark);
 }
 
 .carousel-subtitle {
@@ -606,15 +612,17 @@
 }
 
 .dot {
-  @apply w-2 h-2 rounded-full bg-[#e75c3e]/30 p-0 cursor-pointer transition-all;
+  @apply w-2 h-2 rounded-full p-0 cursor-pointer transition-all;
+  background-color: rgba(var(--kengo-primary-rgb), 0.3);
 }
 
 .dot:hover {
-  @apply bg-[#e75c3e]/50;
+  background-color: rgba(var(--kengo-primary-rgb), 0.5);
 }
 
 .dot.active {
-  @apply w-6 bg-[#e75c3e];
+  @apply w-6;
+  background-color: var(--kengo-primary);
   border-radius: 4px;
 }
 

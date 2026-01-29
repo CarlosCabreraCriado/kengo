@@ -119,14 +119,14 @@ export class ActividadCalendarioComponent implements OnInit {
     const ultimoDiaMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
 
     // Calcular el día de inicio (lunes de la semana del primer día)
-    let diaInicio = new Date(primerDiaMes);
+    const diaInicio = new Date(primerDiaMes);
     const diaSemanaInicio = diaInicio.getDay();
     // Convertir de domingo=0 a lunes=0
     const offset = diaSemanaInicio === 0 ? 6 : diaSemanaInicio - 1;
     diaInicio.setDate(diaInicio.getDate() - offset);
 
     // Calcular el día final (domingo de la semana del último día)
-    let diaFin = new Date(ultimoDiaMes);
+    const diaFin = new Date(ultimoDiaMes);
     const diaSemanaFin = diaFin.getDay();
     const offsetFin = diaSemanaFin === 0 ? 0 : 7 - diaSemanaFin;
     diaFin.setDate(diaFin.getDate() + offsetFin);

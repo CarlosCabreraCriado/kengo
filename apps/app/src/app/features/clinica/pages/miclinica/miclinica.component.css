@@ -7,14 +7,11 @@
 
 /* === Variables === */
 :host {
-  --kengo-primary: #e75c3e;
-  --kengo-primary-dark: #c94a2f;
-  --kengo-tertiary: #efc048;
+  /* Color variables now defined globally via ThemeService */
   --kengo-surface: rgba(255, 255, 255, 0.55);
   --kengo-glass: rgba(255, 255, 255, 0.5);
   --kengo-border: rgba(255, 255, 255, 0.25);
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --kengo-shadow-primary: 0 4px 16px rgba(231, 92, 62, 0.3);
   --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -41,13 +38,13 @@
 
 .aurora-wave-1 {
   @apply w-[300px] h-[300px] -top-20 -right-20;
-  background: radial-gradient(circle, rgba(231, 92, 62, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--kengo-primary-rgb), 0.4) 0%, transparent 70%);
   animation: auroraFloat1 12s ease-in-out infinite;
 }
 
 .aurora-wave-2 {
   @apply w-[250px] h-[250px] top-1/3 -left-20;
-  background: radial-gradient(circle, rgba(239, 192, 72, 0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--kengo-tertiary-rgb), 0.35) 0%, transparent 70%);
   animation: auroraFloat2 15s ease-in-out infinite;
 }
 
@@ -98,7 +95,7 @@
 }
 
 .clinic-switcher:hover {
-  @apply text-[#e75c3e];
+  color: var(--kengo-primary);
 }
 
 .current-clinic-name {
@@ -144,12 +141,12 @@
 }
 
 .picker-option.active {
-  @apply bg-[#e75c3e]/10;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .picker-logo {
   @apply w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0;
-  background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
 }
 
 .picker-logo img {
@@ -173,7 +170,8 @@
 }
 
 .picker-check {
-  @apply text-xl text-[#e75c3e];
+  @apply text-xl;
+  color: var(--kengo-primary);
 }
 
 /* === Main Content === */
@@ -219,7 +217,8 @@
 }
 
 .state-icon .material-symbols-outlined {
-  @apply text-5xl text-[#e75c3e]/50;
+  @apply text-5xl;
+  color: rgba(var(--kengo-primary-rgb), 0.5);
 }
 
 .state-icon.pulse {
@@ -292,9 +291,9 @@
   @apply absolute inset-0;
   background: linear-gradient(
     135deg,
-    var(--clinic-color, #e75c3e) 0%,
+    var(--clinic-color, var(--kengo-primary)) 0%,
     #f9b87e 50%,
-    #efc048 100%
+    var(--kengo-tertiary) 100%
   );
 }
 
@@ -321,7 +320,8 @@
 }
 
 .hero-logo .material-symbols-outlined {
-  @apply text-3xl text-[#e75c3e];
+  @apply text-3xl;
+  color: var(--kengo-primary);
 }
 
 .status-badge {
@@ -367,14 +367,14 @@
 .role-user-badge {
   @apply inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-full
          text-xs font-semibold;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
-  color: #c94a2f;
-  border: 1px solid rgba(231, 92, 62, 0.2);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.08) 100%);
+  color: var(--kengo-primary-dark);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.2);
 }
 
 .role-user-badge .material-symbols-outlined {
   @apply text-sm;
-  color: #e75c3e;
+  color: var(--kengo-primary);
 }
 
 /* === Edit Clinic Button === */
@@ -388,7 +388,9 @@
 }
 
 .edit-clinic-btn:not(:disabled):hover {
-  @apply bg-[#e75c3e]/10 text-[#e75c3e] border-[#e75c3e]/30;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  color: var(--kengo-primary);
+  border-color: rgba(var(--kengo-primary-rgb), 0.3);
 }
 
 .edit-clinic-btn:not(:disabled):active {
@@ -431,8 +433,8 @@
 }
 
 .quick-action.primary .action-icon {
-  background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
-  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.35);
 }
 
 .quick-action.primary .material-symbols-outlined {
@@ -440,7 +442,7 @@
 }
 
 .quick-action.secondary .action-icon {
-  background: linear-gradient(135deg, rgba(239, 192, 72, 0.2) 0%, rgba(239, 192, 72, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-tertiary-rgb), 0.2) 0%, rgba(var(--kengo-tertiary-rgb), 0.1) 100%);
 }
 
 .quick-action.secondary .material-symbols-outlined {
@@ -485,7 +487,8 @@
 }
 
 .info-icon {
-  @apply text-lg text-[#e75c3e];
+  @apply text-lg;
+  color: var(--kengo-primary);
 }
 
 .info-card-title {
@@ -540,11 +543,12 @@
 
 .section-icon {
   @apply w-10 h-10 rounded-xl flex items-center justify-center;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.08) 100%);
 }
 
 .section-icon .material-symbols-outlined {
-  @apply text-xl text-[#e75c3e];
+  @apply text-xl;
+  color: var(--kengo-primary);
 }
 
 .section-title {
@@ -588,7 +592,7 @@
 .stacked-avatar {
   @apply w-10 h-10 rounded-full overflow-hidden flex items-center justify-center
          border-[3px] border-white text-sm font-bold text-white;
-  background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   margin-left: calc(var(--stack-index, 0) * -12px);
   z-index: calc(10 - var(--stack-index, 0));
@@ -639,8 +643,8 @@
 .member-avatar {
   @apply relative w-12 h-12 rounded-full overflow-hidden shrink-0
          flex items-center justify-center text-lg font-bold text-white;
-  background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
-  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.25);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
+  box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.25);
 }
 
 .member-avatar img {
@@ -667,15 +671,19 @@
 
 .role-badge {
   @apply inline-flex items-center px-2 py-0.5 rounded-md
-         bg-[#e75c3e]/10 text-[0.65rem] font-semibold text-[#e75c3e];
+         text-[0.65rem] font-semibold;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  color: var(--kengo-primary);
 }
 
 .colegiado-badge {
-  @apply inline-flex items-center gap-1 text-xs text-[#e75c3e];
+  @apply inline-flex items-center gap-1 text-xs;
+  color: var(--kengo-primary);
 }
 
 .colegiado-badge .material-symbols-outlined {
-  @apply text-sm text-[#efc048];
+  @apply text-sm;
+  color: var(--kengo-tertiary);
 }
 
 .member-actions {
@@ -684,11 +692,14 @@
 
 .member-action {
   @apply inline-flex items-center justify-center w-9 h-9 rounded-full
-         bg-[#e75c3e]/10 text-[#e75c3e] no-underline transition-all;
+         no-underline transition-all;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  color: var(--kengo-primary);
 }
 
 .member-action:hover {
-  @apply bg-[#e75c3e] text-white scale-110;
+  @apply text-white scale-110;
+  background-color: var(--kengo-primary);
 }
 
 .member-action .material-symbols-outlined {
@@ -759,7 +770,7 @@
 
 .welcome-icon {
   @apply w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-4;
-  background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
   box-shadow: var(--kengo-shadow-primary);
 }
 
@@ -853,12 +864,13 @@
 
 .generate-code-btn {
   @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-         bg-[#e75c3e] text-white text-xs font-semibold
+         text-white text-xs font-semibold
          cursor-pointer transition-all border-none;
+  background-color: var(--kengo-primary);
 }
 
 .generate-code-btn:hover {
-  @apply bg-[#c94a2f];
+  background-color: var(--kengo-primary-dark);
 }
 
 .generate-code-btn:active {
@@ -905,12 +917,14 @@
 
 .generate-empty-btn {
   @apply inline-flex items-center gap-2 px-4 py-2 mt-2 rounded-xl
-         bg-[#e75c3e]/10 text-[#e75c3e] text-sm font-medium
+         text-sm font-medium
          cursor-pointer transition-all border-none;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  color: var(--kengo-primary);
 }
 
 .generate-empty-btn:hover {
-  @apply bg-[#e75c3e]/20;
+  background-color: rgba(var(--kengo-primary-rgb), 0.2);
 }
 
 .codes-list {

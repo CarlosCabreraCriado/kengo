@@ -7,7 +7,7 @@ import {
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-import { AuthService, NavegacionComponent } from './core';
+import { AuthService, NavegacionComponent, ThemeService } from './core';
 import { CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios/carrito-ejercicios.component';
 
 @Component({
@@ -22,6 +22,7 @@ export class AppComponent implements OnInit {
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
 
   public mostrarNavegacion = false;
 

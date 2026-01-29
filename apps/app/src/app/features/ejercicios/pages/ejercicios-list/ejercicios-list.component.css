@@ -7,10 +7,8 @@
 
 /* === Variables locales === */
 :host {
-  --kengo-primary: #e75c3e;
-  --kengo-primary-dark: #d14d30;
-  --kengo-tertiary: #efc048;
-  --kengo-glow: rgba(231, 92, 62, 0.4);
+  /* Color variables now defined globally via ThemeService */
+  --kengo-glow: var(--kengo-primary-alpha-30);
 }
 
 /* === Header con glassmorphism (solo móvil) === */
