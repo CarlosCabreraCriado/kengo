@@ -24,7 +24,7 @@
             <span class="material-symbols-outlined text-xl">arrow_back</span>
           </a>
           <div>
-            <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Mi Perfil</h1>
+            <h1 class="titulo-kengo text-2xl text-kengo-primary">Mi Perfil</h1>
             <p class="text-xs font-medium text-zinc-500">Gestiona tu cuenta</p>
           </div>
         </div>
@@ -57,7 +57,7 @@
             class="absolute top-3 right-3 flex items-center gap-1.5 rounded-full px-3 py-2
                    transition-all duration-200 active:scale-95 z-10"
             [class]="formularioCambiado()
-              ? 'bg-white text-[#e75c3e] shadow-lg hover:bg-white/90'
+              ? 'bg-white text-kengo-primary shadow-lg hover:bg-white/90'
               : 'bg-white/30 backdrop-blur-md text-white/70 cursor-default'"
             [disabled]="!formularioCambiado() || formularioUsuario.invalid"
             (click)="guardarCambios()"

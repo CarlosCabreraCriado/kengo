@@ -1,15 +1,12 @@
 @reference "tailwindcss";
 
 :host {
-  --kengo-primary: #e75c3e;
-  --kengo-primary-dark: #c94a2f;
-  --kengo-tertiary: #efc048;
+  /* Color variables now defined globally via ThemeService */
   --kengo-success: #22c55e;
   --kengo-glass: rgba(255, 255, 255, 0.5);
   --kengo-glass-strong: rgba(255, 255, 255, 0.7);
   --kengo-border: rgba(255, 255, 255, 0.25);
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --kengo-shadow-primary: 0 4px 16px rgba(231, 92, 62, 0.35);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   display: block;
   height: 100%;
@@ -37,13 +34,13 @@
 
 .aurora-wave-1 {
   @apply w-[300px] h-[300px] -top-20 -right-20;
-  background: radial-gradient(circle, rgba(231, 92, 62, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--kengo-primary-rgb), 0.4) 0%, transparent 70%);
   animation: auroraFloat1 12s ease-in-out infinite;
 }
 
 .aurora-wave-2 {
   @apply w-[240px] h-[240px] top-1/3 -left-20;
-  background: radial-gradient(circle, rgba(239, 192, 72, 0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--kengo-tertiary-rgb), 0.35) 0%, transparent 70%);
   animation: auroraFloat2 15s ease-in-out infinite;
 }
 
@@ -106,11 +103,13 @@
 }
 
 .back-btn:hover {
-  @apply bg-white/80 text-[#e75c3e];
+  @apply bg-white/80;
+  color: var(--kengo-primary);
 }
 
 .header-title {
-  @apply text-xl text-[#e75c3e] leading-tight m-0;
+  @apply text-xl leading-tight m-0;
+  color: var(--kengo-primary);
 }
 
 .header-action {
@@ -121,7 +120,8 @@
 }
 
 .header-action:hover {
-  @apply bg-white/80 text-[#e75c3e];
+  @apply bg-white/80;
+  color: var(--kengo-primary);
 }
 
 /* ============================================
@@ -171,7 +171,8 @@
 }
 
 .state-icon .material-symbols-outlined {
-  @apply text-5xl text-[#e75c3e]/50;
+  @apply text-5xl;
+  color: rgba(var(--kengo-primary-rgb), 0.5);
 }
 
 .state-icon.pulse {
@@ -201,8 +202,9 @@
 
 .retry-btn {
   @apply inline-flex items-center justify-center gap-2 mt-4 px-5 py-2.5
-         rounded-xl bg-[#e75c3e] text-white text-sm font-semibold
+         rounded-xl text-white text-sm font-semibold
          cursor-pointer transition-all active:scale-95;
+  background-color: var(--kengo-primary);
   box-shadow: var(--kengo-shadow-primary);
 }
 
@@ -247,8 +249,9 @@
 }
 
 .hero-back-btn:hover {
-  @apply bg-white text-[#e75c3e];
-  box-shadow: 0 4px 12px rgba(231, 92, 62, 0.2);
+  @apply bg-white;
+  color: var(--kengo-primary);
+  box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.2);
 }
 
 .hero-back-btn .material-symbols-outlined {
@@ -261,7 +264,7 @@
 
 .hero-gradient {
   @apply absolute inset-0;
-  background: linear-gradient(135deg, #e75c3e 0%, #f9b87e 50%, #efc048 100%);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, #f9b87e 50%, var(--kengo-tertiary) 100%);
 }
 
 .hero-pattern {
@@ -284,7 +287,7 @@
 
 .avatar-placeholder {
   @apply w-full h-full flex items-center justify-center;
-  background: linear-gradient(135deg, #e75c3e 0%, #efc048 100%);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
 }
 
 .avatar-placeholder .material-symbols-outlined {
@@ -314,7 +317,8 @@
 }
 
 .edit-btn:hover {
-  @apply bg-white/80 text-[#e75c3e];
+  @apply bg-white/80;
+  color: var(--kengo-primary);
 }
 
 /* Contact Grid */
@@ -333,12 +337,13 @@
 }
 
 .contact-icon {
-  @apply w-10 h-10 rounded-xl shrink-0 flex items-center justify-center
-         bg-[#e75c3e]/10;
+  @apply w-10 h-10 rounded-xl shrink-0 flex items-center justify-center;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .contact-icon .material-symbols-outlined {
-  @apply text-xl text-[#e75c3e];
+  @apply text-xl;
+  color: var(--kengo-primary);
 }
 
 .contact-info {
@@ -376,7 +381,7 @@
 }
 
 .action-btn.primary:hover {
-  box-shadow: 0 6px 24px rgba(231, 92, 62, 0.45);
+  box-shadow: 0 6px 24px rgba(var(--kengo-primary-rgb), 0.45);
 }
 
 .action-label {
@@ -415,19 +420,20 @@
 
 .section-icon {
   @apply w-10 h-10 rounded-xl flex items-center justify-center shrink-0;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.08) 100%);
 }
 
 .section-icon .material-symbols-outlined {
-  @apply text-xl text-[#e75c3e];
+  @apply text-xl;
+  color: var(--kengo-primary);
 }
 
 .section-icon.gold {
-  background: linear-gradient(135deg, rgba(239, 192, 72, 0.2) 0%, rgba(231, 92, 62, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-tertiary-rgb), 0.2) 0%, rgba(var(--kengo-primary-rgb), 0.08) 100%);
 }
 
 .section-icon.gold .material-symbols-outlined {
-  @apply text-[#efc048];
+  color: var(--kengo-tertiary);
 }
 
 .section-title {
@@ -493,8 +499,9 @@
 
 .empty-action {
   @apply inline-flex items-center gap-2 mt-4 px-4 py-2.5 rounded-xl
-         bg-[#e75c3e] text-white text-sm font-semibold
+         text-white text-sm font-semibold
          cursor-pointer transition-all active:scale-95;
+  background-color: var(--kengo-primary);
   box-shadow: var(--kengo-shadow-primary);
 }
 
@@ -567,7 +574,8 @@
 }
 
 .plan-action-btn:hover {
-  @apply bg-white/60 text-[#e75c3e];
+  @apply bg-white/60;
+  color: var(--kengo-primary);
 }
 
 .plan-action-btn:disabled {
@@ -588,12 +596,13 @@
 
 .see-all-btn {
   @apply flex items-center justify-center gap-2 w-full mt-3 py-2.5
-         rounded-xl bg-transparent text-[#e75c3e] text-sm font-medium
+         rounded-xl bg-transparent text-sm font-medium
          cursor-pointer transition-all;
+  color: var(--kengo-primary);
 }
 
 .see-all-btn:hover {
-  @apply bg-[#e75c3e]/10;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 /* ============================================
@@ -610,13 +619,13 @@
 }
 
 .stat-card.primary {
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.08) 0%, rgba(231, 92, 62, 0.02) 100%);
-  border-color: rgba(231, 92, 62, 0.15);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.08) 0%, rgba(var(--kengo-primary-rgb), 0.02) 100%);
+  border-color: rgba(var(--kengo-primary-rgb), 0.15);
 }
 
 .stat-card.gold {
-  background: linear-gradient(135deg, rgba(239, 192, 72, 0.12) 0%, rgba(239, 192, 72, 0.04) 100%);
-  border-color: rgba(239, 192, 72, 0.2);
+  background: linear-gradient(135deg, rgba(var(--kengo-tertiary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.04) 100%);
+  border-color: rgba(var(--kengo-tertiary-rgb), 0.2);
 }
 
 .stat-header {
@@ -632,11 +641,11 @@
 }
 
 .stat-card.primary .stat-icon {
-  @apply text-[#e75c3e];
+  color: var(--kengo-primary);
 }
 
 .stat-card.gold .stat-icon {
-  @apply text-[#efc048];
+  color: var(--kengo-tertiary);
 }
 
 .stat-value-large {
@@ -644,11 +653,11 @@
 }
 
 .stat-card.primary .stat-value-large {
-  @apply text-[#e75c3e];
+  color: var(--kengo-primary);
 }
 
 .stat-card.gold .stat-value-large {
-  @apply text-[#efc048];
+  color: var(--kengo-tertiary);
 }
 
 .stat-value-large.muted {
@@ -692,7 +701,8 @@
 }
 
 .chart-bar-bg {
-  @apply w-full h-16 rounded-lg bg-[#e75c3e]/10 overflow-hidden flex flex-col justify-end;
+  @apply w-full h-16 rounded-lg overflow-hidden flex flex-col justify-end;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .chart-bar-fill {
@@ -742,11 +752,12 @@
 
 .activity-date-badge {
   @apply shrink-0 px-3 py-1.5 rounded-lg;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.1) 0%, rgba(var(--kengo-tertiary-rgb), 0.05) 100%);
 }
 
 .activity-day {
-  @apply text-sm font-semibold text-[#e75c3e];
+  @apply text-sm font-semibold;
+  color: var(--kengo-primary);
 }
 
 .activity-details {

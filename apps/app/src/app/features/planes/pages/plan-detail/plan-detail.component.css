@@ -7,14 +7,7 @@
 
 /* === CSS Custom Properties === */
 :host {
-  --kengo-primary: #e75c3e;
-  --kengo-primary-light: #f07a61;
-  --kengo-primary-dark: #c94a2f;
-  --kengo-primary-rgb: 231, 92, 62;
-  --kengo-tertiary: #efc048;
-  --kengo-tertiary-dark: #d4a93d;
-  --kengo-tertiary-rgb: 239, 192, 72;
-
+  /* Color variables now defined globally via ThemeService */
   --kengo-success: #10b981;
   --kengo-success-dark: #059669;
   --kengo-success-rgb: 16, 185, 129;
@@ -28,7 +21,6 @@
   --kengo-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   --kengo-shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.14);
-  --kengo-shadow-primary: 0 8px 32px rgba(var(--kengo-primary-rgb), 0.35);
   --kengo-shadow-success: 0 8px 32px rgba(var(--kengo-success-rgb), 0.35);
 
   --safe-top: env(safe-area-inset-top, 0px);

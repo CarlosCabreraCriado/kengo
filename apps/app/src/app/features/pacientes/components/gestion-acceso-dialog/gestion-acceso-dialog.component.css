@@ -7,11 +7,12 @@
 
 .loading-qr {
   @apply w-20 h-20 rounded-2xl flex items-center justify-center mb-4;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(231, 92, 62, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.1) 0%, rgba(var(--kengo-primary-rgb), 0.05) 100%);
 }
 
 .loading-qr .material-symbols-outlined {
-  @apply text-4xl text-[#e75c3e];
+  @apply text-4xl;
+  color: var(--kengo-primary);
 }
 
 .loading-text {
@@ -195,12 +196,13 @@
 /* === Close Button === */
 .btn-close {
   @apply flex h-10 items-center justify-center rounded-xl
-         bg-[#e75c3e] px-6 text-sm font-semibold text-white
+         px-6 text-sm font-semibold text-white
          transition-colors border-none cursor-pointer;
+  background-color: var(--kengo-primary);
 }
 
 .btn-close:hover {
-  @apply bg-[#c94a2f];
+  background-color: var(--kengo-primary-dark);
 }
 
 /* === Spinner === */

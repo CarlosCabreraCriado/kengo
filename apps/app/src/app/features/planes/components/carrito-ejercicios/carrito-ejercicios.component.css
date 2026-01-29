@@ -45,11 +45,11 @@
   gap: 6px;
   padding: 12px 8px 10px 12px;
 
-  background: linear-gradient(135deg, #e75c3e 0%, #d14e32 100%);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
   border: none;
   border-radius: 16px 0 0 16px;
   box-shadow:
-    -4px 4px 16px rgba(231, 92, 62, 0.3),
+    -4px 4px 16px rgba(var(--kengo-primary-rgb), 0.3),
     -2px 2px 8px rgba(0, 0, 0, 0.1);
 
   cursor: pointer;
@@ -59,7 +59,7 @@
 .tab-carrito:hover {
   padding-left: 16px;
   box-shadow:
-    -6px 6px 24px rgba(231, 92, 62, 0.4),
+    -6px 6px 24px rgba(var(--kengo-primary-rgb), 0.4),
     -3px 3px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -92,7 +92,7 @@
   align-items: center;
   justify-content: center;
 
-  background: #efc048;
+  background: var(--kengo-tertiary);
   color: #1a1a1a;
   font-size: 11px;
   font-weight: 700;
@@ -127,6 +127,6 @@
 }
 
 .tab-carrito__badge--rutina {
-  background: #e75c3e;
+  background: var(--kengo-primary);
   color: white;
 }

@@ -160,7 +160,7 @@
         <!-- Botón añadir ejercicio al final de la lista -->
         <button
           type="button"
-          class="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-white/40 p-3 text-zinc-500 transition-all hover:border-[#e75c3e] hover:bg-[#e75c3e]/5 hover:text-[#e75c3e]"
+          class="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-white/40 p-3 text-zinc-500 transition-all hover:border-kengo-primary hover:bg-kengo-primary/5 hover:text-kengo-primary"
           (click)="irAEjercicios()"
           aria-label="Añadir ejercicio"
         >
@@ -174,7 +174,7 @@
           <!-- Botón añadir ejercicio cuando no hay ejercicios -->
           <button
             type="button"
-            class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#e75c3e]/10 text-[#e75c3e] transition-all hover:scale-105 hover:bg-[#e75c3e]/20"
+            class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-kengo-primary/10 text-kengo-primary transition-all hover:scale-105 hover:bg-kengo-primary/20"
             (click)="irAEjercicios()"
             aria-label="Añadir ejercicio"
           >
@@ -230,7 +230,7 @@
         <!-- Acciones para modo Plan -->
         <button
           type="button"
-          class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#e75c3e] px-6 text-sm font-semibold text-white shadow-lg shadow-[#e75c3e]/25 transition-all duration-200 hover:bg-[#d14e32] hover:shadow-xl hover:shadow-[#e75c3e]/30 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:shadow-none"
+          class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-kengo-primary px-6 text-sm font-semibold text-white shadow-lg-kengo-primary/25 transition-all duration-200 hover:bg-kengo-primary-dark hover:shadow-xl-kengo-primary/30 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:shadow-none"
           [disabled]="!svc.items().length || !svc.paciente()"
           (click)="configurarPlan()"
         >
@@ -296,7 +296,7 @@
           class="flex h-10 w-10 items-center justify-center rounded-full bg-white/90"
         >
           <span
-            class="material-symbols-outlined text-2xl text-[#e75c3e]"
+            class="material-symbols-outlined text-2xl text-kengo-primary"
             aria-hidden="true"
             >personal_injury</span
           >

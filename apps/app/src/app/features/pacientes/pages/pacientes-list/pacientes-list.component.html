@@ -27,7 +27,7 @@
               <span class="material-symbols-outlined text-xl">arrow_back</span>
             </button>
             <div>
-              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Mis Pacientes</h1>
+              <h1 class="titulo-kengo text-2xl text-kengo-primary">Mis Pacientes</h1>
               @if (pacientes().length > 0) {
                 <p class="text-xs font-medium text-zinc-500">
                   {{ pacientes().length }} {{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}
@@ -40,8 +40,8 @@
           <button
             type="button"
             class="flex h-10 w-10 items-center justify-center rounded-xl
-                   bg-[#e75c3e] text-white transition-all duration-200
-                   hover:bg-[#c94a2f] hover:scale-105 active:scale-95
+                   bg-kengo-primary text-white transition-all duration-200
+                   hover:bg-kengo-primary-dark hover:scale-105 active:scale-95
                    shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
             aria-label="Añadir paciente"
             (click)="openAddPaciente()"
@@ -56,14 +56,14 @@
         <!-- DESKTOP: Información compacta al inicio -->
         @if (!isMovil() && pacientes().length > 0) {
           <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
-            <span class="text-sm font-bold text-[#e75c3e]">{{ pacientes().length }}</span>
+            <span class="text-sm font-bold text-kengo-primary">{{ pacientes().length }}</span>
             <span class="text-xs text-zinc-500">{{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}</span>
           </div>
         }
 
         <!-- Barra de búsqueda -->
         <div class="relative flex-1">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#e75c3e] text-xl pointer-events-none z-10">search</span>
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-kengo-primary text-xl pointer-events-none z-10">search</span>
           <input
             #buscador
             type="text"
@@ -71,7 +71,7 @@
                    bg-white/70 border border-white/40
                    text-zinc-700 text-sm
                    transition-all outline-none
-                   focus:border-[#e75c3e]/40 focus:bg-white/90
+                   focus:border-kengo-primary/40 focus:bg-white/90
                    backdrop-blur-sm"
             placeholder="Buscar por nombre, email..."
             (input)="onBuscar(buscador.value)"
@@ -96,7 +96,7 @@
           class="flex h-12 w-12 items-center justify-center rounded-2xl
                  bg-white/70 backdrop-blur-md border border-white/40
                  text-zinc-600 transition-all duration-200
-                 hover:bg-white/90 hover:text-[#e75c3e] active:scale-95"
+                 hover:bg-white/90 hover:text-kengo-primary active:scale-95"
           (click)="vista.set(vista() === 'card' ? 'lista' : 'card')"
           aria-label="Cambiar vista"
         >
@@ -108,8 +108,8 @@
           <button
             type="button"
             class="flex h-10 items-center gap-1.5 rounded-full px-4 ml-2
-                   bg-[#e75c3e] text-white transition-all duration-200
-                   hover:bg-[#c94a2f] hover:scale-105 active:scale-95
+                   bg-kengo-primary text-white transition-all duration-200
+                   hover:bg-kengo-primary-dark hover:scale-105 active:scale-95
                    shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
             (click)="openAddPaciente()"
           >
@@ -234,7 +234,7 @@
                 <span class="material-symbols-outlined text-2xl icon-filled">person_add</span>
               </div>
               <div class="patient-info">
-                <h3 class="patient-name text-[#e75c3e]">Nuevo paciente</h3>
+                <h3 class="patient-name text-kengo-primary">Nuevo paciente</h3>
                 <p class="text-xs text-zinc-500 mt-1">Añadir a la lista</p>
               </div>
               <span class="material-symbols-outlined card-arrow">add</span>
@@ -272,7 +272,7 @@
               <span class="material-symbols-outlined text-lg icon-filled">person_add</span>
             </div>
             <div class="row-info">
-              <h4 class="row-name text-[#e75c3e]">Nuevo paciente</h4>
+              <h4 class="row-name text-kengo-primary">Nuevo paciente</h4>
               <span class="row-detail">Añadir a la lista</span>
             </div>
             <span class="material-symbols-outlined row-arrow">add</span>

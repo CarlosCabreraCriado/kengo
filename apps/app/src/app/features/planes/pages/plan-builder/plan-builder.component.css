@@ -7,12 +7,13 @@
 
 /* === Design Tokens === */
 :host {
-  /* Brand colors */
-  --kengo-coral: #e75c3e;
-  --kengo-coral-dark: #c94a2f;
-  --kengo-coral-light: #ff7b5f;
-  --kengo-gold: #efc048;
-  --kengo-gold-dark: #d4a93d;
+  /* Color variables now defined globally via ThemeService */
+  /* Brand colors - keeping aliases for backward compatibility */
+  --kengo-coral: var(--kengo-primary);
+  --kengo-coral-dark: var(--kengo-primary-dark);
+  --kengo-coral-light: var(--kengo-primary-light);
+  --kengo-gold: var(--kengo-tertiary);
+  --kengo-gold-dark: var(--kengo-tertiary-dark);
 
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.72);
@@ -28,8 +29,8 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.14);
-  --shadow-coral: 0 8px 28px rgba(231, 92, 62, 0.35);
-  --shadow-coral-lg: 0 12px 36px rgba(231, 92, 62, 0.45);
+  --shadow-coral: var(--kengo-shadow-primary);
+  --shadow-coral-lg: 0 12px 36px rgba(var(--kengo-primary-rgb), 0.45);
 
   /* Typography */
   --text-primary: #27272a;

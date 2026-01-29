@@ -19,7 +19,7 @@
               <span class="material-symbols-outlined text-xl">arrow_back</span>
             </button>
             <div>
-              <h1 class="titulo-kengo text-2xl text-[#e75c3e]">Planes</h1>
+              <h1 class="titulo-kengo text-2xl text-kengo-primary">Planes</h1>
               <p class="text-xs font-medium text-zinc-500">Gestiona tus planes de ejercicios</p>
             </div>
           </div>
@@ -108,15 +108,15 @@
                 <div class="flex items-start gap-4">
                   <!-- Icon con gradiente -->
                   <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl
-                              bg-gradient-to-br from-[#e75c3e]/10 to-[#efc048]/10
-                              ring-1 ring-[#e75c3e]/10">
-                    <span class="material-symbols-outlined text-2xl text-[#e75c3e]">assignment</span>
+                              bg-gradient-to-br from-kengo-primary/10 to-kengo-tertiary/10
+                              ring-1 ring-kengo-primary/10">
+                    <span class="material-symbols-outlined text-2xl text-kengo-primary">assignment</span>
                   </div>
 
                   <div class="min-w-0 flex-1">
                     <!-- Título y estado -->
                     <div class="flex items-start justify-between gap-2">
-                      <h3 class="truncate text-base font-bold text-zinc-800 group-hover:text-[#e75c3e]
+                      <h3 class="truncate text-base font-bold text-zinc-800 group-hover:text-kengo-primary
                                  transition-colors">
                         {{ plan.titulo }}
                       </h3>
@@ -130,7 +130,7 @@
 
                     <!-- Fisioterapeuta -->
                     <p class="mt-2 flex items-center gap-2 text-sm text-zinc-500">
-                      <span class="material-symbols-outlined text-lg text-[#efc048]">medical_services</span>
+                      <span class="material-symbols-outlined text-lg text-kengo-tertiary">medical_services</span>
                       <span class="truncate">{{ getFisioNombre(plan) }}</span>
                     </p>
 
@@ -152,7 +152,7 @@
 
                 <!-- Indicador de acción -->
                 <div class="mt-4 flex items-center justify-end pt-3 border-t border-zinc-100/50">
-                  <span class="flex items-center gap-1 text-xs font-medium text-[#e75c3e] opacity-0
+                  <span class="flex items-center gap-1 text-xs font-medium text-kengo-primary opacity-0
                                group-hover:opacity-100 transition-opacity">
                     Ver detalles
                     <span class="material-symbols-outlined text-base">arrow_forward</span>
@@ -173,14 +173,14 @@
           <!-- Buscador -->
           <div class="relative min-w-0 flex-1">
             <span class="material-symbols-outlined absolute top-1/2 left-3.5 z-10 -translate-y-1/2
-                         text-[#e75c3e]">search</span>
+                         text-kengo-primary">search</span>
             <input
               #buscador
               type="text"
               class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/80
                      pr-10 pl-11 text-zinc-700 shadow-sm backdrop-blur-sm
                      transition-all placeholder:text-zinc-400
-                     focus:border-[#e75c3e]/50 focus:ring-2 focus:ring-[#e75c3e]/20 focus:outline-none"
+                     focus:border-kengo-primary/50 focus:ring-2 focus:ring-kengo-primary/20 focus:outline-none"
               placeholder="Buscar por título o paciente..."
               [value]="busqueda"
               (input)="onBusquedaChange(buscador.value)"
@@ -205,8 +205,8 @@
               <button
                 type="button"
                 class="quick-action-btn"
-                [class.border-[#e75c3e]]="filtroEstado !== 'todos'"
-                [class.text-[#e75c3e]]="filtroEstado !== 'todos'"
+                [class.border-kengo-primary]="filtroEstado !== 'todos'"
+                [class.text-kengo-primary]="filtroEstado !== 'todos'"
                 aria-label="Filtrar por estado"
                 (click)="menuEstadoOpen = !menuEstadoOpen"
               >
@@ -324,7 +324,7 @@
                       />
                     } @else {
                       <div class="flex h-14 w-14 items-center justify-center rounded-full
-                                  bg-gradient-to-br from-[#e75c3e] to-[#efc048] shadow-md
+                                  bg-gradient-to-br from-kengo-primary to-kengo-tertiary shadow-md
                                   ring-[3px] ring-white">
                         <span class="material-symbols-outlined text-2xl text-white">person</span>
                       </div>
@@ -345,7 +345,7 @@
                     </div>
 
                     <p class="mt-1.5 flex items-center gap-2 text-sm text-zinc-500">
-                      <span class="material-symbols-outlined text-lg text-[#efc048]">person</span>
+                      <span class="material-symbols-outlined text-lg text-kengo-tertiary">person</span>
                       <span class="truncate">{{ getPacienteNombre(plan) }}</span>
                     </p>
 
@@ -369,7 +369,7 @@
                   <button
                     type="button"
                     class="flex h-10 w-10 items-center justify-center rounded-xl
-                           text-zinc-500 transition-all hover:bg-[#e75c3e]/10 hover:text-[#e75c3e]"
+                           text-zinc-500 transition-all hover:bg-kengo-primary/10 hover:text-kengo-primary"
                     aria-label="Ver resumen"
                     (click)="verResumen(plan)"
                   >
@@ -379,7 +379,7 @@
                   <button
                     type="button"
                     class="flex h-10 w-10 items-center justify-center rounded-xl
-                           text-zinc-500 transition-all hover:bg-[#e75c3e]/10 hover:text-[#e75c3e]"
+                           text-zinc-500 transition-all hover:bg-kengo-primary/10 hover:text-kengo-primary"
                     aria-label="Editar plan"
                     (click)="editarPlan(plan)"
                   >
@@ -449,13 +449,13 @@
             <!-- Search input -->
             <div class="relative flex-1">
               <span class="material-symbols-outlined absolute top-1/2 left-3.5 z-10 -translate-y-1/2
-                           text-[#e75c3e]">search</span>
+                           text-kengo-primary">search</span>
               <input
                 type="text"
                 class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/80
                        pr-4 pl-11 text-zinc-700 placeholder:text-zinc-400
-                       transition-all focus:border-[#e75c3e]/50 focus:ring-2
-                       focus:ring-[#e75c3e]/20 focus:outline-none"
+                       transition-all focus:border-kengo-primary/50 focus:ring-2
+                       focus:ring-kengo-primary/20 focus:outline-none"
                 placeholder="Buscar plantilla..."
                 [(ngModel)]="busquedaRutinas"
                 (ngModelChange)="onBusquedaRutinasChange($event)"
@@ -467,8 +467,8 @@
               <select
                 class="h-12 w-full appearance-none rounded-xl border border-zinc-200/80
                        bg-white/80 px-4 pr-10 text-zinc-700 cursor-pointer
-                       transition-all focus:border-[#e75c3e]/50 focus:ring-2
-                       focus:ring-[#e75c3e]/20 focus:outline-none"
+                       transition-all focus:border-kengo-primary/50 focus:ring-2
+                       focus:ring-kengo-primary/20 focus:outline-none"
                 [(ngModel)]="filtroVisibilidad"
                 (ngModelChange)="onFiltroVisibilidadChange($event)"
               >
@@ -520,8 +520,8 @@
                 <div class="flex items-start gap-4 p-5">
                   <!-- Icono -->
                   <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
-                              bg-gradient-to-br from-[#efc048]/20 to-[#e75c3e]/10">
-                    <span class="material-symbols-outlined text-2xl text-[#efc048]">bookmark</span>
+                              bg-gradient-to-br from-kengo-tertiary/20 to-kengo-primary/10">
+                    <span class="material-symbols-outlined text-2xl text-kengo-tertiary">bookmark</span>
                   </div>
 
                   <div class="min-w-0 flex-1">
@@ -555,7 +555,7 @@
                         </span>
                       }
                       @if (!isOwner(rutina)) {
-                        <span class="rounded-full bg-[#efc048]/10 px-2 py-0.5 text-[#efc048] font-medium">
+                        <span class="rounded-full bg-kengo-tertiary/10 px-2 py-0.5 text-kengo-tertiary font-medium">
                           Plantilla pública
                         </span>
                       }

@@ -7,10 +7,9 @@
 
 /* === Variables CSS === */
 :host {
+  /* Color variables now defined globally via ThemeService */
   --kengo-amber: #f59e0b;
   --kengo-amber-dark: #d97706;
-  --kengo-primary: #e75c3e;
-  --kengo-tertiary: #efc048;
   --kengo-glass: rgba(255, 255, 255, 0.65);
   --kengo-glass-strong: rgba(255, 255, 255, 0.85);
   --kengo-border: rgba(255, 255, 255, 0.25);
