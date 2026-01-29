@@ -27,7 +27,7 @@ import {
       >
         <span class="material-symbols-outlined text-primary animate-bounce text-6xl">celebration</span>
         <h1
-          class="m-0 bg-gradient-to-r from-[#e75c3e] to-[#efc048] bg-clip-text text-2xl font-extrabold text-transparent"
+          class="m-0 bg-gradient-to-r from-kengo-primary to-kengo-tertiary bg-clip-text text-2xl font-extrabold text-transparent"
         >
           ¡Sesión completada!
         </h1>

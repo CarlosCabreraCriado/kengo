@@ -118,9 +118,9 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 
     /* === Variables === */
     :host {
-      --primary: #e75c3e;
-      --primary-dark: #c94a2f;
-      --tertiary: #efc048;
+      --primary: var(--kengo-primary);
+      --primary-dark: var(--kengo-primary-dark);
+      --tertiary: var(--kengo-tertiary);
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --breath-duration: 4s;
@@ -170,7 +170,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       height: 300px;
       background: radial-gradient(
         circle,
-        rgba(231, 92, 62, 0.25) 0%,
+        rgba(var(--kengo-primary-rgb), 0.25) 0%,
         transparent 70%
       );
       top: -100px;
@@ -183,7 +183,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       height: 250px;
       background: radial-gradient(
         circle,
-        rgba(239, 192, 72, 0.2) 0%,
+        rgba(var(--kengo-tertiary-rgb), 0.2) 0%,
         transparent 70%
       );
       bottom: 10%;
@@ -196,7 +196,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       height: 200px;
       background: radial-gradient(
         circle,
-        rgba(231, 92, 62, 0.15) 0%,
+        rgba(var(--kengo-primary-rgb), 0.15) 0%,
         transparent 70%
       );
       top: 40%;
@@ -293,7 +293,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       width: 80px;
       height: 4px;
       border-radius: 2px;
-      background: rgba(231, 92, 62, 0.12);
+      background: rgba(var(--kengo-primary-rgb), 0.12);
       overflow: hidden;
     }
 
@@ -332,8 +332,8 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     }
 
     .breath-hint.inhale {
-      background: rgba(231, 92, 62, 0.08);
-      border-color: rgba(231, 92, 62, 0.15);
+      background: rgba(var(--kengo-primary-rgb), 0.08);
+      border-color: rgba(var(--kengo-primary-rgb), 0.15);
     }
 
     .breath-text {
@@ -363,7 +363,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       width: calc(100% + 40px);
       height: calc(100% + 40px);
       border-radius: 50%;
-      border: 2px solid rgba(231, 92, 62, 0.15);
+      border: 2px solid rgba(var(--kengo-primary-rgb), 0.15);
       transition: all var(--breath-duration) cubic-bezier(0.4, 0, 0.6, 1);
       animation: breathe var(--breath-duration) ease-in-out infinite;
     }
@@ -373,13 +373,13 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       position: absolute;
       inset: -8px;
       border-radius: 50%;
-      border: 1px solid rgba(231, 92, 62, 0.08);
+      border: 1px solid rgba(var(--kengo-primary-rgb), 0.08);
       animation: breathe var(--breath-duration) ease-in-out infinite;
       animation-delay: 0.15s;
     }
 
     .breath-ring.inhale {
-      border-color: rgba(231, 92, 62, 0.25);
+      border-color: rgba(var(--kengo-primary-rgb), 0.25);
     }
 
     @keyframes breathe {
@@ -410,7 +410,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.6);
       box-shadow:
-        0 8px 40px rgba(231, 92, 62, 0.12),
+        0 8px 40px rgba(var(--kengo-primary-rgb), 0.12),
         0 2px 12px rgba(0, 0, 0, 0.04),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
@@ -434,7 +434,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     }
 
     .timer-zone ::ng-deep .timer-bg {
-      stroke: rgba(231, 92, 62, 0.08);
+      stroke: rgba(var(--kengo-primary-rgb), 0.08);
       stroke-width: 6;
     }
 
@@ -442,7 +442,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     .timer-zone.warning ::ng-deep .timer-container {
       animation: pulse-warning 0.8s ease-in-out infinite;
       box-shadow:
-        0 8px 40px rgba(239, 192, 72, 0.25),
+        0 8px 40px rgba(var(--kengo-tertiary-rgb), 0.25),
         0 2px 12px rgba(0, 0, 0, 0.04),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
@@ -452,7 +452,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     }
 
     .timer-zone.warning .breath-ring {
-      border-color: rgba(239, 192, 72, 0.3);
+      border-color: rgba(var(--kengo-tertiary-rgb), 0.3);
     }
 
     @keyframes pulse-warning {
@@ -535,7 +535,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1.5px solid rgba(231, 92, 62, 0.2);
+      border: 1.5px solid rgba(var(--kengo-primary-rgb), 0.2);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
       color: #64748b;
 
@@ -564,7 +564,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       border-radius: 18px;
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
       box-shadow:
-        0 4px 20px rgba(231, 92, 62, 0.35),
+        0 4px 20px rgba(var(--kengo-primary-rgb), 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
       color: white;
 
@@ -580,7 +580,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       &:hover {
         transform: translateY(-2px);
         box-shadow:
-          0 6px 24px rgba(231, 92, 62, 0.4),
+          0 6px 24px rgba(var(--kengo-primary-rgb), 0.4),
           inset 0 1px 0 rgba(255, 255, 255, 0.15);
       }
     }

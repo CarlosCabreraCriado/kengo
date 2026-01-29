@@ -38,7 +38,7 @@ import { CommonModule } from '@angular/common';
           alt="Imagen del ejercicio"
         />
       } @else {
-        <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#e75c3e] to-[#efc048]">
+        <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-kengo-primary to-kengo-tertiary">
           <span class="material-symbols-outlined text-6xl text-white/90">videocam</span>
           <span class="text-sm font-medium text-white/90">Sin video disponible</span>
         </div>
@@ -47,7 +47,7 @@ import { CommonModule } from '@angular/common';
       <!-- Overlay de pausa -->
       @if (pausado()) {
         <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60 backdrop-blur-sm">
-          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#e75c3e] to-[#d14d31] pl-1 shadow-xl transition-transform hover:scale-110">
+          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-kengo-primary to-kengo-primary-dark pl-1 shadow-xl transition-transform hover:scale-110">
             <span class="material-symbols-outlined text-4xl text-white">play_arrow</span>
           </div>
           <span class="text-sm font-medium text-white drop-shadow-md">Toca para reproducir</span>
@@ -57,7 +57,7 @@ import { CommonModule } from '@angular/common';
       <!-- Indicador de carga -->
       @if (cargando()) {
         <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-          <div class="h-14 w-14 animate-spin rounded-full border-4 border-white/20 border-t-[#e75c3e]"></div>
+          <div class="loading-spinner h-14 w-14 animate-spin rounded-full border-4 border-white/20"></div>
         </div>
       }
 
@@ -89,6 +89,10 @@ import { CommonModule } from '@angular/common';
     .video-container.expanded img {
       object-fit: contain;
       background: #000;
+    }
+
+    .loading-spinner {
+      border-top-color: var(--kengo-primary);
     }
   `,
 })

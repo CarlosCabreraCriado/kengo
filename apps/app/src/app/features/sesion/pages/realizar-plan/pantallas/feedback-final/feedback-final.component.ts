@@ -272,9 +272,9 @@ export interface FeedbackFinalData {
 
     /* === Variables === */
     :host {
-      --primary: #e75c3e;
-      --primary-dark: #c94a2f;
-      --tertiary: #efc048;
+      --primary: var(--kengo-primary);
+      --primary-dark: var(--kengo-primary-dark);
+      --tertiary: var(--kengo-tertiary);
       --surface: rgba(255, 255, 255, 0.6);
       --border: rgba(255, 255, 255, 0.5);
       --safe-top: env(safe-area-inset-top, 0px);
@@ -325,7 +325,7 @@ export interface FeedbackFinalData {
       height: 280px;
       background: radial-gradient(
         circle,
-        rgba(231, 92, 62, 0.25) 0%,
+        rgba(var(--kengo-primary-rgb), 0.25) 0%,
         transparent 70%
       );
       top: -80px;
@@ -338,7 +338,7 @@ export interface FeedbackFinalData {
       height: 220px;
       background: radial-gradient(
         circle,
-        rgba(239, 192, 72, 0.2) 0%,
+        rgba(var(--kengo-tertiary-rgb), 0.2) 0%,
         transparent 70%
       );
       bottom: 15%;
@@ -351,7 +351,7 @@ export interface FeedbackFinalData {
       height: 180px;
       background: radial-gradient(
         circle,
-        rgba(231, 92, 62, 0.15) 0%,
+        rgba(var(--kengo-primary-rgb), 0.15) 0%,
         transparent 70%
       );
       top: 35%;
@@ -364,7 +364,7 @@ export interface FeedbackFinalData {
       height: 150px;
       background: radial-gradient(
         circle,
-        rgba(239, 192, 72, 0.15) 0%,
+        rgba(var(--kengo-tertiary-rgb), 0.15) 0%,
         transparent 70%
       );
       top: 60%;
@@ -447,7 +447,7 @@ export interface FeedbackFinalData {
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 4px 24px rgba(231, 92, 62, 0.08);
+      box-shadow: 0 4px 24px rgba(var(--kengo-primary-rgb), 0.08);
     }
 
     .header-content {
@@ -470,7 +470,7 @@ export interface FeedbackFinalData {
       justify-content: center;
       flex-shrink: 0;
       box-shadow:
-        0 4px 16px rgba(231, 92, 62, 0.35),
+        0 4px 16px rgba(var(--kengo-primary-rgb), 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
@@ -540,7 +540,7 @@ export interface FeedbackFinalData {
     }
 
     .progress-ring-bg {
-      stroke: rgba(231, 92, 62, 0.12);
+      stroke: rgba(var(--kengo-primary-rgb), 0.12);
     }
 
     .progress-ring-fill {
@@ -598,9 +598,9 @@ export interface FeedbackFinalData {
       gap: 10px;
       padding: 14px 18px;
       margin-bottom: 18px;
-      background: linear-gradient(135deg, rgba(231, 92, 62, 0.08) 0%, rgba(239, 192, 72, 0.06) 100%);
+      background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.08) 0%, rgba(var(--kengo-tertiary-rgb), 0.06) 100%);
       border-radius: 14px;
-      border: 1px solid rgba(231, 92, 62, 0.1);
+      border: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
     }
 
     .summary-icon {
@@ -625,7 +625,7 @@ export interface FeedbackFinalData {
       background: rgba(255, 255, 255, 0.5);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(231, 92, 62, 0.12);
+      border: 1px solid rgba(var(--kengo-primary-rgb), 0.12);
       border-radius: 16px;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -634,7 +634,7 @@ export interface FeedbackFinalData {
     .expand-detail-btn:hover,
     .collapse-detail-btn:hover {
       background: rgba(255, 255, 255, 0.7);
-      border-color: rgba(231, 92, 62, 0.2);
+      border-color: rgba(var(--kengo-primary-rgb), 0.2);
     }
 
     .expand-detail-btn:active,
@@ -707,7 +707,7 @@ export interface FeedbackFinalData {
       width: 36px;
       height: 36px;
       border-radius: 12px;
-      background: rgba(231, 92, 62, 0.1);
+      background: rgba(var(--kengo-primary-rgb), 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -809,7 +809,7 @@ export interface FeedbackFinalData {
     .note-input {
       width: 100%;
       padding: 14px;
-      border: 1.5px solid rgba(231, 92, 62, 0.15);
+      border: 1.5px solid rgba(var(--kengo-primary-rgb), 0.15);
       border-radius: 14px;
       background: rgba(255, 255, 255, 0.8);
       font-size: 0.875rem;
@@ -825,7 +825,7 @@ export interface FeedbackFinalData {
     .note-input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+      box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.1);
     }
 
     /* === Tarjeta de observaciones === */
@@ -868,7 +868,7 @@ export interface FeedbackFinalData {
     .observations-input {
       width: 100%;
       padding: 16px;
-      border: 1.5px solid rgba(239, 192, 72, 0.2);
+      border: 1.5px solid rgba(var(--kengo-tertiary-rgb), 0.2);
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.7);
       font-size: 0.875rem;
@@ -884,7 +884,7 @@ export interface FeedbackFinalData {
     .observations-input:focus {
       outline: none;
       border-color: var(--tertiary);
-      box-shadow: 0 0 0 3px rgba(239, 192, 72, 0.15);
+      box-shadow: 0 0 0 3px rgba(var(--kengo-tertiary-rgb), 0.15);
     }
 
     /* === Footer con CTA === */
@@ -920,7 +920,7 @@ export interface FeedbackFinalData {
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border-radius: 12px;
-      border: 1px solid rgba(231, 92, 62, 0.1);
+      border: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
     }
 
     .hint-icon {
@@ -955,14 +955,14 @@ export interface FeedbackFinalData {
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
       cursor: pointer;
       box-shadow:
-        0 4px 24px rgba(231, 92, 62, 0.4),
+        0 4px 24px rgba(var(--kengo-primary-rgb), 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
     .cta-button.ready:hover {
       transform: translateY(-2px);
       box-shadow:
-        0 8px 32px rgba(231, 92, 62, 0.45),
+        0 8px 32px rgba(var(--kengo-primary-rgb), 0.45),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 

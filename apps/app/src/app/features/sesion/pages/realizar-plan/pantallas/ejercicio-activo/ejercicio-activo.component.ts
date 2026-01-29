@@ -465,7 +465,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
     .progress-fill {
       height: 100%;
       border-radius: 2px;
-      background: linear-gradient(90deg, #e75c3e, #efc048);
+      background: linear-gradient(90deg, var(--kengo-primary), var(--kengo-tertiary));
       transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -646,10 +646,10 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       }
 
       &.current {
-        background: linear-gradient(135deg, #e75c3e, #d14d31);
+        background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
         box-shadow:
-          0 0 0 3px rgba(231, 92, 62, 0.2),
-          0 3px 12px rgba(231, 92, 62, 0.35);
+          0 0 0 3px rgba(var(--kengo-primary-rgb), 0.2),
+          0 3px 12px rgba(var(--kengo-primary-rgb), 0.35);
         transform: scale(1.12);
         animation: pulse-current 2s ease-in-out infinite;
       }
@@ -675,13 +675,13 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       0%,
       100% {
         box-shadow:
-          0 0 0 3px rgba(231, 92, 62, 0.2),
-          0 3px 12px rgba(231, 92, 62, 0.35);
+          0 0 0 3px rgba(var(--kengo-primary-rgb), 0.2),
+          0 3px 12px rgba(var(--kengo-primary-rgb), 0.35);
       }
       50% {
         box-shadow:
-          0 0 0 5px rgba(231, 92, 62, 0.12),
-          0 3px 16px rgba(231, 92, 62, 0.45);
+          0 0 0 5px rgba(var(--kengo-primary-rgb), 0.12),
+          0 3px 16px rgba(var(--kengo-primary-rgb), 0.45);
       }
     }
 
@@ -705,7 +705,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       font-size: 2.25rem;
       font-weight: 800;
       line-height: 1;
-      background: linear-gradient(135deg, #e75c3e, #d14d31);
+      background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
@@ -725,8 +725,8 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       align-items: flex-start;
       gap: 10px;
       padding: 12px 14px;
-      background: rgba(239, 192, 72, 0.1);
-      border: 1px solid rgba(239, 192, 72, 0.25);
+      background: rgba(var(--kengo-tertiary-rgb), 0.1);
+      border: 1px solid rgba(var(--kengo-tertiary-rgb), 0.25);
       border-radius: 16px;
     }
 
@@ -734,7 +734,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       width: 28px;
       height: 28px;
       border-radius: 8px;
-      background: rgba(239, 192, 72, 0.2);
+      background: rgba(var(--kengo-tertiary-rgb), 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -742,7 +742,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 
       span {
         font-size: 1rem;
-        color: #d4a93d;
+        color: var(--kengo-tertiary-dark);
       }
     }
 
@@ -838,7 +838,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
         transform: translateY(-2px);
 
         span {
-          color: #e75c3e;
+          color: var(--kengo-primary);
         }
       }
     }
@@ -861,14 +861,14 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       }
 
       &.final {
-        background: linear-gradient(135deg, #efc048 0%, #d4a93d 100%);
+        background: linear-gradient(135deg, var(--kengo-tertiary) 0%, var(--kengo-tertiary-dark) 100%);
         box-shadow:
-          0 4px 16px rgba(239, 192, 72, 0.35),
+          0 4px 16px rgba(var(--kengo-tertiary-rgb), 0.35),
           inset 0 1px 0 rgba(255, 255, 255, 0.2);
 
         &:hover {
           box-shadow:
-            0 6px 20px rgba(239, 192, 72, 0.4),
+            0 6px 20px rgba(var(--kengo-tertiary-rgb), 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
       }

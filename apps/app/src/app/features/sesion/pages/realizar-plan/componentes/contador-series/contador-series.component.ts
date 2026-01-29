@@ -31,8 +31,8 @@ import { CommonModule } from '@angular/common';
     }
 
     .pill-actual {
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d31 100%);
-      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.2), 0 2px 10px rgba(231, 92, 62, 0.3);
+      background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+      box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.2), 0 2px 10px rgba(var(--kengo-primary-rgb), 0.3);
       transform: scale(1.1);
       animation: pulse-pill 2s ease-in-out infinite;
     }
@@ -44,10 +44,10 @@ import { CommonModule } from '@angular/common';
 
     @keyframes pulse-pill {
       0%, 100% {
-        box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.2), 0 2px 10px rgba(231, 92, 62, 0.3);
+        box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.2), 0 2px 10px rgba(var(--kengo-primary-rgb), 0.3);
       }
       50% {
-        box-shadow: 0 0 0 4px rgba(231, 92, 62, 0.15), 0 2px 12px rgba(231, 92, 62, 0.4);
+        box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.15), 0 2px 12px rgba(var(--kengo-primary-rgb), 0.4);
       }
     }
   `,

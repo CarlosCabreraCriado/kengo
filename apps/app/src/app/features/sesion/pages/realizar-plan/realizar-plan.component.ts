@@ -73,7 +73,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
           class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 bg-white/95 backdrop-blur-md"
         >
           <div
-            class="h-14 w-14 animate-spin rounded-full border-4 border-zinc-200 border-t-[#e75c3e]"
+            class="loading-spinner h-14 w-14 animate-spin rounded-full border-4 border-zinc-200"
           ></div>
           <span class="text-base font-medium text-zinc-500"
             >Cargando tu plan...</span
@@ -167,12 +167,16 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     }
 
     .cta-button {
-      background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
-      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.35);
+      background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+      box-shadow: 0 4px 16px rgba(var(--kengo-primary-rgb), 0.35);
     }
 
     .cta-button:hover {
-      box-shadow: 0 6px 20px rgba(231, 92, 62, 0.45);
+      box-shadow: 0 6px 20px rgba(var(--kengo-primary-rgb), 0.45);
+    }
+
+    .loading-spinner {
+      border-top-color: var(--kengo-primary);
     }
   `,
 })

@@ -59,7 +59,7 @@ import { CommonModule } from '@angular/common';
       -webkit-backdrop-filter: blur(12px);
       border-radius: 50%;
       box-shadow:
-        0 8px 32px rgba(231, 92, 62, 0.15),
+        0 8px 32px rgba(var(--kengo-primary-rgb), 0.15),
         inset 0 0 0 1px rgba(255, 255, 255, 0.5);
       transition: all 0.3s ease;
     }
@@ -67,7 +67,7 @@ import { CommonModule } from '@angular/common';
     .timer-container:hover {
       transform: scale(1.02);
       box-shadow:
-        0 12px 40px rgba(231, 92, 62, 0.2),
+        0 12px 40px rgba(var(--kengo-primary-rgb), 0.2),
         inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     }
 
@@ -76,15 +76,15 @@ import { CommonModule } from '@angular/common';
       width: 100%;
       height: 100%;
       transform: rotate(-90deg);
-      filter: drop-shadow(0 2px 4px rgba(231, 92, 62, 0.3));
+      filter: drop-shadow(0 2px 4px rgba(var(--kengo-primary-rgb), 0.3));
     }
 
     .timer-bg {
-      stroke: rgba(231, 92, 62, 0.1);
+      stroke: rgba(var(--kengo-primary-rgb), 0.1);
     }
 
     .timer-progress {
-      stroke: #e75c3e;
+      stroke: var(--kengo-primary);
       stroke-linecap: round;
       transition:
         stroke-dashoffset 0.1s linear,
@@ -94,16 +94,16 @@ import { CommonModule } from '@angular/common';
     .timer-container.warning {
       animation: pulse-container 1s ease-in-out infinite;
       box-shadow:
-        0 8px 32px rgba(239, 192, 72, 0.3),
-        inset 0 0 0 1px rgba(239, 192, 72, 0.5);
+        0 8px 32px rgba(var(--kengo-tertiary-rgb), 0.3),
+        inset 0 0 0 1px rgba(var(--kengo-tertiary-rgb), 0.5);
     }
 
     .timer-container.warning .timer-progress {
-      stroke: #efc048;
+      stroke: var(--kengo-tertiary);
     }
 
     .timer-container.warning .timer-ring {
-      filter: drop-shadow(0 2px 8px rgba(239, 192, 72, 0.5));
+      filter: drop-shadow(0 2px 8px rgba(var(--kengo-tertiary-rgb), 0.5));
     }
 
     .timer-content {
@@ -132,7 +132,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .timer-container.warning .timer-value {
-      color: #efc048;
+      color: var(--kengo-tertiary);
     }
 
     @keyframes pulse-container {

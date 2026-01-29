@@ -24,9 +24,9 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
         <span class="text-sm font-bold text-zinc-700">
           {{ ejercicioActualIndex() + 1 }}/{{ totalEjercicios() }}
         </span>
-        <div class="h-2 w-24 overflow-hidden rounded-full bg-[#e75c3e]/15">
+        <div class="progress-bar-track h-2 w-24 overflow-hidden rounded-full">
           <div
-            class="h-full rounded-full bg-gradient-to-r from-[#e75c3e] to-[#efc048] transition-all duration-300"
+            class="h-full rounded-full bg-gradient-to-r from-kengo-primary to-kengo-tertiary transition-all duration-300"
             [style.width.%]="progresoSesion()"
           ></div>
         </div>
@@ -55,7 +55,7 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
         <label class="pl-1 text-sm font-semibold text-zinc-700" for="notas">Notas (opcional)</label>
         <textarea
           id="notas"
-          class="w-full resize-none rounded-xl bg-white/75 p-3.5 text-sm text-zinc-800 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition-shadow placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#e75c3e]/40"
+          class="w-full resize-none rounded-xl bg-white/75 p-3.5 text-sm text-zinc-800 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition-shadow placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-kengo-primary/40"
           placeholder="Ej: Sentí molestia en la rodilla derecha..."
           rows="3"
           [(ngModel)]="nota"
@@ -93,6 +93,10 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
       flex: 1;
       min-height: 0;
       overflow: hidden;
+    }
+
+    .progress-bar-track {
+      background-color: rgba(var(--kengo-primary-rgb), 0.15);
     }
 
     .animate-pop-in {
