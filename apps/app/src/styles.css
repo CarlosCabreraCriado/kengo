@@ -40,6 +40,12 @@
 
   /* Autofill background - very light tint of primary */
   --kengo-autofill-bg: rgb(254, 246, 244);
+
+  /* SVG wave background colors - derived from primary */
+  --kengo-svg-wave-1: #ffffff;
+  --kengo-svg-wave-2: rgb(253, 214, 179);
+  --kengo-svg-wave-3: rgb(247, 166, 94);
+  --kengo-svg-wave-4: rgb(241, 116, 3);
 }
 
 /* =========================================

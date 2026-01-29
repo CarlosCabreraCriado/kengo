@@ -2,10 +2,53 @@
 <section class="flex h-dvh max-w-7xl flex-col m-auto overflow-hidden">
   <!-- Fondo decorativo -->
   <div class="fixed top-0 left-0 -z-10 h-dvh w-screen overflow-hidden">
-    <img
+    <!-- SVG con ondas dinámicas - colores basados en el tema de la clínica -->
+    <svg
       class="fixed bottom-0 left-0 -z-10 min-w-screen rotate-180"
-      src="../assets/fondo-kengo (2).svg"
-    />
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1730 992"
+      preserveAspectRatio="xMidYMid"
+      width="1730"
+      height="992"
+      style="shape-rendering: auto; display: block; background: transparent;"
+    >
+      <defs>
+        <linearGradient id="wave-gradient-0" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style="stop-color: var(--kengo-svg-wave-1)" />
+          <stop offset="1" style="stop-color: var(--kengo-svg-wave-2)" />
+        </linearGradient>
+        <linearGradient id="wave-gradient-1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style="stop-color: var(--kengo-svg-wave-2)" />
+          <stop offset="1" style="stop-color: var(--kengo-svg-wave-3)" />
+        </linearGradient>
+      </defs>
+      <g>
+        <path fill-opacity="0.5" fill="url(#wave-gradient-0)" d="M0 0L0 816.55Q288.33 739.18 576.67 706.65T1153.33 639.37T1730 497.68L1730 0Z">
+          <animate
+            attributeName="d"
+            values="M0 0L0 816.55Q288.33 739.18 576.67 706.65T1153.33 639.37T1730 497.68L1730 0Z;M0 0L0 801.97Q288.33 783.61 576.67 761.57T1153.33 611.56T1730 538.74L1730 0Z;M0 0L0 861.14Q288.33 789.16 576.67 764.35T1153.33 633.06T1730 503.65L1730 0Z;M0 0L0 816.55Q288.33 739.18 576.67 706.65T1153.33 639.37T1730 497.68L1730 0Z"
+            keyTimes="0;0.333;0.667;1"
+            keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1"
+            calcMode="spline"
+            dur="33.33s"
+            repeatCount="indefinite"
+            begin="0s"
+          />
+        </path>
+        <path fill-opacity="0.8" fill="url(#wave-gradient-1)" d="M0 0L0 405.20Q288.33 389.26 576.67 343.88T1153.33 268.76T1730 253.26L1730 0Z">
+          <animate
+            attributeName="d"
+            values="M0 0L0 405.20Q288.33 389.26 576.67 343.88T1153.33 268.76T1730 253.26L1730 0Z;M0 0L0 424.88Q288.33 369.72 576.67 334.51T1153.33 293.36T1730 291.58L1730 0Z;M0 0L0 423.86Q288.33 404.38 576.67 384.80T1153.33 335.63T1730 238.76L1730 0Z;M0 0L0 405.20Q288.33 389.26 576.67 343.88T1153.33 268.76T1730 253.26L1730 0Z"
+            keyTimes="0;0.333;0.667;1"
+            keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1"
+            calcMode="spline"
+            dur="33.33s"
+            repeatCount="indefinite"
+            begin="-16.67s"
+          />
+        </path>
+      </g>
+    </svg>
 
     <div class="kengoBackground fixed -z-20">
       <span></span>

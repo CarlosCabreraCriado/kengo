@@ -26,6 +26,11 @@ interface ColorPalette {
   bgGradient8: string;
   bgBubble: string;
   autofillBg: string;
+  // SVG wave background colors
+  svgWave1: string;
+  svgWave2: string;
+  svgWave3: string;
+  svgWave4: string;
 }
 
 interface HSL {
@@ -115,6 +120,11 @@ export class ThemeService {
       bgGradient8: this.mixColors(primaryRGB, lightBase3, 0.10),
       bgBubble: this.mixColors(primaryRGB, lightBase1, 0.45),
       autofillBg: this.mixColors(primaryRGB, { r: 255, g: 255, b: 255 }, 0.05),
+      // SVG wave colors - gradient from white to primary
+      svgWave1: '#ffffff',
+      svgWave2: this.mixColors(primaryRGB, { r: 255, g: 255, b: 255 }, 0.15),
+      svgWave3: this.mixColors(primaryRGB, { r: 255, g: 255, b: 255 }, 0.50),
+      svgWave4: this.hslToHex(primaryHSL.h, Math.min(100, primaryHSL.s + 10), Math.max(0, primaryHSL.l - 5)),
     };
   }
 
@@ -161,6 +171,12 @@ export class ThemeService {
     root.style.setProperty('--kengo-bg-gradient-8', palette.bgGradient8);
     root.style.setProperty('--kengo-bg-bubble', palette.bgBubble);
     root.style.setProperty('--kengo-autofill-bg', palette.autofillBg);
+
+    // SVG wave background colors
+    root.style.setProperty('--kengo-svg-wave-1', palette.svgWave1);
+    root.style.setProperty('--kengo-svg-wave-2', palette.svgWave2);
+    root.style.setProperty('--kengo-svg-wave-3', palette.svgWave3);
+    root.style.setProperty('--kengo-svg-wave-4', palette.svgWave4);
   }
 
   /**
