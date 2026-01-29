@@ -112,18 +112,18 @@ export interface RadioOption {
     }
 
     .ui-radio input:checked + .ui-radio-circle {
-      border-color: #e75c3e;
+      border-color: var(--kengo-primary);
     }
 
     .ui-radio:hover:not(.disabled) .ui-radio-circle {
-      border-color: #e75c3e;
+      border-color: var(--kengo-primary);
     }
 
     .ui-radio-dot {
       width: 0.5rem;
       height: 0.5rem;
       border-radius: 50%;
-      background-color: #e75c3e;
+      background-color: var(--kengo-primary);
     }
 
     .ui-radio-text {

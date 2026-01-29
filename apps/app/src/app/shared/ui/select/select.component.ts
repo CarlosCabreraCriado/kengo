@@ -131,7 +131,7 @@ export interface SelectOption {
 
     .ui-select-option.selected {
       background-color: #fef3f2;
-      color: #e75c3e;
+      color: var(--kengo-primary);
     }
 
     .ui-select-option.disabled {

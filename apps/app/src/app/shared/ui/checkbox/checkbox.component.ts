@@ -62,12 +62,12 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     }
 
     .ui-checkbox input:checked + .ui-checkbox-box {
-      background-color: #e75c3e;
-      border-color: #e75c3e;
+      background-color: var(--kengo-primary);
+      border-color: var(--kengo-primary);
     }
 
     .ui-checkbox:hover:not(.disabled) .ui-checkbox-box {
-      border-color: #e75c3e;
+      border-color: var(--kengo-primary);
     }
 
     .ui-checkbox-label {

@@ -83,12 +83,12 @@ export type ChipSize = 'sm' | 'md';
     /* Variant: primary */
     .ui-chip.primary {
       background-color: #fef3f2;
-      color: #e75c3e;
+      color: var(--kengo-primary);
     }
 
     .ui-chip.primary.selected,
     .ui-chip.primary.clickable:hover {
-      background-color: #e75c3e;
+      background-color: var(--kengo-primary);
       color: white;
     }
 

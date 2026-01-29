@@ -112,7 +112,7 @@ export class StepComponent {
     }
 
     .ui-stepper-step.active .ui-stepper-indicator {
-      background-color: #e75c3e;
+      background-color: var(--kengo-primary);
       color: white;
     }
 
@@ -133,7 +133,7 @@ export class StepComponent {
     }
 
     .ui-stepper-step.active .ui-stepper-label-text {
-      color: #e75c3e;
+      color: var(--kengo-primary);
     }
 
     .ui-stepper-optional {

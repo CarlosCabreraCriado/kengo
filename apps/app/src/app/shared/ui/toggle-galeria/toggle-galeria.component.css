@@ -1,8 +1,7 @@
 @reference "tailwindcss";
 
 :host {
-  --kengo-primary: #e75c3e;
-  --kengo-primary-dark: #c94a2f;
+  /* Color variables now defined globally via ThemeService */
   display: block;
 }
 

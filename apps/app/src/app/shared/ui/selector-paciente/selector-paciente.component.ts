@@ -152,7 +152,7 @@ interface DirectusPage<T> {
 
     .header-icon .material-symbols-outlined {
       font-size: 1.25rem;
-      color: #e75c3e;
+      color: var(--kengo-primary);
     }
 
     .header-title {
@@ -213,7 +213,7 @@ interface DirectusPage<T> {
 
     .search-input:focus {
       outline: none;
-      border-color: #e75c3e;
+      border-color: var(--kengo-primary);
       box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
     }
 
@@ -259,7 +259,7 @@ interface DirectusPage<T> {
       width: 2rem;
       height: 2rem;
       border: 3px solid rgba(231, 92, 62, 0.2);
-      border-top-color: #e75c3e;
+      border-top-color: var(--kengo-primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -315,7 +315,7 @@ interface DirectusPage<T> {
     }
 
     .paciente-item.selected {
-      border-color: #e75c3e;
+      border-color: var(--kengo-primary);
       background: rgba(231, 92, 62, 0.08);
     }
 
@@ -371,7 +371,7 @@ interface DirectusPage<T> {
 
     .check-icon {
       font-size: 1.5rem;
-      color: #e75c3e;
+      color: var(--kengo-primary);
       font-variation-settings: "FILL" 1;
     }
 
@@ -409,7 +409,7 @@ interface DirectusPage<T> {
     }
 
     .btn-confirm {
-      background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 100%);
+      background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
       border: none;
       color: white;
       box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35);
