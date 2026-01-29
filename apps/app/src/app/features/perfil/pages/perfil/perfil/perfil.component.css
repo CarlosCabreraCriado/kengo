@@ -325,7 +325,7 @@
 
 .app-footer { @apply flex flex-col items-center gap-1 mt-8 py-6 text-center; }
 .app-logo { @apply mb-2; }
-.app-logo .titulo-kengo { @apply text-2xl; color: rgba(var(--kengo-primary-rgb), 0.3); }
+.app-logo .titulo-kengo { @apply text-2xl; color: #e75c3e; }
 .app-version { @apply text-xs text-zinc-400 m-0; }
 .app-copyright { @apply text-xs text-zinc-300 m-0; }
 
