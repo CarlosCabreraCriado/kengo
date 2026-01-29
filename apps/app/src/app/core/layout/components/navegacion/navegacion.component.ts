@@ -17,7 +17,7 @@ import { KENGO_BREAKPOINTS } from '../../../../shared';
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './navegacion.component.html',
-  styleUrl: './navegacion.component.scss',
+  styleUrl: './navegacion.component.css',
 })
 export class NavegacionComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);

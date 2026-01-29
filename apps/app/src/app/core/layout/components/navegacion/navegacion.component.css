@@ -1,24 +1,24 @@
 @reference "tailwindcss";
 
-// ============================================
+/* ============================================
 // KENGO NAVIGATION - DESKTOP ONLY
-// ============================================
+// ============================================*/
 
-// Variables
-$kengo-primary: #e75c3e;
-$kengo-primary-light: rgba(231, 92, 62, 0.15);
-$kengo-primary-glow: rgba(231, 92, 62, 0.4);
-$kengo-tertiary: #efc048;
-$kengo-glass: rgba(255, 255, 255, 0.7);
-$kengo-glass-border: rgba(255, 255, 255, 0.4);
-$kengo-text: #475569;
-$kengo-text-muted: #94a3b8;
+/* Variables y animación de entrada */
+:host {
+  --kengo-primary-glow: rgba(231, 92, 62, 0.4);
+  --kengo-glass: rgba(255, 255, 255, 0.7);
+  --kengo-glass-border: rgba(255, 255, 255, 0.4);
+  --kengo-text: #475569;
+  --kengo-text-muted: #94a3b8;
+  animation: navSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-// ============================================
+/* ============================================
 // DESKTOP NAVIGATION (Top Bar)
-// ============================================
+// ============================================*/
 
-// Estilos compartidos para avatar
+/* Estilos compartidos para avatar */
 .avatar-img {
   width: 100%;
   height: 100%;
@@ -35,7 +35,7 @@ $kengo-text-muted: #94a3b8;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, $kengo-primary 0%, $kengo-tertiary 100%);
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
   color: white;
   font-size: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.8);
@@ -53,8 +53,8 @@ $kengo-text-muted: #94a3b8;
   max-width: 80rem;
   margin: 0 auto;
   padding: 0.625rem 0.75rem 0.625rem 1.5rem;
-  background: $kengo-glass;
-  border: 1px solid $kengo-glass-border;
+  background: var(--kengo-glass);
+  border: 1px solid var(--kengo-glass-border);
   border-radius: 2rem;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -64,7 +64,7 @@ $kengo-text-muted: #94a3b8;
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-// Logo
+/* Logo */
 .logo-container {
   position: relative;
   display: flex;
@@ -105,14 +105,14 @@ $kengo-text-muted: #94a3b8;
   }
 }
 
-// Navegación central
+/* Navegación central */
 .nav-center {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-// Item de navegación desktop
+/* Item de navegación desktop */
 .nav-item-desktop {
   position: relative;
   display: flex;
@@ -121,7 +121,7 @@ $kengo-text-muted: #94a3b8;
   padding: 0.625rem 1rem;
   border-radius: 1rem;
   text-decoration: none;
-  color: $kengo-text;
+  color: var(--kengo-text);
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -137,7 +137,7 @@ $kengo-text-muted: #94a3b8;
 
   .icon-active {
     display: none;
-    color: $kengo-primary;
+    color: var(--kengo-primary);
   }
 
   .nav-icon-desktop {
@@ -148,8 +148,9 @@ $kengo-text-muted: #94a3b8;
   }
 
   &:hover {
-    color: $kengo-primary;
-    background: $kengo-primary-light;
+    color: var(--kengo-primary);
+    background: var(--kengo-primary-light);
+    background: color-mix(in srgb, var(--kengo-primary-light) 60%, transparent);
 
     .nav-icon-desktop {
       filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(636%)
@@ -162,9 +163,9 @@ $kengo-text-muted: #94a3b8;
   }
 
   &.active {
-    color: $kengo-primary;
-    background: $kengo-primary-light;
-    box-shadow: inset 0 0 0 1px rgba(231, 92, 62, 0.2);
+    color: var(--kengo-primary);
+    background: color-mix(in srgb, var(--kengo-primary-light) 30%, transparent);
+    border: solid 1px;
 
     .icon-default {
       display: none;
@@ -189,7 +190,7 @@ $kengo-text-muted: #94a3b8;
   transition: font-weight 0.2s ease;
 }
 
-// Avatar desktop
+/* Avatar desktop */
 .avatar-desktop {
   position: relative;
   display: flex;
@@ -219,27 +220,27 @@ $kengo-text-muted: #94a3b8;
   }
 
   &:hover .avatar-ring-desktop {
-    border-color: $kengo-primary;
+    border-color: var(--kengo-primary);
     transform: scale(1.05);
   }
 
-  // Estado activo cuando se está en /perfil
+  /* Estado activo cuando se está en /perfil */
   &.active {
     .avatar-glow {
       opacity: 1;
     }
 
     .avatar-ring-desktop {
-      border-color: $kengo-primary;
-      box-shadow: 0 0 0 3px $kengo-primary-light;
+      border-color: var(--kengo-primary);
+      box-shadow: 0 0 0 3px var(--kengo-primary-light);
     }
 
     .avatar-img {
-      border-color: $kengo-primary;
+      border-color: var(--kengo-primary);
     }
 
     .avatar-placeholder {
-      box-shadow: 0 0 0 3px $kengo-primary-light, 0 2px 8px rgba(231, 92, 62, 0.35);
+      box-shadow: 0 0 0 3px var(--kengo-primary-light), 0 2px 8px rgba(231, 92, 62, 0.35);
     }
   }
 }
@@ -263,9 +264,9 @@ $kengo-text-muted: #94a3b8;
   pointer-events: none;
 }
 
-// ============================================
+/* ============================================
 // ICONOS RELLENOS (Material Symbols)
-// ============================================
+// ============================================*/
 
 .relleno {
   font-variation-settings:
@@ -275,9 +276,9 @@ $kengo-text-muted: #94a3b8;
     'opsz' 24;
 }
 
-// ============================================
+/* ============================================
 // ANIMACIONES
-// ============================================
+// ============================================*/
 
 @keyframes pulseGlow {
   0%,
@@ -287,11 +288,6 @@ $kengo-text-muted: #94a3b8;
   50% {
     box-shadow: 0 0 0 8px rgba(231, 92, 62, 0);
   }
-}
-
-// Animación de entrada
-:host {
-  animation: navSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes navSlideIn {
