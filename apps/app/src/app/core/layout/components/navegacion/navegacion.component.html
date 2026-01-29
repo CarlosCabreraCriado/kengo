@@ -6,9 +6,10 @@
       <!-- Logo -->
       <a routerLink="/inicio" class="logo-container group">
         <img
-          src="assets/logo-kengo-horizontal.svg"
+          [src]="logoUrl()"
           alt="Kengo"
           class="logo-img"
+          (error)="onLogoError()"
         />
         <div class="logo-glow"></div>
       </a>
@@ -22,9 +23,10 @@
           class="nav-item-desktop"
         >
           <img
-            src="/assets/logo.svg"
+            [src]="logoIconUrl()"
             alt="Inicio"
             class="nav-icon-desktop"
+            (error)="onLogoError()"
           />
           <span class="nav-label-desktop">Inicio</span>
         </a>

@@ -55,8 +55,6 @@
 
 .logo {
   @apply h-9;
-  filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(636%)
-    hue-rotate(338deg) brightness(97%) contrast(89%);
 }
 
 .avatar-btn {

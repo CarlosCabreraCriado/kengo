@@ -15,6 +15,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { AuthService } from '../../../../../core/auth/services/auth.service';
+import { ThemeService } from '../../../../../core/services/theme.service';
 import {
   ActividadHoyService,
   BadgeType,
@@ -46,9 +47,13 @@ interface CardOption {
 export class InicioComponent implements OnDestroy {
   private sessionService = inject(SessionService);
   private authService = inject(AuthService);
+  private themeService = inject(ThemeService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
+
+  // Signal de logo desde ThemeService
+  logoUrl = this.themeService.logoUrl;
 
   carouselRef = viewChild<ElementRef<HTMLDivElement>>('carousel');
 
@@ -268,5 +273,9 @@ export class InicioComponent implements OnDestroy {
   async cerrarSesion(): Promise<void> {
     this.cerrarMenu();
     await this.authService.logout();
+  }
+
+  onLogoError(): void {
+    this.themeService.resetLogo();
   }
 }

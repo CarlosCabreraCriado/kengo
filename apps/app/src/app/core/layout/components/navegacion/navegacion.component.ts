@@ -10,6 +10,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 
 import { environment as env } from '../../../../../environments/environment';
 import { SessionService } from '../../../auth/services/session.service';
+import { ThemeService } from '../../../services/theme.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 @Component({
@@ -23,6 +24,11 @@ export class NavegacionComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   private router = inject(Router);
   public sessionService = inject(SessionService);
+  private themeService = inject(ThemeService);
+
+  // Signals de logo desde ThemeService
+  logoUrl = this.themeService.logoUrl;
+  logoIconUrl = this.themeService.logoIconUrl;
 
   public isMovil = signal(false);
   public isInicio = signal(false);
@@ -90,5 +96,9 @@ export class NavegacionComponent implements OnInit {
   logout() {
     console.warn('Realizando Logout...');
     this.router.navigate(['/login']);
+  }
+
+  onLogoError(): void {
+    this.themeService.resetLogo();
   }
 }

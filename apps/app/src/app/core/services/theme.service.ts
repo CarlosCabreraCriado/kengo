@@ -2,6 +2,7 @@ import { Injectable, inject, signal, effect } from '@angular/core';
 
 import { ClinicasService } from '../../features/clinica/data-access/clinicas.service';
 import type { Clinica } from '../../../types/global';
+import { environment as env } from '../../../environments/environment';
 
 interface ColorPalette {
   primary: string;
@@ -49,11 +50,15 @@ interface RGB {
 export class ThemeService {
   private readonly DEFAULT_PRIMARY = '#e75c3e';
   private readonly DEFAULT_TERTIARY = '#efc048';
+  private readonly DEFAULT_LOGO = 'assets/logo-kengo-horizontal.svg';
+  private readonly DEFAULT_LOGO_ICON = 'assets/logo.svg';
 
   private clinicasService = inject(ClinicasService);
 
   currentPrimary = signal<string>(this.DEFAULT_PRIMARY);
   currentTertiary = signal<string>(this.DEFAULT_TERTIARY);
+  logoUrl = signal<string>(this.DEFAULT_LOGO);
+  logoIconUrl = signal<string>(this.DEFAULT_LOGO_ICON);
 
   constructor() {
     // Aplicar colores por defecto al iniciar
@@ -63,6 +68,7 @@ export class ThemeService {
     effect(() => {
       const clinica = this.clinicasService.selectedClinica();
       this.aplicarTemaClinica(clinica);
+      this.actualizarLogo(clinica);
     });
   }
 
@@ -80,6 +86,30 @@ export class ThemeService {
     this.inyectarCSSVariables(palette);
 
     console.log('[ThemeService] Tema aplicado:', { primary, tertiary });
+  }
+
+  /**
+   * Actualiza las URLs de los logos basándose en la clínica
+   */
+  private actualizarLogo(clinica: Clinica | null): void {
+    if (clinica?.logo) {
+      const logoUrl = `${env.DIRECTUS_URL}/assets/${clinica.logo}`;
+      this.logoUrl.set(logoUrl);
+      this.logoIconUrl.set(logoUrl);
+      console.log('[ThemeService] Logo de clínica aplicado:', logoUrl);
+    } else {
+      this.logoUrl.set(this.DEFAULT_LOGO);
+      this.logoIconUrl.set(this.DEFAULT_LOGO_ICON);
+      console.log('[ThemeService] Logo por defecto aplicado');
+    }
+  }
+
+  /**
+   * Restaura el logo por defecto (útil para handlers de error en imágenes)
+   */
+  resetLogo(): void {
+    this.logoUrl.set(this.DEFAULT_LOGO);
+    this.logoIconUrl.set(this.DEFAULT_LOGO_ICON);
   }
 
   /**

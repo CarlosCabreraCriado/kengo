@@ -151,11 +151,6 @@
     color: var(--kengo-primary);
     background: var(--kengo-primary-light);
     background: color-mix(in srgb, var(--kengo-primary-light) 60%, transparent);
-
-    .nav-icon-desktop {
-      filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(636%)
-        hue-rotate(338deg) brightness(97%) contrast(89%);
-    }
   }
 
   &:active {
@@ -173,11 +168,6 @@
 
     .icon-active {
       display: block;
-    }
-
-    .nav-icon-desktop {
-      filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(636%)
-        hue-rotate(338deg) brightness(97%) contrast(89%);
     }
 
     .nav-label-desktop {

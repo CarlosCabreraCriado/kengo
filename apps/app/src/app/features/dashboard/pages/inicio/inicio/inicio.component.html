@@ -4,7 +4,7 @@
     <div class="header-content">
       <!-- MÓVIL: Logo + Avatar -->
       @if (isMovil()) {
-        <img src="assets/logo-kengo-horizontal.svg" alt="Kengo" class="logo" />
+        <img [src]="logoUrl()" alt="Kengo" class="logo" (error)="onLogoError()" />
       } @else {
         <!-- DESKTOP: Saludo con avatar grande -->
         <div class="greeting-section">
