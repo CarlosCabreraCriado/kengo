@@ -1,10 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'ui-divider',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-divider" [class]="dividerClasses" role="separator">
       @if (label) {

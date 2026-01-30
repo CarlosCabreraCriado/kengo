@@ -4,7 +4,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -35,7 +34,6 @@ interface DirectusPage<T> {
   selector: 'app-pacientes-list',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
   ],
   templateUrl: './pacientes-list.component.html',

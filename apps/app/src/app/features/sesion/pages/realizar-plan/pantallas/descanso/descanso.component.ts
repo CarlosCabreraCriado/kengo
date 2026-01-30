@@ -9,7 +9,6 @@ import {
   signal,
   OnDestroy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { fadeAnimation } from '../../realizar-plan.animations';
@@ -17,7 +16,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 @Component({
   selector: 'app-descanso',
   standalone: true,
-  imports: [CommonModule, TemporizadorComponent],
+  imports: [TemporizadorComponent],
   animations: [fadeAnimation],
   template: `
     <div class="descanso-container">

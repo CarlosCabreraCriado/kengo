@@ -1,5 +1,4 @@
 import { Component, inject, signal, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -10,7 +9,6 @@ import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-mode
   standalone: true,
   selector: 'app-registro',
   imports: [
-    CommonModule,
     RouterLink,
     ReactiveFormsModule,
     StepperComponent,

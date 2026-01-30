@@ -1,5 +1,4 @@
 import { Component, inject, signal, computed, ElementRef, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { httpResource } from '@angular/common/http';
@@ -38,7 +37,6 @@ interface DirectusItem<T> {
   selector: 'app-add-paciente',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     DialogContainerComponent,
     DialogHeaderComponent,

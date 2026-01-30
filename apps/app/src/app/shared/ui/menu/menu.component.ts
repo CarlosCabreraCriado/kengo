@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter, ElementRef, HostListener, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 export interface MenuItem {
   id: string;
@@ -13,7 +12,7 @@ export interface MenuItem {
 @Component({
   selector: 'ui-menu',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-menu-container" [class.open]="isOpen()">
       <!-- Trigger -->

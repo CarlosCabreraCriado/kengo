@@ -5,7 +5,6 @@ import {
   inject,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import {
@@ -16,7 +15,7 @@ import {
 @Component({
   selector: 'app-resumen-sesion',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './resumen-sesion.component.html',
   styleUrl: './resumen-sesion.component.css',
   host: {

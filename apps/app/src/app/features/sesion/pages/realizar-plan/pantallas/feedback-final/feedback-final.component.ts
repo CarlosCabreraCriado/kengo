@@ -6,7 +6,6 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
@@ -25,7 +24,6 @@ export interface FeedbackFinalData {
   selector: 'app-feedback-final',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     EscalaDolorComponent,
   ],

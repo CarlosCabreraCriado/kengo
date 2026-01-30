@@ -6,7 +6,6 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
@@ -15,7 +14,7 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
 @Component({
   selector: 'app-feedback-ejercicio',
   standalone: true,
-  imports: [CommonModule, FormsModule, EscalaDolorComponent],
+  imports: [FormsModule, EscalaDolorComponent],
   animations: [checkmarkAnimation, fadeAnimation],
   template: `
     <div class="flex flex-1 flex-col gap-4 overflow-y-auto pt-2">

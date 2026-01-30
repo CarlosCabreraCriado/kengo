@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { DialogContainerComponent } from './dialog-container.component';
 import { DialogHeaderComponent } from './dialog-header.component';
@@ -12,7 +11,6 @@ import { ConfirmDialogData } from './dialog.service';
   selector: 'ui-confirm-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     DialogContainerComponent,
     DialogHeaderComponent,
     DialogContentComponent,

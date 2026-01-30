@@ -1,10 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'ui-dialog-container',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-dialog" [class]="dialogClasses">
       <ng-content></ng-content>

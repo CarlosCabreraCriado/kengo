@@ -1,5 +1,4 @@
 import { Component, Input, forwardRef, signal, ElementRef, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface SelectOption {
@@ -11,7 +10,7 @@ export interface SelectOption {
 @Component({
   selector: 'ui-select',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

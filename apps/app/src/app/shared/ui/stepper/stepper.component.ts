@@ -1,10 +1,9 @@
 import { Component, Input, Output, EventEmitter, ContentChildren, QueryList, AfterContentInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'ui-step',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (isActive) {
       <div class="ui-step-content" [@.disabled]="true">
@@ -35,7 +34,7 @@ export class StepComponent {
 @Component({
   selector: 'ui-stepper',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-stepper" [class.vertical]="orientation === 'vertical'">
       <!-- Step indicators -->

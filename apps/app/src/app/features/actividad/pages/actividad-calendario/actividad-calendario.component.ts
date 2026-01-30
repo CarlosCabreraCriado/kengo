@@ -5,7 +5,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
@@ -54,7 +53,7 @@ interface DiaProximoConEjercicios {
 @Component({
   selector: 'app-actividad-calendario',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './actividad-calendario.component.html',
   styleUrl: './actividad-calendario.component.css',
   host: {

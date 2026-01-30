@@ -5,7 +5,6 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import QRCode from 'qrcode';
 
@@ -17,7 +16,6 @@ import { DialogActionsComponent } from '../dialog/dialog-actions.component';
 @Component({
   standalone: true,
   imports: [
-    CommonModule,
     DialogContainerComponent,
     DialogHeaderComponent,
     DialogContentComponent,

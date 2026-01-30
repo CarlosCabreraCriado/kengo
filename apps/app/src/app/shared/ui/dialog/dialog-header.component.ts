@@ -1,10 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'ui-dialog-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-dialog-header">
       <div class="flex-1 min-w-0">

@@ -1,5 +1,4 @@
 import { Component, Input, forwardRef, signal, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 
 export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
@@ -7,7 +6,7 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
 @Component({
   selector: 'ui-input',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

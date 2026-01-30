@@ -1,5 +1,4 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -24,7 +23,7 @@ const ERROR_MESSAGES: Record<TokenError, string> = {
 @Component({
   standalone: true,
   selector: 'app-magic',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './magic.component.html',
   styleUrl: './magic.component.css',
 })

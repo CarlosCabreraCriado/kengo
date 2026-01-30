@@ -5,7 +5,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -48,7 +47,7 @@ interface EjercicioReciente {
 @Component({
   selector: 'app-actividad-estadisticas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './actividad-estadisticas.component.html',
   styleUrl: './actividad-estadisticas.component.css',
   host: {

@@ -1,11 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ToastService, Toast } from './toast.service';
 
 @Component({
   selector: 'ui-toast-container',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-toast-container">
       @for (toast of toastService.toasts(); track toast.id) {

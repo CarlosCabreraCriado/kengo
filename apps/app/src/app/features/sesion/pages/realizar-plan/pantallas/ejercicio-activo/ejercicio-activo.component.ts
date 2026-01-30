@@ -8,7 +8,6 @@ import {
   ViewChild,
   ElementRef,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { fadeAnimation } from '../../realizar-plan.animations';
@@ -16,7 +15,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 @Component({
   selector: 'app-ejercicio-activo',
   standalone: true,
-  imports: [CommonModule, TemporizadorComponent],
+  imports: [TemporizadorComponent],
   animations: [fadeAnimation],
   template: `
     <!-- Contenedor principal con gestos -->

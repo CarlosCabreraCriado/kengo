@@ -1,10 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'ui-dialog-actions',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-dialog-actions" [class]="alignmentClasses">
       <ng-content></ng-content>

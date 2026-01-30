@@ -8,12 +8,11 @@ import {
   effect,
   OnDestroy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-temporizador',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="timer-container" [class.warning]="esAdvertencia()">
       <svg class="timer-ring" viewBox="0 0 100 100">

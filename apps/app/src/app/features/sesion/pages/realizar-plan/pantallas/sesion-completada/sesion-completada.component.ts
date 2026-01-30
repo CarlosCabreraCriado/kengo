@@ -5,7 +5,6 @@ import {
   inject,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import {
   celebrateAnimation,
@@ -16,7 +15,7 @@ import {
 @Component({
   selector: 'app-sesion-completada',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   animations: [celebrateAnimation, fadeAnimation, slideUpAnimation],
   template: `
     <div class="flex flex-1 flex-col gap-4 overflow-hidden py-2">

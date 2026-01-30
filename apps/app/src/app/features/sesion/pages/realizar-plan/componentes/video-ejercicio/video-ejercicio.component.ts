@@ -8,12 +8,11 @@ import {
   ElementRef,
   AfterViewInit,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-video-ejercicio',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div
       class="video-container relative aspect-video w-full cursor-pointer overflow-hidden rounded-3xl bg-zinc-800 shadow-xl transition-all duration-300"

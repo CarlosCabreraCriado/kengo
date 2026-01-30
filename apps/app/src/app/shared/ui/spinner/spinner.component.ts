@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 export type SpinnerSize = 'sm' | 'md' | 'lg' | 'xl';
 export type SpinnerColor = 'primary' | 'white' | 'gray';
@@ -7,7 +6,7 @@ export type SpinnerColor = 'primary' | 'white' | 'gray';
 @Component({
   selector: 'ui-spinner',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div [class]="spinnerClasses" role="status" aria-label="Cargando">
       <svg class="animate-spin" viewBox="0 0 24 24" fill="none">

@@ -6,7 +6,6 @@ import {
   HostListener,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { RegistroSesionService } from '../../data-access/registro-sesion.service';
 
@@ -26,7 +25,6 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
   selector: 'app-realizar-plan',
   standalone: true,
   imports: [
-    CommonModule,
     ResumenSesionComponent,
     EjercicioActivoComponent,
     DescansoComponent,

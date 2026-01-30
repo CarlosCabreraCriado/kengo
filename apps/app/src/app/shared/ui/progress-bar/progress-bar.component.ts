@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 export type ProgressBarMode = 'determinate' | 'indeterminate';
 export type ProgressBarColor = 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
@@ -7,7 +6,7 @@ export type ProgressBarColor = 'primary' | 'secondary' | 'success' | 'warning' |
 @Component({
   selector: 'ui-progress-bar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="ui-progress-bar" [class]="containerClasses" role="progressbar"
          [attr.aria-valuenow]="mode === 'determinate' ? value : null"

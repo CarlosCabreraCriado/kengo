@@ -1,10 +1,9 @@
 import { Component, Input, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-contador-series',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="flex flex-col items-center gap-2 rounded-2xl bg-white/60 px-6 py-3 shadow-md backdrop-blur-sm">
       <span class="text-sm font-semibold tracking-wide text-zinc-700">

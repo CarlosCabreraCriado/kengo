@@ -7,13 +7,12 @@ import {
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 
 @Component({
   standalone: true,
   selector: 'app-reset-password',
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './reset-password.component.html',
 })
 export class ResetPasswordComponent implements OnInit {

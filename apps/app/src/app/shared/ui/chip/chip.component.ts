@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 export type ChipVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger';
 export type ChipSize = 'sm' | 'md';
@@ -7,7 +6,7 @@ export type ChipSize = 'sm' | 'md';
 @Component({
   selector: 'ui-chip',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <span class="ui-chip" [class]="chipClasses" [class.selected]="selected" [class.clickable]="selectable">
       @if (icon) {

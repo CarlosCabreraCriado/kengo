@@ -1,12 +1,11 @@
 import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 export type DrawerPosition = 'left' | 'right' | 'bottom';
 
 @Component({
   selector: 'ui-drawer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (isOpen) {
       <!-- Backdrop -->

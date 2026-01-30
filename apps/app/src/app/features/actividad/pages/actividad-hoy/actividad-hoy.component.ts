@@ -5,7 +5,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -44,7 +43,7 @@ interface DiaProximoConEjercicios {
 @Component({
   selector: 'app-actividad-hoy',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './actividad-hoy.component.html',
   styleUrl: './actividad-hoy.component.css',
   host: {
