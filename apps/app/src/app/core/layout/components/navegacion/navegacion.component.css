@@ -180,6 +180,11 @@
   transition: font-weight 0.2s ease;
 }
 
+/* Avatar menu container */
+.avatar-menu-container {
+  position: relative;
+}
+
 /* Avatar desktop */
 .avatar-desktop {
   position: relative;
@@ -189,6 +194,9 @@
   padding: 0.25rem;
   border-radius: 50%;
   text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
   transition: all 0.3s ease;
 
   .avatar-glow {
@@ -214,8 +222,8 @@
     transform: scale(1.05);
   }
 
-  /* Estado activo cuando se está en /perfil */
-  &.active {
+  /* Estado activo cuando el menú está abierto */
+  &.menu-open {
     .avatar-glow {
       opacity: 1;
     }
@@ -233,6 +241,95 @@
       box-shadow: 0 0 0 3px var(--kengo-primary-light), 0 2px 8px rgba(231, 92, 62, 0.35);
     }
   }
+}
+
+/* Menú desplegable de usuario */
+.user-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  width: 12rem;
+  z-index: 100;
+  border-radius: 1rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: menuSlideIn 0.2s ease-out;
+}
+
+@keyframes menuSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #3f3f46;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+
+  .material-symbols-outlined {
+    font-size: 1.25rem;
+    color: #71717a;
+    transition: color 0.15s ease;
+  }
+
+  &:hover {
+    background: #f4f4f5;
+
+    .material-symbols-outlined {
+      color: var(--kengo-primary);
+    }
+  }
+
+  &:active {
+    background: #e4e4e7;
+  }
+}
+
+.menu-item-danger {
+  color: #dc2626;
+  border-top: 1px solid #f4f4f5;
+
+  .material-symbols-outlined {
+    color: #ef4444;
+  }
+
+  &:hover {
+    background: #fef2f2;
+
+    .material-symbols-outlined {
+      color: #dc2626;
+    }
+  }
+}
+
+/* Backdrop para cerrar menú */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
 }
 
 .avatar-container-desktop {

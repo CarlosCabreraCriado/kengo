@@ -10,6 +10,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 
 import { environment as env } from '../../../../../environments/environment';
 import { SessionService } from '../../../auth/services/session.service';
+import { AuthService } from '../../../auth/services/auth.service';
 import { ThemeService } from '../../../services/theme.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
@@ -24,6 +25,7 @@ export class NavegacionComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   private router = inject(Router);
   public sessionService = inject(SessionService);
+  private authService = inject(AuthService);
   private themeService = inject(ThemeService);
 
   // Signals de logo desde ThemeService
@@ -93,9 +95,25 @@ export class NavegacionComponent implements OnInit {
     this.isInicio.set(baseRoute === '/inicio' || baseRoute === '/');
   }
 
-  logout() {
-    console.warn('Realizando Logout...');
-    this.router.navigate(['/login']);
+  // Estado del menú de usuario
+  menuAbierto = signal(false);
+
+  toggleMenu(): void {
+    this.menuAbierto.update((v) => !v);
+  }
+
+  cerrarMenu(): void {
+    this.menuAbierto.set(false);
+  }
+
+  irAPerfil(): void {
+    this.cerrarMenu();
+    this.router.navigate(['/perfil']);
+  }
+
+  async cerrarSesion(): Promise<void> {
+    this.cerrarMenu();
+    await this.authService.logout();
   }
 
   onLogoError(): void {

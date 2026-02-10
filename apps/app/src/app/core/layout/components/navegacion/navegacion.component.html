@@ -88,20 +88,58 @@
         </a>
       </nav>
 
-      <!-- Avatar desktop -->
-      <a routerLink="/perfil" routerLinkActive="active" class="avatar-desktop group">
-        <div class="avatar-container-desktop">
-          @if (avatarUrl()) {
-            <img [src]="avatarUrl()" alt="Perfil" class="avatar-img" />
-          } @else {
-            <div class="avatar-placeholder">
-              <span class="material-symbols-outlined text-lg">person</span>
-            </div>
-          }
-          <div class="avatar-ring-desktop"></div>
-        </div>
-        <div class="avatar-glow"></div>
-      </a>
+      <!-- Avatar desktop con menú desplegable -->
+      <div class="avatar-menu-container">
+        <button
+          type="button"
+          class="avatar-desktop group"
+          [class.menu-open]="menuAbierto()"
+          (click)="toggleMenu()"
+          aria-label="Abrir menú de usuario"
+          [attr.aria-expanded]="menuAbierto()"
+        >
+          <div class="avatar-container-desktop">
+            @if (avatarUrl()) {
+              <img [src]="avatarUrl()" alt="Perfil" class="avatar-img" />
+            } @else {
+              <div class="avatar-placeholder">
+                <span class="material-symbols-outlined text-lg">person</span>
+              </div>
+            }
+            <div class="avatar-ring-desktop"></div>
+          </div>
+          <div class="avatar-glow"></div>
+        </button>
+
+        @if (menuAbierto()) {
+          <div class="user-menu" role="menu">
+            <button
+              type="button"
+              class="menu-item"
+              role="menuitem"
+              (click)="irAPerfil()"
+            >
+              <span class="material-symbols-outlined">person</span>
+              <span>Mi perfil</span>
+            </button>
+            <button
+              type="button"
+              class="menu-item menu-item-danger"
+              role="menuitem"
+              (click)="cerrarSesion()"
+            >
+              <span class="material-symbols-outlined">logout</span>
+              <span>Cerrar sesión</span>
+            </button>
+          </div>
+
+          <div
+            class="menu-backdrop"
+            (click)="cerrarMenu()"
+            aria-hidden="true"
+          ></div>
+        }
+      </div>
     </div>
   </header>
 }

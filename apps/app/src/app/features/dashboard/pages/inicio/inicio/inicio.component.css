@@ -184,32 +184,6 @@
   @apply text-sm text-zinc-500 m-0 mt-0.5;
 }
 
-/* Botón logout desktop */
-.logout-btn-desktop {
-  @apply flex items-center gap-2 h-10 px-4
-         rounded-xl border-none cursor-pointer
-         text-sm font-medium text-zinc-600
-         transition-all duration-200;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.logout-btn-desktop:hover {
-  @apply text-red-600 bg-red-50;
-  border-color: rgba(239, 68, 68, 0.2);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
-}
-
-.logout-btn-desktop:active {
-  @apply scale-95;
-}
-
-.logout-btn-desktop .material-symbols-outlined {
-  @apply text-lg;
-}
 
 /* ============================================
    MAIN CONTENT
