@@ -107,6 +107,15 @@ export class PlanBuilderService {
     () => !!this.paciente() && !!this.fisioId() && this.items().length > 0,
   );
 
+  // --- Dirty tracking (edit mode) ---
+  private readonly originalSnapshot = signal<string | null>(null);
+
+  readonly isDirty = computed(() => {
+    const snap = this.originalSnapshot();
+    if (snap === null) return false; // no snapshot = no edit mode or not loaded yet
+    return snap !== this.captureSnapshot();
+  });
+
   readonly drawerOpen = signal(false);
   private saveTimer: any = null; // debounce: simple setTimeout
   private storageInicializado = false; // para evitar guardar al restaurar
@@ -513,6 +522,35 @@ export class PlanBuilderService {
   }
 
   // ============================================
+  // DIRTY TRACKING
+  // ============================================
+
+  private captureSnapshot(): string {
+    return JSON.stringify({
+      titulo: this.titulo(),
+      descripcion: this.descripcion(),
+      fecha_inicio: this.fecha_inicio(),
+      fecha_fin: this.fecha_fin(),
+      items: this.items().map((i) => ({
+        ejercicio: i.ejercicio.id_ejercicio,
+        series: i.series,
+        repeticiones: i.repeticiones,
+        duracion_seg: i.duracion_seg,
+        descanso_seg: i.descanso_seg,
+        veces_dia: i.veces_dia,
+        dias_semana: i.dias_semana,
+        instrucciones_paciente: i.instrucciones_paciente,
+        notas_fisio: i.notas_fisio,
+        sort: i.sort,
+      })),
+    });
+  }
+
+  markAsSaved() {
+    this.originalSnapshot.set(this.captureSnapshot());
+  }
+
+  // ============================================
   // MODO EDICION
   // ============================================
 
@@ -586,8 +624,12 @@ export class PlanBuilderService {
       this.planId.set(planId);
       this.titulo.set(plan.titulo || '');
       this.descripcion.set(plan.descripcion || '');
-      this.fecha_inicio.set(plan.fecha_inicio || null);
-      this.fecha_fin.set(plan.fecha_fin || null);
+      this.fecha_inicio.set(
+        plan.fecha_inicio ? plan.fecha_inicio.split('T')[0] : null,
+      );
+      this.fecha_fin.set(
+        plan.fecha_fin ? plan.fecha_fin.split('T')[0] : null,
+      );
 
       // Cargar ejercicios
       const items: EjercicioPlan[] = (plan.ejercicios || [])
@@ -608,6 +650,9 @@ export class PlanBuilderService {
         .sort((a: EjercicioPlan, b: EjercicioPlan) => a.sort - b.sort);
 
       this.items.set(items);
+
+      // Capture snapshot for dirty tracking
+      this.originalSnapshot.set(this.captureSnapshot());
 
       return true;
     } catch (error) {
@@ -807,6 +852,7 @@ export class PlanBuilderService {
     this.descripcion.set('');
     this.fecha_inicio.set(null);
     this.fecha_fin.set(null);
+    this.originalSnapshot.set(null);
     // Mantener paciente si existe
   }
 
@@ -817,6 +863,7 @@ export class PlanBuilderService {
     this.resetForNewPlan();
     this.paciente.set(null);
     this.closeDrawer();
+    this.originalSnapshot.set(null);
   }
 
   // ============================================

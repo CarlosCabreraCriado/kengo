@@ -3,6 +3,7 @@ import {
   inject,
   OnInit,
   OnDestroy,
+  DestroyRef,
   signal,
   computed,
 } from '@angular/core';
@@ -14,6 +15,7 @@ import {
   ReactiveFormsModule,
   FormsModule,
 } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Dialog } from '@angular/cdk/dialog';
@@ -52,6 +54,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private sessionService = inject(SessionService);
   private breakpointObserver = inject(BreakpointObserver);
+  private destroyRef = inject(DestroyRef);
   svc = inject(PlanBuilderService);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
@@ -134,6 +137,16 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       }
       this.syncFormFromService();
     }
+
+    // Sync form changes to service in real-time for dirty tracking
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((v) => {
+        this.svc.titulo.set(v.titulo || '');
+        this.svc.descripcion.set(v.descripcion || '');
+        this.svc.fecha_inicio.set(v.fecha_inicio || null);
+        this.svc.fecha_fin.set(v.fecha_fin || null);
+      });
   }
 
   ngOnDestroy() {
@@ -310,6 +323,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       console.warn('Plan ID recibido', planId);
 
       if (planId) {
+        if (this.isEditMode()) {
+          this.svc.markAsSaved();
+        }
         this.toastService.show(
           this.isEditMode() ? 'Plan actualizado' : 'Plan creado'
         );

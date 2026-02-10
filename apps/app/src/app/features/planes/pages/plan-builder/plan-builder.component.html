@@ -103,6 +103,39 @@
     </header>
   }
 
+  <!-- Barra superior desktop -->
+  @if (!isMovil()) {
+    <div class="plan-back-bar">
+      @if (isEditMode()) {
+        <div class="plan-top-actions">
+          <button type="button" class="btn-back" (click)="cancelar()">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <span>Cancelar</span>
+          </button>
+          <button
+            type="button"
+            class="btn-top-save"
+            (click)="guardarPlan()"
+            [disabled]="!canSubmit() || isSaving() || !svc.isDirty()"
+          >
+            @if (isSaving()) {
+              <span class="btn-save__spinner"></span>
+              <span>Guardando...</span>
+            } @else {
+              <span class="material-symbols-outlined">check</span>
+              <span>Guardar</span>
+            }
+          </button>
+        </div>
+      } @else {
+        <button type="button" class="btn-back" (click)="cancelar()">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Volver</span>
+        </button>
+      }
+    </div>
+  }
+
   <!-- Main content -->
   <div class="plan-content">
     <div class="plan-content__inner">
@@ -597,14 +630,14 @@
   </div>
 </section>
 
-<!-- Floating action bar -->
-<div class="floating-action-bar">
+<!-- Floating action bar (oculta en desktop edit mode, los botones están arriba) -->
+<div class="floating-action-bar" [class.floating-action-bar--hidden]="isEditMode() && !isMovil()">
   <div class="floating-action-bar__inner">
     <button
       type="button"
       class="btn-save"
       (click)="guardarPlan()"
-      [disabled]="!canSubmit() || isSaving()"
+      [disabled]="!canSubmit() || isSaving() || (isEditMode() && !svc.isDirty())"
     >
       @if (isSaving()) {
         <span class="btn-save__loading">

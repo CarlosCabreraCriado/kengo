@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core';
+import { unsavedChangesGuard } from './features/planes/guards/unsaved-changes.guard';
 
 export const routes: Routes = [
   // Redirección raíz
@@ -122,6 +123,7 @@ export const routes: Routes = [
         (m) => m.PlanBuilderComponent
       ),
     canActivate: [AuthGuard],
+    canDeactivate: [unsavedChangesGuard],
   },
   {
     path: 'planes/:id',
