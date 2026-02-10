@@ -1,4 +1,14 @@
-import { Component, EventEmitter, Input, Output, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Dialog } from '@angular/cdk/dialog';
 import { environment as env } from '../../../../../environments/environment';
@@ -6,22 +16,39 @@ import { environment as env } from '../../../../../environments/environment';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ImageUploadComponent } from '../../../../shared/ui/image-upload/image-upload.component';
-import type { Clinica, ClinicaImagen, UpdateClinicaPayload } from '../../../../../types/global';
+import type {
+  Clinica,
+  ClinicaImagen,
+  UpdateClinicaPayload,
+} from '../../../../../types/global';
 
 const MAX_GALLERY_IMAGES = 5;
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_FORMATS = ['image/png', 'image/jpeg', 'image/webp'];
 
-/** Paleta de colores predefinidos para selección rápida */
+/** Paleta de colores predefinidos (todos con buen contraste sobre blanco) */
 const COLOR_PRESETS = [
-  '#e75c3e', // Kengo default (coral)
-  '#3b82f6', // Blue
-  '#10b981', // Emerald
-  '#8b5cf6', // Purple
-  '#f59e0b', // Amber
-  '#ec4899', // Pink
-  '#6366f1', // Indigo
-  '#14b8a6', // Teal
+  '#1e1e1e', // Gris muy oscuro
+  '#64748b', // Slate
+  '#78716c', // Stone
+  '#92400e', // Brown dark
+  '#a16207', // Brown amber
+  '#dc2626', // Red
+  '#e75c3e', // Kengo coral
+  '#ea580c', // Orange
+  '#d97706', // Amber
+  '#ca8a04', // Yellow dark
+  '#eab308', // Yellow vibrant
+  '#a3a30a', // Yellow olive
+  '#16a34a', // Green
+  '#059669', // Emerald
+  '#0891b2', // Cyan
+  '#2563eb', // Blue
+  '#4f46e5', // Indigo
+  '#7c3aed', // Violet
+  '#c026d3', // Fuchsia
+  '#db2777', // Pink
+  '#be123c', // Rose
 ];
 
 @Component({
@@ -80,19 +107,23 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     }
     if (this.removeLogo()) return null;
     const id = this.existingLogoId();
-    return id ? `${env.DIRECTUS_URL}/assets/${id}?fit=cover&width=200&height=200` : null;
+    return id
+      ? `${env.DIRECTUS_URL}/assets/${id}?fit=cover&width=200&height=200`
+      : null;
   });
 
   // Computed: Can add more images
   canAddMoreImages = computed(() => {
-    const existing = this.existingImages().length - this.imagesToDelete().length;
+    const existing =
+      this.existingImages().length - this.imagesToDelete().length;
     const newImages = this.newImageFiles().length;
     return existing + newImages < MAX_GALLERY_IMAGES;
   });
 
   // Computed: Remaining slots for images
   remainingImageSlots = computed(() => {
-    const existing = this.existingImages().length - this.imagesToDelete().length;
+    const existing =
+      this.existingImages().length - this.imagesToDelete().length;
     const newImages = this.newImageFiles().length;
     return MAX_GALLERY_IMAGES - existing - newImages;
   });
@@ -119,7 +150,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     // Clean up preview URLs
-    this.previewUrls.forEach(url => URL.revokeObjectURL(url));
+    this.previewUrls.forEach((url) => URL.revokeObjectURL(url));
   }
 
   // === Logo Methods ===
@@ -127,7 +158,9 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   openLogoUploader() {
     const dialogRef = this.dialog.open<{ file: File }>(ImageUploadComponent, {
       data: {
-        url_perfil: this.existingLogoId() ? `${env.DIRECTUS_URL}/assets/${this.existingLogoId()}?fit=cover` : null,
+        url_perfil: this.existingLogoId()
+          ? `${env.DIRECTUS_URL}/assets/${this.existingLogoId()}?fit=cover`
+          : null,
         resizeToWidth: 512,
         format: 'png',
         quality: 100,
@@ -168,7 +201,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     }
 
     if (validFiles.length > 0) {
-      this.newImageFiles.update(current => [...current, ...validFiles]);
+      this.newImageFiles.update((current) => [...current, ...validFiles]);
     }
 
     // Clear input to allow re-selecting same files
@@ -189,7 +222,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   }
 
   removeNewImage(index: number) {
-    this.newImageFiles.update(current => {
+    this.newImageFiles.update((current) => {
       const updated = [...current];
       updated.splice(index, 1);
       return updated;
@@ -197,7 +230,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   }
 
   markImageForDeletion(junctionId: number) {
-    this.imagesToDelete.update(current => [...current, junctionId]);
+    this.imagesToDelete.update((current) => [...current, junctionId]);
   }
 
   isImageMarkedForDeletion(junctionId: number): boolean {
@@ -205,7 +238,9 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   }
 
   restoreImage(junctionId: number) {
-    this.imagesToDelete.update(current => current.filter(id => id !== junctionId));
+    this.imagesToDelete.update((current) =>
+      current.filter((id) => id !== junctionId),
+    );
   }
 
   getNewImagePreviewUrl(file: File): string {
@@ -230,7 +265,9 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       // 1. Upload new logo if changed
       let logoId: string | null | undefined = undefined;
       if (this.logoFile()) {
-        const result = await this.clinicaGestionService.uploadFile(this.logoFile()!);
+        const result = await this.clinicaGestionService.uploadFile(
+          this.logoFile()!,
+        );
         if (!result.success) {
           throw new Error(result.error || 'Error al subir el logo');
         }
@@ -269,11 +306,14 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       }
 
       // Add images operations if there are changes
-      const hasImageChanges = newImageIds.length > 0 || this.imagesToDelete().length > 0;
+      const hasImageChanges =
+        newImageIds.length > 0 || this.imagesToDelete().length > 0;
       if (hasImageChanges) {
         payload.imagenes = {};
         if (newImageIds.length > 0) {
-          payload.imagenes.create = newImageIds.map(id => ({ directus_files_id: id }));
+          payload.imagenes.create = newImageIds.map((id) => ({
+            directus_files_id: id,
+          }));
         }
         if (this.imagesToDelete().length > 0) {
           payload.imagenes.delete = this.imagesToDelete();
@@ -283,7 +323,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       // 4. Update clinic
       const result = await this.clinicaGestionService.actualizarClinica(
         this.clinica.id_clinica,
-        payload
+        payload,
       );
 
       if (result.success) {
@@ -294,7 +334,9 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
         this.error.set(result.error || 'Error al actualizar la clínica');
       }
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Error al actualizar la clínica');
+      this.error.set(
+        err instanceof Error ? err.message : 'Error al actualizar la clínica',
+      );
     } finally {
       this.loading.set(false);
     }

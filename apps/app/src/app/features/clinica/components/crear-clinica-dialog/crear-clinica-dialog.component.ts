@@ -2,6 +2,31 @@ import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 
+/** Paleta de colores predefinidos (todos con buen contraste sobre blanco) */
+const COLOR_PRESETS = [
+  '#1e1e1e', // Gris muy oscuro
+  '#64748b', // Slate
+  '#78716c', // Stone
+  '#92400e', // Brown dark
+  '#a16207', // Brown amber
+  '#dc2626', // Red
+  '#e75c3e', // Kengo coral
+  '#ea580c', // Orange
+  '#d97706', // Amber
+  '#ca8a04', // Yellow dark
+  '#eab308', // Yellow vibrant
+  '#a3a30a', // Yellow olive
+  '#16a34a', // Green
+  '#059669', // Emerald
+  '#0891b2', // Cyan
+  '#2563eb', // Blue
+  '#4f46e5', // Indigo
+  '#7c3aed', // Violet
+  '#c026d3', // Fuchsia
+  '#db2777', // Pink
+  '#be123c', // Rose
+];
+
 @Component({
   standalone: true,
   selector: 'app-crear-clinica-dialog',
@@ -28,6 +53,12 @@ export class CrearClinicaDialogComponent {
 
   loading = signal(false);
   error = signal<string | null>(null);
+
+  readonly colorPresets = COLOR_PRESETS;
+
+  selectColor(color: string) {
+    this.form.patchValue({ color_primario: color });
+  }
 
   async onSubmit() {
     if (this.form.invalid || this.loading()) return;

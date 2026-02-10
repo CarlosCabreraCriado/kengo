@@ -98,15 +98,22 @@
 
       <!-- Color primario -->
       <div class="form-group">
-        <label for="color" class="form-label">Color corporativo</label>
-        <div class="color-picker-wrapper">
-          <input
-            id="color"
-            type="color"
-            formControlName="color_primario"
-            class="color-input"
-          />
-          <span class="color-value">{{ form.value.color_primario }}</span>
+        <label class="form-label">Color corporativo</label>
+        <div class="color-presets">
+          @for (color of colorPresets; track color) {
+            <button
+              type="button"
+              class="color-preset"
+              [style.background-color]="color"
+              [class.active]="form.value.color_primario === color"
+              (click)="selectColor(color)"
+              [title]="color"
+            >
+              @if (form.value.color_primario === color) {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+          }
         </div>
       </div>
 
