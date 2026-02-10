@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
+import { PassThrough } from "stream";
 import { Response } from "express";
 import { PlanPDFData, EjercicioPlan } from "../types/plan";
 import "dotenv/config";
@@ -511,4 +512,35 @@ function formatDateTime(date: Date): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+export async function generatePlanPDFBuffer(data: PlanPDFData): Promise<Buffer> {
+  const doc = new PDFDocument({
+    size: "A4",
+    margins: { top: MARGIN, bottom: MARGIN + FOOTER_HEIGHT, left: MARGIN, right: MARGIN },
+    bufferPages: true,
+  });
+
+  const stream = new PassThrough();
+  doc.pipe(stream);
+
+  const colorPrimario = data.clinica.color_primario || "#2563eb";
+  const colorSecundario = data.clinica.color_secundario || "#1e40af";
+  const colorFondoClaro = lightenColor(colorPrimario, 0.92);
+
+  await renderHeader(doc, data, colorPrimario);
+  renderPlanInfoBox(doc, data, colorPrimario, colorFondoClaro);
+  renderPersonasRow(doc, data, colorPrimario);
+  await renderEjerciciosSection(doc, data, colorPrimario, colorSecundario);
+  await renderQRSection(doc, data, colorPrimario, colorFondoClaro);
+
+  addFooterToAllPages(doc, data.clinica.nombre, colorPrimario);
+
+  doc.end();
+
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
 }

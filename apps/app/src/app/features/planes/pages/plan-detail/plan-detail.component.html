@@ -48,15 +48,10 @@
             <button
               type="button"
               class="header-btn header-btn-pdf"
-              aria-label="Descargar PDF"
-              [disabled]="descargandoPdf()"
-              (click)="descargarPdf()"
+              aria-label="Opciones PDF"
+              (click)="abrirOpcionesPdf()"
             >
-              @if (descargandoPdf()) {
-                <span class="material-symbols-outlined spin">progress_activity</span>
-              } @else {
-                <span class="material-symbols-outlined">picture_as_pdf</span>
-              }
+              <span class="material-symbols-outlined">picture_as_pdf</span>
             </button>
             <button
               type="button"
@@ -87,16 +82,10 @@
             <button
               type="button"
               class="header-btn-desktop"
-              [disabled]="descargandoPdf()"
-              (click)="descargarPdf()"
+              (click)="abrirOpcionesPdf()"
             >
-              @if (descargandoPdf()) {
-                <span class="material-symbols-outlined text-lg spin">progress_activity</span>
-                <span class="text-xs font-semibold">Generando...</span>
-              } @else {
-                <span class="material-symbols-outlined text-lg">picture_as_pdf</span>
-                <span class="text-xs font-semibold">PDF</span>
-              }
+              <span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+              <span class="text-xs font-semibold">PDF</span>
             </button>
 
             <button

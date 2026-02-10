@@ -39,6 +39,7 @@ router.post("/usuario/:id/token-acceso/enviar-email", authMiddleware, tokenAcces
 
 //PDF:
 router.get("/plan/:id/pdf", authMiddleware, pdfController.generarPlanPDF);
+router.post("/plan/:id/pdf/enviar", authMiddleware, pdfController.enviarPlanPDF);
 
 // Clínicas (requiere auth)
 router.post("/clinica/vincular", authMiddleware, clinicaController.vincularUsuarioClinica);

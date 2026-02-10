@@ -1,0 +1,123 @@
+<ui-dialog-container>
+  <ui-dialog-header title="Opciones de PDF" (closeClick)="close()"></ui-dialog-header>
+
+  <ui-dialog-content>
+    <div class="flex flex-col gap-3">
+
+      <!-- Descargar -->
+      <button
+        type="button"
+        class="option-card"
+        [disabled]="accionEnProgreso() && !descargando()"
+        (click)="descargar()"
+      >
+        <div class="option-icon">
+          @if (descargando()) {
+            <span class="material-symbols-outlined spin">progress_activity</span>
+          } @else {
+            <span class="material-symbols-outlined">download</span>
+          }
+        </div>
+        <div class="option-text">
+          <h4>Descargar</h4>
+          <p>Guardar PDF en tu dispositivo</p>
+        </div>
+        <div class="option-action">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </div>
+      </button>
+
+      <!-- Imprimir -->
+      <button
+        type="button"
+        class="option-card"
+        [disabled]="accionEnProgreso() && !imprimiendo()"
+        (click)="imprimir()"
+      >
+        <div class="option-icon">
+          @if (imprimiendo()) {
+            <span class="material-symbols-outlined spin">progress_activity</span>
+          } @else {
+            <span class="material-symbols-outlined">print</span>
+          }
+        </div>
+        <div class="option-text">
+          <h4>Imprimir</h4>
+          <p>Abrir vista de impresion</p>
+        </div>
+        <div class="option-action">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </div>
+      </button>
+
+      <!-- Enviar por correo -->
+      @if (!mostrarEmailForm() && !emailEnviado()) {
+        <button
+          type="button"
+          class="option-card"
+          [disabled]="accionEnProgreso()"
+          (click)="mostrarFormEmail()"
+        >
+          <div class="option-icon">
+            <span class="material-symbols-outlined">mail</span>
+          </div>
+          <div class="option-text">
+            <h4>Enviar por correo</h4>
+            <p>Enviar PDF al paciente por email</p>
+          </div>
+          <div class="option-action">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </div>
+        </button>
+      }
+
+      <!-- Formulario de email -->
+      @if (mostrarEmailForm()) {
+        <div class="email-form">
+          <label class="text-sm font-medium text-gray-700">Email del destinatario</label>
+          <input
+            type="email"
+            class="email-input"
+            placeholder="ejemplo@email.com"
+            [value]="emailDestino()"
+            (input)="onEmailInput($event)"
+            [disabled]="enviando()"
+          />
+          <div class="email-actions">
+            <button
+              type="button"
+              class="btn-cancelar"
+              (click)="cancelarEmail()"
+              [disabled]="enviando()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn-enviar"
+              [disabled]="!emailDestino().trim() || enviando()"
+              (click)="enviarEmail()"
+            >
+              @if (enviando()) {
+                <span class="material-symbols-outlined spin" style="font-size: 1rem">progress_activity</span>
+                Enviando...
+              } @else {
+                <span class="material-symbols-outlined" style="font-size: 1rem">send</span>
+                Enviar
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Mensaje de éxito -->
+      @if (emailEnviado()) {
+        <div class="success-message">
+          <span class="material-symbols-outlined">check_circle</span>
+          PDF enviado correctamente a {{ emailDestino() }}
+        </div>
+      }
+
+    </div>
+  </ui-dialog-content>
+</ui-dialog-container>
