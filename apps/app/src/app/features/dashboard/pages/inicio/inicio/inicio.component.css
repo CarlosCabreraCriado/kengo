@@ -17,7 +17,7 @@
 }
 
 .dashboard-page {
-  @apply relative flex flex-col w-full h-full overflow-y-auto overflow-x-hidden;
+  @apply relative flex h-full w-full flex-col overflow-x-hidden overflow-y-auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
@@ -50,7 +50,7 @@
 }
 
 .header-content {
-  @apply flex items-center justify-between max-w-5xl mx-auto;
+  @apply mx-auto flex max-w-5xl items-center justify-between;
 }
 
 .logo {
@@ -58,19 +58,20 @@
 }
 
 .avatar-btn {
-  @apply w-10 h-10 rounded-full overflow-hidden
-         flex items-center justify-center
-         border-2 border-white shadow-md
-         cursor-pointer transition-all active:scale-95;
-  background: linear-gradient(to bottom right, var(--kengo-primary), var(--kengo-tertiary));
+  @apply flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-white shadow-md transition-all active:scale-95;
+  background: linear-gradient(
+    to bottom right,
+    var(--kengo-primary),
+    var(--kengo-tertiary)
+  );
 }
 
 .avatar-btn .avatar-img {
-  @apply w-full h-full object-cover;
+  @apply h-full w-full object-cover;
 }
 
 .avatar-btn .material-symbols-outlined {
-  @apply text-white text-xl;
+  @apply text-xl text-white;
 }
 
 .avatar-btn.menu-open {
@@ -85,14 +86,14 @@
 
 /* Menú desplegable de usuario */
 .user-menu {
-  @apply absolute top-full right-0 mt-2 w-48 z-[100]
-         rounded-2xl overflow-hidden
-         flex flex-col;
+  @apply absolute top-full right-0 z-[100] mt-2 flex w-48 flex-col overflow-hidden rounded-2xl;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.15),
+    0 2px 10px rgba(0, 0, 0, 0.1);
   animation: menuSlideIn 0.2s ease-out;
 }
 
@@ -108,10 +109,7 @@
 }
 
 .menu-item {
-  @apply flex items-center gap-3 px-4 py-3
-         text-sm font-medium text-zinc-700
-         cursor-pointer transition-all
-         border-none bg-transparent w-full text-left;
+  @apply flex w-full cursor-pointer items-center gap-3 border-none bg-transparent px-4 py-3 text-left text-sm font-medium text-zinc-700 transition-all;
 }
 
 .menu-item:hover {
@@ -131,7 +129,7 @@
 }
 
 .menu-item-danger {
-  @apply text-red-600 border-t border-zinc-100;
+  @apply border-t border-zinc-100 text-red-600;
 }
 
 .menu-item-danger .material-symbols-outlined {
@@ -157,18 +155,20 @@
 }
 
 .user-avatar-large {
-  @apply w-14 h-14 rounded-2xl overflow-hidden
-         flex items-center justify-center
-         border-[3px] border-white shadow-lg;
-  background: linear-gradient(to bottom right, var(--kengo-primary), var(--kengo-tertiary));
+  @apply flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border-[3px] border-white shadow-lg;
+  background: linear-gradient(
+    to bottom right,
+    var(--kengo-primary),
+    var(--kengo-tertiary)
+  );
 }
 
 .user-avatar-large img {
-  @apply w-full h-full object-cover;
+  @apply h-full w-full object-cover;
 }
 
 .user-avatar-large .material-symbols-outlined {
-  @apply text-white text-3xl;
+  @apply text-3xl text-white;
 }
 
 .greeting-text {
@@ -176,20 +176,19 @@
 }
 
 .greeting-name {
-  @apply text-2xl m-0;
+  @apply m-0 text-2xl;
   color: var(--kengo-primary);
 }
 
 .greeting-subtitle {
-  @apply text-sm text-zinc-500 m-0 mt-0.5;
+  @apply m-0 mt-0.5 text-sm text-zinc-500;
 }
-
 
 /* ============================================
    MAIN CONTENT
    ============================================ */
 .dashboard-main {
-  @apply relative flex-1 flex flex-col gap-4 px-4 pt-2 z-10;
+  @apply relative z-10 flex flex-1 flex-col gap-4 px-4 pt-2;
   padding-bottom: calc(var(--safe-area-bottom) + 100px);
   max-width: 1200px;
   margin: 0 auto;
@@ -200,7 +199,7 @@
    GREETING CARD (Mobile)
    ============================================ */
 .greeting-card {
-  @apply relative rounded-3xl overflow-hidden p-5;
+  @apply relative overflow-hidden rounded-3xl p-5;
   background: var(--kengo-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -214,16 +213,16 @@
 }
 
 .greeting-title {
-  @apply text-2xl m-0;
+  @apply m-0 text-2xl;
   color: var(--kengo-primary);
 }
 
 .greeting-message {
-  @apply text-sm text-zinc-600 m-0 mt-1;
+  @apply m-0 mt-1 text-sm text-zinc-600;
 }
 
 .greeting-decoration {
-  @apply absolute right-0 bottom-0 h-full w-1/2 pointer-events-none;
+  @apply pointer-events-none absolute right-0 bottom-0 h-full w-1/2;
 }
 
 .bonsai-small {
@@ -234,7 +233,7 @@
    ACTIVITY HERO CARD
    ============================================ */
 .activity-hero {
-  @apply relative rounded-3xl overflow-hidden cursor-pointer transition-all;
+  @apply relative cursor-pointer overflow-hidden rounded-3xl transition-all;
   background: var(--kengo-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -287,31 +286,47 @@
 }
 
 .activity-wave-1 {
-  @apply w-[200px] h-[200px] -top-12 -right-12;
+  @apply -top-12 -right-12 h-[200px] w-[200px];
   background: radial-gradient(circle, var(--wave-color-1) 0%, transparent 70%);
   animation: activityFloat1 var(--wave-duration) ease-in-out infinite;
 }
 
 .activity-wave-2 {
-  @apply w-[160px] h-[160px] bottom-0 left-1/4;
+  @apply bottom-0 left-1/4 h-[160px] w-[160px];
   background: radial-gradient(circle, var(--wave-color-2) 0%, transparent 70%);
   animation: activityFloat2 var(--wave-duration) ease-in-out infinite;
   animation-delay: calc(var(--wave-duration) * -0.33);
 }
 
 @keyframes activityFloat1 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-  50% { transform: translate(-20px, 30px) scale(1.1); opacity: 0.9; }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-20px, 30px) scale(1.1);
+    opacity: 0.9;
+  }
 }
 
 @keyframes activityFloat2 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-  50% { transform: translate(30px, -20px) scale(1.15); opacity: 0.8; }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(30px, -20px) scale(1.15);
+    opacity: 0.8;
+  }
 }
 
 .bonsai-hero {
-  @apply absolute right-[-5%] bottom-0 h-[120%] w-auto object-contain opacity-20 pointer-events-none;
-  transition: transform 0.5s ease, opacity 0.3s ease;
+  @apply pointer-events-none absolute right-[-5%] bottom-0 h-[120%] w-auto object-contain opacity-20;
+  transition:
+    transform 0.5s ease,
+    opacity 0.3s ease;
 }
 
 .activity-hero:hover .bonsai-hero {
@@ -321,8 +336,7 @@
 
 /* Activity Badge */
 .activity-badge {
-  @apply absolute top-4 right-4 z-20 flex items-center gap-1.5
-         rounded-2xl px-3 py-1.5;
+  @apply absolute top-4 right-4 z-20 flex items-center gap-1.5 rounded-2xl px-3 py-1.5;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: fadeInScale 0.3s ease-out;
 }
@@ -333,7 +347,11 @@
 }
 
 .activity-badge[data-type="pending"] {
-  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--kengo-primary) 0%,
+    var(--kengo-primary-dark) 100%
+  );
 }
 
 .activity-badge[data-type="completed"] {
@@ -346,36 +364,44 @@
 }
 
 .badge-spinner {
-  @apply w-5 h-5 rounded-full;
+  @apply h-5 w-5 rounded-full;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   animation: spin 0.8s linear infinite;
 }
 
 .badge-number {
-  @apply text-white font-bold text-lg leading-none;
+  @apply text-lg leading-none font-bold text-white;
 }
 
 .badge-label {
-  @apply text-white/80 text-xs;
+  @apply text-xs text-white/80;
 }
 
 .activity-badge .material-symbols-outlined {
-  @apply text-white text-xl;
+  @apply text-xl text-white;
 }
 
 @keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Activity Content */
 .activity-content {
-  @apply relative z-10 p-5 flex flex-col gap-3;
+  @apply relative z-10 flex flex-col gap-3 p-5;
 }
 
 .activity-info {
@@ -383,11 +409,11 @@
 }
 
 .activity-title {
-  @apply text-lg font-semibold text-zinc-800 m-0;
+  @apply m-0 text-lg font-semibold text-zinc-800;
 }
 
 .activity-subtitle {
-  @apply text-sm text-zinc-500 m-0 mt-0.5;
+  @apply m-0 mt-0.5 text-sm text-zinc-500;
 }
 
 /* Progress */
@@ -396,16 +422,20 @@
 }
 
 .progress-track {
-  @apply flex-1 h-2 rounded-full bg-black/10 overflow-hidden;
+  @apply h-2 flex-1 overflow-hidden rounded-full bg-black/10;
 }
 
 .progress-fill {
   @apply h-full rounded-full transition-all duration-500;
-  background: linear-gradient(90deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--kengo-primary) 0%,
+    var(--kengo-tertiary) 100%
+  );
 }
 
 .progress-text {
-  @apply text-xs font-medium text-zinc-500 whitespace-nowrap;
+  @apply text-xs font-medium whitespace-nowrap text-zinc-500;
 }
 
 /* Next Exercise */
@@ -420,9 +450,12 @@
 
 /* Activity CTA */
 .activity-cta {
-  @apply flex items-center justify-center gap-2 w-full h-12 rounded-xl
-         text-white font-semibold cursor-pointer transition-all active:scale-[0.98];
-  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  @apply flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl font-semibold text-white transition-all active:scale-[0.98];
+  background: linear-gradient(
+    135deg,
+    var(--kengo-primary) 0%,
+    var(--kengo-primary-dark) 100%
+  );
   box-shadow: var(--kengo-shadow-primary);
 }
 
@@ -437,8 +470,7 @@
 
 /* Completed State */
 .activity-completed {
-  @apply flex items-center justify-center gap-2 w-full h-12 rounded-xl
-         text-white font-semibold;
+  @apply flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold text-white;
   background: linear-gradient(135deg, var(--kengo-tertiary) 0%, #d4a93d 100%);
   box-shadow: 0 4px 16px rgba(var(--kengo-tertiary-rgb), 0.35);
 }
@@ -455,7 +487,7 @@
 }
 
 .section-title {
-  @apply text-sm font-semibold text-zinc-500 uppercase tracking-wide m-0 px-1;
+  @apply m-0 px-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase;
 }
 
 .actions-grid {
@@ -464,7 +496,7 @@
 
 /* Action Card */
 .action-card {
-  @apply relative flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all;
+  @apply relative flex cursor-pointer items-center gap-4 rounded-2xl p-3 transition-all;
   background: var(--kengo-glass);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -473,7 +505,7 @@
 }
 
 .action-card:hover {
-  @apply bg-white/70 -translate-y-0.5;
+  @apply -translate-y-0.5 bg-white/70;
   box-shadow: var(--kengo-shadow);
 }
 
@@ -482,38 +514,32 @@
 }
 
 .action-image {
-  @apply w-16 h-16 rounded-xl overflow-hidden shrink-0;
+  @apply relative h-16 w-16 shrink-0 overflow-hidden rounded-xl;
 }
 
 .action-image img {
-  @apply w-full h-full object-cover transition-transform duration-300;
+  @apply h-full w-full object-cover transition-transform duration-300;
 }
 
 .action-card:hover .action-image img {
   transform: scale(1.1);
 }
 
-.action-overlay {
-  @apply absolute inset-0 rounded-xl;
-  background: linear-gradient(135deg, transparent 50%, rgba(var(--kengo-primary-rgb), 0.2) 100%);
-}
-
 .action-content {
-  @apply flex flex-col flex-1 min-w-0;
+  @apply flex min-w-0 flex-1 flex-col;
 }
 
 .action-title {
-  @apply text-base m-0 truncate;
+  @apply m-0 truncate text-base;
   color: var(--kengo-primary);
 }
 
 .action-subtitle {
-  @apply text-xs text-zinc-500 m-0 mt-0.5 truncate;
+  @apply m-0 mt-0.5 truncate text-xs text-zinc-500;
 }
 
 .action-arrow {
-  @apply w-8 h-8 rounded-full flex items-center justify-center shrink-0
-         transition-all;
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all;
   background-color: rgba(var(--kengo-primary-rgb), 0.1);
   color: var(--kengo-primary);
 }
@@ -531,11 +557,11 @@
    CAROUSEL (Alternative - Hidden)
    ============================================ */
 .carousel-wrapper {
-  @apply flex-1 flex flex-col;
+  @apply flex flex-1 flex-col;
 }
 
 .carousel {
-  @apply flex-1 flex items-center gap-4 overflow-x-auto overflow-y-hidden px-[5%] py-8;
+  @apply flex flex-1 items-center gap-4 overflow-x-auto overflow-y-hidden px-[5%] py-8;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -548,7 +574,7 @@
 }
 
 .carousel-card {
-  @apply flex-none w-[90%] h-[calc(100%-2rem)] relative rounded-3xl overflow-hidden cursor-pointer;
+  @apply relative h-[calc(100%-2rem)] w-[90%] flex-none cursor-pointer overflow-hidden rounded-3xl;
   scroll-snap-align: center;
   scroll-snap-stop: always;
   background: var(--kengo-glass);
@@ -558,33 +584,38 @@
 }
 
 .carousel-image {
-  @apply absolute inset-0 w-full h-full object-cover;
+  @apply absolute inset-0 h-full w-full object-cover;
 }
 
 .carousel-overlay {
   @apply absolute inset-0;
-  background: linear-gradient(180deg, transparent 50%, #f9b87e 75%, var(--kengo-primary) 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 50%,
+    #f9b87e 75%,
+    var(--kengo-primary) 100%
+  );
 }
 
 .carousel-content {
-  @apply absolute bottom-0 left-0 right-0 p-6 z-10;
+  @apply absolute right-0 bottom-0 left-0 z-10 p-6;
 }
 
 .carousel-title {
-  @apply text-2xl m-0;
+  @apply m-0 text-2xl;
   color: var(--kengo-primary-dark);
 }
 
 .carousel-subtitle {
-  @apply text-base text-white m-0 mt-1;
+  @apply m-0 mt-1 text-base text-white;
 }
 
 .pagination-dots {
-  @apply shrink-0 flex justify-center gap-2 py-4;
+  @apply flex shrink-0 justify-center gap-2 py-4;
 }
 
 .dot {
-  @apply w-2 h-2 rounded-full p-0 cursor-pointer transition-all;
+  @apply h-2 w-2 cursor-pointer rounded-full p-0 transition-all;
   background-color: rgba(var(--kengo-primary-rgb), 0.3);
 }
 
@@ -602,7 +633,11 @@
    UTILITIES
    ============================================ */
 .icon-filled {
-  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
 }
 
 /* ============================================
@@ -615,8 +650,14 @@
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ============================================
@@ -644,7 +685,7 @@
   }
 
   .dashboard-main {
-    @apply px-8 pt-0 gap-6;
+    @apply gap-6 px-8 pt-0;
     padding-bottom: 32px;
   }
 
@@ -675,7 +716,7 @@
   }
 
   .action-image {
-    @apply w-20 h-20 rounded-2xl;
+    @apply h-20 w-20 rounded-2xl;
   }
 
   .action-title {
@@ -709,10 +750,10 @@
   }
 
   .action-card {
-    @apply p-5 gap-5;
+    @apply gap-5 p-5;
   }
 
   .action-image {
-    @apply w-24 h-24;
+    @apply h-24 w-24;
   }
 }

@@ -69,15 +69,19 @@ export class InicioComponent implements OnDestroy {
   );
 
   userRole = this.sessionService.rolUsuario;
-  userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Usuario');
-  userAvatar = computed(() => this.sessionService.usuario()?.avatar_url ?? null);
+  userName = computed(
+    () => this.sessionService.usuario()?.first_name ?? 'Usuario',
+  );
+  userAvatar = computed(
+    () => this.sessionService.usuario()?.avatar_url ?? null,
+  );
 
   allCards: CardOption[] = [
     {
       id: 'mi-actividad',
       title: 'Mi actividad',
       subtitle: 'Tu progreso diario',
-      image: 'assets/portadas/mi-actividad.png',
+      image: 'assets/portadas/opcion-ejercicios.webp',
       route: '/actividad-personal/hoy',
       roles: ['fisio', 'paciente'],
     },
@@ -85,7 +89,7 @@ export class InicioComponent implements OnDestroy {
       id: 'actividad-personal',
       title: 'Actividad personal',
       subtitle: 'Tu plan de hoy',
-      image: 'assets/portadas/camilla.PNG',
+      image: 'assets/portadas/opcion-ejercicios.webp',
       route: '/actividad-personal',
       roles: ['fisio', 'paciente'],
       // Propiedades dinámicas
@@ -99,7 +103,7 @@ export class InicioComponent implements OnDestroy {
       id: 'ejercicios',
       title: 'Galería',
       subtitle: 'Ejercicios y plantillas',
-      image: 'assets/portadas/catalogo-ejercicios.png',
+      image: 'assets/portadas/opcion-galeria.webp',
       route: '/galeria',
       roles: ['fisio'],
     },
@@ -107,7 +111,7 @@ export class InicioComponent implements OnDestroy {
       id: 'pacientes',
       title: 'Mis Pacientes',
       subtitle: 'Gestiona tus pacientes',
-      image: 'assets/portadas/pacientes.png',
+      image: 'assets/portadas/opcion-pacientes.webp',
       route: '/mis-pacientes',
       roles: ['fisio'],
     },
@@ -115,7 +119,7 @@ export class InicioComponent implements OnDestroy {
       id: 'clinica',
       title: 'Mi Clínica',
       subtitle: 'Administra tu centro',
-      image: 'assets/portadas/clinica.png',
+      image: 'assets/portadas/opcion-clinica.webp',
       route: '/mi-clinica',
       roles: ['fisio', 'paciente'],
     },
@@ -123,17 +127,18 @@ export class InicioComponent implements OnDestroy {
       id: 'rutinas',
       title: 'Rutinas',
       subtitle: 'Plantillas de ejercicios',
-      image: 'assets/portadas/rutina.webp',
+      image: 'assets/portadas/opcion-rutina.webp',
       route: '/galeria/rutinas',
       roles: ['fisio'],
     },
+    /*
     {
       id: 'mi-plan',
       title: 'Mi Plan',
       subtitle: 'Tu plan de recuperación',
       image: 'assets/portadas/camilla.PNG',
       route: '/mi-plan',
-      roles: ['paciente'],
+      roles: ['fisio', 'paciente'],
     },
     {
       id: 'progreso',
@@ -141,8 +146,9 @@ export class InicioComponent implements OnDestroy {
       subtitle: 'Seguimiento de evolución',
       image: 'assets/portadas/progreso-horizontal.png',
       route: '/progreso',
-      roles: ['paciente'],
+      roles: ['fisio', 'paciente'],
     },
+    */
   ];
 
   cards = computed(() => {
