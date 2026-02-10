@@ -1,9 +1,10 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Location } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { map, firstValueFrom } from 'rxjs';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
@@ -25,6 +26,7 @@ import { KENGO_BREAKPOINTS } from '../../../../../app/shared';
 })
 export class PlanDetailComponent implements OnInit {
   private location = inject(Location);
+  private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private planesService = inject(PlanesService);
@@ -41,6 +43,7 @@ export class PlanDetailComponent implements OnInit {
 
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);
+  descargandoPdf = signal(false);
 
   // Action type from queryParams (created, updated, or null for view-only)
   actionType = signal<'created' | 'updated' | null>(null);
@@ -168,5 +171,62 @@ export class PlanDetailComponent implements OnInit {
   avatarUrl(id: string | null | undefined): string {
     if (!id) return 'assets/default-avatar.png';
     return `${env.DIRECTUS_URL}/assets/${id}?width=100&height=100&fit=cover&format=webp`;
+  }
+
+  async descargarPdf() {
+    const p = this.plan();
+    if (!p || this.descargandoPdf()) return;
+
+    this.descargandoPdf.set(true);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get(`${env.API_URL}/plan/${p.id_plan}/pdf`, {
+          responseType: 'blob',
+          observe: 'response',
+          withCredentials: true,
+        })
+      );
+
+      if (response.body) {
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `plan_${p.id_plan}.pdf`;
+
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+          if (match?.[1]) {
+            filename = match[1];
+          }
+        }
+
+        const blob = new Blob([response.body], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err: any) {
+      console.error('Error descargando PDF:', err);
+
+      let errorMessage = 'Error al descargar el PDF';
+
+      if (err.error instanceof Blob) {
+        try {
+          const errorText = await err.error.text();
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          // No se pudo parsear el error
+        }
+      } else if (err.error?.error) {
+        errorMessage = err.error.error;
+      }
+
+      alert(errorMessage);
+    } finally {
+      this.descargandoPdf.set(false);
+    }
   }
 }

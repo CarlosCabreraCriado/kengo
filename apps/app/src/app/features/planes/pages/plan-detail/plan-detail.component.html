@@ -44,14 +44,29 @@
             </div>
           </div>
 
-          <button
-            type="button"
-            class="header-btn header-btn-edit"
-            aria-label="Editar plan"
-            (click)="editarPlan()"
-          >
-            <span class="material-symbols-outlined">edit</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="header-btn header-btn-pdf"
+              aria-label="Descargar PDF"
+              [disabled]="descargandoPdf()"
+              (click)="descargarPdf()"
+            >
+              @if (descargandoPdf()) {
+                <span class="material-symbols-outlined spin">progress_activity</span>
+              } @else {
+                <span class="material-symbols-outlined">picture_as_pdf</span>
+              }
+            </button>
+            <button
+              type="button"
+              class="header-btn header-btn-edit"
+              aria-label="Editar plan"
+              (click)="editarPlan()"
+            >
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </div>
         </div>
       } @else {
         <!-- DESKTOP: Header simplificado (solo controles) -->
@@ -69,6 +84,21 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="header-btn-desktop"
+              [disabled]="descargandoPdf()"
+              (click)="descargarPdf()"
+            >
+              @if (descargandoPdf()) {
+                <span class="material-symbols-outlined text-lg spin">progress_activity</span>
+                <span class="text-xs font-semibold">Generando...</span>
+              } @else {
+                <span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+                <span class="text-xs font-semibold">PDF</span>
+              }
+            </button>
+
             <button
               type="button"
               class="header-btn-desktop"

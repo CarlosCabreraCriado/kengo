@@ -517,7 +517,7 @@
 }
 
 .plan-card {
-  @apply rounded-xl overflow-hidden transition-all;
+  @apply rounded-xl overflow-hidden transition-all cursor-pointer;
   background: rgba(255, 255, 255, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
@@ -563,36 +563,6 @@
   @apply mx-1 text-zinc-300;
 }
 
-.plan-actions {
-  @apply flex shrink-0 gap-1;
-}
-
-.plan-action-btn {
-  @apply w-8 h-8 rounded-lg flex items-center justify-center
-         bg-transparent text-zinc-400
-         cursor-pointer transition-all active:scale-95;
-}
-
-.plan-action-btn:hover {
-  @apply bg-white/60;
-  color: var(--kengo-primary);
-}
-
-.plan-action-btn:disabled {
-  @apply opacity-50 cursor-not-allowed;
-}
-
-.plan-action-btn .material-symbols-outlined {
-  @apply text-lg;
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
 .see-all-btn {
   @apply flex items-center justify-center gap-2 w-full mt-3 py-2.5

@@ -216,6 +216,31 @@
   color: var(--kengo-primary);
 }
 
+.header-btn-pdf {
+  background: rgba(var(--kengo-primary-rgb), 0.05);
+  border-color: rgba(var(--kengo-primary-rgb), 0.15);
+}
+
+.header-btn-pdf .material-symbols-outlined {
+  color: var(--kengo-primary);
+}
+
+.header-btn-pdf:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.header-btn-desktop:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .header-title {
   @apply text-xl font-bold;
   color: var(--kengo-primary);

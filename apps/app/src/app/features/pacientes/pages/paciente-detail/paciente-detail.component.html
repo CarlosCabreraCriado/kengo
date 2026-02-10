@@ -221,7 +221,7 @@
                 } @else {
                   <div class="plans-list">
                     @for (plan of planes(); track plan.id_plan) {
-                      <article class="plan-card" [class.completed]="plan.estado === 'completado'">
+                      <article class="plan-card" [class.completed]="plan.estado === 'completado'" (click)="verPlan(plan)">
                         <div class="plan-main">
                           <div class="plan-info">
                             <div class="plan-header-row">
@@ -245,37 +245,7 @@
                               </p>
                             }
                           </div>
-                          <div class="plan-actions">
-                            <button
-                              type="button"
-                              class="plan-action-btn"
-                              aria-label="Ver plan"
-                              (click)="verPlan(plan)"
-                            >
-                              <span class="material-symbols-outlined">visibility</span>
-                            </button>
-                            <button
-                              type="button"
-                              class="plan-action-btn"
-                              aria-label="Editar plan"
-                              (click)="editarPlan(plan)"
-                            >
-                              <span class="material-symbols-outlined">edit</span>
-                            </button>
-                            <button
-                              type="button"
-                              class="plan-action-btn"
-                              aria-label="Descargar PDF"
-                              [disabled]="descargandoInforme() !== null"
-                              (click)="descargarInforme(plan)"
-                            >
-                              @if (descargandoInforme() === plan.id_plan) {
-                                <span class="material-symbols-outlined spin">progress_activity</span>
-                              } @else {
-                                <span class="material-symbols-outlined">picture_as_pdf</span>
-                              }
-                            </button>
-                          </div>
+                          <span class="material-symbols-outlined text-zinc-300 text-lg">chevron_right</span>
                         </div>
                       </article>
                     }
