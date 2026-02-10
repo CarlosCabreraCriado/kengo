@@ -893,6 +893,53 @@ export async function createDirectusSessionForUser(
   return { sessionCookieValue: accessToken, expires };
 }
 
+/**
+ * Renueva el JWT de una sesión existente en BD sin crear sesión nueva.
+ * Útil cuando el JWT expiró (>15 min) pero la sesión en BD sigue vigente (7 días).
+ */
+export async function renewSessionJWT(
+  sessionToken: string
+): Promise<{ sessionCookieValue: string; expires: Date } | null> {
+  const pool = (await import('../utils/database')).default;
+  const secret = process.env.DIRECTUS_SECRET;
+  if (!secret) throw new Error('Falta DIRECTUS_SECRET en .env');
+
+  // Verificar que la sesión existe y no ha expirado
+  const [rows] = await pool.execute(
+    `SELECT ds.token, ds.user, ds.expires,
+            u.role,
+            COALESCE(MAX(p.app_access), 0) AS app_access,
+            COALESCE(MAX(p.admin_access), 0) AS admin_access
+     FROM directus_sessions ds
+     JOIN directus_users u ON u.id = ds.user
+     LEFT JOIN directus_access a ON a.role = u.role
+     LEFT JOIN directus_policies p ON a.policy = p.id
+     WHERE ds.token = ? AND ds.expires > NOW()
+     GROUP BY ds.token, ds.user, ds.expires, u.role`,
+    [sessionToken]
+  );
+
+  const session = (rows as any[])[0];
+  if (!session) return null;
+
+  const accessToken = jwt.sign(
+    {
+      id: session.user,
+      role: session.role,
+      app_access: !!session.app_access,
+      admin_access: !!session.admin_access,
+      session: sessionToken,
+    },
+    secret,
+    {
+      expiresIn: '15m',
+      issuer: 'directus',
+    }
+  );
+
+  return { sessionCookieValue: accessToken, expires: new Date(session.expires) };
+}
+
 // =========================
 //  RECUPERACIÓN DE CONTRASEÑA
 // =========================

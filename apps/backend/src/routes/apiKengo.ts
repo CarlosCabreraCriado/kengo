@@ -6,12 +6,16 @@ import { clinicaController } from "../controllers/clinica";
 import { tokenAccesoController } from "../controllers/tokenAcceso";
 import { passwordResetController } from "../controllers/passwordReset";
 import { emailVerificationController } from "../controllers/emailVerification";
+import { sessionRefreshController } from "../controllers/sessionRefresh";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
 // Registro de usuarios (no requiere auth)
 router.post("/registro", registroController.registrar);
+
+// Refresh de sesion custom (no requiere auth - lee cookie directamente)
+router.post("/auth/refrescar-sesion", sessionRefreshController.refrescarSesion);
 
 // Recuperacion de contrasena (no requiere auth)
 router.post("/auth/recuperar-password", passwordResetController.solicitarCodigo);
