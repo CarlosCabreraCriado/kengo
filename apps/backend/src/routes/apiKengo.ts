@@ -17,6 +17,9 @@ router.post("/registro", registroController.registrar);
 router.post("/auth/recuperar-password", passwordResetController.solicitarCodigo);
 router.post("/auth/reset-password", passwordResetController.resetPassword);
 
+// Establecer contrasena (requiere auth - para usuarios sin password)
+router.post("/auth/establecer-password", authMiddleware, passwordResetController.establecerPassword);
+
 // Verificacion de email (requiere auth)
 router.post("/auth/enviar-verificacion", authMiddleware, emailVerificationController.enviarCodigo);
 router.post("/auth/verificar-email", authMiddleware, emailVerificationController.verificarEmail);

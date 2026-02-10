@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { SessionService } from '../../../../core/auth/services/session.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
 type TokenError =
@@ -30,6 +31,7 @@ const ERROR_MESSAGES: Record<TokenError, string> = {
 export class MagicComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
+  private sessionService = inject(SessionService);
   private router = inject(Router);
 
   loading = signal(true);
@@ -57,10 +59,20 @@ export class MagicComponent implements OnInit {
       await this.authService.logout(true);
 
       // Consumir token de acceso (el BFF establece la cookie)
-      await this.authService.consumirTokenAcceso(token);
+      const result = await this.authService.consumirTokenAcceso(token);
 
-      // Redirigir a inicio
-      this.router.navigateByUrl('/inicio');
+      // Cargar usuario antes de navegar para que AuthGuard pase por fast path
+      await this.sessionService.cargarMiUsuario();
+
+      if (!result.tienePassword) {
+        // Redirigir a establecer contraseña
+        this.router.navigate(['/establecer-password'], {
+          state: { email: result.email },
+        });
+      } else {
+        // Redirigir a inicio
+        this.router.navigateByUrl('/inicio');
+      }
     } catch (err: unknown) {
       const httpError = err as { error?: { error?: string } };
       const errorFromServer = httpError?.error?.error as TokenError | undefined;

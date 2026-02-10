@@ -15,6 +15,7 @@ import {
   UnpackList,
 } from "@directus/sdk";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 export type ID = string | number;
 export type Schema = {
@@ -831,31 +832,65 @@ export async function revocarToken(tokenId: string): Promise<void> {
 
 /**
  * Crea una sesión de Directus para un usuario (sin necesidad de password)
- * Inserta directamente en directus_sessions via SQL (la API REST no lo permite)
+ * Genera un JWT firmado con DIRECTUS_SECRET como cookie value.
+ * Directus en session mode espera: cookie = JWT con claim `session` → DB token en texto plano.
  */
 export async function createDirectusSessionForUser(
   userId: string,
   clientIp?: string,
   userAgent?: string
-): Promise<{ sessionToken: string; expires: Date }> {
-  // Importar pool de conexión MySQL
+): Promise<{ sessionCookieValue: string; expires: Date }> {
   const pool = (await import('../utils/database')).default;
+  const secret = process.env.DIRECTUS_SECRET;
+  if (!secret) throw new Error('Falta DIRECTUS_SECRET en .env');
 
-  // Generar token de sesión (base64url-safe)
-  const sessionToken = crypto.randomBytes(32).toString('base64url');
+  // 1. Obtener info de rol y permisos del usuario
+  //    En Directus 11+: roles → directus_access → directus_policies (app_access, admin_access)
+  const [userRows] = await pool.execute(
+    `SELECT u.role,
+            COALESCE(MAX(p.app_access), 0) AS app_access,
+            COALESCE(MAX(p.admin_access), 0) AS admin_access
+     FROM directus_users u
+     LEFT JOIN directus_access a ON a.role = u.role
+     LEFT JOIN directus_policies p ON a.policy = p.id
+     WHERE u.id = ?
+     GROUP BY u.id, u.role`,
+    [userId]
+  );
+  const userInfo = (userRows as any)[0];
+  if (!userInfo) throw new Error('Usuario no encontrado');
 
-  // Expiración: 7 días desde ahora
+  // 2. Generar session token (equivalente a nanoid(64) de Directus)
+  const sessionToken = crypto.randomBytes(48).toString('base64url');
+
+  // 3. Expiración: 7 días
   const expires = new Date();
   expires.setDate(expires.getDate() + 7);
 
-  // Insertar sesión directamente en la base de datos
+  // 4. Insertar sesión con token en TEXTO PLANO (así lo almacena Directus)
   await pool.execute(
     `INSERT INTO directus_sessions (token, user, expires, ip, user_agent)
      VALUES (?, ?, ?, ?, ?)`,
     [sessionToken, userId, expires, clientIp || null, userAgent || null]
   );
 
-  return { sessionToken, expires };
+  // 5. Generar JWT access token con los claims que Directus espera
+  const accessToken = jwt.sign(
+    {
+      id: userId,
+      role: userInfo.role,
+      app_access: !!userInfo.app_access,
+      admin_access: !!userInfo.admin_access,
+      session: sessionToken,
+    },
+    secret,
+    {
+      expiresIn: '15m',
+      issuer: 'directus',
+    }
+  );
+
+  return { sessionCookieValue: accessToken, expires };
 }
 
 // =========================
@@ -1010,6 +1045,19 @@ export async function updateUserPassword(userId: string, newPassword: string): P
     const text = await res.text();
     throw new Error(`Error actualizando contraseña: ${res.status} - ${text}`);
   }
+}
+
+/**
+ * Verifica si un usuario tiene contraseña configurada (consulta directa a MySQL)
+ */
+export async function checkUsuarioTienePassword(userId: string): Promise<boolean> {
+  const pool = (await import('../utils/database')).default;
+  const [rows] = await pool.execute(
+    'SELECT password FROM directus_users WHERE id = ?',
+    [userId]
+  );
+  const user = (rows as any)[0];
+  return !!(user && user.password);
 }
 
 // =========================

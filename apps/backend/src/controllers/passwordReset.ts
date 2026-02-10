@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../middleware/auth';
 import {
   getUserByEmail,
   countRecentRecoveryRequests,
@@ -6,6 +7,7 @@ import {
   validarCodigoRecuperacion,
   marcarCodigoUsado,
   updateUserPassword,
+  checkUsuarioTienePassword,
 } from '../models/directus';
 import { sendPasswordResetEmail } from '../services/email.service';
 import type {
@@ -108,6 +110,36 @@ export class passwordResetController {
         message: 'Si el email existe, recibiras un codigo de recuperacion',
       };
       res.status(200).json(response);
+    }
+  }
+
+  /**
+   * POST /auth/establecer-password (protegido)
+   * Establece contraseña para usuarios que no la tienen (ej: acceso via magic link)
+   */
+  static async establecerPassword(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { password } = req.body ?? {};
+
+      if (!password || password.length < MIN_PASSWORD_LENGTH) {
+        res.status(400).json({ error: 'PASSWORD_MUY_CORTA' });
+        return;
+      }
+
+      const userId = req.user!.id;
+
+      const tienePassword = await checkUsuarioTienePassword(userId);
+      if (tienePassword) {
+        res.status(400).json({ error: 'PASSWORD_YA_ESTABLECIDA' });
+        return;
+      }
+
+      await updateUserPassword(userId, password);
+
+      res.json({ ok: true });
+    } catch (error: any) {
+      console.error('[PasswordReset] Error en establecerPassword:', error);
+      res.status(500).json({ error: 'ERROR_SERVIDOR' });
     }
   }
 

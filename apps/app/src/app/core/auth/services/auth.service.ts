@@ -21,8 +21,7 @@ export class AuthService {
   readonly isLoggedIn = signal<boolean>(false);
 
   constructor() {
-    // Verificar sesión al iniciar (sin bloquear)
-    this.checkSession();
+    // No verificar sesión aquí — iniciarApp() y AuthGuard se encargan
   }
 
   /**
@@ -114,11 +113,13 @@ export class AuthService {
   }
 
   /**
-   * Consume un token de acceso y establece la sesión via cookie
+   * Consume un token de acceso y establece la sesión via cookie.
+   * Devuelve si el usuario tiene contraseña y su email.
+   * No carga el usuario aquí — el AuthGuard de la ruta destino se encarga.
    */
-  async consumirTokenAcceso(token: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(
+  async consumirTokenAcceso(token: string): Promise<{ tienePassword: boolean; email: string }> {
+    const res = await firstValueFrom(
+      this.http.post<{ ok: boolean; tienePassword: boolean; email: string }>(
         `${env.API_URL}/auth/token-acceso`,
         { token },
         { withCredentials: true },
@@ -126,7 +127,24 @@ export class AuthService {
     );
 
     this.isLoggedIn.set(true);
-    await this.sessionService.cargarMiUsuario();
+
+    return {
+      tienePassword: res.tienePassword,
+      email: res.email,
+    };
+  }
+
+  /**
+   * Establece contraseña para un usuario que no la tiene (post magic link)
+   */
+  async establecerPassword(password: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(
+        `${env.API_URL}/auth/establecer-password`,
+        { password },
+        { withCredentials: true },
+      ),
+    );
   }
 
   // =========================

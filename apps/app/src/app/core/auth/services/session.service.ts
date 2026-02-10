@@ -93,7 +93,6 @@ export class SessionService {
       console.error('Error al cargar el usuario:', err);
       this._error.set('No se pudo cargar el usuario');
       this._usuario.set(null);
-      this.router.navigate(['/login']);
       localStorage.removeItem('carrito:last_fisio_id');
     } finally {
       const u = this._usuario();

@@ -27,10 +27,13 @@ export class AppComponent implements OnInit {
   public mostrarNavegacion = false;
 
   // Rutas donde NO se debe mostrar la navegación
-  private rutasSinNavegacion = ['/login', '/registro', '/magic', '/mi-plan'];
+  private rutasSinNavegacion = ['/login', '/registro', '/magic', '/mi-plan', '/establecer-password'];
 
   ngOnInit() {
-    this.authService.iniciarApp();
+    // No ejecutar iniciarApp en /magic — MagicComponent maneja su propia autenticación
+    if (!window.location.pathname.startsWith('/magic')) {
+      this.authService.iniciarApp();
+    }
     this.observarRutas();
   }
 

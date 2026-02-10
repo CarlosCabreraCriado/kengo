@@ -41,6 +41,14 @@ export const routes: Routes = [
         (m) => m.ResetPasswordComponent
       ),
   },
+  {
+    path: 'establecer-password',
+    loadComponent: () =>
+      import('./features/auth/pages/establecer-password/establecer-password.component').then(
+        (m) => m.EstablecerPasswordComponent
+      ),
+    canActivate: [AuthGuard],
+  },
 
   // Dashboard (inicio)
   {

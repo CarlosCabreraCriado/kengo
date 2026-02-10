@@ -8,6 +8,7 @@ import {
   revocarToken,
   createDirectusSessionForUser,
   getUserById,
+  checkUsuarioTienePassword,
   TokenValidationError,
 } from "../models/directus";
 import { sendAccessLinkEmail } from "../services/email.service";
@@ -87,17 +88,28 @@ export class tokenAccesoController {
         userAgent
       );
 
-      // Establecer cookie de sesión de Directus
-      // El nombre de la cookie debe coincidir con lo que espera Directus
-      res.cookie("directus_session_token", session.sessionToken, {
+      // Establecer cookie de sesión de Directus (JWT firmado con DIRECTUS_SECRET)
+      res.cookie("directus_session_token", session.sessionCookieValue, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         expires: session.expires,
         path: "/",
+        ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
       });
 
-      res.json({ ok: true, userId: tokenData.id_usuario });
+      // Consultar si el usuario tiene contraseña y obtener su email
+      const [tienePassword, usuario] = await Promise.all([
+        checkUsuarioTienePassword(tokenData.id_usuario),
+        getUserById(tokenData.id_usuario),
+      ]);
+
+      res.json({
+        ok: true,
+        userId: tokenData.id_usuario,
+        tienePassword,
+        email: usuario?.email ?? null,
+      });
     } catch (e: any) {
       console.error("Error consumiendo token de acceso:", e);
       res.status(500).json({ error: "ERROR_CONSUMIENDO_TOKEN", message: e.message });
