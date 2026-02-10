@@ -1,14 +1,10 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../middleware/auth";
 import Planes from "../models/planes";
-import { getUserById, patchUserMagicFields } from "../models/directus";
+import { getUserById, getTokensUsuario, createTokenAccesoUsuario } from "../models/directus";
 import { generatePlanPDF } from "../services/pdfGenerator";
 import { PlanPDFData } from "../types/plan";
-import crypto from "crypto";
-import jwt from "jsonwebtoken";
 import "dotenv/config";
-
-const SECRET = process.env.MAGIC_JWT_SECRET!;
 
 export class pdfController {
   static async generarPlanPDF(
@@ -54,10 +50,18 @@ export class pdfController {
         return;
       }
 
-      const magicLinkUrl = await pdfController.crearMagicLinkInterno(
-        paciente.email,
-        paciente.id
-      );
+      // Reutilizar token activo existente o crear uno nuevo
+      const tokens = await getTokensUsuario(paciente.id);
+      const tokenActivo = tokens.find(t => t.activo && (!t.fecha_expiracion || new Date(t.fecha_expiracion) > new Date()));
+      const appUrl = process.env.APP_URL || 'https://kengoapp.com';
+
+      let magicLinkUrl: string;
+      if (tokenActivo) {
+        magicLinkUrl = `${appUrl}/magic?t=${tokenActivo.token}`;
+      } else {
+        const nuevoToken = await createTokenAccesoUsuario(paciente.id, userId!);
+        magicLinkUrl = nuevoToken.url;
+      }
 
       const pdfData: PlanPDFData = {
         plan,
@@ -81,22 +85,4 @@ export class pdfController {
     }
   }
 
-  private static async crearMagicLinkInterno(
-    email: string,
-    userId: string
-  ): Promise<string> {
-    const jti = crypto.randomUUID();
-
-    const token = jwt.sign({ sub: email, type: "pdf_qr", jti }, SECRET, {
-      algorithm: "HS256",
-      expiresIn: "30d",
-    });
-
-    const appUrl = process.env.APP_URL || 'https://kengoapp.com';
-    const url = `${appUrl}/magic?token=${encodeURIComponent(token)}`;
-
-    await patchUserMagicFields(userId, { url });
-
-    return url;
-  }
 }
