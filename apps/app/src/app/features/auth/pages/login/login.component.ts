@@ -22,6 +22,10 @@ export class LoginComponent implements OnInit {
   verificandoSesion = signal(true);
 
   async ngOnInit(): Promise<void> {
+    if (history.state?.fromLogout) {
+      this.verificandoSesion.set(false);
+      return;
+    }
     const hasSession = await this.auth.checkSession();
     if (hasSession) {
       this.router.navigateByUrl('/inicio');

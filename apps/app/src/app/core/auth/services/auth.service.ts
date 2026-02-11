@@ -45,7 +45,7 @@ export class AuthService {
       this.http.post(
         `${env.DIRECTUS_URL}/auth/login`,
         { email, password, mode: 'session' },
-        { withCredentials: false },
+        { withCredentials: true },
       ),
     );
 
@@ -62,7 +62,7 @@ export class AuthService {
       await firstValueFrom(
         this.http.post(
           `${env.DIRECTUS_URL}/auth/logout`,
-          {},
+          { mode: 'session' },
           { withCredentials: true },
         ),
       );
@@ -81,7 +81,7 @@ export class AuthService {
     this.detenerTimerRefresh();
     this.isLoggedIn.set(false);
     if (!evitarRedirect) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { state: { fromLogout: true } });
     }
   }
 
