@@ -268,6 +268,7 @@ CREATE TABLE `directus_users` (
   `magic_link_url` text,
   `numero_colegiado` varchar(255) DEFAULT NULL,
   `email_verified` tinyint(1) DEFAULT '0',
+  `password_establecida` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `directus_users_external_identifier_unique` (`external_identifier`),
   UNIQUE KEY `directus_users_email_unique` (`email`),

@@ -8,6 +8,7 @@ import {
   marcarCodigoUsado,
   updateUserPassword,
   checkUsuarioTienePassword,
+  setPasswordEstablecida,
 } from '../models/directus';
 import { sendPasswordResetEmail } from '../services/email.service';
 import type {
@@ -135,6 +136,7 @@ export class passwordResetController {
       }
 
       await updateUserPassword(userId, password);
+      await setPasswordEstablecida(userId, true);
 
       res.json({ ok: true });
     } catch (error: any) {

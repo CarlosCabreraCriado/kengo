@@ -1095,16 +1095,29 @@ export async function updateUserPassword(userId: string, newPassword: string): P
 }
 
 /**
- * Verifica si un usuario tiene contraseña configurada (consulta directa a MySQL)
+ * Marca que el usuario ha establecido su propia contraseña
+ */
+export async function setPasswordEstablecida(userId: string, value: boolean): Promise<void> {
+  const pool = (await import('../utils/database')).default;
+  await pool.execute(
+    'UPDATE directus_users SET password_establecida = ? WHERE id = ?',
+    [value ? 1 : 0, userId]
+  );
+}
+
+/**
+ * Verifica si un usuario tiene contraseña establecida por él mismo.
+ * Usa el campo `password_establecida` (default TRUE) en vez de `password`,
+ * ya que los pacientes creados por fisios tienen una contraseña temporal.
  */
 export async function checkUsuarioTienePassword(userId: string): Promise<boolean> {
   const pool = (await import('../utils/database')).default;
   const [rows] = await pool.execute(
-    'SELECT password FROM directus_users WHERE id = ?',
+    'SELECT password_establecida FROM directus_users WHERE id = ?',
     [userId]
   );
   const user = (rows as any)[0];
-  return !!(user && user.password);
+  return !!(user && user.password_establecida);
 }
 
 // =========================

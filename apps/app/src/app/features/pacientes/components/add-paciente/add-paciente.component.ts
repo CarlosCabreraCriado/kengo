@@ -193,21 +193,18 @@ export class AddPacienteDialogComponent {
     this.error.set(null);
 
     const v = this.form.getRawValue();
-    const tempPassword = this.genTempPassword();
-    const baseUser = {
-      first_name: v.first_name,
-      last_name: v.last_name,
-      email: v.email,
-      telefono: v.telefono,
-      password: tempPassword, // Directus exige password al crear usuario
-    };
 
     try {
       if (!this.isEdit()) {
         // ---- CREAR
-        // Role is determined by id_puesto in clinic relationship, not is_cliente flag
+        const tempPassword = this.genTempPassword();
         const payload = {
-          ...baseUser,
+          first_name: v.first_name,
+          last_name: v.last_name,
+          email: v.email,
+          telefono: v.telefono,
+          password: tempPassword, // Directus exige password al crear usuario
+          password_establecida: false, // El paciente aún no ha elegido su contraseña
           role: env.ROL_PACIENTE_ID,
           clinicas: (v.clinicas || []).map((cid: ID) => ({
             id_clinica: cid,
@@ -244,11 +241,16 @@ export class AddPacienteDialogComponent {
         // ---- EDITAR
         const userId = this.data.usuario!.id;
 
-        // 1) PATCH datos básicos
+        // 1) PATCH datos básicos (sin password para no sobreescribir la del paciente)
         await this.http
           .patch<DirectusItem<UsuarioDirectus>>(
             `${env.DIRECTUS_URL}/users/${userId}`,
-            baseUser,
+            {
+              first_name: v.first_name,
+              last_name: v.last_name,
+              email: v.email,
+              telefono: v.telefono,
+            },
           )
           .toPromise();
 
