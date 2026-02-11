@@ -146,8 +146,12 @@ export class PacientesListComponent {
     });
 
     dialogRef.closed.subscribe((r: unknown) => {
-      const result = r as { created?: boolean; updated?: boolean } | undefined;
-      if (result?.created || result?.updated) this.pacientesRes.reload();
+      const result = r as { created?: UsuarioDirectus; updated?: boolean } | undefined;
+      if (result?.created) {
+        this.router.navigate(['/mis-pacientes', result.created.id]);
+      } else if (result?.updated) {
+        this.pacientesRes.reload();
+      }
     });
   }
 
