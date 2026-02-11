@@ -112,11 +112,80 @@
   -webkit-backdrop-filter: none;
 }
 
-/* Desktop (>= 768px): add top padding to content since there's no header */
+/* Desktop (>= 768px): back bar and top padding */
+.plan-back-bar {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .plan-builder-container {
-    padding-top: 32px;
+    padding-top: 16px;
   }
+
+  .plan-back-bar {
+    display: block;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 8px;
+  }
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 8px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background: rgba(231, 92, 62, 0.08);
+  color: var(--kengo-coral);
+}
+
+.btn-back .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.plan-top-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-top-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 12px;
+  background: var(--kengo-coral);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-top-save:hover:not(:disabled) {
+  background: #d04e33;
+}
+
+.btn-top-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-top-save .material-symbols-outlined {
+  font-size: 18px;
 }
 
 /* Mobile (< 768px): Header with glassmorphism */
@@ -734,8 +803,8 @@
 .date-range {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 8px;
+  padding: 12px;
   background: linear-gradient(
     135deg,
     rgba(231, 92, 62, 0.05) 0%,
@@ -747,6 +816,7 @@
 
 .date-input-group {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -763,12 +833,13 @@
 
 .date-input {
   width: 100%;
+  min-width: 0;
   height: 44px;
-  padding: 0 12px;
+  padding: 0 8px;
   border: 1.5px solid rgba(231, 92, 62, 0.15);
   border-radius: 12px;
   background: white;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-primary);
   text-align: center;
@@ -788,6 +859,8 @@
 
 .date-range__arrow {
   flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 10px;
   color: var(--kengo-gold);
 }
 
@@ -1583,6 +1656,10 @@
   -webkit-backdrop-filter: blur(var(--blur-md));
 }
 
+.floating-action-bar--hidden {
+  display: none;
+}
+
 .floating-action-bar__inner {
   max-width: 720px;
   margin: 0 auto;
@@ -1710,6 +1787,16 @@
 }
 
 @media (min-width: 768px) {
+  .date-range {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .date-input {
+    padding: 0 12px;
+    font-size: 0.875rem;
+  }
+
   .floating-action-bar {
     background: transparent;
     backdrop-filter: none;
