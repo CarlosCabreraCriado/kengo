@@ -10,7 +10,13 @@
       "Bash(git mv apps/app/src/app/services/app.service.ts apps/app/src/app/core/auth/services/session.service.ts)",
       "Bash(git mv apps/app/src/app/services/auth-guard.service.ts apps/app/src/app/core/guards/auth.guard.ts)",
       "Bash(ls:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm ls:*)",
+      "Bash(git -C /Users/carloscabrera/Documents/Proyectos/kengo diff)",
+      "Bash(git -C /Users/carloscabrera/Documents/Proyectos/kengo log --oneline -10)",
+      "Bash(npx nx build:*)"
     ],
     "deny": [],
     "ask": []

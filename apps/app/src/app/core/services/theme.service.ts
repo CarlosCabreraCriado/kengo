@@ -207,6 +207,9 @@ export class ThemeService {
     root.style.setProperty('--kengo-svg-wave-2', palette.svgWave2);
     root.style.setProperty('--kengo-svg-wave-3', palette.svgWave3);
     root.style.setProperty('--kengo-svg-wave-4', palette.svgWave4);
+
+    // Actualizar theme-color del notch/status bar en móvil
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', palette.primary);
   }
 
   /**
