@@ -1,83 +1,85 @@
 <section class="dashboard-page">
-  <!-- Header -->
-  <header class="dashboard-header">
-    <div class="header-content">
-      <!-- MÓVIL: Logo + Avatar -->
-      @if (isMovil()) {
-        <img [src]="logoUrl()" alt="Kengo" class="logo" (error)="onLogoError()" />
-      } @else {
-        <!-- DESKTOP: Saludo con avatar grande -->
-        <div class="greeting-section">
-          <div class="user-avatar-large">
-            @if (userAvatar()) {
-              <img [src]="userAvatar()" alt="Avatar" />
-            } @else {
-              <span class="material-symbols-outlined">person</span>
-            }
-          </div>
-          <div class="greeting-text">
-            <h1 class="titulo-kengo greeting-name">Hola, {{ userName() }}</h1>
-            <p class="greeting-subtitle">¿Qué quieres hacer hoy?</p>
-          </div>
-        </div>
-
-      }
-
-      <!-- Avatar con menú desplegable (solo móvil) -->
-      @if (isMovil()) {
-        <div class="avatar-menu-container">
-          <button
-            type="button"
-            class="avatar-btn"
-            [class.menu-open]="menuAbierto()"
-            (click)="toggleMenu()"
-            aria-label="Abrir menú de usuario"
-            [attr.aria-expanded]="menuAbierto()"
-          >
-            @if (userAvatar()) {
-              <img [src]="userAvatar()" alt="Avatar" class="avatar-img" />
-            } @else {
-              <span class="material-symbols-outlined">person</span>
-            }
-          </button>
-
-          <!-- Menú desplegable -->
-          @if (menuAbierto()) {
-            <div class="user-menu" role="menu">
-              <button
-                type="button"
-                class="menu-item"
-                role="menuitem"
-                (click)="irAPerfil()"
-              >
+  <!-- Columna principal: header + contenido -->
+  <div class="dashboard-primary">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <!-- MÓVIL: Logo + Avatar -->
+        @if (isMovil()) {
+          <img [src]="logoUrl()" alt="Kengo" class="logo" (error)="onLogoError()" />
+        } @else {
+          <!-- DESKTOP: Saludo con avatar grande -->
+          <div class="greeting-section">
+            <div class="user-avatar-large">
+              @if (userAvatar()) {
+                <img [src]="userAvatar()" alt="Avatar" />
+              } @else {
                 <span class="material-symbols-outlined">person</span>
-                <span>Mi perfil</span>
-              </button>
-              <button
-                type="button"
-                class="menu-item menu-item-danger"
-                role="menuitem"
-                (click)="cerrarSesion()"
-              >
-                <span class="material-symbols-outlined">logout</span>
-                <span>Cerrar sesión</span>
-              </button>
+              }
             </div>
+            <div class="greeting-text">
+              <h1 class="titulo-kengo greeting-name">Hola, {{ userName() }}</h1>
+              <p class="greeting-subtitle">¿Qué quieres hacer hoy?</p>
+            </div>
+          </div>
 
-            <!-- Backdrop para cerrar el menú -->
-            <div
-              class="menu-backdrop"
-              (click)="cerrarMenu()"
-              aria-hidden="true"
-            ></div>
-          }
-        </div>
-      }
-    </div>
-  </header>
+        }
 
-  <!-- Main Content -->
-  <main class="dashboard-main">
+        <!-- Avatar con menú desplegable (solo móvil) -->
+        @if (isMovil()) {
+          <div class="avatar-menu-container">
+            <button
+              type="button"
+              class="avatar-btn"
+              [class.menu-open]="menuAbierto()"
+              (click)="toggleMenu()"
+              aria-label="Abrir menú de usuario"
+              [attr.aria-expanded]="menuAbierto()"
+            >
+              @if (userAvatar()) {
+                <img [src]="userAvatar()" alt="Avatar" class="avatar-img" />
+              } @else {
+                <span class="material-symbols-outlined">person</span>
+              }
+            </button>
+
+            <!-- Menú desplegable -->
+            @if (menuAbierto()) {
+              <div class="user-menu" role="menu">
+                <button
+                  type="button"
+                  class="menu-item"
+                  role="menuitem"
+                  (click)="irAPerfil()"
+                >
+                  <span class="material-symbols-outlined">person</span>
+                  <span>Mi perfil</span>
+                </button>
+                <button
+                  type="button"
+                  class="menu-item menu-item-danger"
+                  role="menuitem"
+                  (click)="cerrarSesion()"
+                >
+                  <span class="material-symbols-outlined">logout</span>
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
+
+              <!-- Backdrop para cerrar el menú -->
+              <div
+                class="menu-backdrop"
+                (click)="cerrarMenu()"
+                aria-hidden="true"
+              ></div>
+            }
+          </div>
+        }
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
     <!-- Tarjeta de saludo (solo móvil) -->
     @if (isMovil()) {
       <section class="greeting-card animate-in">
@@ -179,37 +181,39 @@
       }
     }
 
-    <!-- Quick Actions Grid -->
-    <section class="actions-section animate-in" style="--delay: 0.1s">
-      <h2 class="section-title">Accesos rápidos</h2>
-      <div class="actions-grid">
-        @for (card of cards(); track card.id; let i = $index) {
-          @if (card.id !== 'actividad-personal') {
-            <article
-              class="action-card animate-in"
-              [style.--delay]="(0.15 + i * 0.03) + 's'"
-              (click)="navigateToCard(card)"
-            >
-              <div class="action-image">
-                <img
-                  [src]="card.image"
-                  [alt]="card.title"
-                  loading="lazy"
-                />
-              </div>
-              <div class="action-content">
-                <h3 class="titulo-kengo action-title">{{ card.title }}</h3>
-                <p class="action-subtitle">{{ card.subtitle }}</p>
-              </div>
-              <div class="action-arrow">
-                <span class="material-symbols-outlined">arrow_forward</span>
-              </div>
-            </article>
-          }
-        }
-      </div>
-    </section>
   </main>
+  </div>
+
+  <!-- Quick Actions (sidebar on desktop) -->
+  <section class="actions-section animate-in p-5" style="--delay: 0.1s">
+    <h2 class="section-title">Accesos rápidos</h2>
+    <div class="actions-grid">
+      @for (card of cards(); track card.id; let i = $index) {
+        @if (card.id !== 'actividad-personal') {
+          <article
+            class="action-card animate-in"
+            [style.--delay]="(0.15 + i * 0.03) + 's'"
+            (click)="navigateToCard(card)"
+          >
+            <div class="action-image">
+              <img
+                [src]="card.image"
+                [alt]="card.title"
+                loading="lazy"
+              />
+            </div>
+            <div class="action-content">
+              <h3 class="titulo-kengo action-title">{{ card.title }}</h3>
+              <p class="action-subtitle">{{ card.subtitle }}</p>
+            </div>
+            <div class="action-arrow">
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </div>
+          </article>
+        }
+      }
+    </div>
+  </section>
 
   <!-- Vista carrusel móvil (layout alternativo, oculto) -->
   @if (false && isMovil()) {

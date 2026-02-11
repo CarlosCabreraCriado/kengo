@@ -188,8 +188,7 @@
    MAIN CONTENT
    ============================================ */
 .dashboard-main {
-  @apply relative z-10 flex flex-1 flex-col gap-4 px-4 pt-2;
-  padding-bottom: calc(var(--safe-area-bottom) + 100px);
+  @apply relative z-10 flex flex-col gap-4 px-4 pt-2;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -483,7 +482,8 @@
    ACTIONS SECTION
    ============================================ */
 .actions-section {
-  @apply flex flex-col gap-3;
+  @apply flex flex-col gap-3 px-4;
+  padding-bottom: calc(var(--safe-area-bottom, 0px) + 100px);
 }
 
 .section-title {
@@ -680,16 +680,44 @@
 }
 
 @media (min-width: 1024px) {
+  /* Desktop: Two-column flex layout */
+  .dashboard-page {
+    flex-direction: row;
+    gap: 24px;
+    padding: 0 32px;
+    max-width: 1300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Left column: header + main */
+  .dashboard-primary {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
   .dashboard-header {
+    position: relative;
     @apply py-6;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .header-content {
+    max-width: none;
+    margin: 0;
   }
 
   .dashboard-main {
-    @apply gap-6 px-8 pt-0;
-    padding-bottom: 32px;
+    max-width: none;
+    margin: 0;
+    padding: 0 0 32px;
+    gap: 24px;
   }
 
-  /* Activity Hero - larger on desktop */
+  /* Activity Hero */
   .activity-hero {
     min-height: 240px;
   }
@@ -706,31 +734,42 @@
     @apply h-[140%] opacity-25;
   }
 
-  /* Actions Grid - 3 columns */
+  /* Right column: Quick actions sidebar */
+  .actions-section {
+    width: 280px;
+    flex-shrink: 0;
+    padding: 24px 0 32px;
+  }
+
   .actions-grid {
-    @apply grid-cols-3;
+    @apply grid-cols-1;
   }
 
   .action-card {
-    @apply p-4;
+    @apply p-3;
   }
 
   .action-image {
-    @apply h-20 w-20 rounded-2xl;
+    @apply h-14 w-14 rounded-xl;
   }
 
   .action-title {
-    @apply text-lg;
+    @apply text-base;
   }
 
   .action-subtitle {
-    @apply text-sm;
+    @apply text-xs;
   }
 }
 
 @media (min-width: 1280px) {
+  .dashboard-page {
+    gap: 32px;
+    max-width: 1400px;
+  }
+
   .dashboard-main {
-    @apply gap-8;
+    gap: 32px;
   }
 
   .activity-hero {
@@ -745,15 +784,19 @@
     @apply text-2xl;
   }
 
+  .actions-section {
+    width: 340px;
+  }
+
   .actions-grid {
-    @apply gap-4;
+    @apply gap-3;
   }
 
   .action-card {
-    @apply gap-5 p-5;
+    @apply gap-4 p-4;
   }
 
   .action-image {
-    @apply h-24 w-24;
+    @apply h-16 w-16;
   }
 }
