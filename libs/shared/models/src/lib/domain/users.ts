@@ -73,6 +73,7 @@ export interface UserData {
   email: string;
   telefono: string | null;
   direccion: string | null;
+  numero_colegiado?: string | null;
 }
 
 /**

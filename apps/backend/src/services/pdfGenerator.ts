@@ -172,7 +172,8 @@ function renderPersonasRow(
 ): void {
   const startY = doc.y;
   const boxWidth = (CONTENT_WIDTH - 10) / 2;
-  const boxHeight = 65;
+  const hasColegiado = !!data.fisio.numero_colegiado;
+  const boxHeight = hasColegiado ? 78 : 65;
 
   doc
     .roundedRect(MARGIN, startY, boxWidth, boxHeight, 6)
@@ -216,6 +217,13 @@ function renderPersonasRow(
   doc.text(data.fisio.email, rightBoxX + 12, startY + 42, {
     width: boxWidth - 24,
   });
+
+  if (data.fisio.numero_colegiado) {
+    doc.fillColor("#6b7280").fontSize(9);
+    doc.text(`Nº Colegiado: ${data.fisio.numero_colegiado}`, rightBoxX + 12, startY + 55, {
+      width: boxWidth - 24,
+    });
+  }
 
   doc.y = startY + boxHeight + 20;
 }
@@ -466,6 +474,9 @@ function addFooterToAllPages(
   for (let i = 0; i < pages.count; i++) {
     doc.switchToPage(i);
 
+    const savedBottomMargin = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+
     doc
       .rect(0, PAGE_HEIGHT - FOOTER_HEIGHT, PAGE_WIDTH, FOOTER_HEIGHT)
       .fill("#f9fafb");
@@ -491,6 +502,8 @@ function addFooterToAllPages(
       footerY,
       { width: CONTENT_WIDTH / 2, align: "right", lineBreak: false }
     );
+
+    doc.page.margins.bottom = savedBottomMargin;
   }
 }
 

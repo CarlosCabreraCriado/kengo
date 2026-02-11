@@ -177,11 +177,12 @@ export interface DirectusUserData {
   email: string;
   telefono: string | null;
   direccion: string | null;
+  numero_colegiado?: string | null;
 }
 
 export async function getUserById(userId: string): Promise<DirectusUserData | null> {
   const res = await fetch(
-    `${process.env.DIRECTUS_URL}/users/${userId}?fields=id,first_name,last_name,email,telefono,direccion`,
+    `${process.env.DIRECTUS_URL}/users/${userId}?fields=id,first_name,last_name,email,telefono,direccion,numero_colegiado`,
     {
       headers: {
         Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
