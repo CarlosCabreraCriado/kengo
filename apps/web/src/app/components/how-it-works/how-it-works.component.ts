@@ -7,85 +7,6 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section id="como-funciona" class="how-it-works-section">
-      <!-- Layered Background -->
-      <div class="bg-layers">
-        <!-- Animated Gradient Mesh -->
-        <div class="gradient-mesh"></div>
-
-        <!-- Flowing Waves -->
-        <svg class="wave-layer wave-top" viewBox="0 0 1440 320" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="hiw-gradient-1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#fff8f5" />
-              <stop offset="50%" stop-color="#ffe8d6" />
-              <stop offset="100%" stop-color="#fdd6b3" />
-            </linearGradient>
-          </defs>
-          <path fill="url(#hiw-gradient-1)" fill-opacity="0.6">
-            <animate
-              attributeName="d"
-              dur="20s"
-              repeatCount="indefinite"
-              values="
-                M0,96 C180,160 360,32 540,96 C720,160 900,64 1080,128 C1260,192 1440,80 1440,80 L1440,0 L0,0 Z;
-                M0,64 C180,32 360,128 540,64 C720,0 900,128 1080,80 C1260,32 1440,112 1440,112 L1440,0 L0,0 Z;
-                M0,80 C180,144 360,16 540,80 C720,144 900,48 1080,112 C1260,176 1440,64 1440,64 L1440,0 L0,0 Z;
-                M0,96 C180,160 360,32 540,96 C720,160 900,64 1080,128 C1260,192 1440,80 1440,80 L1440,0 L0,0 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-        </svg>
-
-        <svg class="wave-layer wave-bottom" viewBox="0 0 1440 320" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="hiw-gradient-2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#fdd6b3" />
-              <stop offset="50%" stop-color="#f7a65e" stop-opacity="0.3" />
-              <stop offset="100%" stop-color="#ffedd6" />
-            </linearGradient>
-          </defs>
-          <path fill="url(#hiw-gradient-2)" fill-opacity="0.5">
-            <animate
-              attributeName="d"
-              dur="25s"
-              repeatCount="indefinite"
-              values="
-                M0,224 C320,160 640,288 960,224 C1280,160 1440,256 1440,256 L1440,320 L0,320 Z;
-                M0,256 C320,320 640,192 960,256 C1280,320 1440,224 1440,224 L1440,320 L0,320 Z;
-                M0,240 C320,176 640,304 960,240 C1280,176 1440,272 1440,272 L1440,320 L0,320 Z;
-                M0,224 C320,160 640,288 960,224 C1280,160 1440,256 1440,256 L1440,320 L0,320 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-          <path fill="#e75c3e" fill-opacity="0.04">
-            <animate
-              attributeName="d"
-              dur="30s"
-              repeatCount="indefinite"
-              values="
-                M0,256 C400,192 800,320 1200,256 C1320,224 1440,288 1440,288 L1440,320 L0,320 Z;
-                M0,224 C400,288 800,160 1200,224 C1320,256 1440,192 1440,192 L1440,320 L0,320 Z;
-                M0,272 C400,208 800,336 1200,272 C1320,240 1440,304 1440,304 L1440,320 L0,320 Z;
-                M0,256 C400,192 800,320 1200,256 C1320,224 1440,288 1440,288 L1440,320 L0,320 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-        </svg>
-
-        <!-- Decorative Orbs -->
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-
-        <!-- Grain Texture -->
-        <div class="grain-overlay"></div>
-      </div>
 
       <!-- Content Container -->
       <div class="content-container">
@@ -290,119 +211,13 @@ import { CommonModule } from '@angular/common';
     .how-it-works-section {
       position: relative;
       padding: 6rem 0 7rem;
-      overflow: hidden;
-      background: linear-gradient(
-        175deg,
-        #fffcfa 0%,
-        #fff8f4 20%,
-        #fff4ed 40%,
-        #fff0e6 60%,
-        #ffece0 80%,
-        #ffe8da 100%
-      );
+      background: #fafaf9;
     }
 
     @media (min-width: 1024px) {
       .how-it-works-section {
         padding: 8rem 0 9rem;
       }
-    }
-
-    /* ============================================
-       BACKGROUND LAYERS
-    ============================================ */
-
-    .bg-layers {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .gradient-mesh {
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 60% at 10% 20%, rgba(231, 92, 62, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 80% at 90% 80%, rgba(239, 192, 72, 0.1) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(247, 166, 94, 0.05) 0%, transparent 60%);
-    }
-
-    .wave-layer {
-      position: absolute;
-      width: 100%;
-    }
-
-    .wave-top {
-      top: 0;
-      left: 0;
-      height: 30%;
-      min-height: 180px;
-    }
-
-    .wave-bottom {
-      bottom: 0;
-      left: 0;
-      height: 25%;
-      min-height: 150px;
-    }
-
-    /* Decorative Orbs */
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.5;
-    }
-
-    .orb-1 {
-      width: 400px;
-      height: 400px;
-      top: 10%;
-      right: -10%;
-      background: radial-gradient(circle, rgba(231, 92, 62, 0.25) 0%, transparent 70%);
-      animation: orbFloat 25s ease-in-out infinite;
-    }
-
-    .orb-2 {
-      width: 350px;
-      height: 350px;
-      bottom: 20%;
-      left: -8%;
-      background: radial-gradient(circle, rgba(239, 192, 72, 0.2) 0%, transparent 70%);
-      animation: orbFloat 30s ease-in-out infinite reverse;
-    }
-
-    .orb-3 {
-      width: 250px;
-      height: 250px;
-      top: 50%;
-      left: 40%;
-      background: radial-gradient(circle, rgba(247, 166, 94, 0.15) 0%, transparent 70%);
-      animation: orbFloat 20s ease-in-out infinite;
-      animation-delay: -10s;
-    }
-
-    @keyframes orbFloat {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(-30px, 40px) scale(1.1); }
-      50% { transform: translate(20px, -30px) scale(0.95); }
-      75% { transform: translate(-20px, 20px) scale(1.05); }
-    }
-
-    .grain-overlay {
-      position: absolute;
-      inset: 0;
-      opacity: 0.15;
-      mix-blend-mode: overlay;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    }
-
-    @media (max-width: 768px) {
-      .orb { opacity: 0.3; }
-      .orb-1 { width: 250px; height: 250px; }
-      .orb-2 { width: 200px; height: 200px; }
-      .orb-3 { display: none; }
     }
 
     /* ============================================

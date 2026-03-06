@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit, QueryList, ViewChildren, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -81,8 +81,6 @@ import { CommonModule } from '@angular/common';
         <div class="blob blob-2"></div>
         <div class="blob blob-3"></div>
 
-        <!-- Grain Overlay -->
-        <div class="grain-texture"></div>
       </div>
 
       <!-- Content -->
@@ -163,6 +161,7 @@ import { CommonModule } from '@angular/common';
 
           @for (segment of segments; track segment.id; let i = $index) {
             <article
+              #segmentCard
               class="segment-card"
               [class]="'segment-' + segment.id"
               [style.--card-index]="i"
@@ -277,25 +276,6 @@ import { CommonModule } from '@angular/common';
           }
         </div>
 
-        <!-- Stats Showcase -->
-        <div class="stats-showcase">
-          <div class="stats-glass">
-            <div class="stat-block">
-              <span class="stat-value">+1.000</span>
-              <span class="stat-label">pacientes activos</span>
-            </div>
-            <div class="stat-separator"></div>
-            <div class="stat-block">
-              <span class="stat-value">+500</span>
-              <span class="stat-label">ejercicios HD</span>
-            </div>
-            <div class="stat-separator"></div>
-            <div class="stat-block">
-              <span class="stat-value">4.9</span>
-              <span class="stat-label">valoracion media</span>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   `,
@@ -918,12 +898,13 @@ import { CommonModule } from '@angular/common';
       align-items: center;
       gap: 14px;
       opacity: 0;
-      animation: benefitSlide 0.4s ease-out calc(0.3s + var(--row-index) * 0.08s) forwards;
+      transform: translateX(-12px);
+      transition: opacity 0.4s ease-out calc(var(--row-index) * 0.08s), transform 0.4s ease-out calc(var(--row-index) * 0.08s);
     }
 
-    @keyframes benefitSlide {
-      from { opacity: 0; transform: translateX(-12px); }
-      to { opacity: 1; transform: translateX(0); }
+    .segment-card.card-visible .benefit-row {
+      opacity: 1;
+      transform: translateX(0);
     }
 
     .benefit-check {
@@ -1201,7 +1182,30 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class BenefitsComponent {
+export class BenefitsComponent implements AfterViewInit, OnDestroy {
+  @ViewChildren('segmentCard') cards!: QueryList<ElementRef>;
+  private observer: IntersectionObserver | null = null;
+
+  ngAfterViewInit() {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      this.cards.forEach(c => c.nativeElement.classList.add('card-visible'));
+      return;
+    }
+    this.observer = new IntersectionObserver(
+      (entries) => entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('card-visible');
+          this.observer?.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.1 }
+    );
+    this.cards.forEach(c => this.observer!.observe(c.nativeElement));
+  }
+
+  ngOnDestroy() {
+    this.observer?.disconnect();
+  }
   segments = [
     {
       id: 'pacientes',
@@ -1234,7 +1238,7 @@ export class BenefitsComponent {
       iconBg: 'linear-gradient(135deg, rgba(239, 192, 72, 0.18) 0%, rgba(255, 220, 150, 0.06) 100%)',
       morphBg: 'conic-gradient(from 90deg, rgba(217, 119, 6, 0.3) 0deg, rgba(239, 192, 72, 0.3) 120deg, rgba(255, 200, 100, 0.2) 240deg, rgba(217, 119, 6, 0.3) 360deg)',
       cta: 'Crear cuenta',
-      ctaLink: 'https://app.kengoapp.com/registro',
+      ctaLink: 'https://app.kengoapp.com/registro?role=fisio',
       description: 'Herramientas profesionales para crear planes, gestionar pacientes y monitorizar adherencia en tiempo real.',
       benefits: [
         { text: 'Crea planes en minutos, no horas', highlight: null },
@@ -1254,7 +1258,7 @@ export class BenefitsComponent {
       iconBg: 'linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, rgba(165, 180, 252, 0.06) 100%)',
       morphBg: 'conic-gradient(from 180deg, rgba(99, 102, 241, 0.3) 0deg, rgba(139, 92, 246, 0.2) 120deg, rgba(165, 180, 252, 0.3) 240deg, rgba(99, 102, 241, 0.3) 360deg)',
       cta: 'Contactar ventas',
-      ctaLink: 'https://app.kengoapp.com/registro',
+      ctaLink: 'mailto:contacto@kengoapp.com',
       description: 'Escala tu clinica con gestion centralizada del equipo, codigos de acceso seguros y branding personalizado.',
       benefits: [
         { text: 'Gestion centralizada del equipo', highlight: null },

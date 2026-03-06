@@ -1,4 +1,4 @@
-import { Component, signal, HostListener } from '@angular/core';
+import { Component, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -28,6 +28,7 @@ import { CommonModule } from '@angular/common';
               <a
                 [href]="link.href"
                 class="nav-link px-4 py-2 rounded-xl text-gray-700 font-medium transition-all hover:text-primary hover:bg-primary/5"
+                [class.nav-link-active]="activeSection() === link.id"
               >
                 {{ link.label }}
               </a>
@@ -73,7 +74,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Mobile Menu -->
       @if (mobileMenuOpen()) {
-        <div class="md:hidden mobile-menu">
+        <div class="md:hidden mobile-menu" [class.mobile-menu-closing]="menuClosing()">
           <div class="px-4 py-6 space-y-2">
             @for (link of navLinks; track link.href) {
               <a
@@ -107,6 +108,7 @@ import { CommonModule } from '@angular/common';
     @if (mobileMenuOpen()) {
       <div
         class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+        [class.backdrop-closing]="menuClosing()"
         (click)="closeMobileMenu()"
         (keydown.escape)="closeMobileMenu()"
         tabindex="0"
@@ -153,8 +155,13 @@ import { CommonModule } from '@angular/common';
       transform: translateX(-50%);
     }
 
-    .nav-link:hover::after {
+    .nav-link:hover::after,
+    .nav-link-active::after {
       width: 60%;
+    }
+
+    .nav-link-active {
+      color: #e75c3e;
     }
 
     .mobile-menu {
@@ -162,30 +169,70 @@ import { CommonModule } from '@angular/common';
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255, 255, 255, 0.5);
-      animation: slideDown 0.3s ease-out;
+      animation: slideDown 0.28s ease-out forwards;
+    }
+
+    .mobile-menu-closing {
+      animation: slideUp 0.28s ease-in forwards;
+    }
+
+    .backdrop-closing {
+      animation: fadeOut 0.28s ease-in forwards;
     }
 
     @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
     }
   `]
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
   isScrolled = signal(false);
   mobileMenuOpen = signal(false);
+  menuClosing = signal(false);
+  activeSection = signal('');
 
   navLinks = [
-    { href: '#beneficios', label: 'Beneficios' },
-    { href: '#como-funciona', label: 'Como funciona' },
-    { href: '#features', label: 'Funcionalidades' },
+    { id: 'beneficios', href: '#beneficios', label: 'Beneficios' },
+    { id: 'como-funciona', href: '#como-funciona', label: 'Como funciona' },
+    { id: 'features', href: '#features', label: 'Funcionalidades' },
   ];
+
+  private observer: IntersectionObserver | null = null;
+
+  ngOnInit() {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            this.activeSection.set(entry.target.id);
+          }
+        }
+      },
+      { threshold: 0.3, rootMargin: '-80px 0px -40% 0px' }
+    );
+
+    for (const link of this.navLinks) {
+      const el = document.getElementById(link.id);
+      if (el) this.observer.observe(el);
+    }
+  }
+
+  ngOnDestroy() {
+    this.observer?.disconnect();
+  }
 
   @HostListener('window:scroll')
   onScroll() {
@@ -197,6 +244,10 @@ export class HeaderComponent {
   }
 
   closeMobileMenu() {
-    this.mobileMenuOpen.set(false);
+    this.menuClosing.set(true);
+    setTimeout(() => {
+      this.mobileMenuOpen.set(false);
+      this.menuClosing.set(false);
+    }, 280);
   }
 }

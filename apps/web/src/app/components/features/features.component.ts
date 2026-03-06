@@ -584,6 +584,14 @@ import { CommonModule } from '@angular/common';
         grid-template-columns: repeat(2, 1fr);
         gap: 1.25rem;
       }
+
+      .bento-card.featured {
+        grid-column: span 2;
+      }
+
+      .bento-card.wide {
+        grid-column: span 2;
+      }
     }
 
     @media (min-width: 1024px) {

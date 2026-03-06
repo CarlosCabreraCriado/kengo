@@ -29,8 +29,6 @@ import { CommonModule } from '@angular/common';
         <div class="aurora-orb aurora-orb-3"></div>
         <div class="aurora-orb aurora-orb-4"></div>
 
-        <!-- Grain Texture -->
-        <div class="grain-overlay"></div>
       </div>
 
       <!-- Main Content -->
@@ -79,21 +77,21 @@ import { CommonModule } from '@angular/common';
           <a href="https://app.kengoapp.com/registro" class="btn-primary">
             <span class="btn-bg"></span>
             <span class="btn-content">
-              <span>Crear cuenta gratuita</span>
+              <span>Soy paciente, empezar gratis</span>
               <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14"/>
                 <path d="M12 5l7 7-7 7"/>
               </svg>
             </span>
           </a>
-          <a href="#como-funciona" class="btn-secondary">
+          <a href="https://app.kengoapp.com/registro?role=fisio" class="btn-secondary">
             <span class="btn-glass"></span>
             <span class="btn-content">
               <svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polygon points="10,8 16,12 10,16" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="7" r="4"/>
+                <path d="M12 11v3m-1.5-1.5h3" stroke-linecap="round" stroke-width="2"/>
               </svg>
-              <span>Ver como funciona</span>
+              <span>Soy fisioterapeuta</span>
             </span>
           </a>
         </div>
@@ -890,9 +888,9 @@ export class CtaComponent {
   ];
 
   stats = [
-    { value: '+500', label: 'Ejercicios', icon: 'exercises' },
-    { value: '+1.000', label: 'Pacientes', icon: 'patients' },
-    { value: '4.9', label: 'Valoracion', icon: 'rating' },
-    { value: '95%', label: 'Adherencia', icon: 'adherence' },
+    { value: '95%', label: 'Adherencia media', icon: 'adherence' },
+    { value: '+50', label: 'Clinicas activas', icon: 'clinics' },
+    { value: '+500', label: 'Ejercicios HD', icon: 'exercises' },
+    { value: '4.9', label: 'Valoracion media', icon: 'rating' },
   ];
 }

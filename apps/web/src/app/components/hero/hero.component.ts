@@ -69,7 +69,7 @@ import { CommonModule } from '@angular/common';
                 </svg>
               </a>
               <a
-                href="https://app.kengoapp.com/registro"
+                href="https://app.kengoapp.com/registro?role=fisio"
                 class="btn-kengo-secondary text-lg"
               >
                 <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,6 +107,78 @@ import { CommonModule } from '@angular/common';
                   <span class="font-semibold text-gray-900">4.9</span> valoracion media
                 </span>
               </div>
+            </div>
+          </div>
+
+          <!-- Mobile App Preview (visible only on mobile/tablet) -->
+          <div class="animate-in delay-400 lg:hidden mt-10 mx-auto max-w-sm">
+            <div class="mobile-app-preview">
+              <!-- App bar -->
+              <div class="mobile-app-bar">
+                <span class="titulo-kengo text-lg text-primary">KENGO</span>
+                <div class="mobile-avatar">
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Today's card -->
+              <div class="mobile-today-card">
+                <div class="mobile-today-label">Tu actividad de hoy</div>
+                <div class="mobile-today-plan">Plan de rehabilitacion lumbar</div>
+                <div class="mobile-progress-row">
+                  <div class="mobile-progress-bar">
+                    <div class="mobile-progress-fill"></div>
+                  </div>
+                  <span class="mobile-progress-text">75%</span>
+                </div>
+                <div class="mobile-continue-btn">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                  </svg>
+                  Continuar sesion
+                </div>
+              </div>
+
+              <!-- Quick actions row -->
+              <div class="mobile-actions-row">
+                @for (action of quickActions; track action.id) {
+                  <div class="mobile-action">
+                    <div class="mobile-action-icon">
+                      @switch (action.id) {
+                        @case ('planes') {
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                          </svg>
+                        }
+                        @case ('ejercicios') {
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                          </svg>
+                        }
+                        @case ('progreso') {
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                          </svg>
+                        }
+                        @case ('fisio') {
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#e75c3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="7" r="4"/><path d="M12 11v3m-1.5-1.5h3" stroke-width="2"/>
+                          </svg>
+                        }
+                      }
+                    </div>
+                    <span class="mobile-action-label">{{ action.title }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Floating badge below card -->
+            <div class="mobile-floating-badge">
+              <span class="mobile-badge-dot"></span>
+              <span>Sesion completada · Racha: 7 dias</span>
             </div>
           </div>
 
@@ -548,6 +620,157 @@ import { CommonModule } from '@angular/common';
       .floating-card {
         display: none;
       }
+    }
+
+    /* ============================================
+       MOBILE APP PREVIEW
+    ============================================ */
+
+    .mobile-app-preview {
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 16px 48px rgba(231, 92, 62, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .mobile-app-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .mobile-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e75c3e, #c94a2f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-today-card {
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(231, 92, 62, 0.06), rgba(239, 192, 72, 0.04));
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .mobile-today-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .mobile-today-plan {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .mobile-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .mobile-progress-bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(231, 92, 62, 0.12);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .mobile-progress-fill {
+      width: 75%;
+      height: 100%;
+      background: linear-gradient(90deg, #e75c3e, #efc048);
+      border-radius: 4px;
+    }
+
+    .mobile-progress-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e75c3e;
+    }
+
+    .mobile-continue-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #e75c3e, #c94a2f);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 12px;
+    }
+
+    .mobile-actions-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 16px;
+      gap: 8px;
+    }
+
+    .mobile-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mobile-action-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(231, 92, 62, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-action-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .mobile-floating-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #15803d;
+    }
+
+    .mobile-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
     }
   `]
 })

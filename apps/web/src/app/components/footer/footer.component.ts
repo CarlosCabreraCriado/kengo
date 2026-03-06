@@ -60,7 +60,7 @@ import { CommonModule } from '@angular/common';
 
             <!-- Links Columns -->
             <div class="lg:col-span-7">
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+              <div class="grid grid-cols-2 gap-8">
                 <!-- Product -->
                 <div>
                   <h4 class="footer-heading">Producto</h4>
@@ -69,27 +69,27 @@ import { CommonModule } from '@angular/common';
                     <li><a href="#como-funciona">Como funciona</a></li>
                     <li><a href="#features">Funcionalidades</a></li>
                     <li><a href="https://app.kengoapp.com/registro">Registrarse</a></li>
+                    <li><a href="https://app.kengoapp.com/registro?role=fisio">Para fisioterapeutas</a></li>
                   </ul>
                 </div>
 
-                <!-- Company -->
+                <!-- Contact -->
                 <div>
-                  <h4 class="footer-heading">Empresa</h4>
+                  <h4 class="footer-heading">Contacto</h4>
                   <ul class="footer-links">
-                    <li><a href="/about">Sobre nosotros</a></li>
-                    <li><a href="/contact">Contacto</a></li>
-                    <li><a href="/blog">Blog</a></li>
-                    <li><a href="/careers">Trabaja con nosotros</a></li>
-                  </ul>
-                </div>
-
-                <!-- Legal -->
-                <div>
-                  <h4 class="footer-heading">Legal</h4>
-                  <ul class="footer-links">
-                    <li><a href="/privacy">Privacidad</a></li>
-                    <li><a href="/terms">Terminos</a></li>
-                    <li><a href="/cookies">Cookies</a></li>
+                    <li>
+                      <a href="mailto:contacto@kengoapp.com" class="contact-email">
+                        <svg class="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+                        </svg>
+                        contacto&#64;kengoapp.com
+                      </a>
+                    </li>
+                    <li>
+                      <a href="mailto:ventas@kengoapp.com">
+                        Contactar ventas
+                      </a>
+                    </li>
                   </ul>
                 </div>
               </div>
