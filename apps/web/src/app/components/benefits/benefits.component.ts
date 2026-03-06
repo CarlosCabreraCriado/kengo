@@ -182,31 +182,40 @@ import { CommonModule } from '@angular/common';
                 <div class="card-header-row">
                   <!-- Animated Icon -->
                   <div class="icon-container">
-                    <div class="icon-rings">
-                      <div class="ring ring-1"></div>
-                      <div class="ring ring-2"></div>
-                    </div>
-                    <div class="icon-shape" [style.background]="segment.iconBg">
+                    <div class="icon-shape">
                       @switch (segment.id) {
                         @case ('pacientes') {
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-linecap="round"/>
-                            <circle cx="12" cy="7" r="4"/>
-                            <path d="M12 11v3m-1.5-1.5h3" stroke-linecap="round" stroke-width="2"/>
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5 2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.41 22 8.5c0 3.77-3.4 6.86-8.55 11.53L12 21.35z"
+                                  fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M6 11h2.5l1.5-3 2.5 6 1.5-4 1 2H18"
+                                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                           </svg>
                         }
                         @case ('fisioterapeutas') {
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <circle cx="12" cy="5" r="3"/>
-                            <path d="M12 8v5m-4 2h8M8 15l2 6m6-6l-2 6" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="18" cy="4" r="2" fill="currentColor" opacity="0.3"/>
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <rect x="5" y="4" width="14" height="17" rx="2"
+                                  fill="currentColor" opacity="0.1" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"
+                                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <circle cx="12" cy="10" r="2"
+                                    fill="currentColor" opacity="0.3" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M9 15.5c0-1.657 1.343-3 3-3s3 1.343 3 3"
+                                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M9 20l1.5 1.5L15 17"
+                                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                           </svg>
                         }
                         @case ('clinicas') {
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <rect x="4" y="6" width="16" height="14" rx="2"/>
-                            <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke-linecap="round"/>
-                            <path d="M12 10v6m-3-3h6" stroke-linecap="round" stroke-width="2"/>
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="9" width="18" height="13" rx="1"
+                                  fill="currentColor" opacity="0.1" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M2 9L12 3l10 6"
+                                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 12v4M10 14h4"
+                                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <rect x="9" y="18" width="6" height="4" rx="0.5"
+                                  fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1.5"/>
                           </svg>
                         }
                       }
@@ -722,7 +731,7 @@ import { CommonModule } from '@angular/common';
 
     .card-header-row {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       margin-bottom: 1.75rem;
     }
@@ -730,63 +739,27 @@ import { CommonModule } from '@angular/common';
     /* Icon Container */
     .icon-container {
       position: relative;
-      width: 76px;
-      height: 76px;
-    }
-
-    .icon-rings {
-      position: absolute;
-      inset: -12px;
-    }
-
-    .ring {
-      position: absolute;
-      inset: 0;
-      border: 1.5px dashed var(--accent);
-      border-radius: 50%;
-      opacity: 0.25;
-    }
-
-    .ring-1 {
-      animation: ringRotate 20s linear infinite;
-    }
-
-    .ring-2 {
-      inset: 6px;
-      animation: ringRotate 15s linear infinite reverse;
-      opacity: 0.15;
-    }
-
-    @keyframes ringRotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .segment-card:hover .ring {
-      opacity: 0.5;
-      animation-duration: 8s;
+      width: 60px;
+      height: 60px;
     }
 
     .icon-shape {
-      position: relative;
-      width: 76px;
-      height: 76px;
+      width: 60px;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 24px;
       color: var(--accent);
-      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .icon-shape svg {
-      width: 34px;
-      height: 34px;
+      width: 52px;
+      height: 52px;
     }
 
     .segment-card:hover .icon-shape {
       transform: scale(1.1) rotate(-6deg);
-      box-shadow: 0 12px 32px color-mix(in srgb, var(--accent) 30%, transparent);
     }
 
     /* Tier Badge */
@@ -794,10 +767,10 @@ import { CommonModule } from '@angular/common';
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 16px;
+      padding: 12px 22px;
       background: var(--badge-bg);
       color: var(--badge-color);
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -805,8 +778,8 @@ import { CommonModule } from '@angular/common';
     }
 
     .badge-indicator {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       background: var(--badge-color);
       border-radius: 50%;
       animation: indicatorPulse 2s ease-in-out infinite;
@@ -1157,7 +1130,6 @@ import { CommonModule } from '@angular/common';
       .blob,
       .badge-pulse,
       .title-accent,
-      .ring,
       .card-morphing-bg,
       .floater,
       .flow-path,
