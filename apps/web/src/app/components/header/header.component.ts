@@ -6,15 +6,13 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <header
-      class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-      [class.header-scrolled]="isScrolled()"
-      [class.header-transparent]="!isScrolled()"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
+    <header class="fixed top-0 left-0 right-0 z-50 pt-4 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto">
+        <div class="navbar-pill flex justify-between items-center px-4 py-2 bg-white/70 backdrop-blur-md border border-white/50 rounded-full shadow-md transition-all duration-300"
+          [class.navbar-pill-scrolled]="isScrolled()"
+        >
           <!-- Logo -->
-          <a href="/" class="flex items-center gap-2 group">
+          <a href="/" class="flex items-center gap-2 group pl-2">
             <div class="logo-container">
               <span class="titulo-kengo text-3xl sm:text-4xl text-primary transition-transform group-hover:scale-105">
                 KENGO
@@ -27,7 +25,7 @@ import { CommonModule } from '@angular/common';
             @for (link of navLinks; track link.href) {
               <a
                 [href]="link.href"
-                class="nav-link px-4 py-2 rounded-xl text-gray-700 font-medium transition-all hover:text-primary hover:bg-primary/5"
+                class="nav-link px-4 py-2 rounded-full text-gray-700 font-medium transition-all hover:text-primary hover:bg-primary/5"
                 [class.nav-link-active]="activeSection() === link.id"
               >
                 {{ link.label }}
@@ -36,16 +34,16 @@ import { CommonModule } from '@angular/common';
           </nav>
 
           <!-- CTA Buttons -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 pr-1">
             <a
               href="https://app.kengoapp.com/login"
-              class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 font-medium transition-all hover:text-primary hover:bg-primary/5"
+              class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full text-gray-700 font-medium transition-all hover:text-primary hover:bg-primary/5"
             >
               Iniciar sesion
             </a>
             <a
               href="https://app.kengoapp.com/registro"
-              class="btn-kengo !px-5 !py-2.5 !text-sm !rounded-xl"
+              class="btn-kengo !px-5 !py-2.5 !text-sm rounded-full!"
             >
               <span>Registrarse</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +54,7 @@ import { CommonModule } from '@angular/common';
             <!-- Mobile Menu Button -->
             <button
               (click)="toggleMobileMenu()"
-              class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-white/60 border border-white/40 text-gray-700 transition-all active:scale-95"
+              class="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-white/60 border border-white/40 text-gray-700 transition-all active:scale-95"
               [class.bg-primary]="mobileMenuOpen()"
               [class.text-white]="mobileMenuOpen()"
             >
@@ -122,16 +120,9 @@ import { CommonModule } from '@angular/common';
       display: block;
     }
 
-    .header-transparent {
-      background: transparent;
-    }
-
-    .header-scrolled {
+    .navbar-pill-scrolled {
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
 
     .logo-container {
