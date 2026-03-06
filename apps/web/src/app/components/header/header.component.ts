@@ -195,7 +195,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   navLinks = [
     { id: 'beneficios', href: '#beneficios', label: 'Beneficios' },
-    { id: 'como-funciona', href: '#como-funciona', label: 'Como funciona' },
+    { id: 'como-funciona', href: '#como-funciona', label: '¿Cómo funciona?' },
     { id: 'features', href: '#features', label: 'Funcionalidades' },
   ];
 
