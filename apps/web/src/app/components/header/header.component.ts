@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   template: `
     <header class="fixed top-0 left-0 right-0 z-50 pt-4 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
-        <div class="navbar-pill flex justify-between items-center px-4 py-2 bg-white/70 backdrop-blur-md border border-white/50 rounded-full shadow-md transition-all duration-300"
+        <div class="navbar-pill flex justify-between items-center px-4 py-2 bg-white/80 backdrop-blur-md border border-white/50 rounded-full shadow-md transition-all duration-300"
           [class.navbar-pill-scrolled]="isScrolled()"
         >
           <!-- Logo -->
