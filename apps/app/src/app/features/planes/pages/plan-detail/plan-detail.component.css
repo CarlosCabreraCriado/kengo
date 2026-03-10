@@ -49,7 +49,7 @@
   @apply relative flex flex-col w-full h-full;
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
   padding-bottom: calc(var(--safe-bottom) + 120px);
 }
 

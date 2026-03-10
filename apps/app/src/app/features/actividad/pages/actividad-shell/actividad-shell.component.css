@@ -141,7 +141,6 @@
 /* Shell Content */
 .shell-content {
   @apply relative flex-1 z-10 overflow-y-auto overflow-x-hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
 }
 

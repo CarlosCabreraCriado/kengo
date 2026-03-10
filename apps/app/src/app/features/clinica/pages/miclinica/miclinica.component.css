@@ -24,9 +24,7 @@
 
 /* === Page Container === */
 .clinic-page {
-  @apply relative flex flex-col w-full h-full overflow-y-auto overflow-x-hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  @apply relative flex flex-col w-full h-full overflow-hidden;
 }
 
 /* === Aurora Background === */
@@ -182,11 +180,12 @@
 
 /* === Main Content === */
 .clinic-main {
-  @apply relative flex-1 px-4 pt-2 z-10;
+  @apply relative flex-1 px-4 pt-2 z-10 overflow-y-auto;
   padding-bottom: calc(var(--safe-area-bottom) + 100px);
   max-width: 640px;
   margin: 0 auto;
   width: 100%;
+  overscroll-behavior-y: none;
 }
 
 @media (min-width: 768px) {

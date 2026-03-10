@@ -109,8 +109,7 @@
 .session-main {
   @apply relative flex-1 overflow-y-auto overflow-x-hidden px-4 pt-2 z-10;
   padding-bottom: calc(var(--safe-area-bottom) + 100px);
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
 }
 
 /* Hero Card */
