@@ -9,6 +9,12 @@
 :host {
   /* Color variables now defined globally via ThemeService */
   --kengo-glow: var(--kengo-primary-alpha-30);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
 }
 
 /* === Header con glassmorphism (solo móvil) === */

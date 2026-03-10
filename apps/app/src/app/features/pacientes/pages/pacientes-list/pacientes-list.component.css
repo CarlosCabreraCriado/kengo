@@ -14,6 +14,12 @@
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
 }
 
 /* === Page Container === */
