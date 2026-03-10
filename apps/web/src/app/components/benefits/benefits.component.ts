@@ -65,12 +65,12 @@ import { CommonModule } from '@angular/common';
           <h2 class="section-title">
             Una plataforma,
             <br />
-            <span class="title-accent">tres experiencias</span>
+            <span class="title-accent">para cada uno</span>
           </h2>
 
           <p class="section-subtitle">
-            Cada usuario encuentra exactamente lo que necesita. Herramientas
-            especializadas que transforman la rehabilitacion.
+            Pacientes y fisioterapeutas encuentran exactamente lo que necesitan.
+            Herramientas que transforman la rehabilitacion.
           </p>
         </header>
 
@@ -92,8 +92,7 @@ import { CommonModule } from '@angular/common';
                   y2="0%"
                 >
                   <stop offset="0%" stop-color="#e75c3e" stop-opacity="0.3" />
-                  <stop offset="50%" stop-color="#efc048" stop-opacity="0.5" />
-                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="#efc048" stop-opacity="0.5" />
                 </linearGradient>
                 <filter id="glow-filter">
                   <feGaussianBlur stdDeviation="3" result="blur" />
@@ -105,30 +104,25 @@ import { CommonModule } from '@angular/common';
               </defs>
               <path
                 class="flow-path"
-                d="M100,300 C200,200 350,400 500,300 C650,200 750,400 900,300 C1000,220 1100,300 1100,300"
+                d="M200,300 C350,200 500,400 700,300 C850,220 1000,300 1000,300"
                 fill="none"
                 stroke="url(#flow-gradient)"
                 stroke-width="3"
                 filter="url(#glow-filter)"
               />
               <circle class="flow-particle particle-1" r="6" fill="#e75c3e">
-                <animateMotion dur="8s" repeatCount="indefinite">
+                <animateMotion dur="6s" repeatCount="indefinite">
                   <mpath href="#flow-path-motion" />
                 </animateMotion>
               </circle>
               <circle class="flow-particle particle-2" r="4" fill="#efc048">
-                <animateMotion dur="8s" repeatCount="indefinite" begin="-3s">
-                  <mpath href="#flow-path-motion" />
-                </animateMotion>
-              </circle>
-              <circle class="flow-particle particle-3" r="5" fill="#6366f1">
-                <animateMotion dur="8s" repeatCount="indefinite" begin="-5s">
+                <animateMotion dur="6s" repeatCount="indefinite" begin="-3s">
                   <mpath href="#flow-path-motion" />
                 </animateMotion>
               </circle>
               <path
                 id="flow-path-motion"
-                d="M100,300 C200,200 350,400 500,300 C650,200 750,400 900,300 C1000,220 1100,300 1100,300"
+                d="M200,300 C350,200 500,400 700,300 C850,220 1000,300 1000,300"
                 fill="none"
                 stroke="none"
               />
@@ -295,62 +289,6 @@ import { CommonModule } from '@angular/common';
                           </svg>
                         }
 
-                        @case ('clinicas') {
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            aria-hidden="true"
-                          >
-                            <!-- Building -->
-                            <path
-                              d="M4 9.5 12 4l8 5.5"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-                            <rect
-                              x="5"
-                              y="9.5"
-                              width="14"
-                              height="10.5"
-                              rx="2"
-                              fill="currentColor"
-                              opacity="0.1"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                            />
-                            <!-- Central system cross -->
-                            <path
-                              d="M12 11.3v3.8M10.1 13.2h3.8"
-                              stroke="currentColor"
-                              stroke-width="1.8"
-                              stroke-linecap="round"
-                            />
-                            <!-- Network nodes -->
-                            <circle
-                              cx="8.2"
-                              cy="17"
-                              r="1"
-                              fill="currentColor"
-                              opacity="0.75"
-                            />
-                            <circle
-                              cx="15.8"
-                              cy="17"
-                              r="1"
-                              fill="currentColor"
-                              opacity="0.75"
-                            />
-                            <path
-                              d="M9.2 16.8h5.6"
-                              stroke="currentColor"
-                              stroke-width="1.4"
-                              stroke-linecap="round"
-                              opacity="0.8"
-                            />
-                          </svg>
-                        }
                       }
                     </div>
                   </div>
@@ -782,35 +720,24 @@ import { CommonModule } from '@angular/common';
       @media (min-width: 768px) {
         .ecosystem-grid {
           grid-template-columns: repeat(2, 1fr);
-          gap: 2rem;
-        }
-
-        .segment-clinicas {
-          grid-column: span 2;
-          max-width: 560px;
-          justify-self: center;
+          gap: 2.5rem;
+          max-width: 900px;
+          margin: 0 auto;
         }
       }
 
       @media (min-width: 1024px) {
         .ecosystem-grid {
-          grid-template-columns: repeat(3, 1fr);
-          gap: 2.5rem;
+          gap: 3rem;
           align-items: start;
         }
 
         .segment-pacientes {
-          transform: translateY(30px);
+          transform: translateY(20px);
         }
 
         .segment-fisioterapeutas {
           transform: translateY(-10px);
-        }
-
-        .segment-clinicas {
-          grid-column: span 1;
-          max-width: none;
-          transform: translateY(50px);
         }
       }
 
@@ -884,13 +811,10 @@ import { CommonModule } from '@angular/common';
 
       @media (min-width: 1024px) {
         .segment-pacientes:hover {
-          transform: translateY(16px) scale(1.02);
+          transform: translateY(6px) scale(1.02);
         }
         .segment-fisioterapeutas:hover {
           transform: translateY(-24px) scale(1.02);
-        }
-        .segment-clinicas:hover {
-          transform: translateY(36px) scale(1.02);
         }
       }
 
@@ -1537,21 +1461,21 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
         'linear-gradient(135deg, rgba(231, 92, 62, 0.14) 0%, rgba(255, 200, 180, 0.06) 100%)',
       morphBg:
         'conic-gradient(from 0deg, rgba(231, 92, 62, 0.3) 0deg, rgba(247, 166, 94, 0.2) 120deg, rgba(255, 200, 180, 0.3) 240deg, rgba(231, 92, 62, 0.3) 360deg)',
-      cta: 'Empezar ahora',
+      cta: 'Empezar gratis',
       ctaLink: 'https://app.kengoapp.com/registro',
       description:
-        'Tu fisio siempre contigo. Ejercicios guiados con video, seguimiento del dolor y comunicacion directa.',
+        'Accede gratis con el codigo de tu fisio o clinica. Ejercicios guiados, seguimiento del dolor y comunicacion directa.',
       benefits: [
-        { text: 'Ejercicios con video HD profesional', highlight: null },
-        { text: 'Sabe exactamente que hacer cada dia', highlight: null },
-        { text: 'Registra como te sientes', highlight: 'Nuevo' },
-        { text: 'Tu fisio siempre informado', highlight: null },
+        { text: 'Sin coste, 100% gratuito', highlight: 'Gratis' },
+        { text: 'Solo necesitas un codigo de tu fisio o clinica', highlight: null },
+        { text: 'Ejercicios guiados con video profesional', highlight: null },
+        { text: 'Registra tu progreso y como te sientes', highlight: null },
       ],
     },
     {
       id: 'fisioterapeutas',
       title: 'Para Fisioterapeutas',
-      tag: 'Pro',
+      tag: 'Prueba gratis',
       tagBg: 'rgba(217, 119, 6, 0.12)',
       tagColor: '#d97706',
       accentColor: '#d97706',
@@ -1560,38 +1484,15 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
         'linear-gradient(135deg, rgba(239, 192, 72, 0.18) 0%, rgba(255, 220, 150, 0.06) 100%)',
       morphBg:
         'conic-gradient(from 90deg, rgba(217, 119, 6, 0.3) 0deg, rgba(239, 192, 72, 0.3) 120deg, rgba(255, 200, 100, 0.2) 240deg, rgba(217, 119, 6, 0.3) 360deg)',
-      cta: 'Crear cuenta',
-      ctaLink: 'https://app.kengoapp.com/registro?role=fisio',
+      cta: 'Descubrir mas',
+      ctaLink: '/fisioterapeutas',
       description:
-        'Herramientas profesionales para crear planes, gestionar pacientes y monitorizar adherencia en tiempo real.',
+        'Registrate y prueba gratis todas las herramientas. Crea planes, gestiona pacientes y accede a un catalogo profesional.',
       benefits: [
-        { text: 'Crea planes en minutos, no horas', highlight: null },
-        { text: '+500 ejercicios en el catalogo', highlight: 'HD' },
-        { text: 'Monitoriza adherencia real', highlight: null },
-        { text: 'Plantillas reutilizables', highlight: null },
-      ],
-    },
-    {
-      id: 'clinicas',
-      title: 'Para Clinicas',
-      tag: 'Enterprise',
-      tagBg: 'rgba(99, 102, 241, 0.12)',
-      tagColor: '#6366f1',
-      accentColor: '#6366f1',
-      accentLight: 'rgba(99, 102, 241, 0.12)',
-      iconBg:
-        'linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, rgba(165, 180, 252, 0.06) 100%)',
-      morphBg:
-        'conic-gradient(from 180deg, rgba(99, 102, 241, 0.3) 0deg, rgba(139, 92, 246, 0.2) 120deg, rgba(165, 180, 252, 0.3) 240deg, rgba(99, 102, 241, 0.3) 360deg)',
-      cta: 'Contactar ventas',
-      ctaLink: 'mailto:contacto@kengoapp.com',
-      description:
-        'Escala tu clinica con gestion centralizada del equipo, codigos de acceso seguros y branding personalizado.',
-      benefits: [
-        { text: 'Gestion centralizada del equipo', highlight: null },
-        { text: 'Codigos de acceso seguros', highlight: null },
-        { text: 'Tu marca, tu identidad', highlight: 'Branding' },
-        { text: 'Escala sin complicaciones', highlight: null },
+        { text: 'Registrate y prueba gratis', highlight: 'Nuevo' },
+        { text: 'Catalogo con +500 ejercicios en video', highlight: 'HD' },
+        { text: 'Crea planes personalizados en minutos', highlight: null },
+        { text: 'Gestion integral de pacientes', highlight: null },
       ],
     },
   ];
