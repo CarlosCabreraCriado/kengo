@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'web-features',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <section id="features" class="features-section">
       <!-- Mesh Gradient Background -->
@@ -18,25 +17,23 @@ import { CommonModule } from '@angular/common';
       <div class="grid-pattern"></div>
 
       <div class="features-content">
-        <!-- Editorial Header -->
+        <!-- Editorial Header — Centrado -->
         <header class="editorial-header">
-          <div class="header-layout">
-            <div class="header-left">
-              <span class="issue-label">Funcionalidades</span>
-              <h2 class="mega-title">
-                <span class="title-line">Herramientas</span>
-                <span class="title-line accent">que curan</span>
-              </h2>
-            </div>
-            <div class="header-right">
-              <p class="header-description">
-                Tecnologia disenada por fisioterapeutas para transformar la recuperacion de tus pacientes.
-              </p>
-              <div class="stat-pill">
-                <span class="stat-number">+500</span>
-                <span class="stat-text">ejercicios HD</span>
-              </div>
-            </div>
+          <div class="header-eyebrow">
+            <span class="eyebrow-line"></span>
+            <span class="eyebrow-label">Funcionalidades</span>
+            <span class="eyebrow-line eyebrow-line-r"></span>
+          </div>
+          <h2 class="mega-title">
+            <span class="title-line">Herramientas</span>
+            <span class="title-line accent">que curan</span>
+          </h2>
+          <p class="header-description">
+            Tecnología diseñada por fisioterapeutas para transformar la recuperación de tus pacientes.
+          </p>
+          <div class="stat-pill">
+            <span class="stat-number">+500</span>
+            <span class="stat-text">ejercicios HD</span>
           </div>
           <div class="header-divider">
             <div class="divider-line"></div>
@@ -46,7 +43,8 @@ import { CommonModule } from '@angular/common';
 
         <!-- Bento Grid Layout -->
         <div class="bento-grid">
-          <!-- Featured Card - Videos -->
+
+          <!-- 1. Featured Card - Videos -->
           <article class="bento-card featured" data-feature="videos">
             <div class="card-inner">
               <div class="card-visual">
@@ -67,7 +65,7 @@ import { CommonModule } from '@angular/common';
                 </div>
               </div>
               <div class="card-content">
-                <div class="card-badge">Catalogo</div>
+                <div class="card-badge">Catálogo</div>
                 <h3 class="card-title">Videos profesionales</h3>
                 <p class="card-description">
                   Biblioteca curada con ejercicios grabados por fisioterapeutas. Instrucciones claras, demostraciones en HD.
@@ -77,47 +75,70 @@ import { CommonModule } from '@angular/common';
             </div>
           </article>
 
-          <!-- Planes Card -->
+          <!-- 2. Planes Card -->
           <article class="bento-card vertical" data-feature="planes">
             <div class="card-inner">
               <div class="card-visual">
                 <div class="calendar-visual">
+                  <div class="calendar-month-label">Marzo 2026</div>
+                  <div class="week-row dimmed">
+                    @for (day of weekDaysPrev; track day.letter) {
+                      <div class="day-cell" [class.active]="day.active">
+                        <span class="day-letter">{{ day.letter }}</span>
+                        @if (day.active) {
+                          <span class="day-dot"></span>
+                        }
+                      </div>
+                    }
+                  </div>
                   <div class="week-row">
-                    @for (day of weekDays; track day) {
+                    @for (day of weekDays; track day.letter) {
                       <div class="day-cell" [class.active]="day.active" [class.today]="day.today">
                         <span class="day-letter">{{ day.letter }}</span>
-                        <span class="day-dot" *ngIf="day.active"></span>
+                        @if (day.active) {
+                          <span class="day-dot"></span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="week-row dimmed">
+                    @for (day of weekDaysNext; track day.letter) {
+                      <div class="day-cell" [class.active]="day.active">
+                        <span class="day-letter">{{ day.letter }}</span>
+                        @if (day.active) {
+                          <span class="day-dot"></span>
+                        }
                       </div>
                     }
                   </div>
                 </div>
               </div>
               <div class="card-content">
-                <div class="card-badge gold">Personalizacion</div>
+                <div class="card-badge gold">Personalización</div>
                 <h3 class="card-title">Planes a medida</h3>
                 <p class="card-description">
-                  Rutinas adaptadas a cada paciente, organizadas por dias de la semana.
+                  Rutinas adaptadas a cada paciente, organizadas por días de la semana.
                 </p>
               </div>
               <div class="card-number">02</div>
             </div>
           </article>
 
-          <!-- Seguimiento Card -->
+          <!-- 3. Seguimiento Card -->
           <article class="bento-card" data-feature="seguimiento">
             <div class="card-inner">
               <div class="card-visual">
                 <div class="chart-visual">
-                  <svg viewBox="0 0 120 60" class="mini-chart">
+                  <svg viewBox="0 0 120 80" class="mini-chart">
                     <defs>
                       <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stop-color="#e75c3e" stop-opacity="0.3"/>
                         <stop offset="100%" stop-color="#e75c3e" stop-opacity="0"/>
                       </linearGradient>
                     </defs>
-                    <path class="chart-area" d="M0,45 Q20,40 30,35 T60,25 T90,15 T120,20 L120,60 L0,60 Z" fill="url(#chartGradient)"/>
-                    <path class="chart-line" d="M0,45 Q20,40 30,35 T60,25 T90,15 T120,20" fill="none" stroke="#e75c3e" stroke-width="2.5" stroke-linecap="round"/>
-                    <circle class="chart-dot" cx="120" cy="20" r="4" fill="#e75c3e"/>
+                    <path class="chart-area" d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30 L120,80 L0,80 Z" fill="url(#chartGradient)"/>
+                    <path class="chart-line" d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30" fill="none" stroke="#e75c3e" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle class="chart-dot" cx="120" cy="30" r="5" fill="#e75c3e"/>
                   </svg>
                   <div class="trend-badge">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -132,14 +153,14 @@ import { CommonModule } from '@angular/common';
                 <div class="card-badge green">Progreso</div>
                 <h3 class="card-title">Seguimiento del dolor</h3>
                 <p class="card-description">
-                  El paciente registra como se siente. Tu ajustas el tratamiento.
+                  El paciente registra cómo se siente. Tú ajustas el tratamiento.
                 </p>
               </div>
               <div class="card-number">03</div>
             </div>
           </article>
 
-          <!-- Recordatorios Card -->
+          <!-- 4. Recordatorios Card -->
           <article class="bento-card" data-feature="recordatorios">
             <div class="card-inner">
               <div class="card-visual">
@@ -160,7 +181,7 @@ import { CommonModule } from '@angular/common';
                 </div>
               </div>
               <div class="card-content">
-                <div class="card-badge blue">Automatico</div>
+                <div class="card-badge blue">Automático</div>
                 <h3 class="card-title">Recordatorios</h3>
                 <p class="card-description">
                   Notificaciones inteligentes para que nunca olviden su rutina.
@@ -170,46 +191,7 @@ import { CommonModule } from '@angular/common';
             </div>
           </article>
 
-          <!-- Multi-clinica Card -->
-          <article class="bento-card wide" data-feature="multiclinica">
-            <div class="card-inner">
-              <div class="card-visual">
-                <div class="clinics-visual">
-                  <div class="clinic-node main">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2a3 3 0 0 0-3 3v1H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v1h-2V5a1 1 0 0 1 1-1zm-1 7h2v2h2v2h-2v2h-2v-2H9v-2h2v-2z"/>
-                    </svg>
-                  </div>
-                  <div class="clinic-connections">
-                    <div class="connection-line line-1"></div>
-                    <div class="connection-line line-2"></div>
-                  </div>
-                  <div class="clinic-node sub node-1">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="8" r="4"/>
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    </svg>
-                  </div>
-                  <div class="clinic-node sub node-2">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="8" r="4"/>
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div class="card-content">
-                <div class="card-badge purple">Escalable</div>
-                <h3 class="card-title">Gestion multi-clinica</h3>
-                <p class="card-description">
-                  Una cuenta, multiples clinicas. Gestiona todos tus pacientes desde un solo lugar con acceso diferenciado.
-                </p>
-              </div>
-              <div class="card-number">05</div>
-            </div>
-          </article>
-
-          <!-- Codigos Card -->
+          <!-- 5. Códigos Card -->
           <article class="bento-card" data-feature="codigos">
             <div class="card-inner">
               <div class="card-visual">
@@ -229,20 +211,74 @@ import { CommonModule } from '@angular/common';
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                       <path d="M9 12l2 2 4-4"/>
                     </svg>
-                    Codigo seguro
+                    Código seguro
                   </div>
                 </div>
               </div>
               <div class="card-content">
                 <div class="card-badge pink">Seguridad</div>
-                <h3 class="card-title">Codigos de acceso</h3>
+                <h3 class="card-title">Códigos de acceso</h3>
                 <p class="card-description">
-                  Invita pacientes de forma segura con codigos unicos de 8 caracteres.
+                  Invita pacientes de forma segura con códigos únicos de 8 caracteres.
+                </p>
+              </div>
+              <div class="card-number">05</div>
+            </div>
+          </article>
+
+          <!-- 6. Multi-clínica Card (full width row 3) -->
+          <article class="bento-card wide" data-feature="multiclinica">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="clinics-visual">
+                  <div class="clinic-node main">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2a3 3 0 0 0-3 3v1H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v1h-2V5a1 1 0 0 1 1-1zm-1 7h2v2h2v2h-2v2h-2v-2H9v-2h2v-2z"/>
+                    </svg>
+                  </div>
+                  <div class="clinic-connections">
+                    <div class="connection-line line-1"></div>
+                    <div class="connection-line line-2"></div>
+                    <div class="connection-line line-3"></div>
+                    <div class="connection-line line-4"></div>
+                  </div>
+                  <div class="clinic-node sub node-1">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    </svg>
+                  </div>
+                  <div class="clinic-node sub node-2">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    </svg>
+                  </div>
+                  <div class="clinic-node sub node-3">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    </svg>
+                  </div>
+                  <div class="clinic-node sub node-4">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="card-badge purple">Escalable</div>
+                <h3 class="card-title">Gestión multi-clínica</h3>
+                <p class="card-description">
+                  Una cuenta, múltiples clínicas. Gestiona todos tus pacientes desde un solo lugar con acceso diferenciado.
                 </p>
               </div>
               <div class="card-number">06</div>
             </div>
           </article>
+
         </div>
       </div>
     </section>
@@ -372,10 +408,12 @@ import { CommonModule } from '@angular/common';
     }
 
     /* ========================================
-       EDITORIAL HEADER
+       EDITORIAL HEADER — CENTRADO
     ======================================== */
     .editorial-header {
-      margin-bottom: 3.5rem;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 3.5rem;
     }
 
     @media (min-width: 1024px) {
@@ -384,54 +422,33 @@ import { CommonModule } from '@angular/common';
       }
     }
 
-    .header-layout {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    @media (min-width: 768px) {
-      .header-layout {
-        grid-template-columns: 1.2fr 1fr;
-        gap: 3rem;
-        align-items: end;
-      }
-    }
-
-    .header-left {
-      animation: slideInLeft 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-    }
-
-    @keyframes slideInLeft {
-      from {
-        opacity: 0;
-        transform: translateX(-30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    .issue-label {
-      display: inline-flex;
+    /* Eyebrow row */
+    .header-eyebrow {
+      display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #e75c3e;
-      margin-bottom: 1rem;
+      justify-content: center;
+      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+      animation: fadeIn 0.6s ease-out backwards;
     }
 
-    .issue-label::before {
-      content: '';
-      width: 24px;
-      height: 2px;
-      background: linear-gradient(90deg, #e75c3e, #efc048);
+    .eyebrow-line {
+      width: 40px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, rgba(231, 92, 62, 0.55));
       border-radius: 1px;
+    }
+
+    .eyebrow-line.eyebrow-line-r {
+      background: linear-gradient(90deg, rgba(231, 92, 62, 0.55), transparent);
+    }
+
+    .eyebrow-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #e75c3e;
     }
 
     .mega-title {
@@ -441,6 +458,8 @@ import { CommonModule } from '@angular/common';
       line-height: 0.95;
       color: #1a1a1a;
       letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+      animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s backwards;
     }
 
     .title-line {
@@ -462,7 +481,7 @@ import { CommonModule } from '@angular/common';
       background: linear-gradient(90deg, rgba(231, 92, 62, 0.3), rgba(239, 192, 72, 0.2));
       border-radius: 4px;
       transform: scaleX(0);
-      transform-origin: left;
+      transform-origin: center;
       animation: lineGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
     }
 
@@ -470,27 +489,13 @@ import { CommonModule } from '@angular/common';
       to { transform: scaleX(1); }
     }
 
-    .header-right {
-      animation: slideInRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s backwards;
-    }
-
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
     .header-description {
       font-size: 1.0625rem;
       line-height: 1.7;
       color: #64748b;
-      margin-bottom: 1.5rem;
-      max-width: 380px;
+      max-width: 460px;
+      margin: 0 auto 1.5rem;
+      animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
     }
 
     .stat-pill {
@@ -501,6 +506,8 @@ import { CommonModule } from '@angular/common';
       background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.06) 100%);
       border: 1px solid rgba(231, 92, 62, 0.15);
       border-radius: 100px;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards;
     }
 
     .stat-number {
@@ -520,12 +527,7 @@ import { CommonModule } from '@angular/common';
       display: flex;
       align-items: center;
       gap: 1rem;
-      animation: fadeIn 0.6s ease-out 0.3s backwards;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      animation: fadeIn 0.6s ease-out 0.4s backwards;
     }
 
     .divider-line {
@@ -573,9 +575,42 @@ import { CommonModule } from '@angular/common';
 
     @media (min-width: 1024px) {
       .bento-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(12, 1fr);
         grid-template-rows: auto auto auto;
         gap: 1.5rem;
+      }
+
+      /* Row 1: Featured (7 cols) + Planes (5 cols) */
+      .bento-card.featured {
+        grid-column: 1 / 8;
+        grid-row: 1;
+      }
+
+      .bento-card.vertical {
+        grid-column: 8 / 13;
+        grid-row: 1;
+      }
+
+      /* Row 2: Seguimiento + Recordatorios + Codigos (4 cols each) */
+      .bento-card[data-feature="seguimiento"] {
+        grid-column: 1 / 5;
+        grid-row: 2;
+      }
+
+      .bento-card[data-feature="recordatorios"] {
+        grid-column: 5 / 9;
+        grid-row: 2;
+      }
+
+      .bento-card[data-feature="codigos"] {
+        grid-column: 9 / 13;
+        grid-row: 2;
+      }
+
+      /* Row 3: Multi-clínica full width */
+      .bento-card.wide {
+        grid-column: 1 / 13;
+        grid-row: 3;
       }
     }
 
@@ -595,6 +630,13 @@ import { CommonModule } from '@angular/common';
         0 4px 16px rgba(0, 0, 0, 0.04);
       transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
       animation: cardReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    .bento-card.featured {
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.02),
+        0 4px 16px rgba(0, 0, 0, 0.04),
+        inset 0 0 0 1px rgba(231, 92, 62, 0.08);
     }
 
     .bento-card:nth-child(1) { animation-delay: 0.1s; }
@@ -625,23 +667,17 @@ import { CommonModule } from '@angular/common';
         0 8px 24px rgba(0, 0, 0, 0.06);
     }
 
-    /* Card Variants */
-    .bento-card.featured {
-      grid-column: 1;
+    .bento-card.featured:hover {
+      box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.02),
+        0 20px 60px rgba(231, 92, 62, 0.18),
+        0 8px 24px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(231, 92, 62, 0.2);
     }
 
     @media (min-width: 1024px) {
       .bento-card.featured {
-        grid-column: 1;
-        grid-row: 1 / 3;
-      }
-
-      .bento-card.vertical {
-        grid-row: span 1;
-      }
-
-      .bento-card.wide {
-        grid-column: span 2;
+        min-height: 320px;
       }
     }
 
@@ -753,7 +789,7 @@ import { CommonModule } from '@angular/common';
 
     @media (min-width: 1024px) {
       .bento-card.featured .card-title {
-        font-size: 1.625rem;
+        font-size: 1.875rem;
       }
     }
 
@@ -797,9 +833,9 @@ import { CommonModule } from '@angular/common';
 
     @media (min-width: 1024px) {
       .preview-frame {
-        width: 180px;
-        height: 130px;
-        border-radius: 16px;
+        width: 220px;
+        height: 155px;
+        border-radius: 18px;
       }
     }
 
@@ -826,6 +862,18 @@ import { CommonModule } from '@angular/common';
       transition: all 0.3s ease;
     }
 
+    @media (min-width: 1024px) {
+      .bento-card.featured .play-button {
+        width: 56px;
+        height: 56px;
+      }
+
+      .bento-card.featured .play-button svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
+
     .play-button svg {
       width: 16px;
       height: 16px;
@@ -843,6 +891,17 @@ import { CommonModule } from '@angular/common';
       align-items: end;
       gap: 3px;
       height: 16px;
+    }
+
+    @media (min-width: 1024px) {
+      .bento-card.featured .video-waves {
+        height: 22px;
+        gap: 4px;
+      }
+
+      .bento-card.featured .video-waves span {
+        width: 4px;
+      }
     }
 
     .video-waves span {
@@ -874,6 +933,14 @@ import { CommonModule } from '@angular/common';
       animation: glowPulse 3s ease-in-out infinite;
     }
 
+    @media (min-width: 1024px) {
+      .bento-card.featured .preview-glow {
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle, rgba(231, 92, 62, 0.25) 0%, transparent 70%);
+      }
+    }
+
     @keyframes glowPulse {
       0%, 100% { opacity: 0.5; transform: scale(1); }
       50% { opacity: 0.8; transform: scale(1.1); }
@@ -881,26 +948,45 @@ import { CommonModule } from '@angular/common';
 
     /* Calendar Visual */
     .calendar-visual {
-      padding: 1rem 0;
+      padding: 0.75rem 0;
+    }
+
+    .calendar-month-label {
+      text-align: center;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 0.625rem;
     }
 
     .week-row {
       display: flex;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.375rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .week-row.dimmed .day-cell {
+      opacity: 0.45;
+    }
+
+    .week-row.dimmed .day-cell.active {
+      opacity: 0.6;
     }
 
     .day-cell {
-      width: 36px;
-      height: 44px;
+      width: 32px;
+      height: 38px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.25rem;
+      gap: 0.2rem;
       background: rgba(255, 255, 255, 0.5);
       border: 1px solid rgba(0, 0, 0, 0.04);
-      border-radius: 10px;
+      border-radius: 8px;
       transition: all 0.3s ease;
     }
 
@@ -916,7 +1002,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .day-letter {
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       font-weight: 700;
       color: #64748b;
     }
@@ -952,12 +1038,12 @@ import { CommonModule } from '@angular/common';
 
     .mini-chart {
       width: 100%;
-      height: 60px;
+      height: 80px;
     }
 
     .chart-line {
-      stroke-dasharray: 200;
-      stroke-dashoffset: 200;
+      stroke-dasharray: 250;
+      stroke-dashoffset: 250;
       animation: drawLine 1.5s ease-out 0.5s forwards;
     }
 
@@ -981,17 +1067,17 @@ import { CommonModule } from '@angular/common';
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
-      padding: 0.375rem 0.75rem;
+      padding: 0.5rem 1rem;
       background: rgba(34, 197, 94, 0.1);
       border-radius: 100px;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       font-weight: 700;
       color: #16a34a;
     }
 
     .trend-badge svg {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
     }
 
     /* Notification Visual */
@@ -1072,7 +1158,7 @@ import { CommonModule } from '@angular/common';
     /* Clinics Visual */
     .clinics-visual {
       position: relative;
-      height: 100px;
+      height: 120px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1116,13 +1202,23 @@ import { CommonModule } from '@angular/common';
     }
 
     .clinic-node.node-1 {
-      left: calc(50% - 70px);
-      top: calc(50% - 30px);
+      left: calc(50% - 90px);
+      top: calc(50% - 35px);
     }
 
     .clinic-node.node-2 {
-      right: calc(50% - 70px);
-      top: calc(50% + 10px);
+      right: calc(50% - 90px);
+      top: calc(50% - 35px);
+    }
+
+    .clinic-node.node-3 {
+      left: calc(50% - 90px);
+      top: calc(50% + 5px);
+    }
+
+    .clinic-node.node-4 {
+      right: calc(50% - 90px);
+      top: calc(50% + 5px);
     }
 
     .clinic-connections {
@@ -1135,19 +1231,37 @@ import { CommonModule } from '@angular/common';
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 40px;
+      width: 44px;
       height: 2px;
-      background: linear-gradient(90deg, rgba(231, 92, 62, 0.3), rgba(231, 92, 62, 0.1));
+      background: linear-gradient(90deg, rgba(231, 92, 62, 0.5), rgba(231, 92, 62, 0.1));
       border-radius: 1px;
       transform-origin: left center;
+      animation: linePulse 2s ease-in-out infinite;
     }
 
     .connection-line.line-1 {
-      transform: rotate(-150deg) translateY(-50%);
+      transform: rotate(-145deg) translateY(-50%);
+      animation-delay: 0s;
     }
 
     .connection-line.line-2 {
-      transform: rotate(-30deg) translateY(-50%);
+      transform: rotate(-35deg) translateY(-50%);
+      animation-delay: 0.5s;
+    }
+
+    .connection-line.line-3 {
+      transform: rotate(-215deg) translateY(-50%);
+      animation-delay: 1s;
+    }
+
+    .connection-line.line-4 {
+      transform: rotate(-325deg) translateY(-50%);
+      animation-delay: 1.5s;
+    }
+
+    @keyframes linePulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.9; }
     }
 
     .bento-card:hover .clinic-node.main {
@@ -1163,6 +1277,14 @@ import { CommonModule } from '@angular/common';
     }
 
     .bento-card:hover .clinic-node.node-2 {
+      transform: translate(4px, -4px);
+    }
+
+    .bento-card:hover .clinic-node.node-3 {
+      transform: translate(-4px, 4px);
+    }
+
+    .bento-card:hover .clinic-node.node-4 {
       transform: translate(4px, 4px);
     }
 
@@ -1230,168 +1352,16 @@ import { CommonModule } from '@angular/common';
     }
 
     /* ========================================
-       CTA STRIP
+       ANIMATIONS
     ======================================== */
-    .cta-strip {
-      position: relative;
-      margin-top: 3rem;
-      padding: 2.5rem 2rem;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 50%, #c44a2d 100%);
-      border-radius: 24px;
-      overflow: hidden;
-      animation: fadeInUp 0.6s ease-out 0.5s backwards;
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(24px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .cta-strip {
-        margin-top: 4rem;
-        padding: 3rem 3.5rem;
-        border-radius: 28px;
-      }
-    }
-
-    .cta-content {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.5rem;
-      text-align: center;
-    }
-
-    @media (min-width: 768px) {
-      .cta-content {
-        flex-direction: row;
-        justify-content: space-between;
-        text-align: left;
-      }
-    }
-
-    .cta-label {
-      display: inline-block;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.6);
-      margin-bottom: 0.5rem;
-    }
-
-    .cta-title {
-      font-family: "kengoFont", system-ui, sans-serif;
-      font-size: clamp(1.375rem, 3vw, 1.75rem);
-      font-weight: 400;
-      color: white;
-      line-height: 1.2;
-      max-width: 420px;
-    }
-
-    .cta-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.875rem;
-      padding: 1rem 1.75rem;
-      background: white;
-      color: #1a1a1a;
-      font-size: 0.9375rem;
-      font-weight: 700;
-      text-decoration: none;
-      border-radius: 14px;
-      flex-shrink: 0;
-      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    .cta-button:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    }
-
-    .cta-button:active {
-      transform: scale(0.98);
-    }
-
-    .button-arrow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.05) 100%);
-      border-radius: 8px;
-      transition: all 0.3s ease;
-    }
-
-    .button-arrow svg {
-      width: 16px;
-      height: 16px;
-      color: #e75c3e;
-      transition: transform 0.3s ease;
-    }
-
-    .cta-button:hover .button-arrow {
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
-    }
-
-    .cta-button:hover .button-arrow svg {
-      color: white;
-      transform: translateX(3px);
-    }
-
-    /* CTA Decorations */
-    .cta-decoration {
-      position: absolute;
-      top: 50%;
-      right: 5%;
-      transform: translateY(-50%);
-      pointer-events: none;
-    }
-
-    .deco-ring {
-      position: absolute;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-    }
-
-    .ring-1 {
-      width: 120px;
-      height: 120px;
-      top: -60px;
-      left: -60px;
-      animation: ringPulse 4s ease-in-out infinite;
-    }
-
-    .ring-2 {
-      width: 200px;
-      height: 200px;
-      top: -100px;
-      left: -100px;
-      animation: ringPulse 4s ease-in-out 1s infinite;
-    }
-
-    .ring-3 {
-      width: 280px;
-      height: 280px;
-      top: -140px;
-      left: -140px;
-      animation: ringPulse 4s ease-in-out 2s infinite;
-    }
-
-    @keyframes ringPulse {
-      0%, 100% { opacity: 0.1; transform: scale(1); }
-      50% { opacity: 0.2; transform: scale(1.05); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* ========================================
@@ -1406,12 +1376,21 @@ import { CommonModule } from '@angular/common';
       .preview-glow,
       .notif-pulse,
       .divider-dot,
-      .deco-ring {
+      .connection-line {
         animation: none;
       }
 
-      .bento-card,
-      .cta-strip {
+      .bento-card {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
+      .header-eyebrow,
+      .mega-title,
+      .header-description,
+      .stat-pill,
+      .header-divider {
         animation: none;
         opacity: 1;
         transform: none;
@@ -1425,12 +1404,32 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class FeaturesComponent {
+  weekDaysPrev = [
+    { letter: 'L', active: true,  today: false },
+    { letter: 'M', active: false, today: false },
+    { letter: 'X', active: true,  today: false },
+    { letter: 'J', active: false, today: false },
+    { letter: 'V', active: true,  today: false },
+    { letter: 'S', active: false, today: false },
+    { letter: 'D', active: false, today: false },
+  ];
+
   weekDays = [
-    { letter: 'L', active: true, today: false },
-    { letter: 'M', active: true, today: false },
+    { letter: 'L', active: true,  today: false },
+    { letter: 'M', active: true,  today: false },
     { letter: 'X', active: false, today: false },
-    { letter: 'J', active: true, today: true },
-    { letter: 'V', active: true, today: false },
+    { letter: 'J', active: true,  today: true  },
+    { letter: 'V', active: true,  today: false },
+    { letter: 'S', active: false, today: false },
+    { letter: 'D', active: false, today: false },
+  ];
+
+  weekDaysNext = [
+    { letter: 'L', active: false, today: false },
+    { letter: 'M', active: true,  today: false },
+    { letter: 'X', active: true,  today: false },
+    { letter: 'J', active: false, today: false },
+    { letter: 'V', active: true,  today: false },
     { letter: 'S', active: false, today: false },
     { letter: 'D', active: false, today: false },
   ];
