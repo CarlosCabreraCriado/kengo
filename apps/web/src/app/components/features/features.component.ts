@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal, OnDestroy } from '@angular/core';
 
 @Component({
   selector: 'web-features',
@@ -48,20 +48,21 @@ import { Component } from '@angular/core';
           <article class="bento-card featured" data-feature="videos">
             <div class="card-inner">
               <div class="card-visual">
-                <div class="video-preview">
-                  <div class="preview-frame">
-                    <div class="frame-content">
-                      <div class="play-button">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                          <polygon points="8,5 19,12 8,19"/>
-                        </svg>
-                      </div>
-                      <div class="video-waves">
-                        <span></span><span></span><span></span><span></span><span></span>
-                      </div>
-                    </div>
+                <div class="exercise-slideshow">
+                  @for (img of exerciseImages; track img; let i = $index) {
+                    <img
+                      [src]="img"
+                      [alt]="'Ejercicio ' + (i + 1)"
+                      class="slide-img"
+                      [class.active]="i === currentSlide()"
+                    />
+                  }
+                  <div class="slide-overlay"></div>
+                  <div class="slide-dots">
+                    @for (img of exerciseImages; track img; let i = $index) {
+                      <span class="dot" [class.active]="i === currentSlide()"></span>
+                    }
                   </div>
-                  <div class="preview-glow"></div>
                 </div>
               </div>
               <div class="card-content">
@@ -807,143 +808,70 @@ import { Component } from '@angular/core';
        FEATURE-SPECIFIC VISUALS
     ======================================== */
 
-    /* Video Preview */
-    .video-preview {
+    /* Exercise Slideshow */
+    .exercise-slideshow {
       position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 0;
-    }
-
-    .preview-frame {
-      position: relative;
-      width: 140px;
-      height: 100px;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      display: grid;
+      border-radius: 16px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 220px;
+      margin: 0 auto;
     }
 
     @media (min-width: 1024px) {
-      .preview-frame {
-        width: 220px;
-        height: 155px;
-        border-radius: 18px;
+      .exercise-slideshow {
+        max-width: 260px;
       }
     }
 
-    .bento-card:hover .preview-frame {
-      transform: scale(1.05) rotate(-2deg);
+    .slide-img {
+      grid-area: 1 / 1;
+      width: 100%;
+      height: auto;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
     }
 
-    .frame-content {
+    .slide-img.active {
+      opacity: 1;
+    }
+
+    .slide-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 55%,
+        rgba(0, 0, 0, 0.35) 100%
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .slide-dots {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
+      gap: 6px;
+      z-index: 2;
     }
 
-    .play-button {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
+    .dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(231, 92, 62, 0.4);
+      background: rgba(255, 255, 255, 0.5);
       transition: all 0.3s ease;
     }
 
-    @media (min-width: 1024px) {
-      .bento-card.featured .play-button {
-        width: 56px;
-        height: 56px;
-      }
-
-      .bento-card.featured .play-button svg {
-        width: 20px;
-        height: 20px;
-      }
-    }
-
-    .play-button svg {
-      width: 16px;
-      height: 16px;
-      color: white;
-      margin-left: 2px;
-    }
-
-    .bento-card:hover .play-button {
-      transform: scale(1.1);
-      box-shadow: 0 6px 24px rgba(231, 92, 62, 0.5);
-    }
-
-    .video-waves {
-      display: flex;
-      align-items: end;
-      gap: 3px;
-      height: 16px;
-    }
-
-    @media (min-width: 1024px) {
-      .bento-card.featured .video-waves {
-        height: 22px;
-        gap: 4px;
-      }
-
-      .bento-card.featured .video-waves span {
-        width: 4px;
-      }
-    }
-
-    .video-waves span {
-      width: 3px;
-      background: rgba(231, 92, 62, 0.6);
-      border-radius: 2px;
-      animation: waveBar 1.2s ease-in-out infinite;
-    }
-
-    .video-waves span:nth-child(1) { height: 40%; animation-delay: 0s; }
-    .video-waves span:nth-child(2) { height: 70%; animation-delay: 0.1s; }
-    .video-waves span:nth-child(3) { height: 100%; animation-delay: 0.2s; }
-    .video-waves span:nth-child(4) { height: 60%; animation-delay: 0.3s; }
-    .video-waves span:nth-child(5) { height: 30%; animation-delay: 0.4s; }
-
-    @keyframes waveBar {
-      0%, 100% { transform: scaleY(1); }
-      50% { transform: scaleY(0.5); }
-    }
-
-    .preview-glow {
-      position: absolute;
-      width: 200px;
-      height: 200px;
-      background: radial-gradient(circle, rgba(231, 92, 62, 0.15) 0%, transparent 70%);
-      border-radius: 50%;
-      filter: blur(30px);
-      z-index: -1;
-      animation: glowPulse 3s ease-in-out infinite;
-    }
-
-    @media (min-width: 1024px) {
-      .bento-card.featured .preview-glow {
-        width: 320px;
-        height: 320px;
-        background: radial-gradient(circle, rgba(231, 92, 62, 0.25) 0%, transparent 70%);
-      }
-    }
-
-    @keyframes glowPulse {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 0.8; transform: scale(1.1); }
+    .dot.active {
+      background: #e75c3e;
+      width: 18px;
+      border-radius: 3px;
     }
 
     /* Calendar Visual */
@@ -1372,8 +1300,7 @@ import { Component } from '@angular/core';
       .bento-card,
       .chart-line,
       .chart-dot,
-      .video-waves span,
-      .preview-glow,
+      .slide-img,
       .notif-pulse,
       .divider-dot,
       .connection-line {
@@ -1403,7 +1330,22 @@ import { Component } from '@angular/core';
     }
   `]
 })
-export class FeaturesComponent {
+export class FeaturesComponent implements OnDestroy {
+  exerciseImages = [
+    '/ejercicio_1.webp',
+    '/ejercicio_2.webp',
+    '/ejercicio_3.webp',
+    '/ejercicio_4.webp',
+  ];
+  currentSlide = signal(0);
+  private slideInterval = setInterval(() => {
+    this.currentSlide.update(i => (i + 1) % this.exerciseImages.length);
+  }, 2500);
+
+  ngOnDestroy() {
+    clearInterval(this.slideInterval);
+  }
+
   weekDaysPrev = [
     { letter: 'L', active: true,  today: false },
     { letter: 'M', active: false, today: false },
