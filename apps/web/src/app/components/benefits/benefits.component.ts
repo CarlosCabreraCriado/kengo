@@ -219,201 +219,7 @@ import { CommonModule } from '@angular/common';
               <div class="card-body">
                 <!-- Header Row -->
                 <div class="card-header-row">
-                  <!-- Animated Icon -->
-                  <div class="icon-container">
-                    <div class="icon-shape">
-                      @switch (segment.id) {
-                        @case ('pacientes') {
-                          <svg
-                            viewBox="0 0 32 32"
-                            fill="none"
-                            aria-hidden="true"
-                          >
-                            <!-- Soft background disk -->
-                            <circle
-                              cx="16"
-                              cy="16"
-                              r="12.5"
-                              fill="currentColor"
-                              opacity="0.08"
-                            />
-
-                            <!-- Head -->
-                            <circle
-                              cx="14.5"
-                              cy="8"
-                              r="2.4"
-                              fill="currentColor"
-                              opacity="0.95"
-                            />
-
-                            <!-- Raised arm -->
-                            <path
-                              d="M15.8 10.2l4-3.2"
-                              stroke="currentColor"
-                              stroke-width="2.2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-
-                            <!-- Torso -->
-                            <path
-                              d="M14.8 10.8l-1.2 6.2"
-                              stroke="currentColor"
-                              stroke-width="2.4"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-
-                            <!-- Bent arm -->
-                            <path
-                              d="M14.2 12.2l-3.7 2.6"
-                              stroke="currentColor"
-                              stroke-width="2.1"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-
-                            <!-- Left leg -->
-                            <path
-                              d="M13.6 17l-2.4 6.2"
-                              stroke="currentColor"
-                              stroke-width="2.5"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-
-                            <!-- Right leg -->
-                            <path
-                              d="M13.6 17l4.3 5.8"
-                              stroke="currentColor"
-                              stroke-width="2.5"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-
-                            <!-- Exercise motion accent -->
-                            <path
-                              d="M22.3 9.8c1.2 1.2 1.9 2.9 1.9 4.8"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                              stroke-linecap="round"
-                              opacity="0.24"
-                            />
-                          </svg>
-                        }
-
-                        @case ('fisioterapeutas') {
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            aria-hidden="true"
-                          >
-                            <!-- Clipboard -->
-                            <rect
-                              x="6"
-                              y="4"
-                              width="12"
-                              height="16"
-                              rx="2.5"
-                              fill="currentColor"
-                              opacity="0.1"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                            />
-                            <path
-                              d="M9 4.5V4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4v.5"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                              stroke-linecap="round"
-                            />
-                            <!-- Checklist lines -->
-                            <path
-                              d="M9.2 9.2h5.8M9.2 12h4.2M9.2 14.8h3"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                              stroke-linecap="round"
-                              opacity="0.9"
-                            />
-                            <!-- Check circle -->
-                            <circle
-                              cx="15.8"
-                              cy="15.8"
-                              r="2.7"
-                              fill="currentColor"
-                              opacity="0.18"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                            />
-                            <path
-                              d="M14.7 15.8l.8.8 1.5-1.8"
-                              stroke="currentColor"
-                              stroke-width="1.7"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-                          </svg>
-                        }
-
-                        @case ('clinicas') {
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            aria-hidden="true"
-                          >
-                            <!-- Building -->
-                            <path
-                              d="M4 9.5 12 4l8 5.5"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-                            <rect
-                              x="5"
-                              y="9.5"
-                              width="14"
-                              height="10.5"
-                              rx="2"
-                              fill="currentColor"
-                              opacity="0.1"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                            />
-                            <!-- Central system cross -->
-                            <path
-                              d="M12 11.3v3.8M10.1 13.2h3.8"
-                              stroke="currentColor"
-                              stroke-width="1.8"
-                              stroke-linecap="round"
-                            />
-                            <!-- Network nodes -->
-                            <circle
-                              cx="8.2"
-                              cy="17"
-                              r="1"
-                              fill="currentColor"
-                              opacity="0.75"
-                            />
-                            <circle
-                              cx="15.8"
-                              cy="17"
-                              r="1"
-                              fill="currentColor"
-                              opacity="0.75"
-                            />
-                            <path
-                              d="M9.2 16.8h5.6"
-                              stroke="currentColor"
-                              stroke-width="1.4"
-                              stroke-linecap="round"
-                              opacity="0.8"
-                            />
-                          </svg>
-                        }
-                      }
-                    </div>
-                  </div>
+                  <h3 class="card-title">{{ segment.title }}</h3>
 
                   <!-- Tier Badge -->
                   <div
@@ -426,8 +232,6 @@ import { CommonModule } from '@angular/common';
                   </div>
                 </div>
 
-                <!-- Title & Description -->
-                <h3 class="card-title">{{ segment.title }}</h3>
                 <p class="card-description">{{ segment.description }}</p>
 
                 <!-- Elegant Divider -->
@@ -1065,57 +869,8 @@ import { CommonModule } from '@angular/common';
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 12px;
         margin-bottom: 1rem;
-      }
-
-      /* Icon Container */
-      .icon-container {
-        position: relative;
-        width: 56px;
-        height: 56px;
-        flex-shrink: 0;
-      }
-
-      .icon-shape {
-        width: 56px;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--accent);
-        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .icon-shape svg {
-        width: 44px;
-        height: 44px;
-        display: block;
-        overflow: visible;
-      }
-
-      .icon-container::before {
-        content: '';
-        position: absolute;
-        inset: 6px;
-        border-radius: 22px;
-        background: linear-gradient(
-          135deg,
-          color-mix(in srgb, var(--accent) 14%, white),
-          color-mix(in srgb, var(--accent) 5%, transparent)
-        );
-        box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.85),
-          0 8px 22px color-mix(in srgb, var(--accent) 10%, transparent);
-        z-index: 0;
-      }
-
-      .icon-shape {
-        position: relative;
-        z-index: 1;
-      }
-
-      .segment-card:hover .icon-shape {
-        transform: scale(1.1) rotate(-6deg);
       }
 
       /* Tier Badge */
@@ -1163,7 +918,8 @@ import { CommonModule } from '@angular/common';
         font-weight: 800;
         color: #1a1a2e;
         letter-spacing: -0.02em;
-        margin-bottom: 0.5rem;
+        margin: 0;
+        flex: 1;
         transition: color 0.3s ease;
       }
 
