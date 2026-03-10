@@ -1010,6 +1010,23 @@ import { CommonModule } from '@angular/common';
         opacity: 1;
       }
 
+      /* Featured card - Fisioterapeutas */
+      .segment-fisioterapeutas .card-body {
+        border: 2px solid #d97706;
+        box-shadow:
+          0 4px 32px rgba(0, 0, 0, 0.04),
+          0 0 0 4px rgba(217, 119, 6, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      }
+
+      .segment-fisioterapeutas:hover .card-body {
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.08),
+          0 0 0 4px rgba(217, 119, 6, 0.2),
+          0 8px 24px rgba(217, 119, 6, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      }
+
       /* Card Body */
       .card-body {
         position: relative;
@@ -1285,8 +1302,9 @@ import { CommonModule } from '@angular/common';
 
       .card-cta {
         position: relative;
-        display: inline-flex;
+        display: flex;
         align-items: center;
+        justify-content: center;
         gap: 12px;
         padding: 16px 28px;
         background: linear-gradient(
