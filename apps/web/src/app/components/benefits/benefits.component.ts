@@ -288,7 +288,6 @@ import { CommonModule } from '@angular/common';
                             />
                           </svg>
                         }
-
                       }
                     </div>
                   </div>
@@ -730,14 +729,6 @@ import { CommonModule } from '@angular/common';
         .ecosystem-grid {
           gap: 3rem;
           align-items: start;
-        }
-
-        .segment-pacientes {
-          transform: translateY(20px);
-        }
-
-        .segment-fisioterapeutas {
-          transform: translateY(-10px);
         }
       }
 
@@ -1451,7 +1442,7 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
   segments = [
     {
       id: 'pacientes',
-      title: 'Para Pacientes',
+      title: 'Pacientes',
       tag: 'Gratis',
       tagBg: 'rgba(34, 197, 94, 0.12)',
       tagColor: '#16a34a',
@@ -1467,14 +1458,17 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
         'Accede gratis con el codigo de tu fisio o clinica. Ejercicios guiados, seguimiento del dolor y comunicacion directa.',
       benefits: [
         { text: 'Sin coste, 100% gratuito', highlight: 'Gratis' },
-        { text: 'Solo necesitas un codigo de tu fisio o clinica', highlight: null },
+        {
+          text: 'Solo necesitas un codigo de tu fisio o clinica',
+          highlight: null,
+        },
         { text: 'Ejercicios guiados con video profesional', highlight: null },
         { text: 'Registra tu progreso y como te sientes', highlight: null },
       ],
     },
     {
       id: 'fisioterapeutas',
-      title: 'Para Fisioterapeutas',
+      title: 'Fisioterapeutas',
       tag: 'Prueba gratis',
       tagBg: 'rgba(217, 119, 6, 0.12)',
       tagColor: '#d97706',

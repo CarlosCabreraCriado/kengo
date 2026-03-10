@@ -56,18 +56,32 @@ body {
   overflow-y: auto;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  background: transparent;
+/* Scrollbar: visible solo en desktop */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(231, 92, 62, 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(231, 92, 62, 0.5);
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(231, 92, 62, 0.3);
-  border-radius: 4px;
-}
+/* Ocultar scrollbar en móvil */
+@media (max-width: 767px) {
+  html {
+    scrollbar-width: none; /* Firefox */
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(231, 92, 62, 0.5);
+  html::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
 }
 
 body {

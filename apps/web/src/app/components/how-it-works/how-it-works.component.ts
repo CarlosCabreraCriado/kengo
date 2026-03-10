@@ -1000,6 +1000,7 @@ import { CommonModule } from '@angular/common';
       }
 
       .cta-glass {
+        margin-top: 4rem;
         display: flex;
         flex-direction: column;
         align-items: center;
