@@ -27,9 +27,9 @@ import { CommonModule } from '@angular/common';
       <div
         class="relative z-10 mx-auto w-full max-w-7xl px-4 py-32 sm:px-6 lg:px-8 "
       >
-        <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        <div class="grid items-center gap-12 lg:gap-8" style="grid-template-columns: 1fr 420px">
           <!-- Text Content -->
-          <div class="text-center lg:text-left">
+          <div class="text-center lg:text-left lg:pl-16">
             <!-- Headline -->
             <h1
               class="animate-in text-4xl leading-tight font-bold tracking-tight text-gray-900 delay-100 sm:text-5xl lg:text-6xl xl:text-7xl"
@@ -253,7 +253,7 @@ import { CommonModule } from '@angular/common';
           </div>
 
           <!-- Visual Element -->
-          <div class="animate-in relative hidden delay-200 lg:block">
+          <div class="animate-in relative hidden delay-200 lg:block lg:pr-12">
             <div class="hero-visual-container relative">
               <!-- Phone Mockup -->
               <div class="phone-mockup animate-float">
@@ -468,7 +468,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Scroll Indicator -->
       <div
-        class="animate-in absolute bottom-8 left-1/2 z-10 -translate-x-1/2 delay-500"
+        class="animate-in absolute bottom-8 left-29/50 z-10 -translate-x-1/2 delay-500"
       >
         <a
           href="#beneficios"
