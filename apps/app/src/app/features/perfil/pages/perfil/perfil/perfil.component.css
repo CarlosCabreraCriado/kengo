@@ -7,14 +7,16 @@
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --kengo-shadow-primary: 0 4px 16px rgba(var(--kengo-primary-rgb), 0.3);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  display: block;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
 }
 
 .profile-page {
-  @apply relative flex flex-col w-full h-full overflow-y-auto overflow-x-hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  @apply relative flex flex-col w-full h-full overflow-hidden;
 }
 
 .aurora-bg { @apply fixed inset-0 pointer-events-none overflow-hidden z-0; }
@@ -74,11 +76,12 @@
 }
 
 .profile-main {
-  @apply relative flex-1 px-4 pt-2 z-10;
+  @apply relative flex-1 px-4 pt-2 z-10 overflow-y-auto;
   padding-bottom: calc(var(--safe-area-bottom) + 100px);
   max-width: 640px;
   margin: 0 auto;
   width: 100%;
+  overscroll-behavior-y: none;
 }
 
 .state-card {

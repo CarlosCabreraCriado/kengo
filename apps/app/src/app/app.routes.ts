@@ -80,6 +80,16 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
   },
 
+  // Rutina Builder (editar plantilla)
+  {
+    path: 'rutinas/:id/editar',
+    loadComponent: () =>
+      import('./features/rutinas/pages/rutina-builder/rutina-builder.component').then(
+        (m) => m.RutinaBuilderComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+
   // Pacientes (lazy loaded feature)
   {
     path: 'mis-pacientes',

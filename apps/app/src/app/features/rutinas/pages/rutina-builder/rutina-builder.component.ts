@@ -7,7 +7,7 @@ import {
   computed,
 } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   FormBuilder,
   Validators,
@@ -45,6 +45,7 @@ import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
 export class RutinaBuilderComponent implements OnInit, OnDestroy {
   private location = inject(Location);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private dialog = inject(Dialog);
   private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
@@ -71,6 +72,8 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   };
 
   isSaving = signal(false);
+  isLoading = signal(false);
+  isEditMode = signal(false);
 
   // Signals para modo edicion por ejercicio
   ejercicioEditando = signal<number | null>(null);
@@ -86,8 +89,31 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     visibilidad: ['privado' as 'privado' | 'clinica'],
   });
 
-  ngOnInit() {
-    // Verificar que estamos en modo rutina y hay ejercicios
+  async ngOnInit() {
+    const rutinaId = this.route.snapshot.paramMap.get('id');
+
+    if (rutinaId) {
+      // Modo edición: cargar rutina existente
+      this.isLoading.set(true);
+      const result = await this.svc.startEditRutinaMode(+rutinaId);
+      this.isLoading.set(false);
+
+      if (!result) {
+        this.toastService.show('No se pudo cargar la rutina', 'error');
+        this.router.navigate(['/galeria/rutinas']);
+        return;
+      }
+
+      this.isEditMode.set(true);
+      this.form.patchValue({
+        nombre: this.svc.titulo(),
+        descripcion: this.svc.descripcion(),
+        visibilidad: result.visibilidad as 'privado' | 'clinica',
+      });
+      return;
+    }
+
+    // Modo creación: verificar que estamos en modo rutina y hay ejercicios
     if (!this.svc.isRutinaMode()) {
       this.toastService.show('Inicia la creación de plantilla primero');
       this.router.navigate(['/galeria/rutinas']);
@@ -159,18 +185,28 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.isSaving.set(true);
     try {
       const v = this.form.value;
-      const rutinaId = await this.svc.saveAsRutina(
-        v.nombre || 'Plantilla sin nombre',
-        v.descripcion || '',
-        v.visibilidad || 'privado',
-      );
+      const nombre = v.nombre || 'Plantilla sin nombre';
+      const descripcion = v.descripcion || '';
+      const visibilidad = v.visibilidad || 'privado';
 
-      if (rutinaId) {
-        this.toastService.show('Plantilla guardada');
-        this.svc.exitRutinaMode();
-        this.router.navigate(['/galeria/rutinas']);
+      if (this.isEditMode()) {
+        const success = await this.svc.updateRutina(nombre, descripcion, visibilidad);
+        if (success) {
+          this.toastService.show('Plantilla actualizada');
+          this.svc.exitRutinaMode();
+          this.router.navigate(['/galeria/rutinas']);
+        } else {
+          this.toastService.show('Error al actualizar plantilla', 'error');
+        }
       } else {
-        this.toastService.show('Error al guardar plantilla', 'error');
+        const rutinaId = await this.svc.saveAsRutina(nombre, descripcion, visibilidad);
+        if (rutinaId) {
+          this.toastService.show('Plantilla guardada');
+          this.svc.exitRutinaMode();
+          this.router.navigate(['/galeria/rutinas']);
+        } else {
+          this.toastService.show('Error al guardar plantilla', 'error');
+        }
       }
     } catch (error) {
       console.error('Error guardando plantilla:', error);

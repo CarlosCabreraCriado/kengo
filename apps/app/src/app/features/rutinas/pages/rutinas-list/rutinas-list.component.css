@@ -13,6 +13,12 @@
   --kengo-border-strong: rgba(255, 255, 255, 0.4);
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --kengo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
 }
 
 /* === Header con glassmorphism refinado === */
@@ -132,6 +138,15 @@
 
 .dropdown-item:active {
   background: rgba(231, 92, 62, 0.15);
+}
+
+.dropdown-item.danger {
+  color: #ef4444;
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
 }
 
 /* === Rutina Card Expanded === */

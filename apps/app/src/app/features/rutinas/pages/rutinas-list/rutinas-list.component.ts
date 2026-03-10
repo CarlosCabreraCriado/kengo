@@ -75,6 +75,7 @@ export class RutinasListComponent {
   @HostListener('document:click')
   onDocumentClick() {
     this.filtroMenuAbierto.set(false);
+    this.openRutinaMenuId = null;
   }
 
   // === Rutinas ===
@@ -156,6 +157,10 @@ export class RutinasListComponent {
     } else {
       this.toastService.show('Error al cambiar visibilidad', 'error');
     }
+  }
+
+  editarRutina(rutina: Rutina) {
+    this.router.navigate(['/rutinas', rutina.id_rutina, 'editar']);
   }
 
   toggleRutinaMenu(rutinaId: number) {
