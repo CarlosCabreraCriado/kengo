@@ -75,6 +75,7 @@ export class RutinasListComponent {
   @HostListener('document:click')
   onDocumentClick() {
     this.filtroMenuAbierto.set(false);
+    this.openRutinaMenuId = null;
   }
 
   // === Rutinas ===

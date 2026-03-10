@@ -134,6 +134,15 @@
   background: rgba(231, 92, 62, 0.15);
 }
 
+.dropdown-item.danger {
+  color: #ef4444;
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+}
+
 /* === Rutina Card Expanded === */
 .rutina-card {
   position: relative;
