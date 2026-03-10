@@ -14,295 +14,117 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section id="beneficios" class="benefits-section">
-      <!-- Layered Wave Background with Morphing Blobs -->
-      <div class="background-container">
-        <!-- Top Morphing Wave -->
-        <svg
-          class="wave-layer wave-top"
-          viewBox="0 0 1440 320"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient
-              id="benefits-wave-1"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
-              <stop offset="0%" stop-color="#fff5ef" />
-              <stop offset="50%" stop-color="#ffe8d6" />
-              <stop offset="100%" stop-color="#fdd6b3" />
-            </linearGradient>
-          </defs>
-          <path fill="url(#benefits-wave-1)" fill-opacity="0.55">
-            <animate
-              attributeName="d"
-              dur="20s"
-              repeatCount="indefinite"
-              values="
-                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z;
-                M0,100 C180,40 360,180 540,100 C720,20 900,180 1080,100 C1260,20 1440,140 1440,140 L1440,0 L0,0 Z;
-                M0,140 C180,80 360,200 540,120 C720,40 900,160 1080,80 C1260,0 1440,120 1440,120 L1440,0 L0,0 Z;
-                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-        </svg>
+      <!-- Ambient background -->
+      <div class="bg-orb orb-coral"></div>
+      <div class="bg-orb orb-amber"></div>
+      <div class="bg-orb orb-violet"></div>
 
-        <!-- Bottom Wave -->
-        <svg
-          class="wave-layer wave-bottom"
-          viewBox="0 0 1440 320"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient
-              id="benefits-wave-2"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
-              <stop offset="0%" stop-color="#fdd6b3" />
-              <stop offset="50%" stop-color="#f7a65e" stop-opacity="0.2" />
-              <stop offset="100%" stop-color="#ffedd6" />
-            </linearGradient>
-          </defs>
-          <path fill="url(#benefits-wave-2)" fill-opacity="0.4">
-            <animate
-              attributeName="d"
-              dur="25s"
-              repeatCount="indefinite"
-              values="
-                M0,180 C320,100 640,260 960,180 C1280,100 1440,220 1440,220 L1440,320 L0,320 Z;
-                M0,220 C320,300 640,140 960,220 C1280,300 1440,180 1440,180 L1440,320 L0,320 Z;
-                M0,200 C320,120 640,280 960,200 C1280,120 1440,240 1440,240 L1440,320 L0,320 Z;
-                M0,180 C320,100 640,260 960,180 C1280,100 1440,220 1440,220 L1440,320 L0,320 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-          <path fill="#e75c3e" fill-opacity="0.05">
-            <animate
-              attributeName="d"
-              dur="30s"
-              repeatCount="indefinite"
-              values="
-                M0,240 C400,160 800,320 1200,240 C1320,200 1440,280 1440,280 L1440,320 L0,320 Z;
-                M0,200 C400,280 800,120 1200,200 C1320,240 1440,160 1440,160 L1440,320 L0,320 Z;
-                M0,260 C400,180 800,340 1200,260 C1320,220 1440,300 1440,300 L1440,320 L0,320 Z;
-                M0,240 C400,160 800,320 1200,240 C1320,200 1440,280 1440,280 L1440,320 L0,320 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-        </svg>
-
-        <!-- Floating Morphing Blobs -->
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-      </div>
-
-      <!-- Content -->
-      <div class="content-wrapper">
-        <!-- Section Header -->
-        <header class="section-header">
-          <div class="badge-row">
-            <span class="header-line"></span>
-            <span class="header-badge">
-              <span class="badge-pulse"></span>
-              Para cada rol
-            </span>
-            <span class="header-line"></span>
+      <div class="wrapper">
+        <!-- ── Section Header ─────────────────────────── -->
+        <header class="section-head">
+          <div class="eyebrow-row">
+            <span class="ey-line"></span>
+            <span class="ey-label">Para cada rol</span>
+            <span class="ey-line ey-line-r"></span>
           </div>
-
-          <h2 class="section-title">
+          <h2 class="section-h2">
             Una plataforma,
             <br />
-            <span class="title-accent">tres experiencias</span>
+            <em class="h2-accent">tres experiencias</em>
           </h2>
-
-          <p class="section-subtitle">
-            Cada usuario encuentra exactamente lo que necesita. Herramientas
-            especializadas que transforman la rehabilitacion.
+          <p class="section-sub">
+            Cada usuario encuentra exactamente lo que necesita.<br />
+            Herramientas especializadas que transforman la rehabilitación.
           </p>
         </header>
 
-        <!-- Ecosystem Cards Layout -->
-        <div class="ecosystem-grid">
-          <!-- Connection Flow Lines (Desktop) -->
-          <div class="flow-connections">
-            <svg
-              class="flow-svg"
-              viewBox="0 0 1200 600"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient
-                  id="flow-gradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop offset="0%" stop-color="#e75c3e" stop-opacity="0.3" />
-                  <stop offset="50%" stop-color="#efc048" stop-opacity="0.5" />
-                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0.3" />
-                </linearGradient>
-                <filter id="glow-filter">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-              <path
-                class="flow-path"
-                d="M100,300 C200,200 350,400 500,300 C650,200 750,400 900,300 C1000,220 1100,300 1100,300"
-                fill="none"
-                stroke="url(#flow-gradient)"
-                stroke-width="3"
-                filter="url(#glow-filter)"
-              />
-              <circle class="flow-particle particle-1" r="6" fill="#e75c3e">
-                <animateMotion dur="8s" repeatCount="indefinite">
-                  <mpath href="#flow-path-motion" />
-                </animateMotion>
-              </circle>
-              <circle class="flow-particle particle-2" r="4" fill="#efc048">
-                <animateMotion dur="8s" repeatCount="indefinite" begin="-3s">
-                  <mpath href="#flow-path-motion" />
-                </animateMotion>
-              </circle>
-              <circle class="flow-particle particle-3" r="5" fill="#6366f1">
-                <animateMotion dur="8s" repeatCount="indefinite" begin="-5s">
-                  <mpath href="#flow-path-motion" />
-                </animateMotion>
-              </circle>
-              <path
-                id="flow-path-motion"
-                d="M100,300 C200,200 350,400 500,300 C650,200 750,400 900,300 C1000,220 1100,300 1100,300"
-                fill="none"
-                stroke="none"
-              />
-            </svg>
-          </div>
-
-          @for (segment of segments; track segment.id; let i = $index) {
+        <!-- ── Cards ─────────────────────────────────── -->
+        <div class="cards-grid">
+          @for (seg of segments; track seg.id; let i = $index) {
             <article
-              #segmentCard
-              class="segment-card"
-              [class]="'segment-' + segment.id"
-              [style.--card-index]="i"
-              [style.--accent]="segment.accentColor"
-              [style.--accent-light]="segment.accentLight"
+              #segCard
+              class="kcard"
+              [class]="'kcard-' + seg.id"
+              [class.kcard-featured]="seg.featured"
+              [style.--i]="i"
+              [style.--c1]="seg.color1"
+              [style.--c2]="seg.color2"
+              [style.--clight]="seg.colorLight"
             >
-              <!-- Card Background Layers -->
-              <div class="card-bg-layer">
-                <div
-                  class="card-morphing-bg"
-                  [style.background]="segment.morphBg"
-                ></div>
+              <!-- ── Cap: colored header block ────────── -->
+              <div class="cap">
+                <div class="cap-dots"></div>
+                <div class="cap-ring cap-ring-1"></div>
+                <div class="cap-ring cap-ring-2"></div>
+                <div class="cap-num">{{ i < 9 ? '0' + (i + 1) : i + 1 }}</div>
+
+                <div class="cap-top">
+                  <span class="tier-pill">
+                    <span class="tier-dot"></span>
+                    {{ seg.tag }}
+                  </span>
+                  @if (seg.featured) {
+                    <span class="feat-pill">★ Recomendado</span>
+                  }
+                </div>
+
+                <h3 class="cap-title">{{ seg.title }}</h3>
+
+                <!-- Wave cutout -->
+                <div class="cap-wave">
+                  <svg
+                    viewBox="0 0 500 48"
+                    preserveAspectRatio="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M0,8 C80,48 220,0 360,32 C420,44 470,20 500,28 L500,48 L0,48 Z"
+                      fill="white"
+                    />
+                  </svg>
+                </div>
               </div>
 
-              <!-- Glowing Border on Hover -->
-              <div class="card-glow-border"></div>
+              <!-- ── Body ─────────────────────────────── -->
+              <div class="body">
+                <p class="body-desc">{{ seg.description }}</p>
 
-              <!-- Card Content -->
-              <div class="card-body">
-                <!-- Header Row -->
-                <div class="card-header-row">
-                  <h3 class="card-title">{{ segment.title }}</h3>
-
-                  <!-- Tier Badge -->
-                  <div
-                    class="tier-badge"
-                    [style.--badge-bg]="segment.tagBg"
-                    [style.--badge-color]="segment.tagColor"
-                  >
-                    <span class="badge-indicator"></span>
-                    <span class="badge-text">{{ segment.tag }}</span>
-                  </div>
-                </div>
-
-                <p class="card-description">{{ segment.description }}</p>
-
-                <!-- Elegant Divider -->
-                <div class="card-divider">
-                  <span class="divider-wing left"></span>
-                  <span class="divider-diamond">
-                    <svg viewBox="0 0 12 12" fill="currentColor">
-                      <path d="M6 0L12 6L6 12L0 6Z" />
-                    </svg>
-                  </span>
-                  <span class="divider-wing right"></span>
-                </div>
-
-                <!-- Benefits List -->
-                <ul class="benefits-list">
-                  @for (
-                    benefit of segment.benefits;
-                    track benefit.text;
-                    let j = $index
-                  ) {
-                    <li class="benefit-row" [style.--row-index]="j">
-                      <span class="benefit-check">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="3"
-                        >
+                <ul class="perks">
+                  @for (b of seg.benefits; track b.text; let j = $index) {
+                    <li class="perk" [style.--j]="j">
+                      <span class="perk-check">
+                        <svg viewBox="0 0 14 14" fill="none">
                           <path
-                            d="M5 12l5 5L20 7"
+                            d="M2.5 7l3 3L11.5 4"
+                            stroke="currentColor"
+                            stroke-width="2.2"
                             stroke-linecap="round"
                             stroke-linejoin="round"
                           />
                         </svg>
                       </span>
-                      <span class="benefit-label">{{ benefit.text }}</span>
-                      @if (benefit.highlight) {
-                        <span class="benefit-tag">{{ benefit.highlight }}</span>
+                      <span class="perk-text">{{ b.text }}</span>
+                      @if (b.highlight) {
+                        <span class="perk-chip">{{ b.highlight }}</span>
                       }
                     </li>
                   }
                 </ul>
 
-                <!-- CTA Button -->
-                <a [href]="segment.ctaLink" class="card-cta">
-                  <span class="cta-shine"></span>
-                  <span class="cta-label">{{ segment.cta }}</span>
-                  <span class="cta-icon">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    >
+                <a [href]="seg.ctaLink" class="cta-btn">
+                  <span>{{ seg.cta }}</span>
+                  <span class="cta-arrow">
+                    <svg viewBox="0 0 20 20" fill="none">
                       <path
-                        d="M5 12h14M12 5l7 7-7 7"
+                        d="M4 10h12M10 4l6 6-6 6"
+                        stroke="currentColor"
+                        stroke-width="2"
                         stroke-linecap="round"
                         stroke-linejoin="round"
                       />
                     </svg>
                   </span>
                 </a>
-              </div>
-
-              <!-- Decorative Corner Accent -->
-              <div class="corner-accent"></div>
-
-              <!-- Floating Decorative Elements -->
-              <div class="card-floaters">
-                <div class="floater floater-1"></div>
-                <div class="floater floater-2"></div>
               </div>
             </article>
           }
@@ -312,333 +134,208 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [
     `
-      /* ============================================
-       BENEFITS SECTION - Kengo Ecosystem Design
-       Premium Glassmorphism + Editorial Layout
-    ============================================ */
-
+      /* ═══════════════════════════════════════════
+         SECTION
+      ═══════════════════════════════════════════ */
       .benefits-section {
         position: relative;
-        padding: 4rem 0 5rem;
+        padding: 5rem 0 6rem;
+        background: #f9f5f1;
         overflow: hidden;
-        background: linear-gradient(
-          175deg,
-          #fffbf8 0%,
-          #fff7f2 25%,
-          #fff3eb 50%,
-          #ffefe4 75%,
-          #ffebdd 100%
-        );
       }
 
       @media (min-width: 1024px) {
         .benefits-section {
-          padding: 5rem 0 6rem;
+          padding: 6rem 0 7rem;
         }
       }
 
-      /* ============================================
-       BACKGROUND LAYERS
-    ============================================ */
-
-      .background-container {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        overflow: hidden;
-      }
-
-      .wave-layer {
-        position: absolute;
-        width: 100%;
-        height: auto;
-      }
-
-      .wave-top {
-        top: 0;
-        left: 0;
-        height: 35%;
-        min-height: 200px;
-      }
-
-      .wave-bottom {
-        bottom: 0;
-        left: 0;
-        height: 30%;
-        min-height: 180px;
-      }
-
-      /* Morphing Blobs */
-      .blob {
+      /* Ambient orbs */
+      .bg-orb {
         position: absolute;
         border-radius: 50%;
-        filter: blur(60px);
-        opacity: 0.4;
-        mix-blend-mode: multiply;
+        filter: blur(90px);
+        pointer-events: none;
+        will-change: transform;
       }
-
-      .blob-1 {
-        width: 500px;
-        height: 500px;
-        top: 5%;
-        right: -10%;
+      .orb-coral {
+        width: 640px;
+        height: 640px;
+        top: -120px;
+        right: -180px;
         background: radial-gradient(
           circle,
-          rgba(231, 92, 62, 0.4) 0%,
-          transparent 70%
+          rgba(231, 92, 62, 0.16) 0%,
+          transparent 68%
         );
-        animation: blobMorph1 25s ease-in-out infinite;
       }
-
-      .blob-2 {
-        width: 400px;
-        height: 400px;
-        bottom: 15%;
-        left: -8%;
+      .orb-amber {
+        width: 480px;
+        height: 480px;
+        bottom: -80px;
+        left: -120px;
         background: radial-gradient(
           circle,
-          rgba(239, 192, 72, 0.35) 0%,
-          transparent 70%
+          rgba(239, 192, 72, 0.18) 0%,
+          transparent 68%
         );
-        animation: blobMorph2 30s ease-in-out infinite;
       }
-
-      .blob-3 {
-        width: 350px;
-        height: 350px;
+      .orb-violet {
+        width: 360px;
+        height: 360px;
         top: 40%;
-        left: 35%;
+        left: 38%;
         background: radial-gradient(
           circle,
-          rgba(99, 102, 241, 0.2) 0%,
-          transparent 70%
+          rgba(99, 102, 241, 0.1) 0%,
+          transparent 68%
         );
-        animation: blobMorph3 20s ease-in-out infinite;
       }
 
-      @keyframes blobMorph1 {
-        0%,
-        100% {
-          transform: translate(0, 0) scale(1) rotate(0deg);
-          border-radius: 50%;
-        }
-        25% {
-          transform: translate(-40px, 60px) scale(1.1) rotate(90deg);
-          border-radius: 40% 60% 70% 30%;
-        }
-        50% {
-          transform: translate(30px, -40px) scale(0.95) rotate(180deg);
-          border-radius: 60% 40% 30% 70%;
-        }
-        75% {
-          transform: translate(-20px, 30px) scale(1.05) rotate(270deg);
-          border-radius: 30% 70% 60% 40%;
-        }
-      }
-
-      @keyframes blobMorph2 {
-        0%,
-        100% {
-          transform: translate(0, 0) scale(1);
-          border-radius: 50%;
-        }
-        33% {
-          transform: translate(50px, -30px) scale(1.15);
-          border-radius: 70% 30% 50% 50%;
-        }
-        66% {
-          transform: translate(-30px, 50px) scale(0.9);
-          border-radius: 30% 70% 70% 30%;
-        }
-      }
-
-      @keyframes blobMorph3 {
-        0%,
-        100% {
-          transform: translate(0, 0) scale(1);
-          opacity: 0.4;
-        }
-        50% {
-          transform: translate(-60px, 40px) scale(1.2);
-          opacity: 0.6;
-        }
-      }
-
-      /* Grain Texture */
-      .grain-texture {
-        position: absolute;
-        inset: 0;
-        opacity: 0.18;
-        mix-blend-mode: overlay;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      }
-
-      @media (max-width: 768px) {
-        .blob {
-          opacity: 0.25;
-        }
-        .blob-1 {
-          width: 300px;
-          height: 300px;
-        }
-        .blob-2 {
-          width: 250px;
-          height: 250px;
-        }
-        .blob-3 {
-          display: none;
-        }
-      }
-
-      /* ============================================
-       CONTENT WRAPPER
-    ============================================ */
-
-      .content-wrapper {
+      /* ═══════════════════════════════════════════
+         WRAPPER
+      ═══════════════════════════════════════════ */
+      .wrapper {
         position: relative;
         z-index: 1;
-        max-width: 1320px;
+        max-width: 1220px;
         margin: 0 auto;
         padding: 0 1.5rem;
       }
-
       @media (min-width: 640px) {
-        .content-wrapper {
+        .wrapper {
           padding: 0 2rem;
         }
       }
-
       @media (min-width: 1024px) {
-        .content-wrapper {
+        .wrapper {
           padding: 0 3rem;
         }
       }
 
-      /* ============================================
-       SECTION HEADER
-    ============================================ */
-
-      .section-header {
+      /* ═══════════════════════════════════════════
+         SECTION HEADER
+      ═══════════════════════════════════════════ */
+      .section-head {
         text-align: center;
-        max-width: 800px;
-        margin: 0 auto 2.5rem;
+        max-width: 680px;
+        margin: 0 auto 3.5rem;
       }
 
-      @media (min-width: 1024px) {
-        .section-header {
-          margin-bottom: 3rem;
-        }
-      }
-
-      .badge-row {
+      .eyebrow-row {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        animation: fadeSlideUp 0.7s ease-out backwards;
+        gap: 0.9rem;
+        margin-bottom: 1.4rem;
       }
-
-      .header-line {
-        width: 48px;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #e75c3e);
-      }
-
-      .header-line:last-child {
-        background: linear-gradient(90deg, #e75c3e, transparent);
-      }
-
-      .header-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 22px;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        border-radius: 100px;
-        font-size: 14px;
-        font-weight: 700;
-        color: #e75c3e;
-        letter-spacing: 0.03em;
-        box-shadow:
-          0 4px 20px rgba(231, 92, 62, 0.08),
-          0 1px 3px rgba(0, 0, 0, 0.04);
-      }
-
-      .badge-pulse {
-        width: 8px;
-        height: 8px;
-        background: linear-gradient(135deg, #e75c3e, #f7a65e);
-        border-radius: 50%;
-        animation: badgePulse 2.5s ease-in-out infinite;
-      }
-
-      @keyframes badgePulse {
-        0%,
-        100% {
-          transform: scale(1);
-          opacity: 1;
-          box-shadow: 0 0 0 0 rgba(231, 92, 62, 0.4);
-        }
-        50% {
-          transform: scale(1.1);
-          opacity: 0.8;
-          box-shadow: 0 0 0 6px rgba(231, 92, 62, 0);
-        }
-      }
-
-      .section-title {
-        font-family: 'kengoFont', system-ui, sans-serif;
-        font-size: clamp(2.25rem, 6vw, 3.75rem);
-        font-weight: 700;
-        color: #1f2937;
-        line-height: 1.1;
-        letter-spacing: -0.02em;
-        margin-bottom: 1.5rem;
-        animation: fadeSlideUp 0.7s ease-out 0.1s backwards;
-      }
-
-      .title-accent {
+      .ey-line {
+        flex: 1;
+        max-width: 56px;
+        height: 1.5px;
         background: linear-gradient(
-          135deg,
+          90deg,
+          transparent,
+          rgba(231, 92, 62, 0.55)
+        );
+      }
+      .ey-line-r {
+        background: linear-gradient(
+          90deg,
+          rgba(231, 92, 62, 0.55),
+          transparent
+        );
+      }
+      .ey-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #e75c3e;
+      }
+
+      .section-h2 {
+        font-family: 'kengoFont', 'Galvji', system-ui, sans-serif;
+        font-size: clamp(2rem, 5.5vw, 3.4rem);
+        font-weight: 700;
+        color: #1a1208;
+        line-height: 1.1;
+        letter-spacing: -0.025em;
+        margin: 0 0 1.2rem;
+      }
+      .h2-accent {
+        font-style: italic;
+        background: linear-gradient(
+          120deg,
           #e75c3e 0%,
-          #c94a2f 40%,
-          #d97706 70%,
+          #d97706 45%,
           #efc048 100%
         );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        background-size: 200% auto;
-        animation: gradientShift 8s ease infinite;
       }
 
-      @keyframes gradientShift {
-        0%,
-        100% {
-          background-position: 0% center;
+      .section-sub {
+        font-size: 1.0625rem;
+        color: #7c6f62;
+        line-height: 1.7;
+        margin: 0;
+      }
+
+      /* ═══════════════════════════════════════════
+         GRID
+      ═══════════════════════════════════════════ */
+      .cards-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      @media (min-width: 768px) {
+        .cards-grid {
+          grid-template-columns: repeat(2, 1fr);
         }
-        50% {
-          background-position: 100% center;
+        .kcard-clinicas {
+          grid-column: span 2;
+          max-width: 500px;
+          justify-self: center;
+          width: 100%;
         }
       }
 
-      .section-subtitle {
-        font-size: 1.125rem;
-        color: #6b7280;
-        line-height: 1.75;
-        max-width: 600px;
-        margin: 0 auto;
-        animation: fadeSlideUp 0.7s ease-out 0.2s backwards;
+      @media (min-width: 1024px) {
+        .cards-grid {
+          grid-template-columns: repeat(3, 1fr);
+          align-items: start;
+        }
+        .kcard-clinicas {
+          grid-column: span 1;
+          max-width: none;
+        }
       }
 
-      @keyframes fadeSlideUp {
+      /* ═══════════════════════════════════════════
+         CARD
+      ═══════════════════════════════════════════ */
+      .kcard {
+        position: relative;
+        background: #ffffff;
+        border-radius: 26px;
+        overflow: hidden;
+        box-shadow:
+          0 2px 8px rgba(26, 18, 8, 0.05),
+          0 8px 32px rgba(26, 18, 8, 0.06);
+        transition:
+          transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        animation: cardReveal 0.55s ease-out calc(var(--i) * 0.11s) both;
+      }
+
+      @keyframes cardReveal {
         from {
           opacity: 0;
-          transform: translateY(24px);
+          transform: translateY(36px);
         }
         to {
           opacity: 1;
@@ -646,696 +343,355 @@ import { CommonModule } from '@angular/common';
         }
       }
 
-      /* ============================================
-       ECOSYSTEM GRID - Editorial Layout
-    ============================================ */
+      .kcard:hover {
+        transform: translateY(-10px);
+        box-shadow:
+          0 6px 24px rgba(26, 18, 8, 0.07),
+          0 24px 64px rgba(26, 18, 8, 0.1),
+          0 0 0 1px rgba(0, 0, 0, 0.03);
+      }
 
-      .ecosystem-grid {
+      /* Featured card */
+      .kcard-featured {
+        box-shadow:
+          0 0 0 2px var(--c1),
+          0 8px 40px color-mix(in srgb, var(--c1) 22%, transparent),
+          0 2px 8px rgba(26, 18, 8, 0.06);
+      }
+      .kcard-featured:hover {
+        box-shadow:
+          0 0 0 2px var(--c1),
+          0 24px 64px color-mix(in srgb, var(--c1) 28%, transparent),
+          0 8px 24px rgba(26, 18, 8, 0.08);
+      }
+
+      @media (min-width: 1024px) {
+        .kcard-featured {
+          margin-top: -10px;
+        }
+      }
+
+      /* ═══════════════════════════════════════════
+         CAP – COLORED HEADER BLOCK
+      ═══════════════════════════════════════════ */
+      .cap {
         position: relative;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-      }
-
-      @media (min-width: 768px) {
-        .ecosystem-grid {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.25rem;
-        }
-
-        .segment-clinicas {
-          grid-column: span 2;
-          max-width: 560px;
-          justify-self: center;
-        }
-      }
-
-      @media (min-width: 1024px) {
-        .ecosystem-grid {
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-          align-items: start;
-        }
-
-        .segment-clinicas {
-          grid-column: span 1;
-          max-width: none;
-        }
-      }
-
-      /* Flow Connections (Desktop only) */
-      .flow-connections {
-        display: none;
-      }
-
-      @media (min-width: 1024px) {
-        .flow-connections {
-          display: block;
-          position: absolute;
-          top: 50%;
-          left: 0;
-          right: 0;
-          height: 200px;
-          transform: translateY(-50%);
-          pointer-events: none;
-          z-index: 0;
-          opacity: 0.6;
-        }
-
-        .flow-svg {
-          width: 100%;
-          height: 100%;
-        }
-
-        .flow-path {
-          stroke-dasharray: 8 4;
-          animation: flowDash 20s linear infinite;
-        }
-
-        @keyframes flowDash {
-          to {
-            stroke-dashoffset: -100;
-          }
-        }
-
-        .flow-particle {
-          opacity: 0.8;
-          filter: blur(1px);
-        }
-      }
-
-      /* ============================================
-       SEGMENT CARD
-    ============================================ */
-
-      .segment-card {
-        position: relative;
-        border-radius: 32px;
-        animation: cardReveal 0.6s ease-out calc(var(--card-index) * 0.15s)
-          backwards;
-        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      @keyframes cardReveal {
-        from {
-          opacity: 0;
-          transform: translateY(40px) scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      .segment-card:hover {
-        transform: translateY(-14px) scale(1.02);
-      }
-
-      @media (min-width: 1024px) {
-        .segment-pacientes:hover,
-        .segment-fisioterapeutas:hover,
-        .segment-clinicas:hover {
-          transform: translateY(-14px) scale(1.02);
-        }
-      }
-
-      /* Card Background Layer */
-      .card-bg-layer {
-        position: absolute;
-        inset: 0;
-        border-radius: 32px;
+        background: linear-gradient(140deg, var(--c1) 0%, var(--c2) 100%);
+        padding: 1.75rem 1.75rem 3.25rem;
         overflow: hidden;
+        min-height: 168px;
       }
 
-      .card-morphing-bg {
-        position: absolute;
-        inset: -50%;
-        width: 200%;
-        height: 200%;
-        opacity: 0.15;
-        animation: cardBgRotate 30s linear infinite;
-      }
-
-      @keyframes cardBgRotate {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* Glow Border */
-      .card-glow-border {
+      /* Dot grid texture */
+      .cap-dots {
         position: absolute;
         inset: 0;
-        border-radius: 32px;
-        padding: 2px;
-        background: linear-gradient(
-          135deg,
-          var(--accent) 0%,
-          transparent 40%,
-          transparent 60%,
-          var(--accent) 100%
+        background-image: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.28) 1.2px,
+          transparent 1.2px
         );
-        opacity: 0;
-        transition: opacity 0.5s ease;
-        -webkit-mask:
-          linear-gradient(#fff 0 0) content-box,
-          linear-gradient(#fff 0 0);
-        mask:
-          linear-gradient(#fff 0 0) content-box,
-          linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
+        background-size: 18px 18px;
+        pointer-events: none;
       }
 
-      .segment-card:hover .card-glow-border {
-        opacity: 1;
+      /* Decorative concentric rings */
+      .cap-ring {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .cap-ring-1 {
+        width: 200px;
+        height: 200px;
+        right: -70px;
+        top: -70px;
+        border: 44px solid rgba(255, 255, 255, 0.07);
+      }
+      .cap-ring-2 {
+        width: 110px;
+        height: 110px;
+        right: 48px;
+        top: 24px;
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
       }
 
-      /* Featured card - Fisioterapeutas */
-      .segment-fisioterapeutas .card-body {
-        border: 2px solid #d97706;
-        box-shadow:
-          0 4px 32px rgba(0, 0, 0, 0.04),
-          0 0 0 4px rgba(217, 119, 6, 0.1),
-          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      /* Faint large background number */
+      .cap-num {
+        position: absolute;
+        right: 14px;
+        bottom: 28px;
+        font-family: 'kengoFont', 'Galvji', monospace;
+        font-size: 5rem;
+        font-weight: 900;
+        color: rgba(255, 255, 255, 0.09);
+        line-height: 1;
+        letter-spacing: -0.05em;
+        pointer-events: none;
+        user-select: none;
+        z-index: 0;
       }
 
-      .segment-fisioterapeutas:hover .card-body {
-        box-shadow:
-          0 20px 60px rgba(0, 0, 0, 0.08),
-          0 0 0 4px rgba(217, 119, 6, 0.2),
-          0 8px 24px rgba(217, 119, 6, 0.2),
-          inset 0 1px 0 rgba(255, 255, 255, 0.9);
-      }
-
-      /* Card Body */
-      .card-body {
-        position: relative;
-        padding: 1.5rem;
-        background: rgba(255, 255, 255, 0.78);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        border-radius: 32px;
-        box-shadow:
-          0 4px 32px rgba(0, 0, 0, 0.04),
-          0 1px 3px rgba(0, 0, 0, 0.02),
-          inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .segment-card:hover .card-body {
-        background: rgba(255, 255, 255, 0.92);
-        box-shadow:
-          0 20px 60px rgba(0, 0, 0, 0.08),
-          0 8px 24px color-mix(in srgb, var(--accent) 15%, transparent),
-          inset 0 1px 0 rgba(255, 255, 255, 0.9);
-      }
-
-      @media (max-width: 640px) {
-        .card-body {
-          padding: 1.25rem 1.25rem;
-        }
-      }
-
-      /* ============================================
-       CARD HEADER ROW
-    ============================================ */
-
-      .card-header-row {
+      /* Badge row */
+      .cap-top {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 1rem;
+        gap: 8px;
+        margin-bottom: 1.1rem;
+        position: relative;
+        z-index: 1;
       }
 
-      /* Tier Badge */
-      .tier-badge {
+      .tier-pill {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 7px 14px;
-        background: var(--badge-bg);
-        color: var(--badge-color);
+        gap: 7px;
+        padding: 5px 14px;
+        background: rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.38);
+        border-radius: 100px;
+        color: white;
         font-size: 11px;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        border-radius: 100px;
+        letter-spacing: 0.11em;
+        white-space: nowrap;
       }
 
-      .badge-indicator {
-        width: 8px;
-        height: 8px;
-        background: var(--badge-color);
+      .tier-dot {
+        width: 6px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.9);
         border-radius: 50%;
-        animation: indicatorPulse 2s ease-in-out infinite;
+        flex-shrink: 0;
+        animation: tierDotPulse 2.2s ease-in-out infinite;
       }
 
-      @keyframes indicatorPulse {
+      @keyframes tierDotPulse {
         0%,
         100% {
-          transform: scale(1);
           opacity: 1;
+          transform: scale(1);
         }
         50% {
-          transform: scale(0.7);
-          opacity: 0.5;
+          opacity: 0.4;
+          transform: scale(0.65);
         }
       }
 
-      /* ============================================
-       CARD CONTENT
-    ============================================ */
-
-      .card-title {
-        font-family: 'Galvji', system-ui, sans-serif;
-        font-size: 1.25rem;
-        font-weight: 800;
-        color: #1a1a2e;
-        letter-spacing: -0.02em;
-        margin: 0;
-        flex: 1;
-        transition: color 0.3s ease;
-      }
-
-      .segment-card:hover .card-title {
-        color: var(--accent);
-      }
-
-      .card-description {
-        font-size: 13px;
-        color: #64748b;
-        line-height: 1.6;
-        margin-bottom: 1rem;
-      }
-
-      /* Elegant Divider */
-      .card-divider {
-        display: flex;
+      .feat-pill {
+        display: inline-flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 1rem;
+        padding: 5px 12px;
+        background: white;
+        color: var(--c1);
+        font-size: 10px;
+        font-weight: 900;
+        border-radius: 100px;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
       }
 
-      .divider-wing {
-        flex: 1;
-        height: 1px;
+      /* Card title */
+      .cap-title {
+        font-family: 'Galvji', system-ui, sans-serif;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: white;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+        position: relative;
+        z-index: 1;
       }
 
-      .divider-wing.left {
-        background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08));
+      /* Wave cutout at bottom of cap */
+      .cap-wave {
+        position: absolute;
+        bottom: -1px;
+        left: -2px;
+        right: -2px;
+        height: 48px;
+        pointer-events: none;
+        z-index: 2;
       }
-
-      .divider-wing.right {
-        background: linear-gradient(90deg, rgba(0, 0, 0, 0.08), transparent);
-      }
-
-      .divider-diamond {
-        width: 12px;
-        height: 12px;
-        color: #d1d5db;
-        transition: all 0.3s ease;
-      }
-
-      .segment-card:hover .divider-diamond {
-        color: var(--accent);
-        transform: rotate(45deg) scale(1.2);
-      }
-
-      .divider-diamond svg {
+      .cap-wave svg {
+        display: block;
         width: 100%;
         height: 100%;
       }
 
-      /* ============================================
-       BENEFITS LIST
-    ============================================ */
-
-      .benefits-list {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+      /* ═══════════════════════════════════════════
+         BODY
+      ═══════════════════════════════════════════ */
+      .body {
+        padding: 1.25rem 1.75rem 1.75rem;
       }
 
-      .benefit-row {
+      .body-desc {
+        font-size: 13.5px;
+        color: #7c6f62;
+        line-height: 1.68;
+        margin: 0 0 1.3rem;
+      }
+
+      /* ═══════════════════════════════════════════
+         PERKS LIST
+      ═══════════════════════════════════════════ */
+      .perks {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .perk {
         display: flex;
         align-items: center;
         gap: 10px;
         opacity: 0;
         transform: translateX(-12px);
         transition:
-          opacity 0.4s ease-out calc(var(--row-index) * 0.08s),
-          transform 0.4s ease-out calc(var(--row-index) * 0.08s);
+          opacity 0.38s ease calc(var(--j) * 0.07s),
+          transform 0.38s ease calc(var(--j) * 0.07s);
       }
 
-      .segment-card.card-visible .benefit-row {
+      .kcard.card-visible .perk {
         opacity: 1;
         transform: translateX(0);
       }
 
-      .benefit-check {
+      .perk-check {
         flex-shrink: 0;
-        width: 26px;
-        height: 26px;
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        background: linear-gradient(140deg, var(--c1), var(--c2));
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(
-          135deg,
-          var(--accent),
-          color-mix(in srgb, var(--accent) 80%, #000)
-        );
-        border-radius: 8px;
         color: white;
-        box-shadow: 0 3px 10px
-          color-mix(in srgb, var(--accent) 35%, transparent);
-        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--c1) 35%, transparent);
+        transition: transform 0.25s ease;
       }
 
-      .benefit-check svg {
-        width: 12px;
-        height: 12px;
+      .kcard:hover .perk-check {
+        transform: scale(1.08);
       }
 
-      .segment-card:hover .benefit-check {
-        transform: scale(1.1);
+      .perk-check svg {
+        width: 11px;
+        height: 11px;
       }
 
-      .benefit-label {
+      .perk-text {
         flex: 1;
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 500;
-        color: #374151;
-        line-height: 1.5;
+        color: #2d2416;
+        line-height: 1.45;
       }
 
-      .benefit-tag {
-        padding: 5px 10px;
-        background: linear-gradient(
-          135deg,
-          var(--accent-light),
-          color-mix(in srgb, var(--accent-light) 60%, transparent)
-        );
-        color: var(--accent);
-        font-size: 10px;
+      .perk-chip {
+        font-size: 9.5px;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-radius: 6px;
+        letter-spacing: 0.07em;
+        color: var(--c1);
+        background: var(--clight);
+        padding: 3px 8px;
+        border-radius: 5px;
+        flex-shrink: 0;
       }
 
-      /* ============================================
-       CTA BUTTON
-    ============================================ */
-
-      .card-cta {
-        position: relative;
+      /* ═══════════════════════════════════════════
+         CTA BUTTON
+      ═══════════════════════════════════════════ */
+      .cta-btn {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 16px 28px;
-        background: linear-gradient(
-          135deg,
-          var(--accent),
-          color-mix(in srgb, var(--accent) 85%, #000)
-        );
+        justify-content: space-between;
+        padding: 13px 18px;
+        background: linear-gradient(140deg, var(--c1), var(--c2));
         color: white;
-        font-size: 15px;
-        font-weight: 700;
-        border-radius: 16px;
+        border-radius: 14px;
         text-decoration: none;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        position: relative;
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-        box-shadow: 0 4px 20px
-          color-mix(in srgb, var(--accent) 35%, transparent);
+        transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
-      .cta-shine {
+      .cta-btn::after {
+        content: '';
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.25),
-          transparent
-        );
-        transition: left 0.6s ease;
+        inset: 0;
+        background: rgba(255, 255, 255, 0);
+        transition: background 0.3s ease;
       }
 
-      .card-cta:hover .cta-shine {
-        left: 100%;
+      .cta-btn:hover::after {
+        background: rgba(255, 255, 255, 0.1);
       }
 
-      .card-cta:hover {
-        transform: translateX(6px);
-        box-shadow: 0 8px 32px
-          color-mix(in srgb, var(--accent) 45%, transparent);
+      .cta-btn:hover {
+        box-shadow: 0 6px 24px color-mix(in srgb, var(--c1) 45%, transparent);
+        transform: translateY(-2px);
       }
 
-      .cta-label {
-        position: relative;
-        z-index: 1;
-      }
-
-      .cta-icon {
-        position: relative;
-        z-index: 1;
+      .cta-arrow {
         display: flex;
         align-items: center;
+        position: relative;
+        z-index: 1;
         transition: transform 0.3s ease;
       }
 
-      .cta-icon svg {
+      .cta-arrow svg {
         width: 18px;
         height: 18px;
       }
 
-      .card-cta:hover .cta-icon {
+      .cta-btn:hover .cta-arrow {
         transform: translateX(4px);
       }
 
-      /* ============================================
-       DECORATIVE ELEMENTS
-    ============================================ */
-
-      .corner-accent {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 140px;
-        height: 140px;
-        background: radial-gradient(
-          circle at 100% 100%,
-          var(--accent-light) 0%,
-          transparent 70%
-        );
-        border-radius: 0 0 32px 0;
-        pointer-events: none;
-        opacity: 0.5;
-        transition: opacity 0.3s ease;
+      .cta-btn span:first-child {
+        position: relative;
+        z-index: 1;
       }
 
-      .segment-card:hover .corner-accent {
-        opacity: 0.8;
-      }
-
-      .card-floaters {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        overflow: hidden;
-        border-radius: 32px;
-      }
-
-      .floater {
-        position: absolute;
-        border-radius: 50%;
-        opacity: 0;
-        transition: opacity 0.5s ease;
-      }
-
-      .segment-card:hover .floater {
-        opacity: 1;
-      }
-
-      .floater-1 {
-        width: 60px;
-        height: 60px;
-        top: 15%;
-        right: 8%;
-        background: radial-gradient(
-          circle,
-          var(--accent-light),
-          transparent 70%
-        );
-        animation: floaterDrift 6s ease-in-out infinite;
-      }
-
-      .floater-2 {
-        width: 40px;
-        height: 40px;
-        bottom: 25%;
-        left: 5%;
-        background: radial-gradient(
-          circle,
-          color-mix(in srgb, var(--accent) 20%, transparent),
-          transparent 70%
-        );
-        animation: floaterDrift 8s ease-in-out infinite reverse;
-      }
-
-      @keyframes floaterDrift {
-        0%,
-        100% {
-          transform: translate(0, 0);
-        }
-        50% {
-          transform: translate(-10px, 15px);
-        }
-      }
-
-      /* ============================================
-       STATS SHOWCASE
-    ============================================ */
-
-      .stats-showcase {
-        margin-top: 4.5rem;
-        animation: fadeSlideUp 0.7s ease-out 0.5s backwards;
-      }
-
-      @media (min-width: 1024px) {
-        .stats-showcase {
-          margin-top: 5.5rem;
-        }
-      }
-
-      .stats-glass {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 2rem;
-        padding: 2.25rem 3rem;
-        background: rgba(255, 255, 255, 0.72);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.65);
-        border-radius: 28px;
-        box-shadow:
-          0 4px 32px rgba(0, 0, 0, 0.04),
-          inset 0 1px 0 rgba(255, 255, 255, 0.7);
-      }
-
-      @media (min-width: 640px) {
-        .stats-glass {
-          gap: 3.5rem;
-        }
-      }
-
-      .stat-block {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .stat-value {
-        font-family: 'kengoFont', system-ui, sans-serif;
-        font-size: 2rem;
-        font-weight: 700;
-        background: linear-gradient(
-          135deg,
-          #e75c3e 0%,
-          #d97706 50%,
-          #efc048 100%
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .stat-label {
-        font-size: 14px;
-        font-weight: 500;
-        color: #6b7280;
-      }
-
-      .stat-separator {
-        width: 1px;
-        height: 48px;
-        background: linear-gradient(
-          180deg,
-          transparent,
-          rgba(0, 0, 0, 0.1),
-          transparent
-        );
-      }
-
-      @media (max-width: 639px) {
-        .stat-separator {
-          display: none;
-        }
-        .stats-glass {
-          gap: 2rem;
-          padding: 2rem;
-        }
-        .stat-block {
-          flex: 1;
-          min-width: 100px;
-        }
-      }
-
-      /* ============================================
-       REDUCED MOTION
-    ============================================ */
-
+      /* ═══════════════════════════════════════════
+         REDUCED MOTION
+      ═══════════════════════════════════════════ */
       @media (prefers-reduced-motion: reduce) {
-        .blob,
-        .badge-pulse,
-        .title-accent,
-        .card-morphing-bg,
-        .floater,
-        .flow-path,
-        .flow-particle,
-        .indicator-pulse,
-        .benefit-row {
+        .kcard,
+        .perk,
+        .tier-dot,
+        .cta-btn,
+        .perk-check {
           animation: none !important;
-        }
-
-        .segment-card,
-        .icon-shape,
-        .card-cta,
-        .card-body,
-        .divider-diamond,
-        .benefit-check,
-        .cta-shine {
           transition: none !important;
         }
-
-        .benefit-row {
+        .perk {
           opacity: 1;
+          transform: none;
         }
-        .segment-card {
-          transform: none !important;
+        .kcard {
+          animation: none;
         }
       }
     `,
   ],
 })
 export class BenefitsComponent implements AfterViewInit, OnDestroy {
-  @ViewChildren('segmentCard') cards!: QueryList<ElementRef>;
+  @ViewChildren('segCard') cards!: QueryList<ElementRef>;
   private observer: IntersectionObserver | null = null;
 
   ngAfterViewInit() {
@@ -1359,27 +715,24 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy() {
     this.observer?.disconnect();
   }
+
   segments = [
     {
       id: 'pacientes',
       title: 'Para Pacientes',
       tag: 'Gratis',
-      tagBg: 'rgba(34, 197, 94, 0.12)',
-      tagColor: '#16a34a',
-      accentColor: '#e75c3e',
-      accentLight: 'rgba(231, 92, 62, 0.12)',
-      iconBg:
-        'linear-gradient(135deg, rgba(231, 92, 62, 0.14) 0%, rgba(255, 200, 180, 0.06) 100%)',
-      morphBg:
-        'conic-gradient(from 0deg, rgba(231, 92, 62, 0.3) 0deg, rgba(247, 166, 94, 0.2) 120deg, rgba(255, 200, 180, 0.3) 240deg, rgba(231, 92, 62, 0.3) 360deg)',
+      color1: '#e75c3e',
+      color2: '#f7873e',
+      colorLight: 'rgba(231, 92, 62, 0.1)',
+      featured: false,
       cta: 'Empezar ahora',
       ctaLink: 'https://app.kengoapp.com/registro',
       description:
-        'Tu fisio siempre contigo. Ejercicios guiados con video, seguimiento del dolor y comunicacion directa.',
+        'Tu fisio siempre contigo. Ejercicios guiados con video, seguimiento del dolor y comunicación directa.',
       benefits: [
         { text: 'Ejercicios con video HD profesional', highlight: null },
-        { text: 'Sabe exactamente que hacer cada dia', highlight: null },
-        { text: 'Registra como te sientes', highlight: 'Nuevo' },
+        { text: 'Sabe exactamente qué hacer cada día', highlight: null },
+        { text: 'Registra cómo te sientes', highlight: 'Nuevo' },
         { text: 'Tu fisio siempre informado', highlight: null },
       ],
     },
@@ -1387,44 +740,36 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
       id: 'fisioterapeutas',
       title: 'Para Fisioterapeutas',
       tag: 'Pro',
-      tagBg: 'rgba(217, 119, 6, 0.12)',
-      tagColor: '#d97706',
-      accentColor: '#d97706',
-      accentLight: 'rgba(217, 119, 6, 0.12)',
-      iconBg:
-        'linear-gradient(135deg, rgba(239, 192, 72, 0.18) 0%, rgba(255, 220, 150, 0.06) 100%)',
-      morphBg:
-        'conic-gradient(from 90deg, rgba(217, 119, 6, 0.3) 0deg, rgba(239, 192, 72, 0.3) 120deg, rgba(255, 200, 100, 0.2) 240deg, rgba(217, 119, 6, 0.3) 360deg)',
+      color1: '#c47d0a',
+      color2: '#efc048',
+      colorLight: 'rgba(196, 125, 10, 0.1)',
+      featured: false,
       cta: 'Crear cuenta',
       ctaLink: 'https://app.kengoapp.com/registro?role=fisio',
       description:
         'Herramientas profesionales para crear planes, gestionar pacientes y monitorizar adherencia en tiempo real.',
       benefits: [
         { text: 'Crea planes en minutos, no horas', highlight: null },
-        { text: '+500 ejercicios en el catalogo', highlight: 'HD' },
+        { text: '+500 ejercicios en el catálogo', highlight: 'HD' },
         { text: 'Monitoriza adherencia real', highlight: null },
         { text: 'Plantillas reutilizables', highlight: null },
       ],
     },
     {
       id: 'clinicas',
-      title: 'Para Clinicas',
+      title: 'Para Clínicas',
       tag: 'Enterprise',
-      tagBg: 'rgba(99, 102, 241, 0.12)',
-      tagColor: '#6366f1',
-      accentColor: '#6366f1',
-      accentLight: 'rgba(99, 102, 241, 0.12)',
-      iconBg:
-        'linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, rgba(165, 180, 252, 0.06) 100%)',
-      morphBg:
-        'conic-gradient(from 180deg, rgba(99, 102, 241, 0.3) 0deg, rgba(139, 92, 246, 0.2) 120deg, rgba(165, 180, 252, 0.3) 240deg, rgba(99, 102, 241, 0.3) 360deg)',
+      color1: '#5254cc',
+      color2: '#8b5cf6',
+      colorLight: 'rgba(82, 84, 204, 0.1)',
+      featured: false,
       cta: 'Contactar ventas',
       ctaLink: 'mailto:contacto@kengoapp.com',
       description:
-        'Escala tu clinica con gestion centralizada del equipo, codigos de acceso seguros y branding personalizado.',
+        'Escala tu clínica con gestión centralizada del equipo, códigos de acceso seguros y branding personalizado.',
       benefits: [
-        { text: 'Gestion centralizada del equipo', highlight: null },
-        { text: 'Codigos de acceso seguros', highlight: null },
+        { text: 'Gestión centralizada del equipo', highlight: null },
+        { text: 'Códigos de acceso seguros', highlight: null },
         { text: 'Tu marca, tu identidad', highlight: 'Branding' },
         { text: 'Escala sin complicaciones', highlight: null },
       ],
