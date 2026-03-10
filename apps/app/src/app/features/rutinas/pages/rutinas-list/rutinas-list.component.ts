@@ -159,6 +159,10 @@ export class RutinasListComponent {
     }
   }
 
+  editarRutina(rutina: Rutina) {
+    this.router.navigate(['/rutinas', rutina.id_rutina, 'editar']);
+  }
+
   toggleRutinaMenu(rutinaId: number) {
     this.openRutinaMenuId = this.openRutinaMenuId === rutinaId ? null : rutinaId;
   }

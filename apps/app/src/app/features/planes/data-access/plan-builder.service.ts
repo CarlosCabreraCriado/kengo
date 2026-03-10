@@ -78,6 +78,8 @@ export class PlanBuilderService {
   // --- Modo rutina (sin paciente) ---
   readonly mode = signal<'plan' | 'rutina'>('plan');
   readonly isRutinaMode = computed(() => this.mode() === 'rutina');
+  readonly rutinaEditId = signal<number | null>(null);
+  readonly isRutinaEditMode = computed(() => this.rutinaEditId() !== null);
 
   // Computed para validar guardado de rutina (sin requerir paciente)
   readonly canSaveAsRutina = computed(
@@ -886,11 +888,75 @@ export class PlanBuilderService {
   }
 
   /**
+   * Activa modo edición de rutina: carga datos existentes
+   */
+  async startEditRutinaMode(rutinaId: number): Promise<{ visibilidad: string } | null> {
+    const rutina = await this.rutinasService.getRutinaById(rutinaId);
+    if (!rutina) return null;
+
+    this.mode.set('rutina');
+    this.rutinaEditId.set(rutinaId);
+    this.paciente.set(null);
+    this.planId.set(null);
+
+    const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
+      sort: idx + 1,
+      ejercicio: e.ejercicio,
+      series: e.series ?? 3,
+      repeticiones: e.repeticiones ?? 12,
+      duracion_seg: e.duracion_seg,
+      descanso_seg: e.descanso_seg ?? 45,
+      veces_dia: e.veces_dia ?? 1,
+      dias_semana: e.dias_semana ?? ['L', 'X', 'V'],
+      instrucciones_paciente: e.instrucciones_paciente,
+      notas_fisio: e.notas_fisio,
+    }));
+
+    this.items.set(items);
+    this.titulo.set(rutina.nombre);
+    this.descripcion.set(rutina.descripcion || '');
+    this.openDrawer();
+
+    return { visibilidad: rutina.visibilidad };
+  }
+
+  /**
+   * Actualizar rutina existente
+   */
+  async updateRutina(
+    nombre: string,
+    descripcion: string,
+    visibilidad: 'privado' | 'clinica',
+  ): Promise<boolean> {
+    const rutinaId = this.rutinaEditId();
+    if (!rutinaId || this.items().length === 0) return false;
+
+    return this.rutinasService.updateRutinaCompleta(rutinaId, {
+      nombre,
+      descripcion,
+      visibilidad,
+      ejercicios: this.items().map((item, idx) => ({
+        ejercicio: item.ejercicio.id_ejercicio,
+        sort: idx + 1,
+        series: item.series,
+        repeticiones: item.repeticiones,
+        duracion_seg: item.duracion_seg,
+        descanso_seg: item.descanso_seg,
+        veces_dia: item.veces_dia,
+        dias_semana: item.dias_semana,
+        instrucciones_paciente: item.instrucciones_paciente,
+        notas_fisio: item.notas_fisio,
+      })),
+    });
+  }
+
+  /**
    * Sale del modo rutina y vuelve a modo plan
    */
   exitRutinaMode() {
     this.clearRutinaStorage();
     this.mode.set('plan');
+    this.rutinaEditId.set(null);
     this.items.set([]);
     this.titulo.set('');
     this.descripcion.set('');

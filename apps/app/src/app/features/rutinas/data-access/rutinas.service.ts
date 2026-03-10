@@ -332,6 +332,81 @@ export class RutinasService {
   }
 
   /**
+   * Actualizar una rutina completa (datos + ejercicios)
+   * 1. Actualiza datos de la rutina
+   * 2. Elimina ejercicios anteriores
+   * 3. Crea los nuevos ejercicios
+   */
+  async updateRutinaCompleta(
+    id: number,
+    payload: Omit<CreateRutinaPayload, 'autor'>
+  ): Promise<boolean> {
+    try {
+      // 1. Actualizar datos de la rutina
+      await firstValueFrom(
+        this.http.patch(
+          `${env.DIRECTUS_URL}/items/rutinas/${id}`,
+          {
+            nombre: payload.nombre,
+            descripcion: payload.descripcion || '',
+            visibilidad: payload.visibilidad,
+          },
+          { withCredentials: true }
+        )
+      );
+
+      // 2. Obtener ejercicios actuales para eliminarlos
+      const currentResponse = await firstValueFrom(
+        this.http.get<{ data: { id: number }[] }>(
+          `${env.DIRECTUS_URL}/items/rutinas_ejercicios?filter[rutina][_eq]=${id}&fields=id`,
+          { withCredentials: true }
+        )
+      );
+
+      const currentIds = (currentResponse?.data || []).map((e) => e.id);
+      if (currentIds.length > 0) {
+        await firstValueFrom(
+          this.http.delete(`${env.DIRECTUS_URL}/items/rutinas_ejercicios`, {
+            body: currentIds,
+            withCredentials: true,
+          })
+        );
+      }
+
+      // 3. Crear los nuevos ejercicios
+      if (payload.ejercicios && payload.ejercicios.length > 0) {
+        const ejerciciosPayload = payload.ejercicios.map((item) => ({
+          rutina: id,
+          ejercicio: item.ejercicio,
+          sort: item.sort,
+          series: item.series,
+          repeticiones: item.repeticiones,
+          duracion_seg: item.duracion_seg,
+          descanso_seg: item.descanso_seg,
+          veces_dia: item.veces_dia,
+          dias_semana: item.dias_semana,
+          instrucciones_paciente: item.instrucciones_paciente,
+          notas_fisio: item.notas_fisio,
+        }));
+
+        await firstValueFrom(
+          this.http.post(
+            `${env.DIRECTUS_URL}/items/rutinas_ejercicios`,
+            ejerciciosPayload,
+            { withCredentials: true }
+          )
+        );
+      }
+
+      this.reload();
+      return true;
+    } catch (error) {
+      console.error('Error al actualizar rutina completa:', error);
+      return false;
+    }
+  }
+
+  /**
    * Eliminar una rutina
    */
   async deleteRutina(id: number): Promise<boolean> {
