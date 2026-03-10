@@ -515,7 +515,7 @@ import { CommonModule } from '@angular/common';
 
       .benefits-section {
         position: relative;
-        padding: 7rem 0 8rem;
+        padding: 4rem 0 5rem;
         overflow: hidden;
         background: linear-gradient(
           175deg,
@@ -529,7 +529,7 @@ import { CommonModule } from '@angular/common';
 
       @media (min-width: 1024px) {
         .benefits-section {
-          padding: 9rem 0 10rem;
+          padding: 5rem 0 6rem;
         }
       }
 
@@ -717,12 +717,12 @@ import { CommonModule } from '@angular/common';
       .section-header {
         text-align: center;
         max-width: 800px;
-        margin: 0 auto 4.5rem;
+        margin: 0 auto 2.5rem;
       }
 
       @media (min-width: 1024px) {
         .section-header {
-          margin-bottom: 5.5rem;
+          margin-bottom: 3rem;
         }
       }
 
@@ -850,13 +850,13 @@ import { CommonModule } from '@angular/common';
         position: relative;
         display: grid;
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 1.25rem;
       }
 
       @media (min-width: 768px) {
         .ecosystem-grid {
           grid-template-columns: repeat(2, 1fr);
-          gap: 2rem;
+          gap: 1.25rem;
         }
 
         .segment-clinicas {
@@ -869,22 +869,13 @@ import { CommonModule } from '@angular/common';
       @media (min-width: 1024px) {
         .ecosystem-grid {
           grid-template-columns: repeat(3, 1fr);
-          gap: 2.5rem;
+          gap: 1.5rem;
           align-items: start;
-        }
-
-        .segment-pacientes {
-          transform: translateY(30px);
-        }
-
-        .segment-fisioterapeutas {
-          transform: translateY(-10px);
         }
 
         .segment-clinicas {
           grid-column: span 1;
           max-width: none;
-          transform: translateY(50px);
         }
       }
 
@@ -957,14 +948,10 @@ import { CommonModule } from '@angular/common';
       }
 
       @media (min-width: 1024px) {
-        .segment-pacientes:hover {
-          transform: translateY(16px) scale(1.02);
-        }
-        .segment-fisioterapeutas:hover {
-          transform: translateY(-24px) scale(1.02);
-        }
+        .segment-pacientes:hover,
+        .segment-fisioterapeutas:hover,
         .segment-clinicas:hover {
-          transform: translateY(36px) scale(1.02);
+          transform: translateY(-14px) scale(1.02);
         }
       }
 
@@ -1026,7 +1013,7 @@ import { CommonModule } from '@angular/common';
       /* Card Body */
       .card-body {
         position: relative;
-        padding: 2.5rem;
+        padding: 1.5rem;
         background: rgba(255, 255, 255, 0.78);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
@@ -1049,7 +1036,7 @@ import { CommonModule } from '@angular/common';
 
       @media (max-width: 640px) {
         .card-body {
-          padding: 2rem 1.75rem;
+          padding: 1.25rem 1.25rem;
         }
       }
 
@@ -1061,20 +1048,20 @@ import { CommonModule } from '@angular/common';
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 1.75rem;
+        margin-bottom: 1rem;
       }
 
       /* Icon Container */
       .icon-container {
         position: relative;
-        width: 76px;
-        height: 76px;
+        width: 56px;
+        height: 56px;
         flex-shrink: 0;
       }
 
       .icon-shape {
-        width: 76px;
-        height: 76px;
+        width: 56px;
+        height: 56px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1083,8 +1070,8 @@ import { CommonModule } from '@angular/common';
       }
 
       .icon-shape svg {
-        width: 64px;
-        height: 64px;
+        width: 44px;
+        height: 44px;
         display: block;
         overflow: visible;
       }
@@ -1118,11 +1105,11 @@ import { CommonModule } from '@angular/common';
       .tier-badge {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 12px 22px;
+        gap: 6px;
+        padding: 7px 14px;
         background: var(--badge-bg);
         color: var(--badge-color);
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -1155,11 +1142,11 @@ import { CommonModule } from '@angular/common';
 
       .card-title {
         font-family: 'Galvji', system-ui, sans-serif;
-        font-size: 1.625rem;
+        font-size: 1.25rem;
         font-weight: 800;
         color: #1a1a2e;
         letter-spacing: -0.02em;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
         transition: color 0.3s ease;
       }
 
@@ -1168,10 +1155,10 @@ import { CommonModule } from '@angular/common';
       }
 
       .card-description {
-        font-size: 15px;
+        font-size: 13px;
         color: #64748b;
-        line-height: 1.7;
-        margin-bottom: 1.75rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
       }
 
       /* Elegant Divider */
@@ -1179,7 +1166,7 @@ import { CommonModule } from '@angular/common';
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 1.75rem;
+        margin-bottom: 1rem;
       }
 
       .divider-wing {
@@ -1219,16 +1206,16 @@ import { CommonModule } from '@angular/common';
       .benefits-list {
         list-style: none;
         padding: 0;
-        margin: 0 0 2rem;
+        margin: 0 0 1rem;
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 8px;
       }
 
       .benefit-row {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 10px;
         opacity: 0;
         transform: translateX(-12px);
         transition:
