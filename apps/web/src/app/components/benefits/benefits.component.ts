@@ -265,6 +265,7 @@ import { CommonModule } from '@angular/common';
       }
       .h2-accent {
         font-style: italic;
+        padding-right: 0.12em;
         background: linear-gradient(
           120deg,
           #e75c3e 0%,

@@ -163,42 +163,6 @@ import { CommonModule } from '@angular/common';
             </article>
           }
         </div>
-
-        <!-- Bottom CTA Section -->
-        <div class="cta-section">
-          <div class="cta-glass">
-            <div class="cta-content">
-              <div class="cta-text">
-                <span class="cta-eyebrow">Empieza hoy</span>
-                <h3 class="cta-headline">Tu tratamiento te espera</h3>
-              </div>
-              <a href="https://app.kengoapp.com/registro" class="cta-button">
-                <span class="btn-bg"></span>
-                <span class="btn-content">
-                  <span>Comenzar ahora</span>
-                  <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M5 12h14m-7-7l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </span>
-              </a>
-            </div>
-            <div class="cta-features">
-              <span class="cta-feature">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Sin tarjeta de credito
-              </span>
-              <span class="cta-feature">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-                Listo en 2 minutos
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   `,

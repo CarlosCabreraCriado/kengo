@@ -244,29 +244,6 @@ import { CommonModule } from '@angular/common';
             </div>
           </article>
         </div>
-
-        <!-- Bottom CTA Strip -->
-        <div class="cta-strip">
-          <div class="cta-content">
-            <div class="cta-text">
-              <span class="cta-label">Mobile-first</span>
-              <h3 class="cta-title">Experiencia nativa en cualquier dispositivo</h3>
-            </div>
-            <a href="https://app.kengoapp.com/registro" class="cta-button">
-              <span>Comenzar gratis</span>
-              <div class="button-arrow">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </div>
-            </a>
-          </div>
-          <div class="cta-decoration">
-            <div class="deco-ring ring-1"></div>
-            <div class="deco-ring ring-2"></div>
-            <div class="deco-ring ring-3"></div>
-          </div>
-        </div>
       </div>
     </section>
   `,
