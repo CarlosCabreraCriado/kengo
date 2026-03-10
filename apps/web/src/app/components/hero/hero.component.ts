@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section
-      class="hero-section relative flex h-screen items-center overflow-hidden"
+      class="hero-section relative flex h-screen items-center overflow-hidden pt-20"
     >
       <!-- Aurora Background -->
       <div class="aurora-bg">
