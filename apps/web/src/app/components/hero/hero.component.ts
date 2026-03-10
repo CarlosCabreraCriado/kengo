@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section
-      class="hero-section relative flex h-screen items-center overflow-hidden"
+      class="hero-section relative flex h-screen items-center justify-center overflow-hidden"
     >
       <!-- Aurora Background -->
       <div class="aurora-bg">
@@ -25,7 +25,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Content -->
       <div
-        class="relative z-10 mx-auto w-full max-w-7xl px-4 py-32 sm:px-6 lg:px-8 "
+        class="pointer-events-none fixed z-10 mx-auto w-full max-w-7xl px-4 py-32 sm:px-6 lg:px-8"
       >
         <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <!-- Text Content -->
@@ -34,9 +34,9 @@ import { CommonModule } from '@angular/common';
             <h1
               class="animate-in text-4xl leading-tight font-bold tracking-tight text-gray-900 delay-100 sm:text-5xl lg:text-6xl xl:text-7xl"
             >
-              Tu tratamiento de
+              Tu
               <span class="hero-highlight relative inline-block">
-                <span class="text-primary relative z-10">fisioterapia</span>
+                <span class="text-primary relative z-10">fisioterapeuta</span>
                 <svg
                   class="highlight-underline absolute -bottom-2 left-0 w-full"
                   viewBox="0 0 200 12"
@@ -80,7 +80,7 @@ import { CommonModule } from '@angular/common';
 
             <!-- CTAs -->
             <div
-              class="animate-in mt-10 flex flex-col justify-center gap-4 delay-300 sm:flex-row lg:justify-start"
+              class="animate-in pointer-events-auto mt-10 flex flex-col justify-center gap-4 delay-300 sm:flex-row lg:justify-start"
             >
               <a
                 href="https://app.kengoapp.com/registro"
@@ -101,154 +101,6 @@ import { CommonModule } from '@angular/common';
                   />
                 </svg>
               </a>
-              <a
-                href="https://app.kengoapp.com/registro?role=fisio"
-                class="btn-kengo-secondary text-lg"
-              >
-                <svg
-                  class="text-primary h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <span>Soy fisioterapeuta</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Mobile App Preview (visible only on mobile/tablet) -->
-          <div class="animate-in mx-auto mt-10 max-w-sm delay-400 lg:hidden">
-            <div class="mobile-app-preview">
-              <!-- App bar -->
-              <div class="mobile-app-bar">
-                <span class="titulo-kengo text-primary text-lg">KENGO</span>
-                <div class="mobile-avatar">
-                  <svg
-                    class="h-4 w-4 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </div>
-
-              <!-- Today's card -->
-              <div class="mobile-today-card">
-                <div class="mobile-today-label">Tu actividad de hoy</div>
-                <div class="mobile-today-plan">
-                  Plan de rehabilitacion lumbar
-                </div>
-                <div class="mobile-progress-row">
-                  <div class="mobile-progress-bar">
-                    <div class="mobile-progress-fill"></div>
-                  </div>
-                  <span class="mobile-progress-text">75%</span>
-                </div>
-                <div class="mobile-continue-btn">
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                    />
-                  </svg>
-                  Continuar sesion
-                </div>
-              </div>
-
-              <!-- Quick actions row -->
-              <div class="mobile-actions-row">
-                @for (action of quickActions; track action.id) {
-                  <div class="mobile-action">
-                    <div class="mobile-action-icon">
-                      @switch (action.id) {
-                        @case ('planes') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                          </svg>
-                        }
-                        @case ('ejercicios') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        }
-                        @case ('progreso') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path
-                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                          </svg>
-                        }
-                        @case ('fisio') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <circle cx="12" cy="7" r="4" />
-                            <path d="M12 11v3m-1.5-1.5h3" stroke-width="2" />
-                          </svg>
-                        }
-                      }
-                    </div>
-                    <span class="mobile-action-label">{{ action.title }}</span>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Floating badge below card -->
-            <div class="mobile-floating-badge">
-              <span class="mobile-badge-dot"></span>
-              <span>Sesion completada · Racha: 7 dias</span>
             </div>
           </div>
 
@@ -468,7 +320,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Scroll Indicator -->
       <div
-        class="animate-in absolute bottom-8 left-1/2 z-10 -translate-x-1/2 delay-500"
+        class="animate-in absolute bottom-8 left-1/2 z-20 -translate-x-1/2 delay-500"
       >
         <a
           href="#beneficios"
@@ -482,6 +334,35 @@ import { CommonModule } from '@angular/common';
           </div>
         </a>
       </div>
+
+      <!-- Top Morphing Wave -->
+      <svg
+        class="wave-layer wave-top absolute bottom-0 z-10 rotate-180"
+        viewBox="0 0 1440 320"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="benefits-wave-1" x1="0%" y1="0%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#fff5ef" />
+            <stop offset="100%" stop-color="#fdd6b3" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#benefits-wave-1)" fill-opacity="1">
+          <animate
+            attributeName="d"
+            dur="20s"
+            repeatCount="indefinite"
+            values="
+                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z;
+                M0,100 C180,40 360,180 540,100 C720,20 900,180 1080,100 C1260,20 1440,140 1440,140 L1440,0 L0,0 Z;
+                M0,140 C180,80 360,200 540,120 C720,40 900,160 1080,80 C1260,0 1440,120 1440,120 L1440,0 L0,0 Z;
+                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z
+              "
+            calcMode="spline"
+            keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
+          />
+        </path>
+      </svg>
     </section>
   `,
   styles: [

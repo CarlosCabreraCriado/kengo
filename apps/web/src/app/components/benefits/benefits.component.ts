@@ -13,45 +13,9 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section id="beneficios" class="benefits-section">
+    <section id="beneficios" class="benefits-section z-10">
       <!-- Layered Wave Background with Morphing Blobs -->
       <div class="background-container">
-        <!-- Top Morphing Wave -->
-        <svg
-          class="wave-layer wave-top"
-          viewBox="0 0 1440 320"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient
-              id="benefits-wave-1"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
-              <stop offset="0%" stop-color="#fff5ef" />
-              <stop offset="50%" stop-color="#ffe8d6" />
-              <stop offset="100%" stop-color="#fdd6b3" />
-            </linearGradient>
-          </defs>
-          <path fill="url(#benefits-wave-1)" fill-opacity="0.55">
-            <animate
-              attributeName="d"
-              dur="20s"
-              repeatCount="indefinite"
-              values="
-                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z;
-                M0,100 C180,40 360,180 540,100 C720,20 900,180 1080,100 C1260,20 1440,140 1440,140 L1440,0 L0,0 Z;
-                M0,140 C180,80 360,200 540,120 C720,40 900,160 1080,80 C1260,0 1440,120 1440,120 L1440,0 L0,0 Z;
-                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-        </svg>
-
         <!-- Bottom Wave -->
         <svg
           class="wave-layer wave-bottom"
@@ -71,22 +35,7 @@ import { CommonModule } from '@angular/common';
               <stop offset="100%" stop-color="#ffedd6" />
             </linearGradient>
           </defs>
-          <path fill="url(#benefits-wave-2)" fill-opacity="0.4">
-            <animate
-              attributeName="d"
-              dur="25s"
-              repeatCount="indefinite"
-              values="
-                M0,180 C320,100 640,260 960,180 C1280,100 1440,220 1440,220 L1440,320 L0,320 Z;
-                M0,220 C320,300 640,140 960,220 C1280,300 1440,180 1440,180 L1440,320 L0,320 Z;
-                M0,200 C320,120 640,280 960,200 C1280,120 1440,240 1440,240 L1440,320 L0,320 Z;
-                M0,180 C320,100 640,260 960,180 C1280,100 1440,220 1440,220 L1440,320 L0,320 Z
-              "
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
-            />
-          </path>
-          <path fill="#e75c3e" fill-opacity="0.05">
+          <path fill="#fafaf9" fill-opacity="1">
             <animate
               attributeName="d"
               dur="30s"
@@ -113,15 +62,6 @@ import { CommonModule } from '@angular/common';
       <div class="content-wrapper">
         <!-- Section Header -->
         <header class="section-header">
-          <div class="badge-row">
-            <span class="header-line"></span>
-            <span class="header-badge">
-              <span class="badge-pulse"></span>
-              Para cada rol
-            </span>
-            <span class="header-line"></span>
-          </div>
-
           <h2 class="section-title">
             Una plataforma,
             <br />
@@ -515,21 +455,14 @@ import { CommonModule } from '@angular/common';
 
       .benefits-section {
         position: relative;
-        padding: 7rem 0 8rem;
+        padding-bottom: 8rem;
         overflow: hidden;
-        background: linear-gradient(
-          175deg,
-          #fffbf8 0%,
-          #fff7f2 25%,
-          #fff3eb 50%,
-          #ffefe4 75%,
-          #ffebdd 100%
-        );
+        background: linear-gradient(180deg, #fdd7b4 0%, #fff 25%, #ffebdd 100%);
       }
 
       @media (min-width: 1024px) {
         .benefits-section {
-          padding: 9rem 0 10rem;
+          padding-bottom: 10rem;
         }
       }
 
@@ -661,13 +594,6 @@ import { CommonModule } from '@angular/common';
       }
 
       /* Grain Texture */
-      .grain-texture {
-        position: absolute;
-        inset: 0;
-        opacity: 0.18;
-        mix-blend-mode: overlay;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      }
 
       @media (max-width: 768px) {
         .blob {

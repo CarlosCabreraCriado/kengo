@@ -28,32 +28,37 @@ import { FooterComponent } from '../../components/footer/footer.component';
     <main>
       <web-hero />
       @defer (on viewport) {
-        <web-benefits />
+        <web-benefits class="relative z-10" />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
       @defer (on viewport) {
-        <web-how-it-works />
+        <web-how-it-works class="relative z-10" />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
+
+      <!--
       @defer (on viewport) {
-        <web-features />
+        <web-features class="relative z-10" />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
+-->
+
       @defer (on viewport) {
-        <web-testimonials />
+        <web-testimonials class="relative z-10" />
       } @placeholder {
         <div style="min-height: 100px"></div>
       }
+
       @defer (on viewport) {
-        <web-cta />
+        <web-cta class="relative z-10" />
       } @placeholder {
         <div style="min-height: 100px"></div>
       }
     </main>
-    <web-footer />
+    <web-footer class="relative z-10" />
   `,
 })
 export class HomeComponent {}
