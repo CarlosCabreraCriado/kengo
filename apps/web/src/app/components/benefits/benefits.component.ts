@@ -727,7 +727,7 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
       colorLight: 'rgba(231, 92, 62, 0.1)',
       featured: false,
       cta: 'Empezar ahora',
-      ctaLink: 'https://app.kengoapp.com/registro',
+      ctaLink: 'https://kengoapp.com/registro',
       description:
         'Tu fisio siempre contigo. Ejercicios guiados con video, seguimiento del dolor y comunicación directa.',
       benefits: [
@@ -746,7 +746,7 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
       colorLight: 'rgba(196, 125, 10, 0.1)',
       featured: false,
       cta: 'Crear cuenta',
-      ctaLink: 'https://app.kengoapp.com/registro?role=fisio',
+      ctaLink: 'https://kengoapp.com/registro?role=fisio',
       description:
         'Herramientas profesionales para crear planes, gestionar pacientes y monitorizar adherencia en tiempo real.',
       benefits: [

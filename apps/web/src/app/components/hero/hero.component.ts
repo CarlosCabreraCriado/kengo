@@ -25,11 +25,14 @@ import { CommonModule } from '@angular/common';
 
       <!-- Content -->
       <div
-        class="relative z-10 mx-auto w-full max-w-7xl px-4 py-32 sm:px-6 lg:px-8 "
+        class="relative z-10 mx-auto w-full max-w-7xl px-4 py-32 sm:px-6 lg:px-8"
       >
-        <div class="grid items-center gap-12 lg:gap-8" style="grid-template-columns: 1fr 420px">
+        <div
+          class="grid items-center gap-12 lg:gap-8"
+          style="grid-template-columns: 1fr 420px"
+        >
           <!-- Text Content -->
-          <div class="text-center lg:text-left lg:pl-16">
+          <div class="text-center lg:pl-16 lg:text-left">
             <!-- Headline -->
             <h1
               class="animate-in text-4xl leading-tight font-bold tracking-tight text-gray-900 delay-100 sm:text-5xl lg:text-6xl xl:text-7xl"
@@ -83,7 +86,7 @@ import { CommonModule } from '@angular/common';
               class="animate-in mt-10 flex flex-col justify-center gap-4 delay-300 sm:flex-row lg:justify-start"
             >
               <a
-                href="https://app.kengoapp.com/registro"
+                href="https://kengoapp.com/registro"
                 class="btn-kengo group text-lg"
               >
                 <span>Empieza gratis</span>
@@ -102,7 +105,7 @@ import { CommonModule } from '@angular/common';
                 </svg>
               </a>
               <a
-                href="https://app.kengoapp.com/registro?role=fisio"
+                href="https://kengoapp.com/registro?role=fisio"
                 class="btn-kengo-secondary text-lg"
               >
                 <svg

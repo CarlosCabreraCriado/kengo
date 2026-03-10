@@ -7,7 +7,7 @@ builder = "railpack"
 
 # Los comandos específicos se configuran en cada servicio de Railway:
 #
-# FRONTEND (app.kengoapp.com):
+# FRONTEND (kengoapp.com):
 #   Build Command:  npm run railway:build:frontend
 #   Start Command:  npm run railway:start:frontend
 #
