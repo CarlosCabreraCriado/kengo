@@ -31,10 +31,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
           <p class="header-description">
             Tecnología diseñada por fisioterapeutas para transformar la recuperación de tus pacientes.
           </p>
-          <div class="stat-pill">
-            <span class="stat-number">+500</span>
-            <span class="stat-text">ejercicios HD</span>
-          </div>
+
           <div class="header-divider">
             <div class="divider-line"></div>
             <div class="divider-dot"></div>
@@ -564,54 +561,13 @@ import { Component, signal, OnDestroy } from '@angular/core';
         grid-template-columns: repeat(2, 1fr);
         gap: 1.25rem;
       }
-
-      .bento-card.featured {
-        grid-column: span 2;
-      }
-
-      .bento-card.wide {
-        grid-column: span 2;
-      }
     }
 
     @media (min-width: 1024px) {
       .bento-grid {
-        grid-template-columns: repeat(12, 1fr);
-        grid-template-rows: auto auto auto;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto;
         gap: 1.5rem;
-      }
-
-      /* Row 1: Featured (7 cols) + Planes (5 cols) */
-      .bento-card.featured {
-        grid-column: 1 / 8;
-        grid-row: 1;
-      }
-
-      .bento-card.vertical {
-        grid-column: 8 / 13;
-        grid-row: 1;
-      }
-
-      /* Row 2: Seguimiento + Recordatorios + Codigos (4 cols each) */
-      .bento-card[data-feature="seguimiento"] {
-        grid-column: 1 / 5;
-        grid-row: 2;
-      }
-
-      .bento-card[data-feature="recordatorios"] {
-        grid-column: 5 / 9;
-        grid-row: 2;
-      }
-
-      .bento-card[data-feature="codigos"] {
-        grid-column: 9 / 13;
-        grid-row: 2;
-      }
-
-      /* Row 3: Multi-clínica full width */
-      .bento-card.wide {
-        grid-column: 1 / 13;
-        grid-row: 3;
       }
     }
 
@@ -676,12 +632,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
         inset 0 0 0 1px rgba(231, 92, 62, 0.2);
     }
 
-    @media (min-width: 1024px) {
-      .bento-card.featured {
-        min-height: 320px;
-      }
-    }
-
     .card-inner {
       position: relative;
       display: flex;
@@ -693,10 +643,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
     @media (min-width: 1024px) {
       .card-inner {
         padding: 2rem;
-      }
-
-      .bento-card.featured .card-inner {
-        padding: 2.5rem;
       }
     }
 
@@ -721,16 +667,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
     ---------------------------------------- */
     .card-visual {
       margin-bottom: 1.5rem;
-    }
-
-    @media (min-width: 1024px) {
-      .bento-card.featured .card-visual {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 2rem;
-      }
     }
 
     /* ----------------------------------------
@@ -788,11 +724,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
       transition: color 0.3s ease;
     }
 
-    @media (min-width: 1024px) {
-      .bento-card.featured .card-title {
-        font-size: 1.875rem;
-      }
-    }
 
     .bento-card:hover .card-title {
       color: #e75c3e;
