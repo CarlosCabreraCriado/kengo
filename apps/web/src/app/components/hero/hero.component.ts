@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section
-      class="hero-section relative flex min-h-screen items-center overflow-hidden pt-20"
+      class="hero-section relative flex h-screen max-h-screen items-center overflow-hidden pt-16"
     >
       <!-- Aurora Background -->
       <div class="aurora-bg">
@@ -25,7 +25,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Content -->
       <div
-        class="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-32"
+        class="relative z-10 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-12"
       >
         <div
           class="grid grid-cols-1 items-center gap-8 lg:gap-8 lg:grid-cols-[1fr_420px]"
@@ -103,135 +103,6 @@ import { CommonModule } from '@angular/common';
                   />
                 </svg>
               </a>
-            </div>
-          </div>
-
-          <!-- Mobile App Preview (visible only on mobile/tablet) -->
-          <div class="animate-in mx-auto mt-10 max-w-sm delay-400 lg:hidden">
-            <div class="mobile-app-preview">
-              <!-- App bar -->
-              <div class="mobile-app-bar">
-                <span class="titulo-kengo text-primary text-lg">KENGO</span>
-                <div class="mobile-avatar">
-                  <svg
-                    class="h-4 w-4 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </div>
-
-              <!-- Today's card -->
-              <div class="mobile-today-card">
-                <div class="mobile-today-label">Tu actividad de hoy</div>
-                <div class="mobile-today-plan">
-                  Plan de rehabilitación lumbar
-                </div>
-                <div class="mobile-progress-row">
-                  <div class="mobile-progress-bar">
-                    <div class="mobile-progress-fill"></div>
-                  </div>
-                  <span class="mobile-progress-text">75%</span>
-                </div>
-                <div class="mobile-continue-btn">
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                    />
-                  </svg>
-                  Continuar sesión
-                </div>
-              </div>
-
-              <!-- Quick actions row -->
-              <div class="mobile-actions-row">
-                @for (action of quickActions; track action.id) {
-                  <div class="mobile-action">
-                    <div class="mobile-action-icon">
-                      @switch (action.id) {
-                        @case ('planes') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                          </svg>
-                        }
-                        @case ('ejercicios') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        }
-                        @case ('progreso') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path
-                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                          </svg>
-                        }
-                        @case ('fisio') {
-                          <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#e75c3e"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <circle cx="12" cy="7" r="4" />
-                            <path d="M12 11v3m-1.5-1.5h3" stroke-width="2" />
-                          </svg>
-                        }
-                      }
-                    </div>
-                    <span class="mobile-action-label">{{ action.title }}</span>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Floating badge below card -->
-            <div class="mobile-floating-badge">
-              <span class="mobile-badge-dot"></span>
-              <span>Sesión completada · Racha: 7 días</span>
             </div>
           </div>
 
@@ -476,8 +347,8 @@ import { CommonModule } from '@angular/common';
 
       .phone-mockup {
         position: relative;
-        width: 280px;
-        height: 500px;
+        width: 260px;
+        height: 450px;
         margin: 0 auto;
         background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 100%);
         border-radius: 40px;
