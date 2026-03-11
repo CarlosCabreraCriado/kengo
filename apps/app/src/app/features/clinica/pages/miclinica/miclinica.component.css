@@ -564,6 +564,32 @@
   @apply text-xs text-zinc-500 mt-0.5 m-0;
 }
 
+.team-header-actions {
+  @apply flex items-center gap-2;
+}
+
+.add-fisio-btn {
+  @apply inline-flex items-center justify-center w-9 h-9 rounded-xl
+         bg-white/60 border border-white/40 text-zinc-500
+         cursor-pointer transition-all;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.add-fisio-btn:hover {
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  color: var(--kengo-primary);
+  border-color: rgba(var(--kengo-primary-rgb), 0.3);
+}
+
+.add-fisio-btn:active {
+  @apply scale-95;
+}
+
+.add-fisio-btn .material-symbols-outlined {
+  @apply text-lg;
+}
+
 .expand-icon {
   @apply text-xl text-zinc-400 transition-transform;
 }

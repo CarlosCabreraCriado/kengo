@@ -7,9 +7,14 @@ import { tokenAccesoController } from "../controllers/tokenAcceso";
 import { passwordResetController } from "../controllers/passwordReset";
 import { emailVerificationController } from "../controllers/emailVerification";
 import { sessionRefreshController } from "../controllers/sessionRefresh";
+import { contactoController } from "../controllers/contacto";
 import { authMiddleware } from "../middleware/auth";
+import { actualizarPlanesExpirados } from "../jobs/planes-expirados";
 
 const router = Router();
+
+// Contacto (no requiere auth)
+router.post("/contacto", contactoController.enviarMensaje);
 
 // Registro de usuarios (no requiere auth)
 router.post("/registro", registroController.registrar);
@@ -48,5 +53,16 @@ router.post("/clinica/codigo/generar", authMiddleware, clinicaController.generar
 router.get("/clinica/:id/codigos", authMiddleware, clinicaController.listarCodigos);
 router.patch("/clinica/codigo/:id/desactivar", authMiddleware, clinicaController.desactivarCodigoAcceso);
 router.patch("/clinica/codigo/:id/reactivar", authMiddleware, clinicaController.reactivarCodigoAcceso);
+
+// Jobs manuales
+router.post("/jobs/planes-expirados", authMiddleware, async (_req, res) => {
+  try {
+    const actualizados = await actualizarPlanesExpirados();
+    res.json({ ok: true, planesActualizados: actualizados });
+  } catch (error) {
+    console.error("Error ejecutando job de planes expirados:", error);
+    res.status(500).json({ error: "Error actualizando planes expirados" });
+  }
+});
 
 export default router;

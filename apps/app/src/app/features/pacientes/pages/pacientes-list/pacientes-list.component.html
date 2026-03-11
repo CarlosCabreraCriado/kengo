@@ -28,9 +28,9 @@
             </button>
             <div>
               <h1 class="titulo-kengo text-2xl text-kengo-primary">Mis Pacientes</h1>
-              @if (pacientes().length > 0) {
+              @if (totalPacientes() > 0) {
                 <p class="text-xs font-medium text-zinc-500">
-                  {{ pacientes().length }} {{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}
+                  {{ totalPacientes() }} {{ totalPacientes() === 1 ? 'paciente' : 'pacientes' }}
                 </p>
               }
             </div>
@@ -54,10 +54,10 @@
       <!-- Barra de controles (siempre visible) -->
       <div class="flex items-center gap-2">
         <!-- DESKTOP: Información compacta al inicio -->
-        @if (!isMovil() && pacientes().length > 0) {
+        @if (!isMovil() && totalPacientes() > 0) {
           <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
-            <span class="text-sm font-bold text-kengo-primary">{{ pacientes().length }}</span>
-            <span class="text-xs text-zinc-500">{{ pacientes().length === 1 ? 'paciente' : 'pacientes' }}</span>
+            <span class="text-sm font-bold text-kengo-primary">{{ totalPacientes() }}</span>
+            <span class="text-xs text-zinc-500">{{ totalPacientes() === 1 ? 'paciente' : 'pacientes' }}</span>
           </div>
         }
 
@@ -149,8 +149,8 @@
       </div>
     }
 
-    <!-- Empty State -->
-    @else if (pacientes().length === 0 && !pacientesRes.isLoading()) {
+    <!-- Empty State (no patients at all) -->
+    @else if (totalPacientes() === 0 && !pacientesRes.isLoading()) {
       <div class="state-card empty-state">
         <div class="state-icon empty">
           <span class="material-symbols-outlined">group_off</span>
@@ -165,23 +165,62 @@
     }
 
     <!-- Patients Content -->
-    @else if (pacientes().length > 0) {
+    @else if (totalPacientes() > 0) {
       <!-- Quick Stats Bar -->
       <section class="stats-bar animate-in">
-        <div class="stat-pill">
+        <button
+          type="button"
+          class="stat-pill"
+          [class.selected]="filtroActividad() === 'todos'"
+          (click)="setFiltro('todos')"
+        >
           <span class="material-symbols-outlined stat-icon">groups</span>
-          <span class="stat-value">{{ pacientes().length }}</span>
+          <span class="stat-value">{{ totalPacientes() }}</span>
           <span class="stat-label">Total</span>
-        </div>
-        <div class="stat-pill accent">
+        </button>
+        <button
+          type="button"
+          class="stat-pill accent"
+          [class.selected]="filtroActividad() === 'activos'"
+          (click)="setFiltro('activos')"
+        >
           <span class="material-symbols-outlined stat-icon icon-filled">favorite</span>
-          <span class="stat-value">{{ pacientes().length }}</span>
+          <span class="stat-value">{{ conteoActivos() }}</span>
           <span class="stat-label">Activos</span>
-        </div>
+        </button>
+        <button
+          type="button"
+          class="stat-pill inactive"
+          [class.selected]="filtroActividad() === 'inactivos'"
+          (click)="setFiltro('inactivos')"
+        >
+          <span class="material-symbols-outlined stat-icon">person_off</span>
+          <span class="stat-value">{{ conteoInactivos() }}</span>
+          <span class="stat-label">Inactivos</span>
+        </button>
       </section>
 
+      <!-- Filtered Empty State -->
+      @if (pacientes().length === 0 && filtroActividad() !== 'todos') {
+        <div class="state-card empty-state animate-in" style="--delay: 0.1s">
+          <div class="state-icon empty">
+            <span class="material-symbols-outlined">{{ filtroActividad() === 'activos' ? 'heart_broken' : 'person_off' }}</span>
+          </div>
+          <h3 class="state-title">Sin pacientes {{ filtroActividad() === 'activos' ? 'activos' : 'inactivos' }}</h3>
+          <p class="state-text">
+            {{ filtroActividad() === 'activos'
+              ? 'Ningún paciente tiene planes activos en este momento.'
+              : 'Todos tus pacientes tienen al menos un plan activo.' }}
+          </p>
+          <button class="cta-btn" (click)="setFiltro('todos')">
+            <span class="material-symbols-outlined">groups</span>
+            Ver todos
+          </button>
+        </div>
+      }
+
       <!-- Patients Grid/List -->
-      @if (vista() === 'card') {
+      @if (pacientes().length > 0 && vista() === 'card') {
         <section class="patients-grid animate-in" style="--delay: 0.1s">
           @for (p of pacientes(); track p.id; let i = $index) {
             <article class="patient-card" [style.--card-delay]="(i * 0.03) + 's'" (click)="verDetalle(p)">
@@ -193,7 +232,7 @@
                   } @else {
                     <span class="avatar-initials">{{ getInitials(p) }}</span>
                   }
-                  <span class="online-dot"></span>
+                  <span class="status-dot" [class.inactive]="!idsPacientesActivos().has(p.id)"></span>
                 </div>
 
                 <!-- Info -->
@@ -241,7 +280,7 @@
             </div>
           </article>
         </section>
-      } @else {
+      } @else if (pacientes().length > 0 && vista() === 'lista') {
         <!-- List View -->
         <section class="patients-list animate-in" style="--delay: 0.1s">
           @for (p of pacientes(); track p.id; let i = $index) {
@@ -283,7 +322,7 @@
   </main>
 
   <!-- Floating Action Button (Mobile only) -->
-  @if (isMovil() && pacientes().length > 0) {
+  @if (isMovil() && totalPacientes() > 0) {
     <button class="fab" (click)="openAddPaciente()" aria-label="Añadir paciente">
       <span class="material-symbols-outlined icon-filled">person_add</span>
     </button>

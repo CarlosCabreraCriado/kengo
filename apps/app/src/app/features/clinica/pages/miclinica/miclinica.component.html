@@ -291,7 +291,19 @@
               <p class="section-subtitle">{{ fisios(c.id_clinica).length }} fisioterapeutas</p>
             </div>
           </div>
-          <span class="material-symbols-outlined expand-icon" [class.rotated]="teamExpanded()">expand_more</span>
+          <div class="team-header-actions">
+            @if (esAdmin()) {
+              <button
+                type="button"
+                class="add-fisio-btn"
+                (click)="abrirAnadirFisio(); $event.stopPropagation()"
+                aria-label="Añadir fisioterapeuta"
+              >
+                <span class="material-symbols-outlined">person_add</span>
+              </button>
+            }
+            <span class="material-symbols-outlined expand-icon" [class.rotated]="teamExpanded()">expand_more</span>
+          </div>
         </header>
 
         @if (fisios(c.id_clinica).length === 0) {
@@ -505,6 +517,7 @@
     <app-generar-codigo-dialog
       [clinicaId]="currentClinic()!.id_clinica"
       [esAdmin]="esAdmin()"
+      [tipoInicial]="tipoInicialCodigo()"
       (cerrar)="cerrarGenerarCodigo()"
       (codigoGenerado)="onCodigoGenerado($event)"
     />

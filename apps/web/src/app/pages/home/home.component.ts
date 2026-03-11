@@ -5,6 +5,7 @@ import { HeroComponent } from '../../components/hero/hero.component';
 import { BenefitsComponent } from '../../components/benefits/benefits.component';
 import { HowItWorksComponent } from '../../components/how-it-works/how-it-works.component';
 import { FeaturesComponent } from '../../components/features/features.component';
+import { TestimonialsComponent } from '../../components/testimonials/testimonials.component';
 import { CtaComponent } from '../../components/cta/cta.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 
@@ -18,6 +19,7 @@ import { FooterComponent } from '../../components/footer/footer.component';
     BenefitsComponent,
     HowItWorksComponent,
     FeaturesComponent,
+    TestimonialsComponent,
     CtaComponent,
     FooterComponent,
   ],
@@ -25,12 +27,38 @@ import { FooterComponent } from '../../components/footer/footer.component';
     <web-header />
     <main>
       <web-hero />
-      <web-benefits />
-      <web-how-it-works />
-      <web-features />
-      <web-cta />
+      @defer (on viewport) {
+        <web-benefits class="relative z-10" />
+      } @placeholder {
+        <div style="min-height: 200px"></div>
+      }
+      @defer (on viewport) {
+        <web-how-it-works class="relative z-10" />
+      } @placeholder {
+        <div style="min-height: 200px"></div>
+      }
+
+      <!--
+      @defer (on viewport) {
+        <web-features class="relative z-10" />
+      } @placeholder {
+        <div style="min-height: 200px"></div>
+      }
+-->
+
+      @defer (on viewport) {
+        <web-testimonials class="relative z-10" />
+      } @placeholder {
+        <div style="min-height: 100px"></div>
+      }
+
+      @defer (on viewport) {
+        <web-cta class="relative z-10" />
+      } @placeholder {
+        <div style="min-height: 100px"></div>
+      }
     </main>
-    <web-footer />
+    <web-footer class="relative z-10" />
   `,
 })
 export class HomeComponent {}

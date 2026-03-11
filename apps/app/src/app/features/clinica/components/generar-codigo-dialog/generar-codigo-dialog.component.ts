@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, signal, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
@@ -11,9 +11,10 @@ import type { TipoCodigoAcceso } from '@kengo/shared-models';
   templateUrl: './generar-codigo-dialog.component.html',
   styleUrl: './generar-codigo-dialog.component.css',
 })
-export class GenerarCodigoDialogComponent {
+export class GenerarCodigoDialogComponent implements OnInit {
   @Input({ required: true }) clinicaId!: number;
   @Input() esAdmin = false;
+  @Input() tipoInicial: TipoCodigoAcceso | null = null;
 
   @Output() cerrar = new EventEmitter<void>();
   @Output() codigoGenerado = new EventEmitter<string>();
@@ -43,6 +44,12 @@ export class GenerarCodigoDialogComponent {
 
   // El formulario es válido si pasa validaciones base Y la validación de email
   formValido = computed(() => this.form.valid && this.emailValido());
+
+  ngOnInit() {
+    if (this.tipoInicial) {
+      this.form.patchValue({ tipo: this.tipoInicial });
+    }
+  }
 
   loading = signal(false);
   error = signal<string | null>(null);

@@ -4,11 +4,19 @@ dotenv.config();
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
+import cron from "node-cron";
 
 import apiKengo from "./routes/apiKengo";
+import { actualizarPlanesExpirados } from "./jobs/planes-expirados";
 
 const app = express();
 const PORT = 3000;
+
+// Cron job: auto-completar planes expirados (diario a las 00:05)
+cron.schedule("5 0 * * *", async () => {
+  console.log("[cron] Ejecutando job de planes expirados...");
+  await actualizarPlanesExpirados();
+});
 
 // CORS configurado para cookies
 app.use(cors({

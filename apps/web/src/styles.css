@@ -10,6 +10,7 @@
 @font-face {
   font-family: kengoFont;
   src: url(./assets/fonts/FieldGothic-45.otf);
+  font-display: swap;
 }
 
 @font-face {
@@ -17,6 +18,7 @@
   src: url(./assets/fonts/galvji.ttf) format("truetype");
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -24,6 +26,7 @@
   src: url(./assets/fonts/galvji-bold.ttf) format("truetype");
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -31,6 +34,7 @@
   src: url(./assets/fonts/galvji-oblique.ttf) format("truetype");
   font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -38,6 +42,7 @@
   src: url(./assets/fonts/galvji-bold-oblique.ttf) format("truetype");
   font-weight: 700;
   font-style: italic;
+  font-display: swap;
 }
 
 html {
@@ -51,18 +56,32 @@ body {
   overflow-y: auto;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  background: transparent;
+/* Scrollbar: visible solo en desktop */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(231, 92, 62, 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(231, 92, 62, 0.5);
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(231, 92, 62, 0.3);
-  border-radius: 4px;
-}
+/* Ocultar scrollbar en móvil */
+@media (max-width: 767px) {
+  html {
+    scrollbar-width: none; /* Firefox */
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(231, 92, 62, 0.5);
+  html::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
 }
 
 body {
@@ -170,7 +189,7 @@ body {
    ============================================ */
 
 .aurora-bg {
-  @apply fixed inset-0 pointer-events-none overflow-hidden;
+  @apply absolute inset-0 pointer-events-none overflow-hidden;
   z-index: 0;
 }
 
@@ -350,6 +369,70 @@ body {
 }
 
 /* ============================================
+   SCROLL-TRIGGERED ANIMATIONS
+   ============================================ */
+
+/* Base state: hidden, waiting for viewport trigger */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scroll-reveal-scale.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Stagger children when parent becomes visible */
+.scroll-reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scroll-reveal-stagger.is-visible > *:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0s; }
+.scroll-reveal-stagger.is-visible > *:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.1s; }
+.scroll-reveal-stagger.is-visible > *:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
+.scroll-reveal-stagger.is-visible > *:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.3s; }
+.scroll-reveal-stagger.is-visible > *:nth-child(5) { opacity: 1; transform: translateY(0); transition-delay: 0.4s; }
+.scroll-reveal-stagger.is-visible > *:nth-child(6) { opacity: 1; transform: translateY(0); transition-delay: 0.5s; }
+
+/* Horizontal slide variants */
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scroll-reveal-left.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scroll-reveal-right.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ============================================
    DECORATIVE PATTERNS
    ============================================ */
 
@@ -379,5 +462,16 @@ body {
     animation: none !important;
     opacity: 1;
     transform: none;
+  }
+
+  .scroll-reveal,
+  .scroll-reveal-scale,
+  .scroll-reveal-left,
+  .scroll-reveal-right,
+  .scroll-reveal-stagger,
+  .scroll-reveal-stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
