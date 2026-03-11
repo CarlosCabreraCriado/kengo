@@ -597,7 +597,7 @@ import { CommonModule } from '@angular/common';
 
       @media (max-width: 767px) {
         .testimonials-section {
-          padding: 4.5rem 0 2.5rem;
+          padding: 4rem 0 3rem;
         }
 
         .carousel-toolbar {

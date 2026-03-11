@@ -188,7 +188,7 @@ import { CommonModule } from '@angular/common';
 
       .cta-section {
         position: relative;
-        padding: 6rem 1.5rem 3rem;
+        padding: 4rem 1.5rem 3rem;
         overflow: hidden;
         min-height: 80vh;
         display: flex;
@@ -198,13 +198,13 @@ import { CommonModule } from '@angular/common';
 
       @media (min-width: 768px) {
         .cta-section {
-          padding: 8rem 2rem 4rem;
+          padding: 5rem 2rem 3rem;
         }
       }
 
       @media (min-width: 1024px) {
         .cta-section {
-          padding: 10rem 3rem 5rem;
+          padding: 5rem 3rem 3rem;
         }
       }
 
