@@ -906,14 +906,22 @@ import { CommonModule } from '@angular/common';
 
       .stats-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.25rem;
+      }
+
+      .stats-grid .stat-item:first-child {
+        display: none;
       }
 
       @media (min-width: 768px) {
         .stats-grid {
           grid-template-columns: repeat(3, 1fr);
           gap: 0;
+        }
+
+        .stats-grid .stat-item:first-child {
+          display: flex;
         }
       }
 
