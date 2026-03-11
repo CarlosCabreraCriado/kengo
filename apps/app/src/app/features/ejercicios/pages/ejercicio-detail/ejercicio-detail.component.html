@@ -47,10 +47,6 @@
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
 
-      <div class="header-center" [class.visible]="videoExpandido()">
-        <h1 class="header-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
-      </div>
-
       <!-- Spacer para mantener el título centrado -->
       <div class="w-11"></div>
     </header>
@@ -111,7 +107,6 @@
         @if (!videoExpandido() && ejercicio()?.video) {
           <div class="swipe-hint">
             <span class="material-symbols-outlined">keyboard_arrow_down</span>
-            <span class="hint-text">Desliza para ver más</span>
           </div>
         }
       </div>
