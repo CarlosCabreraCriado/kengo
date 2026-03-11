@@ -7,11 +7,12 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 @Component({
   selector: 'web-benefits',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ScrollAnimateDirective],
   template: `
     <section id="beneficios" class="benefits-section z-10">
       <!-- Layered Wave Background with Morphing Blobs -->
@@ -61,7 +62,7 @@ import { CommonModule } from '@angular/common';
       <!-- Content -->
       <div class="content-wrapper">
         <!-- Section Header -->
-        <header class="section-header">
+        <header class="section-header scroll-reveal" scrollAnimate>
           <h2 class="section-title">
             Una plataforma,
             <br />

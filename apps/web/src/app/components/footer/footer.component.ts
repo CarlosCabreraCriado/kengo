@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 type ContactState = 'form' | 'sending' | 'success' | 'error';
 
 @Component({
   selector: 'web-footer',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ScrollAnimateDirective],
   template: `
     <footer class="footer-section relative overflow-hidden">
       <!-- Top Wave Decoration -->
@@ -33,7 +34,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
             class="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-8"
           >
             <!-- Brand Column -->
-            <div class="lg:col-span-5">
+            <div class="lg:col-span-5 scroll-reveal-left" scrollAnimate>
               <a href="/" class="mb-6 inline-block">
                 <span class="titulo-kengo text-primary text-4xl">KENGO</span>
               </a>
@@ -96,7 +97,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
             </div>
 
             <!-- Links Columns -->
-            <div class="lg:col-span-7">
+            <div class="lg:col-span-7 scroll-reveal-right" scrollAnimate>
               <div class="grid grid-cols-2 gap-8">
                 <!-- Product -->
                 <div>
@@ -150,7 +151,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
           </div>
 
           <!-- Bottom Bar -->
-          <div class="footer-bottom">
+          <div class="footer-bottom scroll-reveal" scrollAnimate>
             <div
               class="flex flex-col items-center justify-between gap-4 md:flex-row"
             >

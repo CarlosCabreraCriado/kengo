@@ -1,15 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 @Component({
   selector: 'web-testimonials',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ScrollAnimateDirective],
   template: `
     <section class="testimonials-section">
       <div class="content-wrapper">
         <!-- Header -->
-        <div class="section-header">
+        <div class="section-header scroll-reveal" scrollAnimate>
           <div class="badge-row">
             <span class="header-line"></span>
             <span class="header-badge">Lo que dicen nuestros usuarios</span>
@@ -25,7 +26,7 @@ import { CommonModule } from '@angular/common';
         </div>
 
         <!-- Testimonials Grid -->
-        <div class="testimonials-grid">
+        <div class="testimonials-grid scroll-reveal-stagger" scrollAnimate [threshold]="0.1">
           @for (t of testimonials; track t.name) {
             <article class="testimonial-card">
               <!-- Quote Icon -->

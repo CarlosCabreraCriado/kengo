@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 @Component({
   selector: 'web-how-it-works',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ScrollAnimateDirective],
   template: `
     <section id="como-funciona" class="how-it-works-section">
       <!-- Content Container -->
@@ -296,7 +297,7 @@ import { CommonModule } from '@angular/common';
         </div>
 
         <!-- Bottom CTA Section -->
-        <div class="cta-section">
+        <div class="cta-section scroll-reveal-scale" scrollAnimate>
           <div class="cta-glass">
             <div class="cta-content">
               <div class="cta-text">
@@ -990,7 +991,6 @@ import { CommonModule } from '@angular/common';
 
       .cta-section {
         margin-top: 2rem;
-        animation: fadeUp 0.7s ease-out 0.5s backwards;
       }
 
       @media (min-width: 1024px) {
