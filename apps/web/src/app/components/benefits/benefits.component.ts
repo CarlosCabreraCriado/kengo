@@ -66,7 +66,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
           <h2 class="section-title">
             Una plataforma,
             <br />
-            <span class="title-accent">para cada uno</span>
+            <span class="title-accent">para todos</span>
           </h2>
 
           <p class="section-subtitle">

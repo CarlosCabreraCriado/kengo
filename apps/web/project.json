@@ -18,6 +18,10 @@
           {
             "glob": "**/*",
             "input": "apps/web/public"
+          },
+          {
+            "glob": "favicon.ico",
+            "input": "apps/web/src"
           }
         ],
         "styles": ["apps/web/src/styles.css"]

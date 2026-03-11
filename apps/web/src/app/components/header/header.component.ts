@@ -14,13 +14,11 @@ import { CommonModule } from '@angular/common';
         >
           <!-- Logo -->
           <a href="/" class="group flex items-center gap-2 pl-2">
-            <div class="logo-container">
-              <span
-                class="titulo-kengo text-primary text-3xl transition-transform group-hover:scale-105 sm:text-4xl"
-              >
-                KENGO
-              </span>
-            </div>
+            <img
+              src="logo-kengo-horizontal.svg"
+              alt="Kengo"
+              class="h-8 transition-transform group-hover:scale-105 sm:h-10"
+            />
           </a>
 
 
@@ -61,10 +59,6 @@ import { CommonModule } from '@angular/common';
       .navbar-pill-scrolled {
         background: rgba(255, 255, 255, 0.85);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      }
-
-      .logo-container {
-        position: relative;
       }
 
 
