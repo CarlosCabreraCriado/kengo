@@ -596,7 +596,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
       /* Título principal */
       .mega-title {
         font-family: 'Galvji', system-ui, sans-serif;
-        font-size: clamp(2.6rem, 7.5vw, 5rem);
+        font-size: clamp(2rem, 7.5vw, 5rem);
         font-weight: 700;
         line-height: 1.05;
         color: #1a1a1a;

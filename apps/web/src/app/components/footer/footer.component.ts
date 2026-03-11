@@ -82,7 +82,7 @@ import { CommonModule } from '@angular/common';
         <!-- Bottom bar -->
         <div class="footer-bottom">
           <p class="copyright">&copy; {{ currentYear }} Kengo. Todos los derechos reservados.</p>
-          <p class="made-with">Hecho con <span class="heart">♥</span> para fisioterapeutas</p>
+          <p class="made-with">Plataforma especializada para fisioterapia</p>
         </div>
       </div>
     </footer>

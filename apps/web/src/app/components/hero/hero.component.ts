@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section
-      class="hero-section relative flex h-screen items-center overflow-hidden pt-20"
+      class="hero-section relative flex min-h-screen items-center overflow-hidden pt-20"
     >
       <!-- Aurora Background -->
       <div class="aurora-bg">
@@ -25,11 +25,10 @@ import { CommonModule } from '@angular/common';
 
       <!-- Content -->
       <div
-        class="relative z-10 mx-auto w-full max-w-7xl px-4 py-32 sm:px-6 lg:px-8"
+        class="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-32"
       >
         <div
-          class="grid items-center gap-12 lg:gap-8"
-          style="grid-template-columns: 1fr 420px"
+          class="grid grid-cols-1 items-center gap-8 lg:gap-8 lg:grid-cols-[1fr_420px]"
         >
           <!-- Text Content -->
           <div class="text-center lg:pl-16 lg:text-left">
