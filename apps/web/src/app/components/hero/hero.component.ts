@@ -36,7 +36,7 @@ import { CommonModule } from '@angular/common';
             <h1
               class="animate-in text-4xl leading-tight font-bold tracking-tight text-gray-900 delay-100 sm:text-5xl lg:text-6xl xl:text-7xl"
             >
-              Tu tratamiento de
+              Tu app de
               <span class="hero-highlight relative inline-block">
                 <span class="text-primary relative z-10">fisioterapia</span>
                 <svg
