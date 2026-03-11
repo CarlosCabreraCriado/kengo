@@ -31,7 +31,34 @@ import { CommonModule } from '@angular/common';
           <h2 class="section-h2">
             Una plataforma,
             <br />
-            <em class="h2-accent">tres experiencias</em>
+            <span class="h2-accent">
+              <span class="h2-accent-text">tres experiencias</span>
+              <svg
+                class="h2-accent-stroke"
+                viewBox="0 0 280 20"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M0,15 Q70,5 140,15 T280,15"
+                  fill="none"
+                  stroke="url(#benefits-gradient)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+                <defs>
+                  <linearGradient
+                    id="benefits-gradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" stop-color="#e75c3e" />
+                    <stop offset="100%" stop-color="#efc048" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
           </h2>
           <p class="section-sub">
             Cada usuario encuentra exactamente lo que necesita.<br />
@@ -280,17 +307,23 @@ import { CommonModule } from '@angular/common';
         margin: 0 0 1.2rem;
       }
       .h2-accent {
-        font-style: italic;
-        padding-right: 0.12em;
-        background: linear-gradient(
-          120deg,
-          #e75c3e 0%,
-          #d97706 45%,
-          #efc048 100%
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        display: inline-block;
+        position: relative;
+        color: #e75c3e;
+      }
+
+      .h2-accent-text {
+        position: relative;
+        z-index: 1;
+      }
+
+      .h2-accent-stroke {
+        position: absolute;
+        bottom: -0.1em;
+        left: -5%;
+        width: 110%;
+        height: 0.5em;
+        opacity: 0.6;
       }
 
       .section-sub {

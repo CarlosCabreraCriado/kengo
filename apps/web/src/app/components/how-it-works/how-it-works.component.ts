@@ -26,7 +26,34 @@ import { CommonModule } from '@angular/common';
 
           <h2 class="section-title">
             <span class="title-line">Tu recuperación,</span>
-            <span class="title-accent">paso a paso</span>
+            <span class="title-accent">
+              <span class="title-accent-text">paso a paso</span>
+              <svg
+                class="title-accent-stroke"
+                viewBox="0 0 240 20"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M0,15 Q60,5 120,15 T240,15"
+                  fill="none"
+                  stroke="url(#hiw-gradient)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+                <defs>
+                  <linearGradient
+                    id="hiw-gradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" stop-color="#e75c3e" />
+                    <stop offset="100%" stop-color="#efc048" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
           </h2>
 
           <p class="section-intro">
@@ -332,18 +359,24 @@ import { CommonModule } from '@angular/common';
     }
 
     .title-accent {
-      display: block;
-      background: linear-gradient(135deg, #e75c3e 0%, #c94a2f 35%, #d97706 65%, #efc048 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      background-size: 200% auto;
-      animation: fadeUp 0.6s ease-out 0.15s backwards, gradientFlow 6s ease infinite;
+      display: inline-block;
+      position: relative;
+      color: #e75c3e;
+      animation: fadeUp 0.6s ease-out 0.15s backwards;
     }
 
-    @keyframes gradientFlow {
-      0%, 100% { background-position: 0% center; }
-      50% { background-position: 100% center; }
+    .title-accent-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    .title-accent-stroke {
+      position: absolute;
+      bottom: -0.1em;
+      left: -5%;
+      width: 110%;
+      height: 0.5em;
+      opacity: 0.6;
     }
 
     .section-intro {

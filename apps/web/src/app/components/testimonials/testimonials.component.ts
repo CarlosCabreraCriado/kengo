@@ -15,13 +15,40 @@ import { CommonModule } from '@angular/common';
         <div class="section-header">
           <div class="eyebrow-row">
             <span class="ey-line"></span>
-            <span class="ey-label">Opiniones reales de fisios y pacientes</span>
+            <span class="ey-label">Opiniones de fisios y pacientes</span>
             <span class="ey-line ey-line-r"></span>
           </div>
 
           <h2 class="section-title">
-            La diferencia se nota
-            <span class="title-accent">en el seguimiento</span>
+            Así lo viven
+            <span class="title-accent">
+              <span class="title-accent-text">los usuarios</span>
+              <svg
+                class="title-accent-stroke"
+                viewBox="0 0 320 20"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M0,15 Q80,5 160,15 T320,15"
+                  fill="none"
+                  stroke="url(#test-gradient)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+                <defs>
+                  <linearGradient
+                    id="test-gradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" stop-color="#e75c3e" />
+                    <stop offset="100%" stop-color="#efc048" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
           </h2>
 
           <p class="section-subtitle">
@@ -160,7 +187,7 @@ import { CommonModule } from '@angular/common';
       .testimonials-section {
         position: relative;
         overflow: hidden;
-        padding: 6rem 0 3rem;
+        padding: 4rem 0 3rem;
         background: linear-gradient(
           180deg,
           #fffaf5 0%,
@@ -228,7 +255,7 @@ import { CommonModule } from '@angular/common';
 
       .section-header {
         max-width: 760px;
-        margin: 0 auto 2.5rem;
+        margin: 0 auto -1rem;
         text-align: center;
       }
 
@@ -270,7 +297,23 @@ import { CommonModule } from '@angular/common';
       }
 
       .title-accent {
+        display: inline-block;
+        position: relative;
         color: #e75c3e;
+      }
+
+      .title-accent-text {
+        position: relative;
+        z-index: 1;
+      }
+
+      .title-accent-stroke {
+        position: absolute;
+        bottom: -0.1em;
+        left: -5%;
+        width: 110%;
+        height: 0.5em;
+        opacity: 0.6;
       }
 
       .section-subtitle {

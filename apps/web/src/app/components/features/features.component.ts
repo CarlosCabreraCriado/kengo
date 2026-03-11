@@ -28,7 +28,34 @@ import { Component, signal, OnDestroy } from '@angular/core';
               </div>
               <h2 class="mega-title">
                 <span class="title-line">La herramienta</span>
-                <span class="title-line accent">que conecta</span>
+                <span class="title-line accent">
+                  <span class="title-accent-text">que conecta</span>
+                  <svg
+                    class="title-accent-stroke"
+                    viewBox="0 0 200 20"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M0,15 Q50,5 100,15 T200,15"
+                      fill="none"
+                      stroke="url(#features-gradient)"
+                      stroke-width="4"
+                      stroke-linecap="round"
+                    />
+                    <defs>
+                      <linearGradient
+                        id="features-gradient"
+                        x1="0%"
+                        y1="0%"
+                        x2="100%"
+                        y2="0%"
+                      >
+                        <stop offset="0%" stop-color="#e75c3e" />
+                        <stop offset="100%" stop-color="#efc048" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </span>
                 <span class="title-line">tu clínica y tus pacientes</span>
               </h2>
             </div>
@@ -587,6 +614,20 @@ import { Component, signal, OnDestroy } from '@angular/core';
         position: relative;
       }
 
+      .title-accent-text {
+        position: relative;
+        z-index: 1;
+      }
+
+      .title-accent-stroke {
+        position: absolute;
+        bottom: -0.1em;
+        left: 0;
+        width: 80%;
+        height: 0.5em;
+        opacity: 0.6;
+      }
+
       .title-line.accent::after {
         content: '';
         position: absolute;
@@ -594,12 +635,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
         left: 0;
         width: 100%;
         height: 0.07em;
-        background: linear-gradient(
-          90deg,
-          rgba(231, 92, 62, 0.35),
-          rgba(239, 192, 72, 0.15)
-        );
-        border-radius: 4px;
+        background: transparent;
         transform: scaleX(0);
         transform-origin: left;
         animation: lineGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards;
