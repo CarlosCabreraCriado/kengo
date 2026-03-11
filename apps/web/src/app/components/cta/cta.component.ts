@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="cta-section">
+    <section class="cta-section z-10">
       <!-- Layered Background -->
       <div class="cta-bg">
         <!-- Warm Gradient Base -->
@@ -116,10 +116,7 @@ import { CommonModule } from '@angular/common';
               </svg>
             </span>
           </a>
-          <a
-            href="https://kengoapp.com/login"
-            class="btn-secondary"
-          >
+          <a href="https://kengoapp.com/login" class="btn-secondary">
             <span class="btn-glass"></span>
             <span class="btn-content">
               <svg

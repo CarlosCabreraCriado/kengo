@@ -1,6 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
@@ -12,7 +17,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ScrollAnimateDirective],
   template: `
-    <footer class="footer-section relative overflow-hidden">
+    <footer class="footer-section relative z-10 overflow-hidden">
       <!-- Top Wave Decoration -->
       <div class="footer-wave">
         <svg
@@ -34,7 +39,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
             class="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-8"
           >
             <!-- Brand Column -->
-            <div class="lg:col-span-5 scroll-reveal-left" scrollAnimate>
+            <div class="scroll-reveal-left lg:col-span-5" scrollAnimate>
               <a href="/" class="mb-6 inline-block">
                 <span class="titulo-kengo text-primary text-4xl">KENGO</span>
               </a>
@@ -97,7 +102,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
             </div>
 
             <!-- Links Columns -->
-            <div class="lg:col-span-7 scroll-reveal-right" scrollAnimate>
+            <div class="scroll-reveal-right lg:col-span-7" scrollAnimate>
               <div class="grid grid-cols-2 gap-8">
                 <!-- Product -->
                 <div>
@@ -107,9 +112,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
                     <li><a href="#como-funciona">Como funciona</a></li>
                     <li><a href="#features">Funcionalidades</a></li>
                     <li>
-                      <a href="https://kengoapp.com/login"
-                        >Registrarse</a
-                      >
+                      <a href="https://kengoapp.com/login">Registrarse</a>
                     </li>
                     <li>
                       <a href="https://kengoapp.com/login"
@@ -124,10 +127,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
                   <h4 class="footer-heading">Contacto</h4>
                   <ul class="footer-links">
                     <li>
-                      <button
-                        (click)="abrirModal()"
-                        class="contact-btn"
-                      >
+                      <button (click)="abrirModal()" class="contact-btn">
                         <svg
                           class="mr-2 h-4 w-4 shrink-0"
                           fill="none"
@@ -186,9 +186,23 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
           <!-- Header del modal -->
           <div class="modal-header">
             <h3 class="modal-title">Contacto</h3>
-            <button (click)="cerrarModal()" class="modal-close" aria-label="Cerrar">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <button
+              (click)="cerrarModal()"
+              class="modal-close"
+              aria-label="Cerrar"
+            >
+              <svg
+                class="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -260,25 +274,59 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
               @case ('success') {
                 <div class="state-container">
                   <div class="success-icon">
-                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    <svg
+                      class="h-8 w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   </div>
                   <p class="state-title">Mensaje enviado</p>
                   <p class="state-text">Te responderemos lo antes posible.</p>
-                  <button (click)="cerrarModal()" class="submit-btn" style="margin-top: 16px;">Cerrar</button>
+                  <button
+                    (click)="cerrarModal()"
+                    class="submit-btn"
+                    style="margin-top: 16px;"
+                  >
+                    Cerrar
+                  </button>
                 </div>
               }
               @case ('error') {
                 <div class="state-container">
                   <div class="error-icon">
-                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      class="h-8 w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </div>
                   <p class="state-title">Error al enviar</p>
-                  <p class="state-text">No se pudo enviar el mensaje. Intentalo de nuevo.</p>
-                  <button (click)="estado.set('form')" class="submit-btn" style="margin-top: 16px;">Reintentar</button>
+                  <p class="state-text">
+                    No se pudo enviar el mensaje. Intentalo de nuevo.
+                  </p>
+                  <button
+                    (click)="estado.set('form')"
+                    class="submit-btn"
+                    style="margin-top: 16px;"
+                  >
+                    Reintentar
+                  </button>
                 </div>
               }
             }
@@ -575,8 +623,12 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
 
       @keyframes slideUp {
@@ -591,7 +643,9 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
       }
 
       @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+          transform: rotate(360deg);
+        }
       }
     `,
   ],
@@ -645,7 +699,9 @@ export class FooterComponent {
     this.estado.set('sending');
 
     this.http
-      .post<{ success: boolean }>(`${environment.apiUrl}/contacto`, this.contactForm.value)
+      .post<{
+        success: boolean;
+      }>(`${environment.apiUrl}/contacto`, this.contactForm.value)
       .subscribe({
         next: () => this.estado.set('success'),
         error: () => this.estado.set('error'),

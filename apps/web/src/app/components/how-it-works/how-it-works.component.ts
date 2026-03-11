@@ -7,7 +7,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
   standalone: true,
   imports: [CommonModule, ScrollAnimateDirective],
   template: `
-    <section id="como-funciona" class="how-it-works-section">
+    <section id="como-funciona" class="how-it-works-section z-10">
       <!-- Content Container -->
       <div class="content-container">
         <!-- Editorial Header -->

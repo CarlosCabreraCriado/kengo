@@ -7,7 +7,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
   standalone: true,
   imports: [CommonModule, ScrollAnimateDirective],
   template: `
-    <section class="testimonials-section">
+    <section class="testimonials-section relative z-10">
       <div class="content-wrapper">
         <!-- Header -->
         <div class="section-header scroll-reveal" scrollAnimate>
@@ -26,7 +26,11 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
         </div>
 
         <!-- Testimonials Grid -->
-        <div class="testimonials-grid scroll-reveal-stagger" scrollAnimate [threshold]="0.1">
+        <div
+          class="testimonials-grid scroll-reveal-stagger"
+          scrollAnimate
+          [threshold]="0.1"
+        >
           @for (t of testimonials; track t.name) {
             <article class="testimonial-card">
               <!-- Quote Icon -->

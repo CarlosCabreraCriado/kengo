@@ -310,7 +310,7 @@ import { CommonModule } from '@angular/common';
                 </div>
                 <div class="floating-text">
                   <span class="floating-title">Feedback</span>
-                  <span class="floating-subtitle">Tu fisio lo ve</span>
+                  <span class="floating-subtitle">Tu fisio te ayuda</span>
                 </div>
               </div>
             </div>
@@ -341,22 +341,16 @@ import { CommonModule } from '@angular/common';
         viewBox="0 0 1440 320"
         preserveAspectRatio="none"
       >
-        <defs>
-          <linearGradient id="benefits-wave-1" x1="0%" y1="0%" x2="0%" y2="0%">
-            <stop offset="0%" stop-color="#fff5ef" />
-            <stop offset="100%" stop-color="#fdd6b3" />
-          </linearGradient>
-        </defs>
-        <path fill="url(#benefits-wave-1)" fill-opacity="1">
+        <path fill="#fdd6b3" fill-opacity="1">
           <animate
             attributeName="d"
             dur="20s"
             repeatCount="indefinite"
             values="
-                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z;
-                M0,100 C180,40 360,180 540,100 C720,20 900,180 1080,100 C1260,20 1440,140 1440,140 L1440,0 L0,0 Z;
-                M0,140 C180,80 360,200 540,120 C720,40 900,160 1080,80 C1260,0 1440,120 1440,120 L1440,0 L0,0 Z;
-                M0,128 C180,200 360,60 540,140 C720,220 900,100 1080,160 C1260,220 1440,100 1440,100 L1440,0 L0,0 Z
+                M0,140 C360,220 720,60 1080,200 C1260,260 1440,120 1440,120 L1440,0 L0,0 Z;
+                M0,100 C360,40 720,220 1080,80 C1260,20 1440,160 1440,160 L1440,0 L0,0 Z;
+                M0,160 C360,80 720,240 1080,100 C1260,40 1440,140 1440,140 L1440,0 L0,0 Z;
+                M0,140 C360,220 720,60 1080,200 C1260,260 1440,120 1440,120 L1440,0 L0,0 Z
               "
             calcMode="spline"
             keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
