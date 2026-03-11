@@ -166,7 +166,22 @@ export class PacienteDetailComponent implements OnInit {
 
     try {
       const planes = await this.planesService.getPlanesByPaciente(pacienteId);
-      this.planes.set(planes);
+
+      // Corregir estado de planes expirados localmente
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const planesCorregidos = planes.map(plan => {
+        if (plan.estado === 'activo' && plan.fecha_fin) {
+          const fechaFin = new Date(plan.fecha_fin);
+          fechaFin.setHours(0, 0, 0, 0);
+          if (fechaFin < hoy) {
+            return { ...plan, estado: 'completado' as const };
+          }
+        }
+        return plan;
+      });
+
+      this.planes.set(planesCorregidos);
     } catch (err) {
       console.error('Error cargando planes:', err);
     } finally {
