@@ -57,7 +57,7 @@ import { CommonModule } from '@angular/common';
           </h2>
 
           <p class="section-intro">
-            De la prescripcion a la rehabilitacion completa en 4 pasos.
+            De la prescripción a la rehabilitación completa en 4 pasos.
             Sin complicaciones, con resultados.
           </p>
         </header>
@@ -996,7 +996,7 @@ export class HowItWorksComponent {
       id: 'plan',
       number: 1,
       title: 'Tu fisio crea el plan',
-      description: 'Ejercicios personalizados segun tu lesion, objetivos y ritmo de vida. Todo adaptado a ti.',
+      description: 'Ejercicios personalizados según tu lesión, objetivos y ritmo de vida. Todo adaptado a ti.',
       features: ['Personalizado', 'Profesional'],
       timing: '5 min',
       accentColor: '#e75c3e',
@@ -1007,7 +1007,7 @@ export class HowItWorksComponent {
       id: 'actividad',
       number: 2,
       title: 'Recibe tu rutina diaria',
-      description: 'Cada dia sabes exactamente que ejercicios hacer. Con videos y notificaciones en tu movil.',
+      description: 'Cada día sabes exactamente qué ejercicios hacer. Con vídeos y notificaciones en tu móvil.',
       features: ['Calendario', 'Alertas'],
       timing: '1 min',
       accentColor: '#f7a65e',
@@ -1017,8 +1017,8 @@ export class HowItWorksComponent {
     {
       id: 'sesion',
       number: 3,
-      title: 'Sesion guiada paso a paso',
-      description: 'Sigue el video HD, series y descansos. Como tener a tu fisioterapeuta en casa.',
+      title: 'Sesión guiada paso a paso',
+      description: 'Sigue el vídeo HD, series y descansos. Como tener a tu fisioterapeuta en casa.',
       features: ['Video HD', 'Timer'],
       timing: '15-20 min',
       accentColor: '#efc048',
@@ -1029,7 +1029,7 @@ export class HowItWorksComponent {
       id: 'feedback',
       number: 4,
       title: 'Feedback en tiempo real',
-      description: 'Registra como te sientes y tu fisio ajusta el tratamiento automaticamente.',
+      description: 'Registra cómo te sientes y tu fisio ajusta el tratamiento automáticamente.',
       features: ['Progreso', 'Ajustes'],
       timing: '30 seg',
       accentColor: '#22c55e',

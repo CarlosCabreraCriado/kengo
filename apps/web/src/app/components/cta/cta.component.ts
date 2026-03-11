@@ -102,7 +102,7 @@ import { CommonModule } from '@angular/common';
 
         <!-- Subtitle -->
         <p class="cta-subtitle">
-          Registrate gratis y transforma la forma en que tus pacientes siguen
+          Regístrate gratis y transforma la forma en que tus pacientes siguen
           sus tratamientos de fisioterapia.
         </p>
 
@@ -1009,15 +1009,15 @@ import { CommonModule } from '@angular/common';
 })
 export class CtaComponent {
   trustBadges = [
-    { text: 'Sin tarjeta de credito' },
-    { text: 'Configuracion en 2 minutos' },
+    { text: 'Sin tarjeta de crédito' },
+    { text: 'Configuración en 2 minutos' },
     { text: 'Cancela cuando quieras' },
   ];
 
   stats = [
     { value: '95%', label: 'Adherencia media', icon: 'adherence' },
-    { value: '+50', label: 'Clinicas activas', icon: 'clinics' },
+    { value: '+50', label: 'Clínicas activas', icon: 'clinics' },
     { value: '+500', label: 'Ejercicios HD', icon: 'exercises' },
-    { value: '4.9', label: 'Valoracion media', icon: 'rating' },
+    { value: '4.9', label: 'Valoración media', icon: 'rating' },
   ];
 }

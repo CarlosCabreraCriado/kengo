@@ -48,7 +48,7 @@ import { CommonModule } from '@angular/common';
               href="https://kengoapp.com/login"
               class="hover:text-primary hover:bg-primary/5 hidden items-center gap-2 rounded-full px-4 py-2 font-medium text-gray-700 transition-all sm:flex"
             >
-              Iniciar sesion
+              Iniciar sesión
             </a>
             <a
               href="https://kengoapp.com/registro"
@@ -125,7 +125,7 @@ import { CommonModule } from '@angular/common';
                 href="https://kengoapp.com/login"
                 class="hover:bg-primary/10 hover:text-primary block rounded-xl px-4 py-3 font-medium text-gray-700 transition-all"
               >
-                Iniciar sesion
+                Iniciar sesión
               </a>
               <a
                 href="https://kengoapp.com/registro"
@@ -148,7 +148,7 @@ import { CommonModule } from '@angular/common';
         (keydown.escape)="closeMobileMenu()"
         tabindex="0"
         role="button"
-        aria-label="Cerrar menu"
+        aria-label="Cerrar menú"
       ></div>
     }
   `,

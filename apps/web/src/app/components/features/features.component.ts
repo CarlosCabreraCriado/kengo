@@ -90,7 +90,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
               </div>
               <div class="card-content">
                 <div class="card-badge">Catálogo</div>
-                <h3 class="card-title">Videos profesionales</h3>
+                <h3 class="card-title">Vídeos profesionales</h3>
                 <p class="card-description">
                   Biblioteca curada con ejercicios grabados por fisioterapeutas.
                 </p>

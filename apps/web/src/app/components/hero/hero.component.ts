@@ -74,10 +74,10 @@ import { CommonModule } from '@angular/common';
             <p
               class="animate-in mx-auto mt-6 max-w-xl text-lg leading-relaxed text-gray-600 delay-200 sm:text-xl lg:mx-0"
             >
-              Planes de ejercicios personalizados con videos guiados,
+              Planes de ejercicios personalizados con vídeos guiados,
               seguimiento de progreso y
               <span class="font-semibold text-gray-800"
-                >conexion directa con tu fisioterapeuta</span
+                >conexión directa con tu fisioterapeuta</span
               >.
             </p>
 
@@ -151,7 +151,7 @@ import { CommonModule } from '@angular/common';
               <div class="mobile-today-card">
                 <div class="mobile-today-label">Tu actividad de hoy</div>
                 <div class="mobile-today-plan">
-                  Plan de rehabilitacion lumbar
+                  Plan de rehabilitación lumbar
                 </div>
                 <div class="mobile-progress-row">
                   <div class="mobile-progress-bar">
@@ -173,7 +173,7 @@ import { CommonModule } from '@angular/common';
                       d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
                     />
                   </svg>
-                  Continuar sesion
+                  Continuar sesión
                 </div>
               </div>
 
@@ -251,7 +251,7 @@ import { CommonModule } from '@angular/common';
             <!-- Floating badge below card -->
             <div class="mobile-floating-badge">
               <span class="mobile-badge-dot"></span>
-              <span>Sesion completada · Racha: 7 dias</span>
+              <span>Sesión completada · Racha: 7 días</span>
             </div>
           </div>
 
@@ -278,7 +278,7 @@ import { CommonModule } from '@angular/common';
                         Tu actividad de hoy
                       </h3>
                       <p class="activity-subtitle-preview">
-                        Plan de rehabilitacion lumbar
+                        Plan de rehabilitación lumbar
                       </p>
                       <div class="progress-preview">
                         <div class="progress-bar-preview">
@@ -309,7 +309,7 @@ import { CommonModule } from '@angular/common';
                             d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        Continuar sesion
+                        Continuar sesión
                       </button>
                     </div>
                   </div>
@@ -424,8 +424,8 @@ import { CommonModule } from '@angular/common';
                   </svg>
                 </div>
                 <div class="floating-text">
-                  <span class="floating-title">Sesion completada</span>
-                  <span class="floating-subtitle">Racha: 7 dias</span>
+                  <span class="floating-title">Sesión completada</span>
+                  <span class="floating-subtitle">Racha: 7 días</span>
                 </div>
               </div>
 
@@ -446,7 +446,7 @@ import { CommonModule } from '@angular/common';
                   </svg>
                 </div>
                 <div class="floating-text">
-                  <span class="floating-title">Video guiado</span>
+                  <span class="floating-title">Vídeo guiado</span>
                   <span class="floating-subtitle">HD profesional</span>
                 </div>
               </div>
@@ -469,22 +469,6 @@ import { CommonModule } from '@angular/common';
         </div>
       </div>
 
-      <!-- Scroll Indicator -->
-      <div
-        class="animate-in absolute bottom-8 left-29/50 z-10 -translate-x-1/2 delay-500"
-      >
-        <a
-          href="#beneficios"
-          class="hover:text-primary flex flex-col items-center gap-2 text-gray-500 transition-colors"
-        >
-          <span class="text-xs font-medium tracking-wide uppercase"
-            >Descubre mas</span
-          >
-          <div class="scroll-indicator">
-            <div class="scroll-dot"></div>
-          </div>
-        </a>
-      </div>
     </section>
   `,
   styles: [

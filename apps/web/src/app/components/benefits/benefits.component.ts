@@ -91,9 +91,6 @@ import { CommonModule } from '@angular/common';
                     <span class="tier-dot"></span>
                     {{ seg.tag }}
                   </span>
-                  @if (seg.featured) {
-                    <span class="feat-pill">★ Recomendado</span>
-                  }
                 </div>
 
                 <h3 class="cap-title">{{ seg.title }}</h3>
@@ -786,10 +783,10 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
       cta: 'Empezar ahora',
       ctaLink: 'https://kengoapp.com/registro',
       description:
-        'Tu fisio siempre contigo. Ejercicios guiados con video, seguimiento del dolor y comunicación directa.',
+        'Tu fisio siempre contigo. Ejercicios guiados con vídeo, seguimiento del dolor y comunicación directa.',
       benefits: [
-        { text: 'Ejercicios con video HD profesional', highlight: null },
-        { text: 'Sabe exactamente qué hacer cada día', highlight: null },
+        { text: 'Ejercicios con vídeo HD profesional', highlight: null },
+        { text: 'Sabes exactamente qué hacer cada día', highlight: null },
         { text: 'Registra cómo te sientes', highlight: 'Nuevo' },
         { text: 'Tu fisio siempre informado', highlight: null },
       ],
@@ -801,7 +798,7 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
       color1: '#c47d0a',
       color2: '#efc048',
       colorLight: 'rgba(196, 125, 10, 0.1)',
-      featured: false,
+      featured: true,
       cta: 'Crear cuenta',
       ctaLink: 'https://kengoapp.com/registro?role=fisio',
       description:
