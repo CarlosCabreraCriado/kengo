@@ -25,6 +25,8 @@ import { DialogService } from '../../../../shared';
 import { Usuario, UsuarioDirectus } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
+type FiltroActividad = 'todos' | 'activos' | 'inactivos';
+
 interface DirectusPage<T> {
   data: T[];
   meta?: { filter_count?: number };
@@ -68,8 +70,55 @@ export class PacientesListComponent {
   });
 
   private readonly busqueda = signal('');
+  readonly filtroActividad = signal<FiltroActividad>('todos');
 
-  readonly pacientes = computed(() => this.pacientesRes.value());
+  // Resource para obtener IDs de pacientes con planes activos
+  private readonly planesActivosRes = httpResource<string[]>(
+    () => {
+      const cid = this.idsClinicas();
+      if (!cid || cid.length === 0) return undefined;
+
+      return {
+        url: `${env.DIRECTUS_URL}/items/Planes`,
+        method: 'GET',
+        params: {
+          fields: 'paciente',
+          filter: JSON.stringify({ estado: { _eq: 'activo' } }),
+          limit: '-1',
+        },
+      };
+    },
+    {
+      defaultValue: [],
+      parse: (v: unknown): string[] => {
+        const items = (v as { data: { paciente: string }[] })?.data ?? [];
+        return [...new Set(items.map((p) => p.paciente).filter(Boolean))];
+      },
+    },
+  );
+
+  readonly idsPacientesActivos = computed(() => new Set(this.planesActivosRes.value()));
+
+  readonly totalPacientes = computed(() => this.pacientesRes.value()?.length ?? 0);
+
+  readonly conteoActivos = computed(() => {
+    const todos = this.pacientesRes.value() ?? [];
+    const activos = this.idsPacientesActivos();
+    return todos.filter((p) => activos.has(p.id)).length;
+  });
+
+  readonly conteoInactivos = computed(() => this.totalPacientes() - this.conteoActivos());
+
+  readonly pacientes = computed(() => {
+    const todos = this.pacientesRes.value() ?? [];
+    const filtro = this.filtroActividad();
+    if (filtro === 'todos') return todos;
+    const activos = this.idsPacientesActivos();
+    return filtro === 'activos'
+      ? todos.filter((p) => activos.has(p.id))
+      : todos.filter((p) => !activos.has(p.id));
+  });
+
   readonly pacientesRes = httpResource<Usuario[]>(
     () => {
       const cid = this.idsClinicas();
@@ -167,8 +216,13 @@ export class PacientesListComponent {
     });
   }
 
+  setFiltro(filtro: FiltroActividad) {
+    this.filtroActividad.set(filtro);
+  }
+
   reload() {
     this.pacientesRes.reload();
+    this.planesActivosRes.reload();
   }
 
   // Helpers

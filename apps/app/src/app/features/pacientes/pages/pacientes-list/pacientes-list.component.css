@@ -216,9 +216,27 @@
 
 .stat-pill {
   @apply inline-flex items-center gap-2 px-4 py-2 rounded-2xl
-         bg-white/60 border border-white/40;
+         bg-white/60 border border-white/40
+         cursor-pointer transition-all;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  font: inherit;
+  outline: none;
+}
+
+.stat-pill:hover {
+  @apply bg-white/80;
+  transform: translateY(-1px);
+}
+
+.stat-pill:active {
+  @apply scale-[0.97];
+}
+
+.stat-pill.selected {
+  border-color: rgba(var(--kengo-primary-rgb), 0.4);
+  background-color: rgba(var(--kengo-primary-rgb), 0.08);
+  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.15);
 }
 
 .stat-icon {
@@ -244,6 +262,42 @@
 
 .stat-pill.accent .stat-value {
   color: var(--kengo-primary);
+}
+
+.stat-pill.accent.selected {
+  background-color: rgba(var(--kengo-primary-rgb), 0.18);
+  border-color: rgba(var(--kengo-primary-rgb), 0.5);
+  box-shadow: 0 2px 12px rgba(var(--kengo-primary-rgb), 0.25);
+}
+
+/* Inactive variant */
+.stat-pill.inactive {
+  @apply bg-zinc-100/60 border-zinc-200/40;
+}
+
+.stat-pill.inactive .stat-icon {
+  @apply text-zinc-400;
+}
+
+.stat-pill.inactive .stat-value {
+  @apply text-zinc-600;
+}
+
+.stat-pill.inactive .stat-label {
+  @apply text-zinc-400;
+}
+
+.stat-pill.inactive.selected {
+  @apply bg-zinc-200/70 border-zinc-400/50;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-pill.inactive.selected .stat-icon {
+  @apply text-zinc-600;
+}
+
+.stat-pill.inactive.selected .stat-value {
+  @apply text-zinc-800;
 }
 
 /* === Patients Grid === */
@@ -316,10 +370,15 @@
   @apply text-lg font-bold text-white;
 }
 
-.online-dot {
+.status-dot {
   @apply absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-green-400
-         border-2 border-white;
+         border-2 border-white transition-colors;
   box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+}
+
+.status-dot.inactive {
+  @apply bg-amber-400;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
 }
 
 /* === Patient Info === */
