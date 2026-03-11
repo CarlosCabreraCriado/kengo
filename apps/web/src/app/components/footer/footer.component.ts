@@ -41,7 +41,11 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
             <!-- Brand Column -->
             <div class="scroll-reveal-left lg:col-span-5" scrollAnimate>
               <a href="/" class="mb-6 inline-block">
-                <span class="titulo-kengo text-primary text-4xl">KENGO</span>
+                <img
+                  src="logo-kengo-horizontal.svg"
+                  alt="Kengo"
+                  class="h-10"
+                />
               </a>
               <p class="mb-8 max-w-md text-base leading-relaxed text-gray-400">
                 Tu fisio, siempre contigo. Planes de ejercicios personalizados

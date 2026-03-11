@@ -30,6 +30,12 @@ import { CommonModule } from '@angular/common';
         <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <!-- Text Content -->
           <div class="text-center lg:text-left">
+            <!-- Logo mobile -->
+            <img
+              src="logo.svg"
+              alt="Kengo"
+              class="animate-in mx-auto mb-6 h-24 delay-0 lg:hidden"
+            />
             <!-- Headline -->
             <h1
               class="animate-in text-4xl leading-tight font-bold tracking-tight text-gray-900 delay-100 sm:text-5xl lg:text-6xl xl:text-7xl"
