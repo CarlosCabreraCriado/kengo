@@ -168,6 +168,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       },
       width: '100%',
       maxWidth: '500px',
+      panelClass: 'ui-dialog-panel',
     });
 
     dialogRef.closed.subscribe((result) => {
