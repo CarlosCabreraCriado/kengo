@@ -13,6 +13,7 @@ import { ClinicaGestionService } from '../../data-access/clinica-gestion.service
 
 // Types:
 import { Usuario, Clinica, ID, CodigoAcceso } from '../../../../../types/global';
+import type { TipoCodigoAcceso } from '@kengo/shared-models';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 // Dialogs
@@ -78,6 +79,9 @@ export class MiClinicaComponent {
   codigosLoading = signal(false);
   codigosExpanded = signal(false);
 
+  // Tipo inicial para el dialog de generar código
+  tipoInicialCodigo = signal<TipoCodigoAcceso | null>(null);
+
   // Permisos computados
   esAdmin = computed(() => {
     const clinica = this.currentClinic();
@@ -131,6 +135,12 @@ export class MiClinicaComponent {
   }
 
   abrirGenerarCodigo() {
+    this.tipoInicialCodigo.set(null);
+    this.mostrarModalGenerarCodigo.set(true);
+  }
+
+  abrirAnadirFisio() {
+    this.tipoInicialCodigo.set('fisioterapeuta');
     this.mostrarModalGenerarCodigo.set(true);
   }
 
