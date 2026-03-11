@@ -9,20 +9,6 @@ import { CommonModule } from '@angular/common';
     <section
       class="hero-section relative flex h-screen max-h-screen items-center overflow-hidden pt-16"
     >
-      <!-- Aurora Background -->
-      <div class="aurora-bg">
-        <div class="aurora-wave aurora-wave-1"></div>
-        <div class="aurora-wave aurora-wave-2"></div>
-        <div class="aurora-wave aurora-wave-3"></div>
-        <div class="aurora-wave aurora-wave-4"></div>
-      </div>
-
-      <!-- Subtle Pattern Overlay -->
-      <div class="pattern-dots absolute inset-0 z-[1] opacity-30"></div>
-
-      <!-- Gradient Overlay -->
-      <div class="kengo-gradient-subtle absolute inset-0 z-[2]"></div>
-
       <!-- Content -->
       <div
         class="relative z-10 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-12"
@@ -325,7 +311,7 @@ import { CommonModule } from '@angular/common';
   styles: [
     `
       .hero-section {
-        background: linear-gradient(180deg, #fffaf7 0%, #fff5ef 100%);
+        background: transparent;
       }
 
       .hero-highlight {

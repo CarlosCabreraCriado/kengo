@@ -6,12 +6,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
   imports: [],
   template: `
     <section id="features" class="features-section">
-      <!-- Mesh Gradient Background -->
-      <div class="mesh-bg">
-        <div class="mesh-blob mesh-1"></div>
-        <div class="mesh-blob mesh-2"></div>
-        <div class="mesh-blob mesh-3"></div>
-      </div>
 
       <!-- Floating Grid Pattern -->
       <div class="grid-pattern"></div>
@@ -353,13 +347,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
         position: relative;
         padding: 4rem 0 3rem;
         overflow: hidden;
-        background: linear-gradient(
-          180deg,
-          #fffaf5 0%,
-          #fff5eb 30%,
-          #ffedde 70%,
-          #ffe8d4 100%
-        );
+        background: transparent;
       }
 
       @media (min-width: 1024px) {

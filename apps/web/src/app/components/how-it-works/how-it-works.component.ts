@@ -7,12 +7,6 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section id="como-funciona" class="how-it-works-section">
-      <!-- Aurora Background -->
-      <div class="hiw-aurora">
-        <div class="hiw-orb hiw-orb-1"></div>
-        <div class="hiw-orb hiw-orb-2"></div>
-        <div class="hiw-orb hiw-orb-3"></div>
-      </div>
 
       <!-- Content Container -->
       <div class="content-container">
@@ -205,13 +199,7 @@ import { CommonModule } from '@angular/common';
     .how-it-works-section {
       position: relative;
       padding: 4rem 0 3rem;
-      background: linear-gradient(
-        180deg,
-        #fff 0%,
-        #fffaf5 20%,
-        #fff5eb 55%,
-        #ffedde 100%
-      );
+      background: transparent;
       overflow: hidden;
     }
 

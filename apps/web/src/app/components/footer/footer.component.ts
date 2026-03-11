@@ -91,7 +91,6 @@ import { CommonModule } from '@angular/common';
     .footer-section {
       position: relative;
       background: linear-gradient(160deg, #0f172a 0%, #111827 50%, #0c1524 100%);
-      overflow: hidden;
     }
 
     /* Wave */

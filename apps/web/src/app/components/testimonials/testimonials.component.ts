@@ -7,9 +7,6 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section class="testimonials-section" id="testimonios">
-      <div class="bg-orb orb-1"></div>
-      <div class="bg-orb orb-2"></div>
-
       <div class="content-wrapper">
         <!-- Header -->
         <div class="section-header">
@@ -188,13 +185,7 @@ import { CommonModule } from '@angular/common';
         position: relative;
         overflow: hidden;
         padding: 4rem 0 3rem;
-        background: linear-gradient(
-          180deg,
-          #fffaf5 0%,
-          #fff5eb 35%,
-          #ffedde 70%,
-          #ffe8d4 100%
-        );
+        background: transparent;
       }
 
       .bg-orb {

@@ -14,12 +14,6 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section id="beneficios" class="benefits-section">
-      <!-- Aurora Background -->
-      <div class="aurora-bg-layer">
-        <div class="bg-orb orb-coral"></div>
-        <div class="bg-orb orb-amber"></div>
-      </div>
-
       <div class="wrapper">
         <!-- ── Section Header ─────────────────────────── -->
         <header class="section-head">
@@ -165,13 +159,7 @@ import { CommonModule } from '@angular/common';
       .benefits-section {
         position: relative;
         padding: 4rem 0 3rem;
-        background: linear-gradient(
-          180deg,
-          #fff 0%,
-          #fffaf5 25%,
-          #fff5eb 60%,
-          #ffedde 100%
-        );
+        background: transparent;
         overflow: hidden;
       }
 

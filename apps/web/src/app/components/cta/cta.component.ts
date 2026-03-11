@@ -7,47 +7,6 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section class="cta-section">
-      <!-- Layered Background -->
-      <div class="cta-bg">
-        <!-- Warm Gradient Base -->
-        <div class="gradient-base"></div>
-
-        <!-- Animated Wave Layers -->
-        <svg
-          class="wave-layer wave-1"
-          viewBox="0 0 1440 320"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0,192L60,197.3C120,203,240,213,360,192C480,171,600,117,720,122.7C840,128,960,192,1080,213.3C1200,235,1320,213,1380,202.7L1440,192L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
-          />
-        </svg>
-        <svg
-          class="wave-layer wave-2"
-          viewBox="0 0 1440 320"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0,64L48,96C96,128,192,192,288,197.3C384,203,480,149,576,149.3C672,149,768,203,864,213.3C960,224,1056,192,1152,165.3C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          />
-        </svg>
-        <svg
-          class="wave-layer wave-3"
-          viewBox="0 0 1440 320"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0,288L48,272C96,256,192,224,288,218.7C384,213,480,235,576,250.7C672,267,768,277,864,261.3C960,245,1056,203,1152,181.3C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          />
-        </svg>
-
-        <!-- Aurora Orbs -->
-        <div class="aurora-orb aurora-orb-1"></div>
-        <div class="aurora-orb aurora-orb-2"></div>
-        <div class="aurora-orb aurora-orb-3"></div>
-        <div class="aurora-orb aurora-orb-4"></div>
-      </div>
-
       <!-- Main Content -->
       <div class="cta-content">
         <!-- Floating Decorative Elements -->
@@ -218,16 +177,7 @@ import { CommonModule } from '@angular/common';
       }
 
       .gradient-base {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          180deg,
-          #fff 0%,
-          #fffaf5 15%,
-          #fff5eb 40%,
-          #ffedde 70%,
-          #ffe4d0 100%
-        );
+        display: none;
       }
 
       /* Animated Wave Layers */
