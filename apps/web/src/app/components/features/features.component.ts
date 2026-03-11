@@ -187,60 +187,32 @@ import { Component, signal, OnDestroy } from '@angular/core';
           <article class="bento-card" data-feature="seguimiento">
             <div class="card-inner">
               <div class="card-visual">
-                <div class="chart-visual">
-                  <svg viewBox="0 0 120 80" class="mini-chart">
+                <div class="pain-journey-visual">
+                  <div class="pj-start">
+                    <span class="pj-num coral">8</span>
+                    <span class="pj-week">Semana 1</span>
+                  </div>
+                  <svg class="pj-svg" viewBox="0 0 240 90" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                      <linearGradient
-                        id="chartGradient"
-                        x1="0%"
-                        y1="0%"
-                        x2="0%"
-                        y2="100%"
-                      >
-                        <stop
-                          offset="0%"
-                          stop-color="#e75c3e"
-                          stop-opacity="0.3"
-                        />
-                        <stop
-                          offset="100%"
-                          stop-color="#e75c3e"
-                          stop-opacity="0"
-                        />
+                      <linearGradient id="painLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#e75c3e"/>
+                        <stop offset="50%" stop-color="#efc048"/>
+                        <stop offset="100%" stop-color="#16a34a"/>
                       </linearGradient>
                     </defs>
-                    <path
-                      class="chart-area"
-                      d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30 L120,80 L0,80 Z"
-                      fill="url(#chartGradient)"
-                    />
-                    <path
-                      class="chart-line"
-                      d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30"
-                      fill="none"
-                      stroke="#e75c3e"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    />
-                    <circle
-                      class="chart-dot"
-                      cx="120"
-                      cy="30"
-                      r="5"
-                      fill="#e75c3e"
-                    />
+                    <polyline class="pj-steps"
+                      points="25,10 68,10 68,32 108,32 108,54 150,54 150,70 215,70"
+                      stroke="url(#painLineGrad)" stroke-width="2.5"
+                      stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+                    <circle class="pj-dot d1" cx="25"  cy="10" r="4"   fill="#e75c3e"/>
+                    <circle class="pj-dot d2" cx="68"  cy="32" r="3"   fill="#e0863d"/>
+                    <circle class="pj-dot d3" cx="108" cy="54" r="3"   fill="#efc048"/>
+                    <circle class="pj-dot d4" cx="150" cy="70" r="3"   fill="#6db85c"/>
+                    <circle class="pj-dot d5" cx="215" cy="70" r="4.5" fill="#16a34a"/>
                   </svg>
-                  <div class="trend-badge">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    >
-                      <path d="M7 17l5-5 5 5" />
-                      <path d="M7 11l5-5 5 5" />
-                    </svg>
-                    Mejorando
+                  <div class="pj-end">
+                    <span class="pj-num green">2</span>
+                    <span class="pj-week">Semana 5</span>
                   </div>
                 </div>
               </div>
@@ -1131,63 +1103,90 @@ import { Component, signal, OnDestroy } from '@angular/core';
         transform: translateY(-2px);
       }
 
-      /* Chart Visual */
-      .chart-visual {
+      /* Pain Journey Visual */
+      .pain-journey-visual {
         position: relative;
         width: 100%;
         height: 100%;
-        display: flex;
-        align-items: center;
-        padding: 0.5rem 0;
       }
 
-      .mini-chart {
+      .pj-start {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        z-index: 2;
+        line-height: 1;
+      }
+
+      .pj-end {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        z-index: 2;
+        line-height: 1;
+      }
+
+      .pj-num {
+        font-size: 2.25rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+
+      .pj-num.coral { color: #e75c3e; }
+      .pj-num.green { color: #16a34a; }
+
+      .pj-week {
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: rgba(0, 0, 0, 0.3);
+        margin-top: 0.2rem;
+      }
+
+      .pj-svg {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
-        flex: 1;
       }
 
-      .chart-line {
-        stroke-dasharray: 250;
-        stroke-dashoffset: 250;
-        animation: drawLine 1.5s ease-out 0.5s forwards;
+      .pj-steps {
+        stroke-dasharray: 350;
+        stroke-dashoffset: 350;
+        animation: drawSteps 2s ease-out 0.3s forwards;
       }
 
-      @keyframes drawLine {
-        to {
-          stroke-dashoffset: 0;
-        }
+      @keyframes drawSteps {
+        to { stroke-dashoffset: 0; }
       }
 
-      .chart-dot {
+      .pj-dot {
         opacity: 0;
-        animation: dotAppear 0.3s ease-out 1.8s forwards;
       }
+
+      .d1 { animation: dotAppear 0.25s ease-out 0.35s forwards; }
+      .d2 { animation: dotAppear 0.25s ease-out 0.95s forwards; }
+      .d3 { animation: dotAppear 0.25s ease-out 1.35s forwards; }
+      .d4 { animation: dotAppear 0.25s ease-out 1.75s forwards; }
+      .d5 { animation: dotAppear 0.25s ease-out 2.15s forwards; }
 
       @keyframes dotAppear {
-        to {
-          opacity: 1;
+        to { opacity: 1; }
+      }
+
+      /* Desktop compact override para la card seguimiento */
+      @media (min-width: 1024px) {
+        .bento-card[data-feature="seguimiento"] .card-visual {
+          height: 145px;
         }
-      }
-
-      .trend-badge {
-        position: absolute;
-        top: 0.5rem;
-        right: 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.5rem 1rem;
-        background: rgba(34, 197, 94, 0.1);
-        border-radius: 100px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #16a34a;
-      }
-
-      .trend-badge svg {
-        width: 14px;
-        height: 14px;
       }
 
       /* Notification Visual */
@@ -1537,13 +1536,17 @@ import { Component, signal, OnDestroy } from '@angular/core';
       @media (prefers-reduced-motion: reduce) {
         .mesh-blob,
         .bento-card,
-        .chart-line,
-        .chart-dot,
+        .pj-steps,
+        .pj-dot,
         .slide-img,
         .notif-pulse,
         .divider-dot,
         .connection-line {
           animation: none;
+        }
+
+        .pj-dot {
+          opacity: 1;
         }
 
         .bento-card {
