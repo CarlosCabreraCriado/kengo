@@ -140,7 +140,7 @@ import { CommonModule } from '@angular/common';
       ═══════════════════════════════════════════ */
       .benefits-section {
         position: relative;
-        padding: 6rem 0 7rem;
+        padding: 6rem 0 3rem;
         background: linear-gradient(
           180deg,
           #fff 0%,
@@ -153,7 +153,7 @@ import { CommonModule } from '@angular/common';
 
       @media (min-width: 1024px) {
         .benefits-section {
-          padding: 8rem 0 9rem;
+          padding: 8rem 0 4rem;
         }
       }
 

@@ -87,6 +87,27 @@ import { CommonModule } from '@angular/common';
               <div class="carousel-page" [style.--columns]="cardsPerView">
                 @for (t of page; track t.name + t.quote) {
                   <article class="testimonial-card">
+                    <div class="card-top">
+                      <div class="author-row">
+                        <div
+                          class="author-avatar"
+                          [style.background]="t.avatarGradient"
+                        >
+                          <span class="author-initial">{{ t.name[0] }}</span>
+                        </div>
+                        <div class="author-info">
+                          <span class="author-name">{{ t.name }}</span>
+                        </div>
+                      </div>
+                      <div
+                        class="person-badge"
+                        [class.patient]="t.type === 'Paciente'"
+                      >
+                        <span class="status-dot"></span>
+                        {{ t.type }}
+                      </div>
+                    </div>
+
                     <p class="quote-text">{{ t.quote }}</p>
 
                     @if (t.result) {
@@ -106,20 +127,6 @@ import { CommonModule } from '@angular/common';
                         {{ t.result }}
                       </div>
                     }
-
-                    <div class="author-row">
-                      <div
-                        class="author-avatar"
-                        [style.background]="t.avatarGradient"
-                      >
-                        <span class="author-initial">{{ t.name[0] }}</span>
-                      </div>
-
-                      <div class="author-info">
-                        <span class="author-name">{{ t.name }}</span>
-                        <span class="author-role">{{ t.role }}</span>
-                      </div>
-                    </div>
                   </article>
                 }
               </div>
@@ -153,7 +160,7 @@ import { CommonModule } from '@angular/common';
       .testimonials-section {
         position: relative;
         overflow: hidden;
-        padding: 6rem 0 7rem;
+        padding: 6rem 0 3rem;
         background: linear-gradient(
           180deg,
           #fffaf5 0%,
@@ -397,6 +404,8 @@ import { CommonModule } from '@angular/common';
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(17, 24, 39, 0.07);
       }
 
       .person-badge {
@@ -472,9 +481,8 @@ import { CommonModule } from '@angular/common';
         display: flex;
         align-items: center;
         gap: 12px;
-        padding-top: 1rem;
-        margin-top: 0.1rem;
-        border-top: 1px solid rgba(17, 24, 39, 0.07);
+        min-width: 0;
+        flex: 1;
       }
 
       .author-avatar {
@@ -546,7 +554,7 @@ import { CommonModule } from '@angular/common';
 
       @media (max-width: 767px) {
         .testimonials-section {
-          padding: 4.5rem 0 5.5rem;
+          padding: 4.5rem 0 2.5rem;
         }
 
         .carousel-toolbar {

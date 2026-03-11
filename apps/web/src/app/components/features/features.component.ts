@@ -347,7 +347,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
 
       .features-section {
         position: relative;
-        padding: 6rem 0 7rem;
+        padding: 6rem 0 3rem;
         overflow: hidden;
         background: linear-gradient(
           180deg,
@@ -360,7 +360,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
 
       @media (min-width: 1024px) {
         .features-section {
-          padding: 8rem 0 9rem;
+          padding: 8rem 0 4rem;
         }
       }
 
