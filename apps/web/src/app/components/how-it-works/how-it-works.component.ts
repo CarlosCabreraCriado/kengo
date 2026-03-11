@@ -304,7 +304,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
                 <span class="cta-eyebrow">Empieza hoy</span>
                 <h3 class="cta-headline">Tu tratamiento te espera</h3>
               </div>
-              <a href="https://app.kengoapp.com/registro" class="cta-button">
+              <a href="https://kengoapp.com/login" class="cta-button">
                 <span class="btn-bg"></span>
                 <span class="btn-content">
                   <span>Comenzar ahora</span>

@@ -80,10 +80,10 @@ import { CommonModule } from '@angular/common';
 
             <!-- CTAs -->
             <div
-              class="animate-in pointer-events-auto mt-10 flex flex-col justify-center gap-4 delay-300 sm:flex-row lg:justify-start"
+              class="animate-in !pointer-events-auto mt-10 flex flex-col justify-center gap-4 delay-300 sm:flex-row lg:justify-start"
             >
               <a
-                href="https://app.kengoapp.com/registro"
+                href="https://kengoapp.com/login"
                 class="btn-kengo group text-lg"
               >
                 <span>Empieza gratis</span>
@@ -337,7 +337,7 @@ import { CommonModule } from '@angular/common';
 
       <!-- Top Morphing Wave -->
       <svg
-        class="wave-layer wave-top absolute bottom-0 z-10 rotate-180"
+        class="wave-layer wave-top pointer-events-none absolute bottom-0 z-10 rotate-180"
         viewBox="0 0 1440 320"
         preserveAspectRatio="none"
       >

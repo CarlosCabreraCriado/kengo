@@ -107,12 +107,12 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
                     <li><a href="#como-funciona">Como funciona</a></li>
                     <li><a href="#features">Funcionalidades</a></li>
                     <li>
-                      <a href="https://app.kengoapp.com/registro"
+                      <a href="https://kengoapp.com/login"
                         >Registrarse</a
                       >
                     </li>
                     <li>
-                      <a href="https://app.kengoapp.com/registro?role=fisio"
+                      <a href="https://kengoapp.com/login"
                         >Para fisioterapeutas</a
                       >
                     </li>

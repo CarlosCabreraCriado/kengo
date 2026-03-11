@@ -1454,7 +1454,7 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
       morphBg:
         'conic-gradient(from 0deg, rgba(231, 92, 62, 0.3) 0deg, rgba(247, 166, 94, 0.2) 120deg, rgba(255, 200, 180, 0.3) 240deg, rgba(231, 92, 62, 0.3) 360deg)',
       cta: 'Empezar gratis',
-      ctaLink: 'https://app.kengoapp.com/registro',
+      ctaLink: 'https://kengoapp.com/login',
       description:
         'Accede gratis con el codigo de tu fisio o clinica. Ejercicios guiados, seguimiento del dolor y comunicacion directa.',
       benefits: [

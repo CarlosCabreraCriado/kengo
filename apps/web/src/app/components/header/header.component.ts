@@ -27,7 +27,7 @@ import { CommonModule } from '@angular/common';
 <!-- CTA Buttons -->
           <div class="flex items-center gap-3 pr-1">
             <a
-              href="https://app.kengoapp.com/registro"
+              href="https://kengoapp.com/login"
               class="btn-kengo rounded-full! !px-5 !py-2.5 !text-sm"
             >
               <span>Comenzar</span>

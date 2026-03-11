@@ -98,7 +98,7 @@ import { CommonModule } from '@angular/common';
 
         <!-- CTA Buttons -->
         <div class="cta-buttons">
-          <a href="https://app.kengoapp.com/registro" class="btn-primary">
+          <a href="https://kengoapp.com/login" class="btn-primary">
             <span class="btn-bg"></span>
             <span class="btn-content">
               <span>Soy paciente</span>
@@ -117,7 +117,7 @@ import { CommonModule } from '@angular/common';
             </span>
           </a>
           <a
-            href="https://app.kengoapp.com/registro?role=fisio"
+            href="https://kengoapp.com/login"
             class="btn-secondary"
           >
             <span class="btn-glass"></span>

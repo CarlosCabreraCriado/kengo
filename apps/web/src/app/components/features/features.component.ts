@@ -252,7 +252,7 @@ import { CommonModule } from '@angular/common';
               <span class="cta-label">Mobile-first</span>
               <h3 class="cta-title">Experiencia nativa en cualquier dispositivo</h3>
             </div>
-            <a href="https://app.kengoapp.com/registro" class="cta-button">
+            <a href="https://kengoapp.com/login" class="cta-button">
               <span>Comenzar gratis</span>
               <div class="button-arrow">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
