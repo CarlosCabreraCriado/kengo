@@ -877,6 +877,36 @@ import { Component, signal, OnDestroy } from '@angular/core';
         }
       }
 
+      /* Segunda fila (cards 4-6): tarjetas más compactas */
+      @media (min-width: 1024px) {
+        .bento-card:nth-child(4) .card-visual,
+        .bento-card:nth-child(5) .card-visual,
+        .bento-card:nth-child(6) .card-visual {
+          height: 110px;
+          margin-bottom: 1rem;
+        }
+
+        .bento-card:nth-child(4) .card-inner,
+        .bento-card:nth-child(5) .card-inner,
+        .bento-card:nth-child(6) .card-inner {
+          padding: 1.5rem;
+        }
+
+        .bento-card:nth-child(4) .card-title,
+        .bento-card:nth-child(5) .card-title,
+        .bento-card:nth-child(6) .card-title {
+          font-size: 1.2rem;
+          margin-bottom: 0.375rem;
+        }
+
+        .bento-card:nth-child(4) .card-description,
+        .bento-card:nth-child(5) .card-description,
+        .bento-card:nth-child(6) .card-description {
+          font-size: 0.875rem;
+          line-height: 1.5;
+        }
+      }
+
       /* ----------------------------------------
        Card Content
     ---------------------------------------- */
