@@ -19,9 +19,8 @@ import { Component, signal, OnDestroy } from '@angular/core';
       <div class="features-content">
         <!-- Editorial Header — Asimétrico -->
         <header class="editorial-header">
-          <div class="header-columns">
             <!-- Izquierda: eyebrow + título -->
-            <div class="header-left">
+            <div class="section-head">
               <div class="header-eyebrow">
                 <span class="ey-line"></span>
                 <span class="eyebrow-label">Plataforma clínica</span>
@@ -33,28 +32,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
                 <span class="title-line">tu clínica y tus pacientes</span>
               </h2>
             </div>
-
-            <!-- Derecha: descripción + tags -->
-            <div class="header-right">
-              <p class="header-description">
-                Kengo reúne en un solo lugar todo lo que necesitas para el
-                seguimiento de tus pacientes: videoteca profesional de
-                ejercicios, planes personalizados, control del dolor y gestión
-                multi-clínica. Diseñado específicamente para fisioterapeutas.
-              </p>
-              <div class="feature-tags">
-                <span class="ftag">Videoteca HD</span>
-                <span class="ftag">Planes</span>
-                <span class="ftag">Seguimiento</span>
-                <span class="ftag">Multi-clínica</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="header-divider">
-            <div class="divider-line"></div>
-            <div class="divider-dot"></div>
-          </div>
         </header>
 
         <!-- Bento Grid Layout -->
@@ -507,6 +484,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
         position: relative;
         margin-bottom: 3.5rem;
         overflow: hidden;
+        text-align: center;
       }
 
       @media (min-width: 1024px) {
@@ -563,6 +541,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
       .header-eyebrow {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 0.9rem;
         margin-bottom: 1.25rem;
         animation: fadeIn 0.6s ease-out backwards;
@@ -592,9 +571,10 @@ import { Component, signal, OnDestroy } from '@angular/core';
         font-family: 'Galvji', system-ui, sans-serif;
         font-size: clamp(2.6rem, 7.5vw, 5rem);
         font-weight: 700;
-        line-height: 0.93;
+        line-height: 1.05;
         color: #1a1a1a;
         letter-spacing: -0.025em;
+        padding-bottom: 0.15em;
         animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s backwards;
       }
 
