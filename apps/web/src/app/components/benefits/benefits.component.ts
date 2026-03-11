@@ -71,7 +71,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
 
           <p class="section-subtitle">
             Pacientes y fisioterapeutas encuentran exactamente lo que necesitan.
-            Herramientas que transforman la rehabilitacion.
+            Herramientas que transforman la rehabilitación.
           </p>
         </header>
 
@@ -1456,15 +1456,15 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
       cta: 'Empezar gratis',
       ctaLink: 'https://kengoapp.com/login',
       description:
-        'Accede gratis con el codigo de tu fisio o clinica. Ejercicios guiados, seguimiento del dolor y comunicacion directa.',
+        'Accede gratis con el código de tu fisio o clínica. Ejercicios guiados, seguimiento del dolor y comunicación directa.',
       benefits: [
         { text: 'Sin coste, 100% gratuito', highlight: 'Gratis' },
         {
-          text: 'Solo necesitas un codigo de tu fisio o clinica',
+          text: 'Solo necesitas un código de tu fisio o clínica',
           highlight: null,
         },
         { text: 'Ejercicios guiados con video profesional', highlight: null },
-        { text: 'Registra tu progreso y como te sientes', highlight: null },
+        { text: 'Registra tu progreso y cómo te sientes', highlight: null },
       ],
     },
     {
@@ -1479,15 +1479,15 @@ export class BenefitsComponent implements AfterViewInit, OnDestroy {
         'linear-gradient(135deg, rgba(239, 192, 72, 0.18) 0%, rgba(255, 220, 150, 0.06) 100%)',
       morphBg:
         'conic-gradient(from 90deg, rgba(217, 119, 6, 0.3) 0deg, rgba(239, 192, 72, 0.3) 120deg, rgba(255, 200, 100, 0.2) 240deg, rgba(217, 119, 6, 0.3) 360deg)',
-      cta: 'Descubrir mas',
+      cta: 'Descubrir más',
       ctaLink: '/fisioterapeutas',
       description:
-        'Registrate y prueba gratis todas las herramientas. Crea planes, gestiona pacientes y accede a un catalogo profesional.',
+        'Regístrate y prueba gratis todas las herramientas. Crea planes, gestiona pacientes y accede a un catálogo profesional.',
       benefits: [
-        { text: 'Registrate y prueba gratis', highlight: 'Nuevo' },
-        { text: 'Catalogo con +500 ejercicios en video', highlight: 'HD' },
+        { text: 'Regístrate y prueba gratis', highlight: 'Nuevo' },
+        { text: 'Catálogo con +500 ejercicios en video', highlight: 'HD' },
         { text: 'Crea planes personalizados en minutos', highlight: null },
-        { text: 'Gestion integral de pacientes', highlight: null },
+        { text: 'Gestión integral de pacientes', highlight: null },
       ],
     },
   ];

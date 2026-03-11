@@ -22,12 +22,12 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
           </div>
 
           <h2 class="section-title">
-            <span class="title-line">Tu recuperacion,</span>
+            <span class="title-line">Tu recuperación,</span>
             <span class="title-accent">paso a paso</span>
           </h2>
 
           <p class="section-intro">
-            De la prescripcion a la rehabilitacion completa en 4 pasos. Sin
+            De la prescripción a la rehabilitación completa en 4 pasos. Sin
             complicaciones, con resultados.
           </p>
         </header>
@@ -338,7 +338,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
                     stroke-linejoin="round"
                   />
                 </svg>
-                Sin tarjeta de credito
+                Sin tarjeta de crédito
               </span>
               <span class="cta-feature">
                 <svg
@@ -1204,7 +1204,7 @@ export class HowItWorksComponent {
       number: 1,
       title: 'Tu fisio crea el plan',
       description:
-        'Ejercicios personalizados segun tu lesion, objetivos y ritmo de vida. Todo adaptado a ti.',
+        'Ejercicios personalizados según tu lesión, objetivos y ritmo de vida. Todo adaptado a ti.',
       features: ['Personalizado', 'Profesional'],
       timing: '5 min',
       accentColor: '#e75c3e',
@@ -1217,7 +1217,7 @@ export class HowItWorksComponent {
       number: 2,
       title: 'Recibe tu rutina diaria',
       description:
-        'Cada dia sabes exactamente que ejercicios hacer. Con videos y notificaciones en tu movil.',
+        'Cada día sabes exactamente qué ejercicios hacer. Con videos y notificaciones en tu móvil.',
       features: ['Calendario', 'Alertas'],
       timing: '1 min',
       accentColor: '#f7a65e',
@@ -1228,7 +1228,7 @@ export class HowItWorksComponent {
     {
       id: 'sesion',
       number: 3,
-      title: 'Sesion guiada paso a paso',
+      title: 'Sesión guiada paso a paso',
       description:
         'Sigue el video HD, series y descansos. Como tener a tu fisioterapeuta en casa.',
       features: ['Video HD', 'Timer'],
@@ -1243,7 +1243,7 @@ export class HowItWorksComponent {
       number: 4,
       title: 'Feedback en tiempo real',
       description:
-        'Registra como te sientes y tu fisio ajusta el tratamiento automaticamente.',
+        'Registra cómo te sientes y tu fisio ajusta el tratamiento automáticamente.',
       features: ['Progreso', 'Ajustes'],
       timing: '30 seg',
       accentColor: '#22c55e',

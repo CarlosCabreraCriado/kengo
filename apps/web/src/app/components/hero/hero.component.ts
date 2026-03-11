@@ -74,7 +74,7 @@ import { CommonModule } from '@angular/common';
               Planes de ejercicios personalizados con videos guiados,
               seguimiento de progreso y
               <span class="font-semibold text-gray-800"
-                >conexion directa con tu fisioterapeuta</span
+                >conexión directa con tu fisioterapeuta</span
               >.
             </p>
 
@@ -127,7 +127,7 @@ import { CommonModule } from '@angular/common';
                         Tu actividad de hoy
                       </h3>
                       <p class="activity-subtitle-preview">
-                        Plan de rehabilitacion lumbar
+                        Plan de rehabilitación lumbar
                       </p>
                       <div class="progress-preview">
                         <div class="progress-bar-preview">
@@ -158,7 +158,7 @@ import { CommonModule } from '@angular/common';
                             d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        Continuar sesion
+                        Continuar sesión
                       </button>
                     </div>
                   </div>
@@ -273,8 +273,8 @@ import { CommonModule } from '@angular/common';
                   </svg>
                 </div>
                 <div class="floating-text">
-                  <span class="floating-title">Sesion completada</span>
-                  <span class="floating-subtitle">Racha: 7 dias</span>
+                  <span class="floating-title">Sesión completada</span>
+                  <span class="floating-subtitle">Racha: 7 días</span>
                 </div>
               </div>
 
@@ -327,7 +327,7 @@ import { CommonModule } from '@angular/common';
           class="hover:text-primary flex flex-col items-center gap-2 text-gray-500 transition-colors"
         >
           <span class="text-xs font-medium tracking-wide uppercase"
-            >Descubre mas</span
+            >Descubre más</span
           >
           <div class="scroll-indicator">
             <div class="scroll-dot"></div>

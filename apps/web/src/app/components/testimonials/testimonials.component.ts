@@ -327,9 +327,9 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
 export class TestimonialsComponent {
   testimonials = [
     {
-      name: 'Maria Garcia',
+      name: 'María García',
       role: 'Fisioterapeuta',
-      clinic: 'Clinica Fisio Norte',
+      clinic: 'Clínica Fisio Norte',
       quote:
         'Mis pacientes ahora completan el 90% de sus ejercicios. Antes apenas se llegaba al 40%... La diferencia es brutal.',
       result: '+50% adherencia en 3 meses',
@@ -338,18 +338,18 @@ export class TestimonialsComponent {
     {
       name: 'Carlos Ruiz',
       role: 'Paciente',
-      clinic: 'Rehabilitacion lumbar',
+      clinic: 'Rehabilitación lumbar',
       quote:
-        'Me encanta poder ver exactamente como hacer cada ejercicio con el video. Ya no tengo dudas ni miedo de hacerlo mal cuando estoy en casa.',
-      result: 'Recuperacion en 8 semanas',
+        'Me encanta poder ver exactamente cómo hacer cada ejercicio con el video. Ya no tengo dudas ni miedo de hacerlo mal cuando estoy en casa.',
+      result: 'Recuperación en 8 semanas',
       avatarGradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
     },
     {
-      name: 'Laura Sanchez',
-      role: 'Directora de clinica',
+      name: 'Laura Sánchez',
+      role: 'Directora de clínica',
       clinic: 'FisioSalud Madrid',
       quote:
-        'Gestionamos 3 clinicas con 12 fisios desde un solo lugar. Los codigos de acceso simplificaron enormemente la incorporacion de nuevos pacientes.',
+        'Gestionamos 3 clínicas con 12 fisios desde un solo lugar. Los códigos de acceso simplificaron enormemente la incorporación de nuevos pacientes.',
       result: 'Equipo de 12 fisios conectados',
       avatarGradient: 'linear-gradient(135deg, #efc048, #d97706)',
     },

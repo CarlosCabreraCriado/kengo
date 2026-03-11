@@ -45,7 +45,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
               </a>
               <p class="mb-8 max-w-md text-base leading-relaxed text-gray-400">
                 Tu fisio, siempre contigo. Planes de ejercicios personalizados
-                con videos guiados, seguimiento de progreso y conexion directa
+                con videos guiados, seguimiento de progreso y conexión directa
                 con tu fisioterapeuta.
               </p>
 
@@ -59,7 +59,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
                   <h4 class="footer-heading">Producto</h4>
                   <ul class="footer-links">
                     <li><a href="#beneficios">Beneficios</a></li>
-                    <li><a href="#como-funciona">Como funciona</a></li>
+                    <li><a href="#como-funciona">Cómo funciona</a></li>
                     <li>
                       <a href="https://kengoapp.com/login">Registrarse</a>
                     </li>
@@ -115,7 +115,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
                     />
                   </svg>
                 </span>
-                en Espana
+                en España
               </p>
             </div>
           </div>
@@ -262,7 +262,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
                   </div>
                   <p class="state-title">Error al enviar</p>
                   <p class="state-text">
-                    No se pudo enviar el mensaje. Intentalo de nuevo.
+                    No se pudo enviar el mensaje. Inténtalo de nuevo.
                   </p>
                   <button
                     (click)="estado.set('form')"

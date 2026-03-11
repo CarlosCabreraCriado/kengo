@@ -30,7 +30,7 @@ import { CommonModule } from '@angular/common';
             </div>
             <div class="header-right">
               <p class="header-description">
-                Tecnologia disenada por fisioterapeutas para transformar la recuperacion de tus pacientes.
+                Tecnología diseñada por fisioterapeutas para transformar la recuperación de tus pacientes.
               </p>
               <div class="stat-pill">
                 <span class="stat-number">+500</span>
@@ -67,7 +67,7 @@ import { CommonModule } from '@angular/common';
                 </div>
               </div>
               <div class="card-content">
-                <div class="card-badge">Catalogo</div>
+                <div class="card-badge">Catálogo</div>
                 <h3 class="card-title">Videos profesionales</h3>
                 <p class="card-description">
                   Biblioteca curada con ejercicios grabados por fisioterapeutas. Instrucciones claras, demostraciones en HD.
@@ -93,10 +93,10 @@ import { CommonModule } from '@angular/common';
                 </div>
               </div>
               <div class="card-content">
-                <div class="card-badge gold">Personalizacion</div>
+                <div class="card-badge gold">Personalización</div>
                 <h3 class="card-title">Planes a medida</h3>
                 <p class="card-description">
-                  Rutinas adaptadas a cada paciente, organizadas por dias de la semana.
+                  Rutinas adaptadas a cada paciente, organizadas por días de la semana.
                 </p>
               </div>
               <div class="card-number">02</div>
@@ -132,7 +132,7 @@ import { CommonModule } from '@angular/common';
                 <div class="card-badge green">Progreso</div>
                 <h3 class="card-title">Seguimiento del dolor</h3>
                 <p class="card-description">
-                  El paciente registra como se siente. Tu ajustas el tratamiento.
+                  El paciente registra cómo se siente. Tú ajustas el tratamiento.
                 </p>
               </div>
               <div class="card-number">03</div>
@@ -160,7 +160,7 @@ import { CommonModule } from '@angular/common';
                 </div>
               </div>
               <div class="card-content">
-                <div class="card-badge blue">Automatico</div>
+                <div class="card-badge blue">Automático</div>
                 <h3 class="card-title">Recordatorios</h3>
                 <p class="card-description">
                   Notificaciones inteligentes para que nunca olviden su rutina.
@@ -200,9 +200,9 @@ import { CommonModule } from '@angular/common';
               </div>
               <div class="card-content">
                 <div class="card-badge purple">Escalable</div>
-                <h3 class="card-title">Gestion multi-clinica</h3>
+                <h3 class="card-title">Gestión multi-clínica</h3>
                 <p class="card-description">
-                  Una cuenta, multiples clinicas. Gestiona todos tus pacientes desde un solo lugar con acceso diferenciado.
+                  Una cuenta, múltiples clínicas. Gestiona todos tus pacientes desde un solo lugar con acceso diferenciado.
                 </p>
               </div>
               <div class="card-number">05</div>
@@ -229,15 +229,15 @@ import { CommonModule } from '@angular/common';
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                       <path d="M9 12l2 2 4-4"/>
                     </svg>
-                    Codigo seguro
+                    Código seguro
                   </div>
                 </div>
               </div>
               <div class="card-content">
                 <div class="card-badge pink">Seguridad</div>
-                <h3 class="card-title">Codigos de acceso</h3>
+                <h3 class="card-title">Códigos de acceso</h3>
                 <p class="card-description">
-                  Invita pacientes de forma segura con codigos unicos de 8 caracteres.
+                  Invita pacientes de forma segura con códigos únicos de 8 caracteres.
                 </p>
               </div>
               <div class="card-number">06</div>
