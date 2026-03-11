@@ -17,20 +17,38 @@ import { Component, signal, OnDestroy } from '@angular/core';
       <div class="grid-pattern"></div>
 
       <div class="features-content">
-        <!-- Editorial Header — Centrado -->
+        <!-- Editorial Header — Asimétrico -->
         <header class="editorial-header">
-          <div class="header-eyebrow">
-            <span class="eyebrow-line"></span>
-            <span class="eyebrow-label">Funcionalidades</span>
-            <span class="eyebrow-line eyebrow-line-r"></span>
+          <div class="header-columns">
+            <!-- Izquierda: eyebrow + título -->
+            <div class="header-left">
+              <div class="header-eyebrow">
+                <span class="eyebrow-dot"></span>
+                <span class="eyebrow-label">Plataforma clínica</span>
+              </div>
+              <h2 class="mega-title">
+                <span class="title-line">La herramienta</span>
+                <span class="title-line accent">que conecta</span>
+                <span class="title-line">tu clínica y tus pacientes</span>
+              </h2>
+            </div>
+
+            <!-- Derecha: descripción + tags -->
+            <div class="header-right">
+              <p class="header-description">
+                Kengo reúne en un solo lugar todo lo que necesitas para el
+                seguimiento de tus pacientes: videoteca profesional de
+                ejercicios, planes personalizados, control del dolor y gestión
+                multi-clínica. Diseñado específicamente para fisioterapeutas.
+              </p>
+              <div class="feature-tags">
+                <span class="ftag">Videoteca HD</span>
+                <span class="ftag">Planes</span>
+                <span class="ftag">Seguimiento</span>
+                <span class="ftag">Multi-clínica</span>
+              </div>
+            </div>
           </div>
-          <h2 class="mega-title">
-            <span class="title-line">Herramientas</span>
-            <span class="title-line accent">que curan</span>
-          </h2>
-          <p class="header-description">
-            Tecnología diseñada por fisioterapeutas para transformar la recuperación de tus pacientes.
-          </p>
 
           <div class="header-divider">
             <div class="divider-line"></div>
@@ -40,7 +58,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
 
         <!-- Bento Grid Layout -->
         <div class="bento-grid">
-
           <!-- 1. Featured Card - Videos -->
           <article class="bento-card featured" data-feature="videos">
             <div class="card-inner">
@@ -57,7 +74,10 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   <div class="slide-overlay"></div>
                   <div class="slide-dots">
                     @for (img of exerciseImages; track img; let i = $index) {
-                      <span class="dot" [class.active]="i === currentSlide()"></span>
+                      <span
+                        class="dot"
+                        [class.active]="i === currentSlide()"
+                      ></span>
                     }
                   </div>
                 </div>
@@ -66,7 +86,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
                 <div class="card-badge">Catálogo</div>
                 <h3 class="card-title">Videos profesionales</h3>
                 <p class="card-description">
-                  Biblioteca curada con ejercicios grabados por fisioterapeutas. Instrucciones claras, demostraciones en HD.
+                  Biblioteca curada con ejercicios grabados por fisioterapeutas.
                 </p>
               </div>
               <div class="card-number">01</div>
@@ -91,7 +111,11 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   </div>
                   <div class="week-row">
                     @for (day of weekDays; track day.letter) {
-                      <div class="day-cell" [class.active]="day.active" [class.today]="day.today">
+                      <div
+                        class="day-cell"
+                        [class.active]="day.active"
+                        [class.today]="day.today"
+                      >
                         <span class="day-letter">{{ day.letter }}</span>
                         @if (day.active) {
                           <span class="day-dot"></span>
@@ -115,59 +139,29 @@ import { Component, signal, OnDestroy } from '@angular/core';
                 <div class="card-badge gold">Personalización</div>
                 <h3 class="card-title">Planes a medida</h3>
                 <p class="card-description">
-                  Rutinas adaptadas a cada paciente, organizadas por días de la semana.
+                  Rutinas adaptadas a cada paciente, organizadas por días de la
+                  semana.
                 </p>
               </div>
               <div class="card-number">02</div>
             </div>
           </article>
 
-          <!-- 3. Seguimiento Card -->
-          <article class="bento-card" data-feature="seguimiento">
-            <div class="card-inner">
-              <div class="card-visual">
-                <div class="chart-visual">
-                  <svg viewBox="0 0 120 80" class="mini-chart">
-                    <defs>
-                      <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#e75c3e" stop-opacity="0.3"/>
-                        <stop offset="100%" stop-color="#e75c3e" stop-opacity="0"/>
-                      </linearGradient>
-                    </defs>
-                    <path class="chart-area" d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30 L120,80 L0,80 Z" fill="url(#chartGradient)"/>
-                    <path class="chart-line" d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30" fill="none" stroke="#e75c3e" stroke-width="2.5" stroke-linecap="round"/>
-                    <circle class="chart-dot" cx="120" cy="30" r="5" fill="#e75c3e"/>
-                  </svg>
-                  <div class="trend-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <path d="M7 17l5-5 5 5"/>
-                      <path d="M7 11l5-5 5 5"/>
-                    </svg>
-                    Mejorando
-                  </div>
-                </div>
-              </div>
-              <div class="card-content">
-                <div class="card-badge green">Progreso</div>
-                <h3 class="card-title">Seguimiento del dolor</h3>
-                <p class="card-description">
-                  El paciente registra cómo se siente. Tú ajustas el tratamiento.
-                </p>
-              </div>
-              <div class="card-number">03</div>
-            </div>
-          </article>
-
-          <!-- 4. Recordatorios Card -->
+                    <!-- 3. Recordatorios Card -->
           <article class="bento-card" data-feature="recordatorios">
             <div class="card-inner">
               <div class="card-visual">
                 <div class="notification-visual">
                   <div class="notif-card">
                     <div class="notif-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                       </svg>
                     </div>
                     <div class="notif-content">
@@ -189,6 +183,81 @@ import { Component, signal, OnDestroy } from '@angular/core';
             </div>
           </article>
 
+          <!-- 4. Seguimiento Card -->
+          <article class="bento-card" data-feature="seguimiento">
+            <div class="card-inner">
+              <div class="card-visual">
+                <div class="chart-visual">
+                  <svg viewBox="0 0 120 80" class="mini-chart">
+                    <defs>
+                      <linearGradient
+                        id="chartGradient"
+                        x1="0%"
+                        y1="0%"
+                        x2="0%"
+                        y2="100%"
+                      >
+                        <stop
+                          offset="0%"
+                          stop-color="#e75c3e"
+                          stop-opacity="0.3"
+                        />
+                        <stop
+                          offset="100%"
+                          stop-color="#e75c3e"
+                          stop-opacity="0"
+                        />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      class="chart-area"
+                      d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30 L120,80 L0,80 Z"
+                      fill="url(#chartGradient)"
+                    />
+                    <path
+                      class="chart-line"
+                      d="M0,65 Q20,58 30,50 T60,38 T90,22 T120,30"
+                      fill="none"
+                      stroke="#e75c3e"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    />
+                    <circle
+                      class="chart-dot"
+                      cx="120"
+                      cy="30"
+                      r="5"
+                      fill="#e75c3e"
+                    />
+                  </svg>
+                  <div class="trend-badge">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    >
+                      <path d="M7 17l5-5 5 5" />
+                      <path d="M7 11l5-5 5 5" />
+                    </svg>
+                    Mejorando
+                  </div>
+                </div>
+              </div>
+              <div class="card-content">
+                <div class="card-badge green">Progreso</div>
+                <h3 class="card-title">Seguimiento del dolor</h3>
+                <p class="card-description">
+                  El paciente registra cómo se siente. Tú ajustas el
+                  tratamiento.
+                </p>
+              </div>
+              <div class="card-number">03</div>
+            </div>
+          </article>
+
+
+
           <!-- 5. Códigos Card -->
           <article class="bento-card" data-feature="codigos">
             <div class="card-inner">
@@ -205,9 +274,14 @@ import { Component, signal, OnDestroy } from '@angular/core';
                     <span class="code-char accent">X</span>
                   </div>
                   <div class="code-label">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      <path d="M9 12l2 2 4-4"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      <path d="M9 12l2 2 4-4" />
                     </svg>
                     Código seguro
                   </div>
@@ -217,7 +291,8 @@ import { Component, signal, OnDestroy } from '@angular/core';
                 <div class="card-badge pink">Seguridad</div>
                 <h3 class="card-title">Códigos de acceso</h3>
                 <p class="card-description">
-                  Invita pacientes de forma segura con códigos únicos de 8 caracteres.
+                  Invita pacientes de forma segura con códigos únicos de 8
+                  caracteres.
                 </p>
               </div>
               <div class="card-number">05</div>
@@ -231,7 +306,9 @@ import { Component, signal, OnDestroy } from '@angular/core';
                 <div class="clinics-visual">
                   <div class="clinic-node main">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2a3 3 0 0 0-3 3v1H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v1h-2V5a1 1 0 0 1 1-1zm-1 7h2v2h2v2h-2v2h-2v-2H9v-2h2v-2z"/>
+                      <path
+                        d="M12 2a3 3 0 0 0-3 3v1H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3V5a3 3 0 0 0-3-3zm0 2a1 1 0 0 1 1 1v1h-2V5a1 1 0 0 1 1-1zm-1 7h2v2h2v2h-2v2h-2v-2H9v-2h2v-2z"
+                      />
                     </svg>
                   </div>
                   <div class="clinic-connections">
@@ -242,26 +319,26 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   </div>
                   <div class="clinic-node sub node-1">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="8" r="4"/>
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     </svg>
                   </div>
                   <div class="clinic-node sub node-2">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="8" r="4"/>
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     </svg>
                   </div>
                   <div class="clinic-node sub node-3">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="8" r="4"/>
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     </svg>
                   </div>
                   <div class="clinic-node sub node-4">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="8" r="4"/>
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     </svg>
                   </div>
                 </div>
@@ -270,996 +347,1202 @@ import { Component, signal, OnDestroy } from '@angular/core';
                 <div class="card-badge purple">Escalable</div>
                 <h3 class="card-title">Gestión multi-clínica</h3>
                 <p class="card-description">
-                  Una cuenta, múltiples clínicas. Gestiona todos tus pacientes desde un solo lugar con acceso diferenciado.
+                  Una cuenta, múltiples clínicas. Gestiona todos tus pacientes
+                  desde un solo lugar con acceso diferenciado.
                 </p>
               </div>
               <div class="card-number">06</div>
             </div>
           </article>
-
         </div>
       </div>
     </section>
   `,
-  styles: [`
-    /* ========================================
+  styles: [
+    `
+      /* ========================================
        FEATURES SECTION - Editorial Bento Style
        Premium Glassmorphism + Magazine Layout
     ======================================== */
 
-    .features-section {
-      position: relative;
-      padding: 5rem 0 6rem;
-      overflow: hidden;
-      background: linear-gradient(
-        165deg,
-        #fffcf9 0%,
-        #fff8f3 25%,
-        #fffaf6 50%,
-        #fff 100%
-      );
-    }
-
-    @media (min-width: 1024px) {
       .features-section {
-        padding: 7rem 0 8rem;
+        position: relative;
+        padding: 5rem 0 6rem;
+        overflow: hidden;
+        background: linear-gradient(
+          165deg,
+          #fffcf9 0%,
+          #fff8f3 25%,
+          #fffaf6 50%,
+          #fff 100%
+        );
       }
-    }
 
-    /* ----------------------------------------
+      @media (min-width: 1024px) {
+        .features-section {
+          padding: 7rem 0 8rem;
+        }
+      }
+
+      /* ----------------------------------------
        Mesh Gradient Background
     ---------------------------------------- */
-    .mesh-bg {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      pointer-events: none;
-    }
+      .mesh-bg {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
 
-    .mesh-blob {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.6;
-      will-change: transform;
-    }
+      .mesh-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.6;
+        will-change: transform;
+      }
 
-    .mesh-1 {
-      width: 600px;
-      height: 600px;
-      top: -15%;
-      right: -10%;
-      background: radial-gradient(circle, rgba(231, 92, 62, 0.18) 0%, transparent 70%);
-      animation: meshFloat1 25s ease-in-out infinite;
-    }
+      .mesh-1 {
+        width: 600px;
+        height: 600px;
+        top: -15%;
+        right: -10%;
+        background: radial-gradient(
+          circle,
+          rgba(231, 92, 62, 0.18) 0%,
+          transparent 70%
+        );
+        animation: meshFloat1 25s ease-in-out infinite;
+      }
 
-    .mesh-2 {
-      width: 500px;
-      height: 500px;
-      bottom: 10%;
-      left: -12%;
-      background: radial-gradient(circle, rgba(239, 192, 72, 0.15) 0%, transparent 70%);
-      animation: meshFloat2 30s ease-in-out infinite;
-    }
+      .mesh-2 {
+        width: 500px;
+        height: 500px;
+        bottom: 10%;
+        left: -12%;
+        background: radial-gradient(
+          circle,
+          rgba(239, 192, 72, 0.15) 0%,
+          transparent 70%
+        );
+        animation: meshFloat2 30s ease-in-out infinite;
+      }
 
-    .mesh-3 {
-      width: 400px;
-      height: 400px;
-      top: 45%;
-      right: 25%;
-      background: radial-gradient(circle, rgba(231, 92, 62, 0.1) 0%, transparent 70%);
-      animation: meshFloat3 20s ease-in-out infinite;
-    }
+      .mesh-3 {
+        width: 400px;
+        height: 400px;
+        top: 45%;
+        right: 25%;
+        background: radial-gradient(
+          circle,
+          rgba(231, 92, 62, 0.1) 0%,
+          transparent 70%
+        );
+        animation: meshFloat3 20s ease-in-out infinite;
+      }
 
-    @keyframes meshFloat1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(-40px, 60px) scale(1.1); }
-      66% { transform: translate(30px, -30px) scale(0.95); }
-    }
+      @keyframes meshFloat1 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(-40px, 60px) scale(1.1);
+        }
+        66% {
+          transform: translate(30px, -30px) scale(0.95);
+        }
+      }
 
-    @keyframes meshFloat2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(60px, -40px) scale(1.08); }
-    }
+      @keyframes meshFloat2 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(60px, -40px) scale(1.08);
+        }
+      }
 
-    @keyframes meshFloat3 {
-      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-      50% { transform: translate(-30px, 50px) scale(1.15) rotate(5deg); }
-    }
+      @keyframes meshFloat3 {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1) rotate(0deg);
+        }
+        50% {
+          transform: translate(-30px, 50px) scale(1.15) rotate(5deg);
+        }
+      }
 
-    /* ----------------------------------------
+      /* ----------------------------------------
        Grid Pattern Overlay
     ---------------------------------------- */
-    .grid-pattern {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(231, 92, 62, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(231, 92, 62, 0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-      mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
-      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
-    }
+      .grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(231, 92, 62, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(231, 92, 62, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        mask-image: radial-gradient(
+          ellipse 80% 60% at 50% 30%,
+          black 20%,
+          transparent 70%
+        );
+        -webkit-mask-image: radial-gradient(
+          ellipse 80% 60% at 50% 30%,
+          black 20%,
+          transparent 70%
+        );
+      }
 
-    /* ----------------------------------------
+      /* ----------------------------------------
        Content Container
     ---------------------------------------- */
-    .features-content {
-      position: relative;
-      z-index: 1;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1.25rem;
-    }
-
-    @media (min-width: 640px) {
       .features-content {
-        padding: 0 2rem;
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.25rem;
       }
-    }
 
-    @media (min-width: 1024px) {
-      .features-content {
-        padding: 0 2.5rem;
+      @media (min-width: 640px) {
+        .features-content {
+          padding: 0 2rem;
+        }
       }
-    }
 
-    /* ========================================
-       EDITORIAL HEADER — CENTRADO
+      @media (min-width: 1024px) {
+        .features-content {
+          padding: 0 2.5rem;
+        }
+      }
+
+      /* ========================================
+       EDITORIAL HEADER — ASIMÉTRICO
     ======================================== */
-    .editorial-header {
-      text-align: center;
-      max-width: 700px;
-      margin: 0 auto 3.5rem;
-    }
-
-    @media (min-width: 1024px) {
       .editorial-header {
-        margin-bottom: 4.5rem;
+        position: relative;
+        margin-bottom: 3.5rem;
+        overflow: hidden;
       }
-    }
 
-    /* Eyebrow row */
-    .header-eyebrow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.875rem;
-      margin-bottom: 1.5rem;
-      animation: fadeIn 0.6s ease-out backwards;
-    }
-
-    .eyebrow-line {
-      width: 40px;
-      height: 1.5px;
-      background: linear-gradient(90deg, transparent, rgba(231, 92, 62, 0.55));
-      border-radius: 1px;
-    }
-
-    .eyebrow-line.eyebrow-line-r {
-      background: linear-gradient(90deg, rgba(231, 92, 62, 0.55), transparent);
-    }
-
-    .eyebrow-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: #e75c3e;
-    }
-
-    .mega-title {
-      font-family: "kengoFont", system-ui, sans-serif;
-      font-size: clamp(2.5rem, 7vw, 4.5rem);
-      font-weight: 400;
-      line-height: 0.95;
-      color: #1a1a1a;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.25rem;
-      animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s backwards;
-    }
-
-    .title-line {
-      display: block;
-    }
-
-    .title-line.accent {
-      color: #e75c3e;
-      position: relative;
-    }
-
-    .title-line.accent::after {
-      content: '';
-      position: absolute;
-      bottom: 0.05em;
-      left: 0;
-      width: 100%;
-      height: 0.08em;
-      background: linear-gradient(90deg, rgba(231, 92, 62, 0.3), rgba(239, 192, 72, 0.2));
-      border-radius: 4px;
-      transform: scaleX(0);
-      transform-origin: center;
-      animation: lineGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
-    }
-
-    @keyframes lineGrow {
-      to { transform: scaleX(1); }
-    }
-
-    .header-description {
-      font-size: 1.0625rem;
-      line-height: 1.7;
-      color: #64748b;
-      max-width: 460px;
-      margin: 0 auto 1.5rem;
-      animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
-    }
-
-    .stat-pill {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.06) 100%);
-      border: 1px solid rgba(231, 92, 62, 0.15);
-      border-radius: 100px;
-      margin-bottom: 2rem;
-      animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards;
-    }
-
-    .stat-number {
-      font-family: "kengoFont", system-ui, sans-serif;
-      font-size: 1.5rem;
-      color: #e75c3e;
-    }
-
-    .stat-text {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #94a3b8;
-      letter-spacing: 0.02em;
-    }
-
-    .header-divider {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      animation: fadeIn 0.6s ease-out 0.4s backwards;
-    }
-
-    .divider-line {
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, rgba(231, 92, 62, 0.2), rgba(231, 92, 62, 0.05));
-    }
-
-    .divider-dot {
-      width: 6px;
-      height: 6px;
-      background: #e75c3e;
-      border-radius: 50%;
-      animation: dotPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes dotPulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.4); opacity: 0.6; }
-    }
-
-    /* ========================================
-       BENTO GRID
-    ======================================== */
-    .bento-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    @media (min-width: 640px) {
-      .bento-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.25rem;
+      @media (min-width: 1024px) {
+        .editorial-header {
+          margin-bottom: 4.5rem;
+        }
       }
-    }
 
-    @media (min-width: 1024px) {
-      .bento-grid {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: auto auto;
+      /* Número decorativo de fondo */
+      .header-bg-text {
+        position: absolute;
+        top: -0.2em;
+        right: -0.05em;
+        font-family: 'kengoFont', system-ui, sans-serif;
+        font-size: clamp(8rem, 20vw, 16rem);
+        font-weight: 400;
+        line-height: 1;
+        color: transparent;
+        -webkit-text-stroke: 1.5px rgba(231, 92, 62, 0.07);
+        pointer-events: none;
+        user-select: none;
+        letter-spacing: -0.04em;
+      }
+
+      /* Columnas dos-tercios / un-tercio */
+      .header-columns {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding-bottom: 2rem;
+      }
+
+      @media (min-width: 1024px) {
+        .header-columns {
+          flex-direction: row;
+          align-items: center;
+          gap: 5rem;
+        }
+      }
+
+      .header-left {
+        flex: 1;
+      }
+
+      .header-right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
         gap: 1.5rem;
-      }
-    }
-
-    /* ========================================
-       BENTO CARD BASE
-    ======================================== */
-    .bento-card {
-      position: relative;
-      border-radius: 24px;
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.65);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.02),
-        0 4px 16px rgba(0, 0, 0, 0.04);
-      transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-      animation: cardReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-    }
-
-    .bento-card.featured {
-      box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.02),
-        0 4px 16px rgba(0, 0, 0, 0.04),
-        inset 0 0 0 1px rgba(231, 92, 62, 0.08);
-    }
-
-    .bento-card:nth-child(1) { animation-delay: 0.1s; }
-    .bento-card:nth-child(2) { animation-delay: 0.15s; }
-    .bento-card:nth-child(3) { animation-delay: 0.2s; }
-    .bento-card:nth-child(4) { animation-delay: 0.25s; }
-    .bento-card:nth-child(5) { animation-delay: 0.3s; }
-    .bento-card:nth-child(6) { animation-delay: 0.35s; }
-
-    @keyframes cardReveal {
-      from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.96);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .bento-card:hover {
-      transform: translateY(-8px);
-      background: rgba(255, 255, 255, 0.85);
-      border-color: rgba(231, 92, 62, 0.15);
-      box-shadow:
-        0 4px 8px rgba(0, 0, 0, 0.02),
-        0 16px 48px rgba(231, 92, 62, 0.12),
-        0 8px 24px rgba(0, 0, 0, 0.06);
-    }
-
-    .bento-card.featured:hover {
-      box-shadow:
-        0 4px 8px rgba(0, 0, 0, 0.02),
-        0 20px 60px rgba(231, 92, 62, 0.18),
-        0 8px 24px rgba(0, 0, 0, 0.06),
-        inset 0 0 0 1px rgba(231, 92, 62, 0.2);
-    }
-
-    .card-inner {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      padding: 1.75rem;
-    }
-
-    @media (min-width: 1024px) {
-      .card-inner {
-        padding: 2rem;
-      }
-    }
-
-    /* Card Number */
-    .card-number {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
-      font-family: "kengoFont", system-ui, sans-serif;
-      font-size: 0.875rem;
-      color: rgba(231, 92, 62, 0.2);
-      transition: all 0.4s ease;
-    }
-
-    .bento-card:hover .card-number {
-      color: rgba(231, 92, 62, 0.4);
-      transform: translateX(-4px);
-    }
-
-    /* ----------------------------------------
-       Card Visual Area
-    ---------------------------------------- */
-    .card-visual {
-      margin-bottom: 1.5rem;
-    }
-
-    /* ----------------------------------------
-       Card Content
-    ---------------------------------------- */
-    .card-content {
-      margin-top: auto;
-    }
-
-    .card-badge {
-      display: inline-block;
-      padding: 0.375rem 0.875rem;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #e75c3e;
-      background: rgba(231, 92, 62, 0.08);
-      border-radius: 100px;
-      margin-bottom: 0.875rem;
-    }
-
-    .card-badge.gold {
-      color: #b8860b;
-      background: rgba(239, 192, 72, 0.12);
-    }
-
-    .card-badge.green {
-      color: #16a34a;
-      background: rgba(34, 197, 94, 0.1);
-    }
-
-    .card-badge.blue {
-      color: #2563eb;
-      background: rgba(59, 130, 246, 0.1);
-    }
-
-    .card-badge.purple {
-      color: #7c3aed;
-      background: rgba(139, 92, 246, 0.1);
-    }
-
-    .card-badge.pink {
-      color: #db2777;
-      background: rgba(236, 72, 153, 0.1);
-    }
-
-    .card-title {
-      font-family: "kengoFont", system-ui, sans-serif;
-      font-size: 1.375rem;
-      font-weight: 400;
-      color: #1a1a1a;
-      margin-bottom: 0.625rem;
-      line-height: 1.2;
-      transition: color 0.3s ease;
-    }
-
-
-    .bento-card:hover .card-title {
-      color: #e75c3e;
-    }
-
-    .card-description {
-      font-size: 0.9375rem;
-      line-height: 1.6;
-      color: #64748b;
-    }
-
-    /* ========================================
-       FEATURE-SPECIFIC VISUALS
-    ======================================== */
-
-    /* Exercise Slideshow */
-    .exercise-slideshow {
-      position: relative;
-      display: grid;
-      border-radius: 16px;
-      overflow: hidden;
-      width: 100%;
-      max-width: 220px;
-      margin: 0 auto;
-    }
-
-    @media (min-width: 1024px) {
-      .exercise-slideshow {
-        max-width: 260px;
-      }
-    }
-
-    .slide-img {
-      grid-area: 1 / 1;
-      width: 100%;
-      height: auto;
-      display: block;
-      opacity: 0;
-      transition: opacity 0.8s ease-in-out;
-    }
-
-    .slide-img.active {
-      opacity: 1;
-    }
-
-    .slide-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        transparent 55%,
-        rgba(0, 0, 0, 0.35) 100%
-      );
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .slide-dots {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 6px;
-      z-index: 2;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.5);
-      transition: all 0.3s ease;
-    }
-
-    .dot.active {
-      background: #e75c3e;
-      width: 18px;
-      border-radius: 3px;
-    }
-
-    /* Calendar Visual */
-    .calendar-visual {
-      padding: 0.75rem 0;
-    }
-
-    .calendar-month-label {
-      text-align: center;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #94a3b8;
-      margin-bottom: 0.625rem;
-    }
-
-    .week-row {
-      display: flex;
-      justify-content: center;
-      gap: 0.375rem;
-      margin-bottom: 0.375rem;
-    }
-
-    .week-row.dimmed .day-cell {
-      opacity: 0.45;
-    }
-
-    .week-row.dimmed .day-cell.active {
-      opacity: 0.6;
-    }
-
-    .day-cell {
-      width: 32px;
-      height: 38px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.2rem;
-      background: rgba(255, 255, 255, 0.5);
-      border: 1px solid rgba(0, 0, 0, 0.04);
-      border-radius: 8px;
-      transition: all 0.3s ease;
-    }
-
-    .day-cell.active {
-      background: linear-gradient(135deg, rgba(231, 92, 62, 0.1) 0%, rgba(239, 192, 72, 0.05) 100%);
-      border-color: rgba(231, 92, 62, 0.15);
-    }
-
-    .day-cell.today {
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
-      border-color: transparent;
-      box-shadow: 0 4px 12px rgba(231, 92, 62, 0.3);
-    }
-
-    .day-letter {
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: #64748b;
-    }
-
-    .day-cell.today .day-letter {
-      color: white;
-    }
-
-    .day-cell.active .day-letter {
-      color: #e75c3e;
-    }
-
-    .day-dot {
-      width: 4px;
-      height: 4px;
-      background: #e75c3e;
-      border-radius: 50%;
-    }
-
-    .day-cell.today .day-dot {
-      background: white;
-    }
-
-    .bento-card:hover .day-cell.active {
-      transform: translateY(-2px);
-    }
-
-    /* Chart Visual */
-    .chart-visual {
-      position: relative;
-      padding: 1rem 0;
-    }
-
-    .mini-chart {
-      width: 100%;
-      height: 80px;
-    }
-
-    .chart-line {
-      stroke-dasharray: 250;
-      stroke-dashoffset: 250;
-      animation: drawLine 1.5s ease-out 0.5s forwards;
-    }
-
-    @keyframes drawLine {
-      to { stroke-dashoffset: 0; }
-    }
-
-    .chart-dot {
-      opacity: 0;
-      animation: dotAppear 0.3s ease-out 1.8s forwards;
-    }
-
-    @keyframes dotAppear {
-      to { opacity: 1; }
-    }
-
-    .trend-badge {
-      position: absolute;
-      top: 0;
-      right: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      padding: 0.5rem 1rem;
-      background: rgba(34, 197, 94, 0.1);
-      border-radius: 100px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #16a34a;
-    }
-
-    .trend-badge svg {
-      width: 14px;
-      height: 14px;
-    }
-
-    /* Notification Visual */
-    .notification-visual {
-      padding: 1rem 0;
-      display: flex;
-      justify-content: center;
-    }
-
-    .notif-card {
-      position: relative;
-      display: flex;
-      align-items: center;
-      gap: 0.875rem;
-      padding: 0.875rem 1.25rem;
-      background: white;
-      border-radius: 14px;
-      box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.06),
-        0 8px 24px rgba(0, 0, 0, 0.08);
-      transition: transform 0.3s ease;
-    }
-
-    .bento-card:hover .notif-card {
-      transform: translateX(4px);
-    }
-
-    .notif-icon {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
-      border-radius: 10px;
-    }
-
-    .notif-icon svg {
-      width: 18px;
-      height: 18px;
-      color: #3b82f6;
-    }
-
-    .notif-content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.125rem;
-    }
-
-    .notif-title {
-      font-size: 0.8125rem;
-      font-weight: 700;
-      color: #1a1a1a;
-    }
-
-    .notif-time {
-      font-size: 0.6875rem;
-      color: #94a3b8;
-    }
-
-    .notif-pulse {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 12px;
-      height: 12px;
-      background: #ef4444;
-      border: 2px solid white;
-      border-radius: 50%;
-      animation: notifPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes notifPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-    }
-
-    /* Clinics Visual */
-    .clinics-visual {
-      position: relative;
-      height: 120px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .clinic-node {
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    .clinic-node.main {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
-      box-shadow: 0 4px 20px rgba(231, 92, 62, 0.35);
-      z-index: 2;
-    }
-
-    .clinic-node.main svg {
-      width: 24px;
-      height: 24px;
-      color: white;
-    }
-
-    .clinic-node.sub {
-      width: 40px;
-      height: 40px;
-      background: white;
-      border: 2px solid rgba(231, 92, 62, 0.15);
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .clinic-node.sub svg {
-      width: 18px;
-      height: 18px;
-      color: #64748b;
-    }
-
-    .clinic-node.node-1 {
-      left: calc(50% - 90px);
-      top: calc(50% - 35px);
-    }
-
-    .clinic-node.node-2 {
-      right: calc(50% - 90px);
-      top: calc(50% - 35px);
-    }
-
-    .clinic-node.node-3 {
-      left: calc(50% - 90px);
-      top: calc(50% + 5px);
-    }
-
-    .clinic-node.node-4 {
-      right: calc(50% - 90px);
-      top: calc(50% + 5px);
-    }
-
-    .clinic-connections {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-    }
-
-    .connection-line {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 44px;
-      height: 2px;
-      background: linear-gradient(90deg, rgba(231, 92, 62, 0.5), rgba(231, 92, 62, 0.1));
-      border-radius: 1px;
-      transform-origin: left center;
-      animation: linePulse 2s ease-in-out infinite;
-    }
-
-    .connection-line.line-1 {
-      transform: rotate(-145deg) translateY(-50%);
-      animation-delay: 0s;
-    }
-
-    .connection-line.line-2 {
-      transform: rotate(-35deg) translateY(-50%);
-      animation-delay: 0.5s;
-    }
-
-    .connection-line.line-3 {
-      transform: rotate(-215deg) translateY(-50%);
-      animation-delay: 1s;
-    }
-
-    .connection-line.line-4 {
-      transform: rotate(-325deg) translateY(-50%);
-      animation-delay: 1.5s;
-    }
-
-    @keyframes linePulse {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.9; }
-    }
-
-    .bento-card:hover .clinic-node.main {
-      transform: scale(1.1);
-    }
-
-    .bento-card:hover .clinic-node.sub {
-      border-color: rgba(231, 92, 62, 0.3);
-    }
-
-    .bento-card:hover .clinic-node.node-1 {
-      transform: translate(-4px, -4px);
-    }
-
-    .bento-card:hover .clinic-node.node-2 {
-      transform: translate(4px, -4px);
-    }
-
-    .bento-card:hover .clinic-node.node-3 {
-      transform: translate(-4px, 4px);
-    }
-
-    .bento-card:hover .clinic-node.node-4 {
-      transform: translate(4px, 4px);
-    }
-
-    /* Code Visual */
-    .code-visual {
-      padding: 1rem 0;
-    }
-
-    .code-display {
-      display: flex;
-      justify-content: center;
-      gap: 0.375rem;
-      margin-bottom: 1rem;
-    }
-
-    .code-char {
-      width: 28px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: white;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 8px;
-      font-family: "kengoFont", monospace;
-      font-size: 1rem;
-      font-weight: 700;
-      color: #1a1a1a;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      transition: all 0.3s ease;
-    }
-
-    .code-char.accent {
-      background: linear-gradient(135deg, rgba(231, 92, 62, 0.08) 0%, rgba(239, 192, 72, 0.04) 100%);
-      border-color: rgba(231, 92, 62, 0.12);
-      color: #e75c3e;
-    }
-
-    .bento-card:hover .code-char {
-      transform: translateY(-2px);
-    }
-
-    .bento-card:hover .code-char:nth-child(1) { transition-delay: 0s; }
-    .bento-card:hover .code-char:nth-child(2) { transition-delay: 0.02s; }
-    .bento-card:hover .code-char:nth-child(3) { transition-delay: 0.04s; }
-    .bento-card:hover .code-char:nth-child(4) { transition-delay: 0.06s; }
-    .bento-card:hover .code-char:nth-child(5) { transition-delay: 0.08s; }
-    .bento-card:hover .code-char:nth-child(6) { transition-delay: 0.1s; }
-    .bento-card:hover .code-char:nth-child(7) { transition-delay: 0.12s; }
-    .bento-card:hover .code-char:nth-child(8) { transition-delay: 0.14s; }
-
-    .code-label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #16a34a;
-    }
-
-    .code-label svg {
-      width: 14px;
-      height: 14px;
-    }
-
-    /* ========================================
-       ANIMATIONS
-    ======================================== */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ========================================
-       REDUCED MOTION
-    ======================================== */
-    @media (prefers-reduced-motion: reduce) {
-      .mesh-blob,
-      .bento-card,
-      .chart-line,
-      .chart-dot,
-      .slide-img,
-      .notif-pulse,
-      .divider-dot,
-      .connection-line {
-        animation: none;
+        padding-bottom: 0.25rem;
       }
 
-      .bento-card {
-        animation: none;
-        opacity: 1;
-        transform: none;
+      /* Eyebrow */
+      .header-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        margin-bottom: 1.25rem;
+        animation: fadeIn 0.6s ease-out backwards;
       }
 
-      .header-eyebrow,
-      .mega-title,
-      .header-description,
-      .stat-pill,
-      .header-divider {
-        animation: none;
-        opacity: 1;
-        transform: none;
+      .eyebrow-dot {
+        width: 7px;
+        height: 7px;
+        background: #e75c3e;
+        border-radius: 50%;
+        flex-shrink: 0;
+        animation: dotPulse 2.5s ease-in-out infinite;
+      }
+
+      .eyebrow-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #e75c3e;
+      }
+
+      /* Título principal */
+      .mega-title {
+        font-family: 'kengoFont', system-ui, sans-serif;
+        font-size: clamp(2.6rem, 7.5vw, 5rem);
+        font-weight: 400;
+        line-height: 0.93;
+        color: #1a1a1a;
+        letter-spacing: -0.025em;
+        animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s backwards;
+      }
+
+      .title-line {
+        display: block;
+      }
+
+      .title-line.accent {
+        color: #e75c3e;
+        position: relative;
       }
 
       .title-line.accent::after {
-        animation: none;
-        transform: scaleX(1);
+        content: '';
+        position: absolute;
+        bottom: 0.05em;
+        left: 0;
+        width: 100%;
+        height: 0.07em;
+        background: linear-gradient(
+          90deg,
+          rgba(231, 92, 62, 0.35),
+          rgba(239, 192, 72, 0.15)
+        );
+        border-radius: 4px;
+        transform: scaleX(0);
+        transform-origin: left;
+        animation: lineGrow 1s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards;
       }
-    }
-  `]
+
+      @keyframes lineGrow {
+        to {
+          transform: scaleX(1);
+        }
+      }
+
+      /* Descripción */
+      .header-description {
+        font-size: 1rem;
+        line-height: 1.75;
+        color: #64748b;
+        animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
+      }
+
+      /* Feature tags */
+      .feature-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards;
+      }
+
+      .ftag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.875rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #1a1a1a;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        border-radius: 100px;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+      }
+
+      .ftag:hover {
+        background: rgba(231, 92, 62, 0.06);
+        border-color: rgba(231, 92, 62, 0.2);
+        color: #e75c3e;
+      }
+
+      /* Divisor inferior */
+      .header-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        animation: fadeIn 0.6s ease-out 0.45s backwards;
+      }
+
+      .divider-line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          rgba(231, 92, 62, 0.22),
+          rgba(231, 92, 62, 0.04)
+        );
+      }
+
+      .divider-dot {
+        width: 6px;
+        height: 6px;
+        background: #e75c3e;
+        border-radius: 50%;
+        animation: dotPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes dotPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.5);
+          opacity: 0.55;
+        }
+      }
+
+      /* ========================================
+       BENTO GRID
+    ======================================== */
+      .bento-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      @media (min-width: 640px) {
+        .bento-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.25rem;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .bento-grid {
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: auto auto;
+          gap: 1.5rem;
+        }
+      }
+
+      /* ========================================
+       BENTO CARD BASE
+    ======================================== */
+      .bento-card {
+        position: relative;
+        border-radius: 24px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.65);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.02),
+          0 4px 16px rgba(0, 0, 0, 0.04);
+        transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        animation: cardReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+      }
+
+      .bento-card.featured {
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.02),
+          0 4px 16px rgba(0, 0, 0, 0.04),
+          inset 0 0 0 1px rgba(231, 92, 62, 0.08);
+      }
+
+      .bento-card:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .bento-card:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .bento-card:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .bento-card:nth-child(4) {
+        animation-delay: 0.25s;
+      }
+      .bento-card:nth-child(5) {
+        animation-delay: 0.3s;
+      }
+      .bento-card:nth-child(6) {
+        animation-delay: 0.35s;
+      }
+
+      @keyframes cardReveal {
+        from {
+          opacity: 0;
+          transform: translateY(30px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .bento-card:hover {
+        transform: translateY(-8px);
+        background: rgba(255, 255, 255, 0.85);
+        border-color: rgba(231, 92, 62, 0.15);
+        box-shadow:
+          0 4px 8px rgba(0, 0, 0, 0.02),
+          0 16px 48px rgba(231, 92, 62, 0.12),
+          0 8px 24px rgba(0, 0, 0, 0.06);
+      }
+
+      .bento-card.featured:hover {
+        box-shadow:
+          0 4px 8px rgba(0, 0, 0, 0.02),
+          0 20px 60px rgba(231, 92, 62, 0.18),
+          0 8px 24px rgba(0, 0, 0, 0.06),
+          inset 0 0 0 1px rgba(231, 92, 62, 0.2);
+      }
+
+      .card-inner {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 1.75rem;
+      }
+
+      @media (min-width: 1024px) {
+        .card-inner {
+          padding: 2rem;
+        }
+      }
+
+      /* Card Number */
+      .card-number {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-family: 'kengoFont', system-ui, sans-serif;
+        font-size: 0.875rem;
+        color: rgba(231, 92, 62, 0.2);
+        transition: all 0.4s ease;
+      }
+
+      .bento-card:hover .card-number {
+        color: rgba(231, 92, 62, 0.4);
+        transform: translateX(-4px);
+      }
+
+      /* ----------------------------------------
+       Card Visual Area — altura fija uniforme
+    ---------------------------------------- */
+      .card-visual {
+        height: 160px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      @media (min-width: 640px) {
+        .card-visual {
+          height: 175px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .card-visual {
+          height: 185px;
+        }
+      }
+
+      /* ----------------------------------------
+       Card Content
+    ---------------------------------------- */
+      .card-content {
+        margin-top: auto;
+      }
+
+      .card-badge {
+        display: inline-block;
+        padding: 0.375rem 0.875rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #e75c3e;
+        background: rgba(231, 92, 62, 0.08);
+        border-radius: 100px;
+        margin-bottom: 0.875rem;
+      }
+
+      .card-badge.gold {
+        color: #b8860b;
+        background: rgba(239, 192, 72, 0.12);
+      }
+
+      .card-badge.green {
+        color: #16a34a;
+        background: rgba(34, 197, 94, 0.1);
+      }
+
+      .card-badge.blue {
+        color: #2563eb;
+        background: rgba(59, 130, 246, 0.1);
+      }
+
+      .card-badge.purple {
+        color: #7c3aed;
+        background: rgba(139, 92, 246, 0.1);
+      }
+
+      .card-badge.pink {
+        color: #db2777;
+        background: rgba(236, 72, 153, 0.1);
+      }
+
+      .card-title {
+        font-family: 'kengoFont', system-ui, sans-serif;
+        font-size: 1.375rem;
+        font-weight: 400;
+        color: #1a1a1a;
+        margin-bottom: 0.625rem;
+        line-height: 1.2;
+        transition: color 0.3s ease;
+      }
+
+      .bento-card:hover .card-title {
+        color: #e75c3e;
+      }
+
+      .card-description {
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        color: #64748b;
+      }
+
+      /* ========================================
+       FEATURE-SPECIFIC VISUALS
+    ======================================== */
+
+      /* Exercise Slideshow */
+      .exercise-slideshow {
+        position: relative;
+        display: grid;
+        border-radius: 16px;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+      }
+
+      .slide-img {
+        grid-area: 1 / 1;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        display: block;
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+      }
+
+      .slide-img.active {
+        opacity: 1;
+      }
+
+      .slide-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 55%,
+          rgba(0, 0, 0, 0.35) 100%
+        );
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .slide-dots {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        z-index: 2;
+      }
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transition: all 0.3s ease;
+      }
+
+      .dot.active {
+        background: #e75c3e;
+        width: 18px;
+        border-radius: 3px;
+      }
+
+      /* Calendar Visual */
+      .calendar-visual {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0;
+      }
+
+      .calendar-month-label {
+        text-align: center;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 0.625rem;
+      }
+
+      .week-row {
+        display: flex;
+        justify-content: center;
+        gap: 0.375rem;
+        margin-bottom: 0.375rem;
+      }
+
+      .week-row.dimmed .day-cell {
+        opacity: 0.45;
+      }
+
+      .week-row.dimmed .day-cell.active {
+        opacity: 0.6;
+      }
+
+      .day-cell {
+        width: 32px;
+        height: 38px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .day-cell.active {
+        background: linear-gradient(
+          135deg,
+          rgba(231, 92, 62, 0.1) 0%,
+          rgba(239, 192, 72, 0.05) 100%
+        );
+        border-color: rgba(231, 92, 62, 0.15);
+      }
+
+      .day-cell.today {
+        background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(231, 92, 62, 0.3);
+      }
+
+      .day-letter {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: #64748b;
+      }
+
+      .day-cell.today .day-letter {
+        color: white;
+      }
+
+      .day-cell.active .day-letter {
+        color: #e75c3e;
+      }
+
+      .day-dot {
+        width: 4px;
+        height: 4px;
+        background: #e75c3e;
+        border-radius: 50%;
+      }
+
+      .day-cell.today .day-dot {
+        background: white;
+      }
+
+      .bento-card:hover .day-cell.active {
+        transform: translateY(-2px);
+      }
+
+      /* Chart Visual */
+      .chart-visual {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+      }
+
+      .mini-chart {
+        width: 100%;
+        height: 100%;
+        flex: 1;
+      }
+
+      .chart-line {
+        stroke-dasharray: 250;
+        stroke-dashoffset: 250;
+        animation: drawLine 1.5s ease-out 0.5s forwards;
+      }
+
+      @keyframes drawLine {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      .chart-dot {
+        opacity: 0;
+        animation: dotAppear 0.3s ease-out 1.8s forwards;
+      }
+
+      @keyframes dotAppear {
+        to {
+          opacity: 1;
+        }
+      }
+
+      .trend-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        background: rgba(34, 197, 94, 0.1);
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #16a34a;
+      }
+
+      .trend-badge svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* Notification Visual */
+      .notification-visual {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .notif-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.875rem 1.25rem;
+        background: white;
+        border-radius: 14px;
+        box-shadow:
+          0 2px 8px rgba(0, 0, 0, 0.06),
+          0 8px 24px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease;
+      }
+
+      .bento-card:hover .notif-card {
+        transform: translateX(4px);
+      }
+
+      .notif-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+          135deg,
+          rgba(59, 130, 246, 0.1) 0%,
+          rgba(99, 102, 241, 0.05) 100%
+        );
+        border-radius: 10px;
+      }
+
+      .notif-icon svg {
+        width: 18px;
+        height: 18px;
+        color: #3b82f6;
+      }
+
+      .notif-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+      }
+
+      .notif-title {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #1a1a1a;
+      }
+
+      .notif-time {
+        font-size: 0.6875rem;
+        color: #94a3b8;
+      }
+
+      .notif-pulse {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 12px;
+        height: 12px;
+        background: #ef4444;
+        border: 2px solid white;
+        border-radius: 50%;
+        animation: notifPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes notifPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+
+      /* Clinics Visual */
+      .clinics-visual {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .clinic-node {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .clinic-node.main {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #e75c3e 0%, #d14d30 100%);
+        box-shadow: 0 4px 20px rgba(231, 92, 62, 0.35);
+        z-index: 2;
+      }
+
+      .clinic-node.main svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+      }
+
+      .clinic-node.sub {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 2px solid rgba(231, 92, 62, 0.15);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .clinic-node.sub svg {
+        width: 18px;
+        height: 18px;
+        color: #64748b;
+      }
+
+      .clinic-node.node-1 {
+        left: calc(50% - 90px);
+        top: calc(50% - 35px);
+      }
+
+      .clinic-node.node-2 {
+        right: calc(50% - 90px);
+        top: calc(50% - 35px);
+      }
+
+      .clinic-node.node-3 {
+        left: calc(50% - 90px);
+        top: calc(50% + 5px);
+      }
+
+      .clinic-node.node-4 {
+        right: calc(50% - 90px);
+        top: calc(50% + 5px);
+      }
+
+      .clinic-connections {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+
+      .connection-line {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 44px;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          rgba(231, 92, 62, 0.5),
+          rgba(231, 92, 62, 0.1)
+        );
+        border-radius: 1px;
+        transform-origin: left center;
+        animation: linePulse 2s ease-in-out infinite;
+      }
+
+      .connection-line.line-1 {
+        transform: rotate(-145deg) translateY(-50%);
+        animation-delay: 0s;
+      }
+
+      .connection-line.line-2 {
+        transform: rotate(-35deg) translateY(-50%);
+        animation-delay: 0.5s;
+      }
+
+      .connection-line.line-3 {
+        transform: rotate(-215deg) translateY(-50%);
+        animation-delay: 1s;
+      }
+
+      .connection-line.line-4 {
+        transform: rotate(-325deg) translateY(-50%);
+        animation-delay: 1.5s;
+      }
+
+      @keyframes linePulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.9;
+        }
+      }
+
+      .bento-card:hover .clinic-node.main {
+        transform: scale(1.1);
+      }
+
+      .bento-card:hover .clinic-node.sub {
+        border-color: rgba(231, 92, 62, 0.3);
+      }
+
+      .bento-card:hover .clinic-node.node-1 {
+        transform: translate(-4px, -4px);
+      }
+
+      .bento-card:hover .clinic-node.node-2 {
+        transform: translate(4px, -4px);
+      }
+
+      .bento-card:hover .clinic-node.node-3 {
+        transform: translate(-4px, 4px);
+      }
+
+      .bento-card:hover .clinic-node.node-4 {
+        transform: translate(4px, 4px);
+      }
+
+      /* Code Visual */
+      .code-visual {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0;
+      }
+
+      .code-display {
+        display: flex;
+        justify-content: center;
+        gap: 0.375rem;
+        margin-bottom: 1rem;
+      }
+
+      .code-char {
+        width: 28px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 8px;
+        font-family: 'kengoFont', monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s ease;
+      }
+
+      .code-char.accent {
+        background: linear-gradient(
+          135deg,
+          rgba(231, 92, 62, 0.08) 0%,
+          rgba(239, 192, 72, 0.04) 100%
+        );
+        border-color: rgba(231, 92, 62, 0.12);
+        color: #e75c3e;
+      }
+
+      .bento-card:hover .code-char {
+        transform: translateY(-2px);
+      }
+
+      .bento-card:hover .code-char:nth-child(1) {
+        transition-delay: 0s;
+      }
+      .bento-card:hover .code-char:nth-child(2) {
+        transition-delay: 0.02s;
+      }
+      .bento-card:hover .code-char:nth-child(3) {
+        transition-delay: 0.04s;
+      }
+      .bento-card:hover .code-char:nth-child(4) {
+        transition-delay: 0.06s;
+      }
+      .bento-card:hover .code-char:nth-child(5) {
+        transition-delay: 0.08s;
+      }
+      .bento-card:hover .code-char:nth-child(6) {
+        transition-delay: 0.1s;
+      }
+      .bento-card:hover .code-char:nth-child(7) {
+        transition-delay: 0.12s;
+      }
+      .bento-card:hover .code-char:nth-child(8) {
+        transition-delay: 0.14s;
+      }
+
+      .code-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #16a34a;
+      }
+
+      .code-label svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ========================================
+       ANIMATIONS
+    ======================================== */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ========================================
+       REDUCED MOTION
+    ======================================== */
+      @media (prefers-reduced-motion: reduce) {
+        .mesh-blob,
+        .bento-card,
+        .chart-line,
+        .chart-dot,
+        .slide-img,
+        .notif-pulse,
+        .divider-dot,
+        .connection-line {
+          animation: none;
+        }
+
+        .bento-card {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+
+        .header-eyebrow,
+        .mega-title,
+        .header-description,
+        .feature-tags,
+        .header-divider {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+
+        .eyebrow-dot {
+          animation: none;
+        }
+
+        .title-line.accent::after {
+          animation: none;
+          transform: scaleX(1);
+        }
+      }
+    `,
+  ],
 })
 export class FeaturesComponent implements OnDestroy {
   exerciseImages = [
@@ -1270,7 +1553,7 @@ export class FeaturesComponent implements OnDestroy {
   ];
   currentSlide = signal(0);
   private slideInterval = setInterval(() => {
-    this.currentSlide.update(i => (i + 1) % this.exerciseImages.length);
+    this.currentSlide.update((i) => (i + 1) % this.exerciseImages.length);
   }, 2500);
 
   ngOnDestroy() {
@@ -1278,31 +1561,31 @@ export class FeaturesComponent implements OnDestroy {
   }
 
   weekDaysPrev = [
-    { letter: 'L', active: true,  today: false },
+    { letter: 'L', active: true, today: false },
     { letter: 'M', active: false, today: false },
-    { letter: 'X', active: true,  today: false },
+    { letter: 'X', active: true, today: false },
     { letter: 'J', active: false, today: false },
-    { letter: 'V', active: true,  today: false },
+    { letter: 'V', active: true, today: false },
     { letter: 'S', active: false, today: false },
     { letter: 'D', active: false, today: false },
   ];
 
   weekDays = [
-    { letter: 'L', active: true,  today: false },
-    { letter: 'M', active: true,  today: false },
+    { letter: 'L', active: true, today: false },
+    { letter: 'M', active: true, today: false },
     { letter: 'X', active: false, today: false },
-    { letter: 'J', active: true,  today: true  },
-    { letter: 'V', active: true,  today: false },
+    { letter: 'J', active: true, today: true },
+    { letter: 'V', active: true, today: false },
     { letter: 'S', active: false, today: false },
     { letter: 'D', active: false, today: false },
   ];
 
   weekDaysNext = [
     { letter: 'L', active: false, today: false },
-    { letter: 'M', active: true,  today: false },
-    { letter: 'X', active: true,  today: false },
+    { letter: 'M', active: true, today: false },
+    { letter: 'X', active: true, today: false },
     { letter: 'J', active: false, today: false },
-    { letter: 'V', active: true,  today: false },
+    { letter: 'V', active: true, today: false },
     { letter: 'S', active: false, today: false },
     { letter: 'D', active: false, today: false },
   ];

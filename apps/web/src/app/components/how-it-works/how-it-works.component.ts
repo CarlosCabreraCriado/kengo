@@ -22,7 +22,7 @@ import { CommonModule } from '@angular/common';
           </div>
 
           <h2 class="section-title">
-            <span class="title-line">Tu recuperacion,</span>
+            <span class="title-line">Tu recuperación,</span>
             <span class="title-accent">paso a paso</span>
           </h2>
 
