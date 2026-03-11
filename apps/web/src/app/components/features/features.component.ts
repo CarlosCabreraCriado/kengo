@@ -143,7 +143,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   semana.
                 </p>
               </div>
-              <div class="card-number">02</div>
             </div>
           </article>
 
@@ -179,7 +178,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   Notificaciones inteligentes para que nunca olviden su rutina.
                 </p>
               </div>
-              <div class="card-number">04</div>
             </div>
           </article>
 
@@ -199,16 +197,28 @@ import { Component, signal, OnDestroy } from '@angular/core';
                         <stop offset="50%" stop-color="#efc048"/>
                         <stop offset="100%" stop-color="#16a34a"/>
                       </linearGradient>
+                      <filter id="movingDotGlow" x="-60%" y="-60%" width="220%" height="220%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+                        <feMerge>
+                          <feMergeNode in="blur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
                     </defs>
-                    <polyline class="pj-steps"
-                      points="25,10 68,10 68,32 108,32 108,54 150,54 150,70 215,70"
+                    <path id="painCurve" class="pj-curve"
+                      d="M 25,10 C 80,10 160,70 215,70"
                       stroke="url(#painLineGrad)" stroke-width="2.5"
-                      stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+                      stroke-linecap="round" fill="none" pathLength="1"/>
                     <circle class="pj-dot d1" cx="25"  cy="10" r="4"   fill="#e75c3e"/>
-                    <circle class="pj-dot d2" cx="68"  cy="32" r="3"   fill="#e0863d"/>
-                    <circle class="pj-dot d3" cx="108" cy="54" r="3"   fill="#efc048"/>
-                    <circle class="pj-dot d4" cx="150" cy="70" r="3"   fill="#6db85c"/>
                     <circle class="pj-dot d5" cx="215" cy="70" r="4.5" fill="#16a34a"/>
+                    <circle r="5" fill="white" stroke="#e75c3e" stroke-width="2" filter="url(#movingDotGlow)" opacity="0">
+                      <animate attributeName="opacity" values="0;1" dur="0.01s" begin="2.3s" fill="freeze"/>
+                      <animate attributeName="stroke" values="#e75c3e;#efc048;#16a34a" dur="6s" repeatCount="indefinite" begin="2.3s" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+                      <animateMotion dur="6s" repeatCount="indefinite" begin="2.3s"
+                        calcMode="spline" keyTimes="0;1" keySplines="0.42 0 0.58 1">
+                        <mpath href="#painCurve"/>
+                      </animateMotion>
+                    </circle>
                   </svg>
                   <div class="pj-end">
                     <span class="pj-num green">2</span>
@@ -224,7 +234,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   tratamiento.
                 </p>
               </div>
-              <div class="card-number">03</div>
             </div>
           </article>
 
@@ -267,7 +276,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   caracteres.
                 </p>
               </div>
-              <div class="card-number">05</div>
             </div>
           </article>
 
@@ -319,11 +327,10 @@ import { Component, signal, OnDestroy } from '@angular/core';
                 <div class="card-badge purple">Escalable</div>
                 <h3 class="card-title">Gestión multi-clínica</h3>
                 <p class="card-description">
-                  Una cuenta, múltiples clínicas. Gestiona todos tus pacientes
+                  Gestiona todos tus pacientes
                   desde un solo lugar con acceso diferenciado.
                 </p>
               </div>
-              <div class="card-number">06</div>
             </div>
           </article>
         </div>
@@ -1158,13 +1165,13 @@ import { Component, signal, OnDestroy } from '@angular/core';
         height: 100%;
       }
 
-      .pj-steps {
-        stroke-dasharray: 350;
-        stroke-dashoffset: 350;
-        animation: drawSteps 2s ease-out 0.3s forwards;
+      .pj-curve {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: drawCurve 2s ease-out 0.3s forwards;
       }
 
-      @keyframes drawSteps {
+      @keyframes drawCurve {
         to { stroke-dashoffset: 0; }
       }
 
@@ -1173,9 +1180,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
       }
 
       .d1 { animation: dotAppear 0.25s ease-out 0.35s forwards; }
-      .d2 { animation: dotAppear 0.25s ease-out 0.95s forwards; }
-      .d3 { animation: dotAppear 0.25s ease-out 1.35s forwards; }
-      .d4 { animation: dotAppear 0.25s ease-out 1.75s forwards; }
       .d5 { animation: dotAppear 0.25s ease-out 2.15s forwards; }
 
       @keyframes dotAppear {
