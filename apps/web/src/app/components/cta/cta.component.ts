@@ -573,7 +573,7 @@ import { CommonModule } from '@angular/common';
        Title
     ---------------------------------------- */
       .cta-title {
-        font-family: 'kengoFont', system-ui, sans-serif;
+        font-family: 'Galvji', system-ui, sans-serif;
         font-size: clamp(2rem, 6vw, 3.5rem);
         font-weight: 700;
         color: #1f2937;
@@ -946,7 +946,7 @@ import { CommonModule } from '@angular/common';
       }
 
       .stat-value {
-        font-family: 'kengoFont', system-ui, sans-serif;
+        font-family: 'Galvji', system-ui, sans-serif;
         font-size: 1.625rem;
         font-weight: 700;
         color: #e75c3e;

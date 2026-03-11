@@ -14,10 +14,11 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section id="beneficios" class="benefits-section">
-      <!-- Ambient background -->
-      <div class="bg-orb orb-coral"></div>
-      <div class="bg-orb orb-amber"></div>
-      <div class="bg-orb orb-violet"></div>
+      <!-- Aurora Background -->
+      <div class="aurora-bg-layer">
+        <div class="bg-orb orb-coral"></div>
+        <div class="bg-orb orb-amber"></div>
+      </div>
 
       <div class="wrapper">
         <!-- ── Section Header ─────────────────────────── -->
@@ -139,18 +140,31 @@ import { CommonModule } from '@angular/common';
       ═══════════════════════════════════════════ */
       .benefits-section {
         position: relative;
-        padding: 5rem 0 6rem;
-        background: #f9f5f1;
+        padding: 6rem 0 7rem;
+        background: linear-gradient(
+          180deg,
+          #fff 0%,
+          #fffaf5 25%,
+          #fff5eb 60%,
+          #ffedde 100%
+        );
         overflow: hidden;
       }
 
       @media (min-width: 1024px) {
         .benefits-section {
-          padding: 6rem 0 7rem;
+          padding: 8rem 0 9rem;
         }
       }
 
-      /* Ambient orbs */
+      /* Aurora orbs */
+      .aurora-bg-layer {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
       .bg-orb {
         position: absolute;
         border-radius: 50%;
@@ -159,37 +173,39 @@ import { CommonModule } from '@angular/common';
         will-change: transform;
       }
       .orb-coral {
-        width: 640px;
-        height: 640px;
-        top: -120px;
-        right: -180px;
+        width: 600px;
+        height: 600px;
+        top: -10%;
+        right: -8%;
         background: radial-gradient(
           circle,
-          rgba(231, 92, 62, 0.16) 0%,
-          transparent 68%
+          rgba(231, 92, 62, 0.28) 0%,
+          transparent 70%
         );
+        animation: benefitOrbFloat1 22s ease-in-out infinite;
       }
       .orb-amber {
-        width: 480px;
-        height: 480px;
-        bottom: -80px;
-        left: -120px;
+        width: 500px;
+        height: 500px;
+        bottom: -10%;
+        left: -10%;
         background: radial-gradient(
           circle,
-          rgba(239, 192, 72, 0.18) 0%,
-          transparent 68%
+          rgba(239, 192, 72, 0.24) 0%,
+          transparent 70%
         );
+        animation: benefitOrbFloat2 28s ease-in-out infinite;
       }
-      .orb-violet {
-        width: 360px;
-        height: 360px;
-        top: 40%;
-        left: 38%;
-        background: radial-gradient(
-          circle,
-          rgba(99, 102, 241, 0.1) 0%,
-          transparent 68%
-        );
+
+      @keyframes benefitOrbFloat1 {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(50px, 40px) scale(1.12); }
+        66% { transform: translate(-30px, 60px) scale(1.05); }
+      }
+
+      @keyframes benefitOrbFloat2 {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(60px, -50px) scale(1.1); }
       }
 
       /* ═══════════════════════════════════════════
@@ -255,7 +271,7 @@ import { CommonModule } from '@angular/common';
       }
 
       .section-h2 {
-        font-family: 'kengoFont', 'Galvji', system-ui, sans-serif;
+        font-family: 'Galvji', system-ui, sans-serif;
         font-size: clamp(2rem, 5.5vw, 3.4rem);
         font-weight: 700;
         color: #1a1208;
@@ -422,7 +438,7 @@ import { CommonModule } from '@angular/common';
         position: absolute;
         right: 14px;
         bottom: 28px;
-        font-family: 'kengoFont', 'Galvji', monospace;
+        font-family: 'Galvji', monospace;
         font-size: 5rem;
         font-weight: 900;
         color: rgba(255, 255, 255, 0.09);

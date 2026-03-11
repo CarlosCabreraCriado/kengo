@@ -271,7 +271,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .section-title {
-      font-family: "kengoFont", system-ui, sans-serif;
+      font-family: "Galvji", system-ui, sans-serif;
       font-size: clamp(2.25rem, 6vw, 4rem);
       font-weight: 700;
       line-height: 1.1;
@@ -421,7 +421,7 @@ import { CommonModule } from '@angular/common';
     .number-fill {
       position: absolute;
       left: 0;
-      font-family: "kengoFont", system-ui, sans-serif;
+      font-family: "Galvji", system-ui, sans-serif;
       font-size: 5.5rem;
       font-weight: 800;
       line-height: 1;

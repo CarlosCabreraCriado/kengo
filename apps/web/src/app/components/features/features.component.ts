@@ -519,7 +519,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
         position: absolute;
         top: -0.2em;
         right: -0.05em;
-        font-family: 'kengoFont', system-ui, sans-serif;
+        font-family: 'Barlow Condensed', system-ui, sans-serif;
         font-size: clamp(8rem, 20vw, 16rem);
         font-weight: 400;
         line-height: 1;
@@ -586,9 +586,9 @@ import { Component, signal, OnDestroy } from '@angular/core';
 
       /* Título principal */
       .mega-title {
-        font-family: 'kengoFont', system-ui, sans-serif;
+        font-family: 'Galvji', system-ui, sans-serif;
         font-size: clamp(2.6rem, 7.5vw, 5rem);
-        font-weight: 400;
+        font-weight: 700;
         line-height: 0.93;
         color: #1a1a1a;
         letter-spacing: -0.025em;
@@ -820,7 +820,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
         position: absolute;
         top: 1.5rem;
         right: 1.5rem;
-        font-family: 'kengoFont', system-ui, sans-serif;
+        font-family: 'Barlow Condensed', system-ui, sans-serif;
         font-size: 0.875rem;
         color: rgba(231, 92, 62, 0.2);
         transition: all 0.4s ease;
@@ -932,9 +932,9 @@ import { Component, signal, OnDestroy } from '@angular/core';
       }
 
       .card-title {
-        font-family: 'kengoFont', system-ui, sans-serif;
+        font-family: 'Galvji', system-ui, sans-serif;
         font-size: 1.375rem;
-        font-weight: 400;
+        font-weight: 700;
         color: #1a1a1a;
         margin-bottom: 0.625rem;
         line-height: 1.2;
@@ -1449,7 +1449,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
         background: white;
         border: 1px solid rgba(0, 0, 0, 0.06);
         border-radius: 8px;
-        font-family: 'kengoFont', monospace;
+        font-family: 'Barlow Condensed', monospace;
         font-size: 1rem;
         font-weight: 700;
         color: #1a1a1a;

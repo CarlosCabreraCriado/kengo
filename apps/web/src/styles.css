@@ -8,18 +8,9 @@
 }
 
 @font-face {
-  font-family: kengoFont;
+  font-family: FieldGothic;
   src: url(./assets/fonts/FieldGothic-45.otf);
   font-display: swap;
-  unicode-range: U+0020-007E;
-}
-
-@font-face {
-  font-family: kengoFont;
-  src: url(./assets/fonts/galvji.ttf) format("truetype");
-  font-weight: 400;
-  font-display: swap;
-  unicode-range: U+00A0-024F;
 }
 
 @font-face {
@@ -85,11 +76,11 @@ body {
 }
 
 .titulo-kengo {
-  font-family: "kengoFont" !important;
+  font-family: FieldGothic !important;
 }
 
 .fuente-kengo {
-  font-family: "kengoFont";
+  font-family: 'Barlow Condensed';
   color: var(--color-primary);
 }
 

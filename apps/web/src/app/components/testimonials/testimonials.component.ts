@@ -268,7 +268,8 @@ import { CommonModule } from '@angular/common';
 
       .section-title {
         margin: 0 0 1rem;
-        font-family: 'kengoFont', system-ui, sans-serif;
+        font-family: 'Galvji', system-ui, sans-serif;
+        font-weight: 700;
         font-size: clamp(2.2rem, 5vw, 3.6rem);
         line-height: 1.03;
         letter-spacing: -0.035em;
