@@ -29,32 +29,33 @@ import { Component, signal, OnDestroy } from '@angular/core';
               <h2 class="mega-title">
                 <span class="title-line">La herramienta</span>
                 <span class="title-line accent">
-                  <span class="title-accent-text">que conecta</span>
-                  <svg
-                    class="title-accent-stroke"
-                    viewBox="0 0 200 20"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M0,15 Q50,5 100,15 T200,15"
-                      fill="none"
-                      stroke="url(#features-gradient)"
-                      stroke-width="4"
-                      stroke-linecap="round"
-                    />
-                    <defs>
-                      <linearGradient
-                        id="features-gradient"
-                        x1="0%"
-                        y1="0%"
-                        x2="100%"
-                        y2="0%"
-                      >
-                        <stop offset="0%" stop-color="#e75c3e" />
-                        <stop offset="100%" stop-color="#efc048" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                  <span class="title-accent-text">que conecta
+                    <svg
+                      class="title-accent-stroke"
+                      viewBox="0 0 200 20"
+                      preserveAspectRatio="none"
+                    >
+                      <path
+                        d="M0,15 Q50,5 100,15 T200,15"
+                        fill="none"
+                        stroke="url(#features-gradient)"
+                        stroke-width="4"
+                        stroke-linecap="round"
+                      />
+                      <defs>
+                        <linearGradient
+                          id="features-gradient"
+                          x1="0%"
+                          y1="0%"
+                          x2="100%"
+                          y2="0%"
+                        >
+                          <stop offset="0%" stop-color="#e75c3e" />
+                          <stop offset="100%" stop-color="#efc048" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </span>
                 </span>
                 <span class="title-line">tu clínica y tus pacientes</span>
               </h2>
@@ -94,7 +95,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
                   Biblioteca curada con ejercicios grabados por fisioterapeutas.
                 </p>
               </div>
-              <div class="card-number">01</div>
             </div>
           </article>
 
@@ -616,14 +616,15 @@ import { Component, signal, OnDestroy } from '@angular/core';
 
       .title-accent-text {
         position: relative;
+        display: inline-block;
         z-index: 1;
       }
 
       .title-accent-stroke {
         position: absolute;
-        bottom: -0.1em;
+        bottom: -0.15em;
         left: 0;
-        width: 80%;
+        width: 100%;
         height: 0.5em;
         opacity: 0.6;
       }

@@ -309,11 +309,11 @@ import { CommonModule } from '@angular/common';
     .section-header {
       text-align: center;
       max-width: 720px;
-      margin: 0 auto 4rem;
+      margin: 0 auto 2rem;
     }
 
     @media (min-width: 1024px) {
-      .section-header { margin-bottom: 5rem; }
+      .section-header { margin-bottom: 2.5rem; }
     }
 
     .header-meta {
