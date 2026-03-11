@@ -7,9 +7,13 @@ import { tokenAccesoController } from "../controllers/tokenAcceso";
 import { passwordResetController } from "../controllers/passwordReset";
 import { emailVerificationController } from "../controllers/emailVerification";
 import { sessionRefreshController } from "../controllers/sessionRefresh";
+import { contactoController } from "../controllers/contacto";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
+
+// Contacto (no requiere auth)
+router.post("/contacto", contactoController.enviarMensaje);
 
 // Registro de usuarios (no requiere auth)
 router.post("/registro", registroController.registrar);
