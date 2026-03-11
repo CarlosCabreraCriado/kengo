@@ -23,8 +23,9 @@ import { Component, signal, OnDestroy } from '@angular/core';
             <!-- Izquierda: eyebrow + título -->
             <div class="header-left">
               <div class="header-eyebrow">
-                <span class="eyebrow-dot"></span>
+                <span class="ey-line"></span>
                 <span class="eyebrow-label">Plataforma clínica</span>
+                <span class="ey-line ey-line-r"></span>
               </div>
               <h2 class="mega-title">
                 <span class="title-line">La herramienta</span>
@@ -346,20 +347,20 @@ import { Component, signal, OnDestroy } from '@angular/core';
 
       .features-section {
         position: relative;
-        padding: 5rem 0 6rem;
+        padding: 6rem 0 7rem;
         overflow: hidden;
         background: linear-gradient(
-          165deg,
-          #fffcf9 0%,
-          #fff8f3 25%,
-          #fffaf6 50%,
-          #fff 100%
+          180deg,
+          #fffaf5 0%,
+          #fff5eb 30%,
+          #ffedde 70%,
+          #ffe8d4 100%
         );
       }
 
       @media (min-width: 1024px) {
         .features-section {
-          padding: 7rem 0 8rem;
+          padding: 8rem 0 9rem;
         }
       }
 
@@ -388,7 +389,7 @@ import { Component, signal, OnDestroy } from '@angular/core';
         right: -10%;
         background: radial-gradient(
           circle,
-          rgba(231, 92, 62, 0.18) 0%,
+          rgba(231, 92, 62, 0.30) 0%,
           transparent 70%
         );
         animation: meshFloat1 25s ease-in-out infinite;
@@ -397,24 +398,24 @@ import { Component, signal, OnDestroy } from '@angular/core';
       .mesh-2 {
         width: 500px;
         height: 500px;
-        bottom: 10%;
+        bottom: -5%;
         left: -12%;
         background: radial-gradient(
           circle,
-          rgba(239, 192, 72, 0.15) 0%,
+          rgba(239, 192, 72, 0.28) 0%,
           transparent 70%
         );
         animation: meshFloat2 30s ease-in-out infinite;
       }
 
       .mesh-3 {
-        width: 400px;
-        height: 400px;
-        top: 45%;
-        right: 25%;
+        width: 380px;
+        height: 380px;
+        top: 40%;
+        right: 20%;
         background: radial-gradient(
           circle,
-          rgba(231, 92, 62, 0.1) 0%,
+          rgba(255, 180, 150, 0.20) 0%,
           transparent 70%
         );
         animation: meshFloat3 20s ease-in-out infinite;
@@ -562,18 +563,20 @@ import { Component, signal, OnDestroy } from '@angular/core';
       .header-eyebrow {
         display: flex;
         align-items: center;
-        gap: 0.625rem;
+        gap: 0.9rem;
         margin-bottom: 1.25rem;
         animation: fadeIn 0.6s ease-out backwards;
       }
 
-      .eyebrow-dot {
-        width: 7px;
-        height: 7px;
-        background: #e75c3e;
-        border-radius: 50%;
-        flex-shrink: 0;
-        animation: dotPulse 2.5s ease-in-out infinite;
+      .ey-line {
+        flex: 1;
+        max-width: 56px;
+        height: 1.5px;
+        background: linear-gradient(90deg, transparent, rgba(231, 92, 62, 0.55));
+      }
+
+      .ey-line-r {
+        background: linear-gradient(90deg, rgba(231, 92, 62, 0.55), transparent);
       }
 
       .eyebrow-label {
@@ -652,9 +655,9 @@ import { Component, signal, OnDestroy } from '@angular/core';
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: #1a1a1a;
-        background: rgba(255, 255, 255, 0.7);
-        border: 1px solid rgba(0, 0, 0, 0.07);
+        color: #4b3928;
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(231, 92, 62, 0.12);
         border-radius: 100px;
         backdrop-filter: blur(8px);
         transition: all 0.3s ease;
@@ -740,17 +743,19 @@ import { Component, signal, OnDestroy } from '@angular/core';
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.7);
         box-shadow:
-          0 1px 2px rgba(0, 0, 0, 0.02),
-          0 4px 16px rgba(0, 0, 0, 0.04);
+          0 2px 8px rgba(231, 92, 62, 0.05),
+          0 4px 20px rgba(0, 0, 0, 0.03),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
         transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
         animation: cardReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
       }
 
       .bento-card.featured {
         box-shadow:
-          0 1px 2px rgba(0, 0, 0, 0.02),
-          0 4px 16px rgba(0, 0, 0, 0.04),
-          inset 0 0 0 1px rgba(231, 92, 62, 0.08);
+          0 2px 8px rgba(231, 92, 62, 0.06),
+          0 4px 20px rgba(0, 0, 0, 0.03),
+          inset 0 0 0 1px rgba(231, 92, 62, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.85);
       }
 
       .bento-card:nth-child(1) {
@@ -1567,10 +1572,6 @@ import { Component, signal, OnDestroy } from '@angular/core';
           animation: none;
           opacity: 1;
           transform: none;
-        }
-
-        .eyebrow-dot {
-          animation: none;
         }
 
         .title-line.accent::after {

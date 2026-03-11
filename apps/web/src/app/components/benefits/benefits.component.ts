@@ -337,12 +337,16 @@ import { CommonModule } from '@angular/common';
       ═══════════════════════════════════════════ */
       .kcard {
         position: relative;
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.78);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.55);
         border-radius: 26px;
         overflow: hidden;
         box-shadow:
-          0 2px 8px rgba(26, 18, 8, 0.05),
-          0 8px 32px rgba(26, 18, 8, 0.06);
+          0 4px 24px rgba(231, 92, 62, 0.06),
+          0 1px 4px rgba(0, 0, 0, 0.03),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
         transition:
           transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
           box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -362,10 +366,11 @@ import { CommonModule } from '@angular/common';
 
       .kcard:hover {
         transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.90);
         box-shadow:
-          0 6px 24px rgba(26, 18, 8, 0.07),
-          0 24px 64px rgba(26, 18, 8, 0.1),
-          0 0 0 1px rgba(0, 0, 0, 0.03);
+          0 8px 40px rgba(231, 92, 62, 0.1),
+          0 24px 64px rgba(26, 18, 8, 0.07),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
       }
 
       /* Featured card */
@@ -373,13 +378,15 @@ import { CommonModule } from '@angular/common';
         box-shadow:
           0 0 0 2px var(--c1),
           0 8px 40px color-mix(in srgb, var(--c1) 22%, transparent),
-          0 2px 8px rgba(26, 18, 8, 0.06);
+          0 2px 8px rgba(26, 18, 8, 0.06),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
       }
       .kcard-featured:hover {
         box-shadow:
           0 0 0 2px var(--c1),
           0 24px 64px color-mix(in srgb, var(--c1) 28%, transparent),
-          0 8px 24px rgba(26, 18, 8, 0.08);
+          0 8px 24px rgba(26, 18, 8, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
       }
 
       @media (min-width: 1024px) {
@@ -688,6 +695,7 @@ import { CommonModule } from '@angular/common';
          REDUCED MOTION
       ═══════════════════════════════════════════ */
       @media (prefers-reduced-motion: reduce) {
+        .bg-orb,
         .kcard,
         .perk,
         .tier-dot,

@@ -13,9 +13,10 @@ import { CommonModule } from '@angular/common';
       <div class="content-wrapper">
         <!-- Header -->
         <div class="section-header">
-          <div class="eyebrow">
-            <span class="eyebrow-dot"></span>
-            Opiniones reales de fisios y pacientes
+          <div class="eyebrow-row">
+            <span class="ey-line"></span>
+            <span class="ey-label">Opiniones reales de fisios y pacientes</span>
+            <span class="ey-line ey-line-r"></span>
           </div>
 
           <h2 class="section-title">
@@ -86,30 +87,6 @@ import { CommonModule } from '@angular/common';
               <div class="carousel-page" [style.--columns]="cardsPerView">
                 @for (t of page; track t.name + t.quote) {
                   <article class="testimonial-card">
-                    <div class="card-top">
-                      <div
-                        class="person-badge"
-                        [class.patient]="t.type === 'Paciente'"
-                      >
-                        <span class="status-dot"></span>
-                        {{ t.type }}
-                      </div>
-
-                      <div class="stars" aria-hidden="true">
-                        @for (s of [1, 2, 3, 4, 5]; track s) {
-                          <svg
-                            class="star"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                            />
-                          </svg>
-                        }
-                      </div>
-                    </div>
-
                     <p class="quote-text">{{ t.quote }}</p>
 
                     @if (t.result) {
@@ -176,43 +153,50 @@ import { CommonModule } from '@angular/common';
       .testimonials-section {
         position: relative;
         overflow: hidden;
-        padding: 6.5rem 0 7.5rem;
-        background:
-          radial-gradient(
-            circle at top left,
-            rgba(231, 92, 62, 0.06),
-            transparent 28%
-          ),
-          radial-gradient(
-            circle at bottom right,
-            rgba(239, 192, 72, 0.08),
-            transparent 22%
-          ),
-          linear-gradient(180deg, #fffaf7 0%, #fff 42%, #fcfcfb 100%);
+        padding: 6rem 0 7rem;
+        background: linear-gradient(
+          180deg,
+          #fffaf5 0%,
+          #fff5eb 35%,
+          #ffedde 70%,
+          #ffe8d4 100%
+        );
       }
 
       .bg-orb {
         position: absolute;
         border-radius: 999px;
-        filter: blur(60px);
+        filter: blur(80px);
         pointer-events: none;
-        opacity: 0.45;
       }
 
       .orb-1 {
-        top: 80px;
+        top: -60px;
         left: -60px;
-        width: 220px;
-        height: 220px;
-        background: rgba(231, 92, 62, 0.1);
+        width: 480px;
+        height: 480px;
+        background: radial-gradient(circle, rgba(239, 192, 72, 0.28) 0%, transparent 70%);
+        animation: testOrbFloat1 22s ease-in-out infinite;
       }
 
       .orb-2 {
-        right: -40px;
-        bottom: 100px;
-        width: 260px;
-        height: 260px;
-        background: rgba(239, 192, 72, 0.14);
+        right: -60px;
+        bottom: -40px;
+        width: 520px;
+        height: 520px;
+        background: radial-gradient(circle, rgba(231, 92, 62, 0.26) 0%, transparent 70%);
+        animation: testOrbFloat2 26s ease-in-out infinite;
+      }
+
+      @keyframes testOrbFloat1 {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(50px, 40px) scale(1.1); }
+      }
+
+      @keyframes testOrbFloat2 {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(-40px, -50px) scale(1.08); }
+        66% { transform: translate(30px, -30px) scale(1.15); }
       }
 
       .content-wrapper {
@@ -241,29 +225,31 @@ import { CommonModule } from '@angular/common';
         text-align: center;
       }
 
-      .eyebrow {
-        display: inline-flex;
+      .eyebrow-row {
+        display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px 14px;
-        border: 1px solid rgba(231, 92, 62, 0.14);
-        background: rgba(255, 255, 255, 0.78);
-        backdrop-filter: blur(10px);
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 700;
-        color: #c95138;
-        letter-spacing: 0.02em;
+        justify-content: center;
+        gap: 0.9rem;
         margin-bottom: 1.2rem;
       }
 
-      .eyebrow-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #e75c3e;
-        box-shadow: 0 0 0 6px rgba(231, 92, 62, 0.12);
-        flex-shrink: 0;
+      .ey-line {
+        flex: 1;
+        max-width: 56px;
+        height: 1.5px;
+        background: linear-gradient(90deg, transparent, rgba(231, 92, 62, 0.55));
+      }
+
+      .ey-line-r {
+        background: linear-gradient(90deg, rgba(231, 92, 62, 0.55), transparent);
+      }
+
+      .ey-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #e75c3e;
       }
 
       .section-title {
@@ -292,6 +278,7 @@ import { CommonModule } from '@angular/common';
         justify-content: flex-end;
         align-items: center;
         width: 100%;
+        margin-bottom: 1.25rem;
       }
 
       .toolbar-info {
@@ -325,9 +312,11 @@ import { CommonModule } from '@angular/common';
       .nav-btn {
         width: 46px;
         height: 46px;
-        border: 1px solid rgba(17, 24, 39, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.5);
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         color: #1f2937;
         display: inline-flex;
         align-items: center;
@@ -338,14 +327,14 @@ import { CommonModule } from '@angular/common';
           border-color 0.25s ease,
           box-shadow 0.25s ease,
           background 0.25s ease;
-        box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+        box-shadow: 0 4px 16px rgba(231, 92, 62, 0.06);
       }
 
       .nav-btn:hover {
         transform: translateY(-2px);
-        border-color: rgba(231, 92, 62, 0.18);
-        box-shadow: 0 12px 30px rgba(231, 92, 62, 0.1);
-        background: #fff;
+        border-color: rgba(231, 92, 62, 0.25);
+        box-shadow: 0 8px 24px rgba(231, 92, 62, 0.12);
+        background: rgba(255, 255, 255, 0.92);
       }
 
       .nav-btn svg {
@@ -378,11 +367,15 @@ import { CommonModule } from '@angular/common';
         gap: 1rem;
         min-height: 100%;
         padding: 1.5rem;
-        background: rgba(255, 255, 255, 0.88);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(17, 24, 39, 0.06);
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.55);
         border-radius: 24px;
-        box-shadow: 0 10px 30px rgba(17, 24, 39, 0.035);
+        box-shadow:
+          0 8px 32px rgba(231, 92, 62, 0.06),
+          0 2px 8px rgba(0, 0, 0, 0.03),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
         transition:
           transform 0.28s ease,
           box-shadow 0.28s ease,
@@ -391,10 +384,12 @@ import { CommonModule } from '@angular/common';
 
       .testimonial-card:hover {
         transform: translateY(-4px);
-        border-color: rgba(231, 92, 62, 0.16);
+        background: rgba(255, 255, 255, 0.88);
+        border-color: rgba(231, 92, 62, 0.2);
         box-shadow:
-          0 18px 40px rgba(17, 24, 39, 0.06),
-          0 8px 24px rgba(231, 92, 62, 0.08);
+          0 20px 48px rgba(231, 92, 62, 0.1),
+          0 8px 24px rgba(0, 0, 0, 0.05),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
       }
 
       .card-top {
@@ -551,7 +546,7 @@ import { CommonModule } from '@angular/common';
 
       @media (max-width: 767px) {
         .testimonials-section {
-          padding: 5rem 0 6rem;
+          padding: 4.5rem 0 5.5rem;
         }
 
         .carousel-toolbar {
@@ -583,10 +578,12 @@ import { CommonModule } from '@angular/common';
       }
 
       @media (prefers-reduced-motion: reduce) {
+        .bg-orb,
         .carousel-track,
         .testimonial-card,
         .nav-btn,
         .dot {
+          animation: none !important;
           transition: none;
         }
       }

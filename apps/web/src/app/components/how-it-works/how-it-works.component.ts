@@ -7,6 +7,12 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <section id="como-funciona" class="how-it-works-section">
+      <!-- Aurora Background -->
+      <div class="hiw-aurora">
+        <div class="hiw-orb hiw-orb-1"></div>
+        <div class="hiw-orb hiw-orb-2"></div>
+        <div class="hiw-orb hiw-orb-3"></div>
+      </div>
 
       <!-- Content Container -->
       <div class="content-container">
@@ -14,11 +20,8 @@ import { CommonModule } from '@angular/common';
         <header class="section-header">
           <div class="header-meta">
             <span class="meta-line"></span>
-            <span class="meta-badge">
-              <span class="badge-dot"></span>
-              Proceso simple
-            </span>
-            <span class="meta-line"></span>
+            <span class="meta-label-text">Proceso simple</span>
+            <span class="meta-line meta-line-r"></span>
           </div>
 
           <h2 class="section-title">
@@ -175,13 +178,81 @@ import { CommonModule } from '@angular/common';
     .how-it-works-section {
       position: relative;
       padding: 6rem 0 7rem;
-      background: #fafaf9;
+      background: linear-gradient(
+        180deg,
+        #fff 0%,
+        #fffaf5 20%,
+        #fff5eb 55%,
+        #ffedde 100%
+      );
+      overflow: hidden;
     }
 
     @media (min-width: 1024px) {
       .how-it-works-section {
         padding: 8rem 0 9rem;
       }
+    }
+
+    /* ============================================
+       AURORA BACKGROUND
+    ============================================ */
+
+    .hiw-aurora {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hiw-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(85px);
+    }
+
+    .hiw-orb-1 {
+      width: 550px;
+      height: 550px;
+      top: -12%;
+      left: -8%;
+      background: radial-gradient(circle, rgba(239, 192, 72, 0.26) 0%, transparent 70%);
+      animation: hiwOrbFloat1 24s ease-in-out infinite;
+    }
+
+    .hiw-orb-2 {
+      width: 500px;
+      height: 500px;
+      bottom: -10%;
+      right: -10%;
+      background: radial-gradient(circle, rgba(231, 92, 62, 0.28) 0%, transparent 70%);
+      animation: hiwOrbFloat2 20s ease-in-out infinite;
+    }
+
+    .hiw-orb-3 {
+      width: 350px;
+      height: 350px;
+      top: 45%;
+      left: 35%;
+      background: radial-gradient(circle, rgba(255, 180, 150, 0.18) 0%, transparent 70%);
+      animation: hiwOrbFloat3 18s ease-in-out infinite;
+    }
+
+    @keyframes hiwOrbFloat1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(60px, 40px) scale(1.1); }
+      66% { transform: translate(-20px, 60px) scale(1.05); }
+    }
+
+    @keyframes hiwOrbFloat2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-50px, -40px) scale(1.15); }
+    }
+
+    @keyframes hiwOrbFloat3 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+      50% { transform: translate(-40px, 30px) scale(1.2); opacity: 1; }
     }
 
     /* ============================================
@@ -229,45 +300,20 @@ import { CommonModule } from '@angular/common';
 
     .meta-line {
       width: 48px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #e75c3e);
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, rgba(231, 92, 62, 0.55));
     }
 
-    .meta-line:last-child {
-      background: linear-gradient(90deg, #e75c3e, transparent);
+    .meta-line-r {
+      background: linear-gradient(90deg, rgba(231, 92, 62, 0.55), transparent);
     }
 
-    .meta-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 20px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      border-radius: 100px;
-      font-size: 13px;
+    .meta-label-text {
+      font-size: 11.5px;
       font-weight: 700;
-      color: #e75c3e;
-      letter-spacing: 0.04em;
       text-transform: uppercase;
-      box-shadow:
-        0 4px 20px rgba(231, 92, 62, 0.08),
-        0 1px 3px rgba(0, 0, 0, 0.03);
-    }
-
-    .badge-dot {
-      width: 8px;
-      height: 8px;
-      background: linear-gradient(135deg, #e75c3e, #f7a65e);
-      border-radius: 50%;
-      animation: dotPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes dotPulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.2); opacity: 0.7; }
+      letter-spacing: 0.16em;
+      color: #e75c3e;
     }
 
     .section-title {
@@ -470,26 +516,26 @@ import { CommonModule } from '@angular/common';
 
     .step-card {
       position: relative;
-      background: rgba(255, 255, 255, 0.78);
+      background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.6);
       border-radius: 28px;
       overflow: hidden;
       box-shadow:
-        0 4px 32px rgba(0, 0, 0, 0.04),
+        0 4px 32px rgba(231, 92, 62, 0.05),
         0 1px 3px rgba(0, 0, 0, 0.02),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
       transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .step-article:hover .step-card {
       transform: translateY(-12px);
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.90);
       box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.08),
+        0 20px 60px rgba(231, 92, 62, 0.1),
         0 8px 24px color-mix(in srgb, var(--accent) 12%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
     }
 
     .card-shine {
@@ -885,8 +931,8 @@ import { CommonModule } from '@angular/common';
     ============================================ */
 
     @media (prefers-reduced-motion: reduce) {
+      .hiw-orb,
       .orb,
-      .badge-dot,
       .title-accent,
       .icon-ring,
       .pill-dot,
