@@ -182,7 +182,7 @@ import { Usuario, Plan, SeccionPrincipal } from '../types/global';
 ## Backend Integration
 
 - **Directus CMS**: Primary data source
-- **Custom API**: Secondary endpoint at `API_URL` (localhost:3000 in dev, system.kengoapp.com in prod)
+- **Custom API**: Secondary endpoint at `API_URL` (localhost:4201 in dev, system.kengoapp.com in prod)
 - **Magic Link Auth**: Authentication via magic links with `MAGIC_HASH`
 
 ## Database
@@ -192,3 +192,16 @@ Para información detallada sobre la estructura de la base de datos (tablas, col
 ## Deployment
 
 Railway platform deployment using Caddy server. Build configuration in `nixpacks.toml`, server config in `Caddyfile`.
+
+### Local Development Ports (Caddy Reverse Proxy)
+
+Convention: base port 4200, block of 10 ports.
+
+| Service | Port | Domain |
+|---------|:----:|--------|
+| Angular App | 4200 | `kengo.localhost` |
+| Backend API | 4201 | `kengo-api.localhost` |
+| Web/Landing | 4202 | `kengo-web.localhost` |
+
+Setup: `bash scripts/setup-caddy.sh` (macOS/Linux) or `scripts/setup-caddy.ps1` (Windows).
+Standalone: `caddy run --config Caddyfile.dev`.

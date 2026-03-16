@@ -5,6 +5,7 @@
     "node": "22.16.0"
   },
   "scripts": {
+    "ports": "node scripts/dev-ports.mjs",
     "ng": "ng",
     "start": "node scripts/start-menu.mjs",
     "start:backend": "nx serve backend",

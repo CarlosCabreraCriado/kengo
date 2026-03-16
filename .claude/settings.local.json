@@ -16,7 +16,8 @@
       "Bash(npm ls:*)",
       "Bash(git -C /Users/carloscabrera/Documents/Proyectos/kengo diff)",
       "Bash(git -C /Users/carloscabrera/Documents/Proyectos/kengo log --oneline -10)",
-      "Bash(npx nx build:*)"
+      "Bash(npx nx build:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

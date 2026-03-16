@@ -27,7 +27,7 @@ This is a Node.js/Express TypeScript backend for a healthcare clinic management 
 
 ### Key Components
 
-- **Entry Point**: `src/app.ts` - Express server setup, middleware, listens on port 3000
+- **Entry Point**: `src/app.ts` - Express server setup, middleware, listens on port 4201
 - **Controllers** (`src/controllers/`): Request handlers with static methods
 - **Models** (`src/models/`): Database and Directus SDK operations
 - **Routes** (`src/routes/apiKengo.ts`): API endpoint definitions

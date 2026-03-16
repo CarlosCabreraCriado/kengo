@@ -10,7 +10,7 @@ import apiKengo from "./routes/apiKengo";
 import { actualizarPlanesExpirados } from "./jobs/planes-expirados";
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.KENGO_PORT_API || '4201', 10);
 
 // Cron job: auto-completar planes expirados (diario a las 00:05)
 cron.schedule("5 0 * * *", async () => {
@@ -25,7 +25,7 @@ app.use(cors({
     'https://www.kengoapp.com',
     'https://app.kengoapp.com',
     'https://admin.kengoapp.com',
-    'http://localhost:4200'
+    `http://localhost:${process.env.KENGO_PORT_APP || '4200'}`
   ],
   credentials: true
 }));
