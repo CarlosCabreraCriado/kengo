@@ -6,7 +6,7 @@ module.exports = {
     secure: true,
     changeOrigin: true,
     pathRewrite: { '^/directus': '' },
-    cookieDomainRewrite: 'localhost',
+    cookieDomainRewrite: '',
   },
   '/api': {
     target: `http://localhost:${API_PORT}`,

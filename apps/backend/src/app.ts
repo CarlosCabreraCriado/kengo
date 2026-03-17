@@ -25,7 +25,8 @@ app.use(cors({
     'https://www.kengoapp.com',
     'https://app.kengoapp.com',
     'https://admin.kengoapp.com',
-    `http://localhost:${process.env.KENGO_PORT_APP || '4200'}`
+    `http://localhost:${process.env.KENGO_PORT_APP || '4200'}`,
+    'https://kengo.localhost'
   ],
   credentials: true
 }));
