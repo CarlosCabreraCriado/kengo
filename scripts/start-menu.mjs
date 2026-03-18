@@ -62,15 +62,34 @@ function changePortSlot(projectName, slot) {
 // ── Helpers de UI ────────────────────────────────────────────────────
 
 function buildBanner(ports) {
-  return `
-  ╔═══════════════════════════════════╗
-  ║                                   ║
-  ║   ${styleText('bold', 'KENGO')}  ${styleText('dim', `v${ports.version}`)}                  ║
-  ║   ${styleText('dim', 'Plataforma de fisioterapia')}      ║
-  ║   ${styleText('dim', `Puertos: ${ports.app}-${ports.app + BLOCK_SIZE - 1}`)}              ║
-  ║                                   ║
-  ╚═══════════════════════════════════╝
-`;
+  const W = 39; // ancho interior del recuadro
+
+  const lineas = [
+    '',
+    `   KENGO  v${ports.version}`,
+    '   Plataforma de fisioterapia',
+    `   Puertos: ${ports.app}-${ports.app + BLOCK_SIZE - 1}`,
+    '',
+    '   Desarrollado por Nodus Development',
+    '',
+  ];
+
+  const styled = lineas.map((l, i) => {
+    if (i === 1) return `   ${styleText('bold', 'KENGO')}  ${styleText('dim', `v${ports.version}`)}`;
+    if (i === 2) return `   ${styleText('dim', 'Plataforma de fisioterapia')}`;
+    if (i === 3) return `   ${styleText('dim', `Puertos: ${ports.app}-${ports.app + BLOCK_SIZE - 1}`)}`;
+    if (i === 5) return `   ${styleText('dim', 'Desarrollado por')} ${styleText('bold', 'Nodus Development')}`;
+    return l;
+  });
+
+  const top = `  ╔${'═'.repeat(W)}╗`;
+  const bot = `  ╚${'═'.repeat(W)}╝`;
+  const rows = lineas.map((plain, i) => {
+    const trailing = ' '.repeat(Math.max(0, W - plain.length));
+    return `  ║${styled[i]}${trailing}║`;
+  });
+
+  return '\n' + top + '\n' + rows.join('\n') + '\n' + bot + '\n';
 }
 
 function buildProyectos(ports) {
