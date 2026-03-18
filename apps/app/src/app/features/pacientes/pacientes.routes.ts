@@ -11,6 +11,14 @@ export const PACIENTES_ROUTES: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: ':id/sesion/:fecha',
+    loadComponent: () =>
+      import('./pages/sesion-detail/sesion-detail.component').then(
+        (m) => m.SesionDetailComponent
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
     path: ':id',
     loadComponent: () =>
       import('./pages/paciente-detail/paciente-detail.component').then(
