@@ -10,6 +10,8 @@ import { sessionRefreshController } from "../controllers/sessionRefresh";
 import { contactoController } from "../controllers/contacto";
 import { authMiddleware } from "../middleware/auth";
 import { actualizarPlanesExpirados } from "../jobs/planes-expirados";
+import { calcularCumplimientoDiario, backfillCumplimiento, recalcularCumplimiento } from "../jobs/cumplimiento-diario";
+import { cumplimientoController } from "../controllers/cumplimiento";
 
 const router = Router();
 
@@ -54,6 +56,9 @@ router.get("/clinica/:id/codigos", authMiddleware, clinicaController.listarCodig
 router.patch("/clinica/codigo/:id/desactivar", authMiddleware, clinicaController.desactivarCodigoAcceso);
 router.patch("/clinica/codigo/:id/reactivar", authMiddleware, clinicaController.reactivarCodigoAcceso);
 
+// Cumplimiento
+router.get("/paciente/:id/cumplimiento", authMiddleware, cumplimientoController.getCumplimiento);
+
 // Jobs manuales
 router.post("/jobs/planes-expirados", authMiddleware, async (_req, res) => {
   try {
@@ -62,6 +67,47 @@ router.post("/jobs/planes-expirados", authMiddleware, async (_req, res) => {
   } catch (error) {
     console.error("Error ejecutando job de planes expirados:", error);
     res.status(500).json({ error: "Error actualizando planes expirados" });
+  }
+});
+
+router.post("/jobs/cumplimiento-diario", authMiddleware, async (req, res) => {
+  try {
+    const { fecha } = req.body;
+    const filas = await calcularCumplimientoDiario(fecha);
+    res.json({ ok: true, fecha: fecha || "ayer", filasInsertadas: filas });
+  } catch (error) {
+    console.error("Error ejecutando job de cumplimiento diario:", error);
+    res.status(500).json({ error: "Error calculando cumplimiento diario" });
+  }
+});
+
+router.post("/jobs/cumplimiento-diario/backfill", authMiddleware, async (req, res) => {
+  try {
+    const { desde, hasta, paciente_id } = req.body;
+    if (!desde) {
+      res.status(400).json({ error: "Falta parámetro 'desde' (YYYY-MM-DD)" });
+      return;
+    }
+    const resultado = await backfillCumplimiento(desde, hasta, paciente_id);
+    res.json({ ok: true, ...resultado });
+  } catch (error) {
+    console.error("Error ejecutando backfill:", error);
+    res.status(500).json({ error: "Error en backfill de cumplimiento" });
+  }
+});
+
+router.post("/jobs/cumplimiento-diario/recalcular", authMiddleware, async (req, res) => {
+  try {
+    const { desde, hasta, paciente_id } = req.body;
+    if (!desde) {
+      res.status(400).json({ error: "Falta parámetro 'desde' (YYYY-MM-DD)" });
+      return;
+    }
+    const resultado = await recalcularCumplimiento(desde, hasta, paciente_id);
+    res.json({ ok: true, ...resultado });
+  } catch (error) {
+    console.error("Error ejecutando recalcular:", error);
+    res.status(500).json({ error: "Error recalculando cumplimiento" });
   }
 });
 

@@ -175,8 +175,275 @@
             </div>
           </article>
 
-          <!-- Plans Section -->
+          <!-- Recent Activity Section -->
           <section class="content-section animate-in" style="--delay: 0.1s">
+            <header
+              class="section-header clickable"
+              (click)="activityExpanded = !activityExpanded"
+            >
+              <div class="section-header-left">
+                <div class="section-icon">
+                  <span class="material-symbols-outlined">history</span>
+                </div>
+                <div>
+                  <h2 class="section-title">Actividad reciente</h2>
+                  <p class="section-subtitle">
+                    {{ diasProgramados() }} días programados@if (diasSinActividad() > 0) {, {{ diasSinActividad() }} sin actividad}
+                  </p>
+                </div>
+              </div>
+              <span
+                class="material-symbols-outlined expand-icon"
+                [class.rotated]="activityExpanded"
+              >expand_more</span>
+            </header>
+
+            @if (activityExpanded) {
+              <div class="section-content">
+                @if (isLoadingSesiones()) {
+                  <div class="loading-inline">
+                    <div class="shimmer-bar"></div>
+                    <div class="shimmer-bar short"></div>
+                  </div>
+                } @else if (sesiones().length === 0) {
+                  <div class="empty-state-inline">
+                    <div class="empty-icon">
+                      <span class="material-symbols-outlined">event_busy</span>
+                    </div>
+                    <p class="empty-text">Sin actividad registrada</p>
+                  </div>
+                } @else {
+                  <div class="activity-list">
+                    @for (sesion of sesiones().slice(0, 15); track sesion.fecha; let i = $index) {
+                      <article
+                        class="activity-item"
+                        [class.clickable-row]="sesion.tipo !== 'fallido' && sesion.tipo !== 'descanso'"
+                        [class.missed]="sesion.tipo === 'fallido'"
+                        [class.partial]="sesion.tipo === 'parcial'"
+                        [class.rest-day]="sesion.tipo === 'descanso'"
+                        [class.has-comments]="sesion.totalComentarios > 0"
+                        [class.comments-open]="sesionExpandida() === sesion.fecha"
+                        [style.--delay]="(0.25 + i * 0.03) + 's'"
+                        (click)="verSesion(sesion)"
+                      >
+                        <div class="activity-row">
+                          <div class="activity-date-badge">
+                            <span class="activity-day">{{ sesion.fechaFormateada }}</span>
+                          </div>
+                          <div class="activity-details">
+                            <div class="activity-exercises">
+                              <span
+                                class="material-symbols-outlined"
+                                [class.icon-filled]="sesion.tipo === 'completado'"
+                                [class]="getTipoColor(sesion.tipo)"
+                              >{{ getTipoIcon(sesion.tipo) }}</span>
+                              @switch (sesion.tipo) {
+                                @case ('completado') {
+                                  <span>{{ sesion.totalEjercicios }} ejercicio{{ sesion.totalEjercicios !== 1 ? 's' : '' }}</span>
+                                }
+                                @case ('parcial') {
+                                  <span>{{ sesion.totalEjercicios }} de {{ sesion.ejerciciosEsperados }} ejercicios</span>
+                                }
+                                @case ('fallido') {
+                                  <span class="text-zinc-500">Sin actividad ({{ sesion.ejerciciosEsperados }} esperado{{ sesion.ejerciciosEsperados !== 1 ? 's' : '' }})</span>
+                                }
+                                @case ('descanso') {
+                                  <span class="text-zinc-400">Día de descanso</span>
+                                }
+                              }
+                            </div>
+                            @if (sesion.promedioDolorValue !== null && sesion.tipo !== 'descanso') {
+                              <div class="activity-pain">
+                                <span
+                                  class="material-symbols-outlined"
+                                  [class]="getDolorColor(sesion.promedioDolorValue)"
+                                >sentiment_dissatisfied</span>
+                                <span [class]="getDolorColor(sesion.promedioDolorValue)">
+                                  {{ sesion.promedioDolorValue | number:'1.0-1' }}/10
+                                </span>
+                              </div>
+                            }
+                          </div>
+                          @if (sesion.totalComentarios > 0) {
+                            <button
+                              type="button"
+                              class="comment-toggle-btn"
+                              [class.active]="sesionExpandida() === sesion.fecha"
+                              (click)="$event.stopPropagation(); toggleComentarios(sesion.fecha)"
+                              [attr.aria-label]="'Ver ' + sesion.totalComentarios + ' comentario' + (sesion.totalComentarios !== 1 ? 's' : '')"
+                            >
+                              <span class="material-symbols-outlined">chat_bubble</span>
+                              @if (sesion.totalComentarios >= 2) {
+                                <span class="comment-count">{{ sesion.totalComentarios }}</span>
+                              }
+                            </button>
+                          }
+                        </div>
+                        @if (sesionExpandida() === sesion.fecha) {
+                          <div class="comments-panel">
+                            @for (comentario of sesion.comentarios; track $index) {
+                              <div class="comment-bubble">
+                                <span class="material-symbols-outlined comment-quote-icon">format_quote</span>
+                                <span class="comment-text">{{ comentario }}</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </article>
+                    }
+                  </div>
+
+                  @if (sesiones().length > 15) {
+                    <p class="activity-footer">
+                      Mostrando los últimos 15 de {{ sesiones().length }} días
+                    </p>
+                  }
+                }
+              </div>
+            }
+          </section>
+        </div>
+
+        <!-- Sidebar Column -->
+        <aside class="sidebar-column">
+          <!-- Statistics Section -->
+          <section class="content-section stats-section animate-in" style="--delay: 0.15s">
+            <header
+              class="section-header clickable"
+              (click)="statsExpanded = !statsExpanded"
+            >
+              <div class="section-header-left">
+                <div class="section-icon gold">
+                  <span class="material-symbols-outlined">analytics</span>
+                </div>
+                <div>
+                  <h2 class="section-title">Estadísticas</h2>
+                  <p class="section-subtitle">Últimos 30 días</p>
+                </div>
+              </div>
+              <span
+                class="material-symbols-outlined expand-icon"
+                [class.rotated]="statsExpanded"
+              >expand_more</span>
+            </header>
+
+            @if (statsExpanded) {
+              <div class="section-content">
+                @if (isLoadingEstadisticas()) {
+                  <div class="loading-inline">
+                    <div class="shimmer-bar"></div>
+                    <div class="shimmer-bar short"></div>
+                  </div>
+                } @else if (estadisticas()) {
+                  <!-- Main Stats Grid -->
+                  <div class="stats-grid">
+                    <!-- Adherence -->
+                    <div class="stat-card primary">
+                      <div class="stat-header">
+                        <span class="stat-label">Adherencia</span>
+                        <span class="material-symbols-outlined stat-icon">trending_up</span>
+                      </div>
+                      <div class="stat-value-large">{{ estadisticas()?.adherenciaGeneral }}%</div>
+                      <div class="stat-progress">
+                        <div
+                          class="stat-progress-fill"
+                          [style.width.%]="estadisticas()?.adherenciaGeneral ?? 0"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <!-- Total Sessions -->
+                    <div class="stat-card">
+                      <div class="stat-header">
+                        <span class="stat-label">Sesiones</span>
+                        <span class="material-symbols-outlined stat-icon">event_available</span>
+                      </div>
+                      <div class="stat-value-large">{{ estadisticas()?.totalSesiones }}</div>
+                      <span class="stat-hint">días con ejercicios</span>
+                    </div>
+
+                    <!-- Pain Average -->
+                    <div class="stat-card">
+                      <div class="stat-header">
+                        <span class="stat-label">Dolor promedio</span>
+                        <span
+                          class="material-symbols-outlined stat-icon"
+                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
+                        >sentiment_dissatisfied</span>
+                      </div>
+                      @if (estadisticas()?.promedioDolorGeneral !== null && estadisticas()?.promedioDolorGeneral !== undefined) {
+                        <div
+                          class="stat-value-large"
+                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
+                        >{{ estadisticas()?.promedioDolorGeneral }}<span class="stat-unit">/10</span></div>
+                      } @else {
+                        <div class="stat-value-large muted">—</div>
+                        <span class="stat-hint">Sin datos</span>
+                      }
+                    </div>
+
+                    <!-- Streak -->
+                    <div class="stat-card gold">
+                      <div class="stat-header">
+                        <span class="stat-label">Racha actual</span>
+                        <span class="material-symbols-outlined stat-icon icon-filled">local_fire_department</span>
+                      </div>
+                      <div class="stat-value-large">{{ estadisticas()?.rachaActual }}</div>
+                      <span class="stat-hint">días seguidos</span>
+                    </div>
+                  </div>
+
+                  <!-- Weekly Adherence Chart -->
+                  @if (estadisticas()?.adherenciaSemanal && estadisticas()!.adherenciaSemanal.length > 0) {
+                    <div class="weekly-chart">
+                      <h4 class="chart-title">Adherencia semanal</h4>
+                      <div class="chart-bars">
+                        @for (semana of estadisticas()!.adherenciaSemanal; track semana.semana) {
+                          <div class="chart-bar-container">
+                            <div class="chart-bar-bg">
+                              <div
+                                class="chart-bar-fill"
+                                [style.height.%]="semana.porcentaje"
+                              ></div>
+                            </div>
+                            <span class="chart-bar-label">{{ semana.semana }}</span>
+                            <span class="chart-bar-value">{{ semana.porcentaje }}%</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Last Activity -->
+                  @if (estadisticas()?.diasDesdeUltimaSesion !== null && estadisticas()?.diasDesdeUltimaSesion !== undefined) {
+                    <div class="last-activity">
+                      <span class="material-symbols-outlined activity-icon">schedule</span>
+                      <span class="activity-text">
+                        Última actividad:
+                        @if (estadisticas()?.diasDesdeUltimaSesion === 0) {
+                          <strong class="text-success">Hoy</strong>
+                        } @else if (estadisticas()?.diasDesdeUltimaSesion === 1) {
+                          <strong>Ayer</strong>
+                        } @else {
+                          <strong>hace {{ estadisticas()?.diasDesdeUltimaSesion }} días</strong>
+                        }
+                      </span>
+                    </div>
+                  }
+                } @else {
+                  <div class="empty-state-inline">
+                    <div class="empty-icon">
+                      <span class="material-symbols-outlined">bar_chart</span>
+                    </div>
+                    <p class="empty-text">Sin datos suficientes</p>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <!-- Plans Section -->
+          <section class="content-section animate-in" style="--delay: 0.2s">
             <header
               class="section-header clickable"
               (click)="planesExpanded = !planesExpanded"
@@ -260,221 +527,6 @@
                       Ver todos los planes
                       <span class="material-symbols-outlined">arrow_forward</span>
                     </button>
-                  }
-                }
-              </div>
-            }
-          </section>
-        </div>
-
-        <!-- Sidebar Column -->
-        <aside class="sidebar-column">
-          <!-- Statistics Section -->
-          <section class="content-section stats-section animate-in" style="--delay: 0.15s">
-            <header
-              class="section-header clickable"
-              (click)="statsExpanded = !statsExpanded"
-            >
-              <div class="section-header-left">
-                <div class="section-icon gold">
-                  <span class="material-symbols-outlined">analytics</span>
-                </div>
-                <div>
-                  <h2 class="section-title">Estadísticas</h2>
-                  <p class="section-subtitle">Últimos 30 días</p>
-                </div>
-              </div>
-              <span
-                class="material-symbols-outlined expand-icon"
-                [class.rotated]="statsExpanded"
-              >expand_more</span>
-            </header>
-
-            @if (statsExpanded) {
-              <div class="section-content">
-                @if (isLoadingEstadisticas()) {
-                  <div class="loading-inline">
-                    <div class="shimmer-bar"></div>
-                    <div class="shimmer-bar short"></div>
-                  </div>
-                } @else if (estadisticas()) {
-                  <!-- Main Stats Grid -->
-                  <div class="stats-grid">
-                    <!-- Adherence -->
-                    <div class="stat-card primary">
-                      <div class="stat-header">
-                        <span class="stat-label">Adherencia</span>
-                        <span class="material-symbols-outlined stat-icon">trending_up</span>
-                      </div>
-                      <div class="stat-value-large">{{ estadisticas()?.adherenciaGeneral }}%</div>
-                      <div class="stat-progress">
-                        <div
-                          class="stat-progress-fill"
-                          [style.width.%]="estadisticas()?.adherenciaGeneral ?? 0"
-                        ></div>
-                      </div>
-                    </div>
-
-                    <!-- Total Sessions -->
-                    <div class="stat-card">
-                      <div class="stat-header">
-                        <span class="stat-label">Sesiones</span>
-                        <span class="material-symbols-outlined stat-icon">event_available</span>
-                      </div>
-                      <div class="stat-value-large">{{ estadisticas()?.totalSesiones }}</div>
-                      <span class="stat-hint">días con actividad</span>
-                    </div>
-
-                    <!-- Pain Average -->
-                    <div class="stat-card">
-                      <div class="stat-header">
-                        <span class="stat-label">Dolor promedio</span>
-                        <span
-                          class="material-symbols-outlined stat-icon"
-                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
-                        >sentiment_dissatisfied</span>
-                      </div>
-                      @if (estadisticas()?.promedioDolorGeneral !== null && estadisticas()?.promedioDolorGeneral !== undefined) {
-                        <div
-                          class="stat-value-large"
-                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
-                        >{{ estadisticas()?.promedioDolorGeneral }}<span class="stat-unit">/10</span></div>
-                      } @else {
-                        <div class="stat-value-large muted">—</div>
-                        <span class="stat-hint">Sin datos</span>
-                      }
-                    </div>
-
-                    <!-- Streak -->
-                    <div class="stat-card gold">
-                      <div class="stat-header">
-                        <span class="stat-label">Racha actual</span>
-                        <span class="material-symbols-outlined stat-icon icon-filled">local_fire_department</span>
-                      </div>
-                      <div class="stat-value-large">{{ estadisticas()?.rachaActual }}</div>
-                      <span class="stat-hint">días seguidos</span>
-                    </div>
-                  </div>
-
-                  <!-- Weekly Adherence Chart -->
-                  @if (estadisticas()?.adherenciaSemanal && estadisticas()!.adherenciaSemanal.length > 0) {
-                    <div class="weekly-chart">
-                      <h4 class="chart-title">Adherencia semanal</h4>
-                      <div class="chart-bars">
-                        @for (semana of estadisticas()!.adherenciaSemanal; track semana.semana) {
-                          <div class="chart-bar-container">
-                            <div class="chart-bar-bg">
-                              <div
-                                class="chart-bar-fill"
-                                [style.height.%]="semana.porcentaje"
-                              ></div>
-                            </div>
-                            <span class="chart-bar-label">{{ semana.semana }}</span>
-                            <span class="chart-bar-value">{{ semana.porcentaje }}%</span>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  }
-
-                  <!-- Last Activity -->
-                  @if (estadisticas()?.diasDesdeUltimaSesion !== null && estadisticas()?.diasDesdeUltimaSesion !== undefined) {
-                    <div class="last-activity">
-                      <span class="material-symbols-outlined activity-icon">schedule</span>
-                      <span class="activity-text">
-                        Última actividad:
-                        @if (estadisticas()?.diasDesdeUltimaSesion === 0) {
-                          <strong class="text-success">Hoy</strong>
-                        } @else if (estadisticas()?.diasDesdeUltimaSesion === 1) {
-                          <strong>Ayer</strong>
-                        } @else {
-                          <strong>hace {{ estadisticas()?.diasDesdeUltimaSesion }} días</strong>
-                        }
-                      </span>
-                    </div>
-                  }
-                } @else {
-                  <div class="empty-state-inline">
-                    <div class="empty-icon">
-                      <span class="material-symbols-outlined">bar_chart</span>
-                    </div>
-                    <p class="empty-text">Sin datos suficientes</p>
-                  </div>
-                }
-              </div>
-            }
-          </section>
-
-          <!-- Recent Activity Section -->
-          <section class="content-section animate-in" style="--delay: 0.2s">
-            <header
-              class="section-header clickable"
-              (click)="activityExpanded = !activityExpanded"
-            >
-              <div class="section-header-left">
-                <div class="section-icon">
-                  <span class="material-symbols-outlined">history</span>
-                </div>
-                <div>
-                  <h2 class="section-title">Actividad reciente</h2>
-                  <p class="section-subtitle">{{ sesiones().length }} sesión{{ sesiones().length !== 1 ? 'es' : '' }} registrada{{ sesiones().length !== 1 ? 's' : '' }}</p>
-                </div>
-              </div>
-              <span
-                class="material-symbols-outlined expand-icon"
-                [class.rotated]="activityExpanded"
-              >expand_more</span>
-            </header>
-
-            @if (activityExpanded) {
-              <div class="section-content">
-                @if (isLoadingSesiones()) {
-                  <div class="loading-inline">
-                    <div class="shimmer-bar"></div>
-                    <div class="shimmer-bar short"></div>
-                  </div>
-                } @else if (sesiones().length === 0) {
-                  <div class="empty-state-inline">
-                    <div class="empty-icon">
-                      <span class="material-symbols-outlined">event_busy</span>
-                    </div>
-                    <p class="empty-text">Sin actividad registrada</p>
-                  </div>
-                } @else {
-                  <div class="activity-list">
-                    @for (sesion of sesiones().slice(0, 10); track sesion.fecha; let i = $index) {
-                      <article
-                        class="activity-item"
-                        [style.--delay]="(0.25 + i * 0.03) + 's'"
-                      >
-                        <div class="activity-date-badge">
-                          <span class="activity-day">{{ sesion.fechaFormateada }}</span>
-                        </div>
-                        <div class="activity-details">
-                          <div class="activity-exercises">
-                            <span class="material-symbols-outlined icon-filled text-success">check_circle</span>
-                            <span>{{ sesion.totalEjercicios }} ejercicio{{ sesion.totalEjercicios !== 1 ? 's' : '' }}</span>
-                          </div>
-                          @if (sesion.promedioDolorValue !== null) {
-                            <div class="activity-pain">
-                              <span
-                                class="material-symbols-outlined"
-                                [class]="getDolorColor(sesion.promedioDolorValue)"
-                              >sentiment_dissatisfied</span>
-                              <span [class]="getDolorColor(sesion.promedioDolorValue)">
-                                {{ sesion.promedioDolorValue | number:'1.0-1' }}/10
-                              </span>
-                            </div>
-                          }
-                        </div>
-                      </article>
-                    }
-                  </div>
-
-                  @if (sesiones().length > 10) {
-                    <p class="activity-footer">
-                      Mostrando las últimas 10 de {{ sesiones().length }} sesiones
-                    </p>
                   }
                 }
               </div>

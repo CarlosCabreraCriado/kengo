@@ -8,6 +8,7 @@ import cron from "node-cron";
 
 import apiKengo from "./routes/apiKengo";
 import { actualizarPlanesExpirados } from "./jobs/planes-expirados";
+import { calcularCumplimientoDiario } from "./jobs/cumplimiento-diario";
 
 const app = express();
 const PORT = parseInt(process.env.KENGO_PORT_API || '4201', 10);
@@ -16,6 +17,12 @@ const PORT = parseInt(process.env.KENGO_PORT_API || '4201', 10);
 cron.schedule("5 0 * * *", async () => {
   console.log("[cron] Ejecutando job de planes expirados...");
   await actualizarPlanesExpirados();
+});
+
+// Cron job: calcular cumplimiento diario (diario a las 00:10, después de planes expirados)
+cron.schedule("10 0 * * *", async () => {
+  console.log("[cron] Calculando cumplimiento diario...");
+  await calcularCumplimientoDiario();
 });
 
 // CORS configurado para cookies

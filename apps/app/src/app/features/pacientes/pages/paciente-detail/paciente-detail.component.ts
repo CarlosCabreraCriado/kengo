@@ -19,6 +19,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
+import { CumplimientoService } from '../../data-access/cumplimiento.service';
 
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -31,6 +32,8 @@ import {
   Plan,
   EstadoPlan,
   RegistroEjercicioDirectus,
+  TipoCumplimiento,
+  CumplimientoDia,
 } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
@@ -48,6 +51,10 @@ interface SesionAgrupada {
   registros: RegistroEjercicioDirectus[];
   totalEjercicios: number;
   promedioDolorValue: number | null;
+  comentarios: string[];
+  totalComentarios: number;
+  tipo: TipoCumplimiento;
+  ejerciciosEsperados: number;
 }
 
 interface EstadisticasPaciente {
@@ -82,6 +89,7 @@ export class PacienteDetailComponent implements OnInit {
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
   private breakpointObserver = inject(BreakpointObserver);
+  private cumplimientoService = inject(CumplimientoService);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
   isMovil = toSignal(
@@ -114,6 +122,9 @@ export class PacienteDetailComponent implements OnInit {
   statsExpanded = true;
   activityExpanded = false;
 
+  // Comentarios expansion
+  readonly sesionExpandida = signal<string | null>(null);
+
   // Computed
   readonly idsClinicas = computed(() => {
     return this.sessionService.usuario()?.clinicas.map((c) => c.id_clinica) || [];
@@ -124,7 +135,7 @@ export class PacienteDetailComponent implements OnInit {
     if (pacienteId) {
       this.cargarPaciente(pacienteId);
       this.cargarPlanes(pacienteId);
-      this.cargarSesiones(pacienteId);
+      this.cargarCumplimiento(pacienteId);
     } else {
       this.router.navigate(['/mis-pacientes']);
     }
@@ -189,43 +200,123 @@ export class PacienteDetailComponent implements OnInit {
     }
   }
 
-  private async cargarSesiones(pacienteId: string) {
+  private async cargarCumplimiento(pacienteId: string) {
     this.isLoadingSesiones.set(true);
+    this.isLoadingEstadisticas.set(true);
 
     try {
-      const response = await firstValueFrom(
-        this.http.get<RegistrosResponse>(`${env.DIRECTUS_URL}/items/planes_registros`, {
-          params: {
-            fields: 'id_registro,plan_item,paciente,fecha_hora,completado,repeticiones_realizadas,duracion_real_seg,dolor_escala,nota_paciente',
-            filter: JSON.stringify({
-              _and: [
-                { paciente: { _eq: pacienteId } },
-                { completado: { _eq: true } },
-              ],
-            }),
-            sort: '-fecha_hora',
-            limit: '100',
-          },
-          withCredentials: true,
-        })
-      );
+      const cumplimiento = await this.cumplimientoService.getCumplimiento(pacienteId);
+      const dias = cumplimiento.dias;
 
-      const registros = response?.data || [];
-      const sesionesAgrupadas = this.agruparPorFecha(registros);
-      this.sesiones.set(sesionesAgrupadas);
+      // Cargar registros de Directus para días con actividad (para comentarios y drill-down)
+      const diasConActividad = dias.filter(d => d.tipo !== 'fallido' && d.tipo !== 'descanso');
+      let registrosPorFecha = new Map<string, RegistroEjercicioDirectus[]>();
 
-      // Calcular estadísticas después de cargar sesiones
-      this.calcularEstadisticas(registros, pacienteId);
+      if (diasConActividad.length > 0) {
+        const fechas = diasConActividad.map(d => d.fecha);
+        const registros = await this.cargarRegistrosParaFechas(pacienteId, fechas);
+        registrosPorFecha = this.agruparRegistrosPorFecha(registros);
+      }
+
+      // Construir sesiones agrupadas fusionando cumplimiento + registros
+      const sesiones: SesionAgrupada[] = dias.map(dia => {
+        const regs = registrosPorFecha.get(dia.fecha) || [];
+        const dolores = regs.filter(r => r.dolor_escala != null).map(r => r.dolor_escala!);
+        const promedioDolor = dia.dolor_promedio ??
+          (dolores.length > 0 ? dolores.reduce((a, b) => a + b, 0) / dolores.length : null);
+        const comentarios = regs
+          .map(r => r.nota_paciente)
+          .filter((n): n is string => !!n && n.trim().length > 0);
+
+        return {
+          fecha: dia.fecha,
+          fechaFormateada: this.formatearFecha(dia.fecha),
+          registros: regs,
+          totalEjercicios: dia.ejercicios_completados,
+          promedioDolorValue: promedioDolor,
+          comentarios,
+          totalComentarios: comentarios.length,
+          tipo: dia.tipo,
+          ejerciciosEsperados: dia.ejercicios_esperados,
+        };
+      });
+
+      this.sesiones.set(sesiones);
+
+      // Calcular estadísticas desde cumplimiento
+      const resumen = cumplimiento.resumen;
+      const doloresGenerales = dias
+        .filter(d => d.dolor_promedio !== null)
+        .map(d => d.dolor_promedio!);
+      const promedioDolorGeneral = doloresGenerales.length > 0
+        ? Math.round((doloresGenerales.reduce((a, b) => a + b, 0) / doloresGenerales.length) * 10) / 10
+        : null;
+
+      // Días desde última sesión con actividad
+      const ultimoDiaActividad = dias.find(d => d.tipo === 'completado' || d.tipo === 'parcial');
+      let diasDesdeUltimaSesion: number | null = null;
+      if (ultimoDiaActividad) {
+        const ultima = new Date(ultimoDiaActividad.fecha);
+        const hoy = new Date();
+        diasDesdeUltimaSesion = Math.floor((hoy.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24));
+      }
+
+      // Racha: iterar días hacia atrás, saltando descanso
+      const rachaActual = this.calcularRachaCumplimiento(dias);
+
+      // Adherencia semanal basada en cumplimiento
+      const adherenciaSemanal = this.calcularAdherenciaSemanalCumplimiento(dias);
+
+      this.estadisticas.set({
+        totalSesiones: resumen.dias_completados + resumen.dias_parciales,
+        adherenciaGeneral: resumen.adherencia_real,
+        promedioDolorGeneral,
+        diasDesdeUltimaSesion,
+        rachaActual,
+        adherenciaSemanal,
+      });
     } catch (err) {
-      console.error('Error cargando sesiones:', err);
+      console.error('Error cargando cumplimiento:', err);
     } finally {
       this.isLoadingSesiones.set(false);
+      this.isLoadingEstadisticas.set(false);
     }
   }
 
-  private agruparPorFecha(registros: RegistroEjercicioDirectus[]): SesionAgrupada[] {
-    const grupos = new Map<string, RegistroEjercicioDirectus[]>();
+  private async cargarRegistrosParaFechas(
+    pacienteId: string,
+    fechas: string[],
+  ): Promise<RegistroEjercicioDirectus[]> {
+    // Determinar rango de fechas para filtrar
+    const sortedFechas = [...fechas].sort();
+    const desde = sortedFechas[0];
+    const hasta = sortedFechas[sortedFechas.length - 1];
 
+    const response = await firstValueFrom(
+      this.http.get<RegistrosResponse>(`${env.DIRECTUS_URL}/items/planes_registros`, {
+        params: {
+          fields: 'id_registro,plan_item,paciente,fecha_hora,completado,repeticiones_realizadas,duracion_real_seg,dolor_escala,nota_paciente',
+          filter: JSON.stringify({
+            _and: [
+              { paciente: { _eq: pacienteId } },
+              { completado: { _eq: true } },
+              { fecha_hora: { _gte: desde + 'T00:00:00' } },
+              { fecha_hora: { _lte: hasta + 'T23:59:59' } },
+            ],
+          }),
+          sort: '-fecha_hora',
+          limit: '-1',
+        },
+        withCredentials: true,
+      })
+    );
+    return response?.data || [];
+  }
+
+  private agruparRegistrosPorFecha(
+    registros: RegistroEjercicioDirectus[],
+  ): Map<string, RegistroEjercicioDirectus[]> {
+    const grupos = new Map<string, RegistroEjercicioDirectus[]>();
     for (const reg of registros) {
       const fecha = reg.fecha_hora.split('T')[0];
       if (!grupos.has(fecha)) {
@@ -233,81 +324,34 @@ export class PacienteDetailComponent implements OnInit {
       }
       grupos.get(fecha)!.push(reg);
     }
-
-    return Array.from(grupos.entries()).map(([fecha, regs]) => {
-      const dolores = regs.filter(r => r.dolor_escala != null).map(r => r.dolor_escala!);
-      const promedioDolor = dolores.length > 0
-        ? dolores.reduce((a, b) => a + b, 0) / dolores.length
-        : null;
-
-      return {
-        fecha,
-        fechaFormateada: this.formatearFecha(fecha),
-        registros: regs,
-        totalEjercicios: regs.length,
-        promedioDolorValue: promedioDolor,
-      };
-    });
+    return grupos;
   }
 
-  private calcularEstadisticas(registros: RegistroEjercicioDirectus[], pacienteId: string) {
-    this.isLoadingEstadisticas.set(true);
-
-    try {
-      const totalSesiones = new Set(registros.map(r => r.fecha_hora.split('T')[0])).size;
-
-      // Promedio de dolor general
-      const dolores = registros.filter(r => r.dolor_escala != null).map(r => r.dolor_escala!);
-      const promedioDolorGeneral = dolores.length > 0
-        ? Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) / 10
-        : null;
-
-      // Días desde última sesión
-      let diasDesdeUltimaSesion: number | null = null;
-      if (registros.length > 0) {
-        const ultimaFecha = new Date(registros[0].fecha_hora);
-        const hoy = new Date();
-        diasDesdeUltimaSesion = Math.floor((hoy.getTime() - ultimaFecha.getTime()) / (1000 * 60 * 60 * 24));
-      }
-
-      // Racha actual (días consecutivos)
-      const rachaActual = this.calcularRacha(registros);
-
-      // Adherencia semanal (últimas 4 semanas)
-      const adherenciaSemanal = this.calcularAdherenciaSemanal(registros);
-
-      // Adherencia general (simplificado: sesiones con actividad / días del plan)
-      const adherenciaGeneral = this.calcularAdherenciaGeneral(registros);
-
-      this.estadisticas.set({
-        totalSesiones,
-        adherenciaGeneral,
-        promedioDolorGeneral,
-        diasDesdeUltimaSesion,
-        rachaActual,
-        adherenciaSemanal,
-      });
-    } finally {
-      this.isLoadingEstadisticas.set(false);
-    }
-  }
-
-  private calcularRacha(registros: RegistroEjercicioDirectus[]): number {
-    if (registros.length === 0) return 0;
-
-    const fechasUnicas = [...new Set(registros.map(r => r.fecha_hora.split('T')[0]))].sort().reverse();
+  private calcularRachaCumplimiento(dias: CumplimientoDia[]): number {
+    // Días ordenados de más reciente a más antiguo (ya vienen así del backend)
+    const sorted = [...dias].sort((a, b) => b.fecha.localeCompare(a.fecha));
     const hoy = new Date().toISOString().split('T')[0];
 
     let racha = 0;
     let fechaEsperada = new Date(hoy);
 
-    for (const fecha of fechasUnicas) {
-      const fechaReg = new Date(fecha);
-      const diffDias = Math.floor((fechaEsperada.getTime() - fechaReg.getTime()) / (1000 * 60 * 60 * 24));
+    for (const dia of sorted) {
+      // Saltar días de descanso
+      if (dia.tipo === 'descanso') continue;
+
+      const fechaDia = new Date(dia.fecha);
+      const diffDias = Math.floor(
+        (fechaEsperada.getTime() - fechaDia.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
       if (diffDias <= 1) {
-        racha++;
-        fechaEsperada = fechaReg;
+        if (dia.tipo === 'completado') {
+          racha++;
+          fechaEsperada = fechaDia;
+        } else {
+          // Parcial o fallido rompe la racha
+          break;
+        }
       } else {
         break;
       }
@@ -316,7 +360,9 @@ export class PacienteDetailComponent implements OnInit {
     return racha;
   }
 
-  private calcularAdherenciaSemanal(registros: RegistroEjercicioDirectus[]): { semana: string; porcentaje: number }[] {
+  private calcularAdherenciaSemanalCumplimiento(
+    dias: CumplimientoDia[],
+  ): { semana: string; porcentaje: number }[] {
     const resultado: { semana: string; porcentaje: number }[] = [];
     const hoy = new Date();
 
@@ -326,34 +372,20 @@ export class PacienteDetailComponent implements OnInit {
       const inicioSemana = new Date(finSemana);
       inicioSemana.setDate(finSemana.getDate() - 6);
 
-      const registrosSemana = registros.filter(r => {
-        const fecha = new Date(r.fecha_hora);
-        return fecha >= inicioSemana && fecha <= finSemana;
-      });
+      const inicioStr = inicioSemana.toISOString().split('T')[0];
+      const finStr = finSemana.toISOString().split('T')[0];
 
-      const diasConActividad = new Set(registrosSemana.map(r => r.fecha_hora.split('T')[0])).size;
-      const porcentaje = Math.round((diasConActividad / 7) * 100);
+      const diasSemana = dias.filter(d =>
+        d.fecha >= inicioStr && d.fecha <= finStr && d.tipo !== 'descanso',
+      );
+      const programados = diasSemana.length;
+      const completados = diasSemana.filter(d => d.tipo === 'completado').length;
+      const porcentaje = programados > 0 ? Math.round((completados / programados) * 100) : 0;
 
-      resultado.push({
-        semana: `Sem ${4 - i}`,
-        porcentaje,
-      });
+      resultado.push({ semana: `Sem ${4 - i}`, porcentaje });
     }
 
     return resultado.reverse();
-  }
-
-  private calcularAdherenciaGeneral(registros: RegistroEjercicioDirectus[]): number {
-    if (registros.length === 0) return 0;
-
-    // Últimos 30 días
-    const hace30Dias = new Date();
-    hace30Dias.setDate(hace30Dias.getDate() - 30);
-
-    const registrosRecientes = registros.filter(r => new Date(r.fecha_hora) >= hace30Dias);
-    const diasConActividad = new Set(registrosRecientes.map(r => r.fecha_hora.split('T')[0])).size;
-
-    return Math.round((diasConActividad / 30) * 100);
   }
 
   // === Helpers de formato ===
@@ -426,6 +458,38 @@ export class PacienteDetailComponent implements OnInit {
     return 'text-red-600';
   }
 
+  toggleComentarios(fecha: string): void {
+    this.sesionExpandida.update(current => current === fecha ? null : fecha);
+  }
+
+  getTipoIcon(tipo: TipoCumplimiento): string {
+    const icons: Record<TipoCumplimiento, string> = {
+      completado: 'check_circle',
+      parcial: 'warning',
+      fallido: 'cancel',
+      descanso: 'bedtime',
+    };
+    return icons[tipo];
+  }
+
+  getTipoColor(tipo: TipoCumplimiento): string {
+    const colors: Record<TipoCumplimiento, string> = {
+      completado: 'text-success',
+      parcial: 'text-amber',
+      fallido: 'text-danger',
+      descanso: 'text-zinc-400',
+    };
+    return colors[tipo];
+  }
+
+  diasSinActividad(): number {
+    return this.sesiones().filter(s => s.tipo === 'fallido').length;
+  }
+
+  diasProgramados(): number {
+    return this.sesiones().filter(s => s.tipo !== 'descanso').length;
+  }
+
   // === Acciones ===
 
   volver() {
@@ -472,6 +536,13 @@ export class PacienteDetailComponent implements OnInit {
 
   editarPlan(plan: Plan) {
     this.router.navigate(['/planes', plan.id_plan, 'editar']);
+  }
+
+  verSesion(sesion: SesionAgrupada) {
+    // No navegar para días sin actividad o de descanso
+    if (sesion.tipo === 'fallido' || sesion.tipo === 'descanso') return;
+    const pacienteId = this.route.snapshot.params['id'];
+    this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', sesion.fecha]);
   }
 
   verTodosPlanes() {

@@ -714,13 +714,116 @@
 }
 
 .activity-item {
-  @apply flex items-center gap-3 p-3 rounded-xl transition-all;
+  @apply flex flex-col rounded-xl transition-all;
   background: rgba(255, 255, 255, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.activity-item.clickable-row {
+  @apply cursor-pointer;
+}
+
+.activity-item.clickable-row .activity-row::after {
+  content: "chevron_right";
+  font-family: "Material Symbols Outlined";
+  @apply text-lg text-zinc-300 shrink-0 transition-colors;
+}
+
+.activity-item.clickable-row:hover .activity-row::after {
+  color: var(--kengo-primary);
+}
+
 .activity-item:hover {
   @apply bg-white/60;
+}
+
+.activity-item.clickable-row:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  @apply -translate-y-0.5;
+}
+
+/* Missed day (fallido) */
+.activity-item.missed {
+  border-left: 3px solid #dc2626;
+  @apply cursor-default;
+}
+
+.activity-item.missed:hover {
+  @apply translate-y-0;
+  box-shadow: none;
+}
+
+/* Partial day */
+.activity-item.partial {
+  border-left: 3px solid #d97706;
+}
+
+/* Rest day */
+.activity-item.rest-day {
+  @apply opacity-60 cursor-default;
+}
+
+.activity-item.rest-day:hover {
+  @apply opacity-60 translate-y-0 bg-white/40;
+  box-shadow: none;
+}
+
+.activity-item.has-comments {
+  border-left: 2px solid rgba(var(--kengo-primary-rgb), 0.25);
+}
+
+.activity-item.comments-open {
+  border-left: 2px solid var(--kengo-primary);
+}
+
+.activity-row {
+  @apply flex items-center gap-3 p-3;
+}
+
+/* Comment toggle button */
+.comment-toggle-btn {
+  @apply relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
+         cursor-pointer transition-all border-none;
+  background: rgba(var(--kengo-primary-rgb), 0.08);
+  color: var(--kengo-primary);
+  opacity: 0.7;
+}
+
+.comment-toggle-btn:hover,
+.comment-toggle-btn.active {
+  opacity: 1;
+  background: rgba(var(--kengo-primary-rgb), 0.15);
+}
+
+.comment-toggle-btn .material-symbols-outlined {
+  @apply text-lg;
+}
+
+.comment-count {
+  @apply absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center
+         rounded-full text-white text-[0.6rem] font-bold leading-none px-1;
+  background-color: var(--kengo-primary);
+}
+
+/* Comments panel */
+.comments-panel {
+  @apply flex flex-col gap-2 px-3 pb-3;
+  border-top: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
+  animation: expandIn 0.25s ease-out;
+}
+
+.comment-bubble {
+  @apply flex items-start gap-2 p-2.5 rounded-lg;
+  background: rgba(var(--kengo-primary-rgb), 0.05);
+}
+
+.comment-quote-icon {
+  @apply text-sm shrink-0 mt-0.5;
+  color: rgba(var(--kengo-primary-rgb), 0.4);
+}
+
+.comment-text {
+  @apply text-xs text-zinc-600 leading-relaxed;
 }
 
 .activity-date-badge {
@@ -773,6 +876,14 @@
 }
 
 .text-red-600 {
+  color: #dc2626;
+}
+
+.text-amber {
+  color: #d97706;
+}
+
+.text-danger {
   color: #dc2626;
 }
 

@@ -38,6 +38,7 @@ export type {
   ClinicaDB,
   UsuarioClinicaDB,
   ClinicaFilesDB,
+  CumplimientoDiarioDB,
 } from '@kengo/shared-models';
 
 // Tipos Directus
@@ -97,6 +98,11 @@ export {
   PUESTO_FISIOTERAPEUTA,
   PUESTO_PACIENTE,
   PUESTO_ADMINISTRADOR,
+  // Compliance
+  TipoCumplimiento,
+  CumplimientoDia,
+  ResumenCumplimiento,
+  CumplimientoResponse,
 } from '@kengo/shared-models';
 
 // Payloads
