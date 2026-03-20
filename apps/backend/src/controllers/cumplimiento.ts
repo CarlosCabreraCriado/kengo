@@ -10,7 +10,7 @@ import type {
 } from "@kengo/shared-models";
 
 interface CumplimientoRow extends RowDataPacket {
-  fecha: string;
+  fecha: string | Date;
   plan: number;
   titulo: string;
   ejercicios_esperados: number;
@@ -65,8 +65,13 @@ class CumplimientoController {
       >();
 
       for (const row of rows) {
-        if (!porFecha.has(row.fecha)) {
-          porFecha.set(row.fecha, {
+        const fechaKey =
+          row.fecha instanceof Date
+            ? row.fecha.toISOString().split("T")[0]
+            : String(row.fecha);
+
+        if (!porFecha.has(fechaKey)) {
+          porFecha.set(fechaKey, {
             planes: [],
             totalEsperados: 0,
             totalCompletados: 0,
@@ -75,7 +80,7 @@ class CumplimientoController {
           });
         }
 
-        const grupo = porFecha.get(row.fecha)!;
+        const grupo = porFecha.get(fechaKey)!;
         grupo.planes.push({
           plan_id: row.plan,
           titulo: row.titulo,

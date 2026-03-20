@@ -252,6 +252,19 @@
                                 }
                               }
                             </div>
+                            @if (sesion.planes.length >= 1 && sesion.tipo !== 'descanso') {
+                              <div class="plan-breakdown">
+                                @for (plan of sesion.planes; track plan.plan_id) {
+                                  <div class="plan-breakdown-row">
+                                    <span class="plan-dot" [class]="getPlanStatusClass(plan)"></span>
+                                    <span class="plan-breakdown-title">{{ plan.titulo }}</span>
+                                    <span class="plan-breakdown-count" [class]="getPlanStatusClass(plan)">
+                                      {{ plan.completados }}/{{ plan.esperados }}
+                                    </span>
+                                  </div>
+                                }
+                              </div>
+                            }
                             @if (sesion.promedioDolorValue !== null && sesion.tipo !== 'descanso') {
                               <div class="activity-pain">
                                 <span

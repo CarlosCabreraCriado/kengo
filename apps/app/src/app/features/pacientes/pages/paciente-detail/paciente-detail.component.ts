@@ -55,6 +55,7 @@ interface SesionAgrupada {
   totalComentarios: number;
   tipo: TipoCumplimiento;
   ejerciciosEsperados: number;
+  planes: { plan_id: number; titulo: string; esperados: number; completados: number }[];
 }
 
 interface EstadisticasPaciente {
@@ -238,6 +239,7 @@ export class PacienteDetailComponent implements OnInit {
           totalComentarios: comentarios.length,
           tipo: dia.tipo,
           ejerciciosEsperados: dia.ejercicios_esperados,
+          planes: dia.planes,
         };
       });
 
@@ -417,18 +419,20 @@ export class PacienteDetailComponent implements OnInit {
     const ayer = new Date(hoy);
     ayer.setDate(ayer.getDate() - 1);
 
-    if (d.toDateString() === hoy.toDateString()) {
-      return 'Hoy';
-    }
-    if (d.toDateString() === ayer.toDateString()) {
-      return 'Ayer';
-    }
+    if (d.toDateString() === hoy.toDateString()) return 'Hoy';
+    if (d.toDateString() === ayer.toDateString()) return 'Ayer';
 
-    return d.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      year: d.getFullYear() !== hoy.getFullYear() ? 'numeric' : undefined,
-    });
+    const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' });
+    const day = d.getDate();
+    const month = d.toLocaleDateString('es-ES', { month: 'long' });
+    const year = d.getFullYear() !== hoy.getFullYear() ? ` ${d.getFullYear()}` : '';
+    return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}${year}`;
+  }
+
+  getPlanStatusClass(plan: { esperados: number; completados: number }): string {
+    if (plan.completados >= plan.esperados) return 'status-completado';
+    if (plan.completados > 0) return 'status-parcial';
+    return 'status-fallido';
   }
 
   getEstadoLabel(estado: EstadoPlan): string {

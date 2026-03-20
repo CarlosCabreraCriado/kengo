@@ -856,6 +856,36 @@
   @apply text-sm;
 }
 
+/* Plan Breakdown (inside activity items) */
+.plan-breakdown {
+  @apply flex flex-col gap-1 mt-1.5 pt-1.5;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.plan-breakdown-row {
+  @apply flex items-center gap-2 text-xs text-zinc-600;
+}
+
+.plan-dot {
+  @apply w-1.5 h-1.5 rounded-full shrink-0;
+}
+
+.plan-dot.status-completado { @apply bg-green-500; }
+.plan-dot.status-parcial { @apply bg-amber-500; }
+.plan-dot.status-fallido { @apply bg-red-400; }
+
+.plan-breakdown-title {
+  @apply flex-1 truncate;
+}
+
+.plan-breakdown-count {
+  @apply shrink-0 font-medium tabular-nums;
+}
+
+.plan-breakdown-count.status-completado { @apply text-green-600; }
+.plan-breakdown-count.status-parcial { @apply text-amber-600; }
+.plan-breakdown-count.status-fallido { @apply text-red-400; }
+
 .activity-footer {
   @apply text-center text-xs text-zinc-400 mt-3 m-0;
 }
