@@ -11,7 +11,9 @@ import { contactoController } from "../controllers/contacto";
 import { authMiddleware } from "../middleware/auth";
 import { actualizarPlanesExpirados } from "../jobs/planes-expirados";
 import { calcularCumplimientoDiario, backfillCumplimiento, recalcularCumplimiento } from "../jobs/cumplimiento-diario";
+import { generarTodasNotificaciones, backfillNotificaciones } from "../jobs/notificaciones-fisio";
 import { cumplimientoController } from "../controllers/cumplimiento";
+import { notificacionesController } from "../controllers/notificaciones";
 
 const router = Router();
 
@@ -58,6 +60,23 @@ router.patch("/clinica/codigo/:id/reactivar", authMiddleware, clinicaController.
 
 // Cumplimiento
 router.get("/paciente/:id/cumplimiento", authMiddleware, cumplimientoController.getCumplimiento);
+
+// Notificaciones / Comentarios
+router.get("/paciente/:id/comentarios", authMiddleware, notificacionesController.getComentariosPaciente);
+router.patch("/notificacion/:id/revisar", authMiddleware, notificacionesController.marcarRevisada);
+router.patch("/paciente/:id/comentarios/revisar-todos", authMiddleware, notificacionesController.marcarTodasRevisadas);
+
+// Hook: generar notificaciones de comentarios (fire-and-forget desde frontend)
+router.post("/notificaciones/generar-comentarios", authMiddleware, async (req, res) => {
+  try {
+    const { pacienteId } = req.body;
+    const generadas = await generarTodasNotificaciones(pacienteId);
+    res.json({ ok: true, generadas });
+  } catch (error) {
+    console.error("Error generando notificaciones:", error);
+    res.status(500).json({ error: "Error generando notificaciones" });
+  }
+});
 
 // Jobs manuales
 router.post("/jobs/planes-expirados", authMiddleware, async (_req, res) => {
@@ -108,6 +127,24 @@ router.post("/jobs/cumplimiento-diario/recalcular", authMiddleware, async (req, 
   } catch (error) {
     console.error("Error ejecutando recalcular:", error);
     res.status(500).json({ error: "Error recalculando cumplimiento" });
+  }
+});
+
+// Job manual: backfill notificaciones de comentarios
+router.post("/jobs/notificaciones-comentarios", authMiddleware, async (req, res) => {
+  try {
+    const { desde, hasta } = req.body;
+    if (desde) {
+      const insertadas = await backfillNotificaciones(desde, hasta);
+      res.json({ ok: true, insertadas });
+    } else {
+      // Sin rango: ejecutar generación normal (últimos 7 días)
+      const insertadas = await generarTodasNotificaciones();
+      res.json({ ok: true, insertadas });
+    }
+  } catch (error) {
+    console.error("Error en job de notificaciones:", error);
+    res.status(500).json({ error: "Error generando notificaciones" });
   }
 });
 

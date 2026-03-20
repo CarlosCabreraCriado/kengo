@@ -39,6 +39,7 @@ export type {
   UsuarioClinicaDB,
   ClinicaFilesDB,
   CumplimientoDiarioDB,
+  NotificacionFisioDB,
 } from '@kengo/shared-models';
 
 // Tipos Directus
@@ -103,6 +104,10 @@ export {
   CumplimientoDia,
   ResumenCumplimiento,
   CumplimientoResponse,
+  // Notifications
+  TipoNotificacionFisio,
+  NotificacionFisio,
+  ComentariosPacienteResponse,
 } from '@kengo/shared-models';
 
 // Payloads

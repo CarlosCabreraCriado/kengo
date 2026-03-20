@@ -20,6 +20,7 @@ import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
+import { ComentariosPacienteService } from '../../data-access/comentarios-paciente.service';
 
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -34,6 +35,7 @@ import {
   RegistroEjercicioDirectus,
   TipoCumplimiento,
   CumplimientoDia,
+  NotificacionFisio,
 } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
@@ -91,6 +93,7 @@ export class PacienteDetailComponent implements OnInit {
   private planBuilderService = inject(PlanBuilderService);
   private breakpointObserver = inject(BreakpointObserver);
   private cumplimientoService = inject(CumplimientoService);
+  private comentariosService = inject(ComentariosPacienteService);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
   isMovil = toSignal(
@@ -112,23 +115,62 @@ export class PacienteDetailComponent implements OnInit {
   readonly isLoadingSesiones = signal(true);
   readonly isLoadingEstadisticas = signal(true);
 
+  // Comentarios del paciente (notificaciones)
+  readonly comentarios = signal<NotificacionFisio[]>([]);
+  readonly comentariosPendientes = signal<number>(0);
+  readonly isLoadingComentarios = signal(true);
+
   // Descarga de informes
   readonly descargandoInforme = signal<number | null>(null);
 
   // Error state
   readonly error = signal<string | null>(null);
 
-  // Section expansion states
-  planesExpanded = true;
-  statsExpanded = true;
-  activityExpanded = false;
+  // Section expansion states (collapsed on mobile by default)
+  private readonly _inicioExpandido = window.matchMedia('(min-width: 768px)').matches;
+  planesExpanded = this._inicioExpandido;
+  statsExpanded = this._inicioExpandido;
+  activityExpanded = this._inicioExpandido;
+  comentariosExpanded = this._inicioExpandido;
 
   // Comentarios expansion
   readonly sesionExpandida = signal<string | null>(null);
 
+  // Filtro de rango temporal
+  readonly filtroRango = signal<'15' | '30' | '60' | '90' | 'custom'>('15');
+  readonly filtroDesde = signal<string | null>(null);
+  readonly filtroHasta = signal<string | null>(null);
+  readonly filterPanelOpen = signal(false);
+  readonly hoy = new Date().toISOString().split('T')[0];
+
   // Computed
   readonly idsClinicas = computed(() => {
     return this.sessionService.usuario()?.clinicas.map((c) => c.id_clinica) || [];
+  });
+
+  readonly isCustomRange = computed(() => this.filtroRango() !== '15');
+
+  readonly rangoLabel = computed(() => {
+    const rango = this.filtroRango();
+    if (rango === '15') return 'Últimos 15 días';
+    if (rango === '30') return 'Últimos 30 días';
+    if (rango === '60') return 'Últimos 60 días';
+    if (rango === '90') return 'Últimos 90 días';
+    const desde = this.filtroDesde();
+    const hasta = this.filtroHasta();
+    if (desde && hasta) {
+      const formatShort = (s: string) => {
+        const d = new Date(s);
+        return `${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' })}`;
+      };
+      return `${formatShort(desde)} - ${formatShort(hasta)}`;
+    }
+    return 'Rango personalizado';
+  });
+
+  readonly sesionesVisibles = computed(() => {
+    const all = this.sesiones();
+    return this.filtroRango() === '15' ? all.slice(0, 15) : all;
   });
 
   ngOnInit() {
@@ -137,6 +179,7 @@ export class PacienteDetailComponent implements OnInit {
       this.cargarPaciente(pacienteId);
       this.cargarPlanes(pacienteId);
       this.cargarCumplimiento(pacienteId);
+      this.cargarComentarios(pacienteId);
     } else {
       this.router.navigate(['/mis-pacientes']);
     }
@@ -201,12 +244,12 @@ export class PacienteDetailComponent implements OnInit {
     }
   }
 
-  private async cargarCumplimiento(pacienteId: string) {
+  private async cargarCumplimiento(pacienteId: string, desde?: string, hasta?: string) {
     this.isLoadingSesiones.set(true);
     this.isLoadingEstadisticas.set(true);
 
     try {
-      const cumplimiento = await this.cumplimientoService.getCumplimiento(pacienteId);
+      const cumplimiento = await this.cumplimientoService.getCumplimiento(pacienteId, desde, hasta);
       const dias = cumplimiento.dias;
 
       // Cargar registros de Directus para días con actividad (para comentarios y drill-down)
@@ -390,6 +433,72 @@ export class PacienteDetailComponent implements OnInit {
     return resultado.reverse();
   }
 
+  // === Comentarios del paciente ===
+
+  private async cargarComentarios(pacienteId: string) {
+    this.isLoadingComentarios.set(true);
+    try {
+      const response = await this.comentariosService.getComentarios(pacienteId);
+      this.comentarios.set(response.comentarios);
+      this.comentariosPendientes.set(response.pendientes);
+    } catch (err) {
+      console.error('Error cargando comentarios:', err);
+    } finally {
+      this.isLoadingComentarios.set(false);
+    }
+  }
+
+  async marcarComentarioRevisado(comentario: NotificacionFisio) {
+    if (comentario.revisada) return;
+
+    // Optimistic update
+    this.comentarios.update(list =>
+      list.map(c => c.id === comentario.id ? { ...c, revisada: true, fecha_revision: new Date().toISOString() } : c)
+    );
+    this.comentariosPendientes.update(n => Math.max(0, n - 1));
+
+    try {
+      await this.comentariosService.marcarRevisada(comentario.id);
+    } catch (err) {
+      console.error('Error marcando comentario como revisado:', err);
+      // Revert on error
+      this.comentarios.update(list =>
+        list.map(c => c.id === comentario.id ? { ...c, revisada: false, fecha_revision: null } : c)
+      );
+      this.comentariosPendientes.update(n => n + 1);
+    }
+  }
+
+  async marcarTodosRevisados() {
+    const pacienteId = this.route.snapshot.params['id'];
+    if (!pacienteId) return;
+
+    const prevComentarios = this.comentarios();
+    const prevPendientes = this.comentariosPendientes();
+
+    // Optimistic update
+    this.comentarios.update(list =>
+      list.map(c => ({ ...c, revisada: true, fecha_revision: c.fecha_revision || new Date().toISOString() }))
+    );
+    this.comentariosPendientes.set(0);
+
+    try {
+      await this.comentariosService.marcarTodasRevisadas(pacienteId);
+    } catch (err) {
+      console.error('Error marcando todos como revisados:', err);
+      // Revert
+      this.comentarios.set(prevComentarios);
+      this.comentariosPendientes.set(prevPendientes);
+    }
+  }
+
+  formatearFechaComentario(fecha: string): string {
+    const d = new Date(fecha);
+    const day = d.getDate();
+    const month = d.toLocaleDateString('es-ES', { month: 'short' });
+    return `${day} ${month}`;
+  }
+
   // === Helpers de formato ===
 
   avatarUrl(): string | null {
@@ -493,6 +602,61 @@ export class PacienteDetailComponent implements OnInit {
 
   diasProgramados(): number {
     return this.sesiones().filter(s => s.tipo !== 'descanso').length;
+  }
+
+  aplicarFiltroRango(rango: '15' | '30' | '60' | '90' | 'custom') {
+    if (rango === 'custom') {
+      this.filtroRango.set('custom');
+      this.filterPanelOpen.set(true);
+      return;
+    }
+
+    this.filterPanelOpen.set(false);
+    this.filtroRango.set(rango);
+
+    const pacienteId = this.route.snapshot.params['id'];
+    if (!pacienteId) return;
+
+    if (rango === '15') {
+      // Default: let backend use its default 30d, we slice to 15
+      this.filtroDesde.set(null);
+      this.filtroHasta.set(null);
+      this.cargarCumplimiento(pacienteId);
+    } else {
+      const dias = parseInt(rango);
+      const hasta = new Date();
+      const desde = new Date();
+      desde.setDate(hasta.getDate() - dias);
+      const desdeStr = desde.toISOString().split('T')[0];
+      const hastaStr = hasta.toISOString().split('T')[0];
+      this.filtroDesde.set(desdeStr);
+      this.filtroHasta.set(hastaStr);
+      this.cargarCumplimiento(pacienteId, desdeStr, hastaStr);
+    }
+  }
+
+  aplicarRangoPersonalizado() {
+    const desde = this.filtroDesde();
+    const hasta = this.filtroHasta();
+    if (!desde || !hasta || desde > hasta) return;
+
+    this.filterPanelOpen.set(false);
+    const pacienteId = this.route.snapshot.params['id'];
+    if (pacienteId) {
+      this.cargarCumplimiento(pacienteId, desde, hasta);
+    }
+  }
+
+  onDesdeChange(event: Event) {
+    this.filtroDesde.set((event.target as HTMLInputElement).value || null);
+  }
+
+  onHastaChange(event: Event) {
+    this.filtroHasta.set((event.target as HTMLInputElement).value || null);
+  }
+
+  resetearFiltro() {
+    this.aplicarFiltroRango('15');
   }
 
   // === Acciones ===

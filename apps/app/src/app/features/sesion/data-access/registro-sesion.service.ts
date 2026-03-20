@@ -392,6 +392,16 @@ export class RegistroSesionService {
     // Guardar registros en Directus
     await this.guardarRegistrosEnDirectus();
 
+    // Fire-and-forget: generar notificaciones si hay comentarios o observaciones
+    const tieneComentarios = data.feedbacks.some(f => f.nota?.trim());
+    const tieneObservaciones = !!data.observacionesGenerales?.trim();
+    if (tieneComentarios || tieneObservaciones) {
+      this.http.post(`${env.API_URL}/notificaciones/generar-comentarios`,
+        { pacienteId: this.usuarioId() },
+        { withCredentials: true }
+      ).subscribe({ error: (err) => console.warn('[notificaciones] Hook falló:', err) });
+    }
+
     // Finalizar sesión con observaciones generales
     await this.finalizarSesionEnDirectus(data.observacionesGenerales);
 

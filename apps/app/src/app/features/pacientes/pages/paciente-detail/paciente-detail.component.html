@@ -176,7 +176,7 @@
           </article>
 
           <!-- Recent Activity Section -->
-          <section class="content-section animate-in" style="--delay: 0.1s">
+          <section class="content-section activity-section animate-in" style="--delay: 0.1s">
             <header
               class="section-header clickable"
               (click)="activityExpanded = !activityExpanded"
@@ -200,6 +200,98 @@
 
             @if (activityExpanded) {
               <div class="section-content">
+                <!-- Filtro de rango temporal -->
+                <div class="activity-filter">
+                  <div class="filter-chips">
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '15'"
+                      (click)="aplicarFiltroRango('15')"
+                    >15d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '30'"
+                      (click)="aplicarFiltroRango('30')"
+                    >30d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '60'"
+                      (click)="aplicarFiltroRango('60')"
+                    >60d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '90'"
+                      (click)="aplicarFiltroRango('90')"
+                    >90d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === 'custom'"
+                      (click)="aplicarFiltroRango('custom')"
+                    >
+                      <span class="material-symbols-outlined" style="font-size: 14px">date_range</span>
+                      Rango
+                    </button>
+                  </div>
+
+                  @if (filterPanelOpen()) {
+                    <div class="filter-date-range">
+                      <label class="filter-date-field">
+                        <span class="filter-date-label">Desde</span>
+                        <input
+                          type="date"
+                          class="filter-date-input"
+                          [value]="filtroDesde() ?? ''"
+                          [max]="filtroHasta() ?? hoy"
+                          (change)="onDesdeChange($event)"
+                        />
+                      </label>
+                      <span class="filter-date-arrow">
+                        <span class="material-symbols-outlined" style="font-size: 16px">arrow_forward</span>
+                      </span>
+                      <label class="filter-date-field">
+                        <span class="filter-date-label">Hasta</span>
+                        <input
+                          type="date"
+                          class="filter-date-input"
+                          [value]="filtroHasta() ?? ''"
+                          [min]="filtroDesde() ?? ''"
+                          [max]="hoy"
+                          (change)="onHastaChange($event)"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        class="filter-apply-btn"
+                        [disabled]="!filtroDesde() || !filtroHasta() || filtroDesde()! > filtroHasta()!"
+                        (click)="aplicarRangoPersonalizado()"
+                        aria-label="Aplicar rango"
+                      >
+                        <span class="material-symbols-outlined">check</span>
+                      </button>
+                    </div>
+                  }
+
+                  @if (isCustomRange() && !filterPanelOpen()) {
+                    <div class="filter-active-indicator">
+                      <span class="material-symbols-outlined" style="font-size: 14px">filter_alt</span>
+                      <span class="filter-active-label">{{ rangoLabel() }}</span>
+                      <button
+                        type="button"
+                        class="filter-reset-btn"
+                        (click)="resetearFiltro()"
+                        aria-label="Resetear filtro"
+                      >
+                        <span class="material-symbols-outlined" style="font-size: 14px">close</span>
+                      </button>
+                    </div>
+                  }
+                </div>
+
                 @if (isLoadingSesiones()) {
                   <div class="loading-inline">
                     <div class="shimmer-bar"></div>
@@ -214,7 +306,7 @@
                   </div>
                 } @else {
                   <div class="activity-feed">
-                    @for (sesion of sesiones().slice(0, 15); track sesion.fecha; let i = $index) {
+                    @for (sesion of sesionesVisibles(); track sesion.fecha; let i = $index) {
                       <article
                         class="act-card"
                         [class.is-completado]="sesion.tipo === 'completado'"
@@ -307,7 +399,7 @@
                     }
                   </div>
 
-                  @if (sesiones().length > 15) {
+                  @if (filtroRango() === '15' && sesiones().length > 15) {
                     <p class="activity-footer">
                       Mostrando los últimos 15 de {{ sesiones().length }} días
                     </p>
@@ -332,7 +424,7 @@
                 </div>
                 <div>
                   <h2 class="section-title">Estadísticas</h2>
-                  <p class="section-subtitle">Últimos 30 días</p>
+                  <p class="section-subtitle">{{ rangoLabel() }}</p>
                 </div>
               </div>
               <span
@@ -456,8 +548,125 @@
             }
           </section>
 
+          <!-- Comments Section -->
+          <section class="content-section comments-section animate-in" style="--delay: 0.17s">
+            <header
+              class="section-header clickable"
+              (click)="comentariosExpanded = !comentariosExpanded"
+            >
+              <div class="section-header-left">
+                <div class="section-icon">
+                  <span class="material-symbols-outlined">chat_bubble</span>
+                </div>
+                <div>
+                  <h2 class="section-title">Comentarios del paciente</h2>
+                  <p class="section-subtitle">
+                    @if (comentariosPendientes() > 0) {
+                      {{ comentariosPendientes() }} pendiente{{ comentariosPendientes() !== 1 ? 's' : '' }}
+                    } @else {
+                      {{ comentarios().length }} comentario{{ comentarios().length !== 1 ? 's' : '' }}
+                    }
+                  </p>
+                </div>
+              </div>
+              @if (comentariosPendientes() > 0) {
+                <span class="comments-pending-badge">{{ comentariosPendientes() }}</span>
+              }
+              <span
+                class="material-symbols-outlined expand-icon"
+                [class.rotated]="comentariosExpanded"
+              >expand_more</span>
+            </header>
+
+            @if (comentariosExpanded) {
+              <div class="section-content">
+                @if (isLoadingComentarios()) {
+                  <div class="loading-inline">
+                    <div class="shimmer-bar"></div>
+                    <div class="shimmer-bar short"></div>
+                  </div>
+                } @else if (comentarios().length === 0) {
+                  <div class="empty-state-inline">
+                    <div class="empty-icon">
+                      <span class="material-symbols-outlined">speaker_notes_off</span>
+                    </div>
+                    <p class="empty-text">Sin comentarios del paciente</p>
+                  </div>
+                } @else {
+                  @if (comentariosPendientes() > 0) {
+                    <button
+                      type="button"
+                      class="see-all-btn mb-3 mt-0"
+                      (click)="marcarTodosRevisados()"
+                    >
+                      <span class="material-symbols-outlined" style="font-size: 1.125rem">done_all</span>
+                      Marcar todos como leídos
+                    </button>
+                  }
+
+                  <div class="comments-list">
+                    @for (comentario of comentarios(); track comentario.id) {
+                      <article
+                        class="comment-card"
+                        [class.comment-card--unread]="!comentario.revisada"
+                      >
+                        <div class="comment-header">
+                          <span
+                            class="comment-unread-dot"
+                            [class.comment-unread-dot--active]="!comentario.revisada"
+                          ></span>
+                          <span class="comment-context">
+                            {{ formatearFechaComentario(comentario.fecha_registro) }}
+                            @if (comentario.nombre_ejercicio) {
+                              @if (comentario.titulo_plan) {
+                                · {{ comentario.titulo_plan }}
+                              }
+                              · {{ comentario.nombre_ejercicio }}
+                            } @else if (comentario.id_sesion) {
+                              · Observación de sesión
+                            } @else if (comentario.titulo_plan) {
+                              · {{ comentario.titulo_plan }}
+                            }
+                          </span>
+                        </div>
+                        @if (comentario.texto) {
+                          <p class="comment-text">
+                            <span class="material-symbols-outlined act-quote-icon">format_quote</span>
+                            {{ comentario.texto }}
+                          </p>
+                        }
+                        <div class="comment-footer">
+                          @if (comentario.dolor_escala !== null && comentario.dolor_escala !== undefined) {
+                            <span
+                              class="act-pain"
+                              [class]="getDolorColor(comentario.dolor_escala)"
+                            >
+                              <span class="material-symbols-outlined">sentiment_dissatisfied</span>
+                              Dolor: {{ comentario.dolor_escala }}/10
+                            </span>
+                          }
+                          <div class="act-spacer"></div>
+                          @if (!comentario.revisada) {
+                            <button
+                              type="button"
+                              class="act-comment-btn"
+                              (click)="marcarComentarioRevisado(comentario)"
+                            >
+                              <span class="material-symbols-outlined">check</span>
+                              Leído
+                            </button>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
           <!-- Plans Section -->
-          <section class="content-section animate-in" style="--delay: 0.2s">
+          <section class="content-section plans-section animate-in" style="--delay: 0.2s">
             <header
               class="section-header clickable"
               (click)="planesExpanded = !planesExpanded"

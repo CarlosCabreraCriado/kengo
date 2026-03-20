@@ -13,7 +13,7 @@ CREATE TABLE `categorias` (
   `id_categoria` int unsigned NOT NULL AUTO_INCREMENT,
   `nombre_categoria` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id_categoria`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.codigos_recuperacion definition
@@ -28,7 +28,7 @@ CREATE TABLE `codigos_recuperacion` (
   `usado` tinyint(1) DEFAULT '0',
   `ip_solicitante` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.codigos_verificacion_email definition
@@ -43,7 +43,7 @@ CREATE TABLE `codigos_verificacion_email` (
   `usado` tinyint(1) DEFAULT '0',
   `ip_solicitante` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_activity definition
@@ -61,7 +61,7 @@ CREATE TABLE `directus_activity` (
   PRIMARY KEY (`id`),
   KEY `directus_activity_collection_foreign` (`collection`),
   KEY `directus_activity_timestamp_index` (`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=4383 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6664 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_extensions definition
@@ -101,7 +101,7 @@ CREATE TABLE `directus_fields` (
   `searchable` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `directus_fields_collection_foreign` (`collection`)
-) ENGINE=InnoDB AUTO_INCREMENT=338 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=361 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_migrations definition
@@ -145,7 +145,7 @@ CREATE TABLE `directus_relations` (
   PRIMARY KEY (`id`),
   KEY `directus_relations_many_collection_foreign` (`many_collection`),
   KEY `directus_relations_one_collection_foreign` (`one_collection`)
-) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_translations definition
@@ -321,7 +321,7 @@ CREATE TABLE `rutinas` (
   CONSTRAINT `rutinas_autor_foreign` FOREIGN KEY (`autor`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `rutinas_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`),
   CONSTRAINT `rutinas_user_updated_foreign` FOREIGN KEY (`user_updated`) REFERENCES `directus_users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.sesiones definition
@@ -337,7 +337,7 @@ CREATE TABLE `sesiones` (
   PRIMARY KEY (`id`),
   KEY `sesiones_paciente_foreign` (`paciente`),
   CONSTRAINT `sesiones_paciente_foreign` FOREIGN KEY (`paciente`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.tokens_acceso_usuario definition
@@ -358,7 +358,7 @@ CREATE TABLE `tokens_acceso_usuario` (
   KEY `tokens_acceso_usuario_id_usuario_foreign` (`id_usuario`),
   CONSTRAINT `tokens_acceso_usuario_id_usuario_foreign` FOREIGN KEY (`id_usuario`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `tokens_acceso_usuario_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.Planes definition
@@ -385,7 +385,28 @@ CREATE TABLE `Planes` (
   CONSTRAINT `planes_paciente_foreign` FOREIGN KEY (`paciente`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `planes_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`),
   CONSTRAINT `planes_user_updated_foreign` FOREIGN KEY (`user_updated`) REFERENCES `directus_users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- kengoDB.cumplimiento_diario definition
+
+CREATE TABLE `cumplimiento_diario` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `date_created` timestamp NULL DEFAULT NULL,
+  `fecha` date DEFAULT NULL,
+  `paciente` char(36) DEFAULT NULL,
+  `plan` int unsigned DEFAULT NULL,
+  `ejercicios_esperados` int DEFAULT '0',
+  `ejercicios_completados` int DEFAULT '0',
+  `es_dia_descanso` tinyint(1) DEFAULT '0',
+  `dolor_promedio` decimal(3,1) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_fecha_paciente_plan` (`fecha`,`paciente`,`plan`),
+  KEY `cumplimiento_diario_plan_foreign` (`plan`),
+  KEY `idx_paciente_fecha` (`paciente`,`fecha`),
+  CONSTRAINT `cumplimiento_diario_paciente_foreign` FOREIGN KEY (`paciente`) REFERENCES `directus_users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cumplimiento_diario_plan_foreign` FOREIGN KEY (`plan`) REFERENCES `Planes` (`id_plan`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2446 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.detalle_usuario definition
@@ -402,7 +423,7 @@ CREATE TABLE `detalle_usuario` (
   PRIMARY KEY (`id_detalle_usuario`),
   KEY `detalle_usuario_id_usuario_foreign` (`id_usuario`),
   CONSTRAINT `detalle_usuario_id_usuario_foreign` FOREIGN KEY (`id_usuario`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.detalle_usuario_clinica definition
@@ -466,6 +487,25 @@ CREATE TABLE `directus_dashboards` (
   PRIMARY KEY (`id`),
   KEY `directus_dashboards_user_created_foreign` (`user_created`),
   CONSTRAINT `directus_dashboards_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- kengoDB.directus_deployments definition
+
+CREATE TABLE `directus_deployments` (
+  `id` char(36) NOT NULL,
+  `provider` varchar(255) NOT NULL,
+  `credentials` text,
+  `options` text,
+  `date_created` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_created` char(36) DEFAULT NULL,
+  `webhook_ids` json DEFAULT NULL,
+  `webhook_secret` varchar(255) DEFAULT NULL,
+  `last_synced_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `directus_deployments_provider_unique` (`provider`),
+  KEY `directus_deployments_user_created_foreign` (`user_created`),
+  CONSTRAINT `directus_deployments_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
@@ -625,7 +665,7 @@ CREATE TABLE `directus_presets` (
   KEY `directus_presets_role_foreign` (`role`),
   CONSTRAINT `directus_presets_role_foreign` FOREIGN KEY (`role`) REFERENCES `directus_roles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `directus_presets_user_foreign` FOREIGN KEY (`user`) REFERENCES `directus_users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=90 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_revisions definition
@@ -647,7 +687,7 @@ CREATE TABLE `directus_revisions` (
   CONSTRAINT `directus_revisions_activity_foreign` FOREIGN KEY (`activity`) REFERENCES `directus_activity` (`id`) ON DELETE CASCADE,
   CONSTRAINT `directus_revisions_parent_foreign` FOREIGN KEY (`parent`) REFERENCES `directus_revisions` (`id`),
   CONSTRAINT `directus_revisions_version_foreign` FOREIGN KEY (`version`) REFERENCES `directus_versions` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3211 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5264 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_settings definition
@@ -701,6 +741,16 @@ CREATE TABLE `directus_settings` (
   `ai_openai_api_key` text,
   `ai_anthropic_api_key` text,
   `ai_system_prompt` text,
+  `ai_google_api_key` text,
+  `ai_openai_compatible_api_key` text,
+  `ai_openai_compatible_base_url` text,
+  `ai_openai_compatible_name` text,
+  `ai_openai_compatible_models` json DEFAULT NULL,
+  `ai_openai_compatible_headers` json DEFAULT NULL,
+  `ai_openai_allowed_models` json DEFAULT NULL,
+  `ai_anthropic_allowed_models` json DEFAULT NULL,
+  `ai_google_allowed_models` json DEFAULT NULL,
+  `collaborative_editing_enabled` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `directus_settings_project_logo_foreign` (`project_logo`),
   KEY `directus_settings_public_foreground_foreign` (`public_foreground`),
@@ -757,7 +807,7 @@ CREATE TABLE `ejercicios` (
   KEY `ejercicios_portada_foreign` (`portada`),
   CONSTRAINT `ejercicios_portada_foreign` FOREIGN KEY (`portada`) REFERENCES `directus_files` (`id`) ON DELETE SET NULL,
   CONSTRAINT `ejercicios_video_foreign` FOREIGN KEY (`video`) REFERENCES `directus_files` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=190 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=322 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.ejercicios_categorias definition
@@ -771,7 +821,7 @@ CREATE TABLE `ejercicios_categorias` (
   KEY `ejercicios_categorias_ejercicios_id_ejercicio_foreign` (`ejercicios_id_ejercicio`),
   CONSTRAINT `ejercicios_categorias_categorias_id_categoria_foreign` FOREIGN KEY (`categorias_id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE SET NULL,
   CONSTRAINT `ejercicios_categorias_ejercicios_id_ejercicio_foreign` FOREIGN KEY (`ejercicios_id_ejercicio`) REFERENCES `ejercicios` (`id_ejercicio`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=397 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=651 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.ejercicios_favoritos definition
@@ -785,7 +835,7 @@ CREATE TABLE `ejercicios_favoritos` (
   KEY `ejercicios_favoritos_id_ejercicio_foreign` (`id_ejercicio`),
   CONSTRAINT `ejercicios_favoritos_id_ejercicio_foreign` FOREIGN KEY (`id_ejercicio`) REFERENCES `ejercicios` (`id_ejercicio`) ON DELETE SET NULL,
   CONSTRAINT `ejercicios_favoritos_id_usuario_foreign` FOREIGN KEY (`id_usuario`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.planes_ejercicios definition
@@ -811,7 +861,7 @@ CREATE TABLE `planes_ejercicios` (
   KEY `planes_ejercicios_plan_foreign` (`plan`),
   CONSTRAINT `planes_ejercicios_ejercicio_foreign` FOREIGN KEY (`ejercicio`) REFERENCES `ejercicios` (`id_ejercicio`) ON DELETE SET NULL,
   CONSTRAINT `planes_ejercicios_plan_foreign` FOREIGN KEY (`plan`) REFERENCES `Planes` (`id_plan`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=137 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.planes_registros definition
@@ -836,7 +886,7 @@ CREATE TABLE `planes_registros` (
   CONSTRAINT `planes_registros_paciente_foreign` FOREIGN KEY (`paciente`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `planes_registros_plan_item_foreign` FOREIGN KEY (`plan_item`) REFERENCES `planes_ejercicios` (`id`) ON DELETE SET NULL,
   CONSTRAINT `planes_registros_sesion_foreign` FOREIGN KEY (`sesion`) REFERENCES `sesiones` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=232 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.rutinas_ejercicios definition
@@ -861,7 +911,7 @@ CREATE TABLE `rutinas_ejercicios` (
   KEY `rutinas_ejercicios_rutina_foreign` (`rutina`),
   CONSTRAINT `rutinas_ejercicios_ejercicio_foreign` FOREIGN KEY (`ejercicio`) REFERENCES `ejercicios` (`id_ejercicio`) ON DELETE SET NULL,
   CONSTRAINT `rutinas_ejercicios_rutina_foreign` FOREIGN KEY (`rutina`) REFERENCES `rutinas` (`id_rutina`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.clinicas definition
@@ -888,7 +938,7 @@ CREATE TABLE `clinicas` (
   CONSTRAINT `clinicas_logo_foreign` FOREIGN KEY (`logo`) REFERENCES `directus_files` (`id`) ON DELETE SET NULL,
   CONSTRAINT `clinicas_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`),
   CONSTRAINT `clinicas_user_updated_foreign` FOREIGN KEY (`user_updated`) REFERENCES `directus_users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.clinicas_files definition
@@ -902,7 +952,7 @@ CREATE TABLE `clinicas_files` (
   KEY `clinicas_files_clinicas_id_clinica_foreign` (`clinicas_id_clinica`),
   CONSTRAINT `clinicas_files_clinicas_id_clinica_foreign` FOREIGN KEY (`clinicas_id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE SET NULL,
   CONSTRAINT `clinicas_files_directus_files_id_foreign` FOREIGN KEY (`directus_files_id`) REFERENCES `directus_files` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.codigos_acceso definition
@@ -925,7 +975,48 @@ CREATE TABLE `codigos_acceso` (
   KEY `codigos_acceso_creado_por_foreign` (`creado_por`),
   CONSTRAINT `codigos_acceso_creado_por_foreign` FOREIGN KEY (`creado_por`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `codigos_acceso_id_clinica_foreign` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- kengoDB.directus_deployment_projects definition
+
+CREATE TABLE `directus_deployment_projects` (
+  `id` char(36) NOT NULL,
+  `deployment` char(36) NOT NULL,
+  `external_id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `date_created` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_created` char(36) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  `framework` varchar(255) DEFAULT NULL,
+  `deployable` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `directus_deployment_projects_deployment_external_id_unique` (`deployment`,`external_id`),
+  KEY `directus_deployment_projects_user_created_foreign` (`user_created`),
+  CONSTRAINT `directus_deployment_projects_deployment_foreign` FOREIGN KEY (`deployment`) REFERENCES `directus_deployments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `directus_deployment_projects_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- kengoDB.directus_deployment_runs definition
+
+CREATE TABLE `directus_deployment_runs` (
+  `id` char(36) NOT NULL,
+  `project` char(36) NOT NULL,
+  `external_id` varchar(255) NOT NULL,
+  `target` varchar(255) NOT NULL,
+  `date_created` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_created` char(36) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  `started_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `directus_deployment_runs_project_foreign` (`project`),
+  KEY `directus_deployment_runs_user_created_foreign` (`user_created`),
+  CONSTRAINT `directus_deployment_runs_project_foreign` FOREIGN KEY (`project`) REFERENCES `directus_deployment_projects` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `directus_deployment_runs_user_created_foreign` FOREIGN KEY (`user_created`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- kengoDB.directus_sessions definition
@@ -947,6 +1038,35 @@ CREATE TABLE `directus_sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
+-- kengoDB.notificaciones_fisio definition
+
+CREATE TABLE `notificaciones_fisio` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `date_created` timestamp NULL DEFAULT NULL,
+  `tipo` varchar(255) DEFAULT NULL,
+  `paciente` char(36) DEFAULT NULL,
+  `id_clinica` int unsigned DEFAULT NULL,
+  `id_registro` int unsigned DEFAULT NULL,
+  `id_sesion` int unsigned DEFAULT NULL,
+  `fecha_registro` datetime DEFAULT NULL,
+  `titulo_plan` varchar(255) DEFAULT NULL,
+  `nombre_ejercicio` varchar(255) DEFAULT NULL,
+  `texto` varchar(255) DEFAULT NULL,
+  `dolor_escala` int DEFAULT NULL,
+  `revisada` tinyint(1) DEFAULT '0',
+  `fecha_revision` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_registro_tipo` (`id_registro`,`tipo`),
+  UNIQUE KEY `uq_sesion_tipo` (`id_sesion`,`tipo`),
+  KEY `notificaciones_fisio_paciente_foreign` (`paciente`),
+  KEY `notificaciones_fisio_id_clinica_foreign` (`id_clinica`),
+  CONSTRAINT `notificaciones_fisio_id_clinica_foreign` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE CASCADE,
+  CONSTRAINT `notificaciones_fisio_id_registro_foreign` FOREIGN KEY (`id_registro`) REFERENCES `planes_registros` (`id_registro`) ON DELETE CASCADE,
+  CONSTRAINT `notificaciones_fisio_id_sesion_foreign` FOREIGN KEY (`id_sesion`) REFERENCES `sesiones` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `notificaciones_fisio_paciente_foreign` FOREIGN KEY (`paciente`) REFERENCES `directus_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 -- kengoDB.usuarios_clinicas definition
 
 CREATE TABLE `usuarios_clinicas` (
@@ -961,4 +1081,4 @@ CREATE TABLE `usuarios_clinicas` (
   CONSTRAINT `usuarios_clinicas_id_clinica_foreign` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE SET NULL,
   CONSTRAINT `usuarios_clinicas_id_puesto_foreign` FOREIGN KEY (`id_puesto`) REFERENCES `Puestos` (`id`) ON DELETE SET NULL,
   CONSTRAINT `usuarios_clinicas_id_usuario_foreign` FOREIGN KEY (`id_usuario`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

@@ -16,6 +16,7 @@ export * from './lib/database/routines.db';
 export * from './lib/database/clinics.db';
 export * from './lib/database/access-codes.db';
 export * from './lib/database/compliance.db';
+export * from './lib/database/notifications.db';
 
 // Tipos para respuestas del SDK Directus
 export * from './lib/directus/users.directus';
@@ -33,6 +34,7 @@ export * from './lib/domain/clinics';
 export * from './lib/domain/sessions';
 export * from './lib/domain/access-codes';
 export * from './lib/domain/compliance';
+export * from './lib/domain/notifications';
 
 // DTOs para operaciones de crear/actualizar
 export * from './lib/payloads/plans.payload';

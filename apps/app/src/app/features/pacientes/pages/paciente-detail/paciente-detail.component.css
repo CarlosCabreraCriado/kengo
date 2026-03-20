@@ -707,6 +707,167 @@
 }
 
 /* ============================================
+   COMMENTS SECTION
+   ============================================ */
+.comments-pending-badge {
+  @apply inline-flex items-center justify-center w-5 h-5 rounded-full
+         text-[0.6rem] font-bold text-white shrink-0;
+  background: var(--kengo-primary);
+}
+
+.comments-list {
+  @apply flex flex-col gap-2;
+}
+
+.comment-card {
+  @apply relative flex flex-col gap-2 p-3 rounded-xl transition-all;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.comment-card--unread {
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+  border-color: rgba(var(--kengo-primary-rgb), 0.15);
+}
+
+.comment-header {
+  @apply flex items-center gap-2;
+}
+
+.comment-unread-dot {
+  @apply w-2 h-2 rounded-full shrink-0;
+  background: #d4d4d8;
+}
+
+.comment-unread-dot--active {
+  background: var(--kengo-primary);
+}
+
+.comment-context {
+  @apply text-xs text-zinc-500 truncate;
+}
+
+.comment-text {
+  @apply flex items-start gap-1.5 text-xs text-zinc-600 leading-relaxed m-0;
+}
+
+.comment-footer {
+  @apply flex items-center gap-2;
+}
+
+/* ============================================
+   ACTIVITY FILTER
+   ============================================ */
+.activity-filter {
+  @apply flex flex-col gap-2 pb-3 mb-3;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.filter-chips {
+  @apply flex flex-wrap gap-1.5;
+}
+
+.filter-chip {
+  @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full
+         text-xs font-semibold cursor-pointer transition-all
+         border-none;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #71717a;
+}
+
+.filter-chip:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: #3f3f46;
+}
+
+.filter-chip--active {
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.3);
+}
+
+.filter-chip--active:hover {
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  color: white;
+}
+
+.filter-date-range {
+  @apply flex items-end gap-2 p-3 rounded-xl;
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
+  animation: expandIn 0.25s ease-out;
+}
+
+.filter-date-field {
+  @apply flex flex-col gap-1 flex-1 min-w-0;
+}
+
+.filter-date-label {
+  @apply text-[0.65rem] font-medium text-zinc-400 uppercase tracking-wide;
+}
+
+.filter-date-input {
+  @apply w-full px-2.5 py-1.5 rounded-lg text-xs text-zinc-700 font-medium;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.filter-date-input:focus {
+  border-color: rgba(var(--kengo-primary-rgb), 0.4);
+}
+
+.filter-date-arrow {
+  @apply flex items-center text-zinc-300 pb-1.5;
+}
+
+.filter-apply-btn {
+  @apply flex items-center justify-center w-8 h-8 rounded-full shrink-0
+         text-white cursor-pointer transition-all border-none;
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.3);
+}
+
+.filter-apply-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.4);
+  transform: translateY(-1px);
+}
+
+.filter-apply-btn:disabled {
+  @apply opacity-40 cursor-not-allowed;
+}
+
+.filter-apply-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.filter-active-indicator {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium self-start;
+  background: rgba(var(--kengo-primary-rgb), 0.08);
+  color: var(--kengo-primary);
+  animation: expandIn 0.2s ease-out;
+}
+
+.filter-active-label {
+  @apply truncate;
+  max-width: 200px;
+}
+
+.filter-reset-btn {
+  @apply flex items-center justify-center w-5 h-5 rounded-full
+         cursor-pointer transition-all border-none ml-0.5;
+  background: rgba(var(--kengo-primary-rgb), 0.12);
+  color: var(--kengo-primary);
+}
+
+.filter-reset-btn:hover {
+  background: rgba(var(--kengo-primary-rgb), 0.2);
+}
+
+/* ============================================
    ACTIVITY FEED
    ============================================ */
 .activity-feed {
@@ -1009,6 +1170,22 @@
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   MOBILE LAYOUT: reorder sections
+   ============================================ */
+@media (max-width: 767.98px) {
+  .main-column,
+  .sidebar-column {
+    display: contents;
+  }
+
+  .hero-card { order: 1; }
+  .stats-section { order: 2; }
+  .comments-section { order: 3; }
+  .plans-section { order: 4; }
+  .activity-section { order: 5; }
 }
 
 /* ============================================
