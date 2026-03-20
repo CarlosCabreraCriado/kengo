@@ -707,185 +707,261 @@
 }
 
 /* ============================================
-   ACTIVITY LIST
+   ACTIVITY FEED
    ============================================ */
-.activity-list {
-  @apply flex flex-col gap-2;
+.activity-feed {
+  @apply flex flex-col gap-3;
 }
 
-.activity-item {
-  @apply flex flex-col rounded-xl transition-all;
-  background: rgba(255, 255, 255, 0.4);
+/* --- Card Base --- */
+.act-card {
+  @apply relative flex flex-col rounded-2xl overflow-hidden;
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.15s ease;
+  animation: actCardIn 0.3s ease-out both;
+  animation-delay: calc(0.04s + var(--i, 0) * 0.035s);
 }
 
-.activity-item.clickable-row {
+@keyframes actCardIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Left accent bar */
+.act-card::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-1;
+  transition: background 0.2s ease;
+}
+
+.act-card.is-completado::before {
+  background: linear-gradient(180deg, #16a34a, #4ade80);
+}
+.act-card.is-parcial::before {
+  background: linear-gradient(180deg, #d97706, #fbbf24);
+}
+.act-card.is-fallido::before {
+  background: linear-gradient(180deg, #dc2626, #fca5a5);
+}
+.act-card.is-descanso::before {
+  background: linear-gradient(180deg, #a1a1aa, #d4d4d8);
+}
+
+/* Status border tints */
+.act-card.is-completado { border-color: rgba(34, 197, 94, 0.1); }
+.act-card.is-parcial { border-color: rgba(217, 119, 6, 0.1); }
+.act-card.is-fallido { border-color: rgba(220, 38, 38, 0.08); }
+.act-card.is-descanso {
+  @apply opacity-50;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Clickable cards */
+.act-card.is-clickable {
   @apply cursor-pointer;
 }
 
-.activity-item.clickable-row .activity-row::after {
+.act-card.is-clickable:hover {
+  @apply -translate-y-0.5;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.act-card.is-clickable:active {
+  @apply translate-y-0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Chevron for clickable */
+.act-card.is-clickable .act-header::after {
   content: "chevron_right";
   font-family: "Material Symbols Outlined";
-  @apply text-lg text-zinc-300 shrink-0 transition-colors;
+  @apply text-lg text-zinc-300 transition-colors;
 }
 
-.activity-item.clickable-row:hover .activity-row::after {
+.act-card.is-clickable:hover .act-header::after {
   color: var(--kengo-primary);
 }
 
-.activity-item:hover {
-  @apply bg-white/60;
-}
-
-.activity-item.clickable-row:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  @apply -translate-y-0.5;
-}
-
-/* Missed day (fallido) */
-.activity-item.missed {
-  border-left: 3px solid #dc2626;
-  @apply cursor-default;
-}
-
-.activity-item.missed:hover {
+/* Non-clickable hover reset */
+.act-card.is-descanso:hover {
   @apply translate-y-0;
-  box-shadow: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-/* Partial day */
-.activity-item.partial {
-  border-left: 3px solid #d97706;
+/* Comments open state */
+.act-card.comments-open {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(var(--kengo-primary-rgb), 0.15);
 }
 
-/* Rest day */
-.activity-item.rest-day {
-  @apply opacity-60 cursor-default;
+/* --- Card Header --- */
+.act-header {
+  @apply flex items-center gap-2.5 pl-5 pr-3.5 pt-3 pb-2;
 }
 
-.activity-item.rest-day:hover {
-  @apply opacity-60 translate-y-0 bg-white/40;
-  box-shadow: none;
+.act-date {
+  @apply text-[0.8rem] font-bold text-zinc-700 flex-1 leading-tight;
+  letter-spacing: -0.01em;
 }
 
-.activity-item.has-comments {
-  border-left: 2px solid rgba(var(--kengo-primary-rgb), 0.25);
+/* Status badge */
+.act-badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] font-semibold leading-tight;
+  background: rgba(0, 0, 0, 0.04);
+  color: #71717a;
 }
 
-.activity-item.comments-open {
-  border-left: 2px solid var(--kengo-primary);
+.act-badge .material-symbols-outlined {
+  font-size: 14px;
+  @apply leading-none;
 }
 
-.activity-row {
-  @apply flex items-center gap-3 p-3;
+.act-badge.text-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+}
+.act-badge.text-amber {
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+}
+.act-badge.text-danger {
+  background: rgba(239, 68, 68, 0.08);
+  color: #b91c1c;
+}
+.act-badge.text-zinc-400 {
+  background: rgba(161, 161, 170, 0.1);
+  color: #71717a;
 }
 
-/* Comment toggle button */
-.comment-toggle-btn {
-  @apply relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
-         cursor-pointer transition-all border-none;
-  background: rgba(var(--kengo-primary-rgb), 0.08);
+/* --- Plans Breakdown with Progress Bars --- */
+.act-plans {
+  @apply flex flex-col gap-2.5 pl-5 pr-4 pb-3;
+}
+
+.act-plan {
+  @apply flex flex-col gap-1;
+}
+
+.act-plan-info {
+  @apply flex items-center justify-between gap-2;
+}
+
+.act-plan-name {
+  @apply text-xs text-zinc-500 truncate flex-1;
+}
+
+.act-plan-count {
+  @apply text-[0.7rem] font-bold tabular-nums shrink-0;
+}
+
+.act-plan-count.status-completado { color: #16a34a; }
+.act-plan-count.status-parcial { color: #b45309; }
+.act-plan-count.status-fallido { color: #dc2626; }
+
+/* Mini progress bar */
+.act-plan-track {
+  @apply h-[3px] rounded-full overflow-hidden;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.act-plan-fill {
+  @apply h-full rounded-full;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.act-plan-fill.status-completado {
+  background: linear-gradient(90deg, #22c55e, #86efac);
+}
+.act-plan-fill.status-parcial {
+  background: linear-gradient(90deg, #d97706, #fcd34d);
+}
+.act-plan-fill.status-fallido {
+  background: linear-gradient(90deg, #ef4444, #fca5a5);
+}
+
+/* --- Meta Row (pain + comments) --- */
+.act-meta {
+  @apply flex items-center gap-2 pl-5 pr-3.5 pb-3;
+}
+
+.act-spacer {
+  @apply flex-1;
+}
+
+/* Pain badge */
+.act-pain {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] font-semibold;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.act-pain .material-symbols-outlined {
+  font-size: 13px;
+}
+
+.act-pain.text-green-600 {
+  background: rgba(34, 197, 94, 0.08);
+  color: var(--kengo-success);
+}
+.act-pain.text-yellow-600 {
+  background: rgba(202, 138, 4, 0.08);
+  color: #a16207;
+}
+.act-pain.text-red-600 {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+.act-pain.text-zinc-400 {
+  background: rgba(0, 0, 0, 0.04);
+  color: #a1a1aa;
+}
+
+/* Comment button */
+.act-comment-btn {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full
+         text-xs font-medium cursor-pointer transition-all border-none;
+  background: rgba(var(--kengo-primary-rgb), 0.07);
   color: var(--kengo-primary);
-  opacity: 0.7;
 }
 
-.comment-toggle-btn:hover,
-.comment-toggle-btn.active {
-  opacity: 1;
-  background: rgba(var(--kengo-primary-rgb), 0.15);
+.act-comment-btn:hover,
+.act-comment-btn.active {
+  background: rgba(var(--kengo-primary-rgb), 0.14);
 }
 
-.comment-toggle-btn .material-symbols-outlined {
-  @apply text-lg;
+.act-comment-btn .material-symbols-outlined {
+  font-size: 14px;
 }
 
-.comment-count {
-  @apply absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center
-         rounded-full text-white text-[0.6rem] font-bold leading-none px-1;
-  background-color: var(--kengo-primary);
+.act-comment-count {
+  @apply tabular-nums text-[0.7rem];
 }
 
-/* Comments panel */
-.comments-panel {
-  @apply flex flex-col gap-2 px-3 pb-3;
-  border-top: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
-  animation: expandIn 0.25s ease-out;
+/* --- Comments Panel --- */
+.act-comments {
+  @apply flex flex-col gap-2 px-4 pb-3 pt-2 ml-1;
+  border-top: 1px solid rgba(var(--kengo-primary-rgb), 0.08);
+  animation: expandIn 0.2s ease-out;
 }
 
-.comment-bubble {
-  @apply flex items-start gap-2 p-2.5 rounded-lg;
-  background: rgba(var(--kengo-primary-rgb), 0.05);
+.act-comment-bubble {
+  @apply flex items-start gap-2 p-2.5 rounded-xl;
+  background: rgba(var(--kengo-primary-rgb), 0.04);
 }
 
-.comment-quote-icon {
-  @apply text-sm shrink-0 mt-0.5;
-  color: rgba(var(--kengo-primary-rgb), 0.4);
+.act-quote-icon {
+  @apply shrink-0 mt-0.5;
+  font-size: 14px;
+  color: rgba(var(--kengo-primary-rgb), 0.3);
 }
 
-.comment-text {
+.act-comment-text {
   @apply text-xs text-zinc-600 leading-relaxed;
 }
 
-.activity-date-badge {
-  @apply shrink-0 px-3 py-1.5 rounded-lg;
-  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.1) 0%, rgba(var(--kengo-tertiary-rgb), 0.05) 100%);
-}
-
-.activity-day {
-  @apply text-sm font-semibold;
-  color: var(--kengo-primary);
-}
-
-.activity-details {
-  @apply flex flex-col gap-1 min-w-0 flex-1;
-}
-
-.activity-exercises {
-  @apply flex items-center gap-1.5 text-sm text-zinc-700;
-}
-
-.activity-exercises .material-symbols-outlined {
-  @apply text-base;
-}
-
-.activity-pain {
-  @apply flex items-center gap-1.5 text-xs;
-}
-
-.activity-pain .material-symbols-outlined {
-  @apply text-sm;
-}
-
-/* Plan Breakdown (inside activity items) */
-.plan-breakdown {
-  @apply flex flex-col gap-1 mt-1.5 pt-1.5;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.plan-breakdown-row {
-  @apply flex items-center gap-2 text-xs text-zinc-600;
-}
-
-.plan-dot {
-  @apply w-1.5 h-1.5 rounded-full shrink-0;
-}
-
-.plan-dot.status-completado { @apply bg-green-500; }
-.plan-dot.status-parcial { @apply bg-amber-500; }
-.plan-dot.status-fallido { @apply bg-red-400; }
-
-.plan-breakdown-title {
-  @apply flex-1 truncate;
-}
-
-.plan-breakdown-count {
-  @apply shrink-0 font-medium tabular-nums;
-}
-
-.plan-breakdown-count.status-completado { @apply text-green-600; }
-.plan-breakdown-count.status-parcial { @apply text-amber-600; }
-.plan-breakdown-count.status-fallido { @apply text-red-400; }
-
+/* --- Footer --- */
 .activity-footer {
   @apply text-center text-xs text-zinc-400 mt-3 m-0;
 }

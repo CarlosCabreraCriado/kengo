@@ -1,10 +1,4 @@
-import {
-  Component,
-  computed,
-  inject,
-  signal,
-  OnInit,
-} from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
@@ -14,6 +8,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { environment as env } from '../../../../../environments/environment';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { CumplimientoService } from '../../data-access/cumplimiento.service';
+import type { CumplimientoDia, DiaSemana } from '../../../../../types/global';
+
+const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
 interface RegistroExpandido {
   id_registro: number;
@@ -49,6 +47,24 @@ interface GrupoPlan {
   registros: RegistroExpandido[];
 }
 
+interface EjercicioAgendado {
+  id: number;
+  sort: number;
+  nombre: string;
+  portada: string | null;
+  series: number | null;
+  repeticiones: number | null;
+  duracion_seg: number | null;
+}
+
+interface PlanAgendadoDetalle {
+  plan_id: number;
+  titulo: string;
+  esperados: number;
+  completados: number;
+  ejercicios: EjercicioAgendado[];
+}
+
 @Component({
   selector: 'app-sesion-detail',
   standalone: true,
@@ -64,6 +80,7 @@ export class SesionDetailComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
   private breakpointObserver = inject(BreakpointObserver);
+  private cumplimientoService = inject(CumplimientoService);
 
   isMovil = toSignal(
     this.breakpointObserver
@@ -78,6 +95,8 @@ export class SesionDetailComponent implements OnInit {
   readonly pacienteId = signal<string>('');
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly planesAgendados = signal<PlanAgendadoDetalle[]>([]);
+  readonly esFallido = signal(false);
 
   // Computed
   readonly totalEjercicios = computed(() =>
@@ -90,13 +109,20 @@ export class SesionDetailComponent implements OnInit {
       .filter((r) => r.dolor_escala != null)
       .map((r) => r.dolor_escala!);
     if (dolores.length === 0) return null;
-    return Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) / 10;
+    return (
+      Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) /
+      10
+    );
   });
 
   readonly totalComentarios = computed(() => {
     const todos = this.grupos().flatMap((g) => g.registros);
     return todos.filter((r) => r.nota_paciente?.trim()).length;
   });
+
+  readonly totalEsperados = computed(() =>
+    this.planesAgendados().reduce((sum, p) => sum + p.esperados, 0),
+  );
 
   ngOnInit() {
     const id = this.route.snapshot.params['id'];
@@ -164,7 +190,13 @@ export class SesionDetailComponent implements OnInit {
       );
 
       const registros = response?.data || [];
+
       this.grupos.set(this.agruparPorPlan(registros));
+
+      // Si no hay registros, cargar planes agendados desde cumplimiento
+      if (registros.length === 0) {
+        await this.cargarPlanesAgendados();
+      }
     } catch (err) {
       console.error('Error cargando registros de sesión:', err);
       this.error.set('Error al cargar los detalles de la sesión');
@@ -189,6 +221,97 @@ export class SesionDetailComponent implements OnInit {
     }
 
     return Array.from(mapa.values());
+  }
+
+  private async cargarPlanesAgendados() {
+    try {
+      const resp = await this.cumplimientoService.getCumplimiento(
+        this.pacienteId(),
+        this.fecha(),
+        this.fecha(),
+      );
+      const dia = resp.dias.find((d) => d.fecha === this.fecha());
+      if (!dia || dia.tipo !== 'fallido') return;
+
+      const planesConEjercicios = dia.planes.filter((p) => p.esperados > 0);
+      if (planesConEjercicios.length === 0) return;
+
+      this.esFallido.set(true);
+
+      const diaSemana =
+        DIAS_SEMANA[new Date(this.fecha() + 'T12:00:00').getDay()];
+
+      type PlanEjercicioItem = {
+        id: number;
+        sort: number;
+        series: number | null;
+        repeticiones: number | null;
+        duracion_seg: number | null;
+        dias_semana: DiaSemana[] | null;
+        ejercicio: {
+          id_ejercicio: number;
+          nombre_ejercicio: string;
+          portada: string | null;
+        };
+      };
+
+      const ejerciciosPorPlan = await Promise.all(
+        planesConEjercicios.map((p) =>
+          firstValueFrom(
+            this.http
+              .get<{ data: PlanEjercicioItem[] }>(
+                `${env.DIRECTUS_URL}/items/planes_ejercicios`,
+                {
+                  params: {
+                    fields: [
+                      'id',
+                      'sort',
+                      'series',
+                      'repeticiones',
+                      'duracion_seg',
+                      'dias_semana',
+                      'ejercicio.id_ejercicio',
+                      'ejercicio.nombre_ejercicio',
+                      'ejercicio.portada',
+                    ].join(','),
+                    filter: JSON.stringify({
+                      plan: { _eq: p.plan_id },
+                    }),
+                    sort: 'sort',
+                    limit: '-1',
+                  },
+                  withCredentials: true,
+                },
+              )
+              .pipe(map((resp) => resp?.data ?? [])),
+          ),
+        ),
+      );
+
+      console.log(ejerciciosPorPlan);
+      this.planesAgendados.set(
+        planesConEjercicios.map((p, i) => {
+          const items = ejerciciosPorPlan[i].filter((item) => {
+            if (!item.dias_semana || item.dias_semana.length === 0) return true;
+            return item.dias_semana.includes(diaSemana);
+          });
+          return {
+            ...p,
+            ejercicios: items.map((item) => ({
+              id: item.id,
+              sort: item.sort,
+              nombre: item.ejercicio.nombre_ejercicio,
+              portada: item.ejercicio.portada,
+              series: item.series,
+              repeticiones: item.repeticiones,
+              duracion_seg: item.duracion_seg,
+            })),
+          };
+        }),
+      );
+    } catch {
+      // silently ignore — empty state will show
+    }
   }
 
   // === Helpers ===

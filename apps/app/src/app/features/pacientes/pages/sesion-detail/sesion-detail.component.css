@@ -457,6 +457,66 @@
 }
 
 /* ============================================
+   FAILED DAY - SCHEDULED PLANS
+   ============================================ */
+.stat-chip-failed {
+  @apply text-red-600;
+}
+
+.stat-chip-failed .material-symbols-outlined {
+  @apply text-red-500;
+}
+
+.failed-section {
+  border-color: rgba(239, 68, 68, 0.15);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.section-icon-failed {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+}
+
+.section-icon-failed .material-symbols-outlined {
+  @apply text-red-400;
+}
+
+.failed-subtitle {
+  @apply text-red-400;
+}
+
+.failed-progress-row {
+  @apply flex items-center gap-3;
+}
+
+.failed-progress-bar {
+  @apply flex-1 h-2 rounded-full overflow-hidden;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.failed-progress-fill {
+  @apply h-full rounded-full;
+  width: 0%;
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.failed-progress-label {
+  @apply text-xs font-semibold text-red-400 shrink-0;
+}
+
+.failed-ejercicio-card {
+  @apply opacity-60;
+}
+
+.failed-badge {
+  @apply absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.failed-badge .material-symbols-outlined {
+  @apply text-sm text-red-400;
+}
+
+/* ============================================
    UTILITY CLASSES
    ============================================ */
 .text-success {

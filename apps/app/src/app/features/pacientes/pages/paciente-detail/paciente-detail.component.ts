@@ -239,7 +239,7 @@ export class PacienteDetailComponent implements OnInit {
           totalComentarios: comentarios.length,
           tipo: dia.tipo,
           ejerciciosEsperados: dia.ejercicios_esperados,
-          planes: dia.planes,
+          planes: dia.planes.filter(p => p.esperados > 0),
         };
       });
 
@@ -420,13 +420,14 @@ export class PacienteDetailComponent implements OnInit {
     ayer.setDate(ayer.getDate() - 1);
 
     if (d.toDateString() === hoy.toDateString()) return 'Hoy';
-    if (d.toDateString() === ayer.toDateString()) return 'Ayer';
+    const esAyer = d.toDateString() === ayer.toDateString();
 
     const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' });
     const day = d.getDate();
     const month = d.toLocaleDateString('es-ES', { month: 'long' });
     const year = d.getFullYear() !== hoy.getFullYear() ? ` ${d.getFullYear()}` : '';
-    return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}${year}`;
+    const label = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}${year}`;
+    return esAyer ? `${label} (Ayer)` : label;
   }
 
   getPlanStatusClass(plan: { esperados: number; completados: number }): string {
@@ -544,7 +545,7 @@ export class PacienteDetailComponent implements OnInit {
 
   verSesion(sesion: SesionAgrupada) {
     // No navegar para días sin actividad o de descanso
-    if (sesion.tipo === 'fallido' || sesion.tipo === 'descanso') return;
+    if (sesion.tipo === 'descanso') return;
     const pacienteId = this.route.snapshot.params['id'];
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', sesion.fecha]);
   }

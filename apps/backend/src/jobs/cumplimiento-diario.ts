@@ -22,7 +22,7 @@ interface PlanEjercicioRow extends RowDataPacket {
   paciente: string;
   titulo: string;
   item_id: number;
-  dias_semana: string | null; // JSON string from DB
+  dias_semana: string | DiaSemana[] | null;
   veces_dia: number;
 }
 
@@ -101,10 +101,14 @@ export async function calcularCumplimientoDiario(
 
       let diasSemana: DiaSemana[] = [];
       if (row.dias_semana) {
-        try {
-          diasSemana = JSON.parse(row.dias_semana);
-        } catch {
-          diasSemana = [];
+        if (Array.isArray(row.dias_semana)) {
+          diasSemana = row.dias_semana;
+        } else if (typeof row.dias_semana === 'string') {
+          try {
+            diasSemana = JSON.parse(row.dias_semana);
+          } catch {
+            diasSemana = [];
+          }
         }
       }
 
