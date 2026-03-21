@@ -29,7 +29,10 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
 
   // Rutas que queremos cachear (mantener su estado)
   private readonly routesToCache = new Set<string>([
-    'ejercicios',
+    'inicio',
+    'galeria/ejercicios',
+    'mis-pacientes',
+    'mi-clinica',
   ]);
 
   constructor() {
@@ -47,14 +50,24 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
    * Genera una clave única para identificar la ruta
    */
   private getRouteKey(route: ActivatedRouteSnapshot): string {
-    const path = route.routeConfig?.path;
-    return path ?? '';
+    return route.pathFromRoot
+      .filter(r => r.routeConfig?.path && r.routeConfig.path.length > 0)
+      .map(r => r.routeConfig!.path!)
+      .join('/');
+  }
+
+  /**
+   * Verifica si la ruta tiene un componente real (no es un wrapper componentless con loadChildren)
+   */
+  private hasComponent(route: ActivatedRouteSnapshot): boolean {
+    return !!(route.routeConfig?.component || route.routeConfig?.loadComponent);
   }
 
   /**
    * Determina si esta ruta debe ser cacheada al salir
    */
   shouldDetach(route: ActivatedRouteSnapshot): boolean {
+    if (!this.hasComponent(route)) return false;
     const key = this.getRouteKey(route);
     return this.routesToCache.has(key);
   }
@@ -78,6 +91,7 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
    * Determina si debemos restaurar una ruta cacheada
    */
   shouldAttach(route: ActivatedRouteSnapshot): boolean {
+    if (!this.hasComponent(route)) return false;
     const key = this.getRouteKey(route);
     return this.cache.has(key);
   }
@@ -86,6 +100,7 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
    * Recupera la ruta del caché y programa la restauración del scroll
    */
   retrieve(route: ActivatedRouteSnapshot): DetachedRouteHandle | null {
+    if (!this.hasComponent(route)) return null;
     const key = this.getRouteKey(route);
     const cached = this.cache.get(key);
 
