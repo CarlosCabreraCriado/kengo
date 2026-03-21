@@ -34,6 +34,18 @@ interface ColorPalette {
   svgWave4: string;
 }
 
+interface ThemeCacheV1 {
+  v: 1;
+  updatedAt: string;
+  expiresAt: string;
+  idClinica: number | null;
+  colorPrimario: string;
+  logoFileId: string | null;
+  palette: ColorPalette;
+  logoUrl: string;
+  logoIconUrl: string;
+}
+
 interface HSL {
   h: number;
   s: number;
@@ -52,6 +64,8 @@ export class ThemeService {
   private readonly DEFAULT_TERTIARY = '#efc048';
   private readonly DEFAULT_LOGO = 'assets/logo-kengo-horizontal.svg';
   private readonly DEFAULT_LOGO_ICON = 'assets/logo.svg';
+  private readonly CACHE_KEY = 'kengo:theme:v1';
+  private readonly CACHE_TTL_DAYS = 30;
 
   private clinicasService = inject(ClinicasService);
 
@@ -60,15 +74,39 @@ export class ThemeService {
   logoUrl = signal<string>(this.DEFAULT_LOGO);
   logoIconUrl = signal<string>(this.DEFAULT_LOGO_ICON);
 
+  private cache: ThemeCacheV1 | null = null;
+
   constructor() {
-    // Aplicar colores por defecto al iniciar
-    this.inyectarCSSVariables(this.calcularPaleta(this.DEFAULT_PRIMARY, this.DEFAULT_TERTIARY));
+    // Intentar restaurar tema desde caché para evitar flash de colores
+    this.cache = this.leerCache();
+    if (this.cache) {
+      this.inyectarCSSVariables(this.cache.palette);
+      this.currentPrimary.set(this.cache.colorPrimario);
+      this.logoUrl.set(this.cache.logoUrl);
+      this.logoIconUrl.set(this.cache.logoIconUrl);
+      // Precargar imagen del logo en HTTP cache del navegador
+      if (this.cache.logoFileId) {
+        new Image().src = this.cache.logoUrl;
+      }
+    } else {
+      this.inyectarCSSVariables(this.calcularPaleta(this.DEFAULT_PRIMARY, this.DEFAULT_TERTIARY));
+    }
 
     // Effect que escucha cambios en la clínica seleccionada
     effect(() => {
       const clinica = this.clinicasService.selectedClinica();
+      if (!clinica) return; // Caché o defaults ya están aplicados
+
+      const cacheCoincide = this.cache
+        && this.cache.idClinica === clinica.id_clinica
+        && this.cache.colorPrimario === (clinica.color_primario || this.DEFAULT_PRIMARY)
+        && this.cache.logoFileId === (clinica.logo || null);
+
+      if (cacheCoincide) return; // Sin cambios, skip
+
       this.aplicarTemaClinica(clinica);
       this.actualizarLogo(clinica);
+      this.guardarCache(clinica);
     });
   }
 
@@ -110,6 +148,51 @@ export class ThemeService {
   resetLogo(): void {
     this.logoUrl.set(this.DEFAULT_LOGO);
     this.logoIconUrl.set(this.DEFAULT_LOGO_ICON);
+  }
+
+  private leerCache(): ThemeCacheV1 | null {
+    try {
+      const raw = localStorage.getItem(this.CACHE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw) as ThemeCacheV1;
+      if (data.v !== 1) return null;
+      if (new Date(data.expiresAt).getTime() < Date.now()) {
+        localStorage.removeItem(this.CACHE_KEY);
+        return null;
+      }
+      return data;
+    } catch {
+      localStorage.removeItem(this.CACHE_KEY);
+      return null;
+    }
+  }
+
+  private guardarCache(clinica: Clinica): void {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + this.CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
+    const primary = clinica.color_primario || this.DEFAULT_PRIMARY;
+    const logoFileId = clinica.logo || null;
+    const logoUrl = logoFileId ? `${env.DIRECTUS_URL}/assets/${logoFileId}` : this.DEFAULT_LOGO;
+    const logoIconUrl = logoFileId ? logoUrl : this.DEFAULT_LOGO_ICON;
+
+    const cache: ThemeCacheV1 = {
+      v: 1,
+      updatedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      idClinica: clinica.id_clinica,
+      colorPrimario: primary,
+      logoFileId,
+      palette: this.calcularPaleta(primary, this.DEFAULT_TERTIARY),
+      logoUrl,
+      logoIconUrl,
+    };
+
+    try {
+      localStorage.setItem(this.CACHE_KEY, JSON.stringify(cache));
+      this.cache = cache;
+    } catch {
+      // localStorage lleno o no disponible — ignorar
+    }
   }
 
   /**

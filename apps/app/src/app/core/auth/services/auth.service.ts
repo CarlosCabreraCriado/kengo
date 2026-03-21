@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouteReuseStrategy, Router } from '@angular/router';
+import { CustomRouteReuseStrategy } from '../../config/route-reuse-strategy';
 import { environment as env } from '../../../../environments/environment';
 import { BehaviorSubject, firstValueFrom, filter, take } from 'rxjs';
 import { SessionService } from './session.service';
@@ -16,6 +17,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private sessionService = inject(SessionService);
+  private routeReuseStrategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
 
   // Estado reactivo - solo indica si hay sesión activa
   readonly isLoggedIn = signal<boolean>(false);
@@ -80,6 +82,8 @@ export class AuthService {
   limpiarEstadoLocal(evitarRedirect?: boolean): void {
     this.detenerTimerRefresh();
     this.isLoggedIn.set(false);
+    this.routeReuseStrategy.clearCache();
+    localStorage.removeItem('kengo:theme:v1');
     if (!evitarRedirect) {
       this.router.navigate(['/login'], { state: { fromLogout: true } });
     }
