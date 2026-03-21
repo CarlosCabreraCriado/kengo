@@ -320,6 +320,11 @@
                       >
                         <div class="act-header">
                           <span class="act-date">{{ sesion.fechaFormateada }}</span>
+                          @if (sesion.tipo !== 'descanso' && tieneComentarios(sesion)) {
+                            <span class="act-has-comments" title="Tiene comentarios">
+                              <span class="material-symbols-outlined">chat_bubble</span>
+                            </span>
+                          }
                           <div class="act-badge" [class]="getTipoColor(sesion.tipo)">
                             <span
                               class="material-symbols-outlined"
@@ -387,10 +392,21 @@
                         }
                         @if (sesionExpandida() === sesion.fecha) {
                           <div class="act-comments">
-                            @for (comentario of sesion.comentarios; track $index) {
+                            @for (comentario of sesion.comentarios; track comentario.idRegistro) {
                               <div class="act-comment-bubble">
                                 <span class="material-symbols-outlined act-quote-icon">format_quote</span>
-                                <span class="act-comment-text">{{ comentario }}</span>
+                                <span class="act-comment-text">{{ comentario.texto }}</span>
+                                @let notif = buscarNotificacion(comentario.idRegistro);
+                                @if (notif && !notif.revisada) {
+                                  <button
+                                    type="button"
+                                    class="act-comment-read-btn"
+                                    (click)="$event.stopPropagation(); marcarComentarioRevisado(notif)"
+                                  >
+                                    <span class="material-symbols-outlined">check</span>
+                                    Marcar como leído
+                                  </button>
+                                }
                               </div>
                             }
                           </div>
@@ -607,8 +623,9 @@
                   <div class="comments-list">
                     @for (comentario of comentarios(); track comentario.id) {
                       <article
-                        class="comment-card"
+                        class="comment-card comment-card--clickable"
                         [class.comment-card--unread]="!comentario.revisada"
+                        (click)="irASesionComentario(comentario)"
                       >
                         <div class="comment-header">
                           <span
@@ -650,10 +667,10 @@
                             <button
                               type="button"
                               class="act-comment-btn"
-                              (click)="marcarComentarioRevisado(comentario)"
+                              (click)="$event.stopPropagation(); marcarComentarioRevisado(comentario)"
                             >
                               <span class="material-symbols-outlined">check</span>
-                              Leído
+                              Marcar como leído
                             </button>
                           }
                         </div>

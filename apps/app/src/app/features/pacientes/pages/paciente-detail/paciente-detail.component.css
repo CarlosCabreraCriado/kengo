@@ -725,6 +725,15 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.comment-card--clickable {
+  cursor: pointer;
+}
+
+.comment-card--clickable:hover {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(var(--kengo-primary-rgb), 0.2);
+}
+
 .comment-card--unread {
   background: rgba(var(--kengo-primary-rgb), 0.04);
   border-color: rgba(var(--kengo-primary-rgb), 0.15);
@@ -968,6 +977,17 @@
   letter-spacing: -0.01em;
 }
 
+/* Comment indicator */
+.act-has-comments {
+  @apply inline-flex items-center shrink-0;
+  color: var(--kengo-primary);
+  opacity: 0.7;
+}
+
+.act-has-comments .material-symbols-outlined {
+  font-size: 16px;
+}
+
 /* Status badge */
 .act-badge {
   @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] font-semibold leading-tight;
@@ -1119,7 +1139,22 @@
 }
 
 .act-comment-text {
-  @apply text-xs text-zinc-600 leading-relaxed;
+  @apply text-xs text-zinc-600 leading-relaxed flex-1;
+}
+
+.act-comment-read-btn {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0
+         text-[0.65rem] font-medium cursor-pointer transition-all border-none whitespace-nowrap;
+  background: rgba(var(--kengo-primary-rgb), 0.07);
+  color: var(--kengo-primary);
+}
+
+.act-comment-read-btn:hover {
+  background: rgba(var(--kengo-primary-rgb), 0.14);
+}
+
+.act-comment-read-btn .material-symbols-outlined {
+  font-size: 12px;
 }
 
 /* --- Footer --- */

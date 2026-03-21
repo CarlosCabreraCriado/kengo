@@ -47,13 +47,18 @@ interface RegistrosResponse {
   data: RegistroEjercicioDirectus[];
 }
 
+interface ComentarioSesion {
+  texto: string;
+  idRegistro: number;
+}
+
 interface SesionAgrupada {
   fecha: string;
   fechaFormateada: string;
   registros: RegistroEjercicioDirectus[];
   totalEjercicios: number;
   promedioDolorValue: number | null;
-  comentarios: string[];
+  comentarios: ComentarioSesion[];
   totalComentarios: number;
   tipo: TipoCumplimiento;
   ejerciciosEsperados: number;
@@ -269,8 +274,8 @@ export class PacienteDetailComponent implements OnInit {
         const promedioDolor = dia.dolor_promedio ??
           (dolores.length > 0 ? dolores.reduce((a, b) => a + b, 0) / dolores.length : null);
         const comentarios = regs
-          .map(r => r.nota_paciente)
-          .filter((n): n is string => !!n && n.trim().length > 0);
+          .filter(r => r.nota_paciente && r.nota_paciente.trim().length > 0)
+          .map(r => ({ texto: r.nota_paciente!, idRegistro: r.id_registro }));
 
         return {
           fecha: dia.fecha,
@@ -492,6 +497,10 @@ export class PacienteDetailComponent implements OnInit {
     }
   }
 
+  buscarNotificacion(idRegistro: number): NotificacionFisio | undefined {
+    return this.comentarios().find(n => n.id_registro === idRegistro);
+  }
+
   formatearFechaComentario(fecha: string): string {
     const d = new Date(fecha);
     const day = d.getDate();
@@ -570,6 +579,14 @@ export class PacienteDetailComponent implements OnInit {
     if (dolor <= 3) return 'text-green-600';
     if (dolor <= 6) return 'text-yellow-600';
     return 'text-red-600';
+  }
+
+  tieneComentarios(sesion: SesionAgrupada): boolean {
+    if (sesion.totalComentarios > 0) return true;
+    // Session-level observations from notifications
+    return this.comentarios().some(c =>
+      c.id_sesion !== null && c.fecha_registro.split('T')[0] === sesion.fecha
+    );
   }
 
   toggleComentarios(fecha: string): void {
@@ -712,6 +729,12 @@ export class PacienteDetailComponent implements OnInit {
     if (sesion.tipo === 'descanso') return;
     const pacienteId = this.route.snapshot.params['id'];
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', sesion.fecha]);
+  }
+
+  irASesionComentario(comentario: NotificacionFisio) {
+    const pacienteId = this.route.snapshot.params['id'];
+    const fecha = comentario.fecha_registro.split('T')[0];
+    this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', fecha]);
   }
 
   verTodosPlanes() {

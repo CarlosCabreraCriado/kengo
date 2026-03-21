@@ -140,9 +140,6 @@ export class NavegacionComponent implements OnInit {
 
   irANotificacion(n: NotificacionApp): void {
     this.cerrarNotificaciones();
-    if (!n.leida) {
-      this.notificacionesService.marcarRevisada(n);
-    }
     // Si ya estamos en una ruta hija del mismo prefijo, forzar recarga
     // navegando primero a la ruta padre y luego al destino
     const currentUrl = this.router.url.split('?')[0];

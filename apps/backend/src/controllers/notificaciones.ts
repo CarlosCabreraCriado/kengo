@@ -60,7 +60,7 @@ async function verificarAccesoFisio(
      INNER JOIN usuarios_clinicas uc_paciente
        ON uc_paciente.id_clinica = uc_fisio.id_clinica
      WHERE uc_fisio.id_usuario = ? AND uc_fisio.id_puesto IN (1, 4)
-       AND uc_paciente.id_usuario = ? AND uc_paciente.id_puesto = 2
+       AND uc_paciente.id_usuario = ?
      LIMIT 1`,
     [fisioId, pacienteId]
   );
