@@ -28,6 +28,8 @@ export interface PlanDB {
   fecha_fin: string | null;
   paciente: UUID | null;
   fisio: UUID | null;
+  plan_anterior: number | null;
+  version: number;
 }
 
 /**

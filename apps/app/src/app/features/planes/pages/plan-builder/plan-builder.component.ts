@@ -314,22 +314,28 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.isSaving.set(true);
     try {
       let planId: number | null;
+      let wasVersioned = false;
 
       if (this.isEditMode()) {
-        planId = await this.svc.updatePlan();
+        if (this.svc.hasActivity()) {
+          planId = await this.svc.versionPlan();
+          wasVersioned = true;
+        } else {
+          planId = await this.svc.updatePlan();
+        }
       } else {
         planId = await this.svc.submitPlan();
       }
-      console.warn('Plan ID recibido', planId);
 
       if (planId) {
-        if (this.isEditMode()) {
+        if (this.isEditMode() && !wasVersioned) {
           this.svc.markAsSaved();
         }
-        this.toastService.show(
-          this.isEditMode() ? 'Plan actualizado' : 'Plan creado'
-        );
-        const action = this.isEditMode() ? 'updated' : 'created';
+        const mensaje = wasVersioned
+          ? 'Nueva versión del plan creada'
+          : this.isEditMode() ? 'Plan actualizado' : 'Plan creado';
+        this.toastService.show(mensaje);
+        const action = this.isEditMode() || wasVersioned ? 'updated' : 'created';
         this.router.navigate(['/planes', planId], {
           queryParams: { action }
         });

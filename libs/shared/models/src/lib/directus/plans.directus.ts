@@ -27,6 +27,8 @@ export interface PlanDirectus {
   fecha_fin?: string | null;
   date_created?: string;
   date_updated?: string;
+  plan_anterior?: number | null;
+  version?: number;
   ejercicios?: EjercicioPlanDirectus[];
 }
 

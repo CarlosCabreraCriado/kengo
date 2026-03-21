@@ -75,6 +75,10 @@ export class PlanBuilderService {
   readonly planId = signal<number | null>(null);
   readonly isEditMode = computed(() => this.planId() !== null);
 
+  // --- Versionado ---
+  readonly hasActivity = signal<boolean>(false);
+  readonly currentVersion = signal<number>(1);
+
   // --- Modo rutina (sin paciente) ---
   readonly mode = signal<'plan' | 'rutina'>('plan');
   readonly isRutinaMode = computed(() => this.mode() === 'rutina');
@@ -571,6 +575,7 @@ export class PlanBuilderService {
       'estado',
       'fecha_inicio',
       'fecha_fin',
+      'version',
       'paciente.id',
       'paciente.first_name',
       'paciente.last_name',
@@ -652,6 +657,10 @@ export class PlanBuilderService {
         .sort((a: EjercicioPlan, b: EjercicioPlan) => a.sort - b.sort);
 
       this.items.set(items);
+
+      // Versionado: guardar versión y comprobar actividad
+      this.currentVersion.set(plan.version ?? 1);
+      await this.checkPlanHasActivity(planId);
 
       // Capture snapshot for dirty tracking
       this.originalSnapshot.set(this.captureSnapshot());
@@ -772,6 +781,130 @@ export class PlanBuilderService {
   }
 
   // ============================================
+  // VERSIONADO DE PLANES
+  // ============================================
+
+  /**
+   * Comprobar si un plan tiene registros de actividad del paciente
+   */
+  async checkPlanHasActivity(planId: number): Promise<boolean> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ data: { id_registro: number }[] }>(
+          `${env.DIRECTUS_URL}/items/planes_registros`,
+          {
+            params: {
+              'filter[plan_item][plan][_eq]': planId.toString(),
+              limit: '1',
+              fields: 'id_registro',
+            },
+            withCredentials: true,
+          },
+        ),
+      );
+
+      const hasData = (response?.data?.length ?? 0) > 0;
+      this.hasActivity.set(hasData);
+      return hasData;
+    } catch (error) {
+      console.error('Error al verificar actividad del plan:', error);
+      this.hasActivity.set(false);
+      return false;
+    }
+  }
+
+  /**
+   * Crear nueva versión del plan: archiva el anterior y crea uno nuevo
+   */
+  async versionPlan(): Promise<number | null> {
+    const oldPlanId = this.planId();
+    if (!oldPlanId || !this.canSubmit()) {
+      throw new Error('Faltan datos para versionar');
+    }
+
+    try {
+      const oldVersion = this.currentVersion();
+      const today = new Date().toISOString().split('T')[0];
+      const tomorrow = new Date(Date.now() + 864e5).toISOString().split('T')[0];
+
+      // 1. Archivar plan anterior: completado con fecha_fin = hoy
+      await firstValueFrom(
+        this.http.patch(
+          `${env.DIRECTUS_URL}/items/Planes/${oldPlanId}`,
+          {
+            estado: 'completado',
+            fecha_fin: today,
+          },
+          { withCredentials: true },
+        ),
+      );
+
+      // 2. Crear nuevo plan con referencia al anterior
+      const planBody = {
+        paciente: this.paciente()!.id,
+        fisio: this.fisioId()!,
+        titulo: this.titulo() || 'Plan sin título',
+        descripcion: this.descripcion() || '',
+        fecha_inicio: this.fecha_inicio() || tomorrow,
+        fecha_fin: this.fecha_fin(),
+        estado: 'activo',
+        plan_anterior: oldPlanId,
+        version: oldVersion + 1,
+      };
+
+      const planResponse = await firstValueFrom(
+        this.http.post<{ data: { id_plan: number } }>(
+          `${env.DIRECTUS_URL}/items/Planes`,
+          planBody,
+          { withCredentials: true },
+        ),
+      );
+
+      if (!planResponse?.data?.id_plan) {
+        console.error('Error: No se pudo crear la nueva versión del plan');
+        return null;
+      }
+
+      const newPlanId = planResponse.data.id_plan;
+
+      // 3. Crear ejercicios nuevos asociados al nuevo plan (batch)
+      if (this.items().length > 0) {
+        const ejerciciosPayload = this.items().map((item, index) => ({
+          plan: newPlanId,
+          ejercicio: item.ejercicio.id_ejercicio,
+          sort: index + 1,
+          series: item.series,
+          repeticiones: item.repeticiones,
+          duracion_seg: item.duracion_seg,
+          descanso_seg: item.descanso_seg,
+          veces_dia: item.veces_dia,
+          dias_semana: item.dias_semana,
+          instrucciones_paciente: item.instrucciones_paciente,
+          notas_fisio: item.notas_fisio,
+        }));
+
+        await firstValueFrom(
+          this.http.post(
+            `${env.DIRECTUS_URL}/items/planes_ejercicios`,
+            ejerciciosPayload,
+            { withCredentials: true },
+          ),
+        );
+      }
+
+      // 4. Limpiar storage
+      const f = this.fisioId(),
+        p = this.paciente();
+      if (f && p) this.removeFromStorage(f, p.id);
+
+      return newPlanId;
+    } catch (error) {
+      console.error('Error al versionar plan:', error);
+      return null;
+    }
+  }
+
+  // ============================================
   // RUTINAS (Plantillas)
   // ============================================
 
@@ -855,6 +988,8 @@ export class PlanBuilderService {
     this.fecha_inicio.set(null);
     this.fecha_fin.set(null);
     this.originalSnapshot.set(null);
+    this.hasActivity.set(false);
+    this.currentVersion.set(1);
     // Mantener paciente si existe
   }
 
