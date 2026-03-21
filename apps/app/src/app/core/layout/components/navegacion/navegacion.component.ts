@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import {
   RouterLink,
   RouterLinkActive,
@@ -12,7 +12,9 @@ import { environment as env } from '../../../../../environments/environment';
 import { SessionService } from '../../../auth/services/session.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ThemeService } from '../../../services/theme.service';
+import { NotificacionesService } from '../../../services/notificaciones.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
+import type { NotificacionApp } from '../../../../../types/global';
 
 @Component({
   selector: 'app-navegacion',
@@ -27,6 +29,8 @@ export class NavegacionComponent implements OnInit {
   public sessionService = inject(SessionService);
   private authService = inject(AuthService);
   private themeService = inject(ThemeService);
+  public notificacionesService = inject(NotificacionesService);
+  private elementRef = inject(ElementRef);
 
   // Signals de logo desde ThemeService
   logoUrl = this.themeService.logoUrl;
@@ -98,12 +102,79 @@ export class NavegacionComponent implements OnInit {
   // Estado del menú de usuario
   menuAbierto = signal(false);
 
+  // Estado del panel de notificaciones
+  notificacionesAbiertas = signal(false);
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.notificacionesAbiertas() && !this.elementRef.nativeElement.contains(event.target)) {
+      this.cerrarNotificaciones();
+    }
+  }
+
   toggleMenu(): void {
+    this.cerrarNotificaciones();
     this.menuAbierto.update((v) => !v);
   }
 
   cerrarMenu(): void {
     this.menuAbierto.set(false);
+  }
+
+  toggleNotificaciones(): void {
+    this.cerrarMenu();
+    this.notificacionesAbiertas.update((v) => !v);
+  }
+
+  cerrarNotificaciones(): void {
+    this.notificacionesAbiertas.set(false);
+  }
+
+  marcarRevisada(n: NotificacionApp): void {
+    this.notificacionesService.marcarRevisada(n);
+  }
+
+  marcarTodasRevisadas(): void {
+    this.notificacionesService.marcarTodasRevisadas();
+  }
+
+  irANotificacion(n: NotificacionApp): void {
+    this.cerrarNotificaciones();
+    if (!n.leida) {
+      this.notificacionesService.marcarRevisada(n);
+    }
+    // Si ya estamos en una ruta hija del mismo prefijo, forzar recarga
+    // navegando primero a la ruta padre y luego al destino
+    const currentUrl = this.router.url.split('?')[0];
+    const destino = n.ruta_destino;
+    const mismoContexto =
+      currentUrl.startsWith('/mis-pacientes/') && destino.startsWith('/mis-pacientes/');
+
+    if (mismoContexto && currentUrl !== destino) {
+      this.router.navigateByUrl('/mis-pacientes', { skipLocationChange: true }).then(() => {
+        this.router.navigate([destino]);
+      });
+    } else {
+      this.router.navigate([destino]);
+    }
+  }
+
+  avatarUrlEmisor(avatar: string | null): string | null {
+    return avatar
+      ? `${env.DIRECTUS_URL}/assets/${avatar}?fit=cover&width=64&height=64&quality=80`
+      : null;
+  }
+
+  formatearFechaNotificacion(fecha: string): string {
+    const d = new Date(fecha);
+    const ahora = new Date();
+    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    const ayer = new Date(hoy.getTime() - 86400000);
+
+    if (d >= hoy) return 'Hoy';
+    if (d >= ayer) return 'Ayer';
+
+    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   }
 
   irAPerfil(): void {

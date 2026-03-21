@@ -66,6 +66,10 @@ router.get("/paciente/:id/comentarios", authMiddleware, notificacionesController
 router.patch("/notificacion/:id/revisar", authMiddleware, notificacionesController.marcarRevisada);
 router.patch("/paciente/:id/comentarios/revisar-todos", authMiddleware, notificacionesController.marcarTodasRevisadas);
 
+// Notificaciones globales (campana)
+router.get("/notificaciones/mis-notificaciones", authMiddleware, notificacionesController.getMisNotificaciones);
+router.patch("/notificaciones/revisar-todas", authMiddleware, notificacionesController.marcarTodasMisNotificacionesRevisadas);
+
 // Hook: generar notificaciones de comentarios (fire-and-forget desde frontend)
 router.post("/notificaciones/generar-comentarios", authMiddleware, async (req, res) => {
   try {

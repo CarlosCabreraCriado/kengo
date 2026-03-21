@@ -6,6 +6,8 @@ import type {
   NotificacionFisio,
   TipoNotificacionFisio,
   ComentariosPacienteResponse,
+  NotificacionApp,
+  NotificacionesAppResponse,
 } from "@kengo/shared-models";
 
 interface NotificacionRow extends RowDataPacket {
@@ -23,6 +25,22 @@ interface NotificacionRow extends RowDataPacket {
   revisada: number;
   fecha_revision: string | Date | null;
   date_created: string | Date | null;
+}
+
+interface NotificacionAppRow extends RowDataPacket {
+  id: number;
+  tipo: string;
+  paciente: string;
+  id_clinica: number;
+  id_registro: number | null;
+  id_sesion: number | null;
+  fecha_registro: string | Date;
+  titulo_plan: string | null;
+  nombre_ejercicio: string | null;
+  texto: string | null;
+  revisada: number;
+  emisor_nombre: string;
+  emisor_avatar: string | null;
 }
 
 interface ClinicaCheckRow extends RowDataPacket {
@@ -191,6 +209,91 @@ class NotificacionesController {
       res.json({ ok: true, actualizadas: result.affectedRows });
     } catch (error) {
       console.error("Error marcando todas como revisadas:", error);
+      res.status(500).json({ error: "Error actualizando notificaciones" });
+    }
+  }
+
+  async getMisNotificaciones(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ error: "No autenticado" });
+        return;
+      }
+
+      const [rows] = await pool.execute<NotificacionAppRow[]>(
+        `SELECT nf.id, nf.tipo, nf.id_clinica, nf.id_registro, nf.id_sesion,
+                nf.fecha_registro, nf.titulo_plan, nf.nombre_ejercicio, nf.texto,
+                nf.revisada, nf.paciente,
+                CONCAT(du.first_name, ' ', du.last_name) AS emisor_nombre,
+                du.avatar AS emisor_avatar
+         FROM notificaciones_fisio nf
+           INNER JOIN usuarios_clinicas uc ON uc.id_clinica = nf.id_clinica
+           INNER JOIN directus_users du ON du.id = nf.paciente
+         WHERE uc.id_usuario = ? AND uc.id_puesto IN (1, 4)
+         ORDER BY nf.fecha_registro DESC
+         LIMIT 50`,
+        [userId]
+      );
+
+      const notificaciones: NotificacionApp[] = rows.map((row) => ({
+        id: row.id,
+        fuente: "notificaciones_fisio",
+        categoria: "comentario_paciente",
+        emisor_nombre: row.emisor_nombre,
+        emisor_avatar: row.emisor_avatar,
+        emisor_id: row.paciente,
+        titulo: row.nombre_ejercicio
+          ? `${row.titulo_plan} · ${row.nombre_ejercicio}`
+          : "Observación de sesión",
+        texto: row.texto,
+        fecha: toDateString(row.fecha_registro) ?? "",
+        leida: !!row.revisada,
+        ruta_destino: `/mis-pacientes/${row.paciente}`,
+      }));
+
+      const pendientes = notificaciones.filter((n) => !n.leida).length;
+
+      const response: NotificacionesAppResponse = {
+        notificaciones,
+        pendientes,
+        total: notificaciones.length,
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error("Error obteniendo mis notificaciones:", error);
+      res.status(500).json({ error: "Error obteniendo notificaciones" });
+    }
+  }
+
+  async marcarTodasMisNotificacionesRevisadas(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ error: "No autenticado" });
+        return;
+      }
+
+      const [result] = await pool.execute<ResultSetHeader>(
+        `UPDATE notificaciones_fisio nf
+           INNER JOIN usuarios_clinicas uc ON uc.id_clinica = nf.id_clinica
+         SET nf.revisada = 1, nf.fecha_revision = NOW()
+         WHERE uc.id_usuario = ? AND uc.id_puesto IN (1, 4) AND nf.revisada = 0`,
+        [userId]
+      );
+
+      res.json({ ok: true, actualizadas: result.affectedRows });
+    } catch (error) {
+      console.error("Error marcando todas mis notificaciones:", error);
       res.status(500).json({ error: "Error actualizando notificaciones" });
     }
   }

@@ -26,3 +26,33 @@ export interface ComentariosPacienteResponse {
   pendientes: number;
   total: number;
 }
+
+/**
+ * Categorías de notificación. Extensible para futuras fuentes.
+ * - 'comentario_paciente': un paciente dejó un comentario/observación (tabla notificaciones_fisio)
+ */
+export type CategoriaNotificacion = 'comentario_paciente';
+
+/**
+ * Notificación genérica para mostrar en la campana de la app.
+ * Diseñada para ser independiente de la tabla de origen.
+ */
+export interface NotificacionApp {
+  id: number;
+  fuente: string;
+  categoria: CategoriaNotificacion;
+  emisor_nombre: string;
+  emisor_avatar: string | null;
+  emisor_id: string;
+  titulo: string;
+  texto: string | null;
+  fecha: string;
+  leida: boolean;
+  ruta_destino: string;
+}
+
+export interface NotificacionesAppResponse {
+  notificaciones: NotificacionApp[];
+  pendientes: number;
+  total: number;
+}

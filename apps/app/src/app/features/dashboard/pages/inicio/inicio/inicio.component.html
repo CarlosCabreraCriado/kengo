@@ -23,8 +23,84 @@
 
       }
 
-      <!-- Avatar con menú desplegable (solo móvil) -->
+      <!-- Campana + Avatar (solo móvil) -->
       @if (isMovil()) {
+        <div class="header-actions">
+        @if (isFisio()) {
+          <div class="notificaciones-container">
+            <button
+              type="button"
+              class="notificacion-bell"
+              (click)="toggleNotificaciones()"
+              aria-label="Notificaciones"
+              [attr.aria-expanded]="notificacionesAbiertas()"
+            >
+              <span class="material-symbols-outlined">notifications</span>
+              @if (notificacionesService.hayPendientes()) {
+                <span class="notificacion-badge">
+                  {{ notificacionesService.pendientes() > 9 ? '9+' : notificacionesService.pendientes() }}
+                </span>
+              }
+            </button>
+
+            @if (notificacionesAbiertas()) {
+              <div class="notificaciones-panel">
+                <div class="notificaciones-header">
+                  <span class="notificaciones-titulo">Notificaciones</span>
+                  @if (notificacionesService.hayPendientes()) {
+                    <button
+                      type="button"
+                      class="notificaciones-marcar-todas"
+                      (click)="marcarTodasRevisadas()"
+                    >
+                      Marcar todas como leídas
+                    </button>
+                  }
+                </div>
+
+                <div class="notificaciones-lista">
+                  @for (n of notificacionesService.notificaciones(); track n.id) {
+                    <button
+                      type="button"
+                      class="notificacion-item"
+                      [class.no-leida]="!n.leida"
+                      (click)="irANotificacion(n)"
+                    >
+                      <div class="notificacion-avatar">
+                        @if (avatarUrlEmisor(n.emisor_avatar); as avatarSrc) {
+                          <img [src]="avatarSrc" [alt]="n.emisor_nombre" />
+                        } @else {
+                          <div class="notificacion-avatar-placeholder">
+                            <span class="material-symbols-outlined">person</span>
+                          </div>
+                        }
+                      </div>
+                      <div class="notificacion-contenido">
+                        <span class="notificacion-emisor">{{ n.emisor_nombre }}</span>
+                        <span class="notificacion-titulo-item">{{ n.titulo }}</span>
+                        @if (n.texto) {
+                          <span class="notificacion-texto">{{ n.texto }}</span>
+                        }
+                        <span class="notificacion-fecha">{{ formatearFechaNotificacion(n.fecha) }}</span>
+                      </div>
+                      <div class="notificacion-acciones">
+                        @if (!n.leida) {
+                          <span class="notificacion-dot"></span>
+                        }
+                      </div>
+                    </button>
+                  } @empty {
+                    <div class="notificaciones-vacio">
+                      <span class="material-symbols-outlined">notifications_off</span>
+                      <span>Sin notificaciones</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
         <div class="avatar-menu-container">
           <button
             type="button"
@@ -71,6 +147,7 @@
               aria-hidden="true"
             ></div>
           }
+        </div>
         </div>
       }
     </div>

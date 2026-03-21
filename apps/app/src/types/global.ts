@@ -108,6 +108,9 @@ export {
   TipoNotificacionFisio,
   NotificacionFisio,
   ComentariosPacienteResponse,
+  CategoriaNotificacion,
+  NotificacionApp,
+  NotificacionesAppResponse,
 } from '@kengo/shared-models';
 
 // Payloads
