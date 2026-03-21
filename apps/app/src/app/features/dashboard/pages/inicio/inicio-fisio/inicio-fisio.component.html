@@ -1,0 +1,142 @@
+<!-- KPI Grid -->
+<section class="kpi-grid animate-in">
+  @if (dashboardService.cargando()) {
+    @for (_ of [1, 2, 3]; track $index) {
+      <div class="kpi-card kpi-skeleton">
+        <div class="skeleton-icon"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="kpi-card" (click)="irAPacientes()">
+      <div class="kpi-icon">
+        <span class="material-symbols-outlined">group</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ dashboardService.pacientesActivos() }}</span>
+        <span class="kpi-label">Pacientes activos</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-icon-adherencia">
+        <span class="material-symbols-outlined">trending_up</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ dashboardService.adherenciaPromedio() }}%</span>
+        <span class="kpi-label">Adherencia promedio</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" (click)="irAPacientes()">
+      <div class="kpi-icon kpi-icon-notificaciones">
+        <span class="material-symbols-outlined">notifications</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ notificacionesService.pendientes() }}</span>
+        <span class="kpi-label">Notificaciones</span>
+      </div>
+    </div>
+  }
+</section>
+
+<!-- Planes por vencer -->
+@if (!dashboardService.cargando()) {
+  @if (dashboardService.planesProximosAExpirar().length > 0) {
+    <section class="expiring-section animate-in" style="--delay: 0.1s">
+      <h2 class="section-title">Planes por vencer</h2>
+      <div class="expiring-plans">
+        @for (plan of dashboardService.planesProximosAExpirar(); track plan.id_plan) {
+          <article class="expiring-card" (click)="irAPaciente(plan.paciente_id)">
+            <div class="expiring-info">
+              <span class="expiring-paciente">{{ plan.paciente_nombre }}</span>
+              <span class="expiring-plan">{{ plan.titulo }}</span>
+            </div>
+            <div class="expiring-badge" [attr.data-urgencia]="diasParaVencer(plan.fecha_fin) <= 2 ? 'alta' : 'media'">
+              @if (diasParaVencer(plan.fecha_fin) === 0) {
+                Vence hoy
+              } @else if (diasParaVencer(plan.fecha_fin) === 1) {
+                Vence mañana
+              } @else {
+                Vence en {{ diasParaVencer(plan.fecha_fin) }} días
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- Estado vacío: sin pacientes -->
+  @if (dashboardService.pacientesActivos() === 0) {
+    <section class="empty-state animate-in" style="--delay: 0.1s">
+      <span class="material-symbols-outlined empty-icon">group_add</span>
+      <p class="empty-text">Aún no tienes pacientes activos</p>
+      <button type="button" class="empty-cta" (click)="irAClinica()">
+        <span class="material-symbols-outlined">add</span>
+        Ir a Mi Clínica
+      </button>
+    </section>
+  }
+}
+
+<!-- Quick Actions -->
+<section class="actions-section animate-in" style="--delay: 0.15s">
+  <h2 class="section-title">Accesos rápidos</h2>
+  <div class="actions-grid">
+    <article class="action-card" (click)="irAGaleria()">
+      <div class="action-image">
+        <img src="assets/portadas/opcion-galeria.webp" alt="Galería" loading="lazy" />
+      </div>
+      <div class="action-content">
+        <h3 class="titulo-kengo action-title">Galería</h3>
+        <p class="action-subtitle">Ejercicios y plantillas</p>
+      </div>
+      <div class="action-arrow">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </article>
+
+    <article class="action-card" (click)="irAPacientes()">
+      <div class="action-image">
+        <img src="assets/portadas/opcion-pacientes.webp" alt="Mis Pacientes" loading="lazy" />
+      </div>
+      <div class="action-content">
+        <h3 class="titulo-kengo action-title">Mis Pacientes</h3>
+        <p class="action-subtitle">Gestiona tus pacientes</p>
+      </div>
+      <div class="action-arrow">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </article>
+
+    <article class="action-card" (click)="irAClinica()">
+      <div class="action-image">
+        <img src="assets/portadas/opcion-clinica.webp" alt="Mi Clínica" loading="lazy" />
+      </div>
+      <div class="action-content">
+        <h3 class="titulo-kengo action-title">Mi Clínica</h3>
+        <p class="action-subtitle">Administra tu centro</p>
+      </div>
+      <div class="action-arrow">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </article>
+
+    <article class="action-card" (click)="irARutinas()">
+      <div class="action-image">
+        <img src="assets/portadas/opcion-rutina.webp" alt="Rutinas" loading="lazy" />
+      </div>
+      <div class="action-content">
+        <h3 class="titulo-kengo action-title">Rutinas</h3>
+        <p class="action-subtitle">Plantillas de ejercicios</p>
+      </div>
+      <div class="action-arrow">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </article>
+  </div>
+</section>

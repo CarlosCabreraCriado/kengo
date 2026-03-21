@@ -35,6 +35,7 @@ export * from './lib/domain/sessions';
 export * from './lib/domain/access-codes';
 export * from './lib/domain/compliance';
 export * from './lib/domain/notifications';
+export * from './lib/domain/dashboard';
 
 // DTOs para operaciones de crear/actualizar
 export * from './lib/payloads/plans.payload';

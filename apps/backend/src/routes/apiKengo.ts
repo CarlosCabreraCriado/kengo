@@ -14,6 +14,7 @@ import { calcularCumplimientoDiario, backfillCumplimiento, recalcularCumplimient
 import { generarTodasNotificaciones, backfillNotificaciones } from "../jobs/notificaciones-fisio";
 import { cumplimientoController } from "../controllers/cumplimiento";
 import { notificacionesController } from "../controllers/notificaciones";
+import { dashboardController } from "../controllers/dashboard";
 
 const router = Router();
 
@@ -57,6 +58,9 @@ router.post("/clinica/codigo/generar", authMiddleware, clinicaController.generar
 router.get("/clinica/:id/codigos", authMiddleware, clinicaController.listarCodigos);
 router.patch("/clinica/codigo/:id/desactivar", authMiddleware, clinicaController.desactivarCodigoAcceso);
 router.patch("/clinica/codigo/:id/reactivar", authMiddleware, clinicaController.reactivarCodigoAcceso);
+
+// Dashboard
+router.get("/dashboard/fisio/resumen", authMiddleware, dashboardController.getResumenFisio);
 
 // Cumplimiento
 router.get("/paciente/:id/cumplimiento", authMiddleware, cumplimientoController.getCumplimiento);

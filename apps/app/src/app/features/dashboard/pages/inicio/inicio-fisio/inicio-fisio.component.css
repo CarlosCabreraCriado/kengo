@@ -1,0 +1,292 @@
+@reference "tailwindcss";
+
+:host {
+  --kengo-glass: rgba(255, 255, 255, 0.5);
+  --kengo-border: rgba(255, 255, 255, 0.25);
+  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  @apply flex flex-col gap-4 px-4 pt-2 pb-28;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================
+   KPI GRID
+   ============================================ */
+.kpi-grid {
+  @apply grid grid-cols-3 gap-3;
+}
+
+.kpi-card {
+  @apply flex cursor-pointer flex-col items-center gap-2 rounded-2xl p-4 text-center transition-all;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-card:hover {
+  @apply -translate-y-0.5 bg-white/70;
+  box-shadow: var(--kengo-shadow);
+}
+
+.kpi-card:active { @apply scale-[0.98]; }
+
+.kpi-icon {
+  @apply flex h-10 w-10 items-center justify-center rounded-xl text-white;
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+}
+
+.kpi-icon .material-symbols-outlined { @apply text-xl; }
+
+.kpi-icon-adherencia {
+  background: linear-gradient(135deg, var(--kengo-tertiary) 0%, #d4a93d 100%);
+}
+
+.kpi-icon-notificaciones {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.kpi-info {
+  @apply flex flex-col items-center;
+}
+
+.kpi-value {
+  @apply text-xl font-bold;
+  color: var(--kengo-primary);
+}
+
+.kpi-label {
+  @apply text-xs text-zinc-500;
+  line-height: 1.2;
+}
+
+/* KPI Skeleton */
+.kpi-skeleton {
+  @apply cursor-default;
+}
+
+.kpi-skeleton:hover {
+  @apply translate-y-0 bg-white/50;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.skeleton-icon {
+  @apply h-10 w-10 rounded-xl;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-lines {
+  @apply flex w-full flex-col items-center gap-1.5;
+}
+
+.skeleton-line {
+  @apply h-3 w-full rounded;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+  @apply w-2/3;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   EXPIRING PLANS
+   ============================================ */
+.expiring-section {
+  @apply flex flex-col gap-3;
+}
+
+.section-title {
+  @apply m-0 px-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase;
+}
+
+.expiring-plans {
+  @apply flex flex-col gap-2;
+}
+
+.expiring-card {
+  @apply flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-4 transition-all;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.expiring-card:hover {
+  @apply -translate-y-0.5 bg-white/70;
+  box-shadow: var(--kengo-shadow);
+}
+
+.expiring-card:active { @apply scale-[0.99]; }
+
+.expiring-info {
+  @apply flex min-w-0 flex-col;
+}
+
+.expiring-paciente {
+  @apply truncate text-sm font-semibold text-zinc-700;
+}
+
+.expiring-plan {
+  @apply truncate text-xs text-zinc-500;
+}
+
+.expiring-badge {
+  @apply shrink-0 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap;
+}
+
+.expiring-badge[data-urgencia="alta"] {
+  @apply bg-red-100 text-red-700;
+}
+
+.expiring-badge[data-urgencia="media"] {
+  @apply bg-amber-100 text-amber-700;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  @apply flex flex-col items-center gap-3 rounded-2xl py-10;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--kengo-border);
+}
+
+.empty-icon {
+  @apply text-5xl text-zinc-300;
+}
+
+.empty-text {
+  @apply m-0 text-sm text-zinc-400;
+}
+
+.empty-cta {
+  @apply mt-1 flex cursor-pointer items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all active:scale-[0.98];
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+}
+
+.empty-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(var(--kengo-primary-rgb), 0.4);
+}
+
+.empty-cta .material-symbols-outlined { @apply text-lg; }
+
+/* ============================================
+   ACTIONS SECTION
+   ============================================ */
+.actions-section {
+  @apply flex flex-col gap-3;
+}
+
+.actions-grid {
+  @apply grid grid-cols-1 gap-3;
+}
+
+.action-card {
+  @apply relative flex cursor-pointer items-center gap-4 rounded-2xl p-3 transition-all;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.action-card:hover {
+  @apply -translate-y-0.5 bg-white/70;
+  box-shadow: var(--kengo-shadow);
+}
+
+.action-card:active { @apply scale-[0.99]; }
+
+.action-image {
+  @apply relative h-16 w-16 shrink-0 overflow-hidden rounded-xl;
+}
+
+.action-image img {
+  @apply h-full w-full object-cover transition-transform duration-300;
+}
+
+.action-card:hover .action-image img {
+  transform: scale(1.1);
+}
+
+.action-content {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+
+.action-title {
+  @apply m-0 truncate text-base;
+  color: var(--kengo-primary);
+}
+
+.action-subtitle {
+  @apply m-0 mt-0.5 truncate text-xs text-zinc-500;
+}
+
+.action-arrow {
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+  color: var(--kengo-primary);
+}
+
+.action-card:hover .action-arrow {
+  @apply text-white;
+  background-color: var(--kengo-primary);
+}
+
+.action-arrow .material-symbols-outlined { @apply text-lg; }
+
+/* ============================================
+   UTILITIES & ANIMATIONS
+   ============================================ */
+.animate-in {
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 767.98px) {
+  .kpi-grid {
+    @apply grid-cols-3 gap-2;
+  }
+
+  .kpi-card {
+    @apply p-3;
+  }
+
+  .kpi-value {
+    @apply text-lg;
+  }
+
+  .kpi-label {
+    font-size: 0.625rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .actions-grid {
+    @apply grid-cols-2;
+  }
+}

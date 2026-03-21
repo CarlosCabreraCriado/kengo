@@ -104,6 +104,9 @@ export {
   CumplimientoDia,
   ResumenCumplimiento,
   CumplimientoResponse,
+  // Dashboard
+  ResumenFisioDashboard,
+  PlanPorVencer,
   // Notifications
   TipoNotificacionFisio,
   NotificacionFisio,
