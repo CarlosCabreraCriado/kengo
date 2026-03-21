@@ -70,6 +70,25 @@ router.patch("/paciente/:id/comentarios/revisar-todos", authMiddleware, notifica
 router.get("/notificaciones/mis-notificaciones", authMiddleware, notificacionesController.getMisNotificaciones);
 router.patch("/notificaciones/revisar-todas", authMiddleware, notificacionesController.marcarTodasMisNotificacionesRevisadas);
 
+// Hook: recalcular cumplimiento tras registro de ejercicios (fire-and-forget desde frontend)
+router.post("/cumplimiento/recalcular-hoy", authMiddleware, async (req, res) => {
+  try {
+    const { pacienteId } = req.body;
+    if (!pacienteId) {
+      res.status(400).json({ error: "Falta pacienteId" });
+      return;
+    }
+    const now = new Date();
+    const madrid = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
+    const hoy = madrid.toISOString().split("T")[0];
+    const filas = await calcularCumplimientoDiario(hoy, pacienteId);
+    res.json({ ok: true, fecha: hoy, filasActualizadas: filas });
+  } catch (error) {
+    console.error("Error recalculando cumplimiento:", error);
+    res.status(500).json({ error: "Error recalculando cumplimiento" });
+  }
+});
+
 // Hook: generar notificaciones de comentarios (fire-and-forget desde frontend)
 router.post("/notificaciones/generar-comentarios", authMiddleware, async (req, res) => {
   try {

@@ -392,6 +392,12 @@ export class RegistroSesionService {
     // Guardar registros en Directus
     await this.guardarRegistrosEnDirectus();
 
+    // Fire-and-forget: recalcular cumplimiento del día para que "Actividad reciente" se actualice
+    this.http.post(`${env.API_URL}/cumplimiento/recalcular-hoy`,
+      { pacienteId: this.usuarioId() },
+      { withCredentials: true }
+    ).subscribe({ error: (err) => console.warn('[cumplimiento] Recálculo falló:', err) });
+
     // Fire-and-forget: generar notificaciones si hay comentarios o observaciones
     const tieneComentarios = data.feedbacks.some(f => f.nota?.trim());
     const tieneObservaciones = !!data.observacionesGenerales?.trim();
