@@ -24,6 +24,39 @@ export class RachaPacienteService {
   private diasCumplimiento = signal<CumplimientoDia[]>([]);
   private datosCargados = signal<boolean>(false);
 
+  /** Mejor racha en los últimos 14 días (calculada sobre datos ya cargados) */
+  readonly mejorRacha = computed<number>(() => {
+    const dias = this.diasCumplimiento();
+    if (dias.length === 0) return 0;
+
+    const sorted = [...dias].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    let mejor = 0;
+    let actual = 0;
+    let ultimaFecha: Date | null = null;
+
+    for (const dia of sorted) {
+      if (dia.tipo === 'descanso') continue;
+      if (dia.tipo === 'completado') {
+        const fechaDia = new Date(dia.fecha);
+        if (ultimaFecha) {
+          const diffDias = Math.floor(
+            (fechaDia.getTime() - ultimaFecha.getTime()) / (1000 * 60 * 60 * 24),
+          );
+          actual = diffDias <= 1 ? actual + 1 : 1;
+        } else {
+          actual = 1;
+        }
+        ultimaFecha = fechaDia;
+        if (actual > mejor) mejor = actual;
+      } else {
+        actual = 0;
+        ultimaFecha = null;
+      }
+    }
+
+    return mejor;
+  });
+
   readonly cumplimientoSemana = computed<DiaSemanaCalendario[]>(() => {
     const dias = this.diasCumplimiento();
     const planes = this.actividadHoyService.planesActivos();
