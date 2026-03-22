@@ -53,14 +53,16 @@
             >
               <span class="material-symbols-outlined">picture_as_pdf</span>
             </button>
-            <button
-              type="button"
-              class="header-btn header-btn-edit"
-              aria-label="Editar plan"
-              (click)="editarPlan()"
-            >
-              <span class="material-symbols-outlined">edit</span>
-            </button>
+            @if (isFisio()) {
+              <button
+                type="button"
+                class="header-btn header-btn-edit"
+                aria-label="Editar plan"
+                (click)="editarPlan()"
+              >
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+            }
           </div>
         </div>
       } @else {
@@ -88,23 +90,25 @@
               <span class="text-xs font-semibold">PDF</span>
             </button>
 
-            <button
-              type="button"
-              class="header-btn-desktop"
-              (click)="editarPlan()"
-            >
-              <span class="material-symbols-outlined text-lg">edit</span>
-              <span class="text-xs font-semibold">Editar</span>
-            </button>
+            @if (isFisio()) {
+              <button
+                type="button"
+                class="header-btn-desktop"
+                (click)="editarPlan()"
+              >
+                <span class="material-symbols-outlined text-lg">edit</span>
+                <span class="text-xs font-semibold">Editar</span>
+              </button>
 
-            <button
-              type="button"
-              class="header-btn-desktop header-btn-desktop-primary"
-              (click)="crearOtroPlan()"
-            >
-              <span class="material-symbols-outlined text-lg">add</span>
-              <span class="text-xs font-semibold">Nuevo plan</span>
-            </button>
+              <button
+                type="button"
+                class="header-btn-desktop header-btn-desktop-primary"
+                (click)="crearOtroPlan()"
+              >
+                <span class="material-symbols-outlined text-lg">add</span>
+                <span class="text-xs font-semibold">Nuevo plan</span>
+              </button>
+            }
           </div>
         </div>
       }
@@ -145,10 +149,10 @@
         <div
           class="patient-card animate-in"
           [style.--delay]="showSuccessHero() ? '0.15s' : '0s'"
-          (click)="verPerfilPaciente()"
-          role="button"
-          tabindex="0"
-          (keydown.enter)="verPerfilPaciente()"
+          (click)="isFisio() ? verPerfilPaciente() : null"
+          [attr.role]="isFisio() ? 'button' : null"
+          [attr.tabindex]="isFisio() ? '0' : null"
+          (keydown.enter)="isFisio() ? verPerfilPaciente() : null"
         >
           <div class="patient-avatar-wrapper">
             @if (pac.avatar) {
@@ -169,9 +173,11 @@
             <h3 class="patient-name">{{ pac.first_name }} {{ pac.last_name }}</h3>
             <p class="patient-email">{{ pac.email }}</p>
           </div>
-          <div class="patient-action-icon">
-            <span class="material-symbols-outlined">chevron_right</span>
-          </div>
+          @if (isFisio()) {
+            <div class="patient-action-icon">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </div>
+          }
         </div>
       }
 

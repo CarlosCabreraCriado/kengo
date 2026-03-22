@@ -126,73 +126,75 @@
               <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
             </div>
 
-            <!-- Selector de Series -->
-            <div class="preset-selector">
-              <span class="preset-label">Series:</span>
-              <div class="preset-chips">
-                @for (serie of seriesPresets; track serie) {
+            @if (isFisio()) {
+              <!-- Selector de Series -->
+              <div class="preset-selector">
+                <span class="preset-label">Series:</span>
+                <div class="preset-chips">
+                  @for (serie of seriesPresets; track serie) {
+                    <button
+                      type="button"
+                      class="preset-chip"
+                      [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
+                      (click)="seleccionarSeries(serie)"
+                    >
+                      {{ serie }}
+                    </button>
+                  }
                   <button
                     type="button"
                     class="preset-chip"
-                    [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
-                    (click)="seleccionarSeries(serie)"
+                    [class.active]="mostrarOtroSeries()"
+                    (click)="seleccionarSeries('otro')"
                   >
-                    {{ serie }}
+                    Otro
                   </button>
-                }
-                <button
-                  type="button"
-                  class="preset-chip"
-                  [class.active]="mostrarOtroSeries()"
-                  (click)="seleccionarSeries('otro')"
-                >
-                  Otro
-                </button>
-                @if (mostrarOtroSeries()) {
-                  <input
-                    type="number"
-                    min="1"
-                    class="preset-input"
-                    [value]="seriesSeleccionadas()"
-                    (change)="onSeriesOtroChange($event)"
-                  />
-                }
+                  @if (mostrarOtroSeries()) {
+                    <input
+                      type="number"
+                      min="1"
+                      class="preset-input"
+                      [value]="seriesSeleccionadas()"
+                      (change)="onSeriesOtroChange($event)"
+                    />
+                  }
+                </div>
               </div>
-            </div>
 
-            <!-- Selector de Repeticiones -->
-            <div class="preset-selector">
-              <span class="preset-label">Repeticiones:</span>
-              <div class="preset-chips">
-                @for (rep of repeticionesPresets; track rep) {
+              <!-- Selector de Repeticiones -->
+              <div class="preset-selector">
+                <span class="preset-label">Repeticiones:</span>
+                <div class="preset-chips">
+                  @for (rep of repeticionesPresets; track rep) {
+                    <button
+                      type="button"
+                      class="preset-chip"
+                      [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                      (click)="seleccionarRepeticiones(rep)"
+                    >
+                      {{ rep }}
+                    </button>
+                  }
                   <button
                     type="button"
                     class="preset-chip"
-                    [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
-                    (click)="seleccionarRepeticiones(rep)"
+                    [class.active]="mostrarOtroRepeticiones()"
+                    (click)="seleccionarRepeticiones('otro')"
                   >
-                    {{ rep }}
+                    Otro
                   </button>
-                }
-                <button
-                  type="button"
-                  class="preset-chip"
-                  [class.active]="mostrarOtroRepeticiones()"
-                  (click)="seleccionarRepeticiones('otro')"
-                >
-                  Otro
-                </button>
-                @if (mostrarOtroRepeticiones()) {
-                  <input
-                    type="number"
-                    min="1"
-                    class="preset-input"
-                    [value]="repeticionesSeleccionadas()"
-                    (change)="onRepeticionesOtroChange($event)"
-                  />
-                }
+                  @if (mostrarOtroRepeticiones()) {
+                    <input
+                      type="number"
+                      min="1"
+                      class="preset-input"
+                      [value]="repeticionesSeleccionadas()"
+                      (change)="onRepeticionesOtroChange($event)"
+                    />
+                  }
+                </div>
               </div>
-            </div>
+            }
 
             <!-- Description Card -->
             @if (ejercicio()?.descripcion) {
@@ -232,21 +234,23 @@
               </span>
             </button>
 
-            <!-- Primary Action: Assign -->
-            <button
-              type="button"
-              class="action-btn primary"
-              [class.rutina-mode]="isRutinaMode()"
-              (click)="asignarEjercicio()"
-              [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
-            >
-              <span class="material-symbols-outlined icon-filled">
-                {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
-              </span>
-              @if (!videoExpandido()) {
-                <span class="btn-label">{{ isRutinaMode() ? 'Añadir' : 'Asignar' }}</span>
-              }
-            </button>
+            <!-- Primary Action: Assign (solo fisios) -->
+            @if (isFisio()) {
+              <button
+                type="button"
+                class="action-btn primary"
+                [class.rutina-mode]="isRutinaMode()"
+                (click)="asignarEjercicio()"
+                [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
+              >
+                <span class="material-symbols-outlined icon-filled">
+                  {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
+                </span>
+                @if (!videoExpandido()) {
+                  <span class="btn-label">{{ isRutinaMode() ? 'Añadir' : 'Asignar' }}</span>
+                }
+              </button>
+            }
 
             <!-- Play/Pause Button -->
             <button
@@ -340,73 +344,75 @@
         <div class="desktop-info-column">
           <div class="bottom-panel">
             <div class="exercise-content">
-              <!-- Selector de Series -->
-              <div class="preset-selector">
-                <span class="preset-label">Series:</span>
-                <div class="preset-chips">
-                  @for (serie of seriesPresets; track serie) {
+              @if (isFisio()) {
+                <!-- Selector de Series -->
+                <div class="preset-selector">
+                  <span class="preset-label">Series:</span>
+                  <div class="preset-chips">
+                    @for (serie of seriesPresets; track serie) {
+                      <button
+                        type="button"
+                        class="preset-chip"
+                        [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
+                        (click)="seleccionarSeries(serie)"
+                      >
+                        {{ serie }}
+                      </button>
+                    }
                     <button
                       type="button"
                       class="preset-chip"
-                      [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
-                      (click)="seleccionarSeries(serie)"
+                      [class.active]="mostrarOtroSeries()"
+                      (click)="seleccionarSeries('otro')"
                     >
-                      {{ serie }}
+                      Otro
                     </button>
-                  }
-                  <button
-                    type="button"
-                    class="preset-chip"
-                    [class.active]="mostrarOtroSeries()"
-                    (click)="seleccionarSeries('otro')"
-                  >
-                    Otro
-                  </button>
-                  @if (mostrarOtroSeries()) {
-                    <input
-                      type="number"
-                      min="1"
-                      class="preset-input"
-                      [value]="seriesSeleccionadas()"
-                      (change)="onSeriesOtroChange($event)"
-                    />
-                  }
+                    @if (mostrarOtroSeries()) {
+                      <input
+                        type="number"
+                        min="1"
+                        class="preset-input"
+                        [value]="seriesSeleccionadas()"
+                        (change)="onSeriesOtroChange($event)"
+                      />
+                    }
+                  </div>
                 </div>
-              </div>
 
-              <!-- Selector de Repeticiones -->
-              <div class="preset-selector">
-                <span class="preset-label">Repeticiones:</span>
-                <div class="preset-chips">
-                  @for (rep of repeticionesPresets; track rep) {
+                <!-- Selector de Repeticiones -->
+                <div class="preset-selector">
+                  <span class="preset-label">Repeticiones:</span>
+                  <div class="preset-chips">
+                    @for (rep of repeticionesPresets; track rep) {
+                      <button
+                        type="button"
+                        class="preset-chip"
+                        [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                        (click)="seleccionarRepeticiones(rep)"
+                      >
+                        {{ rep }}
+                      </button>
+                    }
                     <button
                       type="button"
                       class="preset-chip"
-                      [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
-                      (click)="seleccionarRepeticiones(rep)"
+                      [class.active]="mostrarOtroRepeticiones()"
+                      (click)="seleccionarRepeticiones('otro')"
                     >
-                      {{ rep }}
+                      Otro
                     </button>
-                  }
-                  <button
-                    type="button"
-                    class="preset-chip"
-                    [class.active]="mostrarOtroRepeticiones()"
-                    (click)="seleccionarRepeticiones('otro')"
-                  >
-                    Otro
-                  </button>
-                  @if (mostrarOtroRepeticiones()) {
-                    <input
-                      type="number"
-                      min="1"
-                      class="preset-input"
-                      [value]="repeticionesSeleccionadas()"
-                      (change)="onRepeticionesOtroChange($event)"
-                    />
-                  }
+                    @if (mostrarOtroRepeticiones()) {
+                      <input
+                        type="number"
+                        min="1"
+                        class="preset-input"
+                        [value]="repeticionesSeleccionadas()"
+                        (change)="onRepeticionesOtroChange($event)"
+                      />
+                    }
+                  </div>
                 </div>
-              </div>
+              }
 
               <!-- Description Card -->
               @if (ejercicio()?.descripcion) {
@@ -423,26 +429,28 @@
               }
             </div>
 
-            <!-- Actions Bar -->
-            <div class="actions-bar">
-              <div class="action-buttons">
-                <!-- Primary Action: Assign -->
-                <button
-                  type="button"
-                  class="action-btn primary"
-                  [class.rutina-mode]="isRutinaMode()"
-                  (click)="asignarEjercicio()"
-                  [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
-                >
-                  <span class="material-symbols-outlined icon-filled">
-                    {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
-                  </span>
-                  <span class="btn-label">
-                    {{ isRutinaMode() ? 'Añadir a plantilla' : 'Asignar a paciente' }}
-                  </span>
-                </button>
+            <!-- Actions Bar (solo fisios) -->
+            @if (isFisio()) {
+              <div class="actions-bar">
+                <div class="action-buttons">
+                  <!-- Primary Action: Assign -->
+                  <button
+                    type="button"
+                    class="action-btn primary"
+                    [class.rutina-mode]="isRutinaMode()"
+                    (click)="asignarEjercicio()"
+                    [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
+                  >
+                    <span class="material-symbols-outlined icon-filled">
+                      {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
+                    </span>
+                    <span class="btn-label">
+                      {{ isRutinaMode() ? 'Añadir a plantilla' : 'Asignar a paciente' }}
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
+            }
           </div>
         </div>
       </div>

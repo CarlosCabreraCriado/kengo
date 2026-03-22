@@ -5,6 +5,7 @@ import { Ejercicio, Usuario } from '../../../../../types/global';
 
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { EjerciciosService } from '../../data-access/ejercicios.service';
+import { SessionService } from '../../../../core/auth/services/session.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 
@@ -23,6 +24,7 @@ export class EjercicioDetailComponent {
   private location = inject(Location);
   private ejerciciosService = inject(EjerciciosService);
   private planBuilderService = inject(PlanBuilderService);
+  private sessionService = inject(SessionService);
   private dialog = inject(Dialog);
 
   @ViewChildren('videoPlayer') videoPlayers!: QueryList<ElementRef<HTMLVideoElement>>;
@@ -60,6 +62,9 @@ export class EjercicioDetailComponent {
 
   // Detectar modo rutina (crear plantilla sin paciente)
   readonly isRutinaMode = computed(() => this.planBuilderService.isRutinaMode());
+
+  // Rol del usuario
+  readonly isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
 
   constructor() {
     this.route.paramMap

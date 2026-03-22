@@ -53,16 +53,18 @@
             </button>
           }
 
-          <!-- Tab: Rutinas -->
-          <button
-            type="button"
-            class="tab-pill"
-            [class.tab-pill-active]="tabActiva() === 'rutinas'"
-            (click)="onTabChange(isFisio() ? 2 : 1)"
-          >
-            <span class="material-symbols-outlined tab-icon">bookmarks</span>
-            <span class="tab-label">Rutinas</span>
-          </button>
+          <!-- Tab: Rutinas (solo fisios) -->
+          @if (isFisio()) {
+            <button
+              type="button"
+              class="tab-pill"
+              [class.tab-pill-active]="tabActiva() === 'rutinas'"
+              (click)="onTabChange(2)"
+            >
+              <span class="material-symbols-outlined tab-icon">bookmarks</span>
+              <span class="tab-label">Rutinas</span>
+            </button>
+          }
         </div>
       </nav>
     </div>

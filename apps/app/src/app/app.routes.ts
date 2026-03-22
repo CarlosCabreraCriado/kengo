@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from './core';
+import { AuthGuard, FisioGuard } from './core';
 import { unsavedChangesGuard } from './features/planes/guards/unsaved-changes.guard';
 
 export const routes: Routes = [
@@ -77,7 +77,7 @@ export const routes: Routes = [
       import('./features/rutinas/pages/rutina-builder/rutina-builder.component').then(
         (m) => m.RutinaBuilderComponent
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, FisioGuard],
   },
 
   // Rutina Builder (editar plantilla)
@@ -87,7 +87,7 @@ export const routes: Routes = [
       import('./features/rutinas/pages/rutina-builder/rutina-builder.component').then(
         (m) => m.RutinaBuilderComponent
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, FisioGuard],
   },
 
   // Pacientes (lazy loaded feature)
@@ -97,6 +97,7 @@ export const routes: Routes = [
       import('./features/pacientes/pacientes.routes').then(
         (m) => m.PACIENTES_ROUTES
       ),
+    canActivate: [AuthGuard, FisioGuard],
   },
 
   // Clínica
@@ -124,7 +125,7 @@ export const routes: Routes = [
       import('./features/planes/pages/plan-builder/plan-builder.component').then(
         (m) => m.PlanBuilderComponent
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, FisioGuard],
   },
   {
     path: 'planes/:id/editar',
@@ -132,7 +133,7 @@ export const routes: Routes = [
       import('./features/planes/pages/plan-builder/plan-builder.component').then(
         (m) => m.PlanBuilderComponent
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, FisioGuard],
     canDeactivate: [unsavedChangesGuard],
   },
   {

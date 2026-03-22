@@ -7,6 +7,7 @@ export { ThemeService } from './services/theme.service';
 
 // Guards
 export { AuthGuard } from './guards/auth.guard';
+export { FisioGuard } from './guards/fisio.guard';
 
 // HTTP Interceptors
 export { authInterceptor } from './http/interceptors/auth.interceptor';

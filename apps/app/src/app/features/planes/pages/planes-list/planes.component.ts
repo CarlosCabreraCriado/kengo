@@ -111,16 +111,14 @@ export class PlanesComponent implements OnInit {
   onTabChange(index: number) {
     this.tabIndex.set(index);
 
-    // El orden de tabs depende de si el usuario es fisio
     // Fisio: [mis-planes, planes-pacientes, rutinas]
-    // Paciente: [mis-planes, rutinas]
+    // Paciente: solo [mis-planes]
     let tab: TabType;
     if (this.isFisio()) {
       const tabs: TabType[] = ['mis-planes', 'planes-pacientes', 'rutinas'];
       tab = tabs[index];
     } else {
-      const tabs: TabType[] = ['mis-planes', 'rutinas'];
-      tab = tabs[index];
+      tab = 'mis-planes';
     }
 
     this.tabActiva.set(tab);
