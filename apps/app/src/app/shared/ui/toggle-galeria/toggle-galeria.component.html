@@ -1,5 +1,5 @@
 <nav class="toggle-nav" aria-label="Navegación de galería">
-  @for (tab of tabs; track tab.path) {
+  @for (tab of tabs(); track tab.path) {
     <a
       [routerLink]="'/galeria/' + tab.path"
       routerLinkActive="active"

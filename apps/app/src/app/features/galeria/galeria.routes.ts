@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AuthGuard, FisioGuard } from '../../core';
 
 export const GALERIA_ROUTES: Routes = [
   { path: '', redirectTo: 'ejercicios', pathMatch: 'full' },
@@ -13,5 +14,6 @@ export const GALERIA_ROUTES: Routes = [
       import('../rutinas/pages/rutinas-list/rutinas-list.component').then(
         (m) => m.RutinasListComponent
       ),
+    canActivate: [AuthGuard, FisioGuard],
   },
 ];

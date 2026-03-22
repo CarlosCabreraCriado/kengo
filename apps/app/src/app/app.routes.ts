@@ -68,6 +68,7 @@ export const routes: Routes = [
       import('./features/galeria/galeria.routes').then(
         (m) => m.GALERIA_ROUTES
       ),
+    canActivate: [AuthGuard],
   },
 
   // Rutina Builder (crear plantilla)
