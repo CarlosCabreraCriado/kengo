@@ -62,6 +62,24 @@
   line-height: 1.2;
 }
 
+.kpi-subtitle {
+  @apply mt-1 rounded-full px-1.5 py-0.5 text-zinc-400;
+  font-size: 0.5625rem;
+  line-height: 1;
+}
+
+.kpi-subtitle[data-tier="alta"] {
+  @apply bg-green-100 text-green-700;
+}
+
+.kpi-subtitle[data-tier="media"] {
+  @apply bg-amber-100 text-amber-700;
+}
+
+.kpi-subtitle[data-tier="baja"] {
+  @apply bg-red-100 text-red-700;
+}
+
 /* KPI Skeleton */
 .kpi-skeleton {
   @apply cursor-default;
@@ -100,6 +118,95 @@
 }
 
 /* ============================================
+   RESUMEN DEL DÍA
+   ============================================ */
+.resumen-dia {
+  @apply m-0 px-1 text-sm text-zinc-500;
+}
+
+/* ============================================
+   ACTIVIDAD RECIENTE (NOTIFICACIONES)
+   ============================================ */
+.notif-section {
+  @apply flex flex-col gap-3;
+}
+
+.section-header {
+  @apply flex items-center justify-between;
+}
+
+.ver-todo-link {
+  @apply cursor-pointer border-none bg-transparent text-xs font-semibold;
+  color: var(--kengo-primary);
+}
+
+.notif-list {
+  @apply flex flex-col gap-2;
+}
+
+.notif-card {
+  @apply flex cursor-pointer items-center gap-3 rounded-2xl p-3 transition-all;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.notif-card:hover {
+  @apply -translate-y-0.5 bg-white/70;
+  box-shadow: var(--kengo-shadow);
+}
+
+.notif-card:active { @apply scale-[0.99]; }
+
+.notif-avatar {
+  @apply flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full;
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+}
+
+.notif-avatar img {
+  @apply h-full w-full object-cover;
+}
+
+.notif-avatar-fallback {
+  @apply text-sm font-bold text-white;
+}
+
+.notif-content {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+
+.notif-emisor {
+  @apply truncate text-sm font-semibold text-zinc-700;
+}
+
+.notif-titulo {
+  @apply truncate text-xs text-zinc-500;
+}
+
+.notif-texto {
+  @apply truncate text-xs text-zinc-400;
+}
+
+.notif-meta {
+  @apply flex shrink-0 flex-col items-center gap-1.5;
+}
+
+.notif-tiempo {
+  @apply text-zinc-400;
+  font-size: 0.625rem;
+  white-space: nowrap;
+}
+
+.notif-dot {
+  @apply rounded-full;
+  width: 8px;
+  height: 8px;
+  background-color: var(--kengo-primary);
+}
+
+/* ============================================
    EXPIRING PLANS
    ============================================ */
 .expiring-section {
@@ -107,7 +214,16 @@
 }
 
 .section-title {
-  @apply m-0 px-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase;
+  @apply m-0 flex items-center gap-2 px-1 text-sm font-semibold tracking-wide text-zinc-500 uppercase;
+}
+
+.count-badge {
+  @apply inline-flex items-center justify-center rounded-full px-1.5 text-xs font-bold;
+  font-size: 0.625rem;
+  min-width: 20px;
+  height: 20px;
+  background-color: rgba(var(--kengo-primary-rgb), 0.12);
+  color: var(--kengo-primary);
 }
 
 .expiring-plans {
@@ -115,7 +231,7 @@
 }
 
 .expiring-card {
-  @apply flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-4 transition-all;
+  @apply relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-2xl py-3 pr-3 pl-5 transition-all;
   background: var(--kengo-glass);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -130,8 +246,37 @@
 
 .expiring-card:active { @apply scale-[0.99]; }
 
+.expiring-stripe {
+  @apply absolute top-0 bottom-0 left-0;
+  width: 3px;
+}
+
+.expiring-card[data-urgencia="alta"] .expiring-stripe {
+  @apply bg-red-500;
+}
+
+.expiring-card[data-urgencia="media"] .expiring-stripe {
+  @apply bg-amber-400;
+}
+
+.expiring-icon {
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full;
+}
+
+.expiring-card[data-urgencia="alta"] .expiring-icon {
+  @apply bg-red-100 text-red-600;
+}
+
+.expiring-card[data-urgencia="media"] .expiring-icon {
+  @apply bg-amber-100 text-amber-600;
+}
+
+.expiring-icon .material-symbols-outlined {
+  @apply text-lg;
+}
+
 .expiring-info {
-  @apply flex min-w-0 flex-col;
+  @apply flex min-w-0 flex-1 flex-col;
 }
 
 .expiring-paciente {
@@ -191,6 +336,18 @@
 .actions-section {
   @apply flex flex-col gap-3;
 }
+
+.crear-plan-cta {
+  @apply flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border-none py-3.5 text-base font-bold text-white transition-all active:scale-[0.98];
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+}
+
+.crear-plan-cta:hover {
+  @apply -translate-y-0.5;
+  box-shadow: 0 8px 24px rgba(var(--kengo-primary-rgb), 0.35);
+}
+
+.crear-plan-cta .material-symbols-outlined { @apply text-xl; }
 
 .actions-grid {
   @apply grid grid-cols-1 gap-3;
@@ -282,6 +439,10 @@
 
   .kpi-label {
     font-size: 0.625rem;
+  }
+
+  .kpi-subtitle {
+    font-size: 0.5rem;
   }
 }
 

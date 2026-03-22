@@ -18,6 +18,7 @@
       <div class="kpi-info">
         <span class="kpi-value">{{ dashboardService.pacientesActivos() }}</span>
         <span class="kpi-label">Pacientes activos</span>
+        <span class="kpi-subtitle">en tus planes</span>
       </div>
     </div>
 
@@ -28,29 +29,80 @@
       <div class="kpi-info">
         <span class="kpi-value">{{ dashboardService.adherenciaPromedio() }}%</span>
         <span class="kpi-label">Adherencia promedio</span>
+        <span class="kpi-subtitle" [attr.data-tier]="adherenciaTier()">{{ adherenciaLabel() }}</span>
       </div>
     </div>
 
-    <div class="kpi-card" (click)="irAPacientes()">
+    <div class="kpi-card">
       <div class="kpi-icon kpi-icon-notificaciones">
         <span class="material-symbols-outlined">notifications</span>
       </div>
       <div class="kpi-info">
         <span class="kpi-value">{{ notificacionesService.pendientes() }}</span>
         <span class="kpi-label">Notificaciones</span>
+        <span class="kpi-subtitle">sin leer</span>
       </div>
     </div>
   }
 </section>
 
+<!-- Resumen del día -->
+@if (!dashboardService.cargando()) {
+  <p class="resumen-dia animate-in" style="--delay: 0.05s">{{ resumenDia() }}</p>
+}
+
+<!-- Actividad reciente -->
+@if (!dashboardService.cargando() && hayNotificacionesRecientes()) {
+  <section class="notif-section animate-in" style="--delay: 0.08s">
+    <div class="section-header">
+      <h2 class="section-title">Actividad reciente</h2>
+      <button type="button" class="ver-todo-link" (click)="irAPacientes()">Ver todo</button>
+    </div>
+    <div class="notif-list">
+      @for (n of notificacionesRecientes(); track n.id) {
+        <article class="notif-card" (click)="irANotificacion(n)">
+          <div class="notif-avatar">
+            @if (avatarUrl(n.emisor_avatar); as url) {
+              <img [src]="url" [alt]="n.emisor_nombre" />
+            } @else {
+              <span class="notif-avatar-fallback">{{ n.emisor_nombre.charAt(0) }}</span>
+            }
+          </div>
+          <div class="notif-content">
+            <span class="notif-emisor">{{ n.emisor_nombre }}</span>
+            <span class="notif-titulo">{{ n.titulo }}</span>
+            @if (n.texto) {
+              <span class="notif-texto">{{ n.texto }}</span>
+            }
+          </div>
+          <div class="notif-meta">
+            <span class="notif-tiempo">{{ formatearTiempoRelativo(n.fecha) }}</span>
+            <span class="notif-dot"></span>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+}
+
 <!-- Planes por vencer -->
 @if (!dashboardService.cargando()) {
-  @if (dashboardService.planesProximosAExpirar().length > 0) {
+  @if (planesCount() > 0) {
     <section class="expiring-section animate-in" style="--delay: 0.1s">
-      <h2 class="section-title">Planes por vencer</h2>
+      <h2 class="section-title">
+        Planes por vencer
+        <span class="count-badge">{{ planesCount() }}</span>
+      </h2>
       <div class="expiring-plans">
         @for (plan of dashboardService.planesProximosAExpirar(); track plan.id_plan) {
-          <article class="expiring-card" (click)="irAPaciente(plan.paciente_id)">
+          <article class="expiring-card" (click)="irAPaciente(plan.paciente_id)"
+            [attr.data-urgencia]="diasParaVencer(plan.fecha_fin) <= 2 ? 'alta' : 'media'">
+            <div class="expiring-stripe"></div>
+            <div class="expiring-icon">
+              <span class="material-symbols-outlined">
+                {{ diasParaVencer(plan.fecha_fin) <= 2 ? 'warning' : 'schedule' }}
+              </span>
+            </div>
             <div class="expiring-info">
               <span class="expiring-paciente">{{ plan.paciente_nombre }}</span>
               <span class="expiring-plan">{{ plan.titulo }}</span>
@@ -86,20 +138,13 @@
 <!-- Quick Actions -->
 <section class="actions-section animate-in" style="--delay: 0.15s">
   <h2 class="section-title">Accesos rápidos</h2>
-  <div class="actions-grid">
-    <article class="action-card" (click)="irAGaleria()">
-      <div class="action-image">
-        <img src="assets/portadas/opcion-galeria.webp" alt="Galería" loading="lazy" />
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Galería</h3>
-        <p class="action-subtitle">Ejercicios y plantillas</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
 
+  <button type="button" class="crear-plan-cta" (click)="irACrearPlan()">
+    <span class="material-symbols-outlined">add_circle</span>
+    Crear nuevo plan
+  </button>
+
+  <div class="actions-grid">
     <article class="action-card" (click)="irAPacientes()">
       <div class="action-image">
         <img src="assets/portadas/opcion-pacientes.webp" alt="Mis Pacientes" loading="lazy" />
@@ -113,6 +158,19 @@
       </div>
     </article>
 
+    <article class="action-card" (click)="irAGaleria()">
+      <div class="action-image">
+        <img src="assets/portadas/opcion-galeria.webp" alt="Galería" loading="lazy" />
+      </div>
+      <div class="action-content">
+        <h3 class="titulo-kengo action-title">Galería</h3>
+        <p class="action-subtitle">Ejercicios y plantillas</p>
+      </div>
+      <div class="action-arrow">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </article>
+
     <article class="action-card" (click)="irAClinica()">
       <div class="action-image">
         <img src="assets/portadas/opcion-clinica.webp" alt="Mi Clínica" loading="lazy" />
@@ -120,19 +178,6 @@
       <div class="action-content">
         <h3 class="titulo-kengo action-title">Mi Clínica</h3>
         <p class="action-subtitle">Administra tu centro</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
-
-    <article class="action-card" (click)="irARutinas()">
-      <div class="action-image">
-        <img src="assets/portadas/opcion-rutina.webp" alt="Rutinas" loading="lazy" />
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Rutinas</h3>
-        <p class="action-subtitle">Plantillas de ejercicios</p>
       </div>
       <div class="action-arrow">
         <span class="material-symbols-outlined">arrow_forward</span>
