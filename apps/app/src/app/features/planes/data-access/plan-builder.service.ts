@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { Router } from '@angular/router';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { AsignacionesService } from '../../pacientes/data-access/asignaciones.service';
 import { RutinasService } from '../../rutinas/data-access/rutinas.service';
 import { environment as env } from '../../../../environments/environment';
 import {
@@ -67,6 +68,7 @@ const DEFAULT_TTL_DAYS = 7;
 export class PlanBuilderService {
   private http = inject(HttpClient);
   private sessionService = inject(SessionService);
+  private asignacionesService = inject(AsignacionesService);
   private rutinasService = inject(RutinasService);
   private router = inject(Router);
   private injector = inject(Injector);
@@ -435,9 +437,18 @@ export class PlanBuilderService {
       })),
     });
 
+    // Auto-asignar fisio responsable si el paciente no tiene uno
+    const f = this.fisioId();
+    const p = this.paciente();
+    if (planId && f && p) {
+      const clinicas = this.sessionService.usuario()?.clinicas ?? [];
+      const clinicaId = clinicas[0]?.id_clinica;
+      if (clinicaId) {
+        this.asignacionesService.autoAsignar(p.id, f, Number(clinicaId));
+      }
+    }
+
     // limpiar storage del plan creado
-    const f = this.fisioId(),
-      p = this.paciente();
     if (f && p) this.removeFromStorage(f, p.id);
 
     return planId;

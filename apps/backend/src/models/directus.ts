@@ -71,6 +71,17 @@ export type Schema = {
     creado_por: ID;
     date_created: string;
   };
+  // Asignaciones de fisio responsable
+  asignaciones_responsable: {
+    id: number;
+    id_paciente: ID; // FK → directus_users
+    id_fisio: ID; // FK → directus_users
+    id_clinica: ID; // FK → clinicas
+    user_created: ID | null;
+    date_created: string | null;
+    user_updated: ID | null;
+    date_updated: string | null;
+  };
   // Si quieres tipar más colecciones, añádelas aquí...
 };
 
@@ -1254,4 +1265,182 @@ export async function updateUserEmailVerified(userId: string, verified: boolean)
     const text = await res.text();
     throw new Error(`Error actualizando email_verified: ${res.status} - ${text}`);
   }
+}
+
+// =========================
+//  ASIGNACIONES RESPONSABLE
+// =========================
+
+export interface AsignacionConFisio {
+  id: number;
+  id_paciente: string;
+  id_fisio: string;
+  id_clinica: number;
+  nombre_fisio: string;
+  apellido_fisio: string;
+  avatar_fisio: string | null;
+  date_created: string | null;
+}
+
+/**
+ * Obtiene todas las asignaciones de una clínica con datos del fisio
+ */
+export async function getAsignacionesByClinica(clinicaId: number): Promise<AsignacionConFisio[]> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/asignaciones_responsable?filter[id_clinica][_eq]=${clinicaId}&fields=id,id_paciente,id_fisio.id,id_fisio.first_name,id_fisio.last_name,id_clinica,date_created&limit=-1`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Error obteniendo asignaciones: ${res.status}`);
+  }
+
+  const json = await res.json();
+  const data = json.data || [];
+
+  return data.map((a: any) => ({
+    id: a.id,
+    id_paciente: a.id_paciente,
+    id_fisio: a.id_fisio?.id || a.id_fisio,
+    id_clinica: typeof a.id_clinica === 'object' ? a.id_clinica.id_clinica : a.id_clinica,
+    nombre_fisio: a.id_fisio?.first_name || '',
+    apellido_fisio: a.id_fisio?.last_name || '',
+    date_created: a.date_created,
+  }));
+}
+
+/**
+ * Obtiene la asignación de un paciente en una clínica
+ */
+export async function getAsignacionByPacienteClinica(
+  idPaciente: string,
+  clinicaId: number
+): Promise<AsignacionConFisio | null> {
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/asignaciones_responsable?filter[id_paciente][_eq]=${idPaciente}&filter[id_clinica][_eq]=${clinicaId}&fields=id,id_paciente,id_fisio.id,id_fisio.first_name,id_fisio.last_name,id_fisio.avatar,id_clinica,date_created&limit=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  if (!res.ok) return null;
+
+  const json = await res.json();
+  const data = json.data;
+
+  if (!data || data.length === 0) return null;
+
+  const a = data[0];
+  return {
+    id: a.id,
+    id_paciente: a.id_paciente,
+    id_fisio: a.id_fisio?.id || a.id_fisio,
+    id_clinica: typeof a.id_clinica === 'object' ? a.id_clinica.id_clinica : a.id_clinica,
+    nombre_fisio: a.id_fisio?.first_name || '',
+    apellido_fisio: a.id_fisio?.last_name || '',
+    avatar_fisio: a.id_fisio?.avatar || null,
+    date_created: a.date_created,
+  };
+}
+
+/**
+ * Crea o actualiza una asignación de fisio responsable
+ */
+export async function upsertAsignacion(
+  idPaciente: string,
+  idFisio: string,
+  clinicaId: number,
+  userId: string
+): Promise<void> {
+  // Buscar si ya existe
+  const existing = await getAsignacionByPacienteClinica(idPaciente, clinicaId);
+
+  if (existing) {
+    // Actualizar
+    await fetch(
+      `${process.env.DIRECTUS_URL}/items/asignaciones_responsable/${existing.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+        },
+        body: JSON.stringify({
+          id_fisio: idFisio,
+          user_updated: userId,
+        }),
+      }
+    );
+  } else {
+    // Crear
+    await fetch(
+      `${process.env.DIRECTUS_URL}/items/asignaciones_responsable`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+        },
+        body: JSON.stringify({
+          id_paciente: idPaciente,
+          id_fisio: idFisio,
+          id_clinica: clinicaId,
+          user_created: userId,
+        }),
+      }
+    );
+  }
+}
+
+/**
+ * Elimina la asignación de un paciente en una clínica
+ */
+export async function deleteAsignacion(
+  idPaciente: string,
+  clinicaId: number
+): Promise<boolean> {
+  const existing = await getAsignacionByPacienteClinica(idPaciente, clinicaId);
+  if (!existing) return false;
+
+  const res = await fetch(
+    `${process.env.DIRECTUS_URL}/items/asignaciones_responsable/${existing.id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${process.env.DIRECTUS_STATIC_TOKEN}`,
+      },
+    }
+  );
+
+  return res.ok;
+}
+
+/**
+ * Procesa un array de asignaciones (upsert/delete)
+ */
+export async function bulkUpsertAsignaciones(
+  clinicaId: number,
+  asignaciones: { id_paciente: string; id_fisio: string | null }[],
+  userId: string
+): Promise<{ asignadas: number; eliminadas: number }> {
+  let asignadas = 0;
+  let eliminadas = 0;
+
+  for (const a of asignaciones) {
+    if (a.id_fisio) {
+      await upsertAsignacion(a.id_paciente, a.id_fisio, clinicaId, userId);
+      asignadas++;
+    } else {
+      const deleted = await deleteAsignacion(a.id_paciente, clinicaId);
+      if (deleted) eliminadas++;
+    }
+  }
+
+  return { asignadas, eliminadas };
 }

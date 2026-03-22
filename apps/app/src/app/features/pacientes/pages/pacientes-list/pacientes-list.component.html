@@ -103,6 +103,22 @@
           <span class="material-symbols-outlined text-xl">{{ vista() === 'card' ? 'view_list' : 'grid_view' }}</span>
         </button>
 
+        <!-- DESKTOP: Botón asignaciones (solo admin) -->
+        @if (!isMovil() && esAdmin()) {
+          <button
+            type="button"
+            class="flex h-10 items-center gap-1.5 rounded-full px-3
+                   bg-white/70 border border-white/40 text-zinc-600
+                   transition-all duration-200 backdrop-blur-sm
+                   hover:bg-white/90 hover:text-kengo-primary active:scale-95"
+            (click)="irAsignacion()"
+            title="Gestionar asignaciones de fisio responsable"
+          >
+            <span class="material-symbols-outlined text-lg">assignment_ind</span>
+            <span class="text-xs font-semibold">Asignar</span>
+          </button>
+        }
+
         <!-- DESKTOP: Botón añadir -->
         @if (!isMovil()) {
           <button
@@ -166,6 +182,22 @@
 
     <!-- Patients Content -->
     @else if (totalPacientes() > 0) {
+      <!-- Admin: Gestionar asignaciones (mobile) -->
+      @if (isMovil() && esAdmin()) {
+        <button
+          type="button"
+          class="flex items-center gap-2 w-full mb-3 px-4 py-2.5 rounded-2xl
+                 bg-white/60 border border-white/40 backdrop-blur-sm
+                 text-zinc-600 text-sm font-medium
+                 transition-all hover:bg-white/80 active:scale-[0.98]"
+          (click)="irAsignacion()"
+        >
+          <span class="material-symbols-outlined text-kengo-primary text-lg">assignment_ind</span>
+          <span>Gestionar asignaciones</span>
+          <span class="material-symbols-outlined ml-auto text-zinc-400 text-lg">chevron_right</span>
+        </button>
+      }
+
       <!-- Quick Stats Bar -->
       <section class="stats-bar animate-in">
         <button
@@ -255,6 +287,12 @@
                     <span class="clinic-badge">
                       <span class="material-symbols-outlined">domain</span>
                       {{ getClinicaNombre(p) }}
+                    </span>
+                  }
+                  @if (getFisioResponsableNombre(p.id)) {
+                    <span class="fisio-badge">
+                      <span class="material-symbols-outlined">person</span>
+                      {{ getFisioResponsableNombre(p.id) }}
                     </span>
                   }
                 </div>

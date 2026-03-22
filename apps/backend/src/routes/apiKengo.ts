@@ -8,6 +8,7 @@ import { passwordResetController } from "../controllers/passwordReset";
 import { emailVerificationController } from "../controllers/emailVerification";
 import { sessionRefreshController } from "../controllers/sessionRefresh";
 import { contactoController } from "../controllers/contacto";
+import { asignacionesController } from "../controllers/asignaciones";
 import { authMiddleware } from "../middleware/auth";
 import { actualizarPlanesExpirados } from "../jobs/planes-expirados";
 import { calcularCumplimientoDiario, backfillCumplimiento, recalcularCumplimiento } from "../jobs/cumplimiento-diario";
@@ -58,6 +59,11 @@ router.post("/clinica/codigo/generar", authMiddleware, clinicaController.generar
 router.get("/clinica/:id/codigos", authMiddleware, clinicaController.listarCodigos);
 router.patch("/clinica/codigo/:id/desactivar", authMiddleware, clinicaController.desactivarCodigoAcceso);
 router.patch("/clinica/codigo/:id/reactivar", authMiddleware, clinicaController.reactivarCodigoAcceso);
+
+// Asignaciones de fisio responsable
+router.get("/clinica/:id/asignaciones", authMiddleware, asignacionesController.listarAsignaciones);
+router.put("/clinica/:id/asignaciones/bulk", authMiddleware, asignacionesController.bulkAsignar);
+router.get("/paciente/:id/fisio-responsable", authMiddleware, asignacionesController.getFisioResponsable);
 
 // Dashboard
 router.get("/dashboard/fisio/resumen", authMiddleware, dashboardController.getResumenFisio);

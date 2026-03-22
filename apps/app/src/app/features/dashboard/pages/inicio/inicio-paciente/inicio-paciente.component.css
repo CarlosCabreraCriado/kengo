@@ -349,6 +349,95 @@
 }
 
 /* ============================================
+   FISIO CARD
+   ============================================ */
+.fisio-card {
+  @apply overflow-hidden rounded-2xl p-4;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.fisio-content {
+  @apply flex items-center gap-3;
+}
+
+.fisio-avatar {
+  @apply flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+}
+
+.fisio-avatar-img {
+  @apply h-full w-full object-cover;
+}
+
+.fisio-avatar-fallback {
+  @apply text-2xl;
+  color: var(--kengo-primary);
+}
+
+.fisio-info {
+  @apply flex flex-col;
+}
+
+.fisio-label {
+  @apply text-xs font-semibold tracking-wide text-zinc-500 uppercase;
+}
+
+.fisio-name {
+  @apply text-base font-semibold;
+  color: var(--kengo-primary);
+}
+
+/* Skeleton */
+.fisio-skeleton {
+  @apply flex items-center gap-3;
+}
+
+.fisio-skeleton-avatar {
+  @apply h-12 w-12 shrink-0 rounded-full;
+  background: linear-gradient(90deg, #e4e4e7 25%, #f4f4f5 50%, #e4e4e7 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.fisio-skeleton-lines {
+  @apply flex flex-1 flex-col gap-2;
+}
+
+.fisio-skeleton-line {
+  @apply h-3 rounded;
+  background: linear-gradient(90deg, #e4e4e7 25%, #f4f4f5 50%, #e4e4e7 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  width: 60%;
+}
+
+.fisio-skeleton-line.short {
+  width: 40%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty state */
+.fisio-empty {
+  @apply flex items-center justify-center gap-2;
+}
+
+.fisio-empty-icon {
+  @apply text-2xl text-zinc-400;
+}
+
+.fisio-empty-text {
+  @apply text-sm text-zinc-400;
+}
+
+/* ============================================
    ACTIONS SECTION
    ============================================ */
 .actions-section {

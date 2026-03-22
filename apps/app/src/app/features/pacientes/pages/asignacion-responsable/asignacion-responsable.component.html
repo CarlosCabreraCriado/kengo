@@ -1,0 +1,189 @@
+<section class="asignacion-page">
+  <!-- Aurora Background -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-wave aurora-wave-1"></div>
+    <div class="aurora-wave aurora-wave-2"></div>
+    <div class="aurora-wave aurora-wave-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
+    <div class="mx-auto max-w-3xl">
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-xl
+                 bg-white/60 backdrop-blur-md border border-white/40
+                 text-zinc-600 transition-all duration-200
+                 hover:bg-white/80 hover:scale-105 active:scale-95"
+          aria-label="Volver a pacientes"
+          (click)="volver()"
+        >
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <div class="flex-1">
+          <h1 class="titulo-kengo text-xl text-kengo-primary">Fisio responsable</h1>
+          <p class="text-xs text-zinc-500 mt-0.5">Asignar fisioterapeuta a cada paciente</p>
+        </div>
+      </div>
+
+      <!-- Selector de clínica (si admin en múltiples) -->
+      @if (clinicasAdmin().length > 1) {
+        <div class="mt-3">
+          <select
+            class="clinic-select"
+            [ngModel]="clinicaSeleccionada()"
+            (ngModelChange)="seleccionarClinica($event)"
+          >
+            @for (c of clinicasAdmin(); track c.id_clinica) {
+              <option [value]="c.id_clinica">{{ c.nombre }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <!-- Buscador -->
+      @if (pacientes().length > 0) {
+        <div class="relative mt-3">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-kengo-primary text-lg pointer-events-none">search</span>
+          <input
+            type="text"
+            class="w-full h-10 pl-10 pr-4 rounded-xl
+                   bg-white/70 border border-white/40
+                   text-zinc-700 text-sm
+                   transition-all outline-none
+                   focus:border-kengo-primary/40 focus:bg-white/90
+                   backdrop-blur-sm"
+            placeholder="Buscar paciente..."
+            [ngModel]="busqueda()"
+            (ngModelChange)="busqueda.set($event)"
+          />
+        </div>
+      }
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="asignacion-main">
+    <!-- Toast -->
+    @if (mensaje()) {
+      <div
+        class="toast"
+        [class.toast-success]="mensaje()?.tipo === 'success'"
+        [class.toast-error]="mensaje()?.tipo === 'error'"
+      >
+        <span class="material-symbols-outlined text-lg">
+          {{ mensaje()?.tipo === 'success' ? 'check_circle' : 'error' }}
+        </span>
+        <span>{{ mensaje()?.texto }}</span>
+      </div>
+    }
+
+    <!-- Loading -->
+    @if (isLoadingPacientes()) {
+      <div class="state-card">
+        <div class="shimmer-effect"></div>
+        <div class="state-icon pulse">
+          <span class="material-symbols-outlined">groups</span>
+        </div>
+        <p class="state-text">Cargando pacientes...</p>
+      </div>
+    }
+
+    <!-- No clínicas admin -->
+    @else if (clinicasAdmin().length === 0) {
+      <div class="state-card">
+        <div class="state-icon">
+          <span class="material-symbols-outlined">admin_panel_settings</span>
+        </div>
+        <h3 class="state-title">Sin permisos</h3>
+        <p class="state-text">No eres administrador en ninguna clínica.</p>
+      </div>
+    }
+
+    <!-- Sin pacientes -->
+    @else if (pacientes().length === 0 && !isLoadingPacientes()) {
+      <div class="state-card">
+        <div class="state-icon">
+          <span class="material-symbols-outlined">group_off</span>
+        </div>
+        <h3 class="state-title">Sin pacientes</h3>
+        <p class="state-text">No hay pacientes en esta clínica.</p>
+      </div>
+    }
+
+    <!-- Lista de pacientes con asignación -->
+    @else if (pacientesFiltrados().length > 0) {
+      <div class="patients-assign-list">
+        @for (p of pacientesFiltrados(); track p.id; let i = $index) {
+          <article
+            class="assign-row"
+            [class.has-change]="tienesCambio(p.id)"
+            [style.--row-delay]="(i * 0.02) + 's'"
+          >
+            <!-- Avatar + nombre -->
+            <div class="assign-patient">
+              <div class="assign-avatar">
+                @if (avatarUrl(p)) {
+                  <img [src]="avatarUrl(p)" [alt]="fullName(p)" class="avatar-img"/>
+                } @else {
+                  <span class="avatar-initials">{{ getInitials(p) }}</span>
+                }
+              </div>
+              <div class="assign-name">
+                <span class="patient-name">{{ fullName(p) }}</span>
+                @if (p.email) {
+                  <span class="patient-email">{{ p.email }}</span>
+                }
+              </div>
+            </div>
+
+            <!-- Dropdown fisio -->
+            <div class="assign-selector">
+              <select
+                class="fisio-select"
+                [class.changed]="tienesCambio(p.id)"
+                [ngModel]="getAsignacionActual(p.id)"
+                (ngModelChange)="cambiarAsignacion(p.id, $event)"
+              >
+                <option value="">Sin asignar</option>
+                @for (f of fisiosClinica(); track f.id) {
+                  <option [value]="f.id">{{ fisioFullName(f) }}</option>
+                }
+              </select>
+              @if (tienesCambio(p.id)) {
+                <span class="change-indicator"></span>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (pacientesFiltrados().length === 0 && busqueda()) {
+        <div class="state-card mt-4">
+          <p class="state-text">Sin resultados para "{{ busqueda() }}"</p>
+        </div>
+      }
+    }
+  </main>
+
+  <!-- Botón flotante guardar -->
+  @if (cambiosPendientes() > 0) {
+    <div class="save-bar">
+      <button
+        type="button"
+        class="save-btn"
+        [disabled]="guardando()"
+        (click)="guardarCambios()"
+      >
+        @if (guardando()) {
+          <span class="material-symbols-outlined animate-spin">progress_activity</span>
+          <span>Guardando...</span>
+        } @else {
+          <span class="material-symbols-outlined">save</span>
+          <span>Guardar cambios ({{ cambiosPendientes() }})</span>
+        }
+      </button>
+    </div>
+  }
+</section>

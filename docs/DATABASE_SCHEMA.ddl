@@ -1,3 +1,23 @@
+-- kengoDB.asignaciones_responsable definition
+
+CREATE TABLE `asignaciones_responsable` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `id_paciente` char(36) DEFAULT NULL,
+  `id_fisio` char(36) DEFAULT NULL,
+  `id_clinica` int unsigned DEFAULT NULL,
+  `user_created` char(36) DEFAULT NULL,
+  `date_created` timestamp NULL DEFAULT NULL,
+  `user_updated` char(36) DEFAULT NULL,
+  `date_updated` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `asignaciones_paciente_clinica_unique` (`id_paciente`,`id_clinica`),
+  KEY `asignaciones_fisio_clinica_idx` (`id_fisio`,`id_clinica`),
+  CONSTRAINT `asignaciones_id_paciente_fk` FOREIGN KEY (`id_paciente`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `asignaciones_id_fisio_fk` FOREIGN KEY (`id_fisio`) REFERENCES `directus_users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `asignaciones_id_clinica_fk` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 -- kengoDB.Puestos definition
 
 CREATE TABLE `Puestos` (

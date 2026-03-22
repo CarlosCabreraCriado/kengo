@@ -17,6 +17,7 @@ export * from './lib/database/clinics.db';
 export * from './lib/database/access-codes.db';
 export * from './lib/database/compliance.db';
 export * from './lib/database/notifications.db';
+export * from './lib/database/assignments.db';
 
 // Tipos para respuestas del SDK Directus
 export * from './lib/directus/users.directus';
@@ -36,6 +37,7 @@ export * from './lib/domain/access-codes';
 export * from './lib/domain/compliance';
 export * from './lib/domain/notifications';
 export * from './lib/domain/dashboard';
+export * from './lib/domain/assignments';
 
 // DTOs para operaciones de crear/actualizar
 export * from './lib/payloads/plans.payload';
@@ -44,3 +46,4 @@ export * from './lib/payloads/users.payload';
 export * from './lib/payloads/clinics.payload';
 export * from './lib/payloads/password-reset.payload';
 export * from './lib/payloads/email-verification.payload';
+export * from './lib/payloads/assignments.payload';

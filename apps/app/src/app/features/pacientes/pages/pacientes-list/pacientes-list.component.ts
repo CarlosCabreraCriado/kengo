@@ -20,9 +20,10 @@ import { AddPacienteDialogComponent } from '../../components/add-paciente/add-pa
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
+import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { DialogService } from '../../../../shared';
 
-import { Usuario, UsuarioDirectus } from '../../../../../types/global';
+import { Usuario, UsuarioDirectus, AsignacionResponsable, PUESTO_ADMINISTRADOR } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
@@ -52,6 +53,7 @@ export class PacientesListComponent {
   private planesService = inject(PlanesService);
   private authService = inject(AuthService);
   private breakpointObserver = inject(BreakpointObserver);
+  private asignacionesService = inject(AsignacionesService);
 
   // Signal para alternar vista card/lista
   public vista = signal<'card' | 'lista'>('card');
@@ -67,6 +69,15 @@ export class PacientesListComponent {
   public idsClinicas = computed(() => {
     if (this.sessionService.usuario() == null) return null;
     return this.sessionService.usuario()?.clinicas.map((c) => c.id_clinica) || [];
+  });
+
+  // Asignaciones de fisio responsable
+  readonly asignacionesMap = signal<Map<string, AsignacionResponsable>>(new Map());
+
+  // Es admin en alguna clínica
+  readonly esAdmin = computed(() => {
+    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
+    return clinicas.some((c) => c.id_puesto === PUESTO_ADMINISTRADOR);
   });
 
   private readonly busqueda = signal('');
@@ -168,6 +179,8 @@ export class PacientesListComponent {
           usuarios.push(this.sessionService.transformarUsuarioDirectus(usuario));
         }
         console.log('Pacientes cargados:', resultado);
+        // Cargar asignaciones en paralelo
+        this.cargarAsignaciones();
         return usuarios;
       },
     },
@@ -223,6 +236,35 @@ export class PacientesListComponent {
   reload() {
     this.pacientesRes.reload();
     this.planesActivosRes.reload();
+    this.cargarAsignaciones();
+  }
+
+  private cargarAsignaciones() {
+    const cid = this.idsClinicas();
+    if (!cid || cid.length === 0) return;
+    // Cargar asignaciones de la primera clínica
+    this.asignacionesService.listarAsignaciones(Number(cid[0])).subscribe({
+      next: (asignaciones) => {
+        const m = new Map<string, AsignacionResponsable>();
+        for (const a of asignaciones) {
+          m.set(a.idPaciente, a);
+        }
+        this.asignacionesMap.set(m);
+      },
+      error: () => {}, // silently ignore
+    });
+  }
+
+  getFisioResponsableNombre(pacienteId: string): string | null {
+    const a = this.asignacionesMap().get(pacienteId);
+    if (!a) return null;
+    const fn = (a.nombreFisio || '').trim();
+    const ln = (a.apellidoFisio || '').trim();
+    return fn || ln ? `${fn} ${ln}`.trim() : null;
+  }
+
+  irAsignacion() {
+    this.router.navigate(['/mis-pacientes', 'asignacion']);
   }
 
   // Helpers

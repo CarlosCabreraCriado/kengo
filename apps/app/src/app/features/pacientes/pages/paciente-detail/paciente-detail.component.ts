@@ -21,6 +21,7 @@ import { PlanBuilderService } from '../../../planes/data-access/plan-builder.ser
 import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { ComentariosPacienteService } from '../../data-access/comentarios-paciente.service';
+import { AsignacionesService } from '../../data-access/asignaciones.service';
 
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -99,6 +100,7 @@ export class PacienteDetailComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   private cumplimientoService = inject(CumplimientoService);
   private comentariosService = inject(ComentariosPacienteService);
+  private asignacionesService = inject(AsignacionesService);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
   isMovil = toSignal(
@@ -124,6 +126,9 @@ export class PacienteDetailComponent implements OnInit {
   readonly comentarios = signal<NotificacionFisio[]>([]);
   readonly comentariosPendientes = signal<number>(0);
   readonly isLoadingComentarios = signal(true);
+
+  // Fisio responsable
+  readonly fisioResponsableNombre = signal<string | null>(null);
 
   // Descarga de informes
   readonly descargandoInforme = signal<number | null>(null);
@@ -185,6 +190,7 @@ export class PacienteDetailComponent implements OnInit {
       this.cargarPlanes(pacienteId);
       this.cargarCumplimiento(pacienteId);
       this.cargarComentarios(pacienteId);
+      this.cargarFisioResponsable(pacienteId);
     } else {
       this.router.navigate(['/mis-pacientes']);
     }
@@ -451,6 +457,26 @@ export class PacienteDetailComponent implements OnInit {
     } finally {
       this.isLoadingComentarios.set(false);
     }
+  }
+
+  private cargarFisioResponsable(pacienteId: string) {
+    const clinicaIds = this.idsClinicas();
+    if (!clinicaIds || clinicaIds.length === 0) return;
+
+    this.asignacionesService
+      .getFisioResponsable(pacienteId, Number(clinicaIds[0]))
+      .subscribe({
+        next: (asignacion) => {
+          if (asignacion) {
+            const fn = (asignacion.nombreFisio || '').trim();
+            const ln = (asignacion.apellidoFisio || '').trim();
+            this.fisioResponsableNombre.set(
+              fn || ln ? `${fn} ${ln}`.trim() : null
+            );
+          }
+        },
+        error: () => {},
+      });
   }
 
   async marcarComentarioRevisado(comentario: NotificacionFisio) {

@@ -40,6 +40,7 @@ export type {
   ClinicaFilesDB,
   CumplimientoDiarioDB,
   NotificacionFisioDB,
+  AsignacionResponsableDB,
 } from '@kengo/shared-models';
 
 // Tipos Directus
@@ -114,6 +115,8 @@ export {
   CategoriaNotificacion,
   NotificacionApp,
   NotificacionesAppResponse,
+  // Assignments
+  AsignacionResponsable,
 } from '@kengo/shared-models';
 
 // Payloads
@@ -141,6 +144,9 @@ export {
   VerificacionEmailErrorCode,
   EnviarVerificacionResult,
   VerificarEmailResult,
+  // Assignment payloads
+  BulkAsignacionPayload,
+  BulkAsignacionResponse,
 } from '@kengo/shared-models';
 
 // ============================================

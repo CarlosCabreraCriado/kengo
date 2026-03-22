@@ -110,6 +110,12 @@
                     {{ getClinicaNombre() }}
                   </p>
                 }
+                @if (fisioResponsableNombre()) {
+                  <p class="hero-fisio">
+                    <span class="material-symbols-outlined icon-sm">person</span>
+                    Fisio: {{ fisioResponsableNombre() }}
+                  </p>
+                }
               </div>
               <!-- Edit Button -->
               <button

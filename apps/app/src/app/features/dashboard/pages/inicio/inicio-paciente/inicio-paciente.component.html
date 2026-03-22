@@ -120,8 +120,40 @@
   }
 </section>
 
+<!-- Tu Fisio Card -->
+<section class="fisio-card animate-in" style="--delay: 0.175s">
+  @if (cargandoFisio()) {
+    <div class="fisio-skeleton">
+      <div class="fisio-skeleton-avatar"></div>
+      <div class="fisio-skeleton-lines">
+        <div class="fisio-skeleton-line short"></div>
+        <div class="fisio-skeleton-line"></div>
+      </div>
+    </div>
+  } @else if (fisioAsignado()) {
+    <div class="fisio-content">
+      <div class="fisio-avatar">
+        @if (fisioAvatarUrl()) {
+          <img [src]="fisioAvatarUrl()" alt="Avatar fisio" class="fisio-avatar-img" />
+        } @else {
+          <span class="material-symbols-outlined fisio-avatar-fallback">person</span>
+        }
+      </div>
+      <div class="fisio-info">
+        <span class="fisio-label">Tu fisioterapeuta</span>
+        <span class="fisio-name">{{ fisioNombreCompleto() }}</span>
+      </div>
+    </div>
+  } @else {
+    <div class="fisio-empty">
+      <span class="material-symbols-outlined fisio-empty-icon">person_off</span>
+      <span class="fisio-empty-text">Sin fisio asignado</span>
+    </div>
+  }
+</section>
+
 <!-- Quick Actions -->
-<section class="actions-section animate-in" style="--delay: 0.2s">
+<section class="actions-section animate-in" style="--delay: 0.25s">
   <h2 class="section-title">Accesos rápidos</h2>
   <div class="actions-grid">
     <article class="action-card" (click)="irAMiActividad()">

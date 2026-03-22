@@ -309,6 +309,10 @@
   @apply flex items-center gap-1 text-sm text-zinc-500 m-0 mt-1;
 }
 
+.hero-fisio {
+  @apply flex items-center gap-1 text-xs text-blue-600 m-0 mt-1 font-medium;
+}
+
 .icon-sm {
   @apply text-base;
 }
