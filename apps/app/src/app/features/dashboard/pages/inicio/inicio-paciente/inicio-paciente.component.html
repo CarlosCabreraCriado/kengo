@@ -48,6 +48,31 @@
       <p class="activity-subtitle">{{ subtitulo() }}</p>
     </div>
 
+    <!-- Exercise Strip -->
+    @if (ejerciciosStrip().length > 0) {
+      <div class="exercise-strip">
+        @for (ej of ejerciciosStrip(); track ej.id) {
+          <div
+            class="exercise-dot"
+            [class.completado]="ej.completado"
+            [class.siguiente]="ej.esSiguiente"
+            [attr.title]="ej.nombre"
+          >
+            @if (ej.portadaUrl) {
+              <img [src]="ej.portadaUrl" [alt]="ej.nombre" class="dot-img" loading="lazy" />
+            } @else {
+              <span class="material-symbols-outlined dot-fallback">fitness_center</span>
+            }
+            @if (ej.completado) {
+              <div class="dot-check">
+                <span class="material-symbols-outlined icon-filled">check</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
     @if (progreso(); as prog) {
       @if (prog.total > 0) {
         <div class="activity-progress">
@@ -57,15 +82,37 @@
               [style.width.%]="(prog.completados / prog.total) * 100"
             ></div>
           </div>
-          <span class="progress-text">
-            {{ prog.completados }}/{{ prog.total }} ejercicios
-          </span>
+          <div class="progress-meta">
+            <span class="progress-text">
+              {{ prog.completados }}/{{ prog.total }} ejercicios
+            </span>
+            @if (tiempoRestanteMin(); as minutos) {
+              <span class="progress-time">
+                <span class="material-symbols-outlined">schedule</span>
+                ~{{ minutos }} min
+              </span>
+            }
+            @if (rachaService.rachaActual() > 0) {
+              <span class="streak-micro">🔥 {{ rachaService.rachaActual() }}</span>
+            }
+          </div>
         </div>
 
-        @if (siguienteEjercicio(); as siguiente) {
+        <!-- Next exercise with thumbnail -->
+        @if (siguienteEjercicioDetalle(); as siguiente) {
           <div class="next-exercise">
-            <span class="material-symbols-outlined icon-filled">play_circle</span>
-            <span>Siguiente: {{ siguiente }}</span>
+            <div class="next-exercise-thumb">
+              @if (siguiente.portadaUrl) {
+                <img [src]="siguiente.portadaUrl" [alt]="siguiente.nombre" loading="lazy" />
+              } @else {
+                <span class="material-symbols-outlined">fitness_center</span>
+              }
+            </div>
+            <div class="next-exercise-info">
+              <span class="next-exercise-label">Siguiente</span>
+              <span class="next-exercise-name">{{ siguiente.nombre }}</span>
+            </div>
+            <span class="material-symbols-outlined icon-filled next-exercise-play">play_circle</span>
           </div>
         }
 
@@ -80,8 +127,16 @@
           </button>
         } @else {
           <div class="activity-completed">
-            <span class="material-symbols-outlined icon-filled">celebration</span>
-            <span>¡Buen trabajo hoy!</span>
+            <div class="completed-main">
+              <span class="material-symbols-outlined icon-filled">celebration</span>
+              <span>¡Buen trabajo hoy!</span>
+            </div>
+            <div class="completed-summary">
+              <span>{{ resumenCompletado().total }} ejercicios completados</span>
+              @if (resumenCompletado().rachaTexto) {
+                <span class="completed-streak">{{ resumenCompletado().rachaTexto }}</span>
+              }
+            </div>
           </div>
         }
       }
@@ -100,7 +155,75 @@
       </div>
     }
   </div>
+
+  <!-- Resumen y próxima sesión -->
+  <div class="calendar-summary">
+    @if (proximaSesion(); as proxima) {
+      <span class="calendar-chip">
+        <span class="material-symbols-outlined calendar-chip-icon">event</span>
+        Próxima: {{ proxima.letra }}
+      </span>
+    }
+    @if (resumenSemana().completados > 0) {
+      <span class="calendar-chip calendar-chip-success">
+        <span class="material-symbols-outlined calendar-chip-icon icon-filled">check_circle</span>
+        {{ resumenSemana().completados }} completado{{ resumenSemana().completados !== 1 ? 's' : '' }}
+      </span>
+    }
+  </div>
+
+  <!-- Leyenda -->
+  <div class="calendar-legend">
+    <div class="legend-item">
+      <span class="legend-dot legend-dot-completado"></span>
+      <span class="legend-label">Completado</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot legend-dot-parcial"></span>
+      <span class="legend-label">Parcial</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot legend-dot-fallido"></span>
+      <span class="legend-label">Pendiente</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot legend-dot-descanso"></span>
+      <span class="legend-label">Descanso</span>
+    </div>
+  </div>
 </section>
+
+<!-- Tu Plan Card -->
+@if (!actividadHoyService.cargando() && planPrincipal(); as plan) {
+  <section class="plan-card animate-in" style="--delay: 0.125s">
+    <div class="plan-header">
+      <span class="material-symbols-outlined plan-icon">assignment</span>
+      <div class="plan-info">
+        <span class="plan-title">{{ plan.titulo }}</span>
+        @if (plan.diasRestantes !== null) {
+          <span class="plan-remaining">
+            {{ plan.diasRestantes }} día{{ plan.diasRestantes !== 1 ? 's' : '' }} restante{{ plan.diasRestantes !== 1 ? 's' : '' }}
+          </span>
+        } @else {
+          <span class="plan-remaining">Plan sin fecha límite</span>
+        }
+      </div>
+    </div>
+    <div class="plan-stats">
+      <div class="plan-stat">
+        <span class="plan-stat-number">{{ plan.totalEjercicios }}</span>
+        <span class="plan-stat-label">ejercicios</span>
+      </div>
+      <div class="plan-stat">
+        <span class="plan-stat-number">{{ plan.ejerciciosHoy }}</span>
+        <span class="plan-stat-label">hoy</span>
+      </div>
+    </div>
+    @if (tienePlanesMultiples()) {
+      <span class="plan-extra">+{{ cantidadPlanesExtra() }} plan{{ cantidadPlanesExtra() !== 1 ? 'es' : '' }} más</span>
+    }
+  </section>
+}
 
 <!-- Racha Card -->
 <section class="streak-card animate-in" style="--delay: 0.15s">
@@ -112,10 +235,22 @@
         <span class="streak-label">{{ rachaService.rachaActual() === 1 ? 'día consecutivo' : 'días consecutivos' }}</span>
       </div>
     </div>
+    <div class="streak-extra">
+      @if (mensajeMotivacional(); as mensaje) {
+        <span class="streak-motivation">{{ mensaje }}</span>
+      }
+      @if (mostrarMejorRacha()) {
+        <span class="streak-best">Récord: {{ rachaService.mejorRacha() }} días</span>
+      }
+    </div>
   } @else {
     <div class="streak-content streak-empty">
       <span class="material-symbols-outlined streak-icon-empty">local_fire_department</span>
-      <span class="streak-empty-text">Completa hoy para empezar tu racha</span>
+      @if (actividadHoyService.todoCompletado()) {
+        <span class="streak-empty-text">¡Has completado hoy! Mañana empieza tu racha</span>
+      } @else {
+        <span class="streak-empty-text">Completa hoy para empezar tu racha</span>
+      }
     </div>
   }
 </section>
@@ -142,12 +277,28 @@
       <div class="fisio-info">
         <span class="fisio-label">Tu fisioterapeuta</span>
         <span class="fisio-name">{{ fisioNombreCompleto() }}</span>
+        @if (clinicaNombre()) {
+          <span class="fisio-clinica-name">{{ clinicaNombre() }}</span>
+        }
+      </div>
+      <div class="fisio-actions">
+        <button
+          type="button"
+          class="fisio-contact-btn"
+          (click)="onContactarFisio()"
+          aria-label="Contactar fisioterapeuta"
+        >
+          <span class="material-symbols-outlined">chat</span>
+        </button>
+        @if (mostrarTooltipContacto()) {
+          <span class="fisio-contact-tooltip">Mensajería disponible pronto</span>
+        }
       </div>
     </div>
   } @else {
     <div class="fisio-empty">
       <span class="material-symbols-outlined fisio-empty-icon">person_off</span>
-      <span class="fisio-empty-text">Sin fisio asignado</span>
+      <span class="fisio-empty-text">Aún no tienes fisio asignado</span>
     </div>
   }
 </section>
@@ -169,13 +320,39 @@
       </div>
     </article>
 
+    <article class="action-card action-card-icon" (click)="irACalendario()">
+      <div class="action-icon-circle">
+        <span class="material-symbols-outlined">calendar_month</span>
+      </div>
+      <div class="action-content">
+        <h3 class="titulo-kengo action-title">Calendario</h3>
+        <p class="action-subtitle">Historial semanal</p>
+      </div>
+      <div class="action-arrow">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </article>
+
+    <article class="action-card action-card-icon" (click)="irAEjercicios()">
+      <div class="action-icon-circle">
+        <span class="material-symbols-outlined">fitness_center</span>
+      </div>
+      <div class="action-content">
+        <h3 class="titulo-kengo action-title">Ejercicios</h3>
+        <p class="action-subtitle">Catálogo de ejercicios</p>
+      </div>
+      <div class="action-arrow">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </article>
+
     <article class="action-card" (click)="irAClinica()">
       <div class="action-image">
         <img src="assets/portadas/opcion-clinica.webp" alt="Mi Clínica" loading="lazy" />
       </div>
       <div class="action-content">
         <h3 class="titulo-kengo action-title">Mi Clínica</h3>
-        <p class="action-subtitle">Administra tu centro</p>
+        <p class="action-subtitle">{{ subtituloClinica() }}</p>
       </div>
       <div class="action-arrow">
         <span class="material-symbols-outlined">arrow_forward</span>
