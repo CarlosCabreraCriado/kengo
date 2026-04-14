@@ -225,7 +225,11 @@ export class RealizarPlanComponent implements OnInit {
       this.registroService.modoMultiPlan() &&
       this.registroService.configSesion()
     ) {
-      return; // La sesion ya esta lista desde actividad-personal
+      // Si viene de actividad-personal con skipResumen, comenzar directamente
+      if (this.registroService.configSesion()?.skipResumen) {
+        await this.onComenzar();
+      }
+      return;
     }
 
     // Flujo original: cargar por planId de la ruta

@@ -283,6 +283,7 @@ export class ActividadCalendarioComponent implements OnInit {
         titulo: p.titulo,
         cantidadEjercicios: p.ejercicios,
       })),
+      skipResumen: true,
     };
 
     this.registroService.iniciarSesionMultiPlan(config);

@@ -123,6 +123,12 @@ export class RegistroSesionService {
     return this.ejercicioActualIndex() >= total - 1;
   });
 
+  readonly proximoEjercicio = computed<EjercicioPlan | null>(() => {
+    const lista = this.ejerciciosList();
+    const idx = this.ejercicioActualIndex();
+    return lista[idx + 1] ?? null;
+  });
+
   readonly esTipoTemporizador = computed(() => {
     const ej = this.ejercicioActual();
     return ej?.duracion_seg !== undefined && ej.duracion_seg > 0;

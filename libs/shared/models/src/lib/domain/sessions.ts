@@ -92,6 +92,7 @@ export interface ConfigSesionMultiPlan {
     titulo: string;
     cantidadEjercicios: number;
   }[];
+  skipResumen?: boolean;
 }
 
 /**

@@ -141,6 +141,46 @@ export class ActividadHoyService {
     return { completados, total };
   });
 
+  // Total de series del día
+  readonly totalSeriesHoy = computed(() => {
+    const actividad = this.actividadHoy();
+    return actividad.reduce(
+      (acc, a) =>
+        acc + a.ejerciciosHoy.reduce((sum, ej) => sum + (ej.series ?? 3), 0),
+      0
+    );
+  });
+
+  // Tiempo estimado de la sesión del día
+  readonly tiempoEstimadoHoy = computed(() => {
+    const actividad = this.actividadHoy();
+    let totalSegundos = 0;
+
+    for (const plan of actividad) {
+      for (const item of plan.ejerciciosHoy) {
+        const series = item.series ?? 3;
+        const descanso = item.descanso_seg ?? 60;
+
+        if (item.duracion_seg) {
+          totalSegundos += item.duracion_seg * series;
+        } else {
+          const reps = item.repeticiones ?? 12;
+          totalSegundos += reps * 3 * series;
+        }
+
+        totalSegundos += descanso * (series - 1);
+      }
+    }
+
+    const minutos = Math.round(totalSegundos / 60);
+    if (minutos < 60) {
+      return `${minutos} min`;
+    }
+    const horas = Math.floor(minutos / 60);
+    const mins = minutos % 60;
+    return mins > 0 ? `${horas}h ${mins}m` : `${horas}h`;
+  });
+
   // Nombre del primer ejercicio pendiente
   readonly primerEjercicioPendiente = computed<string | null>(() => {
     const actividad = this.actividadHoy();

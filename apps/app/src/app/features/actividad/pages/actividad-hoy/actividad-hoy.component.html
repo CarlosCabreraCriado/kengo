@@ -134,6 +134,21 @@
               </span>
             </div>
 
+            <!-- Session Stats -->
+            <div class="hero-session-stats">
+              <div class="session-stat">
+                <span class="material-symbols-outlined session-stat-icon">exercise</span>
+                <span class="session-stat-value">{{ totalSeriesHoy() }}</span>
+                <span class="session-stat-label">series</span>
+              </div>
+              <div class="session-stat-divider"></div>
+              <div class="session-stat">
+                <span class="material-symbols-outlined session-stat-icon">timer</span>
+                <span class="session-stat-value">{{ tiempoEstimadoHoy() }}</span>
+                <span class="session-stat-label">estimado</span>
+              </div>
+            </div>
+
             <!-- CTA Button -->
             <button
               type="button"

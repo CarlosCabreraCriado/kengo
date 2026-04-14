@@ -86,16 +86,51 @@ import { fadeAnimation } from '../../realizar-plan.animations';
           </div>
         </div>
 
-        <!-- Info próxima serie -->
-        <div class="next-series-card" @fade>
-          <div class="next-label">
-            <span class="material-symbols-outlined icon-sm">navigate_next</span>
-            <span>Próxima</span>
+        <!-- Info próxima serie o próximo ejercicio -->
+        @if (esDescansoEntreEjercicios() && proximoEjercicio()) {
+          <div class="next-exercise-card" @fade>
+            <div class="next-label">
+              <span class="material-symbols-outlined icon-sm">navigate_next</span>
+              <span>Siguiente ejercicio</span>
+            </div>
+            <div class="next-exercise-content">
+              <div class="next-exercise-thumb">
+                @if (proximoEjercicioPortada()) {
+                  <img
+                    [src]="proximoEjercicioPortada()"
+                    [alt]="proximoEjercicio()!.ejercicio.nombre_ejercicio"
+                    loading="lazy"
+                  />
+                } @else {
+                  <div class="next-thumb-placeholder">
+                    <span class="material-symbols-outlined">fitness_center</span>
+                  </div>
+                }
+              </div>
+              <div class="next-exercise-info">
+                <span class="next-exercise-name">{{ proximoEjercicio()!.ejercicio.nombre_ejercicio }}</span>
+                <span class="next-exercise-details">
+                  {{ proximoEjercicio()!.series ?? 3 }} series ×
+                  @if (proximoEjercicio()!.duracion_seg) {
+                    {{ proximoEjercicio()!.duracion_seg }}s
+                  } @else {
+                    {{ proximoEjercicio()!.repeticiones ?? 12 }} reps
+                  }
+                </span>
+              </div>
+            </div>
           </div>
-          <div class="next-value">
-            Serie {{ serieActual() }} de {{ totalSeries() }}
+        } @else {
+          <div class="next-series-card" @fade>
+            <div class="next-label">
+              <span class="material-symbols-outlined icon-sm">navigate_next</span>
+              <span>Próxima</span>
+            </div>
+            <div class="next-value">
+              Serie {{ serieActual() }} de {{ totalSeries() }}
+            </div>
           </div>
-        </div>
+        }
       </main>
 
       <!-- Panel de acciones -->
@@ -502,6 +537,80 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       color: transparent;
     }
 
+    /* === Card próximo ejercicio (descanso entre ejercicios) === */
+    .next-exercise-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 24px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      max-width: 280px;
+    }
+
+    .next-exercise-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .next-exercise-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #f4f4f5;
+    }
+
+    .next-exercise-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .next-thumb-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f4f4f5, #e4e4e7);
+    }
+
+    .next-thumb-placeholder .material-symbols-outlined {
+      font-size: 1.25rem;
+      color: #a1a1aa;
+    }
+
+    .next-exercise-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .next-exercise-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .next-exercise-details {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+
     /* === Panel de acciones === */
     .actions-panel {
       position: relative;
@@ -661,6 +770,14 @@ export class DescansoComponent implements OnInit, OnDestroy {
   readonly ejercicioActualIndex = this.registroService.ejercicioActualIndex;
   readonly totalEjercicios = this.registroService.totalEjercicios;
   readonly progresoSesion = this.registroService.progresoSesion;
+
+  // Próximo ejercicio (para descanso entre ejercicios)
+  readonly esDescansoEntreEjercicios = this.registroService.descansoEntreEjercicios;
+  readonly proximoEjercicio = this.registroService.proximoEjercicio;
+  readonly proximoEjercicioPortada = computed(() => {
+    const portadaId = this.proximoEjercicio()?.ejercicio?.portada;
+    return portadaId ? this.registroService.getAssetUrl(portadaId, 96, 96) : null;
+  });
 
   // Estado de la animación de respiración
   readonly breathPhase = signal<'inhale' | 'exhale'>('inhale');

@@ -253,6 +253,33 @@
   @apply text-xs font-medium text-zinc-500 whitespace-nowrap;
 }
 
+/* Session Stats (series + tiempo estimado) */
+.hero-session-stats {
+  @apply flex items-center justify-center gap-4 mx-4 mb-3 px-4 py-2.5 rounded-xl;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.session-stat {
+  @apply flex items-center gap-1.5;
+}
+
+.session-stat-icon {
+  @apply text-base;
+  color: var(--kengo-primary);
+}
+
+.session-stat-value {
+  @apply text-sm font-bold text-zinc-800;
+}
+
+.session-stat-label {
+  @apply text-xs text-zinc-500;
+}
+
+.session-stat-divider {
+  @apply w-px h-5 bg-zinc-200;
+}
+
 .hero-cta {
   @apply flex items-center justify-center gap-2 mx-4 mb-4 px-6 h-14 rounded-2xl text-white font-semibold cursor-pointer transition-all active:scale-[0.98];
   background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);

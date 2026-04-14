@@ -10,12 +10,13 @@ import {
 } from '@angular/core';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
+import { SafeHtmlPipe } from '../../../../../../shared/pipes/safe-html.pipe';
 import { fadeAnimation } from '../../realizar-plan.animations';
 
 @Component({
   selector: 'app-ejercicio-activo',
   standalone: true,
-  imports: [TemporizadorComponent],
+  imports: [TemporizadorComponent, SafeHtmlPipe],
   animations: [fadeAnimation],
   template: `
     <!-- Contenedor principal con gestos -->
@@ -167,17 +168,75 @@ import { fadeAnimation } from '../../realizar-plan.animations';
               </div>
             </div>
 
-            <!-- Instrucciones del fisio -->
+            <!-- Descripción del ejercicio (WYSIWYG HTML) -->
+            @if (descripcion()) {
+              <div class="info-card info-card--description info-card--no-icon">
+                <div
+                  class="info-card-text info-card-html"
+                  [innerHTML]="descripcion() | safeHtml"
+                ></div>
+              </div>
+            }
+
+            <!-- Instrucciones del fisio para el paciente -->
             @if (instrucciones()) {
-              <div class="instructions-card">
-                <div class="instructions-icon">
+              <div class="info-card info-card--instructions">
+                <div class="info-card-icon">
                   <span class="material-symbols-outlined"
                     >tips_and_updates</span
                   >
                 </div>
-                <p class="instructions-text">
+                <p class="info-card-text">
                   {{ instrucciones() }}
                 </p>
+              </div>
+            }
+
+            <!-- Notas del fisio -->
+            @if (notasFisio()) {
+              <div class="info-card info-card--fisio">
+                <div class="info-card-icon">
+                  <span class="material-symbols-outlined">clinical_notes</span>
+                </div>
+                <p class="info-card-text">
+                  {{ notasFisio() }}
+                </p>
+              </div>
+            }
+
+            <!-- Preview del próximo ejercicio -->
+            @if (proximoEjercicio()) {
+              <div class="next-exercise-preview">
+                <div class="next-exercise-label">
+                  <span class="material-symbols-outlined icon-sm">navigate_next</span>
+                  <span>Siguiente</span>
+                </div>
+                <div class="next-exercise-content">
+                  <div class="next-exercise-thumb">
+                    @if (proximoEjercicioPortada()) {
+                      <img
+                        [src]="proximoEjercicioPortada()"
+                        [alt]="proximoEjercicio()!.ejercicio.nombre_ejercicio"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <div class="next-thumb-placeholder">
+                        <span class="material-symbols-outlined">fitness_center</span>
+                      </div>
+                    }
+                  </div>
+                  <div class="next-exercise-info">
+                    <span class="next-exercise-name">{{ proximoEjercicio()!.ejercicio.nombre_ejercicio }}</span>
+                    <span class="next-exercise-details">
+                      {{ proximoEjercicio()!.series ?? 3 }} series ×
+                      @if (proximoEjercicio()!.duracion_seg) {
+                        {{ proximoEjercicio()!.duracion_seg }}s
+                      } @else {
+                        {{ proximoEjercicio()!.repeticiones ?? 12 }} reps
+                      }
+                    </span>
+                  </div>
+                </div>
               </div>
             }
           </div>
@@ -718,22 +777,19 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       letter-spacing: 0.08em;
     }
 
-    /* Instrucciones */
-    .instructions-card {
+    /* Info cards (descripción, instrucciones, notas fisio) */
+    .info-card {
       display: flex;
       align-items: flex-start;
       gap: 10px;
       padding: 12px 14px;
-      background: rgba(var(--kengo-tertiary-rgb), 0.1);
-      border: 1px solid rgba(var(--kengo-tertiary-rgb), 0.25);
       border-radius: 16px;
     }
 
-    .instructions-icon {
+    .info-card-icon {
       width: 28px;
       height: 28px;
       border-radius: 8px;
-      background: rgba(var(--kengo-tertiary-rgb), 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -741,19 +797,157 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 
       span {
         font-size: 1rem;
-        color: var(--kengo-tertiary-dark);
       }
     }
 
-    .instructions-text {
+    .info-card-text {
       margin: 0;
       font-size: 0.8125rem;
       line-height: 1.5;
       color: #4b5563;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
+    }
+
+    /* Contenido HTML del WYSIWYG */
+    .info-card-html {
+      min-width: 0;
+      flex: 1;
+
+      :is(p, ul, ol) {
+        margin: 0;
+      }
+
+      :is(ul, ol) {
+        padding-left: 1.2em;
+      }
+
+      strong, b {
+        font-weight: 600;
+        color: #374151;
+      }
+    }
+
+    /* Sin icono */
+    .info-card--no-icon {
+      gap: 0;
+    }
+
+    /* Variante: Descripción (gris neutro) */
+    .info-card--description {
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .info-card--description .info-card-icon {
+      background: rgba(0, 0, 0, 0.06);
+
+      span { color: #6b7280; }
+    }
+
+    /* Variante: Instrucciones paciente (amarillo/tertiary) */
+    .info-card--instructions {
+      background: rgba(var(--kengo-tertiary-rgb), 0.1);
+      border: 1px solid rgba(var(--kengo-tertiary-rgb), 0.25);
+    }
+
+    .info-card--instructions .info-card-icon {
+      background: rgba(var(--kengo-tertiary-rgb), 0.2);
+
+      span { color: var(--kengo-tertiary-dark); }
+    }
+
+    /* Variante: Notas del fisio (azul) */
+    .info-card--fisio {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.18);
+    }
+
+    .info-card--fisio .info-card-icon {
+      background: rgba(59, 130, 246, 0.15);
+
+      span { color: #2563eb; }
+    }
+
+    /* === Preview próximo ejercicio === */
+    .next-exercise-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 16px;
+    }
+
+    .next-exercise-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9ca3af;
+    }
+
+    .icon-sm {
+      font-size: 1rem;
+    }
+
+    .next-exercise-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .next-exercise-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
       overflow: hidden;
+      flex-shrink: 0;
+      background: #f4f4f5;
+    }
+
+    .next-exercise-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .next-thumb-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f4f4f5, #e4e4e7);
+    }
+
+    .next-thumb-placeholder .material-symbols-outlined {
+      font-size: 1.1rem;
+      color: #a1a1aa;
+    }
+
+    .next-exercise-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .next-exercise-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #374151;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .next-exercise-details {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      margin-top: 1px;
     }
 
     /* === Barra de acciones === */
@@ -1058,6 +1252,21 @@ export class EjercicioActivoComponent {
   readonly instrucciones = computed(
     () => this.ejercicio()?.instrucciones_paciente || '',
   );
+
+  readonly descripcion = computed(
+    () => this.ejercicio()?.ejercicio?.descripcion || '',
+  );
+
+  readonly notasFisio = computed(
+    () => this.ejercicio()?.notas_fisio || '',
+  );
+
+  // Próximo ejercicio
+  readonly proximoEjercicio = this.registroService.proximoEjercicio;
+  readonly proximoEjercicioPortada = computed(() => {
+    const portadaId = this.proximoEjercicio()?.ejercicio?.portada;
+    return portadaId ? this.registroService.getAssetUrl(portadaId, 80, 80) : null;
+  });
 
   // Array de series para el tracker visual
   readonly seriesArray = computed(() => {

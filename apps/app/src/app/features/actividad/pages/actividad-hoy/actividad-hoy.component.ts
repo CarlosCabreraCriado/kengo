@@ -113,6 +113,8 @@ export class ActividadHoyComponent implements OnInit {
   readonly totalPendientes = this.actividadHoyService.totalPendientes;
   readonly todoCompletado = this.actividadHoyService.todoCompletado;
   readonly progresoTotal = this.actividadHoyService.progresoTotal;
+  readonly totalSeriesHoy = this.actividadHoyService.totalSeriesHoy;
+  readonly tiempoEstimadoHoy = this.actividadHoyService.tiempoEstimadoHoy;
 
   readonly proximosDias = computed<DiaProximoConEjercicios[]>(() => {
     const planes = this.planesActivosYFuturos();
@@ -272,6 +274,7 @@ export class ActividadHoyComponent implements OnInit {
       esFechaProgramada: true,
       ejercicios,
       planesInvolucrados,
+      skipResumen: true,
     };
 
     this.registroService.iniciarSesionMultiPlan(config);
@@ -313,6 +316,7 @@ export class ActividadHoyComponent implements OnInit {
         titulo: p.titulo,
         cantidadEjercicios: p.ejercicios,
       })),
+      skipResumen: true,
     };
 
     this.registroService.iniciarSesionMultiPlan(config);
