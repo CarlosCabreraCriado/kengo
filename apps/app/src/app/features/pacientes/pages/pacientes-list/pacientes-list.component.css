@@ -234,9 +234,22 @@
 }
 
 .stat-pill.selected {
-  border-color: rgba(var(--kengo-primary-rgb), 0.4);
-  background-color: rgba(var(--kengo-primary-rgb), 0.08);
-  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.15);
+  border-color: rgba(var(--kengo-primary-rgb), 0.5);
+  background-color: rgba(var(--kengo-primary-rgb), 0.12);
+  box-shadow: 0 2px 12px rgba(var(--kengo-primary-rgb), 0.2);
+}
+
+.stat-pill.selected .stat-icon {
+  color: var(--kengo-primary);
+}
+
+.stat-pill.selected .stat-value {
+  color: var(--kengo-primary);
+}
+
+.stat-pill.selected .stat-label {
+  color: var(--kengo-primary);
+  @apply font-semibold;
 }
 
 .stat-icon {
@@ -249,55 +262,6 @@
 
 .stat-label {
   @apply text-xs text-zinc-500;
-}
-
-.stat-pill.accent {
-  background-color: rgba(var(--kengo-primary-rgb), 0.1);
-  border-color: rgba(var(--kengo-primary-rgb), 0.2);
-}
-
-.stat-pill.accent .stat-icon {
-  color: var(--kengo-primary);
-}
-
-.stat-pill.accent .stat-value {
-  color: var(--kengo-primary);
-}
-
-.stat-pill.accent.selected {
-  background-color: rgba(var(--kengo-primary-rgb), 0.18);
-  border-color: rgba(var(--kengo-primary-rgb), 0.5);
-  box-shadow: 0 2px 12px rgba(var(--kengo-primary-rgb), 0.25);
-}
-
-/* Inactive variant */
-.stat-pill.inactive {
-  @apply bg-zinc-100/60 border-zinc-200/40;
-}
-
-.stat-pill.inactive .stat-icon {
-  @apply text-zinc-400;
-}
-
-.stat-pill.inactive .stat-value {
-  @apply text-zinc-600;
-}
-
-.stat-pill.inactive .stat-label {
-  @apply text-zinc-400;
-}
-
-.stat-pill.inactive.selected {
-  @apply bg-zinc-200/70 border-zinc-400/50;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.stat-pill.inactive.selected .stat-icon {
-  @apply text-zinc-600;
-}
-
-.stat-pill.inactive.selected .stat-value {
-  @apply text-zinc-800;
 }
 
 /* === Patients Grid === */

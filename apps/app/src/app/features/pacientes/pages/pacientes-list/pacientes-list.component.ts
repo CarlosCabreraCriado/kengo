@@ -27,6 +27,7 @@ import { Usuario, UsuarioDirectus, AsignacionResponsable, PUESTO_ADMINISTRADOR }
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
+const STORAGE_KEY_FILTRO = 'kengo:mis-pacientes:filtro';
 
 interface DirectusPage<T> {
   data: T[];
@@ -81,7 +82,7 @@ export class PacientesListComponent {
   });
 
   private readonly busqueda = signal('');
-  readonly filtroActividad = signal<FiltroActividad>('todos');
+  readonly filtroActividad = signal<FiltroActividad>(this.leerFiltroGuardado());
 
   // Resource para obtener IDs de pacientes con planes activos
   private readonly planesActivosRes = httpResource<string[]>(
@@ -231,6 +232,19 @@ export class PacientesListComponent {
 
   setFiltro(filtro: FiltroActividad) {
     this.filtroActividad.set(filtro);
+    try {
+      localStorage.setItem(STORAGE_KEY_FILTRO, filtro);
+    } catch { /* ignore */ }
+  }
+
+  private leerFiltroGuardado(): FiltroActividad {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_FILTRO);
+      if (saved === 'todos' || saved === 'activos' || saved === 'inactivos') {
+        return saved;
+      }
+    } catch { /* ignore */ }
+    return 'todos';
   }
 
   reload() {
