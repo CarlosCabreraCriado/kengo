@@ -377,9 +377,9 @@ export class PacientesListComponent {
   }
 
   dolorTier(value: number): 'baja' | 'media' | 'alta' {
-    if (value <= 3) return 'baja';
-    if (value <= 6) return 'media';
-    return 'alta';
+    if (value <= 3) return 'alta';   // dolor bajo → verde (bueno)
+    if (value <= 6) return 'media';  // dolor medio → ámbar
+    return 'baja';                   // dolor alto → rojo (malo)
   }
 
   @HostListener('document:click')
