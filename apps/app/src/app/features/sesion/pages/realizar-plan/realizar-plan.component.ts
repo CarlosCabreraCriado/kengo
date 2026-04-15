@@ -58,6 +58,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
               (pausar)="onPausar()"
               (salir)="onIntentarSalir()"
               (abrirTimeline)="timelineAbierto.set(true)"
+              (previewEjercicio)="onPreviewEjercicio($event)"
             />
           }
           @case ('descanso') {

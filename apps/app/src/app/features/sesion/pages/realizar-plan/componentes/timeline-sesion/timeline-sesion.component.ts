@@ -9,6 +9,7 @@ import {
   viewChild,
   ElementRef,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { DrawerComponent } from '../../../../../../shared/ui/drawer/drawer.component';
 import {
@@ -30,157 +31,197 @@ interface EjercicioTimeline {
 @Component({
   selector: 'app-timeline-sesion',
   standalone: true,
-  imports: [DrawerComponent],
+  imports: [DrawerComponent, NgTemplateOutlet],
   template: `
-    <ui-drawer
-      [isOpen]="isOpen()"
-      position="bottom"
-      size="lg"
-      (closed)="closed.emit()"
-    >
-      <div class="timeline-drawer">
-        <!-- Handle bar -->
-        <div class="flex justify-center pt-3 pb-1">
-          <div class="h-1.5 w-12 rounded-full bg-zinc-300"></div>
-        </div>
-
-        <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-3">
-          <div class="flex flex-col gap-0.5">
-            <h2 class="text-base font-bold text-zinc-800">Tu sesion</h2>
-            <span class="text-xs font-medium text-zinc-400">
-              Ejercicio {{ ejercicioActualIndex() + 1 }} de
-              {{ totalEjercicios() }}
-            </span>
+    @if (mode() === 'drawer') {
+      <!-- Modo drawer (movil) -->
+      <ui-drawer
+        [isOpen]="isOpen()"
+        position="bottom"
+        size="lg"
+        (closed)="closed.emit()"
+      >
+        <div class="timeline-drawer">
+          <!-- Handle bar -->
+          <div class="flex justify-center pt-3 pb-1">
+            <div class="h-1.5 w-12 rounded-full bg-zinc-300"></div>
           </div>
-          <button
-            type="button"
-            class="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 transition-colors active:bg-zinc-200"
-            (click)="closed.emit()"
+
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 py-3">
+            <div class="flex flex-col gap-0.5">
+              <h2 class="text-base font-bold text-zinc-800">Tu sesion</h2>
+              <span class="text-xs font-medium text-zinc-400">
+                Ejercicio {{ ejercicioActualIndex() + 1 }} de
+                {{ totalEjercicios() }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 transition-colors active:bg-zinc-200"
+              (click)="closed.emit()"
+            >
+              <span class="material-symbols-outlined text-xl">close</span>
+            </button>
+          </div>
+
+          <!-- Barra de progreso -->
+          <div
+            class="mx-5 mb-4 h-1.5 overflow-hidden rounded-full bg-zinc-100"
           >
-            <span class="material-symbols-outlined text-xl">close</span>
-          </button>
+            <div
+              class="progress-fill h-full rounded-full transition-all duration-500 ease-out"
+              [style.width.%]="progresoSesion()"
+            ></div>
+          </div>
+
+          <!-- Timeline scrollable -->
+          <div #timelineContainer class="timeline-scroll">
+            <ng-container
+              *ngTemplateOutlet="timelineNodes"
+            ></ng-container>
+          </div>
+        </div>
+      </ui-drawer>
+    } @else {
+      <!-- Modo inline (desktop) -->
+      <div class="timeline-inline">
+        <div class="inline-header">
+          <div class="inline-header-left">
+            <span class="material-symbols-outlined inline-header-icon"
+              >timeline</span
+            >
+            <span class="inline-header-title">Ejercicios</span>
+          </div>
+          <span class="inline-header-progress">
+            {{ ejercicioActualIndex() + 1 }}/{{ totalEjercicios() }}
+          </span>
         </div>
 
-        <!-- Barra de progreso -->
-        <div class="mx-5 mb-4 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+        <!-- Barra de progreso compacta -->
+        <div class="inline-progress-bar">
           <div
-            class="progress-fill h-full rounded-full transition-all duration-500 ease-out"
+            class="progress-fill"
             [style.width.%]="progresoSesion()"
           ></div>
         </div>
 
-        <!-- Timeline scrollable -->
-        <div #timelineContainer class="timeline-scroll">
-          @for (item of ejerciciosConEstado(); track item.index) {
-            <!-- Separador de plan en modo multi-plan -->
-            @if (item.showPlanDivider && item.planTitulo) {
-              <div class="flex items-center gap-3 px-5 pb-2 pt-4">
-                <div class="h-px flex-1 bg-zinc-200"></div>
-                <span
-                  class="text-[0.6875rem] font-semibold uppercase tracking-wider text-zinc-400"
-                >
-                  {{ item.planTitulo }}
-                </span>
-                <div class="h-px flex-1 bg-zinc-200"></div>
-              </div>
-            }
-
-            <!-- Timeline node -->
-            <div
-              class="timeline-node"
-              [class.completado]="item.estado === 'completado'"
-              [class.activo]="item.estado === 'activo'"
-              [class.pendiente]="item.estado === 'pendiente'"
-              (click)="onTapEjercicio(item)"
-            >
-              <!-- Linea conectora superior -->
-              @if (item.index > 0) {
-                <div
-                  class="connector-line top"
-                  [class.filled]="item.estado !== 'pendiente'"
-                ></div>
-              }
-
-              <!-- Nodo circular -->
-              <div class="node-circle">
-                @if (item.estado === 'completado') {
-                  <span class="material-symbols-outlined icon-check"
-                    >check</span
-                  >
-                } @else {
-                  <span class="node-number">{{ item.index + 1 }}</span>
-                }
-              </div>
-
-              <!-- Linea conectora inferior -->
-              @if (item.index < ejerciciosConEstado().length - 1) {
-                <div
-                  class="connector-line bottom"
-                  [class.filled]="item.estado === 'completado'"
-                ></div>
-              }
-
-              <!-- Card del ejercicio -->
-              <div class="exercise-card">
-                <div class="exercise-thumb">
-                  @if (item.portadaUrl) {
-                    <img
-                      [src]="item.portadaUrl"
-                      [alt]="item.ejercicio.ejercicio.nombre_ejercicio"
-                      loading="lazy"
-                    />
-                  } @else {
-                    <div
-                      class="flex h-full w-full items-center justify-center bg-zinc-100"
-                    >
-                      <span
-                        class="material-symbols-outlined text-lg text-zinc-300"
-                        >fitness_center</span
-                      >
-                    </div>
-                  }
-                </div>
-
-                <div class="exercise-info">
-                  <span class="exercise-name">{{
-                    item.ejercicio.ejercicio.nombre_ejercicio
-                  }}</span>
-                  <span class="exercise-details">
-                    {{ item.ejercicio.series ?? 3 }} series &times;
-                    @if (item.ejercicio.duracion_seg) {
-                      {{ formatDuracion(item.ejercicio.duracion_seg) }}
-                    } @else {
-                      {{ item.ejercicio.repeticiones ?? 12 }} reps
-                    }
-                  </span>
-                  @if (item.estado === 'completado') {
-                    <span class="status-badge completado">
-                      <span class="material-symbols-outlined text-[0.625rem]"
-                        >check_circle</span
-                      >
-                      Completado
-                    </span>
-                  } @else if (item.estado === 'activo') {
-                    <span class="status-badge activo"> En curso </span>
-                  }
-                </div>
-
-                <!-- Boton play preview -->
-                <div class="preview-btn">
-                  <span class="material-symbols-outlined">play_circle</span>
-                </div>
-              </div>
-            </div>
-          }
-
-          <!-- Espaciado inferior -->
-          <div class="h-8"></div>
+        <div #timelineContainer class="timeline-scroll-inline">
+          <ng-container
+            *ngTemplateOutlet="timelineNodes"
+          ></ng-container>
         </div>
       </div>
-    </ui-drawer>
+    }
+
+    <!-- Template compartido de nodos de la timeline -->
+    <ng-template #timelineNodes>
+      @for (item of ejerciciosConEstado(); track item.index) {
+        <!-- Separador de plan en modo multi-plan -->
+        @if (item.showPlanDivider && item.planTitulo) {
+          <div class="flex items-center gap-3 px-5 pb-2 pt-4">
+            <div class="h-px flex-1 bg-zinc-200"></div>
+            <span
+              class="text-[0.6875rem] font-semibold uppercase tracking-wider text-zinc-400"
+            >
+              {{ item.planTitulo }}
+            </span>
+            <div class="h-px flex-1 bg-zinc-200"></div>
+          </div>
+        }
+
+        <!-- Timeline node -->
+        <div
+          class="timeline-node"
+          [class.completado]="item.estado === 'completado'"
+          [class.activo]="item.estado === 'activo'"
+          [class.pendiente]="item.estado === 'pendiente'"
+          (click)="onTapEjercicio(item)"
+        >
+          <!-- Linea conectora superior -->
+          @if (item.index > 0) {
+            <div
+              class="connector-line top"
+              [class.filled]="item.estado !== 'pendiente'"
+            ></div>
+          }
+
+          <!-- Nodo circular -->
+          <div class="node-circle">
+            @if (item.estado === 'completado') {
+              <span class="material-symbols-outlined icon-check">check</span>
+            } @else {
+              <span class="node-number">{{ item.index + 1 }}</span>
+            }
+          </div>
+
+          <!-- Linea conectora inferior -->
+          @if (item.index < ejerciciosConEstado().length - 1) {
+            <div
+              class="connector-line bottom"
+              [class.filled]="item.estado === 'completado'"
+            ></div>
+          }
+
+          <!-- Card del ejercicio -->
+          <div class="exercise-card">
+            <div class="exercise-thumb">
+              @if (item.portadaUrl) {
+                <img
+                  [src]="item.portadaUrl"
+                  [alt]="item.ejercicio.ejercicio.nombre_ejercicio"
+                  loading="lazy"
+                />
+              } @else {
+                <div
+                  class="flex h-full w-full items-center justify-center bg-zinc-100"
+                >
+                  <span
+                    class="material-symbols-outlined text-lg text-zinc-300"
+                    >fitness_center</span
+                  >
+                </div>
+              }
+            </div>
+
+            <div class="exercise-info">
+              <span class="exercise-name">{{
+                item.ejercicio.ejercicio.nombre_ejercicio
+              }}</span>
+              <span class="exercise-details">
+                {{ item.ejercicio.series ?? 3 }} series &times;
+                @if (item.ejercicio.duracion_seg) {
+                  {{ formatDuracion(item.ejercicio.duracion_seg) }}
+                } @else {
+                  {{ item.ejercicio.repeticiones ?? 12 }} reps
+                }
+              </span>
+              @if (item.estado === 'completado') {
+                <span class="status-badge completado">
+                  <span class="material-symbols-outlined text-[0.625rem]"
+                    >check_circle</span
+                  >
+                  Completado
+                </span>
+              } @else if (item.estado === 'activo') {
+                <span class="status-badge activo"> En curso </span>
+              }
+            </div>
+
+            <!-- Boton play preview -->
+            <div class="preview-btn">
+              <span class="material-symbols-outlined">play_circle</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Espaciado inferior -->
+      <div class="h-6"></div>
+    </ng-template>
   `,
   styles: `
+    /* ===== Modo Drawer ===== */
     .timeline-drawer {
       display: flex;
       flex-direction: column;
@@ -188,18 +229,122 @@ interface EjercicioTimeline {
       overflow: hidden;
     }
 
+    .timeline-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ===== Modo Inline ===== */
+    .timeline-inline {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 16px;
+    }
+
+    .inline-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .inline-header-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .inline-header-icon {
+      font-size: 1rem;
+      color: var(--kengo-primary);
+    }
+
+    .inline-header-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #52525b;
+    }
+
+    .inline-header-progress {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: #a1a1aa;
+    }
+
+    .inline-progress-bar {
+      height: 3px;
+      border-radius: 2px;
+      background: #e4e4e7;
+      overflow: hidden;
+    }
+
+    .timeline-scroll-inline {
+      /* El scroll lo controla el panel-content padre */
+    }
+
+    .timeline-inline .timeline-node {
+      padding: 4px 4px 4px 36px;
+      min-height: 56px;
+    }
+
+    .timeline-inline .node-circle {
+      left: 4px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .timeline-inline .node-number {
+      font-size: 0.6rem;
+    }
+
+    .timeline-inline .icon-check {
+      font-size: 0.8rem;
+    }
+
+    .timeline-inline .connector-line {
+      left: 15px;
+    }
+
+    .timeline-inline .exercise-card {
+      padding: 8px 10px;
+      border-radius: 12px;
+      gap: 10px;
+    }
+
+    .timeline-inline .exercise-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
+
+    .timeline-inline .exercise-name {
+      font-size: 0.75rem;
+    }
+
+    .timeline-inline .exercise-details {
+      font-size: 0.625rem;
+    }
+
+    .timeline-inline .preview-btn .material-symbols-outlined {
+      font-size: 1.25rem;
+    }
+
+    /* ===== Compartido ===== */
     .progress-fill {
       background: linear-gradient(
         90deg,
         var(--kengo-primary) 0%,
         var(--kengo-tertiary) 100%
       );
-    }
-
-    .timeline-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding-bottom: env(safe-area-inset-bottom);
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.5s ease-out;
     }
 
     /* ===== Timeline Node ===== */
@@ -394,6 +539,7 @@ interface EjercicioTimeline {
 })
 export class TimelineSesionComponent {
   readonly isOpen = input(false);
+  readonly mode = input<'drawer' | 'inline'>('drawer');
   @Output() closed = new EventEmitter<void>();
   @Output() previewEjercicio = new EventEmitter<{
     ejercicio: EjercicioPlan;
@@ -449,7 +595,7 @@ export class TimelineSesionComponent {
 
   constructor() {
     effect(() => {
-      if (this.isOpen()) {
+      if (this.isOpen() && this.mode() === 'drawer') {
         setTimeout(() => this.scrollToActiveExercise(), 150);
       }
     });

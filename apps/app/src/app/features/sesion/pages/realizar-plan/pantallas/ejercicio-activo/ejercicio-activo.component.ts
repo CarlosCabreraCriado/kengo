@@ -8,15 +8,20 @@ import {
   ViewChild,
   ElementRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
+import { TimelineSesionComponent } from '../../componentes/timeline-sesion/timeline-sesion.component';
 import { SafeHtmlPipe } from '../../../../../../shared/pipes/safe-html.pipe';
+import { KENGO_BREAKPOINTS } from '../../../../../../shared';
+import { EjercicioPlan } from '../../../../../../../types/global';
 import { fadeAnimation } from '../../realizar-plan.animations';
 
 @Component({
   selector: 'app-ejercicio-activo',
   standalone: true,
-  imports: [TemporizadorComponent, SafeHtmlPipe],
+  imports: [TemporizadorComponent, SafeHtmlPipe, TimelineSesionComponent],
   animations: [fadeAnimation],
   template: `
     <!-- Contenedor principal con gestos -->
@@ -204,41 +209,14 @@ import { fadeAnimation } from '../../realizar-plan.animations';
               </div>
             }
 
-            <!-- Preview del próximo ejercicio -->
-            @if (proximoEjercicio()) {
-              <div class="next-exercise-preview">
-                <div class="next-exercise-label">
-                  <span class="material-symbols-outlined icon-sm">navigate_next</span>
-                  <span>Siguiente</span>
-                </div>
-                <div class="next-exercise-content">
-                  <div class="next-exercise-thumb">
-                    @if (proximoEjercicioPortada()) {
-                      <img
-                        [src]="proximoEjercicioPortada()"
-                        [alt]="proximoEjercicio()!.ejercicio.nombre_ejercicio"
-                        loading="lazy"
-                      />
-                    } @else {
-                      <div class="next-thumb-placeholder">
-                        <span class="material-symbols-outlined">fitness_center</span>
-                      </div>
-                    }
-                  </div>
-                  <div class="next-exercise-info">
-                    <span class="next-exercise-name">{{ proximoEjercicio()!.ejercicio.nombre_ejercicio }}</span>
-                    <span class="next-exercise-details">
-                      {{ proximoEjercicio()!.series ?? 3 }} series ×
-                      @if (proximoEjercicio()!.duracion_seg) {
-                        {{ proximoEjercicio()!.duracion_seg }}s
-                      } @else {
-                        {{ proximoEjercicio()!.repeticiones ?? 12 }} reps
-                      }
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <!-- Timeline inline (solo desktop) -->
+            @if (esDesktop()) {
+              <app-timeline-sesion
+                mode="inline"
+                (previewEjercicio)="previewEjercicio.emit($event)"
+              />
             }
+
           </div>
         }
 
@@ -257,15 +235,17 @@ import { fadeAnimation } from '../../realizar-plan.animations';
           }
 
           <div class="action-buttons">
-            <!-- Botón abrir timeline -->
-            <button
-              type="button"
-              class="action-btn secondary"
-              (click)="abrirTimeline.emit()"
-              aria-label="Ver todos los ejercicios"
-            >
-              <span class="material-symbols-outlined">list_alt</span>
-            </button>
+            <!-- Botón abrir timeline (solo movil, en desktop se ve inline) -->
+            @if (!esDesktop()) {
+              <button
+                type="button"
+                class="action-btn secondary"
+                (click)="abrirTimeline.emit()"
+                aria-label="Ver todos los ejercicios"
+              >
+                <span class="material-symbols-outlined">list_alt</span>
+              </button>
+            }
 
             <!-- Botón completar serie -->
             <button
@@ -863,89 +843,6 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       span { color: #2563eb; }
     }
 
-    /* === Preview próximo ejercicio === */
-    .next-exercise-preview {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 12px 14px;
-      background: rgba(0, 0, 0, 0.03);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      border-radius: 16px;
-    }
-
-    .next-exercise-label {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.65rem;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #9ca3af;
-    }
-
-    .icon-sm {
-      font-size: 1rem;
-    }
-
-    .next-exercise-content {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .next-exercise-thumb {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      overflow: hidden;
-      flex-shrink: 0;
-      background: #f4f4f5;
-    }
-
-    .next-exercise-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .next-thumb-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #f4f4f5, #e4e4e7);
-    }
-
-    .next-thumb-placeholder .material-symbols-outlined {
-      font-size: 1.1rem;
-      color: #a1a1aa;
-    }
-
-    .next-exercise-info {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      flex: 1;
-    }
-
-    .next-exercise-name {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #374151;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .next-exercise-details {
-      font-size: 0.7rem;
-      color: #9ca3af;
-      margin-top: 1px;
-    }
-
     /* === Barra de acciones === */
     .actions-bar {
       display: flex;
@@ -1206,10 +1103,24 @@ export class EjercicioActivoComponent {
   @Output() pausar = new EventEmitter<void>();
   @Output() salir = new EventEmitter<void>();
   @Output() abrirTimeline = new EventEmitter<void>();
+  @Output() previewEjercicio = new EventEmitter<{
+    ejercicio: EjercicioPlan;
+    index: number;
+  }>();
 
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 
   private registroService = inject(RegistroSesionService);
+  private breakpointObserver = inject(BreakpointObserver);
+
+  readonly esDesktop = signal(false);
+
+  constructor() {
+    this.breakpointObserver
+      .observe([KENGO_BREAKPOINTS.DESKTOP])
+      .pipe(takeUntilDestroyed())
+      .subscribe((result) => this.esDesktop.set(result.matches));
+  }
 
   readonly ejercicio = this.registroService.ejercicioActual;
   readonly serieActual = this.registroService.serieActual;
@@ -1257,13 +1168,6 @@ export class EjercicioActivoComponent {
   readonly notasFisio = computed(
     () => this.ejercicio()?.notas_fisio || '',
   );
-
-  // Próximo ejercicio
-  readonly proximoEjercicio = this.registroService.proximoEjercicio;
-  readonly proximoEjercicioPortada = computed(() => {
-    const portadaId = this.proximoEjercicio()?.ejercicio?.portada;
-    return portadaId ? this.registroService.getAssetUrl(portadaId, 80, 80) : null;
-  });
 
   // Array de series para el tracker visual
   readonly seriesArray = computed(() => {
