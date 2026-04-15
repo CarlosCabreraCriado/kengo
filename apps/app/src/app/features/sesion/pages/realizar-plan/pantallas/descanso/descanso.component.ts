@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
+import { EjercicioPlan } from '../../../../../../../types/global';
 import { fadeAnimation } from '../../realizar-plan.animations';
 
 @Component({
@@ -88,7 +89,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 
         <!-- Info próxima serie o próximo ejercicio -->
         @if (esDescansoEntreEjercicios() && proximoEjercicio()) {
-          <div class="next-exercise-card" @fade>
+          <div class="next-exercise-card" @fade (click)="onPreviewProximo()">
             <div class="next-label">
               <span class="material-symbols-outlined icon-sm">navigate_next</span>
               <span>Siguiente ejercicio</span>
@@ -135,15 +136,22 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 
       <!-- Panel de acciones -->
       <footer class="actions-panel">
-        <button type="button" class="action-btn secondary" (click)="onAgregarTiempo()">
-          <span class="material-symbols-outlined">add</span>
-          <span class="btn-label">+15s</span>
+        <button type="button" class="action-btn timeline-btn" (click)="abrirTimeline.emit()">
+          <span class="material-symbols-outlined">list_alt</span>
+          <span class="btn-label">Ver ejercicios</span>
         </button>
 
-        <button type="button" class="action-btn primary" (click)="saltar.emit()">
-          <span class="btn-label">Continuar</span>
-          <span class="material-symbols-outlined icon-filled">arrow_forward</span>
-        </button>
+        <div class="action-buttons-row">
+          <button type="button" class="action-btn secondary" (click)="onAgregarTiempo()">
+            <span class="material-symbols-outlined">add</span>
+            <span class="btn-label">+15s</span>
+          </button>
+
+          <button type="button" class="action-btn primary" (click)="saltar.emit()">
+            <span class="btn-label">Continuar</span>
+            <span class="material-symbols-outlined icon-filled">arrow_forward</span>
+          </button>
+        </div>
       </footer>
     </div>
   `,
@@ -358,16 +366,14 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       justify-content: center;
       padding: 8px 20px;
       border-radius: 20px;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
       transition: all 0.5s ease;
     }
 
     .breath-hint.inhale {
-      background: rgba(var(--kengo-primary-rgb), 0.08);
-      border-color: rgba(var(--kengo-primary-rgb), 0.15);
+      background: #fef2f0;
+      border-color: #f5c4ba;
     }
 
     .breath-text {
@@ -551,6 +557,12 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       border: 1px solid rgba(255, 255, 255, 0.5);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
       max-width: 280px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:active {
+        transform: scale(0.97);
+      }
     }
 
     .next-exercise-content {
@@ -616,10 +628,18 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       position: relative;
       z-index: 20;
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 24px calc(var(--safe-bottom) + 24px);
+    }
+
+    .action-buttons-row {
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      padding: 20px 24px calc(var(--safe-bottom) + 24px);
+      width: 100%;
     }
 
     .action-btn {
@@ -633,6 +653,33 @@ import { fadeAnimation } from '../../realizar-plan.animations';
 
       &:active {
         transform: scale(0.96);
+      }
+    }
+
+    .action-btn.timeline-btn {
+      width: 100%;
+      max-width: 320px;
+      height: 44px;
+      padding: 0 20px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1.5px solid #e5e7eb;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      color: #4b5563;
+
+      span.material-symbols-outlined {
+        font-size: 1.15rem;
+        color: var(--primary);
+      }
+
+      .btn-label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #4b5563;
+      }
+
+      &:active {
+        background: #f9fafb;
       }
     }
 
@@ -754,6 +801,11 @@ export class DescansoComponent implements OnInit, OnDestroy {
   @Output() tiempoAgotado = new EventEmitter<void>();
   @Output() agregarTiempo = new EventEmitter<number>();
   @Output() salir = new EventEmitter<void>();
+  @Output() abrirTimeline = new EventEmitter<void>();
+  @Output() previewEjercicio = new EventEmitter<{
+    ejercicio: EjercicioPlan;
+    index: number;
+  }>();
 
   @ViewChild('temporizador') temporizador!: TemporizadorComponent;
 
@@ -810,6 +862,15 @@ export class DescansoComponent implements OnInit, OnDestroy {
       navigator.vibrate([100, 50, 100, 50, 100]);
     }
     this.tiempoAgotado.emit();
+  }
+
+  onPreviewProximo(): void {
+    const ejercicio = this.proximoEjercicio();
+    if (!ejercicio) return;
+    this.previewEjercicio.emit({
+      ejercicio,
+      index: this.ejercicioActualIndex() + 1,
+    });
   }
 
   onAgregarTiempo(): void {

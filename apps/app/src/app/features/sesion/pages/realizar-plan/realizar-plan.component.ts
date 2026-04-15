@@ -67,6 +67,8 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
               (tiempoAgotado)="onDescansoTerminado()"
               (agregarTiempo)="onAgregarTiempo($event)"
               (salir)="onIntentarSalir()"
+              (abrirTimeline)="timelineAbierto.set(true)"
+              (previewEjercicio)="onPreviewEjercicio($event)"
             />
           }
           @case ('feedback-final') {
@@ -76,19 +78,6 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
           }
         }
       </main>
-
-      <!-- FAB para abrir timeline (solo en descanso, en ejercicio está en la barra de acciones) -->
-      @if (estadoPantalla() === 'descanso') {
-        <button
-          type="button"
-          class="fixed bottom-6 left-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm border border-zinc-200/50 transition-all active:scale-95"
-          (click)="timelineAbierto.set(true)"
-          aria-label="Ver todos los ejercicios"
-          @fade
-        >
-          <span class="material-symbols-outlined text-zinc-700">list_alt</span>
-        </button>
-      }
 
       <!-- Timeline drawer -->
       <app-timeline-sesion
