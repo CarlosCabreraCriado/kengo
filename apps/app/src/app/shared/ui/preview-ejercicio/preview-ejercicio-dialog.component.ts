@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DialogContainerComponent } from '../../../../../../shared/ui/dialog/dialog-container.component';
-import { DialogHeaderComponent } from '../../../../../../shared/ui/dialog/dialog-header.component';
-import { DialogContentComponent } from '../../../../../../shared/ui/dialog/dialog-content.component';
+import { DialogContainerComponent } from '../dialog/dialog-container.component';
+import { DialogHeaderComponent } from '../dialog/dialog-header.component';
+import { DialogContentComponent } from '../dialog/dialog-content.component';
 import { VideoEjercicioComponent } from '../video-ejercicio/video-ejercicio.component';
-import { EjercicioPlan } from '../../../../../../../types/global';
+import { EjercicioPlan } from '../../../../types/global';
 
 export interface PreviewEjercicioData {
   ejercicio: EjercicioPlan;

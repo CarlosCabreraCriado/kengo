@@ -218,6 +218,7 @@
                         <li
                           class="exercise-item"
                           [class.completed]="ejercicio.completadoHoy"
+                          (click)="onPreviewEjercicio(ejercicio, $index, actividad)"
                         >
                           <!-- Status Indicator -->
                           <div class="exercise-status">

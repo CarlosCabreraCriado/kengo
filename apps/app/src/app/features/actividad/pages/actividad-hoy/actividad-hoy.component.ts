@@ -20,7 +20,14 @@ import {
   ConfigSesionMultiPlan,
   DiaSemana,
 } from '../../../../../types/global';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import {
+  KENGO_BREAKPOINTS,
+  DialogService,
+  PreviewEjercicioDialogComponent,
+  type PreviewEjercicioData,
+} from '../../../../shared';
+import { environment as env } from '../../../../../environments/environment';
+import type { ActividadPlanDia, EjercicioPlanConEstado } from '../../../../../types/global';
 
 interface EjercicioProximo {
   nombre: string;
@@ -57,6 +64,7 @@ export class ActividadHoyComponent implements OnInit {
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
+  private dialogService = inject(DialogService);
 
   isMovil = toSignal(
     this.breakpointObserver
@@ -340,5 +348,23 @@ export class ActividadHoyComponent implements OnInit {
     const dia = fecha.getDate();
     const mes = this.NOMBRES_MESES[fecha.getMonth()].substring(0, 3);
     return `${dia} ${mes}`;
+  }
+
+  onPreviewEjercicio(ejercicio: EjercicioPlanConEstado, index: number, actividad: ActividadPlanDia): void {
+    const ej = ejercicio.ejercicio;
+    const data: PreviewEjercicioData = {
+      ejercicio,
+      index,
+      totalEjercicios: actividad.ejerciciosHoy.length,
+      videoUrl: ej.video ? `${env.DIRECTUS_URL}/assets/${ej.video}` : null,
+      posterUrl: ej.portada ? this.getAssetUrl(ej.portada, 800, 450) : null,
+      estado: ejercicio.completadoHoy ? 'completado' : 'pendiente',
+    };
+
+    this.dialogService.open(PreviewEjercicioDialogComponent, {
+      data,
+      maxWidth: '420px',
+      maxHeight: '85vh',
+    });
   }
 }

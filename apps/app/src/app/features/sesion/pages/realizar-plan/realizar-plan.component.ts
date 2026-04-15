@@ -23,7 +23,7 @@ import { TimelineSesionComponent } from './componentes/timeline-sesion/timeline-
 import {
   PreviewEjercicioDialogComponent,
   PreviewEjercicioData,
-} from './componentes/preview-ejercicio-dialog/preview-ejercicio-dialog.component';
+} from '../../../../shared/ui/preview-ejercicio/preview-ejercicio-dialog.component';
 import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 import { EjercicioPlan } from '../../../../../types/global';
 

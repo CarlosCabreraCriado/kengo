@@ -43,6 +43,10 @@ export {
   ConfirmDialogComponent,
 } from './ui/dialog';
 
+// Video & Preview
+export { VideoEjercicioComponent } from './ui/video-ejercicio/video-ejercicio.component';
+export { PreviewEjercicioDialogComponent, type PreviewEjercicioData } from './ui/preview-ejercicio/preview-ejercicio-dialog.component';
+
 // Toast
 export {
   ToastService,
