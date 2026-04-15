@@ -769,9 +769,9 @@
 }
 
 /* ============================================
-   ACTIVITY FILTER
+   STATS / ACTIVITY FILTER
    ============================================ */
-.activity-filter {
+.stats-filter {
   @apply flex flex-col gap-2 pb-3 mb-3;
   border-bottom: 1px solid rgba(255, 255, 255, 0.25);
 }

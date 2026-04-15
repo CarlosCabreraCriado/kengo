@@ -194,7 +194,7 @@
                 <div>
                   <h2 class="section-title">Actividad reciente</h2>
                   <p class="section-subtitle">
-                    {{ diasProgramados() }} días programados@if (diasSinActividad() > 0) {, {{ diasSinActividad() }} sin actividad}
+                    {{ rangoLabel() }} · {{ diasProgramados() }} días programados@if (diasSinActividad() > 0) {, {{ diasSinActividad() }} sin actividad}
                   </p>
                 </div>
               </div>
@@ -206,98 +206,6 @@
 
             @if (activityExpanded) {
               <div class="section-content">
-                <!-- Filtro de rango temporal -->
-                <div class="activity-filter">
-                  <div class="filter-chips">
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '15'"
-                      (click)="aplicarFiltroRango('15')"
-                    >15d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '30'"
-                      (click)="aplicarFiltroRango('30')"
-                    >30d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '60'"
-                      (click)="aplicarFiltroRango('60')"
-                    >60d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '90'"
-                      (click)="aplicarFiltroRango('90')"
-                    >90d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === 'custom'"
-                      (click)="aplicarFiltroRango('custom')"
-                    >
-                      <span class="material-symbols-outlined" style="font-size: 14px">date_range</span>
-                      Rango
-                    </button>
-                  </div>
-
-                  @if (filterPanelOpen()) {
-                    <div class="filter-date-range">
-                      <label class="filter-date-field">
-                        <span class="filter-date-label">Desde</span>
-                        <input
-                          type="date"
-                          class="filter-date-input"
-                          [value]="filtroDesde() ?? ''"
-                          [max]="filtroHasta() ?? hoy"
-                          (change)="onDesdeChange($event)"
-                        />
-                      </label>
-                      <span class="filter-date-arrow">
-                        <span class="material-symbols-outlined" style="font-size: 16px">arrow_forward</span>
-                      </span>
-                      <label class="filter-date-field">
-                        <span class="filter-date-label">Hasta</span>
-                        <input
-                          type="date"
-                          class="filter-date-input"
-                          [value]="filtroHasta() ?? ''"
-                          [min]="filtroDesde() ?? ''"
-                          [max]="hoy"
-                          (change)="onHastaChange($event)"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        class="filter-apply-btn"
-                        [disabled]="!filtroDesde() || !filtroHasta() || filtroDesde()! > filtroHasta()!"
-                        (click)="aplicarRangoPersonalizado()"
-                        aria-label="Aplicar rango"
-                      >
-                        <span class="material-symbols-outlined">check</span>
-                      </button>
-                    </div>
-                  }
-
-                  @if (isCustomRange() && !filterPanelOpen()) {
-                    <div class="filter-active-indicator">
-                      <span class="material-symbols-outlined" style="font-size: 14px">filter_alt</span>
-                      <span class="filter-active-label">{{ rangoLabel() }}</span>
-                      <button
-                        type="button"
-                        class="filter-reset-btn"
-                        (click)="resetearFiltro()"
-                        aria-label="Resetear filtro"
-                      >
-                        <span class="material-symbols-outlined" style="font-size: 14px">close</span>
-                      </button>
-                    </div>
-                  }
-                </div>
-
                 @if (isLoadingSesiones()) {
                   <div class="loading-inline">
                     <div class="shimmer-bar"></div>
@@ -446,7 +354,7 @@
                 </div>
                 <div>
                   <h2 class="section-title">Estadísticas</h2>
-                  <p class="section-subtitle">{{ rangoLabel() }}</p>
+                  <p class="section-subtitle">Resumen de cumplimiento</p>
                 </div>
               </div>
               <span
@@ -457,6 +365,104 @@
 
             @if (statsExpanded) {
               <div class="section-content">
+                <!-- Filtro de rango temporal -->
+                <div class="stats-filter">
+                  <div class="filter-chips">
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '15'"
+                      (click)="aplicarFiltroRango('15')"
+                    >15d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '30'"
+                      (click)="aplicarFiltroRango('30')"
+                    >30d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '60'"
+                      (click)="aplicarFiltroRango('60')"
+                    >60d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === '90'"
+                      (click)="aplicarFiltroRango('90')"
+                    >90d</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === 'todo'"
+                      (click)="aplicarFiltroRango('todo')"
+                    >Todo</button>
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      [class.filter-chip--active]="filtroRango() === 'custom'"
+                      (click)="aplicarFiltroRango('custom')"
+                    >
+                      <span class="material-symbols-outlined" style="font-size: 14px">date_range</span>
+                      Rango
+                    </button>
+                  </div>
+
+                  @if (filterPanelOpen()) {
+                    <div class="filter-date-range">
+                      <label class="filter-date-field">
+                        <span class="filter-date-label">Desde</span>
+                        <input
+                          type="date"
+                          class="filter-date-input"
+                          [value]="filtroDesde() ?? ''"
+                          [max]="filtroHasta() ?? hoy"
+                          (change)="onDesdeChange($event)"
+                        />
+                      </label>
+                      <span class="filter-date-arrow">
+                        <span class="material-symbols-outlined" style="font-size: 16px">arrow_forward</span>
+                      </span>
+                      <label class="filter-date-field">
+                        <span class="filter-date-label">Hasta</span>
+                        <input
+                          type="date"
+                          class="filter-date-input"
+                          [value]="filtroHasta() ?? ''"
+                          [min]="filtroDesde() ?? ''"
+                          [max]="hoy"
+                          (change)="onHastaChange($event)"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        class="filter-apply-btn"
+                        [disabled]="!filtroDesde() || !filtroHasta() || filtroDesde()! > filtroHasta()!"
+                        (click)="aplicarRangoPersonalizado()"
+                        aria-label="Aplicar rango"
+                      >
+                        <span class="material-symbols-outlined">check</span>
+                      </button>
+                    </div>
+                  }
+
+                  @if (isCustomRange() && !filterPanelOpen()) {
+                    <div class="filter-active-indicator">
+                      <span class="material-symbols-outlined" style="font-size: 14px">filter_alt</span>
+                      <span class="filter-active-label">{{ rangoLabel() }}</span>
+                      <button
+                        type="button"
+                        class="filter-reset-btn"
+                        (click)="resetearFiltro()"
+                        aria-label="Resetear filtro"
+                      >
+                        <span class="material-symbols-outlined" style="font-size: 14px">close</span>
+                      </button>
+                    </div>
+                  }
+                </div>
+
                 @if (isLoadingEstadisticas()) {
                   <div class="loading-inline">
                     <div class="shimmer-bar"></div>

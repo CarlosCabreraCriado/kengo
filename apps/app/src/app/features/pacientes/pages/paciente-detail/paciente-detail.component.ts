@@ -147,7 +147,7 @@ export class PacienteDetailComponent implements OnInit {
   readonly sesionExpandida = signal<string | null>(null);
 
   // Filtro de rango temporal
-  readonly filtroRango = signal<'15' | '30' | '60' | '90' | 'custom'>('15');
+  readonly filtroRango = signal<'15' | '30' | '60' | '90' | 'todo' | 'custom'>('15');
   readonly filtroDesde = signal<string | null>(null);
   readonly filtroHasta = signal<string | null>(null);
   readonly filterPanelOpen = signal(false);
@@ -158,7 +158,10 @@ export class PacienteDetailComponent implements OnInit {
     return this.sessionService.usuario()?.clinicas.map((c) => c.id_clinica) || [];
   });
 
-  readonly isCustomRange = computed(() => this.filtroRango() !== '15');
+  readonly isCustomRange = computed(() => {
+    const r = this.filtroRango();
+    return r !== '15' && r !== 'todo';
+  });
 
   readonly rangoLabel = computed(() => {
     const rango = this.filtroRango();
@@ -166,6 +169,7 @@ export class PacienteDetailComponent implements OnInit {
     if (rango === '30') return 'Últimos 30 días';
     if (rango === '60') return 'Últimos 60 días';
     if (rango === '90') return 'Últimos 90 días';
+    if (rango === 'todo') return 'Todo el historial';
     const desde = this.filtroDesde();
     const hasta = this.filtroHasta();
     if (desde && hasta) {
@@ -647,7 +651,7 @@ export class PacienteDetailComponent implements OnInit {
     return this.sesiones().filter(s => s.tipo !== 'descanso').length;
   }
 
-  aplicarFiltroRango(rango: '15' | '30' | '60' | '90' | 'custom') {
+  aplicarFiltroRango(rango: '15' | '30' | '60' | '90' | 'todo' | 'custom') {
     if (rango === 'custom') {
       this.filtroRango.set('custom');
       this.filterPanelOpen.set(true);
@@ -665,6 +669,12 @@ export class PacienteDetailComponent implements OnInit {
       this.filtroDesde.set(null);
       this.filtroHasta.set(null);
       this.cargarCumplimiento(pacienteId);
+    } else if (rango === 'todo') {
+      const desdeStr = '2020-01-01';
+      const hastaStr = new Date().toISOString().split('T')[0];
+      this.filtroDesde.set(desdeStr);
+      this.filtroHasta.set(hastaStr);
+      this.cargarCumplimiento(pacienteId, desdeStr, hastaStr);
     } else {
       const dias = parseInt(rango);
       const hasta = new Date();
