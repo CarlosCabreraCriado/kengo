@@ -171,14 +171,19 @@ export async function calcularCumplimientoDiario(
 
       // Contar completados: un item se cuenta como completado si tiene >= veces_dia registros
       let ejerciciosCompletados = 0;
-      let dolorTotal = 0;
-      let dolorCount = 0;
 
       for (const item of itemsHoy) {
         const reg = registrosPorItem.get(item.id);
         if (reg && reg.completados >= item.vecesDia) {
           ejerciciosCompletados++;
         }
+      }
+
+      // Calcular dolor promedio desde TODOS los registros del plan (no solo itemsHoy)
+      let dolorTotal = 0;
+      let dolorCount = 0;
+      for (const item of grupo.items) {
+        const reg = registrosPorItem.get(item.id);
         if (reg?.dolor !== null && reg?.dolor !== undefined) {
           dolorTotal += reg.dolor;
           dolorCount++;

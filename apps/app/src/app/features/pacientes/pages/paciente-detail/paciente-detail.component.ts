@@ -281,8 +281,9 @@ export class PacienteDetailComponent implements OnInit {
       const sesiones: SesionAgrupada[] = dias.map(dia => {
         const regs = registrosPorFecha.get(dia.fecha) || [];
         const dolores = regs.filter(r => r.dolor_escala != null).map(r => r.dolor_escala!);
-        const promedioDolor = dia.dolor_promedio ??
-          (dolores.length > 0 ? dolores.reduce((a, b) => a + b, 0) / dolores.length : null);
+        const promedioDolor = dolores.length > 0
+          ? Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) / 10
+          : dia.dolor_promedio;
         const comentarios = regs
           .filter(r => r.nota_paciente && r.nota_paciente.trim().length > 0)
           .map(r => ({ texto: r.nota_paciente!, idRegistro: r.id_registro }));
@@ -305,9 +306,9 @@ export class PacienteDetailComponent implements OnInit {
 
       // Calcular estadísticas desde cumplimiento
       const resumen = cumplimiento.resumen;
-      const doloresGenerales = dias
-        .filter(d => d.dolor_promedio !== null)
-        .map(d => d.dolor_promedio!);
+      const doloresGenerales = sesiones
+        .filter(s => s.promedioDolorValue !== null)
+        .map(s => s.promedioDolorValue!);
       const promedioDolorGeneral = doloresGenerales.length > 0
         ? Math.round((doloresGenerales.reduce((a, b) => a + b, 0) / doloresGenerales.length) * 10) / 10
         : null;
