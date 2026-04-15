@@ -1,9 +1,11 @@
 import {
   Component,
   computed,
+  HostListener,
   inject,
   signal,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -21,12 +23,14 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
+import { MetricasPacientesService } from '../../data-access/metricas-pacientes.service';
 import { DialogService } from '../../../../shared';
 
-import { Usuario, UsuarioDirectus, AsignacionResponsable, PUESTO_ADMINISTRADOR } from '../../../../../types/global';
+import { Usuario, UsuarioDirectus, AsignacionResponsable, MetricasPacientesBulk, PUESTO_ADMINISTRADOR } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
+type OrdenPacientes = 'nombre' | 'adherencia_desc' | 'adherencia_asc' | 'dolor_desc' | 'dolor_asc';
 const STORAGE_KEY_FILTRO = 'kengo:mis-pacientes:filtro';
 
 interface DirectusPage<T> {
@@ -39,6 +43,7 @@ interface DirectusPage<T> {
   standalone: true,
   imports: [
     RouterLink,
+    DecimalPipe,
   ],
   templateUrl: './pacientes-list.component.html',
   styleUrl: './pacientes-list.component.css',
@@ -55,6 +60,7 @@ export class PacientesListComponent {
   private authService = inject(AuthService);
   private breakpointObserver = inject(BreakpointObserver);
   private asignacionesService = inject(AsignacionesService);
+  private metricasService = inject(MetricasPacientesService);
 
   // Signal para alternar vista card/lista
   public vista = signal<'card' | 'lista'>('card');
@@ -83,6 +89,20 @@ export class PacientesListComponent {
 
   private readonly busqueda = signal('');
   readonly filtroActividad = signal<FiltroActividad>(this.leerFiltroGuardado());
+  readonly metricasMap = signal<MetricasPacientesBulk>({});
+  readonly ordenActual = signal<OrdenPacientes>('nombre');
+  readonly sortMenuAbierto = signal(false);
+
+  readonly ordenLabel = computed(() => {
+    const labels: Record<OrdenPacientes, string> = {
+      nombre: 'Nombre',
+      adherencia_desc: 'Mayor adherencia',
+      adherencia_asc: 'Menor adherencia',
+      dolor_desc: 'Más dolor',
+      dolor_asc: 'Menos dolor',
+    };
+    return labels[this.ordenActual()];
+  });
 
   // Resource para obtener IDs de pacientes con planes activos
   private readonly planesActivosRes = httpResource<string[]>(
@@ -122,13 +142,35 @@ export class PacientesListComponent {
   readonly conteoInactivos = computed(() => this.totalPacientes() - this.conteoActivos());
 
   readonly pacientes = computed(() => {
-    const todos = this.pacientesRes.value() ?? [];
+    let lista = this.pacientesRes.value() ?? [];
     const filtro = this.filtroActividad();
-    if (filtro === 'todos') return todos;
-    const activos = this.idsPacientesActivos();
-    return filtro === 'activos'
-      ? todos.filter((p) => activos.has(p.id))
-      : todos.filter((p) => !activos.has(p.id));
+    if (filtro !== 'todos') {
+      const activos = this.idsPacientesActivos();
+      lista = filtro === 'activos'
+        ? lista.filter((p) => activos.has(p.id))
+        : lista.filter((p) => !activos.has(p.id));
+    }
+
+    const orden = this.ordenActual();
+    if (orden === 'nombre') return lista;
+
+    const metricas = this.metricasMap();
+    return [...lista].sort((a, b) => {
+      const ma = metricas[a.id];
+      const mb = metricas[b.id];
+      switch (orden) {
+        case 'adherencia_desc':
+          return (mb?.adherencia ?? -1) - (ma?.adherencia ?? -1);
+        case 'adherencia_asc':
+          return (ma?.adherencia ?? 999) - (mb?.adherencia ?? 999);
+        case 'dolor_desc':
+          return (mb?.dolor_promedio ?? -1) - (ma?.dolor_promedio ?? -1);
+        case 'dolor_asc':
+          return (ma?.dolor_promedio ?? 999) - (mb?.dolor_promedio ?? 999);
+        default:
+          return 0;
+      }
+    });
   });
 
   readonly pacientesRes = httpResource<Usuario[]>(
@@ -180,8 +222,9 @@ export class PacientesListComponent {
           usuarios.push(this.sessionService.transformarUsuarioDirectus(usuario));
         }
         console.log('Pacientes cargados:', resultado);
-        // Cargar asignaciones en paralelo
+        // Cargar datos complementarios en paralelo
         this.cargarAsignaciones();
+        this.cargarMetricas();
         return usuarios;
       },
     },
@@ -251,6 +294,7 @@ export class PacientesListComponent {
     this.pacientesRes.reload();
     this.planesActivosRes.reload();
     this.cargarAsignaciones();
+    this.cargarMetricas();
   }
 
   private cargarAsignaciones() {
@@ -313,5 +357,47 @@ export class PacientesListComponent {
     // Acceder al nombre de la clínica (viene como objeto anidado de Directus)
     const clinica = p.clinicas[0] as any;
     return clinica?.id_clinica?.nombre || null;
+  }
+
+  // Métricas de pacientes
+  getAdherencia(pacienteId: string): number | null {
+    const m = this.metricasMap()[pacienteId];
+    return m ? m.adherencia : null;
+  }
+
+  getDolorPromedio(pacienteId: string): number | null {
+    const m = this.metricasMap()[pacienteId];
+    return m?.dolor_promedio ?? null;
+  }
+
+  adherenciaTier(value: number): 'alta' | 'media' | 'baja' {
+    if (value >= 70) return 'alta';
+    if (value >= 40) return 'media';
+    return 'baja';
+  }
+
+  dolorTier(value: number): 'baja' | 'media' | 'alta' {
+    if (value <= 3) return 'baja';
+    if (value <= 6) return 'media';
+    return 'alta';
+  }
+
+  @HostListener('document:click')
+  cerrarSortMenu() {
+    if (this.sortMenuAbierto()) {
+      this.sortMenuAbierto.set(false);
+    }
+  }
+
+  setOrden(orden: OrdenPacientes) {
+    this.ordenActual.set(orden);
+    this.sortMenuAbierto.set(false);
+  }
+
+  private cargarMetricas() {
+    this.metricasService.getMetricasBulk().subscribe({
+      next: (metricas) => this.metricasMap.set(metricas),
+      error: () => {},
+    });
   }
 }

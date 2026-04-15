@@ -198,7 +198,7 @@
         </button>
       }
 
-      <!-- Quick Stats Bar -->
+      <!-- Quick Stats Bar + Sort -->
       <section class="stats-bar animate-in">
         <button
           type="button"
@@ -230,6 +230,45 @@
           <span class="stat-value">{{ conteoInactivos() }}</span>
           <span class="stat-label">Inactivos</span>
         </button>
+
+        <!-- Dropdown ordenar (derecha) -->
+        <div class="sort-dropdown ml-auto relative">
+          <button
+            type="button"
+            class="sort-trigger"
+            [class.active]="ordenActual() !== 'nombre'"
+            (click)="$event.stopPropagation(); sortMenuAbierto.set(!sortMenuAbierto())"
+          >
+            <span class="material-symbols-outlined text-base">swap_vert</span>
+            <span class="sort-trigger-label">{{ ordenLabel() }}</span>
+            <span class="material-symbols-outlined text-sm transition-transform" [class.rotate-180]="sortMenuAbierto()">expand_more</span>
+          </button>
+
+          @if (sortMenuAbierto()) {
+            <div class="sort-menu" (click)="$event.stopPropagation()">
+              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'nombre'" (click)="setOrden('nombre')">
+                <span class="material-symbols-outlined">sort_by_alpha</span>
+                Nombre
+              </button>
+              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'adherencia_desc'" (click)="setOrden('adherencia_desc')">
+                <span class="material-symbols-outlined">trending_up</span>
+                Mayor adherencia
+              </button>
+              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'adherencia_asc'" (click)="setOrden('adherencia_asc')">
+                <span class="material-symbols-outlined">trending_down</span>
+                Menor adherencia
+              </button>
+              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'dolor_asc'" (click)="setOrden('dolor_asc')">
+                <span class="material-symbols-outlined">sentiment_satisfied</span>
+                Menos dolor
+              </button>
+              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'dolor_desc'" (click)="setOrden('dolor_desc')">
+                <span class="material-symbols-outlined">sentiment_stressed</span>
+                Más dolor
+              </button>
+            </div>
+          }
+        </div>
       </section>
 
       <!-- Filtered Empty State -->
@@ -295,6 +334,25 @@
                       {{ getFisioResponsableNombre(p.id) }}
                     </span>
                   }
+
+                  <!-- Métricas -->
+                  @if (getAdherencia(p.id) !== null) {
+                    <div class="metrics-row">
+                      <div class="metric-item" [attr.data-tier]="adherenciaTier(getAdherencia(p.id)!)">
+                        <span class="material-symbols-outlined metric-icon">trending_up</span>
+                        <span class="metric-value">{{ getAdherencia(p.id) }}%</span>
+                        <div class="metric-bar">
+                          <div class="metric-bar-fill" [style.width.%]="getAdherencia(p.id)"></div>
+                        </div>
+                      </div>
+                      @if (getDolorPromedio(p.id) !== null) {
+                        <div class="metric-item" [attr.data-tier]="dolorTier(getDolorPromedio(p.id)!)">
+                          <span class="material-symbols-outlined metric-icon">{{ getDolorPromedio(p.id)! <= 3 ? 'sentiment_satisfied' : getDolorPromedio(p.id)! <= 6 ? 'sentiment_neutral' : 'sentiment_stressed' }}</span>
+                          <span class="metric-value">{{ getDolorPromedio(p.id) | number:'1.1-1' }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
 
                 <!-- Arrow -->
@@ -337,6 +395,20 @@
                 <h4 class="row-name">{{ fullName(p) }}</h4>
                 <span class="row-detail">{{ p.email || p.telefono || 'Sin contacto' }}</span>
               </div>
+
+              <!-- Métricas (lista) -->
+              @if (getAdherencia(p.id) !== null) {
+                <div class="row-metrics">
+                  <span class="row-metric-badge" [attr.data-tier]="adherenciaTier(getAdherencia(p.id)!)">
+                    {{ getAdherencia(p.id) }}%
+                  </span>
+                  @if (getDolorPromedio(p.id) !== null) {
+                    <span class="row-metric-badge dolor" [attr.data-tier]="dolorTier(getDolorPromedio(p.id)!)">
+                      {{ getDolorPromedio(p.id) | number:'1.1-1' }}
+                    </span>
+                  }
+                </div>
+              }
 
               <!-- Arrow -->
               <span class="material-symbols-outlined row-arrow">chevron_right</span>

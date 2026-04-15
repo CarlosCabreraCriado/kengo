@@ -672,3 +672,149 @@
   color: var(--kengo-primary);
 }
 
+/* === Sort Dropdown === */
+.sort-dropdown {
+  @apply relative;
+}
+
+.sort-trigger {
+  @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl
+         bg-white/80 border border-white/40
+         text-xs text-zinc-500 font-medium whitespace-nowrap
+         cursor-pointer transition-all;
+  font: inherit;
+  outline: none;
+}
+
+.sort-trigger:hover {
+  @apply bg-white/80 text-zinc-700;
+}
+
+.sort-trigger.active {
+  border-color: rgba(var(--kengo-primary-rgb), 0.4);
+  color: var(--kengo-primary);
+  @apply font-semibold;
+}
+
+.sort-trigger-label {
+  @apply hidden;
+}
+
+@media (min-width: 480px) {
+  .sort-trigger-label {
+    @apply inline;
+  }
+}
+
+.sort-menu {
+  @apply absolute right-0 top-full mt-1.5
+         flex flex-col min-w-[180px] py-1.5 rounded-2xl
+         border border-zinc-200 overflow-hidden;
+  z-index: 999;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
+  animation: sortMenuIn 0.15s ease-out;
+}
+
+@keyframes sortMenuIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sort-option {
+  @apply flex items-center gap-2.5 px-4 py-2.5
+         text-xs text-zinc-600 font-medium
+         cursor-pointer transition-colors border-none bg-transparent;
+  font: inherit;
+  outline: none;
+}
+
+.sort-option:hover {
+  @apply bg-zinc-50;
+}
+
+.sort-option.selected {
+  color: var(--kengo-primary);
+  @apply font-semibold;
+}
+
+.sort-option .material-symbols-outlined {
+  @apply text-base;
+}
+
+/* === Card Metrics Row === */
+.metrics-row {
+  @apply flex items-center gap-3 mt-2 pt-2;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.metric-item {
+  @apply flex items-center gap-1.5;
+}
+
+.metric-icon {
+  @apply text-sm;
+}
+
+.metric-value {
+  @apply text-xs font-bold;
+}
+
+.metric-bar {
+  @apply w-12 h-1 rounded-full bg-zinc-200 overflow-hidden;
+}
+
+.metric-bar-fill {
+  @apply h-full rounded-full transition-all;
+}
+
+/* Tier colors */
+.metric-item[data-tier="alta"] .metric-icon,
+.metric-item[data-tier="alta"] .metric-value {
+  @apply text-green-600;
+}
+
+.metric-item[data-tier="alta"] .metric-bar-fill {
+  @apply bg-green-500;
+}
+
+.metric-item[data-tier="media"] .metric-icon,
+.metric-item[data-tier="media"] .metric-value {
+  @apply text-amber-600;
+}
+
+.metric-item[data-tier="media"] .metric-bar-fill {
+  @apply bg-amber-500;
+}
+
+.metric-item[data-tier="baja"] .metric-icon,
+.metric-item[data-tier="baja"] .metric-value {
+  @apply text-red-500;
+}
+
+.metric-item[data-tier="baja"] .metric-bar-fill {
+  @apply bg-red-500;
+}
+
+/* === List View Metrics === */
+.row-metrics {
+  @apply flex items-center gap-1.5 shrink-0;
+}
+
+.row-metric-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-lg
+         text-[0.65rem] font-bold;
+}
+
+.row-metric-badge[data-tier="alta"] {
+  @apply text-green-700 bg-green-50;
+}
+
+.row-metric-badge[data-tier="media"] {
+  @apply text-amber-700 bg-amber-50;
+}
+
+.row-metric-badge[data-tier="baja"] {
+  @apply text-red-600 bg-red-50;
+}
+

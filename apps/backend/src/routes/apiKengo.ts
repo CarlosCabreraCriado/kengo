@@ -16,6 +16,7 @@ import { generarTodasNotificaciones, backfillNotificaciones } from "../jobs/noti
 import { cumplimientoController } from "../controllers/cumplimiento";
 import { notificacionesController } from "../controllers/notificaciones";
 import { dashboardController } from "../controllers/dashboard";
+import { metricasPacientesController } from "../controllers/metricas-pacientes";
 
 const router = Router();
 
@@ -67,6 +68,9 @@ router.get("/paciente/:id/fisio-responsable", authMiddleware, asignacionesContro
 
 // Dashboard
 router.get("/dashboard/fisio/resumen", authMiddleware, dashboardController.getResumenFisio);
+
+// Métricas de pacientes (bulk)
+router.get("/pacientes/metricas", authMiddleware, metricasPacientesController.getMetricasBulk);
 
 // Cumplimiento
 router.get("/paciente/:id/cumplimiento", authMiddleware, cumplimientoController.getCumplimiento);

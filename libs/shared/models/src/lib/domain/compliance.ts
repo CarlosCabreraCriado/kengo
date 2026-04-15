@@ -27,3 +27,12 @@ export interface CumplimientoResponse {
   dias: CumplimientoDia[];
   resumen: ResumenCumplimiento;
 }
+
+/** Métricas resumen de un paciente (endpoint bulk) */
+export interface MetricasPaciente {
+  adherencia: number;
+  dolor_promedio: number | null;
+}
+
+/** Respuesta del endpoint bulk: mapa paciente UUID → métricas */
+export type MetricasPacientesBulk = Record<string, MetricasPaciente>;

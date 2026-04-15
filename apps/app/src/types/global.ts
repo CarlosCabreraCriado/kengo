@@ -105,6 +105,8 @@ export {
   CumplimientoDia,
   ResumenCumplimiento,
   CumplimientoResponse,
+  MetricasPaciente,
+  MetricasPacientesBulk,
   // Dashboard
   ResumenFisioDashboard,
   PlanPorVencer,
