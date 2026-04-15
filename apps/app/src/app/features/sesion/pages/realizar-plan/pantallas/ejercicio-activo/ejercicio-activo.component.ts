@@ -102,13 +102,6 @@ import { fadeAnimation } from '../../realizar-plan.animations';
             <div class="header-spacer"></div>
           </header>
 
-          <!-- Swipe hint (solo cuando no está expandido y hay video) -->
-          @if (!videoExpandido() && videoUrl()) {
-            <div class="swipe-hint">
-              <span class="material-symbols-outlined">keyboard_arrow_down</span>
-              <span class="hint-text">Desliza para ver más</span>
-            </div>
-          }
         </div>
       </div>
 
@@ -503,42 +496,6 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Swipe hint */
-    .swipe-hint {
-      position: absolute;
-      bottom: 24px;
-      left: 0;
-      right: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      color: rgba(255, 255, 255, 0.7);
-      pointer-events: none;
-      animation: hintBounce 2s ease-in-out infinite;
-
-      span {
-        font-size: 1.5rem;
-      }
-    }
-
-    .hint-text {
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-
-    @keyframes hintBounce {
-      0%,
-      100% {
-        transform: translateY(0);
-        opacity: 0.7;
-      }
-      50% {
-        transform: translateY(-8px);
-        opacity: 1;
-      }
-    }
-
     /* === Panel de información === */
     .info-panel {
       position: relative;
@@ -548,10 +505,8 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       min-height: 0;
       z-index: 10;
       border-radius: 28px 28px 0 0;
-      background: rgba(255, 255, 255, 0.65);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: #ffffff;
+      border: 1px solid #e4e4e7;
       border-bottom: none;
       box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.15);
       margin-top: -24px;
@@ -624,10 +579,8 @@ import { fadeAnimation } from '../../realizar-plan.animations';
       justify-content: center;
       gap: 16px;
       padding: 16px 20px;
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
       border-radius: 24px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     }
@@ -1014,17 +967,13 @@ import { fadeAnimation } from '../../realizar-plan.animations';
         );
       }
 
-      .swipe-hint {
-        display: none;
-      }
-
       .info-panel {
         width: 340px;
         flex-shrink: 0;
         margin-top: 0;
         border-radius: 32px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid #e4e4e7;
+        background: #ffffff;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
       }
 
@@ -1048,7 +997,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
         padding: 24px;
         gap: 24px;
         border-radius: 28px;
-        background: rgba(255, 255, 255, 0.7);
+        background: #f9fafb;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
       }
 
