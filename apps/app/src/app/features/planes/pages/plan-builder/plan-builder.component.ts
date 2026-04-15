@@ -8,7 +8,7 @@ import {
   computed,
 } from '@angular/core';
 import { Location } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
   Validators,
@@ -36,7 +36,6 @@ import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
     ReactiveFormsModule,
     FormsModule,
     DragDropModule,
-    RouterLink,
     SafeHtmlPipe,
   ],
   templateUrl: './plan-builder.component.html',
@@ -122,8 +121,12 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     const pacienteId = this.route.snapshot.queryParams['paciente'];
 
     if (planId) {
-      // Modo edicion
-      this.loadPlanForEdit(+planId);
+      // Modo edicion - skip reload si volvemos del catálogo con el mismo plan
+      if (this.svc.isAlreadyLoadedForEdit(+planId)) {
+        this.syncFormFromService();
+      } else {
+        this.loadPlanForEdit(+planId);
+      }
     } else if (pacienteId) {
       // Modo nuevo con paciente
       this.svc.ensurePacienteLoaded(pacienteId);
@@ -410,6 +413,15 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
         } finally {
           this.isLoading.set(false);
         }
+      }
+    });
+  }
+
+  irAGaleria() {
+    const openDrawer = this.isEditMode();
+    this.router.navigate(['/galeria/ejercicios']).then(() => {
+      if (openDrawer) {
+        this.svc.openDrawer();
       }
     });
   }

@@ -45,6 +45,9 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   // Modo rutina
   readonly isRutinaMode = computed(() => this.svc.isRutinaMode());
 
+  // Modo edición de plan existente
+  readonly isEditMode = computed(() => this.svc.isEditMode());
+
   drawerAbierto = signal(false);
   ocultarTab = signal(false);
   @Input() autoOpen = false;
@@ -178,10 +181,17 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       this.toastService.show('Añade ejercicios al plan.');
       return;
     }
-    const id = this.svc.paciente()!.id;
-    await this.router.navigate(['/planes/nuevo'], {
-      queryParams: { paciente: id },
-    });
+
+    if (this.svc.isEditMode()) {
+      // Edit mode: volver a la página de edición del plan
+      await this.router.navigate(['/planes', this.svc.planId(), 'editar']);
+    } else {
+      // Create mode: ir a configurar nuevo plan
+      const id = this.svc.paciente()!.id;
+      await this.router.navigate(['/planes/nuevo'], {
+        queryParams: { paciente: id },
+      });
+    }
 
     this.svc.closeDrawer();
   }

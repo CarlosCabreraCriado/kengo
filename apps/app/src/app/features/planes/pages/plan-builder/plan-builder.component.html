@@ -78,22 +78,20 @@
                       <span class="dropdown-action__hint">Reutilizar este plan</span>
                     </span>
                   </button>
-                  @if (!isEditMode()) {
-                    <div class="dropdown-panel__divider"></div>
-                    <a
-                      routerLink="/galeria/ejercicios"
-                      class="dropdown-action"
-                      (click)="menuAccionesMobileOpen = false"
-                    >
-                      <span class="dropdown-action__icon dropdown-action__icon--green">
-                        <span class="material-symbols-outlined">add</span>
-                      </span>
-                      <span class="dropdown-action__content">
-                        <span class="dropdown-action__label">Agregar ejercicios</span>
-                        <span class="dropdown-action__hint">Desde el catálogo</span>
-                      </span>
-                    </a>
-                  }
+                  <div class="dropdown-panel__divider"></div>
+                  <button
+                    type="button"
+                    class="dropdown-action"
+                    (click)="irAGaleria(); menuAccionesMobileOpen = false"
+                  >
+                    <span class="dropdown-action__icon dropdown-action__icon--green">
+                      <span class="material-symbols-outlined">add</span>
+                    </span>
+                    <span class="dropdown-action__content">
+                      <span class="dropdown-action__label">Agregar ejercicios</span>
+                      <span class="dropdown-action__hint">Desde el catálogo</span>
+                    </span>
+                  </button>
                 </div>
               </div>
             }
@@ -218,22 +216,20 @@
                             <span class="dropdown-action__hint">Reutilizar este plan</span>
                           </span>
                         </button>
-                        @if (!isEditMode()) {
-                          <div class="dropdown-panel__divider"></div>
-                          <a
-                            routerLink="/galeria/ejercicios"
-                            class="dropdown-action"
-                            (click)="menuAccionesOpen = false"
-                          >
-                            <span class="dropdown-action__icon dropdown-action__icon--green">
-                              <span class="material-symbols-outlined">add</span>
-                            </span>
-                            <span class="dropdown-action__content">
-                              <span class="dropdown-action__label">Agregar ejercicios</span>
-                              <span class="dropdown-action__hint">Desde el catálogo</span>
-                            </span>
-                          </a>
-                        }
+                        <div class="dropdown-panel__divider"></div>
+                        <button
+                          type="button"
+                          class="dropdown-action"
+                          (click)="irAGaleria(); menuAccionesOpen = false"
+                        >
+                          <span class="dropdown-action__icon dropdown-action__icon--green">
+                            <span class="material-symbols-outlined">add</span>
+                          </span>
+                          <span class="dropdown-action__content">
+                            <span class="dropdown-action__label">Agregar ejercicios</span>
+                            <span class="dropdown-action__hint">Desde el catálogo</span>
+                          </span>
+                        </button>
                       </div>
                     </div>
                   }
@@ -396,10 +392,10 @@
             <p class="empty-state-card__text">
               Añade ejercicios del catálogo para crear el plan de tratamiento
             </p>
-            <a routerLink="/galeria/ejercicios" class="btn-primary btn-primary--glow">
+            <button type="button" (click)="irAGaleria()" class="btn-primary btn-primary--glow">
               <span class="material-symbols-outlined">add</span>
               Agregar ejercicios
-            </a>
+            </button>
           </article>
         } @else {
           <!-- Lista de ejercicios -->
@@ -624,6 +620,16 @@
               </article>
             }
           </div>
+
+          <!-- Botón añadir ejercicio al final de la lista -->
+          <button
+            type="button"
+            (click)="irAGaleria()"
+            class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-white/40 p-3 text-zinc-500 transition-all hover:border-kengo-primary hover:bg-kengo-primary/5 hover:text-kengo-primary mt-2"
+          >
+            <span class="material-symbols-outlined text-2xl">add</span>
+            <span class="text-sm font-medium">Añadir ejercicio</span>
+          </button>
         }
       </div>
     </div>

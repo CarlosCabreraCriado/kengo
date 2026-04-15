@@ -77,6 +77,11 @@ export class PlanBuilderService {
   readonly planId = signal<number | null>(null);
   readonly isEditMode = computed(() => this.planId() !== null);
 
+  /** Devuelve true si el plan ya está cargado en memoria para este planId */
+  isAlreadyLoadedForEdit(planId: number): boolean {
+    return this.planId() === planId && this.items().length > 0;
+  }
+
   // --- Versionado ---
   readonly hasActivity = signal<boolean>(false);
   readonly currentVersion = signal<number>(1);
