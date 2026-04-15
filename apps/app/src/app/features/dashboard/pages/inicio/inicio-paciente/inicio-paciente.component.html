@@ -226,8 +226,8 @@
 }
 
 <!-- Racha Card -->
-<section class="streak-card animate-in" style="--delay: 0.15s">
-  @if (rachaService.rachaActual() > 0) {
+@if (rachaService.rachaActual() > 0) {
+  <section class="streak-card animate-in" style="--delay: 0.15s">
     <div class="streak-content">
       <span class="streak-icon">🔥</span>
       <div class="streak-info">
@@ -243,29 +243,12 @@
         <span class="streak-best">Récord: {{ rachaService.mejorRacha() }} días</span>
       }
     </div>
-  } @else {
-    <div class="streak-content streak-empty">
-      <span class="material-symbols-outlined streak-icon-empty">local_fire_department</span>
-      @if (actividadHoyService.todoCompletado()) {
-        <span class="streak-empty-text">¡Has completado hoy! Mañana empieza tu racha</span>
-      } @else {
-        <span class="streak-empty-text">Completa hoy para empezar tu racha</span>
-      }
-    </div>
-  }
-</section>
+  </section>
+}
 
 <!-- Tu Fisio Card -->
-<section class="fisio-card animate-in" style="--delay: 0.175s">
-  @if (cargandoFisio()) {
-    <div class="fisio-skeleton">
-      <div class="fisio-skeleton-avatar"></div>
-      <div class="fisio-skeleton-lines">
-        <div class="fisio-skeleton-line short"></div>
-        <div class="fisio-skeleton-line"></div>
-      </div>
-    </div>
-  } @else if (fisioAsignado()) {
+@if (fisioAsignado()) {
+  <section class="fisio-card animate-in" style="--delay: 0.175s">
     <div class="fisio-content">
       <div class="fisio-avatar">
         @if (fisioAvatarUrl()) {
@@ -295,13 +278,8 @@
         }
       </div>
     </div>
-  } @else {
-    <div class="fisio-empty">
-      <span class="material-symbols-outlined fisio-empty-icon">person_off</span>
-      <span class="fisio-empty-text">Aún no tienes fisio asignado</span>
-    </div>
-  }
-</section>
+  </section>
+}
 
 <!-- Quick Actions -->
 <section class="actions-section animate-in" style="--delay: 0.25s">
