@@ -257,18 +257,14 @@ import { fadeAnimation } from '../../realizar-plan.animations';
           }
 
           <div class="action-buttons">
-            <!-- Botón expandir/contraer -->
+            <!-- Botón abrir timeline -->
             <button
               type="button"
               class="action-btn secondary"
-              (click)="toggleExpandido()"
-              [attr.aria-label]="
-                videoExpandido() ? 'Mostrar detalles' : 'Ver video completo'
-              "
+              (click)="abrirTimeline.emit()"
+              aria-label="Ver todos los ejercicios"
             >
-              <span class="material-symbols-outlined">
-                {{ videoExpandido() ? 'expand_more' : 'expand_less' }}
-              </span>
+              <span class="material-symbols-outlined">list_alt</span>
             </button>
 
             <!-- Botón completar serie -->
@@ -1209,6 +1205,7 @@ export class EjercicioActivoComponent {
   @Output() completarSerie = new EventEmitter<void>();
   @Output() pausar = new EventEmitter<void>();
   @Output() salir = new EventEmitter<void>();
+  @Output() abrirTimeline = new EventEmitter<void>();
 
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 

@@ -1,4 +1,16 @@
-import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  HostListener,
+} from '@angular/core';
+import {
+  trigger,
+  transition,
+  style,
+  animate,
+} from '@angular/animations';
 
 export type DrawerPosition = 'left' | 'right' | 'bottom';
 
@@ -6,17 +18,41 @@ export type DrawerPosition = 'left' | 'right' | 'bottom';
   selector: 'ui-drawer',
   standalone: true,
   imports: [],
+  animations: [
+    trigger('backdrop', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('200ms ease-out', style({ opacity: 1 })),
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ opacity: 0 })),
+      ]),
+    ]),
+    trigger('panel', [
+      transition(':enter', [
+        style({ transform: '{{ enterFrom }}' }),
+        animate('300ms ease-out', style({ transform: 'translate3d(0,0,0)' })),
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ transform: '{{ leaveTo }}' })),
+      ]),
+    ]),
+  ],
   template: `
     @if (isOpen) {
       <!-- Backdrop -->
       <div
         class="ui-drawer-backdrop"
         (click)="onBackdropClick()"
-        [@.disabled]="true"
+        @backdrop
       ></div>
 
       <!-- Drawer panel -->
-      <div class="ui-drawer-panel" [class]="panelClasses">
+      <div
+        class="ui-drawer-panel"
+        [class]="panelClasses"
+        [@panel]="{ value: position, params: { enterFrom: translateFrom, leaveTo: translateFrom } }"
+      >
         <ng-content></ng-content>
       </div>
     }
@@ -29,12 +65,6 @@ export type DrawerPosition = 'left' | 'right' | 'bottom';
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
       z-index: 40;
-      animation: fadeIn 0.2s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
 
     .ui-drawer-panel {
@@ -50,12 +80,6 @@ export type DrawerPosition = 'left' | 'right' | 'bottom';
       top: 0;
       left: 0;
       height: 100%;
-      animation: slideInLeft 0.3s ease-out;
-    }
-
-    @keyframes slideInLeft {
-      from { transform: translateX(-100%); }
-      to { transform: translateX(0); }
     }
 
     /* Right position */
@@ -63,12 +87,6 @@ export type DrawerPosition = 'left' | 'right' | 'bottom';
       top: 0;
       right: 0;
       height: 100%;
-      animation: slideInRight 0.3s ease-out;
-    }
-
-    @keyframes slideInRight {
-      from { transform: translateX(100%); }
-      to { transform: translateX(0); }
     }
 
     /* Bottom position */
@@ -78,12 +96,6 @@ export type DrawerPosition = 'left' | 'right' | 'bottom';
       right: 0;
       max-height: 90vh;
       border-radius: 1.5rem 1.5rem 0 0;
-      animation: slideInBottom 0.3s ease-out;
-    }
-
-    @keyframes slideInBottom {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
     }
 
     /* Size classes for left/right */
@@ -135,6 +147,17 @@ export class DrawerComponent {
 
   get panelClasses(): string {
     return `${this.position} ${this.size}`;
+  }
+
+  get translateFrom(): string {
+    switch (this.position) {
+      case 'bottom':
+        return 'translateY(100%)';
+      case 'left':
+        return 'translateX(-100%)';
+      case 'right':
+        return 'translateX(100%)';
+    }
   }
 
   onBackdropClick(): void {

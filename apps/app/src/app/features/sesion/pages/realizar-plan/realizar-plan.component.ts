@@ -18,6 +18,15 @@ import {
   FeedbackFinalData,
 } from './pantallas/feedback-final/feedback-final.component';
 
+// Componentes adicionales
+import { TimelineSesionComponent } from './componentes/timeline-sesion/timeline-sesion.component';
+import {
+  PreviewEjercicioDialogComponent,
+  PreviewEjercicioData,
+} from './componentes/preview-ejercicio-dialog/preview-ejercicio-dialog.component';
+import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
+import { EjercicioPlan } from '../../../../../types/global';
+
 // Animaciones
 import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
 
@@ -29,6 +38,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     EjercicioActivoComponent,
     DescansoComponent,
     FeedbackFinalComponent,
+    TimelineSesionComponent,
   ],
   animations: [slideAnimation, fadeAnimation],
   template: `
@@ -47,6 +57,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
               (completarSerie)="onCompletarSerie()"
               (pausar)="onPausar()"
               (salir)="onIntentarSalir()"
+              (abrirTimeline)="timelineAbierto.set(true)"
             />
           }
           @case ('descanso') {
@@ -64,6 +75,26 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
           }
         }
       </main>
+
+      <!-- FAB para abrir timeline (solo en descanso, en ejercicio está en la barra de acciones) -->
+      @if (estadoPantalla() === 'descanso') {
+        <button
+          type="button"
+          class="fixed bottom-6 left-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm border border-zinc-200/50 transition-all active:scale-95"
+          (click)="timelineAbierto.set(true)"
+          aria-label="Ver todos los ejercicios"
+          @fade
+        >
+          <span class="material-symbols-outlined text-zinc-700">list_alt</span>
+        </button>
+      }
+
+      <!-- Timeline drawer -->
+      <app-timeline-sesion
+        [isOpen]="timelineAbierto()"
+        (closed)="timelineAbierto.set(false)"
+        (previewEjercicio)="onPreviewEjercicio($event)"
+      />
 
       <!-- Loading overlay -->
       @if (cargando()) {
@@ -182,6 +213,7 @@ export class RealizarPlanComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private registroService = inject(RegistroSesionService);
+  private dialogService = inject(DialogService);
 
   // Estado desde el servicio
   readonly estadoPantalla = this.registroService.estadoPantalla;
@@ -204,6 +236,9 @@ export class RealizarPlanComponent implements OnInit {
 
   // Modal de confirmación
   readonly mostrarConfirmacionSalida = signal(false);
+
+  // Timeline drawer
+  readonly timelineAbierto = signal(false);
 
   // Para la animación de slide
   readonly pantallaIndex = computed(() => {
@@ -293,6 +328,31 @@ export class RealizarPlanComponent implements OnInit {
 
   reintentar(): void {
     this.inicializarSesion();
+  }
+
+  onPreviewEjercicio(event: { ejercicio: EjercicioPlan; index: number }): void {
+    const ej = event.ejercicio;
+    const currentIdx = this.registroService.ejercicioActualIndex();
+
+    const data: PreviewEjercicioData = {
+      ejercicio: ej,
+      index: event.index,
+      totalEjercicios: this.registroService.totalEjercicios(),
+      videoUrl: this.registroService.getVideoUrl(ej.ejercicio?.video),
+      posterUrl: this.registroService.getAssetUrl(ej.ejercicio?.portada, 800, 450),
+      estado:
+        event.index < currentIdx
+          ? 'completado'
+          : event.index === currentIdx
+            ? 'activo'
+            : 'pendiente',
+    };
+
+    this.dialogService.open(PreviewEjercicioDialogComponent, {
+      data,
+      maxWidth: '420px',
+      maxHeight: '85vh',
+    });
   }
 
   // Gestos táctiles para swipe
