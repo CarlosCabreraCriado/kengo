@@ -48,9 +48,9 @@ BASE_PORT=$(node -e "
 ")
 APP_PORT=$BASE_PORT
 API_PORT=$((BASE_PORT + 1))
-WEB_PORT=$((BASE_PORT + 2))
+LANDINGPAGE_PORT=$((BASE_PORT + 2))
 
-info "Puertos del registro: app=$APP_PORT, api=$API_PORT, web=$WEB_PORT"
+info "Puertos del registro: app=$APP_PORT, api=$API_PORT, landingpage=$LANDINGPAGE_PORT"
 
 # 3. Crear directorio ~/.caddy.d/ si no existe
 if [[ ! -d "$CADDY_DIR" ]]; then
@@ -74,8 +74,8 @@ kengo-api.localhost {
 	reverse_proxy localhost:${API_PORT}
 }
 
-kengo-web.localhost {
-	reverse_proxy localhost:${WEB_PORT}
+kengo-landingpage.localhost {
+	reverse_proxy localhost:${LANDINGPAGE_PORT}
 }
 CADDY
 info "Generado: $TARGET_FILE"
@@ -139,5 +139,5 @@ echo ""
 echo -e "${BOLD}Dominios configurados:${NC}"
 dim "https://kengo.localhost      → localhost:${APP_PORT}"
 dim "https://kengo-api.localhost  → localhost:${API_PORT}"
-dim "https://kengo-web.localhost  → localhost:${WEB_PORT}"
+dim "https://kengo-landingpage.localhost → localhost:${LANDINGPAGE_PORT}"
 echo ""

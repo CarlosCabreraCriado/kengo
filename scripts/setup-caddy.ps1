@@ -39,9 +39,9 @@ if (Test-Path $RegistryFile) {
 }
 $AppPort = $BasePort
 $ApiPort = $BasePort + 1
-$WebPort = $BasePort + 2
+$LandingpagePort = $BasePort + 2
 
-Write-Info "Puertos del registro: app=$AppPort, api=$ApiPort, web=$WebPort"
+Write-Info "Puertos del registro: app=$AppPort, api=$ApiPort, landingpage=$LandingpagePort"
 
 # 3. Crear directorio ~/.caddy.d/ si no existe
 if (-not (Test-Path $CaddyDir)) {
@@ -65,8 +65,8 @@ kengo-api.localhost {
 	reverse_proxy localhost:$ApiPort
 }
 
-kengo-web.localhost {
-	reverse_proxy localhost:$WebPort
+kengo-landingpage.localhost {
+	reverse_proxy localhost:$LandingpagePort
 }
 "@
 Set-Content -Path $TargetFile -Value $CaddyContent
@@ -121,5 +121,5 @@ Write-Host ""
 Write-Host "  Dominios configurados:" -ForegroundColor White
 Write-Dim "https://kengo.localhost      -> localhost:$AppPort"
 Write-Dim "https://kengo-api.localhost  -> localhost:$ApiPort"
-Write-Dim "https://kengo-web.localhost  -> localhost:$WebPort"
+Write-Dim "https://kengo-landingpage.localhost -> localhost:$LandingpagePort"
 Write-Host ""

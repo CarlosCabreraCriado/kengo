@@ -5,7 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 4202;
 
 // Directorio de archivos estáticos
-const staticDir = path.join(__dirname, '../../dist/apps/web/browser');
+const staticDir = path.join(__dirname, '../../dist/apps/landingpage/browser');
 
 // Servir archivos estáticos
 app.use(express.static(staticDir, {

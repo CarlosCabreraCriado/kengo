@@ -16,6 +16,7 @@ Kengo is a healthcare/physiotherapy management platform built with Angular 20. I
 kengo/
 ├── apps/
 │   ├── app/                    # Angular frontend application
+│   ├── landingpage/            # Angular landing page
 │   └── backend/                # Node.js/Express API
 └── libs/
     └── shared/

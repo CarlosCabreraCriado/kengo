@@ -1,30 +1,30 @@
 {
-  "name": "web",
+  "name": "landingpage",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "web",
-  "sourceRoot": "apps/web/src",
+  "sourceRoot": "apps/landingpage/src",
   "tags": [],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/web",
-        "browser": "apps/web/src/main.ts",
+        "outputPath": "dist/apps/landingpage",
+        "browser": "apps/landingpage/src/main.ts",
         "polyfills": ["zone.js"],
-        "tsConfig": "apps/web/tsconfig.app.json",
+        "tsConfig": "apps/landingpage/tsconfig.app.json",
         "assets": [
           {
             "glob": "**/*",
-            "input": "apps/web/public"
+            "input": "apps/landingpage/public"
           },
           {
             "glob": "favicon.ico",
-            "input": "apps/web/src"
+            "input": "apps/landingpage/src"
           }
         ],
-        "styles": ["apps/web/src/styles.css"]
+        "styles": ["apps/landingpage/src/styles.css"]
       },
       "configurations": {
         "production": {
@@ -58,10 +58,10 @@
       },
       "configurations": {
         "production": {
-          "buildTarget": "web:build:production"
+          "buildTarget": "landingpage:build:production"
         },
         "development": {
-          "buildTarget": "web:build:development"
+          "buildTarget": "landingpage:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -69,7 +69,7 @@
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",
       "options": {
-        "buildTarget": "web:build"
+        "buildTarget": "landingpage:build"
       }
     },
     "lint": {
@@ -79,17 +79,17 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/web/jest.config.ts",
-        "tsConfig": "apps/web/tsconfig.spec.json"
+        "jestConfig": "apps/landingpage/jest.config.ts",
+        "tsConfig": "apps/landingpage/tsconfig.spec.json"
       }
     },
     "serve-static": {
       "continuous": true,
       "executor": "@nx/web:file-server",
       "options": {
-        "buildTarget": "web:build",
+        "buildTarget": "landingpage:build",
         "port": 4202,
-        "staticFilePath": "dist/apps/web/browser",
+        "staticFilePath": "dist/apps/landingpage/browser",
         "spa": true
       }
     }

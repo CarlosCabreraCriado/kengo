@@ -16,9 +16,9 @@
     "watch": "nx build app --watch --configuration development",
     "test": "nx test app",
     "lint": "nx lint app",
-    "start:web": "nx serve web",
-    "build:web": "nx build web",
-    "lint:web": "nx lint web",
+    "start:landingpage": "nx serve landingpage",
+    "build:landingpage": "nx build landingpage",
+    "lint:landingpage": "nx lint landingpage",
     "graph": "nx graph",
     "e2e": "playwright test",
     "e2e:screenshots": "playwright test e2e/screenshots",
@@ -28,8 +28,8 @@
     "railway:start:frontend": "node apps/app/server.js",
     "railway:build:backend": "nx build backend",
     "railway:start:backend": "node dist/apps/backend/apps/backend/src/app.js",
-    "railway:build:web": "nx build web --configuration production",
-    "railway:start:web": "node apps/web/server.js"
+    "railway:build:landingpage": "nx build landingpage --configuration production",
+    "railway:start:landingpage": "node apps/landingpage/server.js"
   },
   "private": true,
   "dependencies": {

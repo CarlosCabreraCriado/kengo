@@ -3,7 +3,7 @@
 #
 # https://kengo.localhost      → App Angular  (4200)
 # https://kengo-api.localhost  → Backend API  (4201)
-# https://kengo-web.localhost  → Landing Page (4202)
+# https://kengo-landingpage.localhost → Landing Page (4202)
 
 kengo.localhost {
 	reverse_proxy localhost:4200
@@ -13,6 +13,6 @@ kengo-api.localhost {
 	reverse_proxy localhost:4201
 }
 
-kengo-web.localhost {
+kengo-landingpage.localhost {
 	reverse_proxy localhost:4202
 }

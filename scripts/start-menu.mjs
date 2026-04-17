@@ -45,7 +45,7 @@ function getOrRegisterPuertos() {
   }
 
   const base = registry.projects[projectName].base;
-  return { app: base, api: base + 1, web: base + 2, projectName, version: pkg.version };
+  return { app: base, api: base + 1, landingpage: base + 2, projectName, version: pkg.version };
 }
 
 function changePortSlot(projectName, slot) {
@@ -56,7 +56,7 @@ function changePortSlot(projectName, slot) {
     registered: registry.projects[projectName]?.registered || new Date().toISOString().slice(0, 10),
   };
   writeRegistry(registry);
-  return { app: base, api: base + 1, web: base + 2 };
+  return { app: base, api: base + 1, landingpage: base + 2 };
 }
 
 // ── Helpers de UI ────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ function buildBanner(ports) {
 function buildProyectos(ports) {
   return [
     { name: `App   ${styleText('dim', `(Angular Frontend :${ports.app} → kengo.localhost)`)}`, value: 'app' },
-    { name: `Web   ${styleText('dim', `(Angular Web     :${ports.web} → kengo-web.localhost)`)}`, value: 'web' },
+    { name: `Landing ${styleText('dim', `(Angular Landing :${ports.landingpage} → kengo-landingpage.localhost)`)}`, value: 'landingpage' },
     { name: `Backend ${styleText('dim', `(Node.js API   :${ports.api} → kengo-api.localhost)`)}`, value: 'backend' },
     { name: `App + Backend ${styleText('dim', `(Full Stack :${ports.app} + :${ports.api} → kengo.localhost + kengo-api.localhost)`)}`, value: 'fullstack' },
     { name: styleText('dim', 'Cambiar rango de puertos'), value: 'change-ports' },
@@ -108,9 +108,9 @@ function buildComandos(ports) {
       development: [['npx', ['nx', 'serve', 'app', `--port=${ports.app}`]]],
       production: [['npx', ['nx', 'serve', 'app', '--configuration=production', `--port=${ports.app}`]]],
     },
-    web: {
-      development: [['npx', ['nx', 'serve', 'web', `--port=${ports.web}`]]],
-      production: [['npx', ['nx', 'serve', 'web', '--configuration=production', `--port=${ports.web}`]]],
+    landingpage: {
+      development: [['npx', ['nx', 'serve', 'landingpage', `--port=${ports.landingpage}`]]],
+      production: [['npx', ['nx', 'serve', 'landingpage', '--configuration=production', `--port=${ports.landingpage}`]]],
     },
     backend: {
       development: [['npx', ['nx', 'dev', 'backend']]],
@@ -225,7 +225,7 @@ async function main() {
     const portEnv = {
       KENGO_PORT_APP: String(ports.app),
       KENGO_PORT_API: String(ports.api),
-      KENGO_PORT_WEB: String(ports.web),
+      KENGO_PORT_LANDINGPAGE: String(ports.landingpage),
     };
 
     const procesos = comandos.map(([cmd, args]) => {
