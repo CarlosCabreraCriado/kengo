@@ -5,14 +5,12 @@ import {
   signal,
   OnInit,
 } from '@angular/core';
+import { assetUrl } from '../../../../core/utils/asset-url';
 import { Router, ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { environment as env } from '../../../../../environments/environment';
 
 // Servicios
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -22,6 +20,8 @@ import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { ComentariosPacienteService } from '../../data-access/comentarios-paciente.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
+import { ConvexService } from '../../../../core/convex/convex.service';
+import { api } from '../../../../../../../../convex/_generated/api';
 
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -30,7 +30,6 @@ import { GestionAccesoDialogComponent } from '../../components/gestion-acceso-di
 // Tipos
 import {
   Usuario,
-  UsuarioDirectus,
   Plan,
   EstadoPlan,
   RegistroEjercicioDirectus,
@@ -39,14 +38,6 @@ import {
   NotificacionFisio,
 } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
-
-interface DirectusUserResponse {
-  data: UsuarioDirectus;
-}
-
-interface RegistrosResponse {
-  data: RegistroEjercicioDirectus[];
-}
 
 interface ComentarioSesion {
   texto: string;
@@ -92,7 +83,6 @@ export class PacienteDetailComponent implements OnInit {
   Math = Math;
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private http = inject(HttpClient);
   private dialogService = inject(DialogService);
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
@@ -101,6 +91,7 @@ export class PacienteDetailComponent implements OnInit {
   private cumplimientoService = inject(CumplimientoService);
   private comentariosService = inject(ComentariosPacienteService);
   private asignacionesService = inject(AsignacionesService);
+  private convex = inject(ConvexService);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
   isMovil = toSignal(
@@ -207,17 +198,12 @@ export class PacienteDetailComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const response = await firstValueFrom(
-        this.http.get<DirectusUserResponse>(`${env.DIRECTUS_URL}/users/${id}`, {
-          params: {
-            fields: 'id,first_name,last_name,email,avatar,telefono,direccion,magic_link_url,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,clinicas.id_puesto',
-          },
-          withCredentials: true,
-        })
-      );
+      const data = await this.convex.query(api.users.queries.getByLegacyId, {
+        legacyDirectusId: id,
+      });
 
-      if (response?.data) {
-        const usuario = this.sessionService.transformarUsuarioDirectus(response.data);
+      if (data) {
+        const usuario = this.sessionService.transformarUsuarioConvex(data);
         this.paciente.set(usuario);
       } else {
         this.error.set('Paciente no encontrado');
@@ -353,25 +339,28 @@ export class PacienteDetailComponent implements OnInit {
     const desde = sortedFechas[0];
     const hasta = sortedFechas[sortedFechas.length - 1];
 
-    const response = await firstValueFrom(
-      this.http.get<RegistrosResponse>(`${env.DIRECTUS_URL}/items/planes_registros`, {
-        params: {
-          fields: 'id_registro,plan_item,paciente,fecha_hora,completado,repeticiones_realizadas,duracion_real_seg,dolor_escala,nota_paciente',
-          filter: JSON.stringify({
-            _and: [
-              { paciente: { _eq: pacienteId } },
-              { completado: { _eq: true } },
-              { fecha_hora: { _gte: desde + 'T00:00:00' } },
-              { fecha_hora: { _lte: hasta + 'T23:59:59' } },
-            ],
-          }),
-          sort: '-fecha_hora',
-          limit: '-1',
-        },
-        withCredentials: true,
-      })
+    const records = await this.convex.query(
+      api.records.queries.listByPacienteInRange,
+      {
+        pacienteId,
+        desde,
+        hasta,
+        soloCompletados: true,
+      },
     );
-    return response?.data || [];
+
+    // Mapear el shape Convex (camelCase) al shape Directus (snake_case) que el resto del componente espera.
+    return (records ?? []).map((r) => ({
+      id_registro: r._id as unknown as number,
+      plan_item: r.planExerciseId as unknown as number,
+      paciente: r.pacienteId,
+      fecha_hora: r.fechaHora,
+      completado: r.completado,
+      repeticiones_realizadas: r.repeticionesRealizadas,
+      duracion_real_seg: r.duracionRealSeg,
+      dolor_escala: r.dolorEscala,
+      nota_paciente: r.notaPaciente,
+    })) as RegistroEjercicioDirectus[];
   }
 
   private agruparRegistrosPorFecha(
@@ -528,8 +517,9 @@ export class PacienteDetailComponent implements OnInit {
     }
   }
 
-  buscarNotificacion(idRegistro: number): NotificacionFisio | undefined {
-    return this.comentarios().find(n => n.id_registro === idRegistro);
+  buscarNotificacion(idRegistro: number | string): NotificacionFisio | undefined {
+    const key = String(idRegistro);
+    return this.comentarios().find(n => n.id_registro !== null && String(n.id_registro) === key);
   }
 
   formatearFechaComentario(fecha: string): string {
@@ -544,7 +534,7 @@ export class PacienteDetailComponent implements OnInit {
   avatarUrl(): string | null {
     const p = this.paciente();
     if (!p?.avatar) return null;
-    return `${env.DIRECTUS_URL}/assets/${p.avatar}?fit=cover&width=128&height=128&quality=80`;
+    return `${assetUrl(p.avatar, { fit: 'cover', width: 128, height: 128, quality: 80 })}`;
   }
 
   fullName(): string {
@@ -788,57 +778,31 @@ export class PacienteDetailComponent implements OnInit {
   async descargarInforme(plan: Plan) {
     if (this.descargandoInforme()) return;
 
+    const planConvexId = (plan as any)._convexId;
+    if (!planConvexId) {
+      alert('No se puede generar el informe para este plan');
+      return;
+    }
+
     this.descargandoInforme.set(plan.id_plan);
 
     try {
-      const response = await firstValueFrom(
-        this.http.get(`${env.API_URL}/plan/${plan.id_plan}/pdf`, {
-          responseType: 'blob',
-          observe: 'response',
-          withCredentials: true,
-        })
-      );
+      const res = await this.convex.action(api.pdf.actions.generatePlanPdf, {
+        planId: planConvexId,
+      });
+      if (!res?.url) throw new Error('No se pudo generar el PDF');
 
-      if (response.body) {
-        // Extraer nombre del archivo del header Content-Disposition
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `plan_${plan.id_plan}.pdf`;
-
-        if (contentDisposition) {
-          const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
-          if (match && match[1]) {
-            filename = match[1];
-          }
-        }
-
-        // Crear blob y descargar
-        const blob = new Blob([response.body], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        window.URL.revokeObjectURL(url);
-      }
-    } catch (err: any) {
+      const response = await fetch(res.url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = res.filename;
+      link.click();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
       console.error('Error descargando informe:', err);
-
-      // Intentar parsear el error JSON del backend
-      let errorMessage = 'Error al descargar el informe';
-
-      if (err.error instanceof Blob) {
-        try {
-          const errorText = await err.error.text();
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || errorMessage;
-        } catch {
-          // No se pudo parsear el error
-        }
-      } else if (err.error?.error) {
-        errorMessage = err.error.error;
-      }
-
-      alert(errorMessage);
+      alert('Error al descargar el informe');
     } finally {
       this.descargandoInforme.set(null);
     }

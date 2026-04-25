@@ -4,7 +4,8 @@
  */
 
 import { DiaSemana, UUID } from '../types/common';
-import { VisibilidadRutina } from '../directus/routines.directus';
+
+export type VisibilidadRutina = 'privado' | 'clinica';
 
 /**
  * Payload para crear una nueva rutina

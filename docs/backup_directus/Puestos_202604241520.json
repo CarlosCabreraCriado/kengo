@@ -1,0 +1,15 @@
+{
+"Puestos": [
+	{
+		"id" : 1,
+		"puesto" : "Fisioterapeuta"
+	},
+	{
+		"id" : 2,
+		"puesto" : "Paciente"
+	},
+	{
+		"id" : 4,
+		"puesto" : "Administrador-Clinica"
+	}
+]}

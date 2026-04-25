@@ -5,29 +5,12 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
-import { environment as env } from '../../../../../environments/environment';
+import { ConvexService } from '../../../../core/convex/convex.service';
+import { api } from '../../../../../../../../convex/_generated/api';
 import { RegistroEjercicio, DiaSemana } from '../../../../../types/global';
-
-interface RegistroEjercicioDirectus {
-  id_registro: number;
-  plan_item: number | { id: number };
-  paciente: string | { id: string };
-  fecha_hora: string;
-  completado: boolean;
-  repeticiones_realizadas?: number;
-  duracion_real_seg?: number;
-  dolor_escala?: number;
-  nota_paciente?: string;
-}
-
-interface RegistrosResponse {
-  data: RegistroEjercicioDirectus[];
-}
 
 interface DiaEstadistica {
   diaSemana: string;
@@ -55,10 +38,10 @@ interface EjercicioReciente {
   },
 })
 export class ActividadEstadisticasComponent implements OnInit {
-  private http = inject(HttpClient);
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
   private actividadHoyService = inject(ActividadHoyService);
+  private convex = inject(ConvexService);
 
   private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   private readonly DIAS_CORTOS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
@@ -271,46 +254,51 @@ export class ActividadEstadisticasComponent implements OnInit {
     pacienteId: string,
     desde: Date
   ): Promise<RegistroEjercicio[]> {
-    const filter = {
-      _and: [
-        { paciente: { _eq: pacienteId } },
-        { fecha_hora: { _gte: desde.toISOString() } },
-        { completado: { _eq: true } },
-      ],
-    };
-
     try {
-      const response = await firstValueFrom(
-        this.http.get<RegistrosResponse>(
-          `${env.DIRECTUS_URL}/items/planes_registros`,
-          {
-            params: {
-              filter: JSON.stringify(filter),
-              sort: '-fecha_hora',
-            },
-            withCredentials: true,
-          }
-        )
+      const records = await this.convex.query(
+        api.records.queries.listByPacienteSinceDate,
+        {
+          pacienteId,
+          desde: desde.toISOString().split('T')[0],
+          soloCompletados: true,
+        },
       );
 
-      return (response?.data || []).map((r) => this.transformRegistro(r));
+      // Ordenar desc por fecha_hora (Convex devuelve sin orden garantizado)
+      const sorted = [...(records ?? [])].sort((a, b) =>
+        b.fechaHora.localeCompare(a.fechaHora),
+      );
+
+      return sorted.map((r) => this.transformRegistroConvex(r));
     } catch (error) {
       console.error('Error al obtener registros:', error);
       return [];
     }
   }
 
-  private transformRegistro(r: RegistroEjercicioDirectus): RegistroEjercicio {
+  private transformRegistroConvex(r: {
+    _id: string;
+    planExerciseId: string;
+    pacienteId: string;
+    fechaHora: string;
+    completado: boolean;
+    repeticionesRealizadas?: number;
+    duracionRealSeg?: number;
+    dolorEscala?: number;
+    notaPaciente?: string;
+  }): RegistroEjercicio {
     return {
-      id_registro: r.id_registro,
-      plan_item: typeof r.plan_item === 'object' ? r.plan_item.id : r.plan_item,
-      paciente: typeof r.paciente === 'object' ? r.paciente.id : r.paciente,
-      fecha_hora: r.fecha_hora,
+      // id_registro era number en Directus; con Convex es Id string. El UI no
+      // depende de unicidad numérica, así que generamos hash trivial desde el _id.
+      id_registro: undefined as unknown as number,
+      plan_item: r.planExerciseId as unknown as number,
+      paciente: r.pacienteId,
+      fecha_hora: r.fechaHora,
       completado: r.completado,
-      repeticiones_realizadas: r.repeticiones_realizadas,
-      duracion_real_seg: r.duracion_real_seg,
-      dolor_escala: r.dolor_escala,
-      nota_paciente: r.nota_paciente,
+      repeticiones_realizadas: r.repeticionesRealizadas,
+      duracion_real_seg: r.duracionRealSeg,
+      dolor_escala: r.dolorEscala,
+      nota_paciente: r.notaPaciente,
     };
   }
 

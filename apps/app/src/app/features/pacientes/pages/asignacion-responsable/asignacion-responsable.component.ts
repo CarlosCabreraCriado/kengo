@@ -5,31 +5,27 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { assetUrl } from '../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { environment as env } from '../../../../../environments/environment';
 
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
+import { ConvexService } from '../../../../core/convex/convex.service';
+import { api } from '../../../../../../../../convex/_generated/api';
 
 import {
   Usuario,
-  UsuarioDirectus,
   UUID,
   PUESTO_ADMINISTRADOR,
   BulkAsignacionPayload,
 } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
-
-interface DirectusPage<T> {
-  data: T[];
-}
 
 @Component({
   selector: 'app-asignacion-responsable',
@@ -43,11 +39,11 @@ interface DirectusPage<T> {
 })
 export class AsignacionResponsableComponent {
   private router = inject(Router);
-  private http = inject(HttpClient);
   private sessionService = inject(SessionService);
   private clinicasService = inject(ClinicasService);
   private asignacionesService = inject(AsignacionesService);
   private breakpointObserver = inject(BreakpointObserver);
+  private convex = inject(ConvexService);
 
   constructor() {
     // Auto-seleccionar primera clínica admin cuando los datos estén disponibles
@@ -154,28 +150,13 @@ export class AsignacionResponsableComponent {
   }
 
   private async cargarPacientes(clinicaId: number): Promise<Usuario[]> {
-    const response = await firstValueFrom(
-      this.http.get<DirectusPage<UsuarioDirectus>>(`${env.DIRECTUS_URL}/users`, {
-        params: {
-          fields:
-            'id,first_name,last_name,email,avatar,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,clinicas.id_puesto',
-          filter: JSON.stringify({
-            clinicas: {
-              _and: [
-                { id_clinica: { _eq: clinicaId } },
-                { id_puesto: { _eq: 2 } }, // PUESTO_PACIENTE
-              ],
-            },
-          }),
-          sort: 'first_name,last_name',
-          limit: '500',
-        },
-        withCredentials: true,
-      }),
+    const result = await this.convex.query(
+      api.users.queries.listPatientsByClinic,
+      { clinicLegacyId: clinicaId, limit: 500 },
     );
-
-    const data = response?.data ?? [];
-    return data.map((u) => this.sessionService.transformarUsuarioDirectus(u));
+    return (result?.results ?? []).map((u) =>
+      this.sessionService.transformarUsuarioConvex(u),
+    );
   }
 
   cambiarAsignacion(pacienteId: UUID, fisioId: string) {
@@ -263,7 +244,7 @@ export class AsignacionResponsableComponent {
 
   avatarUrl(p: Usuario): string | null {
     return p?.avatar
-      ? `${env.DIRECTUS_URL}/assets/${p.avatar}?fit=cover&width=80&height=80&quality=80`
+      ? `${assetUrl(p.avatar, { fit: 'cover', width: 80, height: 80, quality: 80 })}`
       : null;
   }
 

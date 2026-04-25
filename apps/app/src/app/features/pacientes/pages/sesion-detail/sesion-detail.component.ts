@@ -1,15 +1,15 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { environment as env } from '../../../../../environments/environment';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
-import type { CumplimientoDia, DiaSemana } from '../../../../../types/global';
+import type { DiaSemana } from '../../../../../types/global';
+import { assetUrl } from '../../../../core/utils/asset-url';
+import { ConvexService } from '../../../../core/convex/convex.service';
+import { api } from '../../../../../../../../convex/_generated/api';
 
 const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -78,9 +78,9 @@ interface PlanAgendadoDetalle {
 export class SesionDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private http = inject(HttpClient);
   private breakpointObserver = inject(BreakpointObserver);
   private cumplimientoService = inject(CumplimientoService);
+  private convex = inject(ConvexService);
 
   isMovil = toSignal(
     this.breakpointObserver
@@ -143,58 +143,60 @@ export class SesionDetailComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const fechaInicio = `${this.fecha()}T00:00:00`;
-      const siguiente = new Date(this.fecha());
-      siguiente.setDate(siguiente.getDate() + 1);
-      const fechaFin = `${siguiente.toISOString().split('T')[0]}T00:00:00`;
-
-      const response = await firstValueFrom(
-        this.http.get<{ data: RegistroExpandido[] }>(
-          `${env.DIRECTUS_URL}/items/planes_registros`,
-          {
-            params: {
-              fields: [
-                'id_registro',
-                'fecha_hora',
-                'completado',
-                'repeticiones_realizadas',
-                'duracion_real_seg',
-                'dolor_escala',
-                'esfuerzo_escala',
-                'nota_paciente',
-                'plan_item.id',
-                'plan_item.sort',
-                'plan_item.series',
-                'plan_item.repeticiones',
-                'plan_item.duracion_seg',
-                'plan_item.instrucciones_paciente',
-                'plan_item.ejercicio.id_ejercicio',
-                'plan_item.ejercicio.nombre_ejercicio',
-                'plan_item.ejercicio.portada',
-                'plan_item.plan.id_plan',
-                'plan_item.plan.titulo',
-              ].join(','),
-              filter: JSON.stringify({
-                _and: [
-                  { paciente: { _eq: this.pacienteId() } },
-                  { completado: { _eq: true } },
-                  { fecha_hora: { _gte: fechaInicio } },
-                  { fecha_hora: { _lt: fechaFin } },
-                ],
-              }),
-              sort: 'plan_item.plan.id_plan,plan_item.sort',
-            },
-            withCredentials: true,
-          },
-        ),
+      const records = await this.convex.query(
+        api.records.queries.listByPacienteAndDateExpanded,
+        {
+          pacienteId: this.pacienteId(),
+          fecha: this.fecha(),
+          soloCompletados: true,
+        },
       );
 
-      const registros = response?.data || [];
+      const validos: RegistroExpandido[] = [];
+      for (const r of records ?? []) {
+        if (!r.planExercise || !r.planExercise.exercise || !r.planExercise.plan) {
+          continue;
+        }
+        validos.push({
+          id_registro: r._id as unknown as number,
+          fecha_hora: r.fechaHora,
+          completado: r.completado,
+          repeticiones_realizadas: r.repeticionesRealizadas,
+          duracion_real_seg: r.duracionRealSeg,
+          dolor_escala: r.dolorEscala,
+          esfuerzo_escala: r.esfuerzoEscala,
+          nota_paciente: r.notaPaciente,
+          plan_item: {
+            id: r.planExercise.legacyId ?? (r.planExercise._id as unknown as number),
+            sort: r.planExercise.sort,
+            series: r.planExercise.series,
+            repeticiones: r.planExercise.repeticiones,
+            duracion_seg: r.planExercise.duracionSeg,
+            instrucciones_paciente: r.planExercise.instruccionesPaciente,
+            ejercicio: {
+              id_ejercicio: r.planExercise.exercise.legacyId ?? 0,
+              nombre_ejercicio: r.planExercise.exercise.nombreEjercicio,
+              portada: r.planExercise.exercise.portada ?? null,
+            },
+            plan: {
+              id_plan: r.planExercise.plan.legacyId ?? 0,
+              titulo: r.planExercise.plan.titulo,
+            },
+          },
+        });
+      }
 
-      this.grupos.set(this.agruparPorPlan(registros));
+      // Sort por plan.id_plan, sort
+      validos.sort((a, b) => {
+        if (a.plan_item.plan.id_plan !== b.plan_item.plan.id_plan) {
+          return a.plan_item.plan.id_plan - b.plan_item.plan.id_plan;
+        }
+        return a.plan_item.sort - b.plan_item.sort;
+      });
 
-      // Si no hay registros, cargar planes agendados desde cumplimiento
-      if (registros.length === 0) {
+      this.grupos.set(this.agruparPorPlan(validos));
+
+      if (validos.length === 0) {
         await this.cargarPlanesAgendados();
       }
     } catch (err) {
@@ -241,70 +243,31 @@ export class SesionDetailComponent implements OnInit {
       const diaSemana =
         DIAS_SEMANA[new Date(this.fecha() + 'T12:00:00').getDay()];
 
-      type PlanEjercicioItem = {
-        id: number;
-        sort: number;
-        series: number | null;
-        repeticiones: number | null;
-        duracion_seg: number | null;
-        dias_semana: DiaSemana[] | null;
-        ejercicio: {
-          id_ejercicio: number;
-          nombre_ejercicio: string;
-          portada: string | null;
-        };
-      };
-
       const ejerciciosPorPlan = await Promise.all(
         planesConEjercicios.map((p) =>
-          firstValueFrom(
-            this.http
-              .get<{ data: PlanEjercicioItem[] }>(
-                `${env.DIRECTUS_URL}/items/planes_ejercicios`,
-                {
-                  params: {
-                    fields: [
-                      'id',
-                      'sort',
-                      'series',
-                      'repeticiones',
-                      'duracion_seg',
-                      'dias_semana',
-                      'ejercicio.id_ejercicio',
-                      'ejercicio.nombre_ejercicio',
-                      'ejercicio.portada',
-                    ].join(','),
-                    filter: JSON.stringify({
-                      plan: { _eq: p.plan_id },
-                    }),
-                    sort: 'sort',
-                    limit: '-1',
-                  },
-                  withCredentials: true,
-                },
-              )
-              .pipe(map((resp) => resp?.data ?? [])),
-          ),
+          this.convex.query(api.plans.queries.listExercisesByPlanId, {
+            planLegacyId: p.plan_id,
+          }),
         ),
       );
 
-      console.log(ejerciciosPorPlan);
       this.planesAgendados.set(
         planesConEjercicios.map((p, i) => {
-          const items = ejerciciosPorPlan[i].filter((item) => {
-            if (!item.dias_semana || item.dias_semana.length === 0) return true;
-            return item.dias_semana.includes(diaSemana);
+          const items = (ejerciciosPorPlan[i] ?? []).filter((item) => {
+            const dias = item.diasSemana as DiaSemana[] | undefined;
+            if (!dias || dias.length === 0) return true;
+            return dias.includes(diaSemana);
           });
           return {
             ...p,
             ejercicios: items.map((item) => ({
-              id: item.id,
+              id: item.legacyId ?? (item._id as unknown as number),
               sort: item.sort,
-              nombre: item.ejercicio.nombre_ejercicio,
-              portada: item.ejercicio.portada,
-              series: item.series,
-              repeticiones: item.repeticiones,
-              duracion_seg: item.duracion_seg,
+              nombre: item.ejercicio?.nombreEjercicio ?? '',
+              portada: item.ejercicio?.portada ?? null,
+              series: item.series ?? null,
+              repeticiones: item.repeticiones ?? null,
+              duracion_seg: item.duracionSeg ?? null,
             })),
           };
         }),
@@ -342,7 +305,7 @@ export class SesionDetailComponent implements OnInit {
 
   assetUrl(portada: string | null): string | null {
     if (!portada) return null;
-    return `${env.DIRECTUS_URL}/assets/${portada}?fit=cover&width=160&height=160&quality=80`;
+    return `${assetUrl(portada, { fit: 'cover', width: 160, height: 160, quality: 80 })}`;
   }
 
   formatDuracion(seg: number): string {

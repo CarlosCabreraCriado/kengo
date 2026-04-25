@@ -1,9 +1,8 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
+import { rawAssetUrl } from '../utils/asset-url';
 
 import { ClinicasService } from '../../features/clinica/data-access/clinicas.service';
 import type { Clinica } from '../../../types/global';
-import { environment as env } from '../../../environments/environment';
-
 interface ColorPalette {
   primary: string;
   primaryDark: string;
@@ -131,7 +130,7 @@ export class ThemeService {
    */
   private actualizarLogo(clinica: Clinica | null): void {
     if (clinica?.logo) {
-      const logoUrl = `${env.DIRECTUS_URL}/assets/${clinica.logo}`;
+      const logoUrl = `${rawAssetUrl(clinica.logo)}`;
       this.logoUrl.set(logoUrl);
       this.logoIconUrl.set(logoUrl);
       console.log('[ThemeService] Logo de clínica aplicado:', logoUrl);
@@ -172,7 +171,7 @@ export class ThemeService {
     const expiresAt = new Date(now.getTime() + this.CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
     const primary = clinica.color_primario || this.DEFAULT_PRIMARY;
     const logoFileId = clinica.logo || null;
-    const logoUrl = logoFileId ? `${env.DIRECTUS_URL}/assets/${logoFileId}` : this.DEFAULT_LOGO;
+    const logoUrl = logoFileId ? `${rawAssetUrl(logoFileId)}` : this.DEFAULT_LOGO;
     const logoIconUrl = logoFileId ? logoUrl : this.DEFAULT_LOGO_ICON;
 
     const cache: ThemeCacheV1 = {

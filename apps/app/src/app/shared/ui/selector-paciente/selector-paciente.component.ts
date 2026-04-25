@@ -1,16 +1,12 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { assetUrl } from '../../../core/utils/asset-url';
 
 import { SessionService } from '../../../core/auth/services/session.service';
-import { Usuario, UsuarioDirectus } from '../../../../types/global';
-import { environment as env } from '../../../../environments/environment';
-
-interface DirectusPage<T> {
-  data: T[];
-}
+import { ConvexService } from '../../../core/convex/convex.service';
+import { Usuario } from '../../../../types/global';
+import { api } from '../../../../../../../convex/_generated/api';
 
 @Component({
   selector: 'app-selector-paciente',
@@ -432,8 +428,8 @@ interface DirectusPage<T> {
 })
 export class SelectorPacienteComponent implements OnInit {
   private dialogRef = inject(DialogRef<Usuario>);
-  private http = inject(HttpClient);
   private sessionService = inject(SessionService);
+  private convex = inject(ConvexService);
 
   busqueda = '';
 
@@ -467,26 +463,33 @@ export class SelectorPacienteComponent implements OnInit {
 
     this.isLoading.set(true);
     try {
-      const filter = { clinicas: { id_clinica: { _in: cids } } };
-
-      const response = await firstValueFrom(
-        this.http.get<DirectusPage<UsuarioDirectus>>(
-          `${env.DIRECTUS_URL}/users`,
-          {
-            params: {
-              fields:
-                'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,telefono,direccion',
-              sort: 'first_name,last_name',
-              limit: '200',
-              filter: JSON.stringify(filter),
-            },
-          }
-        )
+      // Pedir pacientes por clínica en paralelo y deduplicar por _id
+      const allByClinic = await Promise.all(
+        cids.map((cid) =>
+          this.convex.query(api.users.queries.listPatientsByClinic, {
+            clinicLegacyId: cid,
+            limit: 200,
+          }),
+        ),
       );
 
-      const usuarios: Usuario[] = (response?.data ?? []).map((u) =>
-        this.sessionService.transformarUsuarioDirectus(u)
+      const seen = new Set<string>();
+      const usuarios: Usuario[] = [];
+      for (const block of allByClinic) {
+        for (const u of block.results) {
+          if (seen.has(u._id)) continue;
+          seen.add(u._id);
+          usuarios.push(this.sessionService.transformarUsuarioConvex(u));
+        }
+      }
+
+      // Sort por nombre
+      usuarios.sort((a, b) =>
+        `${a.first_name} ${a.last_name}`.localeCompare(
+          `${b.first_name} ${b.last_name}`,
+        ),
       );
+
       this.pacientes.set(usuarios);
     } catch (error) {
       console.error('Error cargando pacientes:', error);
@@ -514,7 +517,7 @@ export class SelectorPacienteComponent implements OnInit {
   avatarUrl(p: Usuario): string | null {
     const id_avatar = p?.avatar;
     return id_avatar
-      ? `${env.DIRECTUS_URL}/assets/${id_avatar}?fit=cover&width=96&height=96&quality=80`
+      ? `${assetUrl(id_avatar, { fit: 'cover', width: 96, height: 96, quality: 80 })}`
       : null;
   }
 }

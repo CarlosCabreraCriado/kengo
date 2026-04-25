@@ -5,12 +5,12 @@
 export type TipoNotificacionFisio = 'comentario' | 'dolor_alto';
 
 export interface NotificacionFisio {
-  id: number;
+  id: string;
   tipo: TipoNotificacionFisio;
   paciente: string;
-  id_clinica: number;
-  id_registro: number | null;
-  id_sesion: number | null;
+  id_clinica: string;
+  id_registro: string | null;
+  id_sesion: string | null;
   fecha_registro: string;
   titulo_plan: string | null;
   nombre_ejercicio: string | null;
@@ -38,7 +38,7 @@ export type CategoriaNotificacion = 'comentario_paciente';
  * Diseñada para ser independiente de la tabla de origen.
  */
 export interface NotificacionApp {
-  id: number;
+  id: string;
   fuente: string;
   categoria: CategoriaNotificacion;
   emisor_nombre: string;

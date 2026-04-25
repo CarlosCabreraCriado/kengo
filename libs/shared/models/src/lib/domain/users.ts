@@ -44,6 +44,8 @@ export interface ClinicaUsuario {
  */
 export interface Usuario {
   id: UUID;
+  /** ID de Convex (_id) — disponible cuando el usuario se cargó desde Convex */
+  convexId?: string;
   avatar: string;
   first_name: string;
   last_name: string;

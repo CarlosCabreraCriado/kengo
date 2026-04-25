@@ -1,22 +1,20 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
-import { signal, computed, inject } from '@angular/core';
-import { environment as env } from '../../../../environments/environment';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import {
   RolUsuario,
   Usuario,
-  UsuarioDirectus,
-  ClinicaUsuarioDirectus,
   PUESTO_FISIOTERAPEUTA,
   PUESTO_PACIENTE,
   PUESTO_ADMINISTRADOR,
 } from '../../../../types/global';
-import { firstValueFrom } from 'rxjs';
+import { ConvexService } from '../../convex/convex.service';
+import { BetterAuthService } from './better-auth.service';
+import { api } from '../../../../../../../convex/_generated/api';
+import { rawAssetUrl } from '../../utils/asset-url';
 
 /**
- * SessionService (formerly AppService)
- * Manages the current user session state
+ * SessionService — gestiona el estado del usuario autenticado.
+ * Tras la consolidación a Convex-only, esta clase consume exclusivamente
+ * `api.users.queries.me`. La cookie/sesión la gestiona Better-Auth.
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -24,12 +22,10 @@ export class SessionService {
   public rolUsuario = this._rolUsuario;
   public permitirMultiRol = signal(false);
 
-  //Señales privadas:
   private _usuario = signal<Usuario | null>(null);
   private _loading = signal<boolean>(false);
   private _error = signal<string | null>(null);
 
-  //Señales publicas (solo lectura):
   public usuario = computed(() => this._usuario());
   public isLoggedIn = computed(() => this._usuario() !== null);
   public loading = computed(() => this._loading());
@@ -40,13 +36,11 @@ export class SessionService {
   });
   public misclinicas = computed(() => this._usuario()?.clinicas ?? []);
 
-  //Servicios:
-  private http = inject(HttpClient);
-  private router = inject(Router);
+  private convex = inject(ConvexService);
+  private betterAuth = inject(BetterAuthService);
 
   setRolUsuario(rol: RolUsuario) {
     this._rolUsuario.set(rol);
-    console.warn('Rol de usuario actualizado:', this.rolUsuario());
   }
 
   toggleRolUsuario() {
@@ -55,7 +49,6 @@ export class SessionService {
   }
 
   inicializarApp() {
-    console.warn('Inicializando app');
     this.cargarMiUsuario();
   }
 
@@ -63,31 +56,37 @@ export class SessionService {
     return this.cargarMiUsuario();
   }
 
+  /**
+   * Limpia el usuario actual del estado (sin tocar la sesión Better-Auth).
+   */
+  limpiar(): void {
+    this._usuario.set(null);
+    this._error.set(null);
+    localStorage.removeItem('carrito:last_fisio_id');
+  }
+
   async cargarMiUsuario(): Promise<void> {
     this._loading.set(true);
     this._error.set(null);
     try {
-      const res = await this.http
-        .get<{ data: UsuarioDirectus }>(`${env.DIRECTUS_URL}/users/me`, {
-          params: {
-            fields:
-              'id,first_name,last_name,email,email_verified,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,telefono,direccion,postal,numero_colegiado',
-          },
-        })
-        .toPromise();
+      if (!this.betterAuth.hasStoredSession()) {
+        this._usuario.set(null);
+        return;
+      }
 
-      if (res && res.data) {
-        const usuario: Usuario = this.transformarUsuarioDirectus(res.data);
+      const convexUser = await this.convex.query(api.users.queries.me, {});
+      if (!convexUser) {
+        this._usuario.set(null);
+        return;
+      }
 
-        console.log('Usuario cargado:', usuario);
-        this._usuario.set(usuario);
-        if (usuario.esFisio) {
-          localStorage.setItem('carrito:last_fisio_id', usuario.id);
-        } else {
-          localStorage.removeItem('carrito:last_fisio_id');
-        }
+      const usuario = this.transformarUsuarioConvex(convexUser);
+      this._usuario.set(usuario);
+
+      if (usuario.esFisio) {
+        localStorage.setItem('carrito:last_fisio_id', usuario.id);
       } else {
-        throw new Error('Respuesta inválida del servidor');
+        localStorage.removeItem('carrito:last_fisio_id');
       }
     } catch (err: unknown) {
       console.error('Error al cargar el usuario:', err);
@@ -97,8 +96,7 @@ export class SessionService {
     } finally {
       const u = this._usuario();
       if (u?.esFisio && u?.esPaciente) {
-        // Usuario con roles mixtos (fisio en una clínica, paciente en otra)
-        this._rolUsuario.set('fisio'); // Default a fisio
+        this._rolUsuario.set('fisio');
         this.permitirMultiRol.set(true);
       } else if (u?.esFisio) {
         this._rolUsuario.set('fisio');
@@ -112,66 +110,50 @@ export class SessionService {
     }
   }
 
-  async uploadFile(file: File, title?: string): Promise<string> {
-    const form = new FormData();
-    form.append('file', file);
-    if (title) form.append('title', title);
-
-    const res = await firstValueFrom(
-      this.http.post<{ data: { id: string } }>(
-        `${env.DIRECTUS_URL}/files`,
-        form,
-        {
-          // Si usas sesión por cookies:
-          withCredentials: true,
-        },
-      ),
-    );
-    return res.data.id;
-  }
-
-  transformarUsuarioDirectus(u: UsuarioDirectus): Usuario {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transformarUsuarioConvex(u: any): Usuario {
     const clinicas =
-      u.clinicas?.map((c) => ({
-        id_clinica: c.id_clinica,
+      u.clinicas?.map((c: any) => ({
+        id_clinica: c.id_clinica ?? 0,
         id_puesto: c.id_puesto ?? null,
-        puesto: c.puesto?.puesto ?? null,
+        puesto: c.puesto ?? null,
       })) || [];
 
-    // Compute roles from clinic relationships
-    const { esFisio, esPaciente } = this.computeRoleFromClinics(u.clinicas || []);
+    // Si vienen `esFisio`/`esPaciente` en el doc usamos esos. Si no, los
+    // computamos desde las clínicas (caso de queries que no enriquecen flags).
+    let esFisio = u.esFisio;
+    let esPaciente = u.esPaciente;
+    if (esFisio === undefined && esPaciente === undefined) {
+      const computed = this.computeRoleFromClinics(clinicas);
+      esFisio = computed.esFisio;
+      esPaciente = computed.esPaciente;
+    }
 
     return {
-      id: u.id,
+      id: u.legacyDirectusId,
+      convexId: u._id,
       avatar: u.avatar ?? null,
-      avatar_url: u.avatar ? `${env.DIRECTUS_URL}/assets/${u.avatar}` : undefined,
-      first_name: u.first_name ?? '',
-      last_name: u.last_name ?? '',
+      avatar_url: u.avatar ? rawAssetUrl(u.avatar) : undefined,
+      first_name: u.firstName ?? '',
+      last_name: u.lastName ?? '',
       email: u.email ?? '',
-      email_verified: u.email_verified ?? false,
+      email_verified: u.emailVerified ?? false,
       telefono: u.telefono || undefined,
       direccion: u.direccion || undefined,
-      magic_link_url: u.magic_link_url || undefined,
       postal: u.postal || undefined,
-      detalle: null, // aquí podrás cargar "detalle_usuario" más abajo
+      detalle: null,
       clinicas,
-      esFisio,
-      esPaciente,
-      numero_colegiado: u.numero_colegiado || undefined,
+      esFisio: esFisio ?? false,
+      esPaciente: esPaciente ?? true,
+      numero_colegiado: u.numeroColegiado || undefined,
     };
   }
 
-  /**
-   * Computes user role based on clinic relationships (id_puesto)
-   * - Fisioterapeuta (1) or Administrador (4) → esFisio = true
-   * - Paciente (2) → esPaciente = true
-   * - No clinics → defaults to paciente view
-   */
   private computeRoleFromClinics(
-    clinicas: ClinicaUsuarioDirectus[],
+    clinicas: { id_puesto: number | null }[],
   ): { esFisio: boolean; esPaciente: boolean } {
     if (!clinicas || clinicas.length === 0) {
-      return { esFisio: false, esPaciente: true }; // Sin clínica = paciente
+      return { esFisio: false, esPaciente: true };
     }
 
     const hasFisioAccess = clinicas.some(
@@ -184,16 +166,4 @@ export class SessionService {
       esPaciente: hasPacienteAccess || !hasFisioAccess,
     };
   }
-
-  /*
-  async updateMe(patch: Record<string, any>): Promise<any> {
-    const res = await firstValueFrom(
-      this.http.patch<{ data: any }>(`${env.DIRECTUS_URL}/users/me`, patch, {
-        withCredentials: true,
-        // headers: this.authHeaders
-      }),
-    );
-    return res.data;
-  }
-  */
 }

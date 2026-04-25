@@ -5,6 +5,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Dialog } from '@angular/cdk/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
+import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -13,8 +14,6 @@ import { ToggleGaleriaComponent } from '../../../../shared/ui/toggle-galeria/tog
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
-import { environment as env } from '../../../../../environments/environment';
-
 @Component({
   selector: 'app-rutinas-list',
   standalone: true,
@@ -192,7 +191,7 @@ export class RutinasListComponent {
 
   assetUrl(id: string | null | undefined, w = 60, h = 60): string {
     if (!id) return '';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
   }
 
   // === Asignar a Paciente ===

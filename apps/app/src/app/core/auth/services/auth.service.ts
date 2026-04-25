@@ -1,86 +1,64 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { RouteReuseStrategy, Router } from '@angular/router';
 import { CustomRouteReuseStrategy } from '../../config/route-reuse-strategy';
 import { environment as env } from '../../../../environments/environment';
-import { BehaviorSubject, firstValueFrom, filter, take } from 'rxjs';
 import { SessionService } from './session.service';
+import { BetterAuthService } from './better-auth.service';
+import { ConvexService } from '../../convex/convex.service';
 import type {
   CreateUsuarioPayload,
   RegistroResult,
   SolicitarRecuperacionResult,
   ResetPasswordResult,
 } from '@kengo/shared-models';
+import { api } from '../../../../../../../convex/_generated/api';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
   private router = inject(Router);
   private sessionService = inject(SessionService);
   private routeReuseStrategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
+  private betterAuth = inject(BetterAuthService);
+  private convex = inject(ConvexService);
 
   // Estado reactivo - solo indica si hay sesión activa
   readonly isLoggedIn = signal<boolean>(false);
 
-  // Coordinación de refresh concurrente
-  private isRefreshing = false;
-  private refreshResult$ = new BehaviorSubject<boolean | null>(null);
-
-  // Timer de refresh proactivo
-  private refreshTimerId: ReturnType<typeof setInterval> | null = null;
-  private lastRefreshTime = 0;
-  private readonly REFRESH_INTERVAL_MS = 13 * 60 * 1000; // 13 min (buffer de 2 min antes de expiración de 15 min)
-
-  constructor() {
-    // No verificar sesión aquí — iniciarApp() y AuthGuard se encargan
-  }
-
   /**
-   * Inicia sesión con email y password usando cookies httpOnly.
-   * Limpia cookies expiradas antes para evitar que Directus rechace la petición.
+   * Inicia sesión vía Better-Auth (Convex). Better-Auth gestiona el refresh
+   * automático del token; no necesitamos timer propio.
    */
   async login(email: string, password: string): Promise<void> {
-    console.log('Realizando login');
-    await this.limpiarSesionExpirada();
+    const usuario = this.sessionService.usuario();
+    const nombre = usuario
+      ? `${usuario.first_name} ${usuario.last_name}`.trim()
+      : undefined;
 
-    await firstValueFrom(
-      this.http.post(
-        `${env.DIRECTUS_URL}/auth/login`,
-        { email, password, mode: 'session' },
-        { withCredentials: true },
-      ),
-    );
+    const ok = await this.betterAuth.signIn(email, password, nombre);
+    if (!ok) throw new Error('CREDENCIALES_INCORRECTAS');
 
+    this.convex.setAuth(() => this.betterAuth.getConvexToken());
     this.isLoggedIn.set(true);
-    this.iniciarTimerRefresh();
     await this.sessionService.cargarMiUsuario();
   }
 
   /**
-   * Cierra sesión y limpia cookies
+   * Cierra sesión: limpia Better-Auth + Convex + estado local.
    */
   async logout(evitarRedirect?: boolean): Promise<void> {
     try {
-      await firstValueFrom(
-        this.http.post(
-          `${env.DIRECTUS_URL}/auth/logout`,
-          { mode: 'session' },
-          { withCredentials: true },
-        ),
-      );
+      await this.betterAuth.signOut();
     } catch {
-      // Ignorar error de logout
-    } finally {
-      this.limpiarEstadoLocal(evitarRedirect);
+      // ignorar
     }
+    this.convex.clearAuth();
+    this.limpiarEstadoLocal(evitarRedirect);
   }
 
   /**
-   * Limpia solo el estado local sin hacer petición HTTP.
-   * Útil cuando el token ya expiró y sabemos que la petición de logout fallaría.
+   * Limpia el estado local (signals + cache de rutas + storage no esencial).
    */
   limpiarEstadoLocal(evitarRedirect?: boolean): void {
-    this.detenerTimerRefresh();
     this.isLoggedIn.set(false);
     this.routeReuseStrategy.clearCache();
     localStorage.removeItem('kengo:theme:v1');
@@ -90,115 +68,21 @@ export class AuthService {
   }
 
   /**
-   * Refresca la sesión Directus. Coordina múltiples peticiones concurrentes
-   * para que solo una haga el refresh y las demás esperen el resultado.
-   */
-  async handleRefresh(): Promise<boolean> {
-    if (this.isRefreshing) {
-      return firstValueFrom(
-        this.refreshResult$.pipe(
-          filter((result): result is boolean => result !== null),
-          take(1),
-        ),
-      );
-    }
-
-    this.isRefreshing = true;
-    this.refreshResult$.next(null);
-
-    try {
-      // Intento 1: Directus refresh nativo (funciona si JWT aún es válido)
-      try {
-        await firstValueFrom(
-          this.http.post(
-            `${env.DIRECTUS_URL}/auth/refresh`,
-            { mode: 'session' },
-            { withCredentials: true },
-          ),
-        );
-        this.isLoggedIn.set(true);
-        this.lastRefreshTime = Date.now();
-        this.refreshResult$.next(true);
-        return true;
-      } catch {
-        // JWT probablemente expirado, intentar endpoint custom
-      }
-
-      // Intento 2: Endpoint custom (funciona con JWT expirado si sesión BD vigente)
-      try {
-        await firstValueFrom(
-          this.http.post(
-            `${env.API_URL}/auth/refrescar-sesion`,
-            {},
-            { withCredentials: true },
-          ),
-        );
-        this.isLoggedIn.set(true);
-        this.lastRefreshTime = Date.now();
-        this.refreshResult$.next(true);
-        return true;
-      } catch {
-        // Ambos intentos fallaron — sesión muerta
-      }
-
-      this.refreshResult$.next(false);
-      return false;
-    } finally {
-      this.isRefreshing = false;
-    }
-  }
-
-  /**
-   * Intenta limpiar una sesión/cookie expirada antes del login.
-   *
-   * Problema: si hay una cookie httpOnly con JWT expirado, Directus rechaza
-   * TODAS las peticiones (incluyendo /auth/login y /auth/logout) con TOKEN_EXPIRED.
-   *
-   * Solución: nuestro endpoint custom /auth/refrescar-sesion acepta JWTs expirados
-   * (verifica firma ignorando expiración). Refrescamos para obtener una cookie válida,
-   * y luego hacemos logout para limpiarla.
-   */
-  async limpiarSesionExpirada(): Promise<void> {
-    // 1. Refrescar con endpoint custom (acepta JWTs expirados)
-    try {
-      await firstValueFrom(
-        this.http.post(
-          `${env.API_URL}/auth/refrescar-sesion`,
-          {},
-          { withCredentials: true },
-        ),
-      );
-    } catch {
-      // Si falla (sesión no existe en BD o no hay cookie), no hay nada que limpiar
-      return;
-    }
-
-    // 2. Ahora la cookie es válida — logout la elimina correctamente
-    try {
-      await firstValueFrom(
-        this.http.post(
-          `${env.DIRECTUS_URL}/auth/logout`,
-          { mode: 'session' },
-          { withCredentials: true },
-        ),
-      );
-    } catch {
-      // Ignorar — si logout falla con cookie válida, algo raro pasó
-    }
-  }
-
-  /**
-   * Verifica si hay una sesión activa consultando al servidor
+   * Verifica si hay sesión activa consultando Convex.
+   * Better-Auth gestiona el token; si la cookie sigue válida la query a `me`
+   * devuelve el usuario y consideramos sesión activa.
    */
   async checkSession(): Promise<boolean> {
+    if (!this.betterAuth.hasStoredSession()) {
+      this.isLoggedIn.set(false);
+      return false;
+    }
+
     try {
-      await firstValueFrom(
-        this.http.get(`${env.DIRECTUS_URL}/users/me`, {
-          withCredentials: true,
-        }),
-      );
-      this.isLoggedIn.set(true);
-      return true;
+      const user = await this.convex.query(api.users.queries.me, {});
+      const ok = !!user;
+      this.isLoggedIn.set(ok);
+      return ok;
     } catch {
       this.isLoggedIn.set(false);
       return false;
@@ -206,19 +90,19 @@ export class AuthService {
   }
 
   /**
-   * Verifica autenticación de forma síncrona (basado en estado local)
+   * Verifica autenticación de forma síncrona (basado en estado local).
    */
   isAuthenticated(): boolean {
     return this.isLoggedIn();
   }
 
   /**
-   * Inicializa la app si hay sesión activa
+   * Inicializa la app si hay sesión activa.
    */
   async iniciarApp(): Promise<void> {
+    this.restaurarConvexAuth();
     const hasSession = await this.checkSession();
     if (hasSession) {
-      this.iniciarTimerRefresh();
       await this.sessionService.cargarMiUsuario();
     }
   }
@@ -227,161 +111,146 @@ export class AuthService {
   //  TOKENS DE ACCESO (QR)
   // =========================
 
-  /**
-   * Crea un token de acceso para el usuario
-   */
-  crearTokenAcceso(
+  async crearTokenAcceso(
     userId: string,
     opciones?: { usosMaximos?: number; diasExpiracion?: number },
-  ) {
-    return this.http.post<{ id: string; url: string }>(
-      `${env.API_URL}/usuario/token-acceso`,
-      { idUsuario: userId, ...opciones },
-      { withCredentials: true },
-    );
+  ): Promise<{ id: string; url: string }> {
+    return await this.convex.mutation(api.accessTokens.mutations.create, {
+      userId,
+      usosMaximos: opciones?.usosMaximos,
+      diasExpiracion: opciones?.diasExpiracion,
+    });
+  }
+
+  async listarTokensAcceso(userId: string) {
+    return await this.convex.query(api.accessTokens.queries.listByUser, {
+      userId,
+    });
+  }
+
+  async revocarTokenAcceso(tokenId: string): Promise<void> {
+    await this.convex.mutation(api.accessTokens.mutations.revoke, {
+      id: tokenId as never,
+    });
+  }
+
+  async enviarTokenPorEmail(userId: string): Promise<void> {
+    await this.convex.action(api.accessTokens.actions.sendByEmail, {
+      userId,
+    });
   }
 
   /**
-   * Consume un token de acceso y establece la sesión via cookie.
-   * Devuelve si el usuario tiene contraseña y su email.
-   * No carga el usuario aquí — el AuthGuard de la ruta destino se encarga.
+   * Consume un access token (QR / magic link) vía Convex.
+   * Flujo: Convex valida el access token → genera un magic link Better-Auth →
+   * el cliente lo verifica → Better-Auth establece sesión Convex.
    */
   async consumirTokenAcceso(
     token: string,
   ): Promise<{ tienePassword: boolean; email: string }> {
-    const res = await firstValueFrom(
-      this.http.post<{ ok: boolean; tienePassword: boolean; email: string }>(
-        `${env.API_URL}/auth/token-acceso`,
-        { token },
-        { withCredentials: true },
-      ),
+    const res = await fetch(
+      `${env.CONVEX_SITE_URL}/api/auth/consume-access-token`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      },
     );
 
-    this.isLoggedIn.set(true);
-    this.iniciarTimerRefresh();
-
-    return {
-      tienePassword: res.tienePassword,
-      email: res.email,
+    const body = (await res.json()) as {
+      success: boolean;
+      error?: string;
+      magicLinkToken?: string;
+      email?: string;
     };
+
+    if (!body.success || !body.magicLinkToken || !body.email) {
+      throw new Error(body.error ?? 'ERROR_CONSUMIENDO_TOKEN');
+    }
+
+    const ok = await this.betterAuth.verifyMagicLink(body.magicLinkToken);
+    if (!ok) throw new Error('ERROR_VERIFICANDO_MAGIC_LINK');
+
+    this.convex.setAuth(() => this.betterAuth.getConvexToken());
+    this.isLoggedIn.set(true);
+
+    return { tienePassword: false, email: body.email };
   }
 
   /**
-   * Establece contraseña para un usuario que no la tiene (post magic link)
+   * Establece contraseña para un usuario sin password (post magic link).
+   * Usa el endpoint HTTP `/api/auth/convex-set-password` que delega en Better-Auth.
    */
   async establecerPassword(password: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(
-        `${env.API_URL}/auth/establecer-password`,
-        { password },
-        { withCredentials: true },
-      ),
-    );
-  }
+    const email = this.sessionService.usuario()?.email;
+    if (!email) throw new Error('Usuario no autenticado');
 
-  // =========================
-  //  INVITACIONES
-  // =========================
-
-  /**
-   * Acepta una invitación de Directus con password elegido por el usuario
-   */
-  async acceptInvite(token: string, password: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(
-        `${env.DIRECTUS_URL}/users/invite/accept`,
-        { token, password },
-        { withCredentials: true },
-      ),
-    );
+    const res = await fetch(`${env.CONVEX_SITE_URL}/api/auth/convex-set-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const body = await res.json().catch(() => ({ success: false }));
+    if (!res.ok || !body?.success) {
+      throw new Error(body?.message || 'Error al establecer la contraseña');
+    }
   }
 
   // =========================
   //  REGISTRO
   // =========================
 
-  /**
-   * Registra un nuevo usuario en el sistema
-   */
   async register(payload: CreateUsuarioPayload): Promise<RegistroResult> {
-    return firstValueFrom(
-      this.http.post<RegistroResult>(`${env.API_URL}/registro`, payload, {
-        withCredentials: true,
-      }),
-    );
+    const result = await this.convex.action(api.auth.actions.register, {
+      first_name: payload.first_name.trim(),
+      last_name: payload.last_name.trim(),
+      email: payload.email.toLowerCase().trim(),
+      password: payload.password,
+      tipo: payload.tipo,
+      codigo_clinica: payload.codigo_clinica?.trim(),
+    });
+    return result as RegistroResult;
   }
 
   // =========================
-  //  RECUPERACION DE CONTRASENA
+  //  RECUPERACIÓN DE CONTRASEÑA
   // =========================
 
-  /**
-   * Solicita un codigo de recuperacion de contrasena
-   */
   async solicitarRecuperacion(
     email: string,
   ): Promise<SolicitarRecuperacionResult> {
-    return firstValueFrom(
-      this.http.post<SolicitarRecuperacionResult>(
-        `${env.API_URL}/auth/recuperar-password`,
-        { email },
-      ),
-    );
+    return await this.convex.action(api.auth.actions.requestPasswordReset, {
+      email: email.toLowerCase().trim(),
+    });
   }
 
-  /**
-   * Restablece la contrasena usando el codigo de verificacion
-   */
   async resetPassword(
     email: string,
     codigo: string,
     nuevaPassword: string,
   ): Promise<ResetPasswordResult> {
-    return firstValueFrom(
-      this.http.post<ResetPasswordResult>(
-        `${env.API_URL}/auth/reset-password`,
-        { email, codigo, nuevaPassword },
-      ),
-    );
+    const res = await fetch(`${env.CONVEX_SITE_URL}/api/auth/convex-reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.toLowerCase().trim(),
+        codigo,
+        nuevaPassword,
+      }),
+    });
+    return (await res.json()) as ResetPasswordResult;
   }
 
   // =========================
-  //  REFRESH PROACTIVO
+  //  CONVEX AUTH BRIDGE
   // =========================
 
-  private iniciarTimerRefresh(): void {
-    this.detenerTimerRefresh();
-    this.lastRefreshTime = Date.now();
-
-    this.refreshTimerId = setInterval(() => {
-      this.ejecutarRefreshProactivo();
-    }, this.REFRESH_INTERVAL_MS);
-
-    document.addEventListener('visibilitychange', this.onVisibilityChange);
-  }
-
-  private detenerTimerRefresh(): void {
-    if (this.refreshTimerId) {
-      clearInterval(this.refreshTimerId);
-      this.refreshTimerId = null;
-    }
-    document.removeEventListener('visibilitychange', this.onVisibilityChange);
-  }
-
-  private onVisibilityChange = (): void => {
-    if (document.visibilityState !== 'visible') return;
-    const elapsed = Date.now() - this.lastRefreshTime;
-    // Si pasaron más de 12 min desde el último refresh, refrescar inmediatamente
-    if (elapsed > 12 * 60 * 1000) {
-      this.ejecutarRefreshProactivo();
-    }
-  };
-
-  private async ejecutarRefreshProactivo(): Promise<void> {
-    const ok = await this.handleRefresh();
-    if (!ok) {
-      this.detenerTimerRefresh();
-      this.limpiarEstadoLocal();
+  /**
+   * Restaura la auth de Convex si hay sesión Better-Auth guardada en localStorage.
+   */
+  private restaurarConvexAuth(): void {
+    if (this.betterAuth.hasStoredSession()) {
+      this.convex.setAuth(() => this.betterAuth.getConvexToken());
     }
   }
 }

@@ -5,7 +5,7 @@ export const PERFIL_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/perfil/perfil.component').then((m) => m.PerfilComponent),
+      import('./pages/perfil/perfil/perfil.component').then((m) => m.PerfilComponent),
     canActivate: [AuthGuard],
   },
 ];

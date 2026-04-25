@@ -12,6 +12,7 @@ import {
   OnDestroy,
   ElementRef,
 } from '@angular/core';
+import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { Dialog } from '@angular/cdk/dialog';
 
@@ -20,7 +21,6 @@ import { filter } from 'rxjs/operators';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 
-import { environment as env } from '../../../../../environments/environment';
 import { Usuario } from '../../../../../types/global';
 import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 
@@ -61,7 +61,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   readonly perfilUrl = computed(() => {
     const avatar = this.svc.paciente()?.avatar;
     if (!avatar) return null;
-    return `${env.DIRECTUS_URL}/assets/${avatar}?fit=cover&width=120&height=120&quality=80`;
+    return `${assetUrl(avatar, { fit: 'cover', width: 120, height: 120, quality: 80 })}`;
   });
   private drawerEff!: EffectRef;
 
@@ -199,7 +199,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   // (Opcional) URL para miniaturas de los ejercicios
   assetUrl(id: string | null | undefined, w = 160, h = 90) {
     if (!id) return '';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
   }
 
   // Cargar una rutina existente

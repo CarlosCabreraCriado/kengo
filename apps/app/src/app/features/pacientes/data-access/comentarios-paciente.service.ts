@@ -1,39 +1,29 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { environment as env } from '../../../../environments/environment';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { api } from '../../../../../../../convex/_generated/api';
 import type { ComentariosPacienteResponse } from '../../../../types/global';
 
 @Injectable({ providedIn: 'root' })
 export class ComentariosPacienteService {
-  private http = inject(HttpClient);
+  private convex = inject(ConvexService);
 
   async getComentarios(pacienteId: string): Promise<ComentariosPacienteResponse> {
-    return firstValueFrom(
-      this.http.get<ComentariosPacienteResponse>(
-        `${env.API_URL}/paciente/${pacienteId}/comentarios`,
-        { withCredentials: true },
-      ),
-    );
+    return (await this.convex.query(
+      api.notifications.queries.listCommentsByPatient,
+      { pacienteId },
+    )) as ComentariosPacienteResponse;
   }
 
-  async marcarRevisada(notificacionId: number): Promise<void> {
-    await firstValueFrom(
-      this.http.patch(
-        `${env.API_URL}/notificacion/${notificacionId}/revisar`,
-        {},
-        { withCredentials: true },
-      ),
-    );
+  async marcarRevisada(notificacionId: string): Promise<void> {
+    await this.convex.mutation(api.notifications.mutations.markAsRead, {
+      notificationId: notificacionId as any,
+    });
   }
 
   async marcarTodasRevisadas(pacienteId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.patch(
-        `${env.API_URL}/paciente/${pacienteId}/comentarios/revisar-todos`,
-        {},
-        { withCredentials: true },
-      ),
+    await this.convex.mutation(
+      api.notifications.mutations.markAllReadForPatient,
+      { pacienteId },
     );
   }
 }

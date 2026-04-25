@@ -5,11 +5,11 @@ import {
   signal,
   effect,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { environment as env } from '../../../../environments/environment';
+import { assetUrl, videoUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { PlanesService } from '../../planes/data-access/planes.service';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { api } from '../../../../../../../convex/_generated/api';
 
 import {
   PlanCompleto,
@@ -48,7 +48,7 @@ interface SesionResponse {
 
 @Injectable({ providedIn: 'root' })
 export class RegistroSesionService {
-  private http = inject(HttpClient);
+  private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
 
@@ -64,7 +64,7 @@ export class RegistroSesionService {
   readonly registrosSesion = signal<RegistroEjercicio[]>([]);
   readonly tiempoInicioSesion = signal<Date | null>(null);
   readonly feedbackActual = signal<FeedbackEjercicio | null>(null);
-  readonly sesionActualId = signal<number | null>(null);
+  readonly sesionActualId = signal<string | null>(null);
 
   // Estado del temporizador
   readonly tiempoRestante = signal<number>(0);
@@ -395,26 +395,11 @@ export class RegistroSesionService {
       })
     );
 
-    // Guardar registros en Directus
+    // Guardar registros: createBatch agenda en Convex el recálculo de cumplimiento
+    // y la generación de notificaciones vía ctx.scheduler.runAfter.
     await this.guardarRegistrosEnDirectus();
 
-    // Fire-and-forget: recalcular cumplimiento del día para que "Actividad reciente" se actualice
-    this.http.post(`${env.API_URL}/cumplimiento/recalcular-hoy`,
-      { pacienteId: this.usuarioId() },
-      { withCredentials: true }
-    ).subscribe({ error: (err) => console.warn('[cumplimiento] Recálculo falló:', err) });
-
-    // Fire-and-forget: generar notificaciones si hay comentarios o observaciones
-    const tieneComentarios = data.feedbacks.some(f => f.nota?.trim());
-    const tieneObservaciones = !!data.observacionesGenerales?.trim();
-    if (tieneComentarios || tieneObservaciones) {
-      this.http.post(`${env.API_URL}/notificaciones/generar-comentarios`,
-        { pacienteId: this.usuarioId() },
-        { withCredentials: true }
-      ).subscribe({ error: (err) => console.warn('[notificaciones] Hook falló:', err) });
-    }
-
-    // Finalizar sesión con observaciones generales
+    // Finalizar sesión: complete agenda notificaciones si hay observaciones.
     await this.finalizarSesionEnDirectus(data.observacionesGenerales);
 
     this.limpiarProgresoLocal();
@@ -552,28 +537,17 @@ export class RegistroSesionService {
   /**
    * Crear una sesión en Directus al comenzar
    */
-  private async crearSesionEnDirectus(fechaInicio: Date): Promise<number | null> {
-    const userId = this.usuarioId();
-    if (!userId) return null;
-
+  private async crearSesionEnDirectus(fechaInicio: Date): Promise<string | null> {
     try {
-      const response = await firstValueFrom(
-        this.http.post<SesionResponse>(
-          `${env.DIRECTUS_URL}/items/sesiones`,
-          {
-            paciente: userId,
-            fecha_inicio: fechaInicio.toISOString(),
-            completada: false,
-          },
-          { withCredentials: true }
-        )
+      const sessionId = await this.convex.mutation(
+        api.sessions.mutations.create,
+        { fechaInicio: fechaInicio.toISOString() },
       );
 
-      const sesionId = response?.data?.id ?? null;
-      if (sesionId) {
-        this.sesionActualId.set(sesionId);
+      if (sessionId) {
+        this.sesionActualId.set(sessionId as string);
       }
-      return sesionId;
+      return sessionId as string;
     } catch (error) {
       console.error('Error al crear sesión:', error);
       return null;
@@ -590,18 +564,11 @@ export class RegistroSesionService {
     if (!sesionId) return false;
 
     try {
-      await firstValueFrom(
-        this.http.patch(
-          `${env.DIRECTUS_URL}/items/sesiones/${sesionId}`,
-          {
-            fecha_fin: new Date().toISOString(),
-            observaciones_generales: observacionesGenerales || null,
-            completada: true,
-          },
-          { withCredentials: true }
-        )
-      );
-
+      await this.convex.mutation(api.sessions.mutations.complete, {
+        sessionId: sesionId as any,
+        fechaFin: new Date().toISOString(),
+        observacionesGenerales: observacionesGenerales || undefined,
+      });
       return true;
     } catch (error) {
       console.error('Error al finalizar sesión:', error);
@@ -614,17 +581,20 @@ export class RegistroSesionService {
    */
   async crearRegistro(
     registro: Omit<RegistroEjercicio, 'id_registro'>
-  ): Promise<number | null> {
+  ): Promise<string | null> {
     try {
-      const response = await firstValueFrom(
-        this.http.post<RegistroResponse>(
-          `${env.DIRECTUS_URL}/items/planes_registros`,
-          registro,
-          { withCredentials: true }
-        )
-      );
-
-      return response?.data?.id_registro ?? null;
+      const id = await this.convex.mutation(api.records.mutations.create, {
+        planExerciseId: this.resolvePlanExerciseId(registro.plan_item) as any,
+        fechaHora: registro.fecha_hora,
+        fecha: registro.fecha_hora.split('T')[0]!,
+        completado: registro.completado,
+        repeticionesRealizadas: registro.repeticiones_realizadas,
+        duracionRealSeg: registro.duracion_real_seg,
+        dolorEscala: registro.dolor_escala,
+        esfuerzoEscala: registro.esfuerzo_escala,
+        notaPaciente: registro.nota_paciente,
+      });
+      return id as string;
     } catch (error) {
       console.error('Error al crear registro:', error);
       return null;
@@ -641,20 +611,20 @@ export class RegistroSesionService {
     const sesionId = this.sesionActualId();
 
     try {
-      // Agregar sesion ID a cada registro si existe
-      const registrosConSesion = registros.map((reg) => ({
-        ...reg,
-        ...(sesionId && { sesion: sesionId }),
-      }));
-
-      // Crear registros en batch
-      await firstValueFrom(
-        this.http.post(
-          `${env.DIRECTUS_URL}/items/planes_registros`,
-          registrosConSesion,
-          { withCredentials: true }
-        )
-      );
+      await this.convex.mutation(api.records.mutations.createBatch, {
+        records: registros.map((reg) => ({
+          planExerciseId: this.resolvePlanExerciseId(reg.plan_item) as any,
+          sessionId: (sesionId as any) ?? undefined,
+          fechaHora: reg.fecha_hora,
+          fecha: reg.fecha_hora.split('T')[0]!,
+          completado: reg.completado,
+          repeticionesRealizadas: reg.repeticiones_realizadas,
+          duracionRealSeg: reg.duracion_real_seg,
+          dolorEscala: reg.dolor_escala,
+          esfuerzoEscala: reg.esfuerzo_escala,
+          notaPaciente: reg.nota_paciente,
+        })),
+      });
 
       return true;
     } catch (error) {
@@ -667,31 +637,19 @@ export class RegistroSesionService {
    * Obtener registros del paciente de hoy
    */
   async obtenerRegistrosHoy(pacienteId: string): Promise<RegistroEjercicio[]> {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    const filter = {
-      _and: [
-        { paciente: { _eq: pacienteId } },
-        { fecha_hora: { _gte: hoy.toISOString() } },
-      ],
-    };
+    const hoy = new Date().toISOString().split('T')[0]!;
 
     try {
-      const response = await firstValueFrom(
-        this.http.get<RegistrosResponse>(
-          `${env.DIRECTUS_URL}/items/planes_registros`,
-          {
-            params: {
-              filter: JSON.stringify(filter),
-              sort: '-fecha_hora',
-            },
-            withCredentials: true,
-          }
-        )
+      const convexUserId = this.resolveUserConvexId(pacienteId);
+      const raw = await this.convex.query(
+        api.records.queries.listByPacienteAndDate,
+        {
+          pacienteId: convexUserId as any,
+          fecha: hoy,
+        },
       );
 
-      return (response?.data || []).map((r) => this.transformRegistro(r));
+      return ((raw as any[]) || []).map((r) => this.mapConvexToRegistro(r));
     } catch (error) {
       console.error('Error al obtener registros de hoy:', error);
       return [];
@@ -716,28 +674,53 @@ export class RegistroSesionService {
     });
   }
 
-  private transformRegistro(r: RegistroEjercicioDirectus): RegistroEjercicio {
+  private mapConvexToRegistro(r: any): RegistroEjercicio {
     return {
-      id_registro: r.id_registro,
-      plan_item: typeof r.plan_item === 'object' ? r.plan_item.id : r.plan_item,
-      paciente: typeof r.paciente === 'object' ? r.paciente.id : r.paciente,
-      fecha_hora: r.fecha_hora,
+      id_registro: 0,
+      plan_item: r.planExerciseId,
+      paciente: r.pacienteId,
+      fecha_hora: r.fechaHora,
       completado: r.completado,
-      repeticiones_realizadas: r.repeticiones_realizadas,
-      duracion_real_seg: r.duracion_real_seg,
-      dolor_escala: r.dolor_escala,
-      nota_paciente: r.nota_paciente,
-    };
+      repeticiones_realizadas: r.repeticionesRealizadas,
+      duracion_real_seg: r.duracionRealSeg,
+      dolor_escala: r.dolorEscala,
+      esfuerzo_escala: r.esfuerzoEscala,
+      nota_paciente: r.notaPaciente,
+      _convexId: r._id,
+    } as RegistroEjercicio;
+  }
+
+  private resolvePlanExerciseId(planItem: any): string {
+    // Convex ID directo (string largo)
+    if (typeof planItem === 'string' && planItem.length > 20) return planItem;
+    // Objeto con _convexId (puesto por PlanesService mapper)
+    if (typeof planItem === 'object' && planItem?._convexId) return planItem._convexId;
+    // Número legacy — intentar buscar en los items del plan activo
+    if (typeof planItem === 'number' || typeof planItem === 'string') {
+      const items = this.planActivo()?.items ?? [];
+      const found = items.find((i: any) => i.id === planItem || i._convexId === planItem);
+      if (found && (found as any)._convexId) return (found as any)._convexId;
+    }
+    throw new Error(`No se pudo resolver planExerciseId: ${planItem}`);
+  }
+
+  private resolveUserConvexId(userId: string): string | undefined {
+    const currentUser = this.sessionService.usuario();
+    if (currentUser?.id === userId && currentUser.convexId) {
+      return currentUser.convexId;
+    }
+    if (userId.length > 20) return userId;
+    return undefined;
   }
 
   // ========= Helper de assets =========
   getAssetUrl(id?: string, width = 400, height = 300) {
     return id
-      ? `${env.DIRECTUS_URL}/assets/${id}?width=${width}&height=${height}&fit=cover&format=webp`
+      ? assetUrl(id, { width, height, fit: 'cover', format: 'webp' })
       : '';
   }
 
   getVideoUrl(id?: string) {
-    return id ? `${env.DIRECTUS_URL}/assets/${id}` : '';
+    return id ? videoUrl(id) : '';
   }
 }

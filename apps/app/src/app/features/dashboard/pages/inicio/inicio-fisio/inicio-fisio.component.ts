@@ -2,8 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DashboardFisioService } from '../../../data-access/dashboard-fisio.service';
 import { NotificacionesService } from '../../../../../core/services/notificaciones.service';
-import { environment as env } from '../../../../../../environments/environment';
 import type { NotificacionApp } from '../../../../../../types/global';
+import { assetUrl } from '../../../../../core/utils/asset-url';
 
 @Component({
   selector: 'app-inicio-fisio',
@@ -73,7 +73,7 @@ export class InicioFisioComponent {
 
   avatarUrl(avatar: string | null): string | null {
     if (!avatar) return null;
-    return `${env.DIRECTUS_URL}/assets/${avatar}?key=avatar`;
+    return `${assetUrl(avatar, { key: 'avatar' })}`;
   }
 
   formatearTiempoRelativo(fecha: string): string {

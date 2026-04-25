@@ -10,6 +10,7 @@ import {
   ElementRef,
   ViewChild,
 } from '@angular/core';
+import { assetUrl } from '../../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -19,11 +20,13 @@ import { map } from 'rxjs/operators';
 // Servicios
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { EmailVerificationService } from '../../../../../core/auth/services/email-verification.service';
+import { ConvexService } from '../../../../../core/convex/convex.service';
+import { StorageService } from '../../../../../core/services/storage.service';
 
 // Types
 import { Usuario } from '../../../../../../types/global';
 
-// Environment
+import { api } from '../../../../../../../../../convex/_generated/api';
 import { environment as env } from '../../../../../../environments/environment';
 import { KENGO_BREAKPOINTS } from '../../../../../shared';
 
@@ -40,6 +43,8 @@ import { KENGO_BREAKPOINTS } from '../../../../../shared';
 export class PerfilComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private emailVerificationService = inject(EmailVerificationService);
+  private convex = inject(ConvexService);
+  private storage = inject(StorageService);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
   private breakpointObserver = inject(BreakpointObserver);
@@ -82,7 +87,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   public url_perfil = computed(() => {
     const id_avatar = this.usuario()?.avatar;
     return id_avatar
-      ? `${env.DIRECTUS_URL}/assets/${id_avatar}?fit=cover`
+      ? `${assetUrl(id_avatar, { fit: 'cover' })}`
       : null;
   });
 
@@ -181,30 +186,20 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
     const payload = this.formularioUsuario.value;
 
-    const resUser = await fetch(`${env.DIRECTUS_URL}/users/me`, {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!resUser.ok) {
-      /*
-      dialogoProcesando.close();
-      this.dialog.open(DialogoComponent, {
-        data: {
-          tipo: 'error',
-          titulo: 'Se ha producido un error',
-          mensaje: 'No se pudieron guardar los cambios.',
-        },
+    try {
+      await this.convex.mutation(api.users.mutations.updateProfile, {
+        firstName: payload.first_name ?? undefined,
+        lastName: payload.last_name ?? undefined,
+        email: payload.email ?? undefined,
+        telefono: payload.telefono ?? undefined,
+        direccion: payload.direccion ?? undefined,
+        postal: payload.postal ?? undefined,
+        numeroColegiado: payload.numero_colegiado ?? undefined,
       });
-      */
-    } else {
       await this.sessionService.refreshUsuario();
       this.formularioCambiado.set(false);
-      //dialogoProcesando.close();
+    } catch (err) {
+      console.error('Error guardando perfil:', err);
     }
   }
 
@@ -249,36 +244,14 @@ export class PerfilComponent implements OnInit, OnDestroy {
     try {
       this.subiendoAvatar.set(true);
 
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const resFile = await fetch(`${env.DIRECTUS_URL}/files`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!resFile.ok) throw new Error('Error subiendo el archivo');
-      const filePayload = await resFile.json();
-      const fileId = filePayload?.data?.id as string | undefined;
-
-      if (!fileId) throw new Error('No se recibió ID del archivo');
-
       const usuario = this.sessionService.usuario();
       if (!usuario) throw new Error('Usuario no cargado');
 
-      const updatePayload = { avatar: fileId };
+      const result = await this.storage.upload(file, 'avatars');
 
-      const resUser = await fetch(`${env.DIRECTUS_URL}/users/me`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatePayload),
+      await this.convex.mutation(api.users.mutations.updateAvatar, {
+        key: result.key,
       });
-
-      if (!resUser.ok) throw new Error('No se pudo actualizar el perfil');
 
       await this.sessionService.refreshUsuario();
     } catch (e) {
@@ -334,21 +307,18 @@ export class PerfilComponent implements OnInit, OnDestroy {
     */
 
     try {
-      const res = await fetch(`${env.DIRECTUS_URL}/users/me`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          password: newPassword,
-        }),
+      const usuario = this.sessionService.usuario();
+      if (!usuario?.email) throw new Error('Usuario no autenticado');
+
+      const res = await fetch(`${env.CONVEX_SITE_URL}/api/auth/convex-set-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: usuario.email, password: newPassword }),
       });
 
-      //dialogoProcesando.close();
-
-      if (!res.ok) {
-        throw new Error('Error al cambiar la contraseña');
+      const body = await res.json().catch(() => ({ success: false }));
+      if (!res.ok || !body?.success) {
+        throw new Error(body?.message || 'Error al cambiar la contraseña');
       }
 
       this.formularioPassword.reset();

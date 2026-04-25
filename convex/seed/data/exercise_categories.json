@@ -1,0 +1,1982 @@
+[
+  {
+    "ejercicio_id": 11,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 12,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 13,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 14,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 14,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 15,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 16,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 17,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 18,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 19,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 19,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 20,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 20,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 20,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 21,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 21,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 25,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 25,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 25,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 26,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 27,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 28,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 30,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 32,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 33,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 33,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 33,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 37,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 39,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 39,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 42,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 42,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 44,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 44,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 44,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 45,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 45,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 46,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 46,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 46,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 46,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 47,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 47,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 48,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 49,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 49,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 50,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 50,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 51,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 51,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 53,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 53,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 53,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 54,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 54,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 54,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 55,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 55,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 55,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 55,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 55,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 56,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 56,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 56,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 57,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 57,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 57,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 58,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 58,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 58,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 59,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 59,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 59,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 60,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 60,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 60,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 61,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 61,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 61,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 61,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 62,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 62,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 62,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 62,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 63,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 63,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 63,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 71,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 71,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 73,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 73,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 75,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 75,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 75,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 75,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 77,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 77,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 81,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 82,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 84,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 85,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 86,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 92,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 92,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 92,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 92,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 92,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 92,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 93,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 95,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 95,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 97,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 98,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 99,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 99,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 101,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 104,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 105,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 106,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 107,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 109,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 112,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 112,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 114,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 115,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 117,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 119,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 123,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 123,
+    "categoria_id": 20
+  },
+  {
+    "ejercicio_id": 124,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 133,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 141,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 142,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 142,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 142,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 144,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 144,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 144,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 145,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 145,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 146,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 146,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 146,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 147,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 147,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 147,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 147,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 149,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 149,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 149,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 150,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 150,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 151,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 151,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 151,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 151,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 152,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 153,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 153,
+    "categoria_id": 20
+  },
+  {
+    "ejercicio_id": 154,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 154,
+    "categoria_id": 20
+  },
+  {
+    "ejercicio_id": 155,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 155,
+    "categoria_id": 20
+  },
+  {
+    "ejercicio_id": 156,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 157,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 158,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 158,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 159,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 160,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 161,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 162,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 162,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 162,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 162,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 163,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 163,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 163,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 163,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 164,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 164,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 166,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 167,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 168,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 168,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 168,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 168,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 169,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 170,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 171,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 171,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 171,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 172,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 172,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 173,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 174,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 174,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 175,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 176,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 176,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 176,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 177,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 178,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 179,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 179,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 180,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 180,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 180,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 181,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 185,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 185,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 185,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 186,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 186,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 187,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 188,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 189,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 189,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 191,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 192,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 193,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 193,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 194,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 194,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 195,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 195,
+    "categoria_id": 13
+  },
+  {
+    "ejercicio_id": 196,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 196,
+    "categoria_id": 13
+  },
+  {
+    "ejercicio_id": 197,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 197,
+    "categoria_id": 13
+  },
+  {
+    "ejercicio_id": 198,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 198,
+    "categoria_id": 13
+  },
+  {
+    "ejercicio_id": 199,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 199,
+    "categoria_id": 13
+  },
+  {
+    "ejercicio_id": 200,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 200,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 200,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 201,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 201,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 202,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 203,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 203,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 203,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 204,
+    "categoria_id": 15
+  },
+  {
+    "ejercicio_id": 204,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 205,
+    "categoria_id": 15
+  },
+  {
+    "ejercicio_id": 205,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 206,
+    "categoria_id": 15
+  },
+  {
+    "ejercicio_id": 206,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 207,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 207,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 207,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 208,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 209,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 210,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 211,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 211,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 212,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 213,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 214,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 215,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 216,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 216,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 217,
+    "categoria_id": 15
+  },
+  {
+    "ejercicio_id": 217,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 218,
+    "categoria_id": 15
+  },
+  {
+    "ejercicio_id": 218,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 219,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 220,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 221,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 222,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 223,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 224,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 225,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 226,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 227,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 228,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 229,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 229,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 229,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 230,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 230,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 230,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 231,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 231,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 231,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 232,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 232,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 232,
+    "categoria_id": 20
+  },
+  {
+    "ejercicio_id": 232,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 233,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 234,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 234,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 234,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 235,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 236,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 236,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 237,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 237,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 237,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 238,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 239,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 239,
+    "categoria_id": 2
+  },
+  {
+    "ejercicio_id": 240,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 241,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 242,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 243,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 243,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 244,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 244,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 245,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 246,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 247,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 247,
+    "categoria_id": 21
+  },
+  {
+    "ejercicio_id": 248,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 248,
+    "categoria_id": 21
+  },
+  {
+    "ejercicio_id": 249,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 250,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 251,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 252,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 253,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 254,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 255,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 255,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 256,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 257,
+    "categoria_id": 2
+  },
+  {
+    "ejercicio_id": 257,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 258,
+    "categoria_id": 2
+  },
+  {
+    "ejercicio_id": 258,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 259,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 259,
+    "categoria_id": 2
+  },
+  {
+    "ejercicio_id": 260,
+    "categoria_id": 2
+  },
+  {
+    "ejercicio_id": 260,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 261,
+    "categoria_id": 2
+  },
+  {
+    "ejercicio_id": 261,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 262,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 263,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 264,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 265,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 266,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 267,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 268,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 269,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 270,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 271,
+    "categoria_id": 10
+  },
+  {
+    "ejercicio_id": 272,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 273,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 274,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 275,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 276,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 277,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 278,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 279,
+    "categoria_id": 18
+  },
+  {
+    "ejercicio_id": 280,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 281,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 282,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 282,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 283,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 284,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 285,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 286,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 286,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 287,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 288,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 288,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 289,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 289,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 290,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 291,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 292,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 293,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 294,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 295,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 296,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 296,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 297,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 297,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 297,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 298,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 298,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 298,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 299,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 299,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 300,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 301,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 301,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 302,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 302,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 303,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 303,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 304,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 305,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 306,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 307,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 308,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 309,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 310,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 311,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 312,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 313,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 314,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 315,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 316,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 316,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 317,
+    "categoria_id": 11
+  },
+  {
+    "ejercicio_id": 317,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 318,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 318,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 319,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 319,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 320,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 321,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 322,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 322,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 323,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 323,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 324,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 324,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 325,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 325,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 326,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 326,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 327,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 328,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 329,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 330,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 331,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 332,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 333,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 333,
+    "categoria_id": 12
+  },
+  {
+    "ejercicio_id": 334,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 334,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 334,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 334,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 334,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 335,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 335,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 336,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 336,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 336,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 337,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 337,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 338,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 338,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 339,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 339,
+    "categoria_id": 8
+  },
+  {
+    "ejercicio_id": 340,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 340,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 341,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 341,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 342,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 343,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 344,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 345,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 346,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 347,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 348,
+    "categoria_id": 25
+  },
+  {
+    "ejercicio_id": 349,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 350,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 351,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 351,
+    "categoria_id": 7
+  },
+  {
+    "ejercicio_id": 352,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 353,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 354,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 355,
+    "categoria_id": 23
+  },
+  {
+    "ejercicio_id": 356,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 357,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 358,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 359,
+    "categoria_id": 1
+  },
+  {
+    "ejercicio_id": 360,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 360,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 361,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 361,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 362,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 362,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 363,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 363,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 364,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 364,
+    "categoria_id": 19
+  },
+  {
+    "ejercicio_id": 365,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 366,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 367,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 368,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 369,
+    "categoria_id": 9
+  },
+  {
+    "ejercicio_id": 370,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 370,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 371,
+    "categoria_id": 6
+  },
+  {
+    "ejercicio_id": 371,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 372,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 372,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 373,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 373,
+    "categoria_id": 22
+  },
+  {
+    "ejercicio_id": 373,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 374,
+    "categoria_id": 4
+  },
+  {
+    "ejercicio_id": 374,
+    "categoria_id": 24
+  },
+  {
+    "ejercicio_id": 374,
+    "categoria_id": 22
+  }
+]

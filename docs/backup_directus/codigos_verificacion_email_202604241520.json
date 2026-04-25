@@ -1,0 +1,43 @@
+{
+"codigos_verificacion_email": [
+	{
+		"id" : 1,
+		"date_created" : "2026-01-27 22:51:06",
+		"email" : "carloscabreracriado@gmail.com",
+		"codigo" : "531004",
+		"fecha_expiracion" : "2026-01-27 23:06:07",
+		"intentos_fallidos" : 0,
+		"usado" : 1,
+		"ip_solicitante" : "::1"
+	},
+	{
+		"id" : 2,
+		"date_created" : "2026-01-28 19:27:17",
+		"email" : "carloscabre_96@hotmail.com",
+		"codigo" : "805803",
+		"fecha_expiracion" : "2026-01-28 19:42:18",
+		"intentos_fallidos" : 0,
+		"usado" : 0,
+		"ip_solicitante" : "::1"
+	},
+	{
+		"id" : 3,
+		"date_created" : "2026-02-09 15:46:56",
+		"email" : "guillegp17@gmail.com",
+		"codigo" : "108203",
+		"fecha_expiracion" : "2026-02-09 16:01:57",
+		"intentos_fallidos" : 0,
+		"usado" : 1,
+		"ip_solicitante" : "::ffff:100.64.0.6"
+	},
+	{
+		"id" : 4,
+		"date_created" : "2026-02-20 09:30:01",
+		"email" : "appbykengo@gmail.com",
+		"codigo" : "260961",
+		"fecha_expiracion" : "2026-02-20 09:45:01",
+		"intentos_fallidos" : 0,
+		"usado" : 1,
+		"ip_solicitante" : "::ffff:100.64.0.9"
+	}
+]}

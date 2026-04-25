@@ -6,11 +6,9 @@ import {
   ElementRef,
   ViewChild,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { firstValueFrom } from 'rxjs';
 import QRCode from 'qrcode';
-import { environment as env } from '../../../../../environments/environment';
 
 import {
   DialogContainerComponent,
@@ -20,6 +18,7 @@ import {
   ConfirmDialogComponent,
   DialogService,
 } from '../../../../shared';
+import { AuthService } from '../../../../core/auth/services/auth.service';
 
 import type { Usuario } from '../../../../../types/global';
 
@@ -37,25 +36,6 @@ interface TokenInfo {
   date_created: string;
 }
 
-interface TokensResponse {
-  data: {
-    id: string;
-    tokenPreview: string;
-    url: string;
-    usos_actuales: number;
-    usos_maximos: number | null;
-    fecha_expiracion: string | null;
-    date_created: string;
-    ultimo_uso: string | null;
-    activo: boolean;
-  }[];
-}
-
-interface CreateTokenResponse {
-  id: string;
-  url: string;
-}
-
 @Component({
   selector: 'app-gestion-acceso-dialog',
   standalone: true,
@@ -71,7 +51,7 @@ interface CreateTokenResponse {
 export class GestionAccesoDialogComponent implements OnInit {
   @ViewChild('qrCanvas', { static: false }) qrCanvas!: ElementRef<HTMLCanvasElement>;
 
-  private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private dialogRef = inject(DialogRef);
   private dialogService = inject(DialogService);
   data = inject<DialogData>(DIALOG_DATA);
@@ -98,23 +78,16 @@ export class GestionAccesoDialogComponent implements OnInit {
     this.error.set(null);
 
     try {
-      // Obtener tokens del usuario
-      const response = await firstValueFrom(
-        this.http.get<TokensResponse>(
-          `${env.API_URL}/usuario/${this.paciente.id}/tokens-acceso`,
-          { withCredentials: true }
-        )
+      const response = await this.authService.listarTokensAcceso(
+        this.paciente.id,
       );
 
       const tokenActivo = response.data?.find((t) => t.activo);
 
       if (tokenActivo) {
-        // Usar URL del token devuelta por el backend (siempre tiene el dominio correcto)
-        const url = tokenActivo.url;
-
         this.tokenInfo.set({
           id: tokenActivo.id,
-          url,
+          url: tokenActivo.url,
           usos_actuales: tokenActivo.usos_actuales,
           usos_maximos: tokenActivo.usos_maximos,
           ultimo_uso: tokenActivo.ultimo_uso,
@@ -122,10 +95,8 @@ export class GestionAccesoDialogComponent implements OnInit {
           date_created: tokenActivo.date_created,
         });
 
-        // Generar QR después de establecer tokenInfo
-        setTimeout(() => this.generarQR(url), 100);
+        setTimeout(() => this.generarQR(tokenActivo.url), 100);
       } else {
-        // No hay token activo, crear uno nuevo
         await this.crearNuevoToken();
       }
     } catch (err) {
@@ -138,12 +109,8 @@ export class GestionAccesoDialogComponent implements OnInit {
 
   private async crearNuevoToken(): Promise<void> {
     try {
-      const response = await firstValueFrom(
-        this.http.post<CreateTokenResponse>(
-          `${env.API_URL}/usuario/token-acceso`,
-          { idUsuario: this.paciente.id },
-          { withCredentials: true }
-        )
+      const response = await this.authService.crearTokenAcceso(
+        this.paciente.id,
       );
 
       this.tokenInfo.set({
@@ -185,21 +152,12 @@ export class GestionAccesoDialogComponent implements OnInit {
     this.emailSent.set(false);
 
     try {
-      await firstValueFrom(
-        this.http.post(
-          `${env.API_URL}/usuario/${this.paciente.id}/token-acceso/enviar-email`,
-          {},
-          { withCredentials: true }
-        )
-      );
-
+      await this.authService.enviarTokenPorEmail(this.paciente.id);
       this.emailSent.set(true);
-
-      // Reset el mensaje de éxito después de 3 segundos
       setTimeout(() => this.emailSent.set(false), 3000);
     } catch (err: any) {
       console.error('Error enviando email:', err);
-      this.error.set(err.error?.error || 'Error al enviar el email');
+      this.error.set(err?.message || 'Error al enviar el email');
     } finally {
       this.isSendingEmail.set(false);
     }
@@ -246,21 +204,14 @@ export class GestionAccesoDialogComponent implements OnInit {
     try {
       const tokenActual = this.tokenInfo();
 
-      // Revocar token actual si existe
       if (tokenActual?.id) {
-        await firstValueFrom(
-          this.http.delete(
-            `${env.API_URL}/usuario/token-acceso/${tokenActual.id}`,
-            { withCredentials: true }
-          )
-        );
+        await this.authService.revocarTokenAcceso(tokenActual.id);
       }
 
-      // Crear nuevo token
       await this.crearNuevoToken();
     } catch (err: any) {
       console.error('Error regenerando token:', err);
-      this.error.set(err.error?.error || 'Error al regenerar el token');
+      this.error.set(err?.message || 'Error al regenerar el token');
     } finally {
       this.isRegenerating.set(false);
     }

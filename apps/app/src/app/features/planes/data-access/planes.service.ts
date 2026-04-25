@@ -5,37 +5,25 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { httpResource } from '@angular/common/http';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { environment as env } from '../../../../environments/environment';
+import { assetUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { api } from '../../../../../../../convex/_generated/api';
 
 import {
   Plan,
-  PlanDirectus,
   PlanCompleto,
   EjercicioPlan,
-  EjercicioPlanDirectus,
   EstadoPlan,
   Usuario,
   Ejercicio,
 } from '../../../../types/global';
 
-interface PlanesResponse {
-  data: PlanDirectus[];
-  meta?: { filter_count?: number };
-}
-
-interface PlanResponse {
-  data: PlanDirectus;
-}
-
 type FiltroEstado = 'todos' | EstadoPlan;
 
 @Injectable({ providedIn: 'root' })
 export class PlanesService {
-  private http = inject(HttpClient);
+  private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
 
   // --- Filtros como signals ---
@@ -45,85 +33,83 @@ export class PlanesService {
   readonly page: WritableSignal<number> = signal(1);
   readonly pageSize: WritableSignal<number> = signal(20);
 
-  // ID del usuario actual (fisio)
-  private readonly usuarioId = computed(() => this.sessionService.usuario()?.id ?? null);
+  // Map interno: legacyId → convexId (para resolver IDs en mutations)
+  private readonly idMap = new Map<number, string>();
+  // Map inverso: convexId → legacyId
+  private readonly reverseIdMap = new Map<string, number>();
 
-  // Request para listar planes
-  private readonly peticionPlanes = () => {
-    const userId = this.usuarioId();
-    if (!userId) return undefined;
+  // Suscripción reactiva a planes via Convex
+  private readonly plansQuery = this.convex.watchQuery(
+    api.plans.queries.listByFisio,
+    () => {
+      const estado = this.filtroEstado();
+      return {
+        estado: estado === 'todos' ? undefined : (estado as any),
+      };
+    },
+  );
 
-    const titulo = this.busqueda().trim();
-    const estado = this.filtroEstado();
-    const pacienteId = this.filtroPaciente();
-    const p = this.page();
-    const ps = this.pageSize();
+  // Mapear datos Convex → tipo Plan con filtros client-side
+  private readonly allPlanes = computed<Plan[]>(() => {
+    const raw = this.plansQuery.value();
+    if (!raw) return [];
 
-    // Filtro base: planes del fisio actual
-    const filterConditions: Record<string, unknown>[] = [
-      { fisio: { _eq: userId } },
-    ];
+    this.idMap.clear();
+    this.reverseIdMap.clear();
 
-    // Filtro por estado
-    if (estado !== 'todos') {
-      filterConditions.push({ estado: { _eq: estado } });
+    let result = (raw as any[]).map((r) => {
+      const legacyId = r.legacyId ?? 0;
+      this.idMap.set(legacyId, r._id);
+      this.reverseIdMap.set(r._id, legacyId);
+      return this.mapConvexToPlan(r);
+    });
+
+    // Filtro por búsqueda (titulo)
+    const busq = this.busqueda().toLowerCase().trim();
+    if (busq) {
+      result = result.filter(
+        (p) =>
+          p.titulo.toLowerCase().includes(busq) ||
+          (typeof p.paciente === 'object' &&
+            `${p.paciente.first_name} ${p.paciente.last_name}`
+              .toLowerCase()
+              .includes(busq)),
+      );
     }
 
     // Filtro por paciente
-    if (pacienteId) {
-      filterConditions.push({ paciente: { _eq: pacienteId } });
+    const pacFilter = this.filtroPaciente();
+    if (pacFilter) {
+      result = result.filter((p) => {
+        if (typeof p.paciente === 'object') {
+          return p.paciente.id === pacFilter;
+        }
+        return p.paciente === pacFilter;
+      });
     }
 
-    // Filtro por titulo
-    if (titulo) {
-      filterConditions.push({ titulo: { _icontains: titulo } });
-    }
+    return result;
+  });
 
-    const filter = { _and: filterConditions };
+  // Paginación client-side
+  private readonly paginatedPlanes = computed(() => {
+    const all = this.allPlanes();
+    const start = (this.page() - 1) * this.pageSize();
+    return all.slice(start, start + this.pageSize());
+  });
 
-    return {
-      url: `${env.DIRECTUS_URL}/items/Planes`,
-      method: 'GET',
-      params: {
-        fields: [
-          'id_plan',
-          'titulo',
-          'descripcion',
-          'estado',
-          'fecha_inicio',
-          'fecha_fin',
-          'date_created',
-          'date_updated',
-          'paciente.id',
-          'paciente.first_name',
-          'paciente.last_name',
-          'paciente.email',
-          'paciente.avatar',
-        ].join(','),
-        limit: String(ps),
-        offset: String((p - 1) * ps),
-        sort: '-date_created',
-        meta: 'filter_count',
-        filter: JSON.stringify(filter),
-      },
-    };
+  // Interfaz compatible con httpResource para los templates
+  readonly planesRes = {
+    value: computed(() => this.paginatedPlanes()),
+    isLoading: this.plansQuery.isLoading,
+    error: this.plansQuery.error,
+    reload: () => {},
   };
 
-  readonly planesRes = httpResource<Plan[]>(this.peticionPlanes, {
-    parse: (res) => {
-      const resultado = res as PlanesResponse;
-      return resultado.data.map((p) => this.transformPlan(p));
-    },
-    defaultValue: [],
-  });
-
   // Computed para la vista
-  readonly planes = computed(() => this.planesRes.value());
-  readonly isLoading = computed(() => this.planesRes.isLoading());
-  readonly total = computed(() => {
-    const res = this.planesRes.value();
-    return Array.isArray(res) ? res.length : 0;
-  });
+  readonly planes = computed(() => this.paginatedPlanes());
+  readonly isLoading = computed(() => this.plansQuery.isLoading());
+  readonly total = computed(() => this.allPlanes().length);
 
   // ========= Acciones (mutadores) =========
 
@@ -154,84 +140,62 @@ export class PlanesService {
   }
 
   reload() {
-    this.planesRes.reload();
+    // No-op: datos en tiempo real via Convex
+  }
+
+  // ========= Resolución de IDs =========
+
+  resolveConvexId(legacyId: number): string | undefined {
+    return this.idMap.get(legacyId);
+  }
+
+  resolveLegacyId(convexId: string): number {
+    return this.reverseIdMap.get(convexId) ?? 0;
   }
 
   // ========= CRUD Methods =========
 
-  /**
-   * Obtener un plan por ID con todos sus ejercicios
-   */
   async getPlanById(id: number): Promise<PlanCompleto | null> {
-    const fields = [
-      'id_plan',
-      'titulo',
-      'descripcion',
-      'estado',
-      'fecha_inicio',
-      'fecha_fin',
-      'date_created',
-      'date_updated',
-      'paciente.id',
-      'paciente.first_name',
-      'paciente.last_name',
-      'paciente.email',
-      'paciente.avatar',
-      'paciente.telefono',
-      'fisio.id',
-      'fisio.first_name',
-      'fisio.last_name',
-      'fisio.email',
-      'ejercicios.id',
-      'ejercicios.sort',
-      'ejercicios.ejercicio.id_ejercicio',
-      'ejercicios.ejercicio.nombre_ejercicio',
-      'ejercicios.ejercicio.descripcion',
-      'ejercicios.ejercicio.portada',
-      'ejercicios.ejercicio.video',
-      'ejercicios.ejercicio.series_defecto',
-      'ejercicios.ejercicio.repeticiones_defecto',
-      'ejercicios.series',
-      'ejercicios.repeticiones',
-      'ejercicios.duracion_seg',
-      'ejercicios.descanso_seg',
-      'ejercicios.veces_dia',
-      'ejercicios.dias_semana',
-      'ejercicios.instrucciones_paciente',
-      'ejercicios.notas_fisio',
-    ].join(',');
-
     try {
-      const response = await firstValueFrom(
-        this.http.get<PlanResponse>(`${env.DIRECTUS_URL}/items/Planes/${id}`, {
-          params: { fields },
-          withCredentials: true,
-        })
-      );
+      // Intentar resolver por idMap primero
+      const convexId = this.idMap.get(id);
+      let raw: any;
 
-      if (!response?.data) return null;
+      if (convexId) {
+        raw = await this.convex.query(api.plans.queries.getById, {
+          planId: convexId as any,
+        });
+      } else {
+        // Fallback: buscar por legacyId (navegación directa)
+        raw = await this.convex.query(api.plans.queries.getByLegacyId, {
+          legacyId: id,
+        });
+      }
 
-      return this.transformPlanCompleto(response.data);
+      if (!raw) return null;
+
+      // Registrar en idMap si no estaba
+      if (raw.legacyId && !this.idMap.has(raw.legacyId)) {
+        this.idMap.set(raw.legacyId, raw._id);
+        this.reverseIdMap.set(raw._id, raw.legacyId);
+      }
+
+      return this.mapConvexToPlanCompleto(raw);
     } catch (error) {
       console.error('Error al obtener plan:', error);
       return null;
     }
   }
 
-  /**
-   * Actualizar el estado de un plan
-   */
   async updateEstado(id: number, estado: EstadoPlan): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.http.patch(
-          `${env.DIRECTUS_URL}/items/Planes/${id}`,
-          { estado },
-          { withCredentials: true }
-        )
-      );
+      const convexId = this.idMap.get(id);
+      if (!convexId) return false;
 
-      this.reload();
+      await this.convex.mutation(api.plans.mutations.updateEstado, {
+        planId: convexId as any,
+        estado: estado as any,
+      });
       return true;
     } catch (error) {
       console.error('Error al actualizar estado:', error);
@@ -239,9 +203,6 @@ export class PlanesService {
     }
   }
 
-  /**
-   * Actualizar un plan completo (metadatos)
-   */
   async updatePlan(
     id: number,
     payload: Partial<{
@@ -250,18 +211,20 @@ export class PlanesService {
       fecha_inicio: string | null;
       fecha_fin: string | null;
       estado: EstadoPlan;
-    }>
+    }>,
   ): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.http.patch(
-          `${env.DIRECTUS_URL}/items/Planes/${id}`,
-          payload,
-          { withCredentials: true }
-        )
-      );
+      const convexId = this.idMap.get(id);
+      if (!convexId) return false;
 
-      this.reload();
+      await this.convex.mutation(api.plans.mutations.update, {
+        planId: convexId as any,
+        titulo: payload.titulo,
+        descripcion: payload.descripcion,
+        fechaInicio: payload.fecha_inicio ?? undefined,
+        fechaFin: payload.fecha_fin ?? undefined,
+      });
+
       return true;
     } catch (error) {
       console.error('Error al actualizar plan:', error);
@@ -269,25 +232,18 @@ export class PlanesService {
     }
   }
 
-  /**
-   * Eliminar un plan (soft delete via estado)
-   */
   async deletePlan(id: number): Promise<boolean> {
     return this.updateEstado(id, 'cancelado');
   }
 
-  /**
-   * Eliminar un plan permanentemente
-   */
   async deletePlanPermanente(id: number): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.http.delete(`${env.DIRECTUS_URL}/items/Planes/${id}`, {
-          withCredentials: true,
-        })
-      );
+      const convexId = this.idMap.get(id);
+      if (!convexId) return false;
 
-      this.reload();
+      await this.convex.mutation(api.plans.mutations.remove, {
+        planId: convexId as any,
+      });
       return true;
     } catch (error) {
       console.error('Error al eliminar plan:', error);
@@ -295,252 +251,107 @@ export class PlanesService {
     }
   }
 
-  // ========= Planes por paciente (para perfil) =========
+  // ========= Planes por paciente =========
 
-  /**
-   * Obtener planes ACTIVOS de un paciente dentro de las fechas válidas (para HOY)
-   * Usado para la sección "Actividad de hoy"
-   */
   async getPlanesActivosPaciente(pacienteId: string): Promise<PlanCompleto[]> {
-    const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-    const filter = {
-      _and: [
-        { paciente: { _eq: pacienteId } },
-        { estado: { _eq: 'activo' } },
-        {
-          _or: [
-            { fecha_inicio: { _lte: hoy } },
-            { fecha_inicio: { _null: true } },
-          ],
-        },
-        {
-          _or: [
-            { fecha_fin: { _gte: hoy } },
-            { fecha_fin: { _null: true } },
-          ],
-        },
-      ],
-    };
-
-    const fields = [
-      'id_plan',
-      'titulo',
-      'descripcion',
-      'estado',
-      'fecha_inicio',
-      'fecha_fin',
-      'date_created',
-      'date_updated',
-      'paciente.id',
-      'paciente.first_name',
-      'paciente.last_name',
-      'paciente.email',
-      'paciente.avatar',
-      'fisio.id',
-      'fisio.first_name',
-      'fisio.last_name',
-      'fisio.email',
-      'ejercicios.id',
-      'ejercicios.sort',
-      'ejercicios.ejercicio.id_ejercicio',
-      'ejercicios.ejercicio.nombre_ejercicio',
-      'ejercicios.ejercicio.descripcion',
-      'ejercicios.ejercicio.portada',
-      'ejercicios.ejercicio.video',
-      'ejercicios.series',
-      'ejercicios.repeticiones',
-      'ejercicios.duracion_seg',
-      'ejercicios.descanso_seg',
-      'ejercicios.veces_dia',
-      'ejercicios.dias_semana',
-      'ejercicios.instrucciones_paciente',
-      'ejercicios.notas_fisio',
-    ].join(',');
-
     try {
-      const response = await firstValueFrom(
-        this.http.get<PlanesResponse>(`${env.DIRECTUS_URL}/items/Planes`, {
-          params: {
-            fields,
-            sort: '-date_created',
-            filter: JSON.stringify(filter),
-          },
-          withCredentials: true,
-        })
+      const raw = await this.convex.query(
+        api.plans.queries.getActiveForPatientToday,
+        { pacienteId },
       );
-
-      return (response?.data || []).map((p) => this.transformPlanCompleto(p));
+      return ((raw as any[]) || []).map((p) => this.mapConvexToPlanCompleto(p));
     } catch (error) {
-      console.error('Error al obtener planes activos del paciente:', error);
+      console.error('Error al obtener planes activos:', error);
       return [];
     }
   }
 
-  /**
-   * Obtener TODOS los planes activos de un paciente (incluyendo futuros)
-   * Usado para calcular "Próximos días" en Actividad Diaria
-   * Incluye planes que aún no han comenzado pero están marcados como activos
-   */
-  async getPlanesActivosYFuturosPaciente(pacienteId: string): Promise<PlanCompleto[]> {
-    const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-    // Solo filtramos que el plan no haya terminado (fecha_fin >= hoy o null)
-    // Incluimos planes futuros (fecha_inicio > hoy)
-    const filter = {
-      _and: [
-        { paciente: { _eq: pacienteId } },
-        { estado: { _eq: 'activo' } },
-        {
-          _or: [
-            { fecha_fin: { _gte: hoy } },
-            { fecha_fin: { _null: true } },
-          ],
-        },
-      ],
-    };
-
-    const fields = [
-      'id_plan',
-      'titulo',
-      'descripcion',
-      'estado',
-      'fecha_inicio',
-      'fecha_fin',
-      'date_created',
-      'date_updated',
-      'paciente.id',
-      'paciente.first_name',
-      'paciente.last_name',
-      'paciente.email',
-      'paciente.avatar',
-      'fisio.id',
-      'fisio.first_name',
-      'fisio.last_name',
-      'fisio.email',
-      'ejercicios.id',
-      'ejercicios.sort',
-      'ejercicios.ejercicio.id_ejercicio',
-      'ejercicios.ejercicio.nombre_ejercicio',
-      'ejercicios.ejercicio.descripcion',
-      'ejercicios.ejercicio.portada',
-      'ejercicios.ejercicio.video',
-      'ejercicios.series',
-      'ejercicios.repeticiones',
-      'ejercicios.duracion_seg',
-      'ejercicios.descanso_seg',
-      'ejercicios.veces_dia',
-      'ejercicios.dias_semana',
-      'ejercicios.instrucciones_paciente',
-      'ejercicios.notas_fisio',
-    ].join(',');
-
+  async getPlanesActivosYFuturosPaciente(
+    pacienteId: string,
+  ): Promise<PlanCompleto[]> {
     try {
-      const response = await firstValueFrom(
-        this.http.get<PlanesResponse>(`${env.DIRECTUS_URL}/items/Planes`, {
-          params: {
-            fields,
-            sort: '-date_created',
-            filter: JSON.stringify(filter),
-          },
-          withCredentials: true,
-        })
-      );
-
-      return (response?.data || []).map((p) => this.transformPlanCompleto(p));
+      const raw = await this.convex.query(api.plans.queries.getActiveAndFuture, {
+        pacienteId,
+      });
+      return ((raw as any[]) || []).map((p) => this.mapConvexToPlanCompleto(p));
     } catch (error) {
       console.error('Error al obtener planes activos y futuros:', error);
       return [];
     }
   }
 
-  /**
-   * Obtener planes de un paciente especifico
-   */
   async getPlanesByPaciente(pacienteId: string): Promise<Plan[]> {
-    const filter = {
-      _and: [
-        { paciente: { _eq: pacienteId } },
-        { estado: { _neq: 'cancelado' } },
-      ],
-    };
-
     try {
-      const response = await firstValueFrom(
-        this.http.get<PlanesResponse>(`${env.DIRECTUS_URL}/items/Planes`, {
-          params: {
-            fields: [
-              'id_plan',
-              'titulo',
-              'descripcion',
-              'estado',
-              'fecha_inicio',
-              'fecha_fin',
-              'date_created',
-              'fisio.id',
-              'fisio.first_name',
-              'fisio.last_name',
-            ].join(','),
-            sort: '-date_created',
-            filter: JSON.stringify(filter),
-          },
-          withCredentials: true,
-        })
-      );
-
-      return (response?.data || []).map((p) => this.transformPlan(p));
+      const raw = await this.convex.query(api.plans.queries.listByPaciente, {
+        pacienteId,
+      });
+      return ((raw as any[]) || [])
+        .filter((p) => p.estado !== 'cancelado')
+        .map((p) => this.mapConvexToPlan(p));
     } catch (error) {
       console.error('Error al obtener planes del paciente:', error);
       return [];
     }
   }
 
-  // ========= Transformers =========
+  // ========= Mappers Convex → Domain =========
 
-  private transformPlan(p: PlanDirectus): Plan {
+  private mapConvexToPlan(r: any): Plan {
     return {
-      id_plan: p.id_plan,
-      paciente: this.transformUsuario(p.paciente),
-      fisio: this.transformUsuario(p.fisio),
-      titulo: p.titulo,
-      descripcion: p.descripcion,
-      estado: p.estado,
-      fecha_inicio: p.fecha_inicio,
-      fecha_fin: p.fecha_fin,
-      date_created: p.date_created,
-      date_updated: p.date_updated,
-    };
+      id_plan: r.legacyId ?? 0,
+      paciente: this.mapConvexToUsuarioBasico(
+        r.pacienteId,
+        r.pacienteNombre,
+      ),
+      fisio: this.mapConvexToUsuarioBasico(r.fisioId, r.fisioNombre),
+      titulo: r.titulo,
+      descripcion: r.descripcion,
+      estado: r.estado,
+      fecha_inicio: r.fechaInicio,
+      fecha_fin: r.fechaFin,
+      date_created: r._creationTime
+        ? new Date(r._creationTime).toISOString()
+        : undefined,
+      // Store Convex ID for direct access
+      _convexId: r._id,
+    } as Plan;
   }
 
-  private transformPlanCompleto(p: PlanDirectus): PlanCompleto {
+  private mapConvexToPlanCompleto(r: any): PlanCompleto {
     return {
-      id_plan: p.id_plan,
-      paciente: this.sessionService.transformarUsuarioDirectus(p.paciente as any),
-      fisio: this.sessionService.transformarUsuarioDirectus(p.fisio as any),
-      titulo: p.titulo,
-      descripcion: p.descripcion,
-      estado: p.estado,
-      fecha_inicio: p.fecha_inicio,
-      fecha_fin: p.fecha_fin,
-      date_created: p.date_created,
-      date_updated: p.date_updated,
-      items: (p.ejercicios || [])
-        .map((e) => this.transformEjercicioPlan(e))
+      id_plan: r.legacyId ?? 0,
+      paciente: this.mapConvexToUsuarioBasico(
+        r.pacienteId,
+        r.pacienteNombre,
+      ),
+      fisio: this.mapConvexToUsuarioBasico(r.fisioId, r.fisioNombre),
+      titulo: r.titulo,
+      descripcion: r.descripcion,
+      estado: r.estado,
+      fecha_inicio: r.fechaInicio,
+      fecha_fin: r.fechaFin,
+      date_created: r._creationTime
+        ? new Date(r._creationTime).toISOString()
+        : undefined,
+      items: ((r.ejercicios || []) as any[])
+        .map((e) => this.mapConvexToEjercicioPlan(e))
         .sort((a, b) => a.sort - b.sort),
-    };
+      _convexId: r._id,
+    } as PlanCompleto;
   }
 
-  private transformUsuario(u: string | any): string | Usuario {
-    if (typeof u === 'string') return u;
-    if (!u) return '';
-    // Si es objeto con datos basicos
+  private mapConvexToUsuarioBasico(
+    id: string,
+    nombre: string | undefined,
+  ): Usuario {
+    const parts = (nombre || '').split(' ');
     return {
-      id: u.id,
-      first_name: u.first_name || '',
-      last_name: u.last_name || '',
-      email: u.email || '',
-      email_verified: u.email_verified ?? false,
-      avatar: u.avatar || '',
+      id: id as any,
+      first_name: parts[0] || '',
+      last_name: parts.slice(1).join(' ') || '',
+      email: '',
+      email_verified: false,
+      avatar: '',
       detalle: null,
       clinicas: [],
       esFisio: false,
@@ -548,29 +359,34 @@ export class PlanesService {
     };
   }
 
-  private transformEjercicioPlan(e: EjercicioPlanDirectus): EjercicioPlan {
+  private mapConvexToEjercicioPlan(e: any): EjercicioPlan {
     return {
-      id: e.id,
-      sort: e.sort,
-      plan: e.plan,
-      ejercicio: e.ejercicio as Ejercicio,
+      id: e.legacyId ?? 0,
+      sort: e.sort ?? 0,
+      plan: e.planId,
+      ejercicio: {
+        id_ejercicio: 0,
+        nombre_ejercicio: e.ejercicioNombre || '',
+        _convexId: e.exerciseId,
+      } as unknown as Ejercicio,
       series: e.series,
       repeticiones: e.repeticiones,
-      duracion_seg: e.duracion_seg,
-      descanso_seg: e.descanso_seg,
-      veces_dia: e.veces_dia,
-      dias_semana: e.dias_semana,
-      instrucciones_paciente: e.instrucciones_paciente,
-      notas_fisio: e.notas_fisio,
-      date_created: e.date_created,
-      date_updated: e.date_updated,
-    };
+      duracion_seg: e.duracionSeg,
+      descanso_seg: e.descansoSeg,
+      veces_dia: e.vecesDia,
+      dias_semana: e.diasSemana,
+      instrucciones_paciente: e.instruccionesPaciente,
+      notas_fisio: e.notasFisio,
+      _convexId: e._id,
+      _exerciseConvexId: e.exerciseId,
+    } as EjercicioPlan;
   }
 
-  // ========= Helper de assets =========
+  // ========= Helpers =========
+
   getAssetUrl(id?: string, width = 200, height = 200) {
     return id
-      ? `${env.DIRECTUS_URL}/assets/${id}?width=${width}&height=${height}&fit=cover&format=webp`
+      ? assetUrl(id, { width, height, fit: 'cover', format: 'webp' })
       : '';
   }
 }

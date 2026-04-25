@@ -15,50 +15,18 @@ export {
   UUID,
   Timestamp,
   DiaSemana,
-  DirectusAuditFields,
   RolUsuario,
 } from '@kengo/shared-models';
 
-// Tipos de base de datos (para referencia)
-export type {
-  DirectusUserDB,
-  DetalleUsuarioDB,
-  PuestoDB,
-  EjercicioDB,
-  CategoriaDB,
-  EjercicioCategoriasDB,
-  EjercicioFavoritoDB,
-  EstadoPlanDB,
-  PlanDB,
-  PlanEjercicioDB,
-  PlanRegistroDB,
-  VisibilidadRutinaDB,
-  RutinaDB,
-  RutinaEjercicioDB,
-  ClinicaDB,
-  UsuarioClinicaDB,
-  ClinicaFilesDB,
-  CumplimientoDiarioDB,
-  NotificacionFisioDB,
-  AsignacionResponsableDB,
-} from '@kengo/shared-models';
-
-// Tipos Directus
+// Tipos legacy de "shape de Directus" — siguen usándose como interfaces de
+// datos (records expandidos del backend) aunque la fuente ahora es Convex.
+// Pendiente futuro: renombrar a *Record y unificar con tipos de dominio.
 export {
   UsuarioDirectus,
-  DetalleUsuarioDirectus,
-  ClinicaUsuarioDirectus,
   EjercicioDirectus,
-  CategoriaDirectus,
-  EjercicioFavoritoDirectus,
   EstadoPlan,
-  PlanDirectus,
-  EjercicioPlanDirectus,
   RegistroEjercicioDirectus,
   VisibilidadRutina,
-  RutinaDirectus,
-  EjercicioRutinaDirectus,
-  ClinicaDirectus,
 } from '@kengo/shared-models';
 
 // Tipos de dominio

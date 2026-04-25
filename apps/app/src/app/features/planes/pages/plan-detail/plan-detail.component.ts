@@ -4,12 +4,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
-import { environment as env } from '../../../../../environments/environment';
 import { KENGO_BREAKPOINTS, DialogService, DialogoPdfComponent } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
 
@@ -168,12 +168,12 @@ export class PlanDetailComponent implements OnInit {
 
   assetUrl(id: string | null | undefined, w = 100, h = 100): string {
     if (!id) return '';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
   }
 
   avatarUrl(id: string | null | undefined): string {
     if (!id) return 'assets/default-avatar.png';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=100&height=100&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: 100, height: 100, fit: 'cover', format: 'webp' })}`;
   }
 
   abrirOpcionesPdf() {
@@ -182,7 +182,7 @@ export class PlanDetailComponent implements OnInit {
 
     const pac = this.paciente();
     const data: DialogoPdfData = {
-      planId: p.id_plan,
+      planConvexId: (p as any)._convexId,
       pacienteEmail: pac?.email ?? undefined,
       planTitulo: p.titulo,
     };

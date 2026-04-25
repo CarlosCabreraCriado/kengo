@@ -607,11 +607,12 @@ export class FooterComponent {
     this.estado.set('sending');
 
     this.http
-      .post<{
-        success: boolean;
-      }>(`${environment.apiUrl}/contacto`, this.contactForm.value)
+      .post<{ success: boolean }>(
+        `${environment.convexSiteUrl}/api/contact/send`,
+        this.contactForm.value,
+      )
       .subscribe({
-        next: () => this.estado.set('success'),
+        next: (res) => this.estado.set(res?.success ? 'success' : 'error'),
         error: () => this.estado.set('error'),
       });
   }

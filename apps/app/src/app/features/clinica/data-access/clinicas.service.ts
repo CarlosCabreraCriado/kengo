@@ -1,184 +1,148 @@
-import { Injectable, signal, inject, computed } from '@angular/core';
-import { environment as env } from '../../../../environments/environment';
+import { Injectable, signal, inject, computed, effect } from '@angular/core';
 
-import { httpResource } from '@angular/common/http';
-
-// Core services
+import { ConvexService } from '../../../core/convex/convex.service';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { api } from '../../../../../../../convex/_generated/api';
+import type { Id } from '../../../../../../../convex/_generated/dataModel';
 
-// Types:
 import {
   Usuario,
-  UsuarioDirectus,
   Clinica,
-  ClinicaDirectus,
-  ClinicaImagen,
   ID,
   PUESTO_FISIOTERAPEUTA,
   PUESTO_ADMINISTRADOR,
 } from '../../../../types/global';
 
-interface DirectusPage<T> {
-  data: T[];
-}
-
-type FisiosPorClinica = Record<number, Usuario[]>; // { [id_clinica]: Fisio[] }
+type FisiosPorClinica = Record<number, Usuario[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ClinicasService {
   private sessionService = inject(SessionService);
+  private convex = inject(ConvexService);
 
   selectedClinicaId = signal<ID | null>(null);
 
-  readonly idsMisClinicas = computed<ID[] | null>(() => {
-    const uc = this.sessionService.usuario()?.clinicas ?? null;
-    if (!uc) return null;
-    const ids = uc.map((x) => x.id_clinica);
-    console.log('IDs de mis clínicas:', ids);
-    return ids;
+  // ========= Convex: Suscripcion reactiva a mis clinicas =========
+  private readonly misClinicasQuery = this.convex.watchQuery(
+    api.clinics.queries.myClinicsList,
+    () => ({}),
+  );
+
+  // Clinicas transformadas al tipo de dominio
+  readonly misClinicas = computed<Clinica[]>(() => {
+    const raw = this.misClinicasQuery.value();
+    if (!raw) return [];
+    return raw.map((c) => ({
+      id_clinica: c.legacyId ?? 0,
+      nombre: c.nombre,
+      telefono: c.telefono ?? null,
+      email: c.email ?? null,
+      direccion: c.direccion ?? null,
+      postal: c.postal ?? null,
+      nif: c.nif ?? null,
+      color_primario: c.colorPrimario ?? null,
+      color_secundario: c.colorSecundario ?? null,
+      logo: typeof c.logo === 'string' ? c.logo : null,
+      imagenes: [],
+    }));
   });
 
-  // Lista de clínicas para el selector (id + nombre)
-  readonly misClinicasRes = httpResource<Clinica[]>(
-    () => {
-      const ids = this.idsMisClinicas();
-      console.log('Cargando datos de clínicas:', ids);
-      if (!ids || !ids.length) return undefined;
-      if (ids.length == 0) return undefined; // hasta que tengamos ids, no dispares la llamada
-
-      return {
-        url: `${env.DIRECTUS_URL}/items/clinicas`,
-        method: 'GET',
-        params: {
-          fields: [
-            'id_clinica',
-            'nombre',
-            'telefono',
-            'email',
-            'direccion',
-            'postal',
-            'nif',
-            'color_primario',
-            'logo',
-            'logo.id',
-            'imagenes.id',
-            'imagenes.directus_files_id',
-          ].join(','),
-          filter: JSON.stringify({ id_clinica: { _in: ids } }),
-          limit: '200',
-        },
-        // withCredentials: true,
-      };
+  // Compat: misClinicasRes.value() y misClinicasRes.reload()
+  readonly misClinicasRes = {
+    value: this.misClinicas,
+    reload: () => {
+      // No-op: Convex watchQuery se actualiza automaticamente en tiempo real
     },
-    {
-      parse: (v) => {
-        const res = (v as DirectusPage<ClinicaDirectus>)?.data ?? [];
-        const clinicas: Clinica[] = [];
-        for (const clinica of res) {
-          clinicas.push({
-            id_clinica: Number(clinica.id_clinica),
-            nombre: clinica.nombre ?? '',
-            telefono: clinica.telefono ?? null,
-            email: clinica.email ?? null,
-            direccion: clinica.direccion ?? null,
-            postal: clinica.postal ?? null,
-            nif: clinica.nif ?? null,
-            color_primario: clinica.color_primario ?? null,
-            logo: clinica.logo?.id.toString() ?? null,
-            imagenes: (clinica.imagenes ?? [])
-              .filter((f) => f.id && f.directus_files_id)
-              .map((f): ClinicaImagen => ({
-                junctionId: Number(f.id),
-                fileId: f.directus_files_id.toString(),
-              })),
-          });
-        }
+  };
 
-        console.log('Mis clínicas:', clinicas);
-        return clinicas;
-      },
-      defaultValue: [],
-    },
-  );
+  // Map: legacyId → Convex ID (para mutations)
+  readonly legacyToConvexClinicId = computed(() => {
+    const map = new Map<number, Id<'clinics'>>();
+    const raw = this.misClinicasQuery.value();
+    if (!raw) return map;
+    for (const c of raw) {
+      if (c.legacyId !== undefined) {
+        map.set(c.legacyId, c._id);
+      }
+    }
+    return map;
+  });
 
-  // IDs de clínicas ya confirmadas por el resource anterior
+  // IDs de mis clinicas (legacy)
   readonly idsClinicasCargadas = computed<number[]>(() =>
-    (this.misClinicasRes.value() ?? []).map((c) => Number(c.id_clinica)),
+    this.misClinicas().map((c) => Number(c.id_clinica)),
   );
 
-  // --- NUEVO: fisios de TODAS las clínicas cargadas ---
-  readonly fisiosEnMisClinicaRes = httpResource<FisiosPorClinica>(
-    () => {
-      const ids = this.idsClinicasCargadas();
-      if (!ids || ids.length === 0) return undefined;
+  // ========= Fisios por clinica =========
+  private fisiosCache = signal<FisiosPorClinica>({});
 
-      return {
-        url: `${env.DIRECTUS_URL}/users`,
-        method: 'GET',
-        params: {
-          fields: [
-            'id',
-            'first_name',
-            'last_name',
-            'email',
-            'avatar',
-            'telefono',
-            'numero_colegiado',
-            'clinicas.id_clinica',
-            'clinicas.id_puesto',
-            'clinicas.puesto.id',
-            'clinicas.puesto.puesto',
-          ].join(','),
-          // Filter by puesto in clinic (fisioterapeuta or administrador)
-          filter: JSON.stringify({
-            clinicas: {
-              _and: [
-                { id_clinica: { _in: ids } },
-                { id_puesto: { _in: [PUESTO_FISIOTERAPEUTA, PUESTO_ADMINISTRADOR] } },
-              ],
-            },
-          }),
-          limit: '500',
-          sort: 'first_name,last_name',
-        },
-      };
-    },
-    {
-      // agrupamos a los usuarios por cada clínica en la que estén
-      parse: (v) => {
-        const data = (v as DirectusPage<UsuarioDirectus>)?.data ?? [];
-        const map: FisiosPorClinica = {};
-        for (const u of data) {
-          const fisio: Usuario = this.sessionService.transformarUsuarioDirectus(u);
-          const rel = Array.isArray(u.clinicas) ? u.clinicas : [];
-          for (const c of rel) {
-            const idClin = Number(c?.id_clinica);
-            if (!Number.isFinite(idClin)) continue;
-            if (!map[idClin]) map[idClin] = [];
-            map[idClin].push(fisio);
-          }
+  // Auto-cargar fisios cuando cambian las clinicas
+  private fisiosLoader = effect(() => {
+    const clinicas = this.misClinicasQuery.value();
+    if (clinicas && clinicas.length > 0) {
+      this.cargarFisiosTodasClinicas();
+    }
+  });
+
+  private async cargarFisiosTodasClinicas(): Promise<void> {
+    const clinicas = this.misClinicasQuery.value();
+    if (!clinicas || clinicas.length === 0) return;
+
+    const result: FisiosPorClinica = {};
+
+    for (const clinic of clinicas) {
+      try {
+        const members = await this.convex.query(
+          api.clinics.queries.getMembers,
+          { clinicId: clinic._id },
+        );
+
+        const fisios: Usuario[] = (members ?? [])
+          .filter(
+            (m) => m.puesto === PUESTO_FISIOTERAPEUTA || m.puesto === PUESTO_ADMINISTRADOR,
+          )
+          .map((m) => ({
+            id: m.legacyDirectusId ?? m._id,
+            convexId: m._id,
+            first_name: m.firstName ?? '',
+            last_name: m.lastName ?? '',
+            email: m.email ?? '',
+            email_verified: m.emailVerified ?? false,
+            avatar: m.avatar ? String(m.avatar) : '',
+            avatar_url: undefined,
+            telefono: m.telefono || undefined,
+            numero_colegiado: m.numeroColegiado || undefined,
+            detalle: null,
+            clinicas: [],
+            esFisio: true,
+            esPaciente: false,
+          }));
+
+        if (clinic.legacyId !== undefined) {
+          result[clinic.legacyId] = fisios;
         }
-        console.log('Fisios en mis clínicas:', map);
-        return map;
-      },
-      defaultValue: {},
-    },
-  );
+      } catch (err) {
+        console.warn(`Error cargando miembros de clinica ${clinic.nombre}:`, err);
+      }
+    }
 
-  // helper de acceso cómodo para el template o componentes
+    this.fisiosCache.set(result);
+  }
+
+  // Compat: fisiosDeClinica(id) devuelve un computed
   fisiosDeClinica = (idClinica: ID) =>
     computed<Usuario[]>(() => {
-      return this.fisiosEnMisClinicaRes.value()[Number(idClinica)] ?? [];
+      return this.fisiosCache()[Number(idClinica)] ?? [];
     });
 
   // Computed para obtener la clínica actualmente seleccionada
   readonly selectedClinica = computed<Clinica | null>(() => {
-    const clinicas = this.misClinicasRes.value();
+    const clinicas = this.misClinicas();
     const id = this.selectedClinicaId();
 
     if (!clinicas || clinicas.length === 0) return null;
     if (!id) return clinicas[0] ?? null;
 
-    return clinicas.find(c => c.id_clinica === id) ?? clinicas[0] ?? null;
+    return clinicas.find((c) => c.id_clinica === id) ?? clinicas[0] ?? null;
   });
 }

@@ -1,0 +1,83 @@
+{
+"ejercicios_favoritos": [
+	{
+		"id" : 1,
+		"id_usuario" : "71370a40-d231-4d82-88a2-fcff7e543d1e",
+		"id_ejercicio" : 179
+	},
+	{
+		"id" : 5,
+		"id_usuario" : "71370a40-d231-4d82-88a2-fcff7e543d1e",
+		"id_ejercicio" : 154
+	},
+	{
+		"id" : 15,
+		"id_usuario" : "8ded1953-49c8-4a65-b590-ca4f1c4fb16d",
+		"id_ejercicio" : 164
+	},
+	{
+		"id" : 16,
+		"id_usuario" : "8ded1953-49c8-4a65-b590-ca4f1c4fb16d",
+		"id_ejercicio" : 37
+	},
+	{
+		"id" : 25,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 166
+	},
+	{
+		"id" : 26,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 215
+	},
+	{
+		"id" : 28,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 37
+	},
+	{
+		"id" : 29,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 39
+	},
+	{
+		"id" : 30,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 177
+	},
+	{
+		"id" : 31,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 313
+	},
+	{
+		"id" : 32,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 30
+	},
+	{
+		"id" : 33,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 49
+	},
+	{
+		"id" : 34,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 223
+	},
+	{
+		"id" : 35,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 27
+	},
+	{
+		"id" : 36,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 172
+	},
+	{
+		"id" : 37,
+		"id_usuario" : "61ce8ed2-c0f4-4591-aa5b-fa0c8e54e51f",
+		"id_ejercicio" : 25
+	}
+]}

@@ -7,8 +7,8 @@ import { DiaSemana, UUID } from '../types/common';
 import { Usuario } from './users';
 import { Ejercicio } from './exercises';
 
-// Re-exportar VisibilidadRutina desde directus para mantener compatibilidad
-export { VisibilidadRutina } from '../directus/routines.directus';
+// Re-exportado desde el payload (que es donde se define ahora)
+export { VisibilidadRutina } from '../payloads/routines.payload';
 
 /**
  * Rutina transformada para uso en la aplicación

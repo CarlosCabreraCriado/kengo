@@ -1,0 +1,67 @@
+{
+"clinicas": [
+	{
+		"id_clinica" : 1,
+		"user_created" : "71370a40-d231-4d82-88a2-fcff7e543d1e",
+		"date_created" : "2025-06-02 15:07:14",
+		"user_updated" : "71370a40-d231-4d82-88a2-fcff7e543d1e",
+		"date_updated" : "2026-04-23 18:21:45",
+		"nombre" : "Myo Active Fisioterapia Orotava",
+		"telefono" : "673539193",
+		"email" : "info@myoactive.es",
+		"direccion" : "C. San Juan Bosco, 2, Local 4 y 5, La Orotava, Santa Cruz de Tenerife",
+		"postal" : "38300",
+		"nif" : "D23531298",
+		"logo" : "4d9d303d-215e-49d3-a7e2-70e3e2fabee1",
+		"color_primario" : "#ea580c",
+		"color_secundario" : "#666666"
+	},
+	{
+		"id_clinica" : 2,
+		"user_created" : "6b64c90a-9892-4613-bf60-bb43e4f09351",
+		"date_created" : "2026-01-26 17:11:09",
+		"user_updated" : "8ded1953-49c8-4a65-b590-ca4f1c4fb16d",
+		"date_updated" : "2026-01-27 21:03:31",
+		"nombre" : "Clinica de prueba",
+		"telefono" : "690168013",
+		"email" : "carloscabreracriado@gmail.com",
+		"direccion" : "Calle santa rosalia, n20",
+		"postal" : "38002",
+		"nif" : "B12345679",
+		"logo" : "0d6e84c7-bd87-4fc1-bc28-d2f8000b33be",
+		"color_primario" : "#0a33ff",
+		"color_secundario" : null
+	},
+	{
+		"id_clinica" : 3,
+		"user_created" : "6b64c90a-9892-4613-bf60-bb43e4f09351",
+		"date_created" : "2026-01-28 20:03:29",
+		"user_updated" : "71370a40-d231-4d82-88a2-fcff7e543d1e",
+		"date_updated" : "2026-01-29 00:23:10",
+		"nombre" : "Maria fisio",
+		"telefono" : "8923452345",
+		"email" : "clinicaejemplo@gmail.com",
+		"direccion" : "Calle santa rosalia",
+		"postal" : "38002",
+		"nif" : "79064519H",
+		"logo" : "a8223133-75bb-4383-973b-a695db765044",
+		"color_primario" : "#3b82f6",
+		"color_secundario" : null
+	},
+	{
+		"id_clinica" : 13,
+		"user_created" : "71370a40-d231-4d82-88a2-fcff7e543d1e",
+		"date_created" : "2026-04-11 16:24:39",
+		"user_updated" : null,
+		"date_updated" : null,
+		"nombre" : "Rafael Figueroa Ayala",
+		"telefono" : null,
+		"email" : "figueroaayalarafael@gmail.com",
+		"direccion" : "Calle San Sebastián, 51, Santa Cruz de Tenerife",
+		"postal" : null,
+		"nif" : null,
+		"logo" : null,
+		"color_primario" : null,
+		"color_secundario" : null
+	}
+]}

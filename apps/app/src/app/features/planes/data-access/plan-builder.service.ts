@@ -8,23 +8,19 @@ import {
   Injector,
   effect,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-
 import { Router } from '@angular/router';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { AsignacionesService } from '../../pacientes/data-access/asignaciones.service';
 import { RutinasService } from '../../rutinas/data-access/rutinas.service';
-import { environment as env } from '../../../../environments/environment';
+import { EjerciciosService } from '../../ejercicios/data-access/ejercicios.service';
+import { PlanesService } from './planes.service';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { api } from '../../../../../../../convex/_generated/api';
 import {
-  UsuarioDirectus,
   Usuario,
   ID,
   Ejercicio,
   EjercicioPlan,
-  PlanCompleto,
-  PlanDirectus,
-  EjercicioPlanDirectus,
   CreateRutinaPayload,
 } from '../../../../types/global';
 
@@ -66,10 +62,12 @@ const DEFAULT_TTL_DAYS = 7;
 
 @Injectable({ providedIn: 'root' })
 export class PlanBuilderService {
-  private http = inject(HttpClient);
+  private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private asignacionesService = inject(AsignacionesService);
   private rutinasService = inject(RutinasService);
+  private ejerciciosService = inject(EjerciciosService);
+  private planesService = inject(PlanesService);
   private router = inject(Router);
   private injector = inject(Injector);
 
@@ -326,22 +324,11 @@ export class PlanBuilderService {
   }
 
   async getPacienteById(id: string): Promise<Usuario | null> {
-    const data = await this.http
-      .get<{ data: UsuarioDirectus }>(
-        `${env.DIRECTUS_URL}/items/usuarios/${id}`,
-        {
-          params: {
-            fields:
-              'id,first_name,last_name,email,avatar,clinicas.id_clinica,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,telefono,direccion,postal',
-          },
-        },
-      )
-      .toPromise();
-    if (!data) {
-      return null;
-    } else {
-      return this.sessionService.transformarUsuarioDirectus(data.data);
-    }
+    const data = await this.convex.query(api.users.queries.getByLegacyId, {
+      legacyDirectusId: id,
+    });
+    if (!data) return null;
+    return this.sessionService.transformarUsuarioConvex(data);
   }
 
   cambiarPaciente(p: Usuario | null) {
@@ -481,62 +468,33 @@ export class PlanBuilderService {
     }[];
   }): Promise<number | null> {
     try {
-      // 1. Crear el plan sin ejercicios
-      const planBody = {
-        paciente: payload.paciente,
-        fisio: payload.fisio,
-        titulo: payload.titulo,
-        descripcion: payload.descripcion ?? '',
-        fecha_inicio: payload.fecha_inicio,
-        fecha_fin: payload.fecha_fin,
-        estado: 'activo',
-      };
-
-      const planResponse = await firstValueFrom(
-        this.http.post<{ data: { id_plan: number } }>(
-          `${env.DIRECTUS_URL}/items/Planes`,
-          planBody,
-          { withCredentials: true },
-        ),
-      );
-
-      if (!planResponse?.data?.id_plan) {
-        console.error('Error: No se pudo crear el plan');
+      const pacienteConvexId = this.resolvePatientConvexId(payload.paciente as string);
+      if (!pacienteConvexId) {
+        console.error('No se pudo resolver el Convex ID del paciente');
         return null;
       }
 
-      const planId = planResponse.data.id_plan;
-      console.log('Plan creado con ID:', planId);
-
-      // 2. Crear los ejercicios del plan en planes_ejercicios
-      if (payload.items.length > 0) {
-        const ejerciciosPayload = payload.items.map((item) => ({
-          plan: planId,
-          ejercicio: item.ejercicio,
+      await this.convex.mutation(api.plans.mutations.create, {
+        titulo: payload.titulo,
+        descripcion: payload.descripcion ?? '',
+        pacienteId: pacienteConvexId as any,
+        fechaInicio: payload.fecha_inicio ?? undefined,
+        fechaFin: payload.fecha_fin ?? undefined,
+        ejercicios: payload.items.map((item) => ({
+          exerciseId: this.resolveExerciseId(item.ejercicio),
           sort: item.sort,
           series: item.series,
           repeticiones: item.repeticiones,
-          duracion_seg: item.duracion_seg,
-          descanso_seg: item.descanso_seg,
-          veces_dia: item.veces_dia,
-          dias_semana: item.dias_semana,
-          instrucciones_paciente: item.instrucciones_paciente,
-          notas_fisio: item.notas_fisio,
-        }));
+          duracionSeg: item.duracion_seg,
+          descansoSeg: item.descanso_seg,
+          vecesDia: item.veces_dia,
+          diasSemana: item.dias_semana as any,
+          instruccionesPaciente: item.instrucciones_paciente,
+          notasFisio: item.notas_fisio,
+        })),
+      });
 
-        // Crear todos los ejercicios en una sola petición (batch create)
-        const ejerciciosResponse = await firstValueFrom(
-          this.http.post<{ data: unknown[] }>(
-            `${env.DIRECTUS_URL}/items/planes_ejercicios`,
-            ejerciciosPayload,
-            { withCredentials: true },
-          ),
-        );
-
-        console.log('Ejercicios creados:', ejerciciosResponse?.data?.length ?? 0);
-      }
-
-      return planId;
+      return 0; // El ID real se obtiene via suscripción reactiva
     } catch (error) {
       console.error('Error al crear plan:', error);
       return null;
@@ -584,63 +542,13 @@ export class PlanBuilderService {
    * Cargar un plan existente para editar
    */
   async loadPlanForEdit(planId: number): Promise<boolean> {
-    const fields = [
-      'id_plan',
-      'titulo',
-      'descripcion',
-      'estado',
-      'fecha_inicio',
-      'fecha_fin',
-      'version',
-      'paciente.id',
-      'paciente.first_name',
-      'paciente.last_name',
-      'paciente.email',
-      'paciente.avatar',
-      'paciente.telefono',
-      'paciente.clinicas.id_clinica',
-      'paciente.clinicas.id_puesto',
-      'fisio.id',
-      'ejercicios.id',
-      'ejercicios.sort',
-      'ejercicios.ejercicio.id_ejercicio',
-      'ejercicios.ejercicio.nombre_ejercicio',
-      'ejercicios.ejercicio.descripcion',
-      'ejercicios.ejercicio.portada',
-      'ejercicios.ejercicio.video',
-      'ejercicios.ejercicio.series_defecto',
-      'ejercicios.ejercicio.repeticiones_defecto',
-      'ejercicios.series',
-      'ejercicios.repeticiones',
-      'ejercicios.duracion_seg',
-      'ejercicios.descanso_seg',
-      'ejercicios.veces_dia',
-      'ejercicios.dias_semana',
-      'ejercicios.instrucciones_paciente',
-      'ejercicios.notas_fisio',
-    ].join(',');
-
     try {
-      const response = await firstValueFrom(
-        this.http.get<{ data: PlanDirectus }>(
-          `${env.DIRECTUS_URL}/items/Planes/${planId}`,
-          {
-            params: { fields },
-            withCredentials: true,
-          },
-        ),
-      );
-
-      if (!response?.data) return false;
-
-      const plan = response.data;
+      const plan = await this.planesService.getPlanById(planId);
+      if (!plan) return false;
 
       // Cargar paciente
-      if (plan.paciente && typeof plan.paciente !== 'string') {
-        const pacienteData = plan.paciente as UsuarioDirectus;
-        this.paciente.set(
-          this.sessionService.transformarUsuarioDirectus(pacienteData),
-        );
+      if (plan.paciente && typeof plan.paciente === 'object') {
+        this.paciente.set(plan.paciente as Usuario);
       }
 
       // Cargar metadatos
@@ -655,27 +563,12 @@ export class PlanBuilderService {
       );
 
       // Cargar ejercicios
-      const items: EjercicioPlan[] = (plan.ejercicios || [])
-        .map((item: EjercicioPlanDirectus) => ({
-          id: item.id,
-          sort: item.sort,
-          plan: planId,
-          ejercicio: item.ejercicio as Ejercicio,
-          series: item.series,
-          repeticiones: item.repeticiones,
-          duracion_seg: item.duracion_seg,
-          descanso_seg: item.descanso_seg,
-          veces_dia: item.veces_dia,
-          dias_semana: item.dias_semana,
-          instrucciones_paciente: item.instrucciones_paciente,
-          notas_fisio: item.notas_fisio,
-        }))
-        .sort((a: EjercicioPlan, b: EjercicioPlan) => a.sort - b.sort);
-
-      this.items.set(items);
+      this.items.set(
+        (plan.items || []).sort((a, b) => a.sort - b.sort),
+      );
 
       // Versionado: guardar versión y comprobar actividad
-      this.currentVersion.set(plan.version ?? 1);
+      this.currentVersion.set((plan as any).version ?? 1);
       await this.checkPlanHasActivity(planId);
 
       // Capture snapshot for dirty tracking
@@ -697,92 +590,29 @@ export class PlanBuilderService {
       throw new Error('Faltan datos para actualizar');
 
     try {
-      // 1. Actualizar metadatos del plan
-      await firstValueFrom(
-        this.http.patch(
-          `${env.DIRECTUS_URL}/items/Planes/${id}`,
-          {
-            titulo: this.titulo() || 'Plan sin título',
-            descripcion: this.descripcion() || '',
-            fecha_inicio: this.fecha_inicio(),
-            fecha_fin: this.fecha_fin(),
-          },
-          { withCredentials: true },
-        ),
-      );
+      const convexId = this.planesService.resolveConvexId(id);
+      if (!convexId) throw new Error('No se pudo resolver el Convex ID del plan');
 
-      // 2. Eliminar ejercicios existentes
-      const existingItems = this.items().filter((i) => i.id);
-      const existingIds = existingItems.map((i) => i.id);
-
-      // Obtener IDs actuales en la BD
-      const currentResponse = await firstValueFrom(
-        this.http.get<{ data: { id: number }[] }>(
-          `${env.DIRECTUS_URL}/items/planes_ejercicios`,
-          {
-            params: {
-              filter: JSON.stringify({ plan: { _eq: id } }),
-              fields: 'id',
-            },
-            withCredentials: true,
-          },
-        ),
-      );
-
-      const currentIds = (currentResponse?.data || []).map((i) => i.id);
-      const idsToDelete = currentIds.filter(
-        (cid) => !existingIds.includes(cid),
-      );
-
-      // Eliminar los que ya no estan
-      for (const delId of idsToDelete) {
-        await firstValueFrom(
-          this.http.delete(
-            `${env.DIRECTUS_URL}/items/planes_ejercicios/${delId}`,
-            {
-              withCredentials: true,
-            },
-          ),
-        );
-      }
-
-      // 3. Actualizar/Crear ejercicios
-      for (let i = 0; i < this.items().length; i++) {
-        const item = this.items()[i];
-        const payload = {
-          plan: id,
-          ejercicio: item.ejercicio.id_ejercicio,
+      // Una sola mutation atómica: metadata + replace all exercises
+      await this.convex.mutation(api.plans.mutations.update, {
+        planId: convexId as any,
+        titulo: this.titulo() || 'Plan sin título',
+        descripcion: this.descripcion() || '',
+        fechaInicio: this.fecha_inicio() ?? undefined,
+        fechaFin: this.fecha_fin() ?? undefined,
+        ejercicios: this.items().map((item, i) => ({
+          exerciseId: this.resolveExerciseIdFromItem(item),
           sort: i + 1,
           series: item.series,
           repeticiones: item.repeticiones,
-          duracion_seg: item.duracion_seg,
-          descanso_seg: item.descanso_seg,
-          veces_dia: item.veces_dia,
-          dias_semana: item.dias_semana,
-          instrucciones_paciente: item.instrucciones_paciente,
-          notas_fisio: item.notas_fisio,
-        };
-
-        if (item.id) {
-          // Actualizar existente
-          await firstValueFrom(
-            this.http.patch(
-              `${env.DIRECTUS_URL}/items/planes_ejercicios/${item.id}`,
-              payload,
-              { withCredentials: true },
-            ),
-          );
-        } else {
-          // Crear nuevo
-          await firstValueFrom(
-            this.http.post(
-              `${env.DIRECTUS_URL}/items/planes_ejercicios`,
-              payload,
-              { withCredentials: true },
-            ),
-          );
-        }
-      }
+          duracionSeg: item.duracion_seg,
+          descansoSeg: item.descanso_seg,
+          vecesDia: item.veces_dia,
+          diasSemana: item.dias_semana as any,
+          instruccionesPaciente: item.instrucciones_paciente,
+          notasFisio: item.notas_fisio,
+        })),
+      });
 
       // Limpiar storage
       const f = this.fisioId(),
@@ -805,21 +635,17 @@ export class PlanBuilderService {
    */
   async checkPlanHasActivity(planId: number): Promise<boolean> {
     try {
-      const response = await firstValueFrom(
-        this.http.get<{ data: { id_registro: number }[] }>(
-          `${env.DIRECTUS_URL}/items/planes_registros`,
-          {
-            params: {
-              'filter[plan_item][plan][_eq]': planId.toString(),
-              limit: '1',
-              fields: 'id_registro',
-            },
-            withCredentials: true,
-          },
-        ),
+      const convexId = this.planesService.resolveConvexId(planId);
+      if (!convexId) {
+        this.hasActivity.set(false);
+        return false;
+      }
+
+      const hasData = await this.convex.query(
+        api.plans.queries.checkPlanHasActivity,
+        { planId: convexId as any },
       );
 
-      const hasData = (response?.data?.length ?? 0) > 0;
       this.hasActivity.set(hasData);
       return hasData;
     } catch (error) {
@@ -839,81 +665,38 @@ export class PlanBuilderService {
     }
 
     try {
-      const oldVersion = this.currentVersion();
-      const today = new Date().toISOString().split('T')[0];
+      const convexId = this.planesService.resolveConvexId(oldPlanId);
+      if (!convexId) throw new Error('No se pudo resolver el Convex ID del plan');
+
       const tomorrow = new Date(Date.now() + 864e5).toISOString().split('T')[0];
 
-      // 1. Archivar plan anterior: completado con fecha_fin = hoy
-      await firstValueFrom(
-        this.http.patch(
-          `${env.DIRECTUS_URL}/items/Planes/${oldPlanId}`,
-          {
-            estado: 'completado',
-            fecha_fin: today,
-          },
-          { withCredentials: true },
-        ),
-      );
-
-      // 2. Crear nuevo plan con referencia al anterior
-      const planBody = {
-        paciente: this.paciente()!.id,
-        fisio: this.fisioId()!,
+      // Una sola mutation atómica: archive old + create new + exercises
+      await this.convex.mutation(api.plans.mutations.version, {
+        oldPlanId: convexId as any,
         titulo: this.titulo() || 'Plan sin título',
         descripcion: this.descripcion() || '',
-        fecha_inicio: this.fecha_inicio() || tomorrow,
-        fecha_fin: this.fecha_fin(),
-        estado: 'activo',
-        plan_anterior: oldPlanId,
-        version: oldVersion + 1,
-      };
-
-      const planResponse = await firstValueFrom(
-        this.http.post<{ data: { id_plan: number } }>(
-          `${env.DIRECTUS_URL}/items/Planes`,
-          planBody,
-          { withCredentials: true },
-        ),
-      );
-
-      if (!planResponse?.data?.id_plan) {
-        console.error('Error: No se pudo crear la nueva versión del plan');
-        return null;
-      }
-
-      const newPlanId = planResponse.data.id_plan;
-
-      // 3. Crear ejercicios nuevos asociados al nuevo plan (batch)
-      if (this.items().length > 0) {
-        const ejerciciosPayload = this.items().map((item, index) => ({
-          plan: newPlanId,
-          ejercicio: item.ejercicio.id_ejercicio,
+        fechaInicio: this.fecha_inicio() || tomorrow,
+        fechaFin: this.fecha_fin() ?? undefined,
+        ejercicios: this.items().map((item, index) => ({
+          exerciseId: this.resolveExerciseIdFromItem(item),
           sort: index + 1,
           series: item.series,
           repeticiones: item.repeticiones,
-          duracion_seg: item.duracion_seg,
-          descanso_seg: item.descanso_seg,
-          veces_dia: item.veces_dia,
-          dias_semana: item.dias_semana,
-          instrucciones_paciente: item.instrucciones_paciente,
-          notas_fisio: item.notas_fisio,
-        }));
+          duracionSeg: item.duracion_seg,
+          descansoSeg: item.descanso_seg,
+          vecesDia: item.veces_dia,
+          diasSemana: item.dias_semana as any,
+          instruccionesPaciente: item.instrucciones_paciente,
+          notasFisio: item.notas_fisio,
+        })),
+      });
 
-        await firstValueFrom(
-          this.http.post(
-            `${env.DIRECTUS_URL}/items/planes_ejercicios`,
-            ejerciciosPayload,
-            { withCredentials: true },
-          ),
-        );
-      }
-
-      // 4. Limpiar storage
+      // Limpiar storage
       const f = this.fisioId(),
         p = this.paciente();
       if (f && p) this.removeFromStorage(f, p.id);
 
-      return newPlanId;
+      return 0; // El ID real se obtiene via suscripción reactiva
     } catch (error) {
       console.error('Error al versionar plan:', error);
       return null;
@@ -1131,5 +914,42 @@ export class PlanBuilderService {
     this.drawerOpen.set(persisted.drawerOpen);
 
     return true;
+  }
+
+  // ============================================
+  // HELPERS DE RESOLUCIÓN DE IDs
+  // ============================================
+
+  private resolveExerciseId(legacyId: number): any {
+    const convexId = this.ejerciciosService.legacyToConvexId().get(legacyId);
+    if (!convexId) {
+      throw new Error(`Ejercicio con legacyId ${legacyId} no encontrado`);
+    }
+    return convexId;
+  }
+
+  private resolveExerciseIdFromItem(item: EjercicioPlan): any {
+    // Intentar usar el Convex ID directo si está disponible
+    if ((item as any)._exerciseConvexId) {
+      return (item as any)._exerciseConvexId;
+    }
+    // Fallback: resolver por legacy ID
+    return this.resolveExerciseId(item.ejercicio.id_ejercicio);
+  }
+
+  private resolvePatientConvexId(patientId: string): string | undefined {
+    const currentUser = this.sessionService.usuario();
+    // Si es el usuario actual
+    if (currentUser?.id === patientId && currentUser.convexId) {
+      return currentUser.convexId;
+    }
+    // Si el paciente signal tiene convexId
+    const pac = this.paciente();
+    if (pac?.id === patientId && pac.convexId) {
+      return pac.convexId;
+    }
+    // Si parece un Convex ID (formato largo)
+    if (patientId.length > 20) return patientId;
+    return undefined;
   }
 }

@@ -1,0 +1,18 @@
+[     220ms] [LOG] Cargando datos de clínicas: null @ http://localhost:4200/chunk-ORHU3M6E.js:25
+[     232ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-37U6ET5P.js?v=9f59516f:11970
+[     234ms] [ERROR] ERROR RuntimeError: NG04002: Cannot match any routes. URL Segment: 'ejercicios'
+    at Recognizer.noMatchError (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/@angular_router.js?v=c6f9fcff:2984:12)
+    at http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/@angular_router.js?v=c6f9fcff:3016:20
+    at http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:2673:33
+    at OperatorSubscriber2._this._error (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:803:9)
+    at Subscriber2.error (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:507:12)
+    at Subscriber2._error (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:530:24)
+    at Subscriber2.error (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:507:12)
+    at Subscriber2._error (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:530:24)
+    at Subscriber2.error (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:507:12)
+    at Subscriber2._error (http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-MARUHEWW.js?v=9f59516f:530:24) @ http://localhost:4200/@fs/Users/carloscabrera/Documents/Proyectos/kengo/.angular/cache/20.3.13/app/vite/deps/chunk-RQSSLE7L.js?v=9f59516f:2751
+[     288ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:4200/:0
+[     584ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4200/directus/users/me:0
+[     729ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:4200/directus/auth/refresh:0
+[     824ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4200/api/auth/refrescar-sesion:0
+[     937ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4200/login:0

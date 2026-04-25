@@ -1,9 +1,6 @@
 import { Component, inject, signal, computed, ElementRef, HostListener } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { httpResource } from '@angular/common/http';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { environment as env } from '../../../../../environments/environment';
 
 import {
   DialogContainerComponent,
@@ -13,10 +10,14 @@ import {
   ProgressBarComponent,
 } from '../../../../shared';
 
-import { Usuario, UsuarioDirectus, PUESTO_PACIENTE } from '../../../../../types/global';
+import { Usuario, PUESTO_PACIENTE } from '../../../../../types/global';
+import { ConvexService } from '../../../../core/convex/convex.service';
+import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
+import { api } from '../../../../../../../../convex/_generated/api';
+import type { Id } from '../../../../../../../../convex/_generated/dataModel';
 
 interface DialogData {
-  idsClinicas: ID[]; // clínicas que puede ver/asignar el usuario actual
+  idsClinicas: ID[]; // clínicas (legacyId) que puede ver/asignar el usuario actual
   usuario?: Usuario; // si viene -> modo edición
 }
 
@@ -24,13 +25,6 @@ type ID = string | number;
 interface Clinica {
   id_clinica: ID;
   nombre?: string;
-}
-interface DirectusPage<T> {
-  data: T[];
-}
-
-interface DirectusItem<T> {
-  data: T;
 }
 
 @Component({
@@ -49,12 +43,14 @@ interface DirectusItem<T> {
 })
 export class AddPacienteDialogComponent {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
   private dialogRef = inject(DialogRef<{ created?: unknown; updated?: boolean }>);
   private data = inject<DialogData>(DIALOG_DATA);
   private elementRef = inject(ElementRef);
+  private convex = inject(ConvexService);
+  private clinicasService = inject(ClinicasService);
 
-  private currentLinks = new Map<ID, ID>(); // (id_clinica -> row id)
+  // Mapa: clinic legacyId -> membershipId (Convex Id<"clinicMemberships">)
+  private currentLinks = new Map<ID, string>();
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -90,28 +86,25 @@ export class AddPacienteDialogComponent {
     }
   }
 
-  // Carga de clínicas disponibles (filtradas por las del usuario actual)
-  readonly clinicasRes = httpResource<Clinica[]>(
-    () => ({
-      url: `${env.DIRECTUS_URL}/items/clinicas`,
-      method: 'GET',
-      params: {
-        fields: 'id_clinica,nombre',
-        ...(this.data.idsClinicas?.length
-          ? { filter: JSON.stringify({ id_clinica: { _in: this.data.idsClinicas } }) }
-          : {}),
-      },
+  // Clínicas disponibles (filtradas por las del usuario actual). Reactivo via ClinicasService.
+  readonly clinicasRes = {
+    value: computed<Clinica[]>(() => {
+      const all = this.clinicasService.misClinicasRes.value() ?? [];
+      const allowedIds = this.data.idsClinicas?.length
+        ? new Set(this.data.idsClinicas.map((id) => String(id)))
+        : null;
+      const filtered = all.filter(
+        (c) => !allowedIds || allowedIds.has(String(c.id_clinica)),
+      );
+      // Habilitar select en el primer render con datos
+      queueMicrotask(() => this.form.get('clinicas')?.enable({ emitEvent: false }));
+      return filtered.map((c) => ({ id_clinica: c.id_clinica, nombre: c.nombre }));
     }),
-    {
-      parse: (v) => {
-        const result = (v as DirectusPage<Clinica>)?.data ?? [];
-        console.log('Clínicas disponibles:', result);
-        this.form.get('clinicas')?.enable({ emitEvent: false }); // habilitar select
-        return result;
-      },
-      defaultValue: [],
-    },
-  );
+    isLoading: computed(() => {
+      const all = this.clinicasService.misClinicasRes.value();
+      return !all || all.length === 0;
+    }),
+  };
 
   form = this.fb.group({
     first_name: [this.data.usuario?.first_name ?? '', Validators.required],
@@ -164,21 +157,18 @@ export class AddPacienteDialogComponent {
   // ====== Carga enlaces actuales (solo edición) ======
   private async loadUserClinics(userId: string) {
     try {
-      const params = new HttpParams()
-        .set('fields', 'id,id_clinica')
-        .set('filter', JSON.stringify({ id_usuario: { _eq: userId } }))
-        .set('limit', '500');
-      const res = await this.http
-        .get<
-          DirectusPage<{ id: ID; id_clinica: ID }>
-        >(`${env.DIRECTUS_URL}/items/usuarios_clinicas`, { params })
-        .toPromise();
+      const memberships = await this.convex.query(
+        api.clinicMemberships.queries.listByUser,
+        { userLegacyId: userId },
+      );
 
       this.currentLinks.clear();
-      const ids = (res?.data ?? []).map((row) => {
-        this.currentLinks.set(row.id_clinica, row.id); // clinica -> row id
-        return row.id_clinica;
-      });
+      const ids: ID[] = [];
+      for (const m of memberships ?? []) {
+        if (m.id_puesto !== PUESTO_PACIENTE) continue;
+        this.currentLinks.set(m.id_clinica, m._id as unknown as string);
+        ids.push(m.id_clinica);
+      }
 
       this.form.patchValue({ clinicas: ids }, { emitEvent: false });
     } catch (e) {
@@ -196,93 +186,93 @@ export class AddPacienteDialogComponent {
 
     try {
       if (!this.isEdit()) {
-        // ---- CREAR
-        const tempPassword = this.genTempPassword();
-        const payload = {
-          first_name: v.first_name,
-          last_name: v.last_name,
-          email: v.email,
-          telefono: v.telefono,
-          password: tempPassword, // Directus exige password al crear usuario
-          password_establecida: false, // El paciente aún no ha elegido su contraseña
-          role: env.ROL_PACIENTE_ID,
-          clinicas: (v.clinicas || []).map((cid: ID) => ({
-            id_clinica: cid,
-            id_puesto: PUESTO_PACIENTE,
-          })),
-        };
+        // ---- CREAR — usamos createPatient para la primera clínica.
+        // Si hay varias clínicas seleccionadas, añadimos las demás vía add().
+        const selectedClinics = (v.clinicas as ID[]) || [];
+        if (selectedClinics.length === 0) {
+          throw new Error('Debe seleccionar al menos una clínica.');
+        }
 
-        const res = await this.http
-          .post<DirectusItem<UsuarioDirectus>>(
-            `${env.DIRECTUS_URL}/users`,
-            payload,
-            { withCredentials: true },
-          )
-          .toPromise();
+        const primaryClinicLegacyId = Number(selectedClinics[0]);
+        const primaryClinic = (this.clinicasRes.value() ?? []).find(
+          (c) => Number(c.id_clinica) === primaryClinicLegacyId,
+        );
+        if (!primaryClinic) throw new Error('Clínica no encontrada.');
 
-        const user = res?.data;
+        // Resolver clinicId Convex desde el legacyId
+        const clinicConvexId = await this.resolveClinicConvexId(primaryClinicLegacyId);
+        if (!clinicConvexId) throw new Error('Clínica no encontrada.');
 
-        if (!user) throw new Error('No se pudo crear el usuario.');
+        const result = await this.convex.action(api.users.actions.createPatient, {
+          firstName: v.first_name ?? '',
+          lastName: v.last_name ?? '',
+          email: v.email ?? '',
+          telefono: v.telefono || undefined,
+          password: this.genTempPassword(),
+          clinicId: clinicConvexId,
+          generateAccessToken: true,
+        });
 
-        // Crear token de acceso para el paciente (sin password embebido)
-        await this.http
-          .post<{
-            id: string;
-            url: string;
-          }>(
-            `${env.API_URL}/usuario/token-acceso`,
-            { idUsuario: user.id },
-            { withCredentials: true },
-          )
-          .toPromise();
+        if (!result.success) {
+          throw new Error(result.error || 'No se pudo crear el usuario.');
+        }
 
-        this.close({ created: res?.data });
+        // Añadir membresías a las clínicas adicionales (si las hay)
+        if (selectedClinics.length > 1) {
+          await Promise.all(
+            selectedClinics.slice(1).map(async (cid) => {
+              const cidNumber = Number(cid);
+              return this.convex.mutation(api.clinicMemberships.mutations.add, {
+                userId: result.userId as Id<'users'>,
+                clinicLegacyId: cidNumber,
+                puesto: PUESTO_PACIENTE,
+              });
+            }),
+          );
+        }
+
+        // Devolvemos un objeto compatible con el tipo `created` del padre.
+        // Solo necesita `id` (legacyDirectusId del nuevo paciente, si existe).
+        this.close({ created: { id: result.userId } });
       } else {
         // ---- EDITAR
         const userId = this.data.usuario!.id;
 
-        // 1) PATCH datos básicos (sin password para no sobreescribir la del paciente)
-        await this.http
-          .patch<DirectusItem<UsuarioDirectus>>(
-            `${env.DIRECTUS_URL}/users/${userId}`,
-            {
-              first_name: v.first_name,
-              last_name: v.last_name,
-              email: v.email,
-              telefono: v.telefono,
-            },
-          )
-          .toPromise();
-
-        // 2) Sincronizar clínicas (tabla puente) -> diff
+        // Diff de membresías
         const targetIds = new Set<ID>(v.clinicas || []);
         const currentIds = new Set<ID>([...this.currentLinks.keys()]);
 
         const toAdd: ID[] = [...targetIds].filter((x) => !currentIds.has(x));
         const toRemove: ID[] = [...currentIds].filter((x) => !targetIds.has(x));
 
-        // Crear enlaces nuevos (id_puesto = PUESTO_PACIENTE)
+        // 1) Patch datos básicos vía updatePatient
+        await this.convex.mutation(api.users.mutations.updatePatient, {
+          patientLegacyId: userId,
+          firstName: v.first_name ?? undefined,
+          lastName: v.last_name ?? undefined,
+          email: v.email ?? undefined,
+          telefono: v.telefono || undefined,
+        });
+
+        // 2) Crear membresías nuevas
         await Promise.all(
           toAdd.map((cid) =>
-            this.http
-              .post(
-                `${env.DIRECTUS_URL}/items/usuarios_clinicas`,
-                { id_usuario: userId, id_clinica: cid, id_puesto: PUESTO_PACIENTE },
-              )
-              .toPromise(),
+            this.convex.mutation(api.clinicMemberships.mutations.add, {
+              userLegacyId: userId,
+              clinicLegacyId: Number(cid),
+              puesto: PUESTO_PACIENTE,
+            }),
           ),
         );
 
-        // Borrar enlaces que sobran
+        // 3) Eliminar membresías sobrantes
         await Promise.all(
           toRemove.map((cid) => {
-            const rowId = this.currentLinks.get(cid);
-            return rowId
-              ? this.http
-                  .delete(
-                    `${env.DIRECTUS_URL}/items/usuarios_clinicas/${rowId}`,
-                  )
-                  .toPromise()
+            const membershipId = this.currentLinks.get(cid);
+            return membershipId
+              ? this.convex.mutation(api.clinicMemberships.mutations.remove, {
+                  membershipId: membershipId as Id<'clinicMemberships'>,
+                })
               : Promise.resolve();
           }),
         );
@@ -295,6 +285,11 @@ export class AddPacienteDialogComponent {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async resolveClinicConvexId(legacyId: number): Promise<Id<'clinics'> | null> {
+    const map = this.clinicasService.legacyToConvexClinicId();
+    return map.get(legacyId) ?? null;
   }
 
   genTempPassword(len = 12) {

@@ -1,31 +1,20 @@
 import {
   Injectable,
   computed,
+  effect,
   inject,
   signal,
-  untracked,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { rawAssetUrl } from '../../../core/utils/asset-url';
 
-import { httpResource } from '@angular/common/http';
-
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Observable, firstValueFrom } from 'rxjs';
-import { environment as env } from '../../../../environments/environment';
-import { SessionService } from '../../../core/auth/services/session.service';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { api } from '../../../../../../../convex/_generated/api';
 
-//Tipos:
 import { Ejercicio } from '../../../../types/global';
-
-interface ExerciseQuery {
-  name?: string;
-  categoryIds?: (string | number)[];
-  page: number;
-  pageSize: number;
-  sort?: string;
-}
 
 export interface Categoria {
   id_categoria: number;
@@ -37,26 +26,11 @@ export interface PaginaEjercicios {
   meta: { total_count?: number; filter_count?: number };
 }
 
-export interface DirectusItem<T> {
-  data: T;
-}
-
-export interface PeticionCategoria {
-  data: Categoria[];
-}
-
-interface FiltroEjercicios {
-  nombre_ejercicio?: { _icontains: string };
-  categoria?: { categorias_id_categoria: { _in: (string | number)[] } };
-  id_ejercicio?: { _in: number[] };
-}
-
 @Injectable({ providedIn: 'root' })
 export class EjerciciosService {
-  private http = inject(HttpClient);
-  private sessionService = inject(SessionService);
+  private convex = inject(ConvexService);
 
-  // --- Filtros / paginacion como senales puras ---
+  // --- Filtros / paginación como señales puras ---
   readonly busqueda: WritableSignal<string> = signal('');
   readonly idsCategoriasSeleccionadas: WritableSignal<(string | number)[]> =
     signal([]);
@@ -64,131 +38,156 @@ export class EjerciciosService {
   readonly pageSize: WritableSignal<number> = signal(24);
   readonly sort: WritableSignal<string> = signal('nombre_ejercicio');
 
-  // --- Favoritos ---
+  // --- Favoritos (Convex) ---
   readonly idsFavoritos: WritableSignal<Set<number>> = signal(new Set());
   readonly soloFavoritos: WritableSignal<boolean> = signal(false);
   readonly favoritoEnProceso: WritableSignal<number | null> = signal(null);
 
-  // Query derivada para exercises
-  private readonly query: Signal<ExerciseQuery> = computed(() => ({
-    name: this.busqueda().trim() || undefined,
-    categoryIds: this.idsCategoriasSeleccionadas(),
-    page: this.page(),
-    pageSize: this.pageSize(),
-    sort: this.sort(),
-  }));
-
-  readonly categoriasRes = httpResource<Categoria[]>(
-    () => {
-      const req = {
-        url: `${env.DIRECTUS_URL}/items/categorias`,
-        method: 'GET',
-        params: {
-          fields: 'id_categoria,nombre_categoria',
-          limit: '200',
-          sort: 'nombre_categoria',
-        },
-        transferCache: true,
-      };
-      return req;
-    },
-    {
-      parse: (res) => {
-        const resultado = res as PeticionCategoria;
-        console.log('Categorias: ', resultado.data);
-        return resultado.data;
-      },
-    },
+  // Suscripción a favoritos via Convex (devuelve Convex exercise IDs)
+  private readonly favoritesQuery = this.convex.watchQuery(
+    api.exercises.queries.listFavorites,
+    () => ({}),
   );
 
-  findInCacheById(id: string | number) {
-    const idStr = String(id);
-    return this.listaEjerciciosRes
-      .value()
-      .data.find((e) => String(e.id_ejercicio) === idStr);
+  // Map: legacyId → Convex ID (para llamar mutations con Convex ID)
+  readonly legacyToConvexId = computed(() => {
+    const raw = this.allExercisesQuery.value();
+    if (!raw) return new Map<number, string>();
+    const m = new Map<number, string>();
+    for (const e of raw) {
+      if (e.legacyId != null) m.set(e.legacyId, e._id);
+    }
+    return m;
+  });
+
+  // Map inverso: Convex ID → legacyId (para convertir favoritos)
+  private readonly convexToLegacyId = computed(() => {
+    const raw = this.allExercisesQuery.value();
+    if (!raw) return new Map<string, number>();
+    const m = new Map<string, number>();
+    for (const e of raw) {
+      if (e.legacyId != null) m.set(e._id, e.legacyId);
+    }
+    return m;
+  });
+
+  constructor() {
+    // Sincronizar favoritos Convex → idsFavoritos (legacy IDs)
+    effect(() => {
+      const convexFavIds = this.favoritesQuery.value();
+      if (!convexFavIds) return;
+      const c2l = this.convexToLegacyId();
+      const legacyIds = new Set<number>();
+      for (const cid of convexFavIds) {
+        const lid = c2l.get(cid);
+        if (lid != null) legacyIds.add(lid);
+      }
+      this.idsFavoritos.set(legacyIds);
+    });
   }
 
-  /** Peticion puntual a Directus para un ejercicio por id */
-  getEjercicioById$(id: string | number): Observable<Ejercicio> {
-    const params = new HttpParams().set(
-      'fields',
-      'id_ejercicio,nombre_ejercicio,descripcion,portada,video,categoria,series_defecto,repeticiones_defecto',
-    );
-    return this.http
-      .get<DirectusItem<Ejercicio>>(
-        `${env.DIRECTUS_URL}/items/ejercicios/${id}`,
-        {
-          params,
-          // withCredentials: true, // si usas cookie/session en vez de Bearer
-        },
-      )
-      .pipe(map((res) => res.data));
-  }
+  // ========= Convex: Suscripción a categorías =========
+  private readonly categoriesQuery = this.convex.watchQuery(
+    api.exercises.queries.listCategories,
+    () => ({}),
+  );
 
-  private readonly peticionEjercicios = () => {
-    const name = this.busqueda().trim();
-    const cats = this.idsCategoriasSeleccionadas();
-    const p = this.page();
-    const ps = this.pageSize();
-    const so = this.sort();
-    const soloFavs = this.soloFavoritos();
+  readonly categoriasRes = {
+    value: computed(() => {
+      const raw = this.categoriesQuery.value();
+      if (!raw) return [] as Categoria[];
+      return raw.map(
+        (c: { legacyId?: number | null; nombreCategoria: string }) => ({
+          id_categoria: c.legacyId ?? 0,
+          nombre_categoria: c.nombreCategoria,
+        }),
+      );
+    }),
+    isLoading: this.categoriesQuery.isLoading,
+    error: this.categoriesQuery.error,
+    reload: () => {},
+  };
 
-    const filter: FiltroEjercicios = {};
-    if (name) filter['nombre_ejercicio'] = { _icontains: name };
+  // ========= Convex: Suscripción a TODOS los ejercicios =========
+  private readonly allExercisesQuery = this.convex.watchQuery(
+    api.exercises.queries.listExercises,
+    () => ({}),
+  );
 
-    if (cats.length) {
-      filter['categoria'] = { categorias_id_categoria: { _in: cats } };
+  // 1. Mapear Convex → Ejercicio (dominio Angular)
+  private readonly allEjercicios = computed<Ejercicio[]>(() => {
+    const raw = this.allExercisesQuery.value();
+    if (!raw) return [];
+    return raw.map((e: any) => this.mapConvexToEjercicio(e));
+  });
+
+  // 2. Resolver nombres de categorías seleccionadas (para filtro)
+  private readonly selectedCategoryNames = computed<string[]>(() => {
+    const ids = this.idsCategoriasSeleccionadas();
+    if (!ids.length) return [];
+    const cats = this.categoriasRes.value();
+    const idSet = new Set(ids.map(Number));
+    return cats
+      .filter((c) => idSet.has(c.id_categoria))
+      .map((c) => c.nombre_categoria);
+  });
+
+  // 3. Filtrar (búsqueda + categorías + favoritos)
+  private readonly filteredEjercicios = computed<Ejercicio[]>(() => {
+    let list = this.allEjercicios();
+
+    // Filtro por búsqueda
+    const search = this.busqueda().trim().toLowerCase();
+    if (search) {
+      list = list.filter((e) =>
+        e.nombre_ejercicio.toLowerCase().includes(search),
+      );
     }
 
-    // Filtro de favoritos - solo crear dependencia reactiva si esta activo
-    if (soloFavs) {
+    // Filtro por categorías seleccionadas
+    const catNames = this.selectedCategoryNames();
+    if (catNames.length > 0) {
+      const nameSet = new Set(catNames);
+      list = list.filter((e) =>
+        e.categoria.some((cn: string) => nameSet.has(cn)),
+      );
+    }
+
+    // Filtro de favoritos
+    if (this.soloFavoritos()) {
       const favIds = this.idsFavoritos();
       if (favIds.size > 0) {
-        filter['id_ejercicio'] = { _in: [...favIds] };
+        list = list.filter((e) => favIds.has(e.id_ejercicio));
       } else {
-        // Sin favoritos, devolver array vacio
-        filter['id_ejercicio'] = { _in: [-1] };
+        list = [];
       }
     }
 
-    return {
-      url: `${env.DIRECTUS_URL}/items/ejercicios`,
-      method: 'GET',
-      params: {
-        fields:
-          'id_ejercicio,nombre_ejercicio,descripcion,portada,video,categoria.*,series_defecto,repeticiones_defecto',
-        limit: String(ps),
-        offset: String((p - 1) * ps),
-        sort: so,
-        meta: 'filter_count',
-        ...(Object.keys(filter).length
-          ? { filter: JSON.stringify(filter) }
-          : {}),
-      },
-      transferCache: true,
-    };
-  };
+    return list;
+  });
 
-  readonly listaEjerciciosRes = httpResource<PaginaEjercicios>(
-    this.peticionEjercicios,
-    {
-      parse: (res) => {
-        const resultado = res as PaginaEjercicios;
-        console.log('Ejercicios paginados: ', resultado);
-        return resultado;
-      },
-      defaultValue: { data: [], meta: {} },
-    },
-  );
+  // 4. Ordenar
+  private readonly sortedEjercicios = computed<Ejercicio[]>(() => {
+    const list = [...this.filteredEjercicios()];
+    const dir = this.sort().startsWith('-') ? -1 : 1;
+    return list.sort(
+      (a, b) => dir * a.nombre_ejercicio.localeCompare(b.nombre_ejercicio),
+    );
+  });
 
   // ========= Derivados (computed) para la vista =========
-  readonly ejercicios = computed(() => this.listaEjerciciosRes.value().data);
-  readonly total = computed(
-    () => this.listaEjerciciosRes.value().meta?.filter_count ?? 0,
-  );
+  readonly ejercicios = computed(() => {
+    const all = this.sortedEjercicios();
+    const start = (this.page() - 1) * this.pageSize();
+    return all.slice(start, start + this.pageSize());
+  });
+
+  readonly total = computed(() => this.sortedEjercicios().length);
+
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.total() / this.pageSize())),
   );
+
   readonly hasActiveFilters = computed(
     () =>
       !!this.busqueda().trim() ||
@@ -196,16 +195,39 @@ export class EjerciciosService {
       this.soloFavoritos(),
   );
 
-  // ========= Recargas manuales =========
-  reloadEjercicios() {
-    this.listaEjerciciosRes.reload();
+  // Interfaz compatible con httpResource para los templates
+  readonly listaEjerciciosRes = {
+    value: computed(() => ({
+      data: this.ejercicios(),
+      meta: { filter_count: this.total() },
+    })),
+    isLoading: this.allExercisesQuery.isLoading,
+    error: this.allExercisesQuery.error,
+    reload: () => {},
+  };
+
+  // ========= Cache y detalle =========
+  findInCacheById(id: string | number): Ejercicio | undefined {
+    const idNum = Number(id);
+    return this.allEjercicios().find((e) => e.id_ejercicio === idNum);
   }
 
-  reloadCategorias() {
-    this.categoriasRes.reload();
+  getEjercicioById$(id: string | number): Observable<Ejercicio> {
+    const cached = this.findInCacheById(id);
+    if (cached) return of(cached);
+
+    return from(
+      this.convex.query(api.exercises.queries.getExerciseByLegacyId, {
+        legacyId: Number(id),
+      }),
+    ).pipe(map((raw: any) => this.mapConvexToEjercicio(raw)));
   }
 
-  // ========= Acciones (mutadores) =========
+  // ========= Recargas (no-op con Convex, datos en tiempo real) =========
+  reloadEjercicios() {}
+  reloadCategorias() {}
+
+  // ========= Acciones (mutadores de filtro) =========
   setBusqueda(v: string) {
     this.busqueda.set(v);
     this.page.set(1);
@@ -245,53 +267,31 @@ export class EjerciciosService {
   }
 
   goToPage(p: number) {
-    const max = this.pageSize();
+    const max = this.totalPages();
     this.page.set(Math.min(Math.max(1, p), max));
   }
 
-  // ========= Helper de assets (ajusta si usas tokens/cookies/blob) =========
+  // ========= Helper de assets (Directus CDN durante la transición) =========
   getAssetUrl(id?: string) {
-    return id ? `${env.DIRECTUS_URL}/assets/${id}` : '';
+    return id ? `${rawAssetUrl(id)}` : '';
   }
 
-  // ========= Favoritos =========
+  // ========= Favoritos (Convex) =========
 
-  async cargarFavoritos(): Promise<void> {
-    const usuario = this.sessionService.usuario();
-    if (!usuario) return;
-
-    try {
-      const res = await firstValueFrom(
-        this.http.get<{ data: { id_ejercicio: number }[] }>(
-          `${env.DIRECTUS_URL}/items/ejercicios_favoritos`,
-          {
-            params: {
-              filter: JSON.stringify({
-                id_usuario: { _eq: usuario.id },
-              }),
-              fields: 'id_ejercicio',
-              limit: '1000',
-            },
-            withCredentials: true,
-          },
-        ),
-      );
-
-      const ids = new Set(res.data.map((f) => f.id_ejercicio));
-      this.idsFavoritos.set(ids);
-    } catch (error) {
-      console.error('Error cargando favoritos:', error);
-    }
-  }
+  /**
+   * No-op: los favoritos se cargan automáticamente via watchQuery.
+   * Se mantiene para compatibilidad con componentes que llaman cargarFavoritos().
+   */
+  cargarFavoritos(): void {}
 
   async toggleFavorito(idEjercicio: number): Promise<void> {
-    const usuario = this.sessionService.usuario();
-    if (!usuario) return;
+    const exerciseId = this.legacyToConvexId().get(idEjercicio);
+    if (!exerciseId) return;
 
-    const esFavorito = this.idsFavoritos().has(idEjercicio);
     this.favoritoEnProceso.set(idEjercicio);
 
     // Optimistic update
+    const esFavorito = this.idsFavoritos().has(idEjercicio);
     const nuevoSet = new Set(this.idsFavoritos());
     if (esFavorito) {
       nuevoSet.delete(idEjercicio);
@@ -301,11 +301,9 @@ export class EjerciciosService {
     this.idsFavoritos.set(nuevoSet);
 
     try {
-      if (esFavorito) {
-        await this.eliminarFavorito(usuario.id, idEjercicio);
-      } else {
-        await this.agregarFavorito(usuario.id, idEjercicio);
-      }
+      await this.convex.mutation(api.exercises.mutations.toggleFavorite, {
+        exerciseId: exerciseId as any,
+      });
     } catch (error) {
       console.error('Error toggling favorito:', error);
       // Revertir optimistic update
@@ -321,53 +319,6 @@ export class EjerciciosService {
     }
   }
 
-  private async agregarFavorito(
-    userId: string,
-    ejercicioId: number,
-  ): Promise<void> {
-    await firstValueFrom(
-      this.http.post(
-        `${env.DIRECTUS_URL}/items/ejercicios_favoritos`,
-        {
-          id_usuario: userId,
-          id_ejercicio: ejercicioId,
-        },
-        { withCredentials: true },
-      ),
-    );
-  }
-
-  private async eliminarFavorito(
-    userId: string,
-    ejercicioId: number,
-  ): Promise<void> {
-    const res = await firstValueFrom(
-      this.http.get<{ data: { id: number }[] }>(
-        `${env.DIRECTUS_URL}/items/ejercicios_favoritos`,
-        {
-          params: {
-            filter: JSON.stringify({
-              id_usuario: { _eq: userId },
-              id_ejercicio: { _eq: ejercicioId },
-            }),
-            fields: 'id',
-            limit: '1',
-          },
-          withCredentials: true,
-        },
-      ),
-    );
-
-    if (res.data.length > 0) {
-      await firstValueFrom(
-        this.http.delete(
-          `${env.DIRECTUS_URL}/items/ejercicios_favoritos/${res.data[0].id}`,
-          { withCredentials: true },
-        ),
-      );
-    }
-  }
-
   esFavorito(idEjercicio: number): boolean {
     return this.idsFavoritos().has(idEjercicio);
   }
@@ -375,5 +326,19 @@ export class EjerciciosService {
   toggleSoloFavoritos(): void {
     this.soloFavoritos.update((v) => !v);
     this.page.set(1);
+  }
+
+  // ========= Mapper Convex → Ejercicio (dominio Angular) =========
+  private mapConvexToEjercicio(raw: any): Ejercicio {
+    return {
+      id_ejercicio: raw.legacyId ?? 0,
+      nombre_ejercicio: raw.nombreEjercicio ?? '',
+      descripcion: raw.descripcion ?? '',
+      series_defecto: raw.seriesDefecto ?? '',
+      repeticiones_defecto: raw.repeticionesDefecto ?? '',
+      video: raw.video ?? '',
+      portada: raw.portada ?? '',
+      categoria: raw.categorias ?? [],
+    };
   }
 }

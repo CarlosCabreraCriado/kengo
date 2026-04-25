@@ -1,0 +1,31 @@
+{
+"directus_operations": [
+	{
+		"id" : "38cc00a5-e76e-4a98-a6f6-a3a9260bb963",
+		"name" : "Crear Detalle de Usuario",
+		"key" : "crear_detalle_de_usuario",
+		"type" : "item-create",
+		"position_x" : 19,
+		"position_y" : 2,
+		"options" : "{\"payload\": {\"email\": \"{{$trigger.payload.email}}\", \"id_usuario\": \"{{$trigger.key}}\"}, \"collection\": \"detalle_usuario\", \"permissions\": \"$full\"}",
+		"resolve" : null,
+		"reject" : null,
+		"flow" : "4eeb3d32-c10c-45db-a044-3f606250c568",
+		"date_created" : "2025-04-25 15:04:21",
+		"user_created" : "71370a40-d231-4d82-88a2-fcff7e543d1e"
+	},
+	{
+		"id" : "42abc9ed-2d73-4e78-b9ae-df43ae5f20ad",
+		"name" : "Borrar datos",
+		"key" : "eliminar_detalle_usuario",
+		"type" : "item-delete",
+		"position_x" : 19,
+		"position_y" : 1,
+		"options" : "{\"query\": {\"id_usuario\": {\"_eq\": \"{{$trigger.payload.id}}\"}}, \"collection\": \"detalle_usuario\"}",
+		"resolve" : null,
+		"reject" : null,
+		"flow" : "e88a0832-82d3-482d-bcb7-5bb4318e714a",
+		"date_created" : "2025-04-25 16:21:41",
+		"user_created" : "71370a40-d231-4d82-88a2-fcff7e543d1e"
+	}
+]}

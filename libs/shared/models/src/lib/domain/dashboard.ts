@@ -5,7 +5,7 @@ export interface ResumenFisioDashboard {
 }
 
 export interface PlanPorVencer {
-  id_plan: number;
+  id_plan: number | string;
   titulo: string;
   fecha_fin: string;
   paciente_nombre: string;

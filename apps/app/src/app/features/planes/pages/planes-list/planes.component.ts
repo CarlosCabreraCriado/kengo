@@ -5,13 +5,13 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
+import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { Plan, Usuario, EstadoPlan, Rutina, EjercicioRutina } from '../../../../../types/global';
-import { environment as env } from '../../../../../environments/environment';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
@@ -322,11 +322,11 @@ export class PlanesComponent implements OnInit {
 
   avatarUrl(id: string | null | undefined): string {
     if (!id) return 'assets/default-avatar.png';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=60&height=60&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: 60, height: 60, fit: 'cover', format: 'webp' })}`;
   }
 
   assetUrl(id: string | null | undefined, w = 60, h = 60): string {
     if (!id) return '';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
   }
 }

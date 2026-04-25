@@ -5,15 +5,16 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { assetUrl } from '../../../../core/utils/asset-url';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { httpResource } from '@angular/common/http';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { environment as env } from '../../../../../environments/environment';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { ConvexService } from '../../../../core/convex/convex.service';
+import { api } from '../../../../../../../../convex/_generated/api';
 
 //Componente Add-Paciente:
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -26,17 +27,12 @@ import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { MetricasPacientesService } from '../../data-access/metricas-pacientes.service';
 import { DialogService } from '../../../../shared';
 
-import { Usuario, UsuarioDirectus, AsignacionResponsable, MetricasPacientesBulk, PUESTO_ADMINISTRADOR } from '../../../../../types/global';
+import { Usuario, AsignacionResponsable, MetricasPacientesBulk, PUESTO_ADMINISTRADOR } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
 type OrdenPacientes = 'nombre' | 'adherencia_desc' | 'adherencia_asc' | 'dolor_desc' | 'dolor_asc';
 const STORAGE_KEY_FILTRO = 'kengo:mis-pacientes:filtro';
-
-interface DirectusPage<T> {
-  data: T[];
-  meta?: { filter_count?: number };
-}
 
 @Component({
   selector: 'app-pacientes-list',
@@ -61,6 +57,7 @@ export class PacientesListComponent {
   private breakpointObserver = inject(BreakpointObserver);
   private asignacionesService = inject(AsignacionesService);
   private metricasService = inject(MetricasPacientesService);
+  private convex = inject(ConvexService);
 
   // Signal para alternar vista card/lista
   public vista = signal<'card' | 'lista'>('card');
@@ -104,39 +101,31 @@ export class PacientesListComponent {
     return labels[this.ordenActual()];
   });
 
-  // Resource para obtener IDs de pacientes con planes activos
-  private readonly planesActivosRes = httpResource<string[]>(
+  // Suscripción reactiva a planes activos del fisio para derivar IDs de pacientes activos
+  private readonly planesActivosQuery = this.convex.watchQuery(
+    api.plans.queries.listByFisio,
     () => {
       const cid = this.idsClinicas();
-      if (!cid || cid.length === 0) return undefined;
-
-      return {
-        url: `${env.DIRECTUS_URL}/items/Planes`,
-        method: 'GET',
-        params: {
-          fields: 'paciente',
-          filter: JSON.stringify({ estado: { _eq: 'activo' } }),
-          limit: '-1',
-        },
-      };
-    },
-    {
-      defaultValue: [],
-      parse: (v: unknown): string[] => {
-        const items = (v as { data: { paciente: string }[] })?.data ?? [];
-        return [...new Set(items.map((p) => p.paciente).filter(Boolean))];
-      },
+      if (!cid || cid.length === 0) return 'skip';
+      return { estado: 'activo' as const };
     },
   );
 
-  readonly idsPacientesActivos = computed(() => new Set(this.planesActivosRes.value()));
+  readonly idsPacientesActivos = computed(() => {
+    const planes = this.planesActivosQuery.value() ?? [];
+    return new Set(
+      planes
+        .map((p) => p.pacienteId as unknown as string)
+        .filter(Boolean),
+    );
+  });
 
   readonly totalPacientes = computed(() => this.pacientesRes.value()?.length ?? 0);
 
   readonly conteoActivos = computed(() => {
     const todos = this.pacientesRes.value() ?? [];
     const activos = this.idsPacientesActivos();
-    return todos.filter((p) => activos.has(p.id)).length;
+    return todos.filter((p) => activos.has(p.convexId ?? p.id)).length;
   });
 
   readonly conteoInactivos = computed(() => this.totalPacientes() - this.conteoActivos());
@@ -147,8 +136,8 @@ export class PacientesListComponent {
     if (filtro !== 'todos') {
       const activos = this.idsPacientesActivos();
       lista = filtro === 'activos'
-        ? lista.filter((p) => activos.has(p.id))
-        : lista.filter((p) => !activos.has(p.id));
+        ? lista.filter((p) => activos.has(p.convexId ?? p.id))
+        : lista.filter((p) => !activos.has(p.convexId ?? p.id));
     }
 
     const orden = this.ordenActual();
@@ -173,67 +162,47 @@ export class PacientesListComponent {
     });
   });
 
-  readonly pacientesRes = httpResource<Usuario[]>(
+  // Suscripción reactiva a pacientes de las clínicas del fisio. Si hay varias
+  // clínicas hacemos query por la primera y dedupliamos en cliente cuando haya >1.
+  // Para simplicidad inicial, usamos solo la primera clínica (caso 99% del uso).
+  private readonly pacientesQuery = this.convex.watchQuery(
+    api.users.queries.listPatientsByClinic,
     () => {
       const cid = this.idsClinicas();
-      if (!cid) return undefined; // hasta que tengamos clínica, no dispares la llamada
-
-      if (cid.length == 0) return undefined; // hasta que tengamos clínica, no dispares la llamada
-
-      const q = this.busqueda().trim(); // <-- hace reactivo el resource
-      // Construimos el filter combinando condiciones con _and
-      const andFilters: unknown[] = [
-        { clinicas: { id_clinica: { _in: cid } } },
-      ];
-
-      if (q) {
-        andFilters.push({
-          _or: [
-            { first_name: { _icontains: q } },
-            { last_name: { _icontains: q } },
-            { email: { _icontains: q } },
-          ],
-        });
-      }
-
-      const filter =
-        andFilters.length === 1 ? andFilters[0] : { _and: andFilters };
-
+      if (!cid || cid.length === 0) return 'skip';
       return {
-        url: `${env.DIRECTUS_URL}/users`,
-        method: 'GET',
-        params: {
-          fields:
-            'id,first_name,last_name,email,avatar,clinicas.id_clinica.id_clinica,clinicas.id_clinica.nombre,clinicas.id_puesto,clinicas.puesto.id,clinicas.puesto.puesto,magic_link_url,telefono,direccion',
-          sort: 'first_name,last_name',
-          limit: '200', // ajusta/añade paginación si lo necesitas
-          filter: JSON.stringify(filter),
-          meta: 'filter_count',
-        },
-        // withCredentials: true, // ⬅️ descomenta si usas cookie de sesión
+        clinicLegacyId: cid[0],
+        search: this.busqueda().trim() || undefined,
+        limit: 200,
       };
     },
-    {
-      defaultValue: [],
-      parse: (v: unknown): Usuario[] => {
-        const resultado = (v as DirectusPage<UsuarioDirectus>)?.data ?? [];
-        const usuarios: Usuario[] = [];
-        for (const usuario of resultado) {
-          usuarios.push(this.sessionService.transformarUsuarioDirectus(usuario));
-        }
-        console.log('Pacientes cargados:', resultado);
-        // Cargar datos complementarios en paralelo
+  );
+
+  readonly pacientesRes = {
+    value: computed<Usuario[]>(() => {
+      const result = this.pacientesQuery.value();
+      if (!result) return [];
+      const usuarios = result.results.map((u) =>
+        this.sessionService.transformarUsuarioConvex(u),
+      );
+      // Disparar carga de datos complementarios cuando llegan los pacientes
+      queueMicrotask(() => {
         this.cargarAsignaciones();
         this.cargarMetricas();
-        return usuarios;
-      },
+      });
+      return usuarios;
+    }),
+    isLoading: this.pacientesQuery.isLoading,
+    error: this.pacientesQuery.error,
+    reload: () => {
+      // No-op: Convex watchQuery se actualiza automáticamente
     },
-  );
+  };
 
   avatarUrl(p: Usuario): string | null {
     const id_avatar = p?.avatar;
     return id_avatar
-      ? `${env.DIRECTUS_URL}/assets/${id_avatar}?fit=cover&width=96&height=96&quality=80`
+      ? `${assetUrl(id_avatar, { fit: 'cover', width: 96, height: 96, quality: 80 })}`
       : null;
   }
 
@@ -252,7 +221,9 @@ export class PacientesListComponent {
     });
 
     dialogRef.closed.subscribe((r: unknown) => {
-      const result = r as { created?: UsuarioDirectus; updated?: boolean } | undefined;
+      const result = r as
+        | { created?: { id: string }; updated?: boolean }
+        | undefined;
       if (result?.created) {
         this.router.navigate(['/mis-pacientes', result.created.id]);
       } else if (result?.updated) {
@@ -291,8 +262,7 @@ export class PacientesListComponent {
   }
 
   reload() {
-    this.pacientesRes.reload();
-    this.planesActivosRes.reload();
+    // Convex watchQuery se actualiza solo; solo refrescamos lo que va por HTTP.
     this.cargarAsignaciones();
     this.cargarMetricas();
   }

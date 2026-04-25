@@ -1,0 +1,82 @@
+[
+  {
+    "id_categoria": 1,
+    "nombre_categoria": "Hombro"
+  },
+  {
+    "id_categoria": 2,
+    "nombre_categoria": "Codo"
+  },
+  {
+    "id_categoria": 4,
+    "nombre_categoria": "Rodilla"
+  },
+  {
+    "id_categoria": 6,
+    "nombre_categoria": "Cadera"
+  },
+  {
+    "id_categoria": 7,
+    "nombre_categoria": "Columna Dorsal"
+  },
+  {
+    "id_categoria": 8,
+    "nombre_categoria": "Columna Lumbar"
+  },
+  {
+    "id_categoria": 9,
+    "nombre_categoria": "Columna Cervical"
+  },
+  {
+    "id_categoria": 10,
+    "nombre_categoria": "Muñeca-Mano"
+  },
+  {
+    "id_categoria": 11,
+    "nombre_categoria": "CORE"
+  },
+  {
+    "id_categoria": 12,
+    "nombre_categoria": "Glúteo"
+  },
+  {
+    "id_categoria": 13,
+    "nombre_categoria": "Oncologia"
+  },
+  {
+    "id_categoria": 15,
+    "nombre_categoria": "Corefoot System "
+  },
+  {
+    "id_categoria": 18,
+    "nombre_categoria": "Foam Roller"
+  },
+  {
+    "id_categoria": 19,
+    "nombre_categoria": "Estiramientos "
+  },
+  {
+    "id_categoria": 20,
+    "nombre_categoria": "Test"
+  },
+  {
+    "id_categoria": 21,
+    "nombre_categoria": "ATM"
+  },
+  {
+    "id_categoria": 22,
+    "nombre_categoria": "Pierna"
+  },
+  {
+    "id_categoria": 23,
+    "nombre_categoria": "Brazos"
+  },
+  {
+    "id_categoria": 24,
+    "nombre_categoria": "Tobillo"
+  },
+  {
+    "id_categoria": 25,
+    "nombre_categoria": "Suelo Pélvico"
+  }
+]

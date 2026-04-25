@@ -6,11 +6,11 @@ import {
   ElementRef,
   HostListener,
 } from '@angular/core';
+import { assetUrl } from '../../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { environment as env } from '../../../../../../environments/environment';
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { AuthService } from '../../../../../core/auth/services/auth.service';
 import { ThemeService } from '../../../../../core/services/theme.service';
@@ -120,7 +120,7 @@ export class InicioComponent {
 
   avatarUrlEmisor(avatar: string | null): string | null {
     return avatar
-      ? `${env.DIRECTUS_URL}/assets/${avatar}?fit=cover&width=64&height=64&quality=80`
+      ? `${assetUrl(avatar, { fit: 'cover', width: 64, height: 64, quality: 80 })}`
       : null;
   }
 

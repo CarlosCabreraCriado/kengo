@@ -1,16 +1,15 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { firstValueFrom } from 'rxjs';
 
 import { DialogContainerComponent } from '../dialog/dialog-container.component';
 import { DialogHeaderComponent } from '../dialog/dialog-header.component';
 import { DialogContentComponent } from '../dialog/dialog-content.component';
 import { ToastService } from '../toast';
-import { environment as env } from '../../../../environments/environment';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { api } from '../../../../../../../convex/_generated/api';
 
 export interface DialogoPdfData {
-  planId: number;
+  planConvexId: string;
   pacienteEmail?: string;
   planTitulo?: string;
 }
@@ -27,7 +26,7 @@ export interface DialogoPdfData {
   styleUrl: './dialogo-pdf.component.css',
 })
 export class DialogoPdfComponent {
-  private http = inject(HttpClient);
+  private convex = inject(ConvexService);
   private dialogRef = inject(DialogRef);
   private toast = inject(ToastService);
   data = inject<DialogoPdfData>(DIALOG_DATA);
@@ -43,38 +42,30 @@ export class DialogoPdfComponent {
     () => this.descargando() || this.imprimiendo() || this.enviando()
   );
 
+  private async generar(): Promise<{ url: string | null; filename: string } | null> {
+    const res = await this.convex.action(api.pdf.actions.generatePlanPdf, {
+      planId: this.data.planConvexId as any,
+    });
+    if (!res?.url) return null;
+    return { url: res.url, filename: res.filename };
+  }
+
   async descargar() {
     if (this.accionEnProgreso()) return;
     this.descargando.set(true);
 
     try {
-      const response = await firstValueFrom(
-        this.http.get(`${env.API_URL}/plan/${this.data.planId}/pdf`, {
-          responseType: 'blob',
-          observe: 'response',
-          withCredentials: true,
-        })
-      );
+      const res = await this.generar();
+      if (!res) throw new Error('no url');
 
-      if (response.body) {
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = `plan_${this.data.planId}.pdf`;
-
-        if (contentDisposition) {
-          const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
-          if (match?.[1]) {
-            filename = match[1];
-          }
-        }
-
-        const blob = new Blob([response.body], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        window.URL.revokeObjectURL(url);
-      }
+      const response = await fetch(res.url!);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = res.filename;
+      link.click();
+      window.URL.revokeObjectURL(blobUrl);
     } catch {
       this.toast.error('Error al descargar el PDF');
     } finally {
@@ -87,17 +78,13 @@ export class DialogoPdfComponent {
     this.imprimiendo.set(true);
 
     try {
-      const response = await firstValueFrom(
-        this.http.get(`${env.API_URL}/plan/${this.data.planId}/pdf`, {
-          responseType: 'blob',
-          withCredentials: true,
-        })
-      );
+      const res = await this.generar();
+      if (!res) throw new Error('no url');
 
-      const blob = new Blob([response], { type: 'application/pdf' });
+      const response = await fetch(res.url!);
+      const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
 
-      // En móvil, abrir en nueva pestaña para imprimir desde el navegador
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
         window.open(blobUrl);
@@ -143,13 +130,11 @@ export class DialogoPdfComponent {
     this.enviando.set(true);
 
     try {
-      await firstValueFrom(
-        this.http.post(
-          `${env.API_URL}/plan/${this.data.planId}/pdf/enviar`,
-          { email },
-          { withCredentials: true }
-        )
+      const res = await this.convex.action(
+        api.pdf.actions.generateAndSendPlanPdf,
+        { planId: this.data.planConvexId as any, email },
       );
+      if (!res.ok) throw new Error('send failed');
       this.emailEnviado.set(true);
       this.mostrarEmailForm.set(false);
       this.toast.success('PDF enviado correctamente');

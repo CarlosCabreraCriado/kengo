@@ -1,0 +1,33 @@
+{
+"clinicas_files": [
+	{
+		"id" : 1,
+		"clinicas_id_clinica" : 1,
+		"directus_files_id" : "69a44795-f36c-4585-801b-f18f7abfb99e"
+	},
+	{
+		"id" : 2,
+		"clinicas_id_clinica" : 1,
+		"directus_files_id" : "9baee07b-a76e-4c77-8290-89868e0edb35"
+	},
+	{
+		"id" : 3,
+		"clinicas_id_clinica" : 1,
+		"directus_files_id" : "0fa89e41-1917-42fc-8999-a9e2443bafa1"
+	},
+	{
+		"id" : 4,
+		"clinicas_id_clinica" : 2,
+		"directus_files_id" : "e2c0490c-f66a-441c-8d99-c77010a8c96e"
+	},
+	{
+		"id" : 5,
+		"clinicas_id_clinica" : null,
+		"directus_files_id" : "faec56b8-0f96-4804-8ca8-bc9516844b42"
+	},
+	{
+		"id" : 6,
+		"clinicas_id_clinica" : 3,
+		"directus_files_id" : "08021726-1d26-40a9-bb17-4288bf9df2b0"
+	}
+]}

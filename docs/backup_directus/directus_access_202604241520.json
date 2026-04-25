@@ -1,0 +1,66 @@
+{
+"directus_access": [
+	{
+		"id" : "3e8be351-1da1-4ed8-a5a1-38fd3629636f",
+		"role" : null,
+		"user" : "86aea273-58e9-4195-92ba-f60e180a0581",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e",
+		"sort" : 1
+	},
+	{
+		"id" : "4ca70eda-5c9b-4861-bb15-c24edd012f23",
+		"role" : null,
+		"user" : null,
+		"policy" : "abf8a154-5b1c-4a46-ac9c-7300570f4f17",
+		"sort" : 1
+	},
+	{
+		"id" : "51ee4985-21b2-4603-803d-045546cf22f1",
+		"role" : "690b88bb-0a9b-422c-a476-18eedbf5937b",
+		"user" : null,
+		"policy" : "a32bcea1-5764-4bd5-8139-f2af1cb9a8cb",
+		"sort" : 1
+	},
+	{
+		"id" : "6d753b03-dc1d-4759-9c9e-e259338b8d91",
+		"role" : null,
+		"user" : "dc17cbf4-b2c2-478a-a089-af3b6697e870",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e",
+		"sort" : 1
+	},
+	{
+		"id" : "8152bfd8-c3b6-4ce7-a8ee-c709bc99189b",
+		"role" : null,
+		"user" : "6b64c90a-9892-4613-bf60-bb43e4f09351",
+		"policy" : "a32bcea1-5764-4bd5-8139-f2af1cb9a8cb",
+		"sort" : 1
+	},
+	{
+		"id" : "9724847a-ac45-45ce-a09e-9acbbbf1f654",
+		"role" : "211dc482-59ef-4954-b8d3-4fc745a6b54b",
+		"user" : null,
+		"policy" : "a32bcea1-5764-4bd5-8139-f2af1cb9a8cb",
+		"sort" : null
+	},
+	{
+		"id" : "a9a2a52e-9da4-4ed3-af7f-5a64ff9cd07d",
+		"role" : null,
+		"user" : "e415caec-0960-4ca5-b535-9da58d307291",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e",
+		"sort" : 1
+	},
+	{
+		"id" : "b1e54393-17d0-47d0-9cd9-16ef96676720",
+		"role" : "dbf34acd-48e9-4868-b269-e30afb44fe6f",
+		"user" : null,
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e",
+		"sort" : 1
+	},
+	{
+		"id" : "daf0431f-a3cc-41a9-acd9-24cbe1cd627e",
+		"role" : "dbf34acd-48e9-4868-b269-e30afb44fe6f",
+		"user" : null,
+		"policy" : "a32bcea1-5764-4bd5-8139-f2af1cb9a8cb",
+		"sort" : 2
+	}
+]}

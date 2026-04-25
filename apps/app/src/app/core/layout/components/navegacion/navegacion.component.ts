@@ -8,8 +8,8 @@ import {
 import { filter } from 'rxjs/operators';
 import { BreakpointObserver } from '@angular/cdk/layout';
 
-import { environment as env } from '../../../../../environments/environment';
 import { SessionService } from '../../../auth/services/session.service';
+import { assetUrl } from '../../../utils/asset-url';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ThemeService } from '../../../services/theme.service';
 import { NotificacionesService } from '../../../services/notificaciones.service';
@@ -65,7 +65,7 @@ export class NavegacionComponent implements OnInit {
   public avatarUrl = computed(() => {
     const id_avatar = this.sessionService.usuario()?.avatar;
     return id_avatar
-      ? `${env.DIRECTUS_URL}/assets/${id_avatar}?fit=cover&width=96&height=96&quality=80`
+      ? assetUrl(id_avatar, { fit: 'cover', width: 96, height: 96, quality: 80 })
       : null;
   });
 
@@ -158,7 +158,7 @@ export class NavegacionComponent implements OnInit {
 
   avatarUrlEmisor(avatar: string | null): string | null {
     return avatar
-      ? `${env.DIRECTUS_URL}/assets/${avatar}?fit=cover&width=64&height=64&quality=80`
+      ? assetUrl(avatar, { fit: 'cover', width: 64, height: 64, quality: 80 })
       : null;
   }
 

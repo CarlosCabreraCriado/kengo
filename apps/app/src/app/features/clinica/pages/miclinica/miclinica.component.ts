@@ -4,8 +4,7 @@ import { RouterLink } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { environment as env } from '../../../../../environments/environment';
-
+import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../data-access/clinicas.service';
@@ -333,17 +332,17 @@ export class MiClinicaComponent {
     if (this.logoFile()) return URL.createObjectURL(this.logoFile()!);
     const id = this.existingLogoId();
     return id
-      ? `${env.DIRECTUS_URL}/assets/${id}?fit=cover&width=200&height=200`
+      ? `${assetUrl(id, { fit: 'cover', width: 200, height: 200 })}`
       : null;
   }
 
   imagenPreviewUrl(id: ID) {
-    return `${env.DIRECTUS_URL}/assets/${id}?fit=cover&width=200&height=150`;
+    return `${assetUrl(id, { fit: 'cover', width: 200, height: 150 })}`;
   }
 
   assetUrl(id?: string | null) {
     if (!id) return '';
-    return `${env.DIRECTUS_URL}/assets/${id}`;
+    return `${rawAssetUrl(id)}`;
   }
 
   firstImageId(c: Clinica): string | undefined {

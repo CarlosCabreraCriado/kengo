@@ -1,117 +1,90 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { environment as env } from '../../../environments/environment';
 import { SessionService } from '../auth/services/session.service';
-import type {
-  NotificacionApp,
-  NotificacionesAppResponse,
-} from '../../../types/global';
+import { ConvexService } from '../convex/convex.service';
+import { api } from '../../../../../../convex/_generated/api';
+import type { NotificacionApp } from '../../../types/global';
 
 @Injectable({ providedIn: 'root' })
 export class NotificacionesService {
-  private http = inject(HttpClient);
   private router = inject(Router);
+  private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
 
-  readonly notificaciones = signal<NotificacionApp[]>([]);
-  readonly pendientes = signal(0);
-  readonly cargando = signal(false);
-  private datosCargados = signal(false);
+  private readonly suscripcion = this.convex.watchQuery(
+    api.notifications.queries.listForCurrentFisio,
+    () => {
+      const usuario = this.sessionService.usuario();
+      const rol = this.sessionService.rolUsuario();
+      if (!usuario?.id || rol !== 'fisio') return 'skip' as const;
+      return {};
+    },
+  );
 
+  private overrides = signal<Record<string, boolean>>({});
+
+  readonly notificaciones = computed<NotificacionApp[]>(() => {
+    const data = this.suscripcion.value();
+    if (!data) return [];
+    const overrides = this.overrides();
+    return data.notificaciones.map((n) =>
+      overrides[n.id] !== undefined ? { ...n, leida: overrides[n.id] } : n,
+    );
+  });
+
+  readonly pendientes = computed(
+    () => this.notificaciones().filter((n) => !n.leida).length,
+  );
+
+  readonly cargando = this.suscripcion.isLoading;
   readonly hayPendientes = computed(() => this.pendientes() > 0);
 
   constructor() {
-    // Auto-load cuando el usuario está disponible y es fisio
-    effect(() => {
-      const usuario = this.sessionService.usuario();
-      const rol = this.sessionService.rolUsuario();
-
-      if (usuario?.id && rol === 'fisio' && !this.datosCargados() && !this.cargando()) {
-        this.cargar();
-      }
-    });
-
-    // Recargar al navegar a /mis-pacientes
     this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
-      .subscribe((e) => {
-        const url = (e as NavigationEnd).urlAfterRedirects;
-        if (url.startsWith('/mis-pacientes') && this.datosCargados()) {
-          this.recargar();
-        }
+      .subscribe(() => {
+        // La suscripción Convex es reactiva; no hay recarga manual.
       });
   }
 
   async recargar(): Promise<void> {
-    this.datosCargados.set(false);
-    await this.cargar();
+    // La suscripción se actualiza sola; método preservado por compatibilidad.
   }
 
   async marcarRevisada(n: NotificacionApp): Promise<void> {
     if (n.leida) return;
 
-    // Update optimista
-    const prev = this.notificaciones();
-    const prevPendientes = this.pendientes();
-    this.notificaciones.set(
-      prev.map((item) => (item.id === n.id ? { ...item, leida: true } : item)),
-    );
-    this.pendientes.set(Math.max(0, prevPendientes - 1));
-
+    this.overrides.update((o) => ({ ...o, [n.id]: true }));
     try {
-      await firstValueFrom(
-        this.http.patch(`${env.API_URL}/notificacion/${n.id}/revisar`, {}, {
-          withCredentials: true,
-        }),
-      );
-    } catch {
-      // Revertir
-      this.notificaciones.set(prev);
-      this.pendientes.set(prevPendientes);
+      await this.convex.mutation(api.notifications.mutations.markAsRead, {
+        notificationId: n.id as any,
+      });
+    } catch (err) {
+      console.error('Error al marcar notificación como revisada:', err);
+      this.overrides.update((o) => ({ ...o, [n.id]: false }));
     }
   }
 
   async marcarTodasRevisadas(): Promise<void> {
-    // Update optimista
-    const prev = this.notificaciones();
-    const prevPendientes = this.pendientes();
-    this.notificaciones.set(prev.map((n) => ({ ...n, leida: true })));
-    this.pendientes.set(0);
-
+    const prevIds = this.notificaciones().filter((n) => !n.leida).map((n) => n.id);
+    this.overrides.update((o) => {
+      const next = { ...o };
+      for (const id of prevIds) next[id] = true;
+      return next;
+    });
     try {
-      await firstValueFrom(
-        this.http.patch(`${env.API_URL}/notificaciones/revisar-todas`, {}, {
-          withCredentials: true,
-        }),
+      await this.convex.mutation(
+        api.notifications.mutations.markAllAsReadForCurrentFisio,
+        {},
       );
-    } catch {
-      // Revertir
-      this.notificaciones.set(prev);
-      this.pendientes.set(prevPendientes);
-    }
-  }
-
-  private async cargar(): Promise<void> {
-    if (this.cargando()) return;
-
-    this.cargando.set(true);
-    try {
-      const res = await firstValueFrom(
-        this.http.get<NotificacionesAppResponse>(
-          `${env.API_URL}/notificaciones/mis-notificaciones`,
-          { withCredentials: true },
-        ),
-      );
-      this.notificaciones.set(res.notificaciones);
-      this.pendientes.set(res.pendientes);
-      this.datosCargados.set(true);
     } catch (err) {
-      console.error('Error cargando notificaciones:', err);
-    } finally {
-      this.cargando.set(false);
+      console.error('Error al marcar todas como revisadas:', err);
+      this.overrides.update((o) => {
+        const next = { ...o };
+        for (const id of prevIds) next[id] = false;
+        return next;
+      });
     }
   }
 }

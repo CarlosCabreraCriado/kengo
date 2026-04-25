@@ -9,9 +9,9 @@ import { RachaPacienteService, DiaSemanaCalendario } from '../../../data-access/
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
 import { KENGO_BREAKPOINTS } from '../../../../../shared';
-import { environment as env } from '../../../../../../environments/environment';
 import { PUESTO_PACIENTE } from '@kengo/shared-models';
 import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/global';
+import { assetUrl, rawAssetUrl } from '../../../../../core/utils/asset-url';
 
 interface EjercicioStrip {
   id: number;
@@ -50,7 +50,7 @@ export class InicioPacienteComponent {
 
   fisioAvatarUrl = computed(() => {
     const avatar = this.fisioAsignado()?.avatarFisio;
-    return avatar ? `${env.DIRECTUS_URL}/assets/${avatar}` : null;
+    return avatar ? `${rawAssetUrl(avatar)}` : null;
   });
 
   fisioNombreCompleto = computed(() => {
@@ -192,7 +192,7 @@ export class InicioPacienteComponent {
           id: ej.ejercicio?.id_ejercicio ?? ej.id ?? 0,
           nombre: ej.ejercicio?.nombre_ejercicio ?? 'Ejercicio',
           portadaUrl: ej.ejercicio?.portada
-            ? `${env.DIRECTUS_URL}/assets/${ej.ejercicio.portada}?width=80&height=80&fit=cover&format=webp`
+            ? `${assetUrl(ej.ejercicio.portada, { width: 80, height: 80, fit: 'cover', format: 'webp' })}`
             : null,
           completado: ej.completadoHoy,
           esSiguiente,
@@ -237,7 +237,7 @@ export class InicioPacienteComponent {
         return {
           nombre: pendiente.ejercicio?.nombre_ejercicio ?? 'Ejercicio',
           portadaUrl: pendiente.ejercicio?.portada
-            ? `${env.DIRECTUS_URL}/assets/${pendiente.ejercicio.portada}?width=96&height=96&fit=cover&format=webp`
+            ? `${assetUrl(pendiente.ejercicio.portada, { width: 96, height: 96, fit: 'cover', format: 'webp' })}`
             : null,
         };
       }

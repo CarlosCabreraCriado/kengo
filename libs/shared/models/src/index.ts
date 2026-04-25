@@ -2,29 +2,21 @@
  * @kengo/shared-models
  *
  * Librería compartida de tipos TypeScript para el monorepo Kengo.
- * Sincroniza los modelos entre frontend (Angular) y backend (Node.js).
+ * Tras la migración a Convex (v1.0), expone:
+ *  - Tipos base (`types/`)
+ *  - Tipos legacy de "shape de records expandidos" (`directus/`) — mantenidos como
+ *    interfaces de datos. Pendiente futuro: renombrar a *Record y unificar.
+ *  - Tipos de dominio (`domain/`) — formato canónico que consumen las apps.
+ *  - Payloads para mutations Convex (`payloads/`).
  */
 
 // Tipos base y utilitarios
 export * from './lib/types/common';
 
-// Tipos que reflejan exactamente la estructura de la BD
-export * from './lib/database/users.db';
-export * from './lib/database/exercises.db';
-export * from './lib/database/plans.db';
-export * from './lib/database/routines.db';
-export * from './lib/database/clinics.db';
-export * from './lib/database/access-codes.db';
-export * from './lib/database/compliance.db';
-export * from './lib/database/notifications.db';
-export * from './lib/database/assignments.db';
-
-// Tipos para respuestas del SDK Directus
+// Tipos legacy de records expandidos (siguen usándose como contratos de datos)
 export * from './lib/directus/users.directus';
 export * from './lib/directus/exercises.directus';
 export * from './lib/directus/plans.directus';
-export * from './lib/directus/routines.directus';
-export * from './lib/directus/clinics.directus';
 
 // Tipos de dominio transformados para uso en las apps
 export * from './lib/domain/users';

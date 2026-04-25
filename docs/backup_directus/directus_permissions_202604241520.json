@@ -1,0 +1,183 @@
+{
+"directus_permissions": [
+	{
+		"id" : 1,
+		"collection" : "categorias",
+		"action" : "create",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 2,
+		"collection" : "categorias",
+		"action" : "read",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 3,
+		"collection" : "categorias",
+		"action" : "update",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 4,
+		"collection" : "categorias",
+		"action" : "share",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 9,
+		"collection" : "ejercicios",
+		"action" : "create",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 10,
+		"collection" : "ejercicios",
+		"action" : "read",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 11,
+		"collection" : "ejercicios",
+		"action" : "update",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 12,
+		"collection" : "ejercicios",
+		"action" : "share",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 17,
+		"collection" : "directus_users",
+		"action" : "update",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 18,
+		"collection" : "directus_roles",
+		"action" : "read",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 19,
+		"collection" : "directus_users",
+		"action" : "read",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 25,
+		"collection" : "directus_files",
+		"action" : "read",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 26,
+		"collection" : "ejercicios",
+		"action" : "delete",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 27,
+		"collection" : "categorias",
+		"action" : "delete",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 28,
+		"collection" : "directus_files",
+		"action" : "update",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 29,
+		"collection" : "directus_files",
+		"action" : "create",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 30,
+		"collection" : "directus_files",
+		"action" : "delete",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	},
+	{
+		"id" : 31,
+		"collection" : "directus_files",
+		"action" : "share",
+		"permissions" : null,
+		"validation" : null,
+		"presets" : null,
+		"fields" : "*",
+		"policy" : "5db5d2b4-5505-4e23-be66-fdb1239dc35e"
+	}
+]}

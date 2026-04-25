@@ -5,38 +5,26 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { httpResource } from '@angular/common/http';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { environment as env } from '../../../../environments/environment';
-import { SessionService } from '../../../core/auth/services/session.service';
+import { assetUrl } from '../../../core/utils/asset-url';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { EjerciciosService } from '../../ejercicios/data-access/ejercicios.service';
+import { api } from '../../../../../../../convex/_generated/api';
 
 import {
   Rutina,
-  RutinaDirectus,
   RutinaCompleta,
   EjercicioRutina,
-  EjercicioRutinaDirectus,
   CreateRutinaPayload,
   VisibilidadRutina,
   Ejercicio,
 } from '../../../../types/global';
 
-interface RutinasResponse {
-  data: RutinaDirectus[];
-  meta?: { filter_count?: number };
-}
-
-interface RutinaResponse {
-  data: RutinaDirectus;
-}
-
 type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
 
 @Injectable({ providedIn: 'root' })
 export class RutinasService {
-  private http = inject(HttpClient);
-  private sessionService = inject(SessionService);
+  private convex = inject(ConvexService);
+  private ejerciciosService = inject(EjerciciosService);
 
   // --- Filtros como signals ---
   readonly busqueda: WritableSignal<string> = signal('');
@@ -44,112 +32,63 @@ export class RutinasService {
   readonly page: WritableSignal<number> = signal(1);
   readonly pageSize: WritableSignal<number> = signal(20);
 
-  // ID del usuario actual (fisio)
-  private readonly usuarioId = computed(() => this.sessionService.usuario()?.id ?? null);
+  // Map interno: legacyId → convexId (para llamar mutations)
+  private readonly idMap = new Map<number, string>();
 
-  // ID de la clínica del usuario (primera clínica donde es fisio)
-  private readonly clinicaId = computed(() => {
-    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-    // Buscar la primera clínica donde el usuario es fisio (id_puesto 1 o 4)
-    const clinicaFisio = clinicas.find((c) => c.id_puesto === 1 || c.id_puesto === 4);
-    return clinicaFisio?.id_clinica ?? null;
+  // Suscripción reactiva a rutinas via Convex
+  private readonly routinesQuery = this.convex.watchQuery(
+    api.routines.queries.list,
+    () => {
+      const vis = this.filtroVisibilidad();
+      const visibilidad =
+        vis === 'privadas' ? ('privado' as const) :
+        vis === 'clinica' ? ('clinica' as const) :
+        undefined;
+      return { visibilidad, search: this.busqueda().trim() || undefined };
+    },
+  );
+
+  // Mapear datos Convex → tipo Rutina
+  private readonly allRutinas = computed<Rutina[]>(() => {
+    const raw = this.routinesQuery.value();
+    if (!raw) return [];
+
+    this.idMap.clear();
+    return (raw as any[]).map((r) => {
+      const legacyId = r.legacyId ?? 0;
+      this.idMap.set(legacyId, r._id);
+      return {
+        id_rutina: legacyId,
+        nombre: r.nombre,
+        descripcion: r.descripcion,
+        autor: r.autorId,
+        visibilidad: r.visibilidad,
+        date_created: r._creationTime
+          ? new Date(r._creationTime).toISOString()
+          : undefined,
+      } as Rutina;
+    });
   });
 
-  // Request para listar rutinas
-  private readonly peticionRutinas = () => {
-    const userId = this.usuarioId();
-    const clinicaId = this.clinicaId();
-    if (!userId) return undefined; // No cargar si no hay usuario
+  // Paginación client-side
+  private readonly paginatedRutinas = computed(() => {
+    const all = this.allRutinas();
+    const start = (this.page() - 1) * this.pageSize();
+    return all.slice(start, start + this.pageSize());
+  });
 
-    const nombre = this.busqueda().trim();
-    const vis = this.filtroVisibilidad();
-    const p = this.page();
-    const ps = this.pageSize();
-
-    // Filtros de visibilidad:
-    // - privadas: solo mis rutinas con visibilidad='privado'
-    // - clinica: rutinas con visibilidad='clinica' de autores de mi clínica
-    // - todas: mis privadas + las de mi clínica
-    const filter: Record<string, unknown> = {};
-
-    if (vis === 'privadas') {
-      // Solo mis rutinas privadas
-      filter['_and'] = [
-        { autor: { _eq: userId } },
-        { visibilidad: { _eq: 'privado' } },
-      ];
-    } else if (vis === 'clinica') {
-      // Solo rutinas de clínica (de autores que pertenecen a mi clínica)
-      if (clinicaId) {
-        filter['_and'] = [
-          { visibilidad: { _eq: 'clinica' } },
-          { autor: { clinicas: { id_clinica: { _eq: clinicaId } } } },
-        ];
-      } else {
-        // Sin clínica, no mostrar nada
-        filter['id_rutina'] = { _eq: -1 };
-      }
-    } else {
-      // Todas: mis privadas + las de mi clínica
-      const orConditions: unknown[] = [
-        { autor: { _eq: userId } }, // Mis rutinas (privadas o de clínica)
-      ];
-
-      // Agregar rutinas de clínica si tengo una clínica
-      if (clinicaId) {
-        orConditions.push({
-          _and: [
-            { visibilidad: { _eq: 'clinica' } },
-            { autor: { clinicas: { id_clinica: { _eq: clinicaId } } } },
-          ],
-        });
-      }
-
-      filter['_or'] = orConditions;
-    }
-
-    if (nombre) {
-      // Agregar filtro de nombre
-      const nombreFilter = { nombre: { _icontains: nombre } };
-      if (filter['_and']) {
-        (filter['_and'] as unknown[]).push(nombreFilter);
-      } else if (filter['_or']) {
-        filter['_and'] = [{ _or: filter['_or'] }, nombreFilter];
-        delete filter['_or'];
-      } else {
-        filter['nombre'] = { _icontains: nombre };
-      }
-    }
-
-    return {
-      url: `${env.DIRECTUS_URL}/items/rutinas`,
-      method: 'GET',
-      params: {
-        fields: 'id_rutina,nombre,descripcion,autor,visibilidad,date_created,date_updated',
-        limit: String(ps),
-        offset: String((p - 1) * ps),
-        sort: '-date_created',
-        meta: 'filter_count',
-        filter: JSON.stringify(filter),
-      },
-    };
+  // Interfaz compatible con httpResource para los templates
+  readonly rutinasRes = {
+    value: computed(() => this.paginatedRutinas()),
+    isLoading: this.routinesQuery.isLoading,
+    error: this.routinesQuery.error,
+    reload: () => {},
   };
 
-  readonly rutinasRes = httpResource<Rutina[]>(this.peticionRutinas, {
-    parse: (res) => {
-      const resultado = res as RutinasResponse;
-      return resultado.data.map((r) => this.transformRutina(r));
-    },
-    defaultValue: [],
-  });
-
   // Computed para la vista
-  readonly rutinas = computed(() => this.rutinasRes.value());
-  readonly isLoading = computed(() => this.rutinasRes.isLoading());
-  readonly total = computed(() => {
-    const res = this.rutinasRes.value();
-    return Array.isArray(res) ? res.length : 0;
-  });
+  readonly rutinas = computed(() => this.paginatedRutinas());
+  readonly isLoading = computed(() => this.routinesQuery.isLoading());
+  readonly total = computed(() => this.allRutinas().length);
 
   // ========= Acciones (mutadores) =========
 
@@ -168,7 +107,7 @@ export class RutinasService {
   }
 
   reload() {
-    this.rutinasRes.reload();
+    // No-op: datos en tiempo real via Convex
   }
 
   // ========= CRUD Methods =========
@@ -177,60 +116,17 @@ export class RutinasService {
    * Obtener una rutina por ID con sus ejercicios
    */
   async getRutinaById(id: number): Promise<RutinaCompleta | null> {
-    const fields = [
-      'id_rutina',
-      'nombre',
-      'descripcion',
-      'autor.id',
-      'autor.first_name',
-      'autor.last_name',
-      'autor.email',
-      'autor.avatar',
-      'visibilidad',
-      'date_created',
-      'date_updated',
-      'ejercicios.id',
-      'ejercicios.sort',
-      'ejercicios.ejercicio.id_ejercicio',
-      'ejercicios.ejercicio.nombre_ejercicio',
-      'ejercicios.ejercicio.descripcion',
-      'ejercicios.ejercicio.portada',
-      'ejercicios.ejercicio.video',
-      'ejercicios.ejercicio.series_defecto',
-      'ejercicios.ejercicio.repeticiones_defecto',
-      'ejercicios.series',
-      'ejercicios.repeticiones',
-      'ejercicios.duracion_seg',
-      'ejercicios.descanso_seg',
-      'ejercicios.veces_dia',
-      'ejercicios.dias_semana',
-      'ejercicios.instrucciones_paciente',
-      'ejercicios.notas_fisio',
-    ].join(',');
-
     try {
-      const response = await firstValueFrom(
-        this.http.get<RutinaResponse>(`${env.DIRECTUS_URL}/items/rutinas/${id}`, {
-          params: { fields },
-          withCredentials: true,
-        })
+      const convexId = this.idMap.get(id);
+      if (!convexId) return null;
+
+      const raw = await this.convex.query(
+        api.routines.queries.getById,
+        { routineId: convexId as any },
       );
 
-      if (!response?.data) return null;
-
-      const rutina = response.data;
-      return {
-        id_rutina: rutina.id_rutina,
-        nombre: rutina.nombre,
-        descripcion: rutina.descripcion,
-        autor: this.sessionService.transformarUsuarioDirectus(rutina.autor as any),
-        visibilidad: rutina.visibilidad,
-        date_created: rutina.date_created,
-        date_updated: rutina.date_updated,
-        ejercicios: (rutina.ejercicios || []).map((e) =>
-          this.transformEjercicioRutina(e)
-        ),
-      };
+      if (!raw) return null;
+      return this.mapConvexToRutinaCompleta(raw);
     } catch (error) {
       console.error('Error al obtener rutina:', error);
       return null;
@@ -238,65 +134,31 @@ export class RutinasService {
   }
 
   /**
-   * Crear una nueva rutina con sus ejercicios
-   * Usa un enfoque de dos pasos:
-   * 1. Crear la rutina
-   * 2. Crear los ejercicios en rutinas_ejercicios
+   * Crear una nueva rutina con sus ejercicios (atómico en Convex)
    */
   async createRutina(payload: CreateRutinaPayload): Promise<number | null> {
     try {
-      // 1. Crear la rutina sin ejercicios
-      const rutinaResponse = await firstValueFrom(
-        this.http.post<{ data: { id_rutina: number } }>(
-          `${env.DIRECTUS_URL}/items/rutinas`,
-          {
-            nombre: payload.nombre,
-            descripcion: payload.descripcion || '',
-            autor: payload.autor,
-            visibilidad: payload.visibilidad,
-          },
-          { withCredentials: true }
-        )
-      );
+      const ejercicios = payload.ejercicios.map((item, idx) => ({
+        exerciseId: this.resolveExerciseId(item.ejercicio),
+        sort: item.sort ?? idx + 1,
+        series: item.series,
+        repeticiones: item.repeticiones,
+        duracionSeg: item.duracion_seg,
+        descansoSeg: item.descanso_seg,
+        vecesDia: item.veces_dia,
+        diasSemana: item.dias_semana as any,
+        instruccionesPaciente: item.instrucciones_paciente,
+        notasFisio: item.notas_fisio,
+      }));
 
-      const rutinaId = rutinaResponse?.data?.id_rutina;
-      if (!rutinaId) {
-        console.error('Error: No se pudo crear la rutina');
-        return null;
-      }
+      await this.convex.mutation(api.routines.mutations.create, {
+        nombre: payload.nombre,
+        descripcion: payload.descripcion,
+        visibilidad: payload.visibilidad as 'privado' | 'clinica',
+        ejercicios,
+      });
 
-      console.log('Rutina creada con ID:', rutinaId);
-
-      // 2. Crear los ejercicios en rutinas_ejercicios
-      if (payload.ejercicios && payload.ejercicios.length > 0) {
-        const ejerciciosPayload = payload.ejercicios.map((item) => ({
-          rutina: rutinaId,
-          ejercicio: item.ejercicio,
-          sort: item.sort,
-          series: item.series,
-          repeticiones: item.repeticiones,
-          duracion_seg: item.duracion_seg,
-          descanso_seg: item.descanso_seg,
-          veces_dia: item.veces_dia,
-          dias_semana: item.dias_semana,
-          instrucciones_paciente: item.instrucciones_paciente,
-          notas_fisio: item.notas_fisio,
-        }));
-
-        // Crear todos los ejercicios en una sola petición (batch create)
-        const ejerciciosResponse = await firstValueFrom(
-          this.http.post<{ data: unknown[] }>(
-            `${env.DIRECTUS_URL}/items/rutinas_ejercicios`,
-            ejerciciosPayload,
-            { withCredentials: true }
-          )
-        );
-
-        console.log('Ejercicios creados:', ejerciciosResponse?.data?.length ?? 0);
-      }
-
-      this.reload();
-      return rutinaId;
+      return 0; // El ID real se obtiene vía suscripción
     } catch (error) {
       console.error('Error al crear rutina:', error);
       return null;
@@ -304,7 +166,7 @@ export class RutinasService {
   }
 
   /**
-   * Actualizar una rutina existente
+   * Actualizar solo metadatos de una rutina
    */
   async updateRutina(
     id: number,
@@ -315,15 +177,16 @@ export class RutinasService {
     }>
   ): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.http.patch(
-          `${env.DIRECTUS_URL}/items/rutinas/${id}`,
-          payload,
-          { withCredentials: true }
-        )
-      );
+      const convexId = this.idMap.get(id);
+      if (!convexId) return false;
 
-      this.reload();
+      await this.convex.mutation(api.routines.mutations.update, {
+        routineId: convexId as any,
+        nombre: payload.nombre,
+        descripcion: payload.descripcion,
+        visibilidad: payload.visibilidad as 'privado' | 'clinica' | undefined,
+      });
+
       return true;
     } catch (error) {
       console.error('Error al actualizar rutina:', error);
@@ -332,73 +195,37 @@ export class RutinasService {
   }
 
   /**
-   * Actualizar una rutina completa (datos + ejercicios)
-   * 1. Actualiza datos de la rutina
-   * 2. Elimina ejercicios anteriores
-   * 3. Crea los nuevos ejercicios
+   * Actualizar una rutina completa (datos + ejercicios, atómico en Convex)
    */
   async updateRutinaCompleta(
     id: number,
     payload: Omit<CreateRutinaPayload, 'autor'>
   ): Promise<boolean> {
     try {
-      // 1. Actualizar datos de la rutina
-      await firstValueFrom(
-        this.http.patch(
-          `${env.DIRECTUS_URL}/items/rutinas/${id}`,
-          {
-            nombre: payload.nombre,
-            descripcion: payload.descripcion || '',
-            visibilidad: payload.visibilidad,
-          },
-          { withCredentials: true }
-        )
-      );
+      const convexId = this.idMap.get(id);
+      if (!convexId) return false;
 
-      // 2. Obtener ejercicios actuales para eliminarlos
-      const currentResponse = await firstValueFrom(
-        this.http.get<{ data: { id: number }[] }>(
-          `${env.DIRECTUS_URL}/items/rutinas_ejercicios?filter[rutina][_eq]=${id}&fields=id`,
-          { withCredentials: true }
-        )
-      );
+      const ejercicios = payload.ejercicios.map((item, idx) => ({
+        exerciseId: this.resolveExerciseId(item.ejercicio),
+        sort: item.sort ?? idx + 1,
+        series: item.series,
+        repeticiones: item.repeticiones,
+        duracionSeg: item.duracion_seg,
+        descansoSeg: item.descanso_seg,
+        vecesDia: item.veces_dia,
+        diasSemana: item.dias_semana as any,
+        instruccionesPaciente: item.instrucciones_paciente,
+        notasFisio: item.notas_fisio,
+      }));
 
-      const currentIds = (currentResponse?.data || []).map((e) => e.id);
-      if (currentIds.length > 0) {
-        await firstValueFrom(
-          this.http.delete(`${env.DIRECTUS_URL}/items/rutinas_ejercicios`, {
-            body: currentIds,
-            withCredentials: true,
-          })
-        );
-      }
+      await this.convex.mutation(api.routines.mutations.update, {
+        routineId: convexId as any,
+        nombre: payload.nombre,
+        descripcion: payload.descripcion,
+        visibilidad: payload.visibilidad as 'privado' | 'clinica',
+        ejercicios,
+      });
 
-      // 3. Crear los nuevos ejercicios
-      if (payload.ejercicios && payload.ejercicios.length > 0) {
-        const ejerciciosPayload = payload.ejercicios.map((item) => ({
-          rutina: id,
-          ejercicio: item.ejercicio,
-          sort: item.sort,
-          series: item.series,
-          repeticiones: item.repeticiones,
-          duracion_seg: item.duracion_seg,
-          descanso_seg: item.descanso_seg,
-          veces_dia: item.veces_dia,
-          dias_semana: item.dias_semana,
-          instrucciones_paciente: item.instrucciones_paciente,
-          notas_fisio: item.notas_fisio,
-        }));
-
-        await firstValueFrom(
-          this.http.post(
-            `${env.DIRECTUS_URL}/items/rutinas_ejercicios`,
-            ejerciciosPayload,
-            { withCredentials: true }
-          )
-        );
-      }
-
-      this.reload();
       return true;
     } catch (error) {
       console.error('Error al actualizar rutina completa:', error);
@@ -411,13 +238,13 @@ export class RutinasService {
    */
   async deleteRutina(id: number): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.http.delete(`${env.DIRECTUS_URL}/items/rutinas/${id}`, {
-          withCredentials: true,
-        })
-      );
+      const convexId = this.idMap.get(id);
+      if (!convexId) return false;
 
-      this.reload();
+      await this.convex.mutation(api.routines.mutations.remove, {
+        routineId: convexId as any,
+      });
+
       return true;
     } catch (error) {
       console.error('Error al eliminar rutina:', error);
@@ -426,72 +253,101 @@ export class RutinasService {
   }
 
   /**
-   * Duplicar una rutina
+   * Duplicar una rutina (atómico en Convex)
    */
   async duplicarRutina(id: number, nuevoNombre: string): Promise<number | null> {
-    const original = await this.getRutinaById(id);
-    if (!original) return null;
+    try {
+      const convexId = this.idMap.get(id);
+      if (!convexId) return null;
 
-    const userId = this.usuarioId();
-    if (!userId) return null;
+      await this.convex.mutation(api.routines.mutations.duplicate, {
+        routineId: convexId as any,
+        nuevoNombre,
+      });
 
-    return this.createRutina({
-      nombre: nuevoNombre,
-      descripcion: original.descripcion,
-      autor: userId,
-      visibilidad: 'privado', // Las copias siempre empiezan como privadas
-      ejercicios: original.ejercicios.map((e, idx) => ({
-        ejercicio: e.ejercicio.id_ejercicio,
-        sort: idx + 1,
-        series: e.series,
-        repeticiones: e.repeticiones,
-        duracion_seg: e.duracion_seg,
-        descanso_seg: e.descanso_seg,
-        veces_dia: e.veces_dia,
-        dias_semana: e.dias_semana,
-        instrucciones_paciente: e.instrucciones_paciente,
-        notas_fisio: e.notas_fisio,
-      })),
-    });
+      return 0; // El ID real se obtiene vía suscripción
+    } catch (error) {
+      console.error('Error al duplicar rutina:', error);
+      return null;
+    }
   }
 
-  // ========= Transformers =========
+  // ========= Mappers =========
 
-  private transformRutina(r: RutinaDirectus): Rutina {
+  private mapConvexToRutinaCompleta(raw: any): RutinaCompleta {
+    const autor = raw.autor;
+
     return {
-      id_rutina: r.id_rutina,
-      nombre: r.nombre,
-      descripcion: r.descripcion,
-      autor: typeof r.autor === 'string' ? r.autor : r.autor?.id || '',
-      visibilidad: r.visibilidad,
-      date_created: r.date_created,
-      date_updated: r.date_updated,
+      id_rutina: raw.legacyId ?? 0,
+      nombre: raw.nombre,
+      descripcion: raw.descripcion,
+      visibilidad: raw.visibilidad,
+      date_created: raw._creationTime
+        ? new Date(raw._creationTime).toISOString()
+        : undefined,
+      autor: autor
+        ? {
+            id: autor._id,
+            first_name: autor.firstName ?? '',
+            last_name: autor.lastName ?? '',
+            email: autor.email ?? '',
+            email_verified: false,
+            avatar: autor.avatar ?? null,
+            clinicas: [],
+            esFisio: true,
+            esPaciente: false,
+          }
+        : ({} as any),
+      ejercicios: (raw.ejercicios || []).map((re: any) =>
+        this.mapConvexToEjercicioRutina(re),
+      ),
     };
   }
 
-  private transformEjercicioRutina(e: EjercicioRutinaDirectus): EjercicioRutina {
+  private mapConvexToEjercicioRutina(re: any): EjercicioRutina {
+    const ej = re.ejercicio;
     return {
-      id: e.id,
-      sort: e.sort,
-      rutina: e.rutina,
-      ejercicio: e.ejercicio as Ejercicio,
-      series: e.series,
-      repeticiones: e.repeticiones,
-      duracion_seg: e.duracion_seg,
-      descanso_seg: e.descanso_seg,
-      veces_dia: e.veces_dia,
-      dias_semana: e.dias_semana,
-      instrucciones_paciente: e.instrucciones_paciente,
-      notas_fisio: e.notas_fisio,
-      date_created: e.date_created,
-      date_updated: e.date_updated,
+      id: 0,
+      sort: re.sort ?? 0,
+      rutina: 0,
+      ejercicio: ej
+        ? ({
+            id_ejercicio: ej.legacyId ?? 0,
+            nombre_ejercicio: ej.nombreEjercicio ?? '',
+            descripcion: ej.descripcion ?? '',
+            portada: ej.portada ?? '',
+            video: ej.video ?? '',
+            series_defecto: ej.seriesDefecto ?? '',
+            repeticiones_defecto: ej.repeticionesDefecto ?? '',
+            categoria: ej.categorias ?? [],
+          } as Ejercicio)
+        : ({} as Ejercicio),
+      series: re.series,
+      repeticiones: re.repeticiones,
+      duracion_seg: re.duracionSeg,
+      descanso_seg: re.descansoSeg,
+      veces_dia: re.vecesDia,
+      dias_semana: re.diasSemana,
+      instrucciones_paciente: re.instruccionesPaciente,
+      notas_fisio: re.notasFisio,
     };
   }
 
-  // ========= Helper de assets =========
+  /**
+   * Resuelve un ID de ejercicio (legacy number) a Convex ID string.
+   */
+  private resolveExerciseId(legacyId: number): any {
+    const convexId = this.ejerciciosService.legacyToConvexId().get(legacyId);
+    if (!convexId) {
+      throw new Error(`Ejercicio con legacyId ${legacyId} no encontrado`);
+    }
+    return convexId;
+  }
+
+  // ========= Helper de assets (Directus CDN durante la transición) =========
   getAssetUrl(id?: string, width = 200, height = 200) {
     return id
-      ? `${env.DIRECTUS_URL}/assets/${id}?width=${width}&height=${height}&fit=cover&format=webp`
+      ? assetUrl(id, { width, height, fit: 'cover', format: 'webp' })
       : '';
   }
 }

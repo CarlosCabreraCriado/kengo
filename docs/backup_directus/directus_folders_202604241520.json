@@ -1,0 +1,23 @@
+{
+"directus_folders": [
+	{
+		"id" : "4045b9e8-a24e-4bc1-b4bb-a0e348c71c98",
+		"name" : "logos_clinicas",
+		"parent" : null
+	},
+	{
+		"id" : "61ec0012-9193-4716-9a31-bb6aab6f9a1c",
+		"name" : "imagenes_perfil",
+		"parent" : null
+	},
+	{
+		"id" : "841dcf25-eb48-456d-8059-99c91d838df9",
+		"name" : "ejercicios",
+		"parent" : null
+	},
+	{
+		"id" : "b13605ad-614d-430e-a7d0-a4bd305bc05c",
+		"name" : "imagenes_clinicas",
+		"parent" : null
+	}
+]}

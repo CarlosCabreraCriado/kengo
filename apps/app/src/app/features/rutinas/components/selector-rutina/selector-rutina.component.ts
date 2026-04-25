@@ -1,11 +1,10 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
+import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
 import { Rutina, RutinaCompleta } from '../../../../../types/global';
-import { environment as env } from '../../../../../environments/environment';
-
 @Component({
   selector: 'app-selector-rutina',
   standalone: true,
@@ -305,6 +304,6 @@ export class SelectorRutinaComponent implements OnInit {
 
   assetUrl(id: string | null | undefined): string {
     if (!id) return '';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=80&height=80&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: 80, height: 80, fit: 'cover', format: 'webp' })}`;
   }
 }

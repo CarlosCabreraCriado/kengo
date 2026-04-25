@@ -9,10 +9,9 @@ import {
   OnInit,
   OnDestroy,
 } from '@angular/core';
+import { assetUrl } from '../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Dialog } from '@angular/cdk/dialog';
-import { environment as env } from '../../../../../environments/environment';
-
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ImageUploadComponent } from '../../../../shared/ui/image-upload/image-upload.component';
@@ -108,7 +107,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     if (this.removeLogo()) return null;
     const id = this.existingLogoId();
     return id
-      ? `${env.DIRECTUS_URL}/assets/${id}?fit=cover&width=200&height=200`
+      ? `${assetUrl(id, { fit: 'cover', width: 200, height: 200 })}`
       : null;
   });
 
@@ -159,7 +158,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open<{ file: File }>(ImageUploadComponent, {
       data: {
         url_perfil: this.existingLogoId()
-          ? `${env.DIRECTUS_URL}/assets/${this.existingLogoId()}?fit=cover`
+          ? `${assetUrl(this.existingLogoId(), { fit: 'cover' })}`
           : null,
         resizeToWidth: 512,
         format: 'png',
@@ -251,7 +250,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   }
 
   getExistingImageUrl(fileId: string): string {
-    return `${env.DIRECTUS_URL}/assets/${fileId}?fit=cover&width=200&height=150`;
+    return `${assetUrl(fileId, { fit: 'cover', width: 200, height: 150 })}`;
   }
 
   // === Submit ===
@@ -263,11 +262,12 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     try {
-      // 1. Upload new logo if changed
+      // 1. Upload new logo if changed (prefix `logos/`)
       let logoId: string | null | undefined = undefined;
       if (this.logoFile()) {
         const result = await this.clinicaGestionService.uploadFile(
           this.logoFile()!,
+          'logos',
         );
         if (!result.success) {
           throw new Error(result.error || 'Error al subir el logo');
@@ -277,10 +277,13 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
         logoId = null;
       }
 
-      // 2. Upload new gallery images
+      // 2. Upload new gallery images (prefix `clinic-files/`)
       const newImageIds: string[] = [];
       for (const file of this.newImageFiles()) {
-        const result = await this.clinicaGestionService.uploadFile(file);
+        const result = await this.clinicaGestionService.uploadFile(
+          file,
+          'clinic-files',
+        );
         if (!result.success) {
           throw new Error(result.error || 'Error al subir imagen de galería');
         }

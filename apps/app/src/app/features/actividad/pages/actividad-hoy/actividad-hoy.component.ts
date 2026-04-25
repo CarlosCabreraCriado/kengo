@@ -5,6 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { videoUrl } from '../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -26,7 +27,6 @@ import {
   PreviewEjercicioDialogComponent,
   type PreviewEjercicioData,
 } from '../../../../shared';
-import { environment as env } from '../../../../../environments/environment';
 import type { ActividadPlanDia, EjercicioPlanConEstado } from '../../../../../types/global';
 
 interface EjercicioProximo {
@@ -356,7 +356,7 @@ export class ActividadHoyComponent implements OnInit {
       ejercicio,
       index,
       totalEjercicios: actividad.ejerciciosHoy.length,
-      videoUrl: ej.video ? `${env.DIRECTUS_URL}/assets/${ej.video}` : null,
+      videoUrl: ej.video ? videoUrl(ej.video) : null,
       posterUrl: ej.portada ? this.getAssetUrl(ej.portada, 800, 450) : null,
       estado: ejercicio.completadoHoy ? 'completado' : 'pendiente',
     };

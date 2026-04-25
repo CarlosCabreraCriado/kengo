@@ -6,6 +6,7 @@ import {
   signal,
   computed,
 } from '@angular/core';
+import { assetUrl } from '../../../../core/utils/asset-url';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -23,7 +24,6 @@ import { map } from 'rxjs/operators';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { environment as env } from '../../../../../environments/environment';
 import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
 
 @Component({
@@ -230,7 +230,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
   assetUrl(id: string | null | undefined, w = 200, h = 200) {
     if (!id) return '';
-    return `${env.DIRECTUS_URL}/assets/${id}?width=${w}&height=${h}&fit=cover&format=webp`;
+    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
   }
 
   trackByIndex(index: number) {

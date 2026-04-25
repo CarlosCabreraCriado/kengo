@@ -1,0 +1,42 @@
+[
+  {
+    "id_rutina": 8,
+    "nombre": "Mobilidad de Hombro",
+    "descripcion": "Rutina prearada para el trabajo Osteo muscular del hombro.",
+    "autor": "e415caec-0960-4ca5-b535-9da58d307291",
+    "visibilidad": "clinica",
+    "date_created": "2026-02-23T10:15:17.000Z"
+  },
+  {
+    "id_rutina": 9,
+    "nombre": "Esguince de tobillo Fase 1",
+    "descripcion": "Rutina para protocolo inicial tras esguince (grado 1-2) de tobillo",
+    "autor": "e415caec-0960-4ca5-b535-9da58d307291",
+    "visibilidad": "clinica",
+    "date_created": "2026-02-23T10:19:45.000Z"
+  },
+  {
+    "id_rutina": 10,
+    "nombre": "Esguince Fase 2 ( Grados 1-2)",
+    "descripcion": "Segunda fase protocolaria con ejercicio de cargas unilateral y trabajo de propiocepcion",
+    "autor": "e415caec-0960-4ca5-b535-9da58d307291",
+    "visibilidad": "clinica",
+    "date_created": "2026-02-23T10:23:30.000Z"
+  },
+  {
+    "id_rutina": 13,
+    "nombre": "Condromalacia Rotuliana",
+    "descripcion": "Trabajo preventiva para paceintes con condromalacia rotuliana",
+    "autor": "e415caec-0960-4ca5-b535-9da58d307291",
+    "visibilidad": "clinica",
+    "date_created": "2026-02-24T22:55:22.000Z"
+  },
+  {
+    "id_rutina": 15,
+    "nombre": "Dolor Lumbar Agudo",
+    "descripcion": "Rutina para dolor lumbar inespecifico en fase aguda (1-2 semanas)",
+    "autor": "e415caec-0960-4ca5-b535-9da58d307291",
+    "visibilidad": "clinica",
+    "date_created": "2026-04-10T14:05:08.000Z"
+  }
+]
