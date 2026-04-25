@@ -48,6 +48,7 @@ import type * as records_mutations from "../records/mutations.js";
 import type * as records_queries from "../records/queries.js";
 import type * as routines_mutations from "../routines/mutations.js";
 import type * as routines_queries from "../routines/queries.js";
+import type * as seed_reconcileUsers from "../seed/reconcileUsers.js";
 import type * as seed_seedAccessCodes from "../seed/seedAccessCodes.js";
 import type * as seed_seedAssignments from "../seed/seedAssignments.js";
 import type * as seed_seedClinicMemberships from "../seed/seedClinicMemberships.js";
@@ -115,6 +116,7 @@ declare const fullApi: ApiFromModules<{
   "records/queries": typeof records_queries;
   "routines/mutations": typeof routines_mutations;
   "routines/queries": typeof routines_queries;
+  "seed/reconcileUsers": typeof seed_reconcileUsers;
   "seed/seedAccessCodes": typeof seed_seedAccessCodes;
   "seed/seedAssignments": typeof seed_seedAssignments;
   "seed/seedClinicMemberships": typeof seed_seedClinicMemberships;

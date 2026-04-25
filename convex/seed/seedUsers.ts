@@ -22,7 +22,30 @@ export const insertUsersBatch = internalMutation({
     let updated = 0;
     let skipped = 0;
 
+    const isEmpty = (v: string | undefined | null) =>
+      v === undefined || v === null || v.trim() === "";
+
+    type UserPatch = {
+      legacyDirectusId?: string;
+      telefono?: string;
+      direccion?: string;
+      postal?: string;
+      numeroColegiado?: string;
+    };
+
     for (const user of args.users) {
+      const buildPatch = (existing: { legacyDirectusId?: string }): UserPatch => {
+        const patch: UserPatch = {};
+        if (!existing.legacyDirectusId)
+          patch.legacyDirectusId = user.legacyDirectusId;
+        if (!isEmpty(user.telefono)) patch.telefono = user.telefono;
+        if (!isEmpty(user.direccion)) patch.direccion = user.direccion;
+        if (!isEmpty(user.postal)) patch.postal = user.postal;
+        if (!isEmpty(user.numeroColegiado))
+          patch.numeroColegiado = user.numeroColegiado;
+        return patch;
+      };
+
       // Check by email first
       const existingByEmail = await ctx.db
         .query("users")
@@ -30,10 +53,9 @@ export const insertUsersBatch = internalMutation({
         .unique();
 
       if (existingByEmail) {
-        if (!existingByEmail.legacyDirectusId) {
-          await ctx.db.patch(existingByEmail._id, {
-            legacyDirectusId: user.legacyDirectusId,
-          });
+        const patch = buildPatch(existingByEmail);
+        if (Object.keys(patch).length > 0) {
+          await ctx.db.patch(existingByEmail._id, patch);
           updated++;
         } else {
           skipped++;
@@ -50,7 +72,13 @@ export const insertUsersBatch = internalMutation({
         .unique();
 
       if (existingByLegacy) {
-        skipped++;
+        const patch = buildPatch(existingByLegacy);
+        if (Object.keys(patch).length > 0) {
+          await ctx.db.patch(existingByLegacy._id, patch);
+          updated++;
+        } else {
+          skipped++;
+        }
         continue;
       }
 

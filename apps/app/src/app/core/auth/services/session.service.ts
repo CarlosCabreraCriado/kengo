@@ -141,7 +141,14 @@ export class SessionService {
       telefono: u.telefono || undefined,
       direccion: u.direccion || undefined,
       postal: u.postal || undefined,
-      detalle: null,
+      detalle: u.detalle
+        ? {
+            dni: u.detalle.dni ?? '',
+            telefono: u.detalle.telefono ?? u.telefono ?? '',
+            direccion: u.detalle.direccion ?? u.direccion ?? '',
+            postal: u.detalle.postal ?? u.postal ?? '',
+          }
+        : null,
       clinicas,
       esFisio: esFisio ?? false,
       esPaciente: esPaciente ?? true,

@@ -59,11 +59,24 @@ export const me = query({
       (c) => c.id_puesto === PUESTO_PACIENTE,
     );
 
+    const detalle = await ctx.db
+      .query("userDetails")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
     return {
       ...user,
       clinicas: clinicasFiltered,
       esFisio: hasFisioAccess,
       esPaciente: hasPacienteAccess || !hasFisioAccess,
+      detalle: detalle
+        ? {
+            dni: detalle.dni ?? "",
+            telefono: detalle.telefono ?? "",
+            direccion: detalle.direccion ?? "",
+            postal: detalle.postal ?? "",
+          }
+        : null,
     };
   },
 });
@@ -106,9 +119,22 @@ export const getByLegacyId = query({
       }),
     );
 
+    const detalle = await ctx.db
+      .query("userDetails")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
     return {
       ...user,
       clinicas: clinicas.filter((c): c is NonNullable<typeof c> => c !== null),
+      detalle: detalle
+        ? {
+            dni: detalle.dni ?? "",
+            telefono: detalle.telefono ?? "",
+            direccion: detalle.direccion ?? "",
+            postal: detalle.postal ?? "",
+          }
+        : null,
     };
   },
 });
