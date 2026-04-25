@@ -31,7 +31,7 @@ export const getFisioResponsable = query({
     clinicLegacyId: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Resolve paciente ID (Convex ID or legacy Directus UUID)
+    // Resolve paciente ID (Convex ID or legacy UUID)
     let pacienteId = args.pacienteId;
     if (!pacienteId && args.pacienteLegacyId) {
       const user = await ctx.db

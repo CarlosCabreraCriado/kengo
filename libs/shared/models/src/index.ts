@@ -4,8 +4,7 @@
  * Librería compartida de tipos TypeScript para el monorepo Kengo.
  * Tras la migración a Convex (v1.0), expone:
  *  - Tipos base (`types/`)
- *  - Tipos legacy de "shape de records expandidos" (`directus/`) — mantenidos como
- *    interfaces de datos. Pendiente futuro: renombrar a *Record y unificar.
+ *  - Tipos `*Record` con la forma del record expandido del backend (`records/`).
  *  - Tipos de dominio (`domain/`) — formato canónico que consumen las apps.
  *  - Payloads para mutations Convex (`payloads/`).
  */
@@ -13,10 +12,10 @@
 // Tipos base y utilitarios
 export * from './lib/types/common';
 
-// Tipos legacy de records expandidos (siguen usándose como contratos de datos)
-export * from './lib/directus/users.directus';
-export * from './lib/directus/exercises.directus';
-export * from './lib/directus/plans.directus';
+// Tipos *Record (forma del record expandido del backend)
+export * from './lib/records/users.record';
+export * from './lib/records/exercises.record';
+export * from './lib/records/plans.record';
 
 // Tipos de dominio transformados para uso en las apps
 export * from './lib/domain/users';

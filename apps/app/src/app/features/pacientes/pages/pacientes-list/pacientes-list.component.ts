@@ -324,7 +324,7 @@ export class PacientesListComponent {
 
   getClinicaNombre(p: Usuario): string | null {
     if (!p.clinicas || p.clinicas.length === 0) return null;
-    // Acceder al nombre de la clínica (viene como objeto anidado de Directus)
+    // Acceder al nombre de la clínica (viene como objeto anidado en el record expandido)
     const clinica = p.clinicas[0] as any;
     return clinica?.id_clinica?.nombre || null;
   }

@@ -344,7 +344,7 @@ export class RutinasService {
     return convexId;
   }
 
-  // ========= Helper de assets (Directus CDN durante la transición) =========
+  // ========= Helper de assets (Cloudflare R2 vía assetUrl) =========
   getAssetUrl(id?: string, width = 200, height = 200) {
     return id
       ? assetUrl(id, { width, height, fit: 'cover', format: 'webp' })

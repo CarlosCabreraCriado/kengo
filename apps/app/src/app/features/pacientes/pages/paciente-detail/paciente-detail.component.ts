@@ -32,7 +32,7 @@ import {
   Usuario,
   Plan,
   EstadoPlan,
-  RegistroEjercicioDirectus,
+  RegistroEjercicioRecord,
   TipoCumplimiento,
   CumplimientoDia,
   NotificacionFisio,
@@ -47,7 +47,7 @@ interface ComentarioSesion {
 interface SesionAgrupada {
   fecha: string;
   fechaFormateada: string;
-  registros: RegistroEjercicioDirectus[];
+  registros: RegistroEjercicioRecord[];
   totalEjercicios: number;
   promedioDolorValue: number | null;
   comentarios: ComentarioSesion[];
@@ -253,9 +253,9 @@ export class PacienteDetailComponent implements OnInit {
       const cumplimiento = await this.cumplimientoService.getCumplimiento(pacienteId, desde, hasta);
       const dias = cumplimiento.dias;
 
-      // Cargar registros de Directus para días con actividad (para comentarios y drill-down)
+      // Cargar registros desde Convex para días con actividad (para comentarios y drill-down)
       const diasConActividad = dias.filter(d => d.tipo !== 'fallido' && d.tipo !== 'descanso');
-      let registrosPorFecha = new Map<string, RegistroEjercicioDirectus[]>();
+      let registrosPorFecha = new Map<string, RegistroEjercicioRecord[]>();
 
       if (diasConActividad.length > 0) {
         const fechas = diasConActividad.map(d => d.fecha);
@@ -333,7 +333,7 @@ export class PacienteDetailComponent implements OnInit {
   private async cargarRegistrosParaFechas(
     pacienteId: string,
     fechas: string[],
-  ): Promise<RegistroEjercicioDirectus[]> {
+  ): Promise<RegistroEjercicioRecord[]> {
     // Determinar rango de fechas para filtrar
     const sortedFechas = [...fechas].sort();
     const desde = sortedFechas[0];
@@ -349,7 +349,7 @@ export class PacienteDetailComponent implements OnInit {
       },
     );
 
-    // Mapear el shape Convex (camelCase) al shape Directus (snake_case) que el resto del componente espera.
+    // Mapear el shape Convex (camelCase) al shape RegistroEjercicioRecord (snake_case) que el resto del componente espera.
     return (records ?? []).map((r) => ({
       id_registro: r._id as unknown as number,
       plan_item: r.planExerciseId as unknown as number,
@@ -360,13 +360,13 @@ export class PacienteDetailComponent implements OnInit {
       duracion_real_seg: r.duracionRealSeg,
       dolor_escala: r.dolorEscala,
       nota_paciente: r.notaPaciente,
-    })) as RegistroEjercicioDirectus[];
+    })) as RegistroEjercicioRecord[];
   }
 
   private agruparRegistrosPorFecha(
-    registros: RegistroEjercicioDirectus[],
-  ): Map<string, RegistroEjercicioDirectus[]> {
-    const grupos = new Map<string, RegistroEjercicioDirectus[]>();
+    registros: RegistroEjercicioRecord[],
+  ): Map<string, RegistroEjercicioRecord[]> {
+    const grupos = new Map<string, RegistroEjercicioRecord[]>();
     for (const reg of registros) {
       const fecha = reg.fecha_hora.split('T')[0];
       if (!grupos.has(fecha)) {

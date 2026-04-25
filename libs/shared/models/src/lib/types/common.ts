@@ -5,7 +5,7 @@
 /** ID genérico que puede ser string o número */
 export type ID = string | number;
 
-/** UUID de 36 caracteres (heredado del esquema legacy de Directus). */
+/** UUID de 36 caracteres. */
 export type UUID = string;
 
 /** Timestamp ISO 8601 string */

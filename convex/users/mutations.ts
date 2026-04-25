@@ -4,8 +4,8 @@ import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 
 /**
- * Vincula el UUID de Directus al usuario Convex autenticado.
- * Se llama una sola vez tras el primer login con el bridge de auth.
+ * Vincula el UUID legacy del usuario actual (campo `legacyDirectusId`).
+ * Se llama una sola vez para preservar referencias a IDs externos heredados.
  */
 export const setLegacyDirectusId = mutation({
   args: { directusId: v.string() },
@@ -63,8 +63,7 @@ export const upsertFromAuth = internalMutation({
 });
 
 /**
- * Actualiza datos del perfil del usuario autenticado.
- * Sustituye PATCH /directus/users/me para campos no sensibles.
+ * Actualiza datos del perfil del usuario autenticado (campos no sensibles).
  */
 export const updateProfile = mutation({
   args: {

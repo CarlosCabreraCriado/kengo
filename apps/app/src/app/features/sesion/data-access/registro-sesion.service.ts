@@ -16,35 +16,12 @@ import {
   EjercicioPlan,
   EstadoPantalla,
   RegistroEjercicio,
-  RegistroEjercicioDirectus,
   SesionLocal,
   FeedbackEjercicio,
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
   DiaSemana,
 } from '../../../../types/global';
-
-interface RegistroResponse {
-  data: RegistroEjercicioDirectus;
-}
-
-interface RegistrosResponse {
-  data: RegistroEjercicioDirectus[];
-}
-
-interface SesionDirectus {
-  id: number;
-  date_created?: string;
-  paciente: string;
-  fecha_inicio: string;
-  fecha_fin?: string;
-  observaciones_generales?: string;
-  completada: boolean;
-}
-
-interface SesionResponse {
-  data: SesionDirectus;
-}
 
 @Injectable({ providedIn: 'root' })
 export class RegistroSesionService {
@@ -265,8 +242,8 @@ export class RegistroSesionService {
     this.estadoPantalla.set('ejercicio');
     this.serieActual.set(1);
 
-    // Crear sesión en Directus
-    await this.crearSesionEnDirectus(ahora);
+    // Crear sesión remota (Convex mutation sessions.create)
+    await this.crearSesionRemota(ahora);
 
     this.guardarProgresoLocal();
   }
@@ -397,10 +374,10 @@ export class RegistroSesionService {
 
     // Guardar registros: createBatch agenda en Convex el recálculo de cumplimiento
     // y la generación de notificaciones vía ctx.scheduler.runAfter.
-    await this.guardarRegistrosEnDirectus();
+    await this.guardarRegistrosRemotos();
 
     // Finalizar sesión: complete agenda notificaciones si hay observaciones.
-    await this.finalizarSesionEnDirectus(data.observacionesGenerales);
+    await this.cerrarSesionRemota(data.observacionesGenerales);
 
     this.limpiarProgresoLocal();
   }
@@ -435,7 +412,7 @@ export class RegistroSesionService {
    */
   async finalizarSesion(): Promise<boolean> {
     try {
-      await this.guardarRegistrosEnDirectus();
+      await this.guardarRegistrosRemotos();
       this.limpiarProgresoLocal();
       this.resetearEstado();
       return true;
@@ -532,12 +509,12 @@ export class RegistroSesionService {
     }
   }
 
-  // ========= CRUD Directus =========
+  // ========= Persistencia remota (Convex) =========
 
   /**
-   * Crear una sesión en Directus al comenzar
+   * Crear una sesión remota al comenzar (Convex mutation sessions.create)
    */
-  private async crearSesionEnDirectus(fechaInicio: Date): Promise<string | null> {
+  private async crearSesionRemota(fechaInicio: Date): Promise<string | null> {
     try {
       const sessionId = await this.convex.mutation(
         api.sessions.mutations.create,
@@ -555,9 +532,9 @@ export class RegistroSesionService {
   }
 
   /**
-   * Finalizar la sesión en Directus con observaciones
+   * Cerrar la sesión remota con observaciones (Convex mutation sessions.complete)
    */
-  private async finalizarSesionEnDirectus(
+  private async cerrarSesionRemota(
     observacionesGenerales?: string
   ): Promise<boolean> {
     const sesionId = this.sesionActualId();
@@ -577,7 +554,7 @@ export class RegistroSesionService {
   }
 
   /**
-   * Crear un registro de ejercicio en Directus
+   * Crear un registro de ejercicio (Convex mutation records.create)
    */
   async crearRegistro(
     registro: Omit<RegistroEjercicio, 'id_registro'>
@@ -602,9 +579,9 @@ export class RegistroSesionService {
   }
 
   /**
-   * Guardar todos los registros pendientes en Directus
+   * Guardar batch de registros pendientes (Convex mutation records.createBatch)
    */
-  async guardarRegistrosEnDirectus(): Promise<boolean> {
+  async guardarRegistrosRemotos(): Promise<boolean> {
     const registros = this.registrosSesion();
     if (registros.length === 0) return true;
 

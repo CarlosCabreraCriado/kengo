@@ -16,7 +16,6 @@ const PUESTO_NOMBRES: Record<number, string> = {
 
 /**
  * Lista membresías de un usuario con datos de clínica anidados.
- * Reemplaza GET /directus/items/usuarios_clinicas?filter[id_usuario].
  */
 export const listByUser = query({
   args: {

@@ -7,8 +7,8 @@ import { DiaSemana, UUID } from '../types/common';
 import { Usuario } from './users';
 import { Ejercicio } from './exercises';
 
-// Re-exportar EstadoPlan desde directus para mantener compatibilidad
-export { EstadoPlan } from '../directus/plans.directus';
+// Re-export de EstadoPlan desde records/plans.record
+export { EstadoPlan } from '../records/plans.record';
 
 /**
  * Plan transformado para uso en la aplicación

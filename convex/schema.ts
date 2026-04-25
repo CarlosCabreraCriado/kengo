@@ -19,17 +19,13 @@ export default defineSchema({
     emailVerified: v.boolean(),
     firstName: v.string(),
     lastName: v.string(),
-    // R2 key: `avatars/<uuid>.<ext>` (heredados de Directus en root: `<uuid>.webp`)
+    // R2 key: `avatars/<uuid>.<ext>` (formato heredado: `<uuid>.webp` en raíz del bucket)
     avatar: v.optional(v.string()),
     telefono: v.optional(v.string()),
     direccion: v.optional(v.string()),
     postal: v.optional(v.string()),
     numeroColegiado: v.optional(v.string()),
     legacyDirectusId: v.optional(v.string()),
-    // Flag de auditoría: true si el password ya está sincronizado con Better-Auth.
-    // Los usuarios seed desde Directus nacen con passwordMigrated=false y se
-    // marcan true tras el primer login exitoso (migración transparente).
-    passwordMigrated: v.optional(v.boolean()),
   })
     .index("by_externalId", ["externalId"])
     .index("by_email", ["email"])

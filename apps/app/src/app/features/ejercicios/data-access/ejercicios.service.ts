@@ -271,7 +271,7 @@ export class EjerciciosService {
     this.page.set(Math.min(Math.max(1, p), max));
   }
 
-  // ========= Helper de assets (Directus CDN durante la transición) =========
+  // ========= Helper de assets (Cloudflare R2 vía assetUrl) =========
   getAssetUrl(id?: string) {
     return id ? `${rawAssetUrl(id)}` : '';
   }

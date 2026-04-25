@@ -18,14 +18,14 @@ export {
   RolUsuario,
 } from '@kengo/shared-models';
 
-// Tipos legacy de "shape de Directus" — siguen usándose como interfaces de
-// datos (records expandidos del backend) aunque la fuente ahora es Convex.
-// Pendiente futuro: renombrar a *Record y unificar con tipos de dominio.
+// Tipos *Record que describen la forma del record expandido del backend
+// (snake_case, ids numéricos, objetos anidados). Convex es la fuente de
+// persistencia; estos tipos son el contrato de datos en frontend.
 export {
-  UsuarioDirectus,
-  EjercicioDirectus,
+  UsuarioRecord,
+  EjercicioRecord,
   EstadoPlan,
-  RegistroEjercicioDirectus,
+  RegistroEjercicioRecord,
   VisibilidadRutina,
 } from '@kengo/shared-models';
 

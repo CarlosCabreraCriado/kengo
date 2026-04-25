@@ -32,15 +32,15 @@ function ensureExtension(rawKey: string, ext?: string): string {
 }
 
 /**
- * Construye una URL de asset servida desde Cloudflare R2 (`assets.kengoapp.com`)
- * o desde el proxy Directus durante la transición.
+ * Construye una URL de asset servida desde Cloudflare R2 (`assets.kengoapp.com`).
  *
- * Patrón de keys en R2 (heredado de Directus storage):
+ * Patrón de keys en R2:
  * - Imágenes (portadas, avatares, logos): `<uuid>.webp`
  * - Vídeos: `<uuid>.mp4`
  *
- * Cloudflare Image Resizing parsea `?width=...&format=...` igual que Directus.
- * El swap entre Directus y R2 se hace cambiando únicamente `ASSETS_URL`.
+ * Cloudflare Image Resizing parsea los query params (`width`, `format`, `fit`,
+ * `quality`). Cambiar `ASSETS_URL` permite apuntar a un CDN alternativo sin
+ * tocar callers.
  */
 export function assetUrl(
   key: string | number | undefined | null,

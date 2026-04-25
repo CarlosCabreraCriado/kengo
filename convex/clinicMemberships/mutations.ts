@@ -5,7 +5,6 @@ import { getAuthenticatedUser } from "../_helpers/permissions";
 
 /**
  * Añade una membresía usuario-clínica.
- * Reemplaza POST /directus/items/usuarios_clinicas.
  */
 export const add = mutation({
   args: {
@@ -65,7 +64,6 @@ export const add = mutation({
 
 /**
  * Elimina una membresía por id.
- * Reemplaza DELETE /directus/items/usuarios_clinicas/{id}.
  */
 export const remove = mutation({
   args: { membershipId: v.id("clinicMemberships") },

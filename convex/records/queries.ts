@@ -42,7 +42,6 @@ export const listByPacienteAndDate = query({
 /**
  * Lista registros de un paciente entre dos fechas (inclusivas).
  * Si no se proporciona `hasta`, devuelve hasta hoy.
- * Reemplaza GET /directus/items/planes_registros con filtro fecha_hora rango.
  */
 export const listByPacienteInRange = query({
   args: {
@@ -76,7 +75,7 @@ export const listByPacienteInRange = query({
 
 /**
  * Lista registros de un paciente en una fecha con planExercise + exercise + plan
- * embebidos. Reemplaza GET /directus/items/planes_registros con expand fields.
+ * embebidos.
  */
 export const listByPacienteAndDateExpanded = query({
   args: {

@@ -66,19 +66,6 @@ export const listExercises = query({
   },
 });
 
-export const getExerciseById = query({
-  args: { exerciseId: v.id("exercises") },
-  handler: async (ctx, args) => {
-    const exercise = await ctx.db.get(args.exerciseId);
-    if (!exercise) {
-      throw new Error("Ejercicio no encontrado");
-    }
-
-    const enriched = await enrichWithCategories(ctx, [exercise]);
-    return enriched[0];
-  },
-});
-
 export const listFavorites = query({
   args: {},
   handler: async (ctx) => {

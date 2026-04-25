@@ -3,7 +3,7 @@ import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 
-// Helper: resolve a pacienteId that may be a Convex ID or a Directus UUID
+// Helper: resolve a pacienteId that may be a Convex ID or a legacy UUID
 async function resolvePacienteId(
   ctx: any,
   pacienteIdOrUuid: string | undefined,
@@ -17,7 +17,7 @@ async function resolvePacienteId(
     return pacienteIdOrUuid as Id<"users">;
   }
 
-  // It's a UUID — resolve via legacyDirectusId index
+  // It's a legacy UUID — resolve via legacyDirectusId index
   const user = await ctx.db
     .query("users")
     .withIndex("by_legacyDirectusId", (q: any) =>

@@ -288,8 +288,8 @@ export class ActividadEstadisticasComponent implements OnInit {
     notaPaciente?: string;
   }): RegistroEjercicio {
     return {
-      // id_registro era number en Directus; con Convex es Id string. El UI no
-      // depende de unicidad numérica, así que generamos hash trivial desde el _id.
+      // id_registro era numérico en el esquema legacy; con Convex es Id string.
+      // El UI no depende de unicidad numérica, así que se omite.
       id_registro: undefined as unknown as number,
       plan_item: r.planExerciseId as unknown as number,
       paciente: r.pacienteId,

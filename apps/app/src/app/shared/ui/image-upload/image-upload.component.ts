@@ -81,7 +81,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     // Si te pasan la URL del avatar actual y es privada, la cargamos como blob
     if (this.data?.url_perfil && this.data.precargar) {
       try {
-        await this.precargarDesdeDirectus(this.data.url_perfil);
+        await this.precargarDesdeUrl(this.data.url_perfil);
       } catch (e) {
         this.loadError.set(
           'No se pudo precargar el avatar (403). Selecciona una imagen.',
@@ -100,7 +100,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     if (this.objectUrlFuente) URL.revokeObjectURL(this.objectUrlFuente);
   }
 
-  private async precargarDesdeDirectus(url: string) {
+  private async precargarDesdeUrl(url: string) {
     this.loading.set(true);
 
     const res = await fetch(url, {

@@ -132,22 +132,6 @@ export const markEmailVerified = internalMutation({
   },
 });
 
-// ─── PASSWORD MIGRATION FLAG ───
-
-export const markPasswordMigrated = internalMutation({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const normalized = args.email.toLowerCase().trim();
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", normalized))
-      .unique();
-    if (!user) return { ok: false as const };
-    await ctx.db.patch(user._id, { passwordMigrated: true });
-    return { ok: true as const };
-  },
-});
-
 // ─── MEMBERSHIP FROM ACCESS CODE (for registration flow) ───
 
 export const createMembershipFromCode = internalMutation({

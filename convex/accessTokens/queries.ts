@@ -8,7 +8,7 @@ function buildUrl(token: string): string {
   return `${appUrl}/magic?t=${token}`;
 }
 
-// Resuelve un userId que puede ser UUID Directus legacy o Convex Id.
+// Resuelve un userId que puede ser UUID legacy o Convex Id.
 async function resolveUserId(
   ctx: any,
   idOrUuid: string,

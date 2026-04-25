@@ -4,7 +4,7 @@
  */
 
 import { DiaSemana, UUID } from '../types/common';
-import { EstadoPlan } from '../directus/plans.directus';
+import { EstadoPlan } from '../records/plans.record';
 
 /**
  * Payload para crear un nuevo plan

@@ -142,7 +142,6 @@ export const getByLegacyId = query({
 /**
  * Lista pacientes (puesto=2) de una clínica.
  * Soporta búsqueda por nombre/email, paginación offset.
- * Reemplaza GET /directus/users con filtro por id_puesto=2 y clínica.
  */
 export const listPatientsByClinic = query({
   args: {
