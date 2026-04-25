@@ -29,12 +29,14 @@ export interface UpdateClinicaPayload {
   postal?: string | null;
   nif?: string | null;
   color_primario?: string | null;
-  /** UUID del archivo de logo, null para eliminar */
+  /** R2 key del logo (`logos/<uuid>.<ext>`), null para eliminar */
   logo?: string | null;
-  /** Operaciones M2M para imágenes de galería */
+  /** Operaciones sobre la galería de imágenes (`clinicFiles`) */
   imagenes?: {
-    create?: { directus_files_id: string }[];
-    delete?: number[];
+    /** R2 keys ya subidas (`clinic-files/<uuid>.<ext>`) a vincular */
+    create?: string[];
+    /** Convex IDs de `clinicFiles` a eliminar */
+    delete?: string[];
   };
 }
 

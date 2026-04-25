@@ -15,7 +15,13 @@ export const myClinicsList = query({
     const clinics = await Promise.all(
       memberships.map(async (m) => {
         const clinic = await ctx.db.get(m.clinicId);
-        return clinic ? { ...clinic, puesto: m.puesto } : null;
+        if (!clinic) return null;
+        const files = await ctx.db
+          .query("clinicFiles")
+          .withIndex("by_clinicId", (q) => q.eq("clinicId", m.clinicId))
+          .collect();
+        const imagenes = files.map((f) => ({ id: f._id, fileId: f.fileId }));
+        return { ...clinic, puesto: m.puesto, imagenes };
       }),
     );
 

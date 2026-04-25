@@ -47,7 +47,10 @@ export class ClinicasService {
       color_primario: c.colorPrimario ?? null,
       color_secundario: c.colorSecundario ?? null,
       logo: typeof c.logo === 'string' ? c.logo : null,
-      imagenes: [],
+      imagenes: (c.imagenes ?? []).map((img) => ({
+        id: String(img.id),
+        fileId: img.fileId,
+      })),
     }));
   });
 

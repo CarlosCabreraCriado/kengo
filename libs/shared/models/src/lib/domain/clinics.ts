@@ -4,12 +4,12 @@
  */
 
 /**
- * Imagen de galería de clínica con ID de junction para operaciones M2M
+ * Imagen de galería de clínica.
  */
 export interface ClinicaImagen {
-  /** ID del registro en la tabla junction (clinicas_files) */
-  junctionId: number;
-  /** UUID del archivo en directus_files */
+  /** Convex ID de la fila en `clinicFiles` (string opaco) */
+  id: string;
+  /** R2 key, ej. `clinic-files/<uuid>.<ext>` */
   fileId: string;
 }
 

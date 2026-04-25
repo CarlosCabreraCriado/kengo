@@ -118,7 +118,7 @@ export class ClinicaGestionService {
         return { success: false, error: 'Clínica no encontrada' };
       }
 
-      await this.convex.mutation(
+      const result = await this.convex.mutation(
         api.clinics.mutations.update,
         {
           clinicId: convexId,
@@ -129,8 +129,20 @@ export class ClinicaGestionService {
           postal: payload.postal ?? undefined,
           nif: payload.nif ?? undefined,
           colorPrimario: payload.color_primario ?? undefined,
+          logo: payload.logo ?? undefined,
+          addImageKeys: payload.imagenes?.create,
+          removeImageIds: payload.imagenes?.delete as
+            | Id<'clinicFiles'>[]
+            | undefined,
         },
       );
+
+      const orphaned = result?.orphanedKeys ?? [];
+      if (orphaned.length > 0) {
+        await Promise.allSettled(
+          orphaned.map((k) => this.storage.delete(k)),
+        );
+      }
 
       return { success: true };
     } catch (err: any) {

@@ -45,18 +45,18 @@
         </div>
         <div class="gallery-grid">
           <!-- Existing images -->
-          @for (img of existingImages(); track img.junctionId) {
-            <div class="gallery-item" [class.marked-for-deletion]="isImageMarkedForDeletion(img.junctionId)">
+          @for (img of existingImages(); track img.id) {
+            <div class="gallery-item" [class.marked-for-deletion]="isImageMarkedForDeletion(img.id)">
               <img [src]="getExistingImageUrl(img.fileId)" alt="Imagen de clínica" class="gallery-image" />
-              @if (isImageMarkedForDeletion(img.junctionId)) {
+              @if (isImageMarkedForDeletion(img.id)) {
                 <div class="gallery-item-overlay deleted">
                   <span class="material-symbols-outlined">delete</span>
-                  <button type="button" class="restore-btn" (click)="restoreImage(img.junctionId)">
+                  <button type="button" class="restore-btn" (click)="restoreImage(img.id)">
                     Restaurar
                   </button>
                 </div>
               } @else {
-                <button type="button" class="gallery-delete-btn" (click)="markImageForDeletion(img.junctionId)" title="Eliminar imagen">
+                <button type="button" class="gallery-delete-btn" (click)="markImageForDeletion(img.id)" title="Eliminar imagen">
                   <span class="material-symbols-outlined">close</span>
                 </button>
               }

@@ -88,7 +88,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   // Gallery images state
   newImageFiles = signal<File[]>([]);
   existingImages = signal<ClinicaImagen[]>([]);
-  imagesToDelete = signal<number[]>([]);
+  imagesToDelete = signal<string[]>([]);
 
   // Preview URLs for cleanup
   private previewUrls: string[] = [];
@@ -229,17 +229,17 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     });
   }
 
-  markImageForDeletion(junctionId: number) {
-    this.imagesToDelete.update((current) => [...current, junctionId]);
+  markImageForDeletion(id: string) {
+    this.imagesToDelete.update((current) => [...current, id]);
   }
 
-  isImageMarkedForDeletion(junctionId: number): boolean {
-    return this.imagesToDelete().includes(junctionId);
+  isImageMarkedForDeletion(id: string): boolean {
+    return this.imagesToDelete().includes(id);
   }
 
-  restoreImage(junctionId: number) {
+  restoreImage(id: string) {
     this.imagesToDelete.update((current) =>
-      current.filter((id) => id !== junctionId),
+      current.filter((existing) => existing !== id),
     );
   }
 
@@ -315,9 +315,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       if (hasImageChanges) {
         payload.imagenes = {};
         if (newImageIds.length > 0) {
-          payload.imagenes.create = newImageIds.map((id) => ({
-            directus_files_id: id,
-          }));
+          payload.imagenes.create = newImageIds;
         }
         if (this.imagesToDelete().length > 0) {
           payload.imagenes.delete = this.imagesToDelete();
