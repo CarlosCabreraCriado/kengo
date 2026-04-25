@@ -25,7 +25,11 @@ export class ClinicasService {
   // ========= Convex: Suscripcion reactiva a mis clinicas =========
   private readonly misClinicasQuery = this.convex.watchQuery(
     api.clinics.queries.myClinicsList,
-    () => ({}),
+    () => {
+      const usuario = this.sessionService.usuario();
+      if (!usuario?.id) return 'skip' as const;
+      return {};
+    },
   );
 
   // Clinicas transformadas al tipo de dominio
