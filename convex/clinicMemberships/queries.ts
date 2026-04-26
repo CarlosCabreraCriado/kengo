@@ -3,16 +3,9 @@ import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import {
   getAuthenticatedUser,
-  PUESTO_FISIOTERAPEUTA,
-  PUESTO_PACIENTE,
-  PUESTO_ADMINISTRADOR,
+  puestoToNumber,
+  puestoToNombre,
 } from "../_helpers/permissions";
-
-const PUESTO_NOMBRES: Record<number, string> = {
-  [PUESTO_FISIOTERAPEUTA]: "fisioterapeuta",
-  [PUESTO_PACIENTE]: "paciente",
-  [PUESTO_ADMINISTRADOR]: "administrador",
-};
 
 /**
  * Lista membresías de un usuario con datos de clínica anidados.
@@ -50,8 +43,8 @@ export const listByUser = query({
           id_usuario: userId,
           id_clinica: clinic?.legacyId ?? 0,
           convexClinicId: m.clinicId,
-          id_puesto: m.puesto,
-          puesto: PUESTO_NOMBRES[m.puesto] ?? null,
+          id_puesto: puestoToNumber(m.puesto),
+          puesto: puestoToNombre(m.puesto),
           nombreClinica: clinic?.nombre ?? null,
         };
       }),

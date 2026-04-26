@@ -14,12 +14,14 @@ export const myClinicsList = query({
 
     const clinics = await Promise.all(
       memberships.map(async (m) => {
-        const clinic = await ctx.db.get(m.clinicId);
+        const [clinic, files] = await Promise.all([
+          ctx.db.get(m.clinicId),
+          ctx.db
+            .query("clinicFiles")
+            .withIndex("by_clinicId", (q) => q.eq("clinicId", m.clinicId))
+            .collect(),
+        ]);
         if (!clinic) return null;
-        const files = await ctx.db
-          .query("clinicFiles")
-          .withIndex("by_clinicId", (q) => q.eq("clinicId", m.clinicId))
-          .collect();
         const imagenes = files.map((f) => ({ id: f._id, fileId: f.fileId }));
         return { ...clinic, puesto: m.puesto, imagenes };
       }),
@@ -39,15 +41,15 @@ export const getMembers = query({
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
       .collect();
 
-    const members = await Promise.all(
-      memberships.map(async (m) => {
-        const user = await ctx.db.get(m.userId);
-        return user ? { ...user, puesto: m.puesto } : null;
-      }),
+    const users = await Promise.all(
+      memberships.map((m) => ctx.db.get(m.userId)),
     );
 
-    return members.filter(
-      (m): m is NonNullable<typeof m> => m !== null,
-    );
+    return memberships
+      .map((m, i) => {
+        const user = users[i];
+        return user ? { ...user, puesto: m.puesto } : null;
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null);
   },
 });

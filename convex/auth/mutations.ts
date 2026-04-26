@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
-import { PUESTO_FISIOTERAPEUTA, PUESTO_PACIENTE } from "../_helpers/permissions";
 
 // ─── RECOVERY CODES ───
 
@@ -34,7 +33,7 @@ export const validateAndConsumeRecoveryCode = internalMutation({
       .query("recoveryCodes")
       .withIndex("by_email", (q) => q.eq("email", normalized))
       .order("desc")
-      .collect();
+      .take(10);
 
     const code = codes.find((c) => !c.usado);
 
@@ -95,7 +94,7 @@ export const validateAndConsumeVerificationCode = internalMutation({
       .query("verificationCodes")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .collect();
+      .take(10);
 
     const code = codes.find((c) => !c.usado);
 
@@ -178,8 +177,9 @@ export const createMembershipFromCode = internalMutation({
       return { clinicId: codeDoc.clinicId };
     }
 
-    // Determinar puesto
-    const puesto = args.tipo === "fisioterapeuta" ? PUESTO_FISIOTERAPEUTA : PUESTO_PACIENTE;
+    // Determinar puesto literal
+    const puesto: "fisio" | "paciente" =
+      args.tipo === "fisioterapeuta" ? "fisio" : "paciente";
 
     // Crear membresía
     await ctx.db.insert("clinicMemberships", {

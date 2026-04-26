@@ -1,16 +1,8 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-
-const diaSemana = v.union(
-  v.literal("L"),
-  v.literal("M"),
-  v.literal("X"),
-  v.literal("J"),
-  v.literal("V"),
-  v.literal("S"),
-  v.literal("D"),
-);
+import { getPlanIfOwned } from "../_helpers/authorization";
+import { diaSemana } from "../_helpers/validators";
 
 const ejercicioPlanArgs = v.object({
   exerciseId: v.id("exercises"),
@@ -125,7 +117,31 @@ export const updateEstado = mutation({
   },
 });
 
-// ─── UPDATE (full edit: metadata + exercises replace) ───
+async function planHasActivity(
+  ctx: any,
+  planId: any,
+  exercises?: Array<{ _id: any }>,
+): Promise<boolean> {
+  const items =
+    exercises ??
+    (await ctx.db
+      .query("planExercises")
+      .withIndex("by_planId", (q: any) => q.eq("planId", planId))
+      .collect());
+
+  for (const ex of items) {
+    const hasRecord = await ctx.db
+      .query("planRecords")
+      .withIndex("by_planExerciseId", (q: any) =>
+        q.eq("planExerciseId", ex._id),
+      )
+      .first();
+    if (hasRecord) return true;
+  }
+  return false;
+}
+
+// ─── UPDATE (metadata siempre; ejercicios solo si no hay actividad) ───
 
 export const update = mutation({
   args: {
@@ -137,16 +153,16 @@ export const update = mutation({
     ejercicios: v.optional(v.array(ejercicioPlanArgs)),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthenticatedUser(ctx);
-    const plan = await ctx.db.get(args.planId);
-    if (!plan) throw new Error("Plan no encontrado");
+    await getPlanIfOwned(ctx, args.planId);
 
-    // Ownership check
-    if (plan.fisioId !== user._id) {
-      throw new Error("No tienes permisos para editar este plan");
+    if (args.ejercicios) {
+      if (await planHasActivity(ctx, args.planId)) {
+        throw new Error(
+          "El plan tiene registros del paciente. Crea una nueva versión en lugar de editarlo.",
+        );
+      }
     }
 
-    // Patch metadata
     const patch: Record<string, unknown> = {};
     if (args.titulo !== undefined) patch["titulo"] = args.titulo;
     if (args.descripcion !== undefined) patch["descripcion"] = args.descripcion;
@@ -157,7 +173,6 @@ export const update = mutation({
       await ctx.db.patch(args.planId, patch);
     }
 
-    // Replace exercises if provided
     if (args.ejercicios) {
       await deletePlanExercises(ctx, args.planId);
       await insertPlanExercises(ctx, args.planId, args.ejercicios);
@@ -167,33 +182,30 @@ export const update = mutation({
   },
 });
 
-// ─── REMOVE (cascade delete: records → exercises → plan) ───
+// ─── REMOVE ───
+// Si el plan tiene actividad, soft-delete (cancelado) para preservar history.
+// Sin actividad, hard-delete con cascade de planExercises.
 
 export const remove = mutation({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    await getPlanIfOwned(ctx, args.planId);
 
-    // Get all exercises for this plan
     const exercises = await ctx.db
       .query("planExercises")
       .withIndex("by_planId", (q) => q.eq("planId", args.planId))
       .collect();
 
-    // Delete records for each exercise
-    for (const ex of exercises) {
-      const records = await ctx.db
-        .query("planRecords")
-        .withIndex("by_planExerciseId", (q) => q.eq("planExerciseId", ex._id))
-        .collect();
-      for (const rec of records) {
-        await ctx.db.delete(rec._id);
-      }
-      await ctx.db.delete(ex._id);
+    if (await planHasActivity(ctx, args.planId, exercises)) {
+      await ctx.db.patch(args.planId, { estado: "cancelado" });
+      return { softDeleted: true };
     }
 
-    // Delete the plan
+    for (const ex of exercises) {
+      await ctx.db.delete(ex._id);
+    }
     await ctx.db.delete(args.planId);
+    return { softDeleted: false };
   },
 });
 
@@ -210,11 +222,7 @@ export const version = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const oldPlan = await ctx.db.get(args.oldPlanId);
-    if (!oldPlan) throw new Error("Plan original no encontrado");
-    if (oldPlan.fisioId !== user._id) {
-      throw new Error("No tienes permisos para versionar este plan");
-    }
+    const oldPlan = await getPlanIfOwned(ctx, args.oldPlanId, user._id);
 
     const today = new Date().toISOString().split("T")[0]!;
 

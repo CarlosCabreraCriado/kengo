@@ -1,7 +1,9 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation, MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
+import { insertCommentNotificationFromRecord } from "../_helpers/notifications";
 import { getHoyMadrid } from "../compliance/internal";
 
 const recordArgs = {
@@ -17,10 +19,35 @@ const recordArgs = {
   notaPaciente: v.optional(v.string()),
 };
 
+async function getDenormalizedFields(
+  ctx: MutationCtx,
+  planExerciseId: Id<"planExercises">,
+): Promise<{
+  planId?: Id<"plans">;
+  tituloPlan?: string;
+  nombreEjercicio?: string;
+}> {
+  const planExercise = await ctx.db.get(planExerciseId);
+  if (!planExercise) return {};
+
+  const nombreEjercicio =
+    planExercise.ejercicioNombre ??
+    (await ctx.db.get(planExercise.exerciseId))?.nombreEjercicio;
+  const plan = await ctx.db.get(planExercise.planId);
+
+  return {
+    planId: planExercise.planId,
+    tituloPlan: plan?.titulo,
+    nombreEjercicio,
+  };
+}
+
 export const create = mutation({
   args: recordArgs,
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
+
+    const denorm = await getDenormalizedFields(ctx, args.planExerciseId);
 
     const id = await ctx.db.insert("planRecords", {
       planExerciseId: args.planExerciseId,
@@ -34,21 +61,18 @@ export const create = mutation({
       dolorEscala: args.dolorEscala,
       esfuerzoEscala: args.esfuerzoEscala,
       notaPaciente: args.notaPaciente,
+      ...denorm,
     });
+
+    if (args.completado && args.notaPaciente?.trim()) {
+      await insertCommentNotificationFromRecord(ctx, id);
+    }
 
     await ctx.scheduler.runAfter(
       0,
       internal.compliance.internal.calculateDailyCompliance,
       { fecha: getHoyMadrid(), pacienteId: user._id },
     );
-
-    if (args.notaPaciente && args.notaPaciente.trim().length > 0) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.notifications.internal.generateNotifications,
-        { pacienteId: user._id },
-      );
-    }
 
     return id;
   },
@@ -61,9 +85,21 @@ export const createBatch = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     const ids = [];
-    let hasComentario = false;
+
+    // Cache de denormalización por planExerciseId para evitar lookups repetidos
+    // cuando hay varios records del mismo ejercicio.
+    const denormCache = new Map<
+      Id<"planExercises">,
+      Awaited<ReturnType<typeof getDenormalizedFields>>
+    >();
 
     for (const rec of args.records) {
+      let denorm = denormCache.get(rec.planExerciseId);
+      if (!denorm) {
+        denorm = await getDenormalizedFields(ctx, rec.planExerciseId);
+        denormCache.set(rec.planExerciseId, denorm);
+      }
+
       const id = await ctx.db.insert("planRecords", {
         planExerciseId: rec.planExerciseId,
         pacienteId: user._id,
@@ -76,10 +112,11 @@ export const createBatch = mutation({
         dolorEscala: rec.dolorEscala,
         esfuerzoEscala: rec.esfuerzoEscala,
         notaPaciente: rec.notaPaciente,
+        ...denorm,
       });
       ids.push(id);
-      if (rec.notaPaciente && rec.notaPaciente.trim().length > 0) {
-        hasComentario = true;
+      if (rec.completado && rec.notaPaciente?.trim()) {
+        await insertCommentNotificationFromRecord(ctx, id);
       }
     }
 
@@ -88,14 +125,6 @@ export const createBatch = mutation({
       internal.compliance.internal.calculateDailyCompliance,
       { fecha: getHoyMadrid(), pacienteId: user._id },
     );
-
-    if (hasComentario) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.notifications.internal.generateNotifications,
-        { pacienteId: user._id },
-      );
-    }
 
     return ids;
   },

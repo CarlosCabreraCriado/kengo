@@ -71,10 +71,11 @@ export const listByFisio = query({
         .collect();
     }
 
-    return await ctx.db
+    const all = await ctx.db
       .query("plans")
       .withIndex("by_fisioId", (q) => q.eq("fisioId", user._id))
       .collect();
+    return all.filter((p) => p.estado !== "cancelado");
   },
 });
 
@@ -105,10 +106,11 @@ export const listByPaciente = query({
         .collect();
     }
 
-    return await ctx.db
+    const all = await ctx.db
       .query("plans")
       .withIndex("by_pacienteId", (q) => q.eq("pacienteId", targetId))
       .collect();
+    return all.filter((p) => p.estado !== "cancelado");
   },
 });
 

@@ -26,6 +26,11 @@ export const findUserByEmail = internalQuery({
   },
 });
 
+// Convex ordena los índices simples por el campo + _creationTime como tiebreaker.
+// .order("desc").take(N) recorre como máximo N filas en lugar de todo el historial.
+const RATE_LIMIT_LOOKBACK = 20;
+const UNUSED_LOOKBACK = 10;
+
 export const countRecentRecoveryCodes = internalQuery({
   args: { email: v.string() },
   handler: async (ctx, args) => {
@@ -35,7 +40,8 @@ export const countRecentRecoveryCodes = internalQuery({
     const codes = await ctx.db
       .query("recoveryCodes")
       .withIndex("by_email", (q) => q.eq("email", normalized))
-      .collect();
+      .order("desc")
+      .take(RATE_LIMIT_LOOKBACK);
 
     return codes.filter((c) => c._creationTime > oneHourAgo).length;
   },
@@ -49,7 +55,8 @@ export const countRecentVerificationCodes = internalQuery({
     const codes = await ctx.db
       .query("verificationCodes")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .collect();
+      .order("desc")
+      .take(RATE_LIMIT_LOOKBACK);
 
     return codes.filter((c) => c._creationTime > oneHourAgo).length;
   },
@@ -64,7 +71,7 @@ export const getLatestUnusedRecoveryCode = internalQuery({
       .query("recoveryCodes")
       .withIndex("by_email", (q) => q.eq("email", normalized))
       .order("desc")
-      .collect();
+      .take(UNUSED_LOOKBACK);
 
     return codes.find((c) => !c.usado) ?? null;
   },
@@ -77,7 +84,7 @@ export const getLatestUnusedVerificationCode = internalQuery({
       .query("verificationCodes")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .collect();
+      .take(UNUSED_LOOKBACK);
 
     return codes.find((c) => !c.usado) ?? null;
   },

@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
-import { getAuthenticatedUser } from "../_helpers/permissions";
-
-const PUESTO_FISIO = 1;
-const PUESTO_ADMIN = 4;
+import {
+  getAuthenticatedUser,
+  tieneGestion,
+} from "../_helpers/permissions";
 
 export const listByClinic = query({
   args: {
@@ -55,9 +55,7 @@ export const listForCurrentFisio = query({
       .collect();
 
     const clinicIds = memberships
-      .filter(
-        (m) => m.puesto === PUESTO_FISIO || m.puesto === PUESTO_ADMIN,
-      )
+      .filter((m) => tieneGestion(m.puesto))
       .map((m) => m.clinicId as Id<"clinics">);
 
     if (clinicIds.length === 0) {

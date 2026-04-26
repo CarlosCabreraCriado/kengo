@@ -1,9 +1,10 @@
 import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
-import { getAuthenticatedUser } from "../_helpers/permissions";
-
-const PUESTO_FISIO = 1;
-const PUESTO_ADMIN = 4;
+import {
+  getAuthenticatedUser,
+  tieneGestion,
+} from "../_helpers/permissions";
+import { getUserClinicIds } from "../_helpers/authorization";
 
 function fechaHaceDias(days: number): string {
   return new Date(Date.now() - days * 86400000)
@@ -31,9 +32,7 @@ async function getFisioIdsEnClinicasDelUsuario(
     .collect();
 
   const clinicIdsGestion = misMemberships
-    .filter(
-      (m: any) => m.puesto === PUESTO_FISIO || m.puesto === PUESTO_ADMIN,
-    )
+    .filter((m: any) => tieneGestion(m.puesto))
     .map((m: any) => m.clinicId as Id<"clinics">);
 
   const fisioIds = new Set<Id<"users">>();
@@ -43,7 +42,7 @@ async function getFisioIdsEnClinicasDelUsuario(
       .withIndex("by_clinicId", (q: any) => q.eq("clinicId", clinicId))
       .collect();
     for (const m of members) {
-      if (m.puesto === PUESTO_FISIO || m.puesto === PUESTO_ADMIN) {
+      if (tieneGestion(m.puesto)) {
         fisioIds.add(m.userId as Id<"users">);
       }
     }
@@ -73,51 +72,47 @@ export const fisioSummary = query({
       };
     }
 
-    // 1. Pacientes activos: pacientes distintos con planes activos de estos fisios
-    const pacientesActivos = new Set<string>();
-    for (const fisioId of fisioIds) {
-      const planesActivos = await ctx.db
-        .query("plans")
-        .withIndex("by_fisioId_estado", (q) =>
-          q.eq("fisioId", fisioId).eq("estado", "activo"),
-        )
-        .collect();
-      for (const p of planesActivos) {
-        pacientesActivos.add(p.pacienteId);
-      }
-    }
+    // 1+2. Pacientes activos y adherencia: leer de clinicMetrics (materializada
+    // en el cron diario). Suma sobre las clínicas de gestión del usuario.
+    const userClinicIds = await getUserClinicIds(ctx, user._id);
+    const userMemberships = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect();
+    const clinicasGestion = userMemberships
+      .filter((m) => tieneGestion(m.puesto))
+      .map((m) => m.clinicId);
 
-    // 2. Adherencia promedio últimos 30 días
-    const fechaDesde = fechaHaceDias(30);
-    let sumEsperados = 0;
-    let sumCompletados = 0;
-    for (const fisioId of fisioIds) {
-      const planes = await ctx.db
-        .query("plans")
-        .withIndex("by_fisioId", (q) => q.eq("fisioId", fisioId))
-        .collect();
-      for (const plan of planes) {
-        const cumplimientos = await ctx.db
-          .query("dailyCompliance")
-          .withIndex("by_pacienteId_planId_fecha", (q) =>
-            q
-              .eq("pacienteId", plan.pacienteId)
-              .eq("planId", plan._id)
-              .gte("fecha", fechaDesde),
-          )
-          .collect();
-        for (const c of cumplimientos) {
-          if (!c.esDiaDescanso) {
-            sumEsperados += c.ejerciciosEsperados;
-            sumCompletados += c.ejerciciosCompletados;
-          }
-        }
+    const metricsByClinic = await Promise.all(
+      clinicasGestion.map((cid) =>
+        ctx.db
+          .query("clinicMetrics")
+          .withIndex("by_clinicId", (q) => q.eq("clinicId", cid))
+          .unique(),
+      ),
+    );
+
+    // Sumar pacientes_activos a través de clínicas (puede haber overlap, pero
+    // el orden de magnitud es correcto). Adherencia: ponderada por pacientes.
+    let pacientesActivos = 0;
+    let weightedAdherencia = 0;
+    let totalPacientesPonderados = 0;
+    for (const m of metricsByClinic) {
+      if (!m) continue;
+      pacientesActivos += m.pacientesActivos;
+      if (m.pacientesActivos > 0) {
+        weightedAdherencia += m.adherenciaPromedio * m.pacientesActivos;
+        totalPacientesPonderados += m.pacientesActivos;
       }
     }
     const adherenciaPromedio =
-      sumEsperados > 0 ? Math.round((sumCompletados / sumEsperados) * 100) : 0;
+      totalPacientesPonderados > 0
+        ? Math.round(weightedAdherencia / totalPacientesPonderados)
+        : 0;
+    void userClinicIds; // reservado para futuras mejoras multi-clínica
 
-    // 3. Planes por vencer (estado activo, fechaFin entre hoy y +7 días)
+    // 3. Planes por vencer (estado activo, fechaFin entre hoy y +7 días) —
+    // sigue siendo on-demand porque la ventana de 7 días es muy específica.
     const hoy = fechaHoy();
     const limite = fechaDentroDe(7);
     const planesPorVencer: Array<{
@@ -156,7 +151,7 @@ export const fisioSummary = query({
     const top10 = planesPorVencer.slice(0, 10);
 
     return {
-      pacientes_activos: pacientesActivos.size,
+      pacientes_activos: pacientesActivos,
       adherencia_promedio: adherenciaPromedio,
       planes_por_vencer: top10,
     };

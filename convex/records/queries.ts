@@ -98,17 +98,19 @@ export const listByPacienteAndDateExpanded = query({
       ? records.filter((r) => r.completado)
       : records;
 
+    // planExercise y exercise se cargan siempre (la UI necesita la portada).
+    // El plan solo se carga si falta el dato denormalizado (datos pre-Fase-2).
     const expanded = await Promise.all(
       filtered.map(async (r) => {
-        const planExercise = r.planExerciseId
-          ? await ctx.db.get(r.planExerciseId)
-          : null;
-        const exercise = planExercise?.exerciseId
-          ? await ctx.db.get(planExercise.exerciseId)
-          : null;
-        const plan = planExercise?.planId
-          ? await ctx.db.get(planExercise.planId)
-          : null;
+        const planExercise = await ctx.db.get(r.planExerciseId);
+        const [exercise, plan] = await Promise.all([
+          planExercise ? ctx.db.get(planExercise.exerciseId) : Promise.resolve(null),
+          r.tituloPlan && r.planId
+            ? Promise.resolve(null)
+            : planExercise
+              ? ctx.db.get(planExercise.planId)
+              : Promise.resolve(null),
+        ]);
 
         return {
           _id: r._id,
@@ -132,17 +134,24 @@ export const listByPacienteAndDateExpanded = query({
                   ? {
                       _id: exercise._id,
                       legacyId: exercise.legacyId,
-                      nombreEjercicio: exercise.nombreEjercicio,
+                      nombreEjercicio:
+                        r.nombreEjercicio ?? exercise.nombreEjercicio,
                       portada: exercise.portada,
                     }
                   : null,
-                plan: plan
+                plan: r.planId
                   ? {
-                      _id: plan._id,
-                      legacyId: plan.legacyId,
-                      titulo: plan.titulo,
+                      _id: r.planId,
+                      legacyId: plan?.legacyId,
+                      titulo: r.tituloPlan ?? plan?.titulo ?? "",
                     }
-                  : null,
+                  : plan
+                    ? {
+                        _id: plan._id,
+                        legacyId: plan.legacyId,
+                        titulo: plan.titulo,
+                      }
+                    : null,
               }
             : null,
         };

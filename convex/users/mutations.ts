@@ -3,6 +3,17 @@ import { mutation, internalMutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 
+function buildSearchableText(
+  firstName?: string | null,
+  lastName?: string | null,
+  email?: string | null,
+): string {
+  return [firstName ?? "", lastName ?? "", email ?? ""]
+    .map((s) => s.toLowerCase().trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 /**
  * Vincula el UUID legacy del usuario actual (campo `legacyDirectusId`).
  * Se llama una sola vez para preservar referencias a IDs externos heredados.
@@ -42,12 +53,19 @@ export const upsertFromAuth = internalMutation({
       .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
       .unique();
 
+    const searchableText = buildSearchableText(
+      args.firstName,
+      args.lastName,
+      args.email,
+    );
+
     if (existing) {
       await ctx.db.patch(existing._id, {
         email: args.email,
         firstName: args.firstName,
         lastName: args.lastName,
         emailVerified: args.emailVerified,
+        searchableText,
       });
       return existing._id;
     }
@@ -58,6 +76,7 @@ export const upsertFromAuth = internalMutation({
       firstName: args.firstName,
       lastName: args.lastName,
       emailVerified: args.emailVerified,
+      searchableText,
     });
   },
 });
@@ -90,6 +109,18 @@ export const updateProfile = mutation({
       patch["numeroColegiado"] = args.numeroColegiado;
 
     if (Object.keys(patch).length === 0) return user._id;
+
+    if (
+      args.firstName !== undefined ||
+      args.lastName !== undefined ||
+      args.email !== undefined
+    ) {
+      patch["searchableText"] = buildSearchableText(
+        args.firstName ?? user.firstName,
+        args.lastName ?? user.lastName,
+        (args.email ?? user.email)?.toLowerCase().trim(),
+      );
+    }
 
     await ctx.db.patch(user._id, patch);
     return user._id;
@@ -137,6 +168,12 @@ export const upsertPatientWithMembership = internalMutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .unique();
 
+    const searchableText = buildSearchableText(
+      args.firstName,
+      args.lastName,
+      email,
+    );
+
     let created = false;
     if (!user) {
       const userId = await ctx.db.insert("users", {
@@ -146,6 +183,7 @@ export const upsertPatientWithMembership = internalMutation({
         firstName: args.firstName,
         lastName: args.lastName,
         telefono: args.telefono,
+        searchableText,
       });
       user = await ctx.db.get(userId);
       created = true;
@@ -155,6 +193,7 @@ export const upsertPatientWithMembership = internalMutation({
         firstName: args.firstName,
         lastName: args.lastName,
         ...(args.telefono !== undefined && { telefono: args.telefono }),
+        searchableText,
       });
     }
 
@@ -172,7 +211,7 @@ export const upsertPatientWithMembership = internalMutation({
       await ctx.db.insert("clinicMemberships", {
         userId: user._id,
         clinicId: args.clinicId,
-        puesto: 2,
+        puesto: "paciente",
       });
     }
 
@@ -224,6 +263,22 @@ export const updatePatient = mutation({
     if (args.email !== undefined)
       patch["email"] = args.email.toLowerCase().trim();
     if (args.telefono !== undefined) patch["telefono"] = args.telefono;
+
+    if (
+      args.firstName !== undefined ||
+      args.lastName !== undefined ||
+      args.email !== undefined
+    ) {
+      const current = await ctx.db.get(patientId);
+      if (current) {
+        patch["searchableText"] = buildSearchableText(
+          args.firstName ?? current.firstName,
+          args.lastName ?? current.lastName,
+          (args.email ?? current.email)?.toLowerCase().trim(),
+        );
+      }
+    }
+
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(patientId, patch);
     }

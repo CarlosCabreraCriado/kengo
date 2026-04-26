@@ -162,16 +162,15 @@ export class PacientesListComponent {
     });
   });
 
-  // Suscripción reactiva a pacientes de las clínicas del fisio. Si hay varias
-  // clínicas hacemos query por la primera y dedupliamos en cliente cuando haya >1.
-  // Para simplicidad inicial, usamos solo la primera clínica (caso 99% del uso).
+  // Suscripción reactiva a pacientes de TODAS las clínicas del fisio.
+  // El backend dedupelica por userId cuando un paciente pertenece a varias.
   private readonly pacientesQuery = this.convex.watchQuery(
     api.users.queries.listPatientsByClinic,
     () => {
       const cid = this.idsClinicas();
       if (!cid || cid.length === 0) return 'skip';
       return {
-        clinicLegacyId: cid[0],
+        clinicLegacyIds: cid,
         search: this.busqueda().trim() || undefined,
         limit: 200,
       };

@@ -1,16 +1,22 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation, MutationCtx } from "../_generated/server";
+import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
+import { getRoutineIfOwned } from "../_helpers/authorization";
+import { diaSemana } from "../_helpers/validators";
 
-const diaSemana = v.union(
-  v.literal("L"),
-  v.literal("M"),
-  v.literal("X"),
-  v.literal("J"),
-  v.literal("V"),
-  v.literal("S"),
-  v.literal("D"),
-);
+async function getExerciseNamesByIds(
+  ctx: MutationCtx,
+  exerciseIds: Id<"exercises">[],
+): Promise<Map<Id<"exercises">, string>> {
+  const unique = Array.from(new Set(exerciseIds));
+  const docs = await Promise.all(unique.map((id) => ctx.db.get(id)));
+  const map = new Map<Id<"exercises">, string>();
+  docs.forEach((doc, i) => {
+    if (doc?.nombreEjercicio) map.set(unique[i], doc.nombreEjercicio);
+  });
+  return map;
+}
 
 const ejercicioRutinaValidator = v.object({
   exerciseId: v.id("exercises"),
@@ -42,6 +48,11 @@ export const create = mutation({
       visibilidad: args.visibilidad,
     });
 
+    const nombres = await getExerciseNamesByIds(
+      ctx,
+      args.ejercicios.map((e) => e.exerciseId),
+    );
+
     for (const ejercicio of args.ejercicios) {
       await ctx.db.insert("routineExercises", {
         routineId,
@@ -55,6 +66,7 @@ export const create = mutation({
         diasSemana: ejercicio.diasSemana,
         instruccionesPaciente: ejercicio.instruccionesPaciente,
         notasFisio: ejercicio.notasFisio,
+        ejercicioNombre: nombres.get(ejercicio.exerciseId),
       });
     }
 
@@ -65,12 +77,7 @@ export const create = mutation({
 export const remove = mutation({
   args: { routineId: v.id("routines") },
   handler: async (ctx, args) => {
-    const user = await getAuthenticatedUser(ctx);
-    const routine = await ctx.db.get(args.routineId);
-    if (!routine) throw new Error("Rutina no encontrada");
-    if (routine.autorId !== user._id) {
-      throw new Error("No puedes eliminar una rutina que no es tuya");
-    }
+    await getRoutineIfOwned(ctx, args.routineId);
 
     const exercises = await ctx.db
       .query("routineExercises")
@@ -96,12 +103,7 @@ export const update = mutation({
     ejercicios: v.optional(v.array(ejercicioRutinaValidator)),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthenticatedUser(ctx);
-    const routine = await ctx.db.get(args.routineId);
-    if (!routine) throw new Error("Rutina no encontrada");
-    if (routine.autorId !== user._id) {
-      throw new Error("No puedes editar una rutina que no es tuya");
-    }
+    await getRoutineIfOwned(ctx, args.routineId);
 
     // Patch metadata
     const patch: Record<string, unknown> = {};
@@ -124,6 +126,11 @@ export const update = mutation({
         await ctx.db.delete(ex._id);
       }
 
+      const nombres = await getExerciseNamesByIds(
+        ctx,
+        args.ejercicios.map((e) => e.exerciseId),
+      );
+
       for (const ejercicio of args.ejercicios) {
         await ctx.db.insert("routineExercises", {
           routineId: args.routineId,
@@ -137,6 +144,7 @@ export const update = mutation({
           diasSemana: ejercicio.diasSemana,
           instruccionesPaciente: ejercicio.instruccionesPaciente,
           notasFisio: ejercicio.notasFisio,
+          ejercicioNombre: nombres.get(ejercicio.exerciseId),
         });
       }
     }
@@ -180,6 +188,7 @@ export const duplicate = mutation({
         diasSemana: ex.diasSemana,
         instruccionesPaciente: ex.instruccionesPaciente,
         notasFisio: ex.notasFisio,
+        ejercicioNombre: ex.ejercicioNombre,
       });
     }
 

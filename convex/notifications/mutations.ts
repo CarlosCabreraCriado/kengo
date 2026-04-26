@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import {
+  getAuthenticatedUser,
+  tieneGestion,
+} from "../_helpers/permissions";
 
 export const markAsRead = mutation({
   args: { notificationId: v.id("physioNotifications") },
@@ -38,9 +41,6 @@ export const markAllAsRead = mutation({
   },
 });
 
-const PUESTO_FISIO_M = 1;
-const PUESTO_ADMIN_M = 4;
-
 export const markAllAsReadForCurrentFisio = mutation({
   args: {},
   handler: async (ctx) => {
@@ -53,9 +53,7 @@ export const markAllAsReadForCurrentFisio = mutation({
       .collect();
 
     const clinicIds = memberships
-      .filter(
-        (m) => m.puesto === PUESTO_FISIO_M || m.puesto === PUESTO_ADMIN_M,
-      )
+      .filter((m) => tieneGestion(m.puesto))
       .map((m) => m.clinicId as Id<"clinics">);
 
     let total = 0;

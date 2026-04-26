@@ -3,16 +3,11 @@ import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import {
   getAuthenticatedUser,
-  PUESTO_FISIOTERAPEUTA,
-  PUESTO_PACIENTE,
-  PUESTO_ADMINISTRADOR,
+  esPaciente,
+  tieneGestion,
+  puestoToNumber,
+  puestoToNombre,
 } from "../_helpers/permissions";
-
-const PUESTO_NOMBRES: Record<number, string> = {
-  [PUESTO_FISIOTERAPEUTA]: "fisioterapeuta",
-  [PUESTO_PACIENTE]: "paciente",
-  [PUESTO_ADMINISTRADOR]: "administrador",
-};
 
 export const me = query({
   args: {},
@@ -38,8 +33,8 @@ export const me = query({
         if (!clinic) return null;
         return {
           id_clinica: clinic.legacyId ?? 0,
-          id_puesto: m.puesto,
-          puesto: PUESTO_NOMBRES[m.puesto] ?? null,
+          id_puesto: puestoToNumber(m.puesto),
+          puesto: puestoToNombre(m.puesto),
           convexClinicId: clinic._id,
           nombre: clinic.nombre,
         };
@@ -50,33 +45,44 @@ export const me = query({
       (c): c is NonNullable<typeof c> => c !== null,
     );
 
-    const hasFisioAccess = clinicasFiltered.some(
-      (c) =>
-        c.id_puesto === PUESTO_FISIOTERAPEUTA ||
-        c.id_puesto === PUESTO_ADMINISTRADOR,
-    );
-    const hasPacienteAccess = clinicasFiltered.some(
-      (c) => c.id_puesto === PUESTO_PACIENTE,
-    );
+    const hasFisioAccess = memberships.some((m) => tieneGestion(m.puesto));
+    const hasPacienteAccess = memberships.some((m) => esPaciente(m.puesto));
 
-    const detalle = await ctx.db
-      .query("userDetails")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .unique();
+    const hasInlineDetalle =
+      user.dni !== undefined ||
+      user.telefono !== undefined ||
+      user.direccion !== undefined ||
+      user.postal !== undefined;
+
+    const legacyDetalle = hasInlineDetalle
+      ? null
+      : await ctx.db
+          .query("userDetails")
+          .withIndex("by_userId", (q) => q.eq("userId", user._id))
+          .unique();
+
+    const detalle = hasInlineDetalle
+      ? {
+          dni: user.dni ?? "",
+          telefono: user.telefono ?? "",
+          direccion: user.direccion ?? "",
+          postal: user.postal ?? "",
+        }
+      : legacyDetalle
+        ? {
+            dni: legacyDetalle.dni ?? "",
+            telefono: legacyDetalle.telefono ?? "",
+            direccion: legacyDetalle.direccion ?? "",
+            postal: legacyDetalle.postal ?? "",
+          }
+        : null;
 
     return {
       ...user,
       clinicas: clinicasFiltered,
       esFisio: hasFisioAccess,
       esPaciente: hasPacienteAccess || !hasFisioAccess,
-      detalle: detalle
-        ? {
-            dni: detalle.dni ?? "",
-            telefono: detalle.telefono ?? "",
-            direccion: detalle.direccion ?? "",
-            postal: detalle.postal ?? "",
-          }
-        : null,
+      detalle,
     };
   },
 });
@@ -111,42 +117,82 @@ export const getByLegacyId = query({
         if (!clinic) return null;
         return {
           id_clinica: clinic.legacyId ?? 0,
-          id_puesto: m.puesto,
-          puesto: PUESTO_NOMBRES[m.puesto] ?? null,
+          id_puesto: puestoToNumber(m.puesto),
+          puesto: puestoToNombre(m.puesto),
           convexClinicId: clinic._id,
           nombre: clinic.nombre,
         };
       }),
     );
 
-    const detalle = await ctx.db
-      .query("userDetails")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .unique();
+    const hasInlineDetalle =
+      user.dni !== undefined ||
+      user.telefono !== undefined ||
+      user.direccion !== undefined ||
+      user.postal !== undefined;
+
+    const legacyDetalle = hasInlineDetalle
+      ? null
+      : await ctx.db
+          .query("userDetails")
+          .withIndex("by_userId", (q) => q.eq("userId", user._id))
+          .unique();
+
+    const detalle = hasInlineDetalle
+      ? {
+          dni: user.dni ?? "",
+          telefono: user.telefono ?? "",
+          direccion: user.direccion ?? "",
+          postal: user.postal ?? "",
+        }
+      : legacyDetalle
+        ? {
+            dni: legacyDetalle.dni ?? "",
+            telefono: legacyDetalle.telefono ?? "",
+            direccion: legacyDetalle.direccion ?? "",
+            postal: legacyDetalle.postal ?? "",
+          }
+        : null;
 
     return {
       ...user,
       clinicas: clinicas.filter((c): c is NonNullable<typeof c> => c !== null),
-      detalle: detalle
-        ? {
-            dni: detalle.dni ?? "",
-            telefono: detalle.telefono ?? "",
-            direccion: detalle.direccion ?? "",
-            postal: detalle.postal ?? "",
-          }
-        : null,
+      detalle,
     };
   },
 });
 
+async function resolveClinicIds(
+  ctx: any,
+  clinicLegacyIds?: number[],
+  clinicIds?: Id<"clinics">[],
+): Promise<Id<"clinics">[]> {
+  if (clinicIds && clinicIds.length > 0) return clinicIds;
+  if (!clinicLegacyIds || clinicLegacyIds.length === 0) return [];
+
+  const clinics = await Promise.all(
+    clinicLegacyIds.map((legacyId) =>
+      ctx.db
+        .query("clinics")
+        .withIndex("by_legacyId", (q: any) => q.eq("legacyId", legacyId))
+        .unique(),
+    ),
+  );
+  return clinics
+    .filter((c: any): c is { _id: Id<"clinics"> } => c !== null)
+    .map((c: any) => c._id);
+}
+
 /**
- * Lista pacientes (puesto=2) de una clínica.
- * Soporta búsqueda por nombre/email, paginación offset.
+ * Lista pacientes (puesto=2) de una o varias clínicas. Deduplica por userId
+ * cuando un paciente pertenece a múltiples clínicas del fisio.
  */
 export const listPatientsByClinic = query({
   args: {
     clinicLegacyId: v.optional(v.number()),
     clinicId: v.optional(v.id("clinics")),
+    clinicLegacyIds: v.optional(v.array(v.number())),
+    clinicIds: v.optional(v.array(v.id("clinics"))),
     search: v.optional(v.string()),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
@@ -154,49 +200,50 @@ export const listPatientsByClinic = query({
   handler: async (ctx, args) => {
     await getAuthenticatedUser(ctx);
 
-    let clinicId: Id<"clinics"> | null = args.clinicId ?? null;
-    if (!clinicId && args.clinicLegacyId !== undefined) {
-      const clinic = await ctx.db
-        .query("clinics")
-        .withIndex("by_legacyId", (q) => q.eq("legacyId", args.clinicLegacyId))
-        .unique();
-      clinicId = clinic?._id ?? null;
-    }
+    const legacyIds =
+      args.clinicLegacyIds ??
+      (args.clinicLegacyId !== undefined ? [args.clinicLegacyId] : undefined);
+    const ids =
+      args.clinicIds ?? (args.clinicId ? [args.clinicId] : undefined);
 
-    if (!clinicId) {
+    const resolvedIds = await resolveClinicIds(ctx, legacyIds, ids);
+    if (resolvedIds.length === 0) {
       return { results: [], total: 0 };
     }
 
-    const memberships = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId!))
-      .filter((q) => q.eq(q.field("puesto"), PUESTO_PACIENTE))
-      .collect();
-
-    const users = await Promise.all(
-      memberships.map(async (m) => {
-        const user = await ctx.db.get(m.userId);
-        return user;
-      }),
+    const allMemberships = await Promise.all(
+      resolvedIds.map((cid) =>
+        ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_clinicId", (q) => q.eq("clinicId", cid))
+          .collect(),
+      ),
     );
 
-    let filtered = users.filter(
-      (u): u is NonNullable<typeof u> => u !== null,
+    const allowedUserIds = new Set<Id<"users">>(
+      allMemberships
+        .flat()
+        .filter((m) => esPaciente(m.puesto))
+        .map((m) => m.userId),
     );
 
-    // Filtro búsqueda por nombre/email (case-insensitive)
+    let filtered: any[];
+
     if (args.search && args.search.trim().length > 0) {
+      // Usar el search index full-text y luego filtrar por las clínicas
+      // permitidas en memoria. El take(500) acota el resultado del search.
       const term = args.search.trim().toLowerCase();
-      filtered = filtered.filter((u) => {
-        const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.toLowerCase();
-        return (
-          fullName.includes(term) ||
-          (u.email ?? "").toLowerCase().includes(term)
-        );
-      });
+      const searchHits = await ctx.db
+        .query("users")
+        .withSearchIndex("search_users", (q) => q.search("searchableText", term))
+        .take(500);
+      filtered = searchHits.filter((u) => allowedUserIds.has(u._id));
+    } else {
+      const userIds = Array.from(allowedUserIds);
+      const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
+      filtered = users.filter((u): u is NonNullable<typeof u> => u !== null);
     }
 
-    // Sort por nombre asc para estabilidad
     filtered.sort((a, b) =>
       `${a.firstName} ${a.lastName}`.localeCompare(
         `${b.firstName} ${b.lastName}`,
@@ -213,46 +260,54 @@ export const listPatientsByClinic = query({
 });
 
 /**
- * Lista fisios+admins (puesto=1 o 4) de una clínica.
+ * Lista fisios+admins (puesto=1 o 4) de una o varias clínicas. Deduplica.
  */
 export const listFisiosByClinic = query({
   args: {
     clinicLegacyId: v.optional(v.number()),
     clinicId: v.optional(v.id("clinics")),
+    clinicLegacyIds: v.optional(v.array(v.number())),
+    clinicIds: v.optional(v.array(v.id("clinics"))),
   },
   handler: async (ctx, args) => {
     await getAuthenticatedUser(ctx);
 
-    let clinicId: Id<"clinics"> | null = args.clinicId ?? null;
-    if (!clinicId && args.clinicLegacyId !== undefined) {
-      const clinic = await ctx.db
-        .query("clinics")
-        .withIndex("by_legacyId", (q) => q.eq("legacyId", args.clinicLegacyId))
-        .unique();
-      clinicId = clinic?._id ?? null;
-    }
+    const legacyIds =
+      args.clinicLegacyIds ??
+      (args.clinicLegacyId !== undefined ? [args.clinicLegacyId] : undefined);
+    const ids =
+      args.clinicIds ?? (args.clinicId ? [args.clinicId] : undefined);
 
-    if (!clinicId) return [];
+    const resolvedIds = await resolveClinicIds(ctx, legacyIds, ids);
+    if (resolvedIds.length === 0) return [];
 
-    const memberships = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId!))
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("puesto"), PUESTO_FISIOTERAPEUTA),
-          q.eq(q.field("puesto"), PUESTO_ADMINISTRADOR),
-        ),
-      )
-      .collect();
-
-    const users = await Promise.all(
-      memberships.map(async (m) => {
-        const user = await ctx.db.get(m.userId);
-        if (!user) return null;
-        return { ...user, puesto: m.puesto };
-      }),
+    const allMemberships = await Promise.all(
+      resolvedIds.map((cid) =>
+        ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_clinicId", (q) => q.eq("clinicId", cid))
+          .collect(),
+      ),
     );
 
-    return users.filter((u): u is NonNullable<typeof u> => u !== null);
+    // Filtrar gestión y deduplicar por userId, preservando admin sobre fisio.
+    const byUserId = new Map<Id<"users">, number>();
+    for (const m of allMemberships.flat()) {
+      if (!tieneGestion(m.puesto)) continue;
+      const numericPuesto = puestoToNumber(m.puesto);
+      const existing = byUserId.get(m.userId);
+      if (!existing || numericPuesto > existing) {
+        byUserId.set(m.userId, numericPuesto);
+      }
+    }
+
+    const userEntries = Array.from(byUserId.entries());
+    const users = await Promise.all(
+      userEntries.map(([userId]) => ctx.db.get(userId)),
+    );
+
+    return users
+      .map((u, i) => (u ? { ...u, puesto: userEntries[i][1] } : null))
+      .filter((u): u is NonNullable<typeof u> => u !== null);
   },
 });

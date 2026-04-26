@@ -463,31 +463,14 @@ export class SelectorPacienteComponent implements OnInit {
 
     this.isLoading.set(true);
     try {
-      // Pedir pacientes por clínica en paralelo y deduplicar por _id
-      const allByClinic = await Promise.all(
-        cids.map((cid) =>
-          this.convex.query(api.users.queries.listPatientsByClinic, {
-            clinicLegacyId: cid,
-            limit: 200,
-          }),
-        ),
+      // El backend deduplica y devuelve los pacientes de TODAS las clínicas.
+      const result = await this.convex.query(
+        api.users.queries.listPatientsByClinic,
+        { clinicLegacyIds: cids, limit: 500 },
       );
 
-      const seen = new Set<string>();
-      const usuarios: Usuario[] = [];
-      for (const block of allByClinic) {
-        for (const u of block.results) {
-          if (seen.has(u._id)) continue;
-          seen.add(u._id);
-          usuarios.push(this.sessionService.transformarUsuarioConvex(u));
-        }
-      }
-
-      // Sort por nombre
-      usuarios.sort((a, b) =>
-        `${a.first_name} ${a.last_name}`.localeCompare(
-          `${b.first_name} ${b.last_name}`,
-        ),
+      const usuarios = (result?.results ?? []).map((u) =>
+        this.sessionService.transformarUsuarioConvex(u),
       );
 
       this.pacientes.set(usuarios);

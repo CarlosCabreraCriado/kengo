@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { internal } from "../_generated/api";
 import { getAuthenticatedUser } from "../_helpers/permissions";
+import { insertCommentNotificationFromSession } from "../_helpers/notifications";
 
 export const create = mutation({
   args: {
@@ -32,18 +32,8 @@ export const complete = mutation({
       completada: true,
     });
 
-    if (
-      args.observacionesGenerales &&
-      args.observacionesGenerales.trim().length > 0
-    ) {
-      const session = await ctx.db.get(args.sessionId);
-      if (session) {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.notifications.internal.generateNotifications,
-          { pacienteId: session.pacienteId },
-        );
-      }
+    if (args.observacionesGenerales?.trim()) {
+      await insertCommentNotificationFromSession(ctx, args.sessionId);
     }
   },
 });

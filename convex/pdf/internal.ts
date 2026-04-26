@@ -1,8 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-
-const PUESTO_FISIO = 1;
-const PUESTO_ADMIN = 4;
+import { tieneGestion } from "../_helpers/permissions";
 
 export const getPlanDataForPdf = internalQuery({
   args: { planId: v.id("plans"), requesterExternalId: v.string() },
@@ -53,9 +51,7 @@ export const getPlanDataForPdf = internalQuery({
       .query("clinicMemberships")
       .withIndex("by_userId", (q) => q.eq("userId", fisio._id))
       .collect();
-    const membershipFisio = memberships.find(
-      (m) => m.puesto === PUESTO_FISIO || m.puesto === PUESTO_ADMIN,
-    );
+    const membershipFisio = memberships.find((m) => tieneGestion(m.puesto));
     if (!membershipFisio) throw new Error("Fisio sin clínica asignada");
 
     const clinica = await ctx.db.get(membershipFisio.clinicId);

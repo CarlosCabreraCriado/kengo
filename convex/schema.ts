@@ -1,15 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
-const diaSemana = v.union(
-  v.literal("L"),
-  v.literal("M"),
-  v.literal("X"),
-  v.literal("J"),
-  v.literal("V"),
-  v.literal("S"),
-  v.literal("D"),
-);
+import { diaSemana } from "./_helpers/validators";
 
 export default defineSchema({
   // === USUARIOS ===
@@ -25,12 +16,26 @@ export default defineSchema({
     direccion: v.optional(v.string()),
     postal: v.optional(v.string()),
     numeroColegiado: v.optional(v.string()),
+    // Campos personales (consolidados desde la antigua tabla userDetails).
+    dni: v.optional(v.string()),
+    fechaNacimiento: v.optional(v.string()),
+    sexo: v.optional(v.string()),
     legacyDirectusId: v.optional(v.string()),
+    // Texto denormalizado (lower-cased) para búsqueda full-text. Se mantiene
+    // sincronizado en upsertFromAuth, updateProfile, updatePatient.
+    searchableText: v.optional(v.string()),
   })
     .index("by_externalId", ["externalId"])
     .index("by_email", ["email"])
-    .index("by_legacyDirectusId", ["legacyDirectusId"]),
+    .index("by_legacyDirectusId", ["legacyDirectusId"])
+    .searchIndex("search_users", {
+      searchField: "searchableText",
+    }),
 
+  // DEPRECADO: tabla mantenida para compatibilidad durante migración.
+  // Los nuevos datos se escriben directamente en `users`. Ejecutar la
+  // internal mutation `users.migration.migrateUserDetailsToUsers` para
+  // copiar los datos legacy y luego eliminar esta tabla.
   userDetails: defineTable({
     userId: v.id("users"),
     dni: v.optional(v.string()),
@@ -63,11 +68,18 @@ export default defineSchema({
     fileId: v.string(),
   }).index("by_clinicId", ["clinicId"]),
 
-  // puesto: 1=fisioterapeuta, 2=paciente, 4=administrador
+  // puesto: literal "fisio" | "paciente" | "admin" (números legacy 1/2/4
+  // se aceptan transitoriamente para no romper datos existentes; el cron
+  // de mantenimiento + migrateRolesToLiterals los convierte).
   clinicMemberships: defineTable({
     userId: v.id("users"),
     clinicId: v.id("clinics"),
-    puesto: v.number(),
+    puesto: v.union(
+      v.number(),
+      v.literal("fisio"),
+      v.literal("paciente"),
+      v.literal("admin"),
+    ),
   })
     .index("by_userId", ["userId"])
     .index("by_clinicId", ["clinicId"])
@@ -163,6 +175,10 @@ export default defineSchema({
     dolorEscala: v.optional(v.number()),
     esfuerzoEscala: v.optional(v.number()),
     notaPaciente: v.optional(v.string()),
+    // Denormalizado para evitar joins en listados (set en mutation create).
+    planId: v.optional(v.id("plans")),
+    tituloPlan: v.optional(v.string()),
+    nombreEjercicio: v.optional(v.string()),
   })
     .index("by_pacienteId_fecha", ["pacienteId", "fecha"])
     .index("by_planExerciseId", ["planExerciseId"])
@@ -205,6 +221,7 @@ export default defineSchema({
     diasSemana: v.optional(v.array(diaSemana)),
     instruccionesPaciente: v.optional(v.string()),
     notasFisio: v.optional(v.string()),
+    ejercicioNombre: v.optional(v.string()),
   }).index("by_routineId", ["routineId"]),
 
   // === CÓDIGOS DE ACCESO ===
@@ -229,7 +246,8 @@ export default defineSchema({
     clinicId: v.id("clinics"),
   })
     .index("by_clinicId", ["clinicId"])
-    .index("by_pacienteId_clinicId", ["pacienteId", "clinicId"]),
+    .index("by_pacienteId_clinicId", ["pacienteId", "clinicId"])
+    .index("by_fisioId_clinicId", ["fisioId", "clinicId"]),
 
   // === CUMPLIMIENTO DIARIO ===
   dailyCompliance: defineTable({
@@ -296,4 +314,13 @@ export default defineSchema({
     usado: v.boolean(),
     intentos_fallidos: v.number(),
   }).index("by_userId", ["userId"]),
+
+  // === MÉTRICAS POR CLÍNICA (agregación materializada) ===
+  // Recalculadas en el cron diario para acelerar el dashboard.
+  clinicMetrics: defineTable({
+    clinicId: v.id("clinics"),
+    pacientesActivos: v.number(),
+    adherenciaPromedio: v.number(),
+    actualizadoEn: v.string(),
+  }).index("by_clinicId", ["clinicId"]),
 });
