@@ -7,7 +7,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { rawAssetUrl } from '../../../core/utils/asset-url';
+import { rawAssetUrl, videoUrl } from '../../../core/utils/asset-url';
 
 import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -274,6 +274,10 @@ export class EjerciciosService {
   // ========= Helper de assets (Cloudflare R2 vía assetUrl) =========
   getAssetUrl(id?: string) {
     return id ? `${rawAssetUrl(id)}` : '';
+  }
+
+  getVideoUrl(id?: string) {
+    return id ? videoUrl(id) : '';
   }
 
   // ========= Favoritos (Convex) =========

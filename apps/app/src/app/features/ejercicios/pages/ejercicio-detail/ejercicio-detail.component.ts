@@ -142,6 +142,10 @@ export class EjercicioDetailComponent {
     return this.ejerciciosService.getAssetUrl(String(id));
   }
 
+  getVideoUrl(id?: number | string) {
+    return id ? this.ejerciciosService.getVideoUrl(String(id)) : '';
+  }
+
   // Metodos de UI
   toggleExpandido() {
     this.videoExpandido.update((v) => !v);

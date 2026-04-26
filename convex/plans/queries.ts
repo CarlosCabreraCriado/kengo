@@ -28,12 +28,31 @@ async function resolvePacienteId(
   return user?._id ?? fallbackUserId;
 }
 
-// Helper: load exercises for a plan, sorted by sort field
+// Helper: embed exercise data (nombre, descripción, portada, video) en un planExercise
+async function enrichPlanExercise(ctx: any, pe: any) {
+  const exercise = pe.exerciseId ? await ctx.db.get(pe.exerciseId) : null;
+  return {
+    ...pe,
+    ejercicio: exercise
+      ? {
+          _id: exercise._id,
+          legacyId: exercise.legacyId,
+          nombreEjercicio: exercise.nombreEjercicio,
+          descripcion: exercise.descripcion,
+          portada: exercise.portada,
+          video: exercise.video,
+        }
+      : null,
+  };
+}
+
+// Helper: load exercises for a plan, sorted by sort field, embebiendo datos del ejercicio
 async function loadPlanExercises(ctx: any, planId: any) {
-  return await ctx.db
+  const exercises = await ctx.db
     .query("planExercises")
     .withIndex("by_planId_sort", (q: any) => q.eq("planId", planId))
     .collect();
+  return await Promise.all(exercises.map((pe: any) => enrichPlanExercise(ctx, pe)));
 }
 
 // Helper: enrich plan with exercises array
@@ -223,31 +242,7 @@ export const listExercisesByPlanId = query({
     }
     if (!planId) return [];
 
-    const exercises = await ctx.db
-      .query("planExercises")
-      .withIndex("by_planId_sort", (q) => q.eq("planId", planId!))
-      .collect();
-
-    // Embeber datos del ejercicio (nombre, portada) para cada planExercise
-    const enriched = await Promise.all(
-      exercises.map(async (pe) => {
-        const exercise = pe.exerciseId ? await ctx.db.get(pe.exerciseId) : null;
-        return {
-          ...pe,
-          ejercicio: exercise
-            ? {
-                _id: exercise._id,
-                legacyId: exercise.legacyId,
-                nombreEjercicio: exercise.nombreEjercicio,
-                portada: exercise.portada,
-                video: exercise.video,
-              }
-            : null,
-        };
-      }),
-    );
-
-    return enriched;
+    return await loadPlanExercises(ctx, planId!);
   },
 });
 

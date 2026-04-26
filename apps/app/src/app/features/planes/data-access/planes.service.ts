@@ -365,8 +365,12 @@ export class PlanesService {
       sort: e.sort ?? 0,
       plan: e.planId,
       ejercicio: {
-        id_ejercicio: 0,
-        nombre_ejercicio: e.ejercicioNombre || '',
+        id_ejercicio: e.ejercicio?.legacyId ?? 0,
+        nombre_ejercicio:
+          e.ejercicio?.nombreEjercicio || e.ejercicioNombre || '',
+        descripcion: e.ejercicio?.descripcion ?? '',
+        video: e.ejercicio?.video ?? '',
+        portada: e.ejercicio?.portada ?? '',
         _convexId: e.exerciseId,
       } as unknown as Ejercicio,
       series: e.series,
