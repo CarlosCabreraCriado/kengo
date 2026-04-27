@@ -1,4 +1,5 @@
 import { TipoCumplimiento } from '../../../../types/global';
+import { formatDate } from '../../../shared/utils/format-date';
 
 /** Color tailwind para una escala de dolor 0-10. */
 export function getDolorColor(dolor: number | null): string {
@@ -40,30 +41,12 @@ export function getPlanStatusClass(plan: {
   return 'status-fallido';
 }
 
-/** Formatea una fecha ISO (yyyy-mm-dd) en label largo en español:
- *  "Hoy" / "Sáb 27 abril (Ayer)" / "Mar 4 mayo 2027". */
+/** Formatea una fecha ISO en label largo en español. Alias de `formatDate(fecha)`. */
 export function formatearFecha(fecha: string): string {
-  const d = new Date(fecha);
-  const hoy = new Date();
-  const ayer = new Date(hoy);
-  ayer.setDate(ayer.getDate() - 1);
-
-  if (d.toDateString() === hoy.toDateString()) return 'Hoy';
-  const esAyer = d.toDateString() === ayer.toDateString();
-
-  const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' });
-  const day = d.getDate();
-  const month = d.toLocaleDateString('es-ES', { month: 'long' });
-  const year =
-    d.getFullYear() !== hoy.getFullYear() ? ` ${d.getFullYear()}` : '';
-  const label = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}${year}`;
-  return esAyer ? `${label} (Ayer)` : label;
+  return formatDate(fecha, 'long');
 }
 
-/** Formato corto en español: "27 abr". */
+/** Formato corto en español ("27 abr"). Alias de `formatDate(fecha, 'short')`. */
 export function formatearFechaComentario(fecha: string): string {
-  const d = new Date(fecha);
-  const day = d.getDate();
-  const month = d.toLocaleDateString('es-ES', { month: 'short' });
-  return `${day} ${month}`;
+  return formatDate(fecha, 'short');
 }
