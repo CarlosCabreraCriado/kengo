@@ -29,11 +29,11 @@ interface DialogData {
 interface TokenInfo {
   id: string;
   url: string;
-  usos_actuales: number;
-  usos_maximos: number | null;
-  ultimo_uso: string | null;
+  usosActuales: number;
+  usosMaximos: number | null;
+  ultimoUso: string | null;
   activo: boolean;
-  date_created: string;
+  dateCreated: string;
 }
 
 @Component({
@@ -88,11 +88,11 @@ export class GestionAccesoDialogComponent implements OnInit {
         this.tokenInfo.set({
           id: tokenActivo.id,
           url: tokenActivo.url,
-          usos_actuales: tokenActivo.usos_actuales,
-          usos_maximos: tokenActivo.usos_maximos,
-          ultimo_uso: tokenActivo.ultimo_uso,
+          usosActuales: tokenActivo.usosActuales,
+          usosMaximos: tokenActivo.usosMaximos,
+          ultimoUso: tokenActivo.ultimoUso,
           activo: tokenActivo.activo,
-          date_created: tokenActivo.date_created,
+          dateCreated: tokenActivo.dateCreated,
         });
 
         setTimeout(() => this.generarQR(tokenActivo.url), 100);
@@ -116,11 +116,11 @@ export class GestionAccesoDialogComponent implements OnInit {
       this.tokenInfo.set({
         id: response.id,
         url: response.url,
-        usos_actuales: 0,
-        usos_maximos: null,
-        ultimo_uso: null,
+        usosActuales: 0,
+        usosMaximos: null,
+        ultimoUso: null,
         activo: true,
-        date_created: new Date().toISOString(),
+        dateCreated: new Date().toISOString(),
       });
 
       setTimeout(() => this.generarQR(response.url), 100);

@@ -29,15 +29,14 @@ export const getPlanDataForPdf = internalQuery({
         const ex = await ctx.db.get(pe.exerciseId);
         return {
           id: pe._id as string,
-          nombre_ejercicio:
-            pe.ejercicioNombre ?? ex?.nombreEjercicio ?? "Ejercicio",
+          nombre: ex?.nombreEjercicio ?? "Ejercicio",
           portada: ex?.portada,
           series: pe.series,
           repeticiones: pe.repeticiones,
-          duracion_seg: pe.duracionSeg,
-          descanso_seg: pe.descansoSeg,
-          dias_semana: pe.diasSemana ?? null,
-          instrucciones_paciente: pe.instruccionesPaciente,
+          duracionSeg: pe.duracionSeg,
+          descansoSeg: pe.descansoSeg,
+          diasSemana: pe.diasSemana ?? null,
+          instruccionesPaciente: pe.instruccionesPaciente,
         };
       }),
     );
@@ -63,8 +62,8 @@ export const getPlanDataForPdf = internalQuery({
         id: plan._id as string,
         titulo: plan.titulo,
         descripcion: plan.descripcion,
-        fecha_inicio: plan.fechaInicio,
-        fecha_fin: plan.fechaFin,
+        fechaInicio: plan.fechaInicio,
+        fechaFin: plan.fechaFin,
       },
       ejercicios,
       clinica: {
@@ -74,8 +73,8 @@ export const getPlanDataForPdf = internalQuery({
         telefono: clinica.telefono,
         email: clinica.email,
         logo: clinica.logo,
-        color_primario: clinica.colorPrimario,
-        color_secundario: clinica.colorSecundario,
+        colorPrimario: clinica.colorPrimario,
+        colorSecundario: clinica.colorSecundario,
       },
       paciente: {
         id: paciente._id as string,

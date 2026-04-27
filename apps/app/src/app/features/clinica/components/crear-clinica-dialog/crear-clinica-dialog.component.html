@@ -105,11 +105,11 @@
               type="button"
               class="color-preset"
               [style.background-color]="color"
-              [class.active]="form.value.color_primario === color"
+              [class.active]="form.value.colorPrimario === color"
               (click)="selectColor(color)"
               [title]="color"
             >
-              @if (form.value.color_primario === color) {
+              @if (form.value.colorPrimario === color) {
                 <span class="material-symbols-outlined check-icon">check</span>
               }
             </button>

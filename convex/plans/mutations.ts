@@ -34,7 +34,6 @@ async function insertPlanExercises(
   }>,
 ) {
   for (const ej of ejercicios) {
-    const exerciseDoc = await ctx.db.get(ej.exerciseId);
     await ctx.db.insert("planExercises", {
       planId,
       exerciseId: ej.exerciseId,
@@ -47,7 +46,6 @@ async function insertPlanExercises(
       diasSemana: ej.diasSemana,
       instruccionesPaciente: ej.instruccionesPaciente,
       notasFisio: ej.notasFisio,
-      ejercicioNombre: exerciseDoc?.nombreEjercicio,
     });
   }
 }
@@ -90,8 +88,6 @@ export const create = mutation({
       pacienteId: args.pacienteId,
       fisioId: fisio._id,
       version: 1,
-      pacienteNombre: `${paciente.firstName} ${paciente.lastName}`,
-      fisioNombre: `${fisio.firstName} ${fisio.lastName}`,
     });
 
     await insertPlanExercises(ctx, planId, args.ejercicios);
@@ -113,6 +109,15 @@ export const updateEstado = mutation({
   },
   handler: async (ctx, args) => {
     await getAuthenticatedUser(ctx);
+    if (args.estado === "activo") {
+      const plan = await ctx.db.get(args.planId);
+      if (!plan) throw new Error("Plan no encontrado");
+      if (!plan.fechaInicio || !plan.fechaFin) {
+        throw new Error(
+          "Un plan activo requiere fechaInicio y fechaFin definidas.",
+        );
+      }
+    }
     await ctx.db.patch(args.planId, { estado: args.estado });
   },
 });
@@ -130,13 +135,13 @@ async function planHasActivity(
       .collect());
 
   for (const ex of items) {
-    const hasRecord = await ctx.db
-      .query("planRecords")
+    const hasExecution = await ctx.db
+      .query("exerciseExecutions")
       .withIndex("by_planExerciseId", (q: any) =>
         q.eq("planExerciseId", ex._id),
       )
       .first();
-    if (hasRecord) return true;
+    if (hasExecution) return true;
   }
   return false;
 }
@@ -243,8 +248,6 @@ export const version = mutation({
       fisioId: user._id,
       version: (oldPlan.version ?? 1) + 1,
       planAnterior: args.oldPlanId,
-      pacienteNombre: oldPlan.pacienteNombre,
-      fisioNombre: `${user.firstName} ${user.lastName}`,
     });
 
     await insertPlanExercises(ctx, newPlanId, args.ejercicios);

@@ -98,7 +98,7 @@
               @if (item.ejercicio.portada) {
                 <img
                   [src]="getImageUrl(item.ejercicio.portada)"
-                  [alt]="item.ejercicio.nombre_ejercicio"
+                  [alt]="item.ejercicio.nombre"
                   loading="lazy"
                 />
               } @else {
@@ -110,7 +110,7 @@
 
             <!-- Exercise Info -->
             <div class="exercise-info">
-              <h3 class="exercise-name">{{ item.ejercicio.nombre_ejercicio }}</h3>
+              <h3 class="exercise-name">{{ item.ejercicio.nombre }}</h3>
               <div class="exercise-details">
                 @if (item.series && item.series > 1) {
                   <span class="detail-chip">
@@ -118,10 +118,10 @@
                     {{ item.series }} series
                   </span>
                 }
-                @if (item.duracion_seg) {
+                @if (item.duracionSeg) {
                   <span class="detail-chip">
                     <span class="material-symbols-outlined">timer</span>
-                    {{ formatDuracion(item.duracion_seg) }}
+                    {{ formatDuracion(item.duracionSeg) }}
                   </span>
                 } @else {
                   <span class="detail-chip">

@@ -150,7 +150,9 @@ export const getById = query({
 
     const exercises = await ctx.db
       .query("routineExercises")
-      .withIndex("by_routineId", (q) => q.eq("routineId", args.routineId))
+      .withIndex("by_routineId_sort", (q) =>
+        q.eq("routineId", args.routineId),
+      )
       .collect();
 
     const enrichedExercises = await enrichRoutineExercises(ctx, exercises);

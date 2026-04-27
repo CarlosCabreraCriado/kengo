@@ -145,18 +145,18 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   }
 
   isDia(it: EjercicioPlan, d: DiaSemana) {
-    return it.dias_semana?.includes(d);
+    return it.diasSemana?.includes(d);
   }
 
   toggleDia(i: number, d: DiaSemana) {
     const it = this.svc.items()[i];
-    const set = new Set(it.dias_semana || []);
+    const set = new Set(it.diasSemana || []);
     if (set.has(d)) {
       set.delete(d);
     } else {
       set.add(d);
     }
-    this.svc.updateItem(i, { dias_semana: Array.from(set) as DiaSemana[] });
+    this.svc.updateItem(i, { diasSemana: Array.from(set) as DiaSemana[] });
   }
 
   removeEjercicio(ejercicioId: string) {

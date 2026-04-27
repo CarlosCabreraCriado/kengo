@@ -148,7 +148,7 @@ export class PlanDetailComponent implements OnInit {
   editarPlan() {
     const p = this.plan();
     if (p) {
-      this.router.navigate(['/planes', p.id_plan, 'editar']);
+      this.router.navigate(['/planes', p.id, 'editar']);
     }
   }
 

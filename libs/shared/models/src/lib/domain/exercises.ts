@@ -6,25 +6,25 @@
 import { UUID } from '../types/common';
 
 export interface Ejercicio {
-  id_ejercicio: string;
+  id: string;
   categoria: string[];
-  nombre_ejercicio: string;
+  nombre: string;
   descripcion: string;
-  repeticiones_defecto: string;
-  series_defecto: string;
+  repeticionesDefecto?: number;
+  seriesDefecto?: number;
   video: string;
   portada: string;
-  video_url?: string;
-  portada_url?: string;
+  videoUrl?: string;
+  portadaUrl?: string;
 }
 
 export interface Categoria {
-  id_categoria: string;
-  nombre_categoria: string;
+  id: string;
+  nombre: string;
 }
 
 export interface EjercicioFavorito {
   id: string;
-  id_usuario: UUID;
-  id_ejercicio: string;
+  userId: UUID;
+  ejercicioId: string;
 }

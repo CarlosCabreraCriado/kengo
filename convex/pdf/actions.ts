@@ -18,14 +18,14 @@ type DiaSemana = "L" | "M" | "X" | "J" | "V" | "S" | "D";
 
 interface EjercicioPdf {
   id: string;
-  nombre_ejercicio: string;
+  nombre: string;
   portada?: string;
   series?: number;
   repeticiones?: number;
-  duracion_seg?: number;
-  descanso_seg?: number;
-  dias_semana?: DiaSemana[] | null;
-  instrucciones_paciente?: string;
+  duracionSeg?: number;
+  descansoSeg?: number;
+  diasSemana?: DiaSemana[] | null;
+  instruccionesPaciente?: string;
 }
 
 interface PlanPdfData {
@@ -33,8 +33,8 @@ interface PlanPdfData {
     id: string;
     titulo: string;
     descripcion?: string;
-    fecha_inicio?: string;
-    fecha_fin?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
   };
   ejercicios: EjercicioPdf[];
   clinica: {
@@ -44,8 +44,8 @@ interface PlanPdfData {
     telefono?: string;
     email?: string;
     logo?: string;
-    color_primario?: string;
-    color_secundario?: string;
+    colorPrimario?: string;
+    colorSecundario?: string;
   };
   paciente: {
     id: string;
@@ -221,8 +221,8 @@ function renderPlanInfoBox(
     });
   }
 
-  const fechaInicio = formatDate(data.plan.fecha_inicio);
-  const fechaFin = formatDate(data.plan.fecha_fin);
+  const fechaInicio = formatDate(data.plan.fechaInicio);
+  const fechaFin = formatDate(data.plan.fechaFin);
   doc.fillColor("#6b7280").fontSize(9);
   doc.text(
     `Periodo: ${fechaInicio} - ${fechaFin}`,
@@ -302,8 +302,8 @@ function renderPersonasRow(
 function calcularAlturaEjercicio(ejercicio: EjercicioPdf): number {
   const IMAGE_HEIGHT = 60;
   let height = ejercicio.portada ? IMAGE_HEIGHT + 20 : 60;
-  if (ejercicio.instrucciones_paciente) {
-    height += 20 + Math.ceil(ejercicio.instrucciones_paciente.length / 80) * 12;
+  if (ejercicio.instruccionesPaciente) {
+    height += 20 + Math.ceil(ejercicio.instruccionesPaciente.length / 80) * 12;
   }
   return Math.max(height, ejercicio.portada ? IMAGE_HEIGHT + 30 : 60);
 }
@@ -373,7 +373,7 @@ function renderEjercicioCard(
   }
 
   doc.fillColor(colorSecundario).fontSize(12);
-  doc.text(ejercicio.nombre_ejercicio, contentStartX, startY + 10, {
+  doc.text(ejercicio.nombre, contentStartX, startY + 10, {
     width: contentWidth,
     continued: false,
   });
@@ -382,9 +382,9 @@ function renderEjercicioCard(
   const detalles: string[] = [];
   if (ejercicio.series) detalles.push(`${ejercicio.series} series`);
   if (ejercicio.repeticiones) detalles.push(`${ejercicio.repeticiones} reps`);
-  if (ejercicio.duracion_seg) detalles.push(`${ejercicio.duracion_seg}s`);
-  if (ejercicio.descanso_seg)
-    detalles.push(`${ejercicio.descanso_seg}s descanso`);
+  if (ejercicio.duracionSeg) detalles.push(`${ejercicio.duracionSeg}s`);
+  if (ejercicio.descansoSeg)
+    detalles.push(`${ejercicio.descansoSeg}s descanso`);
 
   let detailX = contentStartX;
   const detailY = startY + 28;
@@ -401,21 +401,21 @@ function renderEjercicioCard(
     detailX += textWidth + 5;
   });
 
-  if (ejercicio.dias_semana && ejercicio.dias_semana.length > 0) {
+  if (ejercicio.diasSemana && ejercicio.diasSemana.length > 0) {
     doc.fillColor("#6b7280").fontSize(9);
     doc.text(
-      `Dias: ${ejercicio.dias_semana.join(", ")}`,
+      `Dias: ${ejercicio.diasSemana.join(", ")}`,
       contentStartX,
       detailY + 20,
     );
   }
 
-  if (ejercicio.instrucciones_paciente) {
+  if (ejercicio.instruccionesPaciente) {
     const instrY = imageLoaded ? startY + IMAGE_SIZE + 15 : startY + 55;
     doc.fillColor("#059669").fontSize(8);
     doc.text("Instrucciones:", MARGIN + 10, instrY);
     doc.fillColor("#374151").fontSize(9);
-    doc.text(ejercicio.instrucciones_paciente, MARGIN + 10, instrY + 12, {
+    doc.text(ejercicio.instruccionesPaciente, MARGIN + 10, instrY + 12, {
       width: CONTENT_WIDTH - 20,
       lineGap: 2,
     });
@@ -545,8 +545,8 @@ async function buildPdfBuffer(data: PlanPdfData): Promise<Buffer> {
   const stream = new PassThrough();
   doc.pipe(stream);
 
-  const colorPrimario = data.clinica.color_primario || "#2563eb";
-  const colorSecundario = data.clinica.color_secundario || "#1e40af";
+  const colorPrimario = data.clinica.colorPrimario || "#2563eb";
+  const colorSecundario = data.clinica.colorSecundario || "#1e40af";
   const colorFondoClaro = lightenColor(colorPrimario, 0.92);
 
   const [logoBuffer, ...ejercicioBuffers] = await Promise.all([

@@ -20,6 +20,7 @@ import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { ComentariosPacienteService } from '../../data-access/comentarios-paciente.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
+import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 
@@ -54,7 +55,7 @@ interface SesionAgrupada {
   totalComentarios: number;
   tipo: TipoCumplimiento;
   ejerciciosEsperados: number;
-  planes: { plan_id: string; titulo: string; esperados: number; completados: number }[];
+  planes: { planId: string; titulo: string; esperados: number; completados: number }[];
 }
 
 interface EstadisticasPaciente {
@@ -91,6 +92,7 @@ export class PacienteDetailComponent implements OnInit {
   private cumplimientoService = inject(CumplimientoService);
   private comentariosService = inject(ComentariosPacienteService);
   private asignacionesService = inject(AsignacionesService);
+  private clinicasService = inject(ClinicasService);
   private convex = inject(ConvexService);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
@@ -146,7 +148,7 @@ export class PacienteDetailComponent implements OnInit {
 
   // Computed
   readonly idsClinicas = computed(() => {
-    return this.sessionService.usuario()?.clinicas.map((c) => c.id_clinica) || [];
+    return this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) || [];
   });
 
   readonly isCustomRange = computed(() => {
@@ -227,8 +229,8 @@ export class PacienteDetailComponent implements OnInit {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       const planesCorregidos = planes.map(plan => {
-        if (plan.estado === 'activo' && plan.fecha_fin) {
-          const fechaFin = new Date(plan.fecha_fin);
+        if (plan.estado === 'activo' && plan.fechaFin) {
+          const fechaFin = new Date(plan.fechaFin);
           fechaFin.setHours(0, 0, 0, 0);
           if (fechaFin < hoy) {
             return { ...plan, estado: 'completado' as const };
@@ -266,24 +268,24 @@ export class PacienteDetailComponent implements OnInit {
       // Construir sesiones agrupadas fusionando cumplimiento + registros
       const sesiones: SesionAgrupada[] = dias.map(dia => {
         const regs = registrosPorFecha.get(dia.fecha) || [];
-        const dolores = regs.filter(r => r.dolor_escala != null).map(r => r.dolor_escala!);
+        const dolores = regs.filter(r => r.dolorEscala != null).map(r => r.dolorEscala!);
         const promedioDolor = dolores.length > 0
           ? Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) / 10
-          : dia.dolor_promedio;
+          : dia.dolorPromedio;
         const comentarios = regs
-          .filter(r => r.nota_paciente && r.nota_paciente.trim().length > 0)
-          .map(r => ({ texto: r.nota_paciente!, idRegistro: r.id_registro }));
+          .filter(r => r.notaPaciente && r.notaPaciente.trim().length > 0)
+          .map(r => ({ texto: r.notaPaciente!, idRegistro: r.id }));
 
         return {
           fecha: dia.fecha,
           fechaFormateada: this.formatearFecha(dia.fecha),
           registros: regs,
-          totalEjercicios: dia.ejercicios_completados,
+          totalEjercicios: dia.ejerciciosCompletados,
           promedioDolorValue: promedioDolor,
           comentarios,
           totalComentarios: comentarios.length,
           tipo: dia.tipo,
-          ejerciciosEsperados: dia.ejercicios_esperados,
+          ejerciciosEsperados: dia.ejerciciosEsperados,
           planes: dia.planes.filter(p => p.esperados > 0),
         };
       });
@@ -315,8 +317,8 @@ export class PacienteDetailComponent implements OnInit {
       const adherenciaSemanal = this.calcularAdherenciaSemanalCumplimiento(dias);
 
       this.estadisticas.set({
-        totalSesiones: resumen.dias_completados + resumen.dias_parciales,
-        adherenciaGeneral: resumen.adherencia_real,
+        totalSesiones: resumen.diasCompletados + resumen.diasParciales,
+        adherenciaGeneral: resumen.adherenciaReal,
         promedioDolorGeneral,
         diasDesdeUltimaSesion,
         rachaActual,
@@ -361,17 +363,16 @@ export class PacienteDetailComponent implements OnInit {
       notaPaciente?: string;
     }>;
 
-    // Mapear el shape Convex (camelCase) al shape RegistroEjercicioRecord (snake_case) que el resto del componente espera.
     return (records ?? []).map((r) => ({
-      id_registro: r._id,
-      plan_item: r.planExerciseId,
-      paciente: r.pacienteId,
-      fecha_hora: r.fechaHora,
+      id: r._id,
+      planItemId: r.planExerciseId,
+      pacienteId: r.pacienteId,
+      fechaHora: r.fechaHora,
       completado: r.completado,
-      repeticiones_realizadas: r.repeticionesRealizadas,
-      duracion_real_seg: r.duracionRealSeg,
-      dolor_escala: r.dolorEscala,
-      nota_paciente: r.notaPaciente,
+      repeticionesRealizadas: r.repeticionesRealizadas,
+      duracionRealSeg: r.duracionRealSeg,
+      dolorEscala: r.dolorEscala,
+      notaPaciente: r.notaPaciente,
     }));
   }
 
@@ -380,7 +381,7 @@ export class PacienteDetailComponent implements OnInit {
   ): Map<string, RegistroEjercicioRecord[]> {
     const grupos = new Map<string, RegistroEjercicioRecord[]>();
     for (const reg of registros) {
-      const fecha = reg.fecha_hora.split('T')[0];
+      const fecha = reg.fechaHora.split('T')[0];
       if (!grupos.has(fecha)) {
         grupos.set(fecha, []);
       }
@@ -490,7 +491,7 @@ export class PacienteDetailComponent implements OnInit {
 
     // Optimistic update
     this.comentarios.update(list =>
-      list.map(c => c.id === comentario.id ? { ...c, revisada: true, fecha_revision: new Date().toISOString() } : c)
+      list.map(c => c.id === comentario.id ? { ...c, revisada: true, fechaRevision: new Date().toISOString() } : c)
     );
     this.comentariosPendientes.update(n => Math.max(0, n - 1));
 
@@ -500,7 +501,7 @@ export class PacienteDetailComponent implements OnInit {
       console.error('Error marcando comentario como revisado:', err);
       // Revert on error
       this.comentarios.update(list =>
-        list.map(c => c.id === comentario.id ? { ...c, revisada: false, fecha_revision: null } : c)
+        list.map(c => c.id === comentario.id ? { ...c, revisada: false, fechaRevision: null } : c)
       );
       this.comentariosPendientes.update(n => n + 1);
     }
@@ -515,7 +516,7 @@ export class PacienteDetailComponent implements OnInit {
 
     // Optimistic update
     this.comentarios.update(list =>
-      list.map(c => ({ ...c, revisada: true, fecha_revision: c.fecha_revision || new Date().toISOString() }))
+      list.map(c => ({ ...c, revisada: true, fechaRevision: c.fechaRevision || new Date().toISOString() }))
     );
     this.comentariosPendientes.set(0);
 
@@ -531,7 +532,7 @@ export class PacienteDetailComponent implements OnInit {
 
   buscarNotificacion(idRegistro: number | string): NotificacionFisio | undefined {
     const key = String(idRegistro);
-    return this.comentarios().find(n => n.id_registro !== null && String(n.id_registro) === key);
+    return this.comentarios().find(n => n.id !== null && String(n.id) === key);
   }
 
   formatearFechaComentario(fecha: string): string {
@@ -560,8 +561,12 @@ export class PacienteDetailComponent implements OnInit {
   getClinicaNombre(): string | null {
     const p = this.paciente();
     if (!p?.clinicas || p.clinicas.length === 0) return null;
-    const clinica = p.clinicas[0] as any;
-    return clinica?.id_clinica?.nombre || null;
+    const clinicId = p.clinicas[0].clinicId;
+    const clinica = this.clinicasService
+      .misClinicasRes
+      .value()
+      ?.find((c) => c.id === clinicId);
+    return clinica?.nombre ?? null;
   }
 
   formatearFecha(fecha: string): string {
@@ -618,7 +623,7 @@ export class PacienteDetailComponent implements OnInit {
     if (sesion.totalComentarios > 0) return true;
     // Session-level observations from notifications
     return this.comentarios().some(c =>
-      c.id_sesion !== null && c.fecha_registro.split('T')[0] === sesion.fecha
+      c.sesionId !== null && c.fechaRegistro.split('T')[0] === sesion.fecha
     );
   }
 
@@ -756,11 +761,11 @@ export class PacienteDetailComponent implements OnInit {
   }
 
   verPlan(plan: Plan) {
-    this.router.navigate(['/planes', plan.id_plan]);
+    this.router.navigate(['/planes', plan.id]);
   }
 
   editarPlan(plan: Plan) {
-    this.router.navigate(['/planes', plan.id_plan, 'editar']);
+    this.router.navigate(['/planes', plan.id, 'editar']);
   }
 
   verSesion(sesion: SesionAgrupada) {
@@ -772,7 +777,7 @@ export class PacienteDetailComponent implements OnInit {
 
   irASesionComentario(comentario: NotificacionFisio) {
     const pacienteId = this.route.snapshot.params['id'];
-    const fecha = comentario.fecha_registro.split('T')[0];
+    const fecha = comentario.fechaRegistro.split('T')[0];
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', fecha]);
   }
 
@@ -790,11 +795,11 @@ export class PacienteDetailComponent implements OnInit {
   async descargarInforme(plan: Plan) {
     if (this.descargandoInforme()) return;
 
-    this.descargandoInforme.set(plan.id_plan);
+    this.descargandoInforme.set(plan.id);
 
     try {
       const res = await this.convex.action(api.pdf.actions.generatePlanPdf, {
-        planId: plan.id_plan as any,
+        planId: plan.id as any,
       });
       if (!res?.url) throw new Error('No se pudo generar el PDF');
 

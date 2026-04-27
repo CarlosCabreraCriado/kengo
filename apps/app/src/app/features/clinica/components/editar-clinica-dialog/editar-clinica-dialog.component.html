@@ -185,11 +185,11 @@
                 type="button"
                 class="color-preset"
                 [style.background-color]="color"
-                [class.active]="form.value.color_primario === color"
+                [class.active]="form.value.colorPrimario === color"
                 (click)="selectColor(color)"
                 [title]="color"
               >
-                @if (form.value.color_primario === color) {
+                @if (form.value.colorPrimario === color) {
                   <span class="material-symbols-outlined check-icon">check</span>
                 }
               </button>
@@ -203,20 +203,20 @@
               <button
                 type="button"
                 class="preview-button"
-                [style.background]="'linear-gradient(135deg, ' + form.value.color_primario + ', ' + getDarkerColor(form.value.color_primario) + ')'"
+                [style.background]="'linear-gradient(135deg, ' + form.value.colorPrimario + ', ' + getDarkerColor(form.value.colorPrimario) + ')'"
               >
                 Botón
               </button>
               <span
                 class="preview-badge"
-                [style.background-color]="form.value.color_primario + '20'"
-                [style.color]="form.value.color_primario"
+                [style.background-color]="form.value.colorPrimario + '20'"
+                [style.color]="form.value.colorPrimario"
               >
                 Badge
               </span>
               <span
                 class="preview-icon"
-                [style.color]="form.value.color_primario"
+                [style.color]="form.value.colorPrimario"
               >
                 <span class="material-symbols-outlined icon-filled">favorite</span>
               </span>

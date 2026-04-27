@@ -3,8 +3,16 @@ import { mutation } from "../_generated/server";
 import {
   getAuthenticatedUser,
   checkClinicPermission,
-  PUESTO_ADMINISTRADOR,
 } from "../_helpers/permissions";
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+function assertHexColor(value: string | undefined, field: string) {
+  if (value === undefined) return;
+  if (!HEX_COLOR.test(value)) {
+    throw new Error(`${field} debe ser un color hex válido (#RRGGBB)`);
+  }
+}
 
 export const create = mutation({
   args: {
@@ -19,6 +27,8 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
+    assertHexColor(args.colorPrimario, "colorPrimario");
+    assertHexColor(args.colorSecundario, "colorSecundario");
 
     const clinicId = await ctx.db.insert("clinics", {
       nombre: args.nombre,
@@ -62,9 +72,9 @@ export const update = mutation({
   },
   handler: async (ctx, args): Promise<{ orphanedKeys: string[] }> => {
     const user = await getAuthenticatedUser(ctx);
-    await checkClinicPermission(ctx, user._id, args.clinicId, [
-      PUESTO_ADMINISTRADOR,
-    ]);
+    await checkClinicPermission(ctx, user._id, args.clinicId, ["admin"]);
+    assertHexColor(args.colorPrimario, "colorPrimario");
+    assertHexColor(args.colorSecundario, "colorSecundario");
 
     const current = await ctx.db.get(args.clinicId);
     if (!current) throw new Error("Clínica no encontrada");

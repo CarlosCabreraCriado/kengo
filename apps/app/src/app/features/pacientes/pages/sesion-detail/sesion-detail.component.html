@@ -110,9 +110,9 @@
         @if (grupos().length === 0) {
           @if (planesAgendados().length > 0) {
             <!-- Planes agendados no completados -->
-            @for (plan of planesAgendados(); track plan.plan_id; let pi = $index) {
+            @for (plan of planesAgendados(); track plan.planId; let pi = $index) {
               <section class="content-section failed-section animate-in" [style.--delay]="(0.1 + pi * 0.08) + 's'">
-                <header class="section-header clickable" (click)="verPlan(plan.plan_id)">
+                <header class="section-header clickable" (click)="verPlan(plan.planId)">
                   <div class="section-header-left">
                     <div class="section-icon section-icon-failed">
                       <span class="material-symbols-outlined">assignment_late</span>
@@ -156,8 +156,8 @@
                           @if (ej.repeticiones) {
                             <span class="param-tag">{{ ej.repeticiones }} reps</span>
                           }
-                          @if (ej.duracion_seg) {
-                            <span class="param-tag">{{ formatDuracion(ej.duracion_seg) }}</span>
+                          @if (ej.duracionSeg) {
+                            <span class="param-tag">{{ formatDuracion(ej.duracionSeg) }}</span>
                           }
                         </div>
                       </div>
@@ -200,14 +200,14 @@
               <span class="material-symbols-outlined text-zinc-400 text-lg">chevron_right</span>
             </header>
             <div class="section-content">
-              @for (reg of grupo.registros; track reg.id_registro) {
+              @for (reg of grupo.registros; track reg.id) {
                 <article class="registro-card">
                   <!-- Thumbnail -->
                   <div class="registro-thumbnail">
-                    @if (assetUrl(reg.plan_item.ejercicio.portada)) {
+                    @if (assetUrl(reg.planItemId.ejercicio.portada)) {
                       <img
-                        [src]="assetUrl(reg.plan_item.ejercicio.portada)"
-                        [alt]="reg.plan_item.ejercicio.nombre_ejercicio"
+                        [src]="assetUrl(reg.planItemId.ejercicio.portada)"
+                        [alt]="reg.planItemId.ejercicio.nombre"
                         class="thumbnail-img"
                         loading="lazy"
                       />
@@ -220,50 +220,50 @@
 
                   <!-- Info -->
                   <div class="registro-info">
-                    <h3 class="registro-nombre">{{ reg.plan_item.ejercicio.nombre_ejercicio }}</h3>
+                    <h3 class="registro-nombre">{{ reg.planItemId.ejercicio.nombre }}</h3>
 
                     <!-- Prescribed params -->
                     <div class="registro-params">
-                      @if (reg.plan_item.series) {
-                        <span class="param-tag">{{ reg.plan_item.series }} series</span>
+                      @if (reg.planItemId.series) {
+                        <span class="param-tag">{{ reg.planItemId.series }} series</span>
                       }
-                      @if (reg.plan_item.repeticiones) {
-                        <span class="param-tag">{{ reg.plan_item.repeticiones }} reps</span>
+                      @if (reg.planItemId.repeticiones) {
+                        <span class="param-tag">{{ reg.planItemId.repeticiones }} reps</span>
                       }
-                      @if (reg.plan_item.duracion_seg) {
-                        <span class="param-tag">{{ formatDuracion(reg.plan_item.duracion_seg) }}</span>
+                      @if (reg.planItemId.duracionSeg) {
+                        <span class="param-tag">{{ formatDuracion(reg.planItemId.duracionSeg) }}</span>
                       }
                     </div>
 
                     <!-- Realized values -->
                     <div class="registro-realizado">
-                      @if (reg.repeticiones_realizadas != null) {
+                      @if (reg.repeticionesRealizadas != null) {
                         <span class="realizado-tag">
                           <span class="material-symbols-outlined">replay</span>
-                          {{ reg.repeticiones_realizadas }} reps realizadas
+                          {{ reg.repeticionesRealizadas }} reps realizadas
                         </span>
                       }
-                      @if (reg.duracion_real_seg != null) {
+                      @if (reg.duracionRealSeg != null) {
                         <span class="realizado-tag">
                           <span class="material-symbols-outlined">timer</span>
-                          {{ formatDuracion(reg.duracion_real_seg) }}
+                          {{ formatDuracion(reg.duracionRealSeg) }}
                         </span>
                       }
                     </div>
 
                     <!-- Note -->
-                    @if (reg.nota_paciente?.trim()) {
+                    @if (reg.notaPaciente?.trim()) {
                       <div class="note-bubble">
                         <span class="material-symbols-outlined note-icon">format_quote</span>
-                        <span class="note-text">{{ reg.nota_paciente }}</span>
+                        <span class="note-text">{{ reg.notaPaciente }}</span>
                       </div>
                     }
                   </div>
 
                   <!-- Dolor Badge -->
-                  @if (reg.dolor_escala != null) {
-                    <div class="dolor-badge" [class]="getDolorBgClass(reg.dolor_escala)">
-                      <span class="dolor-value">{{ reg.dolor_escala }}</span>
+                  @if (reg.dolorEscala != null) {
+                    <div class="dolor-badge" [class]="getDolorBgClass(reg.dolorEscala)">
+                      <span class="dolor-value">{{ reg.dolorEscala }}</span>
                       <span class="dolor-label">/10</span>
                     </div>
                   }

@@ -18,7 +18,9 @@ export default defineSchema({
     numeroColegiado: v.optional(v.string()),
     dni: v.optional(v.string()),
     fechaNacimiento: v.optional(v.string()),
-    sexo: v.optional(v.string()),
+    sexo: v.optional(
+      v.union(v.literal("M"), v.literal("F"), v.literal("otro")),
+    ),
     // Texto denormalizado (lower-cased) para búsqueda full-text. Se mantiene
     // sincronizado en upsertFromAuth, updateProfile, updatePatient.
     searchableText: v.optional(v.string()),
@@ -67,8 +69,8 @@ export default defineSchema({
   exercises: defineTable({
     nombreEjercicio: v.string(),
     descripcion: v.optional(v.string()),
-    seriesDefecto: v.optional(v.string()),
-    repeticionesDefecto: v.optional(v.string()),
+    seriesDefecto: v.optional(v.number()),
+    repeticionesDefecto: v.optional(v.number()),
     video: v.optional(v.string()),
     portada: v.optional(v.string()),
   }).searchIndex("search_nombre", { searchField: "nombreEjercicio" }),
@@ -107,8 +109,6 @@ export default defineSchema({
     fisioId: v.id("users"),
     planAnterior: v.optional(v.id("plans")),
     version: v.number(),
-    pacienteNombre: v.optional(v.string()),
-    fisioNombre: v.optional(v.string()),
   })
     .index("by_fisioId", ["fisioId"])
     .index("by_pacienteId", ["pacienteId"])
@@ -128,7 +128,6 @@ export default defineSchema({
     diasSemana: v.optional(v.array(diaSemana)),
     instruccionesPaciente: v.optional(v.string()),
     notasFisio: v.optional(v.string()),
-    ejercicioNombre: v.optional(v.string()),
   })
     .index("by_planId", ["planId"])
     .index("by_planId_sort", ["planId", "sort"]),
@@ -374,8 +373,9 @@ export default defineSchema({
     diasSemana: v.optional(v.array(diaSemana)),
     instruccionesPaciente: v.optional(v.string()),
     notasFisio: v.optional(v.string()),
-    ejercicioNombre: v.optional(v.string()),
-  }).index("by_routineId", ["routineId"]),
+  })
+    .index("by_routineId", ["routineId"])
+    .index("by_routineId_sort", ["routineId", "sort"]),
 
   // === CÓDIGOS DE ACCESO ===
   accessCodes: defineTable({

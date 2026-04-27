@@ -65,9 +65,6 @@ export {
   CodigoAcceso,
   TipoCodigoAcceso,
   ValidacionCodigo,
-  PUESTO_FISIOTERAPEUTA,
-  PUESTO_PACIENTE,
-  PUESTO_ADMINISTRADOR,
   // Compliance
   TipoCumplimiento,
   CumplimientoDia,

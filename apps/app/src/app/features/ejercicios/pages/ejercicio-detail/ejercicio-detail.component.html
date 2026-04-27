@@ -82,7 +82,7 @@
         } @else if (ejercicio()?.portada) {
           <img
             [src]="getAssetUrl(ejercicio()?.portada || 0)"
-            alt="{{ ejercicio()?.nombre_ejercicio }}"
+            alt="{{ ejercicio()?.nombre }}"
             class="media-image"
           />
         } @else {
@@ -123,7 +123,7 @@
           <div class="exercise-content animate-content">
             <!-- Exercise Title -->
             <div class="exercise-header">
-              <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
+              <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre }}</h1>
             </div>
 
             @if (isFisio()) {
@@ -217,7 +217,7 @@
           @if (videoExpandido()) {
             <!-- Minimal info when expanded -->
             <div class="minimal-info">
-              <span class="minimal-title">{{ ejercicio()?.nombre_ejercicio }}</span>
+              <span class="minimal-title">{{ ejercicio()?.nombre }}</span>
             </div>
           }
 
@@ -284,7 +284,7 @@
         </button>
 
         <div class="desktop-header-title">
-          <h1 class="titulo-kengo">{{ ejercicio()?.nombre_ejercicio }}</h1>
+          <h1 class="titulo-kengo">{{ ejercicio()?.nombre }}</h1>
         </div>
       </header>
 
@@ -316,7 +316,7 @@
             } @else if (ejercicio()?.portada) {
               <img
                 [src]="getAssetUrl(ejercicio()?.portada || 0)"
-                alt="{{ ejercicio()?.nombre_ejercicio }}"
+                alt="{{ ejercicio()?.nombre }}"
                 class="media-image"
               />
             } @else {

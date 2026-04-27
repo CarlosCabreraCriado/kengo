@@ -14,11 +14,8 @@ import type {
   GenerarCodigoResponse,
   CodigoAcceso,
   TipoCodigoAcceso,
+  Puesto,
 } from '@kengo/shared-models';
-
-// Constantes de puestos
-const PUESTO_FISIO = 1;
-const PUESTO_ADMIN = 4;
 
 export interface UploadFileResult {
   success: boolean;
@@ -85,7 +82,7 @@ export class ClinicaGestionService {
           direccion: payload.direccion,
           postal: payload.postal,
           nif: payload.nif,
-          colorPrimario: payload.color_primario,
+          colorPrimario: payload.colorPrimario,
         },
       );
 
@@ -125,7 +122,7 @@ export class ClinicaGestionService {
           direccion: payload.direccion ?? undefined,
           postal: payload.postal ?? undefined,
           nif: payload.nif ?? undefined,
-          colorPrimario: payload.color_primario ?? undefined,
+          colorPrimario: payload.colorPrimario ?? undefined,
           logo: payload.logo ?? undefined,
           addImageKeys: payload.imagenes?.create,
           removeImageIds: payload.imagenes?.delete as
@@ -271,20 +268,20 @@ export class ClinicaGestionService {
   //  HELPERS DE PERMISOS
   // =========================
 
-  tienePuestoEnClinica(clinicaId: string, puestoId: number): boolean {
+  tienePuestoEnClinica(clinicaId: string, puesto: Puesto): boolean {
     const usuario = this.sessionService.usuario();
     if (!usuario) return false;
-    const clinica = usuario.clinicas.find((c) => c.id_clinica === clinicaId);
+    const clinica = usuario.clinicas.find((c) => c.clinicId === clinicaId);
     if (!clinica) return false;
-    return clinica.id_puesto === puestoId;
+    return clinica.puesto === puesto;
   }
 
   esAdminEnClinica(clinicaId: string): boolean {
-    return this.tienePuestoEnClinica(clinicaId, PUESTO_ADMIN);
+    return this.tienePuestoEnClinica(clinicaId, 'admin');
   }
 
   esFisioEnClinica(clinicaId: string): boolean {
-    return this.tienePuestoEnClinica(clinicaId, PUESTO_FISIO);
+    return this.tienePuestoEnClinica(clinicaId, 'fisio');
   }
 
   puedeGenerarCodigo(clinicaId: string, tipo: TipoCodigoAcceso): boolean {

@@ -136,21 +136,22 @@ Kengo migró recientemente de **Directus CMS** a **Convex** como backend princip
 - [x] `AsignacionesService` reescrito sin `resolveUserByLegacyId`
 - [x] `SessionService.transformarUsuarioConvex` adaptado (id = `_id`)
 
-### A.6 Frontend cleanup — eliminar tipos legacy del dominio ✅
-- [x] `libs/shared/models/.../domain/exercises.ts`: `id_ejercicio`, `id_categoria` → `string`
-- [x] `libs/shared/models/.../domain/plans.ts`: `id_plan`, `plan_item`, etc → `string`
-- [x] `libs/shared/models/.../domain/routines.ts`: `id_rutina`, `id`, `rutina` → `string`
-- [x] `libs/shared/models/.../domain/clinics.ts`: `id_clinica` → `string`
-- [x] `libs/shared/models/.../domain/users.ts`: `ClinicaUsuario.id_clinica` → `string`
-- [x] `libs/shared/models/.../domain/sessions.ts`: `planId`, `planItemId`, `registroId` → `string`
-- [x] `libs/shared/models/.../domain/compliance.ts`: `plan_id` → `string`
-- [x] `libs/shared/models/.../domain/dashboard.ts`: `id_plan` → `string`
-- [x] `libs/shared/models/.../domain/access-codes.ts`: `id` → `string`
-- [x] `libs/shared/models/.../domain/assignments.ts`: `id`, `idClinica` → `string`
-- [x] `libs/shared/models/.../payloads/*.ts`: actualizado a `string`
-- [x] `libs/shared/models/.../records/plans.record.ts`: actualizado a `string`
-- [x] `libs/shared/models/.../types/common.ts`: `ID = string` (era `string | number`)
-- [x] Adaptados ~30 componentes y servicios del frontend
+### A.6 Frontend cleanup — tipos del dominio en camelCase ✅ COMPLETADA
+- [x] `libs/shared/models/.../domain/exercises.ts`: `id_ejercicio→id`, `nombre_ejercicio→nombre`, `series_defecto→seriesDefecto`, `repeticiones_defecto→repeticionesDefecto`, `id_categoria→id`, `nombre_categoria→nombre`, `video_url→videoUrl`, `portada_url→portadaUrl`
+- [x] `libs/shared/models/.../domain/plans.ts`: `id_plan→id`, `fecha_inicio→fechaInicio`, `fecha_fin→fechaFin`, `date_created→dateCreated`, `plan_anterior→planAnterior`, `plan_item→planItemId`, `id_registro→id`, todos los campos de `RegistroEjercicio`, `EjercicioPlan` y `EjercicioPlanData` a camelCase
+- [x] `libs/shared/models/.../domain/routines.ts`: `id_rutina→id`, todos los campos de `EjercicioRutina` (`duracion_seg`, `descanso_seg`, etc.) a camelCase
+- [x] `libs/shared/models/.../domain/clinics.ts`: `id_clinica→id`, `color_primario→colorPrimario`, `color_secundario→colorSecundario`
+- [x] `libs/shared/models/.../domain/users.ts`: eliminado `interface Puesto { id_puesto, puesto }`, eliminadas constantes `PUESTO_FISIOTERAPEUTA = 1`, `PUESTO_PACIENTE = 2`, `PUESTO_ADMINISTRADOR = 4`. Sustituido por `type Puesto = 'fisio' | 'paciente' | 'admin'`. `ClinicaUsuario.id_clinica → clinicId`, `ClinicaUsuario.id_puesto` eliminado.
+- [x] `libs/shared/models/.../domain/dashboard.ts`: `pacientes_activos→pacientesActivos`, `adherencia_promedio→adherenciaPromedio`, `planes_por_vencer→planesPorVencer`, `id_plan→id`, `fecha_fin→fechaFin`, `paciente_nombre→pacienteNombre`, `paciente_id→pacienteId`
+- [x] `libs/shared/models/.../domain/compliance.ts`: `ejercicios_*→camelCase`, `dolor_promedio→dolorPromedio`, `plan_id→planId`, `dias_*→camelCase`, `adherencia_real→adherenciaReal`
+- [x] `libs/shared/models/.../domain/notifications.ts`: `id_clinica→clinicId`, `id_registro→registroId`, `id_sesion→sesionId`, `fecha_*→camelCase`, `titulo_plan→tituloPlan`, `emisor_*→emisor*` camelCase, `ruta_destino→rutaDestino`
+- [x] `libs/shared/models/.../payloads/clinics.payload.ts`: `color_primario→colorPrimario`, `id_clinica→clinicId`, `usos_maximos→usosMaximos`, `dias_expiracion→diasExpiracion`
+- [x] `libs/shared/models/.../payloads/assignments.payload.ts`: `id_clinica→clinicId`, `id_paciente→pacienteId`, `id_fisio→fisioId`
+- [x] `libs/shared/models/.../records/plans.record.ts`: `id_registro→id`, `paciente→pacienteId`
+- [x] `libs/shared/models/.../records/users.record.ts`: `ClinicaUsuarioRecord.id_clinica→clinicId`
+- [x] `libs/shared/models/.../records/exercises.record.ts`: tipos a camelCase, `id_ejercicio: number → id: string`
+- [x] Adaptados consumidores frontend: ~50 archivos en `apps/app/src/` (servicios + componentes + HTML templates + interfaces locales)
+- [x] Backend Convex propagando literales puros: `users.queries.me`, `clinicMemberships.queries`, `dashboard.queries`, `accessTokens.queries` actualizados
 
 ### A.7 Verificación Fase A ✅
 - [x] `npx convex deploy` exitoso, sin warnings de schema
@@ -162,51 +163,73 @@ Kengo migró recientemente de **Directus CMS** a **Convex** como backend princip
 
 ---
 
-## Fase B — N+1, validación y eliminación de desnormalizaciones
+## Fase B — N+1, validación y eliminación de desnormalizaciones ✅ COMPLETADA (parcial 4.1/4.2)
 
-> Objetivo: eliminar queries N+1, endurecer validación de schema, resolver nombres con batch-load. Estimado: 1 sprint (~5 días).
+> Resultado: queries N+1 refactorizadas con batchGet, denormalizaciones eliminadas con enriquecimiento al vuelo, validación hex y guard de fechas activos, índice `by_routineId_sort` añadido. TypeScript pasa con 0 errores en convex y app.
 
-### B.1 Helper `batchGet`
-- [ ] Crear `convex/_helpers/batchGet.ts` con función reutilizable
-- [ ] Documentar patrón de uso en comentario del helper
+### B.1 Helper `batchGet` ✅
+- [x] Creado `convex/_helpers/batchGet.ts` con `batchGet` y `batchGetMap`
+- [x] Documentado patrón en comentarios
 
-### B.2 Refactor queries N+1
-- [ ] Refactor `convex/sessions/queries.ts:30-129` (`getByPacienteAndDateWithExecutions`)
-- [ ] Refactor `convex/plans/queries.ts:186-191` (`getActiveForPatientToday`)
-- [ ] Refactor `convex/snapshots/queries.ts:54-62` (`getPatientMetrics`)
-- [ ] Refactor `convex/clinics/queries.ts:15-26` (`myClinicsList`)
-- [ ] Refactor `convex/assignments/queries.ts:12-22` (`listByClinic`)
-- [ ] Medir latencia p95 antes/después; objetivo: -50%
+### B.2 Refactor queries N+1 ✅
+- [x] Refactor `convex/sessions/queries.ts` `getByPacienteAndDateWithExecutions` (recolecta ids únicos y batch-load)
+- [x] Refactor `convex/plans/queries.ts` `getActiveForPatientToday` + `getActiveAndFuture` (helper `enrichPlans` batch)
+- [x] **Descartado**: `convex/snapshots/queries.ts:getPatientMetrics` ya estaba optimizado (consulta directa `patientMetricsSnapshot` con índice 3-field, no N+1)
+- [x] Refactor `convex/clinics/queries.ts` `myClinicsList` + `getMembers` (deduplicación + batchGetMap)
+- [x] Refactor `convex/assignments/queries.ts` `listByClinic` (single batchGetMap sobre union pacienteId+fisioId)
+- [ ] Medir latencia p95 antes/después: pendiente smoke real (sin usuarios el dataset es pequeño)
 
-### B.3 Eliminar campos denormalizados de nombres
-- [ ] Eliminar `plans.pacienteNombre`
-- [ ] Eliminar `plans.fisioNombre`
-- [ ] Eliminar `planExercises.ejercicioNombre`
-- [ ] Eliminar `routineExercises.ejercicioNombre`
-- [ ] Mantener `physioAlerts.pacienteNombre` (snapshot histórico — documentar)
-- [ ] Adaptar queries que devolvían estos campos para enriquecer vía `batchGet`
-- [ ] Eliminar sincronización manual en `users/mutations.ts` (búsquedas de "pacienteNombre")
-- [ ] Adaptar frontend para consumir nombres desde la respuesta enriquecida
+### B.3 Eliminar campos denormalizados de nombres ✅
+- [x] Eliminado `plans.pacienteNombre` y `plans.fisioNombre` del schema
+- [x] Eliminado `planExercises.ejercicioNombre`
+- [x] Eliminado `routineExercises.ejercicioNombre`
+- [x] Mantenido `physioAlerts.pacienteNombre` (snapshot histórico — comentario en schema)
+- [x] Adaptadas queries: `plans.queries.listByFisio/listByPaciente/getById/getActiveForPatientToday/getActiveAndFuture` enriquecen `pacienteNombre`/`fisioNombre` al vuelo vía `attachUserNames` + `batchGetMap`
+- [x] Adaptadas: `dashboard/queries.ts`, `pdf/internal.ts`, `executions/queries.ts` para no leer los campos denorm
+- [x] Eliminadas escrituras en `plans/mutations.ts` (create, version) y `routines/mutations.ts` (create, update, duplicate)
+- [x] **Bonus fix**: `plans/mutations.ts:planHasActivity` consultaba tabla legacy `planRecords` que no existe — corregido a `exerciseExecutions`
+- [x] No se requirió sincronización en `users/mutations.ts` (no existía)
+- [x] Frontend `planes.service.ts` sigue funcionando: las queries devuelven los nombres enriquecidos con la misma forma
 
-### B.4 Endurecer tipos en schema
-- [ ] Migrar datos: convertir `exercises.seriesDefecto` y `repeticionesDefecto` de string a number
-- [ ] Cambiar tipo en schema a `v.optional(v.number())`
-- [ ] Cambiar `users.sexo` a `v.optional(v.union(v.literal("M"), v.literal("F"), v.literal("otro")))`
-- [ ] Añadir validador de formato `#RRGGBB` para `clinics.colorPrimario` y `colorSecundario` en mutations
-- [ ] Añadir validación: si `plans.estado === "activo"`, `fechaInicio` y `fechaFin` requeridos en mutation
+### B.4 Endurecer tipos en schema ✅ COMPLETADA
+- [x] **4.3** Validador `#RRGGBB` añadido en `convex/clinics/mutations.ts` (helper `assertHexColor` aplicado en create/update)
+- [x] **4.4** Guard fechas requeridas: `plans.mutations.updateEstado` lanza si `estado === "activo"` sin `fechaInicio`/`fechaFin`
+- [x] **4.1** `exercises.seriesDefecto`/`repeticionesDefecto` ahora `v.optional(v.number())`. Doble deploy ejecutado: schema temporal `v.union(v.string(), v.number())` → migración `normalizeExerciseDefaults` ejecutada → schema final `v.optional(v.number())`. Frontend simplificado: `parseInt` eliminados en `plan-builder.service.ts` y `ejercicio-detail.component.ts`. Mappers leen number directo.
+- [x] **4.2** `users.sexo` ahora `v.optional(v.union(v.literal("M"), v.literal("F"), v.literal("otro")))`. Migración `normalizeUserSexo` ejecutada (37/37 skipped — ningún usuario tenía valores legacy). Sin impacto en frontend (campo no consumido).
+- [x] Scripts one-shot eliminados: `normalizeExerciseDefaults.ts`, `normalizeUserSexo.ts`.
 
-### B.5 Índices faltantes
-- [ ] Añadir `clinics.by_createdBy`
-- [ ] Añadir search index en `clinics.nombre`
-- [ ] Añadir `routineExercises.by_routineId_sort`
-- [ ] Evaluar si `physioAlerts.by_generadoPor` aporta; añadir si sí
-- [ ] Verificar performance de índices 3-field existentes (`patientMetricsSnapshot.by_clinicId_ventana_riskScore` etc.)
+### B.5 Índices ✅ (pragmático)
+- [x] Añadido `routineExercises.by_routineId_sort` y aplicado en `routines/queries.ts:getById`
+- [x] **Descartado** `clinics.by_createdBy`: sin consumer en el código (principio: no diseñar para hipótesis)
+- [x] **Descartado** search index en `clinics.nombre`: sin consumer
+- [x] **Descartado** `physioAlerts.by_generadoPor`: campo solo se escribe, nunca se filtra
+- [x] Índices 3-field existentes ya verificados durante refactor de queries
 
-### B.6 Verificación Fase B
-- [ ] Latencia p95 de las 5 queries críticas reducida ≥50%
-- [ ] Type-check y lint pasan
-- [ ] Smoke test manual completo
-- [ ] Verificar que editar perfil refleja cambios en planes/listados sin delay
+### Bonus — Residuos Fase A.6 abordados ✅
+- [x] Eliminadas constantes legacy `PUESTO_FISIOTERAPEUTA = 1`, `PUESTO_PACIENTE = 2`, `PUESTO_ADMINISTRADOR = 4` en `libs/shared/models/.../domain/users.ts` y `convex/_helpers/permissions.ts`
+- [x] Sustituidas por `type Puesto = 'fisio' | 'paciente' | 'admin'` (alineado con schema Convex)
+- [x] Eliminada `interface Puesto { id_puesto: number; puesto: string }` legacy
+- [x] `ClinicaUsuario.id_puesto` eliminado, queda solo `puesto: Puesto | null`
+- [x] `convex/users/queries.ts:me` y `clinicMemberships.queries.listByUser` propagan literales (sin `puestoToNumber`/`puestoToNombre`)
+- [x] Adaptados consumidores frontend: `session.service`, `admin.guard`, `add-paciente`, `pacientes-list`, `asignacion-responsable`, `inicio-paciente`, `miclinica`, `clinica-gestion.service`
+- [x] Adaptadas mutations Convex: `assignments`, `accessCodes`, `clinics` (literales en `checkClinicPermission`)
+
+### B.6 Verificación Fase B ✅
+- [x] Type-check Convex: 0 errores
+- [x] Type-check app frontend: 0 errores
+- [ ] Lint completo: pendiente `nx run app:lint`
+- [ ] Smoke test manual completo: pendiente
+- [ ] Convex deploy de producción: pendiente coordinación del usuario (no autorizado en sesión)
+- [ ] Editar perfil refleja cambios en planes/listados: pendiente smoke
+
+### Procedimiento de deploy pendiente (B.4.1, B.4.2)
+1. Para `exercises.seriesDefecto/repeticionesDefecto`:
+   - Cambiar schema temporalmente a `v.optional(v.union(v.string(), v.number()))`.
+   - `npx convex run migrations/normalizeExerciseDefaults:run --dryRun` y luego sin dryRun.
+   - Cambiar schema a `v.optional(v.number())` y desplegar.
+2. Para `users.sexo`:
+   - Mismo procedimiento con `migrations/normalizeUserSexo:run`.
+   - Schema final: `v.optional(v.union(v.literal("M"), v.literal("F"), v.literal("otro")))`.
 
 ---
 

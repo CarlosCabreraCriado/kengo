@@ -94,7 +94,7 @@ export class InicioFisioComponent {
 
   irANotificacion(n: NotificacionApp): void {
     this.notificacionesService.marcarRevisada(n);
-    this.router.navigate([n.ruta_destino]);
+    this.router.navigate([n.rutaDestino]);
   }
 
   irACrearPlan(): void {

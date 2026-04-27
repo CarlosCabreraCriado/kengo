@@ -26,11 +26,11 @@ export const listByUser = query({
         id: t._id as string,
         tokenPreview: `...${t.token.slice(-8)}`,
         url: buildUrl(t.token),
-        usos_actuales: t.usosActuales,
-        usos_maximos: t.usosMaximos ?? null,
-        fecha_expiracion: t.fechaExpiracion ?? null,
-        date_created: new Date(t._creationTime).toISOString(),
-        ultimo_uso: t.ultimoUso ?? null,
+        usosActuales: t.usosActuales,
+        usosMaximos: t.usosMaximos ?? null,
+        fechaExpiracion: t.fechaExpiracion ?? null,
+        dateCreated: new Date(t._creationTime).toISOString(),
+        ultimoUso: t.ultimoUso ?? null,
         activo: t.activo,
       }));
 

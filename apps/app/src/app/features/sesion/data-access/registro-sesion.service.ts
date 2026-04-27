@@ -108,7 +108,7 @@ export class RegistroSesionService {
 
   readonly esTipoTemporizador = computed(() => {
     const ej = this.ejercicioActual();
-    return ej?.duracion_seg !== undefined && ej.duracion_seg > 0;
+    return ej?.duracionSeg !== undefined && ej.duracionSeg > 0;
   });
 
   readonly tiempoTranscurrido = computed(() => {
@@ -147,7 +147,7 @@ export class RegistroSesionService {
       if (!planActivo) return null;
 
       // Cargar plan completo
-      const planCompleto = await this.planesService.getPlanById(planActivo.id_plan);
+      const planCompleto = await this.planesService.getPlanById(planActivo.id);
       if (planCompleto) {
         this.planActivo.set(planCompleto);
       }
@@ -182,7 +182,7 @@ export class RegistroSesionService {
         return false;
       }
 
-      // Filtrar ejercicios para hoy según dias_semana
+      // Filtrar ejercicios para hoy según diasSemana
       const ejerciciosHoy = this.filtrarEjerciciosHoy(plan.items);
       if (ejerciciosHoy.length === 0) {
         // Si no hay ejercicios para hoy, mostrar todos
@@ -257,7 +257,7 @@ export class RegistroSesionService {
 
     const serieActual = this.serieActual();
     const totalSeries = this.totalSeries();
-    const descanso = ejercicio.descanso_seg ?? 45;
+    const descanso = ejercicio.descansoSeg ?? 45;
 
     if (serieActual < totalSeries) {
       // Hay más series: ir a descanso entre series
@@ -338,12 +338,12 @@ export class RegistroSesionService {
 
     // Crear registro sin dolor (se añade al final en feedback-final)
     const registro: RegistroEjercicio = {
-      plan_item: planItemId,
-      paciente: userId,
-      fecha_hora: new Date().toISOString(),
+      planItemId: planItemId,
+      pacienteId: userId,
+      fechaHora: new Date().toISOString(),
       completado: true,
-      repeticiones_realizadas: ejercicio.repeticiones,
-      duracion_real_seg: ejercicio.duracion_seg,
+      repeticionesRealizadas: ejercicio.repeticiones,
+      duracionRealSeg: ejercicio.duracionSeg,
     };
 
     // Añadir a registros pendientes
@@ -360,12 +360,12 @@ export class RegistroSesionService {
     // Actualizar cada registro con su dolor y nota
     this.registrosSesion.update((regs) =>
       regs.map((reg) => {
-        const feedback = data.feedbacks.find((f) => f.planItemId === reg.plan_item);
+        const feedback = data.feedbacks.find((f) => f.planItemId === reg.planItemId);
         if (feedback) {
           return {
             ...reg,
-            dolor_escala: feedback.dolor,
-            nota_paciente: feedback.nota,
+            dolorEscala: feedback.dolor,
+            notaPaciente: feedback.nota,
           };
         }
         return reg;
@@ -449,7 +449,7 @@ export class RegistroSesionService {
     if (!plan) return;
 
     const data: SesionLocal = {
-      planId: plan.id_plan,
+      planId: plan.id,
       ejercicioIndex: this.ejercicioActualIndex(),
       serieActual: this.serieActual(),
       estado: this.estadoPantalla(),
@@ -559,19 +559,19 @@ export class RegistroSesionService {
    * y gestiona sesión, agregados y alertas de comentario.
    */
   async crearRegistro(
-    registro: Omit<RegistroEjercicio, 'id_registro'>
+    registro: Omit<RegistroEjercicio, 'id'>
   ): Promise<string | null> {
     try {
       const id = await this.convex.mutation(api.executions.mutations.create, {
-        planExerciseId: this.resolvePlanExerciseId(registro.plan_item) as any,
-        fechaHora: registro.fecha_hora,
-        fecha: registro.fecha_hora.split('T')[0]!,
+        planExerciseId: this.resolvePlanExerciseId(registro.planItemId) as any,
+        fechaHora: registro.fechaHora,
+        fecha: registro.fechaHora.split('T')[0]!,
         completado: registro.completado,
-        repeticionesRealizadas: registro.repeticiones_realizadas,
-        duracionRealSeg: registro.duracion_real_seg,
-        dolorEscala: registro.dolor_escala,
-        esfuerzoEscala: registro.esfuerzo_escala,
-        notaPaciente: registro.nota_paciente,
+        repeticionesRealizadas: registro.repeticionesRealizadas,
+        duracionRealSeg: registro.duracionRealSeg,
+        dolorEscala: registro.dolorEscala,
+        esfuerzoEscala: registro.esfuerzoEscala,
+        notaPaciente: registro.notaPaciente,
       });
       return id as string;
     } catch (error) {
@@ -593,15 +593,15 @@ export class RegistroSesionService {
     try {
       await this.convex.mutation(api.executions.mutations.createBatch, {
         entradas: registros.map((reg) => ({
-          planExerciseId: this.resolvePlanExerciseId(reg.plan_item) as any,
-          fechaHora: reg.fecha_hora,
-          fecha: reg.fecha_hora.split('T')[0]!,
+          planExerciseId: this.resolvePlanExerciseId(reg.planItemId) as any,
+          fechaHora: reg.fechaHora,
+          fecha: reg.fechaHora.split('T')[0]!,
           completado: reg.completado,
-          repeticionesRealizadas: reg.repeticiones_realizadas,
-          duracionRealSeg: reg.duracion_real_seg,
-          dolorEscala: reg.dolor_escala,
-          esfuerzoEscala: reg.esfuerzo_escala,
-          notaPaciente: reg.nota_paciente,
+          repeticionesRealizadas: reg.repeticionesRealizadas,
+          duracionRealSeg: reg.duracionRealSeg,
+          dolorEscala: reg.dolorEscala,
+          esfuerzoEscala: reg.esfuerzoEscala,
+          notaPaciente: reg.notaPaciente,
         })),
       });
 
@@ -647,25 +647,25 @@ export class RegistroSesionService {
 
     return items.filter((item) => {
       // Si no tiene días configurados, incluirlo siempre
-      if (!item.dias_semana || item.dias_semana.length === 0) {
+      if (!item.diasSemana || item.diasSemana.length === 0) {
         return true;
       }
-      return item.dias_semana.includes(hoy);
+      return item.diasSemana.includes(hoy);
     });
   }
 
   private mapConvexToRegistro(r: any): RegistroEjercicio {
     return {
-      id_registro: r._id,
-      plan_item: r.planExerciseId,
-      paciente: r.pacienteId,
-      fecha_hora: r.fechaHora,
+      id: r._id,
+      planItemId: r.planExerciseId,
+      pacienteId: r.pacienteId,
+      fechaHora: r.fechaHora,
       completado: r.completado,
-      repeticiones_realizadas: r.repeticionesRealizadas,
-      duracion_real_seg: r.duracionRealSeg,
-      dolor_escala: r.dolorEscala,
-      esfuerzo_escala: r.esfuerzoEscala,
-      nota_paciente: r.notaPaciente,
+      repeticionesRealizadas: r.repeticionesRealizadas,
+      duracionRealSeg: r.duracionRealSeg,
+      dolorEscala: r.dolorEscala,
+      esfuerzoEscala: r.esfuerzoEscala,
+      notaPaciente: r.notaPaciente,
     };
   }
 

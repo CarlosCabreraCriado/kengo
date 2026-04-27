@@ -66,11 +66,11 @@ export const planesPorVencer = query({
     const hoy = fechaHoy();
     const limite = fechaDentroDe(7);
     const planesPorVencer: Array<{
-      id_plan: number | string;
+      id: string;
       titulo: string;
-      fecha_fin: string;
-      paciente_nombre: string;
-      paciente_id: string;
+      fechaFin: string;
+      pacienteNombre: string;
+      pacienteId: string;
     }> = [];
 
     for (const fisioId of fisioIds) {
@@ -84,22 +84,20 @@ export const planesPorVencer = query({
         if (!plan.fechaFin) continue;
         if (plan.fechaFin >= hoy && plan.fechaFin <= limite) {
           const paciente = await ctx.db.get(plan.pacienteId);
-          const nombre =
-            plan.pacienteNombre
-            ?? (paciente
-              ? `${paciente.firstName} ${paciente.lastName}`.trim()
-              : "");
+          const nombre = paciente
+            ? `${paciente.firstName} ${paciente.lastName}`.trim()
+            : "";
           planesPorVencer.push({
-            id_plan: plan._id,
+            id: plan._id,
             titulo: plan.titulo,
-            fecha_fin: plan.fechaFin,
-            paciente_nombre: nombre,
-            paciente_id: plan.pacienteId,
+            fechaFin: plan.fechaFin,
+            pacienteNombre: nombre,
+            pacienteId: plan.pacienteId,
           });
         }
       }
     }
-    planesPorVencer.sort((a, b) => a.fecha_fin.localeCompare(b.fecha_fin));
+    planesPorVencer.sort((a, b) => a.fechaFin.localeCompare(b.fechaFin));
     return planesPorVencer.slice(0, 10);
   },
 });

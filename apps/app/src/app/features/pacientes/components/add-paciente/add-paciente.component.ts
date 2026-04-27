@@ -10,7 +10,7 @@ import {
   ProgressBarComponent,
 } from '../../../../shared';
 
-import { Usuario, PUESTO_PACIENTE } from '../../../../../types/global';
+import { Usuario } from '../../../../../types/global';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { api } from '../../../../../../../../convex/_generated/api';
@@ -23,7 +23,7 @@ interface DialogData {
 
 type ID = string | number;
 interface Clinica {
-  id_clinica: ID;
+  id: ID;
   nombre?: string;
 }
 
@@ -67,7 +67,7 @@ export class AddPacienteDialogComponent {
     if (selectedIds.length === 0) return 'Seleccionar clínicas...';
 
     const nombres = selectedIds
-      .map(id => clinicas.find(c => c.id_clinica === id)?.nombre ?? `Clínica ${id}`)
+      .map(id => clinicas.find(c => c.id === id)?.nombre ?? `Clínica ${id}`)
       .slice(0, 2);
 
     if (selectedIds.length > 2) {
@@ -94,11 +94,11 @@ export class AddPacienteDialogComponent {
         ? new Set(this.data.idsClinicas.map((id) => String(id)))
         : null;
       const filtered = all.filter(
-        (c) => !allowedIds || allowedIds.has(String(c.id_clinica)),
+        (c) => !allowedIds || allowedIds.has(String(c.id)),
       );
       // Habilitar select en el primer render con datos
       queueMicrotask(() => this.form.get('clinicas')?.enable({ emitEvent: false }));
-      return filtered.map((c) => ({ id_clinica: c.id_clinica, nombre: c.nombre }));
+      return filtered.map((c) => ({ id: c.id, nombre: c.nombre }));
     }),
     isLoading: computed(() => {
       const all = this.clinicasService.misClinicasRes.value();
@@ -165,9 +165,9 @@ export class AddPacienteDialogComponent {
       this.currentLinks.clear();
       const ids: ID[] = [];
       for (const m of memberships ?? []) {
-        if (m.id_puesto !== PUESTO_PACIENTE) continue;
-        this.currentLinks.set(m.id_clinica, m._id as unknown as string);
-        ids.push(m.id_clinica);
+        if (m.puesto !== 'paciente') continue;
+        this.currentLinks.set(m.clinicId, m._id as unknown as string);
+        ids.push(m.clinicId);
       }
 
       this.form.patchValue({ clinicas: ids }, { emitEvent: false });

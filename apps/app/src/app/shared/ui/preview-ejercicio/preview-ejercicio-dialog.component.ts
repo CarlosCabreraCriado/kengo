@@ -27,7 +27,7 @@ export interface PreviewEjercicioData {
   template: `
     <ui-dialog-container>
       <ui-dialog-header
-        [title]="data.ejercicio.ejercicio.nombre_ejercicio"
+        [title]="data.ejercicio.ejercicio.nombre"
         [subtitle]="
           'Ejercicio ' + (data.index + 1) + ' de ' + data.totalEjercicios
         "
@@ -50,10 +50,10 @@ export interface PreviewEjercicioData {
               <span class="material-symbols-outlined text-sm">repeat</span>
               {{ data.ejercicio.series ?? 3 }} series
             </span>
-            @if (data.ejercicio.duracion_seg) {
+            @if (data.ejercicio.duracionSeg) {
               <span class="detail-chip">
                 <span class="material-symbols-outlined text-sm">timer</span>
-                {{ formatDuracion(data.ejercicio.duracion_seg) }}
+                {{ formatDuracion(data.ejercicio.duracionSeg) }}
               </span>
             } @else {
               <span class="detail-chip">
@@ -63,22 +63,22 @@ export interface PreviewEjercicioData {
                 {{ data.ejercicio.repeticiones ?? 12 }} reps
               </span>
             }
-            @if (data.ejercicio.descanso_seg) {
+            @if (data.ejercicio.descansoSeg) {
               <span class="detail-chip">
                 <span class="material-symbols-outlined text-sm">snooze</span>
-                {{ data.ejercicio.descanso_seg }}s descanso
+                {{ data.ejercicio.descansoSeg }}s descanso
               </span>
             }
           </div>
 
           <!-- Instrucciones del paciente -->
-          @if (data.ejercicio.instrucciones_paciente) {
+          @if (data.ejercicio.instruccionesPaciente) {
             <div class="rounded-xl bg-zinc-50 p-3">
               <p class="text-xs font-semibold text-zinc-500 mb-1">
                 Instrucciones
               </p>
               <p class="text-sm text-zinc-700 leading-relaxed">
-                {{ data.ejercicio.instrucciones_paciente }}
+                {{ data.ejercicio.instruccionesPaciente }}
               </p>
             </div>
           }

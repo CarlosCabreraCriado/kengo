@@ -324,7 +324,7 @@
                   type="date"
                   class="date-input"
                   [min]="minDate"
-                  [value]="form.value.fecha_inicio"
+                  [value]="form.value.fechaInicio"
                   (change)="onFechaInicioChange($event)"
                 />
               </div>
@@ -336,8 +336,8 @@
                 <input
                   type="date"
                   class="date-input"
-                  [min]="form.value.fecha_inicio || minDate"
-                  [value]="form.value.fecha_fin"
+                  [min]="form.value.fechaInicio || minDate"
+                  [value]="form.value.fechaFin"
                   (change)="onFechaFinChange($event)"
                 />
               </div>
@@ -421,7 +421,7 @@
                         <span class="material-symbols-outlined">fitness_center</span>
                       </div>
                     }
-                    <span class="exercise-card-preview__name">{{ it.ejercicio.nombre_ejercicio }}</span>
+                    <span class="exercise-card-preview__name">{{ it.ejercicio.nombre }}</span>
                   </div>
                 </div>
 
@@ -439,7 +439,7 @@
                       @if (it.ejercicio.portada) {
                         <img
                           [src]="assetUrl(it.ejercicio.portada, 80, 80)"
-                          [alt]="it.ejercicio.nombre_ejercicio"
+                          [alt]="it.ejercicio.nombre"
                           class="exercise-thumb__img"
                         />
                       } @else {
@@ -450,20 +450,20 @@
                     </div>
 
                     <div class="exercise-info">
-                      <h3 class="exercise-name">{{ it.ejercicio.nombre_ejercicio }}</h3>
+                      <h3 class="exercise-name">{{ it.ejercicio.nombre }}</h3>
                       <div class="exercise-meta">
                         <span class="exercise-dosage">
                           <span class="exercise-dosage__value">{{ it.series || 3 }}</span>
                           <span class="exercise-dosage__sep">×</span>
                           <span class="exercise-dosage__value">{{ it.repeticiones || 10 }}</span>
                         </span>
-                        @if (it.descanso_seg) {
+                        @if (it.descansoSeg) {
                           <span class="exercise-meta__divider">·</span>
-                          <span class="exercise-rest">{{ it.descanso_seg }}s</span>
+                          <span class="exercise-rest">{{ it.descansoSeg }}s</span>
                         }
-                        @if (it.veces_dia && it.veces_dia > 1) {
+                        @if (it.vecesDia && it.vecesDia > 1) {
                           <span class="exercise-meta__divider">·</span>
-                          <span class="exercise-frequency">{{ it.veces_dia }}/día</span>
+                          <span class="exercise-frequency">{{ it.vecesDia }}/día</span>
                         }
                       </div>
                       <div class="exercise-days">
@@ -490,7 +490,7 @@
                         @if (it.ejercicio.portada) {
                           <img
                             [src]="assetUrl(it.ejercicio.portada, 120, 120)"
-                            [alt]="it.ejercicio.nombre_ejercicio"
+                            [alt]="it.ejercicio.nombre"
                           />
                         } @else {
                           <div class="exercise-edit-thumb__fallback">
@@ -499,7 +499,7 @@
                         }
                       </div>
                       <div class="exercise-edit-info">
-                        <h3 class="exercise-edit-name">{{ it.ejercicio.nombre_ejercicio }}</h3>
+                        <h3 class="exercise-edit-name">{{ it.ejercicio.nombre }}</h3>
                         @if (it.ejercicio.descripcion) {
                           <div
                             class="exercise-edit-desc"
@@ -542,8 +542,8 @@
                             type="number"
                             min="0"
                             class="dosage-input"
-                            [value]="it.descanso_seg ?? 45"
-                            (input)="update(i, { descanso_seg: +$any($event.target).value || 0 })"
+                            [value]="it.descansoSeg ?? 45"
+                            (input)="update(i, { descansoSeg: +$any($event.target).value || 0 })"
                           />
                           <span class="dosage-suffix">seg</span>
                         </div>
@@ -555,8 +555,8 @@
                             type="number"
                             min="1"
                             class="dosage-input"
-                            [value]="it.veces_dia ?? 1"
-                            (input)="update(i, { veces_dia: +$any($event.target).value || 1 })"
+                            [value]="it.vecesDia ?? 1"
+                            (input)="update(i, { vecesDia: +$any($event.target).value || 1 })"
                           />
                         </div>
                       </div>
@@ -591,8 +591,8 @@
                         rows="2"
                         class="form-input form-input--textarea"
                         placeholder="Indicaciones especiales, precauciones, consejos..."
-                        [value]="it.instrucciones_paciente || ''"
-                        (input)="update(i, { instrucciones_paciente: $any($event.target).value })"
+                        [value]="it.instruccionesPaciente || ''"
+                        (input)="update(i, { instruccionesPaciente: $any($event.target).value })"
                       ></textarea>
                     </div>
 
@@ -601,7 +601,7 @@
                       <button
                         type="button"
                         class="btn-delete"
-                        (click)="removeEjercicio(it.ejercicio.id_ejercicio)"
+                        (click)="removeEjercicio(it.ejercicio.id)"
                       >
                         <span class="material-symbols-outlined">delete</span>
                         Eliminar

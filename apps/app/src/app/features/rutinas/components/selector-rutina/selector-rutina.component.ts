@@ -64,12 +64,12 @@ import { Rutina, RutinaCompleta } from '../../../../../types/global';
         </div>
       } @else {
         <div class="space-y-2">
-          @for (rutina of rutinas(); track rutina.id_rutina) {
+          @for (rutina of rutinas(); track rutina.id) {
             <button
               type="button"
               class="w-full rounded-lg border p-3 text-left transition-colors hover:border-orange-300 hover:bg-orange-50"
-              [class.!border-orange-500]="selectedId() === rutina.id_rutina"
-              [class.!bg-orange-50]="selectedId() === rutina.id_rutina"
+              [class.!border-orange-500]="selectedId() === rutina.id"
+              [class.!bg-orange-50]="selectedId() === rutina.id"
               (click)="selectRutina(rutina)"
             >
               <div class="flex items-start justify-between gap-2">
@@ -118,7 +118,7 @@ import { Rutina, RutinaCompleta } from '../../../../../types/global';
                     }
                   </div>
                   <span class="text-zinc-600">
-                    {{ i + 1 }}. {{ ej.ejercicio.nombre_ejercicio }}
+                    {{ i + 1 }}. {{ ej.ejercicio.nombre }}
                   </span>
                   <span class="text-xs text-zinc-400">
                     ({{ ej.series || 3 }}x{{ ej.repeticiones || 12 }})
@@ -276,13 +276,13 @@ export class SelectorRutinaComponent implements OnInit {
   }
 
   async selectRutina(rutina: Rutina) {
-    this.selectedId.set(rutina.id_rutina);
+    this.selectedId.set(rutina.id);
     this.selectedRutina.set(rutina);
 
     // Cargar preview
     this.isLoadingPreview.set(true);
     try {
-      const completa = await this.rutinasService.getRutinaById(rutina.id_rutina);
+      const completa = await this.rutinasService.getRutinaById(rutina.id);
       if (completa) {
         this.previewEjercicios.set(completa.ejercicios);
       }

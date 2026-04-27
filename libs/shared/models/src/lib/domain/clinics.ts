@@ -17,15 +17,15 @@ export interface ClinicaImagen {
  * Clínica transformada para uso en la aplicación
  */
 export interface Clinica {
-  id_clinica: string;
+  id: string;
   nombre: string;
   telefono?: string | null;
   email?: string | null;
   direccion?: string | null;
   postal?: string | null;
   nif?: string | null;
-  color_primario?: string | null;
-  color_secundario?: string | null;
+  colorPrimario?: string | null;
+  colorSecundario?: string | null;
   logo?: string | null;
   imagenes?: ClinicaImagen[] | null;
 }
@@ -34,13 +34,13 @@ export interface Clinica {
  * Datos de clínica para uso en backend (PDF, reportes)
  */
 export interface ClinicaData {
-  id_clinica: string;
+  id: string;
   nombre: string;
   telefono: string | null;
   email: string | null;
   direccion: string | null;
   postal: string | null;
   logo: string | null;
-  color_primario: string | null;
-  color_secundario: string | null;
+  colorPrimario: string | null;
+  colorSecundario: string | null;
 }

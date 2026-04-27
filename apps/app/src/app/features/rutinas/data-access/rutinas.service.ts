@@ -46,12 +46,12 @@ export class RutinasService {
     if (!raw) return [];
 
     return (raw as any[]).map((r) => ({
-      id_rutina: r._id,
+      id: r._id,
       nombre: r.nombre,
       descripcion: r.descripcion,
       autor: r.autorId,
       visibilidad: r.visibilidad,
-      date_created: r._creationTime
+      dateCreated: r._creationTime
         ? new Date(r._creationTime).toISOString()
         : undefined,
     }));
@@ -115,12 +115,12 @@ export class RutinasService {
         sort: item.sort ?? idx + 1,
         series: item.series,
         repeticiones: item.repeticiones,
-        duracionSeg: item.duracion_seg,
-        descansoSeg: item.descanso_seg,
-        vecesDia: item.veces_dia,
-        diasSemana: item.dias_semana as any,
-        instruccionesPaciente: item.instrucciones_paciente,
-        notasFisio: item.notas_fisio,
+        duracionSeg: item.duracionSeg,
+        descansoSeg: item.descansoSeg,
+        vecesDia: item.vecesDia,
+        diasSemana: item.diasSemana as any,
+        instruccionesPaciente: item.instruccionesPaciente,
+        notasFisio: item.notasFisio,
       }));
 
       const id = await this.convex.mutation(api.routines.mutations.create, {
@@ -169,12 +169,12 @@ export class RutinasService {
         sort: item.sort ?? idx + 1,
         series: item.series,
         repeticiones: item.repeticiones,
-        duracionSeg: item.duracion_seg,
-        descansoSeg: item.descanso_seg,
-        vecesDia: item.veces_dia,
-        diasSemana: item.dias_semana as any,
-        instruccionesPaciente: item.instrucciones_paciente,
-        notasFisio: item.notas_fisio,
+        duracionSeg: item.duracionSeg,
+        descansoSeg: item.descansoSeg,
+        vecesDia: item.vecesDia,
+        diasSemana: item.diasSemana as any,
+        instruccionesPaciente: item.instruccionesPaciente,
+        notasFisio: item.notasFisio,
       }));
 
       await this.convex.mutation(api.routines.mutations.update, {
@@ -220,11 +220,11 @@ export class RutinasService {
     const autor = raw.autor;
 
     return {
-      id_rutina: raw._id,
+      id: raw._id,
       nombre: raw.nombre,
       descripcion: raw.descripcion,
       visibilidad: raw.visibilidad,
-      date_created: raw._creationTime
+      dateCreated: raw._creationTime
         ? new Date(raw._creationTime).toISOString()
         : undefined,
       autor: autor
@@ -252,27 +252,27 @@ export class RutinasService {
     return {
       id: re._id,
       sort: re.sort ?? 0,
-      rutina: rutinaId,
+      rutinaId,
       ejercicio: ej
         ? ({
-            id_ejercicio: ej._id ?? '',
-            nombre_ejercicio: ej.nombreEjercicio ?? '',
+            id: ej._id ?? '',
+            nombre: ej.nombreEjercicio ?? '',
             descripcion: ej.descripcion ?? '',
             portada: ej.portada ?? '',
             video: ej.video ?? '',
-            series_defecto: ej.seriesDefecto ?? '',
-            repeticiones_defecto: ej.repeticionesDefecto ?? '',
+            seriesDefecto: ej.seriesDefecto,
+            repeticionesDefecto: ej.repeticionesDefecto,
             categoria: ej.categorias ?? [],
           } as Ejercicio)
         : ({} as Ejercicio),
       series: re.series,
       repeticiones: re.repeticiones,
-      duracion_seg: re.duracionSeg,
-      descanso_seg: re.descansoSeg,
-      veces_dia: re.vecesDia,
-      dias_semana: re.diasSemana,
-      instrucciones_paciente: re.instruccionesPaciente,
-      notas_fisio: re.notasFisio,
+      duracionSeg: re.duracionSeg,
+      descansoSeg: re.descansoSeg,
+      vecesDia: re.vecesDia,
+      diasSemana: re.diasSemana,
+      instruccionesPaciente: re.instruccionesPaciente,
+      notasFisio: re.notasFisio,
     };
   }
 

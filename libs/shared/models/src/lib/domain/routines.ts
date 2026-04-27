@@ -14,13 +14,13 @@ export { VisibilidadRutina } from '../payloads/routines.payload';
  * Rutina transformada para uso en la aplicación
  */
 export interface Rutina {
-  id_rutina: string;
+  id: string;
   nombre: string;
   descripcion?: string;
   autor: UUID | Usuario;
   visibilidad: 'privado' | 'clinica';
-  date_created?: string;
-  date_updated?: string;
+  dateCreated?: string;
+  dateUpdated?: string;
 }
 
 export interface RutinaCompleta extends Rutina {
@@ -31,16 +31,16 @@ export interface RutinaCompleta extends Rutina {
 export interface EjercicioRutina {
   id: string;
   sort: number;
-  rutina: string;
+  rutinaId: string;
   ejercicio: Ejercicio;
   series?: number;
   repeticiones?: number;
-  duracion_seg?: number;
-  descanso_seg?: number;
-  veces_dia?: number;
-  dias_semana?: DiaSemana[];
-  instrucciones_paciente?: string;
-  notas_fisio?: string;
-  date_created?: string;
-  date_updated?: string;
+  duracionSeg?: number;
+  descansoSeg?: number;
+  vecesDia?: number;
+  diasSemana?: DiaSemana[];
+  instruccionesPaciente?: string;
+  notasFisio?: string;
+  dateCreated?: string;
+  dateUpdated?: string;
 }

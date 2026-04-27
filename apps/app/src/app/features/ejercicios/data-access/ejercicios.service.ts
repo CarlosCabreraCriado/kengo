@@ -13,12 +13,7 @@ import { map } from 'rxjs/operators';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 
-import { Ejercicio } from '../../../../types/global';
-
-export interface Categoria {
-  id_categoria: string;
-  nombre_categoria: string;
-}
+import { Ejercicio, Categoria } from '../../../../types/global';
 
 export interface PaginaEjercicios {
   data: Ejercicio[];
@@ -34,7 +29,7 @@ export class EjerciciosService {
   readonly idsCategoriasSeleccionadas: WritableSignal<string[]> = signal([]);
   readonly page: WritableSignal<number> = signal(1);
   readonly pageSize: WritableSignal<number> = signal(24);
-  readonly sort: WritableSignal<string> = signal('nombre_ejercicio');
+  readonly sort: WritableSignal<string> = signal('nombre');
 
   // --- Favoritos (Convex IDs) ---
   readonly idsFavoritos: WritableSignal<Set<string>> = signal(new Set());
@@ -67,8 +62,8 @@ export class EjerciciosService {
       if (!raw) return [] as Categoria[];
       return raw.map(
         (c: { _id: string; nombreCategoria: string }) => ({
-          id_categoria: c._id,
-          nombre_categoria: c.nombreCategoria,
+          id: c._id,
+          nombre: c.nombreCategoria,
         }),
       );
     }),
@@ -95,8 +90,8 @@ export class EjerciciosService {
     const cats = this.categoriasRes.value();
     const idSet = new Set(ids);
     return cats
-      .filter((c) => idSet.has(c.id_categoria))
-      .map((c) => c.nombre_categoria);
+      .filter((c) => idSet.has(c.id))
+      .map((c) => c.nombre);
   });
 
   private readonly filteredEjercicios = computed<Ejercicio[]>(() => {
@@ -105,7 +100,7 @@ export class EjerciciosService {
     const search = this.busqueda().trim().toLowerCase();
     if (search) {
       list = list.filter((e) =>
-        e.nombre_ejercicio.toLowerCase().includes(search),
+        e.nombre.toLowerCase().includes(search),
       );
     }
 
@@ -120,7 +115,7 @@ export class EjerciciosService {
     if (this.soloFavoritos()) {
       const favIds = this.idsFavoritos();
       if (favIds.size > 0) {
-        list = list.filter((e) => favIds.has(e.id_ejercicio));
+        list = list.filter((e) => favIds.has(e.id));
       } else {
         list = [];
       }
@@ -133,7 +128,7 @@ export class EjerciciosService {
     const list = [...this.filteredEjercicios()];
     const dir = this.sort().startsWith('-') ? -1 : 1;
     return list.sort(
-      (a, b) => dir * a.nombre_ejercicio.localeCompare(b.nombre_ejercicio),
+      (a, b) => dir * a.nombre.localeCompare(b.nombre),
     );
   });
 
@@ -168,7 +163,7 @@ export class EjerciciosService {
 
   // ========= Cache y detalle =========
   findInCacheById(id: string): Ejercicio | undefined {
-    return this.allEjercicios().find((e) => e.id_ejercicio === id);
+    return this.allEjercicios().find((e) => e.id === id);
   }
 
   getEjercicioById$(id: string): Observable<Ejercicio> {
@@ -214,7 +209,7 @@ export class EjerciciosService {
     this.page.set(1);
   }
 
-  setSort(s: 'nombre_ejercicio' | '-nombre_ejercicio') {
+  setSort(s: 'nombre' | '-nombre') {
     this.sort.set(s);
     this.page.set(1);
   }
@@ -287,11 +282,11 @@ export class EjerciciosService {
   // ========= Mapper Convex → Ejercicio (dominio Angular) =========
   private mapConvexToEjercicio(raw: any): Ejercicio {
     return {
-      id_ejercicio: raw._id ?? '',
-      nombre_ejercicio: raw.nombreEjercicio ?? '',
+      id: raw._id ?? '',
+      nombre: raw.nombreEjercicio ?? '',
       descripcion: raw.descripcion ?? '',
-      series_defecto: raw.seriesDefecto ?? '',
-      repeticiones_defecto: raw.repeticionesDefecto ?? '',
+      seriesDefecto: raw.seriesDefecto,
+      repeticionesDefecto: raw.repeticionesDefecto,
       video: raw.video ?? '',
       portada: raw.portada ?? '',
       categoria: raw.categorias ?? [],

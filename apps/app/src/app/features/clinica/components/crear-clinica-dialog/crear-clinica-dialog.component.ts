@@ -48,7 +48,7 @@ export class CrearClinicaDialogComponent {
     direccion: [''],
     postal: [''],
     nif: [''],
-    color_primario: ['#e75c3e'],
+    colorPrimario: ['#e75c3e'],
   });
 
   loading = signal(false);
@@ -57,7 +57,7 @@ export class CrearClinicaDialogComponent {
   readonly colorPresets = COLOR_PRESETS;
 
   selectColor(color: string) {
-    this.form.patchValue({ color_primario: color });
+    this.form.patchValue({ colorPrimario: color });
   }
 
   async onSubmit() {
@@ -74,7 +74,7 @@ export class CrearClinicaDialogComponent {
       direccion: formValue.direccion?.trim() || undefined,
       postal: formValue.postal?.trim() || undefined,
       nif: formValue.nif?.trim() || undefined,
-      color_primario: formValue.color_primario || undefined,
+      colorPrimario: formValue.colorPrimario || undefined,
     });
 
     this.loading.set(false);

@@ -9,6 +9,7 @@
  */
 
 import type * as _helpers_authorization from "../_helpers/authorization.js";
+import type * as _helpers_batchGet from "../_helpers/batchGet.js";
 import type * as _helpers_datetime from "../_helpers/datetime.js";
 import type * as _helpers_expectedExercises from "../_helpers/expectedExercises.js";
 import type * as _helpers_patientAccess from "../_helpers/patientAccess.js";
@@ -78,6 +79,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "_helpers/authorization": typeof _helpers_authorization;
+  "_helpers/batchGet": typeof _helpers_batchGet;
   "_helpers/datetime": typeof _helpers_datetime;
   "_helpers/expectedExercises": typeof _helpers_expectedExercises;
   "_helpers/patientAccess": typeof _helpers_patientAccess;

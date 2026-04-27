@@ -179,17 +179,17 @@
                 </div>
               } @else {
                 <div class="max-h-64 overflow-y-auto custom-scrollbar space-y-1">
-                  @for (cat of ejerciciosService.categoriasRes.value(); track cat.id_categoria) {
+                  @for (cat of ejerciciosService.categoriasRes.value(); track cat.id) {
                     <label
                       class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer
                              transition-colors hover:bg-kengo-primary/5"
-                      [class.bg-kengo-primary/10]="isCatSelected(cat.id_categoria, categoriasSeleccionadas)"
+                      [class.bg-kengo-primary/10]="isCatSelected(cat.id, categoriasSeleccionadas)"
                     >
                       <div class="relative flex items-center justify-center">
                         <input
                           type="checkbox"
-                          [checked]="isCatSelected(cat.id_categoria, categoriasSeleccionadas)"
-                          (change)="onCategoriaChange(cat.id_categoria, $any($event.target).checked)"
+                          [checked]="isCatSelected(cat.id, categoriasSeleccionadas)"
+                          (change)="onCategoriaChange(cat.id, $any($event.target).checked)"
                           class="peer sr-only"
                         />
                         <div class="h-5 w-5 rounded-md border-2 border-zinc-300
@@ -201,7 +201,7 @@
                           </span>
                         </div>
                       </div>
-                      <span class="text-sm font-medium text-zinc-700 select-none">{{ cat.nombre_categoria }}</span>
+                      <span class="text-sm font-medium text-zinc-700 select-none">{{ cat.nombre }}</span>
                     </label>
                   }
                 </div>
@@ -357,11 +357,11 @@
             ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
             : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'"
         >
-          @for (ejercicio of ejerciciosService.ejercicios(); track ejercicio.id_ejercicio; let i = $index) {
+          @for (ejercicio of ejerciciosService.ejercicios(); track ejercicio.id; let i = $index) {
             @if (vista() === 'lista') {
               <!-- Vista Lista: Card horizontal con glassmorphism -->
               <a
-                [routerLink]="['/galeria/ejercicios', ejercicio.id_ejercicio]"
+                [routerLink]="['/galeria/ejercicios', ejercicio.id]"
                 class="ejercicio-card group block"
                 [style.animation-delay]="(i * 50) + 'ms'"
               >
@@ -375,17 +375,17 @@
                   <!-- Imagen con overlay gradiente -->
                   <div class="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl">
                     <!-- Placeholder skeleton mientras carga -->
-                    @if (!isImageLoaded(ejercicio.id_ejercicio)) {
+                    @if (!isImageLoaded(ejercicio.id)) {
                       <div class="absolute inset-0 image-skeleton"></div>
                     }
                     <img
                       [src]="getAssetUrl(ejercicio.portada)"
-                      [alt]="ejercicio.nombre_ejercicio"
+                      [alt]="ejercicio.nombre"
                       class="h-full w-full object-cover transition-all duration-500 group-hover:scale-110"
-                      [class.opacity-0]="!isImageLoaded(ejercicio.id_ejercicio)"
-                      [class.opacity-100]="isImageLoaded(ejercicio.id_ejercicio)"
+                      [class.opacity-0]="!isImageLoaded(ejercicio.id)"
+                      [class.opacity-100]="isImageLoaded(ejercicio.id)"
                       loading="lazy"
-                      (load)="onImageLoad(ejercicio.id_ejercicio)"
+                      (load)="onImageLoad(ejercicio.id)"
                     />
                     <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
@@ -393,7 +393,7 @@
                   <!-- Contenido -->
                   <div class="flex-1 min-w-0 py-1">
                     <h3 class="text-sm font-bold text-zinc-800 truncate mb-1 group-hover:text-kengo-primary transition-colors">
-                      {{ ejercicio.nombre_ejercicio }}
+                      {{ ejercicio.nombre }}
                     </h3>
                     @if (ejercicio.descripcion) {
                       <div
@@ -409,20 +409,20 @@
                     class="shrink-0 flex h-10 w-10 items-center justify-center
                            rounded-xl transition-all duration-200
                            hover:bg-kengo-primary/10 active:scale-90"
-                    (click)="toggleFavorito($event, ejercicio.id_ejercicio)"
-                    [disabled]="favoritoEnProceso(ejercicio.id_ejercicio)"
-                    [attr.aria-label]="esFavorito(ejercicio.id_ejercicio) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+                    (click)="toggleFavorito($event, ejercicio.id)"
+                    [disabled]="favoritoEnProceso(ejercicio.id)"
+                    [attr.aria-label]="esFavorito(ejercicio.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
                   >
-                    @if (favoritoEnProceso(ejercicio.id_ejercicio)) {
+                    @if (favoritoEnProceso(ejercicio.id)) {
                       <div class="loading-spinner-small"></div>
                     } @else {
                       <span
                         class="material-symbols-outlined text-xl transition-all duration-200"
-                        [class.relleno]="esFavorito(ejercicio.id_ejercicio)"
-                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id_ejercicio)"
-                        [class.scale-110]="esFavorito(ejercicio.id_ejercicio)"
-                        [class.text-zinc-400]="!esFavorito(ejercicio.id_ejercicio)"
-                        [class.group-hover:text-kengo-primary]="!esFavorito(ejercicio.id_ejercicio)"
+                        [class.relleno]="esFavorito(ejercicio.id)"
+                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id)"
+                        [class.scale-110]="esFavorito(ejercicio.id)"
+                        [class.text-zinc-400]="!esFavorito(ejercicio.id)"
+                        [class.group-hover:text-kengo-primary]="!esFavorito(ejercicio.id)"
                       >
                         star
                       </span>
@@ -433,7 +433,7 @@
             } @else {
               <!-- Vista Viñeta: Card vertical con imagen grande -->
               <a
-                [routerLink]="['/galeria/ejercicios', ejercicio.id_ejercicio]"
+                [routerLink]="['/galeria/ejercicios', ejercicio.id]"
                 class="ejercicio-card group block"
                 [style.animation-delay]="(i * 50) + 'ms'"
               >
@@ -443,18 +443,18 @@
                                hover:shadow-2xl hover:shadow-black/20
                                hover:-translate-y-2 active:scale-[0.98]">
                   <!-- Placeholder skeleton mientras carga -->
-                  @if (!isImageLoaded(ejercicio.id_ejercicio)) {
+                  @if (!isImageLoaded(ejercicio.id)) {
                     <div class="absolute inset-0 image-skeleton"></div>
                   }
                   <!-- Imagen de fondo -->
                   <img
                     [src]="getAssetUrl(ejercicio.portada)"
-                    [alt]="ejercicio.nombre_ejercicio"
+                    [alt]="ejercicio.nombre"
                     class="absolute inset-0 h-full w-full object-cover transition-all duration-700 group-hover:scale-110"
-                    [class.opacity-0]="!isImageLoaded(ejercicio.id_ejercicio)"
-                    [class.opacity-100]="isImageLoaded(ejercicio.id_ejercicio)"
+                    [class.opacity-0]="!isImageLoaded(ejercicio.id)"
+                    [class.opacity-100]="isImageLoaded(ejercicio.id)"
                     loading="lazy"
-                    (load)="onImageLoad(ejercicio.id_ejercicio)"
+                    (load)="onImageLoad(ejercicio.id)"
                   />
 
                   <!-- Overlay gradiente -->
@@ -469,18 +469,18 @@
                            border border-white/20
                            transition-all duration-200
                            hover:bg-black/50 hover:scale-110 active:scale-95"
-                    (click)="toggleFavorito($event, ejercicio.id_ejercicio)"
-                    [disabled]="favoritoEnProceso(ejercicio.id_ejercicio)"
-                    [attr.aria-label]="esFavorito(ejercicio.id_ejercicio) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+                    (click)="toggleFavorito($event, ejercicio.id)"
+                    [disabled]="favoritoEnProceso(ejercicio.id)"
+                    [attr.aria-label]="esFavorito(ejercicio.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
                   >
-                    @if (favoritoEnProceso(ejercicio.id_ejercicio)) {
+                    @if (favoritoEnProceso(ejercicio.id)) {
                       <div class="loading-spinner-small-white"></div>
                     } @else {
                       <span
                         class="material-symbols-outlined text-lg transition-all duration-200"
-                        [class.relleno]="esFavorito(ejercicio.id_ejercicio)"
-                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id_ejercicio)"
-                        [class.text-white/90]="!esFavorito(ejercicio.id_ejercicio)"
+                        [class.relleno]="esFavorito(ejercicio.id)"
+                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id)"
+                        [class.text-white/90]="!esFavorito(ejercicio.id)"
                       >
                         star
                       </span>
@@ -490,7 +490,7 @@
                   <!-- Contenido inferior -->
                   <div class="absolute bottom-0 left-0 right-0 p-4">
                     <h3 class="text-base font-bold text-white leading-tight mb-1 drop-shadow-lg">
-                      {{ ejercicio.nombre_ejercicio }}
+                      {{ ejercicio.nombre }}
                     </h3>
                     @if (ejercicio.descripcion) {
                       <div

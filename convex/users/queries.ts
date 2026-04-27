@@ -5,8 +5,6 @@ import {
   getAuthenticatedUser,
   esPaciente,
   tieneGestion,
-  puestoToNumber,
-  puestoToNombre,
 } from "../_helpers/permissions";
 
 export const me = query({
@@ -32,10 +30,8 @@ export const me = query({
         const clinic = await ctx.db.get(m.clinicId);
         if (!clinic) return null;
         return {
-          id_clinica: clinic._id,
-          id_puesto: puestoToNumber(m.puesto),
-          puesto: puestoToNombre(m.puesto),
-          convexClinicId: clinic._id,
+          clinicId: clinic._id,
+          puesto: m.puesto,
           nombre: clinic.nombre,
         };
       }),
@@ -170,14 +166,14 @@ export const listFisiosByClinic = query({
       ),
     );
 
-    const byUserId = new Map<Id<"users">, number>();
+    // Preferimos "admin" sobre "fisio" cuando un usuario tiene ambos puestos
+    // en la misma colección de clínicas.
+    const byUserId = new Map<Id<"users">, "fisio" | "admin">();
     for (const m of allMemberships.flat()) {
       if (!tieneGestion(m.puesto)) continue;
-      const numericPuesto = puestoToNumber(m.puesto);
-      const existing = byUserId.get(m.userId);
-      if (!existing || numericPuesto > existing) {
-        byUserId.set(m.userId, numericPuesto);
-      }
+      const current = byUserId.get(m.userId);
+      if (current === "admin") continue;
+      byUserId.set(m.userId, m.puesto as "fisio" | "admin");
     }
 
     const userEntries = Array.from(byUserId.entries());

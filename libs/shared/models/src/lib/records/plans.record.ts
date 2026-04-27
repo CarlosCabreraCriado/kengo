@@ -1,7 +1,6 @@
 /**
- * Forma del record de plan / registro expandido (snake_case, ids numéricos).
- * Convex es la fuente de persistencia; este tipo describe el contrato de
- * datos que consumen las apps.
+ * Forma del record de plan / registro expandido. Convex es la fuente de
+ * persistencia; este tipo describe el contrato de datos que consumen las apps.
  */
 
 import { UsuarioRecord } from './users.record';
@@ -13,14 +12,14 @@ import { UsuarioRecord } from './users.record';
 export type EstadoPlan = 'borrador' | 'activo' | 'completado' | 'cancelado';
 
 export interface RegistroEjercicioRecord {
-  id_registro: string;
-  plan_item: string | { id: string };
-  paciente: string | UsuarioRecord;
-  fecha_hora: string;
+  id: string;
+  planItemId: string | { id: string };
+  pacienteId: string | UsuarioRecord;
+  fechaHora: string;
   completado: boolean;
-  repeticiones_realizadas?: number;
-  duracion_real_seg?: number;
-  dolor_escala?: number;
-  esfuerzo_escala?: number;
-  nota_paciente?: string;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
 }

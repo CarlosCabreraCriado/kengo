@@ -3,8 +3,6 @@ import { mutation } from "../_generated/server";
 import {
   getAuthenticatedUser,
   checkClinicPermission,
-  PUESTO_FISIOTERAPEUTA,
-  PUESTO_ADMINISTRADOR,
 } from "../_helpers/permissions";
 
 export const create = mutation({
@@ -18,8 +16,8 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     await checkClinicPermission(ctx, user._id, args.clinicId, [
-      PUESTO_FISIOTERAPEUTA,
-      PUESTO_ADMINISTRADOR,
+      "fisio",
+      "admin",
     ]);
 
     const codigo = generateRandomCode(8);

@@ -88,8 +88,8 @@ export class RachaPacienteService {
         const diaSemana = DIAS_SEMANA_JS[diaJs];
         const tieneEjercicios = planes.some((plan) =>
           plan.items.some((item) => {
-            if (!item.dias_semana || item.dias_semana.length === 0) return true;
-            return item.dias_semana.includes(diaSemana);
+            if (!item.diasSemana || item.diasSemana.length === 0) return true;
+            return item.diasSemana.includes(diaSemana);
           }),
         );
         resultado.push({

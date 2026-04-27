@@ -14,8 +14,8 @@ export interface CreatePlanPayload {
   fisio: UUID;
   titulo: string;
   descripcion?: string;
-  fecha_inicio?: string | null;
-  fecha_fin?: string | null;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
   estado?: EstadoPlan;
   items: CreatePlanEjercicioPayload[];
 }
@@ -28,12 +28,12 @@ export interface CreatePlanEjercicioPayload {
   sort: number;
   series?: number;
   repeticiones?: number;
-  duracion_seg?: number;
-  descanso_seg?: number;
-  veces_dia?: number;
-  dias_semana?: DiaSemana[];
-  instrucciones_paciente?: string;
-  notas_fisio?: string;
+  duracionSeg?: number;
+  descansoSeg?: number;
+  vecesDia?: number;
+  diasSemana?: DiaSemana[];
+  instruccionesPaciente?: string;
+  notasFisio?: string;
 }
 
 /**
@@ -42,8 +42,8 @@ export interface CreatePlanEjercicioPayload {
 export interface UpdatePlanPayload {
   titulo?: string;
   descripcion?: string;
-  fecha_inicio?: string | null;
-  fecha_fin?: string | null;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
   estado?: EstadoPlan;
 }
 
@@ -54,25 +54,25 @@ export interface UpdatePlanEjercicioPayload {
   sort?: number;
   series?: number;
   repeticiones?: number;
-  duracion_seg?: number;
-  descanso_seg?: number;
-  veces_dia?: number;
-  dias_semana?: DiaSemana[];
-  instrucciones_paciente?: string;
-  notas_fisio?: string;
+  duracionSeg?: number;
+  descansoSeg?: number;
+  vecesDia?: number;
+  diasSemana?: DiaSemana[];
+  instruccionesPaciente?: string;
+  notasFisio?: string;
 }
 
 /**
  * Payload para crear un registro de ejercicio completado
  */
 export interface CreateRegistroEjercicioPayload {
-  plan_item: string;
+  planItemId: string;
   paciente: UUID;
-  fecha_hora: string;
+  fechaHora: string;
   completado: boolean;
-  repeticiones_realizadas?: number;
-  duracion_real_seg?: number;
-  dolor_escala?: number;
-  esfuerzo_escala?: number;
-  nota_paciente?: string;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
 }

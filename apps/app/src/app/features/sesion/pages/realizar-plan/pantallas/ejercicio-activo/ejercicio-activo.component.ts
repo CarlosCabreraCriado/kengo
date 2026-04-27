@@ -48,7 +48,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
           } @else if (posterUrl()) {
             <img
               [src]="posterUrl()"
-              [alt]="ejercicio()?.ejercicio?.nombre_ejercicio"
+              [alt]="ejercicio()?.ejercicio?.nombre"
               class="media-element"
             />
           } @else {
@@ -117,7 +117,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
           <div class="panel-content" @fade>
             <!-- Nombre del ejercicio -->
             <h2 class="exercise-name">
-              {{ ejercicio()?.ejercicio?.nombre_ejercicio }}
+              {{ ejercicio()?.ejercicio?.nombre }}
             </h2>
 
             <!-- Fila: Series + Objetivo -->
@@ -219,7 +219,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
             <!-- Info mínima cuando está expandido -->
             <div class="minimal-info">
               <span class="minimal-title">{{
-                ejercicio()?.ejercicio?.nombre_ejercicio
+                ejercicio()?.ejercicio?.nombre
               }}</span>
               <span class="minimal-meta"
                 >Serie {{ serieActual() }}/{{ totalSeries() }}</span
@@ -1102,12 +1102,12 @@ export class EjercicioActivoComponent {
       : null;
   });
 
-  readonly duracionSeg = computed(() => this.ejercicio()?.duracion_seg || 30);
+  readonly duracionSeg = computed(() => this.ejercicio()?.duracionSeg || 30);
 
   readonly repeticiones = computed(() => this.ejercicio()?.repeticiones || 12);
 
   readonly instrucciones = computed(
-    () => this.ejercicio()?.instrucciones_paciente || '',
+    () => this.ejercicio()?.instruccionesPaciente || '',
   );
 
   readonly descripcion = computed(
@@ -1115,7 +1115,7 @@ export class EjercicioActivoComponent {
   );
 
   readonly notasFisio = computed(
-    () => this.ejercicio()?.notas_fisio || '',
+    () => this.ejercicio()?.notasFisio || '',
   );
 
   // Array de series para el tracker visual

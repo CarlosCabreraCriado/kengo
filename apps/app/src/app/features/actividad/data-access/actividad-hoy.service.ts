@@ -51,25 +51,25 @@ export class ActividadHoyService {
     return planes.map((plan) => {
       // Filtrar ejercicios para hoy
       const ejerciciosHoy = plan.items.filter((item) => {
-        if (!item.dias_semana || item.dias_semana.length === 0) {
+        if (!item.diasSemana || item.diasSemana.length === 0) {
           return true; // Sin días configurados = todos los días
         }
-        return item.dias_semana.includes(hoy);
+        return item.diasSemana.includes(hoy);
       });
 
       // Marcar estado de completado
       const ejerciciosConEstado: EjercicioPlanConEstado[] = ejerciciosHoy.map(
         (ej) => {
           const registrosEjercicio = registros.filter(
-            (r) => r.plan_item === ej.id
+            (r) => r.planItemId === ej.id
           );
           const vecesCompletadas = registrosEjercicio.length;
-          const vecesRequeridas = ej.veces_dia ?? 1;
+          const vecesRequeridas = ej.vecesDia ?? 1;
 
           return {
             ...ej,
             completadoHoy: vecesCompletadas >= vecesRequeridas,
-            registroId: registrosEjercicio[0]?.id_registro,
+            registroId: registrosEjercicio[0]?.id,
             vecesCompletadasHoy: vecesCompletadas,
           };
         }
@@ -159,10 +159,10 @@ export class ActividadHoyService {
     for (const plan of actividad) {
       for (const item of plan.ejerciciosHoy) {
         const series = item.series ?? 3;
-        const descanso = item.descanso_seg ?? 60;
+        const descanso = item.descansoSeg ?? 60;
 
-        if (item.duracion_seg) {
-          totalSegundos += item.duracion_seg * series;
+        if (item.duracionSeg) {
+          totalSegundos += item.duracionSeg * series;
         } else {
           const reps = item.repeticiones ?? 12;
           totalSegundos += reps * 3 * series;
@@ -187,7 +187,7 @@ export class ActividadHoyService {
     for (const plan of actividad) {
       const pendiente = plan.ejerciciosHoy.find((e) => !e.completadoHoy);
       if (pendiente) {
-        return pendiente.ejercicio?.nombre_ejercicio ?? 'Ejercicio';
+        return pendiente.ejercicio?.nombre ?? 'Ejercicio';
       }
     }
     return null;

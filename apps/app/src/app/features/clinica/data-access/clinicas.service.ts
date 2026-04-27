@@ -32,15 +32,15 @@ export class ClinicasService {
     const raw = this.misClinicasQuery.value();
     if (!raw) return [];
     return raw.map((c) => ({
-      id_clinica: c._id,
+      id: c._id,
       nombre: c.nombre,
       telefono: c.telefono ?? null,
       email: c.email ?? null,
       direccion: c.direccion ?? null,
       postal: c.postal ?? null,
       nif: c.nif ?? null,
-      color_primario: c.colorPrimario ?? null,
-      color_secundario: c.colorSecundario ?? null,
+      colorPrimario: c.colorPrimario ?? null,
+      colorSecundario: c.colorSecundario ?? null,
       logo: typeof c.logo === 'string' ? c.logo : null,
       imagenes: (c.imagenes ?? []).map((img) => ({
         id: String(img.id),
@@ -57,7 +57,7 @@ export class ClinicasService {
   };
 
   readonly idsClinicasCargadas = computed<string[]>(() =>
-    this.misClinicas().map((c) => c.id_clinica),
+    this.misClinicas().map((c) => c.id),
   );
 
   // ========= Fisios por clinica =========
@@ -125,6 +125,6 @@ export class ClinicasService {
     if (!clinicas || clinicas.length === 0) return null;
     if (!id) return clinicas[0] ?? null;
 
-    return clinicas.find((c) => c.id_clinica === id) ?? clinicas[0] ?? null;
+    return clinicas.find((c) => c.id === id) ?? clinicas[0] ?? null;
   });
 }

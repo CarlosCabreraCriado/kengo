@@ -62,14 +62,14 @@
       @for (n of notificacionesRecientes(); track n.id) {
         <article class="notif-card" (click)="irANotificacion(n)">
           <div class="notif-avatar">
-            @if (avatarUrl(n.emisor_avatar); as url) {
-              <img [src]="url" [alt]="n.emisor_nombre" />
+            @if (avatarUrl(n.emisorAvatar); as url) {
+              <img [src]="url" [alt]="n.emisorNombre" />
             } @else {
-              <span class="notif-avatar-fallback">{{ n.emisor_nombre.charAt(0) }}</span>
+              <span class="notif-avatar-fallback">{{ n.emisorNombre.charAt(0) }}</span>
             }
           </div>
           <div class="notif-content">
-            <span class="notif-emisor">{{ n.emisor_nombre }}</span>
+            <span class="notif-emisor">{{ n.emisorNombre }}</span>
             <span class="notif-titulo">{{ n.titulo }}</span>
             @if (n.texto) {
               <span class="notif-texto">{{ n.texto }}</span>
@@ -94,26 +94,26 @@
         <span class="count-badge">{{ planesCount() }}</span>
       </h2>
       <div class="expiring-plans">
-        @for (plan of dashboardService.planesProximosAExpirar(); track plan.id_plan) {
-          <article class="expiring-card" (click)="irAPaciente(plan.paciente_id)"
-            [attr.data-urgencia]="diasParaVencer(plan.fecha_fin) <= 2 ? 'alta' : 'media'">
+        @for (plan of dashboardService.planesProximosAExpirar(); track plan.id) {
+          <article class="expiring-card" (click)="irAPaciente(plan.pacienteId)"
+            [attr.data-urgencia]="diasParaVencer(plan.fechaFin) <= 2 ? 'alta' : 'media'">
             <div class="expiring-stripe"></div>
             <div class="expiring-icon">
               <span class="material-symbols-outlined">
-                {{ diasParaVencer(plan.fecha_fin) <= 2 ? 'warning' : 'schedule' }}
+                {{ diasParaVencer(plan.fechaFin) <= 2 ? 'warning' : 'schedule' }}
               </span>
             </div>
             <div class="expiring-info">
-              <span class="expiring-paciente">{{ plan.paciente_nombre }}</span>
+              <span class="expiring-paciente">{{ plan.pacienteNombre }}</span>
               <span class="expiring-plan">{{ plan.titulo }}</span>
             </div>
-            <div class="expiring-badge" [attr.data-urgencia]="diasParaVencer(plan.fecha_fin) <= 2 ? 'alta' : 'media'">
-              @if (diasParaVencer(plan.fecha_fin) === 0) {
+            <div class="expiring-badge" [attr.data-urgencia]="diasParaVencer(plan.fechaFin) <= 2 ? 'alta' : 'media'">
+              @if (diasParaVencer(plan.fechaFin) === 0) {
                 Vence hoy
-              } @else if (diasParaVencer(plan.fecha_fin) === 1) {
+              } @else if (diasParaVencer(plan.fechaFin) === 1) {
                 Vence mañana
               } @else {
-                Vence en {{ diasParaVencer(plan.fecha_fin) }} días
+                Vence en {{ diasParaVencer(plan.fechaFin) }} días
               }
             </div>
           </article>

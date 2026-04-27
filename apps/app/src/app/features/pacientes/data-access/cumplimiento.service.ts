@@ -90,13 +90,13 @@ export class CumplimientoService {
 
     const planesActivos = planes.filter((p) => {
       if (p.estado !== 'activo') return false;
-      if (p.fecha_inicio) {
-        const inicio = new Date(p.fecha_inicio);
+      if (p.fechaInicio) {
+        const inicio = new Date(p.fechaInicio);
         inicio.setHours(0, 0, 0, 0);
         if (inicio > hoy) return false;
       }
-      if (p.fecha_fin) {
-        const fin = new Date(p.fecha_fin);
+      if (p.fechaFin) {
+        const fin = new Date(p.fechaFin);
         fin.setHours(23, 59, 59, 999);
         if (fin < hoy) return false;
       }
@@ -112,16 +112,16 @@ export class CumplimientoService {
 
     for (const plan of planesActivos) {
       const itemsHoy = plan.items.filter((item) => {
-        if (!item.dias_semana || item.dias_semana.length === 0) return true;
-        return item.dias_semana.includes(diaHoy);
+        if (!item.diasSemana || item.diasSemana.length === 0) return true;
+        return item.diasSemana.includes(diaHoy);
       });
 
       const esperados = itemsHoy.length;
       let completados = 0;
 
       for (const item of itemsHoy) {
-        const regsItem = registrosHoy.filter((r) => r.plan_item === item.id || r.plan_item === (item as any)._convexId);
-        const vecesRequeridas = item.veces_dia ?? 1;
+        const regsItem = registrosHoy.filter((r) => r.planItemId === item.id || r.planItemId === (item as any)._convexId);
+        const vecesRequeridas = item.vecesDia ?? 1;
         if (regsItem.length >= vecesRequeridas) {
           completados++;
         }
@@ -132,7 +132,7 @@ export class CumplimientoService {
       totalCompletados += completados;
 
       planesDetalle.push({
-        plan_id: plan.id_plan,
+        planId: plan.id,
         titulo: plan.titulo,
         esperados,
         completados,
@@ -151,8 +151,8 @@ export class CumplimientoService {
     }
 
     const dolores = registrosHoy
-      .filter((r) => r.dolor_escala != null)
-      .map((r) => r.dolor_escala!);
+      .filter((r) => r.dolorEscala != null)
+      .map((r) => r.dolorEscala!);
     const dolorPromedio =
       dolores.length > 0
         ? Math.round(
@@ -163,9 +163,9 @@ export class CumplimientoService {
     return {
       fecha: fechaHoy,
       tipo,
-      ejercicios_esperados: totalEsperados,
-      ejercicios_completados: totalCompletados,
-      dolor_promedio: dolorPromedio,
+      ejerciciosEsperados: totalEsperados,
+      ejerciciosCompletados: totalCompletados,
+      dolorPromedio: dolorPromedio,
       planes: planesDetalle,
     };
   }
@@ -214,11 +214,11 @@ export class CumplimientoService {
       return {
         fecha: r.fecha,
         tipo,
-        ejercicios_esperados: r.totalEsperados,
-        ejercicios_completados: r.totalCompletados,
-        dolor_promedio: r.dolorPromedio ?? null,
+        ejerciciosEsperados: r.totalEsperados,
+        ejerciciosCompletados: r.totalCompletados,
+        dolorPromedio: r.dolorPromedio ?? null,
         planes: r.planAggregates.map((p) => ({
-          plan_id: p.planId as string,
+          planId: p.planId as string,
           titulo: '', // sin denormalizar; lookup opcional si la UI lo requiere
           esperados: p.esperados,
           completados: p.completados,
@@ -234,24 +234,24 @@ export class CumplimientoService {
     return {
       dias: dias.sort((a, b) => a.fecha.localeCompare(b.fecha)),
       resumen: {
-        dias_programados: diasProgramados,
-        dias_completados: diasCompletados,
-        dias_parciales: diasParciales,
-        dias_fallidos: diasFallidos,
-        dias_descanso: diasDescanso,
-        adherencia_real: adherenciaReal,
+        diasProgramados: diasProgramados,
+        diasCompletados: diasCompletados,
+        diasParciales: diasParciales,
+        diasFallidos: diasFallidos,
+        diasDescanso: diasDescanso,
+        adherenciaReal: adherenciaReal,
       },
     };
   }
 
   private emptyResumen(): ResumenCumplimiento {
     return {
-      dias_programados: 0,
-      dias_completados: 0,
-      dias_parciales: 0,
-      dias_fallidos: 0,
-      dias_descanso: 0,
-      adherencia_real: 0,
+      diasProgramados: 0,
+      diasCompletados: 0,
+      diasParciales: 0,
+      diasFallidos: 0,
+      diasDescanso: 0,
+      adherenciaReal: 0,
     };
   }
 

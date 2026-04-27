@@ -34,7 +34,7 @@ interface EjercicioProximo {
   portada?: string;
   series: number;
   repeticiones?: number;
-  duracion_seg?: number;
+  duracionSeg?: number;
   planTitulo: string;
 }
 
@@ -147,15 +147,15 @@ export class ActividadHoyComponent implements OnInit {
         if (!this.esFechaEnRangoPlan(plan, fecha)) continue;
 
         const ejerciciosDia = plan.items.filter((item) => {
-          if (!item.dias_semana || item.dias_semana.length === 0) {
+          if (!item.diasSemana || item.diasSemana.length === 0) {
             return true;
           }
-          return item.dias_semana.includes(diaSemana);
+          return item.diasSemana.includes(diaSemana);
         });
 
         if (ejerciciosDia.length > 0) {
           planesConEjercicios.push({
-            planId: plan.id_plan,
+            planId: plan.id,
             titulo: plan.titulo,
             ejercicios: ejerciciosDia.length,
           });
@@ -163,11 +163,11 @@ export class ActividadHoyComponent implements OnInit {
 
           for (const ej of ejerciciosDia) {
             ejerciciosDelDia.push({
-              nombre: ej.ejercicio.nombre_ejercicio,
+              nombre: ej.ejercicio.nombre,
               portada: ej.ejercicio.portada,
               series: ej.series ?? 3,
               repeticiones: ej.repeticiones,
-              duracion_seg: ej.duracion_seg,
+              duracionSeg: ej.duracionSeg,
               planTitulo: plan.titulo,
             });
           }
@@ -259,7 +259,7 @@ export class ActividadHoyComponent implements OnInit {
       if (actividad.ejerciciosHoy.length === 0) continue;
 
       planesInvolucrados.push({
-        planId: actividad.plan.id_plan,
+        planId: actividad.plan.id,
         titulo: actividad.plan.titulo,
         cantidadEjercicios: actividad.ejerciciosHoy.length,
       });
@@ -267,7 +267,7 @@ export class ActividadHoyComponent implements OnInit {
       for (const ej of actividad.ejerciciosHoy) {
         ejercicios.push({
           ...ej,
-          planId: actividad.plan.id_plan,
+          planId: actividad.plan.id,
           planTitulo: actividad.plan.titulo,
           planItemId: ej.id!,
         });
@@ -298,14 +298,14 @@ export class ActividadHoyComponent implements OnInit {
       if (!this.esFechaEnRangoPlan(plan, dia.fecha)) continue;
 
       const ejerciciosDia = plan.items.filter((item) => {
-        if (!item.dias_semana || item.dias_semana.length === 0) return true;
-        return item.dias_semana.includes(diaSemana);
+        if (!item.diasSemana || item.diasSemana.length === 0) return true;
+        return item.diasSemana.includes(diaSemana);
       });
 
       for (const ej of ejerciciosDia) {
         ejercicios.push({
           ...ej,
-          planId: plan.id_plan,
+          planId: plan.id,
           planTitulo: plan.titulo,
           planItemId: ej.id!,
         });
@@ -334,10 +334,10 @@ export class ActividadHoyComponent implements OnInit {
   private esFechaEnRangoPlan(plan: PlanCompleto, fecha: Date): boolean {
     const fechaStr = fecha.toISOString().split('T')[0];
 
-    if (plan.fecha_inicio && fechaStr < plan.fecha_inicio) {
+    if (plan.fechaInicio && fechaStr < plan.fechaInicio) {
       return false;
     }
-    if (plan.fecha_fin && fechaStr > plan.fecha_fin) {
+    if (plan.fechaFin && fechaStr > plan.fechaFin) {
       return false;
     }
 

@@ -29,19 +29,19 @@ export class AsignacionesService {
   }
 
   bulkAsignar(payload: BulkAsignacionPayload): Observable<BulkAsignacionResponse> {
-    return from(this.bulkAssignImpl(payload.id_clinica, payload.asignaciones));
+    return from(this.bulkAssignImpl(payload.clinicId, payload.asignaciones));
   }
 
   private async bulkAssignImpl(
     clinicId: string,
-    asignaciones: { id_paciente: string; id_fisio: string | null }[],
+    asignaciones: { pacienteId: string; fisioId: string | null }[],
   ): Promise<BulkAsignacionResponse> {
     try {
-      const validAsignaciones = asignaciones.filter((a) => a.id_fisio !== null);
+      const validAsignaciones = asignaciones.filter((a) => a.fisioId !== null);
 
       const resolvedAssignments = validAsignaciones.map((a) => ({
-        pacienteId: a.id_paciente,
-        fisioId: a.id_fisio!,
+        pacienteId: a.pacienteId,
+        fisioId: a.fisioId!,
       }));
 
       await this.convex.mutation(api.assignments.mutations.bulkAssign, {

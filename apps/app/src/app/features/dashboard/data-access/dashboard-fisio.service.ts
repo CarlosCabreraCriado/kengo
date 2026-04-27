@@ -69,15 +69,15 @@ export class DashboardFisioService {
     const planes = (this.planesSub.value() as PlanPorVencer[] | null) ?? [];
     if (!snap && !planes.length) return null;
     return {
-      pacientes_activos: snap?.pacientesActivos ?? 0,
-      adherencia_promedio: snap?.adherenciaPromedio ?? 0,
-      planes_por_vencer: planes,
+      pacientesActivos: snap?.pacientesActivos ?? 0,
+      adherenciaPromedio: snap?.adherenciaPromedio ?? 0,
+      planesPorVencer: planes,
     };
   });
 
-  readonly pacientesActivos = computed(() => this.resumen()?.pacientes_activos ?? 0);
-  readonly adherenciaPromedio = computed(() => this.resumen()?.adherencia_promedio ?? 0);
-  readonly planesProximosAExpirar = computed(() => this.resumen()?.planes_por_vencer ?? []);
+  readonly pacientesActivos = computed(() => this.resumen()?.pacientesActivos ?? 0);
+  readonly adherenciaPromedio = computed(() => this.resumen()?.adherenciaPromedio ?? 0);
+  readonly planesProximosAExpirar = computed(() => this.resumen()?.planesPorVencer ?? []);
 
   async recargar(): Promise<void> {
     // Reactive: la suscripción Convex se actualiza sola al mutar datos.

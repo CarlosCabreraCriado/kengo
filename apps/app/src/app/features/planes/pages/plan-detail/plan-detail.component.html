@@ -203,7 +203,7 @@
             </div>
             <div class="stat-content">
               <span class="stat-label">Inicio</span>
-              <span class="stat-value">{{ formatDate(p.fecha_inicio) }}</span>
+              <span class="stat-value">{{ formatDate(p.fechaInicio) }}</span>
             </div>
           </div>
 
@@ -215,7 +215,7 @@
             </div>
             <div class="stat-content">
               <span class="stat-label">Fin</span>
-              <span class="stat-value">{{ formatDate(p.fecha_fin) }}</span>
+              <span class="stat-value">{{ formatDate(p.fechaFin) }}</span>
             </div>
           </div>
 
@@ -258,7 +258,7 @@
                 @if (item.ejercicio.portada) {
                   <img
                     [src]="assetUrl(item.ejercicio.portada, 120, 120)"
-                    [alt]="item.ejercicio.nombre_ejercicio"
+                    [alt]="item.ejercicio.nombre"
                     loading="lazy"
                   />
                 } @else {
@@ -269,7 +269,7 @@
               </div>
 
               <div class="exercise-content">
-                <h4 class="exercise-name">{{ item.ejercicio.nombre_ejercicio }}</h4>
+                <h4 class="exercise-name">{{ item.ejercicio.nombre }}</h4>
 
                 <div class="exercise-params">
                   <div class="param-chip param-chip-primary">
@@ -277,27 +277,27 @@
                     <span>{{ item.series || 3 }} × {{ item.repeticiones || 12 }}</span>
                   </div>
 
-                  @if (item.descanso_seg) {
+                  @if (item.descansoSeg) {
                     <div class="param-chip param-chip-neutral">
                       <span class="material-symbols-outlined">timer</span>
-                      <span>{{ item.descanso_seg }}s</span>
+                      <span>{{ item.descansoSeg }}s</span>
                     </div>
                   }
 
-                  @if (item.veces_dia && item.veces_dia > 1) {
+                  @if (item.vecesDia && item.vecesDia > 1) {
                     <div class="param-chip param-chip-accent">
                       <span class="material-symbols-outlined">schedule</span>
-                      <span>{{ item.veces_dia }}×/día</span>
+                      <span>{{ item.vecesDia }}×/día</span>
                     </div>
                   }
                 </div>
 
-                @if (item.dias_semana && item.dias_semana.length > 0) {
+                @if (item.diasSemana && item.diasSemana.length > 0) {
                   <div class="exercise-days">
                     @for (dia of diasSemanaArray; track dia) {
                       <span
                         class="day-badge"
-                        [class.day-badge-active]="item.dias_semana.includes(dia)"
+                        [class.day-badge-active]="item.diasSemana.includes(dia)"
                       >
                         {{ dia }}
                       </span>
@@ -305,10 +305,10 @@
                   </div>
                 }
 
-                @if (item.instrucciones_paciente) {
+                @if (item.instruccionesPaciente) {
                   <p class="exercise-instructions">
                     <span class="material-symbols-outlined">info</span>
-                    {{ item.instrucciones_paciente }}
+                    {{ item.instruccionesPaciente }}
                   </p>
                 }
               </div>

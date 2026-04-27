@@ -35,8 +35,8 @@
             [ngModel]="clinicaSeleccionada()"
             (ngModelChange)="seleccionarClinica($event)"
           >
-            @for (c of clinicasAdmin(); track c.id_clinica) {
-              <option [value]="c.id_clinica">{{ c.nombre }}</option>
+            @for (c of clinicasAdmin(); track c.id) {
+              <option [value]="c.id">{{ c.nombre }}</option>
             }
           </select>
         </div>

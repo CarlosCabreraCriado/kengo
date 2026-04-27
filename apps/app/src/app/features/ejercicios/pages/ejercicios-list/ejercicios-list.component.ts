@@ -122,7 +122,7 @@ export class EjerciciosListComponent implements OnInit {
     this.formularioFiltros.controls.sort
       .valueChanges!.pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((v) => {
-        if (v == 'nombre_ejercicio' || v == '-nombre_ejercicio') {
+        if (v == 'nombre' || v == '-nombre') {
           this.ejerciciosService.setSort(v);
         }
       });
@@ -165,11 +165,11 @@ export class EjerciciosListComponent implements OnInit {
 
   // Opcional: helper usado en [selected]
   isCatSelected(
-    id_categoria: string,
+    id: string,
     categoriaSignal: Signal<string[]>,
   ): boolean {
     const arr = categoriaSignal() || [];
-    return Array.isArray(arr) && arr.includes(id_categoria);
+    return Array.isArray(arr) && arr.includes(id);
   }
 
   onCategoriaChange(id: string, checked: boolean) {

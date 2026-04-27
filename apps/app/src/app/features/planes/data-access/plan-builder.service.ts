@@ -32,8 +32,8 @@ interface PersistedStateV1 {
   fisioId: string;
   titulo: string;
   descripcion: string;
-  fecha_inicio: string | null;
-  fecha_fin: string | null;
+  fechaInicio: string | null;
+  fechaFin: string | null;
   items: EjercicioPlan[];
   drawerOpen: boolean;
 }
@@ -109,8 +109,8 @@ export class PlanBuilderService {
   readonly items = signal<EjercicioPlan[]>([]);
   readonly titulo = signal<string>('');
   readonly descripcion = signal<string>('');
-  readonly fecha_inicio = signal<string | null>(null);
-  readonly fecha_fin = signal<string | null>(null);
+  readonly fechaInicio = signal<string | null>(null);
+  readonly fechaFin = signal<string | null>(null);
 
   readonly totalItems = computed(() => this.items().length);
   readonly isReadyToConfigure = computed(() => this.items().length > 0);
@@ -143,8 +143,8 @@ export class PlanBuilderService {
         const _ = [
           this.titulo(),
           this.descripcion(),
-          this.fecha_inicio(),
-          this.fecha_fin(),
+          this.fechaInicio(),
+          this.fechaFin(),
           ...this.items(), // ojo: si es array de objetos, el trigger será por referencia; suele bastar
         ];
 
@@ -194,8 +194,8 @@ export class PlanBuilderService {
       fisioId: f,
       titulo: this.titulo(),
       descripcion: this.descripcion(),
-      fecha_inicio: this.fecha_inicio(),
-      fecha_fin: this.fecha_fin(),
+      fechaInicio: this.fechaInicio(),
+      fechaFin: this.fechaFin(),
       drawerOpen: this.drawerOpen(),
       items: this.items(),
     };
@@ -270,8 +270,8 @@ export class PlanBuilderService {
     this.paciente.set(persisted.paciente);
     this.titulo.set(persisted.titulo);
     this.descripcion.set(persisted.descripcion);
-    this.fecha_inicio.set(persisted.fecha_inicio);
-    this.fecha_fin.set(persisted.fecha_fin);
+    this.fechaInicio.set(persisted.fechaInicio);
+    this.fechaFin.set(persisted.fechaFin);
     this.drawerOpen.set(false);
 
     // rehidrata ejercicios: fetch por ids y fusiona con la dosificación guardada
@@ -348,13 +348,13 @@ export class PlanBuilderService {
 
   addEjercicio(e: Ejercicio, options?: { series?: number; repeticiones?: number }) {
     const exists = this.items().some(
-      (i) => i.ejercicio.id_ejercicio === e.id_ejercicio,
+      (i) => i.ejercicio.id === e.id,
     );
     if (exists) return; // evita duplicado; si quieres permitir, elimina este guard
     const orden = this.items().length + 1;
 
-    const series = options?.series ?? (parseInt(e.series_defecto) || 3);
-    const repeticiones = options?.repeticiones ?? (parseInt(e.repeticiones_defecto) || 12);
+    const series = options?.series ?? e.seriesDefecto ?? 3;
+    const repeticiones = options?.repeticiones ?? e.repeticionesDefecto ?? 12;
 
     this.items.update((list) => [
       ...list,
@@ -363,10 +363,10 @@ export class PlanBuilderService {
         sort: orden,
         series,
         repeticiones,
-        duracion_seg: undefined,
-        descanso_seg: 45,
-        veces_dia: 1,
-        dias_semana: ['L', 'X', 'V'],
+        duracionSeg: undefined,
+        descansoSeg: 45,
+        vecesDia: 1,
+        diasSemana: ['L', 'X', 'V'],
       },
     ]);
     this.openDrawer();
@@ -375,7 +375,7 @@ export class PlanBuilderService {
   removeEjercicio(ejercicioId: string) {
     this.items.update((list) =>
       list
-        .filter((i) => i.ejercicio.id_ejercicio !== ejercicioId)
+        .filter((i) => i.ejercicio.id !== ejercicioId)
         .map((i, idx) => ({ ...i, sort: idx + 1 })),
     );
   }
@@ -389,8 +389,8 @@ export class PlanBuilderService {
     this.items.set([]);
     this.titulo.set('');
     this.descripcion.set('');
-    this.fecha_inicio.set(null);
-    this.fecha_fin.set(null);
+    this.fechaInicio.set(null);
+    this.fechaFin.set(null);
   }
 
   reorder(fromIndex: number, toIndex: number) {
@@ -413,19 +413,19 @@ export class PlanBuilderService {
       fisio: this.fisioId()!,
       titulo: this.titulo() || 'Plan sin título',
       descripcion: this.descripcion() || '',
-      fecha_inicio: this.fecha_inicio(),
-      fecha_fin: this.fecha_fin(),
+      fechaInicio: this.fechaInicio(),
+      fechaFin: this.fechaFin(),
       items: this.items().map((i, index) => ({
-        ejercicio: i.ejercicio.id_ejercicio,
+        ejercicio: i.ejercicio.id,
         sort: index + 1,
         series: i.series,
         repeticiones: i.repeticiones,
-        duracion_seg: i.duracion_seg,
-        descanso_seg: i.descanso_seg,
-        veces_dia: i.veces_dia,
-        dias_semana: i.dias_semana,
-        instrucciones_paciente: i.instrucciones_paciente,
-        notas_fisio: i.notas_fisio,
+        duracionSeg: i.duracionSeg,
+        descansoSeg: i.descansoSeg,
+        vecesDia: i.vecesDia,
+        diasSemana: i.diasSemana,
+        instruccionesPaciente: i.instruccionesPaciente,
+        notasFisio: i.notasFisio,
       })),
     });
 
@@ -434,7 +434,7 @@ export class PlanBuilderService {
     const p = this.paciente();
     if (planId && f && p) {
       const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-      const clinicaId = clinicas[0]?.id_clinica;
+      const clinicaId = clinicas[0]?.clinicId;
       if (clinicaId) {
         this.asignacionesService.autoAsignar(p.id, f, String(clinicaId));
       }
@@ -451,19 +451,19 @@ export class PlanBuilderService {
     fisio: string;
     titulo: string;
     descripcion?: string;
-    fecha_inicio?: string | null;
-    fecha_fin?: string | null;
+    fechaInicio?: string | null;
+    fechaFin?: string | null;
     items: {
       ejercicio: string;
       sort: number;
       series?: number;
       repeticiones?: number;
-      duracion_seg?: number;
-      descanso_seg?: number;
-      veces_dia?: number;
-      dias_semana?: string[];
-      instrucciones_paciente?: string;
-      notas_fisio?: string;
+      duracionSeg?: number;
+      descansoSeg?: number;
+      vecesDia?: number;
+      diasSemana?: string[];
+      instruccionesPaciente?: string;
+      notasFisio?: string;
       media_personalizada?: string | null;
     }[];
   }): Promise<string | null> {
@@ -478,19 +478,19 @@ export class PlanBuilderService {
         titulo: payload.titulo,
         descripcion: payload.descripcion ?? '',
         pacienteId: pacienteConvexId as any,
-        fechaInicio: payload.fecha_inicio ?? undefined,
-        fechaFin: payload.fecha_fin ?? undefined,
+        fechaInicio: payload.fechaInicio ?? undefined,
+        fechaFin: payload.fechaFin ?? undefined,
         ejercicios: payload.items.map((item) => ({
           exerciseId: item.ejercicio as any,
           sort: item.sort,
           series: item.series,
           repeticiones: item.repeticiones,
-          duracionSeg: item.duracion_seg,
-          descansoSeg: item.descanso_seg,
-          vecesDia: item.veces_dia,
-          diasSemana: item.dias_semana as any,
-          instruccionesPaciente: item.instrucciones_paciente,
-          notasFisio: item.notas_fisio,
+          duracionSeg: item.duracionSeg,
+          descansoSeg: item.descansoSeg,
+          vecesDia: item.vecesDia,
+          diasSemana: item.diasSemana as any,
+          instruccionesPaciente: item.instruccionesPaciente,
+          notasFisio: item.notasFisio,
         })),
       });
 
@@ -509,18 +509,18 @@ export class PlanBuilderService {
     return JSON.stringify({
       titulo: this.titulo(),
       descripcion: this.descripcion(),
-      fecha_inicio: this.fecha_inicio(),
-      fecha_fin: this.fecha_fin(),
+      fechaInicio: this.fechaInicio(),
+      fechaFin: this.fechaFin(),
       items: this.items().map((i) => ({
-        ejercicio: i.ejercicio.id_ejercicio,
+        ejercicio: i.ejercicio.id,
         series: i.series,
         repeticiones: i.repeticiones,
-        duracion_seg: i.duracion_seg,
-        descanso_seg: i.descanso_seg,
-        veces_dia: i.veces_dia,
-        dias_semana: i.dias_semana,
-        instrucciones_paciente: i.instrucciones_paciente,
-        notas_fisio: i.notas_fisio,
+        duracionSeg: i.duracionSeg,
+        descansoSeg: i.descansoSeg,
+        vecesDia: i.vecesDia,
+        diasSemana: i.diasSemana,
+        instruccionesPaciente: i.instruccionesPaciente,
+        notasFisio: i.notasFisio,
         sort: i.sort,
       })),
     });
@@ -555,11 +555,11 @@ export class PlanBuilderService {
       this.planId.set(planId);
       this.titulo.set(plan.titulo || '');
       this.descripcion.set(plan.descripcion || '');
-      this.fecha_inicio.set(
-        plan.fecha_inicio ? plan.fecha_inicio.split('T')[0] : null,
+      this.fechaInicio.set(
+        plan.fechaInicio ? plan.fechaInicio.split('T')[0] : null,
       );
-      this.fecha_fin.set(
-        plan.fecha_fin ? plan.fecha_fin.split('T')[0] : null,
+      this.fechaFin.set(
+        plan.fechaFin ? plan.fechaFin.split('T')[0] : null,
       );
 
       // Cargar ejercicios
@@ -595,19 +595,19 @@ export class PlanBuilderService {
         planId: id as any,
         titulo: this.titulo() || 'Plan sin título',
         descripcion: this.descripcion() || '',
-        fechaInicio: this.fecha_inicio() ?? undefined,
-        fechaFin: this.fecha_fin() ?? undefined,
+        fechaInicio: this.fechaInicio() ?? undefined,
+        fechaFin: this.fechaFin() ?? undefined,
         ejercicios: this.items().map((item, i) => ({
           exerciseId: this.resolveExerciseIdFromItem(item),
           sort: i + 1,
           series: item.series,
           repeticiones: item.repeticiones,
-          duracionSeg: item.duracion_seg,
-          descansoSeg: item.descanso_seg,
-          vecesDia: item.veces_dia,
-          diasSemana: item.dias_semana as any,
-          instruccionesPaciente: item.instrucciones_paciente,
-          notasFisio: item.notas_fisio,
+          duracionSeg: item.duracionSeg,
+          descansoSeg: item.descansoSeg,
+          vecesDia: item.vecesDia,
+          diasSemana: item.diasSemana as any,
+          instruccionesPaciente: item.instruccionesPaciente,
+          notasFisio: item.notasFisio,
         })),
       });
 
@@ -662,19 +662,19 @@ export class PlanBuilderService {
         oldPlanId: oldPlanId as any,
         titulo: this.titulo() || 'Plan sin título',
         descripcion: this.descripcion() || '',
-        fechaInicio: this.fecha_inicio() || tomorrow,
-        fechaFin: this.fecha_fin() ?? undefined,
+        fechaInicio: this.fechaInicio() || tomorrow,
+        fechaFin: this.fechaFin() ?? undefined,
         ejercicios: this.items().map((item, index) => ({
           exerciseId: this.resolveExerciseIdFromItem(item),
           sort: index + 1,
           series: item.series,
           repeticiones: item.repeticiones,
-          duracionSeg: item.duracion_seg,
-          descansoSeg: item.descanso_seg,
-          vecesDia: item.veces_dia,
-          diasSemana: item.dias_semana as any,
-          instruccionesPaciente: item.instrucciones_paciente,
-          notasFisio: item.notas_fisio,
+          duracionSeg: item.duracionSeg,
+          descansoSeg: item.descansoSeg,
+          vecesDia: item.vecesDia,
+          diasSemana: item.diasSemana as any,
+          instruccionesPaciente: item.instruccionesPaciente,
+          notasFisio: item.notasFisio,
         })),
       });
 
@@ -708,12 +708,12 @@ export class PlanBuilderService {
         ejercicio: e.ejercicio,
         series: e.series ?? 3,
         repeticiones: e.repeticiones ?? 12,
-        duracion_seg: e.duracion_seg,
-        descanso_seg: e.descanso_seg ?? 45,
-        veces_dia: e.veces_dia ?? 1,
-        dias_semana: e.dias_semana ?? ['L', 'X', 'V'],
-        instrucciones_paciente: e.instrucciones_paciente,
-        notas_fisio: e.notas_fisio,
+        duracionSeg: e.duracionSeg,
+        descansoSeg: e.descansoSeg ?? 45,
+        vecesDia: e.vecesDia ?? 1,
+        diasSemana: e.diasSemana ?? ['L', 'X', 'V'],
+        instruccionesPaciente: e.instruccionesPaciente,
+        notasFisio: e.notasFisio,
       }));
 
       this.items.set(items);
@@ -747,16 +747,16 @@ export class PlanBuilderService {
       autor: fisio,
       visibilidad,
       ejercicios: this.items().map((item, idx) => ({
-        ejercicio: item.ejercicio.id_ejercicio,
+        ejercicio: item.ejercicio.id,
         sort: idx + 1,
         series: item.series,
         repeticiones: item.repeticiones,
-        duracion_seg: item.duracion_seg,
-        descanso_seg: item.descanso_seg,
-        veces_dia: item.veces_dia,
-        dias_semana: item.dias_semana,
-        instrucciones_paciente: item.instrucciones_paciente,
-        notas_fisio: item.notas_fisio,
+        duracionSeg: item.duracionSeg,
+        descansoSeg: item.descansoSeg,
+        vecesDia: item.vecesDia,
+        diasSemana: item.diasSemana,
+        instruccionesPaciente: item.instruccionesPaciente,
+        notasFisio: item.notasFisio,
       })),
     };
 
@@ -771,8 +771,8 @@ export class PlanBuilderService {
     this.items.set([]);
     this.titulo.set('');
     this.descripcion.set('');
-    this.fecha_inicio.set(null);
-    this.fecha_fin.set(null);
+    this.fechaInicio.set(null);
+    this.fechaFin.set(null);
     this.originalSnapshot.set(null);
     this.hasActivity.set(false);
     this.currentVersion.set(1);
@@ -803,8 +803,8 @@ export class PlanBuilderService {
     this.items.set([]);
     this.titulo.set('');
     this.descripcion.set('');
-    this.fecha_inicio.set(null);
-    this.fecha_fin.set(null);
+    this.fechaInicio.set(null);
+    this.fechaFin.set(null);
     this.openDrawer();
   }
 
@@ -825,12 +825,12 @@ export class PlanBuilderService {
       ejercicio: e.ejercicio,
       series: e.series ?? 3,
       repeticiones: e.repeticiones ?? 12,
-      duracion_seg: e.duracion_seg,
-      descanso_seg: e.descanso_seg ?? 45,
-      veces_dia: e.veces_dia ?? 1,
-      dias_semana: e.dias_semana ?? ['L', 'X', 'V'],
-      instrucciones_paciente: e.instrucciones_paciente,
-      notas_fisio: e.notas_fisio,
+      duracionSeg: e.duracionSeg,
+      descansoSeg: e.descansoSeg ?? 45,
+      vecesDia: e.vecesDia ?? 1,
+      diasSemana: e.diasSemana ?? ['L', 'X', 'V'],
+      instruccionesPaciente: e.instruccionesPaciente,
+      notasFisio: e.notasFisio,
     }));
 
     this.items.set(items);
@@ -857,16 +857,16 @@ export class PlanBuilderService {
       descripcion,
       visibilidad,
       ejercicios: this.items().map((item, idx) => ({
-        ejercicio: item.ejercicio.id_ejercicio,
+        ejercicio: item.ejercicio.id,
         sort: idx + 1,
         series: item.series,
         repeticiones: item.repeticiones,
-        duracion_seg: item.duracion_seg,
-        descanso_seg: item.descanso_seg,
-        veces_dia: item.veces_dia,
-        dias_semana: item.dias_semana,
-        instrucciones_paciente: item.instrucciones_paciente,
-        notas_fisio: item.notas_fisio,
+        duracionSeg: item.duracionSeg,
+        descansoSeg: item.descansoSeg,
+        vecesDia: item.vecesDia,
+        diasSemana: item.diasSemana,
+        instruccionesPaciente: item.instruccionesPaciente,
+        notasFisio: item.notasFisio,
       })),
     });
   }
@@ -908,7 +908,7 @@ export class PlanBuilderService {
   // ============================================
 
   private resolveExerciseIdFromItem(item: EjercicioPlan): any {
-    return item.ejercicio.id_ejercicio;
+    return item.ejercicio.id;
   }
 
   private resolvePatientConvexId(patientId: string): string | undefined {

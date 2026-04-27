@@ -30,7 +30,7 @@ export class EjercicioDetailComponent {
   @ViewChildren('videoPlayer') videoPlayers!: QueryList<ElementRef<HTMLVideoElement>>;
 
   // Estado del ejercicio
-  id_ejercicio = signal<string | null>(null);
+  id = signal<string | null>(null);
   ejercicio = signal<Ejercicio | null>(null);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
@@ -76,13 +76,13 @@ export class EjercicioDetailComponent {
         this.error.set(null);
         this.ejercicio.set(null);
         this.videoLoaded.set(false);
-        this.id_ejercicio.set(idParam ?? null);
+        this.id.set(idParam ?? null);
         this.cargar();
       });
 
     // Re-hidratar desde cache si esta disponible
     effect(() => {
-      const id = this.id_ejercicio();
+      const id = this.id();
       if (!id) return;
       const cached = this.ejerciciosService.findInCacheById(id);
       if (cached && !this.ejercicio()) {
@@ -94,7 +94,7 @@ export class EjercicioDetailComponent {
   }
 
   private cargar() {
-    const id = this.id_ejercicio();
+    const id = this.id();
     if (!id) return;
 
     // Primero busca en cache
@@ -126,8 +126,8 @@ export class EjercicioDetailComponent {
   private inicializarPresets() {
     const ej = this.ejercicio();
     if (ej) {
-      const seriesDefault = parseInt(ej.series_defecto) || 3;
-      const repsDefault = parseInt(ej.repeticiones_defecto) || 10;
+      const seriesDefault = ej.seriesDefecto ?? 3;
+      const repsDefault = ej.repeticionesDefecto ?? 10;
 
       this.seriesSeleccionadas.set(seriesDefault);
       this.repeticionesSeleccionadas.set(repsDefault);

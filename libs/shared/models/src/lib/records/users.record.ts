@@ -1,10 +1,10 @@
 /**
- * Forma del record de usuario expandido (snake_case, ids numéricos, objetos
- * anidados). Convex es la fuente de persistencia; este tipo describe el
- * contrato de datos que consumen las apps.
+ * Forma del record de usuario expandido. Convex es la fuente de persistencia;
+ * este tipo describe el contrato de datos que consumen las apps.
  */
 
 import { UUID } from '../types/common';
+import { Puesto } from '../domain/users';
 
 interface DetalleUsuarioRecord {
   dni: string;
@@ -14,12 +14,8 @@ interface DetalleUsuarioRecord {
 }
 
 interface ClinicaUsuarioRecord {
-  id_clinica: number;
-  id_puesto: number | null;
-  puesto?: {
-    id: number;
-    puesto: string;
-  };
+  clinicId: string;
+  puesto: Puesto | null;
 }
 
 export interface UsuarioRecord {

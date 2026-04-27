@@ -1117,7 +1117,7 @@ export class FeedbackFinalComponent {
       planItemId: this.registroService.modoMultiPlan()
         ? (ej as any).planItemId
         : ej.id,
-      nombre: ej.ejercicio?.nombre_ejercicio || 'Ejercicio',
+      nombre: ej.ejercicio?.nombre || 'Ejercicio',
     }));
   });
 

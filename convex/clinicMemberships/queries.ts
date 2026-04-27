@@ -1,10 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import {
-  getAuthenticatedUser,
-  puestoToNumber,
-  puestoToNombre,
-} from "../_helpers/permissions";
+import { getAuthenticatedUser } from "../_helpers/permissions";
 
 /**
  * Lista membresías de un usuario con datos de clínica anidados.
@@ -27,11 +23,9 @@ export const listByUser = query({
         const clinic = await ctx.db.get(m.clinicId);
         return {
           _id: m._id,
-          id_usuario: userId,
-          id_clinica: m.clinicId,
-          convexClinicId: m.clinicId,
-          id_puesto: puestoToNumber(m.puesto),
-          puesto: puestoToNombre(m.puesto),
+          userId,
+          clinicId: m.clinicId,
+          puesto: m.puesto,
           nombreClinica: clinic?.nombre ?? null,
         };
       }),

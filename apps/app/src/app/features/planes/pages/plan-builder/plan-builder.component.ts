@@ -112,8 +112,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   form = this.fb.group({
     titulo: ['', [Validators.required, Validators.minLength(3)]],
     descripcion: [''],
-    fecha_inicio: [''],
-    fecha_fin: [''],
+    fechaInicio: [''],
+    fechaFin: [''],
   });
 
   ngOnInit() {
@@ -146,8 +146,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       .subscribe((v) => {
         this.svc.titulo.set(v.titulo || '');
         this.svc.descripcion.set(v.descripcion || '');
-        this.svc.fecha_inicio.set(v.fecha_inicio || null);
-        this.svc.fecha_fin.set(v.fecha_fin || null);
+        this.svc.fechaInicio.set(v.fechaInicio || null);
+        this.svc.fechaFin.set(v.fechaFin || null);
       });
   }
 
@@ -172,7 +172,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   }
 
   private syncFormFromService() {
-    const fechaInicio = this.svc.fecha_inicio() || this.getTomorrowString();
+    const fechaInicio = this.svc.fechaInicio() || this.getTomorrowString();
     const tituloExistente = this.svc.titulo();
     const descripcionExistente = this.svc.descripcion();
 
@@ -184,12 +184,12 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.form.patchValue({
       titulo,
       descripcion,
-      fecha_inicio: fechaInicio,
-      fecha_fin: this.svc.fecha_fin() || '',
+      fechaInicio: fechaInicio,
+      fechaFin: this.svc.fechaFin() || '',
     });
 
     // Si no hay fecha fin, calcularla con la duracion por defecto
-    if (!this.svc.fecha_fin()) {
+    if (!this.svc.fechaFin()) {
       this.calcularFechaFin();
     }
   }
@@ -261,8 +261,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     const v = this.form.value;
     this.svc.titulo.set(v.titulo || '');
     this.svc.descripcion.set(v.descripcion || '');
-    this.svc.fecha_inicio.set(v.fecha_inicio || null);
-    this.svc.fecha_fin.set(v.fecha_fin || null);
+    this.svc.fechaInicio.set(v.fechaInicio || null);
+    this.svc.fechaFin.set(v.fechaFin || null);
   }
 
   // ========= Drag & Drop =========
@@ -279,18 +279,18 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   }
 
   isDia(it: EjercicioPlan, d: DiaSemana) {
-    return it.dias_semana?.includes(d);
+    return it.diasSemana?.includes(d);
   }
 
   toggleDia(i: number, d: DiaSemana) {
     const it = this.svc.items()[i];
-    const set = new Set(it.dias_semana || []);
+    const set = new Set(it.diasSemana || []);
     if (set.has(d)) {
       set.delete(d);
     } else {
       set.add(d);
     }
-    this.svc.updateItem(i, { dias_semana: Array.from(set) as DiaSemana[] });
+    this.svc.updateItem(i, { diasSemana: Array.from(set) as DiaSemana[] });
   }
 
   removeEjercicio(ejercicioId: string) {
@@ -463,7 +463,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   onFechaInicioChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.value) {
-      this.form.patchValue({ fecha_inicio: input.value });
+      this.form.patchValue({ fechaInicio: input.value });
       this.calcularFechaFin();
     }
   }
@@ -471,20 +471,20 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   onFechaFinChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.value) {
-      this.form.patchValue({ fecha_fin: input.value });
+      this.form.patchValue({ fechaFin: input.value });
       this.duracionSeleccionada.set('custom');
     }
   }
 
   private calcularFechaFin() {
-    const fechaInicio = this.form.value.fecha_inicio;
+    const fechaInicio = this.form.value.fechaInicio;
     const dias = this.duracionSeleccionada();
 
     if (fechaInicio && typeof dias === 'number') {
       const inicio = new Date(fechaInicio);
       const fin = new Date(inicio);
       fin.setDate(fin.getDate() + dias);
-      this.form.patchValue({ fecha_fin: this.toDateString(fin) });
+      this.form.patchValue({ fechaFin: this.toDateString(fin) });
     }
   }
 

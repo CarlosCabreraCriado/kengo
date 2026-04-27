@@ -143,7 +143,7 @@ export class NavegacionComponent implements OnInit {
     // Si ya estamos en una ruta hija del mismo prefijo, forzar recarga
     // navegando primero a la ruta padre y luego al destino
     const currentUrl = this.router.url.split('?')[0];
-    const destino = n.ruta_destino;
+    const destino = n.rutaDestino;
     const mismoContexto =
       currentUrl.startsWith('/mis-pacientes/') && destino.startsWith('/mis-pacientes/');
 

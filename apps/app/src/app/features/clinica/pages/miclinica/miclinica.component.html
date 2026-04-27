@@ -63,7 +63,7 @@
     @if (showClinicPicker && clinicasRes().length > 1) {
       <div class="clinic-picker-overlay" (click)="showClinicPicker = false"></div>
       <div class="clinic-picker">
-        @for (c of clinicasRes(); track c.id_clinica; let i = $index) {
+        @for (c of clinicasRes(); track c.id; let i = $index) {
           <button class="picker-option" [class.active]="i === selectedClinicIndex()" (click)="selectClinic(i)">
             <div class="picker-logo">
               @if (c.logo) {
@@ -73,7 +73,7 @@
               }
             </div>
             <div class="picker-info">
-              <span class="picker-name">{{ c.nombre || 'Clínica ' + c.id_clinica }}</span>
+              <span class="picker-name">{{ c.nombre || 'Clínica ' + c.id }}</span>
               <span class="picker-location">{{ c.direccion || 'Sin dirección' }}</span>
             </div>
             @if (i === selectedClinicIndex()) {
@@ -153,7 +153,7 @@
           @if (c.imagenes?.length) {
             <img [src]="assetUrl(firstImageId(c))" [alt]="c.nombre" class="hero-image"/>
           } @else {
-            <div class="hero-gradient" [style.--clinic-color]="c.color_primario"></div>
+            <div class="hero-gradient" [style.--clinic-color]="c.colorPrimario"></div>
           }
           <div class="hero-overlay"></div>
 
@@ -288,7 +288,7 @@
             </div>
             <div>
               <h3 class="section-title">Equipo</h3>
-              <p class="section-subtitle">{{ fisios(c.id_clinica).length }} fisioterapeutas</p>
+              <p class="section-subtitle">{{ fisios(c.id).length }} fisioterapeutas</p>
             </div>
           </div>
           <div class="team-header-actions">
@@ -306,7 +306,7 @@
           </div>
         </header>
 
-        @if (fisios(c.id_clinica).length === 0) {
+        @if (fisios(c.id).length === 0) {
           <div class="empty-team">
             <span class="material-symbols-outlined">person_off</span>
             <p>Sin fisioterapeutas asignados</p>
@@ -316,7 +316,7 @@
           @if (!teamExpanded()) {
             <div class="team-preview">
               <div class="avatar-stack">
-                @for (f of fisios(c.id_clinica).slice(0, 4); track f.id; let i = $index) {
+                @for (f of fisios(c.id).slice(0, 4); track f.id; let i = $index) {
                   <div class="stacked-avatar" [style.--stack-index]="i">
                     @if (f.avatar) {
                       <img [src]="assetUrl(f.avatar)" [alt]="f.first_name"/>
@@ -325,9 +325,9 @@
                     }
                   </div>
                 }
-                @if (fisios(c.id_clinica).length > 4) {
+                @if (fisios(c.id).length > 4) {
                   <div class="stacked-avatar more" [style.--stack-index]="4">
-                    +{{ fisios(c.id_clinica).length - 4 }}
+                    +{{ fisios(c.id).length - 4 }}
                   </div>
                 }
               </div>
@@ -338,7 +338,7 @@
           <!-- Expanded: Team List -->
           @if (teamExpanded()) {
             <div class="team-list">
-              @for (f of fisios(c.id_clinica); track f.id; let j = $index) {
+              @for (f of fisios(c.id); track f.id; let j = $index) {
                 <article class="team-member" [style.--member-delay]="(j * 0.05) + 's'">
                   <div class="member-avatar">
                     @if (f.avatar) {
@@ -514,7 +514,7 @@
 
   @if (mostrarModalGenerarCodigo() && currentClinic()) {
     <app-generar-codigo-dialog
-      [clinicaId]="currentClinic()!.id_clinica"
+      [clinicaId]="currentClinic()!.id"
       [esAdmin]="esAdmin()"
       [tipoInicial]="tipoInicialCodigo()"
       (cerrar)="cerrarGenerarCodigo()"

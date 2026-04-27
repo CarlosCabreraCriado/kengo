@@ -121,7 +121,7 @@ export class FeedbackEjercicioComponent {
 
   readonly esUltimoEjercicio = this.registroService.esUltimoEjercicio;
   readonly nombreEjercicio = computed(
-    () => this.registroService.ejercicioActual()?.ejercicio?.nombre_ejercicio || ''
+    () => this.registroService.ejercicioActual()?.ejercicio?.nombre || ''
   );
 
   // Progreso de la sesión

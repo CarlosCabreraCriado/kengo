@@ -440,7 +440,7 @@ export class SelectorPacienteComponent implements OnInit {
   selectedPaciente = signal<Usuario | null>(null);
 
   private idsClinicas = computed(() => {
-    return this.sessionService.usuario()?.clinicas.map((c) => c.id_clinica) || [];
+    return this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) || [];
   });
 
   pacientesFiltrados = computed(() => {

@@ -1,20 +1,19 @@
 /**
- * Forma del record de ejercicio expandido (snake_case, ids numéricos).
- * Convex es la fuente de persistencia; este tipo describe el contrato de
- * datos que consumen las apps.
+ * Forma del record de ejercicio expandido. Convex es la fuente de persistencia;
+ * este tipo describe el contrato de datos que consumen las apps.
  */
 
 import { UUID } from '../types/common';
 
 export interface EjercicioRecord {
-  id_ejercicio: number;
+  id: string;
   categoria: string[];
-  nombre_ejercicio: string;
+  nombre: string;
   descripcion: string;
-  repeticiones_defecto: string;
-  series_defecto: string;
+  repeticionesDefecto?: number;
+  seriesDefecto?: number;
   video: UUID | null;
   portada: UUID | null;
-  video_url?: string;
-  portada_url?: string;
+  videoUrl?: string;
+  portadaUrl?: string;
 }

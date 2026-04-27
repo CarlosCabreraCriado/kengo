@@ -262,7 +262,7 @@
                         </div>
                         @if (sesion.planes.length >= 1 && sesion.tipo !== 'descanso') {
                           <div class="act-plans">
-                            @for (plan of sesion.planes; track plan.plan_id) {
+                            @for (plan of sesion.planes; track plan.planId) {
                               <div class="act-plan">
                                 <div class="act-plan-info">
                                   <span class="act-plan-name">{{ plan.titulo }}</span>
@@ -645,16 +645,16 @@
                             [class.comment-unread-dot--active]="!comentario.revisada"
                           ></span>
                           <span class="comment-context">
-                            {{ formatearFechaComentario(comentario.fecha_registro) }}
-                            @if (comentario.nombre_ejercicio) {
-                              @if (comentario.titulo_plan) {
-                                · {{ comentario.titulo_plan }}
+                            {{ formatearFechaComentario(comentario.fechaRegistro) }}
+                            @if (comentario.nombre) {
+                              @if (comentario.tituloPlan) {
+                                · {{ comentario.tituloPlan }}
                               }
-                              · {{ comentario.nombre_ejercicio }}
-                            } @else if (comentario.id_sesion) {
+                              · {{ comentario.nombre }}
+                            } @else if (comentario.sesionId) {
                               · Observación de sesión
-                            } @else if (comentario.titulo_plan) {
-                              · {{ comentario.titulo_plan }}
+                            } @else if (comentario.tituloPlan) {
+                              · {{ comentario.tituloPlan }}
                             }
                           </span>
                         </div>
@@ -665,13 +665,13 @@
                           </p>
                         }
                         <div class="comment-footer">
-                          @if (comentario.dolor_escala !== null && comentario.dolor_escala !== undefined) {
+                          @if (comentario.dolorEscala !== null && comentario.dolorEscala !== undefined) {
                             <span
                               class="act-pain"
-                              [class]="getDolorColor(comentario.dolor_escala)"
+                              [class]="getDolorColor(comentario.dolorEscala)"
                             >
                               <span class="material-symbols-outlined">sentiment_dissatisfied</span>
-                              Dolor: {{ comentario.dolor_escala }}/10
+                              Dolor: {{ comentario.dolorEscala }}/10
                             </span>
                           }
                           <div class="act-spacer"></div>
@@ -739,7 +739,7 @@
                   </div>
                 } @else {
                   <div class="plans-list">
-                    @for (plan of planes(); track plan.id_plan) {
+                    @for (plan of planes(); track plan.id) {
                       <article class="plan-card" [class.completed]="plan.estado === 'completado'" (click)="verPlan(plan)">
                         <div class="plan-main">
                           <div class="plan-info">
@@ -749,17 +749,17 @@
                                 {{ getEstadoLabel(plan.estado) }}
                               </span>
                             </div>
-                            @if (plan.fecha_inicio || plan.fecha_fin) {
+                            @if (plan.fechaInicio || plan.fechaFin) {
                               <p class="plan-dates">
                                 <span class="material-symbols-outlined icon-xs">calendar_today</span>
-                                @if (plan.fecha_inicio) {
-                                  {{ formatearFecha(plan.fecha_inicio) }}
+                                @if (plan.fechaInicio) {
+                                  {{ formatearFecha(plan.fechaInicio) }}
                                 }
-                                @if (plan.fecha_inicio && plan.fecha_fin) {
+                                @if (plan.fechaInicio && plan.fechaFin) {
                                   <span class="date-separator">→</span>
                                 }
-                                @if (plan.fecha_fin) {
-                                  {{ formatearFecha(plan.fecha_fin) }}
+                                @if (plan.fechaFin) {
+                                  {{ formatearFecha(plan.fechaFin) }}
                                 }
                               </p>
                             }

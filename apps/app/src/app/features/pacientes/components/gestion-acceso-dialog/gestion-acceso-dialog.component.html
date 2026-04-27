@@ -38,7 +38,7 @@
             <span class="material-symbols-outlined stat-icon">schedule</span>
             <div class="stat-info">
               <span class="stat-label">Último acceso</span>
-              <span class="stat-value">{{ formatearUltimoUso(tokenInfo()!.ultimo_uso) }}</span>
+              <span class="stat-value">{{ formatearUltimoUso(tokenInfo()!.ultimoUso) }}</span>
             </div>
           </div>
           <div class="stat-item">
@@ -46,9 +46,9 @@
             <div class="stat-info">
               <span class="stat-label">Usos</span>
               <span class="stat-value">
-                {{ tokenInfo()!.usos_actuales }}
-                @if (tokenInfo()!.usos_maximos !== null) {
-                  <span class="stat-max">/ {{ tokenInfo()!.usos_maximos }}</span>
+                {{ tokenInfo()!.usosActuales }}
+                @if (tokenInfo()!.usosMaximos !== null) {
+                  <span class="stat-max">/ {{ tokenInfo()!.usosMaximos }}</span>
                 } @else {
                   <span class="stat-max">/ ilimitado</span>
                 }

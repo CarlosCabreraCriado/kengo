@@ -137,9 +137,7 @@ export const listByPacienteAndDateExpanded = query({
                 exercise: exercise
                   ? {
                       _id: exercise._id,
-                      nombreEjercicio:
-                        planExercise.ejercicioNombre ??
-                        exercise.nombreEjercicio,
+                      nombreEjercicio: exercise.nombreEjercicio,
                       portada: exercise.portada,
                     }
                   : null,

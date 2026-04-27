@@ -14,17 +14,17 @@ export { EstadoPlan } from '../records/plans.record';
  * Plan transformado para uso en la aplicación
  */
 export interface Plan {
-  id_plan: string;
+  id: string;
   paciente: UUID | Usuario;
   fisio: UUID | Usuario;
   titulo: string;
   descripcion?: string;
   estado: 'borrador' | 'activo' | 'completado' | 'cancelado';
-  fecha_inicio?: string | null;
-  fecha_fin?: string | null;
-  date_created?: string;
-  date_updated?: string;
-  plan_anterior?: string | null;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
+  dateCreated?: string;
+  dateUpdated?: string;
+  planAnterior?: string | null;
   version?: number;
 }
 
@@ -43,40 +43,40 @@ export interface PlanCompleto extends Plan {
 export interface EjercicioPlan {
   id?: string;
   sort: number;
-  date_created?: string;
-  date_updated?: string;
-  plan?: string;
+  dateCreated?: string;
+  dateUpdated?: string;
+  planId?: string;
   ejercicio: Ejercicio;
-  instrucciones_paciente?: string;
-  notas_fisio?: string;
+  instruccionesPaciente?: string;
+  notasFisio?: string;
   series?: number;
   repeticiones?: number;
-  duracion_seg?: number;
-  descanso_seg?: number;
-  veces_dia?: number;
-  dias_semana?: DiaSemana[];
+  duracionSeg?: number;
+  descansoSeg?: number;
+  vecesDia?: number;
+  diasSemana?: DiaSemana[];
 }
 
 export interface RegistroEjercicio {
-  id_registro?: string;
-  plan_item: string;
-  paciente: UUID;
-  fecha_hora: string;
+  id?: string;
+  planItemId: string;
+  pacienteId: UUID;
+  fechaHora: string;
   completado: boolean;
-  repeticiones_realizadas?: number;
-  duracion_real_seg?: number;
-  dolor_escala?: number;
-  esfuerzo_escala?: number;
-  nota_paciente?: string;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
 }
 
 export interface PlanData {
-  id_plan: string;
+  id: string;
   titulo: string;
   descripcion: string | null;
   estado: string;
-  fecha_inicio: Date | null;
-  fecha_fin: Date | null;
+  fechaInicio: Date | null;
+  fechaFin: Date | null;
   paciente: UUID;
   fisio: UUID;
 }
@@ -86,14 +86,14 @@ export interface EjercicioPlanData {
   sort: number | null;
   series: number;
   repeticiones: number;
-  duracion_seg: number | null;
-  descanso_seg: number | null;
-  veces_dia: number;
-  dias_semana: string | null;
-  instrucciones_paciente: string | null;
-  notas_fisio: string | null;
-  id_ejercicio: string;
-  nombre_ejercicio: string;
-  ejercicio_descripcion: string | null;
+  duracionSeg: number | null;
+  descansoSeg: number | null;
+  vecesDia: number;
+  diasSemana: string | null;
+  instruccionesPaciente: string | null;
+  notasFisio: string | null;
+  ejercicioId: string;
+  nombreEjercicio: string;
+  ejercicioDescripcion: string | null;
   portada: string | null;
 }

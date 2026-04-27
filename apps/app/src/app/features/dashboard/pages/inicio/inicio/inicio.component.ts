@@ -105,7 +105,7 @@ export class InicioComponent {
       this.notificacionesService.marcarRevisada(n);
     }
     const currentUrl = this.router.url.split('?')[0];
-    const destino = n.ruta_destino;
+    const destino = n.rutaDestino;
     const mismoContexto =
       currentUrl.startsWith('/mis-pacientes/') && destino.startsWith('/mis-pacientes/');
 

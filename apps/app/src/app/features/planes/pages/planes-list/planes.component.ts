@@ -177,15 +177,15 @@ export class PlanesComponent implements OnInit {
   }
 
   verResumen(plan: Plan) {
-    this.router.navigate(['/planes', plan.id_plan]);
+    this.router.navigate(['/planes', plan.id]);
   }
 
   editarPlan(plan: Plan) {
-    this.router.navigate(['/planes', plan.id_plan, 'editar']);
+    this.router.navigate(['/planes', plan.id, 'editar']);
   }
 
   async cambiarEstado(plan: Plan, nuevoEstado: EstadoPlan) {
-    const success = await this.planesService.updateEstado(plan.id_plan, nuevoEstado);
+    const success = await this.planesService.updateEstado(plan.id, nuevoEstado);
     if (success) {
       this.toastService.show(`Estado cambiado a ${this.estadoLabels[nuevoEstado]}`);
     } else {
@@ -224,17 +224,17 @@ export class PlanesComponent implements OnInit {
   }
 
   async togglePreview(rutina: Rutina) {
-    if (this.expandedRutinaId() === rutina.id_rutina) {
+    if (this.expandedRutinaId() === rutina.id) {
       this.expandedRutinaId.set(null);
       this.previewEjercicios.set([]);
       return;
     }
 
-    this.expandedRutinaId.set(rutina.id_rutina);
+    this.expandedRutinaId.set(rutina.id);
     this.loadingPreview.set(true);
 
     try {
-      const completa = await this.rutinasService.getRutinaById(rutina.id_rutina);
+      const completa = await this.rutinasService.getRutinaById(rutina.id);
       if (completa) {
         this.previewEjercicios.set(completa.ejercicios);
       }
@@ -256,7 +256,7 @@ export class PlanesComponent implements OnInit {
 
   async duplicarRutina(rutina: Rutina) {
     const nuevoNombre = `${rutina.nombre} (copia)`;
-    const id = await this.rutinasService.duplicarRutina(rutina.id_rutina, nuevoNombre);
+    const id = await this.rutinasService.duplicarRutina(rutina.id, nuevoNombre);
 
     if (id) {
       this.toastService.show('Plantilla duplicada');
@@ -268,7 +268,7 @@ export class PlanesComponent implements OnInit {
   async eliminarRutina(rutina: Rutina) {
     if (!confirm(`¿Eliminar la plantilla "${rutina.nombre}"?`)) return;
 
-    const success = await this.rutinasService.deleteRutina(rutina.id_rutina);
+    const success = await this.rutinasService.deleteRutina(rutina.id);
     if (success) {
       this.toastService.show('Plantilla eliminada');
     } else {
@@ -278,7 +278,7 @@ export class PlanesComponent implements OnInit {
 
   async cambiarVisibilidadRutina(rutina: Rutina) {
     const nuevaVisibilidad = rutina.visibilidad === 'privado' ? 'clinica' : 'privado';
-    const success = await this.rutinasService.updateRutina(rutina.id_rutina, {
+    const success = await this.rutinasService.updateRutina(rutina.id, {
       visibilidad: nuevaVisibilidad,
     });
 

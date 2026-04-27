@@ -80,7 +80,7 @@ export class ActividadEstadisticasComponent implements OnInit {
 
       // Contar registros de este día
       const registrosDia = registros.filter((r) => {
-        const fechaRegistro = new Date(r.fecha_hora);
+        const fechaRegistro = new Date(r.fechaHora);
         return (
           fechaRegistro.getDate() === fecha.getDate() &&
           fechaRegistro.getMonth() === fecha.getMonth() &&
@@ -146,7 +146,7 @@ export class ActividadEstadisticasComponent implements OnInit {
     // Contar días únicos con actividad
     const diasUnicos = new Set<string>();
     registros.forEach((r) => {
-      const fecha = new Date(r.fecha_hora);
+      const fecha = new Date(r.fechaHora);
       diasUnicos.add(`${fecha.getFullYear()}-${fecha.getMonth()}-${fecha.getDate()}`);
     });
 
@@ -170,7 +170,7 @@ export class ActividadEstadisticasComponent implements OnInit {
 
     // Obtener los últimos 5 registros
     const ultimos = registros
-      .sort((a, b) => new Date(b.fecha_hora).getTime() - new Date(a.fecha_hora).getTime())
+      .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime())
       .slice(0, 5);
 
     return ultimos.map((registro) => {
@@ -179,15 +179,15 @@ export class ActividadEstadisticasComponent implements OnInit {
       let portada: string | undefined;
 
       for (const plan of planes) {
-        const item = plan.items.find((i) => i.id === registro.plan_item);
+        const item = plan.items.find((i) => i.id === registro.planItemId);
         if (item) {
-          nombre = item.ejercicio.nombre_ejercicio;
+          nombre = item.ejercicio.nombre;
           portada = item.ejercicio.portada;
           break;
         }
       }
 
-      const fechaHora = new Date(registro.fecha_hora);
+      const fechaHora = new Date(registro.fechaHora);
       return {
         nombre,
         portada,
@@ -301,15 +301,15 @@ export class ActividadEstadisticasComponent implements OnInit {
     notaPaciente?: string;
   }): RegistroEjercicio {
     return {
-      id_registro: undefined,
-      plan_item: r.planExerciseId,
-      paciente: r.pacienteId,
-      fecha_hora: r.fechaHora,
+      id: undefined,
+      planItemId: r.planExerciseId,
+      pacienteId: r.pacienteId,
+      fechaHora: r.fechaHora,
       completado: r.completado,
-      repeticiones_realizadas: r.repeticionesRealizadas,
-      duracion_real_seg: r.duracionRealSeg,
-      dolor_escala: r.dolorEscala,
-      nota_paciente: r.notaPaciente,
+      repeticionesRealizadas: r.repeticionesRealizadas,
+      duracionRealSeg: r.duracionRealSeg,
+      dolorEscala: r.dolorEscala,
+      notaPaciente: r.notaPaciente,
     };
   }
 

@@ -181,7 +181,7 @@
             </header>
 
             <div class="plans-list">
-              @for (actividad of actividadHoy(); track actividad.plan.id_plan; let i = $index) {
+              @for (actividad of actividadHoy(); track actividad.plan.id; let i = $index) {
                 @if (actividad.ejerciciosHoy.length > 0) {
                   <article
                     class="plan-card animate-in"
@@ -236,7 +236,7 @@
                             @if (ejercicio.ejercicio.portada) {
                               <img
                                 [src]="getAssetUrl(ejercicio.ejercicio.portada)"
-                                [alt]="ejercicio.ejercicio.nombre_ejercicio"
+                                [alt]="ejercicio.ejercicio.nombre"
                                 loading="lazy"
                               />
                             } @else {
@@ -249,18 +249,18 @@
                           <!-- Exercise Info -->
                           <div class="exercise-info">
                             <span class="exercise-name">
-                              {{ ejercicio.ejercicio.nombre_ejercicio }}
+                              {{ ejercicio.ejercicio.nombre }}
                             </span>
                             <span class="exercise-details">
                               {{ ejercicio.series ?? 3 }} series ×
-                              @if (ejercicio.duracion_seg) {
-                                {{ ejercicio.duracion_seg }}s
+                              @if (ejercicio.duracionSeg) {
+                                {{ ejercicio.duracionSeg }}s
                               } @else {
                                 {{ ejercicio.repeticiones ?? 12 }} reps
                               }
-                              @if ((ejercicio.veces_dia ?? 1) > 1) {
+                              @if ((ejercicio.vecesDia ?? 1) > 1) {
                                 <span class="detail-separator">·</span>
-                                {{ ejercicio.vecesCompletadasHoy ?? 0 }}/{{ ejercicio.veces_dia }}× día
+                                {{ ejercicio.vecesCompletadasHoy ?? 0 }}/{{ ejercicio.vecesDia }}× día
                               }
                             </span>
                           </div>
@@ -274,7 +274,7 @@
                         type="button"
                         class="plan-action"
                         [class.secondary]="actividad.progreso === 100"
-                        (click)="irAPlan(actividad.plan.id_plan)"
+                        (click)="irAPlan(actividad.plan.id)"
                       >
                         @if (actividad.progreso === 100) {
                           <span class="material-symbols-outlined">replay</span>
@@ -365,8 +365,8 @@
                               <span class="day-exercise-name">{{ ejercicio.nombre }}</span>
                               <span class="day-exercise-details">
                                 {{ ejercicio.series }} series ×
-                                @if (ejercicio.duracion_seg) {
-                                  {{ ejercicio.duracion_seg }}s
+                                @if (ejercicio.duracionSeg) {
+                                  {{ ejercicio.duracionSeg }}s
                                 } @else {
                                   {{ ejercicio.repeticiones ?? 12 }} reps
                                 }

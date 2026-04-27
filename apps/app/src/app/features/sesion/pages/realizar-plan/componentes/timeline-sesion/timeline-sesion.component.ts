@@ -169,7 +169,7 @@ interface EjercicioTimeline {
               @if (item.portadaUrl) {
                 <img
                   [src]="item.portadaUrl"
-                  [alt]="item.ejercicio.ejercicio.nombre_ejercicio"
+                  [alt]="item.ejercicio.ejercicio.nombre"
                   loading="lazy"
                 />
               } @else {
@@ -186,12 +186,12 @@ interface EjercicioTimeline {
 
             <div class="exercise-info">
               <span class="exercise-name">{{
-                item.ejercicio.ejercicio.nombre_ejercicio
+                item.ejercicio.ejercicio.nombre
               }}</span>
               <span class="exercise-details">
                 {{ item.ejercicio.series ?? 3 }} series &times;
-                @if (item.ejercicio.duracion_seg) {
-                  {{ formatDuracion(item.ejercicio.duracion_seg) }}
+                @if (item.ejercicio.duracionSeg) {
+                  {{ formatDuracion(item.ejercicio.duracionSeg) }}
                 } @else {
                   {{ item.ejercicio.repeticiones ?? 12 }} reps
                 }

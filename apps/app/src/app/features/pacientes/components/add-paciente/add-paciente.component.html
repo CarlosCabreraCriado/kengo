@@ -83,23 +83,23 @@
                 <div class="px-4 py-3 text-sm text-gray-500">No hay clínicas disponibles</div>
               } @else {
                 <div class="max-h-48 overflow-y-auto">
-                  @for (c of clinicasRes.value(); track c.id_clinica) {
+                  @for (c of clinicasRes.value(); track c.id) {
                     <button
                       type="button"
                       class="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-50"
-                      (click)="toggleClinica(c.id_clinica); $event.stopPropagation()"
+                      (click)="toggleClinica(c.id); $event.stopPropagation()"
                     >
                       <span
                         class="flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors"
-                        [class.border-primary]="isClinicaSelected(c.id_clinica)"
-                        [class.bg-primary]="isClinicaSelected(c.id_clinica)"
-                        [class.border-gray-300]="!isClinicaSelected(c.id_clinica)"
+                        [class.border-primary]="isClinicaSelected(c.id)"
+                        [class.bg-primary]="isClinicaSelected(c.id)"
+                        [class.border-gray-300]="!isClinicaSelected(c.id)"
                       >
-                        @if (isClinicaSelected(c.id_clinica)) {
+                        @if (isClinicaSelected(c.id)) {
                           <span class="material-symbols-outlined text-sm text-white">check</span>
                         }
                       </span>
-                      <span class="text-sm text-gray-700">{{ c.nombre || 'Clínica ' + c.id_clinica }}</span>
+                      <span class="text-sm text-gray-700">{{ c.nombre || 'Clínica ' + c.id }}</span>
                     </button>
                   }
                 </div>

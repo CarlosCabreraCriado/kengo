@@ -97,8 +97,8 @@ export class ThemeService {
       if (!clinica) return; // Caché o defaults ya están aplicados
 
       const cacheCoincide = this.cache
-        && this.cache.idClinica === clinica.id_clinica
-        && this.cache.colorPrimario === (clinica.color_primario || this.DEFAULT_PRIMARY)
+        && this.cache.idClinica === clinica.id
+        && this.cache.colorPrimario === (clinica.colorPrimario || this.DEFAULT_PRIMARY)
         && this.cache.logoFileId === (clinica.logo || null);
 
       if (cacheCoincide) return; // Sin cambios, skip
@@ -113,7 +113,7 @@ export class ThemeService {
    * Aplica el tema de colores basado en la clínica proporcionada
    */
   aplicarTemaClinica(clinica: Clinica | null): void {
-    const primary = clinica?.color_primario || this.DEFAULT_PRIMARY;
+    const primary = clinica?.colorPrimario || this.DEFAULT_PRIMARY;
     const tertiary = this.DEFAULT_TERTIARY; // Por ahora solo primary es configurable
 
     this.currentPrimary.set(primary);
@@ -169,7 +169,7 @@ export class ThemeService {
   private guardarCache(clinica: Clinica): void {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
-    const primary = clinica.color_primario || this.DEFAULT_PRIMARY;
+    const primary = clinica.colorPrimario || this.DEFAULT_PRIMARY;
     const logoFileId = clinica.logo || null;
     const logoUrl = logoFileId ? `${rawAssetUrl(logoFileId)}` : this.DEFAULT_LOGO;
     const logoIconUrl = logoFileId ? logoUrl : this.DEFAULT_LOGO_ICON;
@@ -178,7 +178,7 @@ export class ThemeService {
       v: 1,
       updatedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
-      idClinica: clinica.id_clinica,
+      idClinica: clinica.id,
       colorPrimario: primary,
       logoFileId,
       palette: this.calcularPaleta(primary, this.DEFAULT_TERTIARY),

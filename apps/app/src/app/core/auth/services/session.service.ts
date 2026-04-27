@@ -1,11 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import {
-  RolUsuario,
-  Usuario,
-  PUESTO_FISIOTERAPEUTA,
-  PUESTO_PACIENTE,
-  PUESTO_ADMINISTRADOR,
-} from '../../../../types/global';
+import { RolUsuario, Usuario, Puesto } from '../../../../types/global';
 import { ConvexService } from '../../convex/convex.service';
 import { BetterAuthService } from './better-auth.service';
 import { api } from '../../../../../../../convex/_generated/api';
@@ -114,9 +108,8 @@ export class SessionService {
   transformarUsuarioConvex(u: any): Usuario {
     const clinicas =
       u.clinicas?.map((c: any) => ({
-        id_clinica: c.id_clinica ?? '',
-        id_puesto: c.id_puesto ?? null,
-        puesto: c.puesto ?? null,
+        clinicId: c.clinicId ?? '',
+        puesto: (c.puesto ?? null) as Puesto | null,
       })) || [];
 
     // Si vienen `esFisio`/`esPaciente` en el doc usamos esos. Si no, los
@@ -157,16 +150,16 @@ export class SessionService {
   }
 
   private computeRoleFromClinics(
-    clinicas: { id_puesto: number | null }[],
+    clinicas: { puesto: Puesto | null }[],
   ): { esFisio: boolean; esPaciente: boolean } {
     if (!clinicas || clinicas.length === 0) {
       return { esFisio: false, esPaciente: true };
     }
 
     const hasFisioAccess = clinicas.some(
-      (c) => c.id_puesto === PUESTO_FISIOTERAPEUTA || c.id_puesto === PUESTO_ADMINISTRADOR,
+      (c) => c.puesto === 'fisio' || c.puesto === 'admin',
     );
-    const hasPacienteAccess = clinicas.some((c) => c.id_puesto === PUESTO_PACIENTE);
+    const hasPacienteAccess = clinicas.some((c) => c.puesto === 'paciente');
 
     return {
       esFisio: hasFisioAccess,

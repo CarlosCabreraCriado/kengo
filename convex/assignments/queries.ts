@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { batchGetMap } from "../_helpers/batchGet";
 
 export const listByClinic = query({
   args: { clinicId: v.id("clinics") },
@@ -9,17 +10,17 @@ export const listByClinic = query({
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
       .collect();
 
-    return await Promise.all(
-      assignments.map(async (a) => {
-        const paciente = await ctx.db.get(a.pacienteId);
-        const fisio = await ctx.db.get(a.fisioId);
-        return {
-          ...a,
-          paciente,
-          fisio,
-        };
-      }),
-    );
+    const userIds = [
+      ...assignments.map((a) => a.pacienteId),
+      ...assignments.map((a) => a.fisioId),
+    ];
+    const usersMap = await batchGetMap(ctx, userIds);
+
+    return assignments.map((a) => ({
+      ...a,
+      paciente: usersMap.get(a.pacienteId) ?? null,
+      fisio: usersMap.get(a.fisioId) ?? null,
+    }));
   },
 });
 

@@ -85,13 +85,13 @@ export class MiClinicaComponent {
   esAdmin = computed(() => {
     const clinica = this.currentClinic();
     if (!clinica) return false;
-    return this.clinicaGestionService.esAdminEnClinica(clinica.id_clinica);
+    return this.clinicaGestionService.esAdminEnClinica(clinica.id);
   });
 
   esFisioOAdmin = computed(() => {
     const clinica = this.currentClinic();
     if (!clinica) return false;
-    return this.clinicaGestionService.puedeGestionarCodigos(clinica.id_clinica);
+    return this.clinicaGestionService.puedeGestionarCodigos(clinica.id);
   });
 
   // Rol del usuario en la clínica actual
@@ -100,14 +100,13 @@ export class MiClinicaComponent {
     const usuario = this.sessionService.usuario();
     if (!clinica || !usuario) return null;
 
-    const clinicaUsuario = usuario.clinicas.find(c => c.id_clinica === clinica.id_clinica);
-    if (!clinicaUsuario || clinicaUsuario.id_puesto === null) return null;
+    const clinicaUsuario = usuario.clinicas.find(c => c.clinicId === clinica.id);
+    if (!clinicaUsuario || clinicaUsuario.puesto === null) return null;
 
-    // Mapear id_puesto a nombre e icono
-    const puesto = clinicaUsuario.id_puesto;
-    if (puesto === 4) return { nombre: 'Administrador', icono: 'admin_panel_settings' };
-    if (puesto === 1) return { nombre: 'Fisioterapeuta', icono: 'medical_services' };
-    if (puesto === 2) return { nombre: 'Paciente', icono: 'person' };
+    const puesto = clinicaUsuario.puesto;
+    if (puesto === 'admin') return { nombre: 'Administrador', icono: 'admin_panel_settings' };
+    if (puesto === 'fisio') return { nombre: 'Fisioterapeuta', icono: 'medical_services' };
+    if (puesto === 'paciente') return { nombre: 'Paciente', icono: 'person' };
 
     return null;
   });
@@ -190,7 +189,7 @@ export class MiClinicaComponent {
 
     this.codigosLoading.set(true);
     try {
-      this.clinicaGestionService.listarCodigos(clinica.id_clinica).subscribe({
+      this.clinicaGestionService.listarCodigos(clinica.id).subscribe({
         next: (codigos) => {
           this.codigosClinica.set(codigos);
           this.codigosLoading.set(false);
@@ -208,7 +207,7 @@ export class MiClinicaComponent {
     const clinica = this.currentClinic();
     if (!clinica) return;
 
-    const result = await this.clinicaGestionService.desactivarCodigo(codigoId, clinica.id_clinica);
+    const result = await this.clinicaGestionService.desactivarCodigo(codigoId, clinica.id);
     if (result.success) {
       this.showSnackbar('Código desactivado');
       this.cargarCodigos();
@@ -219,7 +218,7 @@ export class MiClinicaComponent {
     const clinica = this.currentClinic();
     if (!clinica) return;
 
-    const result = await this.clinicaGestionService.reactivarCodigo(codigoId, clinica.id_clinica);
+    const result = await this.clinicaGestionService.reactivarCodigo(codigoId, clinica.id);
     if (result.success) {
       this.showSnackbar('Código reactivado');
       this.cargarCodigos();
@@ -235,7 +234,7 @@ export class MiClinicaComponent {
   readonly clinicIds = computed<ID[] | null>(() => {
     const uc = this.sessionService.usuario()?.clinicas ?? null;
     if (!uc) return null;
-    return uc.map((x) => x.id_clinica);
+    return uc.map((x) => x.clinicId);
   });
 
   // Selector de clínica activa
@@ -255,7 +254,7 @@ export class MiClinicaComponent {
     this.selectedClinicIndex.set(index);
     const clinica = this.clinicasRes()[index];
     if (clinica) {
-      this.selectedClinicId.set(clinica.id_clinica);
+      this.selectedClinicId.set(clinica.id);
       this.cargarFormulario(index);
     }
     this.showClinicPicker = false;
@@ -270,7 +269,7 @@ export class MiClinicaComponent {
     direccion: [''],
     postal: [''],
     nif: [''],
-    color_primario: ['#000000'],
+    colorPrimario: ['#000000'],
   });
 
   loading = signal(false);
@@ -305,7 +304,7 @@ export class MiClinicaComponent {
         direccion: c.direccion ?? '',
         postal: c.postal ?? '',
         nif: c.nif ?? '',
-        color_primario: c.color_primario ?? '#000000',
+        colorPrimario: c.colorPrimario ?? '#000000',
       },
       { emitEvent: false },
     );
@@ -316,7 +315,7 @@ export class MiClinicaComponent {
     const indexClinica = parseInt(select.value, 10);
     this.selectedClinicIndex.set(indexClinica);
     this.cargarFormulario(indexClinica);
-    this.selectedClinicId.set(this.clinicasRes()[indexClinica].id_clinica);
+    this.selectedClinicId.set(this.clinicasRes()[indexClinica].id);
   }
 
   // ==== Handlers de inputs file ====

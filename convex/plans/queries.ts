@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
+import { batchGetMap } from "../_helpers/batchGet";
 
 function resolvePacienteId(
   pacienteId: string | undefined,
@@ -11,36 +12,109 @@ function resolvePacienteId(
   return pacienteId as Id<"users">;
 }
 
-// Helper: embed exercise data (nombre, descripción, portada, video) en un planExercise
-async function enrichPlanExercise(ctx: any, pe: any) {
-  const exercise = pe.exerciseId ? await ctx.db.get(pe.exerciseId) : null;
-  return {
-    ...pe,
-    ejercicio: exercise
-      ? {
-          _id: exercise._id,
-          nombreEjercicio: exercise.nombreEjercicio,
-          descripcion: exercise.descripcion,
-          portada: exercise.portada,
-          video: exercise.video,
-        }
-      : null,
-  };
+function fullName(user: any): string {
+  if (!user) return "";
+  return `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
 }
 
-// Helper: load exercises for a plan, sorted by sort field, embebiendo datos del ejercicio
+// Adjunta `pacienteNombre`/`fisioNombre` derivados al vuelo. Sustituye a la
+// denormalización previa en schema.
+async function attachUserNames(ctx: any, plans: any[]) {
+  const userIds = [
+    ...plans.map((p) => p.pacienteId),
+    ...plans.map((p) => p.fisioId),
+  ];
+  const usersMap = await batchGetMap<"users">(ctx, userIds);
+  return plans.map((p) => ({
+    ...p,
+    pacienteNombre: fullName(usersMap.get(p.pacienteId)),
+    fisioNombre: fullName(usersMap.get(p.fisioId)),
+  }));
+}
+
+// Carga los planExercises de cada plan + el catálogo de exercises asociado
+// en lote, evitando el patrón N+1 anterior (1 query por plan + 1 por ejercicio).
+async function enrichPlans(ctx: any, plans: any[]) {
+  const allPlanExercises = await Promise.all(
+    plans.map((p) =>
+      ctx.db
+        .query("planExercises")
+        .withIndex("by_planId_sort", (q: any) => q.eq("planId", p._id))
+        .collect(),
+    ),
+  );
+
+  const exerciseIds = allPlanExercises
+    .flat()
+    .map((pe: any) => pe.exerciseId)
+    .filter(Boolean);
+  const userIds = [
+    ...plans.map((p) => p.pacienteId),
+    ...plans.map((p) => p.fisioId),
+  ];
+  const [exercisesMap, usersMap] = await Promise.all([
+    batchGetMap<"exercises">(ctx, exerciseIds),
+    batchGetMap<"users">(ctx, userIds),
+  ]);
+
+  return plans.map((plan, i) => {
+    const ejercicios = (allPlanExercises[i] ?? []).map((pe: any) => {
+      const exercise = pe.exerciseId
+        ? exercisesMap.get(pe.exerciseId) ?? null
+        : null;
+      return {
+        ...pe,
+        ejercicio: exercise
+          ? {
+              _id: exercise._id,
+              nombreEjercicio: exercise.nombreEjercicio,
+              descripcion: exercise.descripcion,
+              portada: exercise.portada,
+              video: exercise.video,
+            }
+          : null,
+      };
+    });
+    return {
+      ...plan,
+      ejercicios,
+      pacienteNombre: fullName(usersMap.get(plan.pacienteId)),
+      fisioNombre: fullName(usersMap.get(plan.fisioId)),
+    };
+  });
+}
+
+async function enrichPlan(ctx: any, plan: any) {
+  const [enriched] = await enrichPlans(ctx, [plan]);
+  return enriched;
+}
+
 async function loadPlanExercises(ctx: any, planId: any) {
   const exercises = await ctx.db
     .query("planExercises")
     .withIndex("by_planId_sort", (q: any) => q.eq("planId", planId))
     .collect();
-  return await Promise.all(exercises.map((pe: any) => enrichPlanExercise(ctx, pe)));
-}
-
-// Helper: enrich plan with exercises array
-async function enrichPlan(ctx: any, plan: any) {
-  const exercises = await loadPlanExercises(ctx, plan._id);
-  return { ...plan, ejercicios: exercises };
+  const exerciseIds = exercises
+    .map((pe: any) => pe.exerciseId)
+    .filter(Boolean);
+  const exercisesMap = await batchGetMap<"exercises">(ctx, exerciseIds);
+  return exercises.map((pe: any) => {
+    const exercise = pe.exerciseId
+      ? exercisesMap.get(pe.exerciseId) ?? null
+      : null;
+    return {
+      ...pe,
+      ejercicio: exercise
+        ? {
+            _id: exercise._id,
+            nombreEjercicio: exercise.nombreEjercicio,
+            descripcion: exercise.descripcion,
+            portada: exercise.portada,
+            video: exercise.video,
+          }
+        : null,
+    };
+  });
 }
 
 function getTodayString(): string {
@@ -63,20 +137,22 @@ export const listByFisio = query({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
 
+    let plans;
     if (args.estado) {
-      return await ctx.db
+      plans = await ctx.db
         .query("plans")
         .withIndex("by_fisioId_estado", (q) =>
           q.eq("fisioId", user._id).eq("estado", args.estado!),
         )
         .collect();
+    } else {
+      const all = await ctx.db
+        .query("plans")
+        .withIndex("by_fisioId", (q) => q.eq("fisioId", user._id))
+        .collect();
+      plans = all.filter((p) => p.estado !== "cancelado");
     }
-
-    const all = await ctx.db
-      .query("plans")
-      .withIndex("by_fisioId", (q) => q.eq("fisioId", user._id))
-      .collect();
-    return all.filter((p) => p.estado !== "cancelado");
+    return await attachUserNames(ctx, plans);
   },
 });
 
@@ -98,20 +174,22 @@ export const listByPaciente = query({
     const user = await getAuthenticatedUser(ctx);
     const targetId = resolvePacienteId(args.pacienteId, user._id);
 
+    let plans;
     if (args.estado) {
-      return await ctx.db
+      plans = await ctx.db
         .query("plans")
         .withIndex("by_pacienteId_estado", (q) =>
           q.eq("pacienteId", targetId).eq("estado", args.estado!),
         )
         .collect();
+    } else {
+      const all = await ctx.db
+        .query("plans")
+        .withIndex("by_pacienteId", (q) => q.eq("pacienteId", targetId))
+        .collect();
+      plans = all.filter((p) => p.estado !== "cancelado");
     }
-
-    const all = await ctx.db
-      .query("plans")
-      .withIndex("by_pacienteId", (q) => q.eq("pacienteId", targetId))
-      .collect();
-    return all.filter((p) => p.estado !== "cancelado");
+    return await attachUserNames(ctx, plans);
   },
 });
 
@@ -150,11 +228,7 @@ export const getActiveForPatientToday = query({
       return true;
     });
 
-    const results = [];
-    for (const plan of filtered) {
-      results.push(await enrichPlan(ctx, plan));
-    }
-    return results;
+    return await enrichPlans(ctx, filtered);
   },
 });
 
@@ -181,11 +255,7 @@ export const getActiveAndFuture = query({
       return true;
     });
 
-    const results = [];
-    for (const plan of filtered) {
-      results.push(await enrichPlan(ctx, plan));
-    }
-    return results;
+    return await enrichPlans(ctx, filtered);
   },
 });
 

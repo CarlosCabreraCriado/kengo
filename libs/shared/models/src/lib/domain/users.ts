@@ -6,11 +6,9 @@
 import { UUID } from '../types/common';
 
 /**
- * Constantes de puestos dentro de una clínica
+ * Puesto dentro de una clínica (alineado con clinicMemberships.puesto en Convex).
  */
-export const PUESTO_FISIOTERAPEUTA = 1;
-export const PUESTO_PACIENTE = 2;
-export const PUESTO_ADMINISTRADOR = 4;
+export type Puesto = 'fisio' | 'paciente' | 'admin';
 
 /**
  * Detalle de usuario transformado
@@ -23,20 +21,11 @@ export interface DetalleUsuario {
 }
 
 /**
- * Puesto dentro de una clínica
- */
-export interface Puesto {
-  id_puesto: number;
-  puesto: string;
-}
-
-/**
  * Relación usuario-clínica transformada (con puesto único)
  */
 export interface ClinicaUsuario {
-  id_clinica: string;
-  id_puesto: number | null;
-  puesto: string | null;
+  clinicId: string;
+  puesto: Puesto | null;
 }
 
 /**
@@ -58,9 +47,9 @@ export interface Usuario {
   magic_link_url?: string;
   clinicas: ClinicaUsuario[];
   postal?: string;
-  /** @computed Derivado de clinicas[].id_puesto - true si fisioterapeuta(1) o admin(4) en alguna clínica */
+  /** @computed Derivado de clinicas[].puesto - true si fisio o admin en alguna clínica */
   esFisio: boolean;
-  /** @computed Derivado de clinicas[].id_puesto - true si paciente(2) en alguna clínica o sin acceso fisio */
+  /** @computed Derivado de clinicas[].puesto - true si paciente en alguna clínica o sin acceso fisio */
   esPaciente: boolean;
   numero_colegiado?: string;
 }

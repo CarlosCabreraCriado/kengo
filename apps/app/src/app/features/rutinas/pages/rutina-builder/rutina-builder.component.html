@@ -172,7 +172,7 @@
                     class="h-12 w-12 rounded-xl object-cover"
                   />
                 }
-                <span class="font-bold text-zinc-800">{{ it.ejercicio.nombre_ejercicio }}</span>
+                <span class="font-bold text-zinc-800">{{ it.ejercicio.nombre }}</span>
               </div>
             </div>
 
@@ -193,7 +193,7 @@
                   @if (it.ejercicio.portada) {
                     <img
                       [src]="assetUrl(it.ejercicio.portada, 80, 80)"
-                      [alt]="it.ejercicio.nombre_ejercicio"
+                      [alt]="it.ejercicio.nombre"
                       class="h-full w-full object-cover"
                     />
                   } @else {
@@ -205,15 +205,15 @@
 
                 <div class="min-w-0 flex-1">
                   <h3 class="truncate font-bold text-zinc-800">
-                    {{ it.ejercicio.nombre_ejercicio }}
+                    {{ it.ejercicio.nombre }}
                   </h3>
                   <p class="mt-1 text-sm text-zinc-500">
                     <span class="font-semibold text-amber-600">{{ it.series || 3 }}x{{ it.repeticiones || 10 }}</span>
-                    @if (it.descanso_seg) {
-                      <span class="text-zinc-400"> · {{ it.descanso_seg }}s</span>
+                    @if (it.descansoSeg) {
+                      <span class="text-zinc-400"> · {{ it.descansoSeg }}s</span>
                     }
-                    @if (it.veces_dia && it.veces_dia > 1) {
-                      <span class="text-zinc-400"> · {{ it.veces_dia }}/dia</span>
+                    @if (it.vecesDia && it.vecesDia > 1) {
+                      <span class="text-zinc-400"> · {{ it.vecesDia }}/dia</span>
                     }
                   </p>
                   <!-- Días de la semana visual -->
@@ -242,14 +242,14 @@
                     @if (it.ejercicio.portada) {
                       <img
                         [src]="assetUrl(it.ejercicio.portada, 120, 120)"
-                        [alt]="it.ejercicio.nombre_ejercicio"
+                        [alt]="it.ejercicio.nombre"
                         class="h-full w-full object-cover"
                       />
                     }
                   </div>
                   <div class="min-w-0 flex-1">
                     <h3 class="font-bold text-lg text-zinc-800">
-                      {{ it.ejercicio.nombre_ejercicio }}
+                      {{ it.ejercicio.nombre }}
                     </h3>
                     @if (it.ejercicio.descripcion) {
                       <div
@@ -294,8 +294,8 @@
                       type="number"
                       min="0"
                       class="input-compact text-center"
-                      [value]="it.descanso_seg ?? 45"
-                      (input)="update(i, { descanso_seg: +$any($event.target).value || 0 })"
+                      [value]="it.descansoSeg ?? 45"
+                      (input)="update(i, { descansoSeg: +$any($event.target).value || 0 })"
                     />
                   </div>
                   <div class="col-span-1">
@@ -306,8 +306,8 @@
                       type="number"
                       min="1"
                       class="input-compact text-center"
-                      [value]="it.veces_dia ?? 1"
-                      (input)="update(i, { veces_dia: +$any($event.target).value || 1 })"
+                      [value]="it.vecesDia ?? 1"
+                      (input)="update(i, { vecesDia: +$any($event.target).value || 1 })"
                     />
                   </div>
                 </div>
@@ -340,8 +340,8 @@
                     rows="2"
                     class="input-compact w-full resize-none"
                     placeholder="Indicaciones especiales..."
-                    [value]="it.instrucciones_paciente || ''"
-                    (input)="update(i, { instrucciones_paciente: $any($event.target).value })"
+                    [value]="it.instruccionesPaciente || ''"
+                    (input)="update(i, { instruccionesPaciente: $any($event.target).value })"
                   ></textarea>
                 </div>
 
@@ -351,7 +351,7 @@
                     type="button"
                     class="inline-flex items-center gap-1.5 text-sm font-semibold text-red-500
                            transition-all hover:text-red-600 active:scale-98"
-                    (click)="removeEjercicio(it.ejercicio.id_ejercicio)"
+                    (click)="removeEjercicio(it.ejercicio.id)"
                   >
                     <span class="material-symbols-outlined text-xl">delete</span>
                     Eliminar

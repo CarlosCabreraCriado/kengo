@@ -22,7 +22,6 @@ import { api } from '../../../../../../../../convex/_generated/api';
 import {
   Usuario,
   UUID,
-  PUESTO_ADMINISTRADOR,
   BulkAsignacionPayload,
 } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
@@ -50,7 +49,7 @@ export class AsignacionResponsableComponent {
     effect(() => {
       const clinicas = this.clinicasAdmin();
       if (clinicas.length > 0 && this.clinicaSeleccionada() === null) {
-        this.seleccionarClinica(clinicas[0].id_clinica);
+        this.seleccionarClinica(clinicas[0].id);
       }
     });
   }
@@ -67,9 +66,9 @@ export class AsignacionResponsableComponent {
     const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
     const userClinicas = this.sessionService.usuario()?.clinicas ?? [];
     const adminClinicaIds = userClinicas
-      .filter((uc) => uc.id_puesto === PUESTO_ADMINISTRADOR)
-      .map((uc) => uc.id_clinica);
-    return clinicas.filter((c) => adminClinicaIds.includes(c.id_clinica));
+      .filter((uc) => uc.puesto === 'admin')
+      .map((uc) => uc.clinicId);
+    return clinicas.filter((c) => adminClinicaIds.includes(c.id));
   });
 
   readonly clinicaSeleccionada = signal<string | null>(null);
@@ -189,15 +188,15 @@ export class AsignacionResponsableComponent {
       const orig = this.asignacionesOriginales();
       const edit = this.asignacionesEditadas();
 
-      const asignaciones: { id_paciente: UUID; id_fisio: UUID | null }[] = [];
+      const asignaciones: { pacienteId: UUID; fisioId: UUID | null }[] = [];
       for (const [pacId, fisioId] of edit) {
         if (orig.get(pacId) !== fisioId) {
-          asignaciones.push({ id_paciente: pacId, id_fisio: fisioId });
+          asignaciones.push({ pacienteId: pacId, fisioId });
         }
       }
 
       const payload: BulkAsignacionPayload = {
-        id_clinica: clinicaId,
+        clinicId: clinicaId,
         asignaciones,
       };
 

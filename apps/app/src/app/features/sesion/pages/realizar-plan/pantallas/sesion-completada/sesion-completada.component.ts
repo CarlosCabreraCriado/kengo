@@ -75,7 +75,7 @@ import {
             Resumen de dolor
           </h3>
           <div class="flex flex-1 flex-col gap-2 overflow-y-auto">
-            @for (registro of registrosConNombre(); track registro.plan_item) {
+            @for (registro of registrosConNombre(); track registro.planItemId) {
               <div
                 class="tarjeta-kengo flex shrink-0 items-center justify-between rounded-xl px-3.5 py-3"
               >
@@ -86,15 +86,15 @@ import {
                 <div class="flex shrink-0 items-center gap-2.5">
                   <span
                     class="text-sm font-bold"
-                    [style.color]="getDolorColor(registro.dolor_escala || 0)"
+                    [style.color]="getDolorColor(registro.dolorEscala || 0)"
                   >
-                    {{ registro.dolor_escala }}/10
+                    {{ registro.dolorEscala }}/10
                   </span>
                   <span
                     class="material-symbols-outlined text-xl"
-                    [style.color]="getDolorColor(registro.dolor_escala || 0)"
+                    [style.color]="getDolorColor(registro.dolorEscala || 0)"
                   >
-                    {{ getDolorIcon(registro.dolor_escala || 0) }}
+                    {{ getDolorIcon(registro.dolorEscala || 0) }}
                   </span>
                 </div>
               </div>
@@ -159,10 +159,10 @@ export class SesionCompletadaComponent {
     const regs = this.registros();
 
     return regs.map((reg) => {
-      const item = plan?.items?.find((i) => i.id === reg.plan_item);
+      const item = plan?.items?.find((i) => i.id === reg.planItemId);
       return {
         ...reg,
-        nombre: item?.ejercicio?.nombre_ejercicio || 'Ejercicio',
+        nombre: item?.ejercicio?.nombre || 'Ejercicio',
       };
     });
   });

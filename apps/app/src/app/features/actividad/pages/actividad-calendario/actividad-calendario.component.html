@@ -140,8 +140,8 @@
                         <span class="detail-exercise-name">{{ ejercicio.nombre }}</span>
                         <span class="detail-exercise-details">
                           {{ ejercicio.series }} series ×
-                          @if (ejercicio.duracion_seg) {
-                            {{ ejercicio.duracion_seg }}s
+                          @if (ejercicio.duracionSeg) {
+                            {{ ejercicio.duracionSeg }}s
                           } @else {
                             {{ ejercicio.repeticiones ?? 12 }} reps
                           }

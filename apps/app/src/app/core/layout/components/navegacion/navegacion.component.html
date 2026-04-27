@@ -131,8 +131,8 @@
                       (click)="irANotificacion(n)"
                     >
                       <div class="notificacion-avatar">
-                        @if (avatarUrlEmisor(n.emisor_avatar); as avatarSrc) {
-                          <img [src]="avatarSrc" [alt]="n.emisor_nombre" />
+                        @if (avatarUrlEmisor(n.emisorAvatar); as avatarSrc) {
+                          <img [src]="avatarSrc" [alt]="n.emisorNombre" />
                         } @else {
                           <div class="notificacion-avatar-placeholder">
                             <span class="material-symbols-outlined">person</span>
@@ -140,7 +140,7 @@
                         }
                       </div>
                       <div class="notificacion-contenido">
-                        <span class="notificacion-emisor">{{ n.emisor_nombre }}</span>
+                        <span class="notificacion-emisor">{{ n.emisorNombre }}</span>
                         <span class="notificacion-titulo-item">{{ n.titulo }}</span>
                         @if (n.texto) {
                           <span class="notificacion-texto">{{ n.texto }}</span>

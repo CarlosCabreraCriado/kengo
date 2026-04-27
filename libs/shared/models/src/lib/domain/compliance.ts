@@ -8,19 +8,19 @@ export type TipoCumplimiento = 'completado' | 'parcial' | 'fallido' | 'descanso'
 export interface CumplimientoDia {
   fecha: string;
   tipo: TipoCumplimiento;
-  ejercicios_esperados: number;
-  ejercicios_completados: number;
-  dolor_promedio: number | null;
-  planes: { plan_id: string; titulo: string; esperados: number; completados: number }[];
+  ejerciciosEsperados: number;
+  ejerciciosCompletados: number;
+  dolorPromedio: number | null;
+  planes: { planId: string; titulo: string; esperados: number; completados: number }[];
 }
 
 export interface ResumenCumplimiento {
-  dias_programados: number;
-  dias_completados: number;
-  dias_parciales: number;
-  dias_fallidos: number;
-  dias_descanso: number;
-  adherencia_real: number;
+  diasProgramados: number;
+  diasCompletados: number;
+  diasParciales: number;
+  diasFallidos: number;
+  diasDescanso: number;
+  adherenciaReal: number;
 }
 
 export interface CumplimientoResponse {
@@ -31,7 +31,7 @@ export interface CumplimientoResponse {
 /** Métricas resumen de un paciente (endpoint bulk) */
 export interface MetricasPaciente {
   adherencia: number;
-  dolor_promedio: number | null;
+  dolorPromedio: number | null;
 }
 
 /** Respuesta del endpoint bulk: mapa paciente UUID → métricas */

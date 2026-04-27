@@ -74,7 +74,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     direccion: [''],
     postal: [''],
     nif: [''],
-    color_primario: ['#e75c3e'],
+    colorPrimario: ['#e75c3e'],
   });
 
   loading = signal(false);
@@ -136,7 +136,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
         direccion: this.clinica.direccion || '',
         postal: this.clinica.postal || '',
         nif: this.clinica.nif || '',
-        color_primario: this.clinica.color_primario || '#e75c3e',
+        colorPrimario: this.clinica.colorPrimario || '#e75c3e',
       });
 
       // Initialize logo
@@ -301,7 +301,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
         direccion: formValue.direccion?.trim() || null,
         postal: formValue.postal?.trim() || null,
         nif: formValue.nif?.trim() || null,
-        color_primario: formValue.color_primario || null,
+        colorPrimario: formValue.colorPrimario || null,
       };
 
       // Add logo if changed
@@ -324,7 +324,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
 
       // 4. Update clinic
       const result = await this.clinicaGestionService.actualizarClinica(
-        this.clinica.id_clinica,
+        this.clinica.id,
         payload,
       );
 
@@ -353,7 +353,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   // === Color Methods ===
 
   selectColor(color: string) {
-    this.form.patchValue({ color_primario: color });
+    this.form.patchValue({ colorPrimario: color });
   }
 
   /**

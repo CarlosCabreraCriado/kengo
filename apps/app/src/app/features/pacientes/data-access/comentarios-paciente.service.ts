@@ -33,20 +33,20 @@ export class ComentariosPacienteService {
     const comentarios = result.items.map((a) => ({
       id: a._id,
       tipo: a.tipo as 'comentario' | 'dolor_alto',
-      paciente: a.pacienteId,
-      id_clinica: a.clinicId,
-      id_registro: (a.exerciseExecutionId as string | undefined) ?? null,
-      id_sesion: (a.sessionId as string | undefined) ?? null,
-      fecha_registro: a.fechaGeneracion,
+      pacienteId: a.pacienteId,
+      clinicId: a.clinicId,
+      registroId: (a.exerciseExecutionId as string | undefined) ?? null,
+      sesionId: (a.sessionId as string | undefined) ?? null,
+      fechaRegistro: a.fechaGeneracion,
       // Las denormalizaciones de plan/ejercicio se eliminaron en el modelo
       // nuevo. Si la UI los requiere, se recuperarán por lookup.
-      titulo_plan: null,
-      nombre_ejercicio: null,
+      tituloPlan: null,
+      nombre: null,
       texto: a.texto ?? null,
-      dolor_escala: a.dolorEscala ?? null,
+      dolorEscala: a.dolorEscala ?? null,
       revisada: a.estado !== 'pendiente',
-      fecha_revision: a.fechaRevision ?? null,
-      date_created: new Date(a._creationTime).toISOString(),
+      fechaRevision: a.fechaRevision ?? null,
+      dateCreated: new Date(a._creationTime).toISOString(),
     }));
 
     return {

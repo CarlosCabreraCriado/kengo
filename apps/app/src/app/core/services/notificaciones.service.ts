@@ -78,14 +78,14 @@ export class NotificacionesService {
         id,
         fuente: 'kengo',
         categoria: 'comentario_paciente' as const,
-        emisor_nombre: a.pacienteNombre ?? '',
-        emisor_avatar: null,
-        emisor_id: a.pacienteId,
+        emisorNombre: a.pacienteNombre ?? '',
+        emisorAvatar: null,
+        emisorId: a.pacienteId,
         titulo: tituloFromAlert(a),
         texto: a.texto ?? null,
         fecha: a.fechaGeneracion,
         leida,
-        ruta_destino: `/mis-pacientes/${a.pacienteId}`,
+        rutaDestino: `/mis-pacientes/${a.pacienteId}`,
       };
     });
   });

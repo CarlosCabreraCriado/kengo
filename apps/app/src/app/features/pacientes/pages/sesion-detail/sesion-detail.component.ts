@@ -14,28 +14,28 @@ import { api } from '../../../../../../../../convex/_generated/api';
 const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
 interface RegistroExpandido {
-  id_registro: string;
-  fecha_hora: string;
+  id: string;
+  fechaHora: string;
   completado: boolean;
-  repeticiones_realizadas?: number;
-  duracion_real_seg?: number;
-  dolor_escala?: number;
-  esfuerzo_escala?: number;
-  nota_paciente?: string;
-  plan_item: {
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
+  planItemId: {
     id: string;
     sort: number;
     series?: number;
     repeticiones?: number;
-    duracion_seg?: number;
-    instrucciones_paciente?: string;
+    duracionSeg?: number;
+    instruccionesPaciente?: string;
     ejercicio: {
-      id_ejercicio: string;
-      nombre_ejercicio: string;
+      id: string;
+      nombre: string;
       portada: string | null;
     };
     plan: {
-      id_plan: string;
+      id: string;
       titulo: string;
     };
   };
@@ -54,11 +54,11 @@ interface EjercicioAgendado {
   portada: string | null;
   series: number | null;
   repeticiones: number | null;
-  duracion_seg: number | null;
+  duracionSeg: number | null;
 }
 
 interface PlanAgendadoDetalle {
-  plan_id: string;
+  planId: string;
   titulo: string;
   esperados: number;
   completados: number;
@@ -106,8 +106,8 @@ export class SesionDetailComponent implements OnInit {
   readonly promedioDolor = computed(() => {
     const todos = this.grupos().flatMap((g) => g.registros);
     const dolores = todos
-      .filter((r) => r.dolor_escala != null)
-      .map((r) => r.dolor_escala!);
+      .filter((r) => r.dolorEscala != null)
+      .map((r) => r.dolorEscala!);
     if (dolores.length === 0) return null;
     return (
       Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) /
@@ -117,7 +117,7 @@ export class SesionDetailComponent implements OnInit {
 
   readonly totalComentarios = computed(() => {
     const todos = this.grupos().flatMap((g) => g.registros);
-    return todos.filter((r) => r.nota_paciente?.trim()).length;
+    return todos.filter((r) => r.notaPaciente?.trim()).length;
   });
 
   readonly totalEsperados = computed(() =>
@@ -162,28 +162,28 @@ export class SesionDetailComponent implements OnInit {
             continue;
           }
           validos.push({
-            id_registro: e._id,
-            fecha_hora: e.fechaHora,
+            id: e._id,
+            fechaHora: e.fechaHora,
             completado: e.completado,
-            repeticiones_realizadas: e.repeticionesRealizadas,
-            duracion_real_seg: e.duracionRealSeg,
-            dolor_escala: e.dolorEscala,
-            esfuerzo_escala: e.esfuerzoEscala,
-            nota_paciente: e.notaPaciente,
-            plan_item: {
+            repeticionesRealizadas: e.repeticionesRealizadas,
+            duracionRealSeg: e.duracionRealSeg,
+            dolorEscala: e.dolorEscala,
+            esfuerzoEscala: e.esfuerzoEscala,
+            notaPaciente: e.notaPaciente,
+            planItemId: {
               id: e.planExercise._id,
               sort: e.planExercise.sort,
               series: e.planExercise.series,
               repeticiones: e.planExercise.repeticiones,
-              duracion_seg: e.planExercise.duracionSeg,
-              instrucciones_paciente: e.planExercise.instruccionesPaciente,
+              duracionSeg: e.planExercise.duracionSeg,
+              instruccionesPaciente: e.planExercise.instruccionesPaciente,
               ejercicio: {
-                id_ejercicio: e.planExercise.exercise._id,
-                nombre_ejercicio: e.planExercise.exercise.nombreEjercicio,
+                id: e.planExercise.exercise._id,
+                nombre: e.planExercise.exercise.nombreEjercicio,
                 portada: e.planExercise.exercise.portada ?? null,
               },
               plan: {
-                id_plan: e.planExercise.plan._id,
+                id: e.planExercise.plan._id,
                 titulo: e.planExercise.plan.titulo,
               },
             },
@@ -192,10 +192,10 @@ export class SesionDetailComponent implements OnInit {
       }
 
       validos.sort((a, b) => {
-        if (a.plan_item.plan.id_plan !== b.plan_item.plan.id_plan) {
-          return a.plan_item.plan.id_plan.localeCompare(b.plan_item.plan.id_plan);
+        if (a.planItemId.plan.id !== b.planItemId.plan.id) {
+          return a.planItemId.plan.id.localeCompare(b.planItemId.plan.id);
         }
-        return a.plan_item.sort - b.plan_item.sort;
+        return a.planItemId.sort - b.planItemId.sort;
       });
 
       this.grupos.set(this.agruparPorPlan(validos));
@@ -215,11 +215,11 @@ export class SesionDetailComponent implements OnInit {
     const mapa = new Map<string, GrupoPlan>();
 
     for (const reg of registros) {
-      const planId = reg.plan_item.plan.id_plan;
+      const planId = reg.planItemId.plan.id;
       if (!mapa.has(planId)) {
         mapa.set(planId, {
           planId,
-          planTitulo: reg.plan_item.plan.titulo,
+          planTitulo: reg.planItemId.plan.titulo,
           registros: [],
         });
       }
@@ -250,28 +250,30 @@ export class SesionDetailComponent implements OnInit {
       const ejerciciosPorPlan = await Promise.all(
         planesConEjercicios.map((p) =>
           this.convex.query(api.plans.queries.listExercisesByPlanId, {
-            planId: p.plan_id as any,
+            planId: p.planId as any,
           }),
         ),
       );
 
       this.planesAgendados.set(
         planesConEjercicios.map((p, i) => {
-          const items = (ejerciciosPorPlan[i] ?? []).filter((item) => {
-            const dias = item.diasSemana as DiaSemana[] | undefined;
-            if (!dias || dias.length === 0) return true;
-            return dias.includes(diaSemana);
-          });
+          const items = ((ejerciciosPorPlan[i] ?? []) as any[]).filter(
+            (item: any) => {
+              const dias = item.diasSemana as DiaSemana[] | undefined;
+              if (!dias || dias.length === 0) return true;
+              return dias.includes(diaSemana);
+            },
+          );
           return {
             ...p,
-            ejercicios: items.map((item) => ({
+            ejercicios: items.map((item: any) => ({
               id: item._id,
               sort: item.sort,
               nombre: item.ejercicio?.nombreEjercicio ?? '',
               portada: item.ejercicio?.portada ?? null,
               series: item.series ?? null,
               repeticiones: item.repeticiones ?? null,
-              duracion_seg: item.duracionSeg ?? null,
+              duracionSeg: item.duracionSeg ?? null,
             })),
           };
         }),

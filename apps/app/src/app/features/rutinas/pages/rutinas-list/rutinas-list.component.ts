@@ -89,17 +89,17 @@ export class RutinasListComponent {
   }
 
   async togglePreview(rutina: Rutina) {
-    if (this.expandedRutinaId() === rutina.id_rutina) {
+    if (this.expandedRutinaId() === rutina.id) {
       this.expandedRutinaId.set(null);
       this.previewEjercicios.set([]);
       return;
     }
 
-    this.expandedRutinaId.set(rutina.id_rutina);
+    this.expandedRutinaId.set(rutina.id);
     this.loadingPreview.set(true);
 
     try {
-      const completa = await this.rutinasService.getRutinaById(rutina.id_rutina);
+      const completa = await this.rutinasService.getRutinaById(rutina.id);
       if (completa) {
         this.previewEjercicios.set(completa.ejercicios);
       }
@@ -121,7 +121,7 @@ export class RutinasListComponent {
 
   async duplicarRutina(rutina: Rutina) {
     const nuevoNombre = `${rutina.nombre} (copia)`;
-    const id = await this.rutinasService.duplicarRutina(rutina.id_rutina, nuevoNombre);
+    const id = await this.rutinasService.duplicarRutina(rutina.id, nuevoNombre);
 
     if (id) {
       this.toastService.show('Rutina duplicada');
@@ -133,7 +133,7 @@ export class RutinasListComponent {
   async eliminarRutina(rutina: Rutina) {
     if (!confirm(`¿Eliminar la rutina "${rutina.nombre}"?`)) return;
 
-    const success = await this.rutinasService.deleteRutina(rutina.id_rutina);
+    const success = await this.rutinasService.deleteRutina(rutina.id);
     if (success) {
       this.toastService.show('Rutina eliminada');
     } else {
@@ -143,7 +143,7 @@ export class RutinasListComponent {
 
   async cambiarVisibilidadRutina(rutina: Rutina) {
     const nuevaVisibilidad = rutina.visibilidad === 'privado' ? 'clinica' : 'privado';
-    const success = await this.rutinasService.updateRutina(rutina.id_rutina, {
+    const success = await this.rutinasService.updateRutina(rutina.id, {
       visibilidad: nuevaVisibilidad,
     });
 
@@ -159,7 +159,7 @@ export class RutinasListComponent {
   }
 
   editarRutina(rutina: Rutina) {
-    this.router.navigate(['/rutinas', rutina.id_rutina, 'editar']);
+    this.router.navigate(['/rutinas', rutina.id, 'editar']);
   }
 
   toggleRutinaMenu(rutinaId: string) {
@@ -211,7 +211,7 @@ export class RutinasListComponent {
     }
 
     // 4. Cargar ejercicios de la rutina en el carrito
-    const success = await this.planBuilderService.loadFromRutina(rutina.id_rutina);
+    const success = await this.planBuilderService.loadFromRutina(rutina.id);
 
     if (success) {
       // 5. Abrir el drawer del carrito

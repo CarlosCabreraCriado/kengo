@@ -15,7 +15,7 @@ export interface CreateClinicaPayload {
   direccion?: string;
   postal?: string;
   nif?: string;
-  color_primario?: string;
+  colorPrimario?: string;
 }
 
 /**
@@ -28,7 +28,7 @@ export interface UpdateClinicaPayload {
   direccion?: string | null;
   postal?: string | null;
   nif?: string | null;
-  color_primario?: string | null;
+  colorPrimario?: string | null;
   /** R2 key del logo (`logos/<uuid>.<ext>`), null para eliminar */
   logo?: string | null;
   /** Operaciones sobre la galería de imágenes (`clinicFiles`) */
@@ -71,10 +71,10 @@ export interface CrearClinicaResponse {
  * Payload para generar un nuevo código de acceso
  */
 export interface GenerarCodigoPayload {
-  id_clinica: string;
+  clinicId: string;
   tipo: TipoCodigoAcceso;
-  usos_maximos?: number | null;
-  dias_expiracion?: number | null;
+  usosMaximos?: number | null;
+  diasExpiracion?: number | null;
   email?: string | null;
 }
 

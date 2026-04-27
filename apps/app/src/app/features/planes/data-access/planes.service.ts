@@ -153,8 +153,8 @@ export class PlanesService {
     payload: Partial<{
       titulo: string;
       descripcion: string;
-      fecha_inicio: string | null;
-      fecha_fin: string | null;
+      fechaInicio: string | null;
+      fechaFin: string | null;
       estado: EstadoPlan;
     }>,
   ): Promise<boolean> {
@@ -163,8 +163,8 @@ export class PlanesService {
         planId: id as any,
         titulo: payload.titulo,
         descripcion: payload.descripcion,
-        fechaInicio: payload.fecha_inicio ?? undefined,
-        fechaFin: payload.fecha_fin ?? undefined,
+        fechaInicio: payload.fechaInicio ?? undefined,
+        fechaFin: payload.fechaFin ?? undefined,
       });
       return true;
     } catch (error) {
@@ -236,7 +236,7 @@ export class PlanesService {
 
   private mapConvexToPlan(r: any): Plan {
     return {
-      id_plan: r._id,
+      id: r._id,
       paciente: this.mapConvexToUsuarioBasico(
         r.pacienteId,
         r.pacienteNombre,
@@ -245,9 +245,9 @@ export class PlanesService {
       titulo: r.titulo,
       descripcion: r.descripcion,
       estado: r.estado,
-      fecha_inicio: r.fechaInicio,
-      fecha_fin: r.fechaFin,
-      date_created: r._creationTime
+      fechaInicio: r.fechaInicio,
+      fechaFin: r.fechaFin,
+      dateCreated: r._creationTime
         ? new Date(r._creationTime).toISOString()
         : undefined,
     };
@@ -255,7 +255,7 @@ export class PlanesService {
 
   private mapConvexToPlanCompleto(r: any): PlanCompleto {
     return {
-      id_plan: r._id,
+      id: r._id,
       paciente: this.mapConvexToUsuarioBasico(
         r.pacienteId,
         r.pacienteNombre,
@@ -264,9 +264,9 @@ export class PlanesService {
       titulo: r.titulo,
       descripcion: r.descripcion,
       estado: r.estado,
-      fecha_inicio: r.fechaInicio,
-      fecha_fin: r.fechaFin,
-      date_created: r._creationTime
+      fechaInicio: r.fechaInicio,
+      fechaFin: r.fechaFin,
+      dateCreated: r._creationTime
         ? new Date(r._creationTime).toISOString()
         : undefined,
       items: ((r.ejercicios || []) as any[])
@@ -298,26 +298,23 @@ export class PlanesService {
     return {
       id: e._id,
       sort: e.sort ?? 0,
-      plan: e.planId,
+      planId: e.planId,
       ejercicio: {
-        id_ejercicio: e.ejercicio?._id ?? e.exerciseId ?? '',
-        nombre_ejercicio:
-          e.ejercicio?.nombreEjercicio || e.ejercicioNombre || '',
+        id: e.ejercicio?._id ?? e.exerciseId ?? '',
+        nombre: e.ejercicio?.nombreEjercicio ?? '',
         descripcion: e.ejercicio?.descripcion ?? '',
         video: e.ejercicio?.video ?? '',
         portada: e.ejercicio?.portada ?? '',
         categoria: [],
-        series_defecto: '',
-        repeticiones_defecto: '',
       } as Ejercicio,
       series: e.series,
       repeticiones: e.repeticiones,
-      duracion_seg: e.duracionSeg,
-      descanso_seg: e.descansoSeg,
-      veces_dia: e.vecesDia,
-      dias_semana: e.diasSemana,
-      instrucciones_paciente: e.instruccionesPaciente,
-      notas_fisio: e.notasFisio,
+      duracionSeg: e.duracionSeg,
+      descansoSeg: e.descansoSeg,
+      vecesDia: e.vecesDia,
+      diasSemana: e.diasSemana,
+      instruccionesPaciente: e.instruccionesPaciente,
+      notasFisio: e.notasFisio,
     };
   }
 

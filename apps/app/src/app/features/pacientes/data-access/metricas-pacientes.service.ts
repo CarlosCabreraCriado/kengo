@@ -57,7 +57,7 @@ export class MetricasPacientesService {
     for (const s of all) {
       out[s.pacienteId] = {
         adherencia: s.adherencia,
-        dolor_promedio: s.dolorPromedio ?? null,
+        dolorPromedio: s.dolorPromedio ?? null,
       };
     }
     return out;

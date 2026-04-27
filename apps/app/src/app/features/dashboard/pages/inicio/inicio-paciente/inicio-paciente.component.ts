@@ -9,7 +9,6 @@ import { RachaPacienteService, DiaSemanaCalendario } from '../../../data-access/
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
 import { KENGO_BREAKPOINTS } from '../../../../../shared';
-import { PUESTO_PACIENTE } from '@kengo/shared-models';
 import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/global';
 import { assetUrl, rawAssetUrl } from '../../../../../core/utils/asset-url';
 
@@ -45,7 +44,7 @@ export class InicioPacienteComponent {
 
   private clinicaPaciente = computed(() => {
     const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-    return clinicas.find(c => c.id_puesto === PUESTO_PACIENTE)?.id_clinica ?? null;
+    return clinicas.find((c) => c.puesto === 'paciente')?.clinicId ?? null;
   });
 
   fisioAvatarUrl = computed(() => {
@@ -63,7 +62,7 @@ export class InicioPacienteComponent {
     const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
     const clinicaId = this.clinicaPaciente();
     if (!clinicaId) return null;
-    return clinicas.find(c => Number(c.id_clinica) === Number(clinicaId))?.nombre ?? null;
+    return clinicas.find(c => c.id === clinicaId)?.nombre ?? null;
   });
 
   // --- Calendario ---
@@ -93,14 +92,14 @@ export class InicioPacienteComponent {
     const diaHoy = this.DIAS_SEMANA_JS[hoy.getDay()];
 
     let diasRestantes: number | null = null;
-    if (plan.fecha_fin) {
-      const fin = new Date(plan.fecha_fin);
+    if (plan.fechaFin) {
+      const fin = new Date(plan.fechaFin);
       diasRestantes = Math.max(0, Math.ceil((fin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)));
     }
 
     const ejerciciosHoy = plan.items.filter(item => {
-      if (!item.dias_semana || item.dias_semana.length === 0) return true;
-      return item.dias_semana.includes(diaHoy);
+      if (!item.diasSemana || item.diasSemana.length === 0) return true;
+      return item.diasSemana.includes(diaHoy);
     }).length;
 
     return {
@@ -189,8 +188,8 @@ export class InicioPacienteComponent {
         if (esSiguiente) primerPendienteEncontrado = true;
 
         items.push({
-          id: ej.ejercicio?.id_ejercicio ?? ej.id ?? '',
-          nombre: ej.ejercicio?.nombre_ejercicio ?? 'Ejercicio',
+          id: ej.ejercicio?.id ?? ej.id ?? '',
+          nombre: ej.ejercicio?.nombre ?? 'Ejercicio',
           portadaUrl: ej.ejercicio?.portada
             ? `${assetUrl(ej.ejercicio.portada, { width: 80, height: 80, fit: 'cover', format: 'webp' })}`
             : null,
@@ -213,14 +212,14 @@ export class InicioPacienteComponent {
         hayPendientes = true;
 
         const series = ej.series ?? 1;
-        if (ej.duracion_seg) {
-          totalSeg += ej.duracion_seg * series;
+        if (ej.duracionSeg) {
+          totalSeg += ej.duracionSeg * series;
         } else {
           const reps = ej.repeticiones ?? 10;
           totalSeg += series * reps * 3;
         }
         if (series > 1) {
-          totalSeg += (ej.descanso_seg ?? 30) * (series - 1);
+          totalSeg += (ej.descansoSeg ?? 30) * (series - 1);
         }
       }
     }
@@ -235,7 +234,7 @@ export class InicioPacienteComponent {
       const pendiente = planDia.ejerciciosHoy.find(e => !e.completadoHoy);
       if (pendiente) {
         return {
-          nombre: pendiente.ejercicio?.nombre_ejercicio ?? 'Ejercicio',
+          nombre: pendiente.ejercicio?.nombre ?? 'Ejercicio',
           portadaUrl: pendiente.ejercicio?.portada
             ? `${assetUrl(pendiente.ejercicio.portada, { width: 96, height: 96, fit: 'cover', format: 'webp' })}`
             : null,

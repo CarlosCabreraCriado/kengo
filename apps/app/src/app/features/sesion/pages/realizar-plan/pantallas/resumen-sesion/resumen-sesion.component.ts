@@ -73,11 +73,11 @@ export class ResumenSesionComponent {
 
     for (const item of ejerciciosList) {
       const series = item.series ?? 3;
-      const descanso = item.descanso_seg ?? 60;
+      const descanso = item.descansoSeg ?? 60;
 
-      if (item.duracion_seg) {
+      if (item.duracionSeg) {
         // Ejercicio por tiempo
-        totalSegundos += item.duracion_seg * series;
+        totalSegundos += item.duracionSeg * series;
       } else {
         // Ejercicio por repeticiones - estimar ~3 seg por rep
         const reps = item.repeticiones ?? 12;

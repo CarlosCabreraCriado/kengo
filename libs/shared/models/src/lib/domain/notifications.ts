@@ -7,18 +7,18 @@ export type TipoNotificacionFisio = 'comentario' | 'dolor_alto';
 export interface NotificacionFisio {
   id: string;
   tipo: TipoNotificacionFisio;
-  paciente: string;
-  id_clinica: string;
-  id_registro: string | null;
-  id_sesion: string | null;
-  fecha_registro: string;
-  titulo_plan: string | null;
-  nombre_ejercicio: string | null;
+  pacienteId: string;
+  clinicId: string;
+  registroId: string | null;
+  sesionId: string | null;
+  fechaRegistro: string;
+  tituloPlan: string | null;
+  nombre: string | null;
   texto: string | null;
-  dolor_escala: number | null;
+  dolorEscala: number | null;
   revisada: boolean;
-  fecha_revision: string | null;
-  date_created: string | null;
+  fechaRevision: string | null;
+  dateCreated: string | null;
 }
 
 export interface ComentariosPacienteResponse {
@@ -41,14 +41,14 @@ export interface NotificacionApp {
   id: string;
   fuente: string;
   categoria: CategoriaNotificacion;
-  emisor_nombre: string;
-  emisor_avatar: string | null;
-  emisor_id: string;
+  emisorNombre: string;
+  emisorAvatar: string | null;
+  emisorId: string;
   titulo: string;
   texto: string | null;
   fecha: string;
   leida: boolean;
-  ruta_destino: string;
+  rutaDestino: string;
 }
 
 export interface NotificacionesAppResponse {

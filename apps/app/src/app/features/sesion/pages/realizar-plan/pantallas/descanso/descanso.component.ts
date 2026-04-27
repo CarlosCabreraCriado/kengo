@@ -99,7 +99,7 @@ import { fadeAnimation } from '../../realizar-plan.animations';
                 @if (proximoEjercicioPortada()) {
                   <img
                     [src]="proximoEjercicioPortada()"
-                    [alt]="proximoEjercicio()!.ejercicio.nombre_ejercicio"
+                    [alt]="proximoEjercicio()!.ejercicio.nombre"
                     loading="lazy"
                   />
                 } @else {
@@ -109,11 +109,11 @@ import { fadeAnimation } from '../../realizar-plan.animations';
                 }
               </div>
               <div class="next-exercise-info">
-                <span class="next-exercise-name">{{ proximoEjercicio()!.ejercicio.nombre_ejercicio }}</span>
+                <span class="next-exercise-name">{{ proximoEjercicio()!.ejercicio.nombre }}</span>
                 <span class="next-exercise-details">
                   {{ proximoEjercicio()!.series ?? 3 }} series ×
-                  @if (proximoEjercicio()!.duracion_seg) {
-                    {{ proximoEjercicio()!.duracion_seg }}s
+                  @if (proximoEjercicio()!.duracionSeg) {
+                    {{ proximoEjercicio()!.duracionSeg }}s
                   } @else {
                     {{ proximoEjercicio()!.repeticiones ?? 12 }} reps
                   }
@@ -815,7 +815,7 @@ export class DescansoComponent implements OnInit, OnDestroy {
   readonly serieActual = this.registroService.serieActual;
   readonly totalSeries = this.registroService.totalSeries;
   readonly tiempoDescanso = computed(
-    () => this.registroService.ejercicioActual()?.descanso_seg || 45,
+    () => this.registroService.ejercicioActual()?.descansoSeg || 45,
   );
 
   // Progreso de la sesión

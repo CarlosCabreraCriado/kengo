@@ -25,9 +25,10 @@ import { PlanBuilderService } from '../../../planes/data-access/plan-builder.ser
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { MetricasPacientesService } from '../../data-access/metricas-pacientes.service';
+import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { DialogService } from '../../../../shared';
 
-import { Usuario, AsignacionResponsable, MetricasPacientesBulk, PUESTO_ADMINISTRADOR } from '../../../../../types/global';
+import { Usuario, AsignacionResponsable, MetricasPacientesBulk } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
@@ -57,6 +58,7 @@ export class PacientesListComponent {
   private breakpointObserver = inject(BreakpointObserver);
   private asignacionesService = inject(AsignacionesService);
   private metricasService = inject(MetricasPacientesService);
+  private clinicasService = inject(ClinicasService);
   private convex = inject(ConvexService);
 
   // Signal para alternar vista card/lista
@@ -72,7 +74,7 @@ export class PacientesListComponent {
 
   public idsClinicas = computed(() => {
     if (this.sessionService.usuario() == null) return null;
-    return this.sessionService.usuario()?.clinicas.map((c) => c.id_clinica) || [];
+    return this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) || [];
   });
 
   // Asignaciones de fisio responsable
@@ -81,7 +83,7 @@ export class PacientesListComponent {
   // Es admin en alguna clínica
   readonly esAdmin = computed(() => {
     const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-    return clinicas.some((c) => c.id_puesto === PUESTO_ADMINISTRADOR);
+    return clinicas.some((c) => c.puesto === 'admin');
   });
 
   private readonly busqueda = signal('');
@@ -153,9 +155,9 @@ export class PacientesListComponent {
         case 'adherencia_asc':
           return (ma?.adherencia ?? 999) - (mb?.adherencia ?? 999);
         case 'dolor_desc':
-          return (mb?.dolor_promedio ?? -1) - (ma?.dolor_promedio ?? -1);
+          return (mb?.dolorPromedio ?? -1) - (ma?.dolorPromedio ?? -1);
         case 'dolor_asc':
-          return (ma?.dolor_promedio ?? 999) - (mb?.dolor_promedio ?? 999);
+          return (ma?.dolorPromedio ?? 999) - (mb?.dolorPromedio ?? 999);
         default:
           return 0;
       }
@@ -323,9 +325,12 @@ export class PacientesListComponent {
 
   getClinicaNombre(p: Usuario): string | null {
     if (!p.clinicas || p.clinicas.length === 0) return null;
-    // Acceder al nombre de la clínica (viene como objeto anidado en el record expandido)
-    const clinica = p.clinicas[0] as any;
-    return clinica?.id_clinica?.nombre || null;
+    const clinicId = p.clinicas[0].clinicId;
+    const clinica = this.clinicasService
+      .misClinicasRes
+      .value()
+      ?.find((c) => c.id === clinicId);
+    return clinica?.nombre ?? null;
   }
 
   // Métricas de pacientes
@@ -336,7 +341,7 @@ export class PacientesListComponent {
 
   getDolorPromedio(pacienteId: string): number | null {
     const m = this.metricasMap()[pacienteId];
-    return m?.dolor_promedio ?? null;
+    return m?.dolorPromedio ?? null;
   }
 
   adherenciaTier(value: number): 'alta' | 'media' | 'baja' {
