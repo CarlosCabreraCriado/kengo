@@ -172,4 +172,6 @@
 
 - [x] **PR-Persist-1** (backend): Añadir `applyFeedbackBatch`. Aislado, deployable independientemente. ✅ **COMPLETADO**
 - [x] **PR-Persist-2** (frontend): Refactor de `SesionPersistenceService`, `SesionStateService` (`registrarEjercicioCompletado`, `aplicarFeedbackFinal`, `iniciarSesion`), y tipos. ✅ **COMPLETADO**
-- [ ] **PR-Persist-3** (cleanup, futuro): Eliminar `SesionLocal` y `guardarRegistrosRemotos`/`crearRegistro` ya no usados.
+- [x] **PR-Persist-3** (cleanup): Eliminar `SesionLocal` y `guardarRegistrosRemotos`/`crearRegistro` ya no usados. ✅ **COMPLETADO**
+
+  Tras grep exhaustivo se confirmó que ningún archivo importaba `SesionLocal` (solo aparecía en su definición y un re-export). Los métodos antiguos ya habían sido eliminados en PR-Persist-2. La limpieza silenciosa de la clave legacy `kengo:sesion_activa:v1` en `SesionPersistenceService` se mantiene como salvaguarda transitoria; se eliminará en un cleanup futuro cuando haya pasado tiempo suficiente desde el deploy.

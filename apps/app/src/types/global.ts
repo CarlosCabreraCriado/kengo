@@ -53,7 +53,6 @@ export {
   ClinicaImagen,
   ClinicaData,
   EstadoPantalla,
-  SesionLocal,
   SesionHintUI,
   FeedbackEjercicio,
   EjercicioPlanConEstado,

@@ -3,7 +3,7 @@
  * Tipos relacionados con la ejecución de planes por pacientes
  */
 
-import { EjercicioPlan, PlanCompleto, RegistroEjercicio } from './plans';
+import { EjercicioPlan, PlanCompleto } from './plans';
 
 /**
  * Estado de la pantalla durante una sesión de ejercicios
@@ -13,23 +13,6 @@ export type EstadoPantalla =
   | 'ejercicio'
   | 'descanso'
   | 'feedback-final';
-
-/**
- * Sesión local guardada (formato legacy v1).
- *
- * @deprecated Sustituido por `SesionHintUI` (clave `kengo:sesion_activa:v2`).
- * Las executions se persisten ya en Convex al instante; el cliente solo
- * conserva un hint efímero de UI. Eliminar este tipo cuando ningún archivo
- * lo importe (PR-Persist-3).
- */
-export interface SesionLocal {
-  planId: string;
-  ejercicioIndex: number;
-  serieActual: number;
-  estado: EstadoPantalla;
-  registrosPendientes: RegistroEjercicio[];
-  timestamp: string;
-}
 
 /**
  * Hint efímero de UI para retomar la sesión exactamente donde el paciente
