@@ -15,7 +15,12 @@ export type EstadoPantalla =
   | 'feedback-final';
 
 /**
- * Sesión local guardada (para recuperación)
+ * Sesión local guardada (formato legacy v1).
+ *
+ * @deprecated Sustituido por `SesionHintUI` (clave `kengo:sesion_activa:v2`).
+ * Las executions se persisten ya en Convex al instante; el cliente solo
+ * conserva un hint efímero de UI. Eliminar este tipo cuando ningún archivo
+ * lo importe (PR-Persist-3).
  */
 export interface SesionLocal {
   planId: string;
@@ -23,6 +28,24 @@ export interface SesionLocal {
   serieActual: number;
   estado: EstadoPantalla;
   registrosPendientes: RegistroEjercicio[];
+  timestamp: string;
+}
+
+/**
+ * Hint efímero de UI para retomar la sesión exactamente donde el paciente
+ * la dejó. La fuente de verdad de los datos clínicos es Convex
+ * (`sessions` + `exerciseExecutions`); este hint solo evita que tras
+ * recargar la pestaña el usuario tenga que volver a posicionarse.
+ *
+ * Persistido en `localStorage` con clave `kengo:sesion_activa:v2` y TTL 4 h.
+ * Si caduca o no existe, el cliente reconstruye el estado desde Convex
+ * (primer ejercicio sin execution completada).
+ */
+export interface SesionHintUI {
+  sessionId: string;
+  ejercicioIndex: number;
+  serieActual: number;
+  estadoPantalla: EstadoPantalla;
   timestamp: string;
 }
 

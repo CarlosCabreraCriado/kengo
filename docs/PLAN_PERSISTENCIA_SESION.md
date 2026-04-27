@@ -97,19 +97,19 @@
 - [x] **B1.** Crear `convex/executions/mutations.ts::applyFeedbackBatch`. Implementada con validación de permisos, idempotencia delegada al `patch` de Convex, y disparo de alerta de comentario solo cuando la nota es nueva.
 - [x] **B2.** Verificar build (`npm run build` y `npx convex codegen`) sin errores. ⚠️ Pendiente: prueba manual desde Convex dashboard.
 
-### Fase 2 — Tipos compartidos (1 commit pequeño dentro del PR principal)
-- [ ] **T1.** Añadir `SesionHintUI` en `libs/shared/models/src/lib/domain/sessions.ts`.
-- [ ] **T2.** Añadir campo opcional `executionId?: string` a `RegistroEjercicio`.
-- [ ] **T3.** Marcar `SesionLocal` como `@deprecated`.
+### Fase 2 — Tipos compartidos (1 commit pequeño dentro del PR principal) ✅
+- [x] **T1.** Añadir `SesionHintUI` en `libs/shared/models/src/lib/domain/sessions.ts`.
+- [x] **T2.** Añadir campo opcional `executionId?: string` a `RegistroEjercicio`.
+- [x] **T3.** Marcar `SesionLocal` como `@deprecated`.
 
-### Fase 3 — Servicios frontend
-- [ ] **F1.** Reescribir `SesionPersistenceService` con el nuevo contrato (`SesionHintUI`, clave v2, TTL 4 h, limpieza de v1).
-- [ ] **F2.** En `SesionStateService`, modificar `registrarEjercicioCompletado()` para insertar inmediatamente. Guardar `executionId` en el registro.
-- [ ] **F3.** En `SesionStateService`, modificar `aplicarFeedbackFinal()` para usar `applyFeedbackBatch` + `complete`.
-- [ ] **F4.** En `SesionStateService`, reescribir `iniciarSesion()` con la lógica de reanudación basada en Convex (orden de prioridad descrito arriba).
-- [ ] **F5.** Eliminar `guardarRegistrosRemotos()` y `crearRegistro()` (ya no se usan).
-- [ ] **F6.** Modificar el `effect()` de auto-guardado para persistir solo el hint.
-- [ ] **F7.** Implementar `pendingExecutions` queue en memoria para retries de `executions.mutations.create`.
+### Fase 3 — Servicios frontend ✅
+- [x] **F1.** Reescribir `SesionPersistenceService` con el nuevo contrato (`SesionHintUI`, clave v2, TTL 4 h, limpieza silenciosa de v1).
+- [x] **F2.** En `SesionStateService`, modificar `registrarEjercicioCompletado()` para insertar inmediatamente con `executions.mutations.create`. Guardar `executionId` en el registro local.
+- [x] **F3.** En `SesionStateService`, modificar `aplicarFeedbackFinal()` para usar `applyFeedbackBatch` + `complete`.
+- [x] **F4.** En `SesionStateService`, reescribir `iniciarSesion()` con la lógica de reanudación basada en `sessions.queries.getByPacienteAndDateWithExecutions` y aplicación condicional del hint.
+- [x] **F5.** Eliminar `guardarRegistrosRemotos()` y `crearRegistro()` (ya no se usan).
+- [x] **F6.** Modificar el `effect()` de auto-guardado para persistir solo el hint cuando hay `sessionId` y la pantalla está activa.
+- [x] **F7.** Implementar `pendingExecutions` queue en memoria para retries de `executions.mutations.create`. Drenada en `aplicarFeedbackFinal` y `finalizarSesion`.
 
 ### Fase 4 — Componentes (mínima superficie esperada)
 - [ ] **C1.** Verificar que ningún componente accede a `registrosSesion[].executionId` directamente. Si alguno espera el campo legacy, ajustar.
@@ -171,5 +171,5 @@
 ## Plan de PRs
 
 - [x] **PR-Persist-1** (backend): Añadir `applyFeedbackBatch`. Aislado, deployable independientemente. ✅ **COMPLETADO**
-- [ ] **PR-Persist-2** (frontend): Refactor de `SesionPersistenceService`, `SesionStateService` (`registrarEjercicioCompletado`, `aplicarFeedbackFinal`, `iniciarSesion`), y tipos. Depende de PR-Persist-1 ya en producción.
+- [x] **PR-Persist-2** (frontend): Refactor de `SesionPersistenceService`, `SesionStateService` (`registrarEjercicioCompletado`, `aplicarFeedbackFinal`, `iniciarSesion`), y tipos. ✅ **COMPLETADO**
 - [ ] **PR-Persist-3** (cleanup, futuro): Eliminar `SesionLocal` y `guardarRegistrosRemotos`/`crearRegistro` ya no usados.

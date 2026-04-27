@@ -59,6 +59,11 @@ export interface EjercicioPlan {
 
 export interface RegistroEjercicio {
   id?: string;
+  /** Convex `Id<"exerciseExecutions">`. Presente cuando la execution ya
+   *  está creada en Convex (flujo nuevo: insertada al completar el
+   *  ejercicio, no al final de la sesión). Permite aplicar el feedback
+   *  vía `executions.mutations.applyFeedbackBatch`. */
+  executionId?: string;
   planItemId: string;
   pacienteId: UUID;
   fechaHora: string;

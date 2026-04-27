@@ -10,6 +10,7 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { PlanesService } from '../../planes/data-access/planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
 import { SesionPersistenceService } from './sesion-persistence.service';
 import { SesionTemporizadorService } from './sesion-temporizador.service';
 
@@ -18,12 +19,64 @@ import {
   EjercicioPlan,
   EstadoPantalla,
   RegistroEjercicio,
-  SesionLocal,
   FeedbackEjercicio,
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
   DiaSemana,
 } from '../../../../types/global';
+
+interface PendingExecutionPayload {
+  planExerciseId: Id<'planExercises'>;
+  fechaHora: string;
+  fecha: string;
+  completado: boolean;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+}
+
+/** Forma del execution expandido devuelto por
+ *  `sessions.queries.getByPacienteAndDateWithExecutions`. */
+interface ExecutionRehidratable {
+  _id: Id<'exerciseExecutions'>;
+  fechaHora: string;
+  completado: boolean;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
+  planExercise?: { _id: Id<'planExercises'> } | null;
+}
+
+/** Forma de cada sesión devuelta por la query de rehidratación. */
+interface SesionRehidratable {
+  _id: Id<'sessions'>;
+  fecha: string;
+  fechaInicio: string;
+  fechaFin?: string;
+  estado: 'en_curso' | 'completada' | 'completada_parcial';
+  executions: ExecutionRehidratable[];
+}
+
+/** Forma plana de un execution devuelta por
+ *  `executions.queries.listByPacienteAndDate`. */
+interface ConvexExecutionRecord {
+  _id: Id<'exerciseExecutions'>;
+  planExerciseId: string;
+  pacienteId: string;
+  fechaHora: string;
+  completado: boolean;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
+}
+
+interface PendingExecution {
+  payload: PendingExecutionPayload;
+  registroBase: Omit<RegistroEjercicio, 'executionId' | 'id'>;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SesionStateService {
@@ -32,6 +85,10 @@ export class SesionStateService {
   private planesService = inject(PlanesService);
   private persistencia = inject(SesionPersistenceService);
   private temporizador = inject(SesionTemporizadorService);
+
+  // Cola en memoria para reintentar inserts de executions que fallaron
+  // por red. Se drena en `aplicarFeedbackFinal` y `finalizarSesion`.
+  private pendingExecutions: PendingExecution[] = [];
 
   // ========= Estado de la sesión =========
 
@@ -119,12 +176,12 @@ export class SesionStateService {
   readonly usuarioId = computed(() => this.sessionService.usuario()?.id ?? null);
 
   constructor() {
-    // Auto-guardar progreso cuando cambia el estado
+    // Auto-guardar el hint de UI mientras la sesión está activa.
     effect(() => {
-      const plan = this.planActivo();
+      const sessionId = this.sesionActualId();
       const estado = this.estadoPantalla();
-      if (plan && estado !== 'resumen' && estado !== 'feedback-final') {
-        this.guardarProgresoLocal();
+      if (sessionId && estado !== 'resumen' && estado !== 'feedback-final') {
+        this.guardarHintUI();
       }
     });
   }
@@ -157,16 +214,17 @@ export class SesionStateService {
   }
 
   /**
-   * Iniciar una sesión con un plan específico
+   * Iniciar una sesión con un plan específico. Convex es la primera fuente
+   * de reanudación: si existe sesión `en_curso` para hoy, se rehidratan los
+   * registros desde sus executions y se aplica el hint de UI (si coincide).
    */
   async iniciarSesion(planId?: string): Promise<boolean> {
     try {
-      if (this.restaurarProgresoLocal()) {
-        return true;
-      }
+      const userId = this.usuarioId();
+      if (!userId) return false;
 
+      // Cargar plan (planId de la ruta o plan activo del paciente)
       let plan: PlanCompleto | null = null;
-
       if (planId) {
         plan = await this.planesService.getPlanById(planId);
       } else {
@@ -178,16 +236,65 @@ export class SesionStateService {
       }
 
       const ejerciciosHoy = this.filtrarEjerciciosHoy(plan.items);
+      const items = ejerciciosHoy.length > 0 ? ejerciciosHoy : plan.items;
 
-      this.planActivo.set({
-        ...plan,
-        items: ejerciciosHoy.length > 0 ? ejerciciosHoy : plan.items,
-      });
-      this.ejercicioActualIndex.set(0);
-      this.serieActual.set(1);
-      this.estadoPantalla.set('resumen');
-      this.registrosSesion.set([]);
-      this.tiempoInicioSesion.set(null);
+      this.planActivo.set({ ...plan, items });
+
+      // Consultar sesión Convex de hoy
+      const session = await this.consultarSesionHoy();
+
+      if (!session || session.estado !== 'en_curso') {
+        // Sin sesión `en_curso`: arrancar limpio. Si existe una sesión
+        // `completada`/`completada_parcial`, `comenzarSesion` la reabrirá
+        // (openOrResume) cuando el usuario pulse "comenzar".
+        this.ejercicioActualIndex.set(0);
+        this.serieActual.set(1);
+        this.estadoPantalla.set('resumen');
+        this.registrosSesion.set([]);
+        this.tiempoInicioSesion.set(null);
+        this.sesionActualId.set(null);
+        this.persistencia.limpiar();
+        return true;
+      }
+
+      // Sesión en curso: rehidratar
+      this.sesionActualId.set(session._id);
+      this.tiempoInicioSesion.set(
+        session.fechaInicio ? new Date(session.fechaInicio) : null,
+      );
+
+      const registros = this.executionsToRegistros(session.executions ?? []);
+      this.registrosSesion.set(registros);
+
+      // Calcular el primer ejercicio sin execution completada como fallback
+      const completedPlanExerciseIds = new Set(
+        (session.executions ?? [])
+          .filter((e) => e.completado)
+          .map((e) => e.planExercise?._id)
+          .filter((id): id is Id<'planExercises'> => !!id),
+      );
+      const firstUncompletedIdx = items.findIndex(
+        (item) => {
+          const id = this.tryResolvePlanExerciseId(item);
+          return !id || !completedPlanExerciseIds.has(id as Id<'planExercises'>);
+        },
+      );
+      const fallbackIdx =
+        firstUncompletedIdx === -1
+          ? Math.max(0, items.length - 1)
+          : firstUncompletedIdx;
+
+      // Aplicar hint si coincide con esta sesión
+      const hint = this.persistencia.restaurarHint(session._id);
+      if (hint) {
+        this.ejercicioActualIndex.set(hint.ejercicioIndex);
+        this.serieActual.set(hint.serieActual);
+        this.estadoPantalla.set(hint.estadoPantalla);
+      } else {
+        this.ejercicioActualIndex.set(fallbackIdx);
+        this.serieActual.set(1);
+        this.estadoPantalla.set('resumen');
+      }
 
       return true;
     } catch (error) {
@@ -229,9 +336,12 @@ export class SesionStateService {
     this.estadoPantalla.set('ejercicio');
     this.serieActual.set(1);
 
+    // openOrResume es idempotente: si ya tenemos sessionId (rehidratado en
+    // `iniciarSesion`), devolverá el mismo id. Si la sesión estaba cerrada,
+    // la reabre.
     await this.crearSesionRemota(ahora);
 
-    this.guardarProgresoLocal();
+    this.guardarHintUI();
   }
 
   /**
@@ -251,8 +361,10 @@ export class SesionStateService {
       this.temporizador.iniciarDescanso(descanso, false);
       this.estadoPantalla.set('descanso');
     } else {
-      // Última serie del ejercicio: registrar y descanso antes del siguiente
-      this.registrarEjercicioCompletado();
+      // Última serie del ejercicio: insertar execution (fire-and-forget) y
+      // descanso antes del siguiente. La inserción NO bloquea la UX: si
+      // falla, queda en `pendingExecutions` para reintentar al cierre.
+      void this.registrarEjercicioCompletado();
 
       if (this.esUltimoEjercicio()) {
         this.avanzarEjercicio();
@@ -262,7 +374,7 @@ export class SesionStateService {
       }
     }
 
-    this.guardarProgresoLocal();
+    this.guardarHintUI();
   }
 
   /**
@@ -278,7 +390,7 @@ export class SesionStateService {
     } else {
       this.estadoPantalla.set('ejercicio');
     }
-    this.guardarProgresoLocal();
+    this.guardarHintUI();
   }
 
   /**
@@ -298,44 +410,89 @@ export class SesionStateService {
     } else {
       this.estadoPantalla.set('ejercicio');
     }
-    this.guardarProgresoLocal();
+    this.guardarHintUI();
   }
 
   /**
-   * Registrar ejercicio completado (sin dolor, se agrega al final)
+   * Insertar la execution en Convex inmediatamente al completar el
+   * ejercicio. Si la red falla, encola en `pendingExecutions` para
+   * reintentar en `aplicarFeedbackFinal`/`finalizarSesion`.
    */
-  registrarEjercicioCompletado(): void {
+  async registrarEjercicioCompletado(): Promise<void> {
     const ejercicio = this.ejercicioActual();
     const userId = this.usuarioId();
-
     if (!ejercicio?.id || !userId) return;
 
     const planItemId = this.modoMultiPlan()
       ? (ejercicio as EjercicioSesionMultiPlan).planItemId
       : ejercicio.id;
 
-    const registro: RegistroEjercicio = {
-      planItemId: planItemId,
-      pacienteId: userId,
-      fechaHora: new Date().toISOString(),
+    const fechaHora = new Date().toISOString();
+    const fecha = fechaHora.split('T')[0]!;
+
+    let planExerciseId: Id<'planExercises'>;
+    try {
+      planExerciseId = this.resolvePlanExerciseId(planItemId) as Id<'planExercises'>;
+    } catch (error) {
+      console.error('No se pudo resolver planExerciseId:', error);
+      return;
+    }
+
+    const payload: PendingExecutionPayload = {
+      planExerciseId,
+      fechaHora,
+      fecha,
       completado: true,
       repeticionesRealizadas: ejercicio.repeticiones,
       duracionRealSeg: ejercicio.duracionSeg,
     };
 
-    this.registrosSesion.update((regs) => [...regs, registro]);
+    const registroBase: Omit<RegistroEjercicio, 'executionId' | 'id'> = {
+      planItemId,
+      pacienteId: userId,
+      fechaHora,
+      completado: true,
+      repeticionesRealizadas: ejercicio.repeticiones,
+      duracionRealSeg: ejercicio.duracionSeg,
+    };
+
+    try {
+      const executionId = await this.convex.mutation(
+        api.executions.mutations.create,
+        payload,
+      );
+
+      const registro: RegistroEjercicio = {
+        ...registroBase,
+        executionId: executionId as string,
+      };
+
+      this.registrosSesion.update((regs) => [...regs, registro]);
+    } catch (error) {
+      console.error('Error al registrar execution; encolando para retry:', error);
+      this.pendingExecutions.push({ payload, registroBase });
+    }
   }
 
   /**
-   * Aplicar feedback final de todos los ejercicios y guardar
+   * Aplicar feedback final de todos los ejercicios y cerrar la sesión.
+   * Antes de aplicar, intenta drenar la cola de executions pendientes para
+   * que sus feedbacks no se pierdan. Después usa `applyFeedbackBatch` (1
+   * round-trip transaccional) y `sessions.complete`.
    */
   async aplicarFeedbackFinal(data: {
     feedbacks: { planItemId: string; dolor: number; nota?: string }[];
     observacionesGenerales?: string;
   }): Promise<void> {
+    await this.drainPendingExecutions();
+
+    // Reflejar el feedback en cliente para que la UI quede consistente
+    // antes del round-trip a Convex.
     this.registrosSesion.update((regs) =>
       regs.map((reg) => {
-        const feedback = data.feedbacks.find((f) => f.planItemId === reg.planItemId);
+        const feedback = data.feedbacks.find(
+          (f) => f.planItemId === reg.planItemId,
+        );
         if (feedback) {
           return {
             ...reg,
@@ -344,17 +501,66 @@ export class SesionStateService {
           };
         }
         return reg;
-      })
+      }),
     );
 
-    // Guardar registros: createBatch agenda en Convex el recálculo de cumplimiento
-    // y la generación de notificaciones vía ctx.scheduler.runAfter.
-    await this.guardarRegistrosRemotos();
+    const entradas = this.registrosSesion()
+      .filter((r) => !!r.executionId)
+      .map((r) => {
+        const feedback = data.feedbacks.find(
+          (f) => f.planItemId === r.planItemId,
+        );
+        if (!feedback) return null;
+        return {
+          executionId: r.executionId as Id<'exerciseExecutions'>,
+          dolorEscala: feedback.dolor,
+          notaPaciente: feedback.nota,
+        };
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null);
 
-    // Finalizar sesión: complete agenda notificaciones si hay observaciones.
+    if (entradas.length > 0) {
+      try {
+        await this.convex.mutation(
+          api.executions.mutations.applyFeedbackBatch,
+          { entradas },
+        );
+      } catch (error) {
+        console.error('Error al aplicar feedback batch:', error);
+      }
+    }
+
     await this.cerrarSesionRemota(data.observacionesGenerales);
 
-    this.limpiarProgresoLocal();
+    this.persistencia.limpiar();
+  }
+
+  /**
+   * Reintenta los inserts de executions que fallaron (red caída u otro
+   * error transitorio). Los que sigan fallando permanecen en cola para
+   * un próximo intento.
+   */
+  private async drainPendingExecutions(): Promise<void> {
+    if (this.pendingExecutions.length === 0) return;
+
+    const remaining: PendingExecution[] = [];
+    for (const pending of this.pendingExecutions) {
+      try {
+        const executionId = await this.convex.mutation(
+          api.executions.mutations.create,
+          pending.payload,
+        );
+        const registro: RegistroEjercicio = {
+          ...pending.registroBase,
+          executionId: executionId as string,
+        };
+        this.registrosSesion.update((regs) => [...regs, registro]);
+      } catch (error) {
+        console.error('Reintento de execution falló; permanece en cola:', error);
+        remaining.push(pending);
+      }
+    }
+    this.pendingExecutions = remaining;
   }
 
   /**
@@ -369,24 +575,25 @@ export class SesionStateService {
       this.estadoPantalla.set('ejercicio');
     }
 
-    this.guardarProgresoLocal();
+    this.guardarHintUI();
   }
 
   /**
    * Pausar la sesión y volver al resumen
    */
   pausarSesion(): void {
-    this.guardarProgresoLocal();
+    this.guardarHintUI();
     this.estadoPantalla.set('resumen');
   }
 
   /**
-   * Finalizar la sesión
+   * Finalizar la sesión sin pasar por feedback (e.g. usuario abandona).
+   * Drena pendientes para no perder executions inserts fallidos.
    */
   async finalizarSesion(): Promise<boolean> {
     try {
-      await this.guardarRegistrosRemotos();
-      this.limpiarProgresoLocal();
+      await this.drainPendingExecutions();
+      this.persistencia.limpiar();
       this.resetearEstado();
       return true;
     } catch (error) {
@@ -411,51 +618,30 @@ export class SesionStateService {
     this.feedbackActual.set(null);
     this.temporizador.reset();
     this.sesionActualId.set(null);
+    this.pendingExecutions = [];
   }
 
-  // ========= Persistencia local (delegada a SesionPersistenceService) =========
+  // ========= Hint de UI (delegado a SesionPersistenceService) =========
 
-  guardarProgresoLocal(): void {
-    const plan = this.planActivo();
-    if (!plan) return;
+  private guardarHintUI(): void {
+    const sessionId = this.sesionActualId();
+    if (!sessionId) return;
 
-    const data: SesionLocal = {
-      planId: plan.id,
+    this.persistencia.guardarHint({
+      sessionId,
       ejercicioIndex: this.ejercicioActualIndex(),
       serieActual: this.serieActual(),
-      estado: this.estadoPantalla(),
-      registrosPendientes: this.registrosSesion(),
+      estadoPantalla: this.estadoPantalla(),
       timestamp: new Date().toISOString(),
-    };
-
-    this.persistencia.guardar(data);
-  }
-
-  restaurarProgresoLocal(): boolean {
-    const data = this.persistencia.restaurar();
-    if (!data) return false;
-
-    this.planesService.getPlanById(data.planId).then((plan) => {
-      if (plan) {
-        this.planActivo.set(plan);
-        this.ejercicioActualIndex.set(data.ejercicioIndex);
-        this.serieActual.set(data.serieActual);
-        this.estadoPantalla.set(data.estado);
-        this.registrosSesion.set(data.registrosPendientes);
-      }
     });
-
-    return true;
-  }
-
-  limpiarProgresoLocal(): void {
-    this.persistencia.limpiar();
   }
 
   // ========= Persistencia remota (Convex) =========
 
   /**
-   * Crear una sesión remota al comenzar (Convex mutation sessions.create)
+   * Crear o reanudar la sesión remota al comenzar.
+   * `sessions.mutations.create` (alias de `openOrResume`) es idempotente:
+   * devuelve la misma `sessionId` para el mismo paciente y día.
    */
   private async crearSesionRemota(fechaInicio: Date): Promise<string | null> {
     try {
@@ -475,17 +661,36 @@ export class SesionStateService {
   }
 
   /**
+   * Consultar la sesión del paciente autenticado para hoy (zona Madrid).
+   * Devuelve la primera (BN1: 1 sesión por paciente y día) o null.
+   */
+  private async consultarSesionHoy(): Promise<SesionRehidratable | null> {
+    try {
+      const fecha = this.getMadridDate();
+      const sessions = await this.convex.query(
+        api.sessions.queries.getByPacienteAndDateWithExecutions,
+        { fecha },
+      );
+      const list = sessions as SesionRehidratable[] | undefined;
+      return list?.[0] ?? null;
+    } catch (error) {
+      console.error('Error al consultar sesión de hoy:', error);
+      return null;
+    }
+  }
+
+  /**
    * Cerrar la sesión remota con observaciones (Convex mutation sessions.complete)
    */
   private async cerrarSesionRemota(
-    observacionesGenerales?: string
+    observacionesGenerales?: string,
   ): Promise<boolean> {
     const sesionId = this.sesionActualId();
     if (!sesionId) return false;
 
     try {
       await this.convex.mutation(api.sessions.mutations.complete, {
-        sessionId: sesionId as any,
+        sessionId: sesionId as Id<'sessions'>,
         fechaFin: new Date().toISOString(),
         observacionesGenerales: observacionesGenerales || undefined,
       });
@@ -497,66 +702,8 @@ export class SesionStateService {
   }
 
   /**
-   * Crear un registro de ejercicio. Modelo nuevo (Fase 5):
-   * `executions.mutations.create` escribe directamente en `exerciseExecutions`
-   * y gestiona sesión, agregados y alertas de comentario.
-   */
-  async crearRegistro(
-    registro: Omit<RegistroEjercicio, 'id'>
-  ): Promise<string | null> {
-    try {
-      const id = await this.convex.mutation(api.executions.mutations.create, {
-        planExerciseId: this.resolvePlanExerciseId(registro.planItemId) as any,
-        fechaHora: registro.fechaHora,
-        fecha: registro.fechaHora.split('T')[0]!,
-        completado: registro.completado,
-        repeticionesRealizadas: registro.repeticionesRealizadas,
-        duracionRealSeg: registro.duracionRealSeg,
-        dolorEscala: registro.dolorEscala,
-        esfuerzoEscala: registro.esfuerzoEscala,
-        notaPaciente: registro.notaPaciente,
-      });
-      return id as string;
-    } catch (error) {
-      console.error('Error al crear registro:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Guardar batch de registros pendientes. Modelo nuevo (Fase 5):
-   * `executions.mutations.createBatch` escribe directo a `exerciseExecutions`
-   * y gestiona sesión + recompute + alertas de forma optimizada (1 recompute
-   * por sesión afectada).
-   */
-  async guardarRegistrosRemotos(): Promise<boolean> {
-    const registros = this.registrosSesion();
-    if (registros.length === 0) return true;
-
-    try {
-      await this.convex.mutation(api.executions.mutations.createBatch, {
-        entradas: registros.map((reg) => ({
-          planExerciseId: this.resolvePlanExerciseId(reg.planItemId) as any,
-          fechaHora: reg.fechaHora,
-          fecha: reg.fechaHora.split('T')[0]!,
-          completado: reg.completado,
-          repeticionesRealizadas: reg.repeticionesRealizadas,
-          duracionRealSeg: reg.duracionRealSeg,
-          dolorEscala: reg.dolorEscala,
-          esfuerzoEscala: reg.esfuerzoEscala,
-          notaPaciente: reg.notaPaciente,
-        })),
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error al guardar registros:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Obtener registros del paciente de hoy
+   * Obtener registros del paciente de hoy (consumido por la feature
+   * `actividad`). Lee de `exerciseExecutions` directamente.
    */
   async obtenerRegistrosHoy(pacienteId: string): Promise<RegistroEjercicio[]> {
     const hoy = new Date().toISOString().split('T')[0]!;
@@ -566,12 +713,13 @@ export class SesionStateService {
       const raw = await this.convex.query(
         api.executions.queries.listByPacienteAndDate,
         {
-          pacienteId: convexUserId as any,
+          pacienteId: convexUserId as Id<'users'>,
           fecha: hoy,
         },
       );
 
-      return ((raw as any[]) || []).map((r) => this.mapConvexToRegistro(r));
+      const list = (raw as ConvexExecutionRecord[] | undefined) ?? [];
+      return list.map((r) => this.mapConvexToRegistro(r));
     } catch (error) {
       console.error('Error al obtener registros de hoy:', error);
       return [];
@@ -579,6 +727,17 @@ export class SesionStateService {
   }
 
   // ========= Helpers =========
+
+  /**
+   * Fecha actual en zona horaria Europe/Madrid en formato YYYY-MM-DD.
+   * Imprescindible para emparejar con la `fecha` que el backend usa
+   * (`getCurrentMadridDate`).
+   */
+  private getMadridDate(): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Madrid',
+    }).format(new Date());
+  }
 
   private filtrarEjerciciosHoy(items: EjercicioPlan[]): EjercicioPlan[] {
     const diasSemana: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
@@ -592,9 +751,33 @@ export class SesionStateService {
     });
   }
 
-  private mapConvexToRegistro(r: any): RegistroEjercicio {
+  /**
+   * Convierte el array de `executions` que devuelve
+   * `sessions.queries.getByPacienteAndDateWithExecutions` (con
+   * `planExercise` expandido) en `RegistroEjercicio[]` con `executionId`.
+   */
+  private executionsToRegistros(
+    executions: ExecutionRehidratable[],
+  ): RegistroEjercicio[] {
+    const userId = this.usuarioId() ?? '';
+    return executions.map((e) => ({
+      executionId: e._id,
+      planItemId: e.planExercise?._id ?? '',
+      pacienteId: userId,
+      fechaHora: e.fechaHora,
+      completado: e.completado,
+      repeticionesRealizadas: e.repeticionesRealizadas,
+      duracionRealSeg: e.duracionRealSeg,
+      dolorEscala: e.dolorEscala,
+      esfuerzoEscala: e.esfuerzoEscala,
+      notaPaciente: e.notaPaciente,
+    }));
+  }
+
+  private mapConvexToRegistro(r: ConvexExecutionRecord): RegistroEjercicio {
     return {
       id: r._id,
+      executionId: r._id,
       planItemId: r.planExerciseId,
       pacienteId: r.pacienteId,
       fechaHora: r.fechaHora,
@@ -607,15 +790,34 @@ export class SesionStateService {
     };
   }
 
-  private resolvePlanExerciseId(planItem: any): string {
+  private resolvePlanExerciseId(planItem: unknown): string {
     if (typeof planItem === 'string' && planItem.length > 20) return planItem;
-    if (typeof planItem === 'object' && planItem?._convexId) return planItem._convexId;
+    if (typeof planItem === 'object' && planItem !== null) {
+      const convexId = (planItem as { _convexId?: unknown })._convexId;
+      if (typeof convexId === 'string') return convexId;
+    }
     if (typeof planItem === 'number' || typeof planItem === 'string') {
       const items = this.planActivo()?.items ?? [];
-      const found = items.find((i: any) => i.id === planItem || i._convexId === planItem);
-      if (found && (found as any)._convexId) return (found as any)._convexId;
+      const found = items.find((i) => {
+        const candidate = i as EjercicioPlan & { _convexId?: string };
+        return candidate.id === planItem || candidate._convexId === planItem;
+      });
+      const candidateConvexId = (found as { _convexId?: string } | undefined)?._convexId;
+      if (candidateConvexId) return candidateConvexId;
     }
-    throw new Error(`No se pudo resolver planExerciseId: ${planItem}`);
+    throw new Error(`No se pudo resolver planExerciseId: ${String(planItem)}`);
+  }
+
+  /**
+   * Variante no-throw del resolver, usada en bucles donde no queremos que
+   * un item sin `_convexId` rompa la rehidratación.
+   */
+  private tryResolvePlanExerciseId(planItem: unknown): string | null {
+    try {
+      return this.resolvePlanExerciseId(planItem);
+    } catch {
+      return null;
+    }
   }
 
   private resolveUserConvexId(userId: string): string | undefined {

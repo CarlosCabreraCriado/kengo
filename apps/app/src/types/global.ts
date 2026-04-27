@@ -54,6 +54,7 @@ export {
   ClinicaData,
   EstadoPantalla,
   SesionLocal,
+  SesionHintUI,
   FeedbackEjercicio,
   EjercicioPlanConEstado,
   ActividadPlanDia,
