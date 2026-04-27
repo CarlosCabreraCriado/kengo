@@ -3,11 +3,16 @@ import {
   computed,
   inject,
   signal,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { assetUrl } from '../../../core/utils/asset-url';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
+import {
+  createFilteredList,
+  type FilteredList,
+} from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import {
@@ -25,10 +30,7 @@ type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
 export class RutinasService {
   private convex = inject(ConvexService);
 
-  readonly busqueda: WritableSignal<string> = signal('');
   readonly filtroVisibilidad: WritableSignal<FiltroVisibilidad> = signal('todas');
-  readonly page: WritableSignal<number> = signal(1);
-  readonly pageSize: WritableSignal<number> = signal(20);
 
   private readonly routinesQuery = this.convex.watchQuery(
     api.routines.queries.list,
@@ -42,8 +44,8 @@ export class RutinasService {
     },
   );
 
-  private readonly allRutinas = computed<Rutina[]>(() => {
-    const raw = this.routinesQuery.value();
+  private readonly rawRutinas: Signal<Rutina[]> = computed<Rutina[]>(() => {
+    const raw: unknown = this.routinesQuery.value();
     if (!raw) return [];
 
     return (raw as any[]).map((r) => ({
@@ -55,35 +57,39 @@ export class RutinasService {
     }));
   });
 
-  private readonly paginatedRutinas = computed(() => {
-    const all = this.allRutinas();
-    const start = (this.page() - 1) * this.pageSize();
-    return all.slice(start, start + this.pageSize());
+  // Caso server-side: la búsqueda viaja en el query Convex; el factory
+  // sólo aporta paginación y signals base. No se pasa `searchPredicate`.
+  private readonly _list: FilteredList<Rutina> = createFilteredList<Rutina>({
+    source: this.rawRutinas,
   });
 
+  readonly busqueda: WritableSignal<string> = this._list.busqueda;
+  readonly page: WritableSignal<number> = this._list.page;
+  readonly pageSize: WritableSignal<number> = this._list.pageSize;
+  readonly total: Signal<number> = this._list.total;
+  readonly totalPages: Signal<number> = this._list.totalPages;
+
   readonly rutinasRes = {
-    value: computed(() => this.paginatedRutinas()),
+    value: this._list.items,
     isLoading: this.routinesQuery.isLoading,
     error: this.routinesQuery.error,
     reload: () => {},
   };
 
-  readonly rutinas = computed(() => this.paginatedRutinas());
+  readonly rutinas = this._list.items;
   readonly isLoading = computed(() => this.routinesQuery.isLoading());
-  readonly total = computed(() => this.allRutinas().length);
 
   setBusqueda(v: string) {
-    this.busqueda.set(v);
-    this.page.set(1);
+    this._list.setBusqueda(v);
   }
 
   setFiltroVisibilidad(v: FiltroVisibilidad) {
     this.filtroVisibilidad.set(v);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   goToPage(p: number) {
-    this.page.set(Math.max(1, p));
+    this._list.goToPage(p);
   }
 
   reload() {
