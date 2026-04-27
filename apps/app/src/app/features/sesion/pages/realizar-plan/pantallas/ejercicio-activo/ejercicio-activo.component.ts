@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { TimelineSesionComponent } from '../../componentes/timeline-sesion/timeline-sesion.component';
 import { SafeHtmlPipe } from '../../../../../../shared/pipes/safe-html.pipe';
@@ -38,7 +38,7 @@ export class EjercicioActivoComponent {
 
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
   private breakpointObserver = inject(BreakpointObserver);
 
   readonly esDesktop = signal(false);

@@ -7,7 +7,7 @@ import {
   computed,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
 import { fadeAnimation, staggerAnimation } from '../../realizar-plan.animations';
 
@@ -34,7 +34,7 @@ export interface FeedbackFinalData {
 export class FeedbackFinalComponent {
   @Output() enviarFeedback = new EventEmitter<FeedbackFinalData>();
 
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
 
   // Estado interno - modo de feedback
   private _modoDetallado = signal(false);

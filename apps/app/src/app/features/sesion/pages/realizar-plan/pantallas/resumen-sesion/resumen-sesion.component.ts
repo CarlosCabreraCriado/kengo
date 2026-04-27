@@ -6,7 +6,7 @@ import {
   computed,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import {
   EjercicioPlan,
   EjercicioSesionMultiPlan,
@@ -26,7 +26,7 @@ export class ResumenSesionComponent {
   @Output() comenzar = new EventEmitter<void>();
 
   private router = inject(Router);
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
 
   // Titulo dinamico de la sesion
   readonly tituloSesion = this.registroService.tituloSesion;

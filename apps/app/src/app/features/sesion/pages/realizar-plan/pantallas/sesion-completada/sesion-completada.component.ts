@@ -5,7 +5,7 @@ import {
   inject,
   computed,
 } from '@angular/core';
-import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import {
   celebrateAnimation,
   fadeAnimation,
@@ -139,7 +139,7 @@ import {
 export class SesionCompletadaComponent {
   @Output() volverInicio = new EventEmitter<void>();
 
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
 
   readonly totalEjercicios = this.registroService.totalEjercicios;
   readonly registros = this.registroService.registrosSesion;

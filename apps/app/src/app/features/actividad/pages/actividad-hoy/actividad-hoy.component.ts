@@ -12,7 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
-import { RegistroSesionService } from '../../../sesion/data-access/registro-sesion.service';
+import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
 
 import {
@@ -60,7 +60,7 @@ interface DiaProximoConEjercicios {
 export class ActividadHoyComponent implements OnInit {
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);

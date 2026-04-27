@@ -10,7 +10,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import { DrawerComponent } from '../../../../../../shared/ui/drawer/drawer.component';
 import {
   EjercicioPlan,
@@ -546,7 +546,7 @@ export class TimelineSesionComponent {
     index: number;
   }>();
 
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
   private timelineContainer = viewChild<ElementRef>('timelineContainer');
 
   readonly ejercicioActualIndex = this.registroService.ejercicioActualIndex;

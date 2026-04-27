@@ -10,6 +10,8 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { PlanesService } from '../../planes/data-access/planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import { SesionPersistenceService } from './sesion-persistence.service';
+import { SesionTemporizadorService } from './sesion-temporizador.service';
 
 import {
   PlanCompleto,
@@ -24,13 +26,12 @@ import {
 } from '../../../../types/global';
 
 @Injectable({ providedIn: 'root' })
-export class RegistroSesionService {
+export class SesionStateService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
-
-  private readonly STORAGE_KEY = 'kengo:sesion_activa:v1';
-  private readonly TTL_HORAS = 24;
+  private persistencia = inject(SesionPersistenceService);
+  private temporizador = inject(SesionTemporizadorService);
 
   // ========= Estado de la sesión =========
 
@@ -43,10 +44,10 @@ export class RegistroSesionService {
   readonly feedbackActual = signal<FeedbackEjercicio | null>(null);
   readonly sesionActualId = signal<string | null>(null);
 
-  // Estado del temporizador
-  readonly tiempoRestante = signal<number>(0);
-  readonly temporizadorActivo = signal<boolean>(false);
-  readonly descansoEntreEjercicios = signal<boolean>(false);
+  // Estado del temporizador (proxies del SesionTemporizadorService)
+  readonly tiempoRestante = this.temporizador.tiempoRestante;
+  readonly temporizadorActivo = this.temporizador.temporizadorActivo;
+  readonly descansoEntreEjercicios = this.temporizador.descansoEntreEjercicios;
 
   // ========= Estado Multi-Plan =========
   readonly modoMultiPlan = signal<boolean>(false);
@@ -55,7 +56,6 @@ export class RegistroSesionService {
 
   // ========= Computed =========
 
-  // Titulo dinamico de la sesion
   readonly tituloSesion = computed(() => {
     if (this.modoMultiPlan()) {
       return this.configSesion()?.titulo ?? 'Tu sesion';
@@ -63,7 +63,6 @@ export class RegistroSesionService {
     return this.planActivo()?.titulo ?? 'Tu sesion';
   });
 
-  // Lista unificada de ejercicios (funciona para ambos modos)
   readonly ejerciciosList = computed<EjercicioPlan[]>(() => {
     if (this.modoMultiPlan()) {
       return this.ejerciciosMultiPlan();
@@ -140,13 +139,11 @@ export class RegistroSesionService {
     if (!userId) return null;
 
     try {
-      // Buscar planes activos del paciente
       const planes = await this.planesService.getPlanesByPaciente(userId);
       const planActivo = planes.find((p) => p.estado === 'activo');
 
       if (!planActivo) return null;
 
-      // Cargar plan completo
       const planCompleto = await this.planesService.getPlanById(planActivo.id);
       if (planCompleto) {
         this.planActivo.set(planCompleto);
@@ -164,12 +161,10 @@ export class RegistroSesionService {
    */
   async iniciarSesion(planId?: string): Promise<boolean> {
     try {
-      // Si hay sesión guardada, intentar restaurarla
       if (this.restaurarProgresoLocal()) {
         return true;
       }
 
-      // Cargar plan
       let plan: PlanCompleto | null = null;
 
       if (planId) {
@@ -182,12 +177,7 @@ export class RegistroSesionService {
         return false;
       }
 
-      // Filtrar ejercicios para hoy según diasSemana
       const ejerciciosHoy = this.filtrarEjerciciosHoy(plan.items);
-      if (ejerciciosHoy.length === 0) {
-        // Si no hay ejercicios para hoy, mostrar todos
-        // (puede que el fisio no haya configurado días)
-      }
 
       this.planActivo.set({
         ...plan,
@@ -211,15 +201,12 @@ export class RegistroSesionService {
    */
   iniciarSesionMultiPlan(config: ConfigSesionMultiPlan): boolean {
     try {
-      // Limpiar estado previo
       this.resetearEstado();
 
-      // Configurar modo multi-plan
       this.modoMultiPlan.set(true);
       this.configSesion.set(config);
       this.ejerciciosMultiPlan.set(config.ejercicios);
 
-      // Inicializar estado de sesion
       this.ejercicioActualIndex.set(0);
       this.serieActual.set(1);
       this.estadoPantalla.set('resumen');
@@ -242,7 +229,6 @@ export class RegistroSesionService {
     this.estadoPantalla.set('ejercicio');
     this.serieActual.set(1);
 
-    // Crear sesión remota (Convex mutation sessions.create)
     await this.crearSesionRemota(ahora);
 
     this.guardarProgresoLocal();
@@ -262,20 +248,16 @@ export class RegistroSesionService {
     if (serieActual < totalSeries) {
       // Hay más series: ir a descanso entre series
       this.serieActual.update((s) => s + 1);
-      this.descansoEntreEjercicios.set(false);
-      this.tiempoRestante.set(descanso);
+      this.temporizador.iniciarDescanso(descanso, false);
       this.estadoPantalla.set('descanso');
     } else {
       // Última serie del ejercicio: registrar y descanso antes del siguiente
       this.registrarEjercicioCompletado();
 
       if (this.esUltimoEjercicio()) {
-        // Era el último ejercicio: ir directo al feedback final
         this.avanzarEjercicio();
       } else {
-        // Hay más ejercicios: descanso entre ejercicios
-        this.descansoEntreEjercicios.set(true);
-        this.tiempoRestante.set(descanso);
+        this.temporizador.iniciarDescanso(descanso, true);
         this.estadoPantalla.set('descanso');
       }
     }
@@ -287,14 +269,13 @@ export class RegistroSesionService {
    * Saltar el descanso y continuar
    */
   saltarDescanso(): void {
-    this.temporizadorActivo.set(false);
+    const eraEntreEjercicios = this.temporizador.descansoEntreEjercicios();
+    this.temporizador.detener();
 
-    if (this.descansoEntreEjercicios()) {
-      // Descanso entre ejercicios: avanzar al siguiente
-      this.descansoEntreEjercicios.set(false);
+    if (eraEntreEjercicios) {
+      this.temporizador.descansoEntreEjercicios.set(false);
       this.avanzarEjercicio();
     } else {
-      // Descanso entre series: continuar con el ejercicio actual
       this.estadoPantalla.set('ejercicio');
     }
     this.guardarProgresoLocal();
@@ -304,19 +285,17 @@ export class RegistroSesionService {
    * Añadir tiempo al descanso
    */
   agregarTiempoDescanso(segundos = 15): void {
-    this.tiempoRestante.update((t) => t + segundos);
+    this.temporizador.agregarTiempo(segundos);
   }
 
   /**
    * Cuando termina el descanso automáticamente
    */
   finalizarDescanso(): void {
-    if (this.descansoEntreEjercicios()) {
-      // Descanso entre ejercicios: avanzar al siguiente
-      this.descansoEntreEjercicios.set(false);
+    if (this.temporizador.descansoEntreEjercicios()) {
+      this.temporizador.descansoEntreEjercicios.set(false);
       this.avanzarEjercicio();
     } else {
-      // Descanso entre series: continuar con el ejercicio actual
       this.estadoPantalla.set('ejercicio');
     }
     this.guardarProgresoLocal();
@@ -331,12 +310,10 @@ export class RegistroSesionService {
 
     if (!ejercicio?.id || !userId) return;
 
-    // En modo multi-plan, usar planItemId del ejercicio enriquecido
     const planItemId = this.modoMultiPlan()
       ? (ejercicio as EjercicioSesionMultiPlan).planItemId
       : ejercicio.id;
 
-    // Crear registro sin dolor (se añade al final en feedback-final)
     const registro: RegistroEjercicio = {
       planItemId: planItemId,
       pacienteId: userId,
@@ -346,7 +323,6 @@ export class RegistroSesionService {
       duracionRealSeg: ejercicio.duracionSeg,
     };
 
-    // Añadir a registros pendientes
     this.registrosSesion.update((regs) => [...regs, registro]);
   }
 
@@ -357,7 +333,6 @@ export class RegistroSesionService {
     feedbacks: { planItemId: string; dolor: number; nota?: string }[];
     observacionesGenerales?: string;
   }): Promise<void> {
-    // Actualizar cada registro con su dolor y nota
     this.registrosSesion.update((regs) =>
       regs.map((reg) => {
         const feedback = data.feedbacks.find((f) => f.planItemId === reg.planItemId);
@@ -387,10 +362,8 @@ export class RegistroSesionService {
    */
   avanzarEjercicio(): void {
     if (this.esUltimoEjercicio()) {
-      // Todos los ejercicios completados: ir a feedback final
       this.estadoPantalla.set('feedback-final');
     } else {
-      // Siguiente ejercicio
       this.ejercicioActualIndex.update((i) => i + 1);
       this.serieActual.set(1);
       this.estadoPantalla.set('ejercicio');
@@ -436,13 +409,11 @@ export class RegistroSesionService {
     this.registrosSesion.set([]);
     this.tiempoInicioSesion.set(null);
     this.feedbackActual.set(null);
-    this.tiempoRestante.set(0);
-    this.temporizadorActivo.set(false);
-    this.descansoEntreEjercicios.set(false);
+    this.temporizador.reset();
     this.sesionActualId.set(null);
   }
 
-  // ========= Persistencia local =========
+  // ========= Persistencia local (delegada a SesionPersistenceService) =========
 
   guardarProgresoLocal(): void {
     const plan = this.planActivo();
@@ -457,56 +428,28 @@ export class RegistroSesionService {
       timestamp: new Date().toISOString(),
     };
 
-    try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-    } catch (error) {
-      console.error('Error al guardar progreso local:', error);
-    }
+    this.persistencia.guardar(data);
   }
 
   restaurarProgresoLocal(): boolean {
-    try {
-      const raw = localStorage.getItem(this.STORAGE_KEY);
-      if (!raw) return false;
+    const data = this.persistencia.restaurar();
+    if (!data) return false;
 
-      const data: SesionLocal = JSON.parse(raw);
-
-      // Verificar TTL
-      const timestamp = new Date(data.timestamp);
-      const ahora = new Date();
-      const horasTranscurridas =
-        (ahora.getTime() - timestamp.getTime()) / (1000 * 60 * 60);
-
-      if (horasTranscurridas > this.TTL_HORAS) {
-        this.limpiarProgresoLocal();
-        return false;
+    this.planesService.getPlanById(data.planId).then((plan) => {
+      if (plan) {
+        this.planActivo.set(plan);
+        this.ejercicioActualIndex.set(data.ejercicioIndex);
+        this.serieActual.set(data.serieActual);
+        this.estadoPantalla.set(data.estado);
+        this.registrosSesion.set(data.registrosPendientes);
       }
+    });
 
-      // Cargar el plan
-      this.planesService.getPlanById(data.planId).then((plan) => {
-        if (plan) {
-          this.planActivo.set(plan);
-          this.ejercicioActualIndex.set(data.ejercicioIndex);
-          this.serieActual.set(data.serieActual);
-          this.estadoPantalla.set(data.estado);
-          this.registrosSesion.set(data.registrosPendientes);
-        }
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error al restaurar progreso local:', error);
-      this.limpiarProgresoLocal();
-      return false;
-    }
+    return true;
   }
 
   limpiarProgresoLocal(): void {
-    try {
-      localStorage.removeItem(this.STORAGE_KEY);
-    } catch (error) {
-      console.error('Error al limpiar progreso local:', error);
-    }
+    this.persistencia.limpiar();
   }
 
   // ========= Persistencia remota (Convex) =========
@@ -620,7 +563,6 @@ export class RegistroSesionService {
 
     try {
       const convexUserId = this.resolveUserConvexId(pacienteId);
-      // Modelo nuevo: lectura desde `exerciseExecutions` (Fase 3 rediseño records).
       const raw = await this.convex.query(
         api.executions.queries.listByPacienteAndDate,
         {
@@ -638,15 +580,11 @@ export class RegistroSesionService {
 
   // ========= Helpers =========
 
-  /**
-   * Filtrar ejercicios que corresponden al día de hoy
-   */
   private filtrarEjerciciosHoy(items: EjercicioPlan[]): EjercicioPlan[] {
     const diasSemana: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
     const hoy = diasSemana[new Date().getDay()];
 
     return items.filter((item) => {
-      // Si no tiene días configurados, incluirlo siempre
       if (!item.diasSemana || item.diasSemana.length === 0) {
         return true;
       }
@@ -670,11 +608,8 @@ export class RegistroSesionService {
   }
 
   private resolvePlanExerciseId(planItem: any): string {
-    // Convex ID directo (string largo)
     if (typeof planItem === 'string' && planItem.length > 20) return planItem;
-    // Objeto con _convexId (puesto por PlanesService mapper)
     if (typeof planItem === 'object' && planItem?._convexId) return planItem._convexId;
-    // Número legacy — intentar buscar en los items del plan activo
     if (typeof planItem === 'number' || typeof planItem === 'string') {
       const items = this.planActivo()?.items ?? [];
       const found = items.find((i: any) => i.id === planItem || i._convexId === planItem);

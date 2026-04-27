@@ -7,7 +7,7 @@ import {
   computed,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
 import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animations';
 
@@ -117,7 +117,7 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
 export class FeedbackEjercicioComponent {
   @Output() enviarFeedback = new EventEmitter<{ dolor: number; nota?: string }>();
 
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
 
   readonly esUltimoEjercicio = this.registroService.esUltimoEjercicio;
   readonly nombreEjercicio = computed(

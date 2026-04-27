@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { RegistroSesionService } from '../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../data-access/sesion-state.service';
 
 // Pantallas
 import { ResumenSesionComponent } from './pantallas/resumen-sesion/resumen-sesion.component';
@@ -202,7 +202,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
 export class RealizarPlanComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
   private dialogService = inject(DialogService);
 
   // Estado desde el servicio

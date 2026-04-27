@@ -25,7 +25,7 @@ Leyenda de campos:
 | [ ] | 1 | Descomponer `feedback-final.component` (1272 LOC) | sesion | L | 🔴 | 🟡 | **P0** |
 | [ ] | 2 | Descomponer `ejercicio-activo.component` (1187 LOC) | sesion | L | 🔴 | 🔴 | **P0** |
 | [ ] | 3 | Descomponer `descanso.component` (882 LOC) | sesion | M | 🟡 | 🟡 | P1 |
-| [ ] | 4 | Partir `registro-sesion.service` (705 LOC) en 3 servicios | sesion | M | 🔴 | 🔴 | **P0** |
+| [x] | 4 | Partir `registro-sesion.service` (705 LOC) en 3 servicios | sesion | M | 🔴 | 🔴 | **P0** ✅ |
 | [ ] | 5 | Extraer modo rutina de `plan-builder.service` (929 LOC) | planes | L | 🔴 | 🔴 | P1 |
 | [ ] | 6 | Descomponer `paciente-detail.component` (821 LOC) | pacientes | L | 🟡 | 🟡 | P1 |
 | [x] | 7 | Mover plantilla inline de god-components a `.html`/`.css` | sesion | S | 🟢 | 🟢 | **P0** (PR-1) ✅ |
@@ -40,7 +40,7 @@ Leyenda de campos:
 ### Plan de ejecución por PRs
 
 - [x] **PR-1 (S)** — Extraer plantillas inline (#7) ✅ **COMPLETADO**
-- [ ] **PR-2 (M)** — Partir `registro-sesion.service` (#4)
+- [x] **PR-2 (M)** — Partir `registro-sesion.service` (#4) ✅ **COMPLETADO**
 - [ ] **PR-3 (L)** — Descomponer `feedback-final` (#1)
 - [ ] **PR-4 (L)** — Descomponer `ejercicio-activo` + `descanso` (#2 + #3)
 - [ ] **PR-5 (L)** — Separar `plan-builder.service` y `paciente-detail` (#5 + #6)
@@ -186,19 +186,19 @@ Leyenda de campos:
 
 ---
 
-## [ ] 1.6 — Partir `registro-sesion.service.ts` (705 LOC) en 3 servicios
+## [x] 1.6 — Partir `registro-sesion.service.ts` (705 LOC) en 3 servicios ✅
 
 **Ubicación**: `apps/app/src/app/features/sesion/data-access/`
 
 **Problema**: único servicio para toda la sesión activa. Combina estado, modo multi-plan, temporizador, persistencia y cálculos de progreso.
 
 **Propuesta**:
-- [ ] Crear `SesionStateService` — estado puro (planActivo, índices, modo) + acciones.
-- [ ] Crear `SesionTemporizadorService` — temporizador, descansos, countdown.
-- [ ] Crear `SesionPersistenceService` — serialización a localStorage con TTL.
-- [ ] Decidir: `MultiPlanSesionService` aparte vs constructor de estado en `SesionStateService`.
-- [ ] Eliminar `registro-sesion.service.ts` y migrar inyecciones en todos los componentes de `pantallas/` y `componentes/`.
-- [ ] Validar hidratación de borradores existentes (`kengo:sesion_activa:v1`).
+- [x] Crear `SesionStateService` (640 LOC) — estado, computeds y acciones. Inyecta los dos siguientes.
+- [x] Crear `SesionTemporizadorService` (28 LOC) — `tiempoRestante`, `temporizadorActivo`, `descansoEntreEjercicios` + métodos `iniciarDescanso`, `agregarTiempo`, `detener`, `reset`.
+- [x] Crear `SesionPersistenceService` (49 LOC) — `guardar`/`restaurar`/`limpiar` con TTL 24h sobre clave `kengo:sesion_activa:v1`.
+- [x] Decisión: modo multi-plan permanece dentro de `SesionStateService` (es solo un flag + 2 signals; no merece servicio aparte).
+- [x] Eliminar `registro-sesion.service.ts` y migrar 11 consumidores (8 en sesion/ + 3 en actividad/).
+- [ ] Validar hidratación de borradores existentes (`kengo:sesion_activa:v1`). ⚠️ Pendiente prueba manual: misma clave y formato, debería ser transparente.
 
 **Archivos afectados**: `registro-sesion.service.ts` (eliminar) + 3 nuevos en `sesion/data-access/` + todos los componentes de la feature `sesion` cambian inyección.
 

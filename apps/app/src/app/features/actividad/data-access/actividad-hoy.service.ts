@@ -1,7 +1,7 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { PlanesService } from '../../planes/data-access/planes.service';
-import { RegistroSesionService } from '../../sesion/data-access/registro-sesion.service';
+import { SesionStateService } from '../../sesion/data-access/sesion-state.service';
 import {
   PlanCompleto,
   RegistroEjercicio,
@@ -16,7 +16,7 @@ export type BadgeType = 'pending' | 'completed' | 'rest' | 'loading' | null;
 export class ActividadHoyService {
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
 
   // Mapeo de días de la semana
   private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];

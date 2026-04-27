@@ -9,7 +9,7 @@ import {
   signal,
   OnDestroy,
 } from '@angular/core';
-import { RegistroSesionService } from '../../../../data-access/registro-sesion.service';
+import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
 import { EjercicioPlan } from '../../../../../../../types/global';
 import { fadeAnimation } from '../../realizar-plan.animations';
@@ -35,7 +35,7 @@ export class DescansoComponent implements OnInit, OnDestroy {
 
   @ViewChild('temporizador') temporizador!: TemporizadorComponent;
 
-  private registroService = inject(RegistroSesionService);
+  private registroService = inject(SesionStateService);
   private breathInterval: ReturnType<typeof setInterval> | null = null;
 
   readonly serieActual = this.registroService.serieActual;
