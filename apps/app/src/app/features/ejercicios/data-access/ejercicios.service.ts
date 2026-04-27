@@ -12,6 +12,7 @@ import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { mapId } from '../../../shared/utils/convex-mappers';
+import { createFilteredList } from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import { Ejercicio, Categoria } from '../../../../types/global';
@@ -25,11 +26,8 @@ export interface PaginaEjercicios {
 export class EjerciciosService {
   private convex = inject(ConvexService);
 
-  // --- Filtros / paginación como señales puras ---
-  readonly busqueda: WritableSignal<string> = signal('');
+  // --- Filtros específicos del dominio (los signals base vienen del factory) ---
   readonly idsCategoriasSeleccionadas: WritableSignal<string[]> = signal([]);
-  readonly page: WritableSignal<number> = signal(1);
-  readonly pageSize: WritableSignal<number> = signal(24);
   readonly sort: WritableSignal<string> = signal('nombre');
 
   // --- Favoritos (Convex IDs) ---
@@ -95,38 +93,41 @@ export class EjerciciosService {
       .map((c) => c.nombre);
   });
 
-  private readonly filteredEjercicios = computed<Ejercicio[]>(() => {
-    let list = this.allEjercicios();
+  // Búsqueda y filtros de categoría/favoritos van al factory; el sort se
+  // aplica encima de `filtered()` (no es un filtro, es un orden) y la
+  // paginación se hace manual sobre el resultado ordenado.
+  private readonly _list = createFilteredList<Ejercicio>({
+    source: this.allEjercicios,
+    defaultPageSize: 24,
+    searchPredicate: (e, q) => e.nombre.toLowerCase().includes(q),
+    applyDomainFilters: (items) => {
+      let list = items;
 
-    const search = this.busqueda().trim().toLowerCase();
-    if (search) {
-      list = list.filter((e) =>
-        e.nombre.toLowerCase().includes(search),
-      );
-    }
-
-    const catNames = this.selectedCategoryNames();
-    if (catNames.length > 0) {
-      const nameSet = new Set(catNames);
-      list = list.filter((e) =>
-        e.categoria.some((cn: string) => nameSet.has(cn)),
-      );
-    }
-
-    if (this.soloFavoritos()) {
-      const favIds = this.idsFavoritos();
-      if (favIds.size > 0) {
-        list = list.filter((e) => favIds.has(e.id));
-      } else {
-        list = [];
+      const catNames = this.selectedCategoryNames();
+      if (catNames.length > 0) {
+        const nameSet = new Set(catNames);
+        list = list.filter((e) =>
+          e.categoria.some((cn: string) => nameSet.has(cn)),
+        );
       }
-    }
 
-    return list;
+      if (this.soloFavoritos()) {
+        const favIds = this.idsFavoritos();
+        list = favIds.size > 0 ? list.filter((e) => favIds.has(e.id)) : [];
+      }
+
+      return list;
+    },
   });
 
+  readonly busqueda = this._list.busqueda;
+  readonly page = this._list.page;
+  readonly pageSize = this._list.pageSize;
+  readonly total = this._list.total;
+  readonly totalPages = this._list.totalPages;
+
   private readonly sortedEjercicios = computed<Ejercicio[]>(() => {
-    const list = [...this.filteredEjercicios()];
+    const list = [...this._list.filtered()];
     const dir = this.sort().startsWith('-') ? -1 : 1;
     return list.sort(
       (a, b) => dir * a.nombre.localeCompare(b.nombre),
@@ -138,12 +139,6 @@ export class EjerciciosService {
     const start = (this.page() - 1) * this.pageSize();
     return all.slice(start, start + this.pageSize());
   });
-
-  readonly total = computed(() => this.sortedEjercicios().length);
-
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.total() / this.pageSize())),
-  );
 
   readonly hasActiveFilters = computed(
     () =>
@@ -183,8 +178,7 @@ export class EjerciciosService {
 
   // ========= Acciones (mutadores de filtro) =========
   setBusqueda(v: string) {
-    this.busqueda.set(v);
-    this.page.set(1);
+    this._list.setBusqueda(v);
   }
 
   toggleCategoria(id: string) {
@@ -195,34 +189,32 @@ export class EjerciciosService {
       set.add(id);
     }
     this.idsCategoriasSeleccionadas.set([...set]);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   limpiarCategorias() {
     this.idsCategoriasSeleccionadas.set([]);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   clearFilters() {
-    this.busqueda.set('');
+    this._list.busqueda.set('');
     this.idsCategoriasSeleccionadas.set([]);
     this.soloFavoritos.set(false);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   setSort(s: 'nombre' | '-nombre') {
     this.sort.set(s);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   setPageSize(n: number) {
-    this.pageSize.set(n);
-    this.page.set(1);
+    this._list.setPageSize(n);
   }
 
   goToPage(p: number) {
-    const max = this.totalPages();
-    this.page.set(Math.min(Math.max(1, p), max));
+    this._list.goToPage(p);
   }
 
   // ========= Helper de assets (Cloudflare R2 vía assetUrl) =========
@@ -277,7 +269,7 @@ export class EjerciciosService {
 
   toggleSoloFavoritos(): void {
     this.soloFavoritos.update((v) => !v);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   // ========= Mapper Convex → Ejercicio (dominio Angular) =========
