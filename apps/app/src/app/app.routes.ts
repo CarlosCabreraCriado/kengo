@@ -15,10 +15,10 @@ export const routes: Routes = [
   },
 
   {
-    path: 'galeria',
+    path: 'ejercicios',
     loadChildren: () =>
-      import('./features/galeria/galeria.routes').then(
-        (m) => m.GALERIA_ROUTES,
+      import('./features/ejercicios/ejercicios.routes').then(
+        (m) => m.EJERCICIOS_ROUTES,
       ),
   },
 
@@ -29,6 +29,12 @@ export const routes: Routes = [
         (m) => m.RUTINAS_ROUTES,
       ),
   },
+
+  // Redirects legados: la feature galeria/ se eliminó (#4.2 auditoría).
+  { path: 'galeria', redirectTo: '/ejercicios', pathMatch: 'full' },
+  { path: 'galeria/ejercicios', redirectTo: '/ejercicios', pathMatch: 'full' },
+  { path: 'galeria/ejercicios/:id', redirectTo: '/ejercicios/:id' },
+  { path: 'galeria/rutinas', redirectTo: '/rutinas', pathMatch: 'full' },
 
   {
     path: 'mis-pacientes',

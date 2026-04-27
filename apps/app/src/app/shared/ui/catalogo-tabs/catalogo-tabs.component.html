@@ -1,7 +1,7 @@
-<nav class="toggle-nav" aria-label="Navegación de galería">
+<nav class="toggle-nav" aria-label="Navegación entre ejercicios y rutinas">
   @for (tab of tabs(); track tab.path) {
     <a
-      [routerLink]="'/galeria/' + tab.path"
+      [routerLink]="'/' + tab.path"
       routerLinkActive="active"
       class="toggle-item"
     >

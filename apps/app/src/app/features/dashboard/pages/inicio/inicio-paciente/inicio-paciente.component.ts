@@ -273,7 +273,7 @@ export class InicioPacienteComponent {
   }
 
   irAEjercicios(): void {
-    this.router.navigate(['/galeria/ejercicios']);
+    this.router.navigate(['/ejercicios']);
   }
 
   onContactarFisio(): void {

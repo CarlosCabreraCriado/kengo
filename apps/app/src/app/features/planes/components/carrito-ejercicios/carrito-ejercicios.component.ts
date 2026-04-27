@@ -189,7 +189,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     // Pequeño delay para permitir que el drawer se cierre antes de navegar
     // Esto evita conflictos con el scroll restoration
     setTimeout(() => {
-      this.router.navigate(['/galeria/ejercicios']);
+      this.router.navigate(['/ejercicios']);
     }, 100);
   }
 
@@ -262,7 +262,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
    */
   salirModoRutina() {
     this.rutinaSvc.exit();
-    this.router.navigate(['/galeria/rutinas']);
+    this.router.navigate(['/rutinas']);
   }
 
   /**
@@ -315,7 +315,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
         if (rutinaId) {
           this.toastService.show('Rutina guardada');
           if (this.rutinaSvc.isActive()) this.rutinaSvc.exit();
-          this.router.navigate(['/galeria/rutinas']);
+          this.router.navigate(['/rutinas']);
         } else {
           this.toastService.show('Error al guardar rutina', 'error');
         }

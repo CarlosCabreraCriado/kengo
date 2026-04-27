@@ -418,7 +418,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   irAGaleria() {
     const openDrawer = this.isEditMode();
-    this.router.navigate(['/galeria/ejercicios']).then(() => {
+    this.router.navigate(['/ejercicios']).then(() => {
       if (openDrawer) {
         this.svc.openDrawer();
       }

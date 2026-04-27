@@ -13,7 +13,7 @@ export const unsavedChangesGuard: CanDeactivateFn<unknown> = (
   if (svc.isEditMode() && svc.isDirty()) {
     // Permitir navegación al catálogo de ejercicios sin warning
     const nextUrl = nextState?.url || '';
-    if (nextUrl.startsWith('/galeria/ejercicios')) {
+    if (nextUrl.startsWith('/ejercicios')) {
       return true;
     }
     return window.confirm(

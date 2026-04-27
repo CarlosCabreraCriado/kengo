@@ -10,7 +10,7 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 import { RutinasService } from '../../data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
-import { ToggleGaleriaComponent } from '../../../../shared/ui/toggle-galeria/toggle-galeria.component';
+import { CatalogoTabsComponent } from '../../../../shared/ui/catalogo-tabs/catalogo-tabs.component';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
@@ -18,7 +18,7 @@ import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
 @Component({
   selector: 'app-rutinas-list',
   standalone: true,
-  imports: [RouterLink, FormsModule, ToggleGaleriaComponent],
+  imports: [RouterLink, FormsModule, CatalogoTabsComponent],
   templateUrl: './rutinas-list.component.html',
   styleUrl: './rutinas-list.component.css',
   host: {
@@ -246,6 +246,6 @@ export class RutinasListComponent {
   // === Crear Rutina ===
   crearRutina() {
     this.rutinaBuilderService.start();
-    this.router.navigate(['/galeria/ejercicios']);
+    this.router.navigate(['/ejercicios']);
   }
 }

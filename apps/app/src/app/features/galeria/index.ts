@@ -1,1 +1,0 @@
-export * from './galeria.routes';

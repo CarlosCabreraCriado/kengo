@@ -100,7 +100,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
       if (!result) {
         this.toastService.show('No se pudo cargar la rutina', 'error');
-        this.router.navigate(['/galeria/rutinas']);
+        this.router.navigate(['/rutinas']);
         return;
       }
 
@@ -116,13 +116,13 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     // Modo creación: verificar que estamos en modo rutina y hay ejercicios
     if (!this.svc.isActive()) {
       this.toastService.show('Inicia la creación de plantilla primero');
-      this.router.navigate(['/galeria/rutinas']);
+      this.router.navigate(['/rutinas']);
       return;
     }
 
     if (this.svc.items().length === 0) {
       this.toastService.show('Añade ejercicios primero');
-      this.router.navigate(['/galeria/ejercicios']);
+      this.router.navigate(['/ejercicios']);
       return;
     }
   }
@@ -164,7 +164,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     // Si no quedan ejercicios, volver a la galería
     if (this.svc.items().length === 0) {
       this.toastService.show('Añade ejercicios a la plantilla');
-      this.router.navigate(['/galeria/ejercicios']);
+      this.router.navigate(['/ejercicios']);
     }
   }
 
@@ -197,7 +197,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
           // sin guardar verá `isDirty === false` durante la navegación.
           this.svc.markAsSaved();
           this.svc.exit();
-          this.router.navigate(['/galeria/rutinas']);
+          this.router.navigate(['/rutinas']);
         } else {
           this.toastService.show('Error al actualizar plantilla', 'error');
         }
@@ -206,7 +206,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
         if (rutinaId) {
           this.toastService.show('Plantilla guardada');
           this.svc.exit();
-          this.router.navigate(['/galeria/rutinas']);
+          this.router.navigate(['/rutinas']);
         } else {
           this.toastService.show('Error al guardar plantilla', 'error');
         }
@@ -226,7 +226,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
   salirModoRutina() {
     this.svc.exit();
-    this.router.navigate(['/galeria/rutinas']);
+    this.router.navigate(['/rutinas']);
   }
 
   // ========= Helpers =========

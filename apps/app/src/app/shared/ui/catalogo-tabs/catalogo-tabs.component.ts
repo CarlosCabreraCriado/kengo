@@ -9,13 +9,13 @@ interface Tab {
 }
 
 @Component({
-  selector: 'app-toggle-galeria',
+  selector: 'app-catalogo-tabs',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
-  templateUrl: './toggle-galeria.component.html',
-  styleUrl: './toggle-galeria.component.css',
+  templateUrl: './catalogo-tabs.component.html',
+  styleUrl: './catalogo-tabs.component.css',
 })
-export class ToggleGaleriaComponent {
+export class CatalogoTabsComponent {
   private session = inject(SessionService);
 
   private readonly allTabs: Tab[] = [

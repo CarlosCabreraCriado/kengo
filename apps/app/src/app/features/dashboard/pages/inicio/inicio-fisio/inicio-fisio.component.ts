@@ -106,7 +106,7 @@ export class InicioFisioComponent {
   }
 
   irAGaleria(): void {
-    this.router.navigate(['/galeria']);
+    this.router.navigate(['/ejercicios']);
   }
 
   irAPacientes(): void {

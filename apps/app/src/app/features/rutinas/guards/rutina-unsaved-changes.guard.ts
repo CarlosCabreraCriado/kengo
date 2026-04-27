@@ -15,7 +15,7 @@ export const rutinaUnsavedChangesGuard: CanDeactivateFn<unknown> = (
     // usuario puede salir a añadir más ejercicios y volver al builder
     // manteniendo el estado en memoria.
     const nextUrl = nextState?.url || '';
-    if (nextUrl.startsWith('/galeria/ejercicios')) {
+    if (nextUrl.startsWith('/ejercicios')) {
       return true;
     }
     return window.confirm(
