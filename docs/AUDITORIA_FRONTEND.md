@@ -30,7 +30,7 @@ Leyenda de campos:
 | [x] | 6 | Descomponer `paciente-detail.component` (821 LOC) | pacientes | L | 🟡 | 🟡 | P1 (PR-Paciente) ✅ |
 | [x] | 7 | Mover plantilla inline de god-components a `.html`/`.css` | sesion | S | 🟢 | 🟢 | **P0** (PR-1) ✅ |
 | [x] | 8 | `EmptyStateComponent` + pipe `formatDate` | shared | S | 🟢 | 🟢 | P2 (PR-Shared) ✅ |
-| [ ] | 9 | `FilteredListService<T>` base (filtrado+paginación) | core | M | 🟡 | 🟡 | P2 (PR-6 next) |
+| [x] | 9 | `FilteredListService<T>` base (filtrado+paginación) | core | M | 🟡 | 🟡 | P2 (PR-6) ✅ |
 | [x] | 10 | Mover rutas de `planes`, `rutinas`, `sesion` a `*.routes.ts` | rutas | S | 🟢 | 🟢 | P2 (PR-Shared) ✅ |
 | [x] | 11 | Aplicar `unsavedChangesGuard` a `rutina-builder` | rutas | S | 🟡 | 🟢 | P1 (PR-Routes) ✅ |
 | [x] | 12 | Revisar guard de rol en `/planes` (list) | rutas | S | 🟡 | 🟡 | P1 (PR-Routes) ✅ |
@@ -47,7 +47,7 @@ Leyenda de campos:
 - [x] **PR-Routes (S)** — `unsavedChangesGuard` rutinas + guard `/planes` (#11 + #12) ✅ **COMPLETADO**
 - [x] **PR-Paciente (L)** — Descomponer `paciente-detail` (#6) ✅ **COMPLETADO** (PR-Paciente-1 + PR-Paciente-2)
 - [x] **PR-Shared (M)** — `convex-mappers` + `FormatDatePipe` + `EmptyStateComponent` + split de rutas (#2.2 + #2.3 + #2.4 + #3.1) ✅ **COMPLETADO**
-- [ ] **PR-6 (M)** — `FilteredListService<T>` base (#2.1) — próximo follow-up
+- [x] **PR-6 (M)** — factory `createFilteredList<T>` + migración de 3 servicios (#2.1) ✅ **COMPLETADO**
 
 ---
 
@@ -247,8 +247,10 @@ Leyenda de campos:
 
 # SECCIÓN 2 — Duplicación cross-feature
 
-## [ ] 2.1 — `FilteredListService<T>` base
-`ejercicios.service`, `rutinas.service`, `planes.service` replican signal+computed (~50 LOC cada uno). Crear servicio base o factory `createFilteredList()`. **Esfuerzo**: M · **Impacto**: 🟡 · **Prioridad**: P2.
+## [x] 2.1 — `FilteredListService<T>` base (PR-6) ✅
+Creado `apps/app/src/app/shared/data-access/create-filtered-list.ts` (factory `createFilteredList<T>(config)` con `source`, `searchPredicate?`, `applyDomainFilters?`, `defaultPageSize?`). Devuelve signals `busqueda`/`page`/`pageSize`, computeds `filtered`/`items`/`total`/`totalPages`, mutators `setBusqueda`/`goToPage`/`setPageSize`/`resetPage`. Cubierto por 10 tests unitarios.
+
+Migrados `PlanesService` (búsqueda+filtroPaciente client-side, filtroEstado server-side), `RutinasService` (server-side: sin `searchPredicate`, anotaciones de tipo explícitas para romper ciclo de inferencia con `watchQuery`) y `EjerciciosService` (filtros de categoría/favoritos en `applyDomainFilters`; sort se aplica encima de `filtered()` y la paginación se hace manual sobre el sorted). Shape público de los 3 servicios intacto: cero cambios en consumidores. **Esfuerzo**: M · **Impacto**: 🟡 · **Prioridad**: P2.
 
 ## [x] 2.2 — Mappers Convex → Domain (PR-Shared) ✅
 Creado `apps/app/src/app/shared/utils/convex-mappers.ts` con `mapId`, `toIsoFromCreationTime`, `mapConvexBase`. Migrados `ejercicios.service`, `rutinas.service`, `planes.service`. `sesion-state.service` usa tipos estrictos (`Id<...>` sin `_creationTime`); no se migra (no aporta abstracción). **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
@@ -420,8 +422,19 @@ apps/app/src/app/features/
     └── planes.service.ts                                                   (mapConvexBase, mapId)
 ```
 
-**Pendientes** (todos P2/P3):
+**Completados (PR-6)**:
 ```
-apps/app/src/app/features/{ejercicios,rutinas,planes}/  (#2.1 FilteredListService, P2 → PR-6)
+apps/app/src/app/shared/data-access/                                        #2.1 ✅ PR-6
+├── create-filtered-list.ts                                                 (nuevo, factory)
+└── create-filtered-list.spec.ts                                            (nuevo, 10 tests)
+
+apps/app/src/app/features/                                                  #2.1 ✅ PR-6
+├── ejercicios/data-access/ejercicios.service.ts                            (consume factory)
+├── rutinas/data-access/rutinas.service.ts                                  (consume factory, server-side)
+└── planes/data-access/planes.service.ts                                    (consume factory)
+```
+
+**Pendientes** (sólo P3):
+```
 apps/app/src/app/shared/                                (#2.6 common-validators, P3)
 ```
