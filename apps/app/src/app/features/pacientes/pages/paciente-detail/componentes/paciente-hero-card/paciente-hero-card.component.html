@@ -1,0 +1,101 @@
+<article class="hero-card animate-in">
+  <div class="hero-visual">
+    <div class="hero-gradient"></div>
+    <div class="hero-pattern" aria-hidden="true"></div>
+  </div>
+
+  @if (!isMobile()) {
+    <button
+      type="button"
+      class="hero-back-btn"
+      aria-label="Volver a pacientes"
+      (click)="volver.emit()"
+    >
+      <span class="material-symbols-outlined">arrow_back</span>
+      <span>Mis pacientes</span>
+    </button>
+  }
+
+  <div class="hero-content">
+    <div class="hero-avatar">
+      @if (avatarUrl()) {
+        <img
+          [src]="avatarUrl()"
+          [alt]="fullName()"
+          class="avatar-img"
+        />
+      } @else {
+        <div class="avatar-placeholder">
+          <span class="material-symbols-outlined">person</span>
+        </div>
+      }
+    </div>
+    <div class="hero-info">
+      <h2 class="hero-name">{{ fullName() }}</h2>
+      @if (clinicaNombre()) {
+        <p class="hero-clinic">
+          <span class="material-symbols-outlined icon-sm">location_city</span>
+          {{ clinicaNombre() }}
+        </p>
+      }
+      @if (fisioResponsableNombre()) {
+        <p class="hero-fisio">
+          <span class="material-symbols-outlined icon-sm">person</span>
+          Fisio: {{ fisioResponsableNombre() }}
+        </p>
+      }
+    </div>
+    <button
+      type="button"
+      class="edit-btn"
+      aria-label="Editar paciente"
+      (click)="editarPaciente.emit()"
+    >
+      <span class="material-symbols-outlined">edit</span>
+    </button>
+  </div>
+
+  <div class="contact-grid">
+    @if (paciente()?.email) {
+      <a [href]="'mailto:' + paciente()?.email" class="contact-item">
+        <div class="contact-icon">
+          <span class="material-symbols-outlined">mail</span>
+        </div>
+        <div class="contact-info">
+          <span class="contact-label">Email</span>
+          <span class="contact-value">{{ paciente()?.email }}</span>
+        </div>
+      </a>
+    }
+    @if (paciente()?.telefono) {
+      <a [href]="'tel:' + paciente()?.telefono" class="contact-item">
+        <div class="contact-icon">
+          <span class="material-symbols-outlined">phone</span>
+        </div>
+        <div class="contact-info">
+          <span class="contact-label">Teléfono</span>
+          <span class="contact-value">{{ paciente()?.telefono }}</span>
+        </div>
+      </a>
+    }
+  </div>
+
+  <div class="quick-actions">
+    <button
+      type="button"
+      class="action-btn primary"
+      (click)="crearPlan.emit()"
+    >
+      <span class="material-symbols-outlined icon-filled">add</span>
+      <span class="action-label">Nuevo Plan</span>
+    </button>
+    <button
+      type="button"
+      class="action-btn"
+      (click)="gestionarAcceso.emit()"
+    >
+      <span class="material-symbols-outlined">key</span>
+      <span class="action-label">Gestionar acceso</span>
+    </button>
+  </div>
+</article>

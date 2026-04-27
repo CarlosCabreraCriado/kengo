@@ -66,724 +66,80 @@
       <div class="content-grid">
         <!-- Main Column -->
         <div class="main-column">
-          <!-- Hero Card: Patient Info -->
-          <article class="hero-card animate-in">
-            <div class="hero-visual">
-              <div class="hero-gradient"></div>
-              <div class="hero-pattern" aria-hidden="true"></div>
-            </div>
-
-            <!-- Back Button (desktop only) -->
-            @if (!isMovil()) {
-              <button
-                type="button"
-                class="hero-back-btn"
-                aria-label="Volver a pacientes"
-                (click)="volver()"
-              >
-                <span class="material-symbols-outlined">arrow_back</span>
-                <span>Mis pacientes</span>
-              </button>
-            }
-
-            <div class="hero-content">
-              <!-- Avatar -->
-              <div class="hero-avatar">
-                @if (avatarUrl()) {
-                  <img
-                    [src]="avatarUrl()"
-                    [alt]="fullName()"
-                    class="avatar-img"
-                  />
-                } @else {
-                  <div class="avatar-placeholder">
-                    <span class="material-symbols-outlined">person</span>
-                  </div>
-                }
-              </div>
-              <!-- Info -->
-              <div class="hero-info">
-                <h2 class="hero-name">{{ fullName() }}</h2>
-                @if (getClinicaNombre()) {
-                  <p class="hero-clinic">
-                    <span class="material-symbols-outlined icon-sm">location_city</span>
-                    {{ getClinicaNombre() }}
-                  </p>
-                }
-                @if (fisioResponsableNombre()) {
-                  <p class="hero-fisio">
-                    <span class="material-symbols-outlined icon-sm">person</span>
-                    Fisio: {{ fisioResponsableNombre() }}
-                  </p>
-                }
-              </div>
-              <!-- Edit Button -->
-              <button
-                type="button"
-                class="edit-btn"
-                aria-label="Editar paciente"
-                (click)="editarPaciente()"
-              >
-                <span class="material-symbols-outlined">edit</span>
-              </button>
-            </div>
-
-            <!-- Contact Info -->
-            <div class="contact-grid">
-              @if (paciente()?.email) {
-                <a
-                  [href]="'mailto:' + paciente()?.email"
-                  class="contact-item"
-                >
-                  <div class="contact-icon">
-                    <span class="material-symbols-outlined">mail</span>
-                  </div>
-                  <div class="contact-info">
-                    <span class="contact-label">Email</span>
-                    <span class="contact-value">{{ paciente()?.email }}</span>
-                  </div>
-                </a>
-              }
-              @if (paciente()?.telefono) {
-                <a
-                  [href]="'tel:' + paciente()?.telefono"
-                  class="contact-item"
-                >
-                  <div class="contact-icon">
-                    <span class="material-symbols-outlined">phone</span>
-                  </div>
-                  <div class="contact-info">
-                    <span class="contact-label">Teléfono</span>
-                    <span class="contact-value">{{ paciente()?.telefono }}</span>
-                  </div>
-                </a>
-              }
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-              <button
-                type="button"
-                class="action-btn primary"
-                (click)="crearPlan()"
-              >
-                <span class="material-symbols-outlined icon-filled">add</span>
-                <span class="action-label">Nuevo Plan</span>
-              </button>
-              <button
-                type="button"
-                class="action-btn"
-                (click)="gestionarAcceso()"
-              >
-                <span class="material-symbols-outlined">key</span>
-                <span class="action-label">Gestionar acceso</span>
-              </button>
-            </div>
-          </article>
+          <app-paciente-hero-card
+            [paciente]="paciente()"
+            [fullName]="fullName()"
+            [avatarUrl]="avatarUrl()"
+            [clinicaNombre]="clinicaNombre()"
+            [fisioResponsableNombre]="fisioResponsableNombre()"
+            [isMobile]="isMovil()"
+            (editarPaciente)="editarPaciente()"
+            (gestionarAcceso)="gestionarAcceso()"
+            (crearPlan)="crearPlan()"
+            (volver)="volver()"
+          />
 
           <!-- Recent Activity Section -->
-          <section class="content-section activity-section animate-in" style="--delay: 0.1s">
-            <header
-              class="section-header clickable"
-              (click)="activityExpanded = !activityExpanded"
-            >
-              <div class="section-header-left">
-                <div class="section-icon">
-                  <span class="material-symbols-outlined">history</span>
-                </div>
-                <div>
-                  <h2 class="section-title">Actividad reciente</h2>
-                  <p class="section-subtitle">
-                    {{ rangoLabel() }} · {{ diasProgramados() }} días programados@if (diasSinActividad() > 0) {, {{ diasSinActividad() }} sin actividad}
-                  </p>
-                </div>
-              </div>
-              <span
-                class="material-symbols-outlined expand-icon"
-                [class.rotated]="activityExpanded"
-              >expand_more</span>
-            </header>
+          <app-paciente-actividad-reciente
+            [sesionesVisibles]="sesionesVisibles()"
+            [totalSesiones]="sesionesEnriquecidas().length"
+            [isLoading]="isLoadingSesiones()"
+            [rangoLabel]="rangoLabel()"
+            [diasProgramados]="diasProgramados()"
+            [diasSinActividad]="diasSinActividad()"
+            [filtroRango]="filtroRango()"
+            [fechaExpandida]="sesionExpandida()"
+            [notificacionesPorRegistro]="notificacionesPorRegistro()"
+            [defaultExpanded]="!isMovil()"
+            (verSesion)="verSesion($event)"
+            (toggleComentarios)="toggleComentarios($event)"
+            (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
+          />
 
-            @if (activityExpanded) {
-              <div class="section-content">
-                @if (isLoadingSesiones()) {
-                  <div class="loading-inline">
-                    <div class="shimmer-bar"></div>
-                    <div class="shimmer-bar short"></div>
-                  </div>
-                } @else if (sesiones().length === 0) {
-                  <div class="empty-state-inline">
-                    <div class="empty-icon">
-                      <span class="material-symbols-outlined">event_busy</span>
-                    </div>
-                    <p class="empty-text">Sin actividad registrada</p>
-                  </div>
-                } @else {
-                  <div class="activity-feed">
-                    @for (sesion of sesionesVisibles(); track sesion.fecha; let i = $index) {
-                      <article
-                        class="act-card"
-                        [class.is-completado]="sesion.tipo === 'completado'"
-                        [class.is-parcial]="sesion.tipo === 'parcial'"
-                        [class.is-fallido]="sesion.tipo === 'fallido'"
-                        [class.is-descanso]="sesion.tipo === 'descanso'"
-                        [class.is-clickable]="sesion.tipo !== 'descanso'"
-                        [class.comments-open]="sesionExpandida() === sesion.fecha"
-                        [style.--i]="i"
-                        (click)="verSesion(sesion)"
-                      >
-                        <div class="act-header">
-                          <span class="act-date">{{ sesion.fechaFormateada }}</span>
-                          @if (sesion.tipo !== 'descanso' && tieneComentarios(sesion)) {
-                            <span class="act-has-comments" title="Tiene comentarios">
-                              <span class="material-symbols-outlined">chat_bubble</span>
-                            </span>
-                          }
-                          <div class="act-badge" [class]="getTipoColor(sesion.tipo)">
-                            <span
-                              class="material-symbols-outlined"
-                              [class.icon-filled]="sesion.tipo === 'completado'"
-                            >{{ getTipoIcon(sesion.tipo) }}</span>
-                            @switch (sesion.tipo) {
-                              @case ('completado') {
-                                <span>{{ sesion.totalEjercicios }} ejercicio{{ sesion.totalEjercicios !== 1 ? 's' : '' }}</span>
-                              }
-                              @case ('parcial') {
-                                <span>{{ sesion.totalEjercicios }} de {{ sesion.ejerciciosEsperados }}</span>
-                              }
-                              @case ('fallido') {
-                                <span>Sin actividad</span>
-                              }
-                              @case ('descanso') {
-                                <span>Descanso</span>
-                              }
-                            }
-                          </div>
-                        </div>
-                        @if (sesion.planes.length >= 1 && sesion.tipo !== 'descanso') {
-                          <div class="act-plans">
-                            @for (plan of sesion.planes; track plan.planId) {
-                              <div class="act-plan">
-                                <div class="act-plan-info">
-                                  <span class="act-plan-name">{{ plan.titulo }}</span>
-                                  <span class="act-plan-count" [class]="getPlanStatusClass(plan)">
-                                    {{ plan.completados }}/{{ plan.esperados }}
-                                  </span>
-                                </div>
-                                <div class="act-plan-track">
-                                  <div
-                                    class="act-plan-fill"
-                                    [class]="getPlanStatusClass(plan)"
-                                    [style.width.%]="plan.esperados > 0 ? (plan.completados / plan.esperados) * 100 : 0"
-                                  ></div>
-                                </div>
-                              </div>
-                            }
-                          </div>
-                        }
-                        @if ((sesion.promedioDolorValue !== null && sesion.tipo !== 'descanso') || sesion.totalComentarios > 0) {
-                          <div class="act-meta">
-                            @if (sesion.promedioDolorValue !== null && sesion.tipo !== 'descanso') {
-                              <div class="act-pain" [class]="getDolorColor(sesion.promedioDolorValue)">
-                                <span class="material-symbols-outlined">sentiment_dissatisfied</span>
-                                <span>{{ sesion.promedioDolorValue | number:'1.0-1' }}/10</span>
-                              </div>
-                            }
-                            <div class="act-spacer"></div>
-                            @if (sesion.totalComentarios > 0) {
-                              <button
-                                type="button"
-                                class="act-comment-btn"
-                                [class.active]="sesionExpandida() === sesion.fecha"
-                                (click)="$event.stopPropagation(); toggleComentarios(sesion.fecha)"
-                                [attr.aria-label]="'Ver ' + sesion.totalComentarios + ' comentario' + (sesion.totalComentarios !== 1 ? 's' : '')"
-                              >
-                                <span class="material-symbols-outlined">chat_bubble</span>
-                                <span class="act-comment-count">{{ sesion.totalComentarios }}</span>
-                              </button>
-                            }
-                          </div>
-                        }
-                        @if (sesionExpandida() === sesion.fecha) {
-                          <div class="act-comments">
-                            @for (comentario of sesion.comentarios; track comentario.idRegistro) {
-                              <div class="act-comment-bubble">
-                                <span class="material-symbols-outlined act-quote-icon">format_quote</span>
-                                <span class="act-comment-text">{{ comentario.texto }}</span>
-                                @let notif = buscarNotificacion(comentario.idRegistro);
-                                @if (notif && !notif.revisada) {
-                                  <button
-                                    type="button"
-                                    class="act-comment-read-btn"
-                                    (click)="$event.stopPropagation(); marcarComentarioRevisado(notif)"
-                                  >
-                                    <span class="material-symbols-outlined">check</span>
-                                    Marcar como leído
-                                  </button>
-                                }
-                              </div>
-                            }
-                          </div>
-                        }
-                      </article>
-                    }
-                  </div>
-
-                  @if (filtroRango() === '15' && sesiones().length > 15) {
-                    <p class="activity-footer">
-                      Mostrando los últimos 15 de {{ sesiones().length }} días
-                    </p>
-                  }
-                }
-              </div>
-            }
-          </section>
         </div>
 
         <!-- Sidebar Column -->
         <aside class="sidebar-column">
           <!-- Statistics Section -->
-          <section class="content-section stats-section animate-in" style="--delay: 0.15s">
-            <header
-              class="section-header clickable"
-              (click)="statsExpanded = !statsExpanded"
-            >
-              <div class="section-header-left">
-                <div class="section-icon gold">
-                  <span class="material-symbols-outlined">analytics</span>
-                </div>
-                <div>
-                  <h2 class="section-title">Estadísticas</h2>
-                  <p class="section-subtitle">Resumen de cumplimiento</p>
-                </div>
-              </div>
-              <span
-                class="material-symbols-outlined expand-icon"
-                [class.rotated]="statsExpanded"
-              >expand_more</span>
-            </header>
+          <app-paciente-estadisticas
+            [estadisticas]="estadisticas()"
+            [isLoading]="isLoadingEstadisticas()"
+            [filtroRango]="filtroRango()"
+            [filtroDesde]="filtroDesde()"
+            [filtroHasta]="filtroHasta()"
+            [isCustomRange]="isCustomRange()"
+            [rangoLabel]="rangoLabel()"
+            [filterPanelOpen]="filterPanelOpen()"
+            [hoy]="hoy"
+            [defaultExpanded]="!isMovil()"
+            (aplicarFiltroRango)="aplicarFiltroRango($event)"
+            (aplicarRangoPersonalizado)="aplicarRangoPersonalizado()"
+            (desdeChange)="filtroDesde.set($event)"
+            (hastaChange)="filtroHasta.set($event)"
+            (resetearFiltro)="resetearFiltro()"
+          />
 
-            @if (statsExpanded) {
-              <div class="section-content">
-                <!-- Filtro de rango temporal -->
-                <div class="stats-filter">
-                  <div class="filter-chips">
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '15'"
-                      (click)="aplicarFiltroRango('15')"
-                    >15d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '30'"
-                      (click)="aplicarFiltroRango('30')"
-                    >30d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '60'"
-                      (click)="aplicarFiltroRango('60')"
-                    >60d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === '90'"
-                      (click)="aplicarFiltroRango('90')"
-                    >90d</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === 'todo'"
-                      (click)="aplicarFiltroRango('todo')"
-                    >Todo</button>
-                    <button
-                      type="button"
-                      class="filter-chip"
-                      [class.filter-chip--active]="filtroRango() === 'custom'"
-                      (click)="aplicarFiltroRango('custom')"
-                    >
-                      <span class="material-symbols-outlined" style="font-size: 14px">date_range</span>
-                      Rango
-                    </button>
-                  </div>
-
-                  @if (filterPanelOpen()) {
-                    <div class="filter-date-range">
-                      <label class="filter-date-field">
-                        <span class="filter-date-label">Desde</span>
-                        <input
-                          type="date"
-                          class="filter-date-input"
-                          [value]="filtroDesde() ?? ''"
-                          [max]="filtroHasta() ?? hoy"
-                          (change)="onDesdeChange($event)"
-                        />
-                      </label>
-                      <span class="filter-date-arrow">
-                        <span class="material-symbols-outlined" style="font-size: 16px">arrow_forward</span>
-                      </span>
-                      <label class="filter-date-field">
-                        <span class="filter-date-label">Hasta</span>
-                        <input
-                          type="date"
-                          class="filter-date-input"
-                          [value]="filtroHasta() ?? ''"
-                          [min]="filtroDesde() ?? ''"
-                          [max]="hoy"
-                          (change)="onHastaChange($event)"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        class="filter-apply-btn"
-                        [disabled]="!filtroDesde() || !filtroHasta() || filtroDesde()! > filtroHasta()!"
-                        (click)="aplicarRangoPersonalizado()"
-                        aria-label="Aplicar rango"
-                      >
-                        <span class="material-symbols-outlined">check</span>
-                      </button>
-                    </div>
-                  }
-
-                  @if (isCustomRange() && !filterPanelOpen()) {
-                    <div class="filter-active-indicator">
-                      <span class="material-symbols-outlined" style="font-size: 14px">filter_alt</span>
-                      <span class="filter-active-label">{{ rangoLabel() }}</span>
-                      <button
-                        type="button"
-                        class="filter-reset-btn"
-                        (click)="resetearFiltro()"
-                        aria-label="Resetear filtro"
-                      >
-                        <span class="material-symbols-outlined" style="font-size: 14px">close</span>
-                      </button>
-                    </div>
-                  }
-                </div>
-
-                @if (isLoadingEstadisticas()) {
-                  <div class="loading-inline">
-                    <div class="shimmer-bar"></div>
-                    <div class="shimmer-bar short"></div>
-                  </div>
-                } @else if (estadisticas()) {
-                  <!-- Main Stats Grid -->
-                  <div class="stats-grid">
-                    <!-- Adherence -->
-                    <div class="stat-card primary">
-                      <div class="stat-header">
-                        <span class="stat-label">Adherencia</span>
-                        <span class="material-symbols-outlined stat-icon">trending_up</span>
-                      </div>
-                      <div class="stat-value-large">{{ estadisticas()?.adherenciaGeneral }}%</div>
-                      <div class="stat-progress">
-                        <div
-                          class="stat-progress-fill"
-                          [style.width.%]="estadisticas()?.adherenciaGeneral ?? 0"
-                        ></div>
-                      </div>
-                    </div>
-
-                    <!-- Total Sessions -->
-                    <div class="stat-card">
-                      <div class="stat-header">
-                        <span class="stat-label">Sesiones</span>
-                        <span class="material-symbols-outlined stat-icon">event_available</span>
-                      </div>
-                      <div class="stat-value-large">{{ estadisticas()?.totalSesiones }}</div>
-                      <span class="stat-hint">días con ejercicios</span>
-                    </div>
-
-                    <!-- Pain Average -->
-                    <div class="stat-card">
-                      <div class="stat-header">
-                        <span class="stat-label">Dolor promedio</span>
-                        <span
-                          class="material-symbols-outlined stat-icon"
-                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
-                        >sentiment_dissatisfied</span>
-                      </div>
-                      @if (estadisticas()?.promedioDolorGeneral !== null && estadisticas()?.promedioDolorGeneral !== undefined) {
-                        <div
-                          class="stat-value-large"
-                          [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)"
-                        >{{ estadisticas()?.promedioDolorGeneral }}<span class="stat-unit">/10</span></div>
-                      } @else {
-                        <div class="stat-value-large muted">—</div>
-                        <span class="stat-hint">Sin datos</span>
-                      }
-                    </div>
-
-                    <!-- Streak -->
-                    <div class="stat-card gold">
-                      <div class="stat-header">
-                        <span class="stat-label">Racha actual</span>
-                        <span class="material-symbols-outlined stat-icon icon-filled">local_fire_department</span>
-                      </div>
-                      <div class="stat-value-large">{{ estadisticas()?.rachaActual }}</div>
-                      <span class="stat-hint">días seguidos</span>
-                    </div>
-                  </div>
-
-                  <!-- Weekly Adherence Chart -->
-                  @if (estadisticas()?.adherenciaSemanal && estadisticas()!.adherenciaSemanal.length > 0) {
-                    <div class="weekly-chart">
-                      <h4 class="chart-title">Adherencia semanal</h4>
-                      <div class="chart-bars">
-                        @for (semana of estadisticas()!.adherenciaSemanal; track semana.semana) {
-                          <div class="chart-bar-container">
-                            <div class="chart-bar-bg">
-                              <div
-                                class="chart-bar-fill"
-                                [style.height.%]="semana.porcentaje"
-                              ></div>
-                            </div>
-                            <span class="chart-bar-label">{{ semana.semana }}</span>
-                            <span class="chart-bar-value">{{ semana.porcentaje }}%</span>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  }
-
-                  <!-- Last Activity -->
-                  @if (estadisticas()?.diasDesdeUltimaSesion !== null && estadisticas()?.diasDesdeUltimaSesion !== undefined) {
-                    <div class="last-activity">
-                      <span class="material-symbols-outlined activity-icon">schedule</span>
-                      <span class="activity-text">
-                        Última actividad:
-                        @if (estadisticas()?.diasDesdeUltimaSesion === 0) {
-                          <strong class="text-success">Hoy</strong>
-                        } @else if (estadisticas()?.diasDesdeUltimaSesion === 1) {
-                          <strong>Ayer</strong>
-                        } @else {
-                          <strong>hace {{ estadisticas()?.diasDesdeUltimaSesion }} días</strong>
-                        }
-                      </span>
-                    </div>
-                  }
-                } @else {
-                  <div class="empty-state-inline">
-                    <div class="empty-icon">
-                      <span class="material-symbols-outlined">bar_chart</span>
-                    </div>
-                    <p class="empty-text">Sin datos suficientes</p>
-                  </div>
-                }
-              </div>
-            }
-          </section>
 
           <!-- Comments Section -->
-          <section class="content-section comments-section animate-in" style="--delay: 0.17s">
-            <header
-              class="section-header clickable"
-              (click)="comentariosExpanded = !comentariosExpanded"
-            >
-              <div class="section-header-left">
-                <div class="section-icon">
-                  <span class="material-symbols-outlined">chat_bubble</span>
-                </div>
-                <div>
-                  <h2 class="section-title">Comentarios del paciente</h2>
-                  <p class="section-subtitle">
-                    @if (comentariosPendientes() > 0) {
-                      {{ comentariosPendientes() }} pendiente{{ comentariosPendientes() !== 1 ? 's' : '' }}
-                    } @else {
-                      {{ comentarios().length }} comentario{{ comentarios().length !== 1 ? 's' : '' }}
-                    }
-                  </p>
-                </div>
-              </div>
-              @if (comentariosPendientes() > 0) {
-                <span class="comments-pending-badge">{{ comentariosPendientes() }}</span>
-              }
-              <span
-                class="material-symbols-outlined expand-icon"
-                [class.rotated]="comentariosExpanded"
-              >expand_more</span>
-            </header>
-
-            @if (comentariosExpanded) {
-              <div class="section-content">
-                @if (isLoadingComentarios()) {
-                  <div class="loading-inline">
-                    <div class="shimmer-bar"></div>
-                    <div class="shimmer-bar short"></div>
-                  </div>
-                } @else if (comentarios().length === 0) {
-                  <div class="empty-state-inline">
-                    <div class="empty-icon">
-                      <span class="material-symbols-outlined">speaker_notes_off</span>
-                    </div>
-                    <p class="empty-text">Sin comentarios del paciente</p>
-                  </div>
-                } @else {
-                  @if (comentariosPendientes() > 0) {
-                    <button
-                      type="button"
-                      class="see-all-btn mb-3 mt-0"
-                      (click)="marcarTodosRevisados()"
-                    >
-                      <span class="material-symbols-outlined" style="font-size: 1.125rem">done_all</span>
-                      Marcar todos como leídos
-                    </button>
-                  }
-
-                  <div class="comments-list">
-                    @for (comentario of comentarios(); track comentario.id) {
-                      <article
-                        class="comment-card comment-card--clickable"
-                        [class.comment-card--unread]="!comentario.revisada"
-                        (click)="irASesionComentario(comentario)"
-                      >
-                        <div class="comment-header">
-                          <span
-                            class="comment-unread-dot"
-                            [class.comment-unread-dot--active]="!comentario.revisada"
-                          ></span>
-                          <span class="comment-context">
-                            {{ formatearFechaComentario(comentario.fechaRegistro) }}
-                            @if (comentario.nombre) {
-                              @if (comentario.tituloPlan) {
-                                · {{ comentario.tituloPlan }}
-                              }
-                              · {{ comentario.nombre }}
-                            } @else if (comentario.sesionId) {
-                              · Observación de sesión
-                            } @else if (comentario.tituloPlan) {
-                              · {{ comentario.tituloPlan }}
-                            }
-                          </span>
-                        </div>
-                        @if (comentario.texto) {
-                          <p class="comment-text">
-                            <span class="material-symbols-outlined act-quote-icon">format_quote</span>
-                            {{ comentario.texto }}
-                          </p>
-                        }
-                        <div class="comment-footer">
-                          @if (comentario.dolorEscala !== null && comentario.dolorEscala !== undefined) {
-                            <span
-                              class="act-pain"
-                              [class]="getDolorColor(comentario.dolorEscala)"
-                            >
-                              <span class="material-symbols-outlined">sentiment_dissatisfied</span>
-                              Dolor: {{ comentario.dolorEscala }}/10
-                            </span>
-                          }
-                          <div class="act-spacer"></div>
-                          @if (!comentario.revisada) {
-                            <button
-                              type="button"
-                              class="act-comment-btn"
-                              (click)="$event.stopPropagation(); marcarComentarioRevisado(comentario)"
-                            >
-                              <span class="material-symbols-outlined">check</span>
-                              Marcar como leído
-                            </button>
-                          }
-                        </div>
-                      </article>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </section>
+          <app-paciente-comentarios-panel
+            [comentarios]="comentarios()"
+            [comentariosPendientes]="comentariosPendientes()"
+            [isLoading]="isLoadingComentarios()"
+            [defaultExpanded]="!isMovil()"
+            (irASesionComentario)="irASesionComentario($event)"
+            (marcarRevisado)="marcarComentarioRevisado($event)"
+            (marcarTodosRevisados)="marcarTodosRevisados()"
+          />
 
           <!-- Plans Section -->
-          <section class="content-section plans-section animate-in" style="--delay: 0.2s">
-            <header
-              class="section-header clickable"
-              (click)="planesExpanded = !planesExpanded"
-            >
-              <div class="section-header-left">
-                <div class="section-icon">
-                  <span class="material-symbols-outlined">assignment</span>
-                </div>
-                <div>
-                  <h2 class="section-title">Planes de tratamiento</h2>
-                  <p class="section-subtitle">{{ planes().length }} plan{{ planes().length !== 1 ? 'es' : '' }} asignado{{ planes().length !== 1 ? 's' : '' }}</p>
-                </div>
-              </div>
-              <span
-                class="material-symbols-outlined expand-icon"
-                [class.rotated]="planesExpanded"
-              >expand_more</span>
-            </header>
-
-            @if (planesExpanded) {
-              <div class="section-content">
-                @if (isLoadingPlanes()) {
-                  <div class="loading-inline">
-                    <div class="shimmer-bar"></div>
-                    <div class="shimmer-bar short"></div>
-                  </div>
-                } @else if (planes().length === 0) {
-                  <div class="empty-state-inline">
-                    <div class="empty-icon">
-                      <span class="material-symbols-outlined">content_paste_off</span>
-                    </div>
-                    <p class="empty-text">No hay planes asignados</p>
-                    <button
-                      type="button"
-                      class="empty-action"
-                      (click)="crearPlan()"
-                    >
-                      <span class="material-symbols-outlined">add</span>
-                      Crear primer plan
-                    </button>
-                  </div>
-                } @else {
-                  <div class="plans-list">
-                    @for (plan of planes(); track plan.id) {
-                      <article class="plan-card" [class.completed]="plan.estado === 'completado'" (click)="verPlan(plan)">
-                        <div class="plan-main">
-                          <div class="plan-info">
-                            <div class="plan-header-row">
-                              <h3 class="plan-title">{{ plan.titulo }}</h3>
-                              <span class="plan-badge" [class]="getEstadoClass(plan.estado)">
-                                {{ getEstadoLabel(plan.estado) }}
-                              </span>
-                            </div>
-                            @if (plan.fechaInicio || plan.fechaFin) {
-                              <p class="plan-dates">
-                                <span class="material-symbols-outlined icon-xs">calendar_today</span>
-                                @if (plan.fechaInicio) {
-                                  {{ formatearFecha(plan.fechaInicio) }}
-                                }
-                                @if (plan.fechaInicio && plan.fechaFin) {
-                                  <span class="date-separator">→</span>
-                                }
-                                @if (plan.fechaFin) {
-                                  {{ formatearFecha(plan.fechaFin) }}
-                                }
-                              </p>
-                            }
-                          </div>
-                          <span class="material-symbols-outlined text-zinc-300 text-lg">chevron_right</span>
-                        </div>
-                      </article>
-                    }
-                  </div>
-
-                  @if (planes().length > 3) {
-                    <button
-                      type="button"
-                      class="see-all-btn"
-                      (click)="verTodosPlanes()"
-                    >
-                      Ver todos los planes
-                      <span class="material-symbols-outlined">arrow_forward</span>
-                    </button>
-                  }
-                }
-              </div>
-            }
-          </section>
+          <app-paciente-planes-list
+            [planes]="planes()"
+            [isLoading]="isLoadingPlanes()"
+            [defaultExpanded]="!isMovil()"
+            (verPlan)="verPlan($event)"
+            (crearPlan)="crearPlan()"
+            (verTodosPlanes)="verTodosPlanes()"
+          />
         </aside>
       </div>
     }

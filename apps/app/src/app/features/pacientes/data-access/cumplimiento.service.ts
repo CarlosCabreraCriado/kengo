@@ -10,7 +10,14 @@ import type {
   DiaSemana,
   PlanCompleto,
   RegistroEjercicio,
+  RegistroEjercicioRecord,
+  NotificacionFisio,
 } from '../../../../types/global';
+import {
+  ComentarioSesion,
+  EstadisticasPaciente,
+  SesionAgrupada,
+} from './paciente-detail.types';
 
 const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -262,5 +269,219 @@ export class CumplimientoService {
     }
     if (userId.length > 20) return userId;
     return undefined;
+  }
+
+  // ============================================
+  // AGREGACIÓN PARA PACIENTE-DETAIL
+  // ============================================
+
+  /**
+   * Construye `SesionAgrupada[]` combinando los días del cumplimiento
+   * con los registros de ejercicio. Si se pasan `notificaciones`,
+   * setea `tieneObservacionSesion` en cada sesión.
+   */
+  buildSesionesAgrupadas(
+    dias: CumplimientoDia[],
+    registros: RegistroEjercicioRecord[],
+    notificaciones?: NotificacionFisio[],
+  ): SesionAgrupada[] {
+    const registrosPorFecha = this.agruparRegistrosPorFecha(registros);
+
+    const sesiones: SesionAgrupada[] = dias.map((dia) => {
+      const regs = registrosPorFecha.get(dia.fecha) || [];
+      const dolores = regs
+        .filter((r) => r.dolorEscala != null)
+        .map((r) => r.dolorEscala!);
+      const promedioDolor =
+        dolores.length > 0
+          ? Math.round(
+              (dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10,
+            ) / 10
+          : dia.dolorPromedio;
+      const comentarios: ComentarioSesion[] = regs
+        .filter((r) => r.notaPaciente && r.notaPaciente.trim().length > 0)
+        .map((r) => ({ texto: r.notaPaciente!, idRegistro: r.id }));
+
+      return {
+        fecha: dia.fecha,
+        fechaFormateada: this.formatearFecha(dia.fecha),
+        registros: regs,
+        totalEjercicios: dia.ejerciciosCompletados,
+        promedioDolorValue: promedioDolor,
+        comentarios,
+        totalComentarios: comentarios.length,
+        tipo: dia.tipo,
+        ejerciciosEsperados: dia.ejerciciosEsperados,
+        planes: dia.planes.filter((p) => p.esperados > 0),
+        tieneObservacionSesion: false, // se setea en enriquecer
+      };
+    });
+
+    return notificaciones
+      ? this.enriquecerSesionesConNotificaciones(sesiones, notificaciones)
+      : sesiones;
+  }
+
+  /**
+   * Re-evalúa `tieneObservacionSesion` para cada sesión en función de
+   * la lista de notificaciones de comentarios del fisio. Útil cuando
+   * sesiones y comentarios se cargan en paralelo y el contenedor
+   * necesita rehidratar tras llegar la segunda fuente.
+   */
+  enriquecerSesionesConNotificaciones(
+    sesiones: SesionAgrupada[],
+    notificaciones: NotificacionFisio[],
+  ): SesionAgrupada[] {
+    if (sesiones.length === 0) return sesiones;
+    const fechasConNotif = new Set(
+      notificaciones
+        .filter((n) => n.sesionId !== null)
+        .map((n) => n.fechaRegistro.split('T')[0]),
+    );
+
+    return sesiones.map((s) => ({
+      ...s,
+      tieneObservacionSesion:
+        s.totalComentarios > 0 || fechasConNotif.has(s.fecha),
+    }));
+  }
+
+  /**
+   * Calcula estadísticas globales del paciente para el rango de días
+   * cargado.
+   */
+  buildEstadisticas(
+    dias: CumplimientoDia[],
+    sesiones: SesionAgrupada[],
+    resumen: ResumenCumplimiento,
+  ): EstadisticasPaciente {
+    const doloresGenerales = sesiones
+      .filter((s) => s.promedioDolorValue !== null)
+      .map((s) => s.promedioDolorValue!);
+    const promedioDolorGeneral =
+      doloresGenerales.length > 0
+        ? Math.round(
+            (doloresGenerales.reduce((a, b) => a + b, 0) /
+              doloresGenerales.length) *
+              10,
+          ) / 10
+        : null;
+
+    const ultimoDiaActividad = dias.find(
+      (d) => d.tipo === 'completado' || d.tipo === 'parcial',
+    );
+    let diasDesdeUltimaSesion: number | null = null;
+    if (ultimoDiaActividad) {
+      const ultima = new Date(ultimoDiaActividad.fecha);
+      const hoy = new Date();
+      diasDesdeUltimaSesion = Math.floor(
+        (hoy.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24),
+      );
+    }
+
+    return {
+      totalSesiones: resumen.diasCompletados + resumen.diasParciales,
+      adherenciaGeneral: resumen.adherenciaReal,
+      promedioDolorGeneral,
+      diasDesdeUltimaSesion,
+      rachaActual: this.calcularRachaCumplimiento(dias),
+      adherenciaSemanal: this.calcularAdherenciaSemanalCumplimiento(dias),
+    };
+  }
+
+  // ========= Helpers privados (movidos del componente) =========
+
+  private agruparRegistrosPorFecha(
+    registros: RegistroEjercicioRecord[],
+  ): Map<string, RegistroEjercicioRecord[]> {
+    const grupos = new Map<string, RegistroEjercicioRecord[]>();
+    for (const reg of registros) {
+      const fecha = reg.fechaHora.split('T')[0];
+      if (!grupos.has(fecha)) {
+        grupos.set(fecha, []);
+      }
+      grupos.get(fecha)!.push(reg);
+    }
+    return grupos;
+  }
+
+  private calcularRachaCumplimiento(dias: CumplimientoDia[]): number {
+    const sorted = [...dias].sort((a, b) => b.fecha.localeCompare(a.fecha));
+    const hoy = new Date().toISOString().split('T')[0];
+
+    let racha = 0;
+    let fechaEsperada = new Date(hoy);
+
+    for (const dia of sorted) {
+      if (dia.tipo === 'descanso') continue;
+
+      const fechaDia = new Date(dia.fecha);
+      const diffDias = Math.floor(
+        (fechaEsperada.getTime() - fechaDia.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      if (diffDias <= 1) {
+        if (dia.tipo === 'completado') {
+          racha++;
+          fechaEsperada = fechaDia;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    return racha;
+  }
+
+  private calcularAdherenciaSemanalCumplimiento(
+    dias: CumplimientoDia[],
+  ): { semana: string; porcentaje: number }[] {
+    const resultado: { semana: string; porcentaje: number }[] = [];
+    const hoy = new Date();
+
+    for (let i = 0; i < 4; i++) {
+      const finSemana = new Date(hoy);
+      finSemana.setDate(hoy.getDate() - i * 7);
+      const inicioSemana = new Date(finSemana);
+      inicioSemana.setDate(finSemana.getDate() - 6);
+
+      const inicioStr = inicioSemana.toISOString().split('T')[0];
+      const finStr = finSemana.toISOString().split('T')[0];
+
+      const diasSemana = dias.filter(
+        (d) =>
+          d.fecha >= inicioStr && d.fecha <= finStr && d.tipo !== 'descanso',
+      );
+      const programados = diasSemana.length;
+      const completados = diasSemana.filter(
+        (d) => d.tipo === 'completado',
+      ).length;
+      const porcentaje =
+        programados > 0 ? Math.round((completados / programados) * 100) : 0;
+
+      resultado.push({ semana: `Sem ${4 - i}`, porcentaje });
+    }
+
+    return resultado.reverse();
+  }
+
+  private formatearFecha(fecha: string): string {
+    const d = new Date(fecha);
+    const hoy = new Date();
+    const ayer = new Date(hoy);
+    ayer.setDate(ayer.getDate() - 1);
+
+    if (d.toDateString() === hoy.toDateString()) return 'Hoy';
+    const esAyer = d.toDateString() === ayer.toDateString();
+
+    const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' });
+    const day = d.getDate();
+    const month = d.toLocaleDateString('es-ES', { month: 'long' });
+    const year =
+      d.getFullYear() !== hoy.getFullYear() ? ` ${d.getFullYear()}` : '';
+    const label = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}${year}`;
+    return esAyer ? `${label} (Ayer)` : label;
   }
 }

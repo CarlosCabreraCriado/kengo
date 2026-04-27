@@ -1,0 +1,90 @@
+<section class="content-section plans-section animate-in" style="--delay: 0.2s">
+  <header class="section-header clickable" (click)="toggle()">
+    <div class="section-header-left">
+      <div class="section-icon">
+        <span class="material-symbols-outlined">assignment</span>
+      </div>
+      <div>
+        <h2 class="section-title">Planes de tratamiento</h2>
+        <p class="section-subtitle">{{ subtitle() }}</p>
+      </div>
+    </div>
+    <span
+      class="material-symbols-outlined expand-icon"
+      [class.rotated]="expanded()"
+    >expand_more</span>
+  </header>
+
+  @if (expanded()) {
+    <div class="section-content">
+      @if (isLoading()) {
+        <div class="loading-inline">
+          <div class="shimmer-bar"></div>
+          <div class="shimmer-bar short"></div>
+        </div>
+      } @else if (planes().length === 0) {
+        <div class="empty-state-inline">
+          <div class="empty-icon">
+            <span class="material-symbols-outlined">content_paste_off</span>
+          </div>
+          <p class="empty-text">No hay planes asignados</p>
+          <button
+            type="button"
+            class="empty-action"
+            (click)="crearPlan.emit()"
+          >
+            <span class="material-symbols-outlined">add</span>
+            Crear primer plan
+          </button>
+        </div>
+      } @else {
+        <div class="plans-list">
+          @for (plan of planes(); track plan.id) {
+            <article
+              class="plan-card"
+              [class.completed]="plan.estado === 'completado'"
+              (click)="verPlan.emit(plan)"
+            >
+              <div class="plan-main">
+                <div class="plan-info">
+                  <div class="plan-header-row">
+                    <h3 class="plan-title">{{ plan.titulo }}</h3>
+                    <span class="plan-badge" [class]="getEstadoClass(plan.estado)">
+                      {{ getEstadoLabel(plan.estado) }}
+                    </span>
+                  </div>
+                  @if (plan.fechaInicio || plan.fechaFin) {
+                    <p class="plan-dates">
+                      <span class="material-symbols-outlined icon-xs">calendar_today</span>
+                      @if (plan.fechaInicio) {
+                        {{ formatearFecha(plan.fechaInicio) }}
+                      }
+                      @if (plan.fechaInicio && plan.fechaFin) {
+                        <span class="date-separator">→</span>
+                      }
+                      @if (plan.fechaFin) {
+                        {{ formatearFecha(plan.fechaFin) }}
+                      }
+                    </p>
+                  }
+                </div>
+                <span class="material-symbols-outlined text-zinc-300 text-lg">chevron_right</span>
+              </div>
+            </article>
+          }
+        </div>
+
+        @if (planes().length > 3) {
+          <button
+            type="button"
+            class="see-all-btn"
+            (click)="verTodosPlanes.emit()"
+          >
+            Ver todos los planes
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        }
+      }
+    </div>
+  }
+</section>

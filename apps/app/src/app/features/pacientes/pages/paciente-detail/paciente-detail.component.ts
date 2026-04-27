@@ -7,10 +7,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DecimalPipe } from '@angular/common';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { useResponsive } from '../../../../shared/composables/use-responsive';
 
 // Servicios
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -27,51 +24,34 @@ import { api } from '../../../../../../../../convex/_generated/api';
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
 import { GestionAccesoDialogComponent } from '../../components/gestion-acceso-dialog/gestion-acceso-dialog.component';
+import { PacientePlanesListComponent } from './componentes/paciente-planes-list/paciente-planes-list.component';
+import { PacienteComentariosPanelComponent } from './componentes/paciente-comentarios-panel/paciente-comentarios-panel.component';
+import { PacienteHeroCardComponent } from './componentes/paciente-hero-card/paciente-hero-card.component';
+import { PacienteEstadisticasComponent } from './componentes/paciente-estadisticas/paciente-estadisticas.component';
+import { PacienteActividadRecienteComponent } from './componentes/paciente-actividad-reciente/paciente-actividad-reciente.component';
 
 // Tipos
 import {
   Usuario,
   Plan,
-  EstadoPlan,
   RegistroEjercicioRecord,
-  TipoCumplimiento,
-  CumplimientoDia,
   NotificacionFisio,
 } from '../../../../../types/global';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
-
-interface ComentarioSesion {
-  texto: string;
-  idRegistro: string;
-}
-
-interface SesionAgrupada {
-  fecha: string;
-  fechaFormateada: string;
-  registros: RegistroEjercicioRecord[];
-  totalEjercicios: number;
-  promedioDolorValue: number | null;
-  comentarios: ComentarioSesion[];
-  totalComentarios: number;
-  tipo: TipoCumplimiento;
-  ejerciciosEsperados: number;
-  planes: { planId: string; titulo: string; esperados: number; completados: number }[];
-}
-
-interface EstadisticasPaciente {
-  totalSesiones: number;
-  adherenciaGeneral: number;
-  promedioDolorGeneral: number | null;
-  diasDesdeUltimaSesion: number | null;
-  rachaActual: number;
-  adherenciaSemanal: { semana: string; porcentaje: number }[];
-}
+import {
+  EstadisticasPaciente,
+  RangoFiltro,
+  SesionAgrupada,
+} from '../../data-access/paciente-detail.types';
 
 @Component({
   selector: 'app-paciente-detail',
   standalone: true,
   imports: [
-    DecimalPipe,
+    PacientePlanesListComponent,
+    PacienteComentariosPanelComponent,
+    PacienteHeroCardComponent,
+    PacienteEstadisticasComponent,
+    PacienteActividadRecienteComponent,
   ],
   templateUrl: './paciente-detail.component.html',
   styleUrl: './paciente-detail.component.css',
@@ -80,28 +60,21 @@ interface EstadisticasPaciente {
   },
 })
 export class PacienteDetailComponent implements OnInit {
-  // Expose Math to template
-  Math = Math;
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dialogService = inject(DialogService);
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
-  private breakpointObserver = inject(BreakpointObserver);
   private cumplimientoService = inject(CumplimientoService);
   private comentariosService = inject(ComentariosPacienteService);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
   private convex = inject(ConvexService);
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true },
-  );
+  // Responsive: < 768px se considera móvil (KENGO_BREAKPOINTS.MOBILE).
+  private readonly responsive = useResponsive();
+  readonly isMovil = this.responsive.esMobile;
 
   // Estado
   readonly paciente = signal<Usuario | null>(null);
@@ -123,24 +96,14 @@ export class PacienteDetailComponent implements OnInit {
   // Fisio responsable
   readonly fisioResponsableNombre = signal<string | null>(null);
 
-  // Descarga de informes
-  readonly descargandoInforme = signal<string | null>(null);
-
   // Error state
   readonly error = signal<string | null>(null);
-
-  // Section expansion states (collapsed on mobile by default)
-  private readonly _inicioExpandido = window.matchMedia('(min-width: 768px)').matches;
-  planesExpanded = this._inicioExpandido;
-  statsExpanded = this._inicioExpandido;
-  activityExpanded = this._inicioExpandido;
-  comentariosExpanded = this._inicioExpandido;
 
   // Comentarios expansion
   readonly sesionExpandida = signal<string | null>(null);
 
   // Filtro de rango temporal
-  readonly filtroRango = signal<'15' | '30' | '60' | '90' | 'todo' | 'custom'>('15');
+  readonly filtroRango = signal<RangoFiltro>('15');
   readonly filtroDesde = signal<string | null>(null);
   readonly filtroHasta = signal<string | null>(null);
   readonly filterPanelOpen = signal(false);
@@ -176,8 +139,36 @@ export class PacienteDetailComponent implements OnInit {
   });
 
   readonly sesionesVisibles = computed(() => {
-    const all = this.sesiones();
+    const all = this.sesionesEnriquecidas();
     return this.filtroRango() === '15' ? all.slice(0, 15) : all;
+  });
+
+  /**
+   * Re-evalúa `tieneObservacionSesion` reactivamente cada vez que
+   * cambian sesiones o comentarios. Esto asegura que el badge
+   * `act-has-comments` aparezca cuando llega la lista de notificaciones
+   * después de las sesiones (orden de carga no garantizado).
+   */
+  readonly sesionesEnriquecidas = computed(() =>
+    this.cumplimientoService.enriquecerSesionesConNotificaciones(
+      this.sesiones(),
+      this.comentarios(),
+    ),
+  );
+
+  /**
+   * Index `idRegistro -> NotificacionFisio` para que el subcomponente de
+   * actividad pueda decidir si mostrar el botón "marcar como leído" sin
+   * leer la lista global de comentarios.
+   */
+  readonly notificacionesPorRegistro = computed(() => {
+    const map: Record<string, NotificacionFisio> = {};
+    for (const n of this.comentarios()) {
+      if (n.id !== null && n.id !== undefined) {
+        map[String(n.id)] = n;
+      }
+    }
+    return map;
   });
 
   ngOnInit() {
@@ -257,73 +248,27 @@ export class PacienteDetailComponent implements OnInit {
 
       // Cargar registros desde Convex para días con actividad (para comentarios y drill-down)
       const diasConActividad = dias.filter(d => d.tipo !== 'fallido' && d.tipo !== 'descanso');
-      let registrosPorFecha = new Map<string, RegistroEjercicioRecord[]>();
+      const registros: RegistroEjercicioRecord[] =
+        diasConActividad.length > 0
+          ? await this.cargarRegistrosParaFechas(
+              pacienteId,
+              diasConActividad.map((d) => d.fecha),
+            )
+          : [];
 
-      if (diasConActividad.length > 0) {
-        const fechas = diasConActividad.map(d => d.fecha);
-        const registros = await this.cargarRegistrosParaFechas(pacienteId, fechas);
-        registrosPorFecha = this.agruparRegistrosPorFecha(registros);
-      }
-
-      // Construir sesiones agrupadas fusionando cumplimiento + registros
-      const sesiones: SesionAgrupada[] = dias.map(dia => {
-        const regs = registrosPorFecha.get(dia.fecha) || [];
-        const dolores = regs.filter(r => r.dolorEscala != null).map(r => r.dolorEscala!);
-        const promedioDolor = dolores.length > 0
-          ? Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) / 10
-          : dia.dolorPromedio;
-        const comentarios = regs
-          .filter(r => r.notaPaciente && r.notaPaciente.trim().length > 0)
-          .map(r => ({ texto: r.notaPaciente!, idRegistro: r.id }));
-
-        return {
-          fecha: dia.fecha,
-          fechaFormateada: this.formatearFecha(dia.fecha),
-          registros: regs,
-          totalEjercicios: dia.ejerciciosCompletados,
-          promedioDolorValue: promedioDolor,
-          comentarios,
-          totalComentarios: comentarios.length,
-          tipo: dia.tipo,
-          ejerciciosEsperados: dia.ejerciciosEsperados,
-          planes: dia.planes.filter(p => p.esperados > 0),
-        };
-      });
-
+      const sesiones = this.cumplimientoService.buildSesionesAgrupadas(
+        dias,
+        registros,
+        this.comentarios(),
+      );
       this.sesiones.set(sesiones);
-
-      // Calcular estadísticas desde cumplimiento
-      const resumen = cumplimiento.resumen;
-      const doloresGenerales = sesiones
-        .filter(s => s.promedioDolorValue !== null)
-        .map(s => s.promedioDolorValue!);
-      const promedioDolorGeneral = doloresGenerales.length > 0
-        ? Math.round((doloresGenerales.reduce((a, b) => a + b, 0) / doloresGenerales.length) * 10) / 10
-        : null;
-
-      // Días desde última sesión con actividad
-      const ultimoDiaActividad = dias.find(d => d.tipo === 'completado' || d.tipo === 'parcial');
-      let diasDesdeUltimaSesion: number | null = null;
-      if (ultimoDiaActividad) {
-        const ultima = new Date(ultimoDiaActividad.fecha);
-        const hoy = new Date();
-        diasDesdeUltimaSesion = Math.floor((hoy.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24));
-      }
-
-      // Racha: iterar días hacia atrás, saltando descanso
-      const rachaActual = this.calcularRachaCumplimiento(dias);
-
-      // Adherencia semanal basada en cumplimiento
-      const adherenciaSemanal = this.calcularAdherenciaSemanalCumplimiento(dias);
-
-      this.estadisticas.set({
-        totalSesiones: resumen.diasCompletados + resumen.diasParciales,
-        adherenciaGeneral: resumen.adherenciaReal,
-        promedioDolorGeneral,
-        diasDesdeUltimaSesion,
-        rachaActual,
-        adherenciaSemanal,
-      });
+      this.estadisticas.set(
+        this.cumplimientoService.buildEstadisticas(
+          dias,
+          sesiones,
+          cumplimiento.resumen,
+        ),
+      );
     } catch (err) {
       console.error('Error cargando cumplimiento:', err);
     } finally {
@@ -374,81 +319,6 @@ export class PacienteDetailComponent implements OnInit {
       dolorEscala: r.dolorEscala,
       notaPaciente: r.notaPaciente,
     }));
-  }
-
-  private agruparRegistrosPorFecha(
-    registros: RegistroEjercicioRecord[],
-  ): Map<string, RegistroEjercicioRecord[]> {
-    const grupos = new Map<string, RegistroEjercicioRecord[]>();
-    for (const reg of registros) {
-      const fecha = reg.fechaHora.split('T')[0];
-      if (!grupos.has(fecha)) {
-        grupos.set(fecha, []);
-      }
-      grupos.get(fecha)!.push(reg);
-    }
-    return grupos;
-  }
-
-  private calcularRachaCumplimiento(dias: CumplimientoDia[]): number {
-    // Días ordenados de más reciente a más antiguo (ya vienen así del backend)
-    const sorted = [...dias].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    const hoy = new Date().toISOString().split('T')[0];
-
-    let racha = 0;
-    let fechaEsperada = new Date(hoy);
-
-    for (const dia of sorted) {
-      // Saltar días de descanso
-      if (dia.tipo === 'descanso') continue;
-
-      const fechaDia = new Date(dia.fecha);
-      const diffDias = Math.floor(
-        (fechaEsperada.getTime() - fechaDia.getTime()) / (1000 * 60 * 60 * 24),
-      );
-
-      if (diffDias <= 1) {
-        if (dia.tipo === 'completado') {
-          racha++;
-          fechaEsperada = fechaDia;
-        } else {
-          // Parcial o fallido rompe la racha
-          break;
-        }
-      } else {
-        break;
-      }
-    }
-
-    return racha;
-  }
-
-  private calcularAdherenciaSemanalCumplimiento(
-    dias: CumplimientoDia[],
-  ): { semana: string; porcentaje: number }[] {
-    const resultado: { semana: string; porcentaje: number }[] = [];
-    const hoy = new Date();
-
-    for (let i = 0; i < 4; i++) {
-      const finSemana = new Date(hoy);
-      finSemana.setDate(hoy.getDate() - (i * 7));
-      const inicioSemana = new Date(finSemana);
-      inicioSemana.setDate(finSemana.getDate() - 6);
-
-      const inicioStr = inicioSemana.toISOString().split('T')[0];
-      const finStr = finSemana.toISOString().split('T')[0];
-
-      const diasSemana = dias.filter(d =>
-        d.fecha >= inicioStr && d.fecha <= finStr && d.tipo !== 'descanso',
-      );
-      const programados = diasSemana.length;
-      const completados = diasSemana.filter(d => d.tipo === 'completado').length;
-      const porcentaje = programados > 0 ? Math.round((completados / programados) * 100) : 0;
-
-      resultado.push({ semana: `Sem ${4 - i}`, porcentaje });
-    }
-
-    return resultado.reverse();
   }
 
   // === Comentarios del paciente ===
@@ -530,35 +400,23 @@ export class PacienteDetailComponent implements OnInit {
     }
   }
 
-  buscarNotificacion(idRegistro: number | string): NotificacionFisio | undefined {
-    const key = String(idRegistro);
-    return this.comentarios().find(n => n.id !== null && String(n.id) === key);
-  }
+  // === Computed de presentación del paciente (consumidos por hero-card) ===
 
-  formatearFechaComentario(fecha: string): string {
-    const d = new Date(fecha);
-    const day = d.getDate();
-    const month = d.toLocaleDateString('es-ES', { month: 'short' });
-    return `${day} ${month}`;
-  }
-
-  // === Helpers de formato ===
-
-  avatarUrl(): string | null {
+  readonly avatarUrl = computed<string | null>(() => {
     const p = this.paciente();
     if (!p?.avatar) return null;
     return `${assetUrl(p.avatar, { fit: 'cover', width: 128, height: 128, quality: 80 })}`;
-  }
+  });
 
-  fullName(): string {
+  readonly fullName = computed<string>(() => {
     const p = this.paciente();
     if (!p) return '';
     const fn = (p.first_name || '').trim();
     const ln = (p.last_name || '').trim();
     return fn || ln ? `${fn} ${ln}`.trim() : p.email || p.id;
-  }
+  });
 
-  getClinicaNombre(): string | null {
+  readonly clinicaNombre = computed<string | null>(() => {
     const p = this.paciente();
     if (!p?.clinicas || p.clinicas.length === 0) return null;
     const clinicId = p.clinicas[0].clinicId;
@@ -567,88 +425,10 @@ export class PacienteDetailComponent implements OnInit {
       .value()
       ?.find((c) => c.id === clinicId);
     return clinica?.nombre ?? null;
-  }
-
-  formatearFecha(fecha: string): string {
-    const d = new Date(fecha);
-    const hoy = new Date();
-    const ayer = new Date(hoy);
-    ayer.setDate(ayer.getDate() - 1);
-
-    if (d.toDateString() === hoy.toDateString()) return 'Hoy';
-    const esAyer = d.toDateString() === ayer.toDateString();
-
-    const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' });
-    const day = d.getDate();
-    const month = d.toLocaleDateString('es-ES', { month: 'long' });
-    const year = d.getFullYear() !== hoy.getFullYear() ? ` ${d.getFullYear()}` : '';
-    const label = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}${year}`;
-    return esAyer ? `${label} (Ayer)` : label;
-  }
-
-  getPlanStatusClass(plan: { esperados: number; completados: number }): string {
-    if (plan.completados >= plan.esperados) return 'status-completado';
-    if (plan.completados > 0) return 'status-parcial';
-    return 'status-fallido';
-  }
-
-  getEstadoLabel(estado: EstadoPlan): string {
-    const labels: Record<EstadoPlan, string> = {
-      borrador: 'Borrador',
-      activo: 'Activo',
-      completado: 'Completado',
-      cancelado: 'Cancelado',
-    };
-    return labels[estado] || estado;
-  }
-
-  getEstadoClass(estado: EstadoPlan): string {
-    const classes: Record<EstadoPlan, string> = {
-      borrador: 'bg-zinc-100 text-zinc-600',
-      activo: 'bg-green-100 text-green-700',
-      completado: 'bg-blue-100 text-blue-700',
-      cancelado: 'bg-red-100 text-red-600',
-    };
-    return classes[estado] || 'bg-zinc-100 text-zinc-600';
-  }
-
-  getDolorColor(dolor: number | null): string {
-    if (dolor === null) return 'text-zinc-400';
-    if (dolor <= 3) return 'text-green-600';
-    if (dolor <= 6) return 'text-yellow-600';
-    return 'text-red-600';
-  }
-
-  tieneComentarios(sesion: SesionAgrupada): boolean {
-    if (sesion.totalComentarios > 0) return true;
-    // Session-level observations from notifications
-    return this.comentarios().some(c =>
-      c.sesionId !== null && c.fechaRegistro.split('T')[0] === sesion.fecha
-    );
-  }
+  });
 
   toggleComentarios(fecha: string): void {
     this.sesionExpandida.update(current => current === fecha ? null : fecha);
-  }
-
-  getTipoIcon(tipo: TipoCumplimiento): string {
-    const icons: Record<TipoCumplimiento, string> = {
-      completado: 'check_circle',
-      parcial: 'warning',
-      fallido: 'cancel',
-      descanso: 'bedtime',
-    };
-    return icons[tipo];
-  }
-
-  getTipoColor(tipo: TipoCumplimiento): string {
-    const colors: Record<TipoCumplimiento, string> = {
-      completado: 'text-success',
-      parcial: 'text-amber',
-      fallido: 'text-danger',
-      descanso: 'text-zinc-400',
-    };
-    return colors[tipo];
   }
 
   diasSinActividad(): number {
@@ -790,32 +570,4 @@ export class PacienteDetailComponent implements OnInit {
     }
   }
 
-  // === Descarga de informes ===
-
-  async descargarInforme(plan: Plan) {
-    if (this.descargandoInforme()) return;
-
-    this.descargandoInforme.set(plan.id);
-
-    try {
-      const res = await this.convex.action(api.pdf.actions.generatePlanPdf, {
-        planId: plan.id as any,
-      });
-      if (!res?.url) throw new Error('No se pudo generar el PDF');
-
-      const response = await fetch(res.url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = res.filename;
-      link.click();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error('Error descargando informe:', err);
-      alert('Error al descargar el informe');
-    } finally {
-      this.descargandoInforme.set(null);
-    }
-  }
 }

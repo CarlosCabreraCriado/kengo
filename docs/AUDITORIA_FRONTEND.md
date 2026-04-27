@@ -27,7 +27,7 @@ Leyenda de campos:
 | [x] | 3 | Descomponer `descanso.component` (882 LOC) | sesion | M | 🟡 | 🟡 | P1 (PR-4) ✅ |
 | [x] | 4 | Partir `registro-sesion.service` (705 LOC) en 3 servicios | sesion | M | 🔴 | 🔴 | **P0** (PR-2) ✅ |
 | [x] | 5 | Extraer modo rutina de `plan-builder.service` (929 LOC) | planes | L | 🔴 | 🔴 | P1 (PR-5) ✅ |
-| [ ] | 6 | Descomponer `paciente-detail.component` (821 LOC) | pacientes | L | 🟡 | 🟡 | P1 |
+| [x] | 6 | Descomponer `paciente-detail.component` (821 LOC) | pacientes | L | 🟡 | 🟡 | P1 (PR-Paciente) ✅ |
 | [x] | 7 | Mover plantilla inline de god-components a `.html`/`.css` | sesion | S | 🟢 | 🟢 | **P0** (PR-1) ✅ |
 | [ ] | 8 | `EmptyStateComponent` + pipe `formatDate` | shared | S | 🟢 | 🟢 | P2 |
 | [ ] | 9 | `FilteredListService<T>` base (filtrado+paginación) | core | M | 🟡 | 🟡 | P2 |
@@ -43,8 +43,9 @@ Leyenda de campos:
 - [x] **PR-2 (M)** — Partir `registro-sesion.service` (#4) ✅ **COMPLETADO**
 - [x] **PR-3 (L)** — Descomponer `feedback-final` (#1) ✅ **COMPLETADO**
 - [x] **PR-4 (L)** — Descomponer `ejercicio-activo` + `descanso` (#2 + #3) ✅ **COMPLETADO**
-- [x] **PR-5 (L)** — Separar `plan-builder.service` (#5) ✅ **COMPLETADO** (PR-5a + PR-5b + PR-5c). Pendiente `paciente-detail` (#6).
+- [x] **PR-5 (L)** — Separar `plan-builder.service` (#5) ✅ **COMPLETADO** (PR-5a + PR-5b + PR-5c).
 - [x] **PR-Routes (S)** — `unsavedChangesGuard` rutinas + guard `/planes` (#11 + #12) ✅ **COMPLETADO**
+- [x] **PR-Paciente (L)** — Descomponer `paciente-detail` (#6) ✅ **COMPLETADO** (PR-Paciente-1 + PR-Paciente-2)
 
 ---
 
@@ -135,30 +136,39 @@ Leyenda de campos:
 
 ---
 
-## [ ] 1.4 — Descomponer `paciente-detail.component.ts` (821 LOC + 791 HTML)
+## [x] 1.4 — Descomponer `paciente-detail.component.ts` (PR-Paciente) ✅
 
 **Ubicación**: `apps/app/src/app/features/pacientes/pages/paciente-detail/`
 
-**Problema**:
-- Inyecta 11 servicios.
-- Define 3 interfaces locales (`ComentarioSesion`, `SesionAgrupada`, `EstadisticasPaciente`).
-- Importa `PlanBuilderService` desde otro feature (acoplamiento).
-- Template de 791 LOC con ≥4 secciones grandes.
+**Resultado**:
+- [x] Tipos extraídos a `pacientes/data-access/paciente-detail.types.ts`: `ComentarioSesion`, `SesionAgrupada` (enriquecida con `tieneObservacionSesion`), `EstadisticasPaciente`, `RangoFiltro`.
+- [x] Lógica de agregación movida a `CumplimientoService`: `buildSesionesAgrupadas`, `buildEstadisticas`, `enriquecerSesionesConNotificaciones`, más helpers privados (`agruparRegistrosPorFecha`, `calcularRachaCumplimiento`, `calcularAdherenciaSemanalCumplimiento`, `formatearFecha`).
+- [x] **5 subcomponentes** en `paciente-detail/componentes/`:
+  - `<app-paciente-hero-card>` (avatar + datos + acciones)
+  - `<app-paciente-actividad-reciente>` (sesiones agrupadas con expansión de comentarios)
+  - `<app-paciente-estadisticas>` (KPIs + filtros temporales + adherencia semanal)
+  - `<app-paciente-comentarios-panel>` (alertas tipo comentario)
+  - `<app-paciente-planes-list>` (listado de planes + crear plan)
+- [x] Helpers puros compartidos en `pacientes/utils/format-helpers.ts`: `getDolorColor`, `getTipoIcon`, `getTipoColor`, `getPlanStatusClass`, `formatearFecha`, `formatearFechaComentario`.
+- [x] Cross-state sesiones↔comentarios resuelto: `sesionesEnriquecidas` (computed) combina ambas fuentes; `notificacionesPorRegistro` (computed) actúa como index para que `actividad-reciente` resuelva "marcar como leído" sin conocer la lista global.
+- [x] `BreakpointObserver` inline migrado a `useResponsive()`.
+- [x] `avatarUrl`, `fullName`, `clinicaNombre` convertidos a `computed()` (reactivos al resource async de clínicas).
+- [x] Eliminadas flags `*Expanded` del padre (cada subcomponente las gestiona internamente).
+- [x] Acoplamiento `pacientes → planes/PlanBuilderService` aceptado: `crearPlan()` sigue llamando `cambiarPaciente()` desde el contenedor reducido. Documentado como follow-up.
 
-**Propuesta**:
-- [ ] Mover `SesionAgrupada` y `EstadisticasPaciente` a `pacientes/data-access/paciente-detail.types.ts`.
-- [ ] Mover lógica de agregación a métodos de `CumplimientoService` y `MetricasPacientesService`.
-- [ ] Crear `<paciente-header>` (avatar + datos + acciones).
-- [ ] Crear `<paciente-estadisticas>` (KPIs + gráfico adherencia).
-- [ ] Crear `<paciente-sesiones-list>` (sesiones agrupadas).
-- [ ] Crear `<paciente-comentarios-panel>`.
-- [ ] Romper acoplamiento `pacientes → planes/PlanBuilderService` vía evento.
+**LOC final**:
+- Contenedor `paciente-detail`: 821 → **573** TS · 791 → **147** HTML · 1276 → **284** CSS (-65% total).
+- Subcomponentes: ~50-180 LOC TS cada uno, con CSS y HTML separados.
 
-**Archivos afectados**: `paciente-detail.component.ts`/`.html` + 4 subcomponentes nuevos en `pacientes/components/paciente-detail/` + `cumplimiento.service.ts` + `metricas-pacientes.service.ts` + nuevo `paciente-detail.types.ts`.
+**Archivos afectados**:
+- Nuevos: `pacientes/data-access/paciente-detail.types.ts`, `pacientes/utils/format-helpers.ts`, 5 carpetas `paciente-detail/componentes/{nombre}/`.
+- Modificados: `paciente-detail.component.{ts,html,css}`, `pacientes/data-access/cumplimiento.service.ts`.
 
-**Esfuerzo**: L (3–4 días) · **Impacto**: 🟡 · **Riesgo**: 🟡
+**Fuera de scope (issues separados)**: refactor `PlanBuilderService.cambiarPaciente()` para separar `prepareForPaciente()` de `navigate+openDrawer` (afecta 4 callsites); tests unitarios de los nuevos métodos puros y subcomponentes.
 
-**Prioridad**: P1
+**Esfuerzo**: L · **Impacto**: 🟡 · **Riesgo**: 🟡
+
+**Prioridad**: P1 ✅ — entregado como PR-Paciente (PR-Paciente-1 servicios + tipos, PR-Paciente-2 subcomponentes).
 
 ---
 

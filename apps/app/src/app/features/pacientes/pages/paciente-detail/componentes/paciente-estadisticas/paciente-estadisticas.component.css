@@ -1,0 +1,364 @@
+@reference "tailwindcss";
+
+/* ============================================
+   SECTION SHELL (compartido)
+   ============================================ */
+.content-section {
+  @apply rounded-3xl overflow-hidden;
+  background: var(--kengo-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--kengo-border);
+  box-shadow: var(--kengo-shadow);
+}
+
+.section-header {
+  @apply flex items-center justify-between gap-3 p-4;
+  background: rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-header.clickable {
+  @apply cursor-pointer transition-colors;
+}
+
+.section-header.clickable:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.section-header-left {
+  @apply flex items-center gap-3;
+}
+
+.section-icon {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center shrink-0;
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.08) 100%);
+}
+
+.section-icon .material-symbols-outlined {
+  @apply text-xl;
+  color: var(--kengo-primary);
+}
+
+.section-icon.gold {
+  background: linear-gradient(135deg, rgba(var(--kengo-tertiary-rgb), 0.2) 0%, rgba(var(--kengo-primary-rgb), 0.08) 100%);
+}
+
+.section-icon.gold .material-symbols-outlined {
+  color: var(--kengo-tertiary);
+}
+
+.section-title {
+  @apply text-base font-semibold text-zinc-700 m-0;
+}
+
+.section-subtitle {
+  @apply text-xs text-zinc-400 m-0 mt-0.5;
+}
+
+.expand-icon {
+  @apply text-xl text-zinc-400 transition-transform shrink-0;
+}
+
+.expand-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.section-content {
+  @apply p-4;
+  animation: expandIn 0.25s ease-out;
+}
+
+@keyframes expandIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.loading-inline {
+  @apply flex flex-col gap-2 py-4;
+}
+
+.shimmer-bar {
+  @apply h-4 rounded-lg;
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.shimmer-bar.short {
+  @apply w-2/3;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.empty-state-inline {
+  @apply flex flex-col items-center py-8;
+}
+
+.empty-icon {
+  @apply w-16 h-16 rounded-2xl flex items-center justify-center mb-3;
+  background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%);
+}
+
+.empty-icon .material-symbols-outlined {
+  @apply text-3xl text-zinc-300;
+}
+
+.empty-text {
+  @apply text-sm text-zinc-500 m-0;
+}
+
+.animate-in {
+  animation: animateIn 0.4s ease-out backwards;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes animateIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   STATISTICS (específico)
+   ============================================ */
+.stats-grid {
+  @apply grid grid-cols-2 gap-2;
+}
+
+.stat-card {
+  @apply p-3 rounded-xl;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.stat-card.primary {
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.08) 0%, rgba(var(--kengo-primary-rgb), 0.02) 100%);
+  border-color: rgba(var(--kengo-primary-rgb), 0.15);
+}
+
+.stat-card.gold {
+  background: linear-gradient(135deg, rgba(var(--kengo-tertiary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.04) 100%);
+  border-color: rgba(var(--kengo-tertiary-rgb), 0.2);
+}
+
+.stat-header {
+  @apply flex items-center justify-between mb-1;
+}
+
+.stat-label {
+  @apply text-xs font-medium text-zinc-500;
+}
+
+.stat-icon {
+  @apply text-base text-zinc-400;
+}
+
+.stat-card.primary .stat-icon {
+  color: var(--kengo-primary);
+}
+
+.stat-card.gold .stat-icon {
+  color: var(--kengo-tertiary);
+}
+
+.stat-value-large {
+  @apply text-2xl font-bold text-zinc-800;
+}
+
+.stat-card.primary .stat-value-large {
+  color: var(--kengo-primary);
+}
+
+.stat-card.gold .stat-value-large {
+  color: var(--kengo-tertiary);
+}
+
+.stat-value-large.muted {
+  @apply text-zinc-300;
+}
+
+.stat-unit {
+  @apply text-base font-normal text-zinc-400;
+}
+
+.stat-hint {
+  @apply text-[0.65rem] text-zinc-400;
+}
+
+.stat-progress {
+  @apply h-1.5 mt-2 rounded-full bg-black/5 overflow-hidden;
+}
+
+.stat-progress-fill {
+  @apply h-full rounded-full transition-all duration-500;
+  background: linear-gradient(90deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
+}
+
+.weekly-chart {
+  @apply mt-4 p-3 rounded-xl;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.chart-title {
+  @apply text-xs font-medium text-zinc-500 m-0 mb-3;
+}
+
+.chart-bars {
+  @apply flex items-end justify-between gap-2;
+}
+
+.chart-bar-container {
+  @apply flex-1 flex flex-col items-center gap-1;
+}
+
+.chart-bar-bg {
+  @apply w-full h-16 rounded-lg overflow-hidden flex flex-col justify-end;
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+}
+
+.chart-bar-fill {
+  @apply w-full rounded-lg transition-all duration-500;
+  background: linear-gradient(0deg, var(--kengo-primary) 0%, var(--kengo-tertiary) 100%);
+}
+
+.chart-bar-label {
+  @apply text-[0.6rem] font-medium text-zinc-400;
+}
+
+.chart-bar-value {
+  @apply text-xs font-bold text-zinc-700;
+}
+
+.last-activity {
+  @apply flex items-center gap-2 mt-4 p-3 rounded-xl;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.activity-icon {
+  @apply text-xl text-zinc-400;
+}
+
+.activity-text {
+  @apply text-sm text-zinc-600;
+}
+
+.text-success {
+  color: var(--kengo-success);
+}
+
+/* ============================================
+   FILTROS (específico)
+   ============================================ */
+.stats-filter {
+  @apply flex flex-col gap-2 pb-3 mb-3;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.filter-chips {
+  @apply flex flex-wrap gap-1.5;
+}
+
+.filter-chip {
+  @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full
+         text-xs font-semibold cursor-pointer transition-all
+         border-none;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #71717a;
+}
+
+.filter-chip:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: #3f3f46;
+}
+
+.filter-chip--active {
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.3);
+}
+
+.filter-chip--active:hover {
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  color: white;
+}
+
+.filter-date-range {
+  @apply flex items-end gap-2 p-3 rounded-xl;
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
+  animation: expandIn 0.25s ease-out;
+}
+
+.filter-date-field {
+  @apply flex flex-col gap-1 flex-1 min-w-0;
+}
+
+.filter-date-label {
+  @apply text-[0.65rem] font-medium text-zinc-400 uppercase tracking-wide;
+}
+
+.filter-date-input {
+  @apply w-full px-2.5 py-1.5 rounded-lg text-xs text-zinc-700 font-medium;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.filter-date-input:focus {
+  border-color: rgba(var(--kengo-primary-rgb), 0.4);
+}
+
+.filter-date-arrow {
+  @apply flex items-center text-zinc-300 pb-1.5;
+}
+
+.filter-apply-btn {
+  @apply flex items-center justify-center w-8 h-8 rounded-full shrink-0
+         text-white cursor-pointer transition-all border-none;
+  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
+  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.3);
+}
+
+.filter-apply-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.4);
+  transform: translateY(-1px);
+}
+
+.filter-apply-btn:disabled {
+  @apply opacity-40 cursor-not-allowed;
+}
+
+.filter-apply-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.filter-active-indicator {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium self-start;
+  background: rgba(var(--kengo-primary-rgb), 0.08);
+  color: var(--kengo-primary);
+  animation: expandIn 0.2s ease-out;
+}
+
+.filter-active-label {
+  @apply truncate;
+  max-width: 200px;
+}
+
+.filter-reset-btn {
+  @apply flex items-center justify-center w-5 h-5 rounded-full
+         cursor-pointer transition-all border-none ml-0.5;
+  background: rgba(var(--kengo-primary-rgb), 0.12);
+  color: var(--kengo-primary);
+}
+
+.filter-reset-btn:hover {
+  background: rgba(var(--kengo-primary-rgb), 0.2);
+}
