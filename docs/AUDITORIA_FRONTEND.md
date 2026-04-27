@@ -1,7 +1,8 @@
 # Auditoría Frontend Kengo — apps/app/
 
 > **Documento destino**: `docs/AUDITORIA_FRONTEND.md` (mismo contenido).
-> **Fecha**: 2026-04-27
+> **Fecha**: 2026-04-27 (creado) · 2026-04-28 (última actualización)
+> **Estado**: Todos los items **P0/P1/P2 cerrados**. Sólo quedan ítems P3 (opcionales).
 > **Alcance**: `apps/app/src/app/` — Angular 20, standalone, signals, OnPush.
 
 ---
@@ -48,6 +49,8 @@ Leyenda de campos:
 - [x] **PR-Paciente (L)** — Descomponer `paciente-detail` (#6) ✅ **COMPLETADO** (PR-Paciente-1 + PR-Paciente-2)
 - [x] **PR-Shared (M)** — `convex-mappers` + `FormatDatePipe` + `EmptyStateComponent` + split de rutas (#2.2 + #2.3 + #2.4 + #3.1) ✅ **COMPLETADO**
 - [x] **PR-6 (M)** — factory `createFilteredList<T>` + migración de 3 servicios (#2.1) ✅ **COMPLETADO**
+
+> **Backlog P0–P2 cerrado**. Los items restantes (sección 2.6, 3.4–3.6, 4.1–4.3) son P3 (opcionales) y deben atacarse oportunísticamente cuando se toque el código afectado.
 
 ---
 
@@ -434,7 +437,13 @@ apps/app/src/app/features/                                                  #2.1
 └── planes/data-access/planes.service.ts                                    (consume factory)
 ```
 
-**Pendientes** (sólo P3):
+**Pendientes** (sólo P3, opcionales):
 ```
-apps/app/src/app/shared/                                (#2.6 common-validators, P3)
+#2.6  apps/app/src/app/shared/                          common-validators (email/password en 5+ formularios)
+#3.4  apps/app/src/app/features/{galeria,rutinas}/      simetría galeria/rutinas ↔ /rutinas/nueva
+#3.5  apps/app/src/app/app.routes.ts                    documentar convención singular/plural (mi-/mis-)
+#3.6  apps/app/src/app/features/dashboard/              lazy InicioFisio/InicioPaciente por rol
+#4.1  features/{planes,ejercicios,rutinas}/             templates HTML grandes (697/661/557/450/412 LOC)
+#4.2  apps/app/src/app/features/galeria/                feature router-dispatcher: dejar o eliminar
+#4.3  apps/app/src/app/features/perfil/                 perfil.component.ts (497 LOC, vigilar)
 ```
