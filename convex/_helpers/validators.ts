@@ -27,7 +27,3 @@ export const visibilidadRutina = v.union(
   v.literal("clinica"),
 );
 
-export const tipoNotificacion = v.union(
-  v.literal("comentario"),
-  v.literal("dolor_alto"),
-);

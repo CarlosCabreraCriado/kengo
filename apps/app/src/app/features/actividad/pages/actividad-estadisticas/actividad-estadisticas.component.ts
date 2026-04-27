@@ -255,16 +255,29 @@ export class ActividadEstadisticasComponent implements OnInit {
     desde: Date
   ): Promise<RegistroEjercicio[]> {
     try {
-      const records = await this.convex.query(
-        api.records.queries.listByPacienteSinceDate,
+      // Lectura del modelo nuevo `exerciseExecutions` (Fase 3 rediseño records).
+      // El shape de retorno es similar al legacy (camelCase). El componente
+      // mantiene la transformación a `RegistroEjercicio` (snake_case).
+      const records = (await this.convex.query(
+        api.executions.queries.listByPacienteInRange,
         {
           pacienteId,
           desde: desde.toISOString().split('T')[0],
           soloCompletados: true,
         },
-      );
+      )) as Array<{
+        _id: string;
+        planExerciseId: string;
+        pacienteId: string;
+        fechaHora: string;
+        completado: boolean;
+        repeticionesRealizadas?: number;
+        duracionRealSeg?: number;
+        dolorEscala?: number;
+        notaPaciente?: string;
+      }>;
 
-      // Ordenar desc por fecha_hora (Convex devuelve sin orden garantizado)
+      // Ordenar desc por fechaHora (Convex devuelve sin orden garantizado).
       const sorted = [...(records ?? [])].sort((a, b) =>
         b.fechaHora.localeCompare(a.fechaHora),
       );

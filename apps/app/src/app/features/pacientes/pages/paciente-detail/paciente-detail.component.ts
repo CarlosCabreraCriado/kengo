@@ -339,15 +339,27 @@ export class PacienteDetailComponent implements OnInit {
     const desde = sortedFechas[0];
     const hasta = sortedFechas[sortedFechas.length - 1];
 
-    const records = await this.convex.query(
-      api.records.queries.listByPacienteInRange,
+    // Modelo nuevo (Fase 3 rediseño records): lectura desde `exerciseExecutions`.
+    // Sin paginationOpts → devuelve array (no PaginationResult).
+    const records = (await this.convex.query(
+      api.executions.queries.listByPacienteInRange,
       {
         pacienteId,
         desde,
         hasta,
         soloCompletados: true,
       },
-    );
+    )) as Array<{
+      _id: string;
+      planExerciseId: string;
+      pacienteId: string;
+      fechaHora: string;
+      completado: boolean;
+      repeticionesRealizadas?: number;
+      duracionRealSeg?: number;
+      dolorEscala?: number;
+      notaPaciente?: string;
+    }>;
 
     // Mapear el shape Convex (camelCase) al shape RegistroEjercicioRecord (snake_case) que el resto del componente espera.
     return (records ?? []).map((r) => ({

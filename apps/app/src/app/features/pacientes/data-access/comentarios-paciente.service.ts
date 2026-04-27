@@ -3,26 +3,68 @@ import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { ComentariosPacienteResponse } from '../../../../types/global';
 
+type AlertDoc = {
+  _id: string;
+  _creationTime: number;
+  tipo: 'comentario' | 'dolor_alto' | 'inactividad' | 'adherencia_baja' | 'tendencia_negativa';
+  pacienteId: string;
+  clinicId: string;
+  exerciseExecutionId?: string;
+  sessionId?: string;
+  texto?: string;
+  dolorEscala?: number;
+  fechaGeneracion: string;
+  fechaRevision?: string;
+  estado: 'pendiente' | 'revisada' | 'descartada';
+};
+
 @Injectable({ providedIn: 'root' })
 export class ComentariosPacienteService {
   private convex = inject(ConvexService);
 
   async getComentarios(pacienteId: string): Promise<ComentariosPacienteResponse> {
-    return (await this.convex.query(
-      api.notifications.queries.listCommentsByPatient,
-      { pacienteId },
-    )) as ComentariosPacienteResponse;
+    // Lectura del modelo nuevo `physioAlerts`. Filtra a `tipo: comentario`
+    // para mantener la semántica del legacy `listCommentsByPatient`.
+    const result = (await this.convex.query(
+      api.alerts.queries.listByPaciente,
+      { pacienteId, tipo: 'comentario' },
+    )) as { items: AlertDoc[]; pendientes: number; total: number };
+
+    const comentarios = result.items.map((a) => ({
+      id: a._id,
+      tipo: a.tipo as 'comentario' | 'dolor_alto',
+      paciente: a.pacienteId,
+      id_clinica: a.clinicId,
+      id_registro: (a.exerciseExecutionId as string | undefined) ?? null,
+      id_sesion: (a.sessionId as string | undefined) ?? null,
+      fecha_registro: a.fechaGeneracion,
+      // Las denormalizaciones de plan/ejercicio se eliminaron en el modelo
+      // nuevo. Si la UI los requiere, se recuperarán por lookup.
+      titulo_plan: null,
+      nombre_ejercicio: null,
+      texto: a.texto ?? null,
+      dolor_escala: a.dolorEscala ?? null,
+      revisada: a.estado !== 'pendiente',
+      fecha_revision: a.fechaRevision ?? null,
+      date_created: new Date(a._creationTime).toISOString(),
+    }));
+
+    return {
+      comentarios,
+      pendientes: result.pendientes,
+      total: result.total,
+    };
   }
 
   async marcarRevisada(notificacionId: string): Promise<void> {
-    await this.convex.mutation(api.notifications.mutations.markAsRead, {
-      notificationId: notificacionId as any,
+    await this.convex.mutation(api.alerts.mutations.markAsRead, {
+      alertId: notificacionId as any,
     });
   }
 
   async marcarTodasRevisadas(pacienteId: string): Promise<void> {
     await this.convex.mutation(
-      api.notifications.mutations.markAllReadForPatient,
+      api.alerts.mutations.markAllAsReadForPatient,
       { pacienteId },
     );
   }

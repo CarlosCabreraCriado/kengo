@@ -143,50 +143,55 @@ export class SesionDetailComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const records = await this.convex.query(
-        api.records.queries.listByPacienteAndDateExpanded,
+      // Modelo nuevo: 1 documento por sesión clínica con sus ejecuciones
+      // (`exerciseExecutions`) ya agrupadas y expandidas. Un día tiene 1 sesión
+      // habitualmente (BN1), pero la query devuelve array por compatibilidad.
+      const sesiones = (await this.convex.query(
+        api.sessions.queries.getByPacienteAndDateWithExecutions,
         {
           pacienteId: this.pacienteId(),
           fecha: this.fecha(),
           soloCompletados: true,
         },
-      );
+      )) ?? [];
 
       const validos: RegistroExpandido[] = [];
-      for (const r of records ?? []) {
-        if (!r.planExercise || !r.planExercise.exercise || !r.planExercise.plan) {
-          continue;
+      for (const sesion of sesiones) {
+        for (const e of sesion.executions ?? []) {
+          if (!e.planExercise || !e.planExercise.exercise || !e.planExercise.plan) {
+            continue;
+          }
+          validos.push({
+            id_registro: e._id as unknown as number,
+            fecha_hora: e.fechaHora,
+            completado: e.completado,
+            repeticiones_realizadas: e.repeticionesRealizadas,
+            duracion_real_seg: e.duracionRealSeg,
+            dolor_escala: e.dolorEscala,
+            esfuerzo_escala: e.esfuerzoEscala,
+            nota_paciente: e.notaPaciente,
+            plan_item: {
+              id: e.planExercise.legacyId ?? (e.planExercise._id as unknown as number),
+              sort: e.planExercise.sort,
+              series: e.planExercise.series,
+              repeticiones: e.planExercise.repeticiones,
+              duracion_seg: e.planExercise.duracionSeg,
+              instrucciones_paciente: e.planExercise.instruccionesPaciente,
+              ejercicio: {
+                id_ejercicio: e.planExercise.exercise.legacyId ?? 0,
+                nombre_ejercicio: e.planExercise.exercise.nombreEjercicio,
+                portada: e.planExercise.exercise.portada ?? null,
+              },
+              plan: {
+                id_plan: e.planExercise.plan.legacyId ?? 0,
+                titulo: e.planExercise.plan.titulo,
+              },
+            },
+          });
         }
-        validos.push({
-          id_registro: r._id as unknown as number,
-          fecha_hora: r.fechaHora,
-          completado: r.completado,
-          repeticiones_realizadas: r.repeticionesRealizadas,
-          duracion_real_seg: r.duracionRealSeg,
-          dolor_escala: r.dolorEscala,
-          esfuerzo_escala: r.esfuerzoEscala,
-          nota_paciente: r.notaPaciente,
-          plan_item: {
-            id: r.planExercise.legacyId ?? (r.planExercise._id as unknown as number),
-            sort: r.planExercise.sort,
-            series: r.planExercise.series,
-            repeticiones: r.planExercise.repeticiones,
-            duracion_seg: r.planExercise.duracionSeg,
-            instrucciones_paciente: r.planExercise.instruccionesPaciente,
-            ejercicio: {
-              id_ejercicio: r.planExercise.exercise.legacyId ?? 0,
-              nombre_ejercicio: r.planExercise.exercise.nombreEjercicio,
-              portada: r.planExercise.exercise.portada ?? null,
-            },
-            plan: {
-              id_plan: r.planExercise.plan.legacyId ?? 0,
-              titulo: r.planExercise.plan.titulo,
-            },
-          },
-        });
       }
 
-      // Sort por plan.id_plan, sort
+      // Sort por plan.id_plan, sort.
       validos.sort((a, b) => {
         if (a.plan_item.plan.id_plan !== b.plan_item.plan.id_plan) {
           return a.plan_item.plan.id_plan - b.plan_item.plan.id_plan;

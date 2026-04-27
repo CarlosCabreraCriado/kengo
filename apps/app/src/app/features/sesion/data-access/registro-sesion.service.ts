@@ -554,13 +554,15 @@ export class RegistroSesionService {
   }
 
   /**
-   * Crear un registro de ejercicio (Convex mutation records.create)
+   * Crear un registro de ejercicio. Modelo nuevo (Fase 5):
+   * `executions.mutations.create` escribe directamente en `exerciseExecutions`
+   * y gestiona sesión, agregados y alertas de comentario.
    */
   async crearRegistro(
     registro: Omit<RegistroEjercicio, 'id_registro'>
   ): Promise<string | null> {
     try {
-      const id = await this.convex.mutation(api.records.mutations.create, {
+      const id = await this.convex.mutation(api.executions.mutations.create, {
         planExerciseId: this.resolvePlanExerciseId(registro.plan_item) as any,
         fechaHora: registro.fecha_hora,
         fecha: registro.fecha_hora.split('T')[0]!,
@@ -579,19 +581,19 @@ export class RegistroSesionService {
   }
 
   /**
-   * Guardar batch de registros pendientes (Convex mutation records.createBatch)
+   * Guardar batch de registros pendientes. Modelo nuevo (Fase 5):
+   * `executions.mutations.createBatch` escribe directo a `exerciseExecutions`
+   * y gestiona sesión + recompute + alertas de forma optimizada (1 recompute
+   * por sesión afectada).
    */
   async guardarRegistrosRemotos(): Promise<boolean> {
     const registros = this.registrosSesion();
     if (registros.length === 0) return true;
 
-    const sesionId = this.sesionActualId();
-
     try {
-      await this.convex.mutation(api.records.mutations.createBatch, {
-        records: registros.map((reg) => ({
+      await this.convex.mutation(api.executions.mutations.createBatch, {
+        entradas: registros.map((reg) => ({
           planExerciseId: this.resolvePlanExerciseId(reg.plan_item) as any,
-          sessionId: (sesionId as any) ?? undefined,
           fechaHora: reg.fecha_hora,
           fecha: reg.fecha_hora.split('T')[0]!,
           completado: reg.completado,
@@ -618,8 +620,9 @@ export class RegistroSesionService {
 
     try {
       const convexUserId = this.resolveUserConvexId(pacienteId);
+      // Modelo nuevo: lectura desde `exerciseExecutions` (Fase 3 rediseño records).
       const raw = await this.convex.query(
-        api.records.queries.listByPacienteAndDate,
+        api.executions.queries.listByPacienteAndDate,
         {
           pacienteId: convexUserId as any,
           fecha: hoy,

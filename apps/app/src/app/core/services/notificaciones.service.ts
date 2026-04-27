@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SessionService } from '../auth/services/session.service';
@@ -6,19 +6,61 @@ import { ConvexService } from '../convex/convex.service';
 import { api } from '../../../../../../convex/_generated/api';
 import type { NotificacionApp } from '../../../types/global';
 
+type AlertDoc = {
+  _id: string;
+  tipo:
+    | 'comentario'
+    | 'dolor_alto'
+    | 'inactividad'
+    | 'adherencia_baja'
+    | 'tendencia_negativa';
+  pacienteId: string;
+  pacienteNombre: string;
+  texto?: string;
+  dolorEscala?: number;
+  inactividadDias?: number;
+  adherenciaPct?: number;
+  fechaGeneracion: string;
+  estado: 'pendiente' | 'revisada' | 'descartada';
+};
+
+function tituloFromAlert(a: AlertDoc): string {
+  switch (a.tipo) {
+    case 'dolor_alto':
+      return a.dolorEscala !== undefined
+        ? `Dolor alto (${a.dolorEscala}/10)`
+        : 'Dolor alto';
+    case 'inactividad':
+      return a.inactividadDias !== undefined
+        ? `Inactividad (${a.inactividadDias} días)`
+        : 'Inactividad';
+    case 'adherencia_baja':
+      return a.adherenciaPct !== undefined
+        ? `Adherencia baja (${a.adherenciaPct}%)`
+        : 'Adherencia baja';
+    case 'tendencia_negativa':
+      return 'Tendencia negativa';
+    case 'comentario':
+    default:
+      return 'Comentario';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificacionesService {
   private router = inject(Router);
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
 
+  // Lectura del modelo nuevo `physioAlerts` (Fase 3 rediseño records).
+  // El watcher de alerts.listForCurrentFisio devuelve un PaginationResult.
   private readonly suscripcion = this.convex.watchQuery(
-    api.notifications.queries.listForCurrentFisio,
+    api.alerts.queries.listForCurrentFisio,
     () => {
       const usuario = this.sessionService.usuario();
       const rol = this.sessionService.rolUsuario();
       if (!usuario?.id || rol !== 'fisio') return 'skip' as const;
-      return {};
+      return { paginationOpts: { numItems: 50, cursor: null } };
     },
   );
 
@@ -28,9 +70,24 @@ export class NotificacionesService {
     const data = this.suscripcion.value();
     if (!data) return [];
     const overrides = this.overrides();
-    return data.notificaciones.map((n) =>
-      overrides[n.id] !== undefined ? { ...n, leida: overrides[n.id] } : n,
-    );
+    return data.page.map((a: AlertDoc) => {
+      const id = a._id;
+      const leidaBase = a.estado !== 'pendiente';
+      const leida = overrides[id] !== undefined ? overrides[id] : leidaBase;
+      return {
+        id,
+        fuente: 'kengo',
+        categoria: 'comentario_paciente' as const,
+        emisor_nombre: a.pacienteNombre ?? '',
+        emisor_avatar: null,
+        emisor_id: a.pacienteId,
+        titulo: tituloFromAlert(a),
+        texto: a.texto ?? null,
+        fecha: a.fechaGeneracion,
+        leida,
+        ruta_destino: `/mis-pacientes/${a.pacienteId}`,
+      };
+    });
   });
 
   readonly pendientes = computed(
@@ -57,8 +114,8 @@ export class NotificacionesService {
 
     this.overrides.update((o) => ({ ...o, [n.id]: true }));
     try {
-      await this.convex.mutation(api.notifications.mutations.markAsRead, {
-        notificationId: n.id as any,
+      await this.convex.mutation(api.alerts.mutations.markAsRead, {
+        alertId: n.id as any,
       });
     } catch (err) {
       console.error('Error al marcar notificación como revisada:', err);
@@ -67,17 +124,16 @@ export class NotificacionesService {
   }
 
   async marcarTodasRevisadas(): Promise<void> {
-    const prevIds = this.notificaciones().filter((n) => !n.leida).map((n) => n.id);
+    const prevIds = this.notificaciones()
+      .filter((n) => !n.leida)
+      .map((n) => n.id);
     this.overrides.update((o) => {
       const next = { ...o };
       for (const id of prevIds) next[id] = true;
       return next;
     });
     try {
-      await this.convex.mutation(
-        api.notifications.mutations.markAllAsReadForCurrentFisio,
-        {},
-      );
+      await this.convex.mutation(api.alerts.mutations.markAllAsRead, {});
     } catch (err) {
       console.error('Error al marcar todas como revisadas:', err);
       this.overrides.update((o) => {

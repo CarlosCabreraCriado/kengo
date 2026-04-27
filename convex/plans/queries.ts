@@ -257,11 +257,11 @@ export const checkPlanHasActivity = query({
       .collect();
 
     for (const ex of exercises) {
-      const record = await ctx.db
-        .query("planRecords")
+      const execution = await ctx.db
+        .query("exerciseExecutions")
         .withIndex("by_planExerciseId", (q) => q.eq("planExerciseId", ex._id))
         .first();
-      if (record) return true;
+      if (execution) return true;
     }
 
     return false;
