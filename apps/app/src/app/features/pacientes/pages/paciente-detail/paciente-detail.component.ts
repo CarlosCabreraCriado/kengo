@@ -41,7 +41,7 @@ import { KENGO_BREAKPOINTS } from '../../../../shared';
 
 interface ComentarioSesion {
   texto: string;
-  idRegistro: number;
+  idRegistro: string;
 }
 
 interface SesionAgrupada {
@@ -54,7 +54,7 @@ interface SesionAgrupada {
   totalComentarios: number;
   tipo: TipoCumplimiento;
   ejerciciosEsperados: number;
-  planes: { plan_id: number; titulo: string; esperados: number; completados: number }[];
+  planes: { plan_id: string; titulo: string; esperados: number; completados: number }[];
 }
 
 interface EstadisticasPaciente {
@@ -122,7 +122,7 @@ export class PacienteDetailComponent implements OnInit {
   readonly fisioResponsableNombre = signal<string | null>(null);
 
   // Descarga de informes
-  readonly descargandoInforme = signal<number | null>(null);
+  readonly descargandoInforme = signal<string | null>(null);
 
   // Error state
   readonly error = signal<string | null>(null);
@@ -198,8 +198,8 @@ export class PacienteDetailComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const data = await this.convex.query(api.users.queries.getByLegacyId, {
-        legacyDirectusId: id,
+      const data = await this.convex.query(api.users.queries.getById, {
+        userId: id as any,
       });
 
       if (data) {
@@ -363,8 +363,8 @@ export class PacienteDetailComponent implements OnInit {
 
     // Mapear el shape Convex (camelCase) al shape RegistroEjercicioRecord (snake_case) que el resto del componente espera.
     return (records ?? []).map((r) => ({
-      id_registro: r._id as unknown as number,
-      plan_item: r.planExerciseId as unknown as number,
+      id_registro: r._id,
+      plan_item: r.planExerciseId,
       paciente: r.pacienteId,
       fecha_hora: r.fechaHora,
       completado: r.completado,
@@ -372,7 +372,7 @@ export class PacienteDetailComponent implements OnInit {
       duracion_real_seg: r.duracionRealSeg,
       dolor_escala: r.dolorEscala,
       nota_paciente: r.notaPaciente,
-    })) as RegistroEjercicioRecord[];
+    }));
   }
 
   private agruparRegistrosPorFecha(
@@ -470,7 +470,7 @@ export class PacienteDetailComponent implements OnInit {
     if (!clinicaIds || clinicaIds.length === 0) return;
 
     this.asignacionesService
-      .getFisioResponsable(pacienteId, Number(clinicaIds[0]))
+      .getFisioResponsable(pacienteId, String(clinicaIds[0]))
       .subscribe({
         next: (asignacion) => {
           if (asignacion) {
@@ -790,17 +790,11 @@ export class PacienteDetailComponent implements OnInit {
   async descargarInforme(plan: Plan) {
     if (this.descargandoInforme()) return;
 
-    const planConvexId = (plan as any)._convexId;
-    if (!planConvexId) {
-      alert('No se puede generar el informe para este plan');
-      return;
-    }
-
     this.descargandoInforme.set(plan.id_plan);
 
     try {
       const res = await this.convex.action(api.pdf.actions.generatePlanPdf, {
-        planId: planConvexId,
+        planId: plan.id_plan as any,
       });
       if (!res?.url) throw new Error('No se pudo generar el PDF');
 

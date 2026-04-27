@@ -2,16 +2,13 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 
-/**
- * Devuelve los datos personales del usuario actual (consolidados en `users`).
- * Mantiene fallback a la tabla deprecada `userDetails` para datos pre-migración.
- */
 export const getForCurrentUser = query({
   args: {},
   handler: async (ctx) => {
     const user = await getAuthenticatedUser(ctx);
-
-    const fromUser = {
+    return {
+      _id: user._id,
+      userId: user._id,
       dni: user.dni,
       fechaNacimiento: user.fechaNacimiento,
       sexo: user.sexo,
@@ -19,23 +16,9 @@ export const getForCurrentUser = query({
       postal: user.postal,
       telefono: user.telefono,
     };
-
-    if (Object.values(fromUser).some((v) => v !== undefined)) {
-      return { _id: user._id, userId: user._id, ...fromUser };
-    }
-
-    const legacy = await ctx.db
-      .query("userDetails")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .unique();
-    return legacy;
   },
 });
 
-/**
- * Escribe los datos personales en `users` directamente. La tabla deprecada
- * `userDetails` ya no se usa para nuevos datos.
- */
 export const upsertForCurrentUser = mutation({
   args: {
     dni: v.optional(v.string()),

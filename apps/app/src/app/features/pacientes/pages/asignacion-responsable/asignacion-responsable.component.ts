@@ -72,7 +72,7 @@ export class AsignacionResponsableComponent {
     return clinicas.filter((c) => adminClinicaIds.includes(c.id_clinica));
   });
 
-  readonly clinicaSeleccionada = signal<number | null>(null);
+  readonly clinicaSeleccionada = signal<string | null>(null);
 
   // Fisios de la clínica seleccionada
   readonly fisiosClinica = computed(() => {
@@ -114,12 +114,12 @@ export class AsignacionResponsableComponent {
   readonly guardando = signal(false);
   readonly mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
-  seleccionarClinica(id: number) {
+  seleccionarClinica(id: string) {
     this.clinicaSeleccionada.set(id);
     this.cargarDatos(id);
   }
 
-  private async cargarDatos(clinicaId: number) {
+  private async cargarDatos(clinicaId: string) {
     this.isLoadingPacientes.set(true);
     this.mensaje.set(null);
 
@@ -149,10 +149,10 @@ export class AsignacionResponsableComponent {
     }
   }
 
-  private async cargarPacientes(clinicaId: number): Promise<Usuario[]> {
+  private async cargarPacientes(clinicaId: string): Promise<Usuario[]> {
     const result = await this.convex.query(
       api.users.queries.listPatientsByClinic,
-      { clinicLegacyId: clinicaId, limit: 500 },
+      { clinicId: clinicaId as any, limit: 500 },
     );
     return (result?.results ?? []).map((u) =>
       this.sessionService.transformarUsuarioConvex(u),

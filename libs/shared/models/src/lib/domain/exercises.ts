@@ -1,15 +1,12 @@
 /**
- * Tipos de dominio para ejercicios
- * Tipos transformados y listos para usar en las aplicaciones
+ * Tipos de dominio para ejercicios.
+ * Los IDs son Convex Ids (strings) en todos los casos.
  */
 
 import { UUID } from '../types/common';
 
-/**
- * Ejercicio transformado para uso en la aplicación
- */
 export interface Ejercicio {
-  id_ejercicio: number;
+  id_ejercicio: string;
   categoria: string[];
   nombre_ejercicio: string;
   descripcion: string;
@@ -21,19 +18,13 @@ export interface Ejercicio {
   portada_url?: string;
 }
 
-/**
- * Categoría transformada para uso en la aplicación
- */
 export interface Categoria {
-  id_categoria: number;
+  id_categoria: string;
   nombre_categoria: string;
 }
 
-/**
- * Ejercicio favorito transformado
- */
 export interface EjercicioFavorito {
-  id: number;
+  id: string;
   id_usuario: UUID;
-  id_ejercicio: number;
+  id_ejercicio: string;
 }

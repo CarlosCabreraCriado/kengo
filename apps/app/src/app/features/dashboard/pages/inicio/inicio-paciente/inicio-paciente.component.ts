@@ -14,7 +14,7 @@ import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/g
 import { assetUrl, rawAssetUrl } from '../../../../../core/utils/asset-url';
 
 interface EjercicioStrip {
-  id: number;
+  id: string;
   nombre: string;
   portadaUrl: string | null;
   completado: boolean;
@@ -189,7 +189,7 @@ export class InicioPacienteComponent {
         if (esSiguiente) primerPendienteEncontrado = true;
 
         items.push({
-          id: ej.ejercicio?.id_ejercicio ?? ej.id ?? 0,
+          id: ej.ejercicio?.id_ejercicio ?? ej.id ?? '',
           nombre: ej.ejercicio?.nombre_ejercicio ?? 'Ejercicio',
           portadaUrl: ej.ejercicio?.portada
             ? `${assetUrl(ej.ejercicio.portada, { width: 80, height: 80, fit: 'cover', format: 'webp' })}`

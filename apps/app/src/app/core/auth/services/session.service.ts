@@ -114,7 +114,7 @@ export class SessionService {
   transformarUsuarioConvex(u: any): Usuario {
     const clinicas =
       u.clinicas?.map((c: any) => ({
-        id_clinica: c.id_clinica ?? 0,
+        id_clinica: c.id_clinica ?? '',
         id_puesto: c.id_puesto ?? null,
         puesto: c.puesto ?? null,
       })) || [];
@@ -130,7 +130,7 @@ export class SessionService {
     }
 
     return {
-      id: u.legacyDirectusId,
+      id: u._id,
       convexId: u._id,
       avatar: u.avatar ?? null,
       avatar_url: u.avatar ? rawAssetUrl(u.avatar) : undefined,

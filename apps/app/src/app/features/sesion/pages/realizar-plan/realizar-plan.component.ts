@@ -260,7 +260,7 @@ export class RealizarPlanComponent implements OnInit {
     // Flujo original: cargar por planId de la ruta
     const planId = this.route.snapshot.paramMap.get('planId');
     const success = await this.registroService.iniciarSesion(
-      planId ? parseInt(planId, 10) : undefined,
+      planId ?? undefined,
     );
 
     if (!success) {

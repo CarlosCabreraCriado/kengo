@@ -129,7 +129,6 @@ export const listByPacienteAndDateExpanded = query({
           planExercise: planExercise
             ? {
                 _id: planExercise._id,
-                legacyId: planExercise.legacyId,
                 sort: planExercise.sort,
                 series: planExercise.series,
                 repeticiones: planExercise.repeticiones,
@@ -138,7 +137,6 @@ export const listByPacienteAndDateExpanded = query({
                 exercise: exercise
                   ? {
                       _id: exercise._id,
-                      legacyId: exercise.legacyId,
                       nombreEjercicio:
                         planExercise.ejercicioNombre ??
                         exercise.nombreEjercicio,
@@ -148,7 +146,6 @@ export const listByPacienteAndDateExpanded = query({
                 plan: plan
                   ? {
                       _id: plan._id,
-                      legacyId: plan.legacyId,
                       titulo: plan.titulo,
                     }
                   : null,

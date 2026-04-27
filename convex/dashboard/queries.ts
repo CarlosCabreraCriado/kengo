@@ -90,11 +90,11 @@ export const planesPorVencer = query({
               ? `${paciente.firstName} ${paciente.lastName}`.trim()
               : "");
           planesPorVencer.push({
-            id_plan: plan.legacyId ?? plan._id,
+            id_plan: plan._id,
             titulo: plan.titulo,
             fecha_fin: plan.fechaFin,
             paciente_nombre: nombre,
-            paciente_id: paciente?.legacyDirectusId ?? plan.pacienteId,
+            paciente_id: plan.pacienteId,
           });
         }
       }

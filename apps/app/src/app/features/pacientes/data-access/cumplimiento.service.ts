@@ -218,7 +218,7 @@ export class CumplimientoService {
         ejercicios_completados: r.totalCompletados,
         dolor_promedio: r.dolorPromedio ?? null,
         planes: r.planAggregates.map((p) => ({
-          plan_id: 0, // legacy numérico — el modelo nuevo usa Convex Id, no se mapea
+          plan_id: p.planId as string,
           titulo: '', // sin denormalizar; lookup opcional si la UI lo requiere
           esperados: p.esperados,
           completados: p.completados,

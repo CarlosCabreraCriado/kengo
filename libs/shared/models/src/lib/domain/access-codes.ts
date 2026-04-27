@@ -12,7 +12,7 @@ export type TipoCodigoAcceso = 'fisioterapeuta' | 'paciente';
  * Código de acceso transformado para uso en la aplicación
  */
 export interface CodigoAcceso {
-  id: number;
+  id: string;
   codigo: string;
   tipo: TipoCodigoAcceso;
   activo: boolean;

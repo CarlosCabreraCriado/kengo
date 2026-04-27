@@ -301,10 +301,8 @@ export class ActividadEstadisticasComponent implements OnInit {
     notaPaciente?: string;
   }): RegistroEjercicio {
     return {
-      // id_registro era numérico en el esquema legacy; con Convex es Id string.
-      // El UI no depende de unicidad numérica, así que se omite.
-      id_registro: undefined as unknown as number,
-      plan_item: r.planExerciseId as unknown as number,
+      id_registro: undefined,
+      plan_item: r.planExerciseId,
       paciente: r.pacienteId,
       fecha_hora: r.fechaHora,
       completado: r.completado,

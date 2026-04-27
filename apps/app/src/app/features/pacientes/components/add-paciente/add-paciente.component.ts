@@ -17,7 +17,7 @@ import { api } from '../../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../../convex/_generated/dataModel';
 
 interface DialogData {
-  idsClinicas: ID[]; // clínicas (legacyId) que puede ver/asignar el usuario actual
+  idsClinicas: ID[]; // Convex Ids de las clínicas que puede ver/asignar el usuario actual
   usuario?: Usuario; // si viene -> modo edición
 }
 
@@ -49,7 +49,7 @@ export class AddPacienteDialogComponent {
   private convex = inject(ConvexService);
   private clinicasService = inject(ClinicasService);
 
-  // Mapa: clinic legacyId -> membershipId (Convex Id<"clinicMemberships">)
+  // Mapa: clinicId -> membershipId (Convex Id<"clinicMemberships">)
   private currentLinks = new Map<ID, string>();
 
   loading = signal(false);
@@ -159,7 +159,7 @@ export class AddPacienteDialogComponent {
     try {
       const memberships = await this.convex.query(
         api.clinicMemberships.queries.listByUser,
-        { userLegacyId: userId },
+        { userId: userId as Id<'users'> },
       );
 
       this.currentLinks.clear();
@@ -193,15 +193,7 @@ export class AddPacienteDialogComponent {
           throw new Error('Debe seleccionar al menos una clínica.');
         }
 
-        const primaryClinicLegacyId = Number(selectedClinics[0]);
-        const primaryClinic = (this.clinicasRes.value() ?? []).find(
-          (c) => Number(c.id_clinica) === primaryClinicLegacyId,
-        );
-        if (!primaryClinic) throw new Error('Clínica no encontrada.');
-
-        // Resolver clinicId Convex desde el legacyId
-        const clinicConvexId = await this.resolveClinicConvexId(primaryClinicLegacyId);
-        if (!clinicConvexId) throw new Error('Clínica no encontrada.');
+        const primaryClinicId = String(selectedClinics[0]);
 
         const result = await this.convex.action(api.users.actions.createPatient, {
           firstName: v.first_name ?? '',
@@ -209,7 +201,7 @@ export class AddPacienteDialogComponent {
           email: v.email ?? '',
           telefono: v.telefono || undefined,
           password: this.genTempPassword(),
-          clinicId: clinicConvexId,
+          clinicId: primaryClinicId as Id<'clinics'>,
           generateAccessToken: true,
         });
 
@@ -217,50 +209,43 @@ export class AddPacienteDialogComponent {
           throw new Error(result.error || 'No se pudo crear el usuario.');
         }
 
-        // Añadir membresías a las clínicas adicionales (si las hay)
         if (selectedClinics.length > 1) {
           await Promise.all(
             selectedClinics.slice(1).map(async (cid) => {
-              const cidNumber = Number(cid);
               return this.convex.mutation(api.clinicMemberships.mutations.add, {
                 userId: result.userId as Id<'users'>,
-                clinicLegacyId: cidNumber,
-                puesto: PUESTO_PACIENTE,
+                clinicId: String(cid) as Id<'clinics'>,
+                puesto: 'paciente',
               });
             }),
           );
         }
 
-        // Devolvemos un objeto compatible con el tipo `created` del padre.
-        // Solo necesita `id` (legacyDirectusId del nuevo paciente, si existe).
         this.close({ created: { id: result.userId } });
       } else {
         // ---- EDITAR
         const userId = this.data.usuario!.id;
 
-        // Diff de membresías
         const targetIds = new Set<ID>(v.clinicas || []);
         const currentIds = new Set<ID>([...this.currentLinks.keys()]);
 
         const toAdd: ID[] = [...targetIds].filter((x) => !currentIds.has(x));
         const toRemove: ID[] = [...currentIds].filter((x) => !targetIds.has(x));
 
-        // 1) Patch datos básicos vía updatePatient
         await this.convex.mutation(api.users.mutations.updatePatient, {
-          patientLegacyId: userId,
+          patientId: userId as Id<'users'>,
           firstName: v.first_name ?? undefined,
           lastName: v.last_name ?? undefined,
           email: v.email ?? undefined,
           telefono: v.telefono || undefined,
         });
 
-        // 2) Crear membresías nuevas
         await Promise.all(
           toAdd.map((cid) =>
             this.convex.mutation(api.clinicMemberships.mutations.add, {
-              userLegacyId: userId,
-              clinicLegacyId: Number(cid),
-              puesto: PUESTO_PACIENTE,
+              userId: userId as Id<'users'>,
+              clinicId: String(cid) as Id<'clinics'>,
+              puesto: 'paciente',
             }),
           ),
         );
@@ -285,11 +270,6 @@ export class AddPacienteDialogComponent {
     } finally {
       this.loading.set(false);
     }
-  }
-
-  private async resolveClinicConvexId(legacyId: number): Promise<Id<'clinics'> | null> {
-    const map = this.clinicasService.legacyToConvexClinicId();
-    return map.get(legacyId) ?? null;
   }
 
   genTempPassword(len = 12) {

@@ -40,9 +40,9 @@ export class EjerciciosListComponent implements OnInit {
   public vista = signal<'vineta' | 'lista'>('lista');
 
   // Set para rastrear qué imágenes ya cargaron
-  public imagenesLoaded = signal<Set<number>>(new Set());
+  public imagenesLoaded = signal<Set<string>>(new Set());
 
-  onImageLoad(idEjercicio: number): void {
+  onImageLoad(idEjercicio: string): void {
     this.imagenesLoaded.update((set) => {
       const newSet = new Set(set);
       newSet.add(idEjercicio);
@@ -50,7 +50,7 @@ export class EjerciciosListComponent implements OnInit {
     });
   }
 
-  isImageLoaded(idEjercicio: number): boolean {
+  isImageLoaded(idEjercicio: string): boolean {
     return this.imagenesLoaded().has(idEjercicio);
   }
   private breakpointObserverService = inject(BreakpointObserver);
@@ -165,17 +165,16 @@ export class EjerciciosListComponent implements OnInit {
 
   // Opcional: helper usado en [selected]
   isCatSelected(
-    id_categoria: number,
-    categoriaSignal: Signal<(number | string)[]>,
+    id_categoria: string,
+    categoriaSignal: Signal<string[]>,
   ): boolean {
     const arr = categoriaSignal() || [];
     return Array.isArray(arr) && arr.includes(id_categoria);
   }
 
-  // Toggle categoria individual (para checkboxes nativos)
-  onCategoriaChange(id: number, checked: boolean) {
+  onCategoriaChange(id: string, checked: boolean) {
     const current = this.formularioFiltros.controls.categories.value ?? [];
-    let updated: (number | string)[];
+    let updated: string[];
 
     if (checked) {
       updated = [...current, id];
@@ -186,7 +185,7 @@ export class EjerciciosListComponent implements OnInit {
     this.formularioFiltros.controls.categories.setValue(updated);
   }
 
-  toggleCategoria(id: string | number) {
+  toggleCategoria(id: string) {
     this.ejerciciosService.toggleCategoria(id);
   }
 
@@ -231,7 +230,7 @@ export class EjerciciosListComponent implements OnInit {
   // ========= Favoritos =========
   soloFavoritos = computed(() => this.ejerciciosService.soloFavoritos());
 
-  toggleFavorito(event: Event, idEjercicio: number): void {
+  toggleFavorito(event: Event, idEjercicio: string): void {
     event.preventDefault();
     event.stopPropagation();
     this.ejerciciosService.toggleFavorito(idEjercicio);
@@ -241,11 +240,11 @@ export class EjerciciosListComponent implements OnInit {
     this.ejerciciosService.toggleSoloFavoritos();
   }
 
-  esFavorito(idEjercicio: number): boolean {
+  esFavorito(idEjercicio: string): boolean {
     return this.ejerciciosService.esFavorito(idEjercicio);
   }
 
-  favoritoEnProceso(idEjercicio: number): boolean {
+  favoritoEnProceso(idEjercicio: string): boolean {
     return this.ejerciciosService.favoritoEnProceso() === idEjercicio;
   }
 }

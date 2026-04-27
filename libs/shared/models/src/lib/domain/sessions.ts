@@ -18,7 +18,7 @@ export type EstadoPantalla =
  * Sesión local guardada (para recuperación)
  */
 export interface SesionLocal {
-  planId: number;
+  planId: string;
   ejercicioIndex: number;
   serieActual: number;
   estado: EstadoPantalla;
@@ -40,7 +40,7 @@ export interface FeedbackEjercicio {
  */
 export interface EjercicioPlanConEstado extends EjercicioPlan {
   completadoHoy: boolean;
-  registroId?: number;
+  registroId?: string;
   vecesCompletadasHoy?: number;
 }
 
@@ -64,7 +64,7 @@ export interface DiaProximo {
   diaSemana: string;
   totalEjercicios: number;
   planes: {
-    planId: number;
+    planId: string;
     titulo: string;
     ejercicios: number;
   }[];
@@ -74,9 +74,9 @@ export interface DiaProximo {
  * Ejercicio con información del plan (para sesiones multi-plan)
  */
 export interface EjercicioSesionMultiPlan extends EjercicioPlan {
-  planId: number;
+  planId: string;
   planTitulo: string;
-  planItemId: number;
+  planItemId: string;
 }
 
 /**
@@ -88,7 +88,7 @@ export interface ConfigSesionMultiPlan {
   esFechaProgramada: boolean;
   ejercicios: EjercicioSesionMultiPlan[];
   planesInvolucrados: {
-    planId: number;
+    planId: string;
     titulo: string;
     cantidadEjercicios: number;
   }[];

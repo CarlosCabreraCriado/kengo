@@ -7,6 +7,7 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { Usuario } from '../../../../types/global';
 import { api } from '../../../../../../../convex/_generated/api';
+import type { Id } from '../../../../../../../convex/_generated/dataModel';
 
 @Component({
   selector: 'app-selector-paciente',
@@ -466,7 +467,7 @@ export class SelectorPacienteComponent implements OnInit {
       // El backend deduplica y devuelve los pacientes de TODAS las clínicas.
       const result = await this.convex.query(
         api.users.queries.listPatientsByClinic,
-        { clinicLegacyIds: cids, limit: 500 },
+        { clinicIds: cids as Id<'clinics'>[], limit: 500 },
       );
 
       const usuarios = (result?.results ?? []).map((u) =>

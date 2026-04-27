@@ -26,8 +26,8 @@ interface EjercicioCalendario {
   repeticiones?: number;
   duracion_seg?: number;
   planTitulo: string;
-  planId: number;
-  planItemId: number;
+  planId: string;
+  planItemId: string;
 }
 
 interface DiaCalendario {
@@ -37,7 +37,7 @@ interface DiaCalendario {
   esMesActual: boolean;
   tieneActividad: boolean;
   totalEjercicios: number;
-  planes: { planId: number; titulo: string; ejercicios: number }[];
+  planes: { planId: string; titulo: string; ejercicios: number }[];
   ejercicios: EjercicioCalendario[];
 }
 
@@ -46,7 +46,7 @@ interface DiaProximoConEjercicios {
   fechaFormateada: string;
   diaSemana: string;
   totalEjercicios: number;
-  planes: { planId: number; titulo: string; ejercicios: number }[];
+  planes: { planId: string; titulo: string; ejercicios: number }[];
   ejercicios: EjercicioCalendario[];
 }
 
@@ -304,9 +304,9 @@ export class ActividadCalendarioComponent implements OnInit {
     planes: PlanCompleto[],
     fecha: Date,
     diaSemana: DiaSemana
-  ): { ejercicios: EjercicioCalendario[]; planes: { planId: number; titulo: string; ejercicios: number }[] } {
+  ): { ejercicios: EjercicioCalendario[]; planes: { planId: string; titulo: string; ejercicios: number }[] } {
     const ejercicios: EjercicioCalendario[] = [];
-    const planesConEjercicios: { planId: number; titulo: string; ejercicios: number }[] = [];
+    const planesConEjercicios: { planId: string; titulo: string; ejercicios: number }[] = [];
 
     for (const plan of planes) {
       if (!this.esFechaEnRangoPlan(plan, fecha)) continue;

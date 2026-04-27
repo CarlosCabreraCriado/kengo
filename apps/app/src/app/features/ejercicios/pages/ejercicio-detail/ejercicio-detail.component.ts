@@ -30,7 +30,7 @@ export class EjercicioDetailComponent {
   @ViewChildren('videoPlayer') videoPlayers!: QueryList<ElementRef<HTMLVideoElement>>;
 
   // Estado del ejercicio
-  id_ejercicio = signal<string | number | null>(null);
+  id_ejercicio = signal<string | null>(null);
   ejercicio = signal<Ejercicio | null>(null);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);

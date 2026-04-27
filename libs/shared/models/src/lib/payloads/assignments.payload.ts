@@ -4,7 +4,7 @@ import type { UUID } from '../types/common';
  * Payload para asignación masiva de fisios responsables.
  */
 export interface BulkAsignacionPayload {
-  id_clinica: number;
+  id_clinica: string;
   asignaciones: { id_paciente: UUID; id_fisio: UUID | null }[];
 }
 

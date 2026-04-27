@@ -35,7 +35,7 @@ export const create = mutation({
     await ctx.db.insert("clinicMemberships", {
       userId: user._id,
       clinicId,
-      puesto: PUESTO_ADMINISTRADOR,
+      puesto: "admin",
     });
 
     return clinicId;

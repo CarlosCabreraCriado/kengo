@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../core/utils/asset-url';
 import { ConvexService } from '../../../core/convex/convex.service';
-import { EjerciciosService } from '../../ejercicios/data-access/ejercicios.service';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import {
@@ -24,18 +23,12 @@ type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
 @Injectable({ providedIn: 'root' })
 export class RutinasService {
   private convex = inject(ConvexService);
-  private ejerciciosService = inject(EjerciciosService);
 
-  // --- Filtros como signals ---
   readonly busqueda: WritableSignal<string> = signal('');
   readonly filtroVisibilidad: WritableSignal<FiltroVisibilidad> = signal('todas');
   readonly page: WritableSignal<number> = signal(1);
   readonly pageSize: WritableSignal<number> = signal(20);
 
-  // Map interno: legacyId → convexId (para llamar mutations)
-  private readonly idMap = new Map<number, string>();
-
-  // Suscripción reactiva a rutinas via Convex
   private readonly routinesQuery = this.convex.watchQuery(
     api.routines.queries.list,
     () => {
@@ -48,36 +41,28 @@ export class RutinasService {
     },
   );
 
-  // Mapear datos Convex → tipo Rutina
   private readonly allRutinas = computed<Rutina[]>(() => {
     const raw = this.routinesQuery.value();
     if (!raw) return [];
 
-    this.idMap.clear();
-    return (raw as any[]).map((r) => {
-      const legacyId = r.legacyId ?? 0;
-      this.idMap.set(legacyId, r._id);
-      return {
-        id_rutina: legacyId,
-        nombre: r.nombre,
-        descripcion: r.descripcion,
-        autor: r.autorId,
-        visibilidad: r.visibilidad,
-        date_created: r._creationTime
-          ? new Date(r._creationTime).toISOString()
-          : undefined,
-      } as Rutina;
-    });
+    return (raw as any[]).map((r) => ({
+      id_rutina: r._id,
+      nombre: r.nombre,
+      descripcion: r.descripcion,
+      autor: r.autorId,
+      visibilidad: r.visibilidad,
+      date_created: r._creationTime
+        ? new Date(r._creationTime).toISOString()
+        : undefined,
+    }));
   });
 
-  // Paginación client-side
   private readonly paginatedRutinas = computed(() => {
     const all = this.allRutinas();
     const start = (this.page() - 1) * this.pageSize();
     return all.slice(start, start + this.pageSize());
   });
 
-  // Interfaz compatible con httpResource para los templates
   readonly rutinasRes = {
     value: computed(() => this.paginatedRutinas()),
     isLoading: this.routinesQuery.isLoading,
@@ -85,12 +70,9 @@ export class RutinasService {
     reload: () => {},
   };
 
-  // Computed para la vista
   readonly rutinas = computed(() => this.paginatedRutinas());
   readonly isLoading = computed(() => this.routinesQuery.isLoading());
   readonly total = computed(() => this.allRutinas().length);
-
-  // ========= Acciones (mutadores) =========
 
   setBusqueda(v: string) {
     this.busqueda.set(v);
@@ -107,24 +89,17 @@ export class RutinasService {
   }
 
   reload() {
-    // No-op: datos en tiempo real via Convex
+    // No-op
   }
 
   // ========= CRUD Methods =========
 
-  /**
-   * Obtener una rutina por ID con sus ejercicios
-   */
-  async getRutinaById(id: number): Promise<RutinaCompleta | null> {
+  async getRutinaById(id: string): Promise<RutinaCompleta | null> {
     try {
-      const convexId = this.idMap.get(id);
-      if (!convexId) return null;
-
       const raw = await this.convex.query(
         api.routines.queries.getById,
-        { routineId: convexId as any },
+        { routineId: id as any },
       );
-
       if (!raw) return null;
       return this.mapConvexToRutinaCompleta(raw);
     } catch (error) {
@@ -133,13 +108,10 @@ export class RutinasService {
     }
   }
 
-  /**
-   * Crear una nueva rutina con sus ejercicios (atómico en Convex)
-   */
-  async createRutina(payload: CreateRutinaPayload): Promise<number | null> {
+  async createRutina(payload: CreateRutinaPayload): Promise<string | null> {
     try {
       const ejercicios = payload.ejercicios.map((item, idx) => ({
-        exerciseId: this.resolveExerciseId(item.ejercicio),
+        exerciseId: item.ejercicio as any,
         sort: item.sort ?? idx + 1,
         series: item.series,
         repeticiones: item.repeticiones,
@@ -151,25 +123,22 @@ export class RutinasService {
         notasFisio: item.notas_fisio,
       }));
 
-      await this.convex.mutation(api.routines.mutations.create, {
+      const id = await this.convex.mutation(api.routines.mutations.create, {
         nombre: payload.nombre,
         descripcion: payload.descripcion,
         visibilidad: payload.visibilidad as 'privado' | 'clinica',
         ejercicios,
       });
 
-      return 0; // El ID real se obtiene vía suscripción
+      return (id as string) ?? null;
     } catch (error) {
       console.error('Error al crear rutina:', error);
       return null;
     }
   }
 
-  /**
-   * Actualizar solo metadatos de una rutina
-   */
   async updateRutina(
-    id: number,
+    id: string,
     payload: Partial<{
       nombre: string;
       descripcion: string;
@@ -177,16 +146,12 @@ export class RutinasService {
     }>
   ): Promise<boolean> {
     try {
-      const convexId = this.idMap.get(id);
-      if (!convexId) return false;
-
       await this.convex.mutation(api.routines.mutations.update, {
-        routineId: convexId as any,
+        routineId: id as any,
         nombre: payload.nombre,
         descripcion: payload.descripcion,
         visibilidad: payload.visibilidad as 'privado' | 'clinica' | undefined,
       });
-
       return true;
     } catch (error) {
       console.error('Error al actualizar rutina:', error);
@@ -194,19 +159,13 @@ export class RutinasService {
     }
   }
 
-  /**
-   * Actualizar una rutina completa (datos + ejercicios, atómico en Convex)
-   */
   async updateRutinaCompleta(
-    id: number,
+    id: string,
     payload: Omit<CreateRutinaPayload, 'autor'>
   ): Promise<boolean> {
     try {
-      const convexId = this.idMap.get(id);
-      if (!convexId) return false;
-
       const ejercicios = payload.ejercicios.map((item, idx) => ({
-        exerciseId: this.resolveExerciseId(item.ejercicio),
+        exerciseId: item.ejercicio as any,
         sort: item.sort ?? idx + 1,
         series: item.series,
         repeticiones: item.repeticiones,
@@ -219,13 +178,12 @@ export class RutinasService {
       }));
 
       await this.convex.mutation(api.routines.mutations.update, {
-        routineId: convexId as any,
+        routineId: id as any,
         nombre: payload.nombre,
         descripcion: payload.descripcion,
         visibilidad: payload.visibilidad as 'privado' | 'clinica',
         ejercicios,
       });
-
       return true;
     } catch (error) {
       console.error('Error al actualizar rutina completa:', error);
@@ -233,18 +191,11 @@ export class RutinasService {
     }
   }
 
-  /**
-   * Eliminar una rutina
-   */
-  async deleteRutina(id: number): Promise<boolean> {
+  async deleteRutina(id: string): Promise<boolean> {
     try {
-      const convexId = this.idMap.get(id);
-      if (!convexId) return false;
-
       await this.convex.mutation(api.routines.mutations.remove, {
-        routineId: convexId as any,
+        routineId: id as any,
       });
-
       return true;
     } catch (error) {
       console.error('Error al eliminar rutina:', error);
@@ -252,33 +203,24 @@ export class RutinasService {
     }
   }
 
-  /**
-   * Duplicar una rutina (atómico en Convex)
-   */
-  async duplicarRutina(id: number, nuevoNombre: string): Promise<number | null> {
+  async duplicarRutina(id: string, nuevoNombre: string): Promise<string | null> {
     try {
-      const convexId = this.idMap.get(id);
-      if (!convexId) return null;
-
-      await this.convex.mutation(api.routines.mutations.duplicate, {
-        routineId: convexId as any,
+      const newId = await this.convex.mutation(api.routines.mutations.duplicate, {
+        routineId: id as any,
         nuevoNombre,
       });
-
-      return 0; // El ID real se obtiene vía suscripción
+      return (newId as string) ?? null;
     } catch (error) {
       console.error('Error al duplicar rutina:', error);
       return null;
     }
   }
 
-  // ========= Mappers =========
-
   private mapConvexToRutinaCompleta(raw: any): RutinaCompleta {
     const autor = raw.autor;
 
     return {
-      id_rutina: raw.legacyId ?? 0,
+      id_rutina: raw._id,
       nombre: raw.nombre,
       descripcion: raw.descripcion,
       visibilidad: raw.visibilidad,
@@ -293,26 +235,27 @@ export class RutinasService {
             email: autor.email ?? '',
             email_verified: false,
             avatar: autor.avatar ?? null,
+            detalle: null,
             clinicas: [],
             esFisio: true,
             esPaciente: false,
           }
         : ({} as any),
       ejercicios: (raw.ejercicios || []).map((re: any) =>
-        this.mapConvexToEjercicioRutina(re),
+        this.mapConvexToEjercicioRutina(re, raw._id),
       ),
     };
   }
 
-  private mapConvexToEjercicioRutina(re: any): EjercicioRutina {
+  private mapConvexToEjercicioRutina(re: any, rutinaId: string): EjercicioRutina {
     const ej = re.ejercicio;
     return {
-      id: 0,
+      id: re._id,
       sort: re.sort ?? 0,
-      rutina: 0,
+      rutina: rutinaId,
       ejercicio: ej
         ? ({
-            id_ejercicio: ej.legacyId ?? 0,
+            id_ejercicio: ej._id ?? '',
             nombre_ejercicio: ej.nombreEjercicio ?? '',
             descripcion: ej.descripcion ?? '',
             portada: ej.portada ?? '',
@@ -333,18 +276,6 @@ export class RutinasService {
     };
   }
 
-  /**
-   * Resuelve un ID de ejercicio (legacy number) a Convex ID string.
-   */
-  private resolveExerciseId(legacyId: number): any {
-    const convexId = this.ejerciciosService.legacyToConvexId().get(legacyId);
-    if (!convexId) {
-      throw new Error(`Ejercicio con legacyId ${legacyId} no encontrado`);
-    }
-    return convexId;
-  }
-
-  // ========= Helper de assets (Cloudflare R2 vía assetUrl) =========
   getAssetUrl(id?: string, width = 200, height = 200) {
     return id
       ? assetUrl(id, { width, height, fit: 'cover', format: 'webp' })

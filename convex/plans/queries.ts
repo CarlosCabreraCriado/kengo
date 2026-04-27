@@ -3,29 +3,12 @@ import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 
-// Helper: resolve a pacienteId that may be a Convex ID or a legacy UUID
-async function resolvePacienteId(
-  ctx: any,
-  pacienteIdOrUuid: string | undefined,
+function resolvePacienteId(
+  pacienteId: string | undefined,
   fallbackUserId: Id<"users">,
-): Promise<Id<"users">> {
-  if (!pacienteIdOrUuid) return fallbackUserId;
-
-  // If it looks like a Convex ID (contains table prefix), use directly
-  // Convex IDs are like "k17abc..." while UUIDs are "xxxxxxxx-xxxx-..."
-  if (!pacienteIdOrUuid.includes("-")) {
-    return pacienteIdOrUuid as Id<"users">;
-  }
-
-  // It's a legacy UUID — resolve via legacyDirectusId index
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_legacyDirectusId", (q: any) =>
-      q.eq("legacyDirectusId", pacienteIdOrUuid),
-    )
-    .unique();
-
-  return user?._id ?? fallbackUserId;
+): Id<"users"> {
+  if (!pacienteId) return fallbackUserId;
+  return pacienteId as Id<"users">;
 }
 
 // Helper: embed exercise data (nombre, descripción, portada, video) en un planExercise
@@ -36,7 +19,6 @@ async function enrichPlanExercise(ctx: any, pe: any) {
     ejercicio: exercise
       ? {
           _id: exercise._id,
-          legacyId: exercise.legacyId,
           nombreEjercicio: exercise.nombreEjercicio,
           descripcion: exercise.descripcion,
           portada: exercise.portada,
@@ -114,7 +96,7 @@ export const listByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetId = resolvePacienteId(args.pacienteId, user._id);
 
     if (args.estado) {
       return await ctx.db
@@ -144,20 +126,6 @@ export const getById = query({
   },
 });
 
-// ─── GET BY LEGACY ID (with exercises) ───
-
-export const getByLegacyId = query({
-  args: { legacyId: v.number() },
-  handler: async (ctx, args) => {
-    const plan = await ctx.db
-      .query("plans")
-      .withIndex("by_legacyId", (q) => q.eq("legacyId", args.legacyId))
-      .unique();
-    if (!plan) return null;
-    return enrichPlan(ctx, plan);
-  },
-});
-
 // ─── GET ACTIVE PLANS FOR PATIENT TODAY ───
 
 export const getActiveForPatientToday = query({
@@ -166,7 +134,7 @@ export const getActiveForPatientToday = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetId = resolvePacienteId(args.pacienteId, user._id);
     const today = getTodayString();
 
     const activePlans = await ctx.db
@@ -176,14 +144,12 @@ export const getActiveForPatientToday = query({
       )
       .collect();
 
-    // Filter by date: fechaInicio <= today AND fechaFin >= today
     const filtered = activePlans.filter((p) => {
       if (p.fechaInicio && p.fechaInicio > today) return false;
       if (p.fechaFin && p.fechaFin < today) return false;
       return true;
     });
 
-    // Enrich with exercises
     const results = [];
     for (const plan of filtered) {
       results.push(await enrichPlan(ctx, plan));
@@ -200,7 +166,7 @@ export const getActiveAndFuture = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetId = resolvePacienteId(args.pacienteId, user._id);
     const today = getTodayString();
 
     const activePlans = await ctx.db
@@ -210,7 +176,6 @@ export const getActiveAndFuture = query({
       )
       .collect();
 
-    // Filter: fechaFin >= today (or no end date)
     const filtered = activePlans.filter((p) => {
       if (p.fechaFin && p.fechaFin < today) return false;
       return true;
@@ -228,21 +193,10 @@ export const getActiveAndFuture = query({
 
 export const listExercisesByPlanId = query({
   args: {
-    planId: v.optional(v.id("plans")),
-    planLegacyId: v.optional(v.number()),
+    planId: v.id("plans"),
   },
   handler: async (ctx, args) => {
-    let planId: Id<"plans"> | null = args.planId ?? null;
-    if (!planId && args.planLegacyId !== undefined) {
-      const plan = await ctx.db
-        .query("plans")
-        .withIndex("by_legacyId", (q) => q.eq("legacyId", args.planLegacyId))
-        .unique();
-      planId = plan?._id ?? null;
-    }
-    if (!planId) return [];
-
-    return await loadPlanExercises(ctx, planId!);
+    return await loadPlanExercises(ctx, args.planId);
   },
 });
 

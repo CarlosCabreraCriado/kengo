@@ -4,7 +4,6 @@ import {
   effect,
   inject,
   signal,
-  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { rawAssetUrl, videoUrl } from '../../../core/utils/asset-url';
@@ -17,7 +16,7 @@ import { api } from '../../../../../../../convex/_generated/api';
 import { Ejercicio } from '../../../../types/global';
 
 export interface Categoria {
-  id_categoria: number;
+  id_categoria: string;
   nombre_categoria: string;
 }
 
@@ -32,16 +31,15 @@ export class EjerciciosService {
 
   // --- Filtros / paginación como señales puras ---
   readonly busqueda: WritableSignal<string> = signal('');
-  readonly idsCategoriasSeleccionadas: WritableSignal<(string | number)[]> =
-    signal([]);
+  readonly idsCategoriasSeleccionadas: WritableSignal<string[]> = signal([]);
   readonly page: WritableSignal<number> = signal(1);
   readonly pageSize: WritableSignal<number> = signal(24);
   readonly sort: WritableSignal<string> = signal('nombre_ejercicio');
 
-  // --- Favoritos (Convex) ---
-  readonly idsFavoritos: WritableSignal<Set<number>> = signal(new Set());
+  // --- Favoritos (Convex IDs) ---
+  readonly idsFavoritos: WritableSignal<Set<string>> = signal(new Set());
   readonly soloFavoritos: WritableSignal<boolean> = signal(false);
-  readonly favoritoEnProceso: WritableSignal<number | null> = signal(null);
+  readonly favoritoEnProceso: WritableSignal<string | null> = signal(null);
 
   // Suscripción a favoritos via Convex (devuelve Convex exercise IDs)
   private readonly favoritesQuery = this.convex.watchQuery(
@@ -49,40 +47,11 @@ export class EjerciciosService {
     () => ({}),
   );
 
-  // Map: legacyId → Convex ID (para llamar mutations con Convex ID)
-  readonly legacyToConvexId = computed(() => {
-    const raw = this.allExercisesQuery.value();
-    if (!raw) return new Map<number, string>();
-    const m = new Map<number, string>();
-    for (const e of raw) {
-      if (e.legacyId != null) m.set(e.legacyId, e._id);
-    }
-    return m;
-  });
-
-  // Map inverso: Convex ID → legacyId (para convertir favoritos)
-  private readonly convexToLegacyId = computed(() => {
-    const raw = this.allExercisesQuery.value();
-    if (!raw) return new Map<string, number>();
-    const m = new Map<string, number>();
-    for (const e of raw) {
-      if (e.legacyId != null) m.set(e._id, e.legacyId);
-    }
-    return m;
-  });
-
   constructor() {
-    // Sincronizar favoritos Convex → idsFavoritos (legacy IDs)
     effect(() => {
       const convexFavIds = this.favoritesQuery.value();
       if (!convexFavIds) return;
-      const c2l = this.convexToLegacyId();
-      const legacyIds = new Set<number>();
-      for (const cid of convexFavIds) {
-        const lid = c2l.get(cid);
-        if (lid != null) legacyIds.add(lid);
-      }
-      this.idsFavoritos.set(legacyIds);
+      this.idsFavoritos.set(new Set(convexFavIds));
     });
   }
 
@@ -97,8 +66,8 @@ export class EjerciciosService {
       const raw = this.categoriesQuery.value();
       if (!raw) return [] as Categoria[];
       return raw.map(
-        (c: { legacyId?: number | null; nombreCategoria: string }) => ({
-          id_categoria: c.legacyId ?? 0,
+        (c: { _id: string; nombreCategoria: string }) => ({
+          id_categoria: c._id,
           nombre_categoria: c.nombreCategoria,
         }),
       );
@@ -114,29 +83,25 @@ export class EjerciciosService {
     () => ({}),
   );
 
-  // 1. Mapear Convex → Ejercicio (dominio Angular)
   private readonly allEjercicios = computed<Ejercicio[]>(() => {
     const raw = this.allExercisesQuery.value();
     if (!raw) return [];
     return raw.map((e: any) => this.mapConvexToEjercicio(e));
   });
 
-  // 2. Resolver nombres de categorías seleccionadas (para filtro)
   private readonly selectedCategoryNames = computed<string[]>(() => {
     const ids = this.idsCategoriasSeleccionadas();
     if (!ids.length) return [];
     const cats = this.categoriasRes.value();
-    const idSet = new Set(ids.map(Number));
+    const idSet = new Set(ids);
     return cats
       .filter((c) => idSet.has(c.id_categoria))
       .map((c) => c.nombre_categoria);
   });
 
-  // 3. Filtrar (búsqueda + categorías + favoritos)
   private readonly filteredEjercicios = computed<Ejercicio[]>(() => {
     let list = this.allEjercicios();
 
-    // Filtro por búsqueda
     const search = this.busqueda().trim().toLowerCase();
     if (search) {
       list = list.filter((e) =>
@@ -144,7 +109,6 @@ export class EjerciciosService {
       );
     }
 
-    // Filtro por categorías seleccionadas
     const catNames = this.selectedCategoryNames();
     if (catNames.length > 0) {
       const nameSet = new Set(catNames);
@@ -153,7 +117,6 @@ export class EjerciciosService {
       );
     }
 
-    // Filtro de favoritos
     if (this.soloFavoritos()) {
       const favIds = this.idsFavoritos();
       if (favIds.size > 0) {
@@ -166,7 +129,6 @@ export class EjerciciosService {
     return list;
   });
 
-  // 4. Ordenar
   private readonly sortedEjercicios = computed<Ejercicio[]>(() => {
     const list = [...this.filteredEjercicios()];
     const dir = this.sort().startsWith('-') ? -1 : 1;
@@ -175,7 +137,6 @@ export class EjerciciosService {
     );
   });
 
-  // ========= Derivados (computed) para la vista =========
   readonly ejercicios = computed(() => {
     const all = this.sortedEjercicios();
     const start = (this.page() - 1) * this.pageSize();
@@ -195,7 +156,6 @@ export class EjerciciosService {
       this.soloFavoritos(),
   );
 
-  // Interfaz compatible con httpResource para los templates
   readonly listaEjerciciosRes = {
     value: computed(() => ({
       data: this.ejercicios(),
@@ -207,23 +167,21 @@ export class EjerciciosService {
   };
 
   // ========= Cache y detalle =========
-  findInCacheById(id: string | number): Ejercicio | undefined {
-    const idNum = Number(id);
-    return this.allEjercicios().find((e) => e.id_ejercicio === idNum);
+  findInCacheById(id: string): Ejercicio | undefined {
+    return this.allEjercicios().find((e) => e.id_ejercicio === id);
   }
 
-  getEjercicioById$(id: string | number): Observable<Ejercicio> {
+  getEjercicioById$(id: string): Observable<Ejercicio> {
     const cached = this.findInCacheById(id);
     if (cached) return of(cached);
 
     return from(
-      this.convex.query(api.exercises.queries.getExerciseByLegacyId, {
-        legacyId: Number(id),
+      this.convex.query(api.exercises.queries.getExerciseById, {
+        exerciseId: id as any,
       }),
     ).pipe(map((raw: any) => this.mapConvexToEjercicio(raw)));
   }
 
-  // ========= Recargas (no-op con Convex, datos en tiempo real) =========
   reloadEjercicios() {}
   reloadCategorias() {}
 
@@ -233,7 +191,7 @@ export class EjerciciosService {
     this.page.set(1);
   }
 
-  toggleCategoria(id: string | number) {
+  toggleCategoria(id: string) {
     const set = new Set(this.idsCategoriasSeleccionadas());
     if (set.has(id)) {
       set.delete(id);
@@ -284,17 +242,12 @@ export class EjerciciosService {
 
   /**
    * No-op: los favoritos se cargan automáticamente via watchQuery.
-   * Se mantiene para compatibilidad con componentes que llaman cargarFavoritos().
    */
   cargarFavoritos(): void {}
 
-  async toggleFavorito(idEjercicio: number): Promise<void> {
-    const exerciseId = this.legacyToConvexId().get(idEjercicio);
-    if (!exerciseId) return;
-
+  async toggleFavorito(idEjercicio: string): Promise<void> {
     this.favoritoEnProceso.set(idEjercicio);
 
-    // Optimistic update
     const esFavorito = this.idsFavoritos().has(idEjercicio);
     const nuevoSet = new Set(this.idsFavoritos());
     if (esFavorito) {
@@ -306,11 +259,10 @@ export class EjerciciosService {
 
     try {
       await this.convex.mutation(api.exercises.mutations.toggleFavorite, {
-        exerciseId: exerciseId as any,
+        exerciseId: idEjercicio as any,
       });
     } catch (error) {
       console.error('Error toggling favorito:', error);
-      // Revertir optimistic update
       const revertSet = new Set(this.idsFavoritos());
       if (esFavorito) {
         revertSet.add(idEjercicio);
@@ -323,7 +275,7 @@ export class EjerciciosService {
     }
   }
 
-  esFavorito(idEjercicio: number): boolean {
+  esFavorito(idEjercicio: string): boolean {
     return this.idsFavoritos().has(idEjercicio);
   }
 
@@ -335,7 +287,7 @@ export class EjerciciosService {
   // ========= Mapper Convex → Ejercicio (dominio Angular) =========
   private mapConvexToEjercicio(raw: any): Ejercicio {
     return {
-      id_ejercicio: raw.legacyId ?? 0,
+      id_ejercicio: raw._id ?? '',
       nombre_ejercicio: raw.nombreEjercicio ?? '',
       descripcion: raw.descripcion ?? '',
       series_defecto: raw.seriesDefecto ?? '',

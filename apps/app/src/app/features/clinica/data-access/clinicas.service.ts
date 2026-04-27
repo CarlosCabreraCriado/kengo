@@ -3,24 +3,20 @@ import { Injectable, signal, inject, computed, effect } from '@angular/core';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { api } from '../../../../../../../convex/_generated/api';
-import type { Id } from '../../../../../../../convex/_generated/dataModel';
 
 import {
   Usuario,
   Clinica,
-  ID,
-  PUESTO_FISIOTERAPEUTA,
-  PUESTO_ADMINISTRADOR,
 } from '../../../../types/global';
 
-type FisiosPorClinica = Record<number, Usuario[]>;
+type FisiosPorClinica = Record<string, Usuario[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ClinicasService {
   private sessionService = inject(SessionService);
   private convex = inject(ConvexService);
 
-  selectedClinicaId = signal<ID | null>(null);
+  selectedClinicaId = signal<string | null>(null);
 
   // ========= Convex: Suscripcion reactiva a mis clinicas =========
   private readonly misClinicasQuery = this.convex.watchQuery(
@@ -32,12 +28,11 @@ export class ClinicasService {
     },
   );
 
-  // Clinicas transformadas al tipo de dominio
   readonly misClinicas = computed<Clinica[]>(() => {
     const raw = this.misClinicasQuery.value();
     if (!raw) return [];
     return raw.map((c) => ({
-      id_clinica: c.legacyId ?? 0,
+      id_clinica: c._id,
       nombre: c.nombre,
       telefono: c.telefono ?? null,
       email: c.email ?? null,
@@ -54,36 +49,20 @@ export class ClinicasService {
     }));
   });
 
-  // Compat: misClinicasRes.value() y misClinicasRes.reload()
   readonly misClinicasRes = {
     value: this.misClinicas,
     reload: () => {
-      // No-op: Convex watchQuery se actualiza automaticamente en tiempo real
+      // No-op: Convex watchQuery se actualiza automaticamente
     },
   };
 
-  // Map: legacyId → Convex ID (para mutations)
-  readonly legacyToConvexClinicId = computed(() => {
-    const map = new Map<number, Id<'clinics'>>();
-    const raw = this.misClinicasQuery.value();
-    if (!raw) return map;
-    for (const c of raw) {
-      if (c.legacyId !== undefined) {
-        map.set(c.legacyId, c._id);
-      }
-    }
-    return map;
-  });
-
-  // IDs de mis clinicas (legacy)
-  readonly idsClinicasCargadas = computed<number[]>(() =>
-    this.misClinicas().map((c) => Number(c.id_clinica)),
+  readonly idsClinicasCargadas = computed<string[]>(() =>
+    this.misClinicas().map((c) => c.id_clinica),
   );
 
   // ========= Fisios por clinica =========
   private fisiosCache = signal<FisiosPorClinica>({});
 
-  // Auto-cargar fisios cuando cambian las clinicas
   private fisiosLoader = effect(() => {
     const clinicas = this.misClinicasQuery.value();
     if (clinicas && clinicas.length > 0) {
@@ -106,10 +85,10 @@ export class ClinicasService {
 
         const fisios: Usuario[] = (members ?? [])
           .filter(
-            (m) => m.puesto === PUESTO_FISIOTERAPEUTA || m.puesto === PUESTO_ADMINISTRADOR,
+            (m) => m.puesto === 'fisio' || m.puesto === 'admin',
           )
           .map((m) => ({
-            id: m.legacyDirectusId ?? m._id,
+            id: m._id,
             convexId: m._id,
             first_name: m.firstName ?? '',
             last_name: m.lastName ?? '',
@@ -125,9 +104,7 @@ export class ClinicasService {
             esPaciente: false,
           }));
 
-        if (clinic.legacyId !== undefined) {
-          result[clinic.legacyId] = fisios;
-        }
+        result[clinic._id] = fisios;
       } catch (err) {
         console.warn(`Error cargando miembros de clinica ${clinic.nombre}:`, err);
       }
@@ -136,13 +113,11 @@ export class ClinicasService {
     this.fisiosCache.set(result);
   }
 
-  // Compat: fisiosDeClinica(id) devuelve un computed
-  fisiosDeClinica = (idClinica: ID) =>
+  fisiosDeClinica = (idClinica: string) =>
     computed<Usuario[]>(() => {
-      return this.fisiosCache()[Number(idClinica)] ?? [];
+      return this.fisiosCache()[idClinica] ?? [];
     });
 
-  // Computed para obtener la clínica actualmente seleccionada
   readonly selectedClinica = computed<Clinica | null>(() => {
     const clinicas = this.misClinicas();
     const id = this.selectedClinicaId();

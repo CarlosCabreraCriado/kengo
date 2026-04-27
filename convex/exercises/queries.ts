@@ -87,18 +87,11 @@ export const listFavorites = query({
   },
 });
 
-export const getExerciseByLegacyId = query({
-  args: { legacyId: v.number() },
+export const getExerciseById = query({
+  args: { exerciseId: v.id("exercises") },
   handler: async (ctx, args) => {
-    const exercise = await ctx.db
-      .query("exercises")
-      .withIndex("by_legacyId", (q) => q.eq("legacyId", args.legacyId))
-      .unique();
-
-    if (!exercise) {
-      throw new Error(`Ejercicio con legacyId ${args.legacyId} no encontrado`);
-    }
-
+    const exercise = await ctx.db.get(args.exerciseId);
+    if (!exercise) return null;
     const enriched = await enrichWithCategories(ctx, [exercise]);
     return enriched[0];
   },

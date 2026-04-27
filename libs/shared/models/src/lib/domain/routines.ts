@@ -14,7 +14,7 @@ export { VisibilidadRutina } from '../payloads/routines.payload';
  * Rutina transformada para uso en la aplicación
  */
 export interface Rutina {
-  id_rutina: number;
+  id_rutina: string;
   nombre: string;
   descripcion?: string;
   autor: UUID | Usuario;
@@ -23,21 +23,15 @@ export interface Rutina {
   date_updated?: string;
 }
 
-/**
- * Rutina con todos los datos expandidos
- */
 export interface RutinaCompleta extends Rutina {
   autor: Usuario;
   ejercicios: EjercicioRutina[];
 }
 
-/**
- * Ejercicio dentro de una rutina
- */
 export interface EjercicioRutina {
-  id: number;
+  id: string;
   sort: number;
-  rutina: number;
+  rutina: string;
   ejercicio: Ejercicio;
   series?: number;
   repeticiones?: number;

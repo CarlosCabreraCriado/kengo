@@ -24,7 +24,7 @@ export interface CreatePlanPayload {
  * Payload para crear un ejercicio dentro de un plan
  */
 export interface CreatePlanEjercicioPayload {
-  ejercicio: number;
+  ejercicio: string;
   sort: number;
   series?: number;
   repeticiones?: number;
@@ -66,7 +66,7 @@ export interface UpdatePlanEjercicioPayload {
  * Payload para crear un registro de ejercicio completado
  */
 export interface CreateRegistroEjercicioPayload {
-  plan_item: number;
+  plan_item: string;
   paciente: UUID;
   fecha_hora: string;
   completado: boolean;

@@ -13,7 +13,7 @@ import { fadeAnimation, staggerAnimation } from '../../realizar-plan.animations'
 
 export interface FeedbackFinalData {
   feedbacks: {
-    planItemId: number;
+    planItemId: string;
     dolor: number;
     nota?: string;
   }[];
@@ -1099,9 +1099,9 @@ export class FeedbackFinalComponent {
   readonly dolorGlobal = this._dolorGlobal.asReadonly();
 
   // Estado interno - modo detallado
-  private _dolorPorEjercicio = signal<Map<number, number>>(new Map());
-  private _notasPorEjercicio = signal<Map<number, string>>(new Map());
-  private _notasExpandidas = signal<Set<number>>(new Set());
+  private _dolorPorEjercicio = signal<Map<string, number>>(new Map());
+  private _notasPorEjercicio = signal<Map<string, string>>(new Map());
+  private _notasExpandidas = signal<Set<string>>(new Set());
   observacionesGenerales = '';
 
   // Para el anillo de progreso circular
@@ -1184,7 +1184,7 @@ export class FeedbackFinalComponent {
     return `${(index * 37) % 360}deg`;
   }
 
-  toggleNota(planItemId: number): void {
+  toggleNota(planItemId: string): void {
     this._notasExpandidas.update((set) => {
       const newSet = new Set(set);
       if (newSet.has(planItemId)) {
@@ -1196,7 +1196,7 @@ export class FeedbackFinalComponent {
     });
   }
 
-  onDolorChange(planItemId: number, dolor: number): void {
+  onDolorChange(planItemId: string, dolor: number): void {
     this._dolorPorEjercicio.update((map) => {
       const newMap = new Map(map);
       newMap.set(planItemId, dolor);
@@ -1204,7 +1204,7 @@ export class FeedbackFinalComponent {
     });
   }
 
-  onNotaChange(planItemId: number, nota: string): void {
+  onNotaChange(planItemId: string, nota: string): void {
     this._notasPorEjercicio.update((map) => {
       const newMap = new Map(map);
       if (nota.trim()) {

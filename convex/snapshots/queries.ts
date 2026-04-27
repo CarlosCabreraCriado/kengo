@@ -49,17 +49,7 @@ export const getPatientMetrics = query({
         .slice(0, limit);
     }
 
-    // Enriquecer con `pacienteLegacyId` para que el frontend pueda indexar el
-    // map por UUID legacy (compatibilidad con flujo Directus).
-    return await Promise.all(
-      snapshots.map(async (s) => {
-        const u = await ctx.db.get(s.pacienteId);
-        return {
-          ...s,
-          pacienteLegacyId: u?.legacyDirectusId,
-        };
-      }),
-    );
+    return snapshots;
   },
 });
 

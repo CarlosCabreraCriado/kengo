@@ -51,12 +51,12 @@ export class RutinasListComponent {
   isLoadingRutinas = computed(() => this.rutinasService.isLoading());
 
   // Preview de ejercicios en rutinas
-  expandedRutinaId = signal<number | null>(null);
+  expandedRutinaId = signal<string | null>(null);
   loadingPreview = signal(false);
   previewEjercicios = signal<EjercicioRutina[]>([]);
 
   // Menu state
-  openRutinaMenuId: number | null = null;
+  openRutinaMenuId: string | null = null;
   filtroMenuAbierto = signal(false);
 
   // Opciones del filtro de visibilidad
@@ -162,7 +162,7 @@ export class RutinasListComponent {
     this.router.navigate(['/rutinas', rutina.id_rutina, 'editar']);
   }
 
-  toggleRutinaMenu(rutinaId: number) {
+  toggleRutinaMenu(rutinaId: string) {
     this.openRutinaMenuId = this.openRutinaMenuId === rutinaId ? null : rutinaId;
   }
 

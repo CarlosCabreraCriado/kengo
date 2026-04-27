@@ -225,10 +225,9 @@ export const closeOpenSessionsAtEndOfDay = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ cerradas: number }> => {
     const hoy = getCurrentMadridDate();
-    const abiertas = await ctx.db
-      .query("sessions")
-      .withIndex("by_estado_fechaInicio", (q) => q.eq("estado", "en_curso"))
-      .collect();
+    const abiertas = (await ctx.db.query("sessions").collect()).filter(
+      (s) => s.estado === "en_curso",
+    );
 
     let cerradas = 0;
     for (const s of abiertas) {

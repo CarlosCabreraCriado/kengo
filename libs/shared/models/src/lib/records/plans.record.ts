@@ -13,8 +13,8 @@ import { UsuarioRecord } from './users.record';
 export type EstadoPlan = 'borrador' | 'activo' | 'completado' | 'cancelado';
 
 export interface RegistroEjercicioRecord {
-  id_registro: number;
-  plan_item: number | { id: number };
+  id_registro: string;
+  plan_item: string | { id: string };
   paciente: string | UsuarioRecord;
   fecha_hora: string;
   completado: boolean;

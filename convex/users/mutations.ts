@@ -14,31 +14,6 @@ function buildSearchableText(
     .join(" ");
 }
 
-/**
- * Vincula el UUID legacy del usuario actual (campo `legacyDirectusId`).
- * Se llama una sola vez para preservar referencias a IDs externos heredados.
- */
-export const setLegacyDirectusId = mutation({
-  args: { directusId: v.string() },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("No autenticado");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_externalId", (q) => q.eq("externalId", identity.subject))
-      .unique();
-
-    if (!user) throw new Error("Usuario no encontrado");
-
-    if (!user.legacyDirectusId) {
-      await ctx.db.patch(user._id, { legacyDirectusId: args.directusId });
-    }
-
-    return user._id;
-  },
-});
-
 export const upsertFromAuth = internalMutation({
   args: {
     externalId: v.string(),
@@ -225,8 +200,7 @@ export const upsertPatientWithMembership = internalMutation({
  */
 export const updatePatient = mutation({
   args: {
-    patientId: v.optional(v.id("users")),
-    patientLegacyId: v.optional(v.string()),
+    patientId: v.id("users"),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     email: v.optional(v.string()),
@@ -235,26 +209,18 @@ export const updatePatient = mutation({
       v.array(
         v.object({
           clinicId: v.id("clinics"),
-          puesto: v.number(),
+          puesto: v.union(
+            v.literal("fisio"),
+            v.literal("paciente"),
+            v.literal("admin"),
+          ),
         }),
       ),
     ),
   },
   handler: async (ctx, args) => {
     await getAuthenticatedUser(ctx);
-
-    // Resolver pacienteId
-    let patientId: Id<"users"> | null = args.patientId ?? null;
-    if (!patientId && args.patientLegacyId) {
-      const u = await ctx.db
-        .query("users")
-        .withIndex("by_legacyDirectusId", (q) =>
-          q.eq("legacyDirectusId", args.patientLegacyId!),
-        )
-        .unique();
-      patientId = u?._id ?? null;
-    }
-    if (!patientId) throw new Error("Paciente no encontrado");
+    const patientId: Id<"users"> = args.patientId;
 
     // Patch de datos básicos
     const patch: Record<string, unknown> = {};

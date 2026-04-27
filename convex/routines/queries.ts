@@ -174,39 +174,3 @@ export const getById = query({
   },
 });
 
-export const getByLegacyId = query({
-  args: { legacyId: v.number() },
-  handler: async (ctx, args) => {
-    const routine = await ctx.db
-      .query("routines")
-      .withIndex("by_legacyId", (q) => q.eq("legacyId", args.legacyId))
-      .unique();
-
-    if (!routine) {
-      throw new Error(`Rutina con legacyId ${args.legacyId} no encontrada`);
-    }
-
-    const exercises = await ctx.db
-      .query("routineExercises")
-      .withIndex("by_routineId", (q) => q.eq("routineId", routine._id))
-      .collect();
-
-    const enrichedExercises = await enrichRoutineExercises(ctx, exercises);
-
-    const autor = await ctx.db.get(routine.autorId);
-
-    return {
-      ...routine,
-      autor: autor
-        ? {
-            _id: autor._id,
-            firstName: autor.firstName,
-            lastName: autor.lastName,
-            email: autor.email,
-            avatar: autor.avatar,
-          }
-        : null,
-      ejercicios: enrichedExercises,
-    };
-  },
-});

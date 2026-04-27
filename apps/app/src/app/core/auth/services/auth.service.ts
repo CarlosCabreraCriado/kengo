@@ -116,7 +116,7 @@ export class AuthService {
     opciones?: { usosMaximos?: number; diasExpiracion?: number },
   ): Promise<{ id: string; url: string }> {
     return await this.convex.mutation(api.accessTokens.mutations.create, {
-      userId,
+      userId: userId as never,
       usosMaximos: opciones?.usosMaximos,
       diasExpiracion: opciones?.diasExpiracion,
     });
@@ -124,7 +124,7 @@ export class AuthService {
 
   async listarTokensAcceso(userId: string) {
     return await this.convex.query(api.accessTokens.queries.listByUser, {
-      userId,
+      userId: userId as never,
     });
   }
 

@@ -95,7 +95,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     if (rutinaId) {
       // Modo edición: cargar rutina existente
       this.isLoading.set(true);
-      const result = await this.svc.startEditRutinaMode(+rutinaId);
+      const result = await this.svc.startEditRutinaMode(rutinaId);
       this.isLoading.set(false);
 
       if (!result) {
@@ -159,7 +159,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.svc.updateItem(i, { dias_semana: Array.from(set) as DiaSemana[] });
   }
 
-  removeEjercicio(ejercicioId: number) {
+  removeEjercicio(ejercicioId: string) {
     this.svc.removeEjercicio(ejercicioId);
     // Si no quedan ejercicios, volver a la galería
     if (this.svc.items().length === 0) {

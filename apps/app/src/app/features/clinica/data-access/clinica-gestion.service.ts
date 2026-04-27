@@ -55,7 +55,7 @@ export class ClinicaGestionService {
 
       return {
         success: true,
-        clinicaId: result.clinicLegacyId,
+        clinicaId: result.clinicId,
         nombreClinica: result.nombreClinica,
         tipo: result.tipo,
       };
@@ -106,17 +106,14 @@ export class ClinicaGestionService {
    * Actualiza los datos de una clínica existente (solo para administradores)
    */
   async actualizarClinica(
-    clinicaId: number,
+    clinicaId: string,
     payload: UpdateClinicaPayload,
   ): Promise<{ success: boolean; error?: string }> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
-      const convexId = this.clinicasService.legacyToConvexClinicId().get(clinicaId);
-      if (!convexId) {
-        return { success: false, error: 'Clínica no encontrada' };
-      }
+      const convexId = clinicaId as Id<'clinics'>;
 
       const result = await this.convex.mutation(
         api.clinics.mutations.update,
@@ -158,7 +155,7 @@ export class ClinicaGestionService {
    * Genera un nuevo código de acceso para una clínica
    */
   async generarCodigo(
-    clinicaId: number,
+    clinicaId: string,
     tipo: TipoCodigoAcceso,
     opciones?: { usosMaximos?: number | null; diasExpiracion?: number | null; email?: string | null },
   ): Promise<GenerarCodigoResponse> {
@@ -166,10 +163,7 @@ export class ClinicaGestionService {
     this.error.set(null);
 
     try {
-      const convexId = this.clinicasService.legacyToConvexClinicId().get(clinicaId);
-      if (!convexId) {
-        return { success: false, error: 'Clínica no encontrada' };
-      }
+      const convexId = clinicaId as Id<'clinics'>;
 
       // Calcular fecha de expiracion si se proporcionan dias
       let fechaExpiracion: string | undefined;
@@ -206,18 +200,15 @@ export class ClinicaGestionService {
   /**
    * Lista los códigos de acceso de una clínica
    */
-  listarCodigos(clinicaId: number): Observable<CodigoAcceso[]> {
-    const convexId = this.clinicasService.legacyToConvexClinicId().get(clinicaId);
-    if (!convexId) {
-      return from(Promise.resolve([]));
-    }
+  listarCodigos(clinicaId: string): Observable<CodigoAcceso[]> {
+    const convexId = clinicaId as Id<'clinics'>;
 
     return from(
       this.convex.query(api.accessCodes.queries.listByClinic, { clinicId: convexId }),
     ).pipe(
       map((codes) =>
         (codes ?? []).map((c): CodigoAcceso => ({
-          id: c._id as unknown as number, // Convex ID stored as 'id' for compat
+          id: c._id,
           codigo: c.codigo,
           tipo: c.tipo,
           activo: c.activo,
@@ -226,9 +217,7 @@ export class ClinicaGestionService {
           fechaExpiracion: c.fechaExpiracion ? new Date(c.fechaExpiracion) : null,
           email: c.email ?? null,
           fechaCreacion: new Date(c._creationTime),
-          // Store Convex ID for mutations
-          _convexId: c._id,
-        } as CodigoAcceso & { _convexId: string })),
+        })),
       ),
     );
   }
@@ -236,7 +225,7 @@ export class ClinicaGestionService {
   /**
    * Desactiva un código de acceso
    */
-  async desactivarCodigo(codigoId: number | string, clinicaId: number): Promise<{ success: boolean }> {
+  async desactivarCodigo(codigoId: string, clinicaId: string): Promise<{ success: boolean }> {
     this.loading.set(true);
     this.error.set(null);
 
@@ -259,7 +248,7 @@ export class ClinicaGestionService {
   /**
    * Reactiva un código de acceso
    */
-  async reactivarCodigo(codigoId: number | string, clinicaId: number): Promise<{ success: boolean }> {
+  async reactivarCodigo(codigoId: string, clinicaId: string): Promise<{ success: boolean }> {
     this.loading.set(true);
     this.error.set(null);
 
@@ -282,7 +271,7 @@ export class ClinicaGestionService {
   //  HELPERS DE PERMISOS
   // =========================
 
-  tienePuestoEnClinica(clinicaId: number, puestoId: number): boolean {
+  tienePuestoEnClinica(clinicaId: string, puestoId: number): boolean {
     const usuario = this.sessionService.usuario();
     if (!usuario) return false;
     const clinica = usuario.clinicas.find((c) => c.id_clinica === clinicaId);
@@ -290,22 +279,22 @@ export class ClinicaGestionService {
     return clinica.id_puesto === puestoId;
   }
 
-  esAdminEnClinica(clinicaId: number): boolean {
+  esAdminEnClinica(clinicaId: string): boolean {
     return this.tienePuestoEnClinica(clinicaId, PUESTO_ADMIN);
   }
 
-  esFisioEnClinica(clinicaId: number): boolean {
+  esFisioEnClinica(clinicaId: string): boolean {
     return this.tienePuestoEnClinica(clinicaId, PUESTO_FISIO);
   }
 
-  puedeGenerarCodigo(clinicaId: number, tipo: TipoCodigoAcceso): boolean {
+  puedeGenerarCodigo(clinicaId: string, tipo: TipoCodigoAcceso): boolean {
     const esAdmin = this.esAdminEnClinica(clinicaId);
     const esFisio = this.esFisioEnClinica(clinicaId);
     if (tipo === 'fisioterapeuta') return esAdmin;
     return esAdmin || esFisio;
   }
 
-  puedeGestionarCodigos(clinicaId: number): boolean {
+  puedeGestionarCodigos(clinicaId: string): boolean {
     return this.esAdminEnClinica(clinicaId) || this.esFisioEnClinica(clinicaId);
   }
 

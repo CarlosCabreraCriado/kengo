@@ -5,10 +5,10 @@ import type { UUID } from '../types/common';
  * Tipo de dominio transformado para uso en las apps.
  */
 export interface AsignacionResponsable {
-  id: number;
+  id: string;
   idPaciente: UUID;
   idFisio: UUID;
-  idClinica: number;
+  idClinica: string;
   nombreFisio?: string;
   apellidoFisio?: string;
   avatarFisio?: string;

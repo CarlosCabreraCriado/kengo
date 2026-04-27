@@ -7,7 +7,6 @@ import type { MetricasPacientesBulk } from '../../../../types/global';
 type SnapshotDoc = {
   _id: string;
   pacienteId: string;
-  pacienteLegacyId?: string;
   clinicId: string;
   fisioId: string;
   ventana: '7d' | '30d';
@@ -24,13 +23,9 @@ export class MetricasPacientesService {
   private convex = inject(ConvexService);
 
   /**
-   * Obtiene el bulk de métricas indexadas por id de paciente.
-   *
-   * Modelo nuevo (Fase 3 rediseño records):
-   * - Resuelve las clínicas gestionadas por el usuario actual (`me.queries.myManagedClinics`).
-   * - Por cada clínica, lee `patientMetricsSnapshot` ventana 30d (default).
-   * - Construye un mapa indexado por `pacienteLegacyId` (UUID legacy) y
-   *   también por `pacienteId` Convex, para soportar ambos formatos.
+   * Obtiene el bulk de métricas indexadas por `pacienteId` (Convex Id).
+   * Lee `patientMetricsSnapshot` (ventana 30d por defecto) de todas las
+   * clínicas gestionadas por el usuario actual.
    */
   getMetricasBulk(ventana: '7d' | '30d' = '30d'): Observable<MetricasPacientesBulk> {
     return from(this.fetchBulk(ventana));
@@ -58,17 +53,12 @@ export class MetricasPacientesService {
       for (const s of snaps) all.push(s);
     }
 
-    // Mapa indexado por ambos: pacienteId Convex y pacienteLegacyId.
     const out: MetricasPacientesBulk = {};
     for (const s of all) {
-      const entry = {
+      out[s.pacienteId] = {
         adherencia: s.adherencia,
         dolor_promedio: s.dolorPromedio ?? null,
       };
-      out[s.pacienteId] = entry;
-      if (s.pacienteLegacyId) {
-        out[s.pacienteLegacyId] = entry;
-      }
     }
     return out;
   }

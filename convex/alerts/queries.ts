@@ -82,23 +82,7 @@ export const listByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-
-    // Resolver pacienteId (acepta UUID legacy o Convex Id).
-    let targetId: Id<"users">;
-    if (args.pacienteId.includes("-")) {
-      const found = await ctx.db
-        .query("users")
-        .withIndex("by_legacyDirectusId", (q) =>
-          q.eq("legacyDirectusId", args.pacienteId),
-        )
-        .unique();
-      if (!found) {
-        return { items: [] as Doc<"physioAlerts">[], pendientes: 0, total: 0 };
-      }
-      targetId = found._id;
-    } else {
-      targetId = args.pacienteId as Id<"users">;
-    }
+    const targetId = args.pacienteId as Id<"users">;
 
     // Permiso: el fisio debe gestionar al menos una clínica que comparta el
     // paciente. Tomamos cualquier clinicId del paciente y validamos.

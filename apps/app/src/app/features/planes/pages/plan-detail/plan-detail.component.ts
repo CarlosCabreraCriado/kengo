@@ -99,13 +99,13 @@ export class PlanDetailComponent implements OnInit {
 
     const planId = this.route.snapshot.params['id'];
     if (planId) {
-      this.loadPlan(+planId);
+      this.loadPlan(planId);
     } else {
       this.router.navigate(['/planes']);
     }
   }
 
-  private async loadPlan(id: number) {
+  private async loadPlan(id: string) {
     this.isLoading.set(true);
     try {
       const plan = await this.planesService.getPlanById(id);

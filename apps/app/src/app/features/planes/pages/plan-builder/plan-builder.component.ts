@@ -121,11 +121,10 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     const pacienteId = this.route.snapshot.queryParams['paciente'];
 
     if (planId) {
-      // Modo edicion - skip reload si volvemos del catálogo con el mismo plan
-      if (this.svc.isAlreadyLoadedForEdit(+planId)) {
+      if (this.svc.isAlreadyLoadedForEdit(planId)) {
         this.syncFormFromService();
       } else {
-        this.loadPlanForEdit(+planId);
+        this.loadPlanForEdit(planId);
       }
     } else if (pacienteId) {
       // Modo nuevo con paciente
@@ -157,7 +156,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.svc.closeDrawer();
   }
 
-  private async loadPlanForEdit(planId: number) {
+  private async loadPlanForEdit(planId: string) {
     this.isLoading.set(true);
     try {
       const success = await this.svc.loadPlanForEdit(planId);
@@ -294,7 +293,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.svc.updateItem(i, { dias_semana: Array.from(set) as DiaSemana[] });
   }
 
-  removeEjercicio(ejercicioId: number) {
+  removeEjercicio(ejercicioId: string) {
     this.svc.removeEjercicio(ejercicioId);
   }
 
@@ -316,7 +315,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
     this.isSaving.set(true);
     try {
-      let planId: number | null;
+      let planId: string | null;
       let wasVersioned = false;
 
       if (this.isEditMode()) {

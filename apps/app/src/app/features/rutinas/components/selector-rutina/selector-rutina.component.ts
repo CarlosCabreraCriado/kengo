@@ -249,13 +249,13 @@ import { Rutina, RutinaCompleta } from '../../../../../types/global';
   `],
 })
 export class SelectorRutinaComponent implements OnInit {
-  private dialogRef = inject(DialogRef<number>);
+  private dialogRef = inject(DialogRef<string>);
   rutinasService = inject(RutinasService);
 
   busqueda = '';
   filtro: 'todas' | 'privadas' | 'publicas' = 'todas';
 
-  selectedId = signal<number | null>(null);
+  selectedId = signal<string | null>(null);
   selectedRutina = signal<Rutina | null>(null);
   isLoadingPreview = signal(false);
   previewEjercicios = signal<RutinaCompleta['ejercicios']>([]);

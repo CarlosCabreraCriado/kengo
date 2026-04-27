@@ -17,7 +17,7 @@ export interface ClinicaImagen {
  * Clínica transformada para uso en la aplicación
  */
 export interface Clinica {
-  id_clinica: number;
+  id_clinica: string;
   nombre: string;
   telefono?: string | null;
   email?: string | null;
@@ -34,7 +34,7 @@ export interface Clinica {
  * Datos de clínica para uso en backend (PDF, reportes)
  */
 export interface ClinicaData {
-  id_clinica: number;
+  id_clinica: string;
   nombre: string;
   telefono: string | null;
   email: string | null;

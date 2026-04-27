@@ -8,30 +8,12 @@ function buildUrl(token: string): string {
   return `${appUrl}/magic?t=${token}`;
 }
 
-// Resuelve un userId que puede ser UUID legacy o Convex Id.
-async function resolveUserId(
-  ctx: any,
-  idOrUuid: string,
-): Promise<Id<"users"> | null> {
-  if (!idOrUuid.includes("-")) {
-    return idOrUuid as Id<"users">;
-  }
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_legacyDirectusId", (q: any) =>
-      q.eq("legacyDirectusId", idOrUuid),
-    )
-    .unique();
-  return user?._id ?? null;
-}
-
 export const listByUser = query({
-  args: { userId: v.string() },
+  args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     await getAuthenticatedUser(ctx);
 
-    const targetId = await resolveUserId(ctx, args.userId);
-    if (!targetId) return { data: [] as any[] };
+    const targetId = args.userId;
 
     const tokens = await ctx.db
       .query("accessTokens")

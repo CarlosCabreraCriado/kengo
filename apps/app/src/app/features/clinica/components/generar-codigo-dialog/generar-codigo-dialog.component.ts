@@ -12,7 +12,7 @@ import type { TipoCodigoAcceso } from '@kengo/shared-models';
   styleUrl: './generar-codigo-dialog.component.css',
 })
 export class GenerarCodigoDialogComponent implements OnInit {
-  @Input({ required: true }) clinicaId!: number;
+  @Input({ required: true }) clinicaId!: string;
   @Input() esAdmin = false;
   @Input() tipoInicial: TipoCodigoAcceso | null = null;
 

@@ -52,7 +52,7 @@ export interface VincularClinicaPayload {
  */
 export interface VincularClinicaResponse {
   success: boolean;
-  clinicaId?: number;
+  clinicaId?: string;
   nombreClinica?: string;
   tipo?: TipoCodigoAcceso;
   error?: string;
@@ -63,7 +63,7 @@ export interface VincularClinicaResponse {
  */
 export interface CrearClinicaResponse {
   success: boolean;
-  clinicaId?: number;
+  clinicaId?: string;
   error?: string;
 }
 
@@ -71,7 +71,7 @@ export interface CrearClinicaResponse {
  * Payload para generar un nuevo código de acceso
  */
 export interface GenerarCodigoPayload {
-  id_clinica: number;
+  id_clinica: string;
   tipo: TipoCodigoAcceso;
   usos_maximos?: number | null;
   dias_expiracion?: number | null;

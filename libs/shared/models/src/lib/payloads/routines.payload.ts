@@ -22,7 +22,7 @@ export interface CreateRutinaPayload {
  * Payload para crear un ejercicio dentro de una rutina
  */
 export interface CreateRutinaEjercicioPayload {
-  ejercicio: number;
+  ejercicio: string;
   sort: number;
   series?: number;
   repeticiones?: number;

@@ -37,7 +37,7 @@ interface ThemeCacheV1 {
   v: 1;
   updatedAt: string;
   expiresAt: string;
-  idClinica: number | null;
+  idClinica: string | null;
   colorPrimario: string;
   logoFileId: string | null;
   palette: ColorPalette;

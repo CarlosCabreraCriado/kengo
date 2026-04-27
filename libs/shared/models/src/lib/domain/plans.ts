@@ -14,7 +14,7 @@ export { EstadoPlan } from '../records/plans.record';
  * Plan transformado para uso en la aplicación
  */
 export interface Plan {
-  id_plan: number;
+  id_plan: string;
   paciente: UUID | Usuario;
   fisio: UUID | Usuario;
   titulo: string;
@@ -24,7 +24,7 @@ export interface Plan {
   fecha_fin?: string | null;
   date_created?: string;
   date_updated?: string;
-  plan_anterior?: number | null;
+  plan_anterior?: string | null;
   version?: number;
 }
 
@@ -41,11 +41,11 @@ export interface PlanCompleto extends Plan {
  * Ejercicio dentro de un plan
  */
 export interface EjercicioPlan {
-  id?: number;
+  id?: string;
   sort: number;
   date_created?: string;
   date_updated?: string;
-  plan?: number;
+  plan?: string;
   ejercicio: Ejercicio;
   instrucciones_paciente?: string;
   notas_fisio?: string;
@@ -57,13 +57,9 @@ export interface EjercicioPlan {
   dias_semana?: DiaSemana[];
 }
 
-/**
- * Registro de ejecución de un ejercicio
- * Incluye esfuerzo_escala que existe en BD
- */
 export interface RegistroEjercicio {
-  id_registro?: number;
-  plan_item: number;
+  id_registro?: string;
+  plan_item: string;
   paciente: UUID;
   fecha_hora: string;
   completado: boolean;
@@ -74,11 +70,8 @@ export interface RegistroEjercicio {
   nota_paciente?: string;
 }
 
-/**
- * Datos de plan para uso en backend (PDF, reportes)
- */
 export interface PlanData {
-  id_plan: number;
+  id_plan: string;
   titulo: string;
   descripcion: string | null;
   estado: string;
@@ -88,11 +81,8 @@ export interface PlanData {
   fisio: UUID;
 }
 
-/**
- * Ejercicio de plan para uso en backend (PDF, reportes)
- */
 export interface EjercicioPlanData {
-  id: number;
+  id: string;
   sort: number | null;
   series: number;
   repeticiones: number;
@@ -102,7 +92,7 @@ export interface EjercicioPlanData {
   dias_semana: string | null;
   instrucciones_paciente: string | null;
   notas_fisio: string | null;
-  id_ejercicio: number;
+  id_ejercicio: string;
   nombre_ejercicio: string;
   ejercicio_descripcion: string | null;
   portada: string | null;

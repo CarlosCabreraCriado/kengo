@@ -72,14 +72,14 @@ export class PlanesComponent implements OnInit {
   isLoadingRutinas = computed(() => this.rutinasService.isLoading());
 
   // Preview de ejercicios en rutinas
-  expandedRutinaId = signal<number | null>(null);
+  expandedRutinaId = signal<string | null>(null);
   loadingPreview = signal(false);
   previewEjercicios = signal<EjercicioRutina[]>([]);
 
   // Menu state for custom dropdowns
   menuEstadoOpen = false;
-  openPlanMenuId: number | null = null;
-  openRutinaMenuId: number | null = null;
+  openPlanMenuId: string | null = null;
+  openRutinaMenuId: string | null = null;
 
   estadoLabels: Record<EstadoPlan, string> = {
     borrador: 'Borrador',
@@ -292,12 +292,12 @@ export class PlanesComponent implements OnInit {
   }
 
   // === Menu helpers ===
-  togglePlanMenu(planId: number) {
+  togglePlanMenu(planId: string) {
     this.openPlanMenuId = this.openPlanMenuId === planId ? null : planId;
     this.openRutinaMenuId = null;
   }
 
-  toggleRutinaMenu(rutinaId: number) {
+  toggleRutinaMenu(rutinaId: string) {
     this.openRutinaMenuId = this.openRutinaMenuId === rutinaId ? null : rutinaId;
     this.openPlanMenuId = null;
   }

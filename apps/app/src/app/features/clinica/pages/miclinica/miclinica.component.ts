@@ -204,7 +204,7 @@ export class MiClinicaComponent {
     }
   }
 
-  async desactivarCodigo(codigoId: number) {
+  async desactivarCodigo(codigoId: string) {
     const clinica = this.currentClinic();
     if (!clinica) return;
 
@@ -215,7 +215,7 @@ export class MiClinicaComponent {
     }
   }
 
-  async reactivarCodigo(codigoId: number) {
+  async reactivarCodigo(codigoId: string) {
     const clinica = this.currentClinic();
     if (!clinica) return;
 

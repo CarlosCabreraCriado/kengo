@@ -2,8 +2,8 @@
  * Tipos base y utilitarios compartidos
  */
 
-/** ID genérico que puede ser string o número */
-export type ID = string | number;
+/** ID genérico (Convex Id, string opaco). */
+export type ID = string;
 
 /** UUID de 36 caracteres. */
 export type UUID = string;

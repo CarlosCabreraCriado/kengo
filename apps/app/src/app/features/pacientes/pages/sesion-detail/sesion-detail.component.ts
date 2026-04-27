@@ -14,7 +14,7 @@ import { api } from '../../../../../../../../convex/_generated/api';
 const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
 interface RegistroExpandido {
-  id_registro: number;
+  id_registro: string;
   fecha_hora: string;
   completado: boolean;
   repeticiones_realizadas?: number;
@@ -23,32 +23,32 @@ interface RegistroExpandido {
   esfuerzo_escala?: number;
   nota_paciente?: string;
   plan_item: {
-    id: number;
+    id: string;
     sort: number;
     series?: number;
     repeticiones?: number;
     duracion_seg?: number;
     instrucciones_paciente?: string;
     ejercicio: {
-      id_ejercicio: number;
+      id_ejercicio: string;
       nombre_ejercicio: string;
       portada: string | null;
     };
     plan: {
-      id_plan: number;
+      id_plan: string;
       titulo: string;
     };
   };
 }
 
 interface GrupoPlan {
-  planId: number;
+  planId: string;
   planTitulo: string;
   registros: RegistroExpandido[];
 }
 
 interface EjercicioAgendado {
-  id: number;
+  id: string;
   sort: number;
   nombre: string;
   portada: string | null;
@@ -58,7 +58,7 @@ interface EjercicioAgendado {
 }
 
 interface PlanAgendadoDetalle {
-  plan_id: number;
+  plan_id: string;
   titulo: string;
   esperados: number;
   completados: number;
@@ -162,7 +162,7 @@ export class SesionDetailComponent implements OnInit {
             continue;
           }
           validos.push({
-            id_registro: e._id as unknown as number,
+            id_registro: e._id,
             fecha_hora: e.fechaHora,
             completado: e.completado,
             repeticiones_realizadas: e.repeticionesRealizadas,
@@ -171,19 +171,19 @@ export class SesionDetailComponent implements OnInit {
             esfuerzo_escala: e.esfuerzoEscala,
             nota_paciente: e.notaPaciente,
             plan_item: {
-              id: e.planExercise.legacyId ?? (e.planExercise._id as unknown as number),
+              id: e.planExercise._id,
               sort: e.planExercise.sort,
               series: e.planExercise.series,
               repeticiones: e.planExercise.repeticiones,
               duracion_seg: e.planExercise.duracionSeg,
               instrucciones_paciente: e.planExercise.instruccionesPaciente,
               ejercicio: {
-                id_ejercicio: e.planExercise.exercise.legacyId ?? 0,
+                id_ejercicio: e.planExercise.exercise._id,
                 nombre_ejercicio: e.planExercise.exercise.nombreEjercicio,
                 portada: e.planExercise.exercise.portada ?? null,
               },
               plan: {
-                id_plan: e.planExercise.plan.legacyId ?? 0,
+                id_plan: e.planExercise.plan._id,
                 titulo: e.planExercise.plan.titulo,
               },
             },
@@ -191,10 +191,9 @@ export class SesionDetailComponent implements OnInit {
         }
       }
 
-      // Sort por plan.id_plan, sort.
       validos.sort((a, b) => {
         if (a.plan_item.plan.id_plan !== b.plan_item.plan.id_plan) {
-          return a.plan_item.plan.id_plan - b.plan_item.plan.id_plan;
+          return a.plan_item.plan.id_plan.localeCompare(b.plan_item.plan.id_plan);
         }
         return a.plan_item.sort - b.plan_item.sort;
       });
@@ -213,7 +212,7 @@ export class SesionDetailComponent implements OnInit {
   }
 
   private agruparPorPlan(registros: RegistroExpandido[]): GrupoPlan[] {
-    const mapa = new Map<number, GrupoPlan>();
+    const mapa = new Map<string, GrupoPlan>();
 
     for (const reg of registros) {
       const planId = reg.plan_item.plan.id_plan;
@@ -251,7 +250,7 @@ export class SesionDetailComponent implements OnInit {
       const ejerciciosPorPlan = await Promise.all(
         planesConEjercicios.map((p) =>
           this.convex.query(api.plans.queries.listExercisesByPlanId, {
-            planLegacyId: p.plan_id,
+            planId: p.plan_id as any,
           }),
         ),
       );
@@ -266,7 +265,7 @@ export class SesionDetailComponent implements OnInit {
           return {
             ...p,
             ejercicios: items.map((item) => ({
-              id: item.legacyId ?? (item._id as unknown as number),
+              id: item._id,
               sort: item.sort,
               nombre: item.ejercicio?.nombreEjercicio ?? '',
               portada: item.ejercicio?.portada ?? null,
@@ -326,7 +325,7 @@ export class SesionDetailComponent implements OnInit {
     this.router.navigate(['/mis-pacientes', this.pacienteId()]);
   }
 
-  verPlan(planId: number) {
+  verPlan(planId: string) {
     this.router.navigate(['/planes', planId]);
   }
 }

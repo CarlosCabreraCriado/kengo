@@ -170,7 +170,7 @@ export class PacientesListComponent {
       const cid = this.idsClinicas();
       if (!cid || cid.length === 0) return 'skip';
       return {
-        clinicLegacyIds: cid,
+        clinicIds: cid as never,
         search: this.busqueda().trim() || undefined,
         limit: 200,
       };
@@ -270,7 +270,7 @@ export class PacientesListComponent {
     const cid = this.idsClinicas();
     if (!cid || cid.length === 0) return;
     // Cargar asignaciones de la primera clínica
-    this.asignacionesService.listarAsignaciones(Number(cid[0])).subscribe({
+    this.asignacionesService.listarAsignaciones(String(cid[0])).subscribe({
       next: (asignaciones) => {
         const m = new Map<string, AsignacionResponsable>();
         for (const a of asignaciones) {

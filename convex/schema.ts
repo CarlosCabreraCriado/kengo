@@ -16,35 +16,18 @@ export default defineSchema({
     direccion: v.optional(v.string()),
     postal: v.optional(v.string()),
     numeroColegiado: v.optional(v.string()),
-    // Campos personales (consolidados desde la antigua tabla userDetails).
     dni: v.optional(v.string()),
     fechaNacimiento: v.optional(v.string()),
     sexo: v.optional(v.string()),
-    legacyDirectusId: v.optional(v.string()),
     // Texto denormalizado (lower-cased) para búsqueda full-text. Se mantiene
     // sincronizado en upsertFromAuth, updateProfile, updatePatient.
     searchableText: v.optional(v.string()),
   })
     .index("by_externalId", ["externalId"])
     .index("by_email", ["email"])
-    .index("by_legacyDirectusId", ["legacyDirectusId"])
     .searchIndex("search_users", {
       searchField: "searchableText",
     }),
-
-  // DEPRECADO: tabla mantenida para compatibilidad durante migración.
-  // Los nuevos datos se escriben directamente en `users`. Ejecutar la
-  // internal mutation `users.migration.migrateUserDetailsToUsers` para
-  // copiar los datos legacy y luego eliminar esta tabla.
-  userDetails: defineTable({
-    userId: v.id("users"),
-    dni: v.optional(v.string()),
-    fechaNacimiento: v.optional(v.string()),
-    sexo: v.optional(v.string()),
-    direccion: v.optional(v.string()),
-    postal: v.optional(v.string()),
-    telefono: v.optional(v.string()),
-  }).index("by_userId", ["userId"]),
 
   // === CLÍNICAS ===
   clinics: defineTable({
@@ -59,8 +42,7 @@ export default defineSchema({
     colorPrimario: v.optional(v.string()),
     colorSecundario: v.optional(v.string()),
     createdBy: v.id("users"),
-    legacyId: v.optional(v.number()),
-  }).index("by_legacyId", ["legacyId"]),
+  }),
 
   clinicFiles: defineTable({
     clinicId: v.id("clinics"),
@@ -68,14 +50,10 @@ export default defineSchema({
     fileId: v.string(),
   }).index("by_clinicId", ["clinicId"]),
 
-  // puesto: literal "fisio" | "paciente" | "admin" (números legacy 1/2/4
-  // se aceptan transitoriamente para no romper datos existentes; el cron
-  // de mantenimiento + migrateRolesToLiterals los convierte).
   clinicMemberships: defineTable({
     userId: v.id("users"),
     clinicId: v.id("clinics"),
     puesto: v.union(
-      v.number(),
       v.literal("fisio"),
       v.literal("paciente"),
       v.literal("admin"),
@@ -93,15 +71,11 @@ export default defineSchema({
     repeticionesDefecto: v.optional(v.string()),
     video: v.optional(v.string()),
     portada: v.optional(v.string()),
-    legacyId: v.optional(v.number()),
-  })
-    .index("by_legacyId", ["legacyId"])
-    .searchIndex("search_nombre", { searchField: "nombreEjercicio" }),
+  }).searchIndex("search_nombre", { searchField: "nombreEjercicio" }),
 
   categories: defineTable({
     nombreCategoria: v.string(),
-    legacyId: v.optional(v.number()),
-  }).index("by_legacyId", ["legacyId"]),
+  }),
 
   exerciseCategories: defineTable({
     exerciseId: v.id("exercises"),
@@ -135,14 +109,12 @@ export default defineSchema({
     version: v.number(),
     pacienteNombre: v.optional(v.string()),
     fisioNombre: v.optional(v.string()),
-    legacyId: v.optional(v.number()),
   })
     .index("by_fisioId", ["fisioId"])
     .index("by_pacienteId", ["pacienteId"])
     .index("by_estado", ["estado"])
     .index("by_fisioId_estado", ["fisioId", "estado"])
-    .index("by_pacienteId_estado", ["pacienteId", "estado"])
-    .index("by_legacyId", ["legacyId"]),
+    .index("by_pacienteId_estado", ["pacienteId", "estado"]),
 
   planExercises: defineTable({
     planId: v.id("plans"),
@@ -157,46 +129,25 @@ export default defineSchema({
     instruccionesPaciente: v.optional(v.string()),
     notasFisio: v.optional(v.string()),
     ejercicioNombre: v.optional(v.string()),
-    legacyId: v.optional(v.number()),
   })
     .index("by_planId", ["planId"])
-    .index("by_planId_sort", ["planId", "sort"])
-    .index("by_legacyId", ["legacyId"]),
+    .index("by_planId_sort", ["planId", "sort"]),
 
   // === SESIONES ===
-  // Tabla en proceso de rediseño: los campos sin v.optional son legacy y se
-  // mantienen mientras conviva el modelo antiguo (`sessions.mutations.create`/
-  // `complete`). Los campos nuevos (clinicId, planIds, fecha, estado, agregados,
-  // motivoCierre, observacionesPaciente, esSintetica) se rellenarán por las
-  // mutations nuevas en `sessions/internal.ts` durante Fase 1 funcional.
   sessions: defineTable({
     pacienteId: v.id("users"),
-    fechaInicio: v.string(),
+    clinicId: v.id("clinics"),
+    fecha: v.string(), // YYYY-MM-DD (Europe/Madrid)
+    fechaInicio: v.string(), // ISO timestamp de apertura
     fechaFin: v.optional(v.string()),
-    // Campos legacy pendientes de limpieza vía
-    // `migrations/cleanup.ts:cleanupLegacySessionFields`. Se eliminarán del
-    // schema en el commit posterior, una vez el cleanup haya pasado en
-    // producción.
-    observacionesGenerales: v.optional(v.string()),
-    completada: v.optional(v.boolean()),
-    legacyId: v.optional(v.number()),
-
-    // Campos nuevos (rediseño): opcionales durante coexistencia.
-    clinicId: v.optional(v.id("clinics")),
-    planIds: v.optional(v.array(v.id("plans"))),
-    fecha: v.optional(v.string()), // YYYY-MM-DD (Europe/Madrid)
-    estado: v.optional(
-      v.union(
-        v.literal("en_curso"),
-        v.literal("completada"),
-        v.literal("completada_parcial"),
-      ),
+    estado: v.union(
+      v.literal("en_curso"),
+      v.literal("completada"),
+      v.literal("completada_parcial"),
     ),
+    planIds: v.optional(v.array(v.id("plans"))),
     motivoCierre: v.optional(
-      v.union(
-        v.literal("auto_completitud"),
-        v.literal("cron_nocturno"),
-      ),
+      v.union(v.literal("auto_completitud"), v.literal("cron_nocturno")),
     ),
     totalEsperados: v.optional(v.number()),
     totalCompletados: v.optional(v.number()),
@@ -209,10 +160,9 @@ export default defineSchema({
     esSintetica: v.optional(v.boolean()),
   })
     .index("by_pacienteId", ["pacienteId"])
-    .index("by_legacyId", ["legacyId"])
     .index("by_pacienteId_fecha", ["pacienteId", "fecha"])
     .index("by_clinicId_fecha", ["clinicId", "fecha"])
-    .index("by_estado_fechaInicio", ["estado", "fechaInicio"]),
+    .index("by_pacienteId_estado", ["pacienteId", "estado"]),
 
   // === EJECUCIONES DE EJERCICIO (rediseño — sustituye a `planRecords`) ===
   // Cada ejecución pertenece a una sesión. Sin denormalizaciones de nombre
@@ -407,11 +357,9 @@ export default defineSchema({
     descripcion: v.optional(v.string()),
     autorId: v.id("users"),
     visibilidad: v.union(v.literal("privado"), v.literal("clinica")),
-    legacyId: v.optional(v.number()),
   })
     .index("by_autorId", ["autorId"])
     .index("by_visibilidad", ["visibilidad"])
-    .index("by_legacyId", ["legacyId"])
     .searchIndex("search_nombre", { searchField: "nombre" }),
 
   routineExercises: defineTable({

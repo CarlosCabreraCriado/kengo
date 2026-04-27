@@ -72,11 +72,11 @@ export class PlanBuilderService {
   private injector = inject(Injector);
 
   // --- Modo edicion ---
-  readonly planId = signal<number | null>(null);
+  readonly planId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.planId() !== null);
 
   /** Devuelve true si el plan ya está cargado en memoria para este planId */
-  isAlreadyLoadedForEdit(planId: number): boolean {
+  isAlreadyLoadedForEdit(planId: string): boolean {
     return this.planId() === planId && this.items().length > 0;
   }
 
@@ -87,7 +87,7 @@ export class PlanBuilderService {
   // --- Modo rutina (sin paciente) ---
   readonly mode = signal<'plan' | 'rutina'>('plan');
   readonly isRutinaMode = computed(() => this.mode() === 'rutina');
-  readonly rutinaEditId = signal<number | null>(null);
+  readonly rutinaEditId = signal<string | null>(null);
   readonly isRutinaEditMode = computed(() => this.rutinaEditId() !== null);
 
   // Computed para validar guardado de rutina (sin requerir paciente)
@@ -324,8 +324,8 @@ export class PlanBuilderService {
   }
 
   async getPacienteById(id: string): Promise<Usuario | null> {
-    const data = await this.convex.query(api.users.queries.getByLegacyId, {
-      legacyDirectusId: id,
+    const data = await this.convex.query(api.users.queries.getById, {
+      userId: id as any,
     });
     if (!data) return null;
     return this.sessionService.transformarUsuarioConvex(data);
@@ -372,7 +372,7 @@ export class PlanBuilderService {
     this.openDrawer();
   }
 
-  removeEjercicio(ejercicioId: number) {
+  removeEjercicio(ejercicioId: string) {
     this.items.update((list) =>
       list
         .filter((i) => i.ejercicio.id_ejercicio !== ejercicioId)
@@ -406,7 +406,7 @@ export class PlanBuilderService {
     this.items.set(arr);
   }
 
-  async submitPlan(): Promise<number | null> {
+  async submitPlan(): Promise<string | null> {
     if (!this.canSubmit()) throw new Error('Faltan datos');
     const planId = await this.createPlanDeep({
       paciente: this.paciente()!.id,
@@ -436,7 +436,7 @@ export class PlanBuilderService {
       const clinicas = this.sessionService.usuario()?.clinicas ?? [];
       const clinicaId = clinicas[0]?.id_clinica;
       if (clinicaId) {
-        this.asignacionesService.autoAsignar(p.id, f, Number(clinicaId));
+        this.asignacionesService.autoAsignar(p.id, f, String(clinicaId));
       }
     }
 
@@ -454,7 +454,7 @@ export class PlanBuilderService {
     fecha_inicio?: string | null;
     fecha_fin?: string | null;
     items: {
-      ejercicio: number;
+      ejercicio: string;
       sort: number;
       series?: number;
       repeticiones?: number;
@@ -466,7 +466,7 @@ export class PlanBuilderService {
       notas_fisio?: string;
       media_personalizada?: string | null;
     }[];
-  }): Promise<number | null> {
+  }): Promise<string | null> {
     try {
       const pacienteConvexId = this.resolvePatientConvexId(payload.paciente as string);
       if (!pacienteConvexId) {
@@ -481,7 +481,7 @@ export class PlanBuilderService {
         fechaInicio: payload.fecha_inicio ?? undefined,
         fechaFin: payload.fecha_fin ?? undefined,
         ejercicios: payload.items.map((item) => ({
-          exerciseId: this.resolveExerciseId(item.ejercicio),
+          exerciseId: item.ejercicio as any,
           sort: item.sort,
           series: item.series,
           repeticiones: item.repeticiones,
@@ -494,7 +494,7 @@ export class PlanBuilderService {
         })),
       });
 
-      return 0; // El ID real se obtiene via suscripción reactiva
+      return null;
     } catch (error) {
       console.error('Error al crear plan:', error);
       return null;
@@ -534,14 +534,14 @@ export class PlanBuilderService {
   // MODO EDICION
   // ============================================
 
-  setPlanId(id: number | null) {
+  setPlanId(id: string | null) {
     this.planId.set(id);
   }
 
   /**
    * Cargar un plan existente para editar
    */
-  async loadPlanForEdit(planId: number): Promise<boolean> {
+  async loadPlanForEdit(planId: string): Promise<boolean> {
     try {
       const plan = await this.planesService.getPlanById(planId);
       if (!plan) return false;
@@ -584,18 +584,15 @@ export class PlanBuilderService {
   /**
    * Actualizar un plan existente
    */
-  async updatePlan(): Promise<number | null> {
+  async updatePlan(): Promise<string | null> {
     const id = this.planId();
     if (!id || !this.canSubmit())
       throw new Error('Faltan datos para actualizar');
 
     try {
-      const convexId = this.planesService.resolveConvexId(id);
-      if (!convexId) throw new Error('No se pudo resolver el Convex ID del plan');
-
       // Una sola mutation atómica: metadata + replace all exercises
       await this.convex.mutation(api.plans.mutations.update, {
-        planId: convexId as any,
+        planId: id as any,
         titulo: this.titulo() || 'Plan sin título',
         descripcion: this.descripcion() || '',
         fechaInicio: this.fecha_inicio() ?? undefined,
@@ -633,17 +630,11 @@ export class PlanBuilderService {
   /**
    * Comprobar si un plan tiene registros de actividad del paciente
    */
-  async checkPlanHasActivity(planId: number): Promise<boolean> {
+  async checkPlanHasActivity(planId: string): Promise<boolean> {
     try {
-      const convexId = this.planesService.resolveConvexId(planId);
-      if (!convexId) {
-        this.hasActivity.set(false);
-        return false;
-      }
-
       const hasData = await this.convex.query(
         api.plans.queries.checkPlanHasActivity,
-        { planId: convexId as any },
+        { planId: planId as any },
       );
 
       this.hasActivity.set(hasData);
@@ -658,21 +649,17 @@ export class PlanBuilderService {
   /**
    * Crear nueva versión del plan: archiva el anterior y crea uno nuevo
    */
-  async versionPlan(): Promise<number | null> {
+  async versionPlan(): Promise<string | null> {
     const oldPlanId = this.planId();
     if (!oldPlanId || !this.canSubmit()) {
       throw new Error('Faltan datos para versionar');
     }
 
     try {
-      const convexId = this.planesService.resolveConvexId(oldPlanId);
-      if (!convexId) throw new Error('No se pudo resolver el Convex ID del plan');
-
       const tomorrow = new Date(Date.now() + 864e5).toISOString().split('T')[0];
 
-      // Una sola mutation atómica: archive old + create new + exercises
       await this.convex.mutation(api.plans.mutations.version, {
-        oldPlanId: convexId as any,
+        oldPlanId: oldPlanId as any,
         titulo: this.titulo() || 'Plan sin título',
         descripcion: this.descripcion() || '',
         fechaInicio: this.fecha_inicio() || tomorrow,
@@ -696,7 +683,7 @@ export class PlanBuilderService {
         p = this.paciente();
       if (f && p) this.removeFromStorage(f, p.id);
 
-      return 0; // El ID real se obtiene via suscripción reactiva
+      return null;
     } catch (error) {
       console.error('Error al versionar plan:', error);
       return null;
@@ -710,7 +697,7 @@ export class PlanBuilderService {
   /**
    * Cargar ejercicios desde una rutina
    */
-  async loadFromRutina(rutinaId: number): Promise<boolean> {
+  async loadFromRutina(rutinaId: string): Promise<boolean> {
     try {
       const rutina = await this.rutinasService.getRutinaById(rutinaId);
       if (!rutina) return false;
@@ -750,7 +737,7 @@ export class PlanBuilderService {
     nombre: string,
     descripcion: string,
     visibilidad: 'privado' | 'clinica',
-  ): Promise<number | null> {
+  ): Promise<string | null> {
     const fisio = this.fisioId();
     if (!fisio || this.items().length === 0) return null;
 
@@ -824,7 +811,7 @@ export class PlanBuilderService {
   /**
    * Activa modo edición de rutina: carga datos existentes
    */
-  async startEditRutinaMode(rutinaId: number): Promise<{ visibilidad: string } | null> {
+  async startEditRutinaMode(rutinaId: string): Promise<{ visibilidad: string } | null> {
     const rutina = await this.rutinasService.getRutinaById(rutinaId);
     if (!rutina) return null;
 
@@ -920,21 +907,8 @@ export class PlanBuilderService {
   // HELPERS DE RESOLUCIÓN DE IDs
   // ============================================
 
-  private resolveExerciseId(legacyId: number): any {
-    const convexId = this.ejerciciosService.legacyToConvexId().get(legacyId);
-    if (!convexId) {
-      throw new Error(`Ejercicio con legacyId ${legacyId} no encontrado`);
-    }
-    return convexId;
-  }
-
   private resolveExerciseIdFromItem(item: EjercicioPlan): any {
-    // Intentar usar el Convex ID directo si está disponible
-    if ((item as any)._exerciseConvexId) {
-      return (item as any)._exerciseConvexId;
-    }
-    // Fallback: resolver por legacy ID
-    return this.resolveExerciseId(item.ejercicio.id_ejercicio);
+    return item.ejercicio.id_ejercicio;
   }
 
   private resolvePatientConvexId(patientId: string): string | undefined {

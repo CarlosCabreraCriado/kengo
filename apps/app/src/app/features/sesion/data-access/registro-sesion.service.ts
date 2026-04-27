@@ -162,7 +162,7 @@ export class RegistroSesionService {
   /**
    * Iniciar una sesión con un plan específico
    */
-  async iniciarSesion(planId?: number): Promise<boolean> {
+  async iniciarSesion(planId?: string): Promise<boolean> {
     try {
       // Si hay sesión guardada, intentar restaurarla
       if (this.restaurarProgresoLocal()) {
@@ -354,7 +354,7 @@ export class RegistroSesionService {
    * Aplicar feedback final de todos los ejercicios y guardar
    */
   async aplicarFeedbackFinal(data: {
-    feedbacks: { planItemId: number; dolor: number; nota?: string }[];
+    feedbacks: { planItemId: string; dolor: number; nota?: string }[];
     observacionesGenerales?: string;
   }): Promise<void> {
     // Actualizar cada registro con su dolor y nota
@@ -656,7 +656,7 @@ export class RegistroSesionService {
 
   private mapConvexToRegistro(r: any): RegistroEjercicio {
     return {
-      id_registro: 0,
+      id_registro: r._id,
       plan_item: r.planExerciseId,
       paciente: r.pacienteId,
       fecha_hora: r.fechaHora,
@@ -666,8 +666,7 @@ export class RegistroSesionService {
       dolor_escala: r.dolorEscala,
       esfuerzo_escala: r.esfuerzoEscala,
       nota_paciente: r.notaPaciente,
-      _convexId: r._id,
-    } as RegistroEjercicio;
+    };
   }
 
   private resolvePlanExerciseId(planItem: any): string {

@@ -44,7 +44,6 @@ import type * as exercises_mutations from "../exercises/mutations.js";
 import type * as exercises_queries from "../exercises/queries.js";
 import type * as http from "../http.js";
 import type * as me_queries from "../me/queries.js";
-import type * as migrations_cleanup from "../migrations/cleanup.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as pdf_actions from "../pdf/actions.js";
 import type * as pdf_internal from "../pdf/internal.js";
@@ -68,7 +67,6 @@ import type * as storage_r2Client from "../storage/r2Client.js";
 import type * as users_actions from "../users/actions.js";
 import type * as users_details from "../users/details.js";
 import type * as users_internal from "../users/internal.js";
-import type * as users_migration from "../users/migration.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
 
@@ -115,7 +113,6 @@ declare const fullApi: ApiFromModules<{
   "exercises/queries": typeof exercises_queries;
   http: typeof http;
   "me/queries": typeof me_queries;
-  "migrations/cleanup": typeof migrations_cleanup;
   "migrations/validation": typeof migrations_validation;
   "pdf/actions": typeof pdf_actions;
   "pdf/internal": typeof pdf_internal;
@@ -139,7 +136,6 @@ declare const fullApi: ApiFromModules<{
   "users/actions": typeof users_actions;
   "users/details": typeof users_details;
   "users/internal": typeof users_internal;
-  "users/migration": typeof users_migration;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
 }>;

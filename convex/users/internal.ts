@@ -15,14 +15,6 @@ export const getRequesterByExternalId = internalQuery({
 export const resolveUser = internalQuery({
   args: { idOrUuid: v.string() },
   handler: async (ctx, args) => {
-    if (!args.idOrUuid.includes("-")) {
-      return await ctx.db.get(args.idOrUuid as Id<"users">);
-    }
-    return await ctx.db
-      .query("users")
-      .withIndex("by_legacyDirectusId", (q) =>
-        q.eq("legacyDirectusId", args.idOrUuid),
-      )
-      .unique();
+    return await ctx.db.get(args.idOrUuid as Id<"users">);
   },
 });

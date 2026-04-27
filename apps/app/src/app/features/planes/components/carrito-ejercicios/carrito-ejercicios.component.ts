@@ -125,7 +125,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     this.drawerAbierto.set(false);
   }
 
-  eliminar(ejercicioId: number) {
+  eliminar(ejercicioId: string) {
     this.svc.removeEjercicio(ejercicioId);
   }
 
@@ -213,7 +213,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     const { SelectorRutinaComponent } =
       await import('../../../rutinas/components/selector-rutina/selector-rutina.component');
 
-    const dialogRef = this.dialog.open<number>(SelectorRutinaComponent, {
+    const dialogRef = this.dialog.open<string>(SelectorRutinaComponent, {
       width: '600px',
       maxWidth: '95vw',
       panelClass: 'selector-rutina-dialog',

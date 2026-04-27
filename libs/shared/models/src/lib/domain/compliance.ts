@@ -11,7 +11,7 @@ export interface CumplimientoDia {
   ejercicios_esperados: number;
   ejercicios_completados: number;
   dolor_promedio: number | null;
-  planes: { plan_id: number; titulo: string; esperados: number; completados: number }[];
+  planes: { plan_id: string; titulo: string; esperados: number; completados: number }[];
 }
 
 export interface ResumenCumplimiento {

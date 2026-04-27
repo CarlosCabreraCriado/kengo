@@ -4,7 +4,6 @@ import {
   getAuthenticatedUser,
   checkClinicPermission,
   PUESTO_FISIOTERAPEUTA,
-  PUESTO_PACIENTE,
   PUESTO_ADMINISTRADOR,
 } from "../_helpers/permissions";
 
@@ -97,27 +96,23 @@ export const consume = mutation({
       throw new ConvexError({ code: "YA_VINCULADO", message: "Ya estás vinculado a esta clínica" });
     }
 
-    // Determinar puesto segun tipo del codigo
-    const puesto = codeDoc.tipo === "fisioterapeuta" ? PUESTO_FISIOTERAPEUTA : PUESTO_PACIENTE;
+    const puesto: "fisio" | "paciente" =
+      codeDoc.tipo === "fisioterapeuta" ? "fisio" : "paciente";
 
-    // Crear membresia
     await ctx.db.insert("clinicMemberships", {
       userId: user._id,
       clinicId: codeDoc.clinicId,
       puesto,
     });
 
-    // Incrementar usos
     await ctx.db.patch(codeDoc._id, {
       usosActuales: codeDoc.usosActuales + 1,
     });
 
-    // Obtener nombre de clinica para respuesta
     const clinic = await ctx.db.get(codeDoc.clinicId);
 
     return {
       clinicId: codeDoc.clinicId,
-      clinicLegacyId: clinic?.legacyId,
       nombreClinica: clinic?.nombre ?? "",
       tipo: codeDoc.tipo,
     };

@@ -43,7 +43,7 @@ interface DiaProximoConEjercicios {
   fechaFormateada: string;
   diaSemana: string;
   totalEjercicios: number;
-  planes: { planId: number; titulo: string; ejercicios: number }[];
+  planes: { planId: string; titulo: string; ejercicios: number }[];
   ejercicios: EjercicioProximo[];
 }
 
@@ -135,7 +135,7 @@ export class ActividadHoyComponent implements OnInit {
 
       const diaSemana = this.DIAS_SEMANA[fecha.getDay()];
       const planesConEjercicios: {
-        planId: number;
+        planId: string;
         titulo: string;
         ejercicios: number;
       }[] = [];
@@ -224,7 +224,7 @@ export class ActividadHoyComponent implements OnInit {
     this.planesActivosYFuturos.set(planesFuturos);
   }
 
-  irAPlan(planId: number): void {
+  irAPlan(planId: string): void {
     this.router.navigate(['/mi-plan', planId]);
   }
 
@@ -250,7 +250,7 @@ export class ActividadHoyComponent implements OnInit {
 
     const ejercicios: EjercicioSesionMultiPlan[] = [];
     const planesInvolucrados: {
-      planId: number;
+      planId: string;
       titulo: string;
       cantidadEjercicios: number;
     }[] = [];

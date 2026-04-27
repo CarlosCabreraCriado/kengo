@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, internalMutation } from "../_generated/server";
-import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 
 function buildUrl(token: string): string {
@@ -14,32 +13,15 @@ function randomToken(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function resolveUserId(
-  ctx: any,
-  idOrUuid: string,
-): Promise<Id<"users"> | null> {
-  if (!idOrUuid.includes("-")) {
-    return idOrUuid as Id<"users">;
-  }
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_legacyDirectusId", (q: any) =>
-      q.eq("legacyDirectusId", idOrUuid),
-    )
-    .unique();
-  return user?._id ?? null;
-}
-
 export const create = mutation({
   args: {
-    userId: v.string(),
+    userId: v.id("users"),
     usosMaximos: v.optional(v.number()),
     diasExpiracion: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const requester = await getAuthenticatedUser(ctx);
-    const targetId = await resolveUserId(ctx, args.userId);
-    if (!targetId) throw new Error("Usuario no encontrado");
+    const targetId = args.userId;
 
     const token = randomToken();
     const fechaExpiracion = args.diasExpiracion

@@ -83,21 +83,7 @@ export const markAllAsReadForPatient = mutation({
   },
   handler: async (ctx, args): Promise<{ revisadas: number }> => {
     const user = await getAuthenticatedUser(ctx);
-
-    // Resolver pacienteId (acepta UUID legacy).
-    let targetId: Id<"users">;
-    if (args.pacienteId.includes("-")) {
-      const found = await ctx.db
-        .query("users")
-        .withIndex("by_legacyDirectusId", (q) =>
-          q.eq("legacyDirectusId", args.pacienteId),
-        )
-        .unique();
-      if (!found) return { revisadas: 0 };
-      targetId = found._id;
-    } else {
-      targetId = args.pacienteId as Id<"users">;
-    }
+    const targetId = args.pacienteId as Id<"users">;
 
     const membership = await ctx.db
       .query("clinicMemberships")

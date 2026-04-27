@@ -1,42 +1,16 @@
-/**
- * Helpers compartidos para resolver pacienteId desde diferentes formatos
- * (Convex Id o legacy Directus UUID) y validar acceso del solicitante.
- *
- * Replica el patrón de `records/queries.ts:resolvePacienteId` pero centralizado
- * para reutilización en las queries del nuevo modelo (executions, rollups,
- * snapshots, alerts).
- */
-
 import { QueryCtx, MutationCtx } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { tieneGestion } from "./permissions";
 
 type AnyCtx = QueryCtx | MutationCtx;
 
-/**
- * Convierte un valor opcional `pacienteId` (Convex Id o UUID legacy) a un
- * `Id<"users">`. Si no se pasa, devuelve el `fallbackUserId` (típicamente el
- * usuario autenticado).
- *
- * Convención usada por el frontend legacy: si el string contiene un guion ("-"),
- * lo interpretamos como UUID Directus y lo resolvemos vía `users.by_legacyDirectusId`.
- */
 export async function resolvePacienteId(
-  ctx: AnyCtx,
-  pacienteIdOrUuid: string | undefined,
+  _ctx: AnyCtx,
+  pacienteId: string | undefined,
   fallbackUserId: Id<"users">,
 ): Promise<Id<"users">> {
-  if (!pacienteIdOrUuid) return fallbackUserId;
-  if (!pacienteIdOrUuid.includes("-")) {
-    return pacienteIdOrUuid as Id<"users">;
-  }
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_legacyDirectusId", (q) =>
-      q.eq("legacyDirectusId", pacienteIdOrUuid),
-    )
-    .unique();
-  return user?._id ?? fallbackUserId;
+  if (!pacienteId) return fallbackUserId;
+  return pacienteId as Id<"users">;
 }
 
 /**
