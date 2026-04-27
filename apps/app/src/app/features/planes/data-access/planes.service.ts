@@ -9,6 +9,7 @@ import { assetUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
+import { createFilteredList } from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import {
@@ -27,11 +28,8 @@ export class PlanesService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
 
-  readonly busqueda: WritableSignal<string> = signal('');
   readonly filtroEstado: WritableSignal<FiltroEstado> = signal('todos');
   readonly filtroPaciente: WritableSignal<string | null> = signal(null);
-  readonly page: WritableSignal<number> = signal(1);
-  readonly pageSize: WritableSignal<number> = signal(20);
 
   private readonly plansQuery = this.convex.watchQuery(
     api.plans.queries.listByFisio,
@@ -43,78 +41,70 @@ export class PlanesService {
     },
   );
 
-  private readonly allPlanes = computed<Plan[]>(() => {
+  private readonly rawPlanes = computed<Plan[]>(() => {
     const raw = this.plansQuery.value();
     if (!raw) return [];
+    return (raw as any[]).map((r) => this.mapConvexToPlan(r));
+  });
 
-    let result = (raw as any[]).map((r) => this.mapConvexToPlan(r));
-
-    const busq = this.busqueda().toLowerCase().trim();
-    if (busq) {
-      result = result.filter(
-        (p) =>
-          p.titulo.toLowerCase().includes(busq) ||
-          (typeof p.paciente === 'object' &&
-            `${p.paciente.first_name} ${p.paciente.last_name}`
-              .toLowerCase()
-              .includes(busq)),
+  private readonly _list = createFilteredList<Plan>({
+    source: this.rawPlanes,
+    searchPredicate: (plan, q) =>
+      plan.titulo.toLowerCase().includes(q) ||
+      (typeof plan.paciente === 'object' &&
+        `${plan.paciente.first_name} ${plan.paciente.last_name}`
+          .toLowerCase()
+          .includes(q)),
+    applyDomainFilters: (planes) => {
+      const pacFilter = this.filtroPaciente();
+      if (!pacFilter) return planes;
+      return planes.filter((p) =>
+        typeof p.paciente === 'object'
+          ? p.paciente.id === pacFilter
+          : p.paciente === pacFilter,
       );
-    }
-
-    const pacFilter = this.filtroPaciente();
-    if (pacFilter) {
-      result = result.filter((p) => {
-        if (typeof p.paciente === 'object') {
-          return p.paciente.id === pacFilter;
-        }
-        return p.paciente === pacFilter;
-      });
-    }
-
-    return result;
+    },
   });
 
-  private readonly paginatedPlanes = computed(() => {
-    const all = this.allPlanes();
-    const start = (this.page() - 1) * this.pageSize();
-    return all.slice(start, start + this.pageSize());
-  });
+  readonly busqueda = this._list.busqueda;
+  readonly page = this._list.page;
+  readonly pageSize = this._list.pageSize;
+  readonly total = this._list.total;
+  readonly totalPages = this._list.totalPages;
 
   readonly planesRes = {
-    value: computed(() => this.paginatedPlanes()),
+    value: this._list.items,
     isLoading: this.plansQuery.isLoading,
     error: this.plansQuery.error,
     reload: () => {},
   };
 
-  readonly planes = computed(() => this.paginatedPlanes());
+  readonly planes = this._list.items;
   readonly isLoading = computed(() => this.plansQuery.isLoading());
-  readonly total = computed(() => this.allPlanes().length);
 
   setBusqueda(v: string) {
-    this.busqueda.set(v);
-    this.page.set(1);
+    this._list.setBusqueda(v);
   }
 
   setFiltroEstado(v: FiltroEstado) {
     this.filtroEstado.set(v);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   setFiltroPaciente(id: string | null) {
     this.filtroPaciente.set(id);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   clearFilters() {
-    this.busqueda.set('');
+    this._list.busqueda.set('');
     this.filtroEstado.set('todos');
     this.filtroPaciente.set(null);
-    this.page.set(1);
+    this._list.resetPage();
   }
 
   goToPage(p: number) {
-    this.page.set(Math.max(1, p));
+    this._list.goToPage(p);
   }
 
   reload() {
