@@ -12,7 +12,6 @@ import { Router } from '@angular/router';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { AsignacionesService } from '../../pacientes/data-access/asignaciones.service';
 import { RutinasService } from '../../rutinas/data-access/rutinas.service';
-import { EjerciciosService } from '../../ejercicios/data-access/ejercicios.service';
 import { PlanesService } from './planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
@@ -23,11 +22,14 @@ import {
   EjercicioPlan,
   CreateRutinaPayload,
 } from '../../../../types/global';
+import { BuilderItemsState } from './internal/builder-items-state';
+import {
+  BuilderPersistence,
+  PersistedEnvelope,
+} from './internal/builder-persistence';
 
-interface PersistedStateV1 {
-  v: 1; // versión de esquema
-  updatedAt: string; // ISO
-  expiresAt?: string | null; // ISO
+interface PersistedStateV1 extends PersistedEnvelope {
+  v: 1;
   paciente: Usuario | null;
   fisioId: string;
   titulo: string;
@@ -38,26 +40,8 @@ interface PersistedStateV1 {
   drawerOpen: boolean;
 }
 
-// Estado para modo rutina (sin paciente)
-interface PersistedRutinaStateV1 {
-  v: 1;
-  updatedAt: string;
-  expiresAt?: string | null;
-  fisioId: string;
-  items: EjercicioPlan[];
-  drawerOpen: boolean;
-}
-
-//Persistencia localStorage
-const STORAGE_PREFIX = 'kengo:plan_builder:v1:';
-const storageKey = (fisioId: string, pacienteId: string) =>
-  `${STORAGE_PREFIX}f=${fisioId}:p=${pacienteId}`;
-
-// Persistencia para modo rutina
-const STORAGE_PREFIX_RUTINA = 'kengo:rutina_builder:v1:';
-const storageKeyRutina = (fisioId: string) =>
-  `${STORAGE_PREFIX_RUTINA}f=${fisioId}`;
-
+const PLAN_STORAGE_PREFIX = 'kengo:plan_builder:v1:';
+const SCHEMA_VERSION = 1;
 const DEFAULT_TTL_DAYS = 7;
 
 @Injectable({ providedIn: 'root' })
@@ -66,10 +50,21 @@ export class PlanBuilderService {
   private sessionService = inject(SessionService);
   private asignacionesService = inject(AsignacionesService);
   private rutinasService = inject(RutinasService);
-  private ejerciciosService = inject(EjerciciosService);
   private planesService = inject(PlanesService);
   private router = inject(Router);
   private injector = inject(Injector);
+
+  private readonly itemsState = new BuilderItemsState();
+
+  private readonly planPersistence = new BuilderPersistence<
+    PersistedStateV1,
+    { fisioId: string; pacienteId: string }
+  >({
+    schemaVersion: SCHEMA_VERSION,
+    ttlDays: DEFAULT_TTL_DAYS,
+    makeKey: ({ fisioId, pacienteId }) =>
+      `${PLAN_STORAGE_PREFIX}f=${fisioId}:p=${pacienteId}`,
+  });
 
   // --- Modo edicion ---
   readonly planId = signal<string | null>(null);
@@ -84,17 +79,6 @@ export class PlanBuilderService {
   readonly hasActivity = signal<boolean>(false);
   readonly currentVersion = signal<number>(1);
 
-  // --- Modo rutina (sin paciente) ---
-  readonly mode = signal<'plan' | 'rutina'>('plan');
-  readonly isRutinaMode = computed(() => this.mode() === 'rutina');
-  readonly rutinaEditId = signal<string | null>(null);
-  readonly isRutinaEditMode = computed(() => this.rutinaEditId() !== null);
-
-  // Computed para validar guardado de rutina (sin requerir paciente)
-  readonly canSaveAsRutina = computed(
-    () => !!this.fisioId() && this.items().length > 0,
-  );
-
   readonly paciente = signal<Usuario | null>(null);
 
   readonly fisioId = computed(() => {
@@ -106,7 +90,7 @@ export class PlanBuilderService {
     }
   });
 
-  readonly items = signal<EjercicioPlan[]>([]);
+  readonly items = this.itemsState.items;
   readonly titulo = signal<string>('');
   readonly descripcion = signal<string>('');
   readonly fechaInicio = signal<string | null>(null);
@@ -127,55 +111,39 @@ export class PlanBuilderService {
     return snap !== this.captureSnapshot();
   });
 
-  readonly drawerOpen = signal(false);
+  readonly drawerOpen = this.itemsState.drawerOpen;
   private saveTimer: any = null; // debounce: simple setTimeout
-  private storageInicializado = false; // para evitar guardar al restaurar
 
   constructor() {
     // Auto-guardar con debounce cuando cambie algo relevante
     effect(
       () => {
-        // leemos las señales (dispara el effect ante cambios)
         const p = this.paciente();
         const f = this.fisioId();
-        const rutinaMode = this.isRutinaMode();
-
+        // Tracking de signals que disparan el save
         const _ = [
           this.titulo(),
           this.descripcion(),
           this.fechaInicio(),
           this.fechaFin(),
-          ...this.items(), // ojo: si es array de objetos, el trigger será por referencia; suele bastar
+          ...this.items(),
         ];
 
-        // En modo rutina solo necesitamos fisioId
-        if (rutinaMode) {
-          if (!f) return;
-          this.scheduleSaveRutina(350);
-        } else {
-          // Modo plan: requiere paciente y fisio
-          if (!p || !f) return;
-          this.scheduleSave(350);
-        }
+        if (!p || !f) return;
+        this.scheduleSave(350);
       },
       { injector: this.injector },
     );
   }
 
   private scheduleSave(ms: number) {
-    clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(
-      () => this.saveToStorage().catch(console.warn),
-      ms,
-    );
-  }
+    // Sin items, no hay nada útil que persistir. Evita guardar borradores
+    // vacíos cuando consumidores como `ejercicio-detail` llaman
+    // `paciente.set(p)` antes de añadir ningún ejercicio.
+    if (this.items().length === 0) return;
 
-  private scheduleSaveRutina(ms: number) {
     clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(
-      () => this.saveRutinaToStorage().catch(console.warn),
-      ms,
-    );
+    this.saveTimer = setTimeout(() => this.saveToStorage(), ms);
   }
 
   private makePersisted(): PersistedStateV1 | null {
@@ -183,14 +151,12 @@ export class PlanBuilderService {
     const f = this.fisioId();
     if (!p || !f) return null;
 
-    const now = new Date();
-    const expires = new Date(now.getTime() + DEFAULT_TTL_DAYS * 864e5);
-
-    const data: PersistedStateV1 = {
-      v: 1,
-      updatedAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
-      paciente: this.paciente(),
+    const envelope = this.planPersistence.buildEnvelope();
+    return {
+      v: SCHEMA_VERSION,
+      updatedAt: envelope.updatedAt,
+      expiresAt: envelope.expiresAt,
+      paciente: p,
       fisioId: f,
       titulo: this.titulo(),
       descripcion: this.descripcion(),
@@ -199,71 +165,22 @@ export class PlanBuilderService {
       drawerOpen: this.drawerOpen(),
       items: this.items(),
     };
-    return data;
   }
 
-  private async saveToStorage() {
+  private saveToStorage() {
     const snap = this.makePersisted();
     if (!snap || !snap.paciente?.id) return;
-    const key = storageKey(snap.fisioId, snap.paciente.id);
-    localStorage.setItem(key, JSON.stringify(snap));
-  }
-
-  // Persistencia para modo rutina
-  private makePersistedRutina(): PersistedRutinaStateV1 | null {
-    const f = this.fisioId();
-    if (!f) return null;
-
-    const now = new Date();
-    const expires = new Date(now.getTime() + DEFAULT_TTL_DAYS * 864e5);
-
-    return {
-      v: 1,
-      updatedAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
-      fisioId: f,
-      items: this.items(),
-      drawerOpen: this.drawerOpen(),
-    };
-  }
-
-  private async saveRutinaToStorage() {
-    const snap = this.makePersistedRutina();
-    if (!snap) return;
-    const key = storageKeyRutina(snap.fisioId);
-    localStorage.setItem(key, JSON.stringify(snap));
-  }
-
-  private readRutinaFromStorage(fisioId: string): PersistedRutinaStateV1 | null {
-    const key = storageKeyRutina(fisioId);
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    try {
-      const json = JSON.parse(raw) as PersistedRutinaStateV1;
-      if (json.v !== 1) return null;
-      if (json.expiresAt && Date.now() > Date.parse(json.expiresAt)) {
-        localStorage.removeItem(key);
-        return null;
-      }
-      return json;
-    } catch {
-      localStorage.removeItem(key);
-      return null;
-    }
-  }
-
-  private clearRutinaStorage() {
-    const f = this.fisioId();
-    if (f) {
-      localStorage.removeItem(storageKeyRutina(f));
-    }
+    this.planPersistence.save(snap, {
+      fisioId: snap.fisioId,
+      pacienteId: snap.paciente.id,
+    });
   }
 
   async tryRestoreFor(pacienteId: string, fisioId?: string) {
     const f = fisioId || this.fisioId();
     if (!f) return;
 
-    const persisted = this.readFromStorage(f, pacienteId);
+    const persisted = this.planPersistence.read({ fisioId: f, pacienteId });
     if (!persisted) return;
 
     // rehidrata cabecera
@@ -272,49 +189,28 @@ export class PlanBuilderService {
     this.descripcion.set(persisted.descripcion);
     this.fechaInicio.set(persisted.fechaInicio);
     this.fechaFin.set(persisted.fechaFin);
-    this.drawerOpen.set(false);
+    this.itemsState.closeDrawer();
 
     // rehidrata ejercicios: fetch por ids y fusiona con la dosificación guardada
     const items: EjercicioPlan[] = persisted.items
       .filter((x): x is EjercicioPlan => !!x)
       .sort((a, b) => a.sort - b.sort);
 
-    this.items.set(items);
-  }
-
-  private readFromStorage(
-    fisioId: string,
-    pacienteId: string,
-  ): PersistedStateV1 | null {
-    const key = storageKey(fisioId, pacienteId);
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    try {
-      const json = JSON.parse(raw) as PersistedStateV1;
-      if (json.v !== 1) return null; // versión incompatible → ignora (o migra)
-      if (json.expiresAt && Date.now() > Date.parse(json.expiresAt)) {
-        localStorage.removeItem(key);
-        return null;
-      }
-      return json;
-    } catch {
-      localStorage.removeItem(key);
-      return null;
-    }
+    this.itemsState.setItems(items);
   }
 
   private removeFromStorage(fisioId: string, pacienteId: string) {
-    localStorage.removeItem(storageKey(fisioId, pacienteId));
+    this.planPersistence.clear({ fisioId, pacienteId });
   }
 
   openDrawer() {
-    this.drawerOpen.set(true);
+    this.itemsState.openDrawer();
   }
   closeDrawer() {
-    this.drawerOpen.set(false);
+    this.itemsState.closeDrawer();
   }
   toggleDrawer() {
-    this.drawerOpen.update((v) => !v);
+    this.itemsState.toggleDrawer();
   }
 
   async ensurePacienteLoaded(id: string) {
@@ -346,38 +242,15 @@ export class PlanBuilderService {
     }
   }
 
-  addEjercicio(e: Ejercicio, options?: { series?: number; repeticiones?: number }) {
-    const exists = this.items().some(
-      (i) => i.ejercicio.id === e.id,
-    );
-    if (exists) return; // evita duplicado; si quieres permitir, elimina este guard
-    const orden = this.items().length + 1;
-
-    const series = options?.series ?? e.seriesDefecto ?? 3;
-    const repeticiones = options?.repeticiones ?? e.repeticionesDefecto ?? 12;
-
-    this.items.update((list) => [
-      ...list,
-      {
-        ejercicio: e,
-        sort: orden,
-        series,
-        repeticiones,
-        duracionSeg: undefined,
-        descansoSeg: 45,
-        vecesDia: 1,
-        diasSemana: ['L', 'X', 'V'],
-      },
-    ]);
-    this.openDrawer();
+  addEjercicio(
+    e: Ejercicio,
+    options?: { series?: number; repeticiones?: number },
+  ) {
+    this.itemsState.add(e, options);
   }
 
   removeEjercicio(ejercicioId: string) {
-    this.items.update((list) =>
-      list
-        .filter((i) => i.ejercicio.id !== ejercicioId)
-        .map((i, idx) => ({ ...i, sort: idx + 1 })),
-    );
+    this.itemsState.remove(ejercicioId);
   }
 
   clear() {
@@ -386,7 +259,7 @@ export class PlanBuilderService {
       p = this.paciente();
     if (f && p) this.removeFromStorage(f, p.id);
 
-    this.items.set([]);
+    this.itemsState.clear();
     this.titulo.set('');
     this.descripcion.set('');
     this.fechaInicio.set(null);
@@ -394,16 +267,11 @@ export class PlanBuilderService {
   }
 
   reorder(fromIndex: number, toIndex: number) {
-    const arr = [...this.items()];
-    const [moved] = arr.splice(fromIndex, 1);
-    arr.splice(toIndex, 0, moved);
-    this.items.set(arr.map((i, idx) => ({ ...i, sort: idx + 1 })));
+    this.itemsState.reorder(fromIndex, toIndex);
   }
 
   updateItem(idx: number, patch: Partial<EjercicioPlan>) {
-    const arr = [...this.items()];
-    arr[idx] = { ...arr[idx], ...patch };
-    this.items.set(arr);
+    this.itemsState.updateItem(idx, patch);
   }
 
   async submitPlan(): Promise<string | null> {
@@ -563,7 +431,7 @@ export class PlanBuilderService {
       );
 
       // Cargar ejercicios
-      this.items.set(
+      this.itemsState.setItems(
         (plan.items || []).sort((a, b) => a.sort - b.sort),
       );
 
@@ -716,7 +584,7 @@ export class PlanBuilderService {
         notasFisio: e.notasFisio,
       }));
 
-      this.items.set(items);
+      this.itemsState.setItems(items);
 
       // Opcional: usar nombre de rutina como base para titulo
       if (!this.titulo()) {
@@ -768,7 +636,7 @@ export class PlanBuilderService {
    */
   resetForNewPlan() {
     this.planId.set(null);
-    this.items.set([]);
+    this.itemsState.clear();
     this.titulo.set('');
     this.descripcion.set('');
     this.fechaInicio.set(null);
@@ -787,120 +655,6 @@ export class PlanBuilderService {
     this.paciente.set(null);
     this.closeDrawer();
     this.originalSnapshot.set(null);
-  }
-
-  // ============================================
-  // MODO RUTINA (crear plantillas sin paciente)
-  // ============================================
-
-  /**
-   * Activa modo rutina: limpia paciente, abre drawer
-   */
-  startRutinaMode() {
-    this.mode.set('rutina');
-    this.paciente.set(null);
-    this.planId.set(null);
-    this.items.set([]);
-    this.titulo.set('');
-    this.descripcion.set('');
-    this.fechaInicio.set(null);
-    this.fechaFin.set(null);
-    this.openDrawer();
-  }
-
-  /**
-   * Activa modo edición de rutina: carga datos existentes
-   */
-  async startEditRutinaMode(rutinaId: string): Promise<{ visibilidad: string } | null> {
-    const rutina = await this.rutinasService.getRutinaById(rutinaId);
-    if (!rutina) return null;
-
-    this.mode.set('rutina');
-    this.rutinaEditId.set(rutinaId);
-    this.paciente.set(null);
-    this.planId.set(null);
-
-    const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
-      sort: idx + 1,
-      ejercicio: e.ejercicio,
-      series: e.series ?? 3,
-      repeticiones: e.repeticiones ?? 12,
-      duracionSeg: e.duracionSeg,
-      descansoSeg: e.descansoSeg ?? 45,
-      vecesDia: e.vecesDia ?? 1,
-      diasSemana: e.diasSemana ?? ['L', 'X', 'V'],
-      instruccionesPaciente: e.instruccionesPaciente,
-      notasFisio: e.notasFisio,
-    }));
-
-    this.items.set(items);
-    this.titulo.set(rutina.nombre);
-    this.descripcion.set(rutina.descripcion || '');
-    this.openDrawer();
-
-    return { visibilidad: rutina.visibilidad };
-  }
-
-  /**
-   * Actualizar rutina existente
-   */
-  async updateRutina(
-    nombre: string,
-    descripcion: string,
-    visibilidad: 'privado' | 'clinica',
-  ): Promise<boolean> {
-    const rutinaId = this.rutinaEditId();
-    if (!rutinaId || this.items().length === 0) return false;
-
-    return this.rutinasService.updateRutinaCompleta(rutinaId, {
-      nombre,
-      descripcion,
-      visibilidad,
-      ejercicios: this.items().map((item, idx) => ({
-        ejercicio: item.ejercicio.id,
-        sort: idx + 1,
-        series: item.series,
-        repeticiones: item.repeticiones,
-        duracionSeg: item.duracionSeg,
-        descansoSeg: item.descansoSeg,
-        vecesDia: item.vecesDia,
-        diasSemana: item.diasSemana,
-        instruccionesPaciente: item.instruccionesPaciente,
-        notasFisio: item.notasFisio,
-      })),
-    });
-  }
-
-  /**
-   * Sale del modo rutina y vuelve a modo plan
-   */
-  exitRutinaMode() {
-    this.clearRutinaStorage();
-    this.mode.set('plan');
-    this.rutinaEditId.set(null);
-    this.items.set([]);
-    this.titulo.set('');
-    this.descripcion.set('');
-    this.closeDrawer();
-  }
-
-  /**
-   * Intenta restaurar estado de modo rutina desde localStorage
-   */
-  tryRestoreRutinaMode(): boolean {
-    const f = this.fisioId();
-    if (!f) return false;
-
-    const persisted = this.readRutinaFromStorage(f);
-    if (!persisted || persisted.items.length === 0) return false;
-
-    // Restaurar estado
-    this.mode.set('rutina');
-    this.paciente.set(null);
-    this.items.set(persisted.items);
-    this.drawerOpen.set(persisted.drawerOpen);
-
-    return true;
   }
 
   // ============================================

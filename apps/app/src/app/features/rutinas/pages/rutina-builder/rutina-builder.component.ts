@@ -21,7 +21,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
-import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
+import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
@@ -50,7 +50,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
   private breakpointObserver = inject(BreakpointObserver);
-  svc = inject(PlanBuilderService);
+  svc = inject(RutinaBuilderService);
 
   // Detectar si estamos en desktop (>= 1024px)
   isDesktop = toSignal(
@@ -81,7 +81,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   // Computed para UI
   items = computed(() => this.svc.items());
   totalItems = computed(() => this.svc.totalItems());
-  canSave = computed(() => this.svc.canSaveAsRutina() && !this.isSaving());
+  canSave = computed(() => this.svc.canSave() && !this.isSaving());
 
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
@@ -95,7 +95,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     if (rutinaId) {
       // Modo edición: cargar rutina existente
       this.isLoading.set(true);
-      const result = await this.svc.startEditRutinaMode(rutinaId);
+      const result = await this.svc.startEdit(rutinaId);
       this.isLoading.set(false);
 
       if (!result) {
@@ -114,7 +114,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     }
 
     // Modo creación: verificar que estamos en modo rutina y hay ejercicios
-    if (!this.svc.isRutinaMode()) {
+    if (!this.svc.isActive()) {
       this.toastService.show('Inicia la creación de plantilla primero');
       this.router.navigate(['/galeria/rutinas']);
       return;
@@ -160,7 +160,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   }
 
   removeEjercicio(ejercicioId: string) {
-    this.svc.removeEjercicio(ejercicioId);
+    this.svc.remove(ejercicioId);
     // Si no quedan ejercicios, volver a la galería
     if (this.svc.items().length === 0) {
       this.toastService.show('Añade ejercicios a la plantilla');
@@ -190,19 +190,19 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
       const visibilidad = v.visibilidad || 'privado';
 
       if (this.isEditMode()) {
-        const success = await this.svc.updateRutina(nombre, descripcion, visibilidad);
+        const success = await this.svc.update(nombre, descripcion, visibilidad);
         if (success) {
           this.toastService.show('Plantilla actualizada');
-          this.svc.exitRutinaMode();
+          this.svc.exit();
           this.router.navigate(['/galeria/rutinas']);
         } else {
           this.toastService.show('Error al actualizar plantilla', 'error');
         }
       } else {
-        const rutinaId = await this.svc.saveAsRutina(nombre, descripcion, visibilidad);
+        const rutinaId = await this.svc.save(nombre, descripcion, visibilidad);
         if (rutinaId) {
           this.toastService.show('Plantilla guardada');
-          this.svc.exitRutinaMode();
+          this.svc.exit();
           this.router.navigate(['/galeria/rutinas']);
         } else {
           this.toastService.show('Error al guardar plantilla', 'error');
@@ -222,7 +222,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   }
 
   salirModoRutina() {
-    this.svc.exitRutinaMode();
+    this.svc.exit();
     this.router.navigate(['/galeria/rutinas']);
   }
 

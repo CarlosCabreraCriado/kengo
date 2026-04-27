@@ -22,11 +22,11 @@ Leyenda de campos:
 
 | ✅ | # | Propuesta | Área | Esfuerzo | Impacto | Riesgo | Prioridad |
 |----|---|-----------|------|----------|---------|--------|-----------|
-| [ ] | 1 | Descomponer `feedback-final.component` (1272 LOC) | sesion | L | 🔴 | 🟡 | **P0** |
-| [ ] | 2 | Descomponer `ejercicio-activo.component` (1187 LOC) | sesion | L | 🔴 | 🔴 | **P0** |
-| [ ] | 3 | Descomponer `descanso.component` (882 LOC) | sesion | M | 🟡 | 🟡 | P1 |
-| [x] | 4 | Partir `registro-sesion.service` (705 LOC) en 3 servicios | sesion | M | 🔴 | 🔴 | **P0** ✅ |
-| [ ] | 5 | Extraer modo rutina de `plan-builder.service` (929 LOC) | planes | L | 🔴 | 🔴 | P1 |
+| [x] | 1 | Descomponer `feedback-final.component` (1272 LOC) | sesion | L | 🔴 | 🟡 | **P0** (PR-3) ✅ |
+| [x] | 2 | Descomponer `ejercicio-activo.component` (1187 LOC) | sesion | L | 🔴 | 🔴 | **P0** (PR-4) ✅ |
+| [x] | 3 | Descomponer `descanso.component` (882 LOC) | sesion | M | 🟡 | 🟡 | P1 (PR-4) ✅ |
+| [x] | 4 | Partir `registro-sesion.service` (705 LOC) en 3 servicios | sesion | M | 🔴 | 🔴 | **P0** (PR-2) ✅ |
+| [x] | 5 | Extraer modo rutina de `plan-builder.service` (929 LOC) | planes | L | 🔴 | 🔴 | P1 (PR-5) ✅ |
 | [ ] | 6 | Descomponer `paciente-detail.component` (821 LOC) | pacientes | L | 🟡 | 🟡 | P1 |
 | [x] | 7 | Mover plantilla inline de god-components a `.html`/`.css` | sesion | S | 🟢 | 🟢 | **P0** (PR-1) ✅ |
 | [ ] | 8 | `EmptyStateComponent` + pipe `formatDate` | shared | S | 🟢 | 🟢 | P2 |
@@ -35,102 +35,103 @@ Leyenda de campos:
 | [ ] | 11 | Aplicar `unsavedChangesGuard` a `rutina-builder` | rutas | S | 🟡 | 🟢 | P1 |
 | [ ] | 12 | Revisar guard de rol en `/planes` (list) | rutas | S | 🟡 | 🟡 | P1 |
 | [ ] | 13 | Unificar simetría `/galeria/rutinas` ↔ creación de rutinas | rutas | S | 🟢 | 🟢 | P3 |
-| [ ] | 14 | Composable `useResponsive()` | shared | S | 🟡 | 🟢 | P2 |
+| [x] | 14 | Composable `useResponsive()` | shared | S | 🟡 | 🟢 | P2 (PR-4) ✅ |
 
 ### Plan de ejecución por PRs
 
 - [x] **PR-1 (S)** — Extraer plantillas inline (#7) ✅ **COMPLETADO**
 - [x] **PR-2 (M)** — Partir `registro-sesion.service` (#4) ✅ **COMPLETADO**
-- [ ] **PR-3 (L)** — Descomponer `feedback-final` (#1)
-- [ ] **PR-4 (L)** — Descomponer `ejercicio-activo` + `descanso` (#2 + #3)
-- [ ] **PR-5 (L)** — Separar `plan-builder.service` y `paciente-detail` (#5 + #6)
+- [x] **PR-3 (L)** — Descomponer `feedback-final` (#1) ✅ **COMPLETADO**
+- [x] **PR-4 (L)** — Descomponer `ejercicio-activo` + `descanso` (#2 + #3) ✅ **COMPLETADO**
+- [x] **PR-5 (L)** — Separar `plan-builder.service` (#5) ✅ **COMPLETADO** (PR-5a + PR-5b + PR-5c). Pendiente `paciente-detail` (#6).
 - [ ] **PR-Routes** — `unsavedChangesGuard` rutinas + guard `/planes` (#11 + #12)
 
 ---
 
 # SECCIÓN 1 — God components (prioridad alta)
 
-## [ ] 1.1 — Descomponer `feedback-final.component.ts` (1272 LOC)
+## [x] 1.1 — Descomponer `feedback-final.component.ts` (PR-3) ✅
 
 **Ubicación**: `apps/app/src/app/features/sesion/pages/realizar-plan/pantallas/feedback-final/`
 
-**Problema**:
+**Problema (resuelto)**:
 - Plantilla inline + animaciones + lógica de feedback dual (modo simple/detallado) + confetti + escala global y por ejercicio + observaciones.
-- Sin archivo `.html` ni `.css` separados: todo embebido en el `.ts`.
-- Mezcla 4 responsabilidades:
-  1. Vista celebratoria (confetti, header animado, orbes).
-  2. Captura de feedback global (un solo dolor + observaciones).
-  3. Captura de feedback detallado (dolor por ejercicio).
-  4. Conmutación entre modos y agregación final del payload.
+- Mezcla 4 responsabilidades.
 
-**Propuesta**:
-- [ ] Extraer plantilla y CSS a archivos separados (cubierto por #7).
-- [ ] Crear `<feedback-celebracion>` (confetti + header animado).
-- [ ] Crear `<feedback-global-form>` (dolor único + observaciones).
-- [ ] Crear `<feedback-detallado-form>` (lista de `EscalaDolor` por ejercicio).
-- [ ] Convertir `feedback-final.component` en contenedor que orquesta modos y emite `(completado)`.
-- [ ] Mover lógica de animación de confetti a `realizar-plan.animations.ts`.
+**Resultado**:
+- [x] Extraer plantilla y CSS a archivos separados (cubierto por #7).
+- [x] Crear `<app-feedback-celebracion>` (confetti + header animado + progress ring).
+- [x] Crear `<app-feedback-global-form>` (dolor único + observaciones).
+- [x] Crear `<app-feedback-detallado-form>` (lista de `EscalaDolor` por ejercicio).
+- [x] Convertir `feedback-final.component` en contenedor que orquesta modos y emite `(enviarFeedback)`.
+- [x] Mover keyframes de confetti a `feedback-celebracion.component.css` (junto al markup que los usa).
+- [x] Bonus: eliminar `componentes/contador-series/` huérfano.
 
-**Archivos afectados**:
-- `feedback-final.component.ts` (refactor)
-- Nuevos: `componentes/feedback-celebracion/`, `componentes/feedback-global-form/`, `componentes/feedback-detallado-form/`
-- `realizar-plan.animations.ts` (extender)
+**LOC final**:
+- Contenedor `feedback-final`: 218 → **189** TS · 235 → **71** HTML · 817 → **295** CSS.
+- 3 subcomponentes nuevos: `feedback-celebracion` (29/52/204), `feedback-global-form` (35/37/168), `feedback-detallado-form` (70/87/289).
+
+**Archivos afectados**: `feedback-final.component.{ts,html,css}` + 3 subcomponentes en `componentes/feedback/`. Eliminado `componentes/contador-series/`.
 
 **Esfuerzo**: L (3–4 días) · **Impacto**: 🔴 · **Riesgo**: 🟡 (animaciones delicadas, requiere prueba visual)
 
-**Prioridad**: **P0**
+**Prioridad**: **P0** ✅ — entregado como PR-3.
 
 ---
 
-## [ ] 1.2 — Descomponer `ejercicio-activo.component.ts` (1187 LOC)
+## [x] 1.2 — Descomponer `ejercicio-activo.component.ts` (PR-4) ✅
 
 **Ubicación**: `apps/app/src/app/features/sesion/pages/realizar-plan/pantallas/ejercicio-activo/`
 
-**Problema**:
+**Problema (resuelto)**:
 - Plantilla inline con video player + header flotante + panel info + timeline.
-- Maneja gestos manuales (`wheel`, `touchstart`, `touchend`) para expandir/contraer video.
-- `BreakpointObserver` inline (patrón duplicado en 3+ sitios).
-- `@ViewChild('videoPlayer')` con manipulación imperativa.
-- Mezcla:
-  1. Reproductor de video (play/pause, indicador, expansión).
-  2. Cabecera de progreso (índice ejercicio + barra).
-  3. Panel info (nombre, descripción, contador de series, temporizador).
-  4. Detección de gestos.
+- Gestos manuales (`wheel`, `touchstart`, `touchend`) inline.
+- `BreakpointObserver` inline.
+- `@ViewChild('videoPlayer')` con manipulación imperativa del `<video>`.
 
-**Propuesta**:
-- [ ] Extraer plantilla y CSS (cubierto por #7).
-- [ ] Crear `<ejercicio-video-player>` (video + poster + indicador play/pause + expansión + gestos).
-- [ ] Crear `<ejercicio-progress-header>` (índice + barra), reutilizable en `descanso`.
-- [ ] Crear `<ejercicio-info-panel>` (nombre, descripción HTML, contador, temporizador).
-- [ ] Reemplazar `BreakpointObserver` inline por `useResponsive()` (#14).
-- [ ] Si los gestos se reusan en `descanso`, extraer directiva `appSwipeGestures`.
+**Resultado**:
+- [x] Extraer plantilla y CSS (cubierto por #7).
+- [x] Crear `<app-ejercicio-video-player>` (video + poster + placeholder + indicador play/pause). Estado `videoReproduciendo`/`showPlayIndicator` y `@ViewChild` del `<video>` quedan **encapsulados** dentro del subcomponente; el contenedor sólo recibe `playStateChange` y dispara `toggle()` por método público.
+- [x] Crear `<app-sesion-progress-header>` (índice + barra) con variantes `plain`/`overlay`, **reutilizado en `descanso`**.
+- [x] Crear `<app-ejercicio-info-panel>` (nombre, stats-row, info-cards, timeline desktop, actions-bar).
+- [x] Reemplazar `BreakpointObserver` inline por `useResponsive()` (#14).
+- [x] Extraer directiva `appSwipeGestures` que unifica `wheel`+`touchstart`+`touchend` en un único output `swipe: 'up' | 'down'`.
+
+**LOC final**:
+- Contenedor `ejercicio-activo`: 1185 → **221** total (107 TS · 45 HTML · 69 CSS), -81%.
+- Subcomponentes nuevos: `sesion-progress-header` (30/16/176), `ejercicio-video-player` (48/32/85), `ejercicio-info-panel` (48/132/518).
 
 **Archivos afectados**:
-- `ejercicio-activo.component.ts` (refactor profundo)
-- Nuevos: `componentes/ejercicio-video-player/`, `componentes/ejercicio-progress-header/`, `componentes/ejercicio-info-panel/`
-- Posible: `shared/directives/swipe-gestures.directive.ts`
+- `ejercicio-activo.component.{ts,html,css}` (refactor profundo).
+- Nuevos: `componentes/sesion-progress-header/`, `componentes/ejercicio-activo-piezas/ejercicio-video-player/`, `componentes/ejercicio-activo-piezas/ejercicio-info-panel/`.
+- Nuevos en `shared/`: `composables/use-responsive.ts`, `directives/swipe-gestures.directive.ts`.
 
 **Esfuerzo**: L (4–5 días) · **Impacto**: 🔴 · **Riesgo**: 🔴 (componente más usado del producto)
 
-**Prioridad**: **P0** — ejecutar después de #1.6 (servicio limpio).
+**Prioridad**: **P0** ✅ — entregado como PR-4.
 
 ---
 
-## [ ] 1.3 — Descomponer `descanso.component.ts` (882 LOC)
+## [x] 1.3 — Descomponer `descanso.component.ts` (PR-4) ✅
 
 **Ubicación**: `apps/app/src/app/features/sesion/pages/realizar-plan/pantallas/descanso/`
 
-**Propuesta**:
-- [ ] Extraer plantilla y CSS (cubierto por #7).
-- [ ] Reutilizar `<ejercicio-progress-header>` y `<app-timeline-sesion>` (ya existe).
-- [ ] Extraer `<countdown-display>` si la cuenta atrás supera 150 LOC.
-- [ ] Mover transiciones `descansoEntreEjercicios` vs `descansoEntreSeries` a servicio si aún están en el componente.
+**Resultado**:
+- [x] Extraer plantilla y CSS (cubierto por #7).
+- [x] Reutilizar `<app-sesion-progress-header>` (variante `plain`) — header común con `ejercicio-activo`.
+- [x] Crear `<app-descanso-respiracion>` (timer + breath ring + indicador inhale/exhale). El `setInterval` de respiración queda encapsulado con `DestroyRef.onDestroy` para cleanup automático.
+- [x] Crear `<app-descanso-proximo>` (card próximo ejercicio o próxima serie según contexto).
+- Decisión: las transiciones `descansoEntreEjercicios` vs `descansoEntreSeries` **ya estaban** en `SesionStateService` (resueltas por PR-2); no fue necesaria mover lógica.
 
-**Archivos afectados**: `descanso.component.ts` + reutiliza componentes de #1.2.
+**LOC final**:
+- Contenedor `descanso`: 880 → **401** total (79 TS · 51 HTML · 271 CSS), -54%.
+- Subcomponentes nuevos: `descanso-respiracion` (55/18/165), `descanso-proximo` (21/44/127).
+
+**Archivos afectados**: `descanso.component.{ts,html,css}` + 2 subcomponentes en `componentes/descanso-piezas/` + reutiliza `componentes/sesion-progress-header/` (compartido con `ejercicio-activo`).
 
 **Esfuerzo**: M (2 días) · **Impacto**: 🟡 · **Riesgo**: 🟡
 
-**Prioridad**: P1 — depende de #1.2.
+**Prioridad**: P1 ✅ — entregado como parte de PR-4.
 
 ---
 
@@ -161,28 +162,34 @@ Leyenda de campos:
 
 ---
 
-## [ ] 1.5 — Separar modo rutina de `plan-builder.service.ts` (929 LOC)
+## [x] 1.5 — Separar modo rutina de `plan-builder.service.ts` (PR-5) ✅
 
 **Ubicación**: `apps/app/src/app/features/planes/data-access/`
 
-**Problema**:
-- Maneja DOS dominios distintos en el mismo servicio (modo plan + modo rutina).
-- Persistencia duplicada (`kengo:plan_builder:v1:` vs `kengo:rutina_builder:v1:`).
-- Inyecta servicios de 5 features distintas (acoplamiento alto).
+**Resultado**:
+- [x] Crear `RutinaBuilderService` (`rutinas/data-access/rutina-builder.service.ts`) — solo modo rutina. Encapsula su `BuilderItemsState` + `BuilderPersistence<PersistedRutinaStateV1>` y su propio `effect()` de auto-save.
+- [x] Crear `BuilderItemsState` (clase TS plain en `planes/data-access/internal/`) — items + drawer state común. Cada builder service la instancia con `new` para evitar singleton compartido.
+- [x] Crear `BuilderPersistence<TState>` (clase TS genérica con `prefix`/`ttlDays`/`schemaVersion`/`makeKey`) — encapsula serialización/expiración/versionado.
+- [x] Reducir `PlanBuilderService` a solo modo plan (paciente, fechas, versionado, dirty tracking). Mantiene `loadFromRutina` y `saveAsRutina` (flujos plan que consumen rutinas).
+- [x] `rutina-builder.component` consume `RutinaBuilderService` (deja de depender de `PlanBuilderService`).
+- [x] Migrar consumidores mixtos (`carrito-ejercicios`, `rutinas-list`, `ejercicio-detail`) a inyectar el servicio adecuado según contexto.
+- [x] **Fix Riesgo 1**: guard `if (this.items().length === 0) return;` en `scheduleSave` evita guardados espurios cuando `ejercicio-detail` llama `paciente.set(p)` sin items aún.
+- [x] **Fix Riesgo 2**: `carrito-ejercicios.ngAfterViewInit` ahora llama `rutinaSvc.tryRestore()` primero y solo invoca `planSvc.tryRestoreFor(...)` si el modo rutina no está activo. Fixea bug preexistente donde recargar `/galeria/ejercicios` con rutina en curso pisaba los items con los del último plan cacheado.
+- [x] Borradores existentes en localStorage: claves y formato intactos (`kengo:plan_builder:v1:` y `kengo:rutina_builder:v1:`) — migración transparente. ⚠️ Pendiente prueba manual.
 
-**Propuesta**:
-- [ ] Crear `RutinaBuilderService` (rutinas/data-access/) — solo modo rutina.
-- [ ] Crear `BuilderItemsService` común (items, addItem, removeItem, drag-drop, currentVersion, hasActivity).
-- [ ] Crear `BuilderPersistenceStore<TState>` con TTL (clase parametrizable).
-- [ ] Reducir `PlanBuilderService` a solo modo plan (paciente, fechas).
-- [ ] `rutina-builder.component` consume `RutinaBuilderService` (deja de depender de `PlanBuilderService`).
-- [ ] Migrar borradores existentes en localStorage (validar que clave antigua aún se hidrata o se descarta limpiamente).
+**LOC final**:
+- `plan-builder.service.ts`: 929 → **683** LOC (-27%).
+- Nuevos: `rutina-builder.service.ts` (334), `builder-items-state.ts` (92), `builder-persistence.ts` (89).
 
-**Archivos afectados**: `plan-builder.service.ts` (refactor masivo), nuevos `builder-items.service.ts`, `builder-persistence.store.ts`, `rutinas/data-access/rutina-builder.service.ts`. `plan-builder.component.ts` y `rutina-builder.component.ts` cambian inyección.
+**Archivos afectados**:
+- Nuevos: `planes/data-access/internal/builder-items-state.ts`, `planes/data-access/internal/builder-persistence.ts`, `rutinas/data-access/rutina-builder.service.ts`.
+- Modificados: `planes/data-access/plan-builder.service.ts`, `rutinas/pages/rutina-builder/rutina-builder.component.ts`, `planes/components/carrito-ejercicios/carrito-ejercicios.{ts,html}`, `rutinas/pages/rutinas-list/rutinas-list.component.ts`, `ejercicios/pages/ejercicio-detail/ejercicio-detail.component.ts`.
 
-**Esfuerzo**: L (4–5 días) · **Impacto**: 🔴 · **Riesgo**: 🔴
+**Fuera de scope (issues separados)**: `unsavedChangesGuard` para rutina-builder (#3.2), `cambiarPaciente()` mezcla estado+routing+UI, `loadFromRutina` no clonable a modo rutina (no es uso actual).
 
-**Prioridad**: P1
+**Esfuerzo**: L (entregado en PR-5a + PR-5b + PR-5c) · **Impacto**: 🔴 · **Riesgo**: 🔴
+
+**Prioridad**: P1 ✅ — entregado como PR-5.
 
 ---
 
@@ -240,8 +247,8 @@ Cada servicio mapea `_id`/`_creationTime` a su modo. Extraer helpers a `shared/u
 ## [ ] 2.4 — `EmptyStateComponent`
 5+ componentes con vacíos manuales. Crear `<app-empty-state>` en `shared/ui/`. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
 
-## [ ] 2.5 — `useResponsive()` composable
-3+ componentes con `BreakpointObserver` inline. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
+## [x] 2.5 — `useResponsive()` composable (PR-4) ✅
+Creado en `apps/app/src/app/shared/composables/use-responsive.ts`. Aplicado en `ejercicio-activo`. Pendiente migrar otros consumidores de `BreakpointObserver` (oportunista cuando se toquen). **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2 ✅.
 
 ## [ ] 2.6 — `common-validators.ts`
 Validators de email/password inline en 5+ formularios. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3.
@@ -303,20 +310,58 @@ Cerca del umbral. Vigilar; descomponer si crece. **Prioridad**: P3.
 
 # Archivos clave referenciados
 
+**Completados (PR-1 → PR-4)**:
 ```
 apps/app/src/app/features/sesion/pages/realizar-plan/pantallas/
-├── feedback-final/feedback-final.component.ts          (1272 LOC) #1.1
-├── ejercicio-activo/ejercicio-activo.component.ts      (1187 LOC) #1.2
-└── descanso/descanso.component.ts                      ( 882 LOC) #1.3
+├── feedback-final/                                                         #1.1 ✅ PR-3
+│   ├── feedback-final.component.ts             (1272 → 189 LOC)
+│   ├── feedback-final.component.html           (235 → 71 LOC)
+│   └── feedback-final.component.css            (817 → 295 LOC)
+├── ejercicio-activo/                                                       #1.2 ✅ PR-4
+│   ├── ejercicio-activo.component.ts           (1187 → 107 LOC)
+│   ├── ejercicio-activo.component.html         (248 → 45 LOC)
+│   └── ejercicio-activo.component.css          (771 → 69 LOC)
+└── descanso/                                                               #1.3 ✅ PR-4
+    ├── descanso.component.ts                   ( 882 → 79 LOC)
+    ├── descanso.component.html                 (134 → 51 LOC)
+    └── descanso.component.css                  (638 → 271 LOC)
 
-apps/app/src/app/features/sesion/data-access/
-└── registro-sesion.service.ts                          ( 705 LOC) #1.6
+apps/app/src/app/features/sesion/pages/realizar-plan/componentes/
+├── feedback/                                                               #1.1 ✅ PR-3
+│   ├── feedback-celebracion/                   (29 + 52 + 204 LOC)
+│   ├── feedback-global-form/                   (35 + 37 + 168 LOC)
+│   └── feedback-detallado-form/                (70 + 87 + 289 LOC)
+├── sesion-progress-header/                     (30 + 16 + 176 LOC)         #1.2/#1.3 ✅ PR-4 (compartido)
+├── ejercicio-activo-piezas/                                                #1.2 ✅ PR-4
+│   ├── ejercicio-video-player/                 (48 + 32 + 85 LOC)
+│   └── ejercicio-info-panel/                   (48 + 132 + 518 LOC)
+└── descanso-piezas/                                                        #1.3 ✅ PR-4
+    ├── descanso-respiracion/                   (55 + 18 + 165 LOC)
+    └── descanso-proximo/                       (21 + 44 + 127 LOC)
 
+apps/app/src/app/features/sesion/data-access/                               #1.6 ✅ PR-2
+├── sesion-state.service.ts                     (640 LOC)
+├── sesion-temporizador.service.ts              ( 28 LOC)
+└── sesion-persistence.service.ts               ( 49 LOC)
+
+apps/app/src/app/shared/                                                    ✅ PR-4
+├── composables/use-responsive.ts                                           #14 ✅
+└── directives/swipe-gestures.directive.ts                                  (nuevo)
+
+apps/app/src/app/features/planes/data-access/                               #1.5 ✅ PR-5
+├── plan-builder.service.ts                             (929 → 683 LOC)
+└── internal/
+    ├── builder-items-state.ts                          ( 92 LOC, nuevo)
+    └── builder-persistence.ts                          ( 89 LOC, nuevo)
+
+apps/app/src/app/features/rutinas/data-access/                              #1.5 ✅ PR-5
+└── rutina-builder.service.ts                           (334 LOC, nuevo)
+```
+
+**Pendientes**:
+```
 apps/app/src/app/features/pacientes/pages/paciente-detail/
 └── paciente-detail.component.ts                        ( 821 LOC) #1.4
-
-apps/app/src/app/features/planes/data-access/
-└── plan-builder.service.ts                             ( 929 LOC) #1.5
 
 apps/app/src/app/app.routes.ts                          (rutas)    #3.1, #3.2, #3.3
 ```

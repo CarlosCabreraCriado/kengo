@@ -12,6 +12,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { ToggleGaleriaComponent } from '../../../../shared/ui/toggle-galeria/toggle-galeria.component';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
+import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
 import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
 @Component({
@@ -29,6 +30,7 @@ export class RutinasListComponent {
   private toastService = inject(ToastService);
   private breakpointObserver = inject(BreakpointObserver);
   private planBuilderService = inject(PlanBuilderService);
+  private rutinaBuilderService = inject(RutinaBuilderService);
   private dialog = inject(Dialog);
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
@@ -243,7 +245,7 @@ export class RutinasListComponent {
 
   // === Crear Rutina ===
   crearRutina() {
-    this.planBuilderService.startRutinaMode();
+    this.rutinaBuilderService.start();
     this.router.navigate(['/galeria/ejercicios']);
   }
 }

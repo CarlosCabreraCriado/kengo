@@ -4,6 +4,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { Ejercicio, Usuario } from '../../../../../types/global';
 
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
+import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builder.service';
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -24,6 +25,7 @@ export class EjercicioDetailComponent {
   private location = inject(Location);
   private ejerciciosService = inject(EjerciciosService);
   private planBuilderService = inject(PlanBuilderService);
+  private rutinaBuilderService = inject(RutinaBuilderService);
   private sessionService = inject(SessionService);
   private dialog = inject(Dialog);
 
@@ -61,7 +63,7 @@ export class EjercicioDetailComponent {
   private touchStartY = 0;
 
   // Detectar modo rutina (crear plantilla sin paciente)
-  readonly isRutinaMode = computed(() => this.planBuilderService.isRutinaMode());
+  readonly isRutinaMode = computed(() => this.rutinaBuilderService.isActive());
 
   // Rol del usuario
   readonly isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
@@ -244,7 +246,7 @@ export class EjercicioDetailComponent {
 
     // En modo rutina, añadir directamente sin pedir paciente
     if (this.isRutinaMode()) {
-      this.planBuilderService.addEjercicio(ejercicio, options);
+      this.rutinaBuilderService.add(ejercicio, options);
       return;
     }
 

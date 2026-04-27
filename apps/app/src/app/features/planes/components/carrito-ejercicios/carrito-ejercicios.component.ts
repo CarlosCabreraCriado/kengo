@@ -19,6 +19,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
+import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 
 import { Usuario } from '../../../../../types/global';
@@ -41,9 +42,10 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   private rutinasService = inject(RutinasService);
 
   readonly svc = inject(PlanBuilderService);
+  readonly rutinaSvc = inject(RutinaBuilderService);
 
   // Modo rutina
-  readonly isRutinaMode = computed(() => this.svc.isRutinaMode());
+  readonly isRutinaMode = computed(() => this.rutinaSvc.isActive());
 
   // Modo edición de plan existente
   readonly isEditMode = computed(() => this.svc.isEditMode());
@@ -57,7 +59,14 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     const p = this.svc.paciente();
     return p ? `${p.first_name} ${p.last_name}` : 'Paciente no seleccionado';
   });
-  readonly total = computed(() => this.svc.totalItems());
+  readonly items = computed(() =>
+    this.rutinaSvc.isActive() ? this.rutinaSvc.items() : this.svc.items(),
+  );
+  readonly total = computed(() =>
+    this.rutinaSvc.isActive()
+      ? this.rutinaSvc.totalItems()
+      : this.svc.totalItems(),
+  );
   readonly perfilUrl = computed(() => {
     const avatar = this.svc.paciente()?.avatar;
     if (!avatar) return null;
@@ -69,7 +78,9 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     if (this.autoOpen) this.open();
     this.drawerEff = effect(
       () => {
-        const shouldOpen = this.svc.drawerOpen();
+        const shouldOpen = this.rutinaSvc.isActive()
+          ? this.rutinaSvc.drawerOpen()
+          : this.svc.drawerOpen();
         this.drawerAbierto.set(shouldOpen);
       },
       { injector: this.injector },
@@ -83,11 +94,17 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
         this.checkRouteForTab((event as NavigationEnd).urlAfterRedirects);
       });
 
-    //Lee de localStorage el último paciente seleccionado
-    const lastPacienteId = localStorage.getItem('carrito:last_paciente_id');
-    const lastFisioId = localStorage.getItem('carrito:last_fisio_id');
-    if (lastPacienteId && lastFisioId) {
-      this.svc.tryRestoreFor(lastPacienteId, lastFisioId);
+    // Restaurar primero el modo rutina si tiene estado guardado: si está
+    // activo, evitamos que el restore de plan pise sus items.
+    this.rutinaSvc.tryRestore();
+
+    if (!this.rutinaSvc.isActive()) {
+      //Lee de localStorage el último paciente seleccionado
+      const lastPacienteId = localStorage.getItem('carrito:last_paciente_id');
+      const lastFisioId = localStorage.getItem('carrito:last_fisio_id');
+      if (lastPacienteId && lastFisioId) {
+        this.svc.tryRestoreFor(lastPacienteId, lastFisioId);
+      }
     }
   }
 
@@ -111,10 +128,11 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   toggle() {
+    const target = this.rutinaSvc.isActive() ? this.rutinaSvc : this.svc;
     if (this.drawerAbierto()) {
-      this.svc.closeDrawer();
+      target.closeDrawer();
     } else {
-      this.svc.openDrawer();
+      target.openDrawer();
     }
   }
 
@@ -126,7 +144,11 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   eliminar(ejercicioId: string) {
-    this.svc.removeEjercicio(ejercicioId);
+    if (this.rutinaSvc.isActive()) {
+      this.rutinaSvc.remove(ejercicioId);
+    } else {
+      this.svc.removeEjercicio(ejercicioId);
+    }
   }
 
   eliminarAsignacion() {
@@ -221,7 +243,9 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
 
     dialogRef.closed.subscribe(async (rutinaId) => {
       if (rutinaId) {
-        const success = await this.svc.loadFromRutina(rutinaId);
+        const success = this.rutinaSvc.isActive()
+          ? await this.rutinaSvc.loadFromRutina(rutinaId)
+          : await this.svc.loadFromRutina(rutinaId);
         if (success) {
           this.toastService.show('Rutina cargada correctamente');
         } else {
@@ -237,7 +261,7 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
    * Salir del modo rutina
    */
   salirModoRutina() {
-    this.svc.exitRutinaMode();
+    this.rutinaSvc.exit();
     this.router.navigate(['/galeria/rutinas']);
   }
 
@@ -276,15 +300,21 @@ export class CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
         | { nombre: string; descripcion: string; visibilidad: 'privado' | 'clinica' }
         | undefined;
       if (data) {
-        const rutinaId = await this.svc.saveAsRutina(
-          data.nombre,
-          data.descripcion,
-          data.visibilidad,
-        );
+        const rutinaId = this.rutinaSvc.isActive()
+          ? await this.rutinaSvc.save(
+              data.nombre,
+              data.descripcion,
+              data.visibilidad,
+            )
+          : await this.svc.saveAsRutina(
+              data.nombre,
+              data.descripcion,
+              data.visibilidad,
+            );
 
         if (rutinaId) {
           this.toastService.show('Rutina guardada');
-          this.svc.exitRutinaMode();
+          if (this.rutinaSvc.isActive()) this.rutinaSvc.exit();
           this.router.navigate(['/galeria/rutinas']);
         } else {
           this.toastService.show('Error al guardar rutina', 'error');
