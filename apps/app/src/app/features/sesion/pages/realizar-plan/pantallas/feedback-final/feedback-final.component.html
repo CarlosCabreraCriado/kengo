@@ -1,5 +1,4 @@
 <div class="feedback-container">
-  <!-- Fondo animado con orbes flotantes -->
   <div class="ambient-background">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -7,205 +6,42 @@
     <div class="orb orb-4"></div>
   </div>
 
-  <!-- Confetti cuando se completa -->
-  @if (todosCompletados()) {
-    <div class="confetti-container">
-      @for (i of confettiPieces; track i) {
-        <div
-          class="confetti"
-          [style.--delay]="i * 0.08 + 's'"
-          [style.--x]="getConfettiX(i)"
-          [style.--rotation]="getConfettiRotation(i)"
-        ></div>
-      }
-    </div>
-  }
+  <app-feedback-celebracion
+    [totalEjercicios]="totalEjercicios()"
+    [ejerciciosConDolor]="ejerciciosConDolor()"
+    [progressOffset]="progressOffset()"
+    [mostrarConfetti]="todosCompletados()"
+    [modoDetallado]="modoDetallado()"
+  />
 
-  <!-- Header sticky -->
-  <header class="floating-header">
-    <div class="header-content">
-      <!-- Icono de celebración -->
-      <div class="celebration-badge">
-        <div class="badge-glow"></div>
-        <span class="material-symbols-outlined icon-filled">celebration</span>
-      </div>
-
-      <!-- Título y progreso -->
-      <div class="header-info">
-        <h1 class="header-title">¡Sesión completada!</h1>
-        <p class="header-subtitle">Cuéntanos cómo te sentiste</p>
-      </div>
-
-      <!-- Indicador de progreso circular - solo en modo detallado -->
-      @if (modoDetallado()) {
-        <div class="progress-ring-container">
-          <svg class="progress-ring" viewBox="0 0 44 44">
-            <circle
-              class="progress-ring-bg"
-              cx="22"
-              cy="22"
-              r="18"
-              fill="none"
-              stroke-width="4"
-            />
-            <circle
-              class="progress-ring-fill"
-              cx="22"
-              cy="22"
-              r="18"
-              fill="none"
-              stroke-width="4"
-              [style.stroke-dasharray]="circumference"
-              [style.stroke-dashoffset]="progressOffset()"
-            />
-          </svg>
-          <span class="progress-text">{{ ejerciciosConDolor() }}/{{ totalEjercicios() }}</span>
-        </div>
-      }
-    </div>
-  </header>
-
-  <!-- Contenido scrolleable -->
   <main class="main-content">
     <div class="exercises-list">
       @if (!modoDetallado()) {
-        <!-- ========== MODO SIMPLIFICADO (por defecto) ========== -->
-        <article class="global-feedback-card" @fade>
-          <div class="session-summary">
-            <span class="material-symbols-outlined summary-icon">fitness_center</span>
-            <span class="summary-text">{{ totalEjercicios() }} ejercicios completados</span>
-          </div>
-
-          <app-escala-dolor
-            label="¿Cómo te sentiste durante la sesión?"
-            [valor]="dolorGlobal()"
-            (valorChange)="onDolorGlobalChange($event)"
-          />
-        </article>
-
-        <!-- Botón para expandir a modo detallado -->
-        <button
-          type="button"
-          class="expand-detail-btn"
-          (click)="activarModoDetallado()"
-        >
-          <span class="material-symbols-outlined detail-icon">tune</span>
-          <span class="detail-text">Dar feedback detallado por ejercicio</span>
-          <span class="material-symbols-outlined arrow-icon">chevron_right</span>
-        </button>
-
-        <!-- Observaciones generales -->
-        <article class="observations-card" @fade>
-          <div class="observations-header">
-            <span class="material-symbols-outlined observations-icon">forum</span>
-            <span class="observations-title">Observaciones generales</span>
-            <span class="observations-optional">(opcional)</span>
-          </div>
-          <textarea
-            class="observations-input"
-            placeholder="¿Algún comentario para tu fisioterapeuta?"
-            rows="4"
-            [(ngModel)]="observacionesGenerales"
-          ></textarea>
-        </article>
+        <app-feedback-global-form
+          [dolorGlobal]="dolorGlobal()"
+          [totalEjercicios]="totalEjercicios()"
+          [observaciones]="observacionesGenerales()"
+          (dolorChange)="onDolorGlobalChange($event)"
+          (observacionesChange)="onObservacionesChange($event)"
+          (cambiarAModoDetallado)="activarModoDetallado()"
+        />
       } @else {
-        <!-- ========== MODO DETALLADO ========== -->
-        <!-- Botón para volver a modo simplificado -->
-        <button
-          type="button"
-          class="collapse-detail-btn"
-          (click)="desactivarModoDetallado()"
-        >
-          <span class="material-symbols-outlined arrow-icon">chevron_left</span>
-          <span class="detail-text">Volver a feedback simplificado</span>
-        </button>
-
-        @for (ejercicio of ejerciciosCompletados(); track ejercicio.planItemId; let i = $index) {
-          <article
-            class="exercise-card"
-            [class.completed]="dolorPorEjercicio().get(ejercicio.planItemId) !== undefined"
-            @fade
-          >
-            <!-- Header del ejercicio -->
-            <div class="exercise-header">
-              <div class="exercise-number">
-                @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
-                  <span class="material-symbols-outlined icon-filled check-icon">check</span>
-                } @else {
-                  {{ i + 1 }}
-                }
-              </div>
-              <div class="exercise-info">
-                <span class="exercise-name">{{ ejercicio.nombre }}</span>
-                @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
-                  <span
-                    class="dolor-badge"
-                    [style.background]="getDolorColor(dolorPorEjercicio().get(ejercicio.planItemId)!)"
-                  >
-                    {{ dolorPorEjercicio().get(ejercicio.planItemId) }}/10
-                  </span>
-                }
-              </div>
-            </div>
-
-            <!-- Escala de dolor -->
-            <app-escala-dolor
-              label="Nivel de dolor"
-              [valor]="dolorPorEjercicio().get(ejercicio.planItemId) ?? null"
-              (valorChange)="onDolorChange(ejercicio.planItemId, $event)"
-            />
-
-            <!-- Sección de nota (colapsable) -->
-            <div class="note-section">
-              <button
-                type="button"
-                class="note-toggle"
-                (click)="toggleNota(ejercicio.planItemId)"
-              >
-                <span class="material-symbols-outlined note-icon">edit_note</span>
-                <span class="note-label">
-                  {{ notasPorEjercicio().get(ejercicio.planItemId) ? 'Editar nota' : 'Agregar nota' }}
-                </span>
-                <span
-                  class="material-symbols-outlined expand-icon"
-                  [class.rotated]="notasExpandidas().has(ejercicio.planItemId)"
-                >expand_more</span>
-              </button>
-
-              @if (notasExpandidas().has(ejercicio.planItemId)) {
-                <div class="note-input-container" @fade>
-                  <textarea
-                    class="note-input"
-                    placeholder="Describe cómo te sentiste durante este ejercicio..."
-                    rows="3"
-                    [ngModel]="notasPorEjercicio().get(ejercicio.planItemId) || ''"
-                    (ngModelChange)="onNotaChange(ejercicio.planItemId, $event)"
-                  ></textarea>
-                </div>
-              }
-            </div>
-          </article>
-        }
-
-        <!-- Observaciones generales -->
-        <article class="observations-card" @fade>
-          <div class="observations-header">
-            <span class="material-symbols-outlined observations-icon">forum</span>
-            <span class="observations-title">Observaciones generales</span>
-            <span class="observations-optional">(opcional)</span>
-          </div>
-          <textarea
-            class="observations-input"
-            placeholder="¿Cómo te sentiste durante la sesión en general? ¿Algún comentario para tu fisioterapeuta?"
-            rows="4"
-            [(ngModel)]="observacionesGenerales"
-          ></textarea>
-        </article>
+        <app-feedback-detallado-form
+          [ejercicios]="ejerciciosCompletados()"
+          [dolorPorEjercicio]="dolorPorEjercicio()"
+          [notasPorEjercicio]="notasPorEjercicio()"
+          [notasExpandidas]="notasExpandidas()"
+          [observaciones]="observacionesGenerales()"
+          (dolorEjercicioChange)="onDolorEjercicioChange($event)"
+          (notaEjercicioChange)="onNotaEjercicioChange($event)"
+          (toggleNota)="onToggleNota($event)"
+          (observacionesChange)="onObservacionesChange($event)"
+          (volverAModoSimplificado)="desactivarModoDetallado()"
+        />
       }
     </div>
   </main>
 
-  <!-- Footer con CTA -->
   <footer class="actions-footer">
     <div class="footer-content">
       @if (!todosCompletados()) {

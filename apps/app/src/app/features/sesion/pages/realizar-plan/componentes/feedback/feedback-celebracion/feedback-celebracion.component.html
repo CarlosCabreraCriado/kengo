@@ -1,0 +1,52 @@
+@if (mostrarConfetti()) {
+  <div class="confetti-container">
+    @for (i of confettiPieces; track i) {
+      <div
+        class="confetti"
+        [style.--delay]="i * 0.08 + 's'"
+        [style.--x]="getConfettiX(i)"
+        [style.--rotation]="getConfettiRotation(i)"
+      ></div>
+    }
+  </div>
+}
+
+<header class="floating-header">
+  <div class="header-content">
+    <div class="celebration-badge">
+      <div class="badge-glow"></div>
+      <span class="material-symbols-outlined icon-filled">celebration</span>
+    </div>
+
+    <div class="header-info">
+      <h1 class="header-title">¡Sesión completada!</h1>
+      <p class="header-subtitle">Cuéntanos cómo te sentiste</p>
+    </div>
+
+    @if (modoDetallado()) {
+      <div class="progress-ring-container">
+        <svg class="progress-ring" viewBox="0 0 44 44">
+          <circle
+            class="progress-ring-bg"
+            cx="22"
+            cy="22"
+            r="18"
+            fill="none"
+            stroke-width="4"
+          />
+          <circle
+            class="progress-ring-fill"
+            cx="22"
+            cy="22"
+            r="18"
+            fill="none"
+            stroke-width="4"
+            [style.stroke-dasharray]="circumference"
+            [style.stroke-dashoffset]="progressDashoffset()"
+          />
+        </svg>
+        <span class="progress-text">{{ ejerciciosConDolor() }}/{{ totalEjercicios() }}</span>
+      </div>
+    }
+  </div>
+</header>

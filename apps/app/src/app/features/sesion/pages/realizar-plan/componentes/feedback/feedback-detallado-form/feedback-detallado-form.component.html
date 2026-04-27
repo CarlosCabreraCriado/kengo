@@ -1,0 +1,87 @@
+<button
+  type="button"
+  class="collapse-detail-btn"
+  (click)="onVolverAModoSimplificado()"
+>
+  <span class="material-symbols-outlined arrow-icon">chevron_left</span>
+  <span class="detail-text">Volver a feedback simplificado</span>
+</button>
+
+@for (ejercicio of ejercicios(); track ejercicio.planItemId; let i = $index) {
+  <article
+    class="exercise-card"
+    [class.completed]="dolorPorEjercicio().get(ejercicio.planItemId) !== undefined"
+    @fade
+  >
+    <div class="exercise-header">
+      <div class="exercise-number">
+        @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
+          <span class="material-symbols-outlined icon-filled check-icon">check</span>
+        } @else {
+          {{ i + 1 }}
+        }
+      </div>
+      <div class="exercise-info">
+        <span class="exercise-name">{{ ejercicio.nombre }}</span>
+        @if (dolorPorEjercicio().get(ejercicio.planItemId) !== undefined) {
+          <span
+            class="dolor-badge"
+            [style.background]="getDolorColor(dolorPorEjercicio().get(ejercicio.planItemId)!)"
+          >
+            {{ dolorPorEjercicio().get(ejercicio.planItemId) }}/10
+          </span>
+        }
+      </div>
+    </div>
+
+    <app-escala-dolor
+      label="Nivel de dolor"
+      [valor]="dolorPorEjercicio().get(ejercicio.planItemId) ?? null"
+      (valorChange)="onDolorChange(ejercicio.planItemId, $event)"
+    />
+
+    <div class="note-section">
+      <button
+        type="button"
+        class="note-toggle"
+        (click)="onToggleNota(ejercicio.planItemId)"
+      >
+        <span class="material-symbols-outlined note-icon">edit_note</span>
+        <span class="note-label">
+          {{ notasPorEjercicio().get(ejercicio.planItemId) ? 'Editar nota' : 'Agregar nota' }}
+        </span>
+        <span
+          class="material-symbols-outlined expand-icon"
+          [class.rotated]="notasExpandidas().has(ejercicio.planItemId)"
+        >expand_more</span>
+      </button>
+
+      @if (notasExpandidas().has(ejercicio.planItemId)) {
+        <div class="note-input-container" @fade>
+          <textarea
+            class="note-input"
+            placeholder="Describe cómo te sentiste durante este ejercicio..."
+            rows="3"
+            [ngModel]="notasPorEjercicio().get(ejercicio.planItemId) || ''"
+            (ngModelChange)="onNotaChange(ejercicio.planItemId, $event)"
+          ></textarea>
+        </div>
+      }
+    </div>
+  </article>
+}
+
+<article class="observations-card" @fade>
+  <div class="observations-header">
+    <span class="material-symbols-outlined observations-icon">forum</span>
+    <span class="observations-title">Observaciones generales</span>
+    <span class="observations-optional">(opcional)</span>
+  </div>
+  <textarea
+    class="observations-input"
+    placeholder="¿Cómo te sentiste durante la sesión en general? ¿Algún comentario para tu fisioterapeuta?"
+    rows="4"
+    [ngModel]="observaciones()"
+    (ngModelChange)="onObservacionesChange($event)"
+  ></textarea>
+</article>
