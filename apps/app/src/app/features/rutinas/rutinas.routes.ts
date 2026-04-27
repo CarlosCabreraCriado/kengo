@@ -1,13 +1,23 @@
 import { Routes } from '@angular/router';
+import { AuthGuard, FisioGuard } from '../../core';
+import { rutinaUnsavedChangesGuard } from './guards/rutina-unsaved-changes.guard';
 
-/**
- * Rutas para el feature de rutinas (plantillas de ejercicios).
- * Actualmente las rutinas se usan como dialogos desde el plan-builder,
- * pero estas rutas quedan preparadas para futura expansion.
- */
 export const RUTINAS_ROUTES: Routes = [
-  // Las rutinas actualmente se gestionan via dialogos desde plan-builder
-  // Rutas futuras:
-  // { path: '', component: RutinasListComponent },
-  // { path: ':id', component: RutinaDetalleComponent },
+  {
+    path: 'nueva',
+    loadComponent: () =>
+      import('./pages/rutina-builder/rutina-builder.component').then(
+        (m) => m.RutinaBuilderComponent,
+      ),
+    canActivate: [AuthGuard, FisioGuard],
+  },
+  {
+    path: ':id/editar',
+    loadComponent: () =>
+      import('./pages/rutina-builder/rutina-builder.component').then(
+        (m) => m.RutinaBuilderComponent,
+      ),
+    canActivate: [AuthGuard, FisioGuard],
+    canDeactivate: [rutinaUnsavedChangesGuard],
+  },
 ];

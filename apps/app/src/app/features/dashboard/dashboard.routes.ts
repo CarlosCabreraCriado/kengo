@@ -5,7 +5,9 @@ export const DASHBOARD_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/inicio/inicio.component').then((m) => m.InicioComponent),
+      import('./pages/inicio/inicio/inicio.component').then(
+        (m) => m.InicioComponent,
+      ),
     canActivate: [AuthGuard],
   },
 ];

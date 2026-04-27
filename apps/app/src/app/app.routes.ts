@@ -1,190 +1,74 @@
 import { Routes } from '@angular/router';
-import { AuthGuard, FisioGuard } from './core';
-import { unsavedChangesGuard } from './features/planes/guards/unsaved-changes.guard';
-import { rutinaUnsavedChangesGuard } from './features/rutinas/guards/rutina-unsaved-changes.guard';
+import { AUTH_ROUTES } from './features/auth/auth.routes';
 
 export const routes: Routes = [
-  // Redirección raíz
   { path: '', redirectTo: '/inicio', pathMatch: 'full' },
 
-  // Auth routes (lazy loaded)
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./features/auth/pages/login/login.component').then(
-        (m) => m.LoginComponent
-      ),
-  },
-  {
-    path: 'magic',
-    loadComponent: () =>
-      import('./features/auth/pages/magic/magic.component').then(
-        (m) => m.MagicComponent
-      ),
-  },
-  {
-    path: 'registro',
-    loadComponent: () =>
-      import('./features/auth/pages/registro/registro.component').then(
-        (m) => m.RegistroComponent
-      ),
-  },
-  {
-    path: 'recuperar-password',
-    loadComponent: () =>
-      import('./features/auth/pages/recuperar-password/recuperar-password.component').then(
-        (m) => m.RecuperarPasswordComponent
-      ),
-  },
-  {
-    path: 'reset-password',
-    loadComponent: () =>
-      import('./features/auth/pages/reset-password/reset-password.component').then(
-        (m) => m.ResetPasswordComponent
-      ),
-  },
-  {
-    path: 'establecer-password',
-    loadComponent: () =>
-      import('./features/auth/pages/establecer-password/establecer-password.component').then(
-        (m) => m.EstablecerPasswordComponent
-      ),
-    canActivate: [AuthGuard],
-  },
+  ...AUTH_ROUTES,
 
-  // Dashboard (inicio)
   {
     path: 'inicio',
-    loadComponent: () =>
-      import('./features/dashboard/pages/inicio/inicio/inicio.component').then(
-        (m) => m.InicioComponent
+    loadChildren: () =>
+      import('./features/dashboard/dashboard.routes').then(
+        (m) => m.DASHBOARD_ROUTES,
       ),
-    canActivate: [AuthGuard],
   },
 
-  // Galería (ejercicios + rutinas)
   {
     path: 'galeria',
     loadChildren: () =>
       import('./features/galeria/galeria.routes').then(
-        (m) => m.GALERIA_ROUTES
+        (m) => m.GALERIA_ROUTES,
       ),
-    canActivate: [AuthGuard],
   },
 
-  // Rutina Builder (crear plantilla)
   {
-    path: 'rutinas/nueva',
-    loadComponent: () =>
-      import('./features/rutinas/pages/rutina-builder/rutina-builder.component').then(
-        (m) => m.RutinaBuilderComponent
+    path: 'rutinas',
+    loadChildren: () =>
+      import('./features/rutinas/rutinas.routes').then(
+        (m) => m.RUTINAS_ROUTES,
       ),
-    canActivate: [AuthGuard, FisioGuard],
   },
 
-  // Rutina Builder (editar plantilla)
-  {
-    path: 'rutinas/:id/editar',
-    loadComponent: () =>
-      import('./features/rutinas/pages/rutina-builder/rutina-builder.component').then(
-        (m) => m.RutinaBuilderComponent
-      ),
-    canActivate: [AuthGuard, FisioGuard],
-    canDeactivate: [rutinaUnsavedChangesGuard],
-  },
-
-  // Pacientes (lazy loaded feature)
   {
     path: 'mis-pacientes',
     loadChildren: () =>
       import('./features/pacientes/pacientes.routes').then(
-        (m) => m.PACIENTES_ROUTES
+        (m) => m.PACIENTES_ROUTES,
       ),
-    canActivate: [AuthGuard, FisioGuard],
   },
 
-  // Clínica
   {
     path: 'mi-clinica',
-    loadComponent: () =>
-      import('./features/clinica/pages/miclinica/miclinica.component').then(
-        (m) => m.MiClinicaComponent
+    loadChildren: () =>
+      import('./features/clinica/clinica.routes').then(
+        (m) => m.CLINICA_ROUTES,
       ),
-    canActivate: [AuthGuard],
   },
 
-  // Planes (lazy loaded)
-  // Vista mixta intencional: el componente discrimina por rol y muestra
-  // tabs distintas (fisio: planes-pacientes/rutinas/mis-planes; paciente:
-  // solo mis-planes). Por eso lleva sólo `AuthGuard` y no `FisioGuard`.
   {
     path: 'planes',
-    loadComponent: () =>
-      import('./features/planes/pages/planes-list/planes.component').then(
-        (m) => m.PlanesComponent
-      ),
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'planes/nuevo',
-    loadComponent: () =>
-      import('./features/planes/pages/plan-builder/plan-builder.component').then(
-        (m) => m.PlanBuilderComponent
-      ),
-    canActivate: [AuthGuard, FisioGuard],
-  },
-  {
-    path: 'planes/:id/editar',
-    loadComponent: () =>
-      import('./features/planes/pages/plan-builder/plan-builder.component').then(
-        (m) => m.PlanBuilderComponent
-      ),
-    canActivate: [AuthGuard, FisioGuard],
-    canDeactivate: [unsavedChangesGuard],
-  },
-  {
-    path: 'planes/:id',
-    loadComponent: () =>
-      import('./features/planes/pages/plan-detail/plan-detail.component').then(
-        (m) => m.PlanDetailComponent
-      ),
-    canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./features/planes/planes.routes').then((m) => m.PLANES_ROUTES),
   },
 
-  // Actividad personal
   {
     path: 'actividad-personal',
     loadChildren: () =>
       import('./features/actividad/actividad.routes').then(
-        (m) => m.ACTIVIDAD_ROUTES
+        (m) => m.ACTIVIDAD_ROUTES,
       ),
   },
 
-  // Sesión / Realizar plan
   {
     path: 'mi-plan',
-    loadComponent: () =>
-      import('./features/sesion/pages/realizar-plan/realizar-plan.component').then(
-        (m) => m.RealizarPlanComponent
-      ),
-    canActivate: [AuthGuard],
-  },
-  {
-    path: 'mi-plan/:planId',
-    loadComponent: () =>
-      import('./features/sesion/pages/realizar-plan/realizar-plan.component').then(
-        (m) => m.RealizarPlanComponent
-      ),
-    canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./features/sesion/sesion.routes').then((m) => m.SESION_ROUTES),
   },
 
-  // Perfil
   {
     path: 'perfil',
-    loadComponent: () =>
-      import('./features/perfil/pages/perfil/perfil/perfil.component').then(
-        (m) => m.PerfilComponent
-      ),
-    canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./features/perfil/perfil.routes').then((m) => m.PERFIL_ROUTES),
   },
 ];
