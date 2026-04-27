@@ -8,6 +8,7 @@ import {
 import { assetUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import {
@@ -236,7 +237,7 @@ export class PlanesService {
 
   private mapConvexToPlan(r: any): Plan {
     return {
-      id: r._id,
+      ...mapConvexBase(r),
       paciente: this.mapConvexToUsuarioBasico(
         r.pacienteId,
         r.pacienteNombre,
@@ -247,15 +248,12 @@ export class PlanesService {
       estado: r.estado,
       fechaInicio: r.fechaInicio,
       fechaFin: r.fechaFin,
-      dateCreated: r._creationTime
-        ? new Date(r._creationTime).toISOString()
-        : undefined,
     };
   }
 
   private mapConvexToPlanCompleto(r: any): PlanCompleto {
     return {
-      id: r._id,
+      ...mapConvexBase(r),
       paciente: this.mapConvexToUsuarioBasico(
         r.pacienteId,
         r.pacienteNombre,
@@ -266,9 +264,6 @@ export class PlanesService {
       estado: r.estado,
       fechaInicio: r.fechaInicio,
       fechaFin: r.fechaFin,
-      dateCreated: r._creationTime
-        ? new Date(r._creationTime).toISOString()
-        : undefined,
       items: ((r.ejercicios || []) as any[])
         .map((e) => this.mapConvexToEjercicioPlan(e))
         .sort((a, b) => a.sort - b.sort),
@@ -296,11 +291,11 @@ export class PlanesService {
 
   private mapConvexToEjercicioPlan(e: any): EjercicioPlan {
     return {
-      id: e._id,
+      id: mapId(e),
       sort: e.sort ?? 0,
       planId: e.planId,
       ejercicio: {
-        id: e.ejercicio?._id ?? e.exerciseId ?? '',
+        id: mapId(e.ejercicio) || (e.exerciseId ?? ''),
         nombre: e.ejercicio?.nombreEjercicio ?? '',
         descripcion: e.ejercicio?.descripcion ?? '',
         video: e.ejercicio?.video ?? '',

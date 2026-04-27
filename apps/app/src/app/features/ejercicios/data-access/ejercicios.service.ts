@@ -11,6 +11,7 @@ import { rawAssetUrl, videoUrl } from '../../../core/utils/asset-url';
 import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { mapId } from '../../../shared/utils/convex-mappers';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import { Ejercicio, Categoria } from '../../../../types/global';
@@ -62,7 +63,7 @@ export class EjerciciosService {
       if (!raw) return [] as Categoria[];
       return raw.map(
         (c: { _id: string; nombreCategoria: string }) => ({
-          id: c._id,
+          id: mapId(c),
           nombre: c.nombreCategoria,
         }),
       );
@@ -282,7 +283,7 @@ export class EjerciciosService {
   // ========= Mapper Convex → Ejercicio (dominio Angular) =========
   private mapConvexToEjercicio(raw: any): Ejercicio {
     return {
-      id: raw._id ?? '',
+      id: mapId(raw),
       nombre: raw.nombreEjercicio ?? '',
       descripcion: raw.descripcion ?? '',
       seriesDefecto: raw.seriesDefecto,

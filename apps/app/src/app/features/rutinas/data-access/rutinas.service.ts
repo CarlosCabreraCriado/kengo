@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../core/utils/asset-url';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import {
@@ -46,14 +47,11 @@ export class RutinasService {
     if (!raw) return [];
 
     return (raw as any[]).map((r) => ({
-      id: r._id,
+      ...mapConvexBase(r),
       nombre: r.nombre,
       descripcion: r.descripcion,
       autor: r.autorId,
       visibilidad: r.visibilidad,
-      dateCreated: r._creationTime
-        ? new Date(r._creationTime).toISOString()
-        : undefined,
     }));
   });
 
@@ -220,16 +218,13 @@ export class RutinasService {
     const autor = raw.autor;
 
     return {
-      id: raw._id,
+      ...mapConvexBase(raw),
       nombre: raw.nombre,
       descripcion: raw.descripcion,
       visibilidad: raw.visibilidad,
-      dateCreated: raw._creationTime
-        ? new Date(raw._creationTime).toISOString()
-        : undefined,
       autor: autor
         ? {
-            id: autor._id,
+            id: mapId(autor),
             first_name: autor.firstName ?? '',
             last_name: autor.lastName ?? '',
             email: autor.email ?? '',
@@ -250,12 +245,12 @@ export class RutinasService {
   private mapConvexToEjercicioRutina(re: any, rutinaId: string): EjercicioRutina {
     const ej = re.ejercicio;
     return {
-      id: re._id,
+      id: mapId(re),
       sort: re.sort ?? 0,
       rutinaId,
       ejercicio: ej
         ? ({
-            id: ej._id ?? '',
+            id: mapId(ej),
             nombre: ej.nombreEjercicio ?? '',
             descripcion: ej.descripcion ?? '',
             portada: ej.portada ?? '',
