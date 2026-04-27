@@ -1,0 +1,16 @@
+<button type="button" class="header-btn" (click)="onSalir($event)" aria-label="Salir">
+  <span class="material-symbols-outlined">close</span>
+</button>
+
+<div class="progress-indicator">
+  <div class="progress-text">
+    <span class="progress-current">{{ ejercicioIndex() + 1 }}</span>
+    <span class="progress-separator">/</span>
+    <span class="progress-total">{{ totalEjercicios() }}</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" [style.width.%]="progresoPct()"></div>
+  </div>
+</div>
+
+<div class="header-spacer"></div>

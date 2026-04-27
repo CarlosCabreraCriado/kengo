@@ -1,118 +1,35 @@
 <div class="descanso-container">
-  <!-- Fondo animado con orbes flotantes -->
   <div class="ambient-background">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
   </div>
 
-  <!-- Header flotante -->
-  <header class="floating-header">
-    <!-- Botón salir -->
-    <button type="button" class="header-btn" (click)="salir.emit()">
-      <span class="material-symbols-outlined">close</span>
-    </button>
+  <app-sesion-progress-header
+    variant="plain"
+    [ejercicioIndex]="ejercicioActualIndex()"
+    [totalEjercicios]="totalEjercicios()"
+    [progresoPct]="progresoSesion()"
+    (salir)="salir.emit()"
+  />
 
-    <!-- Indicador de progreso -->
-    <div class="progress-indicator">
-      <div class="progress-text">
-        <span class="progress-current">{{
-          ejercicioActualIndex() + 1
-        }}</span>
-        <span class="progress-separator">/</span>
-        <span class="progress-total">{{ totalEjercicios() }}</span>
-      </div>
-      <div class="progress-bar">
-        <div
-          class="progress-fill"
-          [style.width.%]="progresoSesion()"
-        ></div>
-      </div>
-    </div>
-
-    <!-- Espacio para balance visual -->
-    <div class="header-spacer"></div>
-  </header>
-
-  <!-- Contenido principal centrado -->
   <main class="main-content">
-    <!-- Indicador de respiración -->
-    <div class="breath-hint" [class.inhale]="breathPhase() === 'inhale'">
-      <span class="breath-text">{{
-        breathPhase() === 'inhale' ? 'Inhala' : 'Exhala'
-      }}</span>
-    </div>
+    <app-descanso-respiracion
+      [tiempoInicial]="tiempoDescanso()"
+      [umbralAdvertencia]="5"
+      (tiempoAgotado)="onTiempoAgotado()"
+    />
 
-    <!-- Timer principal con anillo de respiración -->
-    <div class="timer-zone" [class.warning]="isWarning()">
-      <!-- Anillo exterior de respiración -->
-      <div
-        class="breath-ring"
-        [class.inhale]="breathPhase() === 'inhale'"
-      ></div>
-
-      <!-- Timer central -->
-      <div class="timer-core">
-        <app-temporizador
-          #temporizador
-          [tiempoInicial]="tiempoDescanso()"
-          [autoIniciar]="true"
-          label="segundos"
-          [umbralAdvertencia]="5"
-          (tiempoAgotado)="onTiempoAgotado()"
-          (tick)="onTick($event)"
-        />
-      </div>
-    </div>
-
-    <!-- Info próxima serie o próximo ejercicio -->
-    @if (esDescansoEntreEjercicios() && proximoEjercicio()) {
-      <div class="next-exercise-card" @fade (click)="onPreviewProximo()">
-        <div class="next-label">
-          <span class="material-symbols-outlined icon-sm">navigate_next</span>
-          <span>Siguiente ejercicio</span>
-        </div>
-        <div class="next-exercise-content">
-          <div class="next-exercise-thumb">
-            @if (proximoEjercicioPortada()) {
-              <img
-                [src]="proximoEjercicioPortada()"
-                [alt]="proximoEjercicio()!.ejercicio.nombre"
-                loading="lazy"
-              />
-            } @else {
-              <div class="next-thumb-placeholder">
-                <span class="material-symbols-outlined">fitness_center</span>
-              </div>
-            }
-          </div>
-          <div class="next-exercise-info">
-            <span class="next-exercise-name">{{ proximoEjercicio()!.ejercicio.nombre }}</span>
-            <span class="next-exercise-details">
-              {{ proximoEjercicio()!.series ?? 3 }} series ×
-              @if (proximoEjercicio()!.duracionSeg) {
-                {{ proximoEjercicio()!.duracionSeg }}s
-              } @else {
-                {{ proximoEjercicio()!.repeticiones ?? 12 }} reps
-              }
-            </span>
-          </div>
-        </div>
-      </div>
-    } @else {
-      <div class="next-series-card" @fade>
-        <div class="next-label">
-          <span class="material-symbols-outlined icon-sm">navigate_next</span>
-          <span>Próxima</span>
-        </div>
-        <div class="next-value">
-          Serie {{ serieActual() }} de {{ totalSeries() }}
-        </div>
-      </div>
-    }
+    <app-descanso-proximo
+      [esEntreEjercicios]="esDescansoEntreEjercicios()"
+      [proximoEjercicio]="proximoEjercicio()"
+      [proximoPortadaUrl]="proximoEjercicioPortada()"
+      [serieActual]="serieActual()"
+      [totalSeries]="totalSeries()"
+      (previewClick)="onPreviewProximo()"
+    />
   </main>
 
-  <!-- Panel de acciones -->
   <footer class="actions-panel">
     <button type="button" class="action-btn timeline-btn" (click)="abrirTimeline.emit()">
       <span class="material-symbols-outlined">list_alt</span>

@@ -1,0 +1,18 @@
+<div class="breath-hint" [class.inhale]="breathPhase() === 'inhale'">
+  <span class="breath-text">{{ breathPhase() === 'inhale' ? 'Inhala' : 'Exhala' }}</span>
+</div>
+
+<div class="timer-zone" [class.warning]="isWarning()">
+  <div class="breath-ring" [class.inhale]="breathPhase() === 'inhale'"></div>
+
+  <div class="timer-core">
+    <app-temporizador
+      [tiempoInicial]="tiempoInicial()"
+      [autoIniciar]="true"
+      label="segundos"
+      [umbralAdvertencia]="umbralAdvertencia()"
+      (tiempoAgotado)="onTiempoAgotado()"
+      (tick)="onTick($event)"
+    />
+  </div>
+</div>

@@ -1,28 +1,31 @@
 import {
+  ChangeDetectionStrategy,
   Component,
-  Output,
   EventEmitter,
-  inject,
+  Output,
   computed,
-  OnInit,
-  ViewChild,
-  signal,
-  OnDestroy,
+  inject,
+  viewChild,
 } from '@angular/core';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
-import { TemporizadorComponent } from '../../componentes/temporizador/temporizador.component';
+import { SesionProgressHeaderComponent } from '../../componentes/sesion-progress-header/sesion-progress-header.component';
+import { DescansoRespiracionComponent } from '../../componentes/descanso-piezas/descanso-respiracion/descanso-respiracion.component';
+import { DescansoProximoComponent } from '../../componentes/descanso-piezas/descanso-proximo/descanso-proximo.component';
 import { EjercicioPlan } from '../../../../../../../types/global';
-import { fadeAnimation } from '../../realizar-plan.animations';
 
 @Component({
   selector: 'app-descanso',
   standalone: true,
-  imports: [TemporizadorComponent],
-  animations: [fadeAnimation],
+  imports: [
+    SesionProgressHeaderComponent,
+    DescansoRespiracionComponent,
+    DescansoProximoComponent,
+  ],
   templateUrl: './descanso.component.html',
   styleUrl: './descanso.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DescansoComponent implements OnInit, OnDestroy {
+export class DescansoComponent {
   @Output() saltar = new EventEmitter<void>();
   @Output() tiempoAgotado = new EventEmitter<void>();
   @Output() agregarTiempo = new EventEmitter<number>();
@@ -33,10 +36,8 @@ export class DescansoComponent implements OnInit, OnDestroy {
     index: number;
   }>();
 
-  @ViewChild('temporizador') temporizador!: TemporizadorComponent;
-
-  private registroService = inject(SesionStateService);
-  private breathInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly registroService = inject(SesionStateService);
+  private readonly respiracion = viewChild(DescansoRespiracionComponent);
 
   readonly serieActual = this.registroService.serieActual;
   readonly totalSeries = this.registroService.totalSeries;
@@ -44,12 +45,10 @@ export class DescansoComponent implements OnInit, OnDestroy {
     () => this.registroService.ejercicioActual()?.descansoSeg || 45,
   );
 
-  // Progreso de la sesión
   readonly ejercicioActualIndex = this.registroService.ejercicioActualIndex;
   readonly totalEjercicios = this.registroService.totalEjercicios;
   readonly progresoSesion = this.registroService.progresoSesion;
 
-  // Próximo ejercicio (para descanso entre ejercicios)
   readonly esDescansoEntreEjercicios = this.registroService.descansoEntreEjercicios;
   readonly proximoEjercicio = this.registroService.proximoEjercicio;
   readonly proximoEjercicioPortada = computed(() => {
@@ -57,33 +56,7 @@ export class DescansoComponent implements OnInit, OnDestroy {
     return portadaId ? this.registroService.getAssetUrl(portadaId, 96, 96) : null;
   });
 
-  // Estado de la animación de respiración
-  readonly breathPhase = signal<'inhale' | 'exhale'>('inhale');
-
-  // Estado de advertencia (últimos 5 segundos)
-  readonly isWarning = signal(false);
-
-  ngOnInit(): void {
-    // Ciclo de respiración: 4s inhalar, 4s exhalar
-    this.breathInterval = setInterval(() => {
-      this.breathPhase.update((phase) =>
-        phase === 'inhale' ? 'exhale' : 'inhale',
-      );
-    }, 4000);
-  }
-
-  ngOnDestroy(): void {
-    if (this.breathInterval) {
-      clearInterval(this.breathInterval);
-    }
-  }
-
-  onTick(segundosRestantes: number): void {
-    this.isWarning.set(segundosRestantes <= 5 && segundosRestantes > 0);
-  }
-
   onTiempoAgotado(): void {
-    // Vibrar si está disponible
     if ('vibrate' in navigator) {
       navigator.vibrate([100, 50, 100, 50, 100]);
     }
@@ -100,9 +73,7 @@ export class DescansoComponent implements OnInit, OnDestroy {
   }
 
   onAgregarTiempo(): void {
-    if (this.temporizador) {
-      this.temporizador.agregarTiempo(15);
-    }
+    this.respiracion()?.agregarTiempo(15);
     this.agregarTiempo.emit(15);
   }
 }

@@ -1,0 +1,32 @@
+@if (videoUrl()) {
+  <video
+    #videoPlayer
+    class="media-element"
+    [src]="videoUrl()"
+    [poster]="posterUrl() || ''"
+    autoplay
+    muted
+    loop
+    playsinline
+  ></video>
+} @else if (posterUrl()) {
+  <img
+    [src]="posterUrl()"
+    [alt]="nombreEjercicio()"
+    class="media-element"
+  />
+} @else {
+  <div class="media-placeholder">
+    <div class="placeholder-icon-wrapper">
+      <span class="material-symbols-outlined placeholder-icon">fitness_center</span>
+    </div>
+  </div>
+}
+
+@if (showPlayIndicator()) {
+  <div class="play-indicator-animated">
+    <span class="material-symbols-outlined icon-filled">
+      {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
+    </span>
+  </div>
+}

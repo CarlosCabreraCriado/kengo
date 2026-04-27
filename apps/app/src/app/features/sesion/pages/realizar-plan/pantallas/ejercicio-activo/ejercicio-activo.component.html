@@ -1,248 +1,45 @@
-<!-- Contenedor principal con gestos -->
 <div
   class="ejercicio-activo-container"
-  (wheel)="onWheel($event)"
-  (touchstart)="onTouchStart($event)"
-  (touchend)="onTouchEnd($event)"
+  appSwipeGestures
+  (swipe)="onSwipe($event)"
 >
-  <!-- Sección del video -->
   <div class="video-section" [class.expanded]="videoExpandido()">
-    <div class="video-wrapper" (click)="toggleVideo()">
-      @if (videoUrl()) {
-        <video
-          #videoPlayer
-          class="media-element"
-          [src]="videoUrl()"
-          [poster]="posterUrl() || ''"
-          autoplay
-          muted
-          loop
-          playsinline
-        ></video>
-      } @else if (posterUrl()) {
-        <img
-          [src]="posterUrl()"
-          [alt]="ejercicio()?.ejercicio?.nombre"
-          class="media-element"
-        />
-      } @else {
-        <div class="media-placeholder">
-          <div class="placeholder-icon-wrapper">
-            <span class="material-symbols-outlined placeholder-icon"
-              >fitness_center</span
-            >
-          </div>
-        </div>
-      }
+    <app-ejercicio-video-player
+      [videoUrl]="videoUrl()"
+      [posterUrl]="posterUrl()"
+      [nombreEjercicio]="nombreEjercicio()"
+      (playStateChange)="onPlayStateChange($event)"
+    />
 
-      <!-- Indicador play/pause flotante -->
-      @if (showPlayIndicator()) {
-        <div class="play-indicator-animated">
-          <span class="material-symbols-outlined icon-filled">
-            {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
-          </span>
-        </div>
-      }
-
-      <!-- Header flotante sobre el video -->
-      <header class="floating-header" [class.scrolled]="videoExpandido()">
-        <!-- Botón salir -->
-        <button
-          type="button"
-          class="header-btn"
-          (click)="salir.emit(); $event.stopPropagation()"
-        >
-          <span class="material-symbols-outlined">close</span>
-        </button>
-
-        <!-- Indicador de progreso -->
-        <div class="progress-indicator">
-          <div class="progress-text">
-            <span class="progress-current">{{
-              ejercicioActualIndex() + 1
-            }}</span>
-            <span class="progress-separator">/</span>
-            <span class="progress-total">{{ totalEjercicios() }}</span>
-          </div>
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              [style.width.%]="progresoSesion()"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Espacio para balance visual -->
-        <div class="header-spacer"></div>
-      </header>
-
-    </div>
+    <app-sesion-progress-header
+      variant="overlay"
+      [ejercicioIndex]="ejercicioActualIndex()"
+      [totalEjercicios]="totalEjercicios()"
+      [progresoPct]="progresoSesion()"
+      [scrolled]="videoExpandido()"
+      (salir)="salir.emit()"
+    />
   </div>
 
-  <!-- Panel de información -->
-  <div class="info-panel" [class.minimized]="videoExpandido()">
-    <!-- Panel handle para arrastrar -->
-    <div class="panel-handle" (click)="toggleExpandido()">
-      <div class="handle-bar"></div>
-    </div>
-
-    <!-- Contenido del panel (oculto cuando está minimizado) -->
-    @if (!videoExpandido()) {
-      <div class="panel-content" @fade>
-        <!-- Nombre del ejercicio -->
-        <h2 class="exercise-name">
-          {{ ejercicio()?.ejercicio?.nombre }}
-        </h2>
-
-        <!-- Fila: Series + Objetivo -->
-        <div class="stats-row">
-          <!-- Contador de series visual -->
-          <div class="series-tracker">
-            <span class="series-label">Serie</span>
-            <div class="series-dots">
-              @for (serie of seriesArray(); track serie) {
-                <div
-                  class="series-dot"
-                  [class.completed]="serie < serieActual()"
-                  [class.current]="serie === serieActual()"
-                  [class.pending]="serie > serieActual()"
-                >
-                  @if (serie < serieActual()) {
-                    <span class="material-symbols-outlined dot-check"
-                      >check</span
-                    >
-                  } @else if (serie === serieActual()) {
-                    <span class="dot-number">{{ serie }}</span>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Separador visual -->
-          <div class="stats-divider"></div>
-
-          <!-- Objetivo: Temporizador o Repeticiones -->
-          <div class="objective-section">
-            @if (esTemporizador()) {
-              <app-temporizador
-                [tiempoInicial]="duracionSeg()"
-                [autoIniciar]="true"
-                label="segundos"
-                (tiempoAgotado)="onTiempoAgotado()"
-              />
-            } @else {
-              <div class="reps-display">
-                <span class="reps-number">{{ repeticiones() }}</span>
-                <span class="reps-label">repeticiones</span>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Descripción del ejercicio (WYSIWYG HTML) -->
-        @if (descripcion()) {
-          <div class="info-card info-card--description info-card--no-icon">
-            <div
-              class="info-card-text info-card-html"
-              [innerHTML]="descripcion() | safeHtml"
-            ></div>
-          </div>
-        }
-
-        <!-- Instrucciones del fisio para el paciente -->
-        @if (instrucciones()) {
-          <div class="info-card info-card--instructions">
-            <div class="info-card-icon">
-              <span class="material-symbols-outlined"
-                >tips_and_updates</span
-              >
-            </div>
-            <p class="info-card-text">
-              {{ instrucciones() }}
-            </p>
-          </div>
-        }
-
-        <!-- Notas del fisio -->
-        @if (notasFisio()) {
-          <div class="info-card info-card--fisio">
-            <div class="info-card-icon">
-              <span class="material-symbols-outlined">clinical_notes</span>
-            </div>
-            <p class="info-card-text">
-              {{ notasFisio() }}
-            </p>
-          </div>
-        }
-
-        <!-- Timeline inline (solo desktop) -->
-        @if (esDesktop()) {
-          <app-timeline-sesion
-            mode="inline"
-            (previewEjercicio)="previewEjercicio.emit($event)"
-          />
-        }
-
-      </div>
-    }
-
-    <!-- Barra de acciones (siempre visible) -->
-    <div class="actions-bar" [class.compact]="videoExpandido()">
-      @if (videoExpandido()) {
-        <!-- Info mínima cuando está expandido -->
-        <div class="minimal-info">
-          <span class="minimal-title">{{
-            ejercicio()?.ejercicio?.nombre
-          }}</span>
-          <span class="minimal-meta"
-            >Serie {{ serieActual() }}/{{ totalSeries() }}</span
-          >
-        </div>
-      }
-
-      <div class="action-buttons">
-        <!-- Botón abrir timeline (solo movil, en desktop se ve inline) -->
-        @if (!esDesktop()) {
-          <button
-            type="button"
-            class="action-btn secondary"
-            (click)="abrirTimeline.emit()"
-            aria-label="Ver todos los ejercicios"
-          >
-            <span class="material-symbols-outlined">list_alt</span>
-          </button>
-        }
-
-        <!-- Botón completar serie -->
-        <button
-          type="button"
-          class="action-btn primary"
-          [class.final]="esUltimaSerie()"
-          (click)="completarSerie.emit()"
-        >
-          <span class="material-symbols-outlined icon-filled">{{
-            esUltimaSerie() ? 'done_all' : 'check'
-          }}</span>
-          @if (!videoExpandido()) {
-            <span class="btn-label">{{
-              esUltimaSerie() ? 'Completar' : 'Serie completada'
-            }}</span>
-          }
-        </button>
-
-        <!-- Botón play/pause -->
-        <button
-          type="button"
-          class="action-btn secondary"
-          (click)="toggleVideo(); $event.stopPropagation()"
-          [attr.aria-label]="videoReproduciendo() ? 'Pausar' : 'Reproducir'"
-        >
-          <span class="material-symbols-outlined">
-            {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
-          </span>
-        </button>
-      </div>
-    </div>
-  </div>
+  <app-ejercicio-info-panel
+    [nombre]="nombreEjercicio()"
+    [serieActual]="serieActual()"
+    [totalSeries]="totalSeries()"
+    [esTemporizador]="esTemporizador()"
+    [duracionSeg]="duracionSeg()"
+    [repeticiones]="repeticiones()"
+    [descripcion]="descripcion()"
+    [instrucciones]="instrucciones()"
+    [notasFisio]="notasFisio()"
+    [esDesktop]="esDesktop()"
+    [videoExpandido]="videoExpandido()"
+    [videoReproduciendo]="videoReproduciendo()"
+    [esUltimaSerie]="esUltimaSerie()"
+    (tiempoAgotado)="onTiempoAgotado()"
+    (togglePanel)="togglePanel()"
+    (completarSerie)="completarSerie.emit()"
+    (togglePlayPause)="togglePlayPause()"
+    (abrirTimeline)="abrirTimeline.emit()"
+    (previewEjercicio)="previewEjercicio.emit($event)"
+  />
 </div>

@@ -1,0 +1,132 @@
+<div class="info-panel" [class.minimized]="videoExpandido()">
+  <!-- Panel handle -->
+  <div class="panel-handle" (click)="togglePanel.emit()">
+    <div class="handle-bar"></div>
+  </div>
+
+  @if (!videoExpandido()) {
+    <div class="panel-content" @fade>
+      <h2 class="exercise-name">{{ nombre() }}</h2>
+
+      <div class="stats-row">
+        <div class="series-tracker">
+          <span class="series-label">Serie</span>
+          <div class="series-dots">
+            @for (serie of seriesArray(); track serie) {
+              <div
+                class="series-dot"
+                [class.completed]="serie < serieActual()"
+                [class.current]="serie === serieActual()"
+                [class.pending]="serie > serieActual()"
+              >
+                @if (serie < serieActual()) {
+                  <span class="material-symbols-outlined dot-check">check</span>
+                } @else if (serie === serieActual()) {
+                  <span class="dot-number">{{ serie }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="stats-divider"></div>
+
+        <div class="objective-section">
+          @if (esTemporizador()) {
+            <app-temporizador
+              [tiempoInicial]="duracionSeg()"
+              [autoIniciar]="true"
+              label="segundos"
+              (tiempoAgotado)="tiempoAgotado.emit()"
+            />
+          } @else {
+            <div class="reps-display">
+              <span class="reps-number">{{ repeticiones() }}</span>
+              <span class="reps-label">repeticiones</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (descripcion()) {
+        <div class="info-card info-card--description info-card--no-icon">
+          <div class="info-card-text info-card-html" [innerHTML]="descripcion() | safeHtml"></div>
+        </div>
+      }
+
+      @if (instrucciones()) {
+        <div class="info-card info-card--instructions">
+          <div class="info-card-icon">
+            <span class="material-symbols-outlined">tips_and_updates</span>
+          </div>
+          <p class="info-card-text">{{ instrucciones() }}</p>
+        </div>
+      }
+
+      @if (notasFisio()) {
+        <div class="info-card info-card--fisio">
+          <div class="info-card-icon">
+            <span class="material-symbols-outlined">clinical_notes</span>
+          </div>
+          <p class="info-card-text">{{ notasFisio() }}</p>
+        </div>
+      }
+
+      @if (esDesktop()) {
+        <app-timeline-sesion
+          mode="inline"
+          (previewEjercicio)="previewEjercicio.emit($event)"
+        />
+      }
+    </div>
+  }
+
+  <div class="actions-bar" [class.compact]="videoExpandido()">
+    @if (videoExpandido()) {
+      <div class="minimal-info">
+        <span class="minimal-title">{{ nombre() }}</span>
+        <span class="minimal-meta">Serie {{ serieActual() }}/{{ totalSeries() }}</span>
+      </div>
+    }
+
+    <div class="action-buttons">
+      @if (!esDesktop()) {
+        <button
+          type="button"
+          class="action-btn secondary"
+          (click)="abrirTimeline.emit()"
+          aria-label="Ver todos los ejercicios"
+        >
+          <span class="material-symbols-outlined">list_alt</span>
+        </button>
+      }
+
+      <button
+        type="button"
+        class="action-btn primary"
+        [class.final]="esUltimaSerie()"
+        (click)="completarSerie.emit()"
+      >
+        <span class="material-symbols-outlined icon-filled">{{
+          esUltimaSerie() ? 'done_all' : 'check'
+        }}</span>
+        @if (!videoExpandido()) {
+          <span class="btn-label">{{
+            esUltimaSerie() ? 'Completar' : 'Serie completada'
+          }}</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="action-btn secondary"
+        (click)="onPlayPauseClick($event)"
+        [attr.aria-label]="videoReproduciendo() ? 'Pausar' : 'Reproducir'"
+      >
+        <span class="material-symbols-outlined">
+          {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,13 +1,10 @@
 @reference "tailwindcss";
 
-/* === Variables === */
 :host {
   --primary: var(--kengo-primary);
   --primary-dark: var(--kengo-primary-dark);
   --tertiary: var(--kengo-tertiary);
-  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --breath-duration: 4s;
 
   display: flex;
   flex-direction: column;
@@ -16,7 +13,6 @@
   overflow: hidden;
 }
 
-/* === Contenedor principal === */
 .descanso-container {
   position: relative;
   display: flex;
@@ -33,7 +29,7 @@
   );
 }
 
-/* === Fondo ambiente con orbes === */
+/* === Fondo ambiente === */
 .ambient-background {
   position: absolute;
   inset: 0;
@@ -103,91 +99,6 @@
   }
 }
 
-/* === Header flotante === */
-.floating-header {
-  position: relative;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: calc(var(--safe-top) + 16px) 20px 12px;
-  gap: 16px;
-}
-
-.header-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  color: var(--primary);
-  transition: all 0.2s ease;
-
-  &:active {
-    transform: scale(0.92);
-    background: rgba(255, 255, 255, 0.8);
-  }
-
-  span {
-    font-size: 1.35rem;
-  }
-}
-
-.header-spacer {
-  width: 44px;
-}
-
-/* Indicador de progreso */
-.progress-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.progress-text {
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  font-weight: 600;
-}
-
-.progress-current {
-  font-size: 1rem;
-  color: #1f2937;
-}
-
-.progress-separator {
-  font-size: 0.85rem;
-  color: #9ca3af;
-}
-
-.progress-total {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-.progress-bar {
-  width: 80px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(var(--kengo-primary-rgb), 0.12);
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--tertiary));
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 /* === Contenido principal === */
 .main-content {
   position: relative;
@@ -199,270 +110,6 @@
   flex: 1;
   gap: 24px;
   padding: 0 24px;
-}
-
-/* Indicador de respiración */
-.breath-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 20px;
-  border-radius: 20px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  transition: all 0.5s ease;
-}
-
-.breath-hint.inhale {
-  background: #fef2f0;
-  border-color: #f5c4ba;
-}
-
-.breath-text {
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
-  transition: color 0.5s ease;
-}
-
-.breath-hint.inhale .breath-text {
-  color: var(--primary);
-}
-
-/* === Zona del timer === */
-.timer-zone {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Anillo de respiración */
-.breath-ring {
-  position: absolute;
-  width: calc(100% + 40px);
-  height: calc(100% + 40px);
-  border-radius: 50%;
-  border: 2px solid rgba(var(--kengo-primary-rgb), 0.15);
-  transition: all var(--breath-duration) cubic-bezier(0.4, 0, 0.6, 1);
-  animation: breathe var(--breath-duration) ease-in-out infinite;
-}
-
-.breath-ring::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  border: 1px solid rgba(var(--kengo-primary-rgb), 0.08);
-  animation: breathe var(--breath-duration) ease-in-out infinite;
-  animation-delay: 0.15s;
-}
-
-.breath-ring.inhale {
-  border-color: rgba(var(--kengo-primary-rgb), 0.25);
-}
-
-@keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-}
-
-/* Timer core */
-.timer-core {
-  position: relative;
-  z-index: 2;
-}
-
-/* Override del temporizador para este contexto */
-.timer-zone ::ng-deep .timer-container {
-  width: clamp(180px, 45vw, 220px);
-  height: auto;
-  aspect-ratio: 1;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow:
-    0 8px 40px rgba(var(--kengo-primary-rgb), 0.12),
-    0 2px 12px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.timer-zone ::ng-deep .timer-value {
-  font-size: clamp(2.5rem, 12vw, 4rem);
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.timer-zone ::ng-deep .timer-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: #64748b;
-}
-
-.timer-zone ::ng-deep .timer-progress {
-  stroke: var(--primary);
-  stroke-width: 6;
-}
-
-.timer-zone ::ng-deep .timer-bg {
-  stroke: rgba(var(--kengo-primary-rgb), 0.08);
-  stroke-width: 6;
-}
-
-/* Estado de advertencia */
-.timer-zone.warning ::ng-deep .timer-container {
-  animation: pulse-warning 0.8s ease-in-out infinite;
-  box-shadow:
-    0 8px 40px rgba(var(--kengo-tertiary-rgb), 0.25),
-    0 2px 12px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.timer-zone.warning ::ng-deep .timer-value {
-  color: var(--tertiary);
-}
-
-.timer-zone.warning .breath-ring {
-  border-color: rgba(var(--kengo-tertiary-rgb), 0.3);
-}
-
-@keyframes pulse-warning {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-
-/* === Card próxima serie === */
-.next-series-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 14px 28px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-}
-
-.next-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9ca3af;
-}
-
-.icon-sm {
-  font-size: 1rem;
-}
-
-.next-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* === Card próximo ejercicio (descanso entre ejercicios) === */
-.next-exercise-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 24px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  max-width: 280px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:active {
-    transform: scale(0.97);
-  }
-}
-
-.next-exercise-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.next-exercise-thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: #f4f4f5;
-}
-
-.next-exercise-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.next-thumb-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f4f4f5, #e4e4e7);
-}
-
-.next-thumb-placeholder .material-symbols-outlined {
-  font-size: 1.25rem;
-  color: #a1a1aa;
-}
-
-.next-exercise-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-}
-
-.next-exercise-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.next-exercise-details {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  margin-top: 2px;
 }
 
 /* === Panel de acciones === */
@@ -492,10 +139,10 @@
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+}
 
-  &:active {
-    transform: scale(0.96);
-  }
+.action-btn:active {
+  transform: scale(0.96);
 }
 
 .action-btn.timeline-btn {
@@ -508,21 +155,21 @@
   border: 1.5px solid #e5e7eb;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   color: #4b5563;
+}
 
-  span.material-symbols-outlined {
-    font-size: 1.15rem;
-    color: var(--primary);
-  }
+.action-btn.timeline-btn span.material-symbols-outlined {
+  font-size: 1.15rem;
+  color: var(--primary);
+}
 
-  .btn-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #4b5563;
-  }
+.action-btn.timeline-btn .btn-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #4b5563;
+}
 
-  &:active {
-    background: #f9fafb;
-  }
+.action-btn.timeline-btn:active {
+  background: #f9fafb;
 }
 
 .action-btn.secondary {
@@ -535,22 +182,22 @@
   border: 1.5px solid rgba(var(--kengo-primary-rgb), 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   color: #64748b;
+}
 
-  span.material-symbols-outlined {
-    font-size: 1.25rem;
-    color: var(--primary);
-  }
+.action-btn.secondary span.material-symbols-outlined {
+  font-size: 1.25rem;
+  color: var(--primary);
+}
 
-  .btn-label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #4b5563;
-  }
+.action-btn.secondary .btn-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4b5563;
+}
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: var(--primary);
-  }
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--primary);
 }
 
 .action-btn.primary {
@@ -564,22 +211,22 @@
     0 4px 20px rgba(var(--kengo-primary-rgb), 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   color: white;
+}
 
-  .btn-label {
-    font-size: 1rem;
-    font-weight: 700;
-  }
+.action-btn.primary .btn-label {
+  font-size: 1rem;
+  font-weight: 700;
+}
 
-  span.material-symbols-outlined {
-    font-size: 1.35rem;
-  }
+.action-btn.primary span.material-symbols-outlined {
+  font-size: 1.35rem;
+}
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 6px 24px rgba(var(--kengo-primary-rgb), 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  }
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 24px rgba(var(--kengo-primary-rgb), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .icon-filled {
@@ -590,23 +237,9 @@
     'opsz' 24;
 }
 
-/* === Desktop === */
 @media (min-width: 768px) {
   .descanso-container {
     padding: 0 32px;
-  }
-
-  .timer-zone ::ng-deep .timer-container {
-    width: clamp(200px, 30vw, 260px);
-  }
-
-  .timer-zone ::ng-deep .timer-value {
-    font-size: clamp(3rem, 6vw, 4.5rem);
-  }
-
-  .breath-ring {
-    width: calc(100% + 60px);
-    height: calc(100% + 60px);
   }
 
   .actions-panel {

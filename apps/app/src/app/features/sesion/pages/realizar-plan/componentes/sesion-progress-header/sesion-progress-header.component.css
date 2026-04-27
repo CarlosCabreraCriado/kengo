@@ -1,0 +1,176 @@
+@reference "tailwindcss";
+
+:host {
+  --primary: var(--kengo-primary);
+  --tertiary: var(--kengo-tertiary);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --header-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* === Variante plain (fondo claro, descanso) === */
+:host(.plain) {
+  position: relative;
+  z-index: 20;
+  padding: calc(var(--safe-top) + 16px) 20px 12px;
+}
+
+:host(.plain) .header-btn {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  color: var(--primary);
+}
+
+:host(.plain) .header-btn:active {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+:host(.plain) .progress-current {
+  color: #1f2937;
+}
+
+:host(.plain) .progress-separator {
+  color: #9ca3af;
+}
+
+:host(.plain) .progress-total {
+  color: #6b7280;
+}
+
+:host(.plain) .progress-bar {
+  width: 80px;
+  height: 4px;
+  background: rgba(var(--kengo-primary-rgb), 0.12);
+}
+
+/* === Variante overlay (sobre video, ejercicio-activo) === */
+:host(.overlay) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: calc(var(--safe-top) + 12px) 16px 12px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
+  transition: background var(--header-transition);
+}
+
+:host(.overlay.scrolled) {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+}
+
+:host(.overlay) .header-btn {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+:host(.overlay) .header-btn:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+:host(.overlay) .header-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+:host(.overlay) .progress-current {
+  color: white;
+}
+
+:host(.overlay) .progress-separator {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+:host(.overlay) .progress-total {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+:host(.overlay) .progress-bar {
+  width: 72px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* === Bloques compartidos === */
+.header-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-btn:active {
+  transform: scale(0.92);
+}
+
+.header-btn span {
+  font-size: 1.35rem;
+}
+
+.header-spacer {
+  width: 44px;
+}
+
+.progress-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.progress-text {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-weight: 600;
+}
+
+.progress-current {
+  font-size: 1rem;
+}
+
+.progress-separator,
+.progress-total {
+  font-size: 0.8rem;
+}
+
+.progress-bar {
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--tertiary));
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 1024px) {
+  :host(.overlay) {
+    padding: 20px 24px;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.4) 0%,
+      transparent 100%
+    );
+  }
+}
