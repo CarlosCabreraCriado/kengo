@@ -193,6 +193,9 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
         const success = await this.svc.update(nombre, descripcion, visibilidad);
         if (success) {
           this.toastService.show('Plantilla actualizada');
+          // Marcar como guardado antes de salir: el guard de cambios
+          // sin guardar verá `isDirty === false` durante la navegación.
+          this.svc.markAsSaved();
           this.svc.exit();
           this.router.navigate(['/galeria/rutinas']);
         } else {

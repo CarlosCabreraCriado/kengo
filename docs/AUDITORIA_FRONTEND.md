@@ -32,8 +32,8 @@ Leyenda de campos:
 | [ ] | 8 | `EmptyStateComponent` + pipe `formatDate` | shared | S | 🟢 | 🟢 | P2 |
 | [ ] | 9 | `FilteredListService<T>` base (filtrado+paginación) | core | M | 🟡 | 🟡 | P2 |
 | [ ] | 10 | Mover rutas de `planes`, `rutinas`, `sesion` a `*.routes.ts` | rutas | S | 🟢 | 🟢 | P2 |
-| [ ] | 11 | Aplicar `unsavedChangesGuard` a `rutina-builder` | rutas | S | 🟡 | 🟢 | P1 |
-| [ ] | 12 | Revisar guard de rol en `/planes` (list) | rutas | S | 🟡 | 🟡 | P1 |
+| [x] | 11 | Aplicar `unsavedChangesGuard` a `rutina-builder` | rutas | S | 🟡 | 🟢 | P1 (PR-Routes) ✅ |
+| [x] | 12 | Revisar guard de rol en `/planes` (list) | rutas | S | 🟡 | 🟡 | P1 (PR-Routes) ✅ |
 | [ ] | 13 | Unificar simetría `/galeria/rutinas` ↔ creación de rutinas | rutas | S | 🟢 | 🟢 | P3 |
 | [x] | 14 | Composable `useResponsive()` | shared | S | 🟡 | 🟢 | P2 (PR-4) ✅ |
 
@@ -44,7 +44,7 @@ Leyenda de campos:
 - [x] **PR-3 (L)** — Descomponer `feedback-final` (#1) ✅ **COMPLETADO**
 - [x] **PR-4 (L)** — Descomponer `ejercicio-activo` + `descanso` (#2 + #3) ✅ **COMPLETADO**
 - [x] **PR-5 (L)** — Separar `plan-builder.service` (#5) ✅ **COMPLETADO** (PR-5a + PR-5b + PR-5c). Pendiente `paciente-detail` (#6).
-- [ ] **PR-Routes** — `unsavedChangesGuard` rutinas + guard `/planes` (#11 + #12)
+- [x] **PR-Routes (S)** — `unsavedChangesGuard` rutinas + guard `/planes` (#11 + #12) ✅ **COMPLETADO**
 
 ---
 
@@ -262,11 +262,15 @@ Validators de email/password inline en 5+ formularios. **Esfuerzo**: S · **Impa
 ## [ ] 3.1 — Mover rutas top-level de `planes`/`rutinas`/`sesion` a `*.routes.ts`
 `app.routes.ts` reduciría de ~185 a ~80 LOC. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
 
-## [ ] 3.2 — `unsavedChangesGuard` en `/rutinas/:id/editar`
-El builder de rutinas tiene el mismo riesgo que el de planes. **Esfuerzo**: S · **Impacto**: 🟡 · **Prioridad**: **P1**.
+## [x] 3.2 — `unsavedChangesGuard` en `/rutinas/:id/editar` (PR-Routes) ✅
+**Resultado**:
+- Añadido dirty tracking a `RutinaBuilderService` (`originalSnapshot`, `isDirty`, `captureSnapshot`, `markAsSaved`). Snapshot se captura tras `startEdit()` y se resetea en `start()`/`exit()`.
+- Nuevo guard `rutinas/guards/rutina-unsaved-changes.guard.ts` (espejo del de planes). Permite navegación a `/galeria/ejercicios` sin warning.
+- `app.routes.ts` aplica `canDeactivate: [rutinaUnsavedChangesGuard]` solo en `/rutinas/:id/editar` (la creación `/rutinas/nueva` no entra, igual que planes).
+- `rutina-builder.component.guardarPlantilla` llama `markAsSaved()` tras `update()` exitoso, antes de salir, evitando que el guard dispare durante la transición.
 
-## [ ] 3.3 — Revisar guard de rol en `/planes` (list)
-Solo `AuthGuard`: cualquier autenticado ve el listado. Verificar si es intencional. **Esfuerzo**: S · **Impacto**: 🟡 · **Prioridad**: **P1**.
+## [x] 3.3 — Revisar guard de rol en `/planes` (list) (PR-Routes) ✅
+**Resultado**: comportamiento intencional confirmado, sin cambios en código. `planes.component.ts` discrimina por rol: si `isFisio()` muestra 3 tabs (planes-pacientes / rutinas / mis-planes), si paciente muestra solo "mis-planes" cargando `getPlanesByPaciente(userId)`. Por tanto añadir `FisioGuard` rompería el flujo del paciente. Documentado con comentario inline en `app.routes.ts` para futura claridad.
 
 ## [ ] 3.4 — Asimetría `galeria/rutinas` ↔ `/rutinas/nueva`
 Listado y creación en niveles distintos. Decidir camino canónico. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3.
@@ -355,7 +359,12 @@ apps/app/src/app/features/planes/data-access/                               #1.5
     └── builder-persistence.ts                          ( 89 LOC, nuevo)
 
 apps/app/src/app/features/rutinas/data-access/                              #1.5 ✅ PR-5
-└── rutina-builder.service.ts                           (334 LOC, nuevo)
+└── rutina-builder.service.ts                           (334 → 373 LOC)
+
+apps/app/src/app/features/rutinas/guards/                                   #3.2 ✅ PR-Routes
+└── rutina-unsaved-changes.guard.ts                     ( 27 LOC, nuevo)
+
+apps/app/src/app/app.routes.ts                                              #3.2/#3.3 ✅ PR-Routes
 ```
 
 **Pendientes**:

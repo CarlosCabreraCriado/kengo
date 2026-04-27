@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AuthGuard, FisioGuard } from './core';
 import { unsavedChangesGuard } from './features/planes/guards/unsaved-changes.guard';
+import { rutinaUnsavedChangesGuard } from './features/rutinas/guards/rutina-unsaved-changes.guard';
 
 export const routes: Routes = [
   // Redirección raíz
@@ -89,6 +90,7 @@ export const routes: Routes = [
         (m) => m.RutinaBuilderComponent
       ),
     canActivate: [AuthGuard, FisioGuard],
+    canDeactivate: [rutinaUnsavedChangesGuard],
   },
 
   // Pacientes (lazy loaded feature)
@@ -112,6 +114,9 @@ export const routes: Routes = [
   },
 
   // Planes (lazy loaded)
+  // Vista mixta intencional: el componente discrimina por rol y muestra
+  // tabs distintas (fisio: planes-pacientes/rutinas/mis-planes; paciente:
+  // solo mis-planes). Por eso lleva sólo `AuthGuard` y no `FisioGuard`.
   {
     path: 'planes',
     loadComponent: () =>

@@ -80,6 +80,14 @@ export class RutinaBuilderService {
     () => !!this.fisioId() && this.items().length > 0,
   );
 
+  // --- Dirty tracking (solo modo edición) ---
+  private readonly originalSnapshot = signal<string | null>(null);
+  readonly isDirty = computed(() => {
+    const snap = this.originalSnapshot();
+    if (snap === null) return false;
+    return snap !== this.captureSnapshot();
+  });
+
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -110,6 +118,7 @@ export class RutinaBuilderService {
     this.itemsState.clear();
     this.titulo.set('');
     this.descripcion.set('');
+    this.originalSnapshot.set(null);
     this.itemsState.openDrawer();
   }
 
@@ -137,6 +146,7 @@ export class RutinaBuilderService {
     this.itemsState.setItems(items);
     this.titulo.set(rutina.nombre);
     this.descripcion.set(rutina.descripcion || '');
+    this.originalSnapshot.set(this.captureSnapshot());
     this.itemsState.openDrawer();
 
     return { visibilidad: rutina.visibilidad };
@@ -150,6 +160,7 @@ export class RutinaBuilderService {
     this.itemsState.clear();
     this.titulo.set('');
     this.descripcion.set('');
+    this.originalSnapshot.set(null);
     this.itemsState.closeDrawer();
   }
 
@@ -169,6 +180,34 @@ export class RutinaBuilderService {
       this.itemsState.closeDrawer();
     }
     return true;
+  }
+
+  // ============================================
+  // DIRTY TRACKING
+  // ============================================
+
+  private captureSnapshot(): string {
+    return JSON.stringify({
+      titulo: this.titulo(),
+      descripcion: this.descripcion(),
+      items: this.items().map((i) => ({
+        ejercicio: i.ejercicio.id,
+        series: i.series,
+        repeticiones: i.repeticiones,
+        duracionSeg: i.duracionSeg,
+        descansoSeg: i.descansoSeg,
+        vecesDia: i.vecesDia,
+        diasSemana: i.diasSemana,
+        instruccionesPaciente: i.instruccionesPaciente,
+        notasFisio: i.notasFisio,
+        sort: i.sort,
+      })),
+    });
+  }
+
+  /** Re-captura el snapshot para descartar el estado dirty actual. */
+  markAsSaved(): void {
+    this.originalSnapshot.set(this.captureSnapshot());
   }
 
   // ============================================
