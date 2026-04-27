@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
+import { clinicaCode } from '../../../../shared';
 
 @Component({
   standalone: true,
@@ -17,7 +18,7 @@ export class VincularClinicaDialogComponent {
   private clinicaGestionService = inject(ClinicaGestionService);
 
   form = this.fb.group({
-    codigo: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(8)]],
+    codigo: ['', clinicaCode()],
   });
 
   loading = signal(false);

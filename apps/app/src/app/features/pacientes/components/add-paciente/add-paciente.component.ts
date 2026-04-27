@@ -8,6 +8,7 @@ import {
   DialogContentComponent,
   DialogActionsComponent,
   ProgressBarComponent,
+  emailRequired,
 } from '../../../../shared';
 
 import { Usuario } from '../../../../../types/global';
@@ -109,10 +110,7 @@ export class AddPacienteDialogComponent {
   form = this.fb.group({
     first_name: [this.data.usuario?.first_name ?? '', Validators.required],
     last_name: [this.data.usuario?.last_name ?? ''],
-    email: [
-      this.data.usuario?.email ?? '',
-      [Validators.required, Validators.email],
-    ],
+    email: [this.data.usuario?.email ?? '', emailRequired],
     telefono: [this.data.usuario?.telefono ?? ''],
     clinicas: [
       { value: (this.data.idsClinicas ?? []) as ID[], disabled: true },

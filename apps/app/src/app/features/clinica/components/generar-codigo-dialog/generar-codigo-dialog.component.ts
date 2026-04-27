@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject, signal, compute
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
+import { emailOptional } from '../../../../shared';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
 
 @Component({
@@ -25,7 +26,7 @@ export class GenerarCodigoDialogComponent implements OnInit {
   form = this.fb.group({
     tipo: ['paciente' as TipoCodigoAcceso, [Validators.required]],
     vincularEmail: [true],
-    email: ['', [Validators.email]],
+    email: ['', emailOptional],
     usosMaximos: [1 as number | null],
     diasExpiracion: [null as number | null],
   });

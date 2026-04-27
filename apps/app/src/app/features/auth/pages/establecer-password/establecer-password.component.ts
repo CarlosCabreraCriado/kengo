@@ -1,9 +1,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
-import { passwordMatchValidator } from '../../../../shared/validators/password-match.validator';
+import {
+  passwordMatchValidator,
+  passwordRequired,
+  passwordRepeatRequired,
+} from '../../../../shared';
 
 @Component({
   standalone: true,
@@ -25,8 +29,8 @@ export class EstablecerPasswordComponent implements OnInit {
 
   form = this.fb.group(
     {
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      repetir: ['', Validators.required],
+      password: ['', passwordRequired()],
+      repetir: ['', passwordRepeatRequired],
     },
     { validators: passwordMatchValidator() },
   );

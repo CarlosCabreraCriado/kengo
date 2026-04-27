@@ -15,6 +15,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ImageUploadComponent } from '../../../../shared/ui/image-upload/image-upload.component';
+import { emailOptional } from '../../../../shared';
 import type {
   Clinica,
   ClinicaImagen,
@@ -70,7 +71,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
     telefono: [''],
-    email: ['', [Validators.email]],
+    email: ['', emailOptional],
     direccion: [''],
     postal: [''],
     nif: [''],

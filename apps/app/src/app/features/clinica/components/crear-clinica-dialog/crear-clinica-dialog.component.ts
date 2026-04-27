@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
+import { emailOptional } from '../../../../shared';
 
 /** Paleta de colores predefinidos (todos con buen contraste sobre blanco) */
 const COLOR_PRESETS = [
@@ -44,7 +45,7 @@ export class CrearClinicaDialogComponent {
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
     telefono: [''],
-    email: ['', [Validators.email]],
+    email: ['', emailOptional],
     direccion: [''],
     postal: [''],
     nif: [''],

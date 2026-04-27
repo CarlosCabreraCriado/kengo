@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { emailRequired } from '../../../../shared';
 
 @Component({
   standalone: true,
@@ -35,7 +36,7 @@ export class LoginComponent implements OnInit {
   }
 
   public loginForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', emailRequired],
     password: ['', Validators.required],
   });
 

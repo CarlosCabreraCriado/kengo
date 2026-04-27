@@ -2,7 +2,14 @@ import { Component, inject, signal, ViewChild } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { StepperComponent, StepComponent, passwordMatchValidator } from '../../../../shared';
+import {
+  StepperComponent,
+  StepComponent,
+  passwordMatchValidator,
+  emailRequired,
+  passwordRequired,
+  passwordRepeatRequired,
+} from '../../../../shared';
 import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-models';
 
 @Component({
@@ -32,7 +39,7 @@ export class RegistroComponent {
   datosForm = this.fb.group({
     nombre: ['', Validators.required],
     apellidos: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', emailRequired],
   });
 
   tipoUsuarioForm = this.fb.group({
@@ -44,8 +51,8 @@ export class RegistroComponent {
   });
 
   passwordForm = this.fb.group({
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    repetir: ['', Validators.required],
+    password: ['', passwordRequired()],
+    repetir: ['', passwordRepeatRequired],
   }, { validators: passwordMatchValidator() });
 
   nextStep(): void {
@@ -158,7 +165,7 @@ export class RegistroComponent {
     const control = this.passwordForm.get('password');
     if (!control || !control.touched) return '';
     if (control.hasError('required')) return 'La contrasena es requerida';
-    if (control.hasError('minlength')) return 'Debe tener al menos 6 caracteres';
+    if (control.hasError('minlength')) return 'Debe tener al menos 8 caracteres';
     return '';
   }
 

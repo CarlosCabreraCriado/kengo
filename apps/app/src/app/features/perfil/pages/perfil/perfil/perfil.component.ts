@@ -28,7 +28,12 @@ import { Usuario } from '../../../../../../types/global';
 
 import { api } from '../../../../../../../../../convex/_generated/api';
 import { environment as env } from '../../../../../../environments/environment';
-import { KENGO_BREAKPOINTS } from '../../../../../shared';
+import {
+  KENGO_BREAKPOINTS,
+  emailRequired,
+  passwordRequired,
+  postalCode,
+} from '../../../../../shared';
 
 @Component({
   selector: 'app-perfil',
@@ -106,15 +111,9 @@ export class PerfilComponent implements OnInit, OnDestroy {
   public formularioUsuario = this.fb.group({
     first_name: ['', [Validators.required]],
     last_name: ['', [Validators.required]],
-    email: [
-      { value: '', disabled: true },
-      [Validators.required, Validators.email],
-    ],
+    email: [{ value: '', disabled: true }, emailRequired],
     telefono: [{ value: '', disabled: false }, [Validators.required]],
-    postal: [
-      '',
-      [Validators.required, Validators.maxLength(5), Validators.minLength(5)],
-    ],
+    postal: ['', postalCode],
     direccion: ['', [Validators.required]],
     numero_colegiado: [''],
   });
@@ -135,7 +134,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   public formularioPassword = this.fb.group({
     currentPassword: ['', [Validators.required]],
-    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    newPassword: ['', passwordRequired()],
     confirmPassword: ['', [Validators.required]],
   });
 

@@ -1,13 +1,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-} from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import {
+  otpCode,
+  passwordRequired,
+  passwordRepeatRequired,
+  passwordMatchValidator,
+} from '../../../../shared';
 
 @Component({
   standalone: true,
@@ -29,11 +29,11 @@ export class ResetPasswordComponent implements OnInit {
 
   form = this.fb.group(
     {
-      codigo: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]],
+      codigo: ['', otpCode()],
+      password: ['', passwordRequired()],
+      confirmPassword: ['', passwordRepeatRequired],
     },
-    { validators: this.passwordMatchValidator },
+    { validators: passwordMatchValidator('password', 'confirmPassword') },
   );
 
   get codigo() {
@@ -52,21 +52,6 @@ export class ResetPasswordComponent implements OnInit {
         this.email.set(params['email']);
       }
     });
-  }
-
-  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    const password = control.get('password');
-    const confirmPassword = control.get('confirmPassword');
-
-    if (
-      password &&
-      confirmPassword &&
-      password.value !== confirmPassword.value
-    ) {
-      confirmPassword.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-    return null;
   }
 
   async onSubmit() {

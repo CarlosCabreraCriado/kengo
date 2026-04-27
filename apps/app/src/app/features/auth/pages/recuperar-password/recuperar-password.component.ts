@@ -1,7 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { emailRequired } from '../../../../shared';
 
 @Component({
   standalone: true,
@@ -19,7 +20,7 @@ export class RecuperarPasswordComponent {
   error = signal<string | null>(null);
 
   form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', emailRequired],
   });
 
   get email() {
