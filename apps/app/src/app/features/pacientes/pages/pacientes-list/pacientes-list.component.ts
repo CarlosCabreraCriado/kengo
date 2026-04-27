@@ -30,6 +30,7 @@ import { DialogService } from '../../../../shared';
 
 import { Usuario, AsignacionResponsable, MetricasPacientesBulk } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
 type OrdenPacientes = 'nombre' | 'adherencia_desc' | 'adherencia_asc' | 'dolor_desc' | 'dolor_asc';
@@ -41,6 +42,7 @@ const STORAGE_KEY_FILTRO = 'kengo:mis-pacientes:filtro';
   imports: [
     RouterLink,
     DecimalPipe,
+    EmptyStateComponent,
   ],
   templateUrl: './pacientes-list.component.html',
   styleUrl: './pacientes-list.component.css',

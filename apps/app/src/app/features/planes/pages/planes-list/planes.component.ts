@@ -13,6 +13,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { Plan, Usuario, EstadoPlan, Rutina, EjercicioRutina } from '../../../../../types/global';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 
 type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
 
@@ -23,6 +24,7 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
     NgClass,
     RouterLink,
     FormsModule,
+    EmptyStateComponent,
   ],
   templateUrl: './planes.component.html',
   styleUrl: './planes.component.css',

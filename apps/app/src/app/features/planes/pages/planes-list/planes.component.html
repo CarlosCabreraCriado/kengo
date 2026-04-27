@@ -88,16 +88,11 @@
             </div>
           </div>
         } @else if (misPlanes().length === 0) {
-          <!-- Empty State -->
-          <div class="tarjeta-kengo empty-state rounded-3xl">
-            <div class="empty-state-icon">
-              <span class="material-symbols-outlined">assignment</span>
-            </div>
-            <h3 class="text-lg font-semibold text-zinc-700">No tienes planes asignados</h3>
-            <p class="mt-2 max-w-xs text-sm text-zinc-500">
-              Tu fisioterapeuta te asignará planes de ejercicios personalizados
-            </p>
-          </div>
+          <ui-empty-state
+            icon="assignment"
+            title="No tienes planes asignados"
+            message="Tu fisioterapeuta te asignará planes de ejercicios personalizados"
+          />
         } @else {
           <!-- Grid de planes -->
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -167,17 +167,14 @@
 
     <!-- Empty State (no patients at all) -->
     @else if (totalPacientes() === 0 && !pacientesRes.isLoading()) {
-      <div class="state-card empty-state">
-        <div class="state-icon empty">
-          <span class="material-symbols-outlined">group_off</span>
-        </div>
-        <h3 class="state-title">Sin pacientes</h3>
-        <p class="state-text">Aún no tienes pacientes registrados. Añade tu primer paciente para comenzar.</p>
-        <button class="cta-btn" (click)="openAddPaciente()">
-          <span class="material-symbols-outlined icon-filled">person_add</span>
-          Añadir primer paciente
-        </button>
-      </div>
+      <ui-empty-state
+        icon="group_off"
+        title="Sin pacientes"
+        message="Aún no tienes pacientes registrados. Añade tu primer paciente para comenzar."
+        actionLabel="Añadir primer paciente"
+        actionIcon="person_add"
+        (action)="openAddPaciente()"
+      />
     }
 
     <!-- Patients Content -->
@@ -273,21 +270,16 @@
 
       <!-- Filtered Empty State -->
       @if (pacientes().length === 0 && filtroActividad() !== 'todos') {
-        <div class="state-card empty-state animate-in" style="--delay: 0.1s">
-          <div class="state-icon empty">
-            <span class="material-symbols-outlined">{{ filtroActividad() === 'activos' ? 'heart_broken' : 'person_off' }}</span>
-          </div>
-          <h3 class="state-title">Sin pacientes {{ filtroActividad() === 'activos' ? 'activos' : 'inactivos' }}</h3>
-          <p class="state-text">
-            {{ filtroActividad() === 'activos'
-              ? 'Ningún paciente tiene planes activos en este momento.'
-              : 'Todos tus pacientes tienen al menos un plan activo.' }}
-          </p>
-          <button class="cta-btn" (click)="setFiltro('todos')">
-            <span class="material-symbols-outlined">groups</span>
-            Ver todos
-          </button>
-        </div>
+        <ui-empty-state
+          [icon]="filtroActividad() === 'activos' ? 'heart_broken' : 'person_off'"
+          [title]="'Sin pacientes ' + (filtroActividad() === 'activos' ? 'activos' : 'inactivos')"
+          [message]="filtroActividad() === 'activos'
+            ? 'Ningún paciente tiene planes activos en este momento.'
+            : 'Todos tus pacientes tienen al menos un plan activo.'"
+          actionLabel="Ver todos"
+          actionIcon="groups"
+          (action)="setFiltro('todos')"
+        />
       }
 
       <!-- Patients Grid/List -->
