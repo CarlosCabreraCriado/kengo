@@ -127,6 +127,84 @@ export const createBatch = mutation({
   },
 });
 
+/**
+ * Aplica feedback (dolor/esfuerzo/nota) a `exerciseExecutions` ya existentes
+ * y recomputa los agregados de cada sesión afectada una sola vez al final.
+ *
+ * Diseñado para el cierre de la sesión cuando el frontend ya insertó las
+ * executions al instante (sin feedback) y ahora aplica los datos del paciente
+ * en un solo round-trip. Convex ejecuta la mutation en una transacción, así
+ * que si una entrada falla, todas las anteriores se revierten.
+ */
+export const applyFeedbackBatch = mutation({
+  args: {
+    entradas: v.array(
+      v.object({
+        executionId: v.id("exerciseExecutions"),
+        dolorEscala: v.optional(v.number()),
+        esfuerzoEscala: v.optional(v.number()),
+        notaPaciente: v.optional(v.string()),
+      }),
+    ),
+  },
+  handler: async (ctx, args): Promise<Id<"exerciseExecutions">[]> => {
+    const user = await getAuthenticatedUser(ctx);
+    if (args.entradas.length === 0) return [];
+
+    const sesionesAfectadas = new Set<Id<"sessions">>();
+    const ids: Id<"exerciseExecutions">[] = [];
+
+    for (const entrada of args.entradas) {
+      const execution = await ctx.db.get(entrada.executionId);
+      if (!execution) {
+        throw new Error(`execution no encontrada: ${entrada.executionId}`);
+      }
+      if (execution.pacienteId !== user._id) {
+        throw new Error(
+          `unauthorized: execution ${entrada.executionId} no pertenece al paciente autenticado`,
+        );
+      }
+
+      const tieneNotaPrevia = !!execution.notaPaciente?.trim();
+      const notaNueva = !tieneNotaPrevia && !!entrada.notaPaciente?.trim();
+
+      const patch: {
+        dolorEscala?: number;
+        esfuerzoEscala?: number;
+        notaPaciente?: string;
+      } = {};
+      if (entrada.dolorEscala !== undefined) patch.dolorEscala = entrada.dolorEscala;
+      if (entrada.esfuerzoEscala !== undefined) patch.esfuerzoEscala = entrada.esfuerzoEscala;
+      if (entrada.notaPaciente !== undefined) patch.notaPaciente = entrada.notaPaciente;
+
+      if (Object.keys(patch).length > 0) {
+        await ctx.db.patch(entrada.executionId, patch);
+      }
+
+      sesionesAfectadas.add(execution.sessionId);
+      ids.push(entrada.executionId);
+
+      // Alerta de comentario solo si la nota es nueva y la execution está
+      // marcada como completada. `createCommentAlert` ya es idempotente por
+      // `exerciseExecutionId`, pero comprobamos aquí para evitar el round-trip.
+      if (notaNueva && execution.completado) {
+        await ctx.runMutation(internal.alerts.internal.createCommentAlert, {
+          pacienteId: user._id,
+          sessionId: execution.sessionId,
+          exerciseExecutionId: entrada.executionId,
+          texto: entrada.notaPaciente!,
+        });
+      }
+    }
+
+    for (const sessionId of sesionesAfectadas) {
+      await recomputeAggregatesAndCheckAutoCloseImpl(ctx, sessionId);
+    }
+
+    return ids;
+  },
+});
+
 async function createImpl(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
