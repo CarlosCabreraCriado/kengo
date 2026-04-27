@@ -29,9 +29,9 @@ Leyenda de campos:
 | [x] | 5 | Extraer modo rutina de `plan-builder.service` (929 LOC) | planes | L | 🔴 | 🔴 | P1 (PR-5) ✅ |
 | [x] | 6 | Descomponer `paciente-detail.component` (821 LOC) | pacientes | L | 🟡 | 🟡 | P1 (PR-Paciente) ✅ |
 | [x] | 7 | Mover plantilla inline de god-components a `.html`/`.css` | sesion | S | 🟢 | 🟢 | **P0** (PR-1) ✅ |
-| [ ] | 8 | `EmptyStateComponent` + pipe `formatDate` | shared | S | 🟢 | 🟢 | P2 |
-| [ ] | 9 | `FilteredListService<T>` base (filtrado+paginación) | core | M | 🟡 | 🟡 | P2 |
-| [ ] | 10 | Mover rutas de `planes`, `rutinas`, `sesion` a `*.routes.ts` | rutas | S | 🟢 | 🟢 | P2 |
+| [x] | 8 | `EmptyStateComponent` + pipe `formatDate` | shared | S | 🟢 | 🟢 | P2 (PR-Shared) ✅ |
+| [ ] | 9 | `FilteredListService<T>` base (filtrado+paginación) | core | M | 🟡 | 🟡 | P2 (PR-6 next) |
+| [x] | 10 | Mover rutas de `planes`, `rutinas`, `sesion` a `*.routes.ts` | rutas | S | 🟢 | 🟢 | P2 (PR-Shared) ✅ |
 | [x] | 11 | Aplicar `unsavedChangesGuard` a `rutina-builder` | rutas | S | 🟡 | 🟢 | P1 (PR-Routes) ✅ |
 | [x] | 12 | Revisar guard de rol en `/planes` (list) | rutas | S | 🟡 | 🟡 | P1 (PR-Routes) ✅ |
 | [ ] | 13 | Unificar simetría `/galeria/rutinas` ↔ creación de rutinas | rutas | S | 🟢 | 🟢 | P3 |
@@ -46,6 +46,8 @@ Leyenda de campos:
 - [x] **PR-5 (L)** — Separar `plan-builder.service` (#5) ✅ **COMPLETADO** (PR-5a + PR-5b + PR-5c).
 - [x] **PR-Routes (S)** — `unsavedChangesGuard` rutinas + guard `/planes` (#11 + #12) ✅ **COMPLETADO**
 - [x] **PR-Paciente (L)** — Descomponer `paciente-detail` (#6) ✅ **COMPLETADO** (PR-Paciente-1 + PR-Paciente-2)
+- [x] **PR-Shared (M)** — `convex-mappers` + `FormatDatePipe` + `EmptyStateComponent` + split de rutas (#2.2 + #2.3 + #2.4 + #3.1) ✅ **COMPLETADO**
+- [ ] **PR-6 (M)** — `FilteredListService<T>` base (#2.1) — próximo follow-up
 
 ---
 
@@ -248,14 +250,14 @@ Leyenda de campos:
 ## [ ] 2.1 — `FilteredListService<T>` base
 `ejercicios.service`, `rutinas.service`, `planes.service` replican signal+computed (~50 LOC cada uno). Crear servicio base o factory `createFilteredList()`. **Esfuerzo**: M · **Impacto**: 🟡 · **Prioridad**: P2.
 
-## [ ] 2.2 — Mappers Convex → Domain
-Cada servicio mapea `_id`/`_creationTime` a su modo. Extraer helpers a `shared/utils/convex-mappers.ts`. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
+## [x] 2.2 — Mappers Convex → Domain (PR-Shared) ✅
+Creado `apps/app/src/app/shared/utils/convex-mappers.ts` con `mapId`, `toIsoFromCreationTime`, `mapConvexBase`. Migrados `ejercicios.service`, `rutinas.service`, `planes.service`. `sesion-state.service` usa tipos estrictos (`Id<...>` sin `_creationTime`); no se migra (no aporta abstracción). **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
 
-## [ ] 2.3 — Pipe `formatDate`
-`formatDate()` repetido en 6 componentes. Crear `shared/pipes/format-date.pipe.ts`. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
+## [x] 2.3 — Pipe `formatDate` (PR-Shared) ✅
+Creados `shared/utils/format-date.ts` (función pura `formatDate(iso, variant)`) y `shared/pipes/format-date.pipe.ts` (Pipe standalone). `pacientes/utils/format-helpers.ts` re-exporta `formatearFecha`/`formatearFechaComentario` como aliases (sin romper consumidores). Migración de los ~20 componentes con métodos privados queda como follow-up oportunista (cada uno usa formato distinto: corto/largo/con weekday). **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
 
-## [ ] 2.4 — `EmptyStateComponent`
-5+ componentes con vacíos manuales. Crear `<app-empty-state>` en `shared/ui/`. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
+## [x] 2.4 — `EmptyStateComponent` (PR-Shared) ✅
+Creado `<ui-empty-state>` en `shared/ui/empty-state/` con `icon`, `title`, `message`, `actionLabel`, `actionIcon` y output `action`. Adoptado en `planes-list` (mis-planes vacío) y `pacientes-list` (sin pacientes + filtered empty). El empty-state de `plan-builder` (con decoración circular) y los de `navegacion`/feedback se migrarán cuando se toque cada componente. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
 
 ## [x] 2.5 — `useResponsive()` composable (PR-4) ✅
 Creado en `apps/app/src/app/shared/composables/use-responsive.ts`. Aplicado en `ejercicio-activo`. Pendiente migrar otros consumidores de `BreakpointObserver` (oportunista cuando se toquen). **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2 ✅.
@@ -263,14 +265,14 @@ Creado en `apps/app/src/app/shared/composables/use-responsive.ts`. Aplicado en `
 ## [ ] 2.6 — `common-validators.ts`
 Validators de email/password inline en 5+ formularios. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3.
 
-> **Positivo**: no se detectaron imports cruzados entre features (excepto `pacientes → planes/PlanBuilderService`, cubierto por #1.5).
+> **Positivo**: no se detectaron imports cruzados problemáticos entre features. Tras PR-5 el `PlanBuilderService` tiene una sola responsabilidad y la dependencia residual `pacientes → planes/PlanBuilderService.cambiarPaciente()` (única callsite en `paciente-detail.crearPlan()`) queda aislada en el contenedor reducido. Documentado como follow-up: separar `prepareForPaciente()` de `navigate+openDrawer()`.
 
 ---
 
 # SECCIÓN 3 — Reestructuración de rutas
 
-## [ ] 3.1 — Mover rutas top-level de `planes`/`rutinas`/`sesion` a `*.routes.ts`
-`app.routes.ts` reduciría de ~185 a ~80 LOC. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
+## [x] 3.1 — Mover rutas top-level de `planes`/`rutinas`/`sesion` a `*.routes.ts` (PR-Shared) ✅
+Creados `planes.routes.ts` y `sesion.routes.ts`; completados `auth.routes.ts` (faltaban 3 rutas), `dashboard.routes.ts` (path corregido) y `rutinas.routes.ts` (vacío → 2 rutas con guards). `app.routes.ts`: **190 → 74 LOC** (-61%). Auth queda como `...AUTH_ROUTES` spread (no hay prefijo común). Resto usa `loadChildren` con guards preservados. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2.
 
 ## [x] 3.2 — `unsavedChangesGuard` en `/rutinas/:id/editar` (PR-Routes) ✅
 **Resultado**:
@@ -308,9 +310,9 @@ Cerca del umbral. Vigilar; descomponer si crece. **Prioridad**: P3.
 
 # Verificación (aplica a todos los refactors)
 
-- [ ] `npm run build` o `nx build app` sin errores TS.
-- [ ] `npm run lint` sin nuevos warnings.
-- [ ] Suite de tests existente pasa.
+- [x] `npm run build` o `nx build app` sin errores TS — verificado tras cada PR.
+- [x] `npm run lint` sin nuevos warnings — estable en 303-304 errores preexistentes.
+- [ ] Suite de tests existente pasa — no hay specs en los ficheros refactorizados; pendiente añadir cobertura post-refactor.
 - [ ] Verificación manual obligatoria en navegador para cambios en `sesion`:
   - Iniciar sesión con plan, completar 1 ejercicio, descansar, completar todos, abrir feedback final.
   - Probar modo simple y detallado del feedback.
@@ -318,7 +320,8 @@ Cerca del umbral. Vigilar; descomponer si crece. **Prioridad**: P3.
   - Probar reanudación: cerrar pestaña a mitad, reabrir, validar hidratación.
 - [ ] Verificación manual `paciente-detail` (#1.4): paciente con sesiones, comentarios y plan asignado.
 - [ ] Verificación manual `plan-builder`/`rutina-builder` (#1.5): crear, editar, drawer, recargar (persiste).
-- [ ] Ejecutar `/verify` antes de cada commit (definido en CLAUDE.md raíz).
+- [ ] Verificación manual `rutina-builder` con cambios sin guardar (#3.2): el guard debe disparar warning.
+- [x] Ejecutar `/verify` antes de cada commit (definido en CLAUDE.md raíz).
 
 ---
 
@@ -375,12 +378,50 @@ apps/app/src/app/features/rutinas/guards/                                   #3.2
 └── rutina-unsaved-changes.guard.ts                     ( 27 LOC, nuevo)
 
 apps/app/src/app/app.routes.ts                                              #3.2/#3.3 ✅ PR-Routes
+
+apps/app/src/app/features/pacientes/                                        #1.4 ✅ PR-Paciente
+├── data-access/
+│   ├── paciente-detail.types.ts                        ( 50 LOC, nuevo)
+│   └── cumplimiento.service.ts                         (266 → 487 LOC)
+├── utils/
+│   └── format-helpers.ts                               ( 70 LOC, nuevo)
+└── pages/paciente-detail/
+    ├── paciente-detail.component.{ts,html,css}         (821/791/1276 → 573/147/284 LOC)
+    └── componentes/
+        ├── paciente-hero-card/                         (~25 + ~95 + ~165 LOC)
+        ├── paciente-actividad-reciente/                (~70 + ~135 + ~310 LOC)
+        ├── paciente-estadisticas/                      (~60 + ~165 + ~340 LOC)
+        ├── paciente-comentarios-panel/                 (~50 + ~95 + ~245 LOC)
+        └── paciente-planes-list/                       (~60 + ~85 + ~190 LOC)
 ```
 
-**Pendientes**:
+**Completados (PR-Shared)**:
 ```
-apps/app/src/app/features/pacientes/pages/paciente-detail/
-└── paciente-detail.component.ts                        ( 821 LOC) #1.4
+apps/app/src/app/app.routes.ts                                              #3.1 ✅ (190 → 74 LOC)
+apps/app/src/app/shared/
+├── pipes/format-date.pipe.ts                                               #2.3 ✅ (nuevo)
+├── ui/empty-state/empty-state.component.{ts,html,css}                      #2.4 ✅ (nuevo)
+└── utils/
+    ├── convex-mappers.ts                                                   #2.2 ✅ (nuevo)
+    └── format-date.ts                                                      #2.3 ✅ (nuevo)
 
-apps/app/src/app/app.routes.ts                          (rutas)    #3.1, #3.2, #3.3
+apps/app/src/app/features/
+├── auth/auth.routes.ts                                                     #3.1 ✅ (3 → 6 rutas)
+├── dashboard/dashboard.routes.ts                                           #3.1 ✅ (path fix)
+├── rutinas/rutinas.routes.ts                                               #3.1 ✅ (vacío → 2 rutas)
+├── planes/planes.routes.ts                                                 #3.1 ✅ (nuevo)
+├── sesion/sesion.routes.ts                                                 #3.1 ✅ (nuevo)
+├── pacientes/utils/format-helpers.ts                                       #2.3 ✅ (re-export)
+├── pacientes/pages/pacientes-list/pacientes-list.component.html            #2.4 ✅
+├── planes/pages/planes-list/planes.component.html                          #2.4 ✅
+└── data-access/                                                            #2.2 ✅
+    ├── ejercicios.service.ts                                               (mapId)
+    ├── rutinas.service.ts                                                  (mapConvexBase, mapId)
+    └── planes.service.ts                                                   (mapConvexBase, mapId)
+```
+
+**Pendientes** (todos P2/P3):
+```
+apps/app/src/app/features/{ejercicios,rutinas,planes}/  (#2.1 FilteredListService, P2 → PR-6)
+apps/app/src/app/shared/                                (#2.6 common-validators, P3)
 ```
