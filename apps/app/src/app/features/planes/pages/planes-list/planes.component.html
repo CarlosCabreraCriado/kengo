@@ -146,31 +146,12 @@
         <!-- Toolbar de filtros -->
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
           <!-- Buscador -->
-          <div class="relative min-w-0 flex-1">
-            <span class="material-symbols-outlined absolute top-1/2 left-3.5 z-10 -translate-y-1/2
-                         text-kengo-primary">search</span>
-            <input
-              #buscador
-              type="text"
-              class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/80
-                     pr-10 pl-11 text-zinc-700 shadow-sm backdrop-blur-sm
-                     transition-all placeholder:text-zinc-400
-                     focus:border-kengo-primary/50 focus:ring-2 focus:ring-kengo-primary/20 focus:outline-none"
+          <div class="min-w-0 flex-1">
+            <ui-search-box
               placeholder="Buscar por título o paciente..."
-              [value]="busqueda"
-              (input)="onBusquedaChange(buscador.value)"
-            />
-            @if (busqueda) {
-              <button
-                type="button"
-                class="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-full p-1.5
-                       text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-600"
-                aria-label="Borrar búsqueda"
-                (click)="buscador.value = ''; onBusquedaChange('')"
-              >
-                <span class="material-symbols-outlined text-lg">close</span>
-              </button>
-            }
+              [ngModel]="busqueda"
+              (valueChange)="onBusquedaChange($event)"
+            ></ui-search-box>
           </div>
 
           <!-- Botones de acción -->
@@ -371,19 +352,12 @@
         <div class="tarjeta-kengo mb-5 rounded-2xl p-4">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
             <!-- Search input -->
-            <div class="relative flex-1">
-              <span class="material-symbols-outlined absolute top-1/2 left-3.5 z-10 -translate-y-1/2
-                           text-kengo-primary">search</span>
-              <input
-                type="text"
-                class="h-12 w-full rounded-xl border border-zinc-200/80 bg-white/80
-                       pr-4 pl-11 text-zinc-700 placeholder:text-zinc-400
-                       transition-all focus:border-kengo-primary/50 focus:ring-2
-                       focus:ring-kengo-primary/20 focus:outline-none"
+            <div class="flex-1">
+              <ui-search-box
                 placeholder="Buscar plantilla..."
-                [(ngModel)]="busquedaRutinas"
-                (ngModelChange)="onBusquedaRutinasChange($event)"
-              />
+                [ngModel]="busquedaRutinas"
+                (valueChange)="onBusquedaRutinasChange($event)"
+              ></ui-search-box>
             </div>
 
             <!-- Visibility select -->

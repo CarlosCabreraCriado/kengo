@@ -62,6 +62,8 @@ export {
   SectionHeaderComponent,
   type SectionHeaderTone,
 } from './ui/section-header/section-header.component';
+export { SearchBoxComponent } from './ui/search-box/search-box.component';
+export { ListHeaderComponent } from './ui/list-header/list-header.component';
 export { TooltipDirective, type TooltipPosition } from './ui/tooltip/tooltip.directive';
 export { DrawerComponent, type DrawerPosition } from './ui/drawer/drawer.component';
 export { DatepickerComponent } from './ui/datepicker/datepicker.component';

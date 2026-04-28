@@ -44,20 +44,12 @@
 
       <!-- Buscador -->
       @if (pacientes().length > 0) {
-        <div class="relative mt-3">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-kengo-primary text-lg pointer-events-none">search</span>
-          <input
-            type="text"
-            class="w-full h-10 pl-10 pr-4 rounded-xl
-                   bg-white/70 border border-white/40
-                   text-zinc-700 text-sm
-                   transition-all outline-none
-                   focus:border-kengo-primary/40 focus:bg-white/90
-                   backdrop-blur-sm"
+        <div class="mt-3">
+          <ui-search-box
             placeholder="Buscar paciente..."
             [ngModel]="busqueda()"
-            (ngModelChange)="busqueda.set($event)"
-          />
+            (valueChange)="busqueda.set($event)"
+          ></ui-search-box>
         </div>
       }
     </div>

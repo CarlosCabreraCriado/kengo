@@ -15,6 +15,7 @@ import {
   StatusBadgeComponent,
   VisibilityBadgeComponent,
   SkeletonComponent,
+  SearchBoxComponent,
   type MenuItem,
 } from '../../../../shared';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
@@ -33,6 +34,7 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
     StatusBadgeComponent,
     VisibilityBadgeComponent,
     SkeletonComponent,
+    SearchBoxComponent,
   ],
   templateUrl: './planes.component.html',
   styleUrl: './planes.component.css',

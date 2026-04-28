@@ -1,5 +1,5 @@
 import { Component, inject, computed, signal, HostListener } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Dialog } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../../core/utils/asset-url';
@@ -16,19 +16,20 @@ import {
   BackButtonComponent,
   VisibilityBadgeComponent,
   SkeletonComponent,
+  SearchBoxComponent,
 } from '../../../../shared';
 import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
 @Component({
   selector: 'app-rutinas-list',
   standalone: true,
   imports: [
-    RouterLink,
     FormsModule,
     CatalogoTabsComponent,
     EmptyStateComponent,
     BackButtonComponent,
     VisibilityBadgeComponent,
     SkeletonComponent,
+    SearchBoxComponent,
   ],
   templateUrl: './rutinas-list.component.html',
   styleUrl: './rutinas-list.component.css',

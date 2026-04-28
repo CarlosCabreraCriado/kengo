@@ -70,41 +70,12 @@
             <span class="text-xs text-zinc-500">{{ ejerciciosService.total() === 1 ? 'ejercicio' : 'ejercicios' }}</span>
           </div>
         }
-        <!-- Input de búsqueda con glassmorphism -->
-        <div class="search-container relative flex-1">
-          <div class="search-glow absolute -inset-1 rounded-2xl bg-gradient-to-r from-kengo-primary/20 to-kengo-tertiary/20 blur-lg opacity-0 transition-opacity"></div>
-          <div class="relative flex items-center">
-            <span class="material-symbols-outlined absolute left-3.5 text-kengo-primary text-xl z-10">search</span>
-            <input
-              #buscador
-              type="text"
-              formControlName="busqueda"
-              class="search-input h-12 w-full rounded-2xl
-                     bg-white/70 backdrop-blur-xl
-                     border border-white/50
-                     pl-11 pr-10
-                     text-zinc-800 text-sm font-medium
-                     placeholder:text-zinc-400 placeholder:font-normal
-                     shadow-sm shadow-black/5
-                     transition-all duration-300
-                     focus:bg-white/90 focus:border-kengo-primary/40
-                     focus:shadow-lg-kengo-primary/10
-                     focus:outline-none"
-              placeholder="Buscar ejercicio..."
-            />
-            @if (formularioFiltros.get('busqueda')?.value) {
-              <button
-                type="button"
-                class="absolute right-3 p-1 rounded-full
-                       text-zinc-400 hover:text-zinc-600
-                       hover:bg-zinc-100 transition-all active:scale-90"
-                (click)="formularioFiltros.get('busqueda')?.setValue('')"
-                aria-label="Limpiar búsqueda"
-              >
-                <span class="material-symbols-outlined text-lg">close</span>
-              </button>
-            }
-          </div>
+        <!-- Input de búsqueda -->
+        <div class="flex-1">
+          <ui-search-box
+            placeholder="Buscar ejercicio..."
+            formControlName="busqueda"
+          ></ui-search-box>
         </div>
 
         <!-- Botón Filtros con dropdown custom -->

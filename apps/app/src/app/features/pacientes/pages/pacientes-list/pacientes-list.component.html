@@ -52,32 +52,11 @@
         }
 
         <!-- Barra de búsqueda -->
-        <div class="relative flex-1">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-kengo-primary text-xl pointer-events-none z-10">search</span>
-          <input
-            #buscador
-            type="text"
-            class="w-full h-12 pl-11 pr-10 rounded-2xl
-                   bg-white/70 border border-white/40
-                   text-zinc-700 text-sm
-                   transition-all outline-none
-                   focus:border-kengo-primary/40 focus:bg-white/90
-                   backdrop-blur-sm"
+        <div class="flex-1">
+          <ui-search-box
             placeholder="Buscar por nombre, email..."
-            (input)="onBuscar(buscador.value)"
-          />
-          @if (buscador.value) {
-            <button
-              type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full
-                     bg-transparent text-zinc-400 flex items-center justify-center
-                     cursor-pointer transition-all border-none hover:bg-zinc-100 hover:text-zinc-600"
-              aria-label="Borrar búsqueda"
-              (click)="buscador.value = ''; onBuscar('')"
-            >
-              <span class="material-symbols-outlined text-lg">close</span>
-            </button>
-          }
+            (valueChange)="onBuscar($event)"
+          ></ui-search-box>
         </div>
 
         <!-- Toggle de vista -->
