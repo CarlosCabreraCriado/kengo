@@ -588,7 +588,7 @@
   border: 1px solid rgba(var(--kengo-primary-rgb), 0.08);
 }
 
-@media (min-width: 400px) {
+@media (min-width: 640px) {
   .stats-row {
     @apply flex-row items-stretch;
   }
@@ -598,7 +598,7 @@
   @apply flex items-center gap-2.5 py-1;
 }
 
-@media (min-width: 400px) {
+@media (min-width: 640px) {
   .stat-item {
     @apply flex-1;
   }
@@ -657,7 +657,7 @@
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.08), transparent);
 }
 
-@media (min-width: 400px) {
+@media (min-width: 640px) {
   .stat-divider {
     @apply block w-px self-stretch;
   }

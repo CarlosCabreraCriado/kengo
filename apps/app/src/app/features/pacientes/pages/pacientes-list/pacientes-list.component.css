@@ -762,7 +762,7 @@
   @apply hidden;
 }
 
-@media (min-width: 480px) {
+@media (min-width: 640px) {
   .sort-trigger-label {
     @apply inline;
   }

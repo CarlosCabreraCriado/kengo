@@ -1,10 +1,7 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import type { DiaSemana } from '../../../../../types/global';
 import { assetUrl } from '../../../../core/utils/asset-url';
@@ -78,16 +75,10 @@ interface PlanAgendadoDetalle {
 export class SesionDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private breakpointObserver = inject(BreakpointObserver);
   private cumplimientoService = inject(CumplimientoService);
   private convex = inject(ConvexService);
 
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true },
-  );
+  isMovil = useResponsive().esMobile;
 
   // State
   readonly grupos = signal<GrupoPlan[]>([]);

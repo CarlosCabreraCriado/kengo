@@ -13,9 +13,6 @@ import {
 import { assetUrl } from '../../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 
 // Servicios
 import { SessionService } from '../../../../../core/auth/services/session.service';
@@ -29,7 +26,7 @@ import { Usuario } from '../../../../../../types/global';
 import { api } from '../../../../../../../../../convex/_generated/api';
 import { environment as env } from '../../../../../../environments/environment';
 import {
-  KENGO_BREAKPOINTS,
+  useResponsive,
   emailRequired,
   passwordRequired,
   postalCode,
@@ -52,15 +49,8 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private storage = inject(StorageService);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
-  private breakpointObserver = inject(BreakpointObserver);
 
-  // Detectar si estamos en móvil (< 768px) - alineado con navegación general
-  isMobile = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true }
-  );
+  isMobile = useResponsive().esMobile;
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 

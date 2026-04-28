@@ -77,7 +77,7 @@
   -webkit-backdrop-filter: none;
 }
 
-@media (max-width: 47.9375rem) {
+@media (max-width: 767.98px) {
   .header-glass {
     background: linear-gradient(
       to bottom,
@@ -542,9 +542,9 @@
 }
 
 /* ============================================
-   DESKTOP (>= 768px / 48rem - Tailwind md)
+   DESKTOP (>= 768px - Tailwind md)
    ============================================ */
-@media (min-width: 48rem) {
+@media (min-width: 768px) {
   .detail-main {
     @apply px-8 pt-6;
     padding-bottom: 2rem;

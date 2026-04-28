@@ -1,9 +1,6 @@
 import { Component, inject, computed, OnInit, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
@@ -12,7 +9,7 @@ import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { Plan, Usuario, EstadoPlan, Rutina, EjercicioRutina } from '../../../../../types/global';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 
 type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
@@ -35,18 +32,11 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
 export class PlanesComponent implements OnInit {
   private router = inject(Router);
   private toastService = inject(ToastService);
-  private breakpointObserver = inject(BreakpointObserver);
   planesService = inject(PlanesService);
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true }
-  );
+  isMovil = useResponsive().esMobile;
 
   // Tab activa
   tabActiva = signal<TabType>('mis-planes');

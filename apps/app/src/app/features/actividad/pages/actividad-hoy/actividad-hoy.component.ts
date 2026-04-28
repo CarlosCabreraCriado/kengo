@@ -7,9 +7,6 @@ import {
 } from '@angular/core';
 import { videoUrl } from '../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
@@ -22,7 +19,7 @@ import {
   DiaSemana,
 } from '../../../../../types/global';
 import {
-  KENGO_BREAKPOINTS,
+  useResponsive,
   DialogService,
   PreviewEjercicioDialogComponent,
   type PreviewEjercicioData,
@@ -63,15 +60,9 @@ export class ActividadHoyComponent implements OnInit {
   private registroService = inject(SesionStateService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
-  private breakpointObserver = inject(BreakpointObserver);
   private dialogService = inject(DialogService);
 
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true }
-  );
+  isMovil = useResponsive().esMobile;
 
   private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   private readonly NOMBRES_DIAS = [

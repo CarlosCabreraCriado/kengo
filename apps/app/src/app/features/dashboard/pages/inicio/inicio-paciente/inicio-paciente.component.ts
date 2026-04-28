@@ -1,14 +1,12 @@
 import { Component, ChangeDetectionStrategy, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { ActividadHoyService, BadgeType } from '../../../../actividad/data-access/actividad-hoy.service';
 import { RachaPacienteService, DiaSemanaCalendario } from '../../../data-access/racha-paciente.service';
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
-import { KENGO_BREAKPOINTS } from '../../../../../shared';
+import { useResponsive } from '../../../../../shared';
 import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/global';
 import { assetUrl, rawAssetUrl } from '../../../../../core/utils/asset-url';
 import { DashboardHeaderComponent } from '../../../../../core/layout/components/dashboard-header/dashboard-header.component';
@@ -32,7 +30,6 @@ interface EjercicioStrip {
 export class InicioPacienteComponent {
   private sessionService = inject(SessionService);
   private router = inject(Router);
-  private breakpointObserver = inject(BreakpointObserver);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
   private destroyRef = inject(DestroyRef);
@@ -164,12 +161,7 @@ export class InicioPacienteComponent {
     });
   }
 
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((r) => r.matches)),
-    { initialValue: true },
-  );
+  isMovil = useResponsive().esMobile;
 
   userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Usuario');
 

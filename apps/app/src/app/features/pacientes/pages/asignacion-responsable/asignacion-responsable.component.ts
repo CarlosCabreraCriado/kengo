@@ -9,9 +9,6 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
@@ -24,7 +21,7 @@ import {
   UUID,
   BulkAsignacionPayload,
 } from '../../../../../types/global';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 
 @Component({
   selector: 'app-asignacion-responsable',
@@ -41,7 +38,6 @@ export class AsignacionResponsableComponent {
   private sessionService = inject(SessionService);
   private clinicasService = inject(ClinicasService);
   private asignacionesService = inject(AsignacionesService);
-  private breakpointObserver = inject(BreakpointObserver);
   private convex = inject(ConvexService);
 
   constructor() {
@@ -54,12 +50,7 @@ export class AsignacionResponsableComponent {
     });
   }
 
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true },
-  );
+  isMovil = useResponsive().esMobile;
 
   // Clínicas donde el usuario es admin
   readonly clinicasAdmin = computed(() => {

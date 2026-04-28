@@ -1,16 +1,13 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
-import { KENGO_BREAKPOINTS, DialogService, DialogoPdfComponent } from '../../../../../app/shared';
+import { useResponsive, DialogService, DialogoPdfComponent } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
 
 @Component({
@@ -31,17 +28,10 @@ export class PlanDetailComponent implements OnInit {
   private router = inject(Router);
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
-  private breakpointObserver = inject(BreakpointObserver);
   public sessionService = inject(SessionService);
   private dialogService = inject(DialogService);
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true },
-  );
+  isMovil = useResponsive().esMobile;
 
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);

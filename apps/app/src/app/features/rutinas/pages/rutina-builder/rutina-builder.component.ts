@@ -16,15 +16,12 @@ import {
   FormsModule,
 } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { Dialog } from '@angular/cdk/dialog';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
+import { SafeHtmlPipe, useResponsive } from '../../../../shared';
 
 @Component({
   selector: 'app-rutina-builder',
@@ -49,16 +46,9 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   private dialog = inject(Dialog);
   private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
-  private breakpointObserver = inject(BreakpointObserver);
   svc = inject(RutinaBuilderService);
 
-  // Detectar si estamos en desktop (>= 1024px)
-  isDesktop = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.DESKTOP])
-      .pipe(map((result) => result.matches)),
-    { initialValue: false },
-  );
+  isDesktop = useResponsive().esDesktop;
 
   dias: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   diasNombres: Record<DiaSemana, string> = {

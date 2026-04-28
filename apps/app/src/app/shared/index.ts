@@ -1,6 +1,9 @@
 // Utils
 export { KENGO_BREAKPOINTS, type BreakpointKey } from './utils/breakpoints';
 
+// Composables
+export { useResponsive, type ResponsiveSignals } from './composables/use-responsive';
+
 // Validators
 export { passwordMatchValidator } from './validators/password-match.validator';
 export {

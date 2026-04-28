@@ -18,16 +18,13 @@ import {
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { Dialog } from '@angular/cdk/dialog';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { SafeHtmlPipe, KENGO_BREAKPOINTS } from '../../../../shared';
+import { SafeHtmlPipe, useResponsive } from '../../../../shared';
 
 @Component({
   selector: 'app-plan-builder',
@@ -52,17 +49,10 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
   private sessionService = inject(SessionService);
-  private breakpointObserver = inject(BreakpointObserver);
   private destroyRef = inject(DestroyRef);
   svc = inject(PlanBuilderService);
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true }
-  );
+  isMovil = useResponsive().esMobile;
 
   dias: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   diasNombres: Record<DiaSemana, string> = {

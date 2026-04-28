@@ -1,9 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -13,7 +10,7 @@ import { ClinicaGestionService } from '../../data-access/clinica-gestion.service
 // Types:
 import { Usuario, Clinica, ID, CodigoAcceso } from '../../../../../types/global';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 
 // Dialogs
 import { VincularClinicaDialogComponent } from '../../components/vincular-clinica-dialog/vincular-clinica-dialog.component';
@@ -46,15 +43,8 @@ export class MiClinicaComponent {
   private sessionService = inject(SessionService);
   public clinicasService = inject(ClinicasService);
   public clinicaGestionService = inject(ClinicaGestionService);
-  private breakpointObserver = inject(BreakpointObserver);
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true },
-  );
+  isMovil = useResponsive().esMobile;
 
   public usuario = computed(
     () => this.sessionService.usuario() as Usuario | null,

@@ -1,9 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 
 interface Tab {
   path: string;
@@ -23,14 +20,8 @@ interface Tab {
 })
 export class ActividadShellComponent {
   protected readonly router = inject(Router);
-  private breakpointObserver = inject(BreakpointObserver);
 
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true }
-  );
+  isMovil = useResponsive().esMobile;
 
   readonly tabs: Tab[] = [
     { path: 'hoy', label: 'Hoy', icon: 'today' },

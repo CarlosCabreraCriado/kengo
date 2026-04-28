@@ -6,7 +6,6 @@ import { KENGO_BREAKPOINTS } from '../utils/breakpoints';
 
 export interface ResponsiveSignals {
   esMobile: Signal<boolean>;
-  esTablet: Signal<boolean>;
   esDesktop: Signal<boolean>;
 }
 
@@ -20,13 +19,6 @@ export function useResponsive(): ResponsiveSignals {
     { initialValue: false },
   );
 
-  const esTablet = toSignal(
-    breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MD])
-      .pipe(map((r) => r.matches), takeUntilDestroyed()),
-    { initialValue: false },
-  );
-
   const esDesktop = toSignal(
     breakpointObserver
       .observe([KENGO_BREAKPOINTS.DESKTOP])
@@ -34,5 +26,5 @@ export function useResponsive(): ResponsiveSignals {
     { initialValue: false },
   );
 
-  return { esMobile, esTablet, esDesktop };
+  return { esMobile, esDesktop };
 }

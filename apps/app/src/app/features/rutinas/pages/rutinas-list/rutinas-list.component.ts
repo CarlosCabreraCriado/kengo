@@ -1,10 +1,7 @@
 import { Component, inject, computed, signal, HostListener } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { Dialog } from '@angular/cdk/dialog';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
@@ -13,7 +10,7 @@ import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { CatalogoTabsComponent } from '../../../../shared/ui/catalogo-tabs/catalogo-tabs.component';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
 @Component({
   selector: 'app-rutinas-list',
@@ -28,20 +25,13 @@ import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
 export class RutinasListComponent {
   private router = inject(Router);
   private toastService = inject(ToastService);
-  private breakpointObserver = inject(BreakpointObserver);
   private planBuilderService = inject(PlanBuilderService);
   private rutinaBuilderService = inject(RutinaBuilderService);
   private dialog = inject(Dialog);
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
 
-  // Detectar si es móvil (< 768px)
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true }
-  );
+  isMovil = useResponsive().esMobile;
 
   // Usuario
   usuario = computed(() => this.sessionService.usuario());

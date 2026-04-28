@@ -8,9 +8,6 @@ import {
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
@@ -29,7 +26,7 @@ import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { DialogService } from '../../../../shared';
 
 import { Usuario, AsignacionResponsable, MetricasPacientesBulk } from '../../../../../types/global';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
@@ -57,7 +54,6 @@ export class PacientesListComponent {
   public planBuilderService = inject(PlanBuilderService);
   private planesService = inject(PlanesService);
   private authService = inject(AuthService);
-  private breakpointObserver = inject(BreakpointObserver);
   private asignacionesService = inject(AsignacionesService);
   private metricasService = inject(MetricasPacientesService);
   private clinicasService = inject(ClinicasService);
@@ -66,13 +62,7 @@ export class PacientesListComponent {
   // Signal para alternar vista card/lista
   public vista = signal<'card' | 'lista'>('card');
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true }
-  );
+  isMovil = useResponsive().esMobile;
 
   public idsClinicas = computed(() => {
     if (this.sessionService.usuario() == null) return null;

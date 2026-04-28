@@ -37,8 +37,7 @@
   @apply hidden;
 }
 
-/* Show labels on screens >= 400px */
-@media (min-width: 400px) {
+@media (min-width: 640px) {
   .toggle-label {
     @apply inline;
   }

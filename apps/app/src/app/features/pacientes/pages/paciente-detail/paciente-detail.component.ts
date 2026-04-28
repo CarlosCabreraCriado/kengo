@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { Router, ActivatedRoute } from '@angular/router';
-import { useResponsive } from '../../../../shared/composables/use-responsive';
+import { useResponsive } from '../../../../shared';
 
 // Servicios
 import { SessionService } from '../../../../core/auth/services/session.service';

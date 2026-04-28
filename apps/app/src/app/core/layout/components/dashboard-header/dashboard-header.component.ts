@@ -8,14 +8,11 @@ import {
   HostListener,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import { assetUrl } from '../../../utils/asset-url';
 import { SessionService } from '../../../auth/services/session.service';
 import { ThemeService } from '../../../services/theme.service';
 import { NotificacionesService } from '../../../services/notificaciones.service';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 import { UserMenuComponent } from '../../../../shared/ui/user-menu/user-menu.component';
 import type { NotificacionApp } from '../../../../../types/global';
 
@@ -32,7 +29,6 @@ export class DashboardHeaderComponent {
   private themeService = inject(ThemeService);
   public notificacionesService = inject(NotificacionesService);
   private router = inject(Router);
-  private breakpointObserver = inject(BreakpointObserver);
   private elementRef = inject(ElementRef);
 
   logoUrl = this.themeService.logoUrl;
@@ -51,12 +47,7 @@ export class DashboardHeaderComponent {
     }
   }
 
-  isMovil = toSignal(
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true },
-  );
+  isMovil = useResponsive().esMobile;
 
   userName = computed(
     () => this.sessionService.usuario()?.first_name ?? 'Usuario',

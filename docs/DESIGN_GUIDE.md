@@ -261,13 +261,51 @@ La aplicacion utiliza Material Symbols con configuracion variable:
 
 ### Breakpoints
 
+Mobile-first es una regla del proyecto. Usa Tailwind v4 con los breakpoints estandar.
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `sm` | 640px | Movil grande |
+| `md` | 768px | Tablet / aparece la navegacion desktop |
+| `lg` | 1024px | Desktop (frontera principal movil/desktop) |
+| `xl` | 1280px | Desktop ancho |
+| `2xl` | 1536px | Desktop muy ancho |
+
 ```css
-/* Mobile first - breakpoints de Tailwind */
+/* Mobile-first */
 @media (min-width: 640px)  { /* sm */ }
-@media (min-width: 768px)  { /* md - Navegacion desktop */ }
+@media (min-width: 768px)  { /* md */ }
 @media (min-width: 1024px) { /* lg */ }
 @media (min-width: 1280px) { /* xl */ }
 ```
+
+#### Reglas
+
+1. **No inventes breakpoints intermedios**. Nada de `400px`, `480px`, `560px`, etc. Si necesitas un ajuste para movil pequeno, llevalo a la regla base (mobile-first) o sube al `sm` (640px).
+2. **No mezcles unidades en `@media`**. Usa `px` literales (no `rem`). Asi se compara visualmente con el resto del proyecto.
+3. **No leas `window.innerWidth` para decidir layout**. Esa es responsabilidad de CSS o del composable `useResponsive()`. Excepcion: clamping puntual de posiciones (tooltips, overlays) que necesitan el ancho real en un instante concreto.
+4. **Prefiere clases Tailwind responsive (`md:hidden`, `lg:grid-cols-3`)** sobre `@media` en CSS de componente cuando el cambio sea simple (mostrar/ocultar, ajustar tamano).
+
+#### Detectar movil/desktop en TypeScript
+
+Usa el composable `useResponsive()` desde `@shared`. Devuelve signals reactivos:
+
+```ts
+import { useResponsive } from '../../shared';
+
+export class MiComponente {
+  private responsive = useResponsive();
+  isMovil = this.responsive.esMobile;     // < 768px
+  isDesktop = this.responsive.esDesktop;  // >= 1024px
+}
+```
+
+Las constantes crudas viven en `KENGO_BREAKPOINTS` (`shared/utils/breakpoints.ts`) y solo deberian usarse desde dentro de `useResponsive()`. En componentes consume el composable.
+
+#### Cuando usar Tailwind responsive vs `@if (isMovil())`
+
+- **Tailwind (`md:hidden`, `lg:flex-row`)**: cuando solo cambias estilos. No causa re-render.
+- **`@if (isMovil()) { ... }` en plantilla**: cuando renderizas estructura distinta (componentes diferentes, listas vs tarjetas). Tiene coste de re-render pero da control total.
 
 ### Safe Areas (iOS)
 

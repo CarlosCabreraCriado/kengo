@@ -6,13 +6,12 @@ import {
   NavigationEnd,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { BreakpointObserver } from '@angular/cdk/layout';
 
 import { SessionService } from '../../../auth/services/session.service';
 import { assetUrl } from '../../../utils/asset-url';
 import { ThemeService } from '../../../services/theme.service';
 import { NotificacionesService } from '../../../services/notificaciones.service';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 import { UserMenuComponent } from '../../../../shared/ui/user-menu/user-menu.component';
 import type { NotificacionApp } from '../../../../../types/global';
 
@@ -24,7 +23,6 @@ import type { NotificacionApp } from '../../../../../types/global';
   styleUrl: './navegacion.component.css',
 })
 export class NavegacionComponent implements OnInit {
-  private breakpointObserver = inject(BreakpointObserver);
   private router = inject(Router);
   public sessionService = inject(SessionService);
   private themeService = inject(ThemeService);
@@ -35,7 +33,7 @@ export class NavegacionComponent implements OnInit {
   logoUrl = this.themeService.logoUrl;
   logoIconUrl = this.themeService.logoIconUrl;
 
-  public isMovil = signal(false);
+  public isMovil = useResponsive().esMobile;
   public isInicio = signal(false);
   private currentRoute = signal('/inicio');
 
@@ -50,13 +48,6 @@ export class NavegacionComponent implements OnInit {
   });
 
   ngOnInit() {
-    // Detectar si es móvil
-    this.breakpointObserver
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .subscribe((result) => {
-        this.isMovil.set(result.matches);
-      });
-
     // Detectar ruta actual
     this.updateRouteState(this.router.url);
     this.router.events

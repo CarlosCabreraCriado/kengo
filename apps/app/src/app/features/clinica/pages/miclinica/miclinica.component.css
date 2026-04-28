@@ -821,7 +821,7 @@
   @apply grid grid-cols-1 gap-3;
 }
 
-@media (min-width: 400px) {
+@media (min-width: 640px) {
   .options-grid {
     @apply grid-cols-2;
   }
@@ -916,7 +916,7 @@
   @apply hidden;
 }
 
-@media (min-width: 400px) {
+@media (min-width: 640px) {
   .generate-code-btn .btn-label {
     @apply inline;
   }

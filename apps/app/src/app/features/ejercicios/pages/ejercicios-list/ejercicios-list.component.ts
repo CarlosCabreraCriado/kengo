@@ -17,9 +17,8 @@ import { CatalogoTabsComponent } from '../../../../shared/ui/catalogo-tabs/catal
 
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { useResponsive } from '../../../../shared';
 
 // La navegación se muestra en >= 768px (cuando NO es móvil)
 
@@ -53,15 +52,8 @@ export class EjerciciosListComponent implements OnInit {
   isImageLoaded(idEjercicio: string): boolean {
     return this.imagenesLoaded().has(idEjercicio);
   }
-  private breakpointObserverService = inject(BreakpointObserver);
 
-  // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
-  isMovil = toSignal(
-    this.breakpointObserverService
-      .observe([KENGO_BREAKPOINTS.MOBILE])
-      .pipe(map((result) => result.matches)),
-    { initialValue: true },
-  );
+  isMovil = useResponsive().esMobile;
 
   // Estado del menú de categorías
   menuAbierto = signal(false);
@@ -141,11 +133,7 @@ export class EjerciciosListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.breakpointObserverService
-      .observe([Breakpoints.Handset])
-      .subscribe((result) => {
-        if (result.matches) this.vista.set('lista');
-      });
+    if (this.isMovil()) this.vista.set('lista');
 
     // Cargar favoritos del usuario
     this.ejerciciosService.cargarFavoritos();
