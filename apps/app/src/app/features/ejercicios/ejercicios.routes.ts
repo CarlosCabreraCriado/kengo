@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '../../core';
+import { AuthGuard, FisioGuard } from '../../core';
 
 export const EJERCICIOS_ROUTES: Routes = [
   {
@@ -8,7 +8,7 @@ export const EJERCICIOS_ROUTES: Routes = [
       import('./pages/ejercicios-list/ejercicios-list.component').then(
         (m) => m.EjerciciosListComponent
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, FisioGuard],
   },
   {
     path: ':id',
@@ -16,6 +16,6 @@ export const EJERCICIOS_ROUTES: Routes = [
       import('./pages/ejercicio-detail/ejercicio-detail.component').then(
         (m) => m.EjercicioDetailComponent
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, FisioGuard],
   },
 ];

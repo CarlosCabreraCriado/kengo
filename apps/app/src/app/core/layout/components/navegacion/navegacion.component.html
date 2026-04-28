@@ -45,21 +45,21 @@
           </a>
         }
 
-        <a
-          routerLink="/ejercicios"
-          routerLinkActive="active"
-          class="nav-item-desktop"
-        >
-          <span class="material-symbols-outlined icon-default"
-            >play_circle</span
-          >
-          <span class="material-symbols-outlined icon-active relleno"
-            >play_circle</span
-          >
-          <span class="nav-label-desktop">Ejercicios</span>
-        </a>
-
         @if (sessionService.enModoFisio()) {
+          <a
+            routerLink="/ejercicios"
+            routerLinkActive="active"
+            class="nav-item-desktop"
+          >
+            <span class="material-symbols-outlined icon-default"
+              >play_circle</span
+            >
+            <span class="material-symbols-outlined icon-active relleno"
+              >play_circle</span
+            >
+            <span class="nav-label-desktop">Ejercicios</span>
+          </a>
+
           <a
             routerLink="/mis-pacientes"
             routerLinkActive="active"

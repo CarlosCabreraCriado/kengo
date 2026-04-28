@@ -266,10 +266,6 @@ export class InicioPacienteComponent {
     this.router.navigate(['/actividad-personal/calendario']);
   }
 
-  irAEjercicios(): void {
-    this.router.navigate(['/ejercicios']);
-  }
-
   onContactarFisio(): void {
     this.mostrarTooltipContacto.set(true);
     setTimeout(() => this.mostrarTooltipContacto.set(false), 3000);
