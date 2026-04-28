@@ -15,17 +15,7 @@
         <div class="mb-4 flex items-center justify-between">
           <!-- Botón volver + Título -->
           <div class="flex items-center gap-3">
-            <button
-              type="button"
-              routerLink="/inicio"
-              class="flex h-10 w-10 items-center justify-center rounded-xl
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-600 transition-all duration-200
-                     hover:bg-white/80 hover:scale-105 active:scale-95"
-              aria-label="Volver al inicio"
-            >
-              <span class="material-symbols-outlined text-xl">arrow_back</span>
-            </button>
+            <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
             <div>
               <h1 class="titulo-kengo text-2xl text-kengo-primary">Mi Clínica</h1>
               @if (clinicasRes().length > 1) {
@@ -340,13 +330,11 @@
             <div class="team-list">
               @for (f of fisios(c.id); track f.id; let j = $index) {
                 <article class="team-member" [style.--member-delay]="(j * 0.05) + 's'">
-                  <div class="member-avatar">
-                    @if (f.avatar) {
-                      <img [src]="assetUrl(f.avatar)" [alt]="f.first_name + ' ' + f.last_name"/>
-                    } @else {
-                      <span class="avatar-initials">{{ iniciales(f.first_name, f.last_name) }}</span>
-                    }
-                  </div>
+                  <ui-avatar
+                    [src]="f.avatar ? assetUrl(f.avatar) : null"
+                    [name]="(f.first_name || '') + ' ' + (f.last_name || '')"
+                    size="md"
+                  ></ui-avatar>
 
                   <div class="member-info">
                     <h4 class="member-name">{{ f.first_name }} {{ f.last_name }}</h4>

@@ -28,14 +28,7 @@
       @if (isMovil()) {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <button
-              type="button"
-              class="header-btn"
-              aria-label="Volver"
-              (click)="volver()"
-            >
-              <span class="material-symbols-outlined">arrow_back</span>
-            </button>
+            <ui-back-button (clicked)="volver()"></ui-back-button>
             <div>
               <h1 class="header-title titulo-kengo">Plan de Tratamiento</h1>
               @if (plan(); as p) {

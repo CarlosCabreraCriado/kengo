@@ -6,18 +6,7 @@
       @if (isMovil()) {
         <div class="mb-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <button
-              type="button"
-              routerLink="/inicio"
-              class="flex h-11 w-11 items-center justify-center rounded-xl
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-600 transition-all duration-200
-                     hover:bg-white/80 hover:scale-105 active:scale-95
-                     shadow-sm"
-              aria-label="Volver al inicio"
-            >
-              <span class="material-symbols-outlined text-xl">arrow_back</span>
-            </button>
+            <ui-back-button route="/inicio" size="lg" ariaLabel="Volver al inicio"></ui-back-button>
             <div>
               <h1 class="titulo-kengo text-2xl text-kengo-primary">Planes</h1>
               <p class="text-xs font-medium text-zinc-500">Gestiona tus planes de ejercicios</p>
@@ -80,13 +69,7 @@
       @if (tabActiva() === "mis-planes") {
         @if (isLoadingMisPlanes()) {
           <!-- Loading State -->
-          <div class="tarjeta-kengo rounded-2xl p-6">
-            <div class="flex items-center justify-center gap-3">
-              <div class="h-1.5 w-48 overflow-hidden rounded-full bg-zinc-100">
-                <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
-              </div>
-            </div>
-          </div>
+          <ui-skeleton variant="progress"></ui-skeleton>
         } @else if (misPlanes().length === 0) {
           <ui-empty-state
             icon="assignment"
@@ -117,12 +100,7 @@
                                  transition-colors">
                         {{ plan.titulo }}
                       </h3>
-                      <span
-                        class="status-badge shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
-                        [ngClass]="estadoColors[plan.estado]"
-                      >
-                        {{ estadoLabels[plan.estado] }}
-                      </span>
+                      <ui-status-badge [status]="plan.estado"></ui-status-badge>
                     </div>
 
                     <!-- Fisioterapeuta -->
@@ -279,13 +257,7 @@
 
         <!-- Lista de planes -->
         @if (isLoadingPlanes()) {
-          <div class="tarjeta-kengo rounded-2xl p-6">
-            <div class="flex items-center justify-center gap-3">
-              <div class="h-1.5 w-48 overflow-hidden rounded-full bg-zinc-100">
-                <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
-              </div>
-            </div>
-          </div>
+          <ui-skeleton variant="progress"></ui-skeleton>
         } @else if (planes().length === 0) {
           <ui-empty-state
             icon="assignment"
@@ -323,12 +295,7 @@
                       <h3 class="truncate text-base font-bold text-zinc-800">
                         {{ plan.titulo }}
                       </h3>
-                      <span
-                        class="status-badge shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
-                        [ngClass]="estadoColors[plan.estado]"
-                      >
-                        {{ estadoLabels[plan.estado] }}
-                      </span>
+                      <ui-status-badge [status]="plan.estado"></ui-status-badge>
                     </div>
 
                     <p class="mt-1.5 flex items-center gap-2 text-sm text-zinc-500">
@@ -451,13 +418,7 @@
 
         <!-- Lista de rutinas -->
         @if (isLoadingRutinas()) {
-          <div class="tarjeta-kengo rounded-2xl p-6">
-            <div class="flex items-center justify-center gap-3">
-              <div class="h-1.5 w-48 overflow-hidden rounded-full bg-zinc-100">
-                <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
-              </div>
-            </div>
-          </div>
+          <ui-skeleton variant="progress"></ui-skeleton>
         } @else if (rutinas().length === 0) {
           <ui-empty-state
             icon="bookmarks"
@@ -489,14 +450,7 @@
                       </div>
 
                       <!-- Badge visibilidad -->
-                      <span class="visibility-badge shrink-0"
-                            [class.private]="rutina.visibilidad === 'privado'"
-                            [class.public]="rutina.visibilidad === 'clinica'">
-                        <span class="material-symbols-outlined text-xs">
-                          {{ rutina.visibilidad === "privado" ? "lock" : "domain" }}
-                        </span>
-                        {{ rutina.visibilidad === "privado" ? "Privada" : "Clínica" }}
-                      </span>
+                      <ui-visibility-badge [visibility]="rutina.visibilidad"></ui-visibility-badge>
                     </div>
 
                     <!-- Metadata -->

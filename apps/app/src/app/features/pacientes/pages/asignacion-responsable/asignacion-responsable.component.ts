@@ -21,12 +21,12 @@ import {
   UUID,
   BulkAsignacionPayload,
 } from '../../../../../types/global';
-import { useResponsive } from '../../../../shared';
+import { useResponsive, AvatarComponent } from '../../../../shared';
 
 @Component({
   selector: 'app-asignacion-responsable',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, AvatarComponent],
   templateUrl: './asignacion-responsable.component.html',
   styleUrl: './asignacion-responsable.component.css',
   host: {

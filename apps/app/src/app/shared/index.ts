@@ -39,6 +39,29 @@ export { ChipComponent, type ChipVariant, type ChipSize } from './ui/chip/chip.c
 export { MenuComponent, type MenuItem } from './ui/menu/menu.component';
 export { DividerComponent } from './ui/divider/divider.component';
 export { EmptyStateComponent } from './ui/empty-state/empty-state.component';
+export { BackButtonComponent, type BackButtonSize } from './ui/back-button/back-button.component';
+export {
+  AvatarComponent,
+  type AvatarSize,
+  type AvatarStatus,
+  computeInitials,
+} from './ui/avatar/avatar.component';
+export {
+  StatusBadgeComponent,
+  type StatusBadgeStatus,
+} from './ui/status-badge/status-badge.component';
+export {
+  VisibilityBadgeComponent,
+  type VisibilityType,
+} from './ui/visibility-badge/visibility-badge.component';
+export {
+  SkeletonComponent,
+  type SkeletonVariant,
+} from './ui/skeleton/skeleton.component';
+export {
+  SectionHeaderComponent,
+  type SectionHeaderTone,
+} from './ui/section-header/section-header.component';
 export { TooltipDirective, type TooltipPosition } from './ui/tooltip/tooltip.directive';
 export { DrawerComponent, type DrawerPosition } from './ui/drawer/drawer.component';
 export { DatepickerComponent } from './ui/datepicker/datepicker.component';

@@ -24,7 +24,7 @@ import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { SafeHtmlPipe, useResponsive } from '../../../../shared';
+import { SafeHtmlPipe, useResponsive, BackButtonComponent } from '../../../../shared';
 
 @Component({
   selector: 'app-plan-builder',
@@ -34,6 +34,7 @@ import { SafeHtmlPipe, useResponsive } from '../../../../shared';
     FormsModule,
     DragDropModule,
     SafeHtmlPipe,
+    BackButtonComponent,
   ],
   templateUrl: './plan-builder.component.html',
   styleUrl: './plan-builder.component.css',

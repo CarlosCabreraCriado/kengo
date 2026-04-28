@@ -11,11 +11,12 @@ import {
   EjercicioPlan,
   EjercicioSesionMultiPlan,
 } from '../../../../../../../types/global';
+import { BackButtonComponent, SectionHeaderComponent } from '../../../../../../shared';
 
 @Component({
   selector: 'app-resumen-sesion',
   standalone: true,
-  imports: [],
+  imports: [BackButtonComponent, SectionHeaderComponent],
   templateUrl: './resumen-sesion.component.html',
   styleUrl: './resumen-sesion.component.css',
   host: {

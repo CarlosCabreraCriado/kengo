@@ -13,14 +13,7 @@
     <header class="plan-header">
       <div class="plan-header__inner">
         <div class="plan-header__mobile">
-          <button
-            type="button"
-            class="btn-icon-glass"
-            aria-label="Volver"
-            (click)="cancelar()"
-          >
-            <span class="material-symbols-outlined">arrow_back</span>
-          </button>
+          <ui-back-button (clicked)="cancelar()"></ui-back-button>
 
           <div class="plan-header__title-group">
             <h1 class="plan-header__title">{{ pageTitle() }}</h1>

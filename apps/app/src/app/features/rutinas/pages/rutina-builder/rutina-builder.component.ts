@@ -21,7 +21,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { SafeHtmlPipe, useResponsive, EmptyStateComponent } from '../../../../shared';
+import { SafeHtmlPipe, useResponsive, EmptyStateComponent, BackButtonComponent } from '../../../../shared';
 
 @Component({
   selector: 'app-rutina-builder',
@@ -33,6 +33,7 @@ import { SafeHtmlPipe, useResponsive, EmptyStateComponent } from '../../../../sh
     RouterLink,
     SafeHtmlPipe,
     EmptyStateComponent,
+    BackButtonComponent,
   ],
   templateUrl: './rutina-builder.component.html',
   styleUrl: './rutina-builder.component.css',

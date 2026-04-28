@@ -9,14 +9,7 @@
   <!-- Compact Header -->
   <header class="session-header">
     <div class="header-content">
-      <button
-        type="button"
-        class="back-btn"
-        aria-label="Volver"
-        (click)="volverAtras()"
-      >
-        <span class="material-symbols-outlined">arrow_back</span>
-      </button>
+      <ui-back-button (clicked)="volverAtras()"></ui-back-button>
       <div class="header-title-group">
         <h1 class="titulo-kengo header-title">{{ tituloSesion() }}</h1>
         <p class="header-subtitle">{{ subtitulo() }}</p>
@@ -75,12 +68,14 @@
 
     <!-- Exercises List -->
     <section class="exercises-section animate-in" style="--delay: 0.1s">
-      <header class="section-header">
-        <h2 class="section-title">Ejercicios de la sesión</h2>
+      <ui-section-header
+        title="Ejercicios de la sesión"
+        icon="list_alt"
+      >
         @if (esMultiPlan() && planesInvolucrados().length > 1) {
-          <span class="section-badge">{{ planesInvolucrados().length }} planes</span>
+          <span actions class="section-badge">{{ planesInvolucrados().length }} planes</span>
         }
-      </header>
+      </ui-section-header>
 
       <div class="exercises-list">
         @for (item of ejercicios(); track $index; let i = $index) {

@@ -7,7 +7,7 @@ import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
-import { useResponsive, DialogService, DialogoPdfComponent } from '../../../../../app/shared';
+import { useResponsive, DialogService, DialogoPdfComponent, BackButtonComponent } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
 
 @Component({
@@ -15,6 +15,7 @@ import type { DialogoPdfData } from '../../../../../app/shared';
   standalone: true,
   imports: [
     RouterLink,
+    BackButtonComponent,
   ],
   templateUrl: './plan-detail.component.html',
   styleUrl: './plan-detail.component.css',

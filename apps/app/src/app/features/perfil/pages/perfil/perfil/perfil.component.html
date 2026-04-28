@@ -13,16 +13,7 @@
       <!-- MÓVIL: Header con título y navegación -->
       @if (isMobile()) {
         <div class="flex items-center gap-3">
-          <a
-            routerLink="/inicio"
-            class="flex h-10 w-10 items-center justify-center rounded-xl
-                   bg-white/60 backdrop-blur-md border border-white/40
-                   text-zinc-600 transition-all duration-200
-                   hover:bg-white/80 hover:scale-105 active:scale-95"
-            aria-label="Volver al inicio"
-          >
-            <span class="material-symbols-outlined text-xl">arrow_back</span>
-          </a>
+          <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
           <div>
             <h1 class="titulo-kengo text-2xl text-kengo-primary">Mi Perfil</h1>
             <p class="text-xs font-medium text-zinc-500">Gestiona tu cuenta</p>

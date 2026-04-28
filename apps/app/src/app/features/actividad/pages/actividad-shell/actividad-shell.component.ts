@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { useResponsive } from '../../../../shared';
+import { useResponsive, BackButtonComponent } from '../../../../shared';
 
 interface Tab {
   path: string;
@@ -11,7 +11,7 @@ interface Tab {
 @Component({
   selector: 'app-actividad-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BackButtonComponent],
   templateUrl: './actividad-shell.component.html',
   styleUrl: './actividad-shell.component.css',
   host: {

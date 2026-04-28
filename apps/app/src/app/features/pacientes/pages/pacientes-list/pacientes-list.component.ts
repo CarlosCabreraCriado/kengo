@@ -26,7 +26,7 @@ import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { DialogService } from '../../../../shared';
 
 import { Usuario, AsignacionResponsable, MetricasPacientesBulk } from '../../../../../types/global';
-import { useResponsive } from '../../../../shared';
+import { useResponsive, BackButtonComponent, AvatarComponent } from '../../../../shared';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
@@ -40,6 +40,8 @@ const STORAGE_KEY_FILTRO = 'kengo:mis-pacientes:filtro';
     RouterLink,
     DecimalPipe,
     EmptyStateComponent,
+    BackButtonComponent,
+    AvatarComponent,
   ],
   templateUrl: './pacientes-list.component.html',
   styleUrl: './pacientes-list.component.css',

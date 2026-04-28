@@ -15,17 +15,7 @@
         <div class="mb-4 flex items-center justify-between">
           <!-- Botón volver + Título -->
           <div class="flex items-center gap-3">
-            <button
-              type="button"
-              routerLink="/inicio"
-              class="flex h-10 w-10 items-center justify-center rounded-xl
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-600 transition-all duration-200
-                     hover:bg-white/80 hover:scale-105 active:scale-95"
-              aria-label="Volver al inicio"
-            >
-              <span class="material-symbols-outlined text-xl">arrow_back</span>
-            </button>
+            <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
             <div>
               <h1 class="titulo-kengo text-2xl text-kengo-primary">Mis Pacientes</h1>
               @if (totalPacientes() > 0) {
@@ -289,14 +279,12 @@
             <article class="patient-card" [style.--card-delay]="(i * 0.03) + 's'" (click)="verDetalle(p)">
               <div class="card-content">
                 <!-- Avatar -->
-                <div class="patient-avatar">
-                  @if (avatarUrl(p)) {
-                    <img [src]="avatarUrl(p)" [alt]="fullName(p)" class="avatar-img"/>
-                  } @else {
-                    <span class="avatar-initials">{{ getInitials(p) }}</span>
-                  }
-                  <span class="status-dot" [class.inactive]="!idsPacientesActivos().has(p.id)"></span>
-                </div>
+                <ui-avatar
+                  [src]="avatarUrl(p)"
+                  [name]="fullName(p)"
+                  size="md"
+                  [status]="idsPacientesActivos().has(p.id) ? 'active' : 'inactive'"
+                ></ui-avatar>
 
                 <!-- Info -->
                 <div class="patient-info">
@@ -374,13 +362,11 @@
           @for (p of pacientes(); track p.id; let i = $index) {
             <article class="patient-row" [style.--row-delay]="(i * 0.02) + 's'" (click)="verDetalle(p)">
               <!-- Avatar -->
-              <div class="row-avatar">
-                @if (avatarUrl(p)) {
-                  <img [src]="avatarUrl(p)" [alt]="fullName(p)" class="avatar-img"/>
-                } @else {
-                  <span class="avatar-initials">{{ getInitials(p) }}</span>
-                }
-              </div>
+              <ui-avatar
+                [src]="avatarUrl(p)"
+                [name]="fullName(p)"
+                size="sm"
+              ></ui-avatar>
 
               <!-- Info -->
               <div class="row-info">

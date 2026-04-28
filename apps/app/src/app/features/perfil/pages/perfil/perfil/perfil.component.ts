@@ -30,6 +30,7 @@ import {
   emailRequired,
   passwordRequired,
   postalCode,
+  BackButtonComponent,
 } from '../../../../../shared';
 
 @Component({
@@ -38,6 +39,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    BackButtonComponent,
   ],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css',

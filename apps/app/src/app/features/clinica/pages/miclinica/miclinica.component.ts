@@ -10,7 +10,7 @@ import { ClinicaGestionService } from '../../data-access/clinica-gestion.service
 // Types:
 import { Usuario, Clinica, ID, CodigoAcceso } from '../../../../../types/global';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
-import { useResponsive } from '../../../../shared';
+import { useResponsive, BackButtonComponent, AvatarComponent } from '../../../../shared';
 
 // Dialogs
 import { VincularClinicaDialogComponent } from '../../components/vincular-clinica-dialog/vincular-clinica-dialog.component';
@@ -31,6 +31,8 @@ import { DatePipe } from '@angular/common';
     CrearClinicaDialogComponent,
     GenerarCodigoDialogComponent,
     EditarClinicaDialogComponent,
+    BackButtonComponent,
+    AvatarComponent,
   ],
   templateUrl: './miclinica.component.html',
   styleUrl: './miclinica.component.css',

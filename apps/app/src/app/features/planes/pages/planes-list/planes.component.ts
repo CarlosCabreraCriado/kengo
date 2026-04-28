@@ -1,5 +1,4 @@
 import { Component, inject, computed, OnInit, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { assetUrl } from '../../../../core/utils/asset-url';
@@ -9,7 +8,15 @@ import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { Plan, Usuario, EstadoPlan, Rutina, EjercicioRutina } from '../../../../../types/global';
-import { useResponsive, MenuComponent, type MenuItem } from '../../../../shared';
+import {
+  useResponsive,
+  MenuComponent,
+  BackButtonComponent,
+  StatusBadgeComponent,
+  VisibilityBadgeComponent,
+  SkeletonComponent,
+  type MenuItem,
+} from '../../../../shared';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 
 type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
@@ -18,11 +25,14 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
   selector: 'app-planes',
   standalone: true,
   imports: [
-    NgClass,
     RouterLink,
     FormsModule,
     EmptyStateComponent,
     MenuComponent,
+    BackButtonComponent,
+    StatusBadgeComponent,
+    VisibilityBadgeComponent,
+    SkeletonComponent,
   ],
   templateUrl: './planes.component.html',
   styleUrl: './planes.component.css',
@@ -78,13 +88,6 @@ export class PlanesComponent implements OnInit {
     activo: 'Activo',
     completado: 'Completado',
     cancelado: 'Cancelado',
-  };
-
-  estadoColors: Record<EstadoPlan, string> = {
-    borrador: 'bg-zinc-100 text-zinc-600',
-    activo: 'bg-green-100 text-green-700',
-    completado: 'bg-blue-100 text-blue-700',
-    cancelado: 'bg-red-100 text-red-600',
   };
 
   ngOnInit() {

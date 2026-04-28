@@ -123,13 +123,11 @@
           >
             <!-- Avatar + nombre -->
             <div class="assign-patient">
-              <div class="assign-avatar">
-                @if (avatarUrl(p)) {
-                  <img [src]="avatarUrl(p)" [alt]="fullName(p)" class="avatar-img"/>
-                } @else {
-                  <span class="avatar-initials">{{ getInitials(p) }}</span>
-                }
-              </div>
+              <ui-avatar
+                [src]="avatarUrl(p)"
+                [name]="fullName(p)"
+                size="sm"
+              ></ui-avatar>
               <div class="assign-name">
                 <span class="patient-name">{{ fullName(p) }}</span>
                 @if (p.email) {

@@ -24,17 +24,7 @@
       <!-- Header para móvil y desktop -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <button
-            type="button"
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
-                   bg-white/60 backdrop-blur-md border border-white/40
-                   text-zinc-600 transition-all duration-200
-                   hover:bg-white/80 active:scale-95 shadow-sm"
-            aria-label="Volver"
-            (click)="cancelar()"
-          >
-            <span class="material-symbols-outlined text-xl">arrow_back</span>
-          </button>
+          <ui-back-button size="lg" (clicked)="cancelar()"></ui-back-button>
           <div>
             <h1 class="titulo-kengo text-xl font-bold text-amber-600">
               {{ isEditMode() ? 'Editar rutina' : 'Configurar rutina' }}
