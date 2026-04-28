@@ -1,16 +1,18 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DashboardFisioService } from '../../../data-access/dashboard-fisio.service';
 import { NotificacionesService } from '../../../../../core/services/notificaciones.service';
 import type { NotificacionApp } from '../../../../../../types/global';
 import { assetUrl } from '../../../../../core/utils/asset-url';
+import { DashboardHeaderComponent } from '../../../../../core/layout/components/dashboard-header/dashboard-header.component';
 
 @Component({
   selector: 'app-inicio-fisio',
   standalone: true,
-  imports: [],
+  imports: [DashboardHeaderComponent],
   templateUrl: './inicio-fisio.component.html',
   styleUrl: './inicio-fisio.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InicioFisioComponent {
   private router = inject(Router);

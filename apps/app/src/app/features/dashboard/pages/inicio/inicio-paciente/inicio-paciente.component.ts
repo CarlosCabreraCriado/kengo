@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -11,6 +11,7 @@ import { ClinicasService } from '../../../../clinica/data-access/clinicas.servic
 import { KENGO_BREAKPOINTS } from '../../../../../shared';
 import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/global';
 import { assetUrl, rawAssetUrl } from '../../../../../core/utils/asset-url';
+import { DashboardHeaderComponent } from '../../../../../core/layout/components/dashboard-header/dashboard-header.component';
 
 interface EjercicioStrip {
   id: string;
@@ -23,9 +24,10 @@ interface EjercicioStrip {
 @Component({
   selector: 'app-inicio-paciente',
   standalone: true,
-  imports: [],
+  imports: [DashboardHeaderComponent],
   templateUrl: './inicio-paciente.component.html',
   styleUrl: './inicio-paciente.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InicioPacienteComponent {
   private sessionService = inject(SessionService);

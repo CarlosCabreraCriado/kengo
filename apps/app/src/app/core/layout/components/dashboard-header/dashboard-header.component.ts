@@ -1,33 +1,32 @@
 import {
   Component,
+  ChangeDetectionStrategy,
   computed,
   signal,
   inject,
   ElementRef,
   HostListener,
 } from '@angular/core';
-import { assetUrl } from '../../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { SessionService } from '../../../../../core/auth/services/session.service';
-import { AuthService } from '../../../../../core/auth/services/auth.service';
-import { ThemeService } from '../../../../../core/services/theme.service';
-import { NotificacionesService } from '../../../../../core/services/notificaciones.service';
-import { KENGO_BREAKPOINTS } from '../../../../../shared';
-import type { NotificacionApp } from '../../../../../../types/global';
-import { InicioFisioComponent } from '../inicio-fisio/inicio-fisio.component';
-import { InicioPacienteComponent } from '../inicio-paciente/inicio-paciente.component';
+import { assetUrl } from '../../../utils/asset-url';
+import { SessionService } from '../../../auth/services/session.service';
+import { AuthService } from '../../../auth/services/auth.service';
+import { ThemeService } from '../../../services/theme.service';
+import { NotificacionesService } from '../../../services/notificaciones.service';
+import { KENGO_BREAKPOINTS } from '../../../../shared';
+import type { NotificacionApp } from '../../../../../types/global';
 
 @Component({
-  selector: 'app-inicio',
+  selector: 'app-dashboard-header',
   standalone: true,
-  imports: [InicioFisioComponent, InicioPacienteComponent],
-  templateUrl: './inicio.component.html',
-  styleUrl: './inicio.component.css',
+  templateUrl: './dashboard-header.component.html',
+  styleUrl: './dashboard-header.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InicioComponent {
+export class DashboardHeaderComponent {
   private sessionService = inject(SessionService);
   private authService = inject(AuthService);
   private themeService = inject(ThemeService);
@@ -40,14 +39,20 @@ export class InicioComponent {
 
   menuAbierto = signal(false);
   notificacionesAbiertas = signal(false);
-  isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
-  vistaActual = signal<'fisio' | 'paciente'>('fisio');
-  mostrarVistaFisio = computed(() => this.isFisio() && this.vistaActual() === 'fisio');
+  rolUsuario = this.sessionService.rolUsuario;
+  isFisio = computed(() => this.rolUsuario() === 'fisio');
+
+  readonly puedeToggleRol = computed(() => {
+    const u = this.sessionService.usuario();
+    return !!u?.esFisio && !!u?.esPaciente;
+  });
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.notificacionesAbiertas()) return;
-    const container = this.elementRef.nativeElement.querySelector('.notificaciones-container');
+    const container = this.elementRef.nativeElement.querySelector(
+      '.notificaciones-container',
+    );
     if (!container?.contains(event.target as Node)) {
       this.cerrarNotificaciones();
     }
@@ -68,10 +73,18 @@ export class InicioComponent {
   );
 
   toggleVistaDashboard(): void {
-    this.vistaActual.update((v) => (v === 'fisio' ? 'paciente' : 'fisio'));
+    if (!this.puedeToggleRol()) return;
+    this.sessionService.toggleRolUsuario();
+    this.router.navigateByUrl('/inicio');
   }
 
-  // Métodos del menú de usuario
+  setRol(rol: 'fisio' | 'paciente'): void {
+    if (!this.puedeToggleRol()) return;
+    if (this.rolUsuario() === rol) return;
+    this.sessionService.toggleRolUsuario();
+    this.router.navigateByUrl('/inicio');
+  }
+
   toggleMenu(): void {
     this.cerrarNotificaciones();
     this.menuAbierto.update((v) => !v);
@@ -81,7 +94,6 @@ export class InicioComponent {
     this.menuAbierto.set(false);
   }
 
-  // Métodos de notificaciones
   toggleNotificaciones(): void {
     this.cerrarMenu();
     this.notificacionesAbiertas.update((v) => !v);
@@ -107,12 +119,15 @@ export class InicioComponent {
     const currentUrl = this.router.url.split('?')[0];
     const destino = n.rutaDestino;
     const mismoContexto =
-      currentUrl.startsWith('/mis-pacientes/') && destino.startsWith('/mis-pacientes/');
+      currentUrl.startsWith('/mis-pacientes/') &&
+      destino.startsWith('/mis-pacientes/');
 
     if (mismoContexto && currentUrl !== destino) {
-      this.router.navigateByUrl('/mis-pacientes', { skipLocationChange: true }).then(() => {
-        this.router.navigate([destino]);
-      });
+      this.router
+        .navigateByUrl('/mis-pacientes', { skipLocationChange: true })
+        .then(() => {
+          this.router.navigate([destino]);
+        });
     } else {
       this.router.navigate([destino]);
     }
@@ -127,13 +142,20 @@ export class InicioComponent {
   formatearFechaNotificacion(fecha: string): string {
     const d = new Date(fecha);
     const ahora = new Date();
-    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    const hoy = new Date(
+      ahora.getFullYear(),
+      ahora.getMonth(),
+      ahora.getDate(),
+    );
     const ayer = new Date(hoy.getTime() - 86400000);
 
     if (d >= hoy) return 'Hoy';
     if (d >= ayer) return 'Ayer';
 
-    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    return d.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   irAPerfil(): void {

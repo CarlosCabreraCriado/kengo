@@ -9,6 +9,8 @@ export { ThemeService } from './services/theme.service';
 // Guards
 export { AuthGuard } from './guards/auth.guard';
 export { FisioGuard } from './guards/fisio.guard';
+export { PacienteGuard } from './guards/paciente.guard';
+export { InicioRedirectGuard } from './guards/inicio-redirect.guard';
 export { AdminGuard } from './guards/admin.guard';
 
 // Config
@@ -22,3 +24,4 @@ export { provideConvex } from './convex/convex.provider';
 export { NavegacionComponent } from './layout/components/navegacion/navegacion.component';
 export { HeaderComponent } from './layout/components/header/header.component';
 export { FooterComponent } from './layout/components/footer/footer.component';
+export { DashboardHeaderComponent } from './layout/components/dashboard-header/dashboard-header.component';

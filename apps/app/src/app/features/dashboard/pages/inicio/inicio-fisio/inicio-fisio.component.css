@@ -1,6 +1,21 @@
 @reference "tailwindcss";
 
 :host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.dashboard-body {
+  @apply flex flex-1 flex-col overflow-y-auto overflow-x-hidden;
+  overscroll-behavior-y: none;
+  min-height: 0;
+}
+
+.body-inner {
   --kengo-glass: rgba(255, 255, 255, 0.5);
   --kengo-border: rgba(255, 255, 255, 0.25);
   --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);

@@ -1,13 +1,32 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '../../core';
+import {
+  AuthGuard,
+  FisioGuard,
+  PacienteGuard,
+  InicioRedirectGuard,
+} from '../../core';
 
 export const DASHBOARD_ROUTES: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./pages/inicio/inicio/inicio.component').then(
-        (m) => m.InicioComponent,
-      ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, InicioRedirectGuard],
+    children: [
+      {
+        path: 'fisio',
+        loadComponent: () =>
+          import('./pages/inicio/inicio-fisio/inicio-fisio.component').then(
+            (m) => m.InicioFisioComponent,
+          ),
+        canActivate: [FisioGuard],
+      },
+      {
+        path: 'paciente',
+        loadComponent: () =>
+          import(
+            './pages/inicio/inicio-paciente/inicio-paciente.component'
+          ).then((m) => m.InicioPacienteComponent),
+        canActivate: [PacienteGuard],
+      },
+    ],
   },
 ];
