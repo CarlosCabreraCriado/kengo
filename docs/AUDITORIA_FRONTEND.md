@@ -2,7 +2,7 @@
 
 > **Documento destino**: `docs/AUDITORIA_FRONTEND.md` (mismo contenido).
 > **Fecha**: 2026-04-27 (creado) · 2026-04-28 (última actualización)
-> **Estado**: Todos los items **P0/P1/P2 cerrados**. Sólo quedan ítems P3 (opcionales).
+> **Estado**: Todos los items **P0/P1/P2 cerrados**. P3 cerrados: #2.6, #3.4/#13, #3.5, #3.6, #4.2. Quedan #4.1, #4.3 (opcionales).
 > **Alcance**: `apps/app/src/app/` — Angular 20, standalone, signals, OnPush.
 
 ---
@@ -35,7 +35,7 @@ Leyenda de campos:
 | [x] | 10 | Mover rutas de `planes`, `rutinas`, `sesion` a `*.routes.ts` | rutas | S | 🟢 | 🟢 | P2 (PR-Shared) ✅ |
 | [x] | 11 | Aplicar `unsavedChangesGuard` a `rutina-builder` | rutas | S | 🟡 | 🟢 | P1 (PR-Routes) ✅ |
 | [x] | 12 | Revisar guard de rol en `/planes` (list) | rutas | S | 🟡 | 🟡 | P1 (PR-Routes) ✅ |
-| [ ] | 13 | Unificar simetría `/galeria/rutinas` ↔ creación de rutinas | rutas | S | 🟢 | 🟢 | P3 |
+| [x] | 13 | Unificar simetría `/galeria/rutinas` ↔ creación de rutinas | rutas | S | 🟢 | 🟢 | P3 (PR-Routes-2) ✅ |
 | [x] | 14 | Composable `useResponsive()` | shared | S | 🟡 | 🟢 | P2 (PR-4) ✅ |
 
 ### Plan de ejecución por PRs
@@ -49,8 +49,11 @@ Leyenda de campos:
 - [x] **PR-Paciente (L)** — Descomponer `paciente-detail` (#6) ✅ **COMPLETADO** (PR-Paciente-1 + PR-Paciente-2)
 - [x] **PR-Shared (M)** — `convex-mappers` + `FormatDatePipe` + `EmptyStateComponent` + split de rutas (#2.2 + #2.3 + #2.4 + #3.1) ✅ **COMPLETADO**
 - [x] **PR-6 (M)** — factory `createFilteredList<T>` + migración de 3 servicios (#2.1) ✅ **COMPLETADO**
+- [x] **PR-Validators (S)** — `common-validators.ts` + alineación de password minLength a 8 (#2.6) ✅ **COMPLETADO**
+- [x] **PR-Routes-2 (S)** — eliminar feature `galeria/` + elevar `/ejercicios` y `/rutinas` + rename `ToggleGaleria` → `CatalogoTabs` (#3.4 + #4.2) ✅ **COMPLETADO**
+- [x] **PR-Grupo-A (S)** — refactor `cambiarPaciente()` + docs naming + lazy `InicioFisio`/`InicioPaciente` con guards (#3.5 + #3.6) ✅ **COMPLETADO**
 
-> **Backlog P0–P2 cerrado**. Los items restantes (sección 2.6, 3.4–3.6, 4.1–4.3) son P3 (opcionales) y deben atacarse oportunísticamente cuando se toque el código afectado.
+> **Backlog P0–P2 cerrado**. **P3 cerrados**: #2.6, #3.4/#13, #3.5, #3.6, #4.2. Quedan #4.1, #4.3 (opcionales, ataque oportunístico cuando se toque el código afectado).
 
 ---
 
@@ -159,7 +162,7 @@ Leyenda de campos:
 - [x] `BreakpointObserver` inline migrado a `useResponsive()`.
 - [x] `avatarUrl`, `fullName`, `clinicaNombre` convertidos a `computed()` (reactivos al resource async de clínicas).
 - [x] Eliminadas flags `*Expanded` del padre (cada subcomponente las gestiona internamente).
-- [x] Acoplamiento `pacientes → planes/PlanBuilderService` aceptado: `crearPlan()` sigue llamando `cambiarPaciente()` desde el contenedor reducido. Documentado como follow-up.
+- [x] Acoplamiento `pacientes → planes/PlanBuilderService` aceptado: `crearPlan()` ahora llama `prepareForPaciente(p) + navigateAndOpenDrawer()` desde el contenedor reducido. Refactor cerrado en Grupo A — la separación estado/efectos hace explícito el acoplamiento sin eliminarlo.
 
 **LOC final**:
 - Contenedor `paciente-detail`: 821 → **573** TS · 791 → **147** HTML · 1276 → **284** CSS (-65% total).
@@ -169,7 +172,7 @@ Leyenda de campos:
 - Nuevos: `pacientes/data-access/paciente-detail.types.ts`, `pacientes/utils/format-helpers.ts`, 5 carpetas `paciente-detail/componentes/{nombre}/`.
 - Modificados: `paciente-detail.component.{ts,html,css}`, `pacientes/data-access/cumplimiento.service.ts`.
 
-**Fuera de scope (issues separados)**: refactor `PlanBuilderService.cambiarPaciente()` para separar `prepareForPaciente()` de `navigate+openDrawer` (afecta 4 callsites); tests unitarios de los nuevos métodos puros y subcomponentes.
+**Fuera de scope (issues separados)**: tests unitarios de los nuevos métodos puros y subcomponentes.
 
 **Esfuerzo**: L · **Impacto**: 🟡 · **Riesgo**: 🟡
 
@@ -200,7 +203,7 @@ Leyenda de campos:
 - Nuevos: `planes/data-access/internal/builder-items-state.ts`, `planes/data-access/internal/builder-persistence.ts`, `rutinas/data-access/rutina-builder.service.ts`.
 - Modificados: `planes/data-access/plan-builder.service.ts`, `rutinas/pages/rutina-builder/rutina-builder.component.ts`, `planes/components/carrito-ejercicios/carrito-ejercicios.{ts,html}`, `rutinas/pages/rutinas-list/rutinas-list.component.ts`, `ejercicios/pages/ejercicio-detail/ejercicio-detail.component.ts`.
 
-**Fuera de scope (issues separados)**: `unsavedChangesGuard` para rutina-builder (#3.2), `cambiarPaciente()` mezcla estado+routing+UI, `loadFromRutina` no clonable a modo rutina (no es uso actual).
+**Fuera de scope (issues separados)**: `unsavedChangesGuard` para rutina-builder (#3.2 cerrado en PR-Routes), `loadFromRutina` no clonable a modo rutina (no es uso actual).
 
 **Esfuerzo**: L (entregado en PR-5a + PR-5b + PR-5c) · **Impacto**: 🔴 · **Riesgo**: 🔴
 
@@ -267,10 +270,19 @@ Creado `<ui-empty-state>` en `shared/ui/empty-state/` con `icon`, `title`, `mess
 ## [x] 2.5 — `useResponsive()` composable (PR-4) ✅
 Creado en `apps/app/src/app/shared/composables/use-responsive.ts`. Aplicado en `ejercicio-activo`. Pendiente migrar otros consumidores de `BreakpointObserver` (oportunista cuando se toquen). **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P2 ✅.
 
-## [ ] 2.6 — `common-validators.ts`
-Validators de email/password inline en 5+ formularios. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3.
+## [x] 2.6 — `common-validators.ts` (PR-Validators) ✅
+Creado `apps/app/src/app/shared/validators/common-validators.ts` con `emailRequired`, `emailOptional`, `passwordRequired(minLength=8)`, `passwordRepeatRequired`, `otpCode(digits=6)`, `clinicaCode(length=8)` y `postalCode`. Re-exportado desde `shared/index.ts` junto al `passwordMatchValidator` ya existente.
 
-> **Positivo**: no se detectaron imports cruzados problemáticos entre features. Tras PR-5 el `PlanBuilderService` tiene una sola responsabilidad y la dependencia residual `pacientes → planes/PlanBuilderService.cambiarPaciente()` (única callsite en `paciente-detail.crearPlan()`) queda aislada en el contenedor reducido. Documentado como follow-up: separar `prepareForPaciente()` de `navigate+openDrawer()`.
+Migrados **11 formularios**: 5 auth (login, registro, recuperar-password, reset-password, establecer-password), 2 perfil/paciente (perfil, add-paciente) y 4 clínica (crear, editar, vincular, generar-codigo).
+
+**Cambios de comportamiento**:
+- Password `minLength` **subido 6→8** en registro, reset-password y establecer-password (alineado con perfil/cambiar-password). Mensajes "6 caracteres" en plantillas actualizados a "8 caracteres".
+- `postalCode` ahora exige `pattern(/^\d{5}$/)` (antes solo longitud — permitía letras).
+- `reset-password` migra su `passwordMatchValidator` inline al shared (`passwordMatchValidator('password', 'confirmPassword')`).
+
+**Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3 ✅.
+
+> **Positivo**: no se detectaron imports cruzados problemáticos entre features. Tras PR-5 + Grupo A el `PlanBuilderService` tiene una sola responsabilidad y la dependencia residual `pacientes → planes/PlanBuilderService` (única callsite en `paciente-detail.crearPlan()`) queda aislada en el contenedor reducido. La separación `prepareForPaciente()` / `navigateAndOpenDrawer()` deja explícito el acoplamiento estado/efecto.
 
 ---
 
@@ -289,14 +301,26 @@ Creados `planes.routes.ts` y `sesion.routes.ts`; completados `auth.routes.ts` (f
 ## [x] 3.3 — Revisar guard de rol en `/planes` (list) (PR-Routes) ✅
 **Resultado**: comportamiento intencional confirmado, sin cambios en código. `planes.component.ts` discrimina por rol: si `isFisio()` muestra 3 tabs (planes-pacientes / rutinas / mis-planes), si paciente muestra solo "mis-planes" cargando `getPlanesByPaciente(userId)`. Por tanto añadir `FisioGuard` rompería el flujo del paciente. Documentado con comentario inline en `app.routes.ts` para futura claridad.
 
-## [ ] 3.4 — Asimetría `galeria/rutinas` ↔ `/rutinas/nueva`
-Listado y creación en niveles distintos. Decidir camino canónico. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3.
+## [x] 3.4 — Asimetría `galeria/rutinas` ↔ `/rutinas/nueva` (resuelto por #4.2) ✅
+Eliminada la feature `galeria/` (PR-Routes-2). El listado y la creación de rutinas viven ambos bajo `/rutinas` — simetría restablecida sin trabajo adicional. **Esfuerzo**: 0 (resuelto en cascada) · **Prioridad**: P3 ✅.
 
-## [ ] 3.5 — Naming singular/plural inconsistente
-Documentar convención posesiva (`mi-`/`mis-`) y dejar como está si es intencional. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3.
+## [x] 3.5 — Naming singular/plural inconsistente (Grupo A) ✅
+**Resultado**: convención documentada en bloque de comentario al inicio de `apps/app/src/app/app.routes.ts`. Cuatro patrones reconocidos:
+- `mi-` + singular: recurso propio único (`/mi-clinica`, `/mi-plan`)
+- `mis-` + plural: colección propia (`/mis-pacientes`)
+- plural sin posesivo: catálogo compartido por rol (`/ejercicios`, `/rutinas`, `/planes`)
+- singular sin posesivo: vista única (`/perfil`, `/inicio`, `/actividad-personal`)
 
-## [ ] 3.6 — Lazy de `InicioFisio`/`InicioPaciente`
-`/inicio` carga ambos con `*ngIf`. Evaluar si separar en rutas con redirección por rol. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3.
+Inconsistencia residual aceptada y registrada inline: `/mi-plan` (singular posesivo) vs `/mis-pacientes` (plural posesivo) — ambas son del paciente; renombrar implicaría romper bookmarks y se descartó. **Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3 ✅.
+
+## [x] 3.6 — Lazy de `InicioFisio`/`InicioPaciente` (Grupo A) ✅
+**Resultado**: `InicioComponent` (152 LOC) eliminado. `/inicio` se vuelve nodo de routing sin componente con `InicioRedirectGuard` que devuelve `UrlTree` hacia `/inicio/fisio` o `/inicio/paciente` según `SessionService.rolUsuario()`. Hijos protegidos por `FisioGuard` y nuevo `PacienteGuard`. Header común extraído a `DashboardHeaderComponent` en `core/layout/components/`. Bundle: dos chunks lazy independientes (antes uno con condicional `@if`). 19 ocurrencias de `routerLink="/inicio"` y `router.navigate(['/inicio'])` siguen funcionando vía redirect. Toggle multi-rol del header llama `toggleRolUsuario() + router.navigateByUrl('/inicio')` para forzar re-evaluación de guards.
+
+**Archivos**: nuevos `core/guards/paciente.guard.ts`, `core/guards/inicio-redirect.guard.ts`, `core/layout/components/dashboard-header/dashboard-header.component.{ts,html,css}`. Modificados `core/index.ts`, `features/dashboard/dashboard.routes.ts`, `features/dashboard/index.ts`, `features/dashboard/pages/inicio/inicio-{fisio,paciente}/inicio-{fisio,paciente}.component.{ts,html,css}`. Eliminados `features/dashboard/pages/inicio/inicio/inicio.component.{ts,html,css}` y carpeta vacía.
+
+**Deuda residual registrada**: `routerLink="/inicio/planes"` huérfano en `features/planes/pages/plan-detail/plan-detail.component.html:345` (preexistente, no scope del PR).
+
+**Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3 ✅.
 
 ---
 
@@ -305,8 +329,26 @@ Documentar convención posesiva (`mi-`/`mis-`) y dejar como está si es intencio
 ## [ ] 4.1 — Templates HTML grandes (no críticos)
 `planes.component.html` (697), `plan-builder.component.html` (661), `ejercicios-list.component.html` (557), `rutinas-list.component.html` (450), `rutina-builder.component.html` (412). Tocar solo si se va a modificar funcionalidad. **Prioridad**: P3.
 
-## [ ] 4.2 — Feature `galeria` es solo router-dispatcher
-Decidir: dejar como agrupador semántico vs eliminar. **Prioridad**: P3.
+## [x] 4.2 — Feature `galeria` es solo router-dispatcher (PR-Routes-2) ✅
+Eliminados `features/galeria/galeria.routes.ts` e `index.ts`. La feature era puro dispatcher sin UI ni lógica.
+
+**Rutas elevadas a top-level** en `app.routes.ts`:
+- `/ejercicios` (lazy a `EJERCICIOS_ROUTES`).
+- `/rutinas` (lazy a `RUTINAS_ROUTES`, ahora con ruta raíz `''` que carga `RutinasListComponent` — antes vivía dentro de `galeria.routes.ts`).
+
+**Redirects legados** (preservan bookmarks):
+- `/galeria` → `/ejercicios`
+- `/galeria/ejercicios` → `/ejercicios`
+- `/galeria/ejercicios/:id` → `/ejercicios/:id`
+- `/galeria/rutinas` → `/rutinas`
+
+**Migrado**: 12 `router.navigate(...)`, 8 `routerLink`, 2 guards (`unsaved-changes` planes/rutinas → `startsWith('/ejercicios')`), `route-reuse-strategy.ts` (cache key `'galeria/ejercicios'` → `'ejercicios'`), `navegacion.component.{ts,html}` (`/galeria` → `/ejercicios`, `/rutinas` añadido al `activeIndex`).
+
+**Bonus**: rename `ToggleGaleriaComponent` → `CatalogoTabsComponent` (selector `app-catalogo-tabs`, carpeta `shared/ui/catalogo-tabs/`) para alinear el nombre con la nueva estructura.
+
+**Residuales intencionales**: asset decorativo `opcion-galeria.webp` (no es ruta) en `inicio-fisio`.
+
+**Esfuerzo**: S · **Impacto**: 🟢 · **Prioridad**: P3 ✅.
 
 ## [ ] 4.3 — `perfil.component.ts` (497 LOC)
 Cerca del umbral. Vigilar; descomponer si crece. **Prioridad**: P3.
@@ -437,13 +479,82 @@ apps/app/src/app/features/                                                  #2.1
 └── planes/data-access/planes.service.ts                                    (consume factory)
 ```
 
+**Completados (PR-Validators)**:
+```
+apps/app/src/app/shared/validators/                                         #2.6 ✅ PR-Validators
+└── common-validators.ts                                                    (nuevo)
+
+apps/app/src/app/shared/index.ts                                            (re-export)
+
+apps/app/src/app/features/                                                  #2.6 ✅ PR-Validators
+├── auth/pages/login/login.component.ts                                     (emailRequired)
+├── auth/pages/registro/registro.component.ts                               (emailRequired, passwordRequired, passwordRepeatRequired; minLength 6→8)
+├── auth/pages/recuperar-password/recuperar-password.component.ts           (emailRequired)
+├── auth/pages/reset-password/reset-password.component.{ts,html}            (otpCode, passwordRequired, passwordRepeatRequired, shared passwordMatchValidator; minLength 6→8)
+├── auth/pages/establecer-password/establecer-password.component.{ts,html}  (passwordRequired, passwordRepeatRequired; minLength 6→8)
+├── perfil/pages/perfil/perfil/perfil.component.ts                          (emailRequired, passwordRequired, postalCode)
+├── pacientes/components/add-paciente/add-paciente.component.ts             (emailRequired)
+├── clinica/components/crear-clinica-dialog/crear-clinica-dialog.component.ts        (emailOptional)
+├── clinica/components/editar-clinica-dialog/editar-clinica-dialog.component.ts      (emailOptional)
+├── clinica/components/vincular-clinica-dialog/vincular-clinica-dialog.component.ts  (clinicaCode)
+└── clinica/components/generar-codigo-dialog/generar-codigo-dialog.component.ts      (emailOptional)
+```
+
+**Completados (PR-Routes-2)**:
+```
+apps/app/src/app/features/galeria/                                          #4.2 ✅ PR-Routes-2 (ELIMINADO)
+
+apps/app/src/app/                                                           #4.2/#3.4 ✅ PR-Routes-2
+├── app.routes.ts                                                           (redirects legados + /ejercicios y /rutinas top-level)
+├── core/config/route-reuse-strategy.ts                                     ('galeria/ejercicios' → 'ejercicios')
+├── core/layout/components/navegacion/navegacion.component.{ts,html}        (/galeria → /ejercicios, /rutinas en activeIndex)
+├── features/ejercicios/pages/ejercicios-list/ejercicios-list.component.{ts,html}
+├── features/ejercicios/pages/ejercicio-detail/ejercicio-detail.component.html
+├── features/rutinas/rutinas.routes.ts                                      (+ ruta raíz para listado)
+├── features/rutinas/pages/rutinas-list/rutinas-list.component.{ts,html}
+├── features/rutinas/pages/rutina-builder/rutina-builder.component.{ts,html}
+├── features/rutinas/guards/rutina-unsaved-changes.guard.ts                 (startsWith /ejercicios)
+├── features/planes/guards/unsaved-changes.guard.ts                         (startsWith /ejercicios)
+├── features/planes/data-access/plan-builder.service.ts
+├── features/planes/components/carrito-ejercicios/carrito-ejercicios.component.ts
+├── features/planes/pages/plan-builder/plan-builder.component.ts
+├── features/dashboard/pages/inicio/inicio-fisio/inicio-fisio.component.ts
+├── features/dashboard/pages/inicio/inicio-paciente/inicio-paciente.component.ts
+└── shared/ui/catalogo-tabs/                                                (renombrado desde toggle-galeria/)
+    ├── catalogo-tabs.component.ts                                          (selector app-catalogo-tabs)
+    ├── catalogo-tabs.component.html
+    └── catalogo-tabs.component.css
+```
+
+**Completados (PR-Grupo-A)**:
+```
+apps/app/src/app/app.routes.ts                                              #3.5 ✅ PR-Grupo-A (bloque de comentario con convención mi-/mis-/plural/singular)
+
+apps/app/src/app/core/                                                      #3.6 ✅ PR-Grupo-A
+├── guards/paciente.guard.ts                                                (nuevo)
+├── guards/inicio-redirect.guard.ts                                         (nuevo, devuelve UrlTree según rol)
+└── layout/components/dashboard-header/                                     (nuevo, extraído de InicioComponent)
+    ├── dashboard-header.component.ts
+    ├── dashboard-header.component.html
+    └── dashboard-header.component.css
+
+apps/app/src/app/features/dashboard/                                        #3.6 ✅ PR-Grupo-A
+├── dashboard.routes.ts                                                     (reescrito: redirect guard + 2 hijos lazy)
+├── index.ts                                                                (eliminado export roto a InicioComponent)
+└── pages/inicio/
+    ├── inicio-fisio/inicio-fisio.component.{ts,html,css}                   (montan <app-dashboard-header />)
+    ├── inicio-paciente/inicio-paciente.component.{ts,html,css}             (montan <app-dashboard-header />)
+    └── inicio/                                                             (ELIMINADO: InicioComponent 152 LOC)
+
+apps/app/src/app/features/                                                  #1.4/#1.5 follow-up cerrado en PR-Grupo-A
+├── planes/data-access/plan-builder.service.ts                              (cambiarPaciente eliminado, prepareForPaciente + navigateAndOpenDrawer expuestos)
+├── planes/pages/plan-detail/plan-detail.component.ts                       (callsite migrado)
+├── pacientes/pages/pacientes-list/pacientes-list.component.ts              (callsite migrado)
+└── pacientes/pages/paciente-detail/paciente-detail.component.ts            (callsite migrado)
+```
+
 **Pendientes** (sólo P3, opcionales):
 ```
-#2.6  apps/app/src/app/shared/                          common-validators (email/password en 5+ formularios)
-#3.4  apps/app/src/app/features/{galeria,rutinas}/      simetría galeria/rutinas ↔ /rutinas/nueva
-#3.5  apps/app/src/app/app.routes.ts                    documentar convención singular/plural (mi-/mis-)
-#3.6  apps/app/src/app/features/dashboard/              lazy InicioFisio/InicioPaciente por rol
 #4.1  features/{planes,ejercicios,rutinas}/             templates HTML grandes (697/661/557/450/412 LOC)
-#4.2  apps/app/src/app/features/galeria/                feature router-dispatcher: dejar o eliminar
 #4.3  apps/app/src/app/features/perfil/                 perfil.component.ts (497 LOC, vigilar)
 ```
