@@ -1,6 +1,21 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
 
+/**
+ * Convención de naming de rutas:
+ * - 'mi-' + singular: recurso propio único
+ *   (ej: /mi-clinica, /mi-plan)
+ * - 'mis-' + plural: colección propia
+ *   (ej: /mis-pacientes)
+ * - plural sin posesivo: catálogo compartido por rol
+ *   (ej: /ejercicios, /rutinas, /planes)
+ * - singular sin posesivo: vista única
+ *   (ej: /perfil, /inicio, /actividad-personal)
+ *
+ * Inconsistencia aceptada: /mi-plan (singular) vs /mis-pacientes (plural)
+ * — ambas son del paciente. Renombrar implicaría romper bookmarks; queda
+ * como deuda registrada en docs/AUDITORIA_FRONTEND.md #3.5.
+ */
 export const routes: Routes = [
   { path: '', redirectTo: '/inicio', pathMatch: 'full' },
 
