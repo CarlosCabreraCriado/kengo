@@ -9,8 +9,12 @@
   --kengo-primary-glow: rgba(231, 92, 62, 0.4);
   --kengo-glass: rgba(255, 255, 255, 0.7);
   --kengo-glass-border: rgba(255, 255, 255, 0.4);
+  /* Escala de grises (zinc) — fuente única de verdad para textos del header */
+  --kengo-text-strong: #3f3f46; /* zinc-700 */
   --kengo-text: #475569;
-  --kengo-text-muted: #94a3b8;
+  --kengo-text-muted: #71717a; /* zinc-500 */
+  --kengo-text-subtle: #a1a1aa; /* zinc-400 */
+  --kengo-bg-subtle: #f4f4f5; /* zinc-100 */
   animation: navSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -234,7 +238,7 @@
   min-width: 1.125rem;
   height: 1.125rem;
   padding: 0 4px;
-  border-radius: 9px;
+  border-radius: 9999px;
   background: var(--kengo-primary);
   color: white;
   font-size: 0.625rem;
@@ -270,13 +274,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.875rem 1rem;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid var(--kengo-bg-subtle);
 }
 
 .notificaciones-titulo {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #3f3f46;
+  color: var(--kengo-text-strong);
 }
 
 .notificaciones-marcar-todas {
@@ -312,7 +316,7 @@
   transition: background 0.15s ease;
 
   &:hover {
-    background: #f4f4f5;
+    background: var(--kengo-bg-subtle);
   }
 
   &.no-leida {
@@ -364,7 +368,7 @@
 .notificacion-emisor {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #3f3f46;
+  color: var(--kengo-text-strong);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -372,7 +376,7 @@
 
 .notificacion-titulo-item {
   font-size: 0.75rem;
-  color: #71717a;
+  color: var(--kengo-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -380,7 +384,7 @@
 
 .notificacion-texto {
   font-size: 0.75rem;
-  color: #a1a1aa;
+  color: var(--kengo-text-subtle);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -388,7 +392,7 @@
 
 .notificacion-fecha {
   font-size: 0.6875rem;
-  color: #a1a1aa;
+  color: var(--kengo-text-subtle);
   margin-top: 2px;
 }
 
@@ -412,7 +416,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 2rem 1rem;
-  color: #a1a1aa;
+  color: var(--kengo-text-subtle);
 
   .material-symbols-outlined {
     font-size: 2rem;

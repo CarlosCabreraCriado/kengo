@@ -73,7 +73,7 @@
   right: 0;
   z-index: 100;
   height: 3px;
-  background: rgba(231, 92, 62, 0.1);
+  background: rgba(var(--kengo-primary-rgb), 0.1);
   overflow: hidden;
 }
 
@@ -152,7 +152,7 @@
 }
 
 .btn-back:hover {
-  background: rgba(231, 92, 62, 0.08);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
   color: var(--kengo-coral);
 }
 
@@ -182,7 +182,7 @@
 }
 
 .btn-top-save:hover:not(:disabled) {
-  background: #d04e33;
+  background: var(--kengo-primary-dark);
 }
 
 .btn-top-save:disabled {
@@ -239,9 +239,9 @@
   gap: 6px;
   margin-top: 4px;
   padding: 4px 10px 4px 6px;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.08), rgba(239, 192, 72, 0.06));
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.08), rgba(239, 192, 72, 0.06));
   border-radius: 20px;
-  border: 1px solid rgba(231, 92, 62, 0.12);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.12);
 }
 
 .plan-header__badge-dot {
@@ -282,8 +282,8 @@
 }
 
 .btn-icon-glass:hover {
-  background: rgba(231, 92, 62, 0.1);
-  border-color: rgba(231, 92, 62, 0.25);
+  background: rgba(var(--kengo-primary-rgb), 0.1);
+  border-color: rgba(var(--kengo-primary-rgb), 0.25);
   color: var(--kengo-coral);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
@@ -371,7 +371,7 @@
 }
 
 .dropdown-action:hover {
-  background: rgba(231, 92, 62, 0.08);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
 }
 
 .dropdown-action:active {
@@ -398,7 +398,7 @@
 }
 
 .dropdown-action__icon--coral {
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.15), rgba(231, 92, 62, 0.08));
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.15), rgba(var(--kengo-primary-rgb), 0.08));
   color: var(--kengo-coral);
 }
 
@@ -476,7 +476,7 @@
   gap: 16px;
   background: linear-gradient(
     135deg,
-    rgba(231, 92, 62, 0.04) 0%,
+    rgba(var(--kengo-primary-rgb), 0.04) 0%,
     rgba(239, 192, 72, 0.03) 100%
   );
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
@@ -490,7 +490,7 @@
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(231, 92, 62, 0.02) 100%
+    rgba(var(--kengo-primary-rgb), 0.02) 100%
   );
 }
 
@@ -612,7 +612,7 @@
 }
 
 .btn-icon-subtle:hover {
-  background: rgba(231, 92, 62, 0.1);
+  background: rgba(var(--kengo-primary-rgb), 0.1);
   color: var(--kengo-coral);
 }
 
@@ -677,7 +677,7 @@
 }
 
 .btn-edit-subtle:hover {
-  background: rgba(231, 92, 62, 0.1);
+  background: rgba(var(--kengo-primary-rgb), 0.1);
   color: var(--kengo-coral);
 }
 
@@ -753,7 +753,7 @@
 .form-input:focus {
   outline: none;
   border-color: var(--kengo-coral);
-  box-shadow: 0 0 0 4px rgba(231, 92, 62, 0.1);
+  box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .form-input::placeholder {
@@ -813,11 +813,11 @@
   padding: 12px;
   background: linear-gradient(
     135deg,
-    rgba(231, 92, 62, 0.05) 0%,
+    rgba(var(--kengo-primary-rgb), 0.05) 0%,
     rgba(239, 192, 72, 0.04) 100%
   );
   border-radius: 16px;
-  border: 1px solid rgba(231, 92, 62, 0.1);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .date-input-group {
@@ -842,7 +842,7 @@
   min-width: 0;
   height: 44px;
   padding: 0 8px;
-  border: 1.5px solid rgba(231, 92, 62, 0.15);
+  border: 1.5px solid rgba(var(--kengo-primary-rgb), 0.15);
   border-radius: 12px;
   background: white;
   font-size: 0.8rem;
@@ -854,13 +854,13 @@
 }
 
 .date-input:hover {
-  border-color: rgba(231, 92, 62, 0.3);
+  border-color: rgba(var(--kengo-primary-rgb), 0.3);
 }
 
 .date-input:focus {
   outline: none;
   border-color: var(--kengo-coral);
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .date-range__arrow {
@@ -900,7 +900,7 @@
 .duration-chip:hover {
   border-color: var(--kengo-coral);
   color: var(--kengo-coral);
-  background: rgba(231, 92, 62, 0.05);
+  background: rgba(var(--kengo-primary-rgb), 0.05);
   transform: translateY(-2px);
 }
 
@@ -963,7 +963,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   color: white;
-  box-shadow: 0 3px 10px rgba(231, 92, 62, 0.3);
+  box-shadow: 0 3px 10px rgba(var(--kengo-primary-rgb), 0.3);
 }
 
 /* === Empty State === */
@@ -1007,7 +1007,7 @@
 .empty-state-card__circle--1 {
   width: 100%;
   height: 100%;
-  border-color: rgba(231, 92, 62, 0.15);
+  border-color: rgba(var(--kengo-primary-rgb), 0.15);
   animation-delay: 0s;
 }
 
@@ -1025,7 +1025,7 @@
   height: 50%;
   top: 25%;
   left: 25%;
-  border-color: rgba(231, 92, 62, 0.25);
+  border-color: rgba(var(--kengo-primary-rgb), 0.25);
   animation-delay: 1s;
 }
 
@@ -1101,7 +1101,7 @@
 
 .exercise-card--editing {
   border-color: var(--kengo-coral);
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1), var(--shadow-md);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.1), var(--shadow-md);
 }
 
 /* === Exercise Card Preview (Drag) === */
@@ -1130,7 +1130,7 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1), rgba(239, 192, 72, 0.1));
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.1), rgba(239, 192, 72, 0.1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1149,9 +1149,9 @@
 /* === Exercise Card Placeholder === */
 .exercise-card-placeholder {
   height: 100px;
-  border: 2px dashed rgba(231, 92, 62, 0.35);
+  border: 2px dashed rgba(var(--kengo-primary-rgb), 0.35);
   border-radius: 20px;
-  background: rgba(231, 92, 62, 0.05);
+  background: rgba(var(--kengo-primary-rgb), 0.05);
 }
 
 /* === Exercise Card Compact View === */
@@ -1279,7 +1279,7 @@
 .day-dot--active {
   background: linear-gradient(135deg, var(--kengo-coral), var(--kengo-coral-dark));
   color: white;
-  box-shadow: 0 2px 6px rgba(231, 92, 62, 0.35);
+  box-shadow: 0 2px 6px rgba(var(--kengo-primary-rgb), 0.35);
 }
 
 .btn-edit-exercise {
@@ -1298,7 +1298,7 @@
 }
 
 .btn-edit-exercise:hover {
-  background: rgba(231, 92, 62, 0.1);
+  background: rgba(var(--kengo-primary-rgb), 0.1);
   color: var(--kengo-coral);
 }
 
@@ -1348,7 +1348,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.1), rgba(239, 192, 72, 0.1));
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.1), rgba(239, 192, 72, 0.1));
 }
 
 .exercise-edit-thumb__fallback .material-symbols-outlined {
@@ -1427,7 +1427,7 @@
 .dosage-input:focus {
   outline: none;
   border-color: var(--kengo-coral);
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .dosage-input-wrap--suffix {
@@ -1635,7 +1635,7 @@
     box-shadow: var(--shadow-coral);
   }
   50% {
-    box-shadow: 0 8px 32px rgba(231, 92, 62, 0.5);
+    box-shadow: 0 8px 32px rgba(var(--kengo-primary-rgb), 0.5);
   }
 }
 

@@ -66,7 +66,7 @@ import {
     .escala-label {
       font-size: 1rem;
       font-weight: 600;
-      color: #1f2937;
+      color: #18181b; /* zinc-900 */
       text-align: center;
     }
 
@@ -134,7 +134,7 @@ import {
     .escala-labels .texto {
       font-size: 0.6875rem;
       font-weight: 500;
-      color: #6b7280;
+      color: #71717a; /* zinc-500 */
     }
 
     .escala-labels .spacer {
@@ -195,7 +195,7 @@ export class EscalaDolorComponent {
   };
 
   getColor(valor: number): string {
-    return this.colores[valor] || '#6b7280';
+    return this.colores[valor] || '#71717a';
   }
 
   getDescripcion(valor: number): string {

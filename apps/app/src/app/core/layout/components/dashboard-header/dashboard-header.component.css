@@ -81,14 +81,11 @@
 }
 
 .notificacion-badge {
-  @apply pointer-events-none absolute top-0.5 right-0.5 text-center font-bold text-white;
+  @apply pointer-events-none absolute top-0.5 right-0.5 rounded-full text-center text-[10px] font-bold leading-[1.125rem] text-white;
   min-width: 1.125rem;
   height: 1.125rem;
   padding: 0 4px;
-  border-radius: 9px;
   background: var(--kengo-primary);
-  font-size: 0.625rem;
-  line-height: 1.125rem;
   animation: fadeInScale 0.3s ease-out;
 }
 
