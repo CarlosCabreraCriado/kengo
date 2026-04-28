@@ -78,9 +78,18 @@ export class MiClinicaComponent {
     return this.clinicaGestionService.esAdminEnClinica(clinica.id);
   });
 
+  puedeAnadirAEquipo = computed(
+    () => this.esAdmin() && this.sessionService.enModoFisio(),
+  );
+
+  puedeEditarClinica = computed(
+    () => this.esAdmin() && this.sessionService.enModoFisio(),
+  );
+
   esFisioOAdmin = computed(() => {
     const clinica = this.currentClinic();
     if (!clinica) return false;
+    if (!this.sessionService.enModoFisio()) return false;
     return this.clinicaGestionService.puedeGestionarCodigos(clinica.id);
   });
 

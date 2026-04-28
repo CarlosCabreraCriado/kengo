@@ -181,7 +181,7 @@
                 }
               </p>
             </div>
-            @if (esAdmin()) {
+            @if (puedeEditarClinica()) {
               <button
                 type="button"
                 class="edit-clinic-btn"
@@ -282,7 +282,7 @@
             </div>
           </div>
           <div class="team-header-actions">
-            @if (esAdmin()) {
+            @if (puedeAnadirAEquipo()) {
               <button
                 type="button"
                 class="add-fisio-btn"
