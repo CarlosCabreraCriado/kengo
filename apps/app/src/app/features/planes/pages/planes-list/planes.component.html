@@ -287,23 +287,13 @@
             </div>
           </div>
         } @else if (planes().length === 0) {
-          <div class="tarjeta-kengo empty-state rounded-3xl">
-            <div class="empty-state-icon">
-              <span class="material-symbols-outlined">assignment</span>
-            </div>
-            <h3 class="text-lg font-semibold text-zinc-700">No se encontraron planes</h3>
-            <p class="mt-2 max-w-xs text-sm text-zinc-500">
-              Crea un plan para comenzar a asignar ejercicios a tus pacientes
-            </p>
-            <button
-              type="button"
-              class="cta-button mt-5"
-              (click)="crearNuevoPlan()"
-            >
-              <span class="material-symbols-outlined">add</span>
-              Crear primer plan
-            </button>
-          </div>
+          <ui-empty-state
+            icon="assignment"
+            title="No se encontraron planes"
+            message="Crea un plan para comenzar a asignar ejercicios a tus pacientes"
+            actionLabel="Crear primer plan"
+            (action)="crearNuevoPlan()"
+          ></ui-empty-state>
         } @else {
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @for (plan of planes(); track plan.id) {
@@ -384,51 +374,21 @@
                   </button>
 
                   <!-- Menu más opciones -->
-                  <div class="relative">
+                  <ui-menu
+                    [items]="planMenuItems(plan)"
+                    position="bottom-right"
+                    (itemSelected)="onPlanMenuAction($event, plan)"
+                  >
                     <button
+                      trigger
                       type="button"
                       class="flex h-10 w-10 items-center justify-center rounded-xl
                              text-zinc-500 transition-all hover:bg-zinc-100"
                       aria-label="Más opciones"
-                      (click)="togglePlanMenu(plan.id)"
                     >
                       <span class="material-symbols-outlined">more_vert</span>
                     </button>
-                    @if (openPlanMenuId === plan.id) {
-                      <div class="dropdown-menu right-0">
-                        @if (plan.estado !== "activo") {
-                          <button
-                            type="button"
-                            class="dropdown-item"
-                            (click)="cambiarEstado(plan, 'activo'); openPlanMenuId = null"
-                          >
-                            <span class="material-symbols-outlined text-xl text-green-500">play_circle</span>
-                            <span>Marcar activo</span>
-                          </button>
-                        }
-                        @if (plan.estado !== "completado") {
-                          <button
-                            type="button"
-                            class="dropdown-item"
-                            (click)="cambiarEstado(plan, 'completado'); openPlanMenuId = null"
-                          >
-                            <span class="material-symbols-outlined text-xl text-blue-500">check_circle</span>
-                            <span>Marcar completado</span>
-                          </button>
-                        }
-                        @if (plan.estado !== "cancelado") {
-                          <button
-                            type="button"
-                            class="dropdown-item text-red-500"
-                            (click)="cambiarEstado(plan, 'cancelado'); openPlanMenuId = null"
-                          >
-                            <span class="material-symbols-outlined text-xl">cancel</span>
-                            <span>Cancelar plan</span>
-                          </button>
-                        }
-                      </div>
-                    }
-                  </div>
+                  </ui-menu>
                 </div>
               </article>
             }
@@ -499,15 +459,11 @@
             </div>
           </div>
         } @else if (rutinas().length === 0) {
-          <div class="tarjeta-kengo empty-state rounded-3xl">
-            <div class="empty-state-icon">
-              <span class="material-symbols-outlined">bookmarks</span>
-            </div>
-            <h3 class="text-lg font-semibold text-zinc-700">No tienes plantillas guardadas</h3>
-            <p class="mt-2 max-w-xs text-sm text-zinc-500">
-              Crea un plan y guárdalo como plantilla para reutilizarlo fácilmente
-            </p>
-          </div>
+          <ui-empty-state
+            icon="bookmarks"
+            title="No tienes plantillas guardadas"
+            message="Crea un plan y guárdalo como plantilla para reutilizarlo fácilmente"
+          ></ui-empty-state>
         } @else {
           <div class="space-y-4">
             @for (rutina of rutinas(); track rutina.id) {

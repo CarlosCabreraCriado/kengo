@@ -1,15 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { InputComponent, ButtonComponent } from '../../../../../../shared';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [],
+  imports: [ReactiveFormsModule, InputComponent, ButtonComponent],
   templateUrl: './cambiar-password.component.html',
   styleUrl: './cambiar-password.component.css',
 })
 export class CambiarPasswordComponent {
-  // Password Hide
-  public hide = true;
-  public hide2 = true;
-  public hide3 = true;
+  private fb = inject(FormBuilder);
+
+  form = this.fb.group({
+    actual: [''],
+    nueva: [''],
+    confirmar: [''],
+  });
 }

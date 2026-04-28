@@ -4,12 +4,23 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { emailRequired } from '../../../../shared';
+import {
+  emailRequired,
+  InputComponent,
+  ButtonComponent,
+  SpinnerComponent,
+} from '../../../../shared';
 
 @Component({
   standalone: true,
   selector: 'app-login',
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    InputComponent,
+    ButtonComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
@@ -45,6 +56,21 @@ export class LoginComponent implements OnInit {
   }
   get password() {
     return this.loginForm.controls.password;
+  }
+
+  get emailError(): string | undefined {
+    const ctrl = this.loginForm.controls.email;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'El email es obligatorio.';
+    if (ctrl.hasError('email')) return 'Ingresa un email válido.';
+    return undefined;
+  }
+
+  get passwordError(): string | undefined {
+    const ctrl = this.loginForm.controls.password;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'La contraseña es obligatoria.';
+    return undefined;
   }
 
   async onSubmit() {

@@ -2,12 +2,23 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/services/auth.service';
-import { emailRequired } from '../../../../shared';
+import {
+  emailRequired,
+  InputComponent,
+  ButtonComponent,
+  SpinnerComponent,
+} from '../../../../shared';
 
 @Component({
   standalone: true,
   selector: 'app-recuperar-password',
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    InputComponent,
+    ButtonComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './recuperar-password.component.html',
 })
 export class RecuperarPasswordComponent {
@@ -25,6 +36,14 @@ export class RecuperarPasswordComponent {
 
   get email() {
     return this.form.controls.email;
+  }
+
+  get emailError(): string | undefined {
+    const ctrl = this.form.controls.email;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'El email es obligatorio.';
+    if (ctrl.hasError('email')) return 'Ingresa un email valido.';
+    return undefined;
   }
 
   async onSubmit() {

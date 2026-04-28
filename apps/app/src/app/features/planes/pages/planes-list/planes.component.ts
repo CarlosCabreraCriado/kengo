@@ -9,7 +9,7 @@ import { RutinasService } from '../../../rutinas/data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { Plan, Usuario, EstadoPlan, Rutina, EjercicioRutina } from '../../../../../types/global';
-import { useResponsive } from '../../../../shared';
+import { useResponsive, MenuComponent, type MenuItem } from '../../../../shared';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
 
 type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
@@ -22,6 +22,7 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
     RouterLink,
     FormsModule,
     EmptyStateComponent,
+    MenuComponent,
   ],
   templateUrl: './planes.component.html',
   styleUrl: './planes.component.css',
@@ -182,6 +183,24 @@ export class PlanesComponent implements OnInit {
     } else {
       this.toastService.show('Error al cambiar estado', 'error');
     }
+  }
+
+  planMenuItems(plan: Plan): MenuItem[] {
+    const items: MenuItem[] = [];
+    if (plan.estado !== 'activo') {
+      items.push({ id: 'activo', label: 'Marcar activo', icon: 'play_circle' });
+    }
+    if (plan.estado !== 'completado') {
+      items.push({ id: 'completado', label: 'Marcar completado', icon: 'check_circle' });
+    }
+    if (plan.estado !== 'cancelado') {
+      items.push({ id: 'cancelado', label: 'Cancelar plan', icon: 'cancel', danger: true });
+    }
+    return items;
+  }
+
+  onPlanMenuAction(item: MenuItem, plan: Plan) {
+    void this.cambiarEstado(plan, item.id as EstadoPlan);
   }
 
   getPacienteNombre(plan: Plan): string {

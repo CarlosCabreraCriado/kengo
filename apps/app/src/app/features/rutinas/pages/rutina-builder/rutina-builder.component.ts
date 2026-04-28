@@ -21,7 +21,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { SafeHtmlPipe, useResponsive } from '../../../../shared';
+import { SafeHtmlPipe, useResponsive, EmptyStateComponent } from '../../../../shared';
 
 @Component({
   selector: 'app-rutina-builder',
@@ -32,6 +32,7 @@ import { SafeHtmlPipe, useResponsive } from '../../../../shared';
     DragDropModule,
     RouterLink,
     SafeHtmlPipe,
+    EmptyStateComponent,
   ],
   templateUrl: './rutina-builder.component.html',
   styleUrl: './rutina-builder.component.css',
@@ -119,6 +120,10 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.svc.closeDrawer();
+  }
+
+  navegarACatalogo() {
+    this.router.navigate(['/ejercicios']);
   }
 
   // ========= Drag & Drop =========

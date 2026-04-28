@@ -318,37 +318,22 @@
           </button>
         </div>
       } @else if (ejerciciosService.ejercicios().length === 0) {
-        <!-- Empty State -->
-        <div class="flex flex-col items-center justify-center py-16 px-4">
-          @if (soloFavoritos()) {
-            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-kengo-tertiary/20 to-kengo-primary/20 flex items-center justify-center mb-6 empty-state-icon">
-              <span class="material-symbols-outlined text-5xl text-kengo-tertiary">star</span>
-            </div>
-            <h3 class="text-xl font-bold text-zinc-800 mb-2">Sin favoritos aún</h3>
-            <p class="text-sm text-zinc-500 text-center max-w-xs mb-6">
-              Marca ejercicios con la estrella para acceder rápidamente a ellos aquí
-            </p>
-            <button
-              type="button"
-              (click)="toggleSoloFavoritos()"
-              class="flex items-center gap-2 h-11 px-6 rounded-xl
-                     border-2 border-kengo-primary/30 bg-white/70 backdrop-blur-md
-                     text-sm font-semibold text-kengo-primary
-                     transition-all hover:bg-kengo-primary/10 active:scale-95"
-            >
-              <span class="material-symbols-outlined text-lg">grid_view</span>
-              Ver todos los ejercicios
-            </button>
-          } @else {
-            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-zinc-100 to-zinc-50 flex items-center justify-center mb-6">
-              <span class="material-symbols-outlined text-5xl text-zinc-300">fitness_center</span>
-            </div>
-            <h3 class="text-xl font-bold text-zinc-800 mb-2">No hay ejercicios</h3>
-            <p class="text-sm text-zinc-500 text-center max-w-xs">
-              No se encontraron ejercicios con los filtros actuales
-            </p>
-          }
-        </div>
+        @if (soloFavoritos()) {
+          <ui-empty-state
+            icon="star"
+            title="Sin favoritos aún"
+            message="Marca ejercicios con la estrella para acceder rápidamente a ellos aquí"
+            actionLabel="Ver todos los ejercicios"
+            actionIcon="grid_view"
+            (action)="toggleSoloFavoritos()"
+          ></ui-empty-state>
+        } @else {
+          <ui-empty-state
+            icon="fitness_center"
+            title="No hay ejercicios"
+            message="No se encontraron ejercicios con los filtros actuales"
+          ></ui-empty-state>
+        }
       } @else {
         <!-- Grid de ejercicios -->
         <section

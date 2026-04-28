@@ -182,20 +182,6 @@
   }
 }
 
-/* === Empty state icon animation === */
-.empty-state-icon {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(239, 192, 72, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 16px rgba(239, 192, 72, 0);
-  }
-}
-
 /* === Custom scrollbar === */
 .custom-scrollbar {
   scrollbar-width: thin;

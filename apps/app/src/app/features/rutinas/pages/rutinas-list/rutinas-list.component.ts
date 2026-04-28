@@ -10,12 +10,12 @@ import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { CatalogoTabsComponent } from '../../../../shared/ui/catalogo-tabs/catalogo-tabs.component';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
-import { useResponsive } from '../../../../shared';
+import { useResponsive, EmptyStateComponent } from '../../../../shared';
 import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
 @Component({
   selector: 'app-rutinas-list',
   standalone: true,
-  imports: [RouterLink, FormsModule, CatalogoTabsComponent],
+  imports: [RouterLink, FormsModule, CatalogoTabsComponent, EmptyStateComponent],
   templateUrl: './rutinas-list.component.html',
   styleUrl: './rutinas-list.component.css',
   host: {

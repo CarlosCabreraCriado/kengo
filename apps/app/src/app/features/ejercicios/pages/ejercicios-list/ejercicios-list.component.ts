@@ -18,14 +18,14 @@ import { CatalogoTabsComponent } from '../../../../shared/ui/catalogo-tabs/catal
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { useResponsive } from '../../../../shared';
+import { useResponsive, EmptyStateComponent } from '../../../../shared';
 
 // La navegación se muestra en >= 768px (cuando NO es móvil)
 
 @Component({
   selector: 'app-ejercicios-list',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, SafeHtmlPipe, CatalogoTabsComponent],
+  imports: [RouterLink, ReactiveFormsModule, SafeHtmlPipe, CatalogoTabsComponent, EmptyStateComponent],
   templateUrl: './ejercicios-list.component.html',
   styleUrl: './ejercicios-list.component.css',
   host: {

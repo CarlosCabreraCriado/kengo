@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ElementRef, HostListener } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
@@ -8,6 +8,10 @@ import {
   DialogContentComponent,
   DialogActionsComponent,
   ProgressBarComponent,
+  InputComponent,
+  SelectComponent,
+  ButtonComponent,
+  type SelectOption,
   emailRequired,
 } from '../../../../shared';
 
@@ -38,6 +42,9 @@ interface Clinica {
     DialogContentComponent,
     DialogActionsComponent,
     ProgressBarComponent,
+    InputComponent,
+    SelectComponent,
+    ButtonComponent,
   ],
   templateUrl: './add-paciente.component.html',
   styleUrl: './add-paciente.component.css',
@@ -46,7 +53,6 @@ export class AddPacienteDialogComponent {
   private fb = inject(FormBuilder);
   private dialogRef = inject(DialogRef<{ created?: unknown; updated?: boolean }>);
   private data = inject<DialogData>(DIALOG_DATA);
-  private elementRef = inject(ElementRef);
   private convex = inject(ConvexService);
   private clinicasService = inject(ClinicasService);
 
@@ -56,36 +62,6 @@ export class AddPacienteDialogComponent {
   loading = signal(false);
   error = signal<string | null>(null);
   isEdit = computed(() => !!this.data.usuario);
-
-  // Estado del desplegable de clínicas
-  clinicasDropdownOpen = signal(false);
-
-  // Texto a mostrar en el campo de clínicas
-  clinicasDisplayText = computed(() => {
-    const selectedIds = this.form.get('clinicas')?.value as ID[] ?? [];
-    const clinicas = this.clinicasRes.value() ?? [];
-
-    if (selectedIds.length === 0) return 'Seleccionar clínicas...';
-
-    const nombres = selectedIds
-      .map(id => clinicas.find(c => c.id === id)?.nombre ?? `Clínica ${id}`)
-      .slice(0, 2);
-
-    if (selectedIds.length > 2) {
-      return `${nombres.join(', ')} +${selectedIds.length - 2}`;
-    }
-    return nombres.join(', ');
-  });
-
-  // Cerrar dropdown al hacer click fuera
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    const dropdown = this.elementRef.nativeElement.querySelector('.clinicas-dropdown-container');
-    if (dropdown && !dropdown.contains(target)) {
-      this.clinicasDropdownOpen.set(false);
-    }
-  }
 
   // Clínicas disponibles (filtradas por las del usuario actual). Reactivo via ClinicasService.
   readonly clinicasRes = {
@@ -107,13 +83,29 @@ export class AddPacienteDialogComponent {
     }),
   };
 
+  clinicasOptions = computed<SelectOption[]>(() =>
+    this.clinicasRes.value().map((c) => ({
+      value: String(c.id),
+      label: c.nombre ?? `Clínica ${c.id}`,
+    })),
+  );
+
+  clinicasPlaceholder = computed(() =>
+    this.clinicasRes.isLoading() ? 'Cargando clínicas...' : 'Seleccionar clínicas...',
+  );
+
+  get emailError(): string | undefined {
+    const ctrl = this.form.controls.email;
+    return ctrl.invalid && ctrl.touched ? 'Email inválido' : undefined;
+  }
+
   form = this.fb.group({
     first_name: [this.data.usuario?.first_name ?? '', Validators.required],
     last_name: [this.data.usuario?.last_name ?? ''],
     email: [this.data.usuario?.email ?? '', emailRequired],
     telefono: [this.data.usuario?.telefono ?? ''],
     clinicas: [
-      { value: (this.data.idsClinicas ?? []) as ID[], disabled: true },
+      { value: (this.data.idsClinicas ?? []).map(String), disabled: true },
     ],
   });
 
@@ -126,30 +118,6 @@ export class AddPacienteDialogComponent {
 
   close(result?: { created?: unknown; updated?: boolean }) {
     this.dialogRef.close(result);
-  }
-
-  toggleClinicasDropdown() {
-    if (this.form.get('clinicas')?.disabled) return;
-    this.clinicasDropdownOpen.update(v => !v);
-  }
-
-  isClinicaSelected(id: ID): boolean {
-    const selected = this.form.get('clinicas')?.value as ID[] ?? [];
-    return selected.some(s => s === id || String(s) === String(id));
-  }
-
-  toggleClinica(id: ID) {
-    const control = this.form.get('clinicas');
-    if (!control) return;
-
-    const current = (control.value as ID[]) ?? [];
-    const isSelected = current.some(s => s === id || String(s) === String(id));
-
-    if (isSelected) {
-      control.setValue(current.filter(s => s !== id && String(s) !== String(id)));
-    } else {
-      control.setValue([...current, id]);
-    }
   }
 
   // ====== Carga enlaces actuales (solo edición) ======
@@ -168,7 +136,7 @@ export class AddPacienteDialogComponent {
         ids.push(m.clinicId);
       }
 
-      this.form.patchValue({ clinicas: ids }, { emitEvent: false });
+      this.form.patchValue({ clinicas: ids.map(String) }, { emitEvent: false });
     } catch (e) {
       console.warn('No se pudieron cargar las clínicas del usuario:', e);
     }
@@ -225,10 +193,10 @@ export class AddPacienteDialogComponent {
         const userId = this.data.usuario!.id;
 
         const targetIds = new Set<ID>(v.clinicas || []);
-        const currentIds = new Set<ID>([...this.currentLinks.keys()]);
+        const currentIds = new Set<ID>([...this.currentLinks.keys()].map(String));
 
-        const toAdd: ID[] = [...targetIds].filter((x) => !currentIds.has(x));
-        const toRemove: ID[] = [...currentIds].filter((x) => !targetIds.has(x));
+        const toAdd: ID[] = [...targetIds].filter((x) => !currentIds.has(String(x)));
+        const toRemove: ID[] = [...this.currentLinks.keys()].filter((x) => !targetIds.has(String(x)));
 
         await this.convex.mutation(api.users.mutations.updatePatient, {
           patientId: userId as Id<'users'>,

@@ -9,6 +9,10 @@ import {
   emailRequired,
   passwordRequired,
   passwordRepeatRequired,
+  InputComponent,
+  ButtonComponent,
+  RadioGroupComponent,
+  type RadioOption,
 } from '../../../../shared';
 import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-models';
 
@@ -20,6 +24,9 @@ import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-mode
     ReactiveFormsModule,
     StepperComponent,
     StepComponent,
+    InputComponent,
+    ButtonComponent,
+    RadioGroupComponent,
   ],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.css',
@@ -34,6 +41,19 @@ export class RegistroComponent {
   currentStep = signal(0);
   error = signal<string | null>(null);
   isLoading = signal(false);
+
+  readonly tipoUsuarioOptions: RadioOption[] = [
+    {
+      value: 'fisioterapeuta',
+      label: 'Fisioterapeuta',
+      description: 'Gestiona pacientes y planes de tratamiento',
+    },
+    {
+      value: 'paciente',
+      label: 'Paciente',
+      description: 'Realiza ejercicios y sigue tu progreso',
+    },
+  ];
 
   // Formularios:
   datosForm = this.fb.group({
@@ -132,46 +152,43 @@ export class RegistroComponent {
     }
   }
 
-  // Getters para validacion
-  get nombreInvalid(): boolean {
-    const control = this.datosForm.get('nombre');
-    return !!control && control.invalid && control.touched;
+  // Mensajes de error por campo (devuelven string | undefined para ui-input)
+  get nombreError(): string | undefined {
+    const ctrl = this.datosForm.get('nombre');
+    if (!ctrl || !ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'El nombre es requerido';
+    return undefined;
   }
 
-  get apellidosInvalid(): boolean {
-    const control = this.datosForm.get('apellidos');
-    return !!control && control.invalid && control.touched;
+  get apellidosError(): string | undefined {
+    const ctrl = this.datosForm.get('apellidos');
+    if (!ctrl || !ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'Los apellidos son requeridos';
+    return undefined;
   }
 
-  get emailInvalid(): boolean {
-    const control = this.datosForm.get('email');
-    return !!control && control.invalid && control.touched;
+  get emailError(): string | undefined {
+    const ctrl = this.datosForm.get('email');
+    if (!ctrl || !ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'El email es requerido';
+    if (ctrl.hasError('email')) return 'El formato del email no es valido';
+    return undefined;
   }
 
-  get emailError(): string {
-    const control = this.datosForm.get('email');
-    if (!control || !control.touched) return '';
-    if (control.hasError('required')) return 'El email es requerido';
-    if (control.hasError('email')) return 'El formato del email no es valido';
-    return '';
+  get passwordError(): string | undefined {
+    const ctrl = this.passwordForm.get('password');
+    if (!ctrl || !ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'La contrasena es requerida';
+    if (ctrl.hasError('minlength')) return 'Debe tener al menos 8 caracteres';
+    return undefined;
   }
 
-  get passwordInvalid(): boolean {
-    const control = this.passwordForm.get('password');
-    return !!control && control.invalid && control.touched;
-  }
-
-  get passwordError(): string {
-    const control = this.passwordForm.get('password');
-    if (!control || !control.touched) return '';
-    if (control.hasError('required')) return 'La contrasena es requerida';
-    if (control.hasError('minlength')) return 'Debe tener al menos 8 caracteres';
-    return '';
-  }
-
-  get repetirInvalid(): boolean {
-    const control = this.passwordForm.get('repetir');
-    return !!control && control.invalid && control.touched;
+  get repetirError(): string | undefined {
+    const ctrl = this.passwordForm.get('repetir');
+    if (!ctrl || !ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'Repetir la contrasena es requerido';
+    if (!this.passwordsMatch) return 'Las contrasenas no coinciden';
+    return undefined;
   }
 
   get passwordsMatch(): boolean {

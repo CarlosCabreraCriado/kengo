@@ -7,107 +7,39 @@
   <ui-dialog-content>
     <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="grid gap-4 md:grid-cols-2">
-        <div class="flex flex-col gap-1.5">
-          <label for="first_name" class="text-sm font-medium text-gray-700">Nombre *</label>
-          <input
-            id="first_name"
-            type="text"
-            formControlName="first_name"
-            class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
+        <ui-input
+          label="Nombre"
+          formControlName="first_name"
+          [required]="true"
+        ></ui-input>
 
-        <div class="flex flex-col gap-1.5">
-          <label for="last_name" class="text-sm font-medium text-gray-700">Apellidos</label>
-          <input
-            id="last_name"
-            type="text"
-            formControlName="last_name"
-            class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
+        <ui-input
+          label="Apellidos"
+          formControlName="last_name"
+        ></ui-input>
       </div>
 
-      <div class="flex flex-col gap-1.5">
-        <label for="email" class="text-sm font-medium text-gray-700">Email *</label>
-        <input
-          id="email"
-          type="email"
-          formControlName="email"
-          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          [class.border-red-500]="form.controls.email.invalid && form.controls.email.touched"
-        />
-        @if (form.controls.email.invalid && form.controls.email.touched) {
-          <span class="text-xs text-red-600">Email inválido</span>
-        }
-      </div>
+      <ui-input
+        label="Email"
+        type="email"
+        formControlName="email"
+        [required]="true"
+        [error]="emailError"
+      ></ui-input>
 
-      <div class="flex flex-col gap-1.5">
-        <label for="telefono" class="text-sm font-medium text-gray-700">Teléfono</label>
-        <input
-          id="telefono"
-          type="tel"
-          formControlName="telefono"
-          class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-      </div>
+      <ui-input
+        label="Teléfono"
+        type="tel"
+        formControlName="telefono"
+      ></ui-input>
 
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-gray-700">Clínicas</label>
-        <div class="clinicas-dropdown-container relative">
-          <!-- Trigger -->
-          <button
-            type="button"
-            class="w-full flex items-center justify-between rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base transition-all hover:border-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-            [class.border-primary]="clinicasDropdownOpen()"
-            [disabled]="form.get('clinicas')?.disabled"
-            (click)="toggleClinicasDropdown()"
-          >
-            <span class="truncate" [class.text-gray-400]="(form.get('clinicas')?.value?.length ?? 0) === 0">
-              {{ clinicasDisplayText() }}
-            </span>
-            <span
-              class="material-symbols-outlined text-xl text-gray-400 transition-transform duration-200"
-              [class.rotate-180]="clinicasDropdownOpen()"
-            >
-              expand_more
-            </span>
-          </button>
-
-          <!-- Dropdown (abre hacia arriba) -->
-          @if (clinicasDropdownOpen()) {
-            <div class="absolute left-0 right-0 bottom-full z-50 mb-1 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
-              @if (clinicasRes.isLoading()) {
-                <div class="px-4 py-3 text-sm text-gray-500">Cargando clínicas...</div>
-              } @else if (clinicasRes.value().length === 0) {
-                <div class="px-4 py-3 text-sm text-gray-500">No hay clínicas disponibles</div>
-              } @else {
-                <div class="max-h-48 overflow-y-auto">
-                  @for (c of clinicasRes.value(); track c.id) {
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-50"
-                      (click)="toggleClinica(c.id); $event.stopPropagation()"
-                    >
-                      <span
-                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors"
-                        [class.border-primary]="isClinicaSelected(c.id)"
-                        [class.bg-primary]="isClinicaSelected(c.id)"
-                        [class.border-gray-300]="!isClinicaSelected(c.id)"
-                      >
-                        @if (isClinicaSelected(c.id)) {
-                          <span class="material-symbols-outlined text-sm text-white">check</span>
-                        }
-                      </span>
-                      <span class="text-sm text-gray-700">{{ c.nombre || 'Clínica ' + c.id }}</span>
-                    </button>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
-      </div>
+      <ui-select
+        label="Clínicas"
+        formControlName="clinicas"
+        [multiple]="true"
+        [options]="clinicasOptions()"
+        [placeholder]="clinicasPlaceholder()"
+      ></ui-select>
 
       @if (loading()) {
         <ui-progress-bar mode="indeterminate" class="mt-2"></ui-progress-bar>
@@ -120,20 +52,14 @@
   </ui-dialog-content>
 
   <ui-dialog-actions>
-    <button
-      type="button"
-      class="flex h-10 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-      (click)="close()"
-    >
-      Cancelar
-    </button>
-    <button
-      type="button"
-      class="flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-      [disabled]="form.invalid || loading()"
-      (click)="onSubmit()"
+    <ui-button variant="ghost" (clicked)="close()">Cancelar</ui-button>
+    <ui-button
+      variant="primary"
+      [disabled]="form.invalid"
+      [loading]="loading()"
+      (clicked)="onSubmit()"
     >
       {{ isEdit() ? 'Guardar' : 'Crear' }}
-    </button>
+    </ui-button>
   </ui-dialog-actions>
 </ui-dialog-container>

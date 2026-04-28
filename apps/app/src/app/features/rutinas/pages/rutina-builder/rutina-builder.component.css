@@ -318,19 +318,3 @@ textarea.input-compact {
 .exercise-item:nth-child(4) { animation-delay: 0.2s; }
 .exercise-item:nth-child(5) { animation-delay: 0.25s; }
 
-/* === Empty State Icon === */
-.empty-state-icon {
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
-  margin-bottom: 1rem;
-}
-
-.empty-state-icon .material-symbols-outlined {
-  font-size: 40px;
-  color: var(--kengo-amber);
-}

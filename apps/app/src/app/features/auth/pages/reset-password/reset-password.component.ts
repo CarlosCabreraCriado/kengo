@@ -7,12 +7,21 @@ import {
   passwordRequired,
   passwordRepeatRequired,
   passwordMatchValidator,
+  InputComponent,
+  ButtonComponent,
+  SpinnerComponent,
 } from '../../../../shared';
 
 @Component({
   standalone: true,
   selector: 'app-reset-password',
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    InputComponent,
+    ButtonComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './reset-password.component.html',
 })
 export class ResetPasswordComponent implements OnInit {
@@ -44,6 +53,21 @@ export class ResetPasswordComponent implements OnInit {
   }
   get confirmPassword() {
     return this.form.controls.confirmPassword;
+  }
+
+  get passwordError(): string | undefined {
+    const ctrl = this.form.controls.password;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'La contrasena es obligatoria.';
+    if (ctrl.hasError('minlength')) return 'Minimo 8 caracteres.';
+    return undefined;
+  }
+
+  get confirmPasswordError(): string | undefined {
+    const ctrl = this.form.controls.confirmPassword;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('passwordMismatch')) return 'Las contrasenas no coinciden.';
+    return undefined;
   }
 
   ngOnInit() {

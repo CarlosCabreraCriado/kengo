@@ -38,6 +38,7 @@ export { SpinnerComponent, type SpinnerSize, type SpinnerColor } from './ui/spin
 export { ChipComponent, type ChipVariant, type ChipSize } from './ui/chip/chip.component';
 export { MenuComponent, type MenuItem } from './ui/menu/menu.component';
 export { DividerComponent } from './ui/divider/divider.component';
+export { EmptyStateComponent } from './ui/empty-state/empty-state.component';
 export { TooltipDirective, type TooltipPosition } from './ui/tooltip/tooltip.directive';
 export { DrawerComponent, type DrawerPosition } from './ui/drawer/drawer.component';
 export { DatepickerComponent } from './ui/datepicker/datepicker.component';

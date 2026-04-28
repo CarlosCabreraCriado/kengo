@@ -7,12 +7,20 @@ import {
   passwordMatchValidator,
   passwordRequired,
   passwordRepeatRequired,
+  InputComponent,
+  ButtonComponent,
+  SpinnerComponent,
 } from '../../../../shared';
 
 @Component({
   standalone: true,
   selector: 'app-establecer-password',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    InputComponent,
+    ButtonComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './establecer-password.component.html',
   styleUrl: './establecer-password.component.css',
 })
@@ -40,6 +48,22 @@ export class EstablecerPasswordComponent implements OnInit {
   }
   get repetir() {
     return this.form.controls.repetir;
+  }
+
+  get passwordError(): string | undefined {
+    const ctrl = this.form.controls.password;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'La contraseña es obligatoria.';
+    if (ctrl.hasError('minlength')) return 'Debe tener al menos 8 caracteres.';
+    return undefined;
+  }
+
+  get repetirError(): string | undefined {
+    const ctrl = this.form.controls.repetir;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'Debes repetir la contraseña.';
+    if (ctrl.hasError('passwordMismatch')) return 'Las contraseñas no coinciden.';
+    return undefined;
   }
 
   ngOnInit() {

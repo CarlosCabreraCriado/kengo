@@ -134,26 +134,13 @@
 
     <!-- Lista de ejercicios -->
     @if (items().length === 0) {
-      <article class="tarjeta-kengo rounded-2xl p-8 text-center">
-        <div class="empty-state-icon mx-auto">
-          <span class="material-symbols-outlined">fitness_center</span>
-        </div>
-        <h3 class="text-lg font-bold text-zinc-700">No hay ejercicios en la rutina</h3>
-        <p class="mt-2 text-sm text-zinc-500">
-          Agrega ejercicios del catalogo para comenzar
-        </p>
-        <a
-          routerLink="/ejercicios"
-          class="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl
-                 bg-gradient-to-r from-amber-500 to-amber-600 px-6
-                 text-sm font-semibold text-white shadow-lg shadow-amber-500/30
-                 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-500/40
-                 active:scale-98"
-        >
-          <span class="material-symbols-outlined text-xl">add</span>
-          Agregar ejercicios
-        </a>
-      </article>
+      <ui-empty-state
+        icon="fitness_center"
+        title="No hay ejercicios en la rutina"
+        message="Agrega ejercicios del catalogo para comenzar"
+        actionLabel="Agregar ejercicios"
+        (action)="navegarACatalogo()"
+      ></ui-empty-state>
     } @else {
       <div cdkDropList class="space-y-4" (cdkDropListDropped)="onDrop($event)">
         @for (it of items(); track trackByIndex($index); let i = $index) {

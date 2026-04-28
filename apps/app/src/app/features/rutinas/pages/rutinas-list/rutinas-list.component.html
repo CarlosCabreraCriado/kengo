@@ -242,28 +242,13 @@
         </div>
       } @else if (rutinas().length === 0) {
         <!-- Empty State -->
-        <div class="tarjeta-kengo empty-state rounded-3xl">
-          <div class="empty-state-icon">
-            <span class="material-symbols-outlined">bookmarks</span>
-          </div>
-          <h3 class="text-lg font-semibold text-zinc-700">No tienes rutinas guardadas</h3>
-          <p class="mt-2 max-w-xs text-sm text-zinc-500">
-            Crea tu primera rutina de ejercicios para reutilizarla con tus pacientes
-          </p>
-          <button
-            type="button"
-            class="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-xl
-                   bg-kengo-primary px-6 text-sm font-semibold text-white
-                   shadow-lg-kengo-primary/30
-                   transition-all duration-200
-                   hover:bg-kengo-primary-dark hover:shadow-xl-kengo-primary/40
-                   active:scale-98"
-            (click)="crearRutina()"
-          >
-            <span class="material-symbols-outlined text-xl">add</span>
-            Crear primera rutina
-          </button>
-        </div>
+        <ui-empty-state
+          icon="bookmarks"
+          title="No tienes rutinas guardadas"
+          message="Crea tu primera rutina de ejercicios para reutilizarla con tus pacientes"
+          actionLabel="Crear primera rutina"
+          (action)="crearRutina()"
+        ></ui-empty-state>
       } @else {
         <!-- Lista de rutinas -->
         <div class="space-y-4">
