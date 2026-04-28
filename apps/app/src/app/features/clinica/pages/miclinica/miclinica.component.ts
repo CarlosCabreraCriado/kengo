@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -25,7 +24,6 @@ import { DatePipe } from '@angular/common';
   selector: 'app-mi-clinica',
   imports: [
     ReactiveFormsModule,
-    RouterLink,
     DatePipe,
     VincularClinicaDialogComponent,
     CrearClinicaDialogComponent,

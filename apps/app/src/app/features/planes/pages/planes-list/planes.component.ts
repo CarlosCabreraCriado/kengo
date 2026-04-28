@@ -1,5 +1,5 @@
 import { Component, inject, computed, OnInit, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
@@ -26,7 +26,6 @@ type TabType = 'mis-planes' | 'planes-pacientes' | 'rutinas';
   selector: 'app-planes',
   standalone: true,
   imports: [
-    RouterLink,
     FormsModule,
     EmptyStateComponent,
     MenuComponent,

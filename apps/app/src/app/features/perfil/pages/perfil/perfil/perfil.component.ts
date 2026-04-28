@@ -12,7 +12,6 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 // Servicios
 import { SessionService } from '../../../../../core/auth/services/session.service';
@@ -38,7 +37,6 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    RouterLink,
     BackButtonComponent,
   ],
   templateUrl: './perfil.component.html',

@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { DecimalPipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
@@ -37,7 +37,6 @@ const STORAGE_KEY_FILTRO = 'kengo:mis-pacientes:filtro';
   selector: 'app-pacientes-list',
   standalone: true,
   imports: [
-    RouterLink,
     DecimalPipe,
     EmptyStateComponent,
     BackButtonComponent,
