@@ -124,7 +124,8 @@ export class PlanDetailComponent implements OnInit {
   crearOtroPlan() {
     const paciente = this.paciente();
     if (paciente) {
-      this.planBuilderService.cambiarPaciente(paciente);
+      this.planBuilderService.prepareForPaciente(paciente);
+      this.planBuilderService.navigateAndOpenDrawer();
     } else {
       this.router.navigate(['/mis-pacientes']);
     }

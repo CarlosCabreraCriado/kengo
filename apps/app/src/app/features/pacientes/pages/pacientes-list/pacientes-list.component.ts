@@ -214,7 +214,8 @@ export class PacientesListComponent {
   };
 
   seleccionarPaciente(p: Usuario) {
-    this.planBuilderService.cambiarPaciente(p);
+    this.planBuilderService.prepareForPaciente(p);
+    this.planBuilderService.navigateAndOpenDrawer();
   }
 
   openAddPaciente() {

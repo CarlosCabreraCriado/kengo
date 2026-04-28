@@ -227,16 +227,22 @@ export class PlanBuilderService {
     return this.sessionService.transformarUsuarioConvex(data);
   }
 
-  cambiarPaciente(p: Usuario | null) {
+  prepareForPaciente(p: Usuario | null) {
     if (!p) {
       this.clear();
       this.paciente.set(null);
-      this.router.navigate(['/mis-pacientes']);
-      this.closeDrawer();
     } else {
       this.paciente.set(p);
       this.tryRestoreFor(p.id);
       localStorage.setItem('carrito:last_paciente_id', p.id);
+    }
+  }
+
+  navigateAndOpenDrawer() {
+    if (!this.paciente()) {
+      this.router.navigate(['/mis-pacientes']);
+      this.closeDrawer();
+    } else {
       this.router.navigate(['/ejercicios']);
       this.openDrawer();
     }

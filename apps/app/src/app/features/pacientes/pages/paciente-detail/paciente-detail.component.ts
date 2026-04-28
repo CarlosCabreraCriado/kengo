@@ -536,7 +536,8 @@ export class PacienteDetailComponent implements OnInit {
   crearPlan() {
     const p = this.paciente();
     if (p) {
-      this.planBuilderService.cambiarPaciente(p);
+      this.planBuilderService.prepareForPaciente(p);
+      this.planBuilderService.navigateAndOpenDrawer();
     }
   }
 
