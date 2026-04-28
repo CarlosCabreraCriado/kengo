@@ -299,10 +299,6 @@
   @apply text-base;
 }
 
-.cta-badge {
-  @apply ml-1 px-2 py-0.5 rounded-full bg-white/20 text-xs;
-}
-
 .hero-stats {
   @apply flex items-center justify-center gap-6 px-4 pb-4;
 }
@@ -323,17 +319,9 @@
   @apply w-px h-8 bg-zinc-200;
 }
 
-/* Plans Section */
-.plans-section {
-  @apply flex flex-col;
-}
-
-.section-header {
-  @apply flex items-center justify-between mb-3;
-}
-
+/* Section header (usado en sidebar "Próximos días") */
 .section-header.sticky {
-  @apply flex items-center gap-3 p-4 border-b border-white/20 bg-white/20 mb-0;
+  @apply flex items-center gap-3 p-4 border-b border-white/20 bg-white/20;
 }
 
 .section-icon {
@@ -354,81 +342,13 @@
   @apply text-xs text-zinc-400 m-0 mt-0.5;
 }
 
-.section-badge {
-  @apply px-2.5 py-1 rounded-full text-xs font-semibold;
-  background-color: rgba(var(--kengo-primary-rgb), 0.1);
-  color: var(--kengo-primary);
-}
-
-.plans-list {
-  @apply flex flex-col gap-3;
-}
-
-/* Plan Card */
-.plan-card {
-  @apply rounded-2xl overflow-hidden;
-  background: var(--kengo-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--kengo-border);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-}
-
-.plan-card:hover {
-  box-shadow: var(--kengo-shadow);
-  transform: translateY(-2px);
-}
-
-.plan-card.completed {
-  @apply opacity-80;
-}
-
-.plan-header {
-  @apply flex items-center justify-between gap-3 px-4 py-3 bg-white/30 border-b border-white/20;
-}
-
-.plan-info {
-  @apply flex-1 min-w-0;
-}
-
-.plan-title {
-  @apply text-sm font-semibold text-zinc-800 m-0 truncate;
-}
-
-.plan-progress {
-  @apply flex items-center gap-2 mt-1.5;
-}
-
-.progress-bar {
-  @apply flex-1 h-1.5 rounded-full bg-zinc-200/60 overflow-hidden;
-  max-width: 100px;
-}
-
-.progress-value {
-  @apply h-full rounded-full transition-all duration-300;
-  background: var(--kengo-primary);
-}
-
-.progress-value.complete {
-  background: var(--kengo-success);
-}
-
-.progress-label {
-  @apply text-xs text-zinc-500;
-}
-
-.plan-badge.complete .material-symbols-outlined {
-  @apply text-2xl text-[#22c55e];
-}
-
-/* Exercises List */
+/* Exercises List (vive dentro de .hero-card.active) */
 .exercises-list {
-  @apply divide-y divide-black/5 list-none m-0 p-0;
+  @apply divide-y divide-black/5 list-none mx-4 mb-3 p-0 rounded-xl bg-white/40 border border-white/30 overflow-hidden;
 }
 
 .exercise-item {
-  @apply flex items-center gap-3 px-4 py-3 transition-all cursor-pointer;
+  @apply flex items-center gap-3 px-3 py-2.5 transition-all cursor-pointer;
 }
 
 .exercise-item.completed {
@@ -489,34 +409,6 @@
 
 .detail-separator {
   @apply mx-1 text-zinc-300;
-}
-
-.plan-footer {
-  @apply p-3 pt-1;
-}
-
-.plan-action {
-  @apply flex items-center justify-center gap-2 w-full h-11 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all active:scale-[0.98];
-  background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
-  box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.25);
-}
-
-.plan-action:hover {
-  box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.35);
-}
-
-.plan-action.secondary {
-  @apply text-zinc-600;
-  background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%);
-  box-shadow: none;
-}
-
-.plan-action.secondary:hover {
-  @apply bg-zinc-200;
-}
-
-.plan-action .material-symbols-outlined {
-  @apply text-lg;
 }
 
 /* Upcoming Section */
@@ -625,12 +517,6 @@
   @apply text-xs text-zinc-500 mt-0.5;
 }
 
-.plan-tag {
-  @apply ml-1 px-1.5 py-0.5 rounded text-[0.65rem] font-medium;
-  background-color: rgba(var(--kengo-primary-rgb), 0.1);
-  color: var(--kengo-primary);
-}
-
 .day-action {
   @apply flex items-center justify-center gap-2 w-full h-10 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all active:scale-[0.98];
   background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
@@ -639,10 +525,6 @@
 
 .day-action:hover {
   box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.35);
-}
-
-.action-badge {
-  @apply ml-1 px-2 py-0.5 rounded-full bg-white/20 text-xs;
 }
 
 /* Animations & Utilities */
@@ -717,10 +599,6 @@
 
   .hero-cta {
     @apply h-16 text-base;
-  }
-
-  .plan-card {
-    @apply rounded-3xl;
   }
 
   .state-card {

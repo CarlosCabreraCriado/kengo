@@ -24,7 +24,7 @@ import {
   PreviewEjercicioDialogComponent,
   type PreviewEjercicioData,
 } from '../../../../shared';
-import type { ActividadPlanDia, EjercicioPlanConEstado } from '../../../../../types/global';
+import type { EjercicioPlanConEstado } from '../../../../../types/global';
 
 interface EjercicioProximo {
   nombre: string;
@@ -114,6 +114,7 @@ export class ActividadHoyComponent implements OnInit {
   readonly progresoTotal = this.actividadHoyService.progresoTotal;
   readonly totalSeriesHoy = this.actividadHoyService.totalSeriesHoy;
   readonly tiempoEstimadoHoy = this.actividadHoyService.tiempoEstimadoHoy;
+  readonly ejerciciosUnificadosHoy = this.actividadHoyService.ejerciciosUnificadosHoy;
 
   readonly proximosDias = computed<DiaProximoConEjercicios[]>(() => {
     const planes = this.planesActivosYFuturos();
@@ -213,10 +214,6 @@ export class ActividadHoyComponent implements OnInit {
   private async cargarPlanesFuturos(userId: string): Promise<void> {
     const planesFuturos = await this.planesService.getPlanesActivosYFuturosPaciente(userId);
     this.planesActivosYFuturos.set(planesFuturos);
-  }
-
-  irAPlan(planId: string): void {
-    this.router.navigate(['/mi-plan', planId]);
   }
 
   toggleDia(fecha: Date): void {
@@ -341,12 +338,12 @@ export class ActividadHoyComponent implements OnInit {
     return `${dia} ${mes}`;
   }
 
-  onPreviewEjercicio(ejercicio: EjercicioPlanConEstado, index: number, actividad: ActividadPlanDia): void {
+  onPreviewEjercicio(ejercicio: EjercicioPlanConEstado, index: number): void {
     const ej = ejercicio.ejercicio;
     const data: PreviewEjercicioData = {
       ejercicio,
       index,
-      totalEjercicios: actividad.ejerciciosHoy.length,
+      totalEjercicios: this.ejerciciosUnificadosHoy().length,
       videoUrl: ej.video ? videoUrl(ej.video) : null,
       posterUrl: ej.portada ? this.getAssetUrl(ej.portada, 800, 450) : null,
       estado: ejercicio.completadoHoy ? 'completado' : 'pendiente',

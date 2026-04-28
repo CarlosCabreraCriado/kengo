@@ -12,6 +12,11 @@ import {
 
 export type BadgeType = 'pending' | 'completed' | 'rest' | 'loading' | null;
 
+export type EjercicioUnificadoHoy = EjercicioPlanConEstado & {
+  planId: string;
+  planTitulo: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ActividadHoyService {
   private sessionService = inject(SessionService);
@@ -93,6 +98,17 @@ export class ActividadHoyService {
   readonly hayActividadHoy = computed(() =>
     this.actividadHoy().some((a) => a.ejerciciosHoy.length > 0)
   );
+
+  readonly ejerciciosUnificadosHoy = computed<EjercicioUnificadoHoy[]>(() => {
+    const actividades = this.actividadHoy();
+    const out: EjercicioUnificadoHoy[] = [];
+    for (const a of actividades) {
+      for (const ej of a.ejerciciosHoy) {
+        out.push({ ...ej, planId: a.plan.id, planTitulo: a.plan.titulo });
+      }
+    }
+    return out;
+  });
 
   readonly totalPendientes = computed(() =>
     this.actividadHoy().reduce(
