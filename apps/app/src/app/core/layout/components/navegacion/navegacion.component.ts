@@ -51,6 +51,8 @@ export class NavegacionComponent implements OnInit {
     // Mapeo de rutas a índices (considerando si hay sección de pacientes)
     const routeMap: Record<string, number> = {
       '/inicio': 0,
+      '/inicio/fisio': 0,
+      '/inicio/paciente': 0,
       '/': 0,
       '/ejercicios': 1,
       '/rutinas': 1,
@@ -97,7 +99,12 @@ export class NavegacionComponent implements OnInit {
     // Extraer la ruta base (sin query params)
     const baseRoute = url.split('?')[0];
     this.currentRoute.set(baseRoute);
-    this.isInicio.set(baseRoute === '/inicio' || baseRoute === '/');
+    this.isInicio.set(
+      baseRoute === '/inicio' ||
+        baseRoute === '/inicio/fisio' ||
+        baseRoute === '/inicio/paciente' ||
+        baseRoute === '/',
+    );
   }
 
   // Estado del menú de usuario

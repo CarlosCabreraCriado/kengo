@@ -10,7 +10,6 @@ export { ThemeService } from './services/theme.service';
 export { AuthGuard } from './guards/auth.guard';
 export { FisioGuard } from './guards/fisio.guard';
 export { PacienteGuard } from './guards/paciente.guard';
-export { InicioRedirectGuard } from './guards/inicio-redirect.guard';
 export { AdminGuard } from './guards/admin.guard';
 
 // Config

@@ -29,7 +29,8 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
 
   // Rutas que queremos cachear (mantener su estado)
   private readonly routesToCache = new Set<string>([
-    'inicio',
+    'inicio/fisio',
+    'inicio/paciente',
     'ejercicios',
     'mis-pacientes',
     'mi-clinica',

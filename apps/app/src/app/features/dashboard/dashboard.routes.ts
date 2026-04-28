@@ -1,16 +1,22 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
-import {
-  AuthGuard,
-  FisioGuard,
-  PacienteGuard,
-  InicioRedirectGuard,
-} from '../../core';
+import { AuthGuard, FisioGuard, PacienteGuard, SessionService } from '../../core';
 
 export const DASHBOARD_ROUTES: Routes = [
   {
     path: '',
-    canActivate: [AuthGuard, InicioRedirectGuard],
+    canActivate: [AuthGuard],
     children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: () => {
+          const session = inject(SessionService);
+          return session.rolUsuario() === 'fisio'
+            ? '/inicio/fisio'
+            : '/inicio/paciente';
+        },
+      },
       {
         path: 'fisio',
         loadComponent: () =>
