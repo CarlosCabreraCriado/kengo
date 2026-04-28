@@ -31,17 +31,19 @@
           <span class="nav-label-desktop">Inicio</span>
         </a>
 
-        <a
-          routerLink="/actividad-personal"
-          routerLinkActive="active"
-          class="nav-item-desktop"
-        >
-          <span class="material-symbols-outlined icon-default">exercise</span>
-          <span class="material-symbols-outlined icon-active relleno"
-            >exercise</span
+        @if (isPaciente()) {
+          <a
+            routerLink="/actividad-personal"
+            routerLinkActive="active"
+            class="nav-item-desktop"
           >
-          <span class="nav-label-desktop">Mi plan</span>
-        </a>
+            <span class="material-symbols-outlined icon-default">exercise</span>
+            <span class="material-symbols-outlined icon-active relleno"
+              >exercise</span
+            >
+            <span class="nav-label-desktop">Mi plan</span>
+          </a>
+        }
 
         <a
           routerLink="/ejercicios"
@@ -70,6 +72,20 @@
               >group</span
             >
             <span class="nav-label-desktop">Pacientes</span>
+          </a>
+
+          <a
+            routerLink="/rutinas"
+            routerLinkActive="active"
+            class="nav-item-desktop"
+          >
+            <span class="material-symbols-outlined icon-default"
+              >fitness_center</span
+            >
+            <span class="material-symbols-outlined icon-active relleno"
+              >fitness_center</span
+            >
+            <span class="nav-label-desktop">Rutinas</span>
           </a>
         }
 
@@ -187,34 +203,7 @@
           <div class="avatar-glow"></div>
         </button>
 
-        @if (menuAbierto()) {
-          <div class="user-menu" role="menu">
-            <button
-              type="button"
-              class="menu-item"
-              role="menuitem"
-              (click)="irAPerfil()"
-            >
-              <span class="material-symbols-outlined">person</span>
-              <span>Mi perfil</span>
-            </button>
-            <button
-              type="button"
-              class="menu-item menu-item-danger"
-              role="menuitem"
-              (click)="cerrarSesion()"
-            >
-              <span class="material-symbols-outlined">logout</span>
-              <span>Cerrar sesión</span>
-            </button>
-          </div>
-
-          <div
-            class="menu-backdrop"
-            (click)="cerrarMenu()"
-            aria-hidden="true"
-          ></div>
-        }
+        <app-user-menu [open]="menuAbierto()" (closed)="cerrarMenu()" />
       </div>
       </div>
     </div>

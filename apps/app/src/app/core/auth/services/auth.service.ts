@@ -62,6 +62,7 @@ export class AuthService {
     this.isLoggedIn.set(false);
     this.routeReuseStrategy.clearCache();
     localStorage.removeItem('kengo:theme:v1');
+    localStorage.removeItem('kengo:modo');
     if (!evitarRedirect) {
       this.router.navigate(['/login'], { state: { fromLogout: true } });
     }

@@ -39,6 +39,7 @@ export { TooltipDirective, type TooltipPosition } from './ui/tooltip/tooltip.dir
 export { DrawerComponent, type DrawerPosition } from './ui/drawer/drawer.component';
 export { DatepickerComponent } from './ui/datepicker/datepicker.component';
 export { StepperComponent, StepComponent } from './ui/stepper/stepper.component';
+export { UserMenuComponent } from './ui/user-menu/user-menu.component';
 
 // Dialog
 export {

@@ -13,22 +13,22 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { assetUrl } from '../../../utils/asset-url';
 import { SessionService } from '../../../auth/services/session.service';
-import { AuthService } from '../../../auth/services/auth.service';
 import { ThemeService } from '../../../services/theme.service';
 import { NotificacionesService } from '../../../services/notificaciones.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { UserMenuComponent } from '../../../../shared/ui/user-menu/user-menu.component';
 import type { NotificacionApp } from '../../../../../types/global';
 
 @Component({
   selector: 'app-dashboard-header',
   standalone: true,
+  imports: [UserMenuComponent],
   templateUrl: './dashboard-header.component.html',
   styleUrl: './dashboard-header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardHeaderComponent {
   private sessionService = inject(SessionService);
-  private authService = inject(AuthService);
   private themeService = inject(ThemeService);
   public notificacionesService = inject(NotificacionesService);
   private router = inject(Router);
@@ -41,11 +41,6 @@ export class DashboardHeaderComponent {
   notificacionesAbiertas = signal(false);
   rolUsuario = this.sessionService.rolUsuario;
   isFisio = computed(() => this.rolUsuario() === 'fisio');
-
-  readonly puedeToggleRol = computed(() => {
-    const u = this.sessionService.usuario();
-    return !!u?.esFisio && !!u?.esPaciente;
-  });
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -71,19 +66,6 @@ export class DashboardHeaderComponent {
   userAvatar = computed(
     () => this.sessionService.usuario()?.avatar_url ?? null,
   );
-
-  toggleVistaDashboard(): void {
-    if (!this.puedeToggleRol()) return;
-    this.sessionService.toggleRolUsuario();
-    this.router.navigateByUrl('/inicio');
-  }
-
-  setRol(rol: 'fisio' | 'paciente'): void {
-    if (!this.puedeToggleRol()) return;
-    if (this.rolUsuario() === rol) return;
-    this.sessionService.toggleRolUsuario();
-    this.router.navigateByUrl('/inicio');
-  }
 
   toggleMenu(): void {
     this.cerrarNotificaciones();
@@ -156,16 +138,6 @@ export class DashboardHeaderComponent {
       day: 'numeric',
       month: 'short',
     });
-  }
-
-  irAPerfil(): void {
-    this.cerrarMenu();
-    this.router.navigate(['/perfil']);
-  }
-
-  async cerrarSesion(): Promise<void> {
-    this.cerrarMenu();
-    await this.authService.logout();
   }
 
   onLogoError(): void {

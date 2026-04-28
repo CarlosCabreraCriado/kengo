@@ -10,16 +10,16 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 
 import { SessionService } from '../../../auth/services/session.service';
 import { assetUrl } from '../../../utils/asset-url';
-import { AuthService } from '../../../auth/services/auth.service';
 import { ThemeService } from '../../../services/theme.service';
 import { NotificacionesService } from '../../../services/notificaciones.service';
 import { KENGO_BREAKPOINTS } from '../../../../shared';
+import { UserMenuComponent } from '../../../../shared/ui/user-menu/user-menu.component';
 import type { NotificacionApp } from '../../../../../types/global';
 
 @Component({
   selector: 'app-navegacion',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, UserMenuComponent],
   templateUrl: './navegacion.component.html',
   styleUrl: './navegacion.component.css',
 })
@@ -27,7 +27,6 @@ export class NavegacionComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   private router = inject(Router);
   public sessionService = inject(SessionService);
-  private authService = inject(AuthService);
   private themeService = inject(ThemeService);
   public notificacionesService = inject(NotificacionesService);
   private elementRef = inject(ElementRef);
@@ -42,28 +41,6 @@ export class NavegacionComponent implements OnInit {
 
   // Mostrar navbar: solo en desktop (768px+)
   public showNavbar = computed(() => !this.isMovil());
-
-  // Índice activo para la animación del indicador
-  public activeIndex = computed(() => {
-    const route = this.currentRoute();
-    const isFisio = this.isFisio();
-
-    // Mapeo de rutas a índices (considerando si hay sección de pacientes)
-    const routeMap: Record<string, number> = {
-      '/inicio': 0,
-      '/inicio/fisio': 0,
-      '/inicio/paciente': 0,
-      '/': 0,
-      '/ejercicios': 1,
-      '/rutinas': 1,
-      '/actividad-personal': 2,
-      '/mis-pacientes': isFisio ? 3 : -1,
-      '/mi-clinica': isFisio ? 4 : 3,
-      '/perfil': isFisio ? 5 : 4,
-    };
-
-    return routeMap[route] ?? 0;
-  });
 
   public avatarUrl = computed(() => {
     const id_avatar = this.sessionService.usuario()?.avatar;
@@ -180,16 +157,6 @@ export class NavegacionComponent implements OnInit {
     if (d >= ayer) return 'Ayer';
 
     return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-  }
-
-  irAPerfil(): void {
-    this.cerrarMenu();
-    this.router.navigate(['/perfil']);
-  }
-
-  async cerrarSesion(): Promise<void> {
-    this.cerrarMenu();
-    await this.authService.logout();
   }
 
   onLogoError(): void {

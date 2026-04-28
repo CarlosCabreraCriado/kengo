@@ -21,6 +21,5 @@ export { provideConvex } from './convex/convex.provider';
 
 // Layout Components
 export { NavegacionComponent } from './layout/components/navegacion/navegacion.component';
-export { HeaderComponent } from './layout/components/header/header.component';
 export { FooterComponent } from './layout/components/footer/footer.component';
 export { DashboardHeaderComponent } from './layout/components/dashboard-header/dashboard-header.component';

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import {
   RouterOutlet,
   Router,
@@ -7,7 +7,12 @@ import {
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-import { AuthService, NavegacionComponent, ThemeService } from './core';
+import {
+  AuthService,
+  NavegacionComponent,
+  SessionService,
+  ThemeService,
+} from './core';
 import { CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios/carrito-ejercicios.component';
 
 @Component({
@@ -22,9 +27,11 @@ export class AppComponent implements OnInit {
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private sessionService = inject(SessionService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
 
   public mostrarNavegacion = false;
+  public isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
 
   // Rutas donde NO se debe mostrar la navegación
   private rutasSinNavegacion = ['/login', '/registro', '/magic', '/mi-plan', '/establecer-password'];

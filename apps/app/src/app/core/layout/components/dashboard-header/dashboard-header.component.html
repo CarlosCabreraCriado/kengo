@@ -17,48 +17,6 @@
           <h1 class="titulo-kengo greeting-name">Hola, {{ userName() }}</h1>
           <p class="greeting-subtitle">¿Qué quieres hacer hoy?</p>
         </div>
-        @if (puedeToggleRol()) {
-          <div class="vista-toggle" role="radiogroup" aria-label="Cambiar vista">
-            <button
-              type="button"
-              class="vista-toggle-btn"
-              [class.activo]="rolUsuario() === 'fisio'"
-              (click)="setRol('fisio')"
-              [attr.aria-checked]="rolUsuario() === 'fisio'"
-              role="radio"
-            >Fisio</button>
-            <button
-              type="button"
-              class="vista-toggle-btn"
-              [class.activo]="rolUsuario() === 'paciente'"
-              (click)="setRol('paciente')"
-              [attr.aria-checked]="rolUsuario() === 'paciente'"
-              role="radio"
-            >Paciente</button>
-          </div>
-        }
-      </div>
-    }
-
-    <!-- Toggle Fisio/Paciente (solo multi-rol en móvil) -->
-    @if (isMovil() && puedeToggleRol()) {
-      <div class="vista-toggle" role="radiogroup" aria-label="Cambiar vista">
-        <button
-          type="button"
-          class="vista-toggle-btn"
-          [class.activo]="rolUsuario() === 'fisio'"
-          (click)="setRol('fisio')"
-          [attr.aria-checked]="rolUsuario() === 'fisio'"
-          role="radio"
-        >Fisio</button>
-        <button
-          type="button"
-          class="vista-toggle-btn"
-          [class.activo]="rolUsuario() === 'paciente'"
-          (click)="setRol('paciente')"
-          [attr.aria-checked]="rolUsuario() === 'paciente'"
-          role="radio"
-        >Paciente</button>
       </div>
     }
 
@@ -156,34 +114,7 @@
           }
         </button>
 
-        @if (menuAbierto()) {
-          <div class="user-menu" role="menu">
-            <button
-              type="button"
-              class="menu-item"
-              role="menuitem"
-              (click)="irAPerfil()"
-            >
-              <span class="material-symbols-outlined">person</span>
-              <span>Mi perfil</span>
-            </button>
-            <button
-              type="button"
-              class="menu-item menu-item-danger"
-              role="menuitem"
-              (click)="cerrarSesion()"
-            >
-              <span class="material-symbols-outlined">logout</span>
-              <span>Cerrar sesión</span>
-            </button>
-          </div>
-
-          <div
-            class="menu-backdrop"
-            (click)="cerrarMenu()"
-            aria-hidden="true"
-          ></div>
-        }
+        <app-user-menu [open]="menuAbierto()" (closed)="cerrarMenu()" />
       </div>
       </div>
     }

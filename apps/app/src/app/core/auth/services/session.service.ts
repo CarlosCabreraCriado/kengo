@@ -12,9 +12,13 @@ import { rawAssetUrl } from '../../utils/asset-url';
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
+  private readonly MODO_STORAGE_KEY = 'kengo:modo';
+
   private _rolUsuario = signal<RolUsuario>('fisio');
   public rolUsuario = this._rolUsuario;
-  public permitirMultiRol = signal(false);
+  // True cuando el usuario puede alternar entre modo fisio y modo paciente.
+  // Solo los fisios pueden hacerlo; los pacientes están restringidos a su modo.
+  public puedeAlternarModo = signal(false);
 
   private _usuario = signal<Usuario | null>(null);
   private _loading = signal<boolean>(false);
@@ -35,11 +39,43 @@ export class SessionService {
 
   setRolUsuario(rol: RolUsuario) {
     this._rolUsuario.set(rol);
+    // Solo persistimos preferencia si el usuario puede alternar (fisios).
+    // Para pacientes puros la preferencia es siempre 'paciente' y no debe
+    // persistirse para no quedar inconsistente si en el futuro adquieren rol fisio.
+    if (this.puedeAlternarModo()) {
+      this.guardarModoPersistido(rol);
+    }
   }
 
   toggleRolUsuario() {
-    const current = this._rolUsuario();
-    this._rolUsuario.set(current === 'fisio' ? 'paciente' : 'fisio');
+    const next: RolUsuario =
+      this._rolUsuario() === 'fisio' ? 'paciente' : 'fisio';
+    this.setRolUsuario(next);
+  }
+
+  private leerModoPersistido(): RolUsuario | null {
+    try {
+      const v = localStorage.getItem(this.MODO_STORAGE_KEY);
+      return v === 'fisio' || v === 'paciente' ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private guardarModoPersistido(rol: RolUsuario): void {
+    try {
+      localStorage.setItem(this.MODO_STORAGE_KEY, rol);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private limpiarModoPersistido(): void {
+    try {
+      localStorage.removeItem(this.MODO_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
   }
 
   inicializarApp() {
@@ -57,6 +93,7 @@ export class SessionService {
     this._usuario.set(null);
     this._error.set(null);
     localStorage.removeItem('carrito:last_fisio_id');
+    this.limpiarModoPersistido();
   }
 
   async cargarMiUsuario(): Promise<void> {
@@ -89,15 +126,17 @@ export class SessionService {
       localStorage.removeItem('carrito:last_fisio_id');
     } finally {
       const u = this._usuario();
-      if (u?.esFisio && u?.esPaciente) {
-        this._rolUsuario.set('fisio');
-        this.permitirMultiRol.set(true);
-      } else if (u?.esFisio) {
-        this._rolUsuario.set('fisio');
-        this.permitirMultiRol.set(false);
+      // Cualquier fisio puede alternar entre modos. Los pacientes puros no.
+      const puedeAlternar = !!u?.esFisio;
+      this.puedeAlternarModo.set(puedeAlternar);
+
+      if (puedeAlternar) {
+        const persistido = this.leerModoPersistido();
+        this._rolUsuario.set(persistido ?? 'fisio');
+        if (!persistido) this.guardarModoPersistido('fisio');
       } else {
         this._rolUsuario.set('paciente');
-        this.permitirMultiRol.set(false);
+        this.limpiarModoPersistido();
       }
 
       this._loading.set(false);
