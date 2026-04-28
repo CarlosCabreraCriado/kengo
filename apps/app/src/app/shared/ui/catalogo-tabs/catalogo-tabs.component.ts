@@ -24,8 +24,8 @@ export class CatalogoTabsComponent {
   ];
 
   readonly tabs = computed(() =>
-    this.session.rolUsuario() === 'fisio'
+    this.session.puedeCrearRutinas()
       ? this.allTabs
-      : this.allTabs.filter((t) => t.path !== 'rutinas')
+      : this.allTabs.filter((t) => t.path !== 'rutinas'),
   );
 }

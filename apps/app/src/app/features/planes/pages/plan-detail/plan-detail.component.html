@@ -53,7 +53,7 @@
             >
               <span class="material-symbols-outlined">picture_as_pdf</span>
             </button>
-            @if (isFisio()) {
+            @if (sessionService.puedeEditarRecursos()) {
               <button
                 type="button"
                 class="header-btn header-btn-edit"
@@ -90,7 +90,7 @@
               <span class="text-xs font-semibold">PDF</span>
             </button>
 
-            @if (isFisio()) {
+            @if (sessionService.puedeEditarRecursos()) {
               <button
                 type="button"
                 class="header-btn-desktop"
@@ -149,10 +149,10 @@
         <div
           class="patient-card animate-in"
           [style.--delay]="showSuccessHero() ? '0.15s' : '0s'"
-          (click)="isFisio() ? verPerfilPaciente() : null"
-          [attr.role]="isFisio() ? 'button' : null"
-          [attr.tabindex]="isFisio() ? '0' : null"
-          (keydown.enter)="isFisio() ? verPerfilPaciente() : null"
+          (click)="sessionService.puedeGestionarPacientes() ? verPerfilPaciente() : null"
+          [attr.role]="sessionService.puedeGestionarPacientes() ? 'button' : null"
+          [attr.tabindex]="sessionService.puedeGestionarPacientes() ? '0' : null"
+          (keydown.enter)="sessionService.puedeGestionarPacientes() ? verPerfilPaciente() : null"
         >
           <div class="patient-avatar-wrapper">
             @if (pac.avatar) {
@@ -173,7 +173,7 @@
             <h3 class="patient-name">{{ pac.first_name }} {{ pac.last_name }}</h3>
             <p class="patient-email">{{ pac.email }}</p>
           </div>
-          @if (isFisio()) {
+          @if (sessionService.puedeGestionarPacientes()) {
             <div class="patient-action-icon">
               <span class="material-symbols-outlined">chevron_right</span>
             </div>

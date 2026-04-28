@@ -26,7 +26,7 @@ export class EjercicioDetailComponent {
   private ejerciciosService = inject(EjerciciosService);
   private planBuilderService = inject(PlanBuilderService);
   private rutinaBuilderService = inject(RutinaBuilderService);
-  private sessionService = inject(SessionService);
+  public sessionService = inject(SessionService);
   private dialog = inject(Dialog);
 
   @ViewChildren('videoPlayer') videoPlayers!: QueryList<ElementRef<HTMLVideoElement>>;
@@ -64,9 +64,6 @@ export class EjercicioDetailComponent {
 
   // Detectar modo rutina (crear plantilla sin paciente)
   readonly isRutinaMode = computed(() => this.rutinaBuilderService.isActive());
-
-  // Rol del usuario
-  readonly isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
 
   constructor() {
     this.route.paramMap

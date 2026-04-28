@@ -41,7 +41,7 @@
           </button>
 
           <!-- Tab: Pacientes (solo fisios) -->
-          @if (isFisio()) {
+          @if (sessionService.puedeCrearPlanes()) {
             <button
               type="button"
               class="tab-pill"
@@ -54,7 +54,7 @@
           }
 
           <!-- Tab: Rutinas (solo fisios) -->
-          @if (isFisio()) {
+          @if (sessionService.puedeCrearPlanes()) {
             <button
               type="button"
               class="tab-pill"
@@ -164,7 +164,7 @@
       <!-- ══════════════════════════════════════════════════════════════ -->
       <!-- TAB: Planes de Pacientes (Solo fisios) -->
       <!-- ══════════════════════════════════════════════════════════════ -->
-      @if (tabActiva() === "planes-pacientes" && isFisio()) {
+      @if (tabActiva() === "planes-pacientes" && sessionService.puedeCrearPlanes()) {
         <!-- Toolbar de filtros -->
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
           <!-- Buscador -->

@@ -114,7 +114,7 @@
           <div class="hero-info">
             <h2 class="user-name">{{ usuario()?.first_name }} {{ usuario()?.last_name }}</h2>
             <p class="user-email">{{ usuario()?.email }}</p>
-            @if (esFisio()) {
+            @if (tieneCapacidadFisio()) {
               <span class="role-badge">
                 <span class="material-symbols-outlined icon-filled">verified</span>
                 Fisioterapeuta
@@ -358,7 +358,7 @@
                 </div>
               </div>
 
-              @if (esFisio()) {
+              @if (tieneCapacidadFisio()) {
                 <div class="form-field">
                   <label class="field-label">Nº Colegiado</label>
                   <div class="input-wrapper">

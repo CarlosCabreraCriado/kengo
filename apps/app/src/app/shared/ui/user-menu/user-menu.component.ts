@@ -1,7 +1,6 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  computed,
   inject,
   input,
   output,
@@ -26,9 +25,7 @@ export class UserMenuComponent {
   open = input.required<boolean>();
   closed = output<void>();
 
-  modoPaciente = computed(
-    () => this.sessionService.rolUsuario() === 'paciente',
-  );
+  modoPaciente = this.sessionService.enModoPaciente;
 
   irAPerfil(): void {
     this.closed.emit();

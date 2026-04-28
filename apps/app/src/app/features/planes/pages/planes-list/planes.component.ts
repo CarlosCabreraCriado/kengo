@@ -54,7 +54,6 @@ export class PlanesComponent implements OnInit {
 
   // Usuario y rol
   usuario = computed(() => this.sessionService.usuario());
-  isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
 
   // Planes
   busqueda = '';
@@ -99,7 +98,7 @@ export class PlanesComponent implements OnInit {
 
   ngOnInit() {
     // Cargar datos segun el rol inicial
-    if (this.isFisio()) {
+    if (this.sessionService.puedeCrearPlanes()) {
       this.tabActiva.set('planes-pacientes');
       this.tabIndex.set(1);
       this.planesService.reload();
@@ -116,7 +115,7 @@ export class PlanesComponent implements OnInit {
     // Fisio: [mis-planes, planes-pacientes, rutinas]
     // Paciente: solo [mis-planes]
     let tab: TabType;
-    if (this.isFisio()) {
+    if (this.sessionService.puedeCrearPlanes()) {
       const tabs: TabType[] = ['mis-planes', 'planes-pacientes', 'rutinas'];
       tab = tabs[index];
     } else {

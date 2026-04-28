@@ -82,11 +82,8 @@ export class PacientesListComponent {
   // Asignaciones de fisio responsable
   readonly asignacionesMap = signal<Map<string, AsignacionResponsable>>(new Map());
 
-  // Es admin en alguna clínica
-  readonly esAdmin = computed(() => {
-    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-    return clinicas.some((c) => c.puesto === 'admin');
-  });
+  // Es admin en alguna clínica (delegado en SessionService)
+  readonly esAdmin = this.sessionService.esAdmin;
 
   private readonly busqueda = signal('');
   readonly filtroActividad = signal<FiltroActividad>(this.leerFiltroGuardado());

@@ -58,8 +58,9 @@ export class NotificacionesService {
     api.alerts.queries.listForCurrentFisio,
     () => {
       const usuario = this.sessionService.usuario();
-      const rol = this.sessionService.rolUsuario();
-      if (!usuario?.id || rol !== 'fisio') return 'skip' as const;
+      if (!usuario?.id || !this.sessionService.puedeRecibirNotificaciones()) {
+        return 'skip' as const;
+      }
       return { paginationOpts: { numItems: 50, cursor: null } };
     },
   );

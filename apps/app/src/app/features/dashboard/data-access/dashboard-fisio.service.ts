@@ -28,8 +28,7 @@ export class DashboardFisioService {
     api.me.queries.myManagedClinics,
     () => {
       const usuario = this.sessionService.usuario();
-      const esFisio = this.sessionService.rolUsuario() === 'fisio';
-      if (!usuario?.id || !esFisio) return 'skip' as const;
+      if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
       return {};
     },
   );
@@ -41,8 +40,7 @@ export class DashboardFisioService {
     api.snapshots.queries.getClinicMetrics,
     () => {
       const usuario = this.sessionService.usuario();
-      const esFisio = this.sessionService.rolUsuario() === 'fisio';
-      if (!usuario?.id || !esFisio) return 'skip' as const;
+      if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
       const ids = this.clinicIdsSub.value();
       if (!ids || ids.length === 0) return 'skip' as const;
       return { clinicId: ids[0] as any, ventana: '30d' as const };
@@ -54,8 +52,7 @@ export class DashboardFisioService {
     api.dashboard.queries.planesPorVencer,
     () => {
       const usuario = this.sessionService.usuario();
-      const esFisio = this.sessionService.rolUsuario() === 'fisio';
-      if (!usuario?.id || !esFisio) return 'skip' as const;
+      if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
       return {};
     },
   );

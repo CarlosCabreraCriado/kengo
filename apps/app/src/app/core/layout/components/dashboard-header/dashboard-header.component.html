@@ -23,7 +23,7 @@
     <!-- Campana + Avatar (solo móvil) -->
     @if (isMovil()) {
       <div class="header-actions">
-      @if (isFisio()) {
+      @if (sessionService.puedeRecibirNotificaciones()) {
         <div class="notificaciones-container">
           <button
             type="button"

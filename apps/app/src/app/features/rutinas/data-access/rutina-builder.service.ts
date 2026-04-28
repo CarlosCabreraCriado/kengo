@@ -68,11 +68,8 @@ export class RutinaBuilderService {
   readonly drawerOpen = this.itemsState.drawerOpen;
 
   readonly fisioId = computed(() => {
-    const usuario = this.sessionService.usuario();
-    if (usuario?.esFisio) {
-      return usuario.id || null;
-    }
-    return null;
+    if (!this.sessionService.enModoFisio()) return null;
+    return this.sessionService.usuario()?.id || null;
   });
 
   readonly totalItems = computed(() => this.items().length);

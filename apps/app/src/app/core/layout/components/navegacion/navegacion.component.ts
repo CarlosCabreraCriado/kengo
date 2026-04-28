@@ -49,12 +49,6 @@ export class NavegacionComponent implements OnInit {
       : null;
   });
 
-  public isPaciente = computed(
-    () => this.sessionService.rolUsuario() === 'paciente',
-  );
-
-  public isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
-
   ngOnInit() {
     // Detectar si es móvil
     this.breakpointObserver

@@ -28,7 +28,7 @@ import type { NotificacionApp } from '../../../../../types/global';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardHeaderComponent {
-  private sessionService = inject(SessionService);
+  public sessionService = inject(SessionService);
   private themeService = inject(ThemeService);
   public notificacionesService = inject(NotificacionesService);
   private router = inject(Router);
@@ -39,8 +39,6 @@ export class DashboardHeaderComponent {
 
   menuAbierto = signal(false);
   notificacionesAbiertas = signal(false);
-  rolUsuario = this.sessionService.rolUsuario;
-  isFisio = computed(() => this.rolUsuario() === 'fisio');
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {

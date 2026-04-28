@@ -75,7 +75,7 @@
     <router-outlet></router-outlet>
   </main>
 
-  @if (mostrarNavegacion && isFisio()) {
+  @if (mostrarNavegacion && sessionService.enModoFisio()) {
     <app-carrito-ejercicios></app-carrito-ejercicios>
   }
 </section>

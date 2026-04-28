@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '../../core';
+import { AuthGuard, PacienteGuard } from '../../core';
 import { ActividadShellComponent } from './pages/actividad-shell/actividad-shell.component';
 
 export const ACTIVIDAD_ROUTES: Routes = [
   {
     path: '',
     component: ActividadShellComponent,
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, PacienteGuard],
     children: [
       { path: '', redirectTo: 'hoy', pathMatch: 'full' },
       {

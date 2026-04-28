@@ -8,10 +8,7 @@ export class AdminGuard implements CanActivate {
   private router = inject(Router);
 
   canActivate(): boolean {
-    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-    const esAdmin = clinicas.some((c) => c.puesto === 'admin');
-
-    if (esAdmin) {
+    if (this.sessionService.esAdmin()) {
       return true;
     }
 

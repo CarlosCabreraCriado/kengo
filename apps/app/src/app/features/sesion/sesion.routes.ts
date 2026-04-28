@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '../../core';
+import { AuthGuard, PacienteGuard } from '../../core';
 
 export const SESION_ROUTES: Routes = [
   {
@@ -8,7 +8,7 @@ export const SESION_ROUTES: Routes = [
       import('./pages/realizar-plan/realizar-plan.component').then(
         (m) => m.RealizarPlanComponent,
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, PacienteGuard],
   },
   {
     path: ':planId',
@@ -16,6 +16,6 @@ export const SESION_ROUTES: Routes = [
       import('./pages/realizar-plan/realizar-plan.component').then(
         (m) => m.RealizarPlanComponent,
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, PacienteGuard],
   },
 ];

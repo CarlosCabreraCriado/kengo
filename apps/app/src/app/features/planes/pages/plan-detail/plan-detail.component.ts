@@ -32,7 +32,7 @@ export class PlanDetailComponent implements OnInit {
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
   private breakpointObserver = inject(BreakpointObserver);
-  private sessionService = inject(SessionService);
+  public sessionService = inject(SessionService);
   private dialogService = inject(DialogService);
 
   // Detectar si es móvil (< 768px) - alineado con breakpoint de navegación
@@ -45,8 +45,6 @@ export class PlanDetailComponent implements OnInit {
 
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);
-
-  isFisio = computed(() => this.sessionService.rolUsuario() === 'fisio');
 
   // Action type from queryParams (created, updated, or null for view-only)
   actionType = signal<'created' | 'updated' | null>(null);

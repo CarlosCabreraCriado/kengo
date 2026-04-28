@@ -126,7 +126,7 @@
               <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre }}</h1>
             </div>
 
-            @if (isFisio()) {
+            @if (sessionService.puedeEditarRecursos()) {
               <!-- Selector de Series -->
               <div class="preset-selector">
                 <span class="preset-label">Series:</span>
@@ -235,7 +235,7 @@
             </button>
 
             <!-- Primary Action: Assign (solo fisios) -->
-            @if (isFisio()) {
+            @if (sessionService.puedeEditarRecursos()) {
               <button
                 type="button"
                 class="action-btn primary"
@@ -344,7 +344,7 @@
         <div class="desktop-info-column">
           <div class="bottom-panel">
             <div class="exercise-content">
-              @if (isFisio()) {
+              @if (sessionService.puedeEditarRecursos()) {
                 <!-- Selector de Series -->
                 <div class="preset-selector">
                   <span class="preset-label">Series:</span>
@@ -430,7 +430,7 @@
             </div>
 
             <!-- Actions Bar (solo fisios) -->
-            @if (isFisio()) {
+            @if (sessionService.puedeEditarRecursos()) {
               <div class="actions-bar">
                 <div class="action-buttons">
                   <!-- Primary Action: Assign -->

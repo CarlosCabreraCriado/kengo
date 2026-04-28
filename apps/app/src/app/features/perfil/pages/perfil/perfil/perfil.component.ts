@@ -87,7 +87,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   // === DATOS PERSONALES ===
   public usuario = computed(() => this.sessionService.usuario());
-  public esFisio = computed(() => this.sessionService.usuario()?.esFisio ?? false);
+  public tieneCapacidadFisio = this.sessionService.tieneCapacidadFisio;
 
   public url_perfil = computed(() => {
     const id_avatar = this.usuario()?.avatar;

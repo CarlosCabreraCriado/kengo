@@ -34,8 +34,49 @@ export class SessionService {
   });
   public misclinicas = computed(() => this._usuario()?.clinicas ?? []);
 
+  // === MODO ACTIVO (dinámico, lo que el usuario ve/hace ahora) ===
+  public enModoFisio = computed(() => this._rolUsuario() === 'fisio');
+  public enModoPaciente = computed(() => this._rolUsuario() === 'paciente');
+
+  // === CAPACIDAD (estático, derivado del usuario) ===
+  public tieneCapacidadFisio = computed(
+    () => this._usuario()?.esFisio ?? false,
+  );
+  public tieneCapacidadPaciente = computed(
+    () => this._usuario()?.esPaciente ?? false,
+  );
+  public esAdmin = computed(() =>
+    (this._usuario()?.clinicas ?? []).some((c) => c.puesto === 'admin'),
+  );
+
+  // === REGLAS DE NEGOCIO (semánticas, basadas en modo) ===
+  // Si en el futuro la regla cambia (ej. admins en modo paciente sí pueden
+  // crear planes), se modifica solo el computed correspondiente.
+  public puedeGestionarPacientes = computed(() => this.enModoFisio());
+  public puedeCrearPlanes = computed(() => this.enModoFisio());
+  public puedeCrearRutinas = computed(() => this.enModoFisio());
+  public puedeEditarRecursos = computed(() => this.enModoFisio());
+  public puedeRealizarSesion = computed(() => this.enModoPaciente());
+  public puedeAsignarResponsables = computed(
+    () => this.enModoFisio() && this.esAdmin(),
+  );
+  public puedeRecibirNotificaciones = computed(() => this.enModoFisio());
+
   private convex = inject(ConvexService);
   private betterAuth = inject(BetterAuthService);
+
+  // Granulares por clínica (no son computeds porque parametrizan)
+  esAdminEnClinica(clinicaId: string): boolean {
+    return (this._usuario()?.clinicas ?? []).some(
+      (c) => c.clinicId === clinicaId && c.puesto === 'admin',
+    );
+  }
+
+  tienePuestoEnClinica(clinicaId: string, puesto: Puesto): boolean {
+    return (this._usuario()?.clinicas ?? []).some(
+      (c) => c.clinicId === clinicaId && c.puesto === puesto,
+    );
+  }
 
   setRolUsuario(rol: RolUsuario) {
     this._rolUsuario.set(rol);

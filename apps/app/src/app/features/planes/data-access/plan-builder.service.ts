@@ -82,12 +82,8 @@ export class PlanBuilderService {
   readonly paciente = signal<Usuario | null>(null);
 
   readonly fisioId = computed(() => {
-    const usuario = this.sessionService.usuario();
-    if (usuario?.esFisio) {
-      return usuario.id || null;
-    } else {
-      return null;
-    }
+    if (!this.sessionService.enModoFisio()) return null;
+    return this.sessionService.usuario()?.id || null;
   });
 
   readonly items = this.itemsState.items;

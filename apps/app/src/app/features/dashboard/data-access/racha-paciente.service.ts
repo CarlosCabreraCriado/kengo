@@ -135,9 +135,14 @@ export class RachaPacienteService {
   constructor() {
     effect(() => {
       const usuario = this.sessionService.usuario();
-      const esPaciente = this.sessionService.rolUsuario() !== 'fisio';
+      const enModoPaciente = this.sessionService.enModoPaciente();
 
-      if (usuario?.id && esPaciente && !this.datosCargados() && !this.cargando()) {
+      if (
+        usuario?.id &&
+        enModoPaciente &&
+        !this.datosCargados() &&
+        !this.cargando()
+      ) {
         this.cargar(usuario.id);
       }
     });
