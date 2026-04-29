@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
@@ -6,6 +6,9 @@ import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import type { RolUsuario } from '../../../../types/global';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
+
+const COLLAPSED_STORAGE_KEY = 'kengo:sidebar-collapsed';
+const EXPANDED_BREAKPOINT_QUERY = '(min-width: 1024px)';
 
 interface SidebarNavItem {
   id: string;
@@ -51,7 +54,20 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
   imports: [RouterLink, Ui2AvatarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <aside class="ui2-sidebar">
+    <aside
+      class="ui2-sidebar"
+      [class.ui2-sidebar--collapsed]="collapsed()"
+    >
+      <button
+        type="button"
+        class="ui2-sidebar__toggle"
+        [attr.aria-label]="collapsed() ? 'Expandir barra lateral' : 'Colapsar barra lateral'"
+        [attr.aria-expanded]="!collapsed()"
+        (click)="toggleCollapsed()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</span>
+      </button>
+
       <a class="ui2-sidebar__brand" routerLink="/inicio" aria-label="Ir al inicio">
         <span class="ui2-sidebar__logo">
           <img src="assets/logo-k.svg" alt="" />
@@ -72,6 +88,8 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
                   class="ui2-sidebar__item"
                   [class.ui2-sidebar__item--active]="activeId() === item.id"
                   [routerLink]="item.route"
+                  [attr.title]="collapsed() ? item.label : null"
+                  [attr.aria-label]="collapsed() ? item.label : null"
                   [attr.aria-current]="activeId() === item.id ? 'page' : null"
                 >
                   <span class="material-symbols-outlined ui2-sidebar__item-icon" aria-hidden="true">{{ item.icon }}</span>
@@ -89,6 +107,8 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
                   class="ui2-sidebar__item ui2-sidebar__item--disabled"
                   disabled
                   aria-disabled="true"
+                  [attr.title]="collapsed() ? item.label : null"
+                  [attr.aria-label]="collapsed() ? item.label : null"
                 >
                   <span class="material-symbols-outlined ui2-sidebar__item-icon" aria-hidden="true">{{ item.icon }}</span>
                   <span class="ui2-sidebar__item-label">{{ item.label }}</span>
@@ -101,7 +121,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
 
       <div class="ui2-sidebar__spacer"></div>
 
-      @if (clinicaNombre()) {
+      @if (clinicaNombre() && !collapsed()) {
         <a
           class="ui2-sidebar__clinic"
           routerLink="/mi-clinica"
@@ -123,6 +143,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
           [attr.aria-expanded]="menuOpen()"
           aria-haspopup="menu"
           aria-label="Abrir menú de usuario"
+          [attr.title]="collapsed() ? userName() : null"
           (click)="toggleMenu($event)"
         >
           <ui2-avatar [name]="userName()" [src]="avatarUrl()" size="sm" gradient="coral"></ui2-avatar>
@@ -180,9 +201,11 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
       height: 100%;
     }
     .ui2-sidebar {
+      position: relative;
       display: flex;
       flex-direction: column;
       height: 100%;
+      width: 220px;
       padding: 22px 14px;
       gap: 18px;
       background: rgba(255, 255, 255, 0.6);
@@ -190,7 +213,37 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-right: 1px solid rgba(0, 0, 0, 0.04);
       box-sizing: border-box;
+      transition: width 0.22s ease, padding 0.22s ease;
     }
+    @media (min-width: 1024px) {
+      .ui2-sidebar { width: 260px; }
+    }
+
+    /* Botón flotante para alternar collapsed/expanded en el borde derecho. */
+    .ui2-sidebar__toggle {
+      position: absolute;
+      top: 28px;
+      right: -14px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: var(--shadow-card-strong);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      z-index: 11;
+      color: var(--ink-700);
+      padding: 0;
+      transition: background 0.12s, color 0.12s, transform 0.12s;
+    }
+    .ui2-sidebar__toggle:hover {
+      background: var(--cream-100);
+      color: var(--kengo-primary);
+    }
+    .ui2-sidebar__toggle:active { transform: scale(0.94); }
+    .ui2-sidebar__toggle .material-symbols-outlined { font-size: 18px; }
     .ui2-sidebar__brand {
       display: flex;
       align-items: center;
@@ -469,6 +522,68 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
       inset: 0;
       z-index: 99;
     }
+
+    /* ============================================================ */
+    /*  Estado COLLAPSED — rail compacto 72px (solo iconos)          */
+    /* ============================================================ */
+    .ui2-sidebar--collapsed { width: 72px; padding: 22px 8px; }
+    @media (min-width: 1024px) {
+      .ui2-sidebar--collapsed { width: 72px; }
+    }
+
+    .ui2-sidebar--collapsed .ui2-sidebar__brand {
+      justify-content: center;
+      gap: 0;
+      padding: 0;
+    }
+    .ui2-sidebar--collapsed .ui2-sidebar__brand-text { display: none; }
+
+    .ui2-sidebar--collapsed .ui2-sidebar__group-label { display: none; }
+    .ui2-sidebar--collapsed .ui2-sidebar__group { gap: 4px; }
+
+    .ui2-sidebar--collapsed .ui2-sidebar__item {
+      justify-content: center;
+      gap: 0;
+      padding: 11px 0;
+    }
+    .ui2-sidebar--collapsed .ui2-sidebar__item-label { display: none; }
+
+    /* Badge → punto pequeño en esquina superior derecha del item */
+    .ui2-sidebar--collapsed .ui2-sidebar__item { position: relative; }
+    .ui2-sidebar--collapsed .ui2-sidebar__item-badge {
+      position: absolute;
+      top: 6px;
+      right: 12px;
+      min-width: 0;
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      font-size: 0;
+      border: 1.5px solid white;
+      box-sizing: content-box;
+    }
+
+    .ui2-sidebar--collapsed .ui2-sidebar__user {
+      justify-content: center;
+      gap: 0;
+      padding: 8px;
+    }
+    .ui2-sidebar--collapsed .ui2-sidebar__user-text,
+    .ui2-sidebar--collapsed .ui2-sidebar__user-cog { display: none; }
+
+    /* Dropdown del avatar abre lateralmente cuando está colapsado */
+    .ui2-sidebar--collapsed .ui2-user-menu {
+      bottom: auto;
+      top: 0;
+      left: calc(100% + 12px);
+      right: auto;
+      min-width: 220px;
+      animation: ui2-sidebar-menu-side-in 0.18s ease-out;
+    }
+    @keyframes ui2-sidebar-menu-side-in {
+      from { opacity: 0; transform: translateX(-6px) scale(0.97); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
+    }
   `],
 })
 export class Ui2PatientSidebarComponent {
@@ -482,9 +597,20 @@ export class Ui2PatientSidebarComponent {
   public readonly sessionService = inject(SessionService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly menuOpen = signal(false);
   readonly modoPaciente = this.sessionService.enModoPaciente;
+
+  /**
+   * Estado colapsado del sidebar. Default por breakpoint:
+   *  - lg+ (≥1024px): expandido (false)
+   *  - md  (768–1023px): colapsado (true)
+   * La preferencia explícita del usuario (localStorage) sobrescribe el default y
+   * persiste entre sesiones.
+   */
+  readonly collapsed = signal<boolean>(this.computeInitialCollapsed());
+  private hasUserPreference = this.readStoredPreference() !== null;
 
   readonly modoLabel = computed(() =>
     this.modoPaciente() ? 'Modo paciente' : 'Modo fisio',
@@ -512,6 +638,50 @@ export class Ui2PatientSidebarComponent {
     }
     return null;
   });
+
+  constructor() {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia(EXPANDED_BREAKPOINT_QUERY);
+    const handler = () => {
+      // Solo recalcula el default si el usuario nunca ha tocado el toggle.
+      if (!this.hasUserPreference) {
+        this.collapsed.set(!mq.matches);
+      }
+    };
+    mq.addEventListener('change', handler);
+    this.destroyRef.onDestroy(() => mq.removeEventListener('change', handler));
+  }
+
+  toggleCollapsed(): void {
+    const next = !this.collapsed();
+    this.collapsed.set(next);
+    this.hasUserPreference = true;
+    try {
+      window.localStorage?.setItem(COLLAPSED_STORAGE_KEY, next ? 'true' : 'false');
+    } catch {
+      // localStorage no disponible (modo privado, SSR…) — silencioso
+    }
+    if (this.menuOpen()) this.menuOpen.set(false);
+  }
+
+  private computeInitialCollapsed(): boolean {
+    if (typeof window === 'undefined') return false;
+    const stored = this.readStoredPreference();
+    if (stored !== null) return stored;
+    return !window.matchMedia(EXPANDED_BREAKPOINT_QUERY).matches;
+  }
+
+  private readStoredPreference(): boolean | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const v = window.localStorage?.getItem(COLLAPSED_STORAGE_KEY);
+      if (v === 'true') return true;
+      if (v === 'false') return false;
+      return null;
+    } catch {
+      return null;
+    }
+  }
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
