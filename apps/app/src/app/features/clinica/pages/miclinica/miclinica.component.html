@@ -6,33 +6,17 @@
     <div class="aurora-wave aurora-wave-3"></div>
   </div>
 
-  <!-- Header Responsivo -->
-  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
-    <div class="mx-auto max-w-2xl">
-
-      <!-- MÓVIL: Header completo con título y navegación -->
-      @if (isMovil()) {
-        <div class="mb-4 flex items-center justify-between">
-          <!-- Botón volver + Título -->
-          <div class="flex items-center gap-3">
-            <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
-            <div>
-              <h1 class="titulo-kengo text-2xl text-kengo-primary">Mi Clínica</h1>
-              @if (clinicasRes().length > 1) {
-                <button class="clinic-switcher" (click)="showClinicPicker = !showClinicPicker">
-                  <span class="current-clinic-name">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
-                  <span class="material-symbols-outlined switcher-icon" [class.rotated]="showClinicPicker">expand_more</span>
-                </button>
-              }
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- Barra de controles (siempre visible) -->
-      <div class="flex items-center gap-2">
-        <!-- DESKTOP: Selector de clínica compacto -->
-        @if (!isMovil() && clinicasRes().length > 1) {
+  <!-- Main Content -->
+  <main class="clinic-main">
+    <!-- Selector de clínica (solo si hay más de una) -->
+    @if (clinicasRes().length > 1) {
+      <div class="clinic-selector-wrap">
+        @if (isMovil()) {
+          <button class="clinic-switcher" (click)="showClinicPicker = !showClinicPicker">
+            <span class="current-clinic-name">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
+            <span class="material-symbols-outlined switcher-icon" [class.rotated]="showClinicPicker">expand_more</span>
+          </button>
+        } @else {
           <button
             class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md
                    border border-white/40 text-sm font-medium text-zinc-700
@@ -45,38 +29,32 @@
           </button>
         }
 
-      </div>
-
-    </div>
-
-    <!-- Clinic Picker Dropdown -->
-    @if (showClinicPicker && clinicasRes().length > 1) {
-      <div class="clinic-picker-overlay" (click)="showClinicPicker = false"></div>
-      <div class="clinic-picker">
-        @for (c of clinicasRes(); track c.id; let i = $index) {
-          <button class="picker-option" [class.active]="i === selectedClinicIndex()" (click)="selectClinic(i)">
-            <div class="picker-logo">
-              @if (c.logo) {
-                <img [src]="assetUrl(c.logo)" [alt]="c.nombre"/>
-              } @else {
-                <span class="material-symbols-outlined icon-filled">domain</span>
-              }
-            </div>
-            <div class="picker-info">
-              <span class="picker-name">{{ c.nombre || 'Clínica ' + c.id }}</span>
-              <span class="picker-location">{{ c.direccion || 'Sin dirección' }}</span>
-            </div>
-            @if (i === selectedClinicIndex()) {
-              <span class="material-symbols-outlined picker-check">check_circle</span>
+        @if (showClinicPicker) {
+          <div class="clinic-picker-overlay" (click)="showClinicPicker = false"></div>
+          <div class="clinic-picker">
+            @for (c of clinicasRes(); track c.id; let i = $index) {
+              <button class="picker-option" [class.active]="i === selectedClinicIndex()" (click)="selectClinic(i)">
+                <div class="picker-logo">
+                  @if (c.logo) {
+                    <img [src]="assetUrl(c.logo)" [alt]="c.nombre"/>
+                  } @else {
+                    <span class="material-symbols-outlined icon-filled">domain</span>
+                  }
+                </div>
+                <div class="picker-info">
+                  <span class="picker-name">{{ c.nombre || 'Clínica ' + c.id }}</span>
+                  <span class="picker-location">{{ c.direccion || 'Sin dirección' }}</span>
+                </div>
+                @if (i === selectedClinicIndex()) {
+                  <span class="material-symbols-outlined picker-check">check_circle</span>
+                }
+              </button>
             }
-          </button>
+          </div>
         }
       </div>
     }
-  </header>
 
-  <!-- Main Content -->
-  <main class="clinic-main">
     <!-- Loading State -->
     @if (!clinicasRes()) {
       <div class="state-card loading-state">
