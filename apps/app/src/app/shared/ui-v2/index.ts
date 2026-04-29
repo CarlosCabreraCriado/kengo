@@ -59,8 +59,17 @@ export { Ui2ClinicHeroCardComponent } from './clinic-hero-card/clinic-hero-card.
 export { Ui2SegmentedComponent } from './segmented/segmented.component';
 export type { Ui2SegmentedOption } from './segmented/segmented.component';
 export { Ui2AchievementCardComponent } from './achievement-card/achievement-card.component';
+export { Ui2MiniStatComponent } from './mini-stat/mini-stat.component';
+export { Ui2WebActivityChartComponent } from './web-activity-chart/web-activity-chart.component';
+export type { Ui2ActivityDay } from './web-activity-chart/web-activity-chart.component';
+export { Ui2NextAppointmentComponent } from './next-appointment/next-appointment.component';
+export type { Ui2AppointmentVm } from './next-appointment/next-appointment.component';
+export { Ui2WebAchievementsListComponent } from './web-achievements-list/web-achievements-list.component';
+export type { Ui2AchievementListItem } from './web-achievements-list/web-achievements-list.component';
 
 // --- Shell paciente ---
 export { Ui2CreamBgComponent } from './cream-bg/cream-bg.component';
 export { Ui2PatientHeaderComponent } from './patient-header/patient-header.component';
 export { Ui2PatientTabBarComponent } from './patient-tab-bar/patient-tab-bar.component';
+export { Ui2PatientSidebarComponent } from './patient-sidebar/patient-sidebar.component';
+export { Ui2WebTopbarComponent } from './web-topbar/web-topbar.component';

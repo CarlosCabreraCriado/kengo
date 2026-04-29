@@ -1,17 +1,41 @@
-<!-- Modo paciente con navegación: shell V2 cream wellness -->
+<!-- Modo paciente con navegación: shell V2 cream wellness (responsive) -->
 @if (mostrarNavegacion && sessionService.enModoPaciente()) {
   <ui2-cream-bg></ui2-cream-bg>
-  <section class="flex h-dvh max-w-3xl flex-col m-auto overflow-hidden relative z-10">
-    <ui2-patient-header
-      [clinica]="clinicaActual()"
-      [userName]="userName()"
-      [avatarUrl]="avatarUrl()"
-    ></ui2-patient-header>
-    <main class="flex-1 min-h-0 overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
-      <router-outlet></router-outlet>
-    </main>
-    <ui2-patient-tab-bar></ui2-patient-tab-bar>
-  </section>
+
+  @if (esDesktop()) {
+    <!-- Desktop shell: sidebar fija + topbar + main scrollable -->
+    <section class="flex h-dvh flex-row relative z-10">
+      <ui2-patient-sidebar
+        class="shrink-0 w-[220px] lg:w-[260px] h-full"
+        [userName]="firstName()"
+        [userSubtitle]="userSubtitle()"
+        [avatarUrl]="avatarUrl()"
+        [clinicaNombre]="clinicaActual()"
+      ></ui2-patient-sidebar>
+      <div class="flex-1 flex flex-col min-w-0">
+        <ui2-web-topbar
+          [userName]="firstName()"
+          [avatarUrl]="avatarUrl()"
+        ></ui2-web-topbar>
+        <main class="flex-1 min-h-0 overflow-y-auto">
+          <router-outlet></router-outlet>
+        </main>
+      </div>
+    </section>
+  } @else {
+    <!-- Mobile shell: header floating + main scrollable + tab bar floating -->
+    <section class="flex h-dvh max-w-3xl flex-col m-auto overflow-hidden relative z-10">
+      <ui2-patient-header
+        [clinica]="clinicaActual()"
+        [userName]="userName()"
+        [avatarUrl]="avatarUrl()"
+      ></ui2-patient-header>
+      <main class="flex-1 min-h-0 overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
+        <router-outlet></router-outlet>
+      </main>
+      <ui2-patient-tab-bar></ui2-patient-tab-bar>
+    </section>
+  }
 }
 
 <!-- Modo fisio con navegación: shell legacy intacto -->

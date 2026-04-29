@@ -1,5 +1,8 @@
 <div class="ip-page">
-  <section class="ip-hero">
+  <!-- ========================================================== -->
+  <!-- HERO mobile (compact)                                       -->
+  <!-- ========================================================== -->
+  <section class="ip-hero ip-hero--mobile">
     <div class="ip-hero__text">
       <p class="ip-hero__overline">Hola {{ userName() }},</p>
       <h1 class="ip-hero__title">{{ heroTitle() }}</h1>
@@ -19,8 +22,79 @@
     </ui2-progress-ring>
   </section>
 
+  <!-- ========================================================== -->
+  <!-- HERO desktop (expanded block: ring + text + CTAs + stats)   -->
+  <!-- ========================================================== -->
+  <section class="ip-hero-web">
+    <div class="ip-hero-web__ring-col">
+      <ui2-progress-ring
+        [size]="170"
+        [stroke]="16"
+        [value]="progresoRatio()"
+        trackColor="rgba(231, 92, 62, 0.12)"
+      >
+        <div class="ip-hero-web__ring-num">
+          {{ progreso().completados
+          }}<span class="ip-hero-web__ring-den">/{{ progreso().total }}</span>
+        </div>
+        <div class="ip-hero-web__ring-label">hoy</div>
+      </ui2-progress-ring>
+    </div>
+
+    <div class="ip-hero-web__main">
+      <span class="ip-hero-web__eyebrow">Tu sesión de hoy</span>
+      <h1 class="ip-hero-web__title">{{ heroTitle() }}</h1>
+      <p class="ip-hero-web__sub" [innerHTML]="heroSubDesktop()"></p>
+
+      @if (hayActividadHoy() && !todoCompletado()) {
+        <div class="ip-hero-web__ctas">
+          <button
+            type="button"
+            class="ip-hero-web__cta-primary"
+            (click)="iniciarSesionHoy()"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">play_arrow</span>
+            <span>{{ progreso().completados > 0 ? 'Continuar sesión' : 'Empezar sesión' }}</span>
+          </button>
+          <button
+            type="button"
+            class="ip-hero-web__cta-secondary"
+            (click)="irAActividad()"
+          >
+            Ver plan completo
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="ip-hero-web__stats">
+      <ui2-mini-stat
+        icon="local_fire_department"
+        label="Racha"
+        [value]="rachaActual() + ' días'"
+        color="#d9a832"
+      ></ui2-mini-stat>
+      <ui2-mini-stat
+        icon="trending_up"
+        label="Adherencia"
+        [value]="adherencia() + '%'"
+        color="#22c55e"
+      ></ui2-mini-stat>
+      <ui2-mini-stat
+        icon="favorite"
+        label="Dolor"
+        [value]="dolorActual() + '/10'"
+        [sub]="dolorSub()"
+        color="#22c55e"
+      ></ui2-mini-stat>
+    </div>
+  </section>
+
+  <!-- ========================================================== -->
+  <!-- CTA BAR mobile (hero desktop ya tiene sus propios CTAs)     -->
+  <!-- ========================================================== -->
   @if (hayActividadHoy() && !todoCompletado()) {
-    <ui2-section [padding]="'4px 20px 14px'">
+    <ui2-section [padding]="'4px 20px 14px'" class="ip-mobile-only">
       <ui2-cta-bar
         [title]="progreso().completados > 0 ? 'CONTINUAR' : 'COMENZAR'"
         [subtitle]="progreso().completados + '/' + progreso().total + ' · ' + tiempoEstimadoHoy() + ' estimado'"
@@ -30,46 +104,115 @@
     </ui2-section>
   }
 
-  @if (ejerciciosHoy().length > 0) {
-    <ui2-horizontal-scroller
-      label="Ejercicios de hoy"
-      action="Ver todo →"
-      (actionClick)="irAActividad()"
-    >
-      @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
-        <ui2-exercise-card
-          [name]="ej.nombre"
-          [sets]="ej.sets"
-          [imageUrl]="ej.imageUrl"
-          [done]="ej.done"
-          [index]="i"
-          (cardClick)="irAActividad()"
-        ></ui2-exercise-card>
+  <!-- ========================================================== -->
+  <!-- CONTENIDO: 1-col (mobile) / 2-col (desktop)                 -->
+  <!-- ========================================================== -->
+  <div class="ip-grid">
+    <div class="ip-col-left">
+      <!-- Ejercicios — scroller en mobile -->
+      @if (ejerciciosHoy().length > 0) {
+        <ui2-horizontal-scroller
+          class="ip-mobile-only"
+          label="Ejercicios de hoy"
+          action="Ver todo →"
+          (actionClick)="irAActividad()"
+        >
+          @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
+            <ui2-exercise-card
+              [name]="ej.nombre"
+              [sets]="ej.sets"
+              [imageUrl]="ej.imageUrl"
+              [done]="ej.done"
+              [index]="i"
+              (cardClick)="irAActividad()"
+            ></ui2-exercise-card>
+          }
+        </ui2-horizontal-scroller>
       }
-    </ui2-horizontal-scroller>
-  }
 
-  @if (!cargandoFisio() && fisioAsignado()) {
-    <ui2-section [padding]="'6px 20px 14px'">
-      <ui2-fisio-message-card
-        [name]="fisioNombreCompleto()"
-        [avatarUrl]="fisioAvatarUrl()"
-        [text]="mensajeFisio()"
-        action="Responder"
-        (actionClick)="irAClinica()"
-      ></ui2-fisio-message-card>
-    </ui2-section>
-  }
+      <!-- Ejercicios — grid 3-col en desktop -->
+      @if (ejerciciosHoy().length > 0) {
+        <section class="ip-exercises-web ip-desktop-only">
+          <header class="ip-exercises-web__head">
+            <div>
+              <span class="ip-exercises-web__eyebrow">Ejercicios de hoy</span>
+              <h3 class="ip-exercises-web__title">
+                {{ ejerciciosHoy().length }} EJERCICIOS · ~{{ tiempoEstimadoHoy() }}
+              </h3>
+            </div>
+            <button
+              type="button"
+              class="ip-exercises-web__link"
+              (click)="irAActividad()"
+            >
+              Ver plan completo →
+            </button>
+          </header>
+          <div class="ip-exercises-web__grid">
+            @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
+              <ui2-exercise-card
+                class="ip-exercises-web__card"
+                [name]="ej.nombre"
+                [sets]="ej.sets"
+                [imageUrl]="ej.imageUrl"
+                [done]="ej.done"
+                [index]="i"
+                (cardClick)="irAActividad()"
+              ></ui2-exercise-card>
+            }
+          </div>
+        </section>
+      }
 
-  @if (clinicaActual(); as clinica) {
-    <ui2-section [padding]="'0 20px 14px'">
-      <ui2-clinic-hero-card
-        [name]="clinica.nombre"
-        [imageUrl]="clinicaImagenUrl()"
-        [address]="clinica.direccion ?? null"
-        [phone]="clinica.telefono ?? null"
-        (cardClick)="irAClinica()"
-      ></ui2-clinic-hero-card>
-    </ui2-section>
-  }
+      <!-- Activity chart — solo desktop (mock) -->
+      <ui2-web-activity-chart
+        class="ip-desktop-only"
+        [data]="actividad10dias()"
+        delta="↑ +12% vs semana anterior"
+      ></ui2-web-activity-chart>
+    </div>
+
+    <div class="ip-col-right">
+      <!-- Fisio message — siempre, en ambos viewports -->
+      @if (!cargandoFisio() && fisioAsignado()) {
+        <ui2-section class="ip-fisio-section" [padding]="'6px 20px 14px'">
+          <ui2-fisio-message-card
+            [name]="fisioNombreCompleto()"
+            [avatarUrl]="fisioAvatarUrl()"
+            [text]="mensajeFisio()"
+            action="Responder"
+            (actionClick)="irAClinica()"
+          ></ui2-fisio-message-card>
+        </ui2-section>
+      }
+
+      <!-- Próxima cita — solo desktop (mock) -->
+      <ui2-next-appointment
+        class="ip-desktop-only"
+        [data]="proximaCita()"
+        (rescheduleClick)="irAClinica()"
+        (calendarClick)="irAClinica()"
+      ></ui2-next-appointment>
+
+      <!-- Logros recientes — solo desktop (mock) -->
+      <ui2-web-achievements-list
+        class="ip-desktop-only"
+        [items]="logros()"
+        (actionClick)="irAActividad()"
+      ></ui2-web-achievements-list>
+
+      <!-- Clínica hero — solo mobile (en desktop la clínica vive en sidebar) -->
+      @if (clinicaActual(); as clinica) {
+        <ui2-section [padding]="'0 20px 14px'" class="ip-mobile-only">
+          <ui2-clinic-hero-card
+            [name]="clinica.nombre"
+            [imageUrl]="clinicaImagenUrl()"
+            [address]="clinica.direccion ?? null"
+            [phone]="clinica.telefono ?? null"
+            (cardClick)="irAClinica()"
+          ></ui2-clinic-hero-card>
+        </ui2-section>
+      }
+    </div>
+  </div>
 </div>

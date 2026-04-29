@@ -9,11 +9,15 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
   selector: 'ui2-exercise-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[class.ui2-ex-card-host--fluid]': 'fluid()',
+  },
   template: `
     <button
       type="button"
       class="ui2-ex-card"
       [class.ui2-ex-card--done]="done()"
+      [class.ui2-ex-card--fluid]="fluid()"
       (click)="cardClick.emit($event)"
     >
       <span
@@ -41,6 +45,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
   `,
   styles: [`
     :host { display: inline-block; flex-shrink: 0; }
+    :host(.ui2-ex-card-host--fluid) { display: block; width: 100%; }
     .ui2-ex-card {
       position: relative;
       display: flex;
@@ -58,6 +63,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
       color: inherit;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+    .ui2-ex-card--fluid { width: 100%; }
     .ui2-ex-card:active { transform: translateY(1px); }
     .ui2-ex-card--done {
       background: rgba(34, 197, 94, 0.08);
@@ -126,6 +132,7 @@ export class Ui2ExerciseCardComponent {
   readonly fallbackIcon = input<string>('fitness_center');
   readonly done = input<boolean>(false);
   readonly index = input<number>(0);
+  readonly fluid = input<boolean>(false);
 
   readonly cardClick = output<MouseEvent>();
 

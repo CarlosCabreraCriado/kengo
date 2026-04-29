@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import {
   RouterOutlet,
   Router,
@@ -17,7 +17,9 @@ import { CarritoEjerciciosComponent } from './features/planes/components/carrito
 import {
   Ui2CreamBgComponent,
   Ui2PatientHeaderComponent,
+  Ui2PatientSidebarComponent,
   Ui2PatientTabBarComponent,
+  Ui2WebTopbarComponent,
 } from './shared/ui-v2';
 
 @Component({
@@ -29,7 +31,9 @@ import {
     NavegacionComponent,
     Ui2CreamBgComponent,
     Ui2PatientHeaderComponent,
+    Ui2PatientSidebarComponent,
     Ui2PatientTabBarComponent,
+    Ui2WebTopbarComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -39,6 +43,7 @@ export class AppComponent implements OnInit {
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   public sessionService = inject(SessionService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
 
@@ -52,10 +57,31 @@ export class AppComponent implements OnInit {
   });
 
   public userName = computed(() => this.sessionService.nombreCompleto() || 'Usuario');
+  public firstName = computed(() => this.sessionService.usuario()?.first_name || 'Usuario');
   public avatarUrl = computed(() => this.sessionService.usuario()?.avatar_url ?? null);
+
+  /** Subtítulo del user row del sidebar — placeholder hasta tener datos reales del plan. */
+  public userSubtitle = computed<string | null>(() => {
+    const enModoPaciente = this.sessionService.enModoPaciente();
+    return enModoPaciente ? 'Plan activo' : null;
+  });
+
+  /** Breakpoint reactivo desktop (md: ≥768px). */
+  public esDesktop = signal<boolean>(
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches,
+  );
 
   // Rutas donde NO se debe mostrar la navegación
   private rutasSinNavegacion = ['/login', '/registro', '/magic', '/mi-plan', '/establecer-password'];
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const mq = window.matchMedia('(min-width: 768px)');
+      const handler = (e: MediaQueryListEvent) => this.esDesktop.set(e.matches);
+      mq.addEventListener('change', handler);
+      this.destroyRef.onDestroy(() => mq.removeEventListener('change', handler));
+    }
+  }
 
   ngOnInit() {
     // No ejecutar iniciarApp en /magic — MagicComponent maneja su propia autenticación

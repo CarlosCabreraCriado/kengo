@@ -15,13 +15,20 @@ import type {
 } from '../../../../../../types/global';
 import { rawAssetUrl, thumbnailUrl } from '../../../../../core/utils/asset-url';
 import {
+  Ui2ActivityDay,
+  Ui2AchievementListItem,
+  Ui2AppointmentVm,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2ExerciseCardComponent,
   Ui2FisioMessageCardComponent,
   Ui2HorizontalScrollerComponent,
+  Ui2MiniStatComponent,
+  Ui2NextAppointmentComponent,
   Ui2ProgressRingComponent,
   Ui2SectionComponent,
+  Ui2WebAchievementsListComponent,
+  Ui2WebActivityChartComponent,
 } from '../../../../../shared/ui-v2';
 
 interface ExerciseVm {
@@ -50,8 +57,12 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
     Ui2ExerciseCardComponent,
     Ui2FisioMessageCardComponent,
     Ui2HorizontalScrollerComponent,
+    Ui2MiniStatComponent,
+    Ui2NextAppointmentComponent,
     Ui2ProgressRingComponent,
     Ui2SectionComponent,
+    Ui2WebAchievementsListComponent,
+    Ui2WebActivityChartComponent,
   ],
   templateUrl: './inicio-paciente.component.html',
   styleUrl: './inicio-paciente.component.css',
@@ -155,6 +166,63 @@ export class InicioPacienteComponent {
   clinicaImagenUrl = computed<string | null>(() => {
     const fileId = this.clinicaActual()?.imagenes?.[0]?.fileId;
     return fileId ? rawAssetUrl(fileId) : null;
+  });
+
+  // ============================================================
+  // Datos mockeados para vista desktop — reemplazar cuando haya backend
+  // (adherencia, dolor, actividad histórica, logros, próxima cita).
+  // ============================================================
+
+  readonly adherencia = signal<number>(87);
+  readonly dolorActual = signal<number>(3);
+  readonly dolorAnterior = signal<number>(6);
+
+  readonly dolorSub = computed<string>(() => {
+    const actual = this.dolorActual();
+    const anterior = this.dolorAnterior();
+    if (anterior > actual) return `↓ desde ${anterior}`;
+    if (anterior < actual) return `↑ desde ${anterior}`;
+    return 'sin cambios';
+  });
+
+  readonly actividad10dias = signal<Ui2ActivityDay[]>([
+    { label: 'L', value: 1.0 },
+    { label: 'M', value: 0.85 },
+    { label: 'X', value: 0.6 },
+    { label: 'J', value: 1.0 },
+    { label: 'V', value: 0.9 },
+    { label: 'S', value: 0 },
+    { label: 'D', value: 0.4 },
+    { label: 'L', value: 1.0 },
+    { label: 'M', value: 0.85 },
+    { label: 'X', value: 0.33, today: true },
+  ]);
+
+  readonly logros = signal<Ui2AchievementListItem[]>([
+    { emoji: '🔥', title: '12 días de racha', sub: '¡Sigue así!', color: '#f59e0b', earned: true },
+    { emoji: '💪', title: '50 ejercicios', sub: 'Completados', color: '#22c55e', earned: true },
+    { emoji: '🎯', title: 'Mes perfecto', sub: 'Faltan 4 días', color: '#6366f1', earned: false },
+  ]);
+
+  readonly proximaCita = signal<Ui2AppointmentVm>({
+    weekday: 'LUN',
+    day: '28',
+    month: 'ABR',
+    titulo: 'Revisión hombro',
+    meta: '17:30 · 30 min · Presencial',
+    ubicacion: 'Myo Active Orotava',
+  });
+
+  readonly heroSubDesktop = computed<string>(() => {
+    const racha = this.rachaActual();
+    const total = this.progreso().total;
+    const completados = this.progreso().completados;
+    const restantes = total - completados;
+    if (this.todoCompletado()) return '¡Sesión de hoy completada! Disfruta del descanso.';
+    if (this.actividadHoyService.badgeType() === 'rest') return 'Hoy descansas. Vuelve mañana con energía.';
+    const rachaTxt = racha > 0 ? `Llevas <b>${racha} días de racha</b>. ` : '';
+    if (restantes > 0) return `${rachaTxt}Solo te quedan ${restantes} ejercicios para terminar la sesión de hoy.`;
+    return 'Empieza tu sesión de hoy.';
   });
 
   constructor() {
