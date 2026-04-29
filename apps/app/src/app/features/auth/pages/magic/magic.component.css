@@ -1,3 +1,49 @@
-.loginfondo {
-  clip-path: polygon(0% 0%, 46.3% 0%, 100% 100%, 0% 100%);
+.auth-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+}
+
+.auth-shell__panel {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-shell__brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.auth-shell__logo {
+  height: 56px;
+  width: auto;
+}
+
+.magic-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.magic-state__icon {
+  font-size: 40px;
+  color: var(--danger);
+}
+
+.magic-state__message {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-700);
+  line-height: 1.4;
 }

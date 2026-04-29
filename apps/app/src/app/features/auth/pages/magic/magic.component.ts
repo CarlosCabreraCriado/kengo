@@ -1,8 +1,14 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit, computed } from '@angular/core';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import {
+  Ui2CreamBgComponent,
+  Ui2CardComponent,
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 type TokenError =
   | 'TOKEN_NO_PROPORCIONADO'
@@ -24,7 +30,14 @@ const ERROR_MESSAGES: Record<TokenError, string> = {
 @Component({
   standalone: true,
   selector: 'app-magic',
-  imports: [RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    Ui2CreamBgComponent,
+    Ui2CardComponent,
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './magic.component.html',
   styleUrl: './magic.component.css',
 })
@@ -43,7 +56,6 @@ export class MagicComponent implements OnInit {
   });
 
   async ngOnInit() {
-    // Soportar tanto 't' (nuevo) como 'token' (legacy) como parámetros
     const token =
       this.route.snapshot.queryParamMap.get('t') ||
       this.route.snapshot.queryParamMap.get('token');
@@ -55,22 +67,15 @@ export class MagicComponent implements OnInit {
     }
 
     try {
-      // Limpiar sesión previa si existe
       await this.authService.logout(true);
-
-      // Consumir token de acceso (el BFF establece la cookie)
       const result = await this.authService.consumirTokenAcceso(token);
-
-      // Cargar usuario antes de navegar para que AuthGuard pase por fast path
       await this.sessionService.cargarMiUsuario();
 
       if (!result.tienePassword) {
-        // Redirigir a establecer contraseña
         this.router.navigate(['/establecer-password'], {
           state: { email: result.email },
         });
       } else {
-        // Redirigir a inicio
         this.router.navigateByUrl('/inicio');
       }
     } catch (err: unknown) {
@@ -79,5 +84,9 @@ export class MagicComponent implements OnInit {
       this.errorCode.set(errorFromServer || 'ERROR_DESCONOCIDO');
       this.loading.set(false);
     }
+  }
+
+  volverAlLogin(): void {
+    this.router.navigateByUrl('/login');
   }
 }

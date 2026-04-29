@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/services/auth.service';
@@ -7,22 +7,32 @@ import {
   passwordRequired,
   passwordRepeatRequired,
   passwordMatchValidator,
-  InputComponent,
-  ButtonComponent,
-  SpinnerComponent,
 } from '../../../../shared';
+import {
+  Ui2CreamBgComponent,
+  Ui2CardComponent,
+  Ui2BigTitleComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 @Component({
   standalone: true,
   selector: 'app-reset-password',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
     ReactiveFormsModule,
-    InputComponent,
-    ButtonComponent,
-    SpinnerComponent,
+    Ui2CreamBgComponent,
+    Ui2CardComponent,
+    Ui2BigTitleComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './reset-password.component.html',
+  styleUrl: './reset-password.component.css',
 })
 export class ResetPasswordComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -55,18 +65,26 @@ export class ResetPasswordComponent implements OnInit {
     return this.form.controls.confirmPassword;
   }
 
+  get codigoError(): string | undefined {
+    const ctrl = this.form.controls.codigo;
+    if (!ctrl.touched) return undefined;
+    if (ctrl.hasError('required')) return 'El código es obligatorio.';
+    if (ctrl.hasError('pattern')) return 'El código debe tener 6 dígitos.';
+    return undefined;
+  }
+
   get passwordError(): string | undefined {
     const ctrl = this.form.controls.password;
     if (!ctrl.touched) return undefined;
-    if (ctrl.hasError('required')) return 'La contrasena es obligatoria.';
-    if (ctrl.hasError('minlength')) return 'Minimo 8 caracteres.';
+    if (ctrl.hasError('required')) return 'La contraseña es obligatoria.';
+    if (ctrl.hasError('minlength')) return 'Mínimo 8 caracteres.';
     return undefined;
   }
 
   get confirmPasswordError(): string | undefined {
     const ctrl = this.form.controls.confirmPassword;
     if (!ctrl.touched) return undefined;
-    if (ctrl.hasError('passwordMismatch')) return 'Las contrasenas no coinciden.';
+    if (ctrl.hasError('passwordMismatch')) return 'Las contraseñas no coinciden.';
     return undefined;
   }
 
@@ -99,10 +117,10 @@ export class ResetPasswordComponent implements OnInit {
           this.router.navigate(['/login']);
         }, 2000);
       } else {
-        this.error.set(result.message || 'Error al restablecer la contrasena');
+        this.error.set(result.message || 'Error al restablecer la contraseña');
       }
     } catch {
-      this.error.set('Error al restablecer la contrasena. Intentalo de nuevo.');
+      this.error.set('Error al restablecer la contraseña. Inténtalo de nuevo.');
     } finally {
       this.loading.set(false);
     }
@@ -118,7 +136,7 @@ export class ResetPasswordComponent implements OnInit {
       await this.auth.solicitarRecuperacion(this.email());
       this.error.set(null);
     } catch {
-      this.error.set('Error al reenviar el codigo');
+      this.error.set('Error al reenviar el código');
     } finally {
       this.reenviando.set(false);
     }
