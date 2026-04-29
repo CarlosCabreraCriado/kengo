@@ -21,6 +21,10 @@ import {
   Ui2PatientTabBarComponent,
   Ui2WebTopbarComponent,
 } from './shared/ui-v2';
+import {
+  FISIO_SIDEBAR_GROUPS,
+  FISIO_TAB_BAR_TABS,
+} from './features/dashboard/pages/inicio/inicio-fisio/inicio-fisio.nav';
 
 @Component({
   selector: 'app-root',
@@ -48,6 +52,18 @@ export class AppComponent implements OnInit {
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
 
   public mostrarNavegacion = false;
+
+  /** Configuración de navegación V2 del modo fisio (sidebar + tab-bar). */
+  public readonly fisioSidebarGroups = FISIO_SIDEBAR_GROUPS;
+  public readonly fisioTabBarTabs = FISIO_TAB_BAR_TABS;
+
+  /** URL actual reactiva — usada para conmutar shell V2 ↔ legacy en modo fisio. */
+  private readonly currentUrl = signal<string>(this.router.url);
+
+  /** True cuando la URL está bajo `/inicio/fisio`. Activa el shell V2 también para el fisio. */
+  public readonly enRutaV2Fisio = computed(() =>
+    this.currentUrl().startsWith('/inicio/fisio'),
+  );
 
   /** Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado). */
   public clinicaActual = computed(() => {
@@ -111,6 +127,7 @@ export class AppComponent implements OnInit {
   }
 
   private actualizarNavegacion(url: string) {
+    this.currentUrl.set(url);
     this.mostrarNavegacion = !this.rutasSinNavegacion.some((ruta) =>
       url.startsWith(ruta),
     );

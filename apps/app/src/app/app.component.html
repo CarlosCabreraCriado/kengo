@@ -38,11 +38,53 @@
   }
 }
 
-<!-- Modo fisio con navegación: shell legacy intacto -->
+<!-- Modo fisio con navegación -->
 @if (mostrarNavegacion && sessionService.enModoFisio()) {
-  <section class="flex h-dvh max-w-7xl flex-col m-auto overflow-hidden">
-    <!-- Fondo decorativo -->
-    <div class="fixed top-0 left-0 -z-10 h-dvh w-screen overflow-hidden">
+  @if (enRutaV2Fisio()) {
+    <!-- Shell V2 (cream wellness) — solo activo bajo /inicio/fisio. -->
+    <ui2-cream-bg></ui2-cream-bg>
+
+    @if (esDesktop()) {
+      <!-- Desktop: sidebar + topbar + main scrollable -->
+      <section class="flex h-dvh flex-row relative z-10">
+        <ui2-patient-sidebar
+          class="shrink-0 h-full"
+          brandTag="FISIOTERAPIA"
+          [groups]="fisioSidebarGroups"
+          [userName]="firstName()"
+          [userSubtitle]="userSubtitle()"
+          [avatarUrl]="avatarUrl()"
+          [clinicaNombre]="clinicaActual()"
+        ></ui2-patient-sidebar>
+        <div class="flex-1 flex flex-col min-w-0">
+          <ui2-web-topbar
+            [userName]="firstName()"
+            [avatarUrl]="avatarUrl()"
+          ></ui2-web-topbar>
+          <main class="flex-1 min-h-0 overflow-y-auto">
+            <router-outlet></router-outlet>
+          </main>
+        </div>
+      </section>
+    } @else {
+      <!-- Mobile: header floating + main scrollable + tab bar floating -->
+      <section class="flex h-dvh max-w-3xl flex-col m-auto overflow-hidden relative z-10">
+        <ui2-patient-header
+          [clinica]="clinicaActual()"
+          [userName]="userName()"
+          [avatarUrl]="avatarUrl()"
+        ></ui2-patient-header>
+        <main class="flex-1 min-h-0 overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
+          <router-outlet></router-outlet>
+        </main>
+        <ui2-patient-tab-bar [tabs]="fisioTabBarTabs"></ui2-patient-tab-bar>
+      </section>
+    }
+  } @else {
+    <!-- Shell legacy del modo fisio (resto de pantallas, hasta migrarlas a V2) -->
+    <section class="flex h-dvh max-w-7xl flex-col m-auto overflow-hidden">
+      <!-- Fondo decorativo -->
+      <div class="fixed top-0 left-0 -z-10 h-dvh w-screen overflow-hidden">
       <!-- SVG con ondas dinámicas - colores basados en el tema de la clínica -->
       <svg
         class="fixed bottom-0 left-0 -z-10 min-w-screen rotate-180"
@@ -111,6 +153,7 @@
 
     <app-carrito-ejercicios></app-carrito-ejercicios>
   </section>
+  }
 }
 
 <!-- Auth / sin navegación: layout mínimo -->

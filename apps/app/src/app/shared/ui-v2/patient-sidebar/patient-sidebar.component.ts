@@ -10,7 +10,7 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
 const COLLAPSED_STORAGE_KEY = 'kengo:sidebar-collapsed';
 const EXPANDED_BREAKPOINT_QUERY = '(min-width: 1024px)';
 
-interface SidebarNavItem {
+export interface SidebarNavItem {
   id: string;
   label: string;
   icon: string;
@@ -19,7 +19,7 @@ interface SidebarNavItem {
   badge?: string | null;
 }
 
-interface SidebarNavGroup {
+export interface SidebarNavGroup {
   label: string;
   items: SidebarNavItem[];
 }
@@ -74,7 +74,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         </span>
         <span class="ui2-sidebar__brand-text">
           <span class="ui2-sidebar__brand-name">KENGO</span>
-          <span class="ui2-sidebar__brand-tag">RECUPERACIÓN</span>
+          <span class="ui2-sidebar__brand-tag">{{ brandTag() }}</span>
         </span>
       </a>
 
@@ -593,6 +593,7 @@ export class Ui2PatientSidebarComponent {
   readonly clinicaNombre = input<string | null>(null);
   readonly clinicaImagenUrl = input<string | null>(null);
   readonly groups = input<SidebarNavGroup[]>(DEFAULT_GROUPS);
+  readonly brandTag = input<string>('RECUPERACIÓN');
 
   public readonly sessionService = inject(SessionService);
   private readonly authService = inject(AuthService);

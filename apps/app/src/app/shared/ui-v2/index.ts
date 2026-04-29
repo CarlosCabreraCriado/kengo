@@ -71,5 +71,7 @@ export type { Ui2AchievementListItem } from './web-achievements-list/web-achieve
 export { Ui2CreamBgComponent } from './cream-bg/cream-bg.component';
 export { Ui2PatientHeaderComponent } from './patient-header/patient-header.component';
 export { Ui2PatientTabBarComponent } from './patient-tab-bar/patient-tab-bar.component';
+export type { TabItem } from './patient-tab-bar/patient-tab-bar.component';
 export { Ui2PatientSidebarComponent } from './patient-sidebar/patient-sidebar.component';
+export type { SidebarNavGroup, SidebarNavItem } from './patient-sidebar/patient-sidebar.component';
 export { Ui2WebTopbarComponent } from './web-topbar/web-topbar.component';

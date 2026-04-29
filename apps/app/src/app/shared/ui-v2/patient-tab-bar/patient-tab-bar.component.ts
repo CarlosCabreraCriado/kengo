@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
 
-interface TabItem {
+export interface TabItem {
   id: string;
   label: string;
   icon: string;

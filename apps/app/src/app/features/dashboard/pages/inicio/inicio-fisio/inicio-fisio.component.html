@@ -1,195 +1,213 @@
-<app-dashboard-header />
-
-<div class="dashboard-body">
-  <div class="body-inner">
-
-<!-- KPI Grid -->
-<section class="kpi-grid animate-in">
-  @if (dashboardService.cargando()) {
-    @for (_ of [1, 2, 3]; track $index) {
-      <div class="kpi-card kpi-skeleton">
-        <div class="skeleton-icon"></div>
-        <div class="skeleton-lines">
-          <div class="skeleton-line short"></div>
-          <div class="skeleton-line"></div>
-        </div>
-      </div>
-    }
-  } @else {
-    <div class="kpi-card" (click)="irAPacientes()">
-      <div class="kpi-icon">
-        <span class="material-symbols-outlined">group</span>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-value">{{ dashboardService.pacientesActivos() }}</span>
-        <span class="kpi-label">Pacientes activos</span>
-        <span class="kpi-subtitle">en tus planes</span>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon kpi-icon-adherencia">
-        <span class="material-symbols-outlined">trending_up</span>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-value">{{ dashboardService.adherenciaPromedio() }}%</span>
-        <span class="kpi-label">Adherencia promedio</span>
-        <span class="kpi-subtitle" [attr.data-tier]="adherenciaTier()">{{ adherenciaLabel() }}</span>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon kpi-icon-notificaciones">
-        <span class="material-symbols-outlined">notifications</span>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-value">{{ notificacionesService.pendientes() }}</span>
-        <span class="kpi-label">Notificaciones</span>
-        <span class="kpi-subtitle">sin leer</span>
-      </div>
-    </div>
+<div class="if-page">
+  <!-- ========================================================== -->
+  <!-- HERO mobile (compacto: overline + title + sub)              -->
+  <!-- ========================================================== -->
+  @if (estadoSituacion() !== 'cargando') {
+    <section class="if-hero if-mobile-only">
+      <p class="if-hero__overline">Hola{{ firstName() ? ', ' + firstName() : '' }}</p>
+      <h1 class="if-hero__title">{{ heroTitle() }}</h1>
+      <p class="if-hero__sub" [innerHTML]="heroSub()"></p>
+    </section>
   }
-</section>
 
-<!-- Resumen del día -->
-@if (!dashboardService.cargando()) {
-  <p class="resumen-dia animate-in" style="--delay: 0.05s">{{ resumenDia() }}</p>
-}
+  <!-- ========================================================== -->
+  <!-- HERO desktop (expanded block: text + CTAs + mini stats)     -->
+  <!-- ========================================================== -->
+  <section class="if-hero-web if-desktop-only">
+    <div class="if-hero-web__main">
+      <span class="if-hero-web__eyebrow">Resumen de hoy</span>
+      <h1 class="if-hero-web__title">{{ heroTitle() || 'CARGANDO…' }}</h1>
+      <p class="if-hero-web__sub" [innerHTML]="heroSubDesktop()"></p>
 
-<!-- Actividad reciente -->
-@if (!dashboardService.cargando() && hayNotificacionesRecientes()) {
-  <section class="notif-section animate-in" style="--delay: 0.08s">
-    <div class="section-header">
-      <h2 class="section-title">Actividad reciente</h2>
-      <button type="button" class="ver-todo-link" (click)="irAPacientes()">Ver todo</button>
-    </div>
-    <div class="notif-list">
-      @for (n of notificacionesRecientes(); track n.id) {
-        <article class="notif-card" (click)="irANotificacion(n)">
-          <div class="notif-avatar">
-            @if (avatarUrl(n.emisorAvatar); as url) {
-              <img [src]="url" [alt]="n.emisorNombre" />
-            } @else {
-              <span class="notif-avatar-fallback">{{ n.emisorNombre.charAt(0) }}</span>
-            }
-          </div>
-          <div class="notif-content">
-            <span class="notif-emisor">{{ n.emisorNombre }}</span>
-            <span class="notif-titulo">{{ n.titulo }}</span>
-            @if (n.texto) {
-              <span class="notif-texto">{{ n.texto }}</span>
-            }
-          </div>
-          <div class="notif-meta">
-            <span class="notif-tiempo">{{ formatearTiempoRelativo(n.fecha) }}</span>
-            <span class="notif-dot"></span>
-          </div>
-        </article>
-      }
-    </div>
-  </section>
-}
-
-<!-- Planes por vencer -->
-@if (!dashboardService.cargando()) {
-  @if (planesCount() > 0) {
-    <section class="expiring-section animate-in" style="--delay: 0.1s">
-      <h2 class="section-title">
-        Planes por vencer
-        <span class="count-badge">{{ planesCount() }}</span>
-      </h2>
-      <div class="expiring-plans">
-        @for (plan of dashboardService.planesProximosAExpirar(); track plan.id) {
-          <article class="expiring-card" (click)="irAPaciente(plan.pacienteId)"
-            [attr.data-urgencia]="diasParaVencer(plan.fechaFin) <= 2 ? 'alta' : 'media'">
-            <div class="expiring-stripe"></div>
-            <div class="expiring-icon">
-              <span class="material-symbols-outlined">
-                {{ diasParaVencer(plan.fechaFin) <= 2 ? 'warning' : 'schedule' }}
-              </span>
-            </div>
-            <div class="expiring-info">
-              <span class="expiring-paciente">{{ plan.pacienteNombre }}</span>
-              <span class="expiring-plan">{{ plan.titulo }}</span>
-            </div>
-            <div class="expiring-badge" [attr.data-urgencia]="diasParaVencer(plan.fechaFin) <= 2 ? 'alta' : 'media'">
-              @if (diasParaVencer(plan.fechaFin) === 0) {
-                Vence hoy
-              } @else if (diasParaVencer(plan.fechaFin) === 1) {
-                Vence mañana
-              } @else {
-                Vence en {{ diasParaVencer(plan.fechaFin) }} días
-              }
-            </div>
-          </article>
+      <div class="if-hero-web__ctas">
+        @if (estadoSituacion() === 'urgente' || estadoSituacion() === 'pendiente') {
+          <button type="button" class="if-hero-web__cta-primary" (click)="irAPacientes()">
+            <span class="material-symbols-outlined" aria-hidden="true">priority_high</span>
+            <span>Ver pacientes</span>
+          </button>
+          <button type="button" class="if-hero-web__cta-secondary" (click)="irACrearPlan()">
+            Crear plan
+          </button>
+        } @else {
+          <button type="button" class="if-hero-web__cta-primary" (click)="irACrearPlan()">
+            <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+            <span>Crear nuevo plan</span>
+          </button>
+          <button type="button" class="if-hero-web__cta-secondary" (click)="irAPacientes()">
+            Ver pacientes
+          </button>
         }
       </div>
-    </section>
+    </div>
+
+    <div class="if-hero-web__stats">
+      <ui2-mini-stat
+        icon="group"
+        label="Pacientes"
+        [value]="dashboardService.pacientesActivos().toString()"
+        color="var(--kengo-primary)"
+      ></ui2-mini-stat>
+      <ui2-mini-stat
+        icon="trending_up"
+        label="Adherencia"
+        [value]="dashboardService.adherenciaPromedio() + '%'"
+        [sub]="adherenciaDelta()"
+        [color]="adherenciaDeltaColor()"
+        [subColor]="adherenciaDeltaColor()"
+      ></ui2-mini-stat>
+      <ui2-mini-stat
+        icon="event_available"
+        label="Sesiones hoy"
+        [value]="sesionesHoyMock().toString()"
+        color="var(--ink-700)"
+      ></ui2-mini-stat>
+    </div>
+  </section>
+
+  <!-- ========================================================== -->
+  <!-- KPIs mobile (3-col)                                         -->
+  <!-- ========================================================== -->
+  @if (!dashboardService.cargando()) {
+    <ui2-section class="if-mobile-only" [padding]="'4px 20px 10px'">
+      <div class="if-kpi-grid">
+        <ui2-kpi-card
+          icon="group"
+          label="Pacientes"
+          [value]="dashboardService.pacientesActivos().toString()"
+        ></ui2-kpi-card>
+        <ui2-kpi-card
+          icon="trending_up"
+          label="Adherencia"
+          [value]="dashboardService.adherenciaPromedio().toString()"
+          unit="%"
+          [delta]="adherenciaDelta()"
+          [deltaColor]="adherenciaDeltaColor()"
+        ></ui2-kpi-card>
+        <ui2-kpi-card
+          icon="notifications"
+          label="Alertas"
+          [value]="alertasCount().toString()"
+        ></ui2-kpi-card>
+      </div>
+    </ui2-section>
+
+    <!-- ============= CTA mobile (varía por estado) =============== -->
+    <ui2-section class="if-mobile-only" [padding]="'6px 20px 14px'">
+      @if (estadoSituacion() === 'urgente') {
+        <ui2-cta-bar
+          variant="primary"
+          icon="priority_high"
+          title="REVISAR ALERTAS"
+          [subtitle]="alertasCount() + ' sin leer · ' + planesCount() + ' planes por vencer'"
+          (clicked)="irAPacientes()"
+        ></ui2-cta-bar>
+      } @else if (estadoSituacion() === 'pendiente') {
+        <ui2-cta-bar
+          variant="primary"
+          icon="schedule"
+          title="REVISAR PLANES"
+          [subtitle]="planesCount() + ' planes por vencer próximamente'"
+          (clicked)="irAPacientes()"
+        ></ui2-cta-bar>
+      } @else {
+        <ui2-cta-bar
+          variant="secondary"
+          icon="add_circle"
+          title="CREAR NUEVO PLAN"
+          subtitle="Para un paciente existente"
+          (clicked)="irACrearPlan()"
+        ></ui2-cta-bar>
+      }
+    </ui2-section>
   }
 
-  <!-- Estado vacío: sin pacientes -->
-  @if (dashboardService.pacientesActivos() === 0) {
-    <section class="empty-state animate-in" style="--delay: 0.1s">
-      <span class="material-symbols-outlined empty-icon">group_add</span>
-      <p class="empty-text">Aún no tienes pacientes activos</p>
-      <button type="button" class="empty-cta" (click)="irAClinica()">
-        <span class="material-symbols-outlined">add</span>
-        Ir a Mi Clínica
-      </button>
-    </section>
-  }
-}
+  <!-- ========================================================== -->
+  <!-- CONTENIDO: 1-col (mobile) / 2-col (desktop)                 -->
+  <!-- ========================================================== -->
+  <div class="if-grid">
+    <div class="if-col-left">
+      <!-- Actividad reciente — ambos viewports -->
+      @if (hayNotificacionesRecientes()) {
+        <ui2-section
+          label="Actividad reciente"
+          action="Ver todo"
+          (actionClick)="irAPacientes()"
+        >
+          <div class="if-list">
+            @for (n of notificacionesRecientes(); track n.id; let i = $index) {
+              <ui2-list-row
+                icon="notifications"
+                iconColor="var(--kengo-primary)"
+                [title]="n.emisorNombre + ' · ' + n.titulo"
+                [subtitle]="(n.texto ? n.texto + ' · ' : '') + formatearTiempoRelativo(n.fecha)"
+                [isFirst]="i === 0"
+                [rowClickable]="true"
+                (rowClick)="irANotificacion(n)"
+              ></ui2-list-row>
+            }
+          </div>
+        </ui2-section>
+      }
 
-<!-- Quick Actions -->
-<section class="actions-section animate-in" style="--delay: 0.15s">
-  <h2 class="section-title">Accesos rápidos</h2>
+      <!-- Activity chart — solo desktop (mock) -->
+      <ui2-web-activity-chart
+        class="if-desktop-only if-activity-chart"
+        eyebrow="Actividad de la clínica"
+        title="Esta semana"
+        delta="↑ +8% vs semana anterior"
+        [data]="actividad10dias()"
+      ></ui2-web-activity-chart>
+    </div>
 
-  <button type="button" class="crear-plan-cta" (click)="irACrearPlan()">
-    <span class="material-symbols-outlined">add_circle</span>
-    Crear nuevo plan
-  </button>
+    <div class="if-col-right">
+      <!-- Planes por vencer -->
+      @if (!dashboardService.cargando() && planesCount() > 0) {
+        <ui2-section [label]="'Planes por vencer'">
+          <div class="if-list if-list--with-badge">
+            @for (plan of planesPorVencer(); track plan.id; let i = $index) {
+              <ui2-list-row
+                [icon]="iconoUrgencia(plan)"
+                [iconColor]="colorUrgencia(plan)"
+                [title]="plan.pacienteNombre"
+                [subtitle]="plan.titulo + ' · ' + textoVencimiento(plan)"
+                [isFirst]="i === 0"
+                [rowClickable]="true"
+                (rowClick)="irAPaciente(plan.pacienteId)"
+              >
+                <ui2-pill
+                  [variant]="diasParaVencer(plan.fechaFin) <= 2 ? 'danger' : 'warning'"
+                  size="sm"
+                >{{ diasParaVencer(plan.fechaFin) }}d</ui2-pill>
+              </ui2-list-row>
+            }
+          </div>
+        </ui2-section>
+      }
 
-  <div class="actions-grid">
-    <article class="action-card" (click)="irAPacientes()">
-      <div class="action-image">
-        <img src="assets/portadas/opcion-pacientes.webp" alt="Mis Pacientes" loading="lazy" />
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Mis Pacientes</h3>
-        <p class="action-subtitle">Gestiona tus pacientes</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
+      <!-- Empty state: sin pacientes -->
+      @if (!dashboardService.cargando() && dashboardService.pacientesActivos() === 0) {
+        <ui2-empty-state
+          icon="group_add"
+          title="Aún no tienes pacientes"
+          message="Empieza añadiendo tu primer paciente desde Mi Clínica."
+          actionLabel="Ir a Mi Clínica"
+          actionIcon="apartment"
+          (action)="irAClinica()"
+        ></ui2-empty-state>
+      }
 
-    <article class="action-card" (click)="irAGaleria()">
-      <div class="action-image">
-        <img src="assets/portadas/opcion-galeria.webp" alt="Galería" loading="lazy" />
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Galería</h3>
-        <p class="action-subtitle">Ejercicios y plantillas</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
-
-    <article class="action-card" (click)="irAClinica()">
-      <div class="action-image">
-        <img src="assets/portadas/opcion-clinica.webp" alt="Mi Clínica" loading="lazy" />
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Mi Clínica</h3>
-        <p class="action-subtitle">Administra tu centro</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
-  </div>
-</section>
-
+      <!-- Clínica -->
+      @if (clinicaActual(); as clinica) {
+        <ui2-section [padding]="'0 20px 14px'" class="if-clinica-section">
+          <ui2-clinic-hero-card
+            [name]="clinica.nombre"
+            [imageUrl]="clinicaImagenUrl()"
+            [address]="clinica.direccion ?? null"
+            [phone]="clinica.telefono ?? null"
+            (cardClick)="irAClinica()"
+          ></ui2-clinic-hero-card>
+        </ui2-section>
+      }
+    </div>
   </div>
 </div>
