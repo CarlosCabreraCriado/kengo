@@ -60,10 +60,14 @@ export class AppComponent implements OnInit {
   /** URL actual reactiva — usada para conmutar shell V2 ↔ legacy en modo fisio. */
   private readonly currentUrl = signal<string>(this.router.url);
 
-  /** True cuando la URL está bajo `/inicio/fisio`. Activa el shell V2 también para el fisio. */
-  public readonly enRutaV2Fisio = computed(() =>
-    this.currentUrl().startsWith('/inicio/fisio'),
-  );
+  /** Rutas del modo fisio que ya están migradas al shell V2. */
+  private readonly rutasV2Fisio = ['/inicio/fisio', '/mis-pacientes', '/ejercicios', '/rutinas'];
+
+  /** True cuando la URL pertenece a una ruta del fisio ya migrada al shell V2. */
+  public readonly enRutaV2Fisio = computed(() => {
+    const url = this.currentUrl();
+    return this.rutasV2Fisio.some((r) => url.startsWith(r));
+  });
 
   /** Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado). */
   public clinicaActual = computed(() => {

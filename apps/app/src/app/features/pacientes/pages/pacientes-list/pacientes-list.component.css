@@ -1,884 +1,373 @@
-@reference "tailwindcss";
-
-/* ============================================
-   MIS PACIENTES - KENGO APP REDESIGN
-   Mobile-first, glassmorphism, aurora effects
-   ============================================ */
-
-/* === Variables === */
 :host {
-  /* Color variables now defined globally via ThemeService */
-  --kengo-surface: rgba(255, 255, 255, 0.55);
-  --kengo-glass: rgba(255, 255, 255, 0.5);
-  --kengo-border: rgba(255, 255, 255, 0.25);
-  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  display: block;
+  width: 100%;
+}
+
+.pl-page {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+  padding-bottom: 24px;
+}
+
+/* ========================================================== */
+/*  Header                                                     */
+/* ========================================================== */
+
+.pl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pl-header__title { display: flex; flex-direction: column; gap: 2px; }
+
+.pl-header__h1 {
+  margin: 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.3px;
+  color: var(--kengo-primary);
+  text-transform: uppercase;
+}
+
+.pl-header__sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1;
+}
+
+.pl-header__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ========================================================== */
+/*  Búsqueda + toggle de vista                                 */
+/* ========================================================== */
+
+.pl-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pl-controls__search {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  width: 100%;
+  min-width: 200px;
 }
 
-/* === Page Container === */
-.patients-page {
-  @apply relative flex h-full w-full flex-col overflow-hidden;
+.pl-controls__view { flex-shrink: 0; }
+
+/* ========================================================== */
+/*  Filterbar (filtros + sort)                                 */
+/* ========================================================== */
+
+.pl-filterbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-/* === Aurora Background === */
-.aurora-bg {
-  @apply pointer-events-none fixed inset-0 overflow-hidden;
-  z-index: 0;
+.pl-filterbar__filters {
+  flex: 1;
+  min-width: 240px;
 }
 
-.aurora-wave {
-  @apply absolute rounded-full;
-  filter: blur(60px);
-  opacity: 0.5;
-  mix-blend-mode: multiply;
-}
-
-.aurora-wave-1 {
-  @apply -top-20 -right-20 h-[300px] w-[300px];
-  background: radial-gradient(
-    circle,
-    rgba(var(--kengo-primary-rgb), 0.4) 0%,
-    transparent 70%
-  );
-  animation: auroraFloat1 12s ease-in-out infinite;
-}
-
-.aurora-wave-2 {
-  @apply top-1/3 -left-20 h-[250px] w-[250px];
-  background: radial-gradient(
-    circle,
-    rgba(var(--kengo-tertiary-rgb), 0.35) 0%,
-    transparent 70%
-  );
-  animation: auroraFloat2 15s ease-in-out infinite;
-}
-
-.aurora-wave-3 {
-  @apply right-10 bottom-40 h-[200px] w-[200px];
-  background: radial-gradient(
-    circle,
-    rgba(255, 180, 164, 0.3) 0%,
-    transparent 70%
-  );
-  animation: auroraFloat3 10s ease-in-out infinite;
-}
-
-@keyframes auroraFloat1 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translate(-30px, 40px) scale(1.15);
-    opacity: 0.7;
-  }
-}
-
-@keyframes auroraFloat2 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translate(40px, -20px) scale(1.1);
-    opacity: 0.6;
-  }
-}
-
-@keyframes auroraFloat3 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.35;
-  }
-  50% {
-    transform: translate(-20px, -30px) scale(1.2);
-    opacity: 0.55;
-  }
-}
-
-/* === Header con glassmorphism (solo móvil) === */
-.header-glass {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-@media (max-width: 767.98px) {
-  .header-glass {
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.85) 60%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-  }
-}
-
-/* === Main Content === */
-.patients-main {
-  @apply relative z-10 flex-1 overflow-y-auto px-4 pt-2;
-  padding-bottom: calc(var(--safe-area-bottom) + 100px);
-  max-width: 900px;
-  margin: 0 auto;
-  width: 100%;
-  overscroll-behavior-y: none;
-}
-
-@media (min-width: 768px) {
-  .patients-main {
-    padding-bottom: 32px;
-  }
-}
-
-/* === State Cards === */
-.state-card {
-  @apply relative overflow-hidden rounded-3xl p-10 text-center;
-  background: var(--kengo-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--kengo-border);
-  box-shadow: var(--kengo-shadow);
-}
-
-.shimmer-effect {
-  @apply absolute inset-0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.5) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.state-icon {
-  @apply mx-auto flex h-20 w-20 items-center justify-center rounded-2xl;
-  background: linear-gradient(135deg, #ffede8 0%, white 100%);
-}
-
-.state-icon .material-symbols-outlined {
-  @apply text-5xl;
-  color: rgba(var(--kengo-primary-rgb), 0.5);
-}
-
-.state-icon.pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-}
-
-.state-icon.error {
-  @apply bg-red-50;
-}
-
-.state-icon.error .material-symbols-outlined {
-  @apply text-red-400;
-}
-
-.state-icon.empty .material-symbols-outlined {
-  @apply text-zinc-300;
-}
-
-.state-title {
-  @apply mt-4 mb-1 text-lg font-semibold text-zinc-700;
-}
-
-.state-text {
-  @apply mx-auto mt-3 max-w-xs text-sm text-zinc-500;
-}
-
-.state-text.error {
-  @apply text-red-600;
-}
-
-.retry-btn {
-  @apply mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl border-[1.5px] border-red-300 bg-transparent px-4 py-2.5 text-sm font-medium text-red-600 transition-all;
-}
-
-.retry-btn:hover {
-  @apply border-red-400 bg-red-50;
-}
-
-.retry-btn .material-symbols-outlined {
-  @apply text-lg;
-}
-
-.cta-btn {
-  @apply mt-5 inline-flex cursor-pointer items-center gap-2 rounded-xl border-none px-6 py-3 text-sm font-semibold text-white transition-all;
-  background: linear-gradient(
-    135deg,
-    var(--kengo-primary) 0%,
-    var(--kengo-primary-dark) 100%
-  );
-  box-shadow: var(--kengo-shadow-primary);
-}
-
-.cta-btn:hover {
-  @apply -translate-y-0.5;
-  box-shadow: 0 6px 20px rgba(var(--kengo-primary-rgb), 0.4);
-}
-
-.cta-btn:active {
-  @apply scale-[0.98];
-}
-
-.cta-btn .material-symbols-outlined {
-  @apply text-xl;
-}
-
-/* === Stats Bar === */
-.stats-bar {
-  @apply mb-4 flex items-center gap-3;
-}
-
-.stat-pill {
-  @apply inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-white/40 bg-white/60 px-4 py-2 transition-all;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  font: inherit;
-  outline: none;
-}
-
-.stat-pill:hover {
-  @apply bg-white/80;
-  transform: translateY(-1px);
-}
-
-.stat-pill:active {
-  @apply scale-[0.97];
-}
-
-.stat-pill.selected {
-  border-color: rgba(var(--kengo-primary-rgb), 0.5);
-  background-color: rgba(var(--kengo-primary-rgb), 0.12);
-  box-shadow: 0 2px 12px rgba(var(--kengo-primary-rgb), 0.2);
-}
-
-.stat-pill.selected .stat-icon {
-  color: var(--kengo-primary);
-}
-
-.stat-pill.selected .stat-value {
-  color: var(--kengo-primary);
-}
-
-.stat-pill.selected .stat-label {
-  color: var(--kengo-primary);
-  @apply font-semibold;
-}
-
-.stat-icon {
-  @apply text-lg text-zinc-400;
-}
-
-.stat-value {
-  @apply text-base font-bold text-zinc-700;
-}
-
-.stat-label {
-  @apply text-xs text-zinc-500;
-}
-
-/* === Patients Grid === */
-.patients-grid {
-  z-index: -10;
+.pl-sort {
   position: relative;
+  flex-shrink: 0;
 }
 
-.patients-grid {
-  @apply grid grid-cols-1 gap-3;
+.pl-sort__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--ink-300);
+  background: var(--cream-50);
+  color: var(--ink-700);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
-@media (min-width: 640px) {
-  .patients-grid {
-    @apply grid-cols-2 gap-4;
-  }
-}
+.pl-sort__trigger:hover { background: white; }
 
-@media (min-width: 1024px) {
-  .patients-grid {
-    @apply grid-cols-3;
-  }
-}
-
-/* === Patient Card === */
-.patient-card {
-  @apply relative cursor-pointer overflow-hidden rounded-3xl transition-all;
-  background: var(--kengo-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--kengo-border);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  animation: cardSlideIn 0.4s ease-out forwards;
-  animation-delay: var(--card-delay, 0s);
-  opacity: 0;
-}
-
-@keyframes cardSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.patient-card:hover {
-  @apply -translate-y-1;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.patient-card:active {
-  @apply scale-[0.98];
-}
-
-.card-content {
-  @apply flex items-start gap-3.5 p-4;
-}
-
-/* === Patient Avatar === */
-.patient-avatar {
-  @apply relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl;
-  background: linear-gradient(
-    135deg,
-    var(--kengo-primary) 0%,
-    var(--kengo-tertiary) 100%
-  );
-  box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.25);
-}
-
-.avatar-img {
-  @apply h-full w-full object-cover;
-}
-
-.avatar-initials {
-  @apply text-lg font-bold text-white;
-}
-
-.status-dot {
-  @apply absolute right-0.5 bottom-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-400 transition-colors;
-  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
-}
-
-.status-dot.inactive {
-  @apply bg-amber-400;
-  box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
-}
-
-/* === Patient Info === */
-.patient-info {
-  @apply min-w-0 flex-1;
-}
-
-.patient-name {
-  @apply m-0 truncate text-base leading-tight font-semibold text-zinc-800;
-}
-
-.info-row {
-  @apply mt-1.5 flex items-center gap-1.5;
-}
-
-.info-icon {
-  @apply shrink-0 text-sm text-zinc-400;
-}
-
-.info-text {
-  @apply truncate text-xs text-zinc-500;
-}
-
-.clinic-badge {
-  @apply mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[0.65rem] font-semibold text-amber-700;
-  background-color: rgba(var(--kengo-tertiary-rgb), 0.15);
-}
-
-.clinic-badge .material-symbols-outlined {
-  @apply text-xs;
-}
-
-.fisio-badge {
-  @apply mt-1 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[0.65rem] font-medium text-blue-600;
-  background-color: rgba(59, 130, 246, 0.1);
-}
-
-.fisio-badge .material-symbols-outlined {
-  @apply text-xs;
-}
-
-.card-arrow {
-  @apply mt-3 text-xl text-zinc-300 transition-all;
-}
-
-.patient-card:hover .card-arrow {
-  @apply translate-x-1;
+.pl-sort__trigger--active {
+  border-color: var(--kengo-primary);
   color: var(--kengo-primary);
+  background: rgba(231, 92, 62, 0.08);
 }
 
-/* === Card Actions === */
-.card-actions {
-  @apply flex items-center justify-end gap-2 px-4 pt-0 pb-3;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: all 0.2s ease;
+.pl-sort__trigger .material-symbols-outlined { font-size: 18px; }
+
+.pl-sort__chevron {
+  transition: transform 0.15s ease;
 }
 
-.patient-card:hover .card-actions,
-.patient-card:focus-within .card-actions {
-  opacity: 1;
-  transform: translateY(0);
+.pl-sort__chevron--open { transform: rotate(180deg); }
+
+.pl-sort__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card-strong);
+  overflow: hidden;
+  animation: pl-menu-in 0.16s ease-out;
 }
 
-/* Always show on touch devices */
-@media (hover: none) {
-  .card-actions {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes pl-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.mini-action {
-  @apply inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-none no-underline transition-all;
-  background-color: rgba(var(--kengo-primary-rgb), 0.1);
+.pl-sort__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.pl-sort__option:hover { background: var(--cream-100); }
+
+.pl-sort__option--selected {
   color: var(--kengo-primary);
+  background: rgba(231, 92, 62, 0.08);
 }
 
-.mini-action:hover {
-  @apply scale-110 text-white;
-  background-color: var(--kengo-primary);
+.pl-sort__option .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--ink-500);
 }
 
-.mini-action .material-symbols-outlined {
-  @apply text-lg;
+.pl-sort__option--selected .material-symbols-outlined { color: var(--kengo-primary); }
+
+/* ========================================================== */
+/*  Estado de carga                                            */
+/* ========================================================== */
+
+.pl-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 20px;
 }
 
-/* === Patients List View === */
-.patients-list {
-  @apply flex flex-col gap-2 overflow-hidden rounded-3xl;
-  background: var(--kengo-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--kengo-border);
+/* ========================================================== */
+/*  Vista cuadrícula (cards)                                   */
+/* ========================================================== */
+
+.pl-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
-.patient-row {
-  @apply flex cursor-pointer items-center gap-3 p-3.5 transition-colors;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  animation: rowSlideIn 0.3s ease-out forwards;
-  animation-delay: var(--row-delay, 0s);
-  opacity: 0;
+.pl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  width: 100%;
+  text-align: left;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 22px;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+  font: inherit;
+  color: inherit;
 }
 
-@keyframes rowSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.pl-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-strong);
 }
 
-.patient-row:last-child {
-  border-bottom: none;
+.pl-card:active { transform: translateY(0); }
+
+.pl-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.patient-row:hover {
-  @apply bg-white/40;
+.pl-card__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.patient-row:active {
-  @apply bg-white/60;
+.pl-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.row-avatar {
-  @apply flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl;
-  background: linear-gradient(
-    135deg,
-    var(--kengo-primary) 0%,
-    var(--kengo-tertiary) 100%
-  );
+.pl-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-500);
+  line-height: 1;
 }
 
-.row-avatar .avatar-img {
-  @apply h-full w-full object-cover;
+.pl-card__chip .material-symbols-outlined {
+  font-size: 14px;
+  color: var(--ink-400);
 }
 
-.row-avatar .avatar-initials {
-  @apply text-sm font-bold text-white;
+.pl-card__arrow {
+  font-size: 22px;
+  color: var(--ink-400);
+  flex-shrink: 0;
 }
 
-.row-info {
-  @apply min-w-0 flex-1;
+.pl-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.row-name {
-  @apply m-0 truncate text-sm font-semibold text-zinc-800;
+.pl-card__meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-700);
+  min-width: 0;
 }
 
-.row-detail {
-  @apply mt-0.5 block truncate text-xs text-zinc-500;
+.pl-card__meta-row .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--ink-400);
+  flex-shrink: 0;
 }
 
-.row-actions {
-  @apply flex items-center gap-1;
+.pl-card__meta-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.row-action {
-  @apply inline-flex h-8 w-8 items-center justify-center rounded-lg no-underline transition-all;
-  background-color: rgba(var(--kengo-primary-rgb), 0.1);
-  color: var(--kengo-primary);
+.pl-card__meta-text--empty { color: var(--ink-400); }
+
+.pl-card__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
 }
 
-.row-action:hover {
-  @apply text-white;
-  background-color: var(--kengo-primary);
+/* ========================================================== */
+/*  Vista lista                                                */
+/* ========================================================== */
+
+.pl-list {
+  background: white;
+  border-radius: 22px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 
-.row-action .material-symbols-outlined {
-  @apply text-base;
+.pl-list__arrow {
+  font-size: 20px;
+  color: var(--ink-400);
 }
 
-.row-arrow {
-  @apply text-lg text-zinc-300;
-}
+/* ========================================================== */
+/*  FAB (mobile)                                               */
+/* ========================================================== */
 
-.patient-row:hover .row-arrow {
-  color: var(--kengo-primary);
-}
-
-/* === Floating Action Button === */
-.fab {
-  @apply fixed z-50 flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl border-none text-white transition-all;
+.pl-fab {
+  position: fixed;
+  bottom: calc(96px + env(safe-area-inset-bottom));
   right: 20px;
-  bottom: calc(var(--safe-area-bottom) + 90px);
-  background: linear-gradient(
-    135deg,
-    var(--kengo-primary) 0%,
-    var(--kengo-primary-dark) 100%
-  );
-  box-shadow: 0 8px 24px rgba(var(--kengo-primary-rgb), 0.4);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 0;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  color: white;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -6px rgba(231, 92, 62, 0.5);
+  z-index: 25;
+  transition: transform 0.12s ease, filter 0.2s ease;
 }
 
-.fab:hover {
-  @apply -translate-y-1;
-  box-shadow: 0 12px 32px rgba(var(--kengo-primary-rgb), 0.5);
-}
+.pl-fab:hover { filter: brightness(1.04); }
+.pl-fab:active { transform: translateY(1px) scale(0.96); }
+.pl-fab .material-symbols-outlined { font-size: 28px; }
 
-.fab:active {
-  @apply scale-95;
-}
-
-.fab .material-symbols-outlined {
-  @apply text-2xl;
-}
+/* ========================================================== */
+/*  ≥ md: layout desktop                                       */
+/* ========================================================== */
 
 @media (min-width: 768px) {
-  .fab {
-    @apply hidden;
+  .pl-page {
+    padding: 16px 8px 32px;
+    gap: 8px;
+  }
+
+  .pl-header__h1 { font-size: 32px; }
+
+  .pl-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 }
 
-/* === Animations === */
-.animate-in {
-  animation: fadeInUp 0.4s ease-out forwards;
-  animation-delay: var(--delay, 0s);
-  opacity: 0;
-}
+/* ========================================================== */
+/*  ≥ lg: 3 columnas                                           */
+/* ========================================================== */
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* === Icon Filled === */
-.icon-filled {
-  font-variation-settings:
-    "FILL" 1,
-    "wght" 400,
-    "GRAD" 0,
-    "opsz" 24;
-}
-
-/* === Desktop Adjustments === */
 @media (min-width: 1024px) {
-  .patients-header {
-    @apply px-8 py-4;
+  .pl-page {
+    padding: 24px 16px 40px;
   }
 
-  .header-content {
-    @apply max-w-5xl;
+  .pl-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  .header-title {
-    @apply text-2xl;
-  }
-
-  .search-container {
-    @apply max-w-5xl;
-  }
-
-  .search-bar {
-    @apply max-w-md;
-  }
-
-  .patients-main {
-    @apply px-8 pt-4;
-    max-width: 1200px;
-  }
-
-  .patient-card {
-    @apply rounded-2xl;
-  }
-}
-
-/* === Add Patient Card === */
-.add-patient-card {
-  border: 2px dashed rgba(var(--kengo-primary-rgb), 0.3);
-  background: rgba(var(--kengo-primary-rgb), 0.03);
-  opacity: 1;
-  animation: none;
-}
-
-.add-patient-card:hover {
-  border-color: rgba(var(--kengo-primary-rgb), 0.5);
-  background: rgba(var(--kengo-primary-rgb), 0.08);
-}
-
-.add-patient-card .card-arrow {
-  color: rgba(var(--kengo-primary-rgb), 0.5);
-}
-
-.add-patient-card:hover .card-arrow {
-  color: var(--kengo-primary);
-}
-
-.add-avatar {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--kengo-primary-rgb), 0.15) 0%,
-    rgba(var(--kengo-tertiary-rgb), 0.15) 100%
-  );
-  box-shadow: none;
-}
-
-.add-avatar .material-symbols-outlined {
-  color: var(--kengo-primary);
-}
-
-/* === Add Patient Row === */
-.add-patient-row {
-  background: rgba(var(--kengo-primary-rgb), 0.03);
-  border-bottom: 2px dashed rgba(var(--kengo-primary-rgb), 0.2);
-  opacity: 1;
-  animation: none;
-}
-
-.add-patient-row:hover {
-  background: rgba(var(--kengo-primary-rgb), 0.08);
-}
-
-.add-patient-row .row-avatar {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--kengo-primary-rgb), 0.15) 0%,
-    rgba(var(--kengo-tertiary-rgb), 0.15) 100%
-  );
-}
-
-.add-patient-row .row-avatar .material-symbols-outlined {
-  color: var(--kengo-primary);
-}
-
-.add-patient-row .row-arrow {
-  color: rgba(var(--kengo-primary-rgb), 0.5);
-}
-
-.add-patient-row:hover .row-arrow {
-  color: var(--kengo-primary);
-}
-
-/* === Sort Dropdown === */
-.sort-dropdown {
-  @apply relative;
-}
-
-.sort-trigger {
-  @apply inline-flex cursor-pointer items-center gap-1.5 rounded-2xl border border-white/40 bg-white/80 px-3 py-2 text-xs font-medium whitespace-nowrap text-zinc-500 transition-all;
-  font: inherit;
-  outline: none;
-}
-
-.sort-trigger:hover {
-  @apply bg-white/80 text-zinc-700;
-}
-
-.sort-trigger.active {
-  border-color: rgba(var(--kengo-primary-rgb), 0.4);
-  color: var(--kengo-primary);
-  @apply font-semibold;
-}
-
-.sort-trigger-label {
-  @apply hidden;
-}
-
-@media (min-width: 640px) {
-  .sort-trigger-label {
-    @apply inline;
-  }
-}
-
-.sort-menu {
-  @apply absolute top-full right-0 mt-1.5 flex min-w-[180px] flex-col overflow-hidden rounded-2xl border border-zinc-200 py-1.5;
-  z-index: 999;
-  background: #fff;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.14),
-    0 2px 8px rgba(0, 0, 0, 0.08);
-  animation: sortMenuIn 0.15s ease-out;
-}
-
-@keyframes sortMenuIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.sort-option {
-  @apply flex cursor-pointer items-center gap-2.5 border-none bg-transparent px-4 py-2.5 text-xs font-medium text-zinc-600 transition-colors;
-  font: inherit;
-  outline: none;
-}
-
-.sort-option:hover {
-  @apply bg-zinc-200;
-}
-
-.sort-option.selected {
-  color: var(--kengo-primary);
-  @apply font-semibold;
-}
-
-.sort-option .material-symbols-outlined {
-  @apply text-base;
-}
-
-/* === Card Metrics Row === */
-.metrics-row {
-  @apply mt-2 flex items-center gap-3 pt-2;
-  border-top: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.metric-item {
-  @apply flex items-center gap-1.5;
-}
-
-.metric-icon {
-  @apply text-sm;
-}
-
-.metric-value {
-  @apply text-xs font-bold;
-}
-
-.metric-bar {
-  @apply h-1 w-12 overflow-hidden rounded-full bg-zinc-200;
-}
-
-.metric-bar-fill {
-  @apply h-full rounded-full transition-all;
-}
-
-/* Tier colors */
-.metric-item[data-tier="alta"] .metric-icon,
-.metric-item[data-tier="alta"] .metric-value {
-  @apply text-green-600;
-}
-
-.metric-item[data-tier="alta"] .metric-bar-fill {
-  @apply bg-green-500;
-}
-
-.metric-item[data-tier="media"] .metric-icon,
-.metric-item[data-tier="media"] .metric-value {
-  @apply text-amber-600;
-}
-
-.metric-item[data-tier="media"] .metric-bar-fill {
-  @apply bg-amber-500;
-}
-
-.metric-item[data-tier="baja"] .metric-icon,
-.metric-item[data-tier="baja"] .metric-value {
-  @apply text-red-500;
-}
-
-.metric-item[data-tier="baja"] .metric-bar-fill {
-  @apply bg-red-500;
-}
-
-/* === List View Metrics === */
-.row-metrics {
-  @apply flex shrink-0 items-center gap-1.5;
-}
-
-.row-metric-badge {
-  @apply inline-flex items-center rounded-lg px-2 py-0.5 text-[0.65rem] font-bold;
-}
-
-.row-metric-badge[data-tier="alta"] {
-  @apply bg-green-50 text-green-700;
-}
-
-.row-metric-badge[data-tier="media"] {
-  @apply bg-amber-50 text-amber-700;
-}
-
-.row-metric-badge[data-tier="baja"] {
-  @apply bg-red-50 text-red-600;
 }

@@ -1,503 +1,259 @@
-<section class="ejercicios-page flex h-full w-full flex-col overflow-hidden">
-  <!-- Header sticky con glassmorphism -->
-  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
-    <div class="mx-auto max-w-6xl">
-      @if (isMovil()) {
-        <!-- MÓVIL: Header con título y navegación -->
-        <div class="mb-4 flex items-center justify-between">
-          <!-- Back + Título -->
-          <div class="flex items-center gap-3">
-            <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
-            <div>
-              <h1 class="titulo-kengo text-2xl text-kengo-primary">Galería</h1>
-              @if (ejerciciosService.total() > 0) {
-                <p class="text-xs font-medium text-zinc-500 tracking-wide">
-                  {{ ejerciciosService.total() }} {{ ejerciciosService.total() === 1 ? 'ejercicio' : 'ejercicios' }}
-                </p>
+<div class="el-page">
+  <!-- ========================================================== -->
+  <!-- Tabs Ejercicios / Rutinas                                   -->
+  <!-- ========================================================== -->
+  <ui2-section [padding]="'4px 20px 8px'">
+    <ui2-segmented
+      [options]="catalogoTabs"
+      value="ejercicios"
+      (valueChange)="onCatalogoTabChange($event)"
+    ></ui2-segmented>
+  </ui2-section>
+
+  <!-- ========================================================== -->
+  <!-- Header                                                       -->
+  <!-- ========================================================== -->
+  <ui2-section [padding]="'0 20px 12px'">
+    <header class="el-header">
+      <div class="el-header__title">
+        <h1 class="el-header__h1">Galería</h1>
+        @if (total() > 0) {
+          <p class="el-header__sub">
+            {{ total() }} {{ total() === 1 ? 'ejercicio' : 'ejercicios' }}
+          </p>
+        }
+      </div>
+
+      <div class="el-header__actions">
+        <button
+          type="button"
+          class="el-fav-toggle"
+          [class.el-fav-toggle--on]="soloFavoritos()"
+          [attr.aria-pressed]="soloFavoritos()"
+          [attr.aria-label]="soloFavoritos() ? 'Mostrar todos' : 'Solo favoritos'"
+          (click)="toggleSoloFavoritos()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">{{ soloFavoritos() ? 'star' : 'star_outline' }}</span>
+        </button>
+        <ui2-segmented
+          [options]="vistaOptions"
+          [value]="vista()"
+          (valueChange)="setVista($event)"
+        ></ui2-segmented>
+      </div>
+    </header>
+  </ui2-section>
+
+  <!-- ========================================================== -->
+  <!-- Búsqueda + dropdown categorías                              -->
+  <!-- ========================================================== -->
+  <ui2-section [padding]="'0 20px 12px'">
+    <div class="el-controls">
+      <div class="el-controls__search">
+        <ui2-search-box
+          placeholder="Buscar ejercicio…"
+          (valueChange)="onBuscar($event)"
+        ></ui2-search-box>
+      </div>
+
+      <div class="el-cat-dropdown">
+        <button
+          type="button"
+          class="el-cat-trigger"
+          [class.el-cat-trigger--active]="categoriasSeleccionadas().length > 0"
+          (click)="$event.stopPropagation(); toggleMenu()"
+          [attr.aria-expanded]="menuAbierto()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+          <span class="el-cat-trigger__label">Categorías</span>
+          @if (categoriasSeleccionadas().length > 0) {
+            <ui2-pill variant="primary" size="sm">{{ categoriasSeleccionadas().length }}</ui2-pill>
+          }
+        </button>
+
+        @if (menuAbierto()) {
+          <div class="el-cat-menu" role="menu">
+            <div class="el-cat-menu__list">
+              @for (cat of categorias(); track cat.id) {
+                <label class="el-cat-option">
+                  <input
+                    type="checkbox"
+                    [checked]="categoriasSeleccionadas().includes(cat.id)"
+                    (change)="onCategoriaChange(cat.id, $any($event.target).checked)"
+                  />
+                  <span class="el-cat-option__label">{{ cat.nombre }}</span>
+                </label>
+              }
+              @if (categorias().length === 0) {
+                <p class="el-cat-menu__empty">Sin categorías</p>
               }
             </div>
-          </div>
-
-          <!-- Quick Actions Pills (móvil) -->
-          <div class="flex items-center gap-2">
-            <!-- Toggle Favoritos -->
-            <button
-              type="button"
-              (click)="toggleSoloFavoritos()"
-              class="flex h-10 items-center gap-1.5 rounded-full px-3
-                     border transition-all duration-200
-                     active:scale-95"
-              [class]="soloFavoritos()
-                ? 'bg-gradient-kengo-primary-horizontal border-transparent text-white shadow-lg-kengo-primary/30'
-                : 'bg-white/60 backdrop-blur-md border-white/40 text-zinc-600 hover:bg-white/80'"
-              aria-label="Mostrar solo favoritos"
-            >
-              <span class="material-symbols-outlined text-lg" [class.relleno]="soloFavoritos()">
-                {{ soloFavoritos() ? 'star' : 'star_border' }}
-              </span>
-            </button>
-
-            <!-- Toggle Vista -->
-            <button
-              type="button"
-              (click)="vista.set(vista() === 'vineta' ? 'lista' : 'vineta')"
-              class="flex h-10 w-10 items-center justify-center rounded-full
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-600 transition-all duration-200
-                     hover:bg-white/80 active:scale-95"
-              aria-label="Cambiar vista"
-            >
-              <span class="material-symbols-outlined text-xl">
-                {{ vista() === 'vineta' ? 'view_list' : 'grid_view' }}
-              </span>
-            </button>
-          </div>
-        </div>
-      }
-
-      <!-- Toggle + Barra de búsqueda y filtros -->
-      <form
-        [formGroup]="formularioFiltros"
-        (ngSubmit)="$event.preventDefault()"
-        class="flex items-center gap-2"
-      >
-        <!-- Toggle Galería -->
-        <app-catalogo-tabs />
-        <!-- DESKTOP: Contador de ejercicios -->
-        @if (!isMovil() && ejerciciosService.total() > 0) {
-          <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
-            <span class="text-sm font-bold text-kengo-primary">{{ ejerciciosService.total() }}</span>
-            <span class="text-xs text-zinc-500">{{ ejerciciosService.total() === 1 ? 'ejercicio' : 'ejercicios' }}</span>
+            <div class="el-cat-menu__footer">
+              <ui2-button variant="ghost" size="sm" (clicked)="limpiarCategorias()">Limpiar</ui2-button>
+              <ui2-button variant="primary" size="sm" (clicked)="closeMenu()">Aplicar</ui2-button>
+            </div>
           </div>
         }
-        <!-- Input de búsqueda -->
-        <div class="flex-1">
-          <ui-search-box
-            placeholder="Buscar ejercicio..."
-            formControlName="busqueda"
-          ></ui-search-box>
-        </div>
+      </div>
+    </div>
+  </ui2-section>
 
-        <!-- Botón Filtros con dropdown custom -->
-        <div class="categories-dropdown-container relative">
-          <button
-            type="button"
-            (click)="toggleMenu(); $event.stopPropagation()"
-            class="filter-btn relative flex h-12 w-12 items-center justify-center
-                   rounded-2xl bg-white/70 backdrop-blur-xl
-                   border border-white/50 shadow-sm
-                   text-zinc-600 transition-all duration-200
-                   hover:bg-white/90 hover:shadow-md active:scale-95"
-            [class.ring-2]="menuAbierto()"
-            [class.ring-kengo-primary/30]="menuAbierto()"
-            aria-label="Filtrar por categorías"
-            [attr.aria-expanded]="menuAbierto()"
-          >
-            <span class="material-symbols-outlined text-xl">tune</span>
-            @if (categoriasSeleccionadas().length > 0) {
-              <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center
-                           rounded-full bg-kengo-primary text-[10px] font-bold text-white
-                           shadow-lg-kengo-primary/40 animate-bounce-subtle">
-                {{ categoriasSeleccionadas().length }}
-              </span>
-            }
-          </button>
-
-          <!-- Dropdown de categorías -->
-          @if (menuAbierto()) {
-            <div
-              class="categories-dropdown absolute right-0 top-full mt-2 z-50
-                     w-80 p-4 rounded-2xl
-                     bg-white/95 backdrop-blur-xl
-                     border border-white/50
-                     shadow-2xl shadow-black/20"
-              (click)="$event.stopPropagation()"
-            >
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-kengo-primary/10">
-                    <span class="material-symbols-outlined text-lg text-kengo-primary">category</span>
-                  </div>
-                  <span class="text-base font-bold text-zinc-800">Categorías</span>
+  <!-- ========================================================== -->
+  <!-- Estados                                                      -->
+  <!-- ========================================================== -->
+  @if (loading) {
+    <div class="el-state">
+      <ui2-spinner size="md" color="primary" label="Cargando ejercicios…"></ui2-spinner>
+    </div>
+  } @else if (error) {
+    <ui2-empty-state
+      icon="cloud_off"
+      title="No se pudieron cargar"
+      message="Hubo un problema al obtener los ejercicios. Inténtalo de nuevo."
+      actionLabel="Reintentar"
+      actionIcon="refresh"
+      (action)="reloadEjercicios()"
+    ></ui2-empty-state>
+  } @else if (ejercicios().length === 0) {
+    @if (soloFavoritos()) {
+      <ui2-empty-state
+        icon="star_outline"
+        title="Sin favoritos"
+        message="Aún no has marcado ejercicios como favoritos."
+        actionLabel="Ver todos"
+        actionIcon="grid_view"
+        (action)="toggleSoloFavoritos()"
+      ></ui2-empty-state>
+    } @else if (hasActiveFilters()) {
+      <ui2-empty-state
+        icon="search_off"
+        title="Sin coincidencias"
+        message="No se han encontrado ejercicios con los filtros activos."
+        actionLabel="Limpiar filtros"
+        actionIcon="filter_alt_off"
+        (action)="borrarFiltros()"
+      ></ui2-empty-state>
+    } @else {
+      <ui2-empty-state
+        icon="fitness_center"
+        title="Sin ejercicios"
+        message="No hay ejercicios disponibles en este momento."
+      ></ui2-empty-state>
+    }
+  } @else {
+    <!-- ======================================================== -->
+    <!-- Vista cuadrícula (vineta)                                 -->
+    <!-- ======================================================== -->
+    @if (vista() === 'vineta') {
+      <ui2-section [padding]="'0 20px 16px'">
+        <div class="el-grid-vineta">
+          @for (e of ejercicios(); track e.id) {
+            <a class="el-card-vineta" [routerLink]="['/ejercicios', e.id]">
+              <div class="el-card-vineta__media">
+                @if (e.portada) {
+                  <img
+                    [src]="getAssetUrl(e.portada)"
+                    [alt]="e.nombre"
+                    loading="lazy"
+                    (load)="onImageLoad(e.id)"
+                  />
+                } @else {
+                  <span class="material-symbols-outlined el-card-vineta__placeholder" aria-hidden="true">fitness_center</span>
+                }
+                <div class="el-card-vineta__overlay" aria-hidden="true"></div>
+                <button
+                  type="button"
+                  class="el-fav el-fav--overlay"
+                  [class.el-fav--on]="esFavorito(e.id)"
+                  [disabled]="favoritoEnProceso(e.id)"
+                  [attr.aria-pressed]="esFavorito(e.id)"
+                  [attr.aria-label]="esFavorito(e.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+                  (click)="toggleFavorito($event, e.id)"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ esFavorito(e.id) ? 'star' : 'star_outline' }}</span>
+                </button>
+                <div class="el-card-vineta__title">
+                  <h3 class="el-card-vineta__name">{{ e.nombre }}</h3>
+                  @if (e.categoria.length > 0) {
+                    <span class="el-card-vineta__cat">{{ e.categoria[0] }}</span>
+                  }
                 </div>
-                @if (categoriasSeleccionadas().length > 0) {
-                  <span class="text-xs font-medium text-kengo-primary bg-kengo-primary/10 px-2 py-1 rounded-full">
-                    {{ categoriasSeleccionadas().length }} seleccionadas
-                  </span>
+              </div>
+            </a>
+          }
+        </div>
+      </ui2-section>
+    }
+
+    <!-- ======================================================== -->
+    <!-- Vista lista                                               -->
+    <!-- ======================================================== -->
+    @if (vista() === 'lista') {
+      <ui2-section [padding]="'0 20px 16px'">
+        <div class="el-grid-lista">
+          @for (e of ejercicios(); track e.id) {
+            <a class="el-card-lista" [routerLink]="['/ejercicios', e.id]">
+              <div class="el-card-lista__media">
+                @if (e.portada) {
+                  <img
+                    [src]="getAssetUrl(e.portada)"
+                    [alt]="e.nombre"
+                    loading="lazy"
+                    (load)="onImageLoad(e.id)"
+                  />
+                } @else {
+                  <span class="material-symbols-outlined el-card-lista__placeholder" aria-hidden="true">fitness_center</span>
                 }
               </div>
-
-              <div class="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent mb-3"></div>
-
-              @if (ejerciciosService.categoriasRes.isLoading()) {
-                <div class="flex items-center justify-center py-8">
-                  <div class="loading-spinner"></div>
-                </div>
-              } @else if (ejerciciosService.categoriasRes.error()) {
-                <div class="flex flex-col items-center py-6 text-center">
-                  <span class="material-symbols-outlined text-3xl text-red-400 mb-2">error</span>
-                  <p class="text-sm text-red-600">Error al cargar categorías</p>
-                </div>
-              } @else {
-                <div class="max-h-64 overflow-y-auto custom-scrollbar space-y-1">
-                  @for (cat of ejerciciosService.categoriasRes.value(); track cat.id) {
-                    <label
-                      class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer
-                             transition-colors hover:bg-kengo-primary/5"
-                      [class.bg-kengo-primary/10]="isCatSelected(cat.id, categoriasSeleccionadas)"
-                    >
-                      <div class="relative flex items-center justify-center">
-                        <input
-                          type="checkbox"
-                          [checked]="isCatSelected(cat.id, categoriasSeleccionadas)"
-                          (change)="onCategoriaChange(cat.id, $any($event.target).checked)"
-                          class="peer sr-only"
-                        />
-                        <div class="h-5 w-5 rounded-md border-2 border-zinc-300
-                                    peer-checked:border-kengo-primary peer-checked:bg-kengo-primary
-                                    transition-all duration-200
-                                    flex items-center justify-center">
-                          <span class="material-symbols-outlined text-sm text-white opacity-0 peer-checked:opacity-100 transition-opacity">
-                            check
-                          </span>
-                        </div>
-                      </div>
-                      <span class="text-sm font-medium text-zinc-700 select-none">{{ cat.nombre }}</span>
-                    </label>
-                  }
-                </div>
-              }
-
-              <div class="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent my-3"></div>
-
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  (click)="limpiarCategorias()"
-                  class="flex-1 h-10 rounded-xl border border-zinc-200
-                         text-sm font-medium text-zinc-600
-                         transition-all hover:bg-zinc-50 active:scale-98"
-                >
-                  Limpiar
-                </button>
-                <button
-                  type="button"
-                  (click)="closeMenu()"
-                  class="flex-1 h-10 rounded-xl
-                         bg-gradient-kengo-primary-horizontal
-                         text-sm font-semibold text-white
-                         shadow-lg-kengo-primary/30
-                         transition-all hover:shadow-xl-kengo-primary/40
-                         active:scale-98"
-                >
-                  Aplicar
-                </button>
+              <div class="el-card-lista__body">
+                <h3 class="el-card-lista__name">{{ e.nombre }}</h3>
+                @if (e.descripcion) {
+                  <p class="el-card-lista__desc" [innerHTML]="e.descripcion | safeHtml"></p>
+                }
+                @if (e.categoria.length > 0) {
+                  <span class="el-card-lista__cat">{{ e.categoria[0] }}</span>
+                }
               </div>
-            </div>
-          }
-        </div>
-
-        <!-- DESKTOP: Controles de vista y favoritos -->
-        @if (!isMovil()) {
-          <div class="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200/50">
-            <!-- Toggle Favoritos -->
-            <button
-              type="button"
-              (click)="toggleSoloFavoritos()"
-              class="flex h-10 items-center gap-1.5 rounded-full px-3
-                     border transition-all duration-200
-                     active:scale-95"
-              [class]="soloFavoritos()
-                ? 'bg-gradient-kengo-primary-horizontal border-transparent text-white shadow-lg-kengo-primary/30'
-                : 'bg-white/60 backdrop-blur-md border-white/40 text-zinc-600 hover:bg-white/80'"
-              aria-label="Mostrar solo favoritos"
-            >
-              <span class="material-symbols-outlined text-lg" [class.relleno]="soloFavoritos()">
-                {{ soloFavoritos() ? 'star' : 'star_border' }}
-              </span>
-              <span class="text-xs font-semibold">Favoritos</span>
-            </button>
-
-            <!-- Toggle Vista -->
-            <button
-              type="button"
-              (click)="vista.set(vista() === 'vineta' ? 'lista' : 'vineta')"
-              class="flex h-10 items-center gap-1.5 rounded-full px-3
-                     bg-white/60 backdrop-blur-md border border-white/40
-                     text-zinc-600 transition-all duration-200
-                     hover:bg-white/80 active:scale-95"
-              aria-label="Cambiar vista"
-            >
-              <span class="material-symbols-outlined text-lg">
-                {{ vista() === 'vineta' ? 'view_list' : 'grid_view' }}
-              </span>
-              <span class="text-xs font-semibold">{{ vista() === 'vineta' ? 'Lista' : 'Cuadrícula' }}</span>
-            </button>
-          </div>
-        }
-      </form>
-    </div>
-  </header>
-
-  <!-- Contenido principal con scroll -->
-  <main class="flex-1 overflow-y-auto px-4 pb-28 lg:pb-8">
-    <div class="mx-auto max-w-6xl">
-      @if (ejerciciosService.listaEjerciciosRes.isLoading()) {
-        <!-- Loading State con Skeleton -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="skeleton-card animate-pulse rounded-3xl bg-white/50 backdrop-blur-md overflow-hidden">
-              <div class="aspect-[4/3] bg-gradient-to-br from-zinc-200/80 to-zinc-100/80"></div>
-              <div class="p-4 space-y-3">
-                <div class="h-4 bg-zinc-200/80 rounded-full w-3/4"></div>
-                <div class="h-3 bg-zinc-200/60 rounded-full w-1/2"></div>
-              </div>
-            </div>
-          }
-        </div>
-      } @else if (ejerciciosService.listaEjerciciosRes.error()) {
-        <!-- Error State -->
-        <div class="flex flex-col items-center justify-center py-16 px-4">
-          <div class="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center mb-4 shadow-lg shadow-red-100">
-            <span class="material-symbols-outlined text-4xl text-red-400">cloud_off</span>
-          </div>
-          <h3 class="text-lg font-bold text-zinc-800 mb-2">Error de conexión</h3>
-          <p class="text-sm text-zinc-500 text-center max-w-xs mb-6">
-            No pudimos cargar los ejercicios. Verifica tu conexión e intenta de nuevo.
-          </p>
-          <button
-            type="button"
-            (click)="reloadEjercicios()"
-            class="flex items-center gap-2 h-11 px-6 rounded-xl
-                   bg-gradient-kengo-primary-horizontal
-                   text-sm font-semibold text-white
-                   shadow-lg-kengo-primary/30
-                   transition-all hover:shadow-xl active:scale-95"
-          >
-            <span class="material-symbols-outlined text-lg">refresh</span>
-            Reintentar
-          </button>
-        </div>
-      } @else if (ejerciciosService.ejercicios().length === 0) {
-        @if (soloFavoritos()) {
-          <ui-empty-state
-            icon="star"
-            title="Sin favoritos aún"
-            message="Marca ejercicios con la estrella para acceder rápidamente a ellos aquí"
-            actionLabel="Ver todos los ejercicios"
-            actionIcon="grid_view"
-            (action)="toggleSoloFavoritos()"
-          ></ui-empty-state>
-        } @else {
-          <ui-empty-state
-            icon="fitness_center"
-            title="No hay ejercicios"
-            message="No se encontraron ejercicios con los filtros actuales"
-          ></ui-empty-state>
-        }
-      } @else {
-        <!-- Grid de ejercicios -->
-        <section
-          class="grid gap-4"
-          [class]="vista() === 'lista'
-            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'"
-        >
-          @for (ejercicio of ejerciciosService.ejercicios(); track ejercicio.id; let i = $index) {
-            @if (vista() === 'lista') {
-              <!-- Vista Lista: Card horizontal con glassmorphism -->
-              <a
-                [routerLink]="['/ejercicios', ejercicio.id]"
-                class="ejercicio-card group block"
-                [style.animation-delay]="(i * 50) + 'ms'"
+              <button
+                type="button"
+                class="el-fav el-fav--inline"
+                [class.el-fav--on]="esFavorito(e.id)"
+                [disabled]="favoritoEnProceso(e.id)"
+                [attr.aria-pressed]="esFavorito(e.id)"
+                [attr.aria-label]="esFavorito(e.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+                (click)="toggleFavorito($event, e.id)"
               >
-                <article class="relative flex items-center gap-4 p-3
-                               rounded-2xl bg-white/60 backdrop-blur-xl
-                               border border-white/50
-                               shadow-sm shadow-black/5
-                               transition-all duration-300
-                               hover:bg-white/80 hover:shadow-xl hover:shadow-black/10
-                               hover:-translate-y-1 active:scale-[0.98]">
-                  <!-- Imagen con overlay gradiente -->
-                  <div class="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl">
-                    <!-- Placeholder skeleton mientras carga -->
-                    @if (!isImageLoaded(ejercicio.id)) {
-                      <div class="absolute inset-0 image-skeleton"></div>
-                    }
-                    <img
-                      [src]="getAssetUrl(ejercicio.portada)"
-                      [alt]="ejercicio.nombre"
-                      class="h-full w-full object-cover transition-all duration-500 group-hover:scale-110"
-                      [class.opacity-0]="!isImageLoaded(ejercicio.id)"
-                      [class.opacity-100]="isImageLoaded(ejercicio.id)"
-                      loading="lazy"
-                      (load)="onImageLoad(ejercicio.id)"
-                    />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  </div>
-
-                  <!-- Contenido -->
-                  <div class="flex-1 min-w-0 py-1">
-                    <h3 class="text-sm font-bold text-zinc-800 truncate mb-1 group-hover:text-kengo-primary transition-colors">
-                      {{ ejercicio.nombre }}
-                    </h3>
-                    @if (ejercicio.descripcion) {
-                      <div
-                        class="text-xs text-zinc-500 line-clamp-2 leading-relaxed"
-                        [innerHTML]="ejercicio.descripcion | safeHtml"
-                      ></div>
-                    }
-                  </div>
-
-                  <!-- Botón favorito -->
-                  <button
-                    type="button"
-                    class="shrink-0 flex h-10 w-10 items-center justify-center
-                           rounded-xl transition-all duration-200
-                           hover:bg-kengo-primary/10 active:scale-90"
-                    (click)="toggleFavorito($event, ejercicio.id)"
-                    [disabled]="favoritoEnProceso(ejercicio.id)"
-                    [attr.aria-label]="esFavorito(ejercicio.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
-                  >
-                    @if (favoritoEnProceso(ejercicio.id)) {
-                      <div class="loading-spinner-small"></div>
-                    } @else {
-                      <span
-                        class="material-symbols-outlined text-xl transition-all duration-200"
-                        [class.relleno]="esFavorito(ejercicio.id)"
-                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id)"
-                        [class.scale-110]="esFavorito(ejercicio.id)"
-                        [class.text-zinc-400]="!esFavorito(ejercicio.id)"
-                        [class.group-hover:text-kengo-primary]="!esFavorito(ejercicio.id)"
-                      >
-                        star
-                      </span>
-                    }
-                  </button>
-                </article>
-              </a>
-            } @else {
-              <!-- Vista Viñeta: Card vertical con imagen grande -->
-              <a
-                [routerLink]="['/ejercicios', ejercicio.id]"
-                class="ejercicio-card group block"
-                [style.animation-delay]="(i * 50) + 'ms'"
-              >
-                <article class="relative aspect-[3/4] overflow-hidden rounded-2xl
-                               shadow-lg shadow-black/10
-                               transition-all duration-300
-                               hover:shadow-2xl hover:shadow-black/20
-                               hover:-translate-y-2 active:scale-[0.98]">
-                  <!-- Placeholder skeleton mientras carga -->
-                  @if (!isImageLoaded(ejercicio.id)) {
-                    <div class="absolute inset-0 image-skeleton"></div>
-                  }
-                  <!-- Imagen de fondo -->
-                  <img
-                    [src]="getAssetUrl(ejercicio.portada)"
-                    [alt]="ejercicio.nombre"
-                    class="absolute inset-0 h-full w-full object-cover transition-all duration-700 group-hover:scale-110"
-                    [class.opacity-0]="!isImageLoaded(ejercicio.id)"
-                    [class.opacity-100]="isImageLoaded(ejercicio.id)"
-                    loading="lazy"
-                    (load)="onImageLoad(ejercicio.id)"
-                  />
-
-                  <!-- Overlay gradiente -->
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
-                  <!-- Botón favorito flotante -->
-                  <button
-                    type="button"
-                    class="absolute top-3 right-3 z-10
-                           flex h-9 w-9 items-center justify-center
-                           rounded-full bg-black/30 backdrop-blur-md
-                           border border-white/20
-                           transition-all duration-200
-                           hover:bg-black/50 hover:scale-110 active:scale-95"
-                    (click)="toggleFavorito($event, ejercicio.id)"
-                    [disabled]="favoritoEnProceso(ejercicio.id)"
-                    [attr.aria-label]="esFavorito(ejercicio.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
-                  >
-                    @if (favoritoEnProceso(ejercicio.id)) {
-                      <div class="loading-spinner-small-white"></div>
-                    } @else {
-                      <span
-                        class="material-symbols-outlined text-lg transition-all duration-200"
-                        [class.relleno]="esFavorito(ejercicio.id)"
-                        [class.text-kengo-tertiary]="esFavorito(ejercicio.id)"
-                        [class.text-white/90]="!esFavorito(ejercicio.id)"
-                      >
-                        star
-                      </span>
-                    }
-                  </button>
-
-                  <!-- Contenido inferior -->
-                  <div class="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 class="text-base font-bold text-white leading-tight mb-1 drop-shadow-lg">
-                      {{ ejercicio.nombre }}
-                    </h3>
-                    @if (ejercicio.descripcion) {
-                      <div
-                        class="text-xs text-white/70 line-clamp-2 leading-relaxed
-                               opacity-0 translate-y-2 transition-all duration-300
-                               group-hover:opacity-100 group-hover:translate-y-0"
-                        [innerHTML]="ejercicio.descripcion | safeHtml"
-                      ></div>
-                    }
-                  </div>
-                </article>
-              </a>
-            }
+                <span class="material-symbols-outlined" aria-hidden="true">{{ esFavorito(e.id) ? 'star' : 'star_outline' }}</span>
+              </button>
+            </a>
           }
-        </section>
+        </div>
+      </ui2-section>
+    }
 
-        <!-- Paginación moderna -->
-        @if (ejerciciosService.totalPages() > 1) {
-          <nav class="flex items-center justify-center gap-3 mt-8 mb-4" aria-label="Paginación">
-            <!-- Anterior -->
-            <button
-              type="button"
-              (click)="paginaAnterior()"
-              [disabled]="ejerciciosService.page() <= 1"
-              class="flex h-11 items-center gap-2 px-4 rounded-xl
-                     bg-white/70 backdrop-blur-md border border-white/50
-                     text-sm font-medium text-zinc-700
-                     transition-all duration-200
-                     hover:bg-white/90 hover:shadow-md active:scale-95
-                     disabled:opacity-40 disabled:pointer-events-none"
-            >
-              <span class="material-symbols-outlined text-lg">chevron_left</span>
-              <span class="hidden sm:inline">Anterior</span>
-            </button>
-
-            <!-- Indicador de página -->
-            <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/50 backdrop-blur-md">
-              <span class="text-sm font-bold text-kengo-primary">{{ ejerciciosService.page() }}</span>
-              <span class="text-xs text-zinc-400">de</span>
-              <span class="text-sm font-medium text-zinc-600">{{ ejerciciosService.totalPages() }}</span>
-            </div>
-
-            <!-- Siguiente -->
-            <button
-              type="button"
-              (click)="siguientePagina()"
-              [disabled]="ejerciciosService.page() >= ejerciciosService.totalPages()"
-              class="flex h-11 items-center gap-2 px-4 rounded-xl
-                     bg-gradient-kengo-primary-horizontal
-                     text-sm font-medium text-white
-                     shadow-lg-kengo-primary/30
-                     transition-all duration-200
-                     hover:shadow-xl-kengo-primary/40 active:scale-95
-                     disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
-            >
-              <span class="hidden sm:inline">Siguiente</span>
-              <span class="material-symbols-outlined text-lg">chevron_right</span>
-            </button>
-          </nav>
-        }
-      }
-    </div>
-  </main>
-</section>
+    <!-- ======================================================== -->
+    <!-- Paginación                                                -->
+    <!-- ======================================================== -->
+    @if (totalPages() > 1) {
+      <ui2-section [padding]="'0 20px 24px'">
+        <div class="el-pagination">
+          <ui2-button
+            variant="ghost"
+            size="sm"
+            iconLeft="chevron_left"
+            [disabled]="page() === 1"
+            (clicked)="paginaAnterior()"
+          >Anterior</ui2-button>
+          <span class="el-pagination__info">{{ page() }} de {{ totalPages() }}</span>
+          <ui2-button
+            variant="ghost"
+            size="sm"
+            iconRight="chevron_right"
+            [disabled]="page() >= totalPages()"
+            (clicked)="siguientePagina()"
+          >Siguiente</ui2-button>
+        </div>
+      </ui2-section>
+    }
+  }
+</div>

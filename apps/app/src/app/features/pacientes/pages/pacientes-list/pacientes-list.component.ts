@@ -1,53 +1,75 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   HostListener,
   inject,
   signal,
 } from '@angular/core';
-import { assetUrl } from '../../../../core/utils/asset-url';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 
-//Componente Add-Paciente:
+// Componente Add-Paciente:
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
 
-//Servicios:
+// Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { MetricasPacientesService } from '../../data-access/metricas-pacientes.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
-import { DialogService } from '../../../../shared';
+import { DialogService, useResponsive } from '../../../../shared';
 
 import { Usuario, AsignacionResponsable, MetricasPacientesBulk } from '../../../../../types/global';
-import { useResponsive, BackButtonComponent, AvatarComponent, SearchBoxComponent } from '../../../../shared';
-import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state.component';
+import {
+  Ui2AvatarComponent,
+  Ui2ButtonComponent,
+  Ui2EmptyStateComponent,
+  Ui2ListRowComponent,
+  Ui2PillComponent,
+  Ui2SearchBoxComponent,
+  Ui2SectionComponent,
+  Ui2SegmentedComponent,
+  Ui2SegmentedOption,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
 type OrdenPacientes = 'nombre' | 'adherencia_desc' | 'adherencia_asc' | 'dolor_desc' | 'dolor_asc';
+type Vista = 'card' | 'lista';
+
 const STORAGE_KEY_FILTRO = 'kengo:mis-pacientes:filtro';
+
+interface OrdenOption {
+  value: OrdenPacientes;
+  label: string;
+  icon: string;
+}
 
 @Component({
   selector: 'app-pacientes-list',
   standalone: true,
   imports: [
     DecimalPipe,
-    EmptyStateComponent,
-    BackButtonComponent,
-    AvatarComponent,
-    SearchBoxComponent,
+    Ui2AvatarComponent,
+    Ui2ButtonComponent,
+    Ui2EmptyStateComponent,
+    Ui2ListRowComponent,
+    Ui2PillComponent,
+    Ui2SearchBoxComponent,
+    Ui2SectionComponent,
+    Ui2SegmentedComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './pacientes-list.component.html',
   styleUrl: './pacientes-list.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
-  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PacientesListComponent {
   private sessionService = inject(SessionService);
@@ -61,8 +83,12 @@ export class PacientesListComponent {
   private clinicasService = inject(ClinicasService);
   private convex = inject(ConvexService);
 
-  // Signal para alternar vista card/lista
-  public vista = signal<'card' | 'lista'>('card');
+  // Vista (toggle entre cuadrícula y lista)
+  public vista = signal<Vista>('card');
+  readonly vistaOptions: Ui2SegmentedOption[] = [
+    { id: 'card', label: 'Cuadrícula' },
+    { id: 'lista', label: 'Lista' },
+  ];
 
   isMovil = useResponsive().esMobile;
 
@@ -83,16 +109,24 @@ export class PacientesListComponent {
   readonly ordenActual = signal<OrdenPacientes>('nombre');
   readonly sortMenuAbierto = signal(false);
 
+  readonly ordenOptions: OrdenOption[] = [
+    { value: 'nombre',           label: 'Nombre',            icon: 'sort_by_alpha' },
+    { value: 'adherencia_desc',  label: 'Mayor adherencia',  icon: 'trending_up' },
+    { value: 'adherencia_asc',   label: 'Menor adherencia',  icon: 'trending_down' },
+    { value: 'dolor_asc',        label: 'Menos dolor',       icon: 'sentiment_satisfied' },
+    { value: 'dolor_desc',       label: 'Más dolor',         icon: 'sentiment_stressed' },
+  ];
+
   readonly ordenLabel = computed(() => {
-    const labels: Record<OrdenPacientes, string> = {
-      nombre: 'Nombre',
-      adherencia_desc: 'Mayor adherencia',
-      adherencia_asc: 'Menor adherencia',
-      dolor_desc: 'Más dolor',
-      dolor_asc: 'Menos dolor',
-    };
-    return labels[this.ordenActual()];
+    const opt = this.ordenOptions.find((o) => o.value === this.ordenActual());
+    return opt?.label ?? 'Nombre';
   });
+
+  readonly filtroOptions = computed<Ui2SegmentedOption[]>(() => [
+    { id: 'todos',     label: `Todos · ${this.totalPacientes()}` },
+    { id: 'activos',   label: `Activos · ${this.conteoActivos()}` },
+    { id: 'inactivos', label: `Inactivos · ${this.conteoInactivos()}` },
+  ]);
 
   // Suscripción reactiva a planes activos del fisio para derivar IDs de pacientes activos
   private readonly planesActivosQuery = this.convex.watchQuery(
@@ -156,7 +190,6 @@ export class PacientesListComponent {
   });
 
   // Suscripción reactiva a pacientes de TODAS las clínicas del fisio.
-  // El backend dedupelica por userId cuando un paciente pertenece a varias.
   private readonly pacientesQuery = this.convex.watchQuery(
     api.users.queries.listPatientsByClinic,
     () => {
@@ -237,11 +270,19 @@ export class PacientesListComponent {
     });
   }
 
-  setFiltro(filtro: FiltroActividad) {
-    this.filtroActividad.set(filtro);
-    try {
-      localStorage.setItem(STORAGE_KEY_FILTRO, filtro);
-    } catch { /* ignore */ }
+  setVista(value: string) {
+    if (value === 'card' || value === 'lista') {
+      this.vista.set(value);
+    }
+  }
+
+  setFiltro(value: string) {
+    if (value === 'todos' || value === 'activos' || value === 'inactivos') {
+      this.filtroActividad.set(value);
+      try {
+        localStorage.setItem(STORAGE_KEY_FILTRO, value);
+      } catch { /* ignore */ }
+    }
   }
 
   private leerFiltroGuardado(): FiltroActividad {
@@ -263,7 +304,6 @@ export class PacientesListComponent {
   private cargarAsignaciones() {
     const cid = this.idsClinicas();
     if (!cid || cid.length === 0) return;
-    // Cargar asignaciones de la primera clínica
     this.asignacionesService.listarAsignaciones(String(cid[0])).subscribe({
       next: (asignaciones) => {
         const m = new Map<string, AsignacionResponsable>();
@@ -272,7 +312,7 @@ export class PacientesListComponent {
         }
         this.asignacionesMap.set(m);
       },
-      error: () => {}, // silently ignore
+      error: () => undefined,
     });
   }
 
@@ -288,7 +328,6 @@ export class PacientesListComponent {
     this.router.navigate(['/mis-pacientes', 'asignacion']);
   }
 
-  // Helpers
   fullName(u: Usuario) {
     const fn = (u.first_name || '').trim();
     const ln = (u.last_name || '').trim();
@@ -336,16 +375,22 @@ export class PacientesListComponent {
     return m?.dolorPromedio ?? null;
   }
 
-  adherenciaTier(value: number): 'alta' | 'media' | 'baja' {
-    if (value >= 70) return 'alta';
-    if (value >= 40) return 'media';
-    return 'baja';
+  adherenciaColor(value: number): string {
+    if (value >= 70) return 'var(--success)';
+    if (value >= 40) return 'var(--warning)';
+    return 'var(--danger)';
   }
 
-  dolorTier(value: number): 'baja' | 'media' | 'alta' {
-    if (value <= 3) return 'alta';   // dolor bajo → verde (bueno)
-    if (value <= 6) return 'media';  // dolor medio → ámbar
-    return 'baja';                   // dolor alto → rojo (malo)
+  dolorColor(value: number): string {
+    if (value <= 3) return 'var(--success)';
+    if (value <= 6) return 'var(--warning)';
+    return 'var(--danger)';
+  }
+
+  dolorIcon(value: number): string {
+    if (value <= 3) return 'sentiment_satisfied';
+    if (value <= 6) return 'sentiment_neutral';
+    return 'sentiment_stressed';
   }
 
   @HostListener('document:click')
@@ -363,7 +408,7 @@ export class PacientesListComponent {
   private cargarMetricas() {
     this.metricasService.getMetricasBulk().subscribe({
       next: (metricas) => this.metricasMap.set(metricas),
-      error: () => {},
+      error: () => undefined,
     });
   }
 }

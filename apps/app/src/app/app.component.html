@@ -61,7 +61,7 @@
             [userName]="firstName()"
             [avatarUrl]="avatarUrl()"
           ></ui2-web-topbar>
-          <main class="flex-1 min-h-0 overflow-y-auto">
+          <main class="flex-1 min-h-0 flex flex-col overflow-y-auto">
             <router-outlet></router-outlet>
           </main>
         </div>
@@ -74,7 +74,7 @@
           [userName]="userName()"
           [avatarUrl]="avatarUrl()"
         ></ui2-patient-header>
-        <main class="flex-1 min-h-0 overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
+        <main class="flex-1 min-h-0 flex flex-col overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
           <router-outlet></router-outlet>
         </main>
         <ui2-patient-tab-bar [tabs]="fisioTabBarTabs"></ui2-patient-tab-bar>

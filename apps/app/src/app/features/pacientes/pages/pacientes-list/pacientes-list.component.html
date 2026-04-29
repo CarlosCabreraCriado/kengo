@@ -1,397 +1,262 @@
-<section class="patients-page">
-  <!-- Aurora Background -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-    <div class="aurora-wave aurora-wave-3"></div>
-  </div>
-
-  <!-- Header Responsivo Alineado con Navegación -->
-  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
-    <div class="mx-auto max-w-6xl">
-
-      <!-- MÓVIL: Header completo con título y navegación -->
-      @if (isMovil()) {
-        <div class="mb-4 flex items-center justify-between">
-          <!-- Botón volver + Título -->
-          <div class="flex items-center gap-3">
-            <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
-            <div>
-              <h1 class="titulo-kengo text-2xl text-kengo-primary">Mis Pacientes</h1>
-              @if (totalPacientes() > 0) {
-                <p class="text-xs font-medium text-zinc-500">
-                  {{ totalPacientes() }} {{ totalPacientes() === 1 ? 'paciente' : 'pacientes' }}
-                </p>
-              }
-            </div>
-          </div>
-
-          <!-- Acción añadir paciente (móvil) -->
-          <button
-            type="button"
-            class="flex h-10 w-10 items-center justify-center rounded-xl
-                   bg-kengo-primary text-white transition-all duration-200
-                   hover:bg-kengo-primary-dark hover:scale-105 active:scale-95
-                   shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
-            aria-label="Añadir paciente"
-            (click)="openAddPaciente()"
-          >
-            <span class="material-symbols-outlined text-xl icon-filled">person_add</span>
-          </button>
-        </div>
-      }
-
-      <!-- Barra de controles (siempre visible) -->
-      <div class="flex items-center gap-2">
-        <!-- DESKTOP: Información compacta al inicio -->
-        @if (!isMovil() && totalPacientes() > 0) {
-          <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
-            <span class="text-sm font-bold text-kengo-primary">{{ totalPacientes() }}</span>
-            <span class="text-xs text-zinc-500">{{ totalPacientes() === 1 ? 'paciente' : 'pacientes' }}</span>
-          </div>
+<div class="pl-page">
+  <!-- ========================================================== -->
+  <!-- Header                                                       -->
+  <!-- ========================================================== -->
+  <ui2-section [padding]="'4px 20px 14px'">
+    <header class="pl-header">
+      <div class="pl-header__title">
+        <h1 class="pl-header__h1">Mis pacientes</h1>
+        @if (totalPacientes() > 0) {
+          <p class="pl-header__sub">
+            {{ totalPacientes() }} {{ totalPacientes() === 1 ? 'paciente' : 'pacientes' }}
+          </p>
         }
+      </div>
 
-        <!-- Barra de búsqueda -->
-        <div class="flex-1">
-          <ui-search-box
-            placeholder="Buscar por nombre, email..."
-            (valueChange)="onBuscar($event)"
-          ></ui-search-box>
-        </div>
-
-        <!-- Toggle de vista -->
-        <button
-          type="button"
-          class="flex h-12 w-12 items-center justify-center rounded-2xl
-                 bg-white/70 backdrop-blur-md border border-white/40
-                 text-zinc-600 transition-all duration-200
-                 hover:bg-white/90 hover:text-kengo-primary active:scale-95"
-          (click)="vista.set(vista() === 'card' ? 'lista' : 'card')"
-          aria-label="Cambiar vista"
-        >
-          <span class="material-symbols-outlined text-xl">{{ vista() === 'card' ? 'view_list' : 'grid_view' }}</span>
-        </button>
-
-        <!-- DESKTOP: Botón asignaciones (solo admin) -->
-        @if (!isMovil() && esAdmin()) {
-          <button
-            type="button"
-            class="flex h-10 items-center gap-1.5 rounded-full px-3
-                   bg-white/70 border border-white/40 text-zinc-600
-                   transition-all duration-200 backdrop-blur-sm
-                   hover:bg-white/90 hover:text-kengo-primary active:scale-95"
-            (click)="irAsignacion()"
-            title="Gestionar asignaciones de fisio responsable"
-          >
-            <span class="material-symbols-outlined text-lg">assignment_ind</span>
-            <span class="text-xs font-semibold">Asignar</span>
-          </button>
+      <div class="pl-header__actions">
+        @if (esAdmin()) {
+          <ui2-button
+            variant="secondary"
+            iconLeft="assignment_ind"
+            size="sm"
+            (clicked)="irAsignacion()"
+          >Asignar</ui2-button>
         }
-
-        <!-- DESKTOP: Botón añadir -->
         @if (!isMovil()) {
-          <button
-            type="button"
-            class="flex h-10 items-center gap-1.5 rounded-full px-4 ml-2
-                   bg-kengo-primary text-white transition-all duration-200
-                   hover:bg-kengo-primary-dark hover:scale-105 active:scale-95
-                   shadow-[0_4px_16px_rgba(231,92,62,0.3)]"
-            (click)="openAddPaciente()"
-          >
-            <span class="material-symbols-outlined text-lg icon-filled">person_add</span>
-            <span class="text-xs font-semibold">Añadir</span>
-          </button>
+          <ui2-button
+            variant="primary"
+            iconLeft="person_add"
+            size="sm"
+            (clicked)="openAddPaciente()"
+          >Añadir</ui2-button>
         }
       </div>
+    </header>
+  </ui2-section>
 
+  <!-- ========================================================== -->
+  <!-- Búsqueda + toggle de vista                                   -->
+  <!-- ========================================================== -->
+  <ui2-section [padding]="'0 20px 12px'">
+    <div class="pl-controls">
+      <div class="pl-controls__search">
+        <ui2-search-box
+          placeholder="Buscar por nombre, email…"
+          (valueChange)="onBuscar($event)"
+        ></ui2-search-box>
+      </div>
+      <ui2-segmented
+        class="pl-controls__view"
+        [options]="vistaOptions"
+        [value]="vista()"
+        (valueChange)="setVista($event)"
+      ></ui2-segmented>
     </div>
-  </header>
+  </ui2-section>
 
-  <!-- Main Content -->
-  <main class="patients-main">
-    <!-- Loading State -->
-    @if (pacientesRes.isLoading() && idsClinicas() !== null) {
-      <div class="state-card loading-state">
-        <div class="shimmer-effect"></div>
-        <div class="state-icon pulse">
-          <span class="material-symbols-outlined">groups</span>
-        </div>
-        <p class="state-text">Cargando pacientes...</p>
-      </div>
-    }
+  <!-- ========================================================== -->
+  <!-- Estados (loading, error, empty global)                       -->
+  <!-- ========================================================== -->
+  @if (pacientesRes.isLoading() && idsClinicas() !== null) {
+    <div class="pl-state">
+      <ui2-spinner size="md" color="primary" label="Cargando pacientes…"></ui2-spinner>
+    </div>
+  } @else if (pacientesRes.error()) {
+    <ui2-empty-state
+      icon="error"
+      title="No se pudieron cargar"
+      message="Hubo un problema al obtener tus pacientes. Inténtalo de nuevo."
+      actionLabel="Reintentar"
+      actionIcon="refresh"
+      (action)="reload()"
+    ></ui2-empty-state>
+  } @else if (totalPacientes() === 0) {
+    <ui2-empty-state
+      icon="group_off"
+      title="Sin pacientes"
+      message="Aún no tienes pacientes registrados. Añade tu primer paciente para comenzar."
+      actionLabel="Añadir primer paciente"
+      actionIcon="person_add"
+      (action)="openAddPaciente()"
+    ></ui2-empty-state>
+  } @else {
+    <!-- ======================================================== -->
+    <!-- Filtros + sort                                            -->
+    <!-- ======================================================== -->
+    <ui2-section [padding]="'0 20px 12px'">
+      <div class="pl-filterbar">
+        <ui2-segmented
+          class="pl-filterbar__filters"
+          [options]="filtroOptions()"
+          [value]="filtroActividad()"
+          (valueChange)="setFiltro($event)"
+        ></ui2-segmented>
 
-    <!-- Error State -->
-    @else if (pacientesRes.error()) {
-      <div class="state-card error-state">
-        <div class="state-icon error">
-          <span class="material-symbols-outlined">error</span>
-        </div>
-        <p class="state-text error">No se pudieron cargar los pacientes</p>
-        <button class="retry-btn" (click)="reload()">
-          <span class="material-symbols-outlined">refresh</span>
-          Reintentar
-        </button>
-      </div>
-    }
-
-    <!-- Empty State (no patients at all) -->
-    @else if (totalPacientes() === 0 && !pacientesRes.isLoading()) {
-      <ui-empty-state
-        icon="group_off"
-        title="Sin pacientes"
-        message="Aún no tienes pacientes registrados. Añade tu primer paciente para comenzar."
-        actionLabel="Añadir primer paciente"
-        actionIcon="person_add"
-        (action)="openAddPaciente()"
-      />
-    }
-
-    <!-- Patients Content -->
-    @else if (totalPacientes() > 0) {
-      <!-- Admin: Gestionar asignaciones (mobile) -->
-      @if (isMovil() && esAdmin()) {
-        <button
-          type="button"
-          class="flex items-center gap-2 w-full mb-3 px-4 py-2.5 rounded-2xl
-                 bg-white/60 border border-white/40 backdrop-blur-sm
-                 text-zinc-600 text-sm font-medium
-                 transition-all hover:bg-white/80 active:scale-[0.98]"
-          (click)="irAsignacion()"
-        >
-          <span class="material-symbols-outlined text-kengo-primary text-lg">assignment_ind</span>
-          <span>Gestionar asignaciones</span>
-          <span class="material-symbols-outlined ml-auto text-zinc-400 text-lg">chevron_right</span>
-        </button>
-      }
-
-      <!-- Quick Stats Bar + Sort -->
-      <section class="stats-bar animate-in">
-        <button
-          type="button"
-          class="stat-pill"
-          [class.selected]="filtroActividad() === 'todos'"
-          (click)="setFiltro('todos')"
-        >
-          <span class="material-symbols-outlined stat-icon">groups</span>
-          <span class="stat-value">{{ totalPacientes() }}</span>
-          <span class="stat-label">Total</span>
-        </button>
-        <button
-          type="button"
-          class="stat-pill"
-          [class.selected]="filtroActividad() === 'activos'"
-          (click)="setFiltro('activos')"
-        >
-          <span class="material-symbols-outlined stat-icon icon-filled">favorite</span>
-          <span class="stat-value">{{ conteoActivos() }}</span>
-          <span class="stat-label">Activos</span>
-        </button>
-        <button
-          type="button"
-          class="stat-pill"
-          [class.selected]="filtroActividad() === 'inactivos'"
-          (click)="setFiltro('inactivos')"
-        >
-          <span class="material-symbols-outlined stat-icon">person_off</span>
-          <span class="stat-value">{{ conteoInactivos() }}</span>
-          <span class="stat-label">Inactivos</span>
-        </button>
-
-        <!-- Dropdown ordenar (derecha) -->
-        <div class="sort-dropdown ml-auto relative">
+        <div class="pl-sort">
           <button
             type="button"
-            class="sort-trigger"
-            [class.active]="ordenActual() !== 'nombre'"
+            class="pl-sort__trigger"
+            [class.pl-sort__trigger--active]="ordenActual() !== 'nombre'"
             (click)="$event.stopPropagation(); sortMenuAbierto.set(!sortMenuAbierto())"
+            [attr.aria-expanded]="sortMenuAbierto()"
           >
-            <span class="material-symbols-outlined text-base">swap_vert</span>
-            <span class="sort-trigger-label">{{ ordenLabel() }}</span>
-            <span class="material-symbols-outlined text-sm transition-transform" [class.rotate-180]="sortMenuAbierto()">expand_more</span>
+            <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span>
+            <span class="pl-sort__label">{{ ordenLabel() }}</span>
+            <span
+              class="material-symbols-outlined pl-sort__chevron"
+              [class.pl-sort__chevron--open]="sortMenuAbierto()"
+              aria-hidden="true"
+            >expand_more</span>
           </button>
 
           @if (sortMenuAbierto()) {
-            <div class="sort-menu" (click)="$event.stopPropagation()">
-              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'nombre'" (click)="setOrden('nombre')">
-                <span class="material-symbols-outlined">sort_by_alpha</span>
-                Nombre
-              </button>
-              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'adherencia_desc'" (click)="setOrden('adherencia_desc')">
-                <span class="material-symbols-outlined">trending_up</span>
-                Mayor adherencia
-              </button>
-              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'adherencia_asc'" (click)="setOrden('adherencia_asc')">
-                <span class="material-symbols-outlined">trending_down</span>
-                Menor adherencia
-              </button>
-              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'dolor_asc'" (click)="setOrden('dolor_asc')">
-                <span class="material-symbols-outlined">sentiment_satisfied</span>
-                Menos dolor
-              </button>
-              <button type="button" class="sort-option" [class.selected]="ordenActual() === 'dolor_desc'" (click)="setOrden('dolor_desc')">
-                <span class="material-symbols-outlined">sentiment_stressed</span>
-                Más dolor
-              </button>
+            <div class="pl-sort__menu" role="menu">
+              @for (opt of ordenOptions; track opt.value) {
+                <button
+                  type="button"
+                  class="pl-sort__option"
+                  [class.pl-sort__option--selected]="ordenActual() === opt.value"
+                  role="menuitem"
+                  (click)="setOrden(opt.value)"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ opt.icon }}</span>
+                  <span>{{ opt.label }}</span>
+                </button>
+              }
             </div>
           }
         </div>
-      </section>
+      </div>
+    </ui2-section>
 
-      <!-- Filtered Empty State -->
-      @if (pacientes().length === 0 && filtroActividad() !== 'todos') {
-        <ui-empty-state
-          [icon]="filtroActividad() === 'activos' ? 'heart_broken' : 'person_off'"
-          [title]="'Sin pacientes ' + (filtroActividad() === 'activos' ? 'activos' : 'inactivos')"
-          [message]="filtroActividad() === 'activos'
-            ? 'Ningún paciente tiene planes activos en este momento.'
-            : 'Todos tus pacientes tienen al menos un plan activo.'"
-          actionLabel="Ver todos"
-          actionIcon="groups"
-          (action)="setFiltro('todos')"
-        />
-      }
+    <!-- ======================================================== -->
+    <!-- Empty filtrado                                            -->
+    <!-- ======================================================== -->
+    @if (pacientes().length === 0) {
+      <ui2-empty-state
+        [icon]="filtroActividad() === 'activos' ? 'heart_broken' : 'person_off'"
+        [title]="'Sin pacientes ' + filtroActividad()"
+        [message]="filtroActividad() === 'activos'
+          ? 'Ningún paciente tiene planes activos en este momento.'
+          : 'Todos tus pacientes tienen al menos un plan activo.'"
+        actionLabel="Ver todos"
+        actionIcon="groups"
+        (action)="setFiltro('todos')"
+      ></ui2-empty-state>
+    }
 
-      <!-- Patients Grid/List -->
-      @if (pacientes().length > 0 && vista() === 'card') {
-        <section class="patients-grid animate-in" style="--delay: 0.1s">
-          @for (p of pacientes(); track p.id; let i = $index) {
-            <article class="patient-card" [style.--card-delay]="(i * 0.03) + 's'" (click)="verDetalle(p)">
-              <div class="card-content">
-                <!-- Avatar -->
-                <ui-avatar
+    <!-- ======================================================== -->
+    <!-- Vista cuadrícula                                          -->
+    <!-- ======================================================== -->
+    @if (pacientes().length > 0 && vista() === 'card') {
+      <ui2-section [padding]="'0 20px 24px'">
+        <div class="pl-grid">
+          @for (p of pacientes(); track p.id) {
+            <button type="button" class="pl-card" (click)="verDetalle(p)">
+              <div class="pl-card__head">
+                <ui2-avatar
                   [src]="avatarUrl(p)"
                   [name]="fullName(p)"
                   size="md"
-                  [status]="idsPacientesActivos().has(p.id) ? 'active' : 'inactive'"
-                ></ui-avatar>
-
-                <!-- Info -->
-                <div class="patient-info">
-                  <h3 class="patient-name">{{ fullName(p) }}</h3>
-
-                  @if (p.email) {
-                    <div class="info-row">
-                      <span class="material-symbols-outlined info-icon">mail</span>
-                      <span class="info-text">{{ p.email }}</span>
-                    </div>
-                  }
-
-                  <div class="info-row">
-                    <span class="material-symbols-outlined info-icon">phone</span>
-                    <span class="info-text" [class.text-zinc-400]="!p.telefono">{{ p.telefono || 'Sin teléfono' }}</span>
-                  </div>
-
+                  gradient="coral"
+                  [online]="idsPacientesActivos().has(p.id)"
+                ></ui2-avatar>
+                <div class="pl-card__title">
+                  <span class="pl-card__name">{{ fullName(p) }}</span>
                   @if (getClinicaNombre(p)) {
-                    <span class="clinic-badge">
-                      <span class="material-symbols-outlined">domain</span>
+                    <span class="pl-card__chip">
+                      <span class="material-symbols-outlined" aria-hidden="true">domain</span>
                       {{ getClinicaNombre(p) }}
                     </span>
                   }
-                  @if (getFisioResponsableNombre(p.id)) {
-                    <span class="fisio-badge">
-                      <span class="material-symbols-outlined">person</span>
-                      {{ getFisioResponsableNombre(p.id) }}
-                    </span>
-                  }
-
-                  <!-- Métricas -->
-                  @if (getAdherencia(p.id) !== null) {
-                    <div class="metrics-row">
-                      <div class="metric-item" [attr.data-tier]="adherenciaTier(getAdherencia(p.id)!)">
-                        <span class="material-symbols-outlined metric-icon">trending_up</span>
-                        <span class="metric-value">{{ getAdherencia(p.id) }}%</span>
-                        <div class="metric-bar">
-                          <div class="metric-bar-fill" [style.width.%]="getAdherencia(p.id)"></div>
-                        </div>
-                      </div>
-                      @if (getDolorPromedio(p.id) !== null) {
-                        <div class="metric-item" [attr.data-tier]="dolorTier(getDolorPromedio(p.id)!)">
-                          <span class="material-symbols-outlined metric-icon">{{ getDolorPromedio(p.id)! <= 3 ? 'sentiment_satisfied' : getDolorPromedio(p.id)! <= 6 ? 'sentiment_neutral' : 'sentiment_stressed' }}</span>
-                          <span class="metric-value">{{ getDolorPromedio(p.id) | number:'1.1-1' }}</span>
-                        </div>
-                      }
-                    </div>
-                  }
                 </div>
-
-                <!-- Arrow -->
-                <span class="material-symbols-outlined card-arrow">chevron_right</span>
+                <span class="material-symbols-outlined pl-card__arrow" aria-hidden="true">chevron_right</span>
               </div>
 
-            </article>
-          }
-
-          <!-- Card: Nuevo Paciente (al final) -->
-          <article class="patient-card add-patient-card" (click)="openAddPaciente()">
-            <div class="card-content">
-              <div class="patient-avatar add-avatar">
-                <span class="material-symbols-outlined text-2xl icon-filled">person_add</span>
-              </div>
-              <div class="patient-info">
-                <h3 class="patient-name text-kengo-primary">Nuevo paciente</h3>
-                <p class="text-xs text-zinc-500 mt-1">Añadir a la lista</p>
-              </div>
-              <span class="material-symbols-outlined card-arrow">add</span>
-            </div>
-          </article>
-        </section>
-      } @else if (pacientes().length > 0 && vista() === 'lista') {
-        <!-- List View -->
-        <section class="patients-list animate-in" style="--delay: 0.1s">
-          @for (p of pacientes(); track p.id; let i = $index) {
-            <article class="patient-row" [style.--row-delay]="(i * 0.02) + 's'" (click)="verDetalle(p)">
-              <!-- Avatar -->
-              <ui-avatar
-                [src]="avatarUrl(p)"
-                [name]="fullName(p)"
-                size="sm"
-              ></ui-avatar>
-
-              <!-- Info -->
-              <div class="row-info">
-                <h4 class="row-name">{{ fullName(p) }}</h4>
-                <span class="row-detail">{{ p.email || p.telefono || 'Sin contacto' }}</span>
-              </div>
-
-              <!-- Métricas (lista) -->
-              @if (getAdherencia(p.id) !== null) {
-                <div class="row-metrics">
-                  <span class="row-metric-badge" [attr.data-tier]="adherenciaTier(getAdherencia(p.id)!)">
-                    {{ getAdherencia(p.id) }}%
+              <div class="pl-card__meta">
+                @if (p.email) {
+                  <span class="pl-card__meta-row">
+                    <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+                    <span class="pl-card__meta-text">{{ p.email }}</span>
                   </span>
+                }
+                <span class="pl-card__meta-row">
+                  <span class="material-symbols-outlined" aria-hidden="true">phone</span>
+                  <span class="pl-card__meta-text" [class.pl-card__meta-text--empty]="!p.telefono">
+                    {{ p.telefono || 'Sin teléfono' }}
+                  </span>
+                </span>
+                @if (getFisioResponsableNombre(p.id); as fisioNombre) {
+                  <span class="pl-card__meta-row">
+                    <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                    <span class="pl-card__meta-text">{{ fisioNombre }}</span>
+                  </span>
+                }
+              </div>
+
+              @if (getAdherencia(p.id) !== null) {
+                <div class="pl-card__metrics">
+                  <ui2-pill variant="custom" [color]="adherenciaColor(getAdherencia(p.id)!)" icon="trending_up">
+                    {{ getAdherencia(p.id) }}%
+                  </ui2-pill>
                   @if (getDolorPromedio(p.id) !== null) {
-                    <span class="row-metric-badge dolor" [attr.data-tier]="dolorTier(getDolorPromedio(p.id)!)">
-                      {{ getDolorPromedio(p.id) | number:'1.1-1' }}
-                    </span>
+                    <ui2-pill
+                      variant="custom"
+                      [color]="dolorColor(getDolorPromedio(p.id)!)"
+                      [icon]="dolorIcon(getDolorPromedio(p.id)!)"
+                    >{{ getDolorPromedio(p.id) | number:'1.1-1' }}</ui2-pill>
                   }
                 </div>
               }
-
-              <!-- Arrow -->
-              <span class="material-symbols-outlined row-arrow">chevron_right</span>
-            </article>
+            </button>
           }
-
-          <!-- Row: Nuevo Paciente (al final) -->
-          <article class="patient-row add-patient-row" (click)="openAddPaciente()">
-            <div class="row-avatar add-avatar">
-              <span class="material-symbols-outlined text-lg icon-filled">person_add</span>
-            </div>
-            <div class="row-info">
-              <h4 class="row-name text-kengo-primary">Nuevo paciente</h4>
-              <span class="row-detail">Añadir a la lista</span>
-            </div>
-            <span class="material-symbols-outlined row-arrow">add</span>
-          </article>
-        </section>
-      }
+        </div>
+      </ui2-section>
     }
-  </main>
 
-  <!-- Floating Action Button (Mobile only) -->
+    <!-- ======================================================== -->
+    <!-- Vista lista                                               -->
+    <!-- ======================================================== -->
+    @if (pacientes().length > 0 && vista() === 'lista') {
+      <ui2-section [padding]="'0 20px 24px'">
+        <div class="pl-list">
+          @for (p of pacientes(); track p.id; let i = $index) {
+            <ui2-list-row
+              [title]="fullName(p)"
+              [subtitle]="p.email || p.telefono || 'Sin contacto'"
+              [isFirst]="i === 0"
+              [rowClickable]="true"
+              (rowClick)="verDetalle(p)"
+            >
+              @if (getAdherencia(p.id) !== null) {
+                <ui2-pill variant="custom" [color]="adherenciaColor(getAdherencia(p.id)!)">
+                  {{ getAdherencia(p.id) }}%
+                </ui2-pill>
+              }
+              @if (getDolorPromedio(p.id) !== null) {
+                <ui2-pill variant="custom" [color]="dolorColor(getDolorPromedio(p.id)!)">
+                  {{ getDolorPromedio(p.id) | number:'1.1-1' }}
+                </ui2-pill>
+              }
+              <span class="material-symbols-outlined pl-list__arrow" aria-hidden="true">chevron_right</span>
+            </ui2-list-row>
+          }
+        </div>
+      </ui2-section>
+    }
+  }
+
+  <!-- ========================================================== -->
+  <!-- FAB (mobile)                                                 -->
+  <!-- ========================================================== -->
   @if (isMovil() && totalPacientes() > 0) {
-    <button class="fab" (click)="openAddPaciente()" aria-label="Añadir paciente">
-      <span class="material-symbols-outlined icon-filled">person_add</span>
+    <button
+      type="button"
+      class="pl-fab"
+      aria-label="Añadir paciente"
+      (click)="openAddPaciente()"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
     </button>
   }
-</section>
+</div>
