@@ -46,6 +46,37 @@
   --kengo-svg-wave-2: rgb(253, 214, 179);
   --kengo-svg-wave-3: rgb(247, 166, 94);
   --kengo-svg-wave-4: rgb(241, 116, 3);
+
+  /* =========================================
+     V2 (cream wellness) — solo consumidos por componentes ui2-*
+     Coexisten con los tokens kengo-* legacy.
+     ========================================= */
+
+  /* Cream surface palette */
+  --cream-50: #fdf8f1;
+  --cream-100: #f7eedf;
+
+  /* Ink (neutral text) scale */
+  --ink-100: #f3f4f6;
+  --ink-300: #d1d5db;
+  --ink-400: #9ca3af;
+  --ink-500: #6b7280;
+  --ink-700: #374151;
+  --ink-900: #111827;
+
+  /* Semantic colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #6366f1;
+
+  /* Shadows */
+  --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.04);
+  --shadow-card-strong: 0 8px 20px rgba(0, 0, 0, 0.06);
+  --shadow-cta-coral: 0 12px 28px -6px rgba(231, 92, 62, 0.5);
+  --shadow-pill-coral: 0 4px 10px -2px rgba(231, 92, 62, 0.4);
+  --shadow-toggle-coral: 0 4px 10px -2px rgba(231, 92, 62, 0.35);
+  --shadow-tab-bar: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 /* =========================================
@@ -350,11 +381,66 @@
   .focus\:ring-kengo-primary\/20:focus {
     --tw-ring-color: rgba(var(--kengo-primary-rgb), 0.2);
   }
+
+  /* =========================================
+     V2 utilities (cream wellness) — solo para ui2-*
+     ========================================= */
+
+  /* Cream */
+  .bg-cream-50  { background-color: var(--cream-50); }
+  .bg-cream-100 { background-color: var(--cream-100); }
+  .border-cream-100 { border-color: var(--cream-100); }
+
+  /* Ink */
+  .bg-ink-100   { background-color: var(--ink-100); }
+  .text-ink-300 { color: var(--ink-300); }
+  .text-ink-400 { color: var(--ink-400); }
+  .text-ink-500 { color: var(--ink-500); }
+  .text-ink-700 { color: var(--ink-700); }
+  .text-ink-900 { color: var(--ink-900); }
+  .border-ink-100 { border-color: var(--ink-100); }
+  .border-ink-300 { border-color: var(--ink-300); }
+
+  /* Semantic */
+  .bg-success { background-color: var(--success); }
+  .bg-warning { background-color: var(--warning); }
+  .bg-danger  { background-color: var(--danger); }
+  .bg-info    { background-color: var(--info); }
+  .text-success { color: var(--success); }
+  .text-warning { color: var(--warning); }
+  .text-danger  { color: var(--danger); }
+  .text-info    { color: var(--info); }
+
+  /* Shadows */
+  .shadow-card         { box-shadow: var(--shadow-card); }
+  .shadow-card-strong  { box-shadow: var(--shadow-card-strong); }
+  .shadow-cta-coral    { box-shadow: var(--shadow-cta-coral); }
+  .shadow-pill-coral   { box-shadow: var(--shadow-pill-coral); }
+  .shadow-toggle-coral { box-shadow: var(--shadow-toggle-coral); }
+  .shadow-tab-bar      { box-shadow: var(--shadow-tab-bar); }
+
+  /* Cream coral gradient (Card tinted) */
+  .bg-tinted-coral {
+    background: linear-gradient(135deg, #fff5ee, #ffffff);
+  }
+
+  /* Coral gradient utilities used by ui2-cta-bar / ui2-message-bubble (me) */
+  .bg-coral-gradient {
+    background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  }
 }
 
 @font-face {
   font-family: kengoFont;
   src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+}
+
+/* Alias V2: misma fuente, nombre alineado con la guía de diseño */
+@font-face {
+  font-family: KengoDisplay;
+  src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+  font-weight: 700;
+  font-display: swap;
 }
 
 @font-face {

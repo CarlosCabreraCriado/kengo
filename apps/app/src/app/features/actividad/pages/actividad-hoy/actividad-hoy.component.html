@@ -1,318 +1,158 @@
-<div class="activity-hoy">
-  <!-- Loading State -->
+<div class="ah-page">
   @if (cargando()) {
-    <div class="state-card loading-state">
-      <div class="shimmer-effect"></div>
-      <div class="state-icon pulse">
-        <span class="material-symbols-outlined">fitness_center</span>
-      </div>
-      <p class="state-text">Cargando tu actividad...</p>
+    <div class="ah-state-center">
+      <ui2-spinner size="lg" label="Cargando tu actividad..."></ui2-spinner>
     </div>
-  }
+  } @else if (error()) {
+    <ui2-empty-state
+      icon="error"
+      title="Algo salió mal"
+      [message]="error()"
+      actionLabel="Reintentar"
+      actionIcon="refresh"
+      (action)="cargarDatos()"
+    ></ui2-empty-state>
+  } @else if (sinPlanesActivos()) {
+    <ui2-empty-state
+      icon="calendar_today"
+      title="Sin planes activos"
+      message="No tienes planes asignados. Contacta con tu fisio para que te asigne uno."
+    ></ui2-empty-state>
+  } @else {
+    <ui2-big-title
+      [overline]="fechaHoy()"
+      [title]="todoCompletado() ? '¡FELICIDADES!' : (hayActividadHoy() ? 'TU ACTIVIDAD DE HOY' : 'DÍA DE DESCANSO')"
+      [sub]="todoCompletado() ? 'Has completado todos los ejercicios de hoy' : (hayActividadHoy() ? 'Pulsa Continuar cuando estés listo' : 'No tienes ejercicios programados para hoy')"
+    ></ui2-big-title>
 
-  <!-- Error State -->
-  @if (error()) {
-    <div class="state-card error-state animate-in">
-      <div class="state-icon error">
-        <span class="material-symbols-outlined">error</span>
-      </div>
-      <h2 class="state-title">Algo salió mal</h2>
-      <p class="state-text">{{ error() }}</p>
-      <button type="button" class="retry-btn" (click)="cargarDatos()">
-        <span class="material-symbols-outlined">refresh</span>
-        Reintentar
-      </button>
-    </div>
-  }
+    @if (hayActividadHoy() && !todoCompletado()) {
+      <ui2-section [padding]="'4px 20px 14px'">
+        <ui2-cta-bar
+          [title]="progresoTotal().completados > 0 ? 'CONTINUAR' : 'COMENZAR'"
+          [subtitle]="progresoTotal().completados + '/' + progresoTotal().total + ' · ' + tiempoEstimadoHoy() + ' estimado'"
+          icon="play_arrow"
+          (clicked)="iniciarSesionHoy()"
+        ></ui2-cta-bar>
+      </ui2-section>
+    }
 
-  <!-- Sin planes activos -->
-  @if (sinPlanesActivos()) {
-    <div class="state-card empty-state animate-in">
-      <div class="state-visual">
-        <div class="empty-illustration">
-          <span class="material-symbols-outlined main-icon">calendar_today</span>
-          <span class="material-symbols-outlined accent-icon">add</span>
-        </div>
-      </div>
-      <h2 class="state-title">Sin planes activos</h2>
-      <p class="state-text">
-        No tienes planes de ejercicios asignados actualmente.
-      </p>
-      <p class="state-hint">
-        Contacta con tu fisioterapeuta para que te asigne un plan personalizado.
-      </p>
-    </div>
-  }
-
-  <!-- Contenido principal -->
-  @if (!cargando() && !error() && !sinPlanesActivos()) {
-    <div class="content-grid">
-      <!-- Columna principal -->
-      <div class="main-column">
-        <!-- Hero Card: Estado del día -->
-        @if (todoCompletado()) {
-          <article class="hero-card completed animate-in">
-            <div class="hero-visual">
-              <div class="hero-gradient success"></div>
-              <div class="celebration-particles" aria-hidden="true">
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
-            </div>
-            <div class="hero-content">
-              <div class="hero-icon success">
-                <span class="material-symbols-outlined icon-filled">celebration</span>
-              </div>
-              <div class="hero-info">
-                <span class="hero-date">{{ fechaHoy() }}</span>
-                <h2 class="hero-title">¡Felicidades!</h2>
-                <p class="hero-subtitle">Has completado todos los ejercicios de hoy</p>
-              </div>
-            </div>
-            <div class="hero-stats">
-              <div class="stat-item">
-                <span class="stat-value">{{ progresoTotal().completados }}</span>
-                <span class="stat-label">Completados</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat-item">
-                <span class="stat-value">100%</span>
-                <span class="stat-label">Progreso</span>
-              </div>
-            </div>
-          </article>
-        } @else if (!hayActividadHoy()) {
-          <article class="hero-card rest animate-in">
-            <div class="hero-visual">
-              <div class="hero-gradient rest"></div>
-            </div>
-            <div class="hero-content">
-              <div class="hero-icon rest">
-                <span class="material-symbols-outlined">self_improvement</span>
-              </div>
-              <div class="hero-info">
-                <span class="hero-date">{{ fechaHoy() }}</span>
-                <h2 class="hero-title">Día de descanso</h2>
-                <p class="hero-subtitle">No tienes ejercicios programados para hoy</p>
-              </div>
-            </div>
-          </article>
-        } @else {
-          <!-- Hero Card: Actividad pendiente -->
-          <article class="hero-card active animate-in">
-            <div class="hero-visual">
-              <div class="hero-gradient active"></div>
-              <div class="hero-pattern" aria-hidden="true"></div>
-            </div>
-            <div class="hero-content">
-              <div class="hero-badge pending">
-                <span class="badge-count">{{ totalPendientes() }}</span>
-                <span class="badge-label">pendiente{{ totalPendientes() !== 1 ? 's' : '' }}</span>
-              </div>
-              <div class="hero-info">
-                <span class="hero-date">{{ fechaHoy() }}</span>
-                <h2 class="hero-title">Tu actividad de hoy</h2>
-              </div>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="hero-progress">
-              <div class="progress-track">
-                <div
-                  class="progress-fill"
-                  [style.width.%]="progresoTotal().total > 0
-                    ? (progresoTotal().completados / progresoTotal().total) * 100
-                    : 0"
-                ></div>
-              </div>
-              <span class="progress-text">
-                {{ progresoTotal().completados }}/{{ progresoTotal().total }} ejercicios
-              </span>
-            </div>
-
-            <!-- Session Stats -->
-            <div class="hero-session-stats">
-              <div class="session-stat">
-                <span class="material-symbols-outlined session-stat-icon">exercise</span>
-                <span class="session-stat-value">{{ totalSeriesHoy() }}</span>
-                <span class="session-stat-label">series</span>
-              </div>
-              <div class="session-stat-divider"></div>
-              <div class="session-stat">
-                <span class="material-symbols-outlined session-stat-icon">timer</span>
-                <span class="session-stat-value">{{ tiempoEstimadoHoy() }}</span>
-                <span class="session-stat-label">estimado</span>
-              </div>
-            </div>
-
-            <!-- Exercises List -->
-            <ul class="exercises-list">
-              @for (ejercicio of ejerciciosUnificadosHoy(); track ejercicio.id; let i = $index) {
-                <li
-                  class="exercise-item"
-                  [class.completed]="ejercicio.completadoHoy"
-                  (click)="onPreviewEjercicio(ejercicio, i)"
-                >
-                  <div class="exercise-status">
-                    @if (ejercicio.completadoHoy) {
-                      <div class="status-check">
-                        <span class="material-symbols-outlined icon-filled">check</span>
-                      </div>
-                    } @else {
-                      <div class="status-pending"></div>
-                    }
-                  </div>
-
-                  <div class="exercise-thumb">
-                    @if (ejercicio.ejercicio.portada) {
-                      <img
-                        [src]="getAssetUrl(ejercicio.ejercicio.portada)"
-                        [alt]="ejercicio.ejercicio.nombre"
-                        loading="lazy"
-                      />
-                    } @else {
-                      <div class="thumb-placeholder">
-                        <span class="material-symbols-outlined">fitness_center</span>
-                      </div>
-                    }
-                  </div>
-
-                  <div class="exercise-info">
-                    <span class="exercise-name">
-                      {{ ejercicio.ejercicio.nombre }}
-                    </span>
-                    <span class="exercise-details">
-                      {{ ejercicio.series ?? 3 }} series ×
-                      @if (ejercicio.duracionSeg) {
-                        {{ ejercicio.duracionSeg }}s
-                      } @else {
-                        {{ ejercicio.repeticiones ?? 12 }} reps
-                      }
-                      @if ((ejercicio.vecesDia ?? 1) > 1) {
-                        <span class="detail-separator">·</span>
-                        {{ ejercicio.vecesCompletadasHoy ?? 0 }}/{{ ejercicio.vecesDia }}× día
-                      }
-                    </span>
-                  </div>
-                </li>
-              }
-            </ul>
-
-            <!-- CTA Button -->
+    @if (hayActividadHoy()) {
+      <ui2-section
+        [label]="'Ejercicios de hoy · ' + totalSeriesHoy() + ' series'"
+      >
+        <ui2-card [padding]="0">
+          @for (ejercicio of ejerciciosUnificadosHoy(); track ejercicio.id; let i = $index) {
             <button
               type="button"
-              class="hero-cta"
-              (click)="iniciarSesionHoy()"
+              class="ah-exercise-row"
+              [class.ah-exercise-row--bordered]="i > 0"
+              [class.ah-exercise-row--done]="ejercicio.completadoHoy"
+              (click)="onPreviewEjercicio(ejercicio, i)"
             >
-              <span class="material-symbols-outlined icon-filled">play_arrow</span>
-              <span class="cta-text">
-                @if (progresoTotal().completados > 0) {
-                  Continuar sesión
+              <span class="ah-exercise-row__thumb">
+                @if (ejercicio.ejercicio.portada) {
+                  <img
+                    [src]="getAssetUrl(ejercicio.ejercicio.portada)"
+                    [alt]="ejercicio.ejercicio.nombre"
+                    loading="lazy"
+                  />
                 } @else {
-                  Comenzar sesión
+                  <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                }
+                @if (ejercicio.completadoHoy) {
+                  <span class="ah-exercise-row__check material-symbols-outlined" aria-hidden="true">check</span>
                 }
               </span>
-            </button>
-          </article>
-        }
-      </div>
-
-      <!-- Columna lateral: Próximos días -->
-      @if (proximosDias().length > 0) {
-        <aside class="sidebar-column">
-          <section class="upcoming-section animate-in" style="--delay: 0.2s">
-            <header class="section-header sticky">
-              <div class="section-icon">
-                <span class="material-symbols-outlined">calendar_month</span>
-              </div>
-              <div>
-                <h2 class="section-title">Próximos días</h2>
-                <p class="section-subtitle">Tu agenda de ejercicios</p>
-              </div>
-            </header>
-
-            <div class="upcoming-list">
-              @for (dia of proximosDias(); track dia.fecha.toISOString(); let i = $index) {
-                <article
-                  class="day-card animate-in"
-                  [style.--delay]="(0.25 + i * 0.03) + 's'"
-                  [class.expanded]="esDiaExpandido(dia.fecha)"
-                >
-                  <!-- Day Header (clickable) -->
-                  <button
-                    type="button"
-                    class="day-header"
-                    (click)="toggleDia(dia.fecha)"
-                  >
-                    <div class="day-date">
-                      <span class="day-name">{{ dia.diaSemana }}</span>
-                      <span class="day-number">{{ dia.fechaFormateada }}</span>
-                    </div>
-                    <div class="day-summary">
-                      <span class="exercise-count">
-                        {{ dia.totalEjercicios }}
-                        <span class="count-label">ejercicio{{ dia.totalEjercicios !== 1 ? 's' : '' }}</span>
-                      </span>
-                      @if (dia.planes.length > 1) {
-                        <span class="plans-count">{{ dia.planes.length }} planes</span>
-                      }
-                    </div>
-                    <span
-                      class="material-symbols-outlined expand-icon"
-                      [class.rotated]="esDiaExpandido(dia.fecha)"
-                    >expand_more</span>
-                  </button>
-
-                  <!-- Expanded Content -->
-                  @if (esDiaExpandido(dia.fecha)) {
-                    <div class="day-content">
-                      <ul class="day-exercises">
-                        @for (ejercicio of dia.ejercicios; track $index) {
-                          <li class="day-exercise-item">
-                            <div class="day-exercise-thumb">
-                              @if (ejercicio.portada) {
-                                <img
-                                  [src]="getAssetUrl(ejercicio.portada)"
-                                  [alt]="ejercicio.nombre"
-                                  loading="lazy"
-                                />
-                              } @else {
-                                <div class="thumb-placeholder small">
-                                  <span class="material-symbols-outlined">fitness_center</span>
-                                </div>
-                              }
-                            </div>
-                            <div class="day-exercise-info">
-                              <span class="day-exercise-name">{{ ejercicio.nombre }}</span>
-                              <span class="day-exercise-details">
-                                {{ ejercicio.series }} series ×
-                                @if (ejercicio.duracionSeg) {
-                                  {{ ejercicio.duracionSeg }}s
-                                } @else {
-                                  {{ ejercicio.repeticiones ?? 12 }} reps
-                                }
-                              </span>
-                            </div>
-                          </li>
-                        }
-                      </ul>
-
-                      <!-- Start Session Button -->
-                      <button
-                        type="button"
-                        class="day-action"
-                        (click)="iniciarSesionDia(dia)"
-                      >
-                        <span class="material-symbols-outlined icon-filled">play_arrow</span>
-                        Comenzar sesión
-                      </button>
-                    </div>
+              <span class="ah-exercise-row__text">
+                <span class="ah-exercise-row__name">{{ ejercicio.ejercicio.nombre }}</span>
+                <span class="ah-exercise-row__meta">
+                  {{ ejercicio.series ?? 3 }} series ×
+                  @if (ejercicio.duracionSeg) {
+                    {{ ejercicio.duracionSeg }}s
+                  } @else {
+                    {{ ejercicio.repeticiones ?? 12 }} reps
                   }
-                </article>
-              }
-            </div>
-          </section>
-        </aside>
-      }
-    </div>
+                  @if ((ejercicio.vecesDia ?? 1) > 1) {
+                    · {{ ejercicio.vecesCompletadasHoy ?? 0 }}/{{ ejercicio.vecesDia }}× día
+                  }
+                </span>
+              </span>
+              <span class="material-symbols-outlined ah-exercise-row__chev" aria-hidden="true">chevron_right</span>
+            </button>
+          }
+        </ui2-card>
+      </ui2-section>
+    }
+
+    @if (proximosDias().length > 0) {
+      <ui2-section label="Próximos días" action="Ver agenda">
+        <ui2-card [padding]="0">
+          @for (dia of proximosDias(); track dia.fecha.toISOString(); let i = $index) {
+            <button
+              type="button"
+              class="ah-day-row"
+              [class.ah-day-row--bordered]="i > 0"
+              (click)="toggleDia(dia.fecha)"
+            >
+              <span class="ah-day-row__date">
+                <span class="ah-day-row__name">{{ dia.diaSemana }}</span>
+                <span class="ah-day-row__num">{{ dia.fechaFormateada }}</span>
+              </span>
+              <span class="ah-day-row__pill">
+                <ui2-pill variant="soft">
+                  {{ dia.totalEjercicios }} ej
+                </ui2-pill>
+              </span>
+              <span
+                class="material-symbols-outlined ah-day-row__chev"
+                [class.ah-day-row__chev--rot]="esDiaExpandido(dia.fecha)"
+                aria-hidden="true"
+              >expand_more</span>
+            </button>
+
+            @if (esDiaExpandido(dia.fecha)) {
+              <div class="ah-day-content">
+                <ul class="ah-day-list">
+                  @for (ejercicio of dia.ejercicios; track $index) {
+                    <li class="ah-day-list__item">
+                      <span class="ah-day-list__thumb">
+                        @if (ejercicio.portada) {
+                          <img
+                            [src]="getAssetUrl(ejercicio.portada)"
+                            [alt]="ejercicio.nombre"
+                            loading="lazy"
+                          />
+                        } @else {
+                          <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                        }
+                      </span>
+                      <span class="ah-day-list__text">
+                        <span class="ah-day-list__name">{{ ejercicio.nombre }}</span>
+                        <span class="ah-day-list__meta">
+                          {{ ejercicio.series }} ×
+                          @if (ejercicio.duracionSeg) {
+                            {{ ejercicio.duracionSeg }}s
+                          } @else {
+                            {{ ejercicio.repeticiones ?? 12 }} reps
+                          }
+                        </span>
+                      </span>
+                    </li>
+                  }
+                </ul>
+                <div class="ah-day-action">
+                  <ui2-button
+                    variant="primary"
+                    size="md"
+                    iconLeft="play_arrow"
+                    (clicked)="iniciarSesionDia(dia)"
+                  >Comenzar sesión</ui2-button>
+                </div>
+              </div>
+            }
+          }
+        </ui2-card>
+      </ui2-section>
+    }
   }
 </div>

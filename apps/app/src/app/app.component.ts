@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import {
   RouterOutlet,
   Router,
@@ -14,11 +14,23 @@ import {
   ThemeService,
 } from './core';
 import { CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios/carrito-ejercicios.component';
+import {
+  Ui2CreamBgComponent,
+  Ui2PatientHeaderComponent,
+  Ui2PatientTabBarComponent,
+} from './shared/ui-v2';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CarritoEjerciciosComponent, NavegacionComponent],
+  imports: [
+    RouterOutlet,
+    CarritoEjerciciosComponent,
+    NavegacionComponent,
+    Ui2CreamBgComponent,
+    Ui2PatientHeaderComponent,
+    Ui2PatientTabBarComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -31,6 +43,16 @@ export class AppComponent implements OnInit {
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
 
   public mostrarNavegacion = false;
+
+  /** Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado). */
+  public clinicaActual = computed(() => {
+    const clinicas = this.sessionService.misclinicas();
+    if (!clinicas || clinicas.length === 0) return 'Mi clínica';
+    return 'Mi clínica';
+  });
+
+  public userName = computed(() => this.sessionService.nombreCompleto() || 'Usuario');
+  public avatarUrl = computed(() => this.sessionService.usuario()?.avatar_url ?? null);
 
   // Rutas donde NO se debe mostrar la navegación
   private rutasSinNavegacion = ['/login', '/registro', '/magic', '/mi-plan', '/establecer-password'];

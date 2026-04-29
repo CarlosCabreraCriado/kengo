@@ -25,6 +25,16 @@ import {
   type PreviewEjercicioData,
 } from '../../../../shared';
 import type { EjercicioPlanConEstado } from '../../../../../types/global';
+import {
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2CtaBarComponent,
+  Ui2EmptyStateComponent,
+  Ui2PillComponent,
+  Ui2SectionComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 interface EjercicioProximo {
   nombre: string;
@@ -47,7 +57,16 @@ interface DiaProximoConEjercicios {
 @Component({
   selector: 'app-actividad-hoy',
   standalone: true,
-  imports: [],
+  imports: [
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2CtaBarComponent,
+    Ui2EmptyStateComponent,
+    Ui2PillComponent,
+    Ui2SectionComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './actividad-hoy.component.html',
   styleUrl: './actividad-hoy.component.css',
   host: {

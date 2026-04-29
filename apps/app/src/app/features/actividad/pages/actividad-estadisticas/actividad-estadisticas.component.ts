@@ -11,6 +11,15 @@ import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 import { RegistroEjercicio, DiaSemana } from '../../../../../types/global';
+import {
+  Ui2ActivityRingsComponent,
+  Ui2BigTitleComponent,
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2KpiCardComponent,
+  Ui2SectionComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 interface DiaEstadistica {
   diaSemana: string;
@@ -30,7 +39,15 @@ interface EjercicioReciente {
 @Component({
   selector: 'app-actividad-estadisticas',
   standalone: true,
-  imports: [],
+  imports: [
+    Ui2ActivityRingsComponent,
+    Ui2BigTitleComponent,
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2KpiCardComponent,
+    Ui2SectionComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './actividad-estadisticas.component.html',
   styleUrl: './actividad-estadisticas.component.css',
   host: {
@@ -203,6 +220,14 @@ export class ActividadEstadisticasComponent implements OnInit {
          this.registrosMes().length === 0
   );
 
+  // Anillos para ui2-activity-rings — [días con actividad / 7, ejercicios semana / max sugerido, % mensual / 100]
+  readonly ringValues = computed<[number, number, number]>(() => {
+    const dias = Math.min(1, this.diasConActividadSemana() / 7);
+    const total = Math.min(1, this.totalEjerciciosSemana() / 35);
+    const mensual = this.progresoMensual().porcentaje / 100;
+    return [dias, total, Math.min(1, mensual)];
+  });
+
   ngOnInit(): void {
     this.cargarDatos();
   }
@@ -265,7 +290,7 @@ export class ActividadEstadisticasComponent implements OnInit {
           desde: desde.toISOString().split('T')[0],
           soloCompletados: true,
         },
-      )) as Array<{
+      )) as {
         _id: string;
         planExerciseId: string;
         pacienteId: string;
@@ -275,7 +300,7 @@ export class ActividadEstadisticasComponent implements OnInit {
         duracionRealSeg?: number;
         dolorEscala?: number;
         notaPaciente?: string;
-      }>;
+      }[];
 
       // Ordenar desc por fechaHora (Convex devuelve sin orden garantizado).
       const sorted = [...(records ?? [])].sort((a, b) =>

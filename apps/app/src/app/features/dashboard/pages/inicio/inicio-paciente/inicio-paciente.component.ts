@@ -6,23 +6,37 @@ import { ActividadHoyService, BadgeType } from '../../../../actividad/data-acces
 import { RachaPacienteService, DiaSemanaCalendario } from '../../../data-access/racha-paciente.service';
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
-import { useResponsive } from '../../../../../shared';
 import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/global';
-import { assetUrl, rawAssetUrl } from '../../../../../core/utils/asset-url';
-import { DashboardHeaderComponent } from '../../../../../core/layout/components/dashboard-header/dashboard-header.component';
+import { rawAssetUrl } from '../../../../../core/utils/asset-url';
+import {
+  Ui2BigTitleComponent,
+  Ui2CardComponent,
+  Ui2CtaBarComponent,
+  Ui2DateTileComponent,
+  Ui2FisioMessageCardComponent,
+  Ui2HorizontalScrollerComponent,
+  Ui2KpiCardComponent,
+  Ui2ListRowComponent,
+  Ui2SectionComponent,
+} from '../../../../../shared/ui-v2';
 
-interface EjercicioStrip {
-  id: string;
-  nombre: string;
-  portadaUrl: string | null;
-  completado: boolean;
-  esSiguiente: boolean;
-}
+const MES_ABREV = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+const DIA_SHORT = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
 
 @Component({
   selector: 'app-inicio-paciente',
   standalone: true,
-  imports: [DashboardHeaderComponent],
+  imports: [
+    Ui2BigTitleComponent,
+    Ui2CardComponent,
+    Ui2CtaBarComponent,
+    Ui2DateTileComponent,
+    Ui2FisioMessageCardComponent,
+    Ui2HorizontalScrollerComponent,
+    Ui2KpiCardComponent,
+    Ui2ListRowComponent,
+    Ui2SectionComponent,
+  ],
   templateUrl: './inicio-paciente.component.html',
   styleUrl: './inicio-paciente.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,7 +53,6 @@ export class InicioPacienteComponent {
 
   fisioAsignado = signal<AsignacionResponsable | null>(null);
   cargandoFisio = signal(true);
-  mostrarTooltipContacto = signal(false);
 
   private clinicaPaciente = computed(() => {
     const clinicas = this.sessionService.usuario()?.clinicas ?? [];
@@ -48,7 +61,7 @@ export class InicioPacienteComponent {
 
   fisioAvatarUrl = computed(() => {
     const avatar = this.fisioAsignado()?.avatarFisio;
-    return avatar ? `${rawAssetUrl(avatar)}` : null;
+    return avatar ? rawAssetUrl(avatar) : null;
   });
 
   fisioNombreCompleto = computed(() => {
@@ -61,22 +74,29 @@ export class InicioPacienteComponent {
     const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
     const clinicaId = this.clinicaPaciente();
     if (!clinicaId) return null;
-    return clinicas.find(c => c.id === clinicaId)?.nombre ?? null;
+    return clinicas.find((c) => c.id === clinicaId)?.nombre ?? null;
   });
 
   // --- Calendario ---
   proximaSesion = computed<DiaSemanaCalendario | null>(() => {
     const semana = this.rachaService.cumplimientoSemana();
-    return semana.find(d => !d.esHoy && d.estado === 'programado') ?? null;
+    return semana.find((d) => !d.esHoy && d.estado === 'programado') ?? null;
   });
 
-  resumenSemana = computed(() => {
+  proximasFechas = computed(() => {
     const semana = this.rachaService.cumplimientoSemana();
-    return {
-      completados: semana.filter(d => d.estado === 'completado').length,
-      parciales: semana.filter(d => d.estado === 'parcial').length,
-      fallidos: semana.filter(d => d.estado === 'fallido').length,
-    };
+    const ahora = new Date();
+    return semana
+      .filter((d) => !d.esHoy && d.estado === 'programado')
+      .slice(0, 5)
+      .map((d) => {
+        const fecha = d.fecha ? new Date(d.fecha) : ahora;
+        return {
+          weekday: DIA_SHORT[fecha.getDay()],
+          day: fecha.getDate(),
+          month: MES_ABREV[fecha.getMonth()],
+        };
+      });
   });
 
   // --- Plan ---
@@ -85,51 +105,70 @@ export class InicioPacienteComponent {
   planPrincipal = computed(() => {
     const planes = this.actividadHoyService.planesActivos();
     if (planes.length === 0) return null;
-
     const plan = planes[0];
     const hoy = new Date();
     const diaHoy = this.DIAS_SEMANA_JS[hoy.getDay()];
-
-    let diasRestantes: number | null = null;
-    if (plan.fechaFin) {
-      const fin = new Date(plan.fechaFin);
-      diasRestantes = Math.max(0, Math.ceil((fin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)));
-    }
-
-    const ejerciciosHoy = plan.items.filter(item => {
+    const ejerciciosHoy = plan.items.filter((item) => {
       if (!item.diasSemana || item.diasSemana.length === 0) return true;
       return item.diasSemana.includes(diaHoy);
     }).length;
-
-    return {
-      titulo: plan.titulo,
-      diasRestantes,
-      totalEjercicios: plan.items.length,
-      ejerciciosHoy,
-    };
+    return { titulo: plan.titulo, totalEjercicios: plan.items.length, ejerciciosHoy };
   });
 
-  tienePlanesMultiples = computed(() => this.actividadHoyService.planesActivos().length > 1);
-  cantidadPlanesExtra = computed(() => this.actividadHoyService.planesActivos().length - 1);
-
-  // --- Racha ---
-  mensajeMotivacional = computed(() => {
-    const racha = this.rachaService.rachaActual();
-    if (racha >= 7) return '¡Increíble! Una semana entera';
-    if (racha >= 3) return '¡Sigue así, vas genial!';
-    if (racha >= 1) return '¡Buen inicio!';
-    if (this.actividadHoyService.todoCompletado()) return '¡Hoy puede ser el día 1!';
-    return null;
+  // --- Header ---
+  userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Hola');
+  saludoOverline = computed(() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 19) return 'Buenas tardes';
+    return 'Buenas noches';
   });
 
-  mostrarMejorRacha = computed(() => {
-    const mejor = this.rachaService.mejorRacha();
-    const actual = this.rachaService.rachaActual();
-    return mejor > actual && mejor > 0;
+  // --- Estados de actividad ---
+  badgeType = computed<BadgeType>(() => this.actividadHoyService.badgeType());
+  subtitulo = computed(() => this.actividadHoyService.subtituloDinamico());
+  progreso = computed(() => this.actividadHoyService.progresoTotal());
+
+  ctaSubtitle = computed(() => {
+    const t = this.badgeType();
+    const prog = this.progreso();
+    if (t === 'loading') return 'Cargando…';
+    if (t === 'completed') return '¡Hecho! Disfruta del día.';
+    if (t === 'rest') return 'Hoy descansas.';
+    if (prog.total > 0) return `${prog.completados}/${prog.total} ejercicios · pulsa para continuar`;
+    return 'Empieza tu sesión de hoy';
   });
 
-  // --- Quick actions ---
-  subtituloClinica = computed(() => this.clinicaNombre() ?? 'Tu centro de salud');
+  ctaTitle = computed(() => {
+    const t = this.badgeType();
+    if (t === 'completed') return 'COMPLETADO';
+    if (t === 'rest') return 'DESCANSO';
+    return 'CONTINUAR';
+  });
+
+  ctaIcon = computed(() => {
+    const t = this.badgeType();
+    if (t === 'completed') return 'check';
+    if (t === 'rest') return 'self_improvement';
+    return 'play_arrow';
+  });
+
+  rachaActual = computed(() => this.rachaService.rachaActual());
+  mejorRacha = computed(() => this.rachaService.mejorRacha());
+
+  userNameUpper = computed(() => (this.userName() || 'Hola').toUpperCase());
+
+  porcentajeHoy = computed<string | null>(() => {
+    const p = this.progreso();
+    if (!p.total) return null;
+    return `${Math.round((p.completados / p.total) * 100)}% completado`;
+  });
+
+  rachaDelta = computed<string | null>(() => {
+    const m = this.mejorRacha();
+    const a = this.rachaActual();
+    return m > a ? `Mejor: ${m}` : null;
+  });
 
   constructor() {
     effect(() => {
@@ -161,101 +200,8 @@ export class InicioPacienteComponent {
     });
   }
 
-  isMovil = useResponsive().esMobile;
-
-  userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Usuario');
-
-  badgeType = computed<BadgeType>(() => this.actividadHoyService.badgeType());
-  badgeCount = computed(() => this.actividadHoyService.badgeCount());
-  subtitulo = computed(() => this.actividadHoyService.subtituloDinamico());
-  progreso = computed(() => this.actividadHoyService.progresoTotal());
-  siguienteEjercicio = computed(() => this.actividadHoyService.primerEjercicioPendiente());
-
-  ejerciciosStrip = computed<EjercicioStrip[]>(() => {
-    const actividad = this.actividadHoyService.actividadHoy();
-    let primerPendienteEncontrado = false;
-    const items: EjercicioStrip[] = [];
-
-    for (const planDia of actividad) {
-      for (const ej of planDia.ejerciciosHoy) {
-        const esSiguiente = !ej.completadoHoy && !primerPendienteEncontrado;
-        if (esSiguiente) primerPendienteEncontrado = true;
-
-        items.push({
-          id: ej.ejercicio?.id ?? ej.id ?? '',
-          nombre: ej.ejercicio?.nombre ?? 'Ejercicio',
-          portadaUrl: ej.ejercicio?.portada
-            ? `${assetUrl(ej.ejercicio.portada, { width: 80, height: 80, fit: 'cover', format: 'webp' })}`
-            : null,
-          completado: ej.completadoHoy,
-          esSiguiente,
-        });
-      }
-    }
-    return items;
-  });
-
-  tiempoRestanteMin = computed<number | null>(() => {
-    const actividad = this.actividadHoyService.actividadHoy();
-    let totalSeg = 0;
-    let hayPendientes = false;
-
-    for (const planDia of actividad) {
-      for (const ej of planDia.ejerciciosHoy) {
-        if (ej.completadoHoy) continue;
-        hayPendientes = true;
-
-        const series = ej.series ?? 1;
-        if (ej.duracionSeg) {
-          totalSeg += ej.duracionSeg * series;
-        } else {
-          const reps = ej.repeticiones ?? 10;
-          totalSeg += series * reps * 3;
-        }
-        if (series > 1) {
-          totalSeg += (ej.descansoSeg ?? 30) * (series - 1);
-        }
-      }
-    }
-
-    if (!hayPendientes) return null;
-    return Math.max(1, Math.ceil(totalSeg / 60));
-  });
-
-  siguienteEjercicioDetalle = computed<{ nombre: string; portadaUrl: string | null } | null>(() => {
-    const actividad = this.actividadHoyService.actividadHoy();
-    for (const planDia of actividad) {
-      const pendiente = planDia.ejerciciosHoy.find(e => !e.completadoHoy);
-      if (pendiente) {
-        return {
-          nombre: pendiente.ejercicio?.nombre ?? 'Ejercicio',
-          portadaUrl: pendiente.ejercicio?.portada
-            ? `${assetUrl(pendiente.ejercicio.portada, { width: 96, height: 96, fit: 'cover', format: 'webp' })}`
-            : null,
-        };
-      }
-    }
-    return null;
-  });
-
-  resumenCompletado = computed(() => {
-    const prog = this.actividadHoyService.progresoTotal();
-    const racha = this.rachaService.rachaActual();
-    let rachaTexto: string | null = null;
-    if (racha > 0) {
-      rachaTexto = `Racha de ${racha} ${racha === 1 ? 'día' : 'días'}`;
-    } else {
-      rachaTexto = 'Mañana empieza tu racha';
-    }
-    return { total: prog.total, rachaTexto };
-  });
-
   irAActividad(): void {
     this.router.navigate(['/actividad-personal']);
-  }
-
-  irAMiActividad(): void {
-    this.router.navigate(['/actividad-personal/hoy']);
   }
 
   irAClinica(): void {
@@ -266,8 +212,11 @@ export class InicioPacienteComponent {
     this.router.navigate(['/actividad-personal/calendario']);
   }
 
-  onContactarFisio(): void {
-    this.mostrarTooltipContacto.set(true);
-    setTimeout(() => this.mostrarTooltipContacto.set(false), 3000);
+  irAEstadisticas(): void {
+    this.router.navigate(['/actividad-personal/estadisticas']);
+  }
+
+  irAPerfil(): void {
+    this.router.navigate(['/perfil']);
   }
 }
