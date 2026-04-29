@@ -99,7 +99,15 @@ export class AppComponent implements OnInit {
   );
 
   // Rutas donde NO se debe mostrar la navegación
-  private rutasSinNavegacion = ['/login', '/registro', '/magic', '/mi-plan', '/establecer-password'];
+  private rutasSinNavegacion = [
+    '/login',
+    '/registro',
+    '/magic',
+    '/mi-plan',
+    '/establecer-password',
+    '/recuperar-password',
+    '/reset-password',
+  ];
 
   constructor() {
     if (typeof window !== 'undefined') {
