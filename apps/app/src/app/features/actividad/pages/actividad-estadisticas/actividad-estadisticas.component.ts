@@ -1,378 +1,162 @@
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { SessionService } from '../../../../core/auth/services/session.service';
-import { PlanesService } from '../../../planes/data-access/planes.service';
-import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
-import { ConvexService } from '../../../../core/convex/convex.service';
-import { api } from '../../../../../../../../convex/_generated/api';
-import { RegistroEjercicio, DiaSemana } from '../../../../../types/global';
-import {
-  Ui2ActivityRingsComponent,
+  Ui2AchievementCardComponent,
   Ui2BigTitleComponent,
   Ui2CardComponent,
-  Ui2EmptyStateComponent,
+  Ui2CtaBarComponent,
+  Ui2HorizontalScrollerComponent,
+  Ui2IconBadgeComponent,
   Ui2KpiCardComponent,
+  Ui2PillComponent,
   Ui2SectionComponent,
-  Ui2SpinnerComponent,
+  Ui2SegmentedComponent,
+  Ui2StatusDotComponent,
+  Ui2SegmentedOption,
 } from '../../../../shared/ui-v2';
 
-interface DiaEstadistica {
-  diaSemana: string;
-  diaCorto: string;
-  fecha: Date;
-  ejerciciosCompletados: number;
-  tieneActividad: boolean;
+interface DiaActividad {
+  label: string;
+  value: number; // 0..1
+  today?: boolean;
 }
 
-interface EjercicioReciente {
-  nombre: string;
-  portada?: string;
-  fechaHora: Date;
-  tiempoRelativo: string;
+interface PuntoDolor {
+  d: string; // L, M, X, J...
+  v: number; // 0..10
 }
+
+interface Logro {
+  emoji: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  earned: boolean;
+}
+
+interface SesionHistorica {
+  day: string;
+  plan: string;
+  pct: number;
+  time: string;
+  pain: number | null;
+  rest?: boolean;
+}
+
+interface PuntoDolorPlot extends PuntoDolor {
+  x: number;
+  y: number;
+}
+
+const PERIODO_OPTIONS: Ui2SegmentedOption[] = [
+  { id: 'semana', label: 'Semana' },
+  { id: 'mes', label: 'Mes' },
+  { id: 'plan', label: 'Plan completo' },
+];
 
 @Component({
   selector: 'app-actividad-estadisticas',
   standalone: true,
   imports: [
-    Ui2ActivityRingsComponent,
+    Ui2AchievementCardComponent,
     Ui2BigTitleComponent,
     Ui2CardComponent,
-    Ui2EmptyStateComponent,
+    Ui2CtaBarComponent,
+    Ui2HorizontalScrollerComponent,
+    Ui2IconBadgeComponent,
     Ui2KpiCardComponent,
+    Ui2PillComponent,
     Ui2SectionComponent,
-    Ui2SpinnerComponent,
+    Ui2SegmentedComponent,
+    Ui2StatusDotComponent,
   ],
   templateUrl: './actividad-estadisticas.component.html',
   styleUrl: './actividad-estadisticas.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full',
-  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ActividadEstadisticasComponent implements OnInit {
-  private sessionService = inject(SessionService);
-  private planesService = inject(PlanesService);
-  private actividadHoyService = inject(ActividadHoyService);
-  private convex = inject(ConvexService);
+export class ActividadEstadisticasComponent {
+  readonly periodoOptions = PERIODO_OPTIONS;
+  readonly periodoActivo = signal<string>('semana');
 
-  private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-  private readonly DIAS_CORTOS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-  private readonly NOMBRES_DIAS = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
+  readonly weeks: DiaActividad[] = [
+    { label: 'L 14', value: 0.8 },
+    { label: 'M 15', value: 1.0 },
+    { label: 'X 16', value: 0.6 },
+    { label: 'J 17', value: 1.0 },
+    { label: 'V 18', value: 0.9 },
+    { label: 'S 19', value: 0.0 },
+    { label: 'D 20', value: 0.4 },
+    { label: 'L 21', value: 1.0 },
+    { label: 'M 22', value: 0.85 },
+    { label: 'X 23', value: 0.33, today: true },
   ];
 
-  readonly cargando = signal<boolean>(false);
-  readonly error = signal<string | null>(null);
-  readonly registrosSemana = signal<RegistroEjercicio[]>([]);
-  readonly registrosMes = signal<RegistroEjercicio[]>([]);
+  readonly pain: PuntoDolor[] = [
+    { d: 'L', v: 6 },
+    { d: 'M', v: 5 },
+    { d: 'X', v: 5 },
+    { d: 'J', v: 4 },
+    { d: 'V', v: 3 },
+    { d: 'S', v: 3 },
+    { d: 'D', v: 2 },
+  ];
 
-  readonly usuarioId = computed(() => this.sessionService.usuario()?.id);
+  readonly achievements: Logro[] = [
+    { emoji: '🔥', title: '12 días de racha', subtitle: '¡Sigue así!', color: '#f59e0b', earned: true },
+    { emoji: '💪', title: '50 ejercicios', subtitle: 'Completados', color: '#22c55e', earned: true },
+    { emoji: '🎯', title: 'Mes perfecto', subtitle: 'Faltan 4 días', color: '#6366f1', earned: false },
+    { emoji: '⭐', title: 'Primera semana', subtitle: 'Desbloqueado', color: '#e75c3e', earned: true },
+  ];
 
-  // Estadísticas semanales
-  readonly estadisticasSemana = computed<DiaEstadistica[]>(() => {
-    const registros = this.registrosSemana();
-    const hoy = new Date();
-    const diasSemana: DiaEstadistica[] = [];
+  readonly history: SesionHistorica[] = [
+    { day: 'Ayer · mar 22', plan: 'Hombro · Semana 3', pct: 100, time: '28 min', pain: 3 },
+    { day: 'Lun 21 abr', plan: 'Hombro · Semana 3', pct: 100, time: '32 min', pain: 3 },
+    { day: 'Dom 20 abr', plan: 'Hombro · Semana 2', pct: 50, time: '14 min', pain: 4 },
+    { day: 'Sáb 19 abr', plan: 'Descanso', pct: 0, time: '—', pain: null, rest: true },
+    { day: 'Vie 18 abr', plan: 'Hombro · Semana 2', pct: 100, time: '30 min', pain: 4 },
+  ];
 
-    // Calcular el lunes de esta semana
-    const diaSemanaHoy = hoy.getDay();
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - (diaSemanaHoy === 0 ? 6 : diaSemanaHoy - 1));
-    lunes.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < 7; i++) {
-      const fecha = new Date(lunes);
-      fecha.setDate(lunes.getDate() + i);
-
-      // Contar registros de este día
-      const registrosDia = registros.filter((r) => {
-        const fechaRegistro = new Date(r.fechaHora);
-        return (
-          fechaRegistro.getDate() === fecha.getDate() &&
-          fechaRegistro.getMonth() === fecha.getMonth() &&
-          fechaRegistro.getFullYear() === fecha.getFullYear()
-        );
-      });
-
-      diasSemana.push({
-        diaSemana: this.NOMBRES_DIAS[fecha.getDay()],
-        diaCorto: this.DIAS_CORTOS[fecha.getDay()],
-        fecha,
-        ejerciciosCompletados: registrosDia.length,
-        tieneActividad: registrosDia.length > 0,
-      });
-    }
-
-    return diasSemana;
-  });
-
-  readonly totalEjerciciosSemana = computed(() =>
-    this.estadisticasSemana().reduce((acc, d) => acc + d.ejerciciosCompletados, 0)
+  readonly diasActivosTotal = computed(
+    () => this.weeks.filter((w) => w.value > 0).length,
   );
 
-  readonly diasConActividadSemana = computed(() =>
-    this.estadisticasSemana().filter((d) => d.tieneActividad).length
+  readonly painPlot = computed<PuntoDolorPlot[]>(() => {
+    const pts = this.pain;
+    const last = Math.max(pts.length - 1, 1);
+    return pts.map((p, i) => ({
+      ...p,
+      x: (i / last) * 280 + 10,
+      y: 80 - (p.v / 10) * 70,
+    }));
+  });
+
+  readonly painPolyline = computed(() =>
+    this.painPlot()
+      .map((p) => `${p.x},${p.y}`)
+      .join(' '),
   );
 
-  readonly maxEjerciciosDia = computed(() =>
-    Math.max(...this.estadisticasSemana().map((d) => d.ejerciciosCompletados), 1)
-  );
+  readonly painArea = computed(() => `10,80 ${this.painPolyline()} 290,80`);
 
-  // Racha actual
-  readonly rachaActual = computed(() => {
-    const estadisticas = this.estadisticasSemana();
-    let racha = 0;
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+  onPeriodoChange(id: string): void {
+    this.periodoActivo.set(id);
+  }
 
-    // Buscar hacia atrás desde hoy
-    for (let i = estadisticas.length - 1; i >= 0; i--) {
-      const dia = estadisticas[i];
-      if (dia.fecha > hoy) continue;
-
-      if (dia.tieneActividad) {
-        racha++;
-      } else if (dia.fecha.getTime() < hoy.getTime()) {
-        break;
-      }
+  barColor(w: DiaActividad): string {
+    if (w.value === 0) return 'rgba(0, 0, 0, 0.06)';
+    if (w.today) {
+      return 'repeating-linear-gradient(45deg, var(--kengo-primary), var(--kengo-primary) 3px, var(--kengo-primary-light) 3px, var(--kengo-primary-light) 6px)';
     }
-
-    return racha;
-  });
-
-  // Progreso mensual
-  readonly progresoMensual = computed(() => {
-    const registros = this.registrosMes();
-    const hoy = new Date();
-    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const diasTranscurridos = Math.ceil(
-      (hoy.getTime() - primerDiaMes.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
-
-    // Contar días únicos con actividad
-    const diasUnicos = new Set<string>();
-    registros.forEach((r) => {
-      const fecha = new Date(r.fechaHora);
-      diasUnicos.add(`${fecha.getFullYear()}-${fecha.getMonth()}-${fecha.getDate()}`);
-    });
-
-    const diasConActividad = diasUnicos.size;
-    const porcentaje = diasTranscurridos > 0
-      ? Math.round((diasConActividad / diasTranscurridos) * 100)
-      : 0;
-
-    return {
-      diasConActividad,
-      diasTranscurridos,
-      porcentaje,
-      totalEjercicios: registros.length,
-    };
-  });
-
-  // Ejercicios recientes
-  readonly ejerciciosRecientes = computed<EjercicioReciente[]>(() => {
-    const registros = this.registrosSemana();
-    const planes = this.actividadHoyService.planesActivos();
-
-    // Obtener los últimos 5 registros
-    const ultimos = registros
-      .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime())
-      .slice(0, 5);
-
-    return ultimos.map((registro) => {
-      // Buscar el nombre del ejercicio
-      let nombre = 'Ejercicio';
-      let portada: string | undefined;
-
-      for (const plan of planes) {
-        const item = plan.items.find((i) => i.id === registro.planItemId);
-        if (item) {
-          nombre = item.ejercicio.nombre;
-          portada = item.ejercicio.portada;
-          break;
-        }
-      }
-
-      const fechaHora = new Date(registro.fechaHora);
-      return {
-        nombre,
-        portada,
-        fechaHora,
-        tiempoRelativo: this.calcularTiempoRelativo(fechaHora),
-      };
-    });
-  });
-
-  readonly sinDatos = computed(
-    () => !this.cargando() &&
-         this.registrosSemana().length === 0 &&
-         this.registrosMes().length === 0
-  );
-
-  // Anillos para ui2-activity-rings — [días con actividad / 7, ejercicios semana / max sugerido, % mensual / 100]
-  readonly ringValues = computed<[number, number, number]>(() => {
-    const dias = Math.min(1, this.diasConActividadSemana() / 7);
-    const total = Math.min(1, this.totalEjerciciosSemana() / 35);
-    const mensual = this.progresoMensual().porcentaje / 100;
-    return [dias, total, Math.min(1, mensual)];
-  });
-
-  ngOnInit(): void {
-    this.cargarDatos();
+    if (w.value >= 1) return 'linear-gradient(180deg, var(--kengo-primary), var(--kengo-primary-dark))';
+    return 'linear-gradient(180deg, var(--kengo-primary-light), var(--kengo-primary))';
   }
 
-  async cargarDatos(): Promise<void> {
-    const userId = this.usuarioId();
-    if (!userId) {
-      this.error.set('No se pudo identificar al usuario');
-      return;
-    }
-
-    this.cargando.set(true);
-    this.error.set(null);
-
-    try {
-      await Promise.all([
-        this.actividadHoyService.cargarDatos(),
-        this.cargarRegistrosSemana(userId),
-        this.cargarRegistrosMes(userId),
-      ]);
-    } catch (err) {
-      console.error('Error al cargar estadísticas:', err);
-      this.error.set('Error al cargar las estadísticas. Intenta de nuevo.');
-    } finally {
-      this.cargando.set(false);
-    }
+  barHeightPct(w: DiaActividad): number {
+    return Math.max(w.value * 100, 3);
   }
 
-  private async cargarRegistrosSemana(userId: string): Promise<void> {
-    const hoy = new Date();
-    const diaSemanaHoy = hoy.getDay();
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - (diaSemanaHoy === 0 ? 6 : diaSemanaHoy - 1));
-    lunes.setHours(0, 0, 0, 0);
-
-    const registros = await this.obtenerRegistrosDesde(userId, lunes);
-    this.registrosSemana.set(registros);
-  }
-
-  private async cargarRegistrosMes(userId: string): Promise<void> {
-    const hoy = new Date();
-    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-
-    const registros = await this.obtenerRegistrosDesde(userId, primerDiaMes);
-    this.registrosMes.set(registros);
-  }
-
-  private async obtenerRegistrosDesde(
-    pacienteId: string,
-    desde: Date
-  ): Promise<RegistroEjercicio[]> {
-    try {
-      // Lectura del modelo nuevo `exerciseExecutions` (Fase 3 rediseño records).
-      // El shape de retorno es similar al legacy (camelCase). El componente
-      // mantiene la transformación a `RegistroEjercicio` (snake_case).
-      const records = (await this.convex.query(
-        api.executions.queries.listByPacienteInRange,
-        {
-          pacienteId,
-          desde: desde.toISOString().split('T')[0],
-          soloCompletados: true,
-        },
-      )) as {
-        _id: string;
-        planExerciseId: string;
-        pacienteId: string;
-        fechaHora: string;
-        completado: boolean;
-        repeticionesRealizadas?: number;
-        duracionRealSeg?: number;
-        dolorEscala?: number;
-        notaPaciente?: string;
-      }[];
-
-      // Ordenar desc por fechaHora (Convex devuelve sin orden garantizado).
-      const sorted = [...(records ?? [])].sort((a, b) =>
-        b.fechaHora.localeCompare(a.fechaHora),
-      );
-
-      return sorted.map((r) => this.transformRegistroConvex(r));
-    } catch (error) {
-      console.error('Error al obtener registros:', error);
-      return [];
-    }
-  }
-
-  private transformRegistroConvex(r: {
-    _id: string;
-    planExerciseId: string;
-    pacienteId: string;
-    fechaHora: string;
-    completado: boolean;
-    repeticionesRealizadas?: number;
-    duracionRealSeg?: number;
-    dolorEscala?: number;
-    notaPaciente?: string;
-  }): RegistroEjercicio {
-    return {
-      id: undefined,
-      planItemId: r.planExerciseId,
-      pacienteId: r.pacienteId,
-      fechaHora: r.fechaHora,
-      completado: r.completado,
-      repeticionesRealizadas: r.repeticionesRealizadas,
-      duracionRealSeg: r.duracionRealSeg,
-      dolorEscala: r.dolorEscala,
-      notaPaciente: r.notaPaciente,
-    };
-  }
-
-  private calcularTiempoRelativo(fecha: Date): string {
-    const ahora = new Date();
-    const diff = ahora.getTime() - fecha.getTime();
-    const minutos = Math.floor(diff / (1000 * 60));
-    const horas = Math.floor(diff / (1000 * 60 * 60));
-    const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (minutos < 60) {
-      return minutos <= 1 ? 'Hace un momento' : `Hace ${minutos} min`;
-    } else if (horas < 24) {
-      return horas === 1 ? 'Hace 1 hora' : `Hace ${horas} horas`;
-    } else if (dias === 1) {
-      return 'Ayer';
-    } else if (dias < 7) {
-      return `Hace ${dias} días`;
-    } else {
-      return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-    }
-  }
-
-  getAssetUrl(id?: string, width = 80, height = 80): string {
-    return this.planesService.getAssetUrl(id, width, height);
-  }
-
-  getBarHeight(ejercicios: number): number {
-    const max = this.maxEjerciciosDia();
-    return max > 0 ? (ejercicios / max) * 100 : 0;
-  }
-
-  esHoy(fecha: Date): boolean {
-    const hoy = new Date();
-    return (
-      fecha.getDate() === hoy.getDate() &&
-      fecha.getMonth() === hoy.getMonth() &&
-      fecha.getFullYear() === hoy.getFullYear()
-    );
+  painDotColor(v: number): string {
+    if (v <= 3) return '#22c55e';
+    if (v <= 5) return '#efc048';
+    return '#ef4444';
   }
 }

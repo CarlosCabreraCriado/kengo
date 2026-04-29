@@ -54,6 +54,11 @@ export type { Ui2CtaBarVariant } from './cta-bar/cta-bar.component';
 export { Ui2FisioMessageCardComponent } from './fisio-message-card/fisio-message-card.component';
 export { Ui2ProgressRingComponent } from './progress-ring/progress-ring.component';
 export { Ui2ActivityRingsComponent } from './activity-rings/activity-rings.component';
+export { Ui2ExerciseCardComponent } from './exercise-card/exercise-card.component';
+export { Ui2ClinicHeroCardComponent } from './clinic-hero-card/clinic-hero-card.component';
+export { Ui2SegmentedComponent } from './segmented/segmented.component';
+export type { Ui2SegmentedOption } from './segmented/segmented.component';
+export { Ui2AchievementCardComponent } from './achievement-card/achievement-card.component';
 
 // --- Shell paciente ---
 export { Ui2CreamBgComponent } from './cream-bg/cream-bg.component';

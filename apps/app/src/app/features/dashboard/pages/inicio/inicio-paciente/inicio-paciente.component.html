@@ -1,106 +1,75 @@
 <div class="ip-page">
-  <ui2-big-title
-    [overline]="saludoOverline()"
-    [title]="'HOLA, ' + userNameUpper()"
-    [sub]="ctaSubtitle()"
-  ></ui2-big-title>
-
-  <ui2-section [padding]="'4px 20px 14px'">
-    <ui2-cta-bar
-      [title]="ctaTitle()"
-      [subtitle]="ctaSubtitle()"
-      [icon]="ctaIcon()"
-      (clicked)="irAActividad()"
-    ></ui2-cta-bar>
-  </ui2-section>
-
-  <ui2-section label="Tu progreso" action="Ver más" (actionClick)="irAEstadisticas()">
-    <div class="ip-kpi-grid">
-      <ui2-kpi-card
-        icon="local_fire_department"
-        iconColor="var(--warning)"
-        label="Racha"
-        [value]="rachaActual()"
-        unit="días"
-        [delta]="rachaDelta()"
-        deltaColor="var(--ink-500)"
-      ></ui2-kpi-card>
-      <ui2-kpi-card
-        icon="check_circle"
-        iconColor="var(--success)"
-        label="Hoy"
-        [value]="progreso().completados + ' / ' + progreso().total"
-        [delta]="porcentajeHoy()"
-      ></ui2-kpi-card>
+  <section class="ip-hero">
+    <div class="ip-hero__text">
+      <p class="ip-hero__overline">Hola {{ userName() }},</p>
+      <h1 class="ip-hero__title">{{ heroTitle() }}</h1>
+      <p class="ip-hero__sub" [innerHTML]="heroSub()"></p>
     </div>
-  </ui2-section>
+    <ui2-progress-ring
+      [size]="130"
+      [stroke]="14"
+      [value]="progresoRatio()"
+      trackColor="rgba(231, 92, 62, 0.1)"
+    >
+      <div class="ip-hero__ring-num">
+        {{ progreso().completados
+        }}<span class="ip-hero__ring-den">/{{ progreso().total }}</span>
+      </div>
+      <div class="ip-hero__ring-label">hoy</div>
+    </ui2-progress-ring>
+  </section>
 
-  @if (proximasFechas().length > 0) {
-    <ui2-horizontal-scroller label="Próximas sesiones" action="Calendario" (actionClick)="irACalendario()">
-      @for (f of proximasFechas(); track $index) {
-        <ui2-date-tile [weekday]="f.weekday" [day]="f.day" [month]="f.month"></ui2-date-tile>
+  @if (hayActividadHoy() && !todoCompletado()) {
+    <ui2-section [padding]="'4px 20px 14px'">
+      <ui2-cta-bar
+        [title]="progreso().completados > 0 ? 'CONTINUAR' : 'COMENZAR'"
+        [subtitle]="progreso().completados + '/' + progreso().total + ' · ' + tiempoEstimadoHoy() + ' estimado'"
+        icon="play_arrow"
+        (clicked)="iniciarSesionHoy()"
+      ></ui2-cta-bar>
+    </ui2-section>
+  }
+
+  @if (ejerciciosHoy().length > 0) {
+    <ui2-horizontal-scroller
+      label="Ejercicios de hoy"
+      action="Ver todo →"
+      (actionClick)="irAActividad()"
+    >
+      @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
+        <ui2-exercise-card
+          [name]="ej.nombre"
+          [sets]="ej.sets"
+          [imageUrl]="ej.imageUrl"
+          [done]="ej.done"
+          [index]="i"
+          (cardClick)="irAActividad()"
+        ></ui2-exercise-card>
       }
     </ui2-horizontal-scroller>
   }
 
-  @if (planPrincipal(); as plan) {
-    <ui2-section label="Tu plan">
-      <ui2-card [padding]="0">
-        <ui2-list-row
-          icon="fitness_center"
-          [title]="plan.titulo"
-          [subtitle]="plan.ejerciciosHoy + ' ejercicios hoy · ' + plan.totalEjercicios + ' totales'"
-          [rowClickable]="true"
-          (rowClick)="irAActividad()"
-        >
-          <span class="material-symbols-outlined ip-chevron" aria-hidden="true">chevron_right</span>
-        </ui2-list-row>
-      </ui2-card>
-    </ui2-section>
-  }
-
   @if (!cargandoFisio() && fisioAsignado()) {
-    <ui2-section>
+    <ui2-section [padding]="'6px 20px 14px'">
       <ui2-fisio-message-card
-        [name]="fisioNombreCompleto() || 'Tu fisio'"
-        [text]="'¿Cómo te has sentido hoy con los ejercicios? Cuéntame y ajusto el plan si lo necesitas.'"
-        action="Hablar con tu fisio"
+        [name]="fisioNombreCompleto()"
+        [avatarUrl]="fisioAvatarUrl()"
+        [text]="mensajeFisio()"
+        action="Responder"
         (actionClick)="irAClinica()"
       ></ui2-fisio-message-card>
     </ui2-section>
   }
 
-  <ui2-section label="Accesos rápidos">
-    <ui2-card [padding]="0">
-      <ui2-list-row
-        icon="apartment"
-        [title]="clinicaNombre() || 'Mi clínica'"
-        subtitle="Ver detalles del centro"
-        [rowClickable]="true"
-        (rowClick)="irAClinica()"
-      >
-        <span class="material-symbols-outlined ip-chevron" aria-hidden="true">chevron_right</span>
-      </ui2-list-row>
-      <ui2-list-row
-        icon="calendar_month"
-        title="Mi calendario"
-        subtitle="Próximas sesiones del plan"
-        [isFirst]="false"
-        [rowClickable]="true"
-        (rowClick)="irACalendario()"
-      >
-        <span class="material-symbols-outlined ip-chevron" aria-hidden="true">chevron_right</span>
-      </ui2-list-row>
-      <ui2-list-row
-        icon="person"
-        title="Mi perfil"
-        subtitle="Datos y preferencias"
-        [isFirst]="false"
-        [rowClickable]="true"
-        (rowClick)="irAPerfil()"
-      >
-        <span class="material-symbols-outlined ip-chevron" aria-hidden="true">chevron_right</span>
-      </ui2-list-row>
-    </ui2-card>
-  </ui2-section>
+  @if (clinicaActual(); as clinica) {
+    <ui2-section [padding]="'0 20px 14px'">
+      <ui2-clinic-hero-card
+        [name]="clinica.nombre"
+        [imageUrl]="clinicaImagenUrl()"
+        [address]="clinica.direccion ?? null"
+        [phone]="clinica.telefono ?? null"
+        (cardClick)="irAClinica()"
+      ></ui2-clinic-hero-card>
+    </ui2-section>
+  }
 </div>

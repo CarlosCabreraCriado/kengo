@@ -10,14 +10,65 @@
   padding-top: 4px;
 }
 
-.ip-kpi-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.ip-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 20px 14px;
 }
 
-.ip-chevron {
-  color: var(--ink-300);
-  font-size: 22px;
+.ip-hero__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ip-hero__overline {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.ip-hero__title {
+  margin: 2px 0 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 30px;
   line-height: 1;
+  letter-spacing: -0.3px;
+  color: var(--kengo-primary);
+  text-transform: uppercase;
+}
+
+.ip-hero__sub {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-500);
+}
+
+.ip-hero__sub b {
+  color: var(--ink-900);
+  font-weight: 700;
+}
+
+.ip-hero__ring-num {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 36px;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--kengo-primary);
+}
+
+.ip-hero__ring-den {
+  font-size: 20px;
+  color: rgba(231, 92, 62, 0.4);
+}
+
+.ip-hero__ring-label {
+  margin-top: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--ink-500);
 }

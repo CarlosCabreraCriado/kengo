@@ -1,4 +1,7 @@
-:host { display: block; width: 100%; }
+:host {
+  display: block;
+  width: 100%;
+}
 
 .ae-page {
   display: flex;
@@ -7,163 +10,210 @@
   padding-top: 4px;
 }
 
-.ae-state-center {
-  display: grid;
-  place-items: center;
-  padding: 60px 20px;
-}
-
-/* Activity rings card */
-.ae-rings {
-  display: grid;
-  place-items: center;
-  padding: 8px 0;
-}
-.ae-rings__center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.ae-rings__num {
-  font-family: KengoDisplay, kengoFont, sans-serif;
-  font-size: 36px;
-  color: var(--kengo-primary);
-  line-height: 1;
-  letter-spacing: -1px;
-}
-.ae-rings__label {
-  font-size: 11px;
+.ae-hero-sub {
+  margin: -4px 20px 14px;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--ink-500);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 4px;
 }
 
-.ae-rings-legend {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-.ae-rings-legend__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.ae-rings-legend__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-.ae-rings-legend__text {
-  font-size: 11px;
+.ae-hero-sub b {
+  color: var(--ink-900);
   font-weight: 700;
-  color: var(--ink-700);
 }
 
-/* KPI grid */
 .ae-kpi-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-/* Bars */
-.ae-bars {
+.ae-chart { padding: 16px 14px 12px; }
+
+.ae-chart__head {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 8px;
-  height: 140px;
-  padding: 0 4px;
-}
-.ae-bar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  height: 100%;
+  justify-content: space-between;
+  padding: 0 4px 14px;
 }
-.ae-bar__track {
-  width: 100%;
-  max-width: 28px;
-  flex: 1;
-  background: var(--cream-100);
-  border-radius: 9999px;
-  position: relative;
-  overflow: hidden;
-}
-.ae-bar__fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--ink-300);
-  border-radius: 9999px;
-  transition: height 0.3s ease;
-}
-.ae-bar__fill--done {
-  background: linear-gradient(180deg, var(--kengo-primary-light), var(--kengo-primary));
-}
-.ae-bar--today .ae-bar__fill--done {
-  background: linear-gradient(180deg, var(--kengo-primary), var(--kengo-primary-dark));
-  box-shadow: 0 0 0 2px rgba(231, 92, 62, 0.2);
-}
-.ae-bar__day {
+
+.ae-chart__overline {
   font-size: 10px;
   font-weight: 700;
   color: var(--ink-500);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.8px;
 }
-.ae-bar--today .ae-bar__day { color: var(--kengo-primary); }
-.ae-bar__count {
+
+.ae-chart__title {
+  margin-top: 4px;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--ink-900);
+}
+
+.ae-chart__bars {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 110px;
+  padding: 0 4px;
+}
+
+.ae-chart__col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ae-chart__bar-wrap {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.ae-chart__bar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 6px;
+}
+
+.ae-chart__bar--today { opacity: 0.9; }
+
+.ae-chart__label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ink-400);
+}
+
+.ae-chart__label--today { color: var(--kengo-primary); }
+
+.ae-pain { padding: 16px 14px 8px; }
+
+.ae-pain__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0 4px 8px;
+}
+
+.ae-pain__overline {
   font-size: 10px;
   font-weight: 700;
   color: var(--kengo-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
-/* Recent exercises rows */
-.ae-rec-row {
+.ae-pain__title {
+  margin-top: 4px;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--ink-900);
+}
+
+.ae-pain__arrow {
+  font-size: 18px;
+  color: #22c55e;
+}
+
+.ae-pain__sub {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.ae-pain__svg {
+  width: 100%;
+  height: 90px;
+  display: block;
+}
+
+.ae-hist {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
 }
-.ae-rec-row--bordered { border-top: 1px solid rgba(0, 0, 0, 0.04); }
-.ae-rec-row__thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--cream-100);
+
+.ae-hist--bordered {
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.ae-hist__badge {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  color: var(--kengo-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 14px;
 }
-.ae-rec-row__thumb img { width: 100%; height: 100%; object-fit: cover; }
-.ae-rec-row__text {
+
+.ae-hist__badge--rest {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ink-400);
+}
+
+.ae-hist__badge--done {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+}
+
+.ae-hist__badge--partial {
+  background: rgba(239, 192, 72, 0.18);
+  color: #d9a832;
+}
+
+.ae-hist__check {
+  font-size: 18px;
+  font-variation-settings: 'wght' 700;
+}
+
+.ae-hist__text {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
-.ae-rec-row__name {
-  display: block;
+
+.ae-hist__day {
+  font-size: 12px;
+  color: var(--ink-400);
+  font-weight: 700;
+}
+
+.ae-hist__plan {
+  margin-top: 1px;
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-900);
 }
-.ae-rec-row__time {
-  display: block;
-  font-size: 11px;
-  color: var(--ink-500);
-  margin-top: 2px;
+
+.ae-hist__trail {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
-.ae-rec-row__check {
-  color: var(--success);
-  font-size: 22px;
+
+.ae-hist__time {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.ae-hist__pain-text {
+  color: var(--ink-500);
+  font-weight: 600;
 }

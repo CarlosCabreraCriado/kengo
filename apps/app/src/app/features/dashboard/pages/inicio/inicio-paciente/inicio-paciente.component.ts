@@ -2,39 +2,55 @@ import { Component, ChangeDetectionStrategy, DestroyRef, computed, effect, injec
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
-import { ActividadHoyService, BadgeType } from '../../../../actividad/data-access/actividad-hoy.service';
-import { RachaPacienteService, DiaSemanaCalendario } from '../../../data-access/racha-paciente.service';
+import { ActividadHoyService, EjercicioUnificadoHoy } from '../../../../actividad/data-access/actividad-hoy.service';
+import { RachaPacienteService } from '../../../data-access/racha-paciente.service';
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
-import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/global';
-import { rawAssetUrl } from '../../../../../core/utils/asset-url';
+import { SesionStateService } from '../../../../sesion/data-access/sesion-state.service';
+import type {
+  AsignacionResponsable,
+  Clinica,
+  ConfigSesionMultiPlan,
+  EjercicioSesionMultiPlan,
+} from '../../../../../../types/global';
+import { rawAssetUrl, thumbnailUrl } from '../../../../../core/utils/asset-url';
 import {
-  Ui2BigTitleComponent,
-  Ui2CardComponent,
+  Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
-  Ui2DateTileComponent,
+  Ui2ExerciseCardComponent,
   Ui2FisioMessageCardComponent,
   Ui2HorizontalScrollerComponent,
-  Ui2KpiCardComponent,
-  Ui2ListRowComponent,
+  Ui2ProgressRingComponent,
   Ui2SectionComponent,
 } from '../../../../../shared/ui-v2';
 
-const MES_ABREV = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-const DIA_SHORT = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+interface ExerciseVm {
+  id: string;
+  nombre: string;
+  sets: string;
+  imageUrl: string | null;
+  done: boolean;
+}
+
+function formatSets(ej: EjercicioUnificadoHoy): string {
+  if (ej.duracionSeg && ej.duracionSeg > 0) {
+    return ej.duracionSeg >= 60 ? `${Math.round(ej.duracionSeg / 60)} min` : `${ej.duracionSeg} seg`;
+  }
+  const series = ej.series ?? 3;
+  const reps = ej.repeticiones ?? 12;
+  return `${series}×${reps}`;
+}
 
 @Component({
   selector: 'app-inicio-paciente',
   standalone: true,
   imports: [
-    Ui2BigTitleComponent,
-    Ui2CardComponent,
+    Ui2ClinicHeroCardComponent,
     Ui2CtaBarComponent,
-    Ui2DateTileComponent,
+    Ui2ExerciseCardComponent,
     Ui2FisioMessageCardComponent,
     Ui2HorizontalScrollerComponent,
-    Ui2KpiCardComponent,
-    Ui2ListRowComponent,
+    Ui2ProgressRingComponent,
     Ui2SectionComponent,
   ],
   templateUrl: './inicio-paciente.component.html',
@@ -46,10 +62,15 @@ export class InicioPacienteComponent {
   private router = inject(Router);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
+  private registroService = inject(SesionStateService);
   private destroyRef = inject(DestroyRef);
 
   actividadHoyService = inject(ActividadHoyService);
   rachaService = inject(RachaPacienteService);
+
+  hayActividadHoy = this.actividadHoyService.hayActividadHoy;
+  todoCompletado = this.actividadHoyService.todoCompletado;
+  tiempoEstimadoHoy = this.actividadHoyService.tiempoEstimadoHoy;
 
   fisioAsignado = signal<AsignacionResponsable | null>(null);
   cargandoFisio = signal(true);
@@ -59,6 +80,55 @@ export class InicioPacienteComponent {
     return clinicas.find((c) => c.puesto === 'paciente')?.clinicId ?? null;
   });
 
+  // --- Hero ---
+  userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Hola');
+
+  progreso = computed(() => this.actividadHoyService.progresoTotal());
+
+  progresoRatio = computed(() => {
+    const p = this.progreso();
+    return p.total > 0 ? p.completados / p.total : 0;
+  });
+
+  rachaActual = computed(() => this.rachaService.rachaActual());
+
+  heroTitle = computed(() => {
+    const t = this.actividadHoyService.badgeType();
+    if (t === 'completed') return '¡BIEN HECHO!';
+    if (t === 'rest') return 'A DESCANSAR';
+    if (t === 'loading') return '';
+    return 'VAMOS ALLÁ 💪';
+  });
+
+  heroSub = computed<string>(() => {
+    const t = this.actividadHoyService.badgeType();
+    if (t === 'loading') return 'Cargando…';
+    const racha = this.rachaActual();
+    if (t === 'completed') return '¡Disfruta del día!';
+    if (t === 'rest') return 'Hoy descansas. Vuelve mañana.';
+    if (racha > 0) {
+      const dias = racha === 1 ? '1 día' : `${racha} días`;
+      return `Llevas <b>${dias}</b> de racha.<br>Sigue así.`;
+    }
+    return 'Empieza tu sesión de hoy.';
+  });
+
+  // --- Ejercicios de hoy ---
+  ejerciciosHoy = computed<ExerciseVm[]>(() => {
+    const ejercicios = this.actividadHoyService.ejerciciosUnificadosHoy();
+    return ejercicios.map((ej, i) => {
+      const portada = ej.ejercicio?.portada;
+      return {
+        id: ej.id ?? `${ej.planId}-${i}`,
+        nombre: ej.ejercicio?.nombre ?? 'Ejercicio',
+        sets: formatSets(ej),
+        imageUrl: portada ? thumbnailUrl(portada, 240, 160) : null,
+        done: ej.completadoHoy,
+      };
+    });
+  });
+
+  // --- Fisio ---
   fisioAvatarUrl = computed(() => {
     const avatar = this.fisioAsignado()?.avatarFisio;
     return avatar ? rawAssetUrl(avatar) : null;
@@ -66,108 +136,25 @@ export class InicioPacienteComponent {
 
   fisioNombreCompleto = computed(() => {
     const fisio = this.fisioAsignado();
-    if (!fisio) return '';
-    return [fisio.nombreFisio, fisio.apellidoFisio].filter(Boolean).join(' ');
+    if (!fisio) return 'Tu fisio';
+    return [fisio.nombreFisio, fisio.apellidoFisio].filter(Boolean).join(' ').trim() || 'Tu fisio';
   });
 
-  clinicaNombre = computed(() => {
+  mensajeFisio = signal<string>(
+    '¿Cómo te has sentido hoy con los ejercicios? Cuéntame y ajusto el plan si lo necesitas.',
+  );
+
+  // --- Clínica ---
+  clinicaActual = computed<Clinica | null>(() => {
     const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
-    const clinicaId = this.clinicaPaciente();
-    if (!clinicaId) return null;
-    return clinicas.find((c) => c.id === clinicaId)?.nombre ?? null;
+    const id = this.clinicaPaciente();
+    if (!id) return null;
+    return clinicas.find((c) => c.id === id) ?? null;
   });
 
-  // --- Calendario ---
-  proximaSesion = computed<DiaSemanaCalendario | null>(() => {
-    const semana = this.rachaService.cumplimientoSemana();
-    return semana.find((d) => !d.esHoy && d.estado === 'programado') ?? null;
-  });
-
-  proximasFechas = computed(() => {
-    const semana = this.rachaService.cumplimientoSemana();
-    const ahora = new Date();
-    return semana
-      .filter((d) => !d.esHoy && d.estado === 'programado')
-      .slice(0, 5)
-      .map((d) => {
-        const fecha = d.fecha ? new Date(d.fecha) : ahora;
-        return {
-          weekday: DIA_SHORT[fecha.getDay()],
-          day: fecha.getDate(),
-          month: MES_ABREV[fecha.getMonth()],
-        };
-      });
-  });
-
-  // --- Plan ---
-  private readonly DIAS_SEMANA_JS: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-
-  planPrincipal = computed(() => {
-    const planes = this.actividadHoyService.planesActivos();
-    if (planes.length === 0) return null;
-    const plan = planes[0];
-    const hoy = new Date();
-    const diaHoy = this.DIAS_SEMANA_JS[hoy.getDay()];
-    const ejerciciosHoy = plan.items.filter((item) => {
-      if (!item.diasSemana || item.diasSemana.length === 0) return true;
-      return item.diasSemana.includes(diaHoy);
-    }).length;
-    return { titulo: plan.titulo, totalEjercicios: plan.items.length, ejerciciosHoy };
-  });
-
-  // --- Header ---
-  userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Hola');
-  saludoOverline = computed(() => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Buenos días';
-    if (h < 19) return 'Buenas tardes';
-    return 'Buenas noches';
-  });
-
-  // --- Estados de actividad ---
-  badgeType = computed<BadgeType>(() => this.actividadHoyService.badgeType());
-  subtitulo = computed(() => this.actividadHoyService.subtituloDinamico());
-  progreso = computed(() => this.actividadHoyService.progresoTotal());
-
-  ctaSubtitle = computed(() => {
-    const t = this.badgeType();
-    const prog = this.progreso();
-    if (t === 'loading') return 'Cargando…';
-    if (t === 'completed') return '¡Hecho! Disfruta del día.';
-    if (t === 'rest') return 'Hoy descansas.';
-    if (prog.total > 0) return `${prog.completados}/${prog.total} ejercicios · pulsa para continuar`;
-    return 'Empieza tu sesión de hoy';
-  });
-
-  ctaTitle = computed(() => {
-    const t = this.badgeType();
-    if (t === 'completed') return 'COMPLETADO';
-    if (t === 'rest') return 'DESCANSO';
-    return 'CONTINUAR';
-  });
-
-  ctaIcon = computed(() => {
-    const t = this.badgeType();
-    if (t === 'completed') return 'check';
-    if (t === 'rest') return 'self_improvement';
-    return 'play_arrow';
-  });
-
-  rachaActual = computed(() => this.rachaService.rachaActual());
-  mejorRacha = computed(() => this.rachaService.mejorRacha());
-
-  userNameUpper = computed(() => (this.userName() || 'Hola').toUpperCase());
-
-  porcentajeHoy = computed<string | null>(() => {
-    const p = this.progreso();
-    if (!p.total) return null;
-    return `${Math.round((p.completados / p.total) * 100)}% completado`;
-  });
-
-  rachaDelta = computed<string | null>(() => {
-    const m = this.mejorRacha();
-    const a = this.rachaActual();
-    return m > a ? `Mejor: ${m}` : null;
+  clinicaImagenUrl = computed<string | null>(() => {
+    const fileId = this.clinicaActual()?.imagenes?.[0]?.fileId;
+    return fileId ? rawAssetUrl(fileId) : null;
   });
 
   constructor() {
@@ -208,15 +195,47 @@ export class InicioPacienteComponent {
     this.router.navigate(['/mi-clinica']);
   }
 
-  irACalendario(): void {
-    this.router.navigate(['/actividad-personal/calendario']);
-  }
+  iniciarSesionHoy(): void {
+    const actividades = this.actividadHoyService.actividadHoy();
 
-  irAEstadisticas(): void {
-    this.router.navigate(['/actividad-personal/estadisticas']);
-  }
+    const ejercicios: EjercicioSesionMultiPlan[] = [];
+    const planesInvolucrados: {
+      planId: string;
+      titulo: string;
+      cantidadEjercicios: number;
+    }[] = [];
 
-  irAPerfil(): void {
-    this.router.navigate(['/perfil']);
+    for (const actividad of actividades) {
+      if (actividad.ejerciciosHoy.length === 0) continue;
+
+      planesInvolucrados.push({
+        planId: actividad.plan.id,
+        titulo: actividad.plan.titulo,
+        cantidadEjercicios: actividad.ejerciciosHoy.length,
+      });
+
+      for (const ej of actividad.ejerciciosHoy) {
+        ejercicios.push({
+          ...ej,
+          planId: actividad.plan.id,
+          planTitulo: actividad.plan.titulo,
+          planItemId: ej.id!,
+        });
+      }
+    }
+
+    if (ejercicios.length === 0) return;
+
+    const config: ConfigSesionMultiPlan = {
+      titulo: 'Tu actividad de hoy',
+      fecha: new Date(),
+      esFechaProgramada: true,
+      ejercicios,
+      planesInvolucrados,
+      skipResumen: true,
+    };
+
+    this.registroService.iniciarSesionMultiPlan(config);
+    this.router.navigate(['/mi-plan']);
   }
 }

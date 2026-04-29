@@ -14,7 +14,7 @@ import { Ui2PillComponent } from '../pill/pill.component';
   template: `
     <ui2-card variant="tinted" [padding]="16">
       <div class="ui2-fisio-card">
-        <ui2-avatar [name]="name()" size="md"></ui2-avatar>
+        <ui2-avatar [name]="name()" [src]="avatarUrl()" size="md"></ui2-avatar>
         <div class="ui2-fisio-card__body">
           <div class="ui2-fisio-card__head">
             <span class="ui2-fisio-card__overline">Nota de tu fisio</span>
@@ -82,6 +82,7 @@ import { Ui2PillComponent } from '../pill/pill.component';
 })
 export class Ui2FisioMessageCardComponent {
   readonly name = input<string>('Tu fisio');
+  readonly avatarUrl = input<string | null>(null);
   readonly time = input<string | null>(null);
   readonly text = input.required<string>();
   readonly action = input<string | null>(null);
