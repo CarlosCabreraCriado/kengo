@@ -61,7 +61,13 @@ export class AppComponent implements OnInit {
   private readonly currentUrl = signal<string>(this.router.url);
 
   /** Rutas del modo fisio que ya están migradas al shell V2. */
-  private readonly rutasV2Fisio = ['/inicio/fisio', '/mis-pacientes', '/ejercicios', '/rutinas'];
+  private readonly rutasV2Fisio = [
+    '/inicio/fisio',
+    '/mis-pacientes',
+    '/ejercicios',
+    '/rutinas',
+    '/mi-clinica',
+  ];
 
   /** True cuando la URL pertenece a una ruta del fisio ya migrada al shell V2. */
   public readonly enRutaV2Fisio = computed(() => {
