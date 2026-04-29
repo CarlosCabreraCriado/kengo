@@ -562,13 +562,4 @@ export class PacienteDetailComponent implements OnInit {
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', fecha]);
   }
 
-  verTodosPlanes() {
-    const p = this.paciente();
-    if (p) {
-      this.planesService.clearFilters();
-      this.planesService.setFiltroPaciente(p.id);
-      this.router.navigate(['/planes']);
-    }
-  }
-
 }

@@ -3,17 +3,7 @@ import { AuthGuard, FisioGuard } from '../../core';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 
 export const PLANES_ROUTES: Routes = [
-  // Vista mixta intencional: el componente discrimina por rol y muestra
-  // tabs distintas (fisio: planes-pacientes/rutinas/mis-planes; paciente:
-  // solo mis-planes). Por eso lleva sólo `AuthGuard` y no `FisioGuard`.
-  {
-    path: '',
-    loadComponent: () =>
-      import('./pages/planes-list/planes.component').then(
-        (m) => m.PlanesComponent,
-      ),
-    canActivate: [AuthGuard],
-  },
+  { path: '', redirectTo: '/inicio', pathMatch: 'full' },
   {
     path: 'nuevo',
     loadComponent: () =>

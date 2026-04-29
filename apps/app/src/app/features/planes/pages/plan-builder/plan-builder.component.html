@@ -1,654 +1,343 @@
-<!-- Loading bar premium -->
-@if (isLoading() || isSaving()) {
-  <div class="loading-bar-container">
-    <div class="loading-bar-track">
-      <div class="loading-bar-fill"></div>
+<div class="pb-page">
+  @if (isLoading()) {
+    <div class="pb-loading">
+      <ui2-spinner size="lg" color="primary" label="Cargando…"></ui2-spinner>
+    </div>
+  }
+
+  <!-- Header -->
+  <div class="pb-header">
+    <ui2-back-button (clicked)="cancelar()" ariaLabel="Volver"></ui2-back-button>
+    <div class="pb-header__title">
+      <ui2-big-title
+        [overline]="pageOverline()"
+        [title]="pageTitle()"
+        sub="Configura los ejercicios y dosis del plan"
+      ></ui2-big-title>
     </div>
   </div>
-}
 
-<section class="plan-builder-container">
-  <!-- Header con glassmorfismo (solo mobile < 768px) -->
-  @if (isMovil()) {
-    <header class="plan-header">
-      <div class="plan-header__inner">
-        <div class="plan-header__mobile">
-          <ui-back-button (clicked)="cancelar()"></ui-back-button>
-
-          <div class="plan-header__title-group">
-            <h1 class="plan-header__title">{{ pageTitle() }}</h1>
-            <div class="plan-header__badge">
-              <span class="plan-header__badge-dot"></span>
-              <span class="plan-header__badge-text">
-                {{ totalItems() }} {{ totalItems() === 1 ? "ejercicio" : "ejercicios" }}
-              </span>
-            </div>
-          </div>
-
-          <div class="relative">
-            <button
-              #menuAccionesMobileBtn
-              type="button"
-              class="btn-icon-glass"
-              [disabled]="isSaving()"
-              (click)="menuAccionesMobileOpen = !menuAccionesMobileOpen"
-              aria-label="Más opciones"
-            >
-              <span class="material-symbols-outlined">more_vert</span>
-            </button>
-
-            @if (menuAccionesMobileOpen) {
-              <div class="dropdown-panel" (clickOutside)="menuAccionesMobileOpen = false">
-                <div class="dropdown-panel__header">
-                  <span class="dropdown-panel__title">Acciones</span>
-                </div>
-                <div class="dropdown-panel__body">
-                  <button
-                    type="button"
-                    class="dropdown-action"
-                    [disabled]="isLoading()"
-                    (click)="cargarPlantilla(); menuAccionesMobileOpen = false"
-                  >
-                    <span class="dropdown-action__icon dropdown-action__icon--gold">
-                      <span class="material-symbols-outlined">folder_open</span>
-                    </span>
-                    <span class="dropdown-action__content">
-                      <span class="dropdown-action__label">Cargar plantilla</span>
-                      <span class="dropdown-action__hint">Usar rutina existente</span>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    class="dropdown-action"
-                    [disabled]="items().length === 0"
-                    (click)="guardarComoPlantilla(); menuAccionesMobileOpen = false"
-                  >
-                    <span class="dropdown-action__icon dropdown-action__icon--coral">
-                      <span class="material-symbols-outlined">bookmark_add</span>
-                    </span>
-                    <span class="dropdown-action__content">
-                      <span class="dropdown-action__label">Guardar como plantilla</span>
-                      <span class="dropdown-action__hint">Reutilizar este plan</span>
-                    </span>
-                  </button>
-                  <div class="dropdown-panel__divider"></div>
-                  <button
-                    type="button"
-                    class="dropdown-action"
-                    (click)="irAGaleria(); menuAccionesMobileOpen = false"
-                  >
-                    <span class="dropdown-action__icon dropdown-action__icon--green">
-                      <span class="material-symbols-outlined">add</span>
-                    </span>
-                    <span class="dropdown-action__content">
-                      <span class="dropdown-action__label">Agregar ejercicios</span>
-                      <span class="dropdown-action__hint">Desde el catálogo</span>
-                    </span>
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    </header>
-  }
-
-  <!-- Barra superior desktop -->
-  @if (!isMovil()) {
-    <div class="plan-back-bar">
-      @if (isEditMode()) {
-        <div class="plan-top-actions">
-          <button type="button" class="btn-back" (click)="cancelar()">
-            <span class="material-symbols-outlined">arrow_back</span>
-            <span>Cancelar</span>
-          </button>
-          <button
-            type="button"
-            class="btn-top-save"
-            (click)="guardarPlan()"
-            [disabled]="!canSubmit() || isSaving() || !svc.isDirty()"
-          >
-            @if (isSaving()) {
-              <span class="btn-save__spinner"></span>
-              <span>Guardando...</span>
-            } @else {
-              <span class="material-symbols-outlined">check</span>
-              <span>Guardar</span>
-            }
-          </button>
-        </div>
-      } @else {
-        <button type="button" class="btn-back" (click)="cancelar()">
-          <span class="material-symbols-outlined">arrow_back</span>
-          <span>Volver</span>
-        </button>
-      }
+  <!-- Acciones rápidas -->
+  <ui2-section [padding]="'0 20px 12px'">
+    <div class="pb-quick-actions">
+      <ui2-button
+        variant="ghost"
+        size="sm"
+        iconLeft="folder_open"
+        (clicked)="cargarPlantilla()"
+      >Cargar plantilla</ui2-button>
+      <ui2-button
+        variant="ghost"
+        size="sm"
+        iconLeft="bookmark_add"
+        [disabled]="totalItems() === 0"
+        (clicked)="guardarComoPlantilla()"
+      >Guardar como plantilla</ui2-button>
     </div>
+  </ui2-section>
+
+  <!-- Card paciente -->
+  @if (paciente(); as pac) {
+    <ui2-section [padding]="'0 20px 12px'">
+      <ui2-card [padding]="14">
+        <div class="pb-patient">
+          <ui2-avatar
+            [name]="pacienteNombre()"
+            [src]="avatarUrl(pac.avatar)"
+            size="md"
+            gradient="coral"
+          ></ui2-avatar>
+          <div class="pb-patient__info">
+            <h3 class="pb-patient__name">{{ pac.first_name }} {{ pac.last_name }}</h3>
+            @if (pac.email) {
+              <p class="pb-patient__email">{{ pac.email }}</p>
+            }
+          </div>
+          <ui2-pill variant="soft" size="sm" icon="healing">Paciente</ui2-pill>
+        </div>
+      </ui2-card>
+    </ui2-section>
   }
 
-  <!-- Main content -->
-  <div class="plan-content">
-    <div class="plan-content__inner">
+  <!-- Form: detalles + duración -->
+  <form [formGroup]="form" novalidate>
+    <ui2-section [padding]="'0 20px 12px'">
+      <ui2-card [padding]="14">
+        <div class="pb-form">
+          <ui2-input
+            label="Título del plan"
+            placeholder="Ej: Rehabilitación rodilla"
+            iconLeft="title"
+            formControlName="titulo"
+            [required]="true"
+            [error]="tituloError()"
+          ></ui2-input>
+          <ui2-textarea
+            label="Descripción"
+            placeholder="Notas o contexto del plan"
+            formControlName="descripcion"
+            [rows]="3"
+          ></ui2-textarea>
+        </div>
+      </ui2-card>
+    </ui2-section>
 
-      <!-- Card principal del plan -->
-      <article class="plan-card plan-card--main">
-        <!-- Paciente section -->
-        @if (paciente(); as p) {
-          <div class="plan-card__section plan-card__section--patient">
-            <div class="patient-info">
-              <div class="patient-avatar">
-                @if (p.avatar) {
-                  <img
-                    [src]="avatarUrl(p.avatar)"
-                    alt="Avatar de {{ p.first_name }}"
-                    class="patient-avatar__img"
-                  />
-                } @else {
-                  <div class="patient-avatar__fallback">
-                    <span class="material-symbols-outlined">person</span>
+    <ui2-section [label]="'Duración'" [padding]="'8px 20px 12px'">
+      <ui2-card [padding]="14">
+        <div class="pb-dates">
+          <label class="pb-date-field">
+            <span class="pb-date-field__label">Inicio</span>
+            <input
+              type="date"
+              class="pb-date-input"
+              formControlName="fechaInicio"
+              [min]="minDate"
+              (change)="onFechaInicioChange($event)"
+            />
+          </label>
+          <label class="pb-date-field">
+            <span class="pb-date-field__label">Fin</span>
+            <input
+              type="date"
+              class="pb-date-input"
+              formControlName="fechaFin"
+              [min]="form.value.fechaInicio || minDate"
+              (change)="onFechaFinChange($event)"
+            />
+          </label>
+        </div>
+        <div class="pb-duration-presets">
+          <ui2-segmented
+            [options]="duracionOptions"
+            [value]="duracionSeleccionadaId()"
+            (valueChange)="onDuracionChange($event)"
+          ></ui2-segmented>
+        </div>
+      </ui2-card>
+    </ui2-section>
+  </form>
+
+  <!-- Ejercicios -->
+  <ui2-section
+    [label]="'Ejercicios del plan (' + totalItems() + ')'"
+    [action]="totalItems() > 0 ? 'Añadir' : null"
+    [padding]="'8px 20px 16px'"
+    (actionClick)="irAGaleria()"
+  >
+    @if (items().length === 0) {
+      <ui2-empty-state
+        icon="fitness_center"
+        title="Sin ejercicios todavía"
+        message="Añade ejercicios del catálogo para construir el plan."
+        actionLabel="Agregar ejercicios"
+        actionIcon="add"
+        (action)="irAGaleria()"
+      ></ui2-empty-state>
+    } @else {
+      <div
+        class="pb-ex-list"
+        cdkDropList
+        (cdkDropListDropped)="onDrop($event)"
+      >
+        @for (it of items(); track trackByIndex($index); let i = $index) {
+          <article
+            class="pb-ex-item"
+            cdkDrag
+            [cdkDragDisabled]="ejercicioEditando() === i"
+          >
+            <div *cdkDragPreview class="pb-ex-preview">
+              <ui2-card [padding]="12">
+                <div class="pb-ex-preview__row">
+                  <div class="pb-ex__thumb pb-ex__thumb--sm">
+                    @if (it.ejercicio.portada) {
+                      <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
+                    } @else {
+                      <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                    }
                   </div>
-                }
-                <span class="patient-avatar__status"></span>
-              </div>
-              <div class="patient-details">
-                <h3 class="patient-name">{{ p.first_name }} {{ p.last_name }}</h3>
-                <p class="patient-email">{{ p.email }}</p>
-              </div>
+                  <span class="pb-ex__name">{{ it.ejercicio.nombre }}</span>
+                </div>
+              </ui2-card>
             </div>
-            <div class="patient-section__actions">
-              <div class="patient-badge">
-                <span class="material-symbols-outlined">healing</span>
-                Paciente
-              </div>
-              <!-- Menu acciones rápidas (solo desktop >= 768px) -->
-              @if (!isMovil()) {
-                <div class="relative">
+
+            <div *cdkDragPlaceholder class="pb-drag-placeholder"></div>
+
+            <ui2-card [padding]="12">
+              @if (ejercicioEditando() !== i) {
+                <!-- Vista compacta -->
+                <div class="pb-ex pb-ex--compact">
                   <button
-                    #menuAccionesBtn
                     type="button"
-                    class="btn-icon-subtle"
-                    [disabled]="isSaving()"
-                    (click)="menuAccionesOpen = !menuAccionesOpen"
-                    aria-label="Más opciones"
+                    class="pb-drag-handle"
+                    cdkDragHandle
+                    aria-label="Reordenar"
                   >
-                    <span class="material-symbols-outlined">more_vert</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
                   </button>
 
-                  @if (menuAccionesOpen) {
-                    <div class="dropdown-panel dropdown-panel--right" (clickOutside)="menuAccionesOpen = false">
-                      <div class="dropdown-panel__header">
-                        <span class="dropdown-panel__title">Acciones rápidas</span>
-                      </div>
-                      <div class="dropdown-panel__body">
-                        <button
-                          type="button"
-                          class="dropdown-action"
-                          [disabled]="isLoading()"
-                          (click)="cargarPlantilla(); menuAccionesOpen = false"
-                        >
-                          <span class="dropdown-action__icon dropdown-action__icon--gold">
-                            <span class="material-symbols-outlined">folder_open</span>
-                          </span>
-                          <span class="dropdown-action__content">
-                            <span class="dropdown-action__label">Cargar plantilla</span>
-                            <span class="dropdown-action__hint">Usar rutina existente</span>
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          class="dropdown-action"
-                          [disabled]="items().length === 0"
-                          (click)="guardarComoPlantilla(); menuAccionesOpen = false"
-                        >
-                          <span class="dropdown-action__icon dropdown-action__icon--coral">
-                            <span class="material-symbols-outlined">bookmark_add</span>
-                          </span>
-                          <span class="dropdown-action__content">
-                            <span class="dropdown-action__label">Guardar como plantilla</span>
-                            <span class="dropdown-action__hint">Reutilizar este plan</span>
-                          </span>
-                        </button>
-                        <div class="dropdown-panel__divider"></div>
-                        <button
-                          type="button"
-                          class="dropdown-action"
-                          (click)="irAGaleria(); menuAccionesOpen = false"
-                        >
-                          <span class="dropdown-action__icon dropdown-action__icon--green">
-                            <span class="material-symbols-outlined">add</span>
-                          </span>
-                          <span class="dropdown-action__content">
-                            <span class="dropdown-action__label">Agregar ejercicios</span>
-                            <span class="dropdown-action__hint">Desde el catálogo</span>
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Detalles del plan -->
-        <div class="plan-card__section plan-card__section--details">
-          @if (!editandoDetalles()) {
-            <!-- Vista mode -->
-            <div class="plan-details-view">
-              <div class="plan-details-view__content">
-                <h2 class="plan-title">{{ form.value.titulo || "Sin título" }}</h2>
-                @if (form.value.descripcion) {
-                  <p class="plan-description">{{ form.value.descripcion }}</p>
-                }
-              </div>
-              <button
-                type="button"
-                class="btn-edit-subtle"
-                (click)="editandoDetalles.set(true)"
-                title="Editar título y descripción"
-              >
-                <span class="material-symbols-outlined">edit</span>
-              </button>
-            </div>
-          } @else {
-            <!-- Edit mode -->
-            <form [formGroup]="form" class="plan-details-form">
-              <div class="form-field">
-                <label class="form-label">
-                  <span class="form-label__icon material-symbols-outlined">title</span>
-                  Título del plan
-                </label>
-                <input
-                  type="text"
-                  class="form-input"
-                  formControlName="titulo"
-                  placeholder="Ej: Rehabilitación rodilla derecha"
-                />
-                @if (form.controls.titulo.hasError("required") && form.controls.titulo.touched) {
-                  <p class="form-error">
-                    <span class="material-symbols-outlined">error</span>
-                    El título es requerido
-                  </p>
-                }
-              </div>
-
-              <div class="form-field">
-                <label class="form-label">
-                  <span class="form-label__icon material-symbols-outlined">description</span>
-                  Descripción
-                  <span class="form-label__optional">(opcional)</span>
-                </label>
-                <textarea
-                  rows="2"
-                  class="form-input form-input--textarea"
-                  formControlName="descripcion"
-                  placeholder="Breve descripción del plan de tratamiento..."
-                ></textarea>
-              </div>
-
-              <div class="form-actions">
-                <button
-                  type="button"
-                  class="btn-primary btn-primary--sm"
-                  (click)="editandoDetalles.set(false)"
-                >
-                  <span class="material-symbols-outlined">check</span>
-                  Listo
-                </button>
-              </div>
-            </form>
-          }
-        </div>
-
-        <!-- Selector de fechas -->
-        <div class="plan-card__section plan-card__section--dates">
-          <div class="date-selector">
-            <div class="date-selector__header">
-              <span class="date-selector__icon material-symbols-outlined">calendar_month</span>
-              <span class="date-selector__title">Duración del plan</span>
-            </div>
-
-            <div class="date-range">
-              <div class="date-input-group">
-                <label class="date-input-label">Inicio</label>
-                <input
-                  type="date"
-                  class="date-input"
-                  [min]="minDate"
-                  [value]="form.value.fechaInicio"
-                  (change)="onFechaInicioChange($event)"
-                />
-              </div>
-              <div class="date-range__arrow">
-                <span class="material-symbols-outlined">trending_flat</span>
-              </div>
-              <div class="date-input-group">
-                <label class="date-input-label">Fin</label>
-                <input
-                  type="date"
-                  class="date-input"
-                  [min]="form.value.fechaInicio || minDate"
-                  [value]="form.value.fechaFin"
-                  (change)="onFechaFinChange($event)"
-                />
-              </div>
-            </div>
-
-            <div class="duration-presets">
-              @for (preset of duracionPresets; track preset.dias) {
-                <button
-                  type="button"
-                  class="duration-chip"
-                  [class.duration-chip--active]="duracionSeleccionada() === preset.dias"
-                  (click)="seleccionarDuracion(preset.dias)"
-                >
-                  {{ preset.label }}
-                </button>
-              }
-              <button
-                type="button"
-                class="duration-chip duration-chip--custom"
-                [class.duration-chip--active]="duracionSeleccionada() === 'custom'"
-              >
-                <span class="material-symbols-outlined">tune</span>
-                Otro
-              </button>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <!-- Sección de ejercicios -->
-      <div class="exercises-section">
-        <div class="exercises-header">
-          <h2 class="exercises-title">
-            <span class="exercises-title__icon material-symbols-outlined">fitness_center</span>
-            Ejercicios del plan
-          </h2>
-          <span class="exercises-count">{{ totalItems() }}</span>
-        </div>
-
-        @if (items().length === 0) {
-          <!-- Empty state -->
-          <article class="empty-state-card">
-            <div class="empty-state-card__visual">
-              <div class="empty-state-card__circles">
-                <span class="empty-state-card__circle empty-state-card__circle--1"></span>
-                <span class="empty-state-card__circle empty-state-card__circle--2"></span>
-                <span class="empty-state-card__circle empty-state-card__circle--3"></span>
-              </div>
-              <span class="material-symbols-outlined empty-state-card__icon">fitness_center</span>
-            </div>
-            <h3 class="empty-state-card__title">Sin ejercicios todavía</h3>
-            <p class="empty-state-card__text">
-              Añade ejercicios del catálogo para crear el plan de tratamiento
-            </p>
-            <button type="button" (click)="irAGaleria()" class="btn-primary btn-primary--glow">
-              <span class="material-symbols-outlined">add</span>
-              Agregar ejercicios
-            </button>
-          </article>
-        } @else {
-          <!-- Lista de ejercicios -->
-          <div cdkDropList class="exercises-list" (cdkDropListDropped)="onDrop($event)">
-            @for (it of items(); track trackByIndex($index); let i = $index) {
-              <article
-                class="exercise-card"
-                [class.exercise-card--editing]="ejercicioEditando() === i"
-                cdkDrag
-                [cdkDragDisabled]="ejercicioEditando() === i"
-              >
-                <!-- Drag preview -->
-                <div *cdkDragPreview class="exercise-card-preview">
-                  <div class="exercise-card-preview__inner">
+                  <div class="pb-ex__thumb">
                     @if (it.ejercicio.portada) {
-                      <img
-                        [src]="assetUrl(it.ejercicio.portada, 56, 56)"
-                        class="exercise-card-preview__img"
-                        alt=""
-                      />
+                      <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
                     } @else {
-                      <div class="exercise-card-preview__placeholder">
-                        <span class="material-symbols-outlined">fitness_center</span>
-                      </div>
+                      <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
                     }
-                    <span class="exercise-card-preview__name">{{ it.ejercicio.nombre }}</span>
                   </div>
-                </div>
 
-                <!-- Placeholder -->
-                <div *cdkDragPlaceholder class="exercise-card-placeholder"></div>
-
-                @if (ejercicioEditando() !== i) {
-                  <!-- Vista compacta -->
-                  <div class="exercise-card__compact">
-                    <div class="exercise-drag" cdkDragHandle>
-                      <span class="material-symbols-outlined">drag_indicator</span>
-                    </div>
-
-                    <div class="exercise-thumb">
-                      @if (it.ejercicio.portada) {
-                        <img
-                          [src]="assetUrl(it.ejercicio.portada, 80, 80)"
-                          [alt]="it.ejercicio.nombre"
-                          class="exercise-thumb__img"
-                        />
-                      } @else {
-                        <div class="exercise-thumb__fallback">
-                          <span class="material-symbols-outlined">fitness_center</span>
-                        </div>
+                  <div class="pb-ex__body">
+                    <h4 class="pb-ex__name">{{ it.ejercicio.nombre }}</h4>
+                    <div class="pb-ex__pills">
+                      <ui2-pill variant="primary" size="sm" icon="repeat">
+                        {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
+                      </ui2-pill>
+                      @if (it.descansoSeg) {
+                        <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
+                      }
+                      @if (it.vecesDia && it.vecesDia > 1) {
+                        <ui2-pill variant="soft" size="sm" icon="schedule">{{ it.vecesDia }}×/día</ui2-pill>
                       }
                     </div>
-
-                    <div class="exercise-info">
-                      <h3 class="exercise-name">{{ it.ejercicio.nombre }}</h3>
-                      <div class="exercise-meta">
-                        <span class="exercise-dosage">
-                          <span class="exercise-dosage__value">{{ it.series || 3 }}</span>
-                          <span class="exercise-dosage__sep">×</span>
-                          <span class="exercise-dosage__value">{{ it.repeticiones || 10 }}</span>
-                        </span>
-                        @if (it.descansoSeg) {
-                          <span class="exercise-meta__divider">·</span>
-                          <span class="exercise-rest">{{ it.descansoSeg }}s</span>
-                        }
-                        @if (it.vecesDia && it.vecesDia > 1) {
-                          <span class="exercise-meta__divider">·</span>
-                          <span class="exercise-frequency">{{ it.vecesDia }}/día</span>
-                        }
-                      </div>
-                      <div class="exercise-days">
-                        @for (d of dias; track d) {
-                          <span class="day-dot" [class.day-dot--active]="isDia(it, d)">{{ d }}</span>
-                        }
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      class="btn-edit-exercise"
-                      (click)="ejercicioEditando.set(i)"
-                      title="Editar ejercicio"
-                    >
-                      <span class="material-symbols-outlined">edit</span>
-                    </button>
-                  </div>
-                } @else {
-                  <!-- Vista expandida (edición) -->
-                  <div class="exercise-card__expanded">
-                    <div class="exercise-edit-header">
-                      <div class="exercise-edit-thumb">
-                        @if (it.ejercicio.portada) {
-                          <img
-                            [src]="assetUrl(it.ejercicio.portada, 120, 120)"
-                            [alt]="it.ejercicio.nombre"
-                          />
-                        } @else {
-                          <div class="exercise-edit-thumb__fallback">
-                            <span class="material-symbols-outlined">fitness_center</span>
-                          </div>
-                        }
-                      </div>
-                      <div class="exercise-edit-info">
-                        <h3 class="exercise-edit-name">{{ it.ejercicio.nombre }}</h3>
-                        @if (it.ejercicio.descripcion) {
-                          <div
-                            class="exercise-edit-desc"
-                            [innerHTML]="it.ejercicio.descripcion | safeHtml"
-                          ></div>
-                        }
-                      </div>
-                    </div>
-
-                    <!-- Dosificación -->
-                    <div class="dosage-grid">
-                      <div class="dosage-field">
-                        <label class="dosage-label">Series</label>
-                        <div class="dosage-input-wrap">
-                          <input
-                            type="number"
-                            min="1"
-                            class="dosage-input"
-                            [value]="it.series || 3"
-                            (input)="update(i, { series: +$any($event.target).value || 1 })"
-                          />
-                        </div>
-                      </div>
-                      <div class="dosage-field">
-                        <label class="dosage-label">Repeticiones</label>
-                        <div class="dosage-input-wrap">
-                          <input
-                            type="number"
-                            min="1"
-                            class="dosage-input"
-                            [value]="it.repeticiones || 10"
-                            (input)="update(i, { repeticiones: +$any($event.target).value || 1 })"
-                          />
-                        </div>
-                      </div>
-                      <div class="dosage-field">
-                        <label class="dosage-label">Descanso</label>
-                        <div class="dosage-input-wrap dosage-input-wrap--suffix">
-                          <input
-                            type="number"
-                            min="0"
-                            class="dosage-input"
-                            [value]="it.descansoSeg ?? 45"
-                            (input)="update(i, { descansoSeg: +$any($event.target).value || 0 })"
-                          />
-                          <span class="dosage-suffix">seg</span>
-                        </div>
-                      </div>
-                      <div class="dosage-field">
-                        <label class="dosage-label">Veces/día</label>
-                        <div class="dosage-input-wrap">
-                          <input
-                            type="number"
-                            min="1"
-                            class="dosage-input"
-                            [value]="it.vecesDia ?? 1"
-                            (input)="update(i, { vecesDia: +$any($event.target).value || 1 })"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Días de la semana -->
-                    <div class="days-selector">
-                      <label class="days-selector__label">Días de la semana</label>
-                      <div class="days-selector__grid">
-                        @for (d of dias; track d) {
-                          <button
-                            type="button"
-                            class="day-btn"
-                            [class.day-btn--active]="isDia(it, d)"
-                            (click)="toggleDia(i, d)"
-                          >
-                            <span class="day-btn__letter">{{ d }}</span>
-                            <span class="day-btn__name">{{ diasNombres[d] }}</span>
-                          </button>
-                        }
-                      </div>
-                    </div>
-
-                    <!-- Instrucciones -->
-                    <div class="instructions-field">
-                      <label class="form-label">
-                        <span class="form-label__icon material-symbols-outlined">note</span>
-                        Instrucciones para el paciente
-                        <span class="form-label__optional">(opcional)</span>
-                      </label>
-                      <textarea
-                        rows="2"
-                        class="form-input form-input--textarea"
-                        placeholder="Indicaciones especiales, precauciones, consejos..."
-                        [value]="it.instruccionesPaciente || ''"
-                        (input)="update(i, { instruccionesPaciente: $any($event.target).value })"
-                      ></textarea>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="exercise-edit-actions">
-                      <button
-                        type="button"
-                        class="btn-delete"
-                        (click)="removeEjercicio(it.ejercicio.id)"
-                      >
-                        <span class="material-symbols-outlined">delete</span>
-                        Eliminar
-                      </button>
-                      <button
-                        type="button"
-                        class="btn-primary btn-primary--sm"
-                        (click)="ejercicioEditando.set(null)"
-                      >
-                        <span class="material-symbols-outlined">check</span>
-                        Listo
-                      </button>
+                    <div class="pb-ex__days">
+                      @for (d of dias; track d) {
+                        <span
+                          class="pb-day"
+                          [class.pb-day--active]="isDia(it, d)"
+                        >{{ d }}</span>
+                      }
                     </div>
                   </div>
-                }
-              </article>
-            }
-          </div>
 
-          <!-- Botón añadir ejercicio al final de la lista -->
-          <button
-            type="button"
-            (click)="irAGaleria()"
-            class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 bg-white/40 p-3 text-zinc-500 transition-all hover:border-kengo-primary hover:bg-kengo-primary/5 hover:text-kengo-primary mt-2"
-          >
-            <span class="material-symbols-outlined text-2xl">add</span>
-            <span class="text-sm font-medium">Añadir ejercicio</span>
-          </button>
+                  <ui2-button
+                    variant="ghost"
+                    size="sm"
+                    iconLeft="edit"
+                    [iconOnly]="true"
+                    (clicked)="toggleEdicion(i)"
+                  ></ui2-button>
+                </div>
+              } @else {
+                <!-- Vista expandida -->
+                <div class="pb-ex pb-ex--expanded">
+                  <div class="pb-ex__head">
+                    <div class="pb-ex__thumb pb-ex__thumb--lg">
+                      @if (it.ejercicio.portada) {
+                        <img [src]="assetUrl(it.ejercicio.portada, 160, 160)" [alt]="it.ejercicio.nombre" />
+                      } @else {
+                        <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                      }
+                    </div>
+                    <div class="pb-ex__head-text">
+                      <h4 class="pb-ex__name">{{ it.ejercicio.nombre }}</h4>
+                      @if (it.ejercicio.descripcion) {
+                        <div
+                          class="pb-ex__desc"
+                          [innerHTML]="it.ejercicio.descripcion | safeHtml"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="pb-dosage-grid">
+                    <label class="pb-dosage-field">
+                      <span class="pb-dosage-field__label">Series</span>
+                      <input
+                        type="number"
+                        min="1"
+                        class="pb-dosage-input"
+                        [value]="it.series ?? ''"
+                        (change)="updateNumber(i, 'series', $event)"
+                      />
+                    </label>
+                    <label class="pb-dosage-field">
+                      <span class="pb-dosage-field__label">Reps</span>
+                      <input
+                        type="number"
+                        min="1"
+                        class="pb-dosage-input"
+                        [value]="it.repeticiones ?? ''"
+                        (change)="updateNumber(i, 'repeticiones', $event)"
+                      />
+                    </label>
+                    <label class="pb-dosage-field">
+                      <span class="pb-dosage-field__label">Descanso (s)</span>
+                      <input
+                        type="number"
+                        min="0"
+                        class="pb-dosage-input"
+                        [value]="it.descansoSeg ?? ''"
+                        (change)="updateNumber(i, 'descansoSeg', $event)"
+                      />
+                    </label>
+                    <label class="pb-dosage-field">
+                      <span class="pb-dosage-field__label">Veces/día</span>
+                      <input
+                        type="number"
+                        min="1"
+                        class="pb-dosage-input"
+                        [value]="it.vecesDia ?? ''"
+                        (change)="updateNumber(i, 'vecesDia', $event)"
+                      />
+                    </label>
+                  </div>
+
+                  <div class="pb-days-block">
+                    <span class="pb-days-block__label">Días de la semana</span>
+                    <div class="pb-days">
+                      @for (d of dias; track d) {
+                        <button
+                          type="button"
+                          class="pb-day-btn"
+                          [class.pb-day-btn--active]="isDia(it, d)"
+                          [attr.aria-label]="diasNombres[d]"
+                          (click)="toggleDia(i, d)"
+                        >{{ d }}</button>
+                      }
+                    </div>
+                  </div>
+
+                  <label class="pb-instructions">
+                    <span class="pb-instructions__label">Instrucciones para el paciente</span>
+                    <textarea
+                      class="pb-instructions__input"
+                      rows="3"
+                      [value]="it.instruccionesPaciente ?? ''"
+                      placeholder="Notas o indicaciones específicas"
+                      (change)="updateText(i, 'instruccionesPaciente', $event)"
+                    ></textarea>
+                  </label>
+
+                  <div class="pb-ex__footer">
+                    <ui2-button
+                      variant="danger"
+                      size="sm"
+                      iconLeft="delete"
+                      (clicked)="removeEjercicio(it.ejercicio.id)"
+                    >Eliminar</ui2-button>
+                    <ui2-button
+                      variant="primary"
+                      size="sm"
+                      iconLeft="check"
+                      (clicked)="toggleEdicion(i)"
+                    >Listo</ui2-button>
+                  </div>
+                </div>
+              }
+            </ui2-card>
+          </article>
         }
       </div>
-    </div>
-  </div>
-</section>
+    }
+  </ui2-section>
 
-<!-- Floating action bar (oculta en desktop edit mode, los botones están arriba) -->
-<div class="floating-action-bar" [class.floating-action-bar--hidden]="isEditMode() && !isMovil()">
-  <div class="floating-action-bar__inner">
-    <button
-      type="button"
-      class="btn-save"
-      (click)="guardarPlan()"
-      [disabled]="!canSubmit() || isSaving() || (isEditMode() && !svc.isDirty())"
-    >
-      @if (isSaving()) {
-        <span class="btn-save__loading">
-          <span class="btn-save__spinner"></span>
-          <span>Guardando...</span>
-        </span>
-      } @else {
-        <span class="btn-save__content">
-          <span class="material-symbols-outlined">check_circle</span>
-          <span>{{ isEditMode() ? "Actualizar plan" : "Guardar plan" }}</span>
-        </span>
-      }
-    </button>
+  <!-- CTA bottom -->
+  <div class="pb-cta-bar">
+    <ui2-button
+      variant="primary"
+      size="lg"
+      iconLeft="check_circle"
+      [fullWidth]="true"
+      [loading]="isSaving()"
+      [disabled]="saveDisabled()"
+      (clicked)="guardarPlan()"
+    >{{ isEditMode() ? 'Actualizar plan' : 'Guardar plan' }}</ui2-button>
   </div>
 </div>

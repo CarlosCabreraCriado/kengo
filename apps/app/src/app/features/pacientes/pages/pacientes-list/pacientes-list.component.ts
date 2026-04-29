@@ -20,7 +20,6 @@ import { AddPacienteDialogComponent } from '../../components/add-paciente/add-pa
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
-import { PlanesService } from '../../../planes/data-access/planes.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { MetricasPacientesService } from '../../data-access/metricas-pacientes.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
@@ -76,7 +75,6 @@ export class PacientesListComponent {
   private dialogService = inject(DialogService);
   private router = inject(Router);
   public planBuilderService = inject(PlanBuilderService);
-  private planesService = inject(PlanesService);
   private authService = inject(AuthService);
   private asignacionesService = inject(AsignacionesService);
   private metricasService = inject(MetricasPacientesService);
@@ -342,12 +340,6 @@ export class PacientesListComponent {
     if (ln) return ln.substring(0, 2).toUpperCase();
     if (u.email) return u.email.substring(0, 2).toUpperCase();
     return '??';
-  }
-
-  verPlanes(p: Usuario) {
-    this.planesService.clearFilters();
-    this.planesService.setFiltroPaciente(p.id);
-    this.router.navigate(['/planes']);
   }
 
   verDetalle(p: Usuario) {

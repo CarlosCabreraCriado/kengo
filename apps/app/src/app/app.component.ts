@@ -13,7 +13,6 @@ import {
   SessionService,
   ThemeService,
 } from './core';
-import { CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios/carrito-ejercicios.component';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
@@ -32,7 +31,6 @@ import {
   standalone: true,
   imports: [
     RouterOutlet,
-    CarritoEjerciciosComponent,
     Ui2CarritoEjerciciosComponent,
     NavegacionComponent,
     Ui2CreamBgComponent,
@@ -69,6 +67,7 @@ export class AppComponent implements OnInit {
     '/ejercicios',
     '/rutinas',
     '/mi-clinica',
+    '/planes',
   ];
 
   /** True cuando la URL pertenece a una ruta del fisio ya migrada al shell V2. */

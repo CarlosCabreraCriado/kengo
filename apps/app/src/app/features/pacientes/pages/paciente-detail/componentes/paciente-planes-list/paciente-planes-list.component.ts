@@ -23,7 +23,6 @@ export class PacientePlanesListComponent {
 
   readonly verPlan = output<Plan>();
   readonly crearPlan = output<void>();
-  readonly verTodosPlanes = output<void>();
 
   protected readonly expanded = signal(true);
   protected readonly subtitle = computed(() => {

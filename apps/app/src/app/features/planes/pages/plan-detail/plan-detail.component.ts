@@ -1,30 +1,50 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { Location } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
-import { useResponsive, DialogService, DialogoPdfComponent, BackButtonComponent } from '../../../../../app/shared';
+import { DialogService, DialogoPdfComponent } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
+import {
+  Ui2AvatarComponent,
+  Ui2BackButtonComponent,
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2IconBadgeComponent,
+  Ui2PillComponent,
+  Ui2SectionComponent,
+  Ui2SectionLabelComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-plan-detail',
   standalone: true,
   imports: [
-    RouterLink,
-    BackButtonComponent,
+    Ui2AvatarComponent,
+    Ui2BackButtonComponent,
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2IconBadgeComponent,
+    Ui2PillComponent,
+    Ui2SectionComponent,
+    Ui2SectionLabelComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './plan-detail.component.html',
   styleUrl: './plan-detail.component.css',
   host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+    class: 'flex flex-col flex-1 min-h-0 w-full',
   },
 })
 export class PlanDetailComponent implements OnInit {
-  private location = inject(Location);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private planesService = inject(PlanesService);
@@ -32,32 +52,27 @@ export class PlanDetailComponent implements OnInit {
   public sessionService = inject(SessionService);
   private dialogService = inject(DialogService);
 
-  isMovil = useResponsive().esMobile;
-
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);
 
-  // Action type from queryParams (created, updated, or null for view-only)
   actionType = signal<'created' | 'updated' | null>(null);
 
-  // Computed for success hero visibility
   showSuccessHero = computed(() => this.actionType() !== null);
 
   heroTitle = computed(() => {
     const action = this.actionType();
-    if (action === 'created') return 'Plan Creado';
-    if (action === 'updated') return 'Plan Actualizado';
+    if (action === 'created') return 'Plan creado';
+    if (action === 'updated') return 'Plan actualizado';
     return '';
   });
 
   heroSubtitle = computed(() => {
     const action = this.actionType();
-    if (action === 'created') return 'El plan ha sido asignado correctamente al paciente';
-    if (action === 'updated') return 'Los cambios se han guardado correctamente';
+    if (action === 'created') return 'El plan ha sido asignado correctamente al paciente.';
+    if (action === 'updated') return 'Los cambios se han guardado correctamente.';
     return '';
   });
 
-  // Computed
   paciente = computed(() => {
     const p = this.plan();
     return p?.paciente as Usuario | null;
@@ -65,6 +80,17 @@ export class PlanDetailComponent implements OnInit {
 
   items = computed(() => this.plan()?.items || []);
   totalEjercicios = computed(() => this.items().length);
+
+  backRoute = computed<unknown[]>(() => {
+    if (this.sessionService.enModoPaciente()) return ['/inicio'];
+    const pacId = this.paciente()?.id;
+    return pacId ? ['/mis-pacientes', pacId] : ['/mis-pacientes'];
+  });
+
+  pageOverline = computed(() => {
+    const total = this.totalEjercicios();
+    return total > 0 ? `${total} ejercicio${total === 1 ? '' : 's'}` : 'Plan de tratamiento';
+  });
 
   diasSemana: Record<string, string> = {
     L: 'Lun',
@@ -76,11 +102,9 @@ export class PlanDetailComponent implements OnInit {
     D: 'Dom',
   };
 
-  // Array tipado para el template
   diasSemanaArray: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   ngOnInit() {
-    // Read action from queryParams
     const action = this.route.snapshot.queryParams['action'];
     if (action === 'created' || action === 'updated') {
       this.actionType.set(action);
@@ -90,7 +114,7 @@ export class PlanDetailComponent implements OnInit {
     if (planId) {
       this.loadPlan(planId);
     } else {
-      this.router.navigate(['/planes']);
+      this.router.navigate(this.backRoute());
     }
   }
 
@@ -100,39 +124,22 @@ export class PlanDetailComponent implements OnInit {
       const plan = await this.planesService.getPlanById(id);
       if (plan) {
         this.plan.set(plan);
-        // Limpiar el builder service
         this.planBuilderService.resetForNewPlan();
-      } else {
-        this.router.navigate(['/planes']);
       }
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  crearOtroPlan() {
-    const paciente = this.paciente();
-    if (paciente) {
-      this.planBuilderService.prepareForPaciente(paciente);
-      this.planBuilderService.navigateAndOpenDrawer();
-    } else {
-      this.router.navigate(['/mis-pacientes']);
-    }
-  }
-
   verPerfilPaciente() {
     const pac = this.paciente();
-    if (pac?.id) {
+    if (pac?.id && this.sessionService.puedeGestionarPacientes()) {
       this.router.navigate(['/mis-pacientes', pac.id]);
     }
   }
 
   irAInicio() {
     this.router.navigate(['/inicio']);
-  }
-
-  volver() {
-    this.location.back();
   }
 
   editarPlan() {
@@ -151,18 +158,13 @@ export class PlanDetailComponent implements OnInit {
     });
   }
 
-  getDiasDisplay(dias: string[] | undefined): string {
-    if (!dias || dias.length === 0) return '-';
-    return dias.map((d) => this.diasSemana[d] || d).join(', ');
-  }
-
   assetUrl(id: string | null | undefined, w = 100, h = 100): string {
     if (!id) return '';
     return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
   }
 
-  avatarUrl(id: string | null | undefined): string {
-    if (!id) return 'assets/default-avatar.png';
+  avatarUrl(id: string | null | undefined): string | null {
+    if (!id) return null;
     return `${assetUrl(id, { width: 100, height: 100, fit: 'cover', format: 'webp' })}`;
   }
 
@@ -172,7 +174,7 @@ export class PlanDetailComponent implements OnInit {
 
     const pac = this.paciente();
     const data: DialogoPdfData = {
-      planConvexId: (p as any)._convexId,
+      planConvexId: (p as unknown as { _convexId: string })._convexId,
       pacienteEmail: pac?.email ?? undefined,
       planTitulo: p.titulo,
     };
