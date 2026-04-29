@@ -29,6 +29,11 @@ import { PacienteComentariosPanelComponent } from './componentes/paciente-coment
 import { PacienteHeroCardComponent } from './componentes/paciente-hero-card/paciente-hero-card.component';
 import { PacienteEstadisticasComponent } from './componentes/paciente-estadisticas/paciente-estadisticas.component';
 import { PacienteActividadRecienteComponent } from './componentes/paciente-actividad-reciente/paciente-actividad-reciente.component';
+import {
+  Ui2BackButtonComponent,
+  Ui2EmptyStateComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 // Tipos
 import {
@@ -52,6 +57,9 @@ import {
     PacienteHeroCardComponent,
     PacienteEstadisticasComponent,
     PacienteActividadRecienteComponent,
+    Ui2BackButtonComponent,
+    Ui2EmptyStateComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './paciente-detail.component.html',
   styleUrl: './paciente-detail.component.css',

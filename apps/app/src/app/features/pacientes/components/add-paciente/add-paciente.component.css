@@ -1,1 +1,98 @@
-/* Estilos específicos del diálogo add-paciente */
+/* AddPaciente dialog — estética cream wellness */
+
+.add-paciente-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-paciente-form__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .add-paciente-form__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.add-paciente-form__clinicas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-paciente-form__clinicas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-100);
+  border-radius: 14px;
+  padding: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.add-paciente-form__clinica-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.add-paciente-form__clinica-row:hover {
+  background: var(--cream-100);
+}
+
+.add-paciente-form__clinicas-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--cream-50);
+  border: 1px dashed var(--ink-300);
+  color: var(--ink-700);
+  font-family: Galvji, sans-serif;
+  font-size: 13px;
+}
+
+.add-paciente-form__empty {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--cream-50);
+  border: 1px dashed var(--ink-300);
+  color: var(--ink-500);
+  font-family: Galvji, sans-serif;
+  font-size: 13px;
+  text-align: center;
+}
+
+.add-paciente-form__hint {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.add-paciente-form__hint--danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.add-paciente-form__error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger);
+  font-family: Galvji, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}

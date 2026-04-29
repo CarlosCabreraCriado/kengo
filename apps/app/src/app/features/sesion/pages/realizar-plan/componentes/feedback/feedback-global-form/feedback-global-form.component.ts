@@ -1,12 +1,25 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EscalaDolorComponent } from '../../escala-dolor/escala-dolor.component';
+import {
+  Ui2CardComponent,
+  Ui2IconBadgeComponent,
+  Ui2SectionLabelComponent,
+  Ui2TextareaComponent,
+} from '../../../../../../../shared/ui-v2';
 import { fadeAnimation } from '../../../realizar-plan.animations';
 
 @Component({
   selector: 'app-feedback-global-form',
   standalone: true,
-  imports: [FormsModule, EscalaDolorComponent],
+  imports: [
+    FormsModule,
+    EscalaDolorComponent,
+    Ui2CardComponent,
+    Ui2IconBadgeComponent,
+    Ui2SectionLabelComponent,
+    Ui2TextareaComponent,
+  ],
   animations: [fadeAnimation],
   templateUrl: './feedback-global-form.component.html',
   styleUrl: './feedback-global-form.component.css',

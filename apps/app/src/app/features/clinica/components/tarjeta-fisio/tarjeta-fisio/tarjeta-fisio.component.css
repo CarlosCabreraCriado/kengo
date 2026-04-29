@@ -1,0 +1,92 @@
+:host {
+  display: block;
+}
+
+.tf-root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tf-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tf-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tf-name {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+  color: var(--ink-900);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.tf-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+}
+
+.tf-colegiado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--kengo-primary);
+}
+
+.tf-colegiado .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.tf-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tf-action {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--ink-300);
+  background: var(--cream-50);
+  color: var(--ink-900);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.tf-action:hover {
+  border-color: var(--kengo-primary);
+  background: white;
+  color: var(--kengo-primary);
+}
+
+.tf-action-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tf-action-desc {
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.tf-action:hover .tf-action-desc {
+  color: var(--kengo-primary-dark);
+}

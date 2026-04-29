@@ -1,5 +1,5 @@
 @if (mostrarConfetti()) {
-  <div class="confetti-container">
+  <div class="confetti-container" aria-hidden="true">
     @for (i of confettiPieces; track i) {
       <div
         class="confetti"
@@ -15,7 +15,7 @@
   <div class="header-content">
     <div class="celebration-badge">
       <div class="badge-glow"></div>
-      <span class="material-symbols-outlined icon-filled">celebration</span>
+      <span class="material-symbols-outlined icon-filled" aria-hidden="true">celebration</span>
     </div>
 
     <div class="header-info">
@@ -25,27 +25,17 @@
 
     @if (modoDetallado()) {
       <div class="progress-ring-container">
-        <svg class="progress-ring" viewBox="0 0 44 44">
-          <circle
-            class="progress-ring-bg"
-            cx="22"
-            cy="22"
-            r="18"
-            fill="none"
-            stroke-width="4"
-          />
-          <circle
-            class="progress-ring-fill"
-            cx="22"
-            cy="22"
-            r="18"
-            fill="none"
-            stroke-width="4"
-            [style.stroke-dasharray]="circumference"
-            [style.stroke-dashoffset]="progressDashoffset()"
-          />
-        </svg>
-        <span class="progress-text">{{ ejerciciosConDolor() }}/{{ totalEjercicios() }}</span>
+        <ui2-progress-ring
+          [size]="44"
+          [stroke]="4"
+          [value]="progressValue()"
+          color="var(--kengo-primary)"
+          trackColor="rgba(231, 92, 62, 0.12)"
+        >
+          <span class="progress-text"
+            >{{ ejerciciosConDolor() }}/{{ totalEjercicios() }}</span
+          >
+        </ui2-progress-ring>
       </div>
     }
   </div>

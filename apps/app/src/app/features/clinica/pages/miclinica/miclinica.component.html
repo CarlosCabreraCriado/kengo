@@ -1,466 +1,451 @@
-<section class="clinic-page">
-  <!-- Aurora Background -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-    <div class="aurora-wave aurora-wave-3"></div>
-  </div>
+<section class="mc-page">
+  <main class="mc-main">
+    <!-- Header / título -->
+    <ui2-section padding="20px 20px 8px">
+      <div class="mc-header-row">
+        <ui2-big-title overline="Mi clínica" [title]="currentClinic()?.nombre || 'Clínica'"></ui2-big-title>
 
-  <!-- Main Content -->
-  <main class="clinic-main">
-    <!-- Selector de clínica (solo si hay más de una) -->
-    @if (clinicasRes().length > 1) {
-      <div class="clinic-selector-wrap">
-        @if (isMovil()) {
-          <button class="clinic-switcher" (click)="showClinicPicker = !showClinicPicker">
-            <span class="current-clinic-name">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
-            <span class="material-symbols-outlined switcher-icon" [class.rotated]="showClinicPicker">expand_more</span>
-          </button>
-        } @else {
-          <button
-            class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md
-                   border border-white/40 text-sm font-medium text-zinc-700
-                   hover:bg-white/70 transition-all shrink-0"
-            (click)="showClinicPicker = !showClinicPicker"
-          >
-            <span class="material-symbols-outlined text-lg text-kengo-primary">domain</span>
-            <span class="max-w-[150px] truncate">{{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Seleccionar' }}</span>
-            <span class="material-symbols-outlined text-base text-zinc-400" [class.rotate-180]="showClinicPicker">expand_more</span>
-          </button>
-        }
+        @if (clinicasRes() && clinicasRes().length > 1) {
+          <div class="mc-switcher-wrap">
+            <ui2-button
+              variant="secondary"
+              size="sm"
+              iconLeft="domain"
+              iconRight="expand_more"
+              (clicked)="toggleClinicPicker()"
+            >
+              {{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Cambiar clínica' }}
+            </ui2-button>
 
-        @if (showClinicPicker) {
-          <div class="clinic-picker-overlay" (click)="showClinicPicker = false"></div>
-          <div class="clinic-picker">
-            @for (c of clinicasRes(); track c.id; let i = $index) {
-              <button class="picker-option" [class.active]="i === selectedClinicIndex()" (click)="selectClinic(i)">
-                <div class="picker-logo">
-                  @if (c.logo) {
-                    <img [src]="assetUrl(c.logo)" [alt]="c.nombre"/>
-                  } @else {
-                    <span class="material-symbols-outlined icon-filled">domain</span>
-                  }
-                </div>
-                <div class="picker-info">
-                  <span class="picker-name">{{ c.nombre || 'Clínica ' + c.id }}</span>
-                  <span class="picker-location">{{ c.direccion || 'Sin dirección' }}</span>
-                </div>
-                @if (i === selectedClinicIndex()) {
-                  <span class="material-symbols-outlined picker-check">check_circle</span>
+            @if (showClinicPicker()) {
+              <div class="mc-picker-overlay" (click)="closeClinicPicker()"></div>
+              <div class="mc-picker">
+                @for (c of clinicasRes(); track c.id; let i = $index) {
+                  <button
+                    type="button"
+                    class="mc-picker-option"
+                    [class.mc-picker-option--active]="i === selectedClinicIndex()"
+                    (click)="selectClinic(i)"
+                  >
+                    <ui2-avatar
+                      size="sm"
+                      gradient="coral"
+                      [name]="c.nombre || 'Clínica'"
+                      [src]="c.logo ? assetUrl(c.logo) : null"
+                    ></ui2-avatar>
+                    <span class="mc-picker-text">
+                      <span class="mc-picker-name">{{ c.nombre || 'Clínica ' + c.id }}</span>
+                      <span class="mc-picker-location">{{ c.direccion || 'Sin dirección' }}</span>
+                    </span>
+                    @if (i === selectedClinicIndex()) {
+                      <span
+                        class="material-symbols-outlined mc-picker-check"
+                        aria-hidden="true"
+                      >check_circle</span>
+                    }
+                  </button>
                 }
-              </button>
+              </div>
             }
           </div>
         }
       </div>
-    }
+    </ui2-section>
 
-    <!-- Loading State -->
+    <!-- Loading state -->
     @if (!clinicasRes()) {
-      <div class="state-card loading-state">
-        <div class="shimmer-effect"></div>
-        <div class="state-icon pulse">
-          <span class="material-symbols-outlined">domain</span>
-        </div>
-        <p class="state-text">Cargando clínica...</p>
-      </div>
+      <ui2-section>
+        <ui2-card>
+          <div class="mc-loading">
+            <ui2-spinner size="md"></ui2-spinner>
+            <p class="mc-loading-text">Cargando clínica...</p>
+          </div>
+        </ui2-card>
+      </ui2-section>
     }
 
-    <!-- Error State -->
+    <!-- Error state -->
     @if (error()) {
-      <div class="state-card error-state">
-        <div class="state-icon error">
-          <span class="material-symbols-outlined">error</span>
-        </div>
-        <p class="state-text error">{{ error() }}</p>
-        <button class="retry-btn">
-          <span class="material-symbols-outlined">refresh</span>
-          Reintentar
-        </button>
-      </div>
+      <ui2-section>
+        <ui2-card>
+          <ui2-empty-state
+            icon="error"
+            title="Hubo un problema"
+            [message]="error()"
+            actionLabel="Reintentar"
+            actionIcon="refresh"
+          ></ui2-empty-state>
+        </ui2-card>
+      </ui2-section>
     }
 
-    <!-- Empty State - Options to link or create clinic -->
+    <!-- Empty state -->
     @if (clinicIds() && clinicIds()?.length === 0) {
-      <div class="no-clinic-container animate-in">
-        <!-- Welcome Card -->
-        <article class="welcome-card">
-          <div class="welcome-icon">
-            <span class="material-symbols-outlined icon-filled">domain_add</span>
-          </div>
-          <h2 class="welcome-title">Bienvenido a Kengo</h2>
-          <p class="welcome-text">Aún no estás vinculado a ninguna clínica. Elige una opción para comenzar:</p>
-        </article>
+      <ui2-section>
+        <ui2-card [padding]="20">
+          <ui2-empty-state
+            icon="domain_add"
+            title="Bienvenido a Kengo"
+            message="Aún no estás vinculado a ninguna clínica. Elige una opción para comenzar."
+          ></ui2-empty-state>
+        </ui2-card>
+      </ui2-section>
 
-        <!-- Options Grid -->
-        <div class="options-grid">
-          <button type="button" class="option-card" (click)="abrirVincularClinica()">
-            <div class="option-icon link">
-              <span class="material-symbols-outlined icon-filled">link</span>
-            </div>
-            <h3 class="option-title">Vincularme a una clínica</h3>
-            <p class="option-desc">Tengo un código de acceso</p>
-          </button>
+      <ui2-section>
+        <div class="mc-cta-stack">
+          <ui2-cta-bar
+            icon="link"
+            title="Vincularme a una clínica"
+            subtitle="Tengo un código de acceso"
+            variant="secondary"
+            (clicked)="abrirVincularClinica()"
+          ></ui2-cta-bar>
 
-          <button type="button" class="option-card" (click)="abrirCrearClinica()">
-            <div class="option-icon create">
-              <span class="material-symbols-outlined icon-filled">add_business</span>
-            </div>
-            <h3 class="option-title">Crear nueva clínica</h3>
-            <p class="option-desc">Soy propietario y quiero gestionar mi clínica</p>
-          </button>
+          <ui2-cta-bar
+            icon="add_business"
+            title="Crear nueva clínica"
+            subtitle="Soy propietario y quiero gestionarla"
+            variant="primary"
+            (clicked)="abrirCrearClinica()"
+          ></ui2-cta-bar>
         </div>
-      </div>
+      </ui2-section>
     }
 
-    <!-- Clinic Content -->
+    <!-- Clinica content -->
     @if (currentClinic(); as c) {
-      <!-- Hero Card -->
-      <article class="hero-card animate-in">
-        <div class="hero-visual">
-          @if (c.imagenes?.length) {
-            <img [src]="assetUrl(firstImageId(c))" [alt]="c.nombre" class="hero-image"/>
-          } @else {
-            <div class="hero-gradient" [style.--clinic-color]="c.colorPrimario"></div>
-          }
-          <div class="hero-overlay"></div>
+      <!-- Hero -->
+      <ui2-section padding="0 20px 16px">
+        <ui2-clinic-hero-card
+          [name]="c.nombre || 'Mi Clínica'"
+          [imageUrl]="firstImageId(c) ? assetUrl(firstImageId(c)) : null"
+          [address]="c.direccion || null"
+          [phone]="c.telefono || null"
+        ></ui2-clinic-hero-card>
 
-          <!-- Floating Logo -->
-          <div class="hero-logo">
-            @if (c.logo) {
-              <img [src]="assetUrl(c.logo)" [alt]="c.nombre"/>
-            } @else {
-              <span class="material-symbols-outlined icon-filled">domain</span>
-            }
-          </div>
+        @if (rolEnClinica(); as rol) {
+          <div class="mc-role-row">
+            <ui2-pill variant="soft" [icon]="rol.icono">{{ rol.nombre }}</ui2-pill>
 
-          <!-- Status Badge -->
-          <div class="status-badge">
-            <span class="status-dot"></span>
-            Activa
-          </div>
-        </div>
-
-        <div class="hero-info">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex-1 min-w-0">
-              <h2 class="clinic-name">{{ c.nombre || 'Mi Clínica' }}</h2>
-              @if (rolEnClinica(); as rol) {
-                <div class="role-user-badge">
-                  <span class="material-symbols-outlined">{{ rol.icono }}</span>
-                  <span>{{ rol.nombre }}</span>
-                </div>
-              }
-              <p class="clinic-address">
-                <span class="material-symbols-outlined">location_on</span>
-                {{ c.direccion || 'Sin dirección' }}
-                @if (c.postal) {
-                  <span class="postal-badge">{{ c.postal }}</span>
-                }
-              </p>
-            </div>
             @if (puedeEditarClinica()) {
-              <button
-                type="button"
-                class="edit-clinic-btn"
-                (click)="abrirEditarClinica()"
-                aria-label="Editar clínica"
+              <ui2-button
+                variant="ghost"
+                size="sm"
+                iconLeft="edit"
+                (clicked)="abrirEditarClinica()"
               >
-                <span class="material-symbols-outlined">edit</span>
-                <span class="edit-label">Editar</span>
-              </button>
+                Editar
+              </ui2-button>
             }
           </div>
-        </div>
-      </article>
+        }
+      </ui2-section>
 
-      <!-- Quick Actions -->
-      <section class="quick-actions animate-in" style="--delay: 0.1s">
-        @if (c.telefono) {
-          <a [href]="'tel:' + c.telefono" class="quick-action primary">
-            <div class="action-icon">
-              <span class="material-symbols-outlined icon-filled">call</span>
-            </div>
-            <span class="action-label">Llamar</span>
-          </a>
-        }
-        @if (c.email) {
-          <a [href]="'mailto:' + c.email" class="quick-action secondary">
-            <div class="action-icon">
-              <span class="material-symbols-outlined">mail</span>
-            </div>
-            <span class="action-label">Email</span>
-          </a>
-        }
-        @if (c.direccion) {
-          <button type="button" class="quick-action tertiary">
-            <div class="action-icon">
-              <span class="material-symbols-outlined">map</span>
-            </div>
-            <span class="action-label">Mapa</span>
+      <!-- Quick actions -->
+      <ui2-section label="Contacto rápido">
+        <div class="mc-quick-grid">
+          @if (c.telefono) {
+            <a [href]="'tel:' + c.telefono" class="mc-quick-card mc-quick-card--primary">
+              <span class="mc-quick-icon">
+                <span class="material-symbols-outlined" aria-hidden="true">call</span>
+              </span>
+              <span class="mc-quick-label">Llamar</span>
+            </a>
+          }
+          @if (c.email) {
+            <a [href]="'mailto:' + c.email" class="mc-quick-card mc-quick-card--soft">
+              <span class="mc-quick-icon">
+                <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+              </span>
+              <span class="mc-quick-label">Email</span>
+            </a>
+          }
+          @if (c.direccion) {
+            <button type="button" class="mc-quick-card mc-quick-card--soft">
+              <span class="mc-quick-icon">
+                <span class="material-symbols-outlined" aria-hidden="true">map</span>
+              </span>
+              <span class="mc-quick-label">Mapa</span>
+            </button>
+          }
+          <button type="button" class="mc-quick-card mc-quick-card--neutral">
+            <span class="mc-quick-icon">
+              <span class="material-symbols-outlined" aria-hidden="true">share</span>
+            </span>
+            <span class="mc-quick-label">Compartir</span>
           </button>
-        }
-        <button type="button" class="quick-action neutral">
-          <div class="action-icon">
-            <span class="material-symbols-outlined">share</span>
-          </div>
-          <span class="action-label">Compartir</span>
-        </button>
-      </section>
-
-      <!-- Info Cards Grid -->
-      <section class="info-grid animate-in" style="--delay: 0.15s">
-        <!-- Contact Card -->
-        <div class="info-card">
-          <div class="info-card-header">
-            <span class="material-symbols-outlined info-icon">contact_phone</span>
-            <span class="info-card-title">Contacto</span>
-          </div>
-          <div class="info-card-body">
-            <div class="info-row">
-              <span class="info-label">Teléfono</span>
-              <span class="info-value">{{ c.telefono || '—' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Email</span>
-              <span class="info-value truncate">{{ c.email || '—' }}</span>
-            </div>
-          </div>
         </div>
+      </ui2-section>
 
-        <!-- Legal Card -->
-        <div class="info-card">
-          <div class="info-card-header">
-            <span class="material-symbols-outlined info-icon">badge</span>
-            <span class="info-card-title">Fiscal</span>
-          </div>
-          <div class="info-card-body">
-            <div class="info-row">
-              <span class="info-label">NIF</span>
-              <span class="info-value mono">{{ c.nif || '—' }}</span>
+      <!-- Info cards -->
+      <ui2-section label="Información">
+        <div class="mc-info-grid">
+          <ui2-card [padding]="14">
+            <div class="mc-info-card">
+              <div class="mc-info-head">
+                <span class="material-symbols-outlined mc-info-icon" aria-hidden="true">contact_phone</span>
+                <span class="mc-info-title">Contacto</span>
+              </div>
+              <div class="mc-info-body">
+                <div class="mc-info-row">
+                  <span class="mc-info-label">Teléfono</span>
+                  <span class="mc-info-value">{{ c.telefono || '—' }}</span>
+                </div>
+                <div class="mc-info-row">
+                  <span class="mc-info-label">Email</span>
+                  <span class="mc-info-value mc-info-value--truncate">{{ c.email || '—' }}</span>
+                </div>
+              </div>
             </div>
-            <div class="info-row">
-              <span class="info-label">C.P.</span>
-              <span class="info-value">{{ c.postal || '—' }}</span>
+          </ui2-card>
+
+          <ui2-card [padding]="14">
+            <div class="mc-info-card">
+              <div class="mc-info-head">
+                <span class="material-symbols-outlined mc-info-icon" aria-hidden="true">badge</span>
+                <span class="mc-info-title">Fiscal</span>
+              </div>
+              <div class="mc-info-body">
+                <div class="mc-info-row">
+                  <span class="mc-info-label">NIF</span>
+                  <span class="mc-info-value mc-info-value--mono">{{ c.nif || '—' }}</span>
+                </div>
+                <div class="mc-info-row">
+                  <span class="mc-info-label">C.P.</span>
+                  <span class="mc-info-value">{{ c.postal || '—' }}</span>
+                </div>
+              </div>
             </div>
-          </div>
+          </ui2-card>
         </div>
-      </section>
+      </ui2-section>
 
-      <!-- Team Section -->
-      <section class="team-section animate-in" style="--delay: 0.2s">
-        <header class="section-header" (click)="toggleTeamExpanded()">
-          <div class="section-title-group">
-            <div class="section-icon">
-              <span class="material-symbols-outlined icon-filled">groups</span>
-            </div>
-            <div>
-              <h3 class="section-title">Equipo</h3>
-              <p class="section-subtitle">{{ fisios(c.id).length }} fisioterapeutas</p>
-            </div>
-          </div>
-          <div class="team-header-actions">
-            @if (puedeAnadirAEquipo()) {
-              <button
-                type="button"
-                class="add-fisio-btn"
-                (click)="abrirAnadirFisio(); $event.stopPropagation()"
-                aria-label="Añadir fisioterapeuta"
-              >
-                <span class="material-symbols-outlined">person_add</span>
-              </button>
-            }
-            <span class="material-symbols-outlined expand-icon" [class.rotated]="teamExpanded()">expand_more</span>
-          </div>
-        </header>
-
-        @if (fisios(c.id).length === 0) {
-          <div class="empty-team">
-            <span class="material-symbols-outlined">person_off</span>
-            <p>Sin fisioterapeutas asignados</p>
-          </div>
-        } @else {
-          <!-- Collapsed: Avatar Stack -->
-          @if (!teamExpanded()) {
-            <div class="team-preview">
-              <div class="avatar-stack">
-                @for (f of fisios(c.id).slice(0, 4); track f.id; let i = $index) {
-                  <div class="stacked-avatar" [style.--stack-index]="i">
-                    @if (f.avatar) {
-                      <img [src]="assetUrl(f.avatar)" [alt]="f.first_name"/>
-                    } @else {
-                      <span class="avatar-initials">{{ iniciales(f.first_name, f.last_name) }}</span>
-                    }
-                  </div>
-                }
-                @if (fisios(c.id).length > 4) {
-                  <div class="stacked-avatar more" [style.--stack-index]="4">
-                    +{{ fisios(c.id).length - 4 }}
-                  </div>
-                }
-              </div>
-              <span class="preview-hint">Toca para ver el equipo</span>
-            </div>
-          }
-
-          <!-- Expanded: Team List -->
-          @if (teamExpanded()) {
-            <div class="team-list">
-              @for (f of fisios(c.id); track f.id; let j = $index) {
-                <article class="team-member" [style.--member-delay]="(j * 0.05) + 's'">
-                  <ui-avatar
-                    [src]="f.avatar ? assetUrl(f.avatar) : null"
-                    [name]="(f.first_name || '') + ' ' + (f.last_name || '')"
-                    size="md"
-                  ></ui-avatar>
-
-                  <div class="member-info">
-                    <h4 class="member-name">{{ f.first_name }} {{ f.last_name }}</h4>
-                    <div class="member-meta">
-                      @if (f.numero_colegiado) {
-                        <span class="colegiado-badge">
-                          <span class="material-symbols-outlined">verified</span>
-                          Col. {{ f.numero_colegiado }}
-                        </span>
-                      } @else {
-                        <span class="role-badge">Fisioterapeuta</span>
-                      }
-                    </div>
-                  </div>
-
-                  <div class="member-actions">
-                    @if (f.telefono) {
-                      <a [href]="'tel:' + f.telefono" class="member-action" aria-label="Llamar">
-                        <span class="material-symbols-outlined">call</span>
-                      </a>
-                    }
-                    @if (f.email) {
-                      <a [href]="'mailto:' + f.email" class="member-action" aria-label="Email">
-                        <span class="material-symbols-outlined">mail</span>
-                      </a>
-                    }
-                  </div>
-                </article>
-              }
-            </div>
-          }
-        }
-      </section>
-
-      <!-- Códigos de Acceso Section (visible para admin/fisio) -->
-      @if (esFisioOAdmin()) {
-        <section class="codes-section animate-in" style="--delay: 0.25s">
-          <header class="section-header" (click)="toggleCodigosExpanded()">
-            <div class="section-title-group">
-              <div class="section-icon codes">
-                <span class="material-symbols-outlined icon-filled">key</span>
-              </div>
+      <!-- Equipo -->
+      <ui2-section label="Equipo">
+        <ui2-card [padding]="0">
+          <header class="mc-section-head" (click)="toggleTeamExpanded()">
+            <div class="mc-section-title">
+              <span class="mc-section-icon mc-section-icon--coral">
+                <span class="material-symbols-outlined" aria-hidden="true">groups</span>
+              </span>
               <div>
-                <h3 class="section-title">Códigos de Acceso</h3>
-                <p class="section-subtitle">Invita pacientes y fisioterapeutas</p>
+                <h3 class="mc-section-name">Equipo</h3>
+                <p class="mc-section-sub">{{ fisios(c.id).length }} fisioterapeutas</p>
               </div>
             </div>
-            <div class="codes-header-actions">
-              <button
-                type="button"
-                class="generate-code-btn"
-                (click)="abrirGenerarCodigo(); $event.stopPropagation()"
-                aria-label="Generar código"
-              >
-                <span class="material-symbols-outlined">add</span>
-                <span class="btn-label">Generar</span>
-              </button>
-              <span class="material-symbols-outlined expand-icon" [class.rotated]="codigosExpanded()">expand_more</span>
+            <div class="mc-section-actions">
+              @if (puedeAnadirAEquipo()) {
+                <ui2-button
+                  variant="secondary"
+                  size="sm"
+                  iconLeft="person_add"
+                  [iconOnly]="true"
+                  (clicked)="abrirAnadirFisio(); $event.stopPropagation()"
+                ></ui2-button>
+              }
+              <span
+                class="material-symbols-outlined mc-chevron"
+                [class.mc-chevron--rotated]="teamExpanded()"
+                aria-hidden="true"
+              >expand_more</span>
             </div>
           </header>
 
-          @if (codigosExpanded()) {
-            <div class="codes-content">
-              @if (codigosLoading()) {
-                <div class="codes-loading">
-                  <div class="shimmer-effect"></div>
-                  <p>Cargando códigos...</p>
-                </div>
-              } @else if (codigosClinica().length === 0) {
-                <div class="empty-codes">
-                  <span class="material-symbols-outlined">vpn_key_off</span>
-                  <p>No hay códigos activos</p>
-                  <button type="button" class="generate-empty-btn" (click)="abrirGenerarCodigo()">
-                    <span class="material-symbols-outlined">add</span>
-                    Generar primer código
-                  </button>
-                </div>
-              } @else {
-                <div class="codes-list">
-                  @for (codigo of codigosClinica(); track codigo.id) {
-                    <article class="code-item" [class.inactive]="!codigo.activo">
-                      <div class="code-info">
-                        <div class="code-value">
-                          <span class="code-text">{{ codigo.codigo }}</span>
-                          <button
-                            type="button"
-                            class="copy-btn"
-                            (click)="copiarCodigo(codigo.codigo)"
-                            aria-label="Copiar código"
-                          >
-                            <span class="material-symbols-outlined">content_copy</span>
-                          </button>
-                        </div>
-                        <div class="code-meta">
-                          <span class="code-type" [class.fisio]="codigo.tipo === 'fisioterapeuta'">
-                            {{ codigo.tipo === 'fisioterapeuta' ? 'Fisioterapeuta' : 'Paciente' }}
-                          </span>
-                          @if (codigo.email) {
-                            <span class="code-email-badge" [title]="codigo.email">
-                              <span class="material-symbols-outlined">mail</span>
-                              Vinculado
-                            </span>
-                          }
-                          @if (codigo.usosMaximos) {
-                            <span class="code-uses">{{ codigo.usosActuales }}/{{ codigo.usosMaximos }} usos</span>
-                          } @else {
-                            <span class="code-uses">{{ codigo.usosActuales }} usos</span>
-                          }
-                          @if (codigo.fechaExpiracion) {
-                            <span class="code-expiry">
-                              Expira: {{ codigo.fechaExpiracion | date:'dd/MM/yyyy' }}
-                            </span>
-                          }
-                        </div>
-                      </div>
-                      @if (codigo.activo) {
-                        <button
-                          type="button"
-                          class="deactivate-btn"
-                          (click)="desactivarCodigo(codigo.id)"
-                          aria-label="Desactivar código"
-                        >
-                          <span class="material-symbols-outlined">block</span>
-                        </button>
-                      } @else {
-                        <button
-                          type="button"
-                          class="reactivate-btn"
-                          (click)="reactivarCodigo(codigo.id)"
-                          aria-label="Reactivar código"
-                        >
-                          <span class="material-symbols-outlined">check_circle</span>
-                        </button>
-                      }
-                    </article>
+          @if (fisios(c.id).length === 0) {
+            <div class="mc-empty-block">
+              <span class="material-symbols-outlined" aria-hidden="true">person_off</span>
+              <p>Sin fisioterapeutas asignados</p>
+            </div>
+          } @else {
+            @if (!teamExpanded()) {
+              <div class="mc-team-preview">
+                <div class="mc-avatar-stack">
+                  @for (f of fisios(c.id).slice(0, 4); track f.id; let i = $index) {
+                    <span class="mc-avatar-stack-item" [style.--stack-index]="i">
+                      <ui2-avatar
+                        size="sm"
+                        gradient="coral"
+                        [border]="true"
+                        [name]="(f.first_name || '') + ' ' + (f.last_name || '')"
+                        [src]="fisioAvatarUrl(f.avatar)"
+                      ></ui2-avatar>
+                    </span>
+                  }
+                  @if (fisios(c.id).length > 4) {
+                    <span class="mc-avatar-stack-more" [style.--stack-index]="4">
+                      +{{ fisios(c.id).length - 4 }}
+                    </span>
                   }
                 </div>
-              }
-            </div>
+                <span class="mc-preview-hint">Toca para ver el equipo</span>
+              </div>
+            } @else {
+              <div class="mc-team-list">
+                @for (f of fisios(c.id); track f.id) {
+                  <article class="mc-team-row">
+                    <ui2-avatar
+                      size="md"
+                      gradient="coral"
+                      [name]="(f.first_name || '') + ' ' + (f.last_name || '')"
+                      [src]="fisioAvatarUrl(f.avatar)"
+                    ></ui2-avatar>
+
+                    <div class="mc-team-info">
+                      <h4 class="mc-team-name">{{ f.first_name }} {{ f.last_name }}</h4>
+                      <div class="mc-team-meta">
+                        @if (f.numero_colegiado) {
+                          <ui2-pill variant="soft" icon="verified">Col. {{ f.numero_colegiado }}</ui2-pill>
+                        } @else {
+                          <ui2-pill variant="neutral">Fisioterapeuta</ui2-pill>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="mc-team-actions">
+                      @if (f.telefono) {
+                        <a [href]="'tel:' + f.telefono" class="mc-team-action" aria-label="Llamar">
+                          <span class="material-symbols-outlined" aria-hidden="true">call</span>
+                        </a>
+                      }
+                      @if (f.email) {
+                        <a [href]="'mailto:' + f.email" class="mc-team-action" aria-label="Email">
+                          <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+                        </a>
+                      }
+                    </div>
+                  </article>
+                }
+              </div>
+            }
           }
-        </section>
+        </ui2-card>
+      </ui2-section>
+
+      <!-- Códigos de acceso -->
+      @if (esFisioOAdmin()) {
+        <ui2-section label="Códigos de acceso">
+          <ui2-card [padding]="0">
+            <header class="mc-section-head" (click)="toggleCodigosExpanded()">
+              <div class="mc-section-title">
+                <span class="mc-section-icon mc-section-icon--ink">
+                  <span class="material-symbols-outlined" aria-hidden="true">key</span>
+                </span>
+                <div>
+                  <h3 class="mc-section-name">Códigos de acceso</h3>
+                  <p class="mc-section-sub">Invita pacientes y fisioterapeutas</p>
+                </div>
+              </div>
+              <div class="mc-section-actions">
+                <ui2-button
+                  variant="primary"
+                  size="sm"
+                  iconLeft="add"
+                  (clicked)="abrirGenerarCodigo(); $event.stopPropagation()"
+                >
+                  Generar
+                </ui2-button>
+                <span
+                  class="material-symbols-outlined mc-chevron"
+                  [class.mc-chevron--rotated]="codigosExpanded()"
+                  aria-hidden="true"
+                >expand_more</span>
+              </div>
+            </header>
+
+            @if (codigosExpanded()) {
+              <div class="mc-codes-content">
+                @if (codigosLoading()) {
+                  <div class="mc-empty-block">
+                    <ui2-spinner size="sm"></ui2-spinner>
+                    <p>Cargando códigos...</p>
+                  </div>
+                } @else if (codigosClinica().length === 0) {
+                  <div class="mc-empty-block">
+                    <span class="material-symbols-outlined" aria-hidden="true">vpn_key_off</span>
+                    <p>No hay códigos activos</p>
+                    <ui2-button
+                      variant="secondary"
+                      size="sm"
+                      iconLeft="add"
+                      (clicked)="abrirGenerarCodigo()"
+                    >
+                      Generar primer código
+                    </ui2-button>
+                  </div>
+                } @else {
+                  <div class="mc-codes-list">
+                    @for (codigo of codigosClinica(); track codigo.id) {
+                      <article
+                        class="mc-code-item"
+                        [class.mc-code-item--inactive]="!codigo.activo"
+                      >
+                        <div class="mc-code-info">
+                          <div class="mc-code-value">
+                            <span class="mc-code-text">{{ codigo.codigo }}</span>
+                            <button
+                              type="button"
+                              class="mc-copy-btn"
+                              (click)="copiarCodigo(codigo.codigo)"
+                              aria-label="Copiar código"
+                            >
+                              <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+                            </button>
+                          </div>
+                          <div class="mc-code-meta">
+                            @if (codigo.tipo === 'fisioterapeuta') {
+                              <ui2-pill variant="soft" icon="medical_services">Fisioterapeuta</ui2-pill>
+                            } @else {
+                              <ui2-pill variant="neutral" icon="person">Paciente</ui2-pill>
+                            }
+                            @if (codigo.email) {
+                              <ui2-pill variant="success" icon="mail">Vinculado</ui2-pill>
+                            }
+                            @if (codigo.usosMaximos) {
+                              <span class="mc-code-uses">{{ codigo.usosActuales }}/{{ codigo.usosMaximos }} usos</span>
+                            } @else {
+                              <span class="mc-code-uses">{{ codigo.usosActuales }} usos</span>
+                            }
+                            @if (codigo.fechaExpiracion) {
+                              <span class="mc-code-expiry">
+                                Expira: {{ codigo.fechaExpiracion | date:'dd/MM/yyyy' }}
+                              </span>
+                            }
+                          </div>
+                        </div>
+                        @if (codigo.activo) {
+                          <button
+                            type="button"
+                            class="mc-code-toggle mc-code-toggle--off"
+                            (click)="desactivarCodigo(codigo.id)"
+                            aria-label="Desactivar código"
+                          >
+                            <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="mc-code-toggle mc-code-toggle--on"
+                            (click)="reactivarCodigo(codigo.id)"
+                            aria-label="Reactivar código"
+                          >
+                            <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                          </button>
+                        }
+                      </article>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </ui2-card>
+        </ui2-section>
       }
     }
   </main>
 
   <!-- Snackbar -->
   @if (snackbarVisible()) {
-    <div class="snackbar">{{ snackbarMessage() }}</div>
+    <div class="mc-snackbar">{{ snackbarMessage() }}</div>
   }
 
   <!-- Dialogs -->

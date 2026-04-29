@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { useResponsive } from '../../../../shared';
@@ -7,6 +7,16 @@ import type { DiaSemana } from '../../../../../types/global';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
+import {
+  Ui2BackButtonComponent,
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2IconBadgeComponent,
+  Ui2KpiCardComponent,
+  Ui2PillComponent,
+  Ui2ProgressBarComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -65,7 +75,18 @@ interface PlanAgendadoDetalle {
 @Component({
   selector: 'app-sesion-detail',
   standalone: true,
-  imports: [DecimalPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DecimalPipe,
+    Ui2BackButtonComponent,
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2IconBadgeComponent,
+    Ui2KpiCardComponent,
+    Ui2PillComponent,
+    Ui2ProgressBarComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './sesion-detail.component.html',
   styleUrl: './sesion-detail.component.css',
   host: {
@@ -286,18 +307,15 @@ export class SesionDetailComponent implements OnInit {
     });
   }
 
+  /**
+   * Devuelve el color V2 (token CSS) para un valor de dolor, usado por
+   * `ui2-pill variant="custom"` y por el KPI de dolor.
+   */
   getDolorColor(dolor: number | null): string {
-    if (dolor === null) return 'text-zinc-400';
-    if (dolor <= 3) return 'dolor-low';
-    if (dolor <= 6) return 'dolor-mid';
-    return 'dolor-high';
-  }
-
-  getDolorBgClass(dolor: number | null): string {
-    if (dolor === null) return 'dolor-badge-neutral';
-    if (dolor <= 3) return 'dolor-badge-low';
-    if (dolor <= 6) return 'dolor-badge-mid';
-    return 'dolor-badge-high';
+    if (dolor === null) return 'var(--ink-400)';
+    if (dolor <= 3) return 'var(--success)';
+    if (dolor <= 6) return 'var(--warning)';
+    return 'var(--danger)';
   }
 
   assetUrl(portada: string | null): string | null {

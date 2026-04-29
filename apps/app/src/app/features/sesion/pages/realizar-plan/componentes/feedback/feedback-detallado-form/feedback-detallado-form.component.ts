@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EscalaDolorComponent } from '../../escala-dolor/escala-dolor.component';
+import {
+  Ui2CardComponent,
+  Ui2IconBadgeComponent,
+  Ui2PillComponent,
+  Ui2SectionLabelComponent,
+  Ui2TextareaComponent,
+} from '../../../../../../../shared/ui-v2';
 import { fadeAnimation } from '../../../realizar-plan.animations';
 
 export interface EjercicioFeedback {
@@ -11,7 +18,15 @@ export interface EjercicioFeedback {
 @Component({
   selector: 'app-feedback-detallado-form',
   standalone: true,
-  imports: [FormsModule, EscalaDolorComponent],
+  imports: [
+    FormsModule,
+    EscalaDolorComponent,
+    Ui2CardComponent,
+    Ui2IconBadgeComponent,
+    Ui2PillComponent,
+    Ui2SectionLabelComponent,
+    Ui2TextareaComponent,
+  ],
   animations: [fadeAnimation],
   templateUrl: './feedback-detallado-form.component.html',
   styleUrl: './feedback-detallado-form.component.css',
@@ -30,13 +45,14 @@ export class FeedbackDetalladoFormComponent {
   readonly observacionesChange = output<string>();
   readonly volverAModoSimplificado = output<void>();
 
+  // Mapping a tonos semánticos coherente con escala-dolor
   private readonly dolorColores: Record<number, string> = {
     0: '#22c55e',
-    1: '#4ade80',
-    2: '#86efac',
+    1: '#34d399',
+    2: '#5eead4',
     3: '#a3e635',
     4: '#facc15',
-    5: '#fbbf24',
+    5: '#f59e0b',
     6: '#fb923c',
     7: '#f97316',
     8: '#ef4444',
@@ -45,7 +61,7 @@ export class FeedbackDetalladoFormComponent {
   };
 
   getDolorColor(dolor: number): string {
-    return this.dolorColores[dolor] || '#6b7280';
+    return this.dolorColores[dolor] || 'var(--ink-500)';
   }
 
   onDolorChange(planItemId: string, valor: number): void {

@@ -1,13 +1,13 @@
-<section class="activity-shell">
-  <!-- Aurora Background -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-    <div class="aurora-wave aurora-wave-3"></div>
-  </div>
+<section class="actividad-shell">
+  <ui2-section [padding]="'12px 20px 8px'">
+    <ui2-segmented
+      [options]="tabs"
+      [value]="activeTab()"
+      (valueChange)="onTabChange($event)"
+    ></ui2-segmented>
+  </ui2-section>
 
-  <!-- Router Outlet for Child Routes -->
-  <main class="shell-content">
+  <main class="actividad-shell__content">
     <router-outlet />
   </main>
 </section>

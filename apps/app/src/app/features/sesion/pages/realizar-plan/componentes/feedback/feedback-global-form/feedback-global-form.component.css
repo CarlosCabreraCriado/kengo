@@ -1,25 +1,18 @@
 @reference "tailwindcss";
 
 :host {
-  --primary: var(--kengo-primary);
-  --tertiary: var(--kengo-tertiary);
-  --surface: rgba(255, 255, 255, 0.6);
-  --border: rgba(255, 255, 255, 0.5);
-
   display: contents;
 }
 
 /* === Tarjeta de feedback global === */
+.global-feedback-wrapper {
+  display: block;
+}
+
 .global-feedback-card {
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .session-summary {
@@ -28,21 +21,25 @@
   justify-content: center;
   gap: 10px;
   padding: 14px 18px;
-  margin-bottom: 18px;
-  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.08) 0%, rgba(var(--kengo-tertiary-rgb), 0.06) 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--kengo-primary) 8%, transparent),
+    color-mix(in srgb, var(--warning) 6%, transparent)
+  );
   border-radius: 14px;
-  border: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
+  border: 1px solid rgba(231, 92, 62, 0.12);
 }
 
 .summary-icon {
   font-size: 1.3rem;
-  color: var(--primary);
+  color: var(--kengo-primary);
 }
 
 .summary-text {
+  font-family: Galvji, sans-serif;
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #374151;
+  font-weight: 700;
+  color: var(--ink-900);
 }
 
 /* === Botón expansión a modo detallado === */
@@ -51,19 +48,17 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 16px 18px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(var(--kengo-primary-rgb), 0.12);
-  border-radius: 16px;
+  padding: 14px 18px;
+  background: var(--cream-50);
+  border: 1px solid rgba(231, 92, 62, 0.18);
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .expand-detail-btn:hover {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(var(--kengo-primary-rgb), 0.2);
+  background: white;
+  border-color: var(--kengo-primary);
 }
 
 .expand-detail-btn:active {
@@ -72,97 +67,42 @@
 
 .detail-icon {
   font-size: 1.25rem;
-  color: var(--primary);
+  color: var(--kengo-primary);
 }
 
 .detail-text {
   flex: 1;
   text-align: left;
+  font-family: Galvji, sans-serif;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #4b5563;
+  font-weight: 600;
+  color: var(--ink-700);
 }
 
 .arrow-icon {
   font-size: 1.25rem;
-  color: #9ca3af;
+  color: var(--ink-500);
 }
 
-/* === Tarjeta de observaciones === */
-.observations-card {
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+/* === Observaciones === */
+.observations-wrapper {
+  display: block;
 }
 
 .observations-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-.observations-icon {
-  font-size: 1.25rem;
-  color: var(--tertiary);
+.observations-header ui2-section-label {
+  margin-bottom: 0;
 }
 
-.observations-title {
-  font-size: 0.95rem;
+.optional {
   font-weight: 600;
-  color: #1f2937;
-}
-
-.observations-optional {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #9ca3af;
-}
-
-.observations-input {
-  width: 100%;
-  padding: 16px;
-  border: 1.5px solid rgba(var(--kengo-tertiary-rgb), 0.2);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem;
-  color: #374151;
-  resize: none;
-  transition: all 0.2s ease;
-}
-
-.observations-input::placeholder {
-  color: #9ca3af;
-}
-
-.observations-input:focus {
-  outline: none;
-  border-color: var(--tertiary);
-  box-shadow: 0 0 0 3px rgba(var(--kengo-tertiary-rgb), 0.15);
-}
-
-/* === Estilos para la escala de dolor embebida === */
-:host ::ng-deep .escala-container {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: none;
-}
-
-@media (min-width: 768px) {
-  .global-feedback-card,
-  .observations-card {
-    padding: 24px;
-    border-radius: 28px;
-  }
-
-  .expand-detail-btn {
-    padding: 18px 20px;
-    border-radius: 18px;
-  }
+  color: var(--ink-500);
+  text-transform: none;
+  letter-spacing: 0;
 }

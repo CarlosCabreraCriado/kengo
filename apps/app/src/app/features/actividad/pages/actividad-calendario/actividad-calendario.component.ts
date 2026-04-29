@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   OnInit,
   computed,
@@ -18,6 +19,18 @@ import {
   ConfigSesionMultiPlan,
   DiaSemana,
 } from '../../../../../types/global';
+
+import {
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2CtaBarComponent,
+  Ui2EmptyStateComponent,
+  Ui2IconBadgeComponent,
+  Ui2PillComponent,
+  Ui2SectionComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 interface EjercicioCalendario {
   nombre: string;
@@ -53,7 +66,18 @@ interface DiaProximoConEjercicios {
 @Component({
   selector: 'app-actividad-calendario',
   standalone: true,
-  imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2CtaBarComponent,
+    Ui2EmptyStateComponent,
+    Ui2IconBadgeComponent,
+    Ui2PillComponent,
+    Ui2SectionComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './actividad-calendario.component.html',
   styleUrl: './actividad-calendario.component.css',
   host: {

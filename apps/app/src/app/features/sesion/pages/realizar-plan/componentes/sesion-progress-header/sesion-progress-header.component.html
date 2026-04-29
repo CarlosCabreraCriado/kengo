@@ -1,16 +1,19 @@
-<button type="button" class="header-btn" (click)="onSalir($event)" aria-label="Salir">
-  <span class="material-symbols-outlined">close</span>
-</button>
+<ui2-back-button
+  icon="close"
+  ariaLabel="Salir"
+  (clicked)="onSalir($event)"
+/>
 
 <div class="progress-indicator">
-  <div class="progress-text">
-    <span class="progress-current">{{ ejercicioIndex() + 1 }}</span>
-    <span class="progress-separator">/</span>
-    <span class="progress-total">{{ totalEjercicios() }}</span>
-  </div>
-  <div class="progress-bar">
-    <div class="progress-fill" [style.width.%]="progresoPct()"></div>
-  </div>
+  <ui2-pill variant="soft" size="sm">
+    {{ ejercicioIndex() + 1 }} / {{ totalEjercicios() }}
+  </ui2-pill>
+  <ui2-progress-bar
+    class="progress-bar"
+    [value]="progresoPct()"
+    size="sm"
+    color="primary"
+  />
 </div>
 
 <div class="header-spacer"></div>

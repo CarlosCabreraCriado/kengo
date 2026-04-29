@@ -1,191 +1,114 @@
-@reference "tailwindcss";
-
-/* ============================================
-   SECTION SHELL (compartido con otros subcomponentes)
-   ============================================ */
-.content-section {
-  @apply rounded-3xl overflow-hidden;
-  background: var(--kengo-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--kengo-border);
-  box-shadow: var(--kengo-shadow);
+:host {
+  display: block;
 }
 
-.section-header {
-  @apply flex items-center justify-between gap-3 p-4;
-  background: rgba(255, 255, 255, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+.pln-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  gap: 8px;
+}
+.pln-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+.pln-header__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pln-header__title {
+  font-family: KengoDisplay, Galvji, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+}
+.pln-header__subtitle {
+  font-size: 12px;
+  color: var(--ink-500);
+  margin-top: 2px;
+}
+.pln-header__chev {
+  font-size: 22px;
+  color: var(--ink-500);
+  transition: transform 0.2s;
+}
+.pln-header__chev--open { transform: rotate(180deg); }
+
+.pln-body { padding: 0 16px 16px; }
+.pln-loading {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
 }
 
-.section-header.clickable {
-  @apply cursor-pointer transition-colors;
+.pln-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.section-header.clickable:hover {
-  background: rgba(255, 255, 255, 0.4);
+.pln-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--ink-100);
+  border-radius: 18px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
-
-.section-header-left {
-  @apply flex items-center gap-3;
+.pln-card:hover {
+  border-color: rgba(231, 92, 62, 0.25);
+  background: var(--cream-50);
 }
-
-.section-icon {
-  @apply w-10 h-10 rounded-xl flex items-center justify-center shrink-0;
-  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12) 0%, rgba(var(--kengo-tertiary-rgb), 0.08) 100%);
+.pln-card--completed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.04), white);
 }
-
-.section-icon .material-symbols-outlined {
-  @apply text-xl;
-  color: var(--kengo-primary);
+.pln-card__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-
-.section-title {
-  @apply text-base font-semibold text-zinc-700 m-0;
+.pln-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
-
-.section-subtitle {
-  @apply text-xs text-zinc-400 m-0 mt-0.5;
+.pln-card__title {
+  margin: 0;
+  font-family: KengoDisplay, Galvji, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-.expand-icon {
-  @apply text-xl text-zinc-400 transition-transform shrink-0;
+.pln-card__dates {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ink-500);
 }
-
-.expand-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.section-content {
-  @apply p-4;
-  animation: expandIn 0.25s ease-out;
-}
-
-@keyframes expandIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.loading-inline {
-  @apply flex flex-col gap-2 py-4;
-}
-
-.shimmer-bar {
-  @apply h-4 rounded-lg;
-  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.shimmer-bar.short {
-  @apply w-2/3;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.empty-state-inline {
-  @apply flex flex-col items-center py-8;
-}
-
-.empty-icon {
-  @apply w-16 h-16 rounded-2xl flex items-center justify-center mb-3;
-  background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%);
-}
-
-.empty-icon .material-symbols-outlined {
-  @apply text-3xl text-zinc-300;
-}
-
-.empty-text {
-  @apply text-sm text-zinc-500 m-0;
-}
-
-.empty-action {
-  @apply inline-flex items-center gap-2 mt-4 px-4 py-2.5 rounded-xl
-         text-white text-sm font-semibold
-         cursor-pointer transition-all active:scale-95;
-  background-color: var(--kengo-primary);
-  box-shadow: var(--kengo-shadow-primary);
-}
-
-.empty-action:hover {
-  transform: translateY(-2px);
-}
-
-.animate-in {
-  animation: animateIn 0.4s ease-out backwards;
-  animation-delay: var(--delay, 0s);
-}
-
-@keyframes animateIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ============================================
-   PLANS LIST (específico)
-   ============================================ */
-.plans-list {
-  @apply flex flex-col gap-2;
-}
-
-.plan-card {
-  @apply rounded-xl overflow-hidden transition-all cursor-pointer;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.plan-card:hover {
-  @apply bg-white/60 -translate-y-0.5;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.plan-card.completed {
-  @apply opacity-70;
-}
-
-.plan-main {
-  @apply flex items-center gap-3 p-3;
-}
-
-.plan-info {
-  @apply flex flex-col min-w-0 flex-1;
-}
-
-.plan-header-row {
-  @apply flex items-center gap-2 flex-wrap;
-}
-
-.plan-title {
-  @apply text-sm font-semibold text-zinc-800 m-0 truncate;
-}
-
-.plan-badge {
-  @apply shrink-0 px-2 py-0.5 rounded-full text-xs font-medium;
-}
-
-.plan-dates {
-  @apply flex items-center gap-1 mt-1 text-xs text-zinc-500 m-0;
-}
-
-.icon-xs {
-  @apply text-sm;
-}
-
-.date-separator {
-  @apply mx-1 text-zinc-300;
-}
-
-.see-all-btn {
-  @apply flex items-center justify-center gap-2 w-full mt-3 py-2.5
-         rounded-xl bg-transparent text-sm font-medium
-         cursor-pointer transition-all;
-  color: var(--kengo-primary);
-}
-
-.see-all-btn:hover {
-  background-color: rgba(var(--kengo-primary-rgb), 0.1);
-}
+.pln-card__dates .material-symbols-outlined { font-size: 14px; }
+.pln-card__sep { color: var(--ink-300); }
+.pln-card__chev { color: var(--ink-300); font-size: 22px; flex-shrink: 0; }

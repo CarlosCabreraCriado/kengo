@@ -1,60 +1,46 @@
-<div class="flex flex-col">
-  <!-- Header -->
-  <div
-    class="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3"
-  >
-    <h2 class="text-lg font-bold text-zinc-800">Términos y Condiciones</h2>
-    <button
-      type="button"
-      class="flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-      (click)="cerrar()"
-      aria-label="Cerrar"
-    >
-      <span class="material-symbols-outlined">close</span>
-    </button>
-  </div>
+<ui2-dialog-host>
+  <ui2-dialog-header
+    title="Términos y condiciones"
+    subtitle="Última actualización: Enero 2025"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
 
-  <!-- Content -->
-  <div class="max-h-[70vh] overflow-y-auto p-4 text-zinc-700">
-    <p class="mb-4 text-xs text-zinc-500">Última actualización: Enero 2025</p>
-
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">1. Aviso Legal</h3>
-      <p class="text-sm leading-relaxed">
+  <ui2-dialog-content>
+    <section class="terms-section">
+      <h3>1. Aviso legal</h3>
+      <p>
         En cumplimiento del artículo 10 de la Ley 34/2002, del 11 de julio, de
         Servicios de la Sociedad de la Información y Comercio Electrónico (LSSICE),
         KENGO facilita a continuación sus datos de contacto e información general.
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">2. Datos de la Organización</h3>
-      <div class="space-y-2 text-sm leading-relaxed">
-        <p><strong>Denominación social:</strong> KENGO</p>
-        <p><strong>Correo electrónico:</strong> info&#64;kengoapp.com</p>
-        <p><strong>Sitio web:</strong> kengoapp.com</p>
-      </div>
+    <section class="terms-section">
+      <h3>2. Datos de la organización</h3>
+      <p><strong>Denominación social:</strong> KENGO</p>
+      <p><strong>Correo electrónico:</strong> info&#64;kengoapp.com</p>
+      <p><strong>Sitio web:</strong> kengoapp.com</p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">3. Objeto y Ámbito de Aplicación</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>3. Objeto y ámbito de aplicación</h3>
+      <p>
         KENGO es una plataforma tecnológica diseñada para facilitar la gestión de
         tratamientos de fisioterapia, permitiendo a profesionales sanitarios crear
         y asignar planes de ejercicios personalizados a sus pacientes, y a estos
         ejecutar dichos planes de forma guiada.
       </p>
-      <p class="mt-2 text-sm leading-relaxed">
+      <p>
         Los presentes Términos y Condiciones regulan el acceso y uso de la
         plataforma KENGO, tanto en su versión web como en aplicación móvil, y son
         de aplicación a todos los usuarios registrados.
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">4. Tipos de Usuario y Roles</h3>
-      <p class="text-sm leading-relaxed">La plataforma distingue tres tipos de usuarios:</p>
-      <ul class="mt-2 list-inside list-disc text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>4. Tipos de usuario y roles</h3>
+      <p>La plataforma distingue tres tipos de usuarios:</p>
+      <ul>
         <li>
           <strong>Pacientes:</strong> Usuarios que reciben tratamientos de
           fisioterapia y ejecutan los planes de ejercicios asignados por su
@@ -72,27 +58,27 @@
       </ul>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">5. Registro y Acceso</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>5. Registro y acceso</h3>
+      <p>
         El registro en la plataforma requiere proporcionar información veraz y
         actualizada. El acceso puede realizarse mediante:
       </p>
-      <ul class="mt-2 list-inside list-disc text-sm leading-relaxed">
+      <ul>
         <li>Registro directo con correo electrónico y contraseña.</li>
         <li>Código de acceso proporcionado por una clínica o fisioterapeuta.</li>
         <li>Enlace de acceso directo (magic link) enviado al correo electrónico.</li>
       </ul>
-      <p class="mt-2 text-sm leading-relaxed">
+      <p>
         El usuario es responsable de mantener la confidencialidad de sus
         credenciales de acceso y de todas las actividades realizadas bajo su cuenta.
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">6. Funcionalidades de la Plataforma</h3>
-      <p class="text-sm leading-relaxed font-medium">Para Pacientes:</p>
-      <ul class="mt-1 list-inside list-disc text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>6. Funcionalidades de la plataforma</h3>
+      <p class="terms-section__lead">Para pacientes:</p>
+      <ul>
         <li>Visualizar planes de ejercicios asignados.</li>
         <li>Ejecutar sesiones de ejercicios con guía audiovisual.</li>
         <li>Registrar nivel de dolor y esfuerzo percibido tras cada ejercicio.</li>
@@ -100,8 +86,8 @@
         <li>Consultar historial de sesiones realizadas.</li>
         <li>Marcar ejercicios como favoritos.</li>
       </ul>
-      <p class="mt-3 text-sm leading-relaxed font-medium">Para Fisioterapeutas:</p>
-      <ul class="mt-1 list-inside list-disc text-sm leading-relaxed">
+      <p class="terms-section__lead">Para fisioterapeutas:</p>
+      <ul>
         <li>Crear y personalizar planes de ejercicios.</li>
         <li>Asignar planes a pacientes con parámetros específicos.</li>
         <li>Consultar estadísticas de adherencia de pacientes.</li>
@@ -109,33 +95,33 @@
         <li>Generar informes en formato PDF.</li>
         <li>Gestionar códigos de acceso para nuevos pacientes.</li>
       </ul>
-      <p class="mt-3 text-sm leading-relaxed font-medium">Para Administradores:</p>
-      <ul class="mt-1 list-inside list-disc text-sm leading-relaxed">
+      <p class="terms-section__lead">Para administradores:</p>
+      <ul>
         <li>Configurar información y branding de la clínica.</li>
         <li>Gestionar códigos de acceso para fisioterapeutas y pacientes.</li>
         <li>Administrar el equipo de profesionales de la clínica.</li>
       </ul>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">7. Exclusión de Responsabilidad Médica</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>7. Exclusión de responsabilidad médica</h3>
+      <p>
         <strong>KENGO es una herramienta de gestión y seguimiento, NO un servicio
         médico ni de diagnóstico.</strong>
       </p>
-      <p class="mt-2 text-sm leading-relaxed">
+      <p>
         Los planes de ejercicios son diseñados y prescritos por fisioterapeutas
         colegiados. KENGO no proporciona diagnósticos, consejos médicos ni
         tratamientos. La plataforma únicamente facilita la comunicación y
         seguimiento entre profesionales sanitarios y pacientes.
       </p>
-      <p class="mt-2 text-sm leading-relaxed">
+      <p>
         Ante cualquier dolor intenso, molestia inusual o síntoma preocupante
         durante la ejecución de ejercicios, el usuario debe interrumpir
         inmediatamente la actividad y consultar con su fisioterapeuta o
         profesional sanitario.
       </p>
-      <p class="mt-2 text-sm leading-relaxed">
+      <p>
         KENGO no se responsabiliza de lesiones o daños derivados de la ejecución
         incorrecta de ejercicios, del incumplimiento de las instrucciones del
         fisioterapeuta, o del uso de la plataforma sin supervisión profesional
@@ -143,10 +129,10 @@
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">8. Obligaciones del Usuario</h3>
-      <p class="text-sm leading-relaxed">El usuario se compromete a:</p>
-      <ul class="mt-2 list-inside list-disc text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>8. Obligaciones del usuario</h3>
+      <p>El usuario se compromete a:</p>
+      <ul>
         <li>Proporcionar información veraz y mantenerla actualizada.</li>
         <li>Utilizar la plataforma de forma lícita y conforme a estos términos.</li>
         <li>No compartir sus credenciales de acceso con terceros.</li>
@@ -156,12 +142,10 @@
       </ul>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">9. Obligaciones del Fisioterapeuta</h3>
-      <p class="text-sm leading-relaxed">
-        Los fisioterapeutas que utilicen la plataforma se comprometen a:
-      </p>
-      <ul class="mt-2 list-inside list-disc text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>9. Obligaciones del fisioterapeuta</h3>
+      <p>Los fisioterapeutas que utilicen la plataforma se comprometen a:</p>
+      <ul>
         <li>Estar debidamente colegiados y habilitados para ejercer.</li>
         <li>Diseñar planes de ejercicios adecuados a cada paciente.</li>
         <li>Supervisar el progreso de sus pacientes.</li>
@@ -170,24 +154,24 @@
       </ul>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">10. Propiedad Intelectual</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>10. Propiedad intelectual</h3>
+      <p>
         Todos los contenidos de la plataforma, incluyendo pero no limitándose a
         textos, imágenes, vídeos de ejercicios, diseño gráfico, código fuente y
         logotipos, son propiedad de KENGO o de sus legítimos titulares y están
         protegidos por las leyes de propiedad intelectual e industrial.
       </p>
-      <p class="mt-2 text-sm leading-relaxed">
+      <p>
         El usuario únicamente está autorizado a utilizar los contenidos para los
         fines propios de la plataforma, quedando prohibida su reproducción,
         distribución o modificación sin autorización expresa.
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">11. Disponibilidad del Servicio</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>11. Disponibilidad del servicio</h3>
+      <p>
         KENGO se esfuerza por mantener la plataforma operativa de forma continua.
         No obstante, no garantiza la disponibilidad ininterrumpida del servicio,
         que podrá verse afectado por tareas de mantenimiento, actualizaciones o
@@ -195,9 +179,9 @@
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">12. Modificación de los Términos</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>12. Modificación de los términos</h3>
+      <p>
         KENGO se reserva el derecho de modificar estos Términos y Condiciones en
         cualquier momento. Los cambios serán comunicados a los usuarios a través
         de la plataforma. El uso continuado del servicio tras la notificación de
@@ -205,9 +189,9 @@
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">13. Baja y Cancelación de Cuenta</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>13. Baja y cancelación de cuenta</h3>
+      <p>
         El usuario puede solicitar la baja de su cuenta en cualquier momento
         contactando con el servicio de atención al usuario. La baja implicará la
         eliminación de su perfil, aunque se podrán conservar datos anonimizados
@@ -215,9 +199,9 @@
       </p>
     </section>
 
-    <section class="mb-6">
-      <h3 class="mb-2 font-bold text-zinc-800">14. Legislación Aplicable y Jurisdicción</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>14. Legislación aplicable y jurisdicción</h3>
+      <p>
         Los presentes Términos y Condiciones se rigen por la legislación española.
         Para la resolución de cualquier controversia, las partes se someten a los
         juzgados y tribunales del domicilio del usuario, salvo que la normativa
@@ -225,26 +209,17 @@
       </p>
     </section>
 
-    <section>
-      <h3 class="mb-2 font-bold text-zinc-800">15. Contacto</h3>
-      <p class="text-sm leading-relaxed">
+    <section class="terms-section">
+      <h3>15. Contacto</h3>
+      <p>
         Para cualquier consulta relacionada con estos Términos y Condiciones,
         puede contactar con nosotros en:
       </p>
-      <p class="mt-2 text-sm leading-relaxed">
-        <strong>Correo electrónico:</strong> info&#64;kengoapp.com
-      </p>
+      <p><strong>Correo electrónico:</strong> info&#64;kengoapp.com</p>
     </section>
-  </div>
+  </ui2-dialog-content>
 
-  <!-- Footer -->
-  <div class="flex justify-end gap-2 border-t border-zinc-200 px-4 py-3">
-    <button
-      type="button"
-      class="flex h-10 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
-      (click)="cerrar()"
-    >
-      Cerrar
-    </button>
-  </div>
-</div>
+  <ui2-dialog-actions>
+    <ui2-button variant="primary" (clicked)="cerrar()">Cerrar</ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

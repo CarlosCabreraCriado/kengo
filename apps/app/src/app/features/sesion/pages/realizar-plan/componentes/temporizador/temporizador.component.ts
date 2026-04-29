@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   Input,
   Output,
@@ -8,101 +9,52 @@ import {
   effect,
   OnDestroy,
 } from '@angular/core';
+import { Ui2ProgressRingComponent } from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-temporizador',
   standalone: true,
-  imports: [],
+  imports: [Ui2ProgressRingComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="timer-container" [class.warning]="esAdvertencia()">
-      <svg class="timer-ring" viewBox="0 0 100 100">
-        <!-- Círculo de fondo -->
-        <circle
-          class="timer-bg"
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke-width="8"
-        />
-        <!-- Círculo de progreso -->
-        <circle
-          class="timer-progress"
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke-width="8"
-          [style.strokeDasharray]="circunferencia"
-          [style.strokeDashoffset]="offsetProgreso()"
-        />
-      </svg>
-
-      <div class="timer-content">
-        <span class="timer-value">{{ tiempoFormateado() }}</span>
-        <span class="timer-label">{{ label }}</span>
-      </div>
+    <div class="timer-shell" [class.warning]="esAdvertencia()">
+      <ui2-progress-ring
+        [size]="ringSize()"
+        [stroke]="8"
+        [value]="progreso()"
+        [color]="esAdvertencia() ? 'var(--warning)' : 'var(--kengo-primary)'"
+        [trackColor]="
+          esAdvertencia()
+            ? 'rgba(245, 158, 11, 0.16)'
+            : 'rgba(231, 92, 62, 0.12)'
+        "
+      >
+        <div class="timer-content">
+          <span class="timer-value">{{ tiempoFormateado() }}</span>
+          <span class="timer-label">{{ label }}</span>
+        </div>
+      </ui2-progress-ring>
     </div>
   `,
   styles: `
-    .timer-container {
+    :host { display: inline-flex; }
+    .timer-shell {
       position: relative;
-      padding: 2rem;
-      width: clamp(5rem, 25vw, 9rem);
-      height: clamp(5rem, 25vw, 9rem);
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 50%;
-      box-shadow:
-        0 8px 32px rgba(var(--kengo-primary-rgb), 0.15),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-      transition: all 0.3s ease;
+      padding: 8px;
+      border-radius: 9999px;
+      background: var(--cream-50);
+      box-shadow: var(--shadow-card);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
     }
 
-    .timer-container:hover {
-      transform: scale(1.02);
-      box-shadow:
-        0 12px 40px rgba(var(--kengo-primary-rgb), 0.2),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-    }
-
-    .timer-ring {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg);
-      filter: drop-shadow(0 2px 4px rgba(var(--kengo-primary-rgb), 0.3));
-    }
-
-    .timer-bg {
-      stroke: rgba(var(--kengo-primary-rgb), 0.1);
-    }
-
-    .timer-progress {
-      stroke: var(--kengo-primary);
-      stroke-linecap: round;
-      transition:
-        stroke-dashoffset 0.1s linear,
-        stroke 0.3s ease;
-    }
-
-    .timer-container.warning {
+    .timer-shell.warning {
       animation: pulse-container 1s ease-in-out infinite;
       box-shadow:
-        0 8px 32px rgba(var(--kengo-tertiary-rgb), 0.3),
-        inset 0 0 0 1px rgba(var(--kengo-tertiary-rgb), 0.5);
-    }
-
-    .timer-container.warning .timer-progress {
-      stroke: var(--kengo-tertiary);
-    }
-
-    .timer-container.warning .timer-ring {
-      filter: drop-shadow(0 2px 8px rgba(var(--kengo-tertiary-rgb), 0.5));
+        0 8px 32px rgba(245, 158, 11, 0.25),
+        inset 0 0 0 1px rgba(245, 158, 11, 0.35);
     }
 
     .timer-content {
@@ -114,24 +66,26 @@ import {
     }
 
     .timer-value {
+      font-family: KengoDisplay, kengoFont, sans-serif;
       font-size: clamp(2rem, 8vw, 2.5rem);
-      font-weight: 700;
-      color: #1f2937;
+      color: var(--ink-900);
       font-variant-numeric: tabular-nums;
       line-height: 1;
+      letter-spacing: 0.5px;
       transition: color 0.3s ease;
     }
 
     .timer-label {
+      font-family: Galvji, sans-serif;
       font-size: 0.75rem;
-      font-weight: 500;
-      color: #6b7280;
+      font-weight: 700;
+      color: var(--ink-500);
       text-transform: uppercase;
       letter-spacing: 0.1em;
     }
 
-    .timer-container.warning .timer-value {
-      color: var(--kengo-tertiary);
+    .timer-shell.warning .timer-value {
+      color: var(--warning);
     }
 
     @keyframes pulse-container {
@@ -154,6 +108,7 @@ export class TemporizadorComponent implements OnDestroy {
   @Input() label = 'segundos';
   @Input() umbralAdvertencia = 5;
   @Input() autoIniciar = false;
+  @Input() ringSizePx: number | null = null;
 
   @Output() tiempoAgotado = new EventEmitter<void>();
   @Output() tick = new EventEmitter<number>();
@@ -162,14 +117,13 @@ export class TemporizadorComponent implements OnDestroy {
   readonly tiempoRestante = signal(0);
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
-  readonly circunferencia = 2 * Math.PI * 45; // 2πr donde r=45
+  readonly ringSize = computed(() => this.ringSizePx ?? 144);
 
-  readonly offsetProgreso = computed(() => {
+  readonly progreso = computed(() => {
     const total = this._tiempoInicial();
     const restante = this.tiempoRestante();
     if (total === 0) return 0;
-    const progreso = restante / total;
-    return this.circunferencia * (1 - progreso);
+    return Math.max(0, Math.min(1, restante / total));
   });
 
   readonly esAdvertencia = computed(() => {

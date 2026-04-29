@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Input,
@@ -16,6 +17,14 @@ import { ClinicaGestionService } from '../../data-access/clinica-gestion.service
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ImageUploadComponent } from '../../../../shared/ui/image-upload/image-upload.component';
 import { emailOptional } from '../../../../shared';
+import {
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+} from '../../../../shared/ui-v2';
 import type {
   Clinica,
   ClinicaImagen,
@@ -54,7 +63,16 @@ const COLOR_PRESETS = [
 @Component({
   standalone: true,
   selector: 'app-editar-clinica-dialog',
-  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
+    Ui2DialogActionsComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+  ],
   templateUrl: './editar-clinica-dialog.component.html',
   styleUrl: './editar-clinica-dialog.component.css',
 })

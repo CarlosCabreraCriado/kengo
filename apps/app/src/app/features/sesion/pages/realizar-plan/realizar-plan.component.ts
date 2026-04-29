@@ -26,6 +26,11 @@ import {
 } from '../../../../shared/ui/preview-ejercicio/preview-ejercicio-dialog.component';
 import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
 import { EjercicioPlan } from '../../../../../types/global';
+import {
+  Ui2ButtonComponent,
+  Ui2IconBadgeComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 // Animaciones
 import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
@@ -39,15 +44,14 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     DescansoComponent,
     FeedbackFinalComponent,
     TimelineSesionComponent,
+    Ui2ButtonComponent,
+    Ui2IconBadgeComponent,
+    Ui2SpinnerComponent,
   ],
   animations: [slideAnimation, fadeAnimation],
   template: `
-    <section class="fixed inset-0 flex flex-col">
-      <!-- Contenido principal -->
-      <main
-        class="flex flex-1 flex-col overflow-hidden"
-        [@slide]="pantallaIndex()"
-      >
+    <section class="rp-shell">
+      <main class="rp-main" [@slide]="pantallaIndex()">
         @switch (estadoPantalla()) {
           @case ('resumen') {
             <app-resumen-sesion (comenzar)="onComenzar()" />
@@ -79,93 +83,53 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
         }
       </main>
 
-      <!-- Timeline drawer -->
       <app-timeline-sesion
         [isOpen]="timelineAbierto()"
         (closed)="timelineAbierto.set(false)"
         (previewEjercicio)="onPreviewEjercicio($event)"
       />
 
-      <!-- Loading overlay -->
       @if (cargando()) {
-        <div
-          class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 bg-white/95 backdrop-blur-md"
-        >
-          <div
-            class="loading-spinner h-14 w-14 animate-spin rounded-full border-4 border-zinc-200"
-          ></div>
-          <span class="text-base font-medium text-zinc-500"
-            >Cargando tu plan...</span
-          >
+        <div class="rp-overlay rp-overlay--loading">
+          <ui2-spinner size="lg" />
+          <span class="rp-overlay__hint">Cargando tu plan…</span>
         </div>
       }
 
-      <!-- Error overlay -->
       @if (error()) {
-        <div
-          class="fixed inset-0 z-[100] flex items-center justify-center bg-white/95 px-4 backdrop-blur-md"
-          @fade
-        >
-          <div
-            class="tarjeta-kengo flex max-w-sm flex-col items-center gap-5 rounded-3xl p-8 text-center"
-          >
-            <span class="material-symbols-outlined text-6xl text-red-400">sentiment_dissatisfied</span>
-            <h2 class="text-base font-medium text-zinc-700">{{ error() }}</h2>
-            <button
-              type="button"
-              class="cta-button flex h-14 w-full items-center justify-center rounded-2xl text-base font-bold text-white"
-              (click)="reintentar()"
-            >
-              Reintentar
-            </button>
-            <button
-              type="button"
-              class="flex h-12 w-full items-center justify-center rounded-xl border-[1.5px] border-zinc-200 text-sm font-semibold text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-600"
-              (click)="onVolverInicio()"
-            >
-              Volver al inicio
-            </button>
+        <div class="rp-overlay rp-overlay--error" @fade>
+          <div class="rp-state">
+            <ui2-icon-badge icon="sentiment_dissatisfied" color="var(--danger)" [size]="64" [radius]="20" />
+            <h2 class="rp-state__title">{{ error() }}</h2>
+            <div class="rp-state__actions">
+              <ui2-button variant="primary" size="lg" [fullWidth]="true" (clicked)="reintentar()">
+                Reintentar
+              </ui2-button>
+              <ui2-button variant="secondary" size="md" [fullWidth]="true" (clicked)="onVolverInicio()">
+                Volver al inicio
+              </ui2-button>
+            </div>
           </div>
         </div>
       }
 
-      <!-- Modal de confirmación de salida -->
       @if (mostrarConfirmacionSalida()) {
-        <div
-          class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
-          (click)="cancelarSalida()"
-          @fade
-        >
-          <div
-            class="flex max-w-[320px] flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-2xl"
-            (click)="$event.stopPropagation()"
-          >
-            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
-              <span class="material-symbols-outlined text-4xl text-orange-600">warning</span>
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <h2 class="m-0 text-lg font-bold text-zinc-800">Salir de la sesión</h2>
-              <p class="m-0 text-sm text-zinc-500">
+        <div class="rp-overlay rp-overlay--confirm" (click)="cancelarSalida()" @fade>
+          <div class="rp-state rp-state--confirm" (click)="$event.stopPropagation()">
+            <ui2-icon-badge icon="warning" color="var(--warning)" [size]="64" [radius]="20" />
+            <div class="rp-state__text">
+              <h2 class="rp-state__title">Salir de la sesión</h2>
+              <p class="rp-state__message">
                 Tu progreso en esta sesión se perderá. ¿Estás seguro de que quieres salir?
               </p>
             </div>
-
-            <div class="flex w-full flex-col gap-2">
-              <button
-                type="button"
-                class="flex h-12 w-full items-center justify-center rounded-xl bg-zinc-800 text-sm font-semibold text-white transition-colors hover:bg-zinc-700"
-                (click)="confirmarSalida()"
-              >
+            <div class="rp-state__actions">
+              <ui2-button variant="danger" size="md" [fullWidth]="true" (clicked)="confirmarSalida()">
                 Sí, salir
-              </button>
-              <button
-                type="button"
-                class="flex h-12 w-full items-center justify-center rounded-xl border-[1.5px] border-zinc-200 text-sm font-semibold text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
-                (click)="cancelarSalida()"
-              >
+              </ui2-button>
+              <ui2-button variant="secondary" size="md" [fullWidth]="true" (clicked)="cancelarSalida()">
                 Continuar sesión
-              </button>
+              </ui2-button>
             </div>
           </div>
         </div>
@@ -179,23 +143,87 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
       inset: 0;
       z-index: 100;
     }
-
-    section {
+    .rp-shell {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
     }
-
-    .cta-button {
-      background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
-      box-shadow: 0 4px 16px rgba(var(--kengo-primary-rgb), 0.35);
+    .rp-main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      flex-direction: column;
+      overflow: hidden;
     }
-
-    .cta-button:hover {
-      box-shadow: 0 6px 20px rgba(var(--kengo-primary-rgb), 0.45);
+    .rp-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
-
-    .loading-spinner {
-      border-top-color: var(--kengo-primary);
+    .rp-overlay--loading {
+      flex-direction: column;
+      gap: 16px;
+      background: rgba(250, 247, 242, 0.92);
+    }
+    .rp-overlay--error {
+      background: rgba(250, 247, 242, 0.92);
+    }
+    .rp-overlay--confirm {
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.45);
+    }
+    .rp-overlay__hint {
+      font-family: Galvji, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-500);
+    }
+    .rp-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      max-width: 360px;
+      padding: 28px 24px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: var(--shadow-card-strong);
+      text-align: center;
+    }
+    .rp-state--confirm { max-width: 340px; }
+    .rp-state__title {
+      margin: 0;
+      font-family: KengoDisplay, Galvji, sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink-900);
+      letter-spacing: -0.2px;
+    }
+    .rp-state__message {
+      margin: 0;
+      font-size: 13px;
+      color: var(--ink-500);
+      line-height: 1.45;
+    }
+    .rp-state__text {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .rp-state__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
     }
   `,
 })

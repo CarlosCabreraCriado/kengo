@@ -10,38 +10,52 @@ import { FormsModule } from '@angular/forms';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import { EscalaDolorComponent } from '../../componentes/escala-dolor/escala-dolor.component';
 import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animations';
+import {
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2ProgressBarComponent,
+  Ui2TextareaComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-feedback-ejercicio',
   standalone: true,
-  imports: [FormsModule, EscalaDolorComponent],
+  imports: [
+    FormsModule,
+    EscalaDolorComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2ProgressBarComponent,
+    Ui2TextareaComponent,
+  ],
   animations: [checkmarkAnimation, fadeAnimation],
   template: `
-    <div class="flex flex-1 flex-col gap-4 overflow-y-auto pt-2">
+    <div class="feedback-ejercicio-container">
       <!-- Indicador de progreso -->
-      <div class="flex items-center justify-center gap-3 py-2">
-        <span class="text-sm font-bold text-zinc-700">
+      <div class="progress-row">
+        <span class="progress-counter">
           {{ ejercicioActualIndex() + 1 }}/{{ totalEjercicios() }}
         </span>
-        <div class="progress-bar-track h-2 w-24 overflow-hidden rounded-full">
-          <div
-            class="h-full rounded-full bg-gradient-to-r from-kengo-primary to-kengo-tertiary transition-all duration-300"
-            [style.width.%]="progresoSesion()"
-          ></div>
+        <div class="progress-bar-wrapper">
+          <ui2-progress-bar
+            [value]="progresoSesion()"
+            size="sm"
+            color="primary"
+          />
         </div>
       </div>
 
       <!-- Checkmark animado -->
-      <div class="flex shrink-0 flex-col items-center gap-3 py-3" @checkmark>
-        <div class="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg animate-pop-in">
-          <span class="material-symbols-outlined text-3xl text-white">check</span>
+      <div class="celebracion" @checkmark>
+        <div class="checkmark-circle">
+          <span class="material-symbols-outlined" aria-hidden="true">check</span>
         </div>
-        <h2 class="m-0 text-xl font-bold text-zinc-800">¡Ejercicio completado!</h2>
-        <p class="m-0 text-sm font-medium text-zinc-500">{{ nombreEjercicio() }}</p>
+        <h2 class="celebracion-title">¡Ejercicio completado!</h2>
+        <p class="celebracion-sub">{{ nombreEjercicio() }}</p>
       </div>
 
       <!-- Escala de dolor -->
-      <div class="shrink-0" @fade>
+      <div class="escala-wrapper" @fade>
         <app-escala-dolor
           label="¿Sentiste dolor durante el ejercicio?"
           [valor]="dolorSeleccionado()"
@@ -50,35 +64,36 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
       </div>
 
       <!-- Notas opcionales -->
-      <div class="flex shrink-0 flex-col gap-2 px-1" @fade>
-        <label class="pl-1 text-sm font-semibold text-zinc-700" for="notas">Notas (opcional)</label>
-        <textarea
-          id="notas"
-          class="w-full resize-none rounded-xl bg-white/75 p-3.5 text-sm text-zinc-800 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition-shadow placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-kengo-primary/40"
-          placeholder="Ej: Sentí molestia en la rodilla derecha..."
-          rows="3"
-          [(ngModel)]="nota"
-        ></textarea>
+      <div class="notas-wrapper" @fade>
+        <ui2-card [padding]="14">
+          <ui2-textarea
+            label="Notas (opcional)"
+            placeholder="Ej: Sentí molestia en la rodilla derecha..."
+            [rows]="3"
+            [(ngModel)]="nota"
+          />
+        </ui2-card>
       </div>
 
       <!-- Botón continuar -->
-      <div class="flex shrink-0 flex-col items-center gap-2.5 pt-2">
-        <button
-          type="button"
-          class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-bold text-white transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+      <div class="cta-wrapper">
+        <ui2-button
+          variant="primary"
+          size="lg"
+          iconRight="arrow_forward"
+          [fullWidth]="true"
           [disabled]="dolorSeleccionado() === null"
-          (click)="onEnviar()"
+          (clicked)="onEnviar()"
         >
           @if (esUltimoEjercicio()) {
             Finalizar sesión
           } @else {
             Siguiente ejercicio
           }
-          <span class="material-symbols-outlined">arrow_forward</span>
-        </button>
+        </ui2-button>
 
         @if (dolorSeleccionado() === null) {
-          <p class="m-0 rounded-xl bg-white/50 px-4 py-2 text-xs font-medium text-zinc-400">
+          <p class="hint">
             Selecciona un nivel de dolor para continuar
           </p>
         }
@@ -92,14 +107,101 @@ import { checkmarkAnimation, fadeAnimation } from '../../realizar-plan.animation
       flex: 1;
       min-height: 0;
       overflow: hidden;
+      background: var(--cream-50);
     }
 
-    .progress-bar-track {
-      background-color: rgba(var(--kengo-primary-rgb), 0.15);
+    .feedback-ejercicio-container {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      padding: 12px 20px;
     }
 
-    .animate-pop-in {
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 6px 0;
+    }
+
+    .progress-counter {
+      font-family: KengoDisplay, kengoFont, sans-serif;
+      font-size: 14px;
+      color: var(--ink-700);
+      line-height: 1;
+    }
+
+    .progress-bar-wrapper {
+      width: 120px;
+    }
+
+    .celebracion {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      flex-shrink: 0;
+    }
+
+    .checkmark-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 9999px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      box-shadow: 0 8px 22px -6px rgba(34, 197, 94, 0.5);
       animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .checkmark-circle .material-symbols-outlined {
+      font-size: 36px;
+      color: white;
+    }
+
+    .celebracion-title {
+      font-family: KengoDisplay, kengoFont, sans-serif;
+      font-size: 22px;
+      color: var(--ink-900);
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .celebracion-sub {
+      font-size: 13px;
+      color: var(--ink-500);
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .escala-wrapper,
+    .notas-wrapper {
+      flex-shrink: 0;
+    }
+
+    .cta-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    .hint {
+      margin: 0;
+      padding: 8px 14px;
+      border-radius: 14px;
+      background: white;
+      box-shadow: var(--shadow-card);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-500);
+      text-align: center;
     }
 
     @keyframes pop-in {

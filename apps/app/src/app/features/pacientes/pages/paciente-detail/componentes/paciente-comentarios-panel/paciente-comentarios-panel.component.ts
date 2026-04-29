@@ -11,10 +11,26 @@ import {
   formatearFechaComentario,
   getDolorColor,
 } from '../../../../utils/format-helpers';
+import {
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2IconBadgeComponent,
+  Ui2PillComponent,
+  Ui2SpinnerComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-paciente-comentarios-panel',
   standalone: true,
+  imports: [
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2IconBadgeComponent,
+    Ui2PillComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './paciente-comentarios-panel.component.html',
   styleUrl: './paciente-comentarios-panel.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 // Servicios:
@@ -9,19 +9,34 @@ import { ClinicaGestionService } from '../../data-access/clinica-gestion.service
 // Types:
 import { Usuario, Clinica, ID, CodigoAcceso } from '../../../../../types/global';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
-import { useResponsive, AvatarComponent } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
 
-// Dialogs
+// Dialogs (rediseñados V2)
 import { VincularClinicaDialogComponent } from '../../components/vincular-clinica-dialog/vincular-clinica-dialog.component';
 import { CrearClinicaDialogComponent } from '../../components/crear-clinica-dialog/crear-clinica-dialog.component';
 import { GenerarCodigoDialogComponent } from '../../components/generar-codigo-dialog/generar-codigo-dialog.component';
 import { EditarClinicaDialogComponent } from '../../components/editar-clinica-dialog/editar-clinica-dialog.component';
+
+// V2 catalog
+import {
+  Ui2CardComponent,
+  Ui2SectionComponent,
+  Ui2BigTitleComponent,
+  Ui2ClinicHeroCardComponent,
+  Ui2ButtonComponent,
+  Ui2CtaBarComponent,
+  Ui2EmptyStateComponent,
+  Ui2AvatarComponent,
+  Ui2PillComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 import { DatePipe } from '@angular/common';
 
 @Component({
   standalone: true,
   selector: 'app-mi-clinica',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     DatePipe,
@@ -29,7 +44,16 @@ import { DatePipe } from '@angular/common';
     CrearClinicaDialogComponent,
     GenerarCodigoDialogComponent,
     EditarClinicaDialogComponent,
-    AvatarComponent,
+    Ui2CardComponent,
+    Ui2SectionComponent,
+    Ui2BigTitleComponent,
+    Ui2ClinicHeroCardComponent,
+    Ui2ButtonComponent,
+    Ui2CtaBarComponent,
+    Ui2EmptyStateComponent,
+    Ui2AvatarComponent,
+    Ui2PillComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './miclinica.component.html',
   styleUrl: './miclinica.component.css',
@@ -53,7 +77,7 @@ export class MiClinicaComponent {
   public fisios = (id: ID) => this.clinicasService.fisiosDeClinica(id)();
 
   // UI State
-  showClinicPicker = false;
+  showClinicPicker = signal(false);
   teamExpanded = signal(false);
 
   // Dialog states
@@ -111,6 +135,14 @@ export class MiClinicaComponent {
 
   toggleTeamExpanded() {
     this.teamExpanded.update((v) => !v);
+  }
+
+  toggleClinicPicker() {
+    this.showClinicPicker.update((v) => !v);
+  }
+
+  closeClinicPicker() {
+    this.showClinicPicker.set(false);
   }
 
   // ===== Dialog Methods =====
@@ -255,7 +287,7 @@ export class MiClinicaComponent {
       this.selectedClinicId.set(clinica.id);
       this.cargarFormulario(index);
     }
-    this.showClinicPicker = false;
+    this.showClinicPicker.set(false);
     this.teamExpanded.set(false);
   }
 
@@ -345,6 +377,11 @@ export class MiClinicaComponent {
   firstImageId(c: Clinica): string | undefined {
     const img = c?.imagenes?.[0];
     return img?.fileId ?? undefined;
+  }
+
+  fisioAvatarUrl(avatar: string | null | undefined): string | null {
+    if (!avatar) return null;
+    return `${assetUrl(avatar, { fit: 'cover', width: 128, height: 128 })}`;
   }
 
   iniciales(nombre?: string, apellidos?: string): string {

@@ -18,13 +18,13 @@
 } @else {
   <div class="media-placeholder">
     <div class="placeholder-icon-wrapper">
-      <span class="material-symbols-outlined placeholder-icon">fitness_center</span>
+      <span class="material-symbols-outlined placeholder-icon" aria-hidden="true">fitness_center</span>
     </div>
   </div>
 }
 
 @if (showPlayIndicator()) {
-  <div class="play-indicator-animated">
+  <div class="play-indicator-animated" aria-hidden="true">
     <span class="material-symbols-outlined icon-filled">
       {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
     </span>

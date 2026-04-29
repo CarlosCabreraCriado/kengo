@@ -2,13 +2,25 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { TemporizadorComponent } from '../../temporizador/temporizador.component';
 import { TimelineSesionComponent } from '../../timeline-sesion/timeline-sesion.component';
 import { SafeHtmlPipe } from '../../../../../../../shared/pipes/safe-html.pipe';
+import {
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2IconBadgeComponent,
+} from '../../../../../../../shared/ui-v2';
 import { EjercicioPlan } from '../../../../../../../../types/global';
 import { fadeAnimation } from '../../../realizar-plan.animations';
 
 @Component({
   selector: 'app-ejercicio-info-panel',
   standalone: true,
-  imports: [TemporizadorComponent, TimelineSesionComponent, SafeHtmlPipe],
+  imports: [
+    TemporizadorComponent,
+    TimelineSesionComponent,
+    SafeHtmlPipe,
+    Ui2CardComponent,
+    Ui2ButtonComponent,
+    Ui2IconBadgeComponent,
+  ],
   animations: [fadeAnimation],
   templateUrl: './ejercicio-info-panel.component.html',
   styleUrl: './ejercicio-info-panel.component.css',
@@ -41,7 +53,7 @@ export class EjercicioInfoPanelComponent {
     return Array.from({ length: total }, (_, i) => i + 1);
   });
 
-  onPlayPauseClick(event: Event): void {
+  onPlayPauseClick(event: MouseEvent): void {
     event.stopPropagation();
     this.togglePlayPause.emit();
   }

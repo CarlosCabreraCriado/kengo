@@ -1,80 +1,63 @@
-<section class="content-section plans-section animate-in" style="--delay: 0.2s">
-  <header class="section-header clickable" (click)="toggle()">
-    <div class="section-header-left">
-      <div class="section-icon">
-        <span class="material-symbols-outlined">assignment</span>
-      </div>
-      <div>
-        <h2 class="section-title">Planes de tratamiento</h2>
-        <p class="section-subtitle">{{ subtitle() }}</p>
-      </div>
-    </div>
+<ui2-card [padding]="0">
+  <button type="button" class="pln-header" (click)="toggle()">
+    <span class="pln-header__left">
+      <ui2-icon-badge icon="assignment" color="var(--kengo-primary)" [size]="36" [radius]="12" />
+      <span class="pln-header__text">
+        <span class="pln-header__title">Planes de tratamiento</span>
+        <span class="pln-header__subtitle">{{ subtitle() }}</span>
+      </span>
+    </span>
     <span
-      class="material-symbols-outlined expand-icon"
-      [class.rotated]="expanded()"
+      class="material-symbols-outlined pln-header__chev"
+      [class.pln-header__chev--open]="expanded()"
+      aria-hidden="true"
     >expand_more</span>
-  </header>
+  </button>
 
   @if (expanded()) {
-    <div class="section-content">
+    <div class="pln-body">
       @if (isLoading()) {
-        <div class="loading-inline">
-          <div class="shimmer-bar"></div>
-          <div class="shimmer-bar short"></div>
+        <div class="pln-loading">
+          <ui2-spinner />
         </div>
       } @else if (planes().length === 0) {
-        <div class="empty-state-inline">
-          <div class="empty-icon">
-            <span class="material-symbols-outlined">content_paste_off</span>
-          </div>
-          <p class="empty-text">No hay planes asignados</p>
-          <button
-            type="button"
-            class="empty-action"
-            (click)="crearPlan.emit()"
-          >
-            <span class="material-symbols-outlined">add</span>
-            Crear primer plan
-          </button>
-        </div>
+        <ui2-empty-state
+          icon="content_paste_off"
+          title="Sin planes asignados"
+          message="Crea el primer plan de tratamiento."
+          actionLabel="Crear primer plan"
+          actionIcon="add"
+          (action)="crearPlan.emit()"
+        />
       } @else {
-        <div class="plans-list">
+        <div class="pln-list">
           @for (plan of planes(); track plan.id) {
             <article
-              class="plan-card"
-              [class.completed]="plan.estado === 'completado'"
+              class="pln-card"
+              [class.pln-card--completed]="plan.estado === 'completado'"
               (click)="verPlan.emit(plan)"
             >
-              <div class="plan-main">
-                <div class="plan-info">
-                  <div class="plan-header-row">
-                    <h3 class="plan-title">{{ plan.titulo }}</h3>
-                    <span class="plan-badge" [class]="getEstadoClass(plan.estado)">
-                      {{ getEstadoLabel(plan.estado) }}
-                    </span>
-                  </div>
-                  @if (plan.fechaInicio || plan.fechaFin) {
-                    <p class="plan-dates">
-                      <span class="material-symbols-outlined icon-xs">calendar_today</span>
-                      @if (plan.fechaInicio) {
-                        {{ formatearFecha(plan.fechaInicio) }}
-                      }
-                      @if (plan.fechaInicio && plan.fechaFin) {
-                        <span class="date-separator">→</span>
-                      }
-                      @if (plan.fechaFin) {
-                        {{ formatearFecha(plan.fechaFin) }}
-                      }
-                    </p>
-                  }
+              <div class="pln-card__main">
+                <div class="pln-card__head">
+                  <h3 class="pln-card__title">{{ plan.titulo }}</h3>
+                  <ui2-pill [variant]="getEstadoVariant(plan.estado)">
+                    {{ getEstadoLabel(plan.estado) }}
+                  </ui2-pill>
                 </div>
-                <span class="material-symbols-outlined text-zinc-300 text-lg">chevron_right</span>
+                @if (plan.fechaInicio || plan.fechaFin) {
+                  <p class="pln-card__dates">
+                    <span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>
+                    @if (plan.fechaInicio) { {{ formatearFecha(plan.fechaInicio) }} }
+                    @if (plan.fechaInicio && plan.fechaFin) { <span class="pln-card__sep">→</span> }
+                    @if (plan.fechaFin) { {{ formatearFecha(plan.fechaFin) }} }
+                  </p>
+                }
               </div>
+              <span class="material-symbols-outlined pln-card__chev" aria-hidden="true">chevron_right</span>
             </article>
           }
         </div>
-
       }
     </div>
   }
-</section>
+</ui2-card>

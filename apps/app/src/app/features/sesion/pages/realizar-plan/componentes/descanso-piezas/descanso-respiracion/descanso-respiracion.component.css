@@ -1,11 +1,12 @@
 @reference "tailwindcss";
 
 :host {
-  --primary: var(--kengo-primary);
-  --tertiary: var(--kengo-tertiary);
   --breath-duration: 4s;
 
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 /* Indicador de respiración */
@@ -14,28 +15,30 @@
   align-items: center;
   justify-content: center;
   padding: 8px 20px;
-  border-radius: 20px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  background: white;
+  border: 1px solid var(--ink-100);
+  box-shadow: var(--shadow-card);
   transition: all 0.5s ease;
 }
 
 .breath-hint.inhale {
-  background: #fef2f0;
-  border-color: #f5c4ba;
+  background: linear-gradient(135deg, #fff5ee, #ffffff);
+  border-color: rgba(231, 92, 62, 0.25);
 }
 
 .breath-text {
+  font-family: Galvji, sans-serif;
   font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--ink-500);
   transition: color 0.5s ease;
 }
 
 .breath-hint.inhale .breath-text {
-  color: var(--primary);
+  color: var(--kengo-primary);
 }
 
 /* Zona timer */
@@ -51,9 +54,10 @@
   width: calc(100% + 40px);
   height: calc(100% + 40px);
   border-radius: 50%;
-  border: 2px solid rgba(var(--kengo-primary-rgb), 0.15);
+  border: 2px solid rgba(231, 92, 62, 0.15);
   transition: all var(--breath-duration) cubic-bezier(0.4, 0, 0.6, 1);
   animation: breathe var(--breath-duration) ease-in-out infinite;
+  pointer-events: none;
 }
 
 .breath-ring::before {
@@ -61,13 +65,13 @@
   position: absolute;
   inset: -8px;
   border-radius: 50%;
-  border: 1px solid rgba(var(--kengo-primary-rgb), 0.08);
+  border: 1px solid rgba(231, 92, 62, 0.08);
   animation: breathe var(--breath-duration) ease-in-out infinite;
   animation-delay: 0.15s;
 }
 
 .breath-ring.inhale {
-  border-color: rgba(var(--kengo-primary-rgb), 0.25);
+  border-color: rgba(231, 92, 62, 0.28);
 }
 
 @keyframes breathe {
@@ -86,78 +90,11 @@
   z-index: 2;
 }
 
-.timer-zone ::ng-deep .timer-container {
-  width: clamp(180px, 45vw, 220px);
-  height: auto;
-  aspect-ratio: 1;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow:
-    0 8px 40px rgba(var(--kengo-primary-rgb), 0.12),
-    0 2px 12px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.timer-zone ::ng-deep .timer-value {
-  font-size: clamp(2.5rem, 12vw, 4rem);
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.timer-zone ::ng-deep .timer-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: #64748b;
-}
-
-.timer-zone ::ng-deep .timer-progress {
-  stroke: var(--primary);
-  stroke-width: 6;
-}
-
-.timer-zone ::ng-deep .timer-bg {
-  stroke: rgba(var(--kengo-primary-rgb), 0.08);
-  stroke-width: 6;
-}
-
-.timer-zone.warning ::ng-deep .timer-container {
-  animation: pulse-warning 0.8s ease-in-out infinite;
-  box-shadow:
-    0 8px 40px rgba(var(--kengo-tertiary-rgb), 0.25),
-    0 2px 12px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.timer-zone.warning ::ng-deep .timer-value {
-  color: var(--tertiary);
-}
-
 .timer-zone.warning .breath-ring {
-  border-color: rgba(var(--kengo-tertiary-rgb), 0.3);
-}
-
-@keyframes pulse-warning {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
+  border-color: rgba(245, 158, 11, 0.32);
 }
 
 @media (min-width: 768px) {
-  .timer-zone ::ng-deep .timer-container {
-    width: clamp(200px, 30vw, 260px);
-  }
-
-  .timer-zone ::ng-deep .timer-value {
-    font-size: clamp(3rem, 6vw, 4.5rem);
-  }
-
   .breath-ring {
     width: calc(100% + 60px);
     height: calc(100% + 60px);

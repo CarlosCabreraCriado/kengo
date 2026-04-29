@@ -1,22 +1,53 @@
-import { Component, inject, signal, effect, ViewChildren, ElementRef, QueryList, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Location } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
-import { Ejercicio, Usuario } from '../../../../../types/global';
+import { ActivatedRoute } from '@angular/router';
+import { ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
+
+import { Ejercicio, Usuario, Categoria } from '../../../../../types/global';
 
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builder.service';
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
+import { VideoEjercicioComponent } from '../../../../shared/ui/video-ejercicio/video-ejercicio.component';
+import {
+  Ui2BackButtonComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2PillComponent,
+  Ui2SectionLabelComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-ejercicio-detail',
   standalone: true,
-  imports: [RouterLink, SafeHtmlPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    SafeHtmlPipe,
+    VideoEjercicioComponent,
+    Ui2BackButtonComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2PillComponent,
+    Ui2SectionLabelComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './ejercicio-detail.component.html',
   styleUrl: './ejercicio-detail.component.css',
 })
@@ -29,19 +60,11 @@ export class EjercicioDetailComponent {
   public sessionService = inject(SessionService);
   private dialog = inject(Dialog);
 
-  @ViewChildren('videoPlayer') videoPlayers!: QueryList<ElementRef<HTMLVideoElement>>;
-
   // Estado del ejercicio
   id = signal<string | null>(null);
   ejercicio = signal<Ejercicio | null>(null);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
-
-  // Estado de la UI
-  videoExpandido = signal<boolean>(false);
-  videoReproduciendo = signal<boolean>(true);
-  showPlayIndicator = signal<boolean>(false);
-  videoLoaded = signal<boolean>(false);
 
   // Presets de series y repeticiones
   readonly seriesPresets = [1, 3, 5];
@@ -55,15 +78,26 @@ export class EjercicioDetailComponent {
   mostrarOtroSeries = signal<boolean>(false);
   mostrarOtroRepeticiones = signal<boolean>(false);
 
-  onVideoLoad(): void {
-    this.videoLoaded.set(true);
-  }
-
-  // Control de gestos tactiles
-  private touchStartY = 0;
-
   // Detectar modo rutina (crear plantilla sin paciente)
   readonly isRutinaMode = computed(() => this.rutinaBuilderService.isActive());
+
+  // Lookup de categorias para resolver nombres a partir de IDs
+  private readonly categoriasMap = computed(() => {
+    const cats = this.ejerciciosService.categoriasRes.value() ?? [];
+    const map = new Map<string, string>();
+    for (const c of cats as Categoria[]) {
+      map.set(c.id, c.nombre);
+    }
+    return map;
+  });
+
+  // Tags resueltos a nombres legibles
+  readonly categoriasNombres = computed<string[]>(() => {
+    const ej = this.ejercicio();
+    if (!ej?.categoria?.length) return [];
+    const map = this.categoriasMap();
+    return ej.categoria.map((id) => map.get(id) ?? id).filter(Boolean);
+  });
 
   constructor() {
     this.route.paramMap
@@ -74,7 +108,6 @@ export class EjercicioDetailComponent {
       .subscribe((idParam) => {
         this.error.set(null);
         this.ejercicio.set(null);
-        this.videoLoaded.set(false);
         this.id.set(idParam ?? null);
         this.cargar();
       });
@@ -141,36 +174,8 @@ export class EjercicioDetailComponent {
     return this.ejerciciosService.getAssetUrl(String(id));
   }
 
-  getVideoUrl(id?: number | string) {
+  getVideoUrl(id?: number | string | null) {
     return id ? this.ejerciciosService.getVideoUrl(String(id)) : '';
-  }
-
-  // Metodos de UI
-  toggleExpandido() {
-    this.videoExpandido.update((v) => !v);
-  }
-
-  toggleVideo() {
-    const players = this.videoPlayers?.toArray();
-    if (!players || players.length === 0) return;
-
-    // Toggle all video players (mobile and desktop)
-    players.forEach((playerRef) => {
-      const video = playerRef.nativeElement;
-      if (video.paused) {
-        video.play();
-      } else {
-        video.pause();
-      }
-    });
-
-    // Update state based on first player
-    const firstVideo = players[0].nativeElement;
-    this.videoReproduciendo.set(!firstVideo.paused);
-
-    // Mostrar indicador de play/pause brevemente
-    this.showPlayIndicator.set(true);
-    setTimeout(() => this.showPlayIndicator.set(false), 600);
   }
 
   seleccionarSeries(valor: number | 'otro') {
@@ -191,45 +196,14 @@ export class EjercicioDetailComponent {
     }
   }
 
-  onSeriesOtroChange(event: Event) {
-    const val = parseInt((event.target as HTMLInputElement).value);
-    if (val > 0) this.seriesSeleccionadas.set(val);
+  onSeriesOtroChange(value: string | number) {
+    const val = typeof value === 'number' ? value : parseInt(value, 10);
+    if (!Number.isNaN(val) && val > 0) this.seriesSeleccionadas.set(val);
   }
 
-  onRepeticionesOtroChange(event: Event) {
-    const val = parseInt((event.target as HTMLInputElement).value);
-    if (val > 0) this.repeticionesSeleccionadas.set(val);
-  }
-
-  // Scroll con rueda del raton (desktop)
-  onWheel(event: WheelEvent) {
-    // Scroll hacia arriba -> expandir video (ocultar panel)
-    if (event.deltaY < -30 && !this.videoExpandido()) {
-      this.videoExpandido.set(true);
-    }
-    // Scroll hacia abajo -> contraer video (mostrar panel)
-    if (event.deltaY > 30 && this.videoExpandido()) {
-      this.videoExpandido.set(false);
-    }
-  }
-
-  // Gestos tactiles (movil)
-  onTouchStart(event: TouchEvent) {
-    this.touchStartY = event.touches[0].clientY;
-  }
-
-  onTouchEnd(event: TouchEvent) {
-    const touchEndY = event.changedTouches[0].clientY;
-    const deltaY = this.touchStartY - touchEndY;
-
-    // Swipe hacia abajo (deltaY < 0) -> expandir video (ocultar panel)
-    if (deltaY < -50 && !this.videoExpandido()) {
-      this.videoExpandido.set(true);
-    }
-    // Swipe hacia arriba (deltaY > 0) -> contraer video (mostrar panel)
-    if (deltaY > 50 && this.videoExpandido()) {
-      this.videoExpandido.set(false);
-    }
+  onRepeticionesOtroChange(value: string | number) {
+    const val = typeof value === 'number' ? value : parseInt(value, 10);
+    if (!Number.isNaN(val) && val > 0) this.repeticionesSeleccionadas.set(val);
   }
 
   async asignarEjercicio() {

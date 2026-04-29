@@ -55,8 +55,12 @@ El proyecto tiene **dos catálogos de componentes**:
 | Card de mensaje del fisio | `<ui2-fisio-message-card>` |
 | Anillo de progreso | `<ui2-progress-ring>` o `<ui2-activity-rings>` |
 | Botón de retroceso | `<ui2-back-button>` |
+| Selector de fecha/hora | `<ui2-datepicker mode="date\|datetime\|time">` (con `formControlName`) |
+| Stepper/wizard | `<ui2-stepper [selectedIndex]>` + `<ui2-step label>` |
+| Progress bar lineal | `<ui2-progress-bar [value]>` (variantes `sm`/`md`, colores semánticos) |
+| Surface de diálogo (estructura interna del componente abierto) | `<ui2-dialog-host>` + `<ui2-dialog-header>` + `<ui2-dialog-content>` + `<ui2-dialog-actions>` |
 | Toasts/snackbars | `ToastService.success/error/info/warning(...)` (compartido) |
-| Modales/diálogos | `DialogService.open(...)` (compartido) |
+| Modales/diálogos (apertura) | `DialogService.open(...)` (compartido) — el contenido del componente abre con `<ui2-dialog-host>` |
 
 Importa desde `apps/app/src/app/shared/ui-v2`.
 

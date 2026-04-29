@@ -1,458 +1,178 @@
-<section
-  class="exercise-page"
-  (wheel)="onWheel($event)"
-  (touchstart)="onTouchStart($event)"
-  (touchend)="onTouchEnd($event)"
->
-  <!-- Aurora Background (visible cuando no hay video) - Mobile only -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-  </div>
+<section class="ed-page">
+  <!-- ============================================== -->
+  <!-- Header (Back + título)                          -->
+  <!-- ============================================== -->
+  <header class="ed-header">
+    <ui2-back-button ariaLabel="Volver" (clicked)="volver()"></ui2-back-button>
 
+    @if (ejercicio(); as ej) {
+      <h1 class="ed-header__title">{{ ej.nombre }}</h1>
+    } @else {
+      <h1 class="ed-header__title">Ejercicio</h1>
+    }
+
+    <span class="ed-header__spacer" aria-hidden="true"></span>
+  </header>
+
+  <!-- ============================================== -->
+  <!-- Loading                                         -->
+  <!-- ============================================== -->
   @if (loading()) {
-    <!-- Loading State -->
-    <div class="loading-container">
-      <div class="loading-card">
-        <div class="shimmer-effect"></div>
-        <div class="loading-icon">
-          <span class="material-symbols-outlined icon-filled">fitness_center</span>
-        </div>
-        <p class="loading-text">Cargando ejercicio...</p>
-      </div>
+    <div class="ed-state">
+      <ui2-spinner size="lg" color="primary" label="Cargando ejercicio…"></ui2-spinner>
     </div>
   } @else if (error()) {
-    <!-- Error State -->
-    <div class="error-container">
-      <div class="error-card">
-        <div class="error-icon">
-          <span class="material-symbols-outlined">error</span>
-        </div>
-        <p class="error-text">{{ error() }}</p>
-        <button type="button" class="error-btn" routerLink="/ejercicios">
-          <span class="material-symbols-outlined">arrow_back</span>
-          Volver a ejercicios
-        </button>
-      </div>
+    <!-- ============================================== -->
+    <!-- Error                                           -->
+    <!-- ============================================== -->
+    <div class="ed-state">
+      <ui2-empty-state
+        icon="error"
+        title="No se pudo cargar"
+        [message]="error()"
+        actionLabel="Volver a ejercicios"
+        actionIcon="arrow_back"
+        (action)="volver()"
+      ></ui2-empty-state>
     </div>
-  } @else if (ejercicio()) {
-    <!-- Floating Header (Mobile only) -->
-    <header class="floating-header md:hidden" [class.scrolled]="videoExpandido()">
-      <button
-        type="button"
-        class="header-btn back"
-        aria-label="Volver a ejercicios"
-        (click)="volver()"
-      >
-        <span class="material-symbols-outlined">arrow_back</span>
-      </button>
-
-      <!-- Spacer para mantener el título centrado -->
-      <div class="w-11"></div>
-    </header>
-
+  } @else if (ejercicio(); as ej) {
     <!-- ============================================== -->
-    <!-- MOBILE LAYOUT (< 768px) - Original behavior   -->
+    <!-- Layout principal                                -->
     <!-- ============================================== -->
-    <div class="md:hidden contents">
-      <!-- Video/Media Container -->
-      <div
-        class="media-container"
-        [class.expanded]="videoExpandido()"
-        (click)="toggleVideo()"
-      >
-        @if (ejercicio()?.video) {
-          <!-- Placeholder mientras carga el video -->
-          @if (!videoLoaded()) {
-            <div class="video-placeholder"></div>
-          }
-          <video
-            #videoPlayer
-            class="media-video"
-            [class.opacity-0]="!videoLoaded()"
-            [class.opacity-100]="videoLoaded()"
-            autoplay
-            muted
-            loop
-            playsinline
-            (loadeddata)="onVideoLoad()"
-          >
-            <source [src]="getVideoUrl(ejercicio()?.video)" type="video/mp4" />
-          </video>
-        } @else if (ejercicio()?.portada) {
-          <img
-            [src]="getAssetUrl(ejercicio()?.portada || 0)"
-            alt="{{ ejercicio()?.nombre }}"
-            class="media-image"
-          />
-        } @else {
-          <div class="media-placeholder">
-            <span class="material-symbols-outlined icon-filled">fitness_center</span>
-          </div>
-        }
+    <div class="ed-layout">
+      <!-- Columna media -->
+      <div class="ed-media">
+        <ui2-card [padding]="0" [radius]="22">
+          <app-video-ejercicio
+            [videoUrl]="ej.video ? getVideoUrl(ej.video) : null"
+            [posterUrl]="ej.portada ? getAssetUrl(ej.portada) : null"
+          ></app-video-ejercicio>
+        </ui2-card>
 
-        <!-- Video Overlay Gradient -->
-        <div class="media-overlay"></div>
-
-        <!-- Play/Pause Indicator (aparece brevemente) -->
-        @if (showPlayIndicator()) {
-          <div class="play-indicator">
-            <span class="material-symbols-outlined icon-filled">
-              {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
-            </span>
-          </div>
-        }
-
-        <!-- Swipe Hint (solo cuando el video no está expandido) -->
-        @if (!videoExpandido() && ejercicio()?.video) {
-          <div class="swipe-hint">
-            <span class="material-symbols-outlined">keyboard_arrow_down</span>
+        <!-- Tags / categorías -->
+        @if (categoriasNombres().length > 0) {
+          <div class="ed-tags" aria-label="Categorías">
+            @for (tag of categoriasNombres(); track tag) {
+              <ui2-pill variant="soft" size="md" icon="local_offer">{{ tag }}</ui2-pill>
+            }
           </div>
         }
       </div>
 
-      <!-- Bottom Panel -->
-      <div class="bottom-panel" [class.minimized]="videoExpandido()">
-        <!-- Panel Handle -->
-        <div class="panel-handle" (click)="toggleExpandido()">
-          <div class="handle-bar"></div>
-        </div>
+      <!-- Columna info -->
+      <div class="ed-info">
+        @if (sessionService.puedeEditarRecursos()) {
+          <!-- ====================================== -->
+          <!-- Series / Repeticiones                   -->
+          <!-- ====================================== -->
+          <ui2-section-label>Parámetros</ui2-section-label>
 
-        <!-- Exercise Info (visible cuando no está minimizado) -->
-        @if (!videoExpandido()) {
-          <div class="exercise-content animate-content">
-            <!-- Exercise Title -->
-            <div class="exercise-header">
-              <h1 class="exercise-title titulo-kengo">{{ ejercicio()?.nombre }}</h1>
-            </div>
-
-            @if (sessionService.puedeEditarRecursos()) {
-              <!-- Selector de Series -->
-              <div class="preset-selector">
-                <span class="preset-label">Series:</span>
-                <div class="preset-chips">
-                  @for (serie of seriesPresets; track serie) {
-                    <button
-                      type="button"
-                      class="preset-chip"
-                      [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
-                      (click)="seleccionarSeries(serie)"
-                    >
-                      {{ serie }}
-                    </button>
-                  }
+          <ui2-card [padding]="20" [radius]="22">
+            <!-- Series -->
+            <div class="ed-preset">
+              <span class="ed-preset__label">Series</span>
+              <div class="ed-preset__chips">
+                @for (serie of seriesPresets; track serie) {
                   <button
                     type="button"
-                    class="preset-chip"
-                    [class.active]="mostrarOtroSeries()"
-                    (click)="seleccionarSeries('otro')"
+                    class="ed-chip"
+                    [class.ed-chip--active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
+                    [attr.aria-pressed]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
+                    (click)="seleccionarSeries(serie)"
                   >
-                    Otro
+                    {{ serie }}
                   </button>
-                  @if (mostrarOtroSeries()) {
-                    <input
-                      type="number"
-                      min="1"
-                      class="preset-input"
-                      [value]="seriesSeleccionadas()"
-                      (change)="onSeriesOtroChange($event)"
-                    />
-                  }
-                </div>
-              </div>
-
-              <!-- Selector de Repeticiones -->
-              <div class="preset-selector">
-                <span class="preset-label">Repeticiones:</span>
-                <div class="preset-chips">
-                  @for (rep of repeticionesPresets; track rep) {
-                    <button
-                      type="button"
-                      class="preset-chip"
-                      [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
-                      (click)="seleccionarRepeticiones(rep)"
-                    >
-                      {{ rep }}
-                    </button>
-                  }
-                  <button
-                    type="button"
-                    class="preset-chip"
-                    [class.active]="mostrarOtroRepeticiones()"
-                    (click)="seleccionarRepeticiones('otro')"
-                  >
-                    Otro
-                  </button>
-                  @if (mostrarOtroRepeticiones()) {
-                    <input
-                      type="number"
-                      min="1"
-                      class="preset-input"
-                      [value]="repeticionesSeleccionadas()"
-                      (change)="onRepeticionesOtroChange($event)"
-                    />
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- Description Card -->
-            @if (ejercicio()?.descripcion) {
-              <div class="description-card">
-                <div class="description-header">
-                  <span class="material-symbols-outlined">info</span>
-                  <span>Instrucciones</span>
-                </div>
-                <div
-                  class="description-content"
-                  [innerHTML]="ejercicio()?.descripcion | safeHtml"
-                ></div>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- Quick Actions Bar -->
-        <div class="actions-bar" [class.compact]="videoExpandido()">
-          @if (videoExpandido()) {
-            <!-- Minimal info when expanded -->
-            <div class="minimal-info">
-              <span class="minimal-title">{{ ejercicio()?.nombre }}</span>
-            </div>
-          }
-
-          <div class="action-buttons">
-            <!-- Expand/Collapse Button -->
-            <button
-              type="button"
-              class="action-btn secondary"
-              (click)="toggleExpandido()"
-              [attr.aria-label]="videoExpandido() ? 'Mostrar detalles' : 'Pantalla completa'"
-            >
-              <span class="material-symbols-outlined">
-                {{ videoExpandido() ? 'expand_more' : 'expand_less' }}
-              </span>
-            </button>
-
-            <!-- Primary Action: Assign (solo fisios) -->
-            @if (sessionService.puedeEditarRecursos()) {
-              <button
-                type="button"
-                class="action-btn primary"
-                [class.rutina-mode]="isRutinaMode()"
-                (click)="asignarEjercicio()"
-                [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
-              >
-                <span class="material-symbols-outlined icon-filled">
-                  {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
-                </span>
-                @if (!videoExpandido()) {
-                  <span class="btn-label">{{ isRutinaMode() ? 'Añadir' : 'Asignar' }}</span>
                 }
-              </button>
-            }
-
-            <!-- Play/Pause Button -->
-            <button
-              type="button"
-              class="action-btn secondary"
-              (click)="toggleVideo(); $event.stopPropagation()"
-              [attr.aria-label]="videoReproduciendo() ? 'Pausar' : 'Reproducir'"
-            >
-              <span class="material-symbols-outlined">
-                {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================== -->
-    <!-- DESKTOP LAYOUT (>= 768px) - Two columns       -->
-    <!-- ============================================== -->
-    <div class="hidden md:block">
-      <!-- Desktop Header Card: Back button + Title -->
-      <header class="desktop-header-card">
-        <button
-          type="button"
-          class="back-btn-desktop"
-          (click)="volver()"
-        >
-          <span class="material-symbols-outlined">arrow_back</span>
-          <span>Volver</span>
-        </button>
-
-        <div class="desktop-header-title">
-          <h1 class="titulo-kengo">{{ ejercicio()?.nombre }}</h1>
-        </div>
-      </header>
-
-      <div class="desktop-layout">
-        <!-- Left Column: Video -->
-        <div class="desktop-video-column">
-          <div
-            class="media-container"
-            (click)="toggleVideo()"
-          >
-            @if (ejercicio()?.video) {
-              <!-- Placeholder mientras carga el video -->
-              @if (!videoLoaded()) {
-                <div class="video-placeholder"></div>
-              }
-              <video
-                #videoPlayer
-                class="media-video"
-                [class.opacity-0]="!videoLoaded()"
-                [class.opacity-100]="videoLoaded()"
-                autoplay
-                muted
-                loop
-                playsinline
-                (loadeddata)="onVideoLoad()"
-              >
-                <source [src]="getVideoUrl(ejercicio()?.video)" type="video/mp4" />
-              </video>
-            } @else if (ejercicio()?.portada) {
-              <img
-                [src]="getAssetUrl(ejercicio()?.portada || 0)"
-                alt="{{ ejercicio()?.nombre }}"
-                class="media-image"
-              />
-            } @else {
-              <div class="media-placeholder">
-                <span class="material-symbols-outlined icon-filled">fitness_center</span>
+                <button
+                  type="button"
+                  class="ed-chip"
+                  [class.ed-chip--active]="mostrarOtroSeries()"
+                  [attr.aria-pressed]="mostrarOtroSeries()"
+                  (click)="seleccionarSeries('otro')"
+                >
+                  Otro
+                </button>
+                @if (mostrarOtroSeries()) {
+                  <input
+                    type="number"
+                    min="1"
+                    class="ed-chip-input"
+                    aria-label="Series personalizadas"
+                    [value]="seriesSeleccionadas()"
+                    (change)="onSeriesOtroChange(($any($event.target)).value)"
+                  />
+                }
               </div>
-            }
-
-            <!-- Video Overlay Gradient -->
-            <div class="media-overlay"></div>
-
-            <!-- Play/Pause Indicator -->
-            @if (showPlayIndicator()) {
-              <div class="play-indicator">
-                <span class="material-symbols-outlined icon-filled">
-                  {{ videoReproduciendo() ? 'pause' : 'play_arrow' }}
-                </span>
-              </div>
-            }
-          </div>
-
-        </div>
-
-        <!-- Right Column: Exercise Info -->
-        <div class="desktop-info-column">
-          <div class="bottom-panel">
-            <div class="exercise-content">
-              @if (sessionService.puedeEditarRecursos()) {
-                <!-- Selector de Series -->
-                <div class="preset-selector">
-                  <span class="preset-label">Series:</span>
-                  <div class="preset-chips">
-                    @for (serie of seriesPresets; track serie) {
-                      <button
-                        type="button"
-                        class="preset-chip"
-                        [class.active]="seriesSeleccionadas() === serie && !mostrarOtroSeries()"
-                        (click)="seleccionarSeries(serie)"
-                      >
-                        {{ serie }}
-                      </button>
-                    }
-                    <button
-                      type="button"
-                      class="preset-chip"
-                      [class.active]="mostrarOtroSeries()"
-                      (click)="seleccionarSeries('otro')"
-                    >
-                      Otro
-                    </button>
-                    @if (mostrarOtroSeries()) {
-                      <input
-                        type="number"
-                        min="1"
-                        class="preset-input"
-                        [value]="seriesSeleccionadas()"
-                        (change)="onSeriesOtroChange($event)"
-                      />
-                    }
-                  </div>
-                </div>
-
-                <!-- Selector de Repeticiones -->
-                <div class="preset-selector">
-                  <span class="preset-label">Repeticiones:</span>
-                  <div class="preset-chips">
-                    @for (rep of repeticionesPresets; track rep) {
-                      <button
-                        type="button"
-                        class="preset-chip"
-                        [class.active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
-                        (click)="seleccionarRepeticiones(rep)"
-                      >
-                        {{ rep }}
-                      </button>
-                    }
-                    <button
-                      type="button"
-                      class="preset-chip"
-                      [class.active]="mostrarOtroRepeticiones()"
-                      (click)="seleccionarRepeticiones('otro')"
-                    >
-                      Otro
-                    </button>
-                    @if (mostrarOtroRepeticiones()) {
-                      <input
-                        type="number"
-                        min="1"
-                        class="preset-input"
-                        [value]="repeticionesSeleccionadas()"
-                        (change)="onRepeticionesOtroChange($event)"
-                      />
-                    }
-                  </div>
-                </div>
-              }
-
-              <!-- Description Card -->
-              @if (ejercicio()?.descripcion) {
-                <div class="description-card">
-                  <div class="description-header">
-                    <span class="material-symbols-outlined">info</span>
-                    <span>Instrucciones</span>
-                  </div>
-                  <div
-                    class="description-content"
-                    [innerHTML]="ejercicio()?.descripcion | safeHtml"
-                  ></div>
-                </div>
-              }
             </div>
 
-            <!-- Actions Bar (solo fisios) -->
-            @if (sessionService.puedeEditarRecursos()) {
-              <div class="actions-bar">
-                <div class="action-buttons">
-                  <!-- Primary Action: Assign -->
+            <!-- Repeticiones -->
+            <div class="ed-preset ed-preset--last">
+              <span class="ed-preset__label">Repeticiones</span>
+              <div class="ed-preset__chips">
+                @for (rep of repeticionesPresets; track rep) {
                   <button
                     type="button"
-                    class="action-btn primary"
-                    [class.rutina-mode]="isRutinaMode()"
-                    (click)="asignarEjercicio()"
-                    [attr.aria-label]="isRutinaMode() ? 'Añadir a plantilla' : 'Asignar ejercicio'"
+                    class="ed-chip"
+                    [class.ed-chip--active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                    [attr.aria-pressed]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                    (click)="seleccionarRepeticiones(rep)"
                   >
-                    <span class="material-symbols-outlined icon-filled">
-                      {{ isRutinaMode() ? 'bookmark_add' : 'person_add' }}
-                    </span>
-                    <span class="btn-label">
-                      {{ isRutinaMode() ? 'Añadir a plantilla' : 'Asignar a paciente' }}
-                    </span>
+                    {{ rep }}
                   </button>
-                </div>
+                }
+                <button
+                  type="button"
+                  class="ed-chip"
+                  [class.ed-chip--active]="mostrarOtroRepeticiones()"
+                  [attr.aria-pressed]="mostrarOtroRepeticiones()"
+                  (click)="seleccionarRepeticiones('otro')"
+                >
+                  Otro
+                </button>
+                @if (mostrarOtroRepeticiones()) {
+                  <input
+                    type="number"
+                    min="1"
+                    class="ed-chip-input"
+                    aria-label="Repeticiones personalizadas"
+                    [value]="repeticionesSeleccionadas()"
+                    (change)="onRepeticionesOtroChange(($any($event.target)).value)"
+                  />
+                }
               </div>
-            }
+            </div>
+          </ui2-card>
+        }
+
+        <!-- ====================================== -->
+        <!-- Instrucciones                           -->
+        <!-- ====================================== -->
+        @if (ej.descripcion) {
+          <ui2-section-label>Instrucciones</ui2-section-label>
+          <ui2-card [padding]="20" [radius]="22">
+            <div
+              class="ed-description"
+              [innerHTML]="ej.descripcion | safeHtml"
+            ></div>
+          </ui2-card>
+        }
+
+        <!-- ====================================== -->
+        <!-- Acciones                                -->
+        <!-- ====================================== -->
+        @if (sessionService.puedeEditarRecursos()) {
+          <div class="ed-actions">
+            <ui2-button
+              variant="primary"
+              size="lg"
+              [iconLeft]="isRutinaMode() ? 'bookmark_add' : 'person_add'"
+              [fullWidth]="true"
+              (clicked)="asignarEjercicio()"
+            >
+              {{ isRutinaMode() ? 'Añadir a plantilla' : 'Asignar a paciente' }}
+            </ui2-button>
           </div>
-        </div>
+        }
       </div>
     </div>
   }

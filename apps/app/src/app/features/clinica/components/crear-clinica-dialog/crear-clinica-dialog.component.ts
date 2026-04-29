@@ -1,7 +1,15 @@
-import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { emailOptional } from '../../../../shared';
+import {
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+} from '../../../../shared/ui-v2';
 
 /** Paleta de colores predefinidos (todos con buen contraste sobre blanco) */
 const COLOR_PRESETS = [
@@ -31,7 +39,16 @@ const COLOR_PRESETS = [
 @Component({
   standalone: true,
   selector: 'app-crear-clinica-dialog',
-  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
+    Ui2DialogActionsComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+  ],
   templateUrl: './crear-clinica-dialog.component.html',
   styleUrl: './crear-clinica-dialog.component.css',
 })

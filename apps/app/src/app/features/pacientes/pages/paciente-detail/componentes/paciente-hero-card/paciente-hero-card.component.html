@@ -1,101 +1,79 @@
-<article class="hero-card animate-in">
-  <div class="hero-visual">
-    <div class="hero-gradient"></div>
-    <div class="hero-pattern" aria-hidden="true"></div>
+@if (!isMobile()) {
+  <div class="hero-back">
+    <ui2-back-button (clicked)="volver.emit()" ariaLabel="Volver a pacientes" />
+    <span class="hero-back__label">Mis pacientes</span>
   </div>
+}
 
-  @if (!isMobile()) {
-    <button
-      type="button"
-      class="hero-back-btn"
-      aria-label="Volver a pacientes"
-      (click)="volver.emit()"
-    >
-      <span class="material-symbols-outlined">arrow_back</span>
-      <span>Mis pacientes</span>
-    </button>
-  }
+<ui2-card variant="tinted" [padding]="20">
+  <div class="hero-top">
+    <ui2-avatar
+      [src]="avatarUrl()"
+      [name]="fullName()"
+      size="xl"
+      gradient="coral"
+      [border]="true"
+    />
 
-  <div class="hero-content">
-    <div class="hero-avatar">
-      @if (avatarUrl()) {
-        <img
-          [src]="avatarUrl()"
-          [alt]="fullName()"
-          class="avatar-img"
-        />
-      } @else {
-        <div class="avatar-placeholder">
-          <span class="material-symbols-outlined">person</span>
-        </div>
-      }
-    </div>
     <div class="hero-info">
-      <h2 class="hero-name">{{ fullName() }}</h2>
-      @if (clinicaNombre()) {
-        <p class="hero-clinic">
-          <span class="material-symbols-outlined icon-sm">location_city</span>
-          {{ clinicaNombre() }}
-        </p>
-      }
-      @if (fisioResponsableNombre()) {
-        <p class="hero-fisio">
-          <span class="material-symbols-outlined icon-sm">person</span>
-          Fisio: {{ fisioResponsableNombre() }}
-        </p>
-      }
+      <h2 class="hero-name">{{ fullName() || 'Paciente' }}</h2>
+      <div class="hero-pills">
+        @if (clinicaNombre()) {
+          <ui2-pill variant="soft" icon="apartment">{{ clinicaNombre() }}</ui2-pill>
+        }
+        @if (fisioResponsableNombre()) {
+          <ui2-pill variant="neutral" icon="person">{{ fisioResponsableNombre() }}</ui2-pill>
+        }
+      </div>
     </div>
+
     <button
       type="button"
-      class="edit-btn"
+      class="hero-edit"
       aria-label="Editar paciente"
       (click)="editarPaciente.emit()"
     >
-      <span class="material-symbols-outlined">edit</span>
+      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
     </button>
   </div>
 
-  <div class="contact-grid">
-    @if (paciente()?.email) {
-      <a [href]="'mailto:' + paciente()?.email" class="contact-item">
-        <div class="contact-icon">
-          <span class="material-symbols-outlined">mail</span>
-        </div>
-        <div class="contact-info">
-          <span class="contact-label">Email</span>
-          <span class="contact-value">{{ paciente()?.email }}</span>
-        </div>
-      </a>
-    }
-    @if (paciente()?.telefono) {
-      <a [href]="'tel:' + paciente()?.telefono" class="contact-item">
-        <div class="contact-icon">
-          <span class="material-symbols-outlined">phone</span>
-        </div>
-        <div class="contact-info">
-          <span class="contact-label">Teléfono</span>
-          <span class="contact-value">{{ paciente()?.telefono }}</span>
-        </div>
-      </a>
-    }
-  </div>
+  @if (paciente()?.email || paciente()?.telefono) {
+    <div class="hero-contact">
+      @if (paciente()?.email; as email) {
+        <a [href]="'mailto:' + email" class="hero-contact__row">
+          <ui2-icon-badge icon="mail" color="var(--kengo-primary)" [size]="36" [radius]="12" />
+          <div class="hero-contact__text">
+            <span class="hero-contact__label">Email</span>
+            <span class="hero-contact__value">{{ email }}</span>
+          </div>
+        </a>
+      }
+      @if (paciente()?.telefono; as tel) {
+        <a [href]="'tel:' + tel" class="hero-contact__row">
+          <ui2-icon-badge icon="phone" color="var(--kengo-primary)" [size]="36" [radius]="12" />
+          <div class="hero-contact__text">
+            <span class="hero-contact__label">Teléfono</span>
+            <span class="hero-contact__value">{{ tel }}</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
 
-  <div class="quick-actions">
-    <button
-      type="button"
-      class="action-btn primary"
-      (click)="crearPlan.emit()"
-    >
-      <span class="material-symbols-outlined icon-filled">add</span>
-      <span class="action-label">Nuevo Plan</span>
-    </button>
-    <button
-      type="button"
-      class="action-btn"
-      (click)="gestionarAcceso.emit()"
-    >
-      <span class="material-symbols-outlined">key</span>
-      <span class="action-label">Gestionar acceso</span>
-    </button>
+  <div class="hero-actions">
+    <ui2-button
+      variant="primary"
+      size="md"
+      iconLeft="add"
+      [fullWidth]="true"
+      (clicked)="crearPlan.emit()"
+    >Nuevo plan</ui2-button>
+    <ui2-button
+      variant="secondary"
+      size="md"
+      iconLeft="key"
+      [fullWidth]="true"
+      (clicked)="gestionarAcceso.emit()"
+    >Gestionar acceso</ui2-button>
   </div>
-</article>
+</ui2-card>

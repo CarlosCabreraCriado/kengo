@@ -8,10 +8,25 @@ import {
 } from '@angular/core';
 import { EstadoPlan, Plan } from '../../../../../../../types/global';
 import { formatearFecha } from '../../../../utils/format-helpers';
+import {
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2IconBadgeComponent,
+  Ui2PillComponent,
+  Ui2PillVariant,
+  Ui2SpinnerComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-paciente-planes-list',
   standalone: true,
+  imports: [
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2IconBadgeComponent,
+    Ui2PillComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './paciente-planes-list.component.html',
   styleUrl: './paciente-planes-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,13 +65,13 @@ export class PacientePlanesListComponent {
     return labels[estado] || estado;
   }
 
-  protected getEstadoClass(estado: EstadoPlan): string {
-    const classes: Record<EstadoPlan, string> = {
-      borrador: 'bg-zinc-100 text-zinc-600',
-      activo: 'bg-green-100 text-green-700',
-      completado: 'bg-blue-100 text-blue-700',
-      cancelado: 'bg-red-100 text-red-600',
+  protected getEstadoVariant(estado: EstadoPlan): Ui2PillVariant {
+    const map: Record<EstadoPlan, Ui2PillVariant> = {
+      borrador: 'neutral',
+      activo: 'success',
+      completado: 'soft',
+      cancelado: 'danger',
     };
-    return classes[estado] || 'bg-zinc-100 text-zinc-600';
+    return map[estado] ?? 'neutral';
   }
 }

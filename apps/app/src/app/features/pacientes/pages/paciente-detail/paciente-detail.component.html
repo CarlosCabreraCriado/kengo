@@ -1,71 +1,41 @@
 <section class="detail-page">
-  <!-- Aurora Background -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-    <div class="aurora-wave aurora-wave-3"></div>
-  </div>
-
-  <!-- Compact Header (mobile only) -->
   @if (isMovil()) {
-    <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
-      <div class="header-content">
-        <div class="header-left">
-          <button
-            type="button"
-            class="back-btn"
-            aria-label="Volver a pacientes"
-            (click)="volver()"
-          >
-            <span class="material-symbols-outlined">arrow_back</span>
-          </button>
-          <h1 class="titulo-kengo header-title">Paciente</h1>
-        </div>
-        <button
-          type="button"
-          class="header-action"
-          aria-label="Gestionar acceso"
-          (click)="gestionarAcceso()"
-        >
-          <span class="material-symbols-outlined">key</span>
-        </button>
-      </div>
+    <header class="detail-topbar">
+      <ui2-back-button (clicked)="volver()" ariaLabel="Volver a pacientes" />
+      <h1 class="detail-topbar__title">Paciente</h1>
+      <button
+        type="button"
+        class="detail-topbar__action"
+        aria-label="Gestionar acceso"
+        (click)="gestionarAcceso()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">key</span>
+      </button>
     </header>
   }
 
-  <!-- Main Content -->
-  <main class="detail-main" [class.pt-desktop]="!isMovil()">
-    <!-- Loading State -->
+  <main class="detail-main" [class.detail-main--desktop]="!isMovil()">
     @if (isLoadingPaciente()) {
-      <div class="state-card loading-state">
-        <div class="shimmer-effect"></div>
-        <div class="state-icon pulse">
-          <span class="material-symbols-outlined">person</span>
-        </div>
-        <p class="state-text">Cargando paciente...</p>
+      <div class="detail-state">
+        <ui2-spinner />
+        <p class="detail-state__text">Cargando paciente…</p>
       </div>
     }
 
-    <!-- Error State -->
     @if (error()) {
-      <div class="state-card error-state animate-in">
-        <div class="state-icon error">
-          <span class="material-symbols-outlined">error</span>
-        </div>
-        <h2 class="state-title">Algo salió mal</h2>
-        <p class="state-text">{{ error() }}</p>
-        <button type="button" class="retry-btn" (click)="volver()">
-          <span class="material-symbols-outlined">arrow_back</span>
-          Volver a pacientes
-        </button>
-      </div>
+      <ui2-empty-state
+        icon="error"
+        title="Algo salió mal"
+        [message]="error()"
+        actionLabel="Volver a pacientes"
+        actionIcon="arrow_back"
+        (action)="volver()"
+      />
     }
 
-    <!-- Patient Content -->
     @if (!isLoadingPaciente() && !error() && paciente()) {
-      <div class="content-grid">
-        <!-- Main Column -->
-        <div class="main-column">
+      <div class="detail-grid" [class.detail-grid--desktop]="!isMovil()">
+        <div class="detail-col detail-col--main">
           <app-paciente-hero-card
             [paciente]="paciente()"
             [fullName]="fullName()"
@@ -79,7 +49,6 @@
             (volver)="volver()"
           />
 
-          <!-- Recent Activity Section -->
           <app-paciente-actividad-reciente
             [sesionesVisibles]="sesionesVisibles()"
             [totalSesiones]="sesionesEnriquecidas().length"
@@ -95,12 +64,9 @@
             (toggleComentarios)="toggleComentarios($event)"
             (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
           />
-
         </div>
 
-        <!-- Sidebar Column -->
-        <aside class="sidebar-column">
-          <!-- Statistics Section -->
+        <aside class="detail-col detail-col--side">
           <app-paciente-estadisticas
             [estadisticas]="estadisticas()"
             [isLoading]="isLoadingEstadisticas()"
@@ -119,8 +85,6 @@
             (resetearFiltro)="resetearFiltro()"
           />
 
-
-          <!-- Comments Section -->
           <app-paciente-comentarios-panel
             [comentarios]="comentarios()"
             [comentariosPendientes]="comentariosPendientes()"
@@ -131,7 +95,6 @@
             (marcarTodosRevisados)="marcarTodosRevisados()"
           />
 
-          <!-- Plans Section -->
           <app-paciente-planes-list
             [planes]="planes()"
             [isLoading]="isLoadingPlanes()"

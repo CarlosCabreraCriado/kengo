@@ -14,6 +14,10 @@ import {
   EjercicioFeedback,
   FeedbackDetalladoFormComponent,
 } from '../../componentes/feedback/feedback-detallado-form/feedback-detallado-form.component';
+import {
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+} from '../../../../../../shared/ui-v2';
 
 export interface FeedbackFinalData {
   feedbacks: {
@@ -31,6 +35,8 @@ export interface FeedbackFinalData {
     FeedbackCelebracionComponent,
     FeedbackGlobalFormComponent,
     FeedbackDetalladoFormComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
   ],
   templateUrl: './feedback-final.component.html',
   styleUrl: './feedback-final.component.css',

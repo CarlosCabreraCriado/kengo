@@ -1,254 +1,229 @@
 <div class="dialog-overlay" (click)="onOverlayClick($event)">
-  <div class="dialog-content">
-    <header class="dialog-header">
-      <div class="dialog-icon">
-        <span class="material-symbols-outlined icon-filled">edit</span>
-      </div>
-      <h2 class="dialog-title">Editar clínica</h2>
-      <p class="dialog-subtitle">Actualiza los datos de tu clínica</p>
-      <button type="button" class="close-btn" (click)="cerrar.emit()" aria-label="Cerrar">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </header>
+  <div class="dialog-shell">
+    <ui2-dialog-host>
+      <ui2-dialog-header
+        title="Editar clínica"
+        subtitle="Actualiza los datos de tu clínica"
+        (closeClick)="cerrar.emit()"
+      ></ui2-dialog-header>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="dialog-body">
-      <!-- Logo Section -->
-      <div class="media-section">
-        <span class="form-label">Logo de la clínica</span>
-        <div class="logo-container">
-          @if (logoPreviewUrl()) {
-            <div class="logo-preview">
-              <img [src]="logoPreviewUrl()" alt="Logo de la clínica" class="logo-image" />
-              <div class="logo-actions">
-                <button type="button" class="logo-action-btn" (click)="openLogoUploader()" title="Cambiar logo">
-                  <span class="material-symbols-outlined">edit</span>
-                </button>
-                <button type="button" class="logo-action-btn danger" (click)="clearLogo()" title="Eliminar logo">
-                  <span class="material-symbols-outlined">delete</span>
-                </button>
-              </div>
-            </div>
-          } @else {
-            <button type="button" class="logo-upload-btn" (click)="openLogoUploader()">
-              <span class="material-symbols-outlined">add_photo_alternate</span>
-              <span>Añadir logo</span>
-            </button>
-          }
-        </div>
-      </div>
-
-      <!-- Gallery Section -->
-      <div class="media-section">
-        <div class="gallery-header">
-          <span class="form-label">Galería de imágenes</span>
-          <span class="gallery-count">{{ existingImages().length - imagesToDelete().length + newImageFiles().length }} / 5</span>
-        </div>
-        <div class="gallery-grid">
-          <!-- Existing images -->
-          @for (img of existingImages(); track img.id) {
-            <div class="gallery-item" [class.marked-for-deletion]="isImageMarkedForDeletion(img.id)">
-              <img [src]="getExistingImageUrl(img.fileId)" alt="Imagen de clínica" class="gallery-image" />
-              @if (isImageMarkedForDeletion(img.id)) {
-                <div class="gallery-item-overlay deleted">
-                  <span class="material-symbols-outlined">delete</span>
-                  <button type="button" class="restore-btn" (click)="restoreImage(img.id)">
-                    Restaurar
-                  </button>
+      <ui2-dialog-content>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="ec-form">
+          <!-- Logo -->
+          <div class="ec-section">
+            <span class="ec-section-label">Logo de la clínica</span>
+            <div class="ec-logo-wrap">
+              @if (logoPreviewUrl()) {
+                <div class="ec-logo">
+                  <img [src]="logoPreviewUrl()" alt="Logo de la clínica" class="ec-logo-img" />
+                  <div class="ec-logo-actions">
+                    <button type="button" class="ec-logo-btn" (click)="openLogoUploader()" title="Cambiar logo">
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    </button>
+                    <button type="button" class="ec-logo-btn ec-logo-btn--danger" (click)="clearLogo()" title="Eliminar logo">
+                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                    </button>
+                  </div>
                 </div>
               } @else {
-                <button type="button" class="gallery-delete-btn" (click)="markImageForDeletion(img.id)" title="Eliminar imagen">
-                  <span class="material-symbols-outlined">close</span>
+                <button type="button" class="ec-logo-upload" (click)="openLogoUploader()">
+                  <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+                  <span>Añadir logo</span>
                 </button>
               }
             </div>
-          }
-          <!-- New images (pending upload) -->
-          @for (file of newImageFiles(); track $index) {
-            <div class="gallery-item new-image">
-              <img [src]="getNewImagePreviewUrl(file)" alt="Nueva imagen" class="gallery-image" />
-              <button type="button" class="gallery-delete-btn" (click)="removeNewImage($index)" title="Quitar imagen">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-              <div class="new-badge">Nueva</div>
-            </div>
-          }
-          <!-- Add image button -->
-          @if (canAddMoreImages()) {
-            <label class="gallery-add-btn">
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                multiple
-                class="hidden-input"
-                (change)="onGalleryImagesSelected($event)"
-              />
-              <span class="material-symbols-outlined">add_photo_alternate</span>
-              <span class="add-text">Añadir</span>
-            </label>
-          }
-        </div>
-        <p class="gallery-hint">Máximo 5 imágenes. Formatos: PNG, JPG, WebP (máx. 5MB)</p>
-      </div>
-
-      <!-- Nombre (required) -->
-      <div class="form-group">
-        <label for="nombre" class="form-label">
-          Nombre de la clínica <span class="required">*</span>
-        </label>
-        <input
-          id="nombre"
-          type="text"
-          formControlName="nombre"
-          class="form-input"
-          placeholder="Clínica Ejemplo"
-          [class.error]="form.get('nombre')?.touched && form.get('nombre')?.invalid"
-        />
-        @if (form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']) {
-          <span class="field-error">El nombre es requerido</span>
-        }
-      </div>
-
-      <!-- Row: Teléfono + Email -->
-      <div class="form-row">
-        <div class="form-group">
-          <label for="telefono" class="form-label">Teléfono</label>
-          <input
-            id="telefono"
-            type="tel"
-            formControlName="telefono"
-            class="form-input"
-            placeholder="612 345 678"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="email" class="form-label">Email</label>
-          <input
-            id="email"
-            type="email"
-            formControlName="email"
-            class="form-input"
-            placeholder="clinica@ejemplo.com"
-            [class.error]="form.get('email')?.touched && form.get('email')?.invalid"
-          />
-          @if (form.get('email')?.touched && form.get('email')?.errors?.['email']) {
-            <span class="field-error">Email no válido</span>
-          }
-        </div>
-      </div>
-
-      <!-- Dirección -->
-      <div class="form-group">
-        <label for="direccion" class="form-label">Dirección</label>
-        <input
-          id="direccion"
-          type="text"
-          formControlName="direccion"
-          class="form-input"
-          placeholder="Calle Ejemplo 123, Ciudad"
-        />
-      </div>
-
-      <!-- Row: C.P. + NIF -->
-      <div class="form-row">
-        <div class="form-group">
-          <label for="postal" class="form-label">Código Postal</label>
-          <input
-            id="postal"
-            type="text"
-            formControlName="postal"
-            class="form-input"
-            placeholder="28001"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="nif" class="form-label">NIF/CIF</label>
-          <input
-            id="nif"
-            type="text"
-            formControlName="nif"
-            class="form-input"
-            placeholder="B12345678"
-          />
-        </div>
-      </div>
-
-      <!-- Color primario -->
-      <div class="form-group">
-        <label for="color" class="form-label">Color corporativo</label>
-        <div class="color-section">
-          <!-- Paleta de colores predefinidos -->
-          <div class="color-presets">
-            @for (color of colorPresets; track color) {
-              <button
-                type="button"
-                class="color-preset"
-                [style.background-color]="color"
-                [class.active]="form.value.colorPrimario === color"
-                (click)="selectColor(color)"
-                [title]="color"
-              >
-                @if (form.value.colorPrimario === color) {
-                  <span class="material-symbols-outlined check-icon">check</span>
-                }
-              </button>
-            }
           </div>
 
-          <!-- Preview de elementos con el color -->
-          <div class="color-preview-section">
-            <span class="preview-label">Vista previa:</span>
-            <div class="preview-items">
-              <button
-                type="button"
-                class="preview-button"
-                [style.background]="'linear-gradient(135deg, ' + form.value.colorPrimario + ', ' + getDarkerColor(form.value.colorPrimario) + ')'"
-              >
-                Botón
-              </button>
-              <span
-                class="preview-badge"
-                [style.background-color]="form.value.colorPrimario + '20'"
-                [style.color]="form.value.colorPrimario"
-              >
-                Badge
-              </span>
-              <span
-                class="preview-icon"
-                [style.color]="form.value.colorPrimario"
-              >
-                <span class="material-symbols-outlined icon-filled">favorite</span>
+          <!-- Galería -->
+          <div class="ec-section">
+            <div class="ec-gallery-header">
+              <span class="ec-section-label">Galería de imágenes</span>
+              <span class="ec-gallery-count">
+                {{ existingImages().length - imagesToDelete().length + newImageFiles().length }} / 5
               </span>
             </div>
+            <div class="ec-gallery-grid">
+              @for (img of existingImages(); track img.id) {
+                <div
+                  class="ec-gallery-item"
+                  [class.ec-gallery-item--marked]="isImageMarkedForDeletion(img.id)"
+                >
+                  <img [src]="getExistingImageUrl(img.fileId)" alt="Imagen de clínica" class="ec-gallery-img" />
+                  @if (isImageMarkedForDeletion(img.id)) {
+                    <div class="ec-gallery-overlay">
+                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                      <button type="button" class="ec-gallery-restore" (click)="restoreImage(img.id)">
+                        Restaurar
+                      </button>
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      class="ec-gallery-delete"
+                      (click)="markImageForDeletion(img.id)"
+                      title="Eliminar imagen"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              @for (file of newImageFiles(); track $index) {
+                <div class="ec-gallery-item ec-gallery-item--new">
+                  <img [src]="getNewImagePreviewUrl(file)" alt="Nueva imagen" class="ec-gallery-img" />
+                  <button
+                    type="button"
+                    class="ec-gallery-delete"
+                    (click)="removeNewImage($index)"
+                    title="Quitar imagen"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                  </button>
+                  <span class="ec-gallery-badge">Nueva</span>
+                </div>
+              }
+
+              @if (canAddMoreImages()) {
+                <label class="ec-gallery-add">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    class="ec-gallery-input"
+                    (change)="onGalleryImagesSelected($event)"
+                  />
+                  <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+                  <span class="ec-gallery-add-text">Añadir</span>
+                </label>
+              }
+            </div>
+            <p class="ec-gallery-hint">Máximo 5 imágenes. Formatos: PNG, JPG, WebP (máx. 5MB)</p>
           </div>
-        </div>
-      </div>
 
-      @if (error()) {
-        <div class="error-message">
-          <span class="material-symbols-outlined">error</span>
-          {{ error() }}
-        </div>
-      }
+          <!-- Datos básicos -->
+          <ui2-input
+            label="Nombre de la clínica"
+            formControlName="nombre"
+            placeholder="Clínica Ejemplo"
+            [required]="true"
+            iconLeft="apartment"
+            [error]="
+              form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']
+                ? 'El nombre es requerido'
+                : null
+            "
+          ></ui2-input>
 
-      <div class="dialog-actions">
-        <button type="button" class="btn-secondary" (click)="cerrar.emit()">
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          class="btn-primary"
-          [disabled]="form.invalid || loading()"
+          <div class="ec-row">
+            <ui2-input
+              label="Teléfono"
+              type="tel"
+              formControlName="telefono"
+              placeholder="612 345 678"
+              iconLeft="phone"
+            ></ui2-input>
+
+            <ui2-input
+              label="Email"
+              type="email"
+              formControlName="email"
+              placeholder="clinica@ejemplo.com"
+              iconLeft="mail"
+              [error]="
+                form.get('email')?.touched && form.get('email')?.errors?.['email']
+                  ? 'Email no válido'
+                  : null
+              "
+            ></ui2-input>
+          </div>
+
+          <ui2-input
+            label="Dirección"
+            formControlName="direccion"
+            placeholder="Calle Ejemplo 123, Ciudad"
+            iconLeft="location_on"
+          ></ui2-input>
+
+          <div class="ec-row">
+            <ui2-input
+              label="Código postal"
+              formControlName="postal"
+              placeholder="28001"
+            ></ui2-input>
+
+            <ui2-input
+              label="NIF/CIF"
+              formControlName="nif"
+              placeholder="B12345678"
+            ></ui2-input>
+          </div>
+
+          <!-- Color -->
+          <div class="ec-color-group">
+            <span class="ec-section-label">Color corporativo</span>
+            <div class="ec-color-presets">
+              @for (color of colorPresets; track color) {
+                <button
+                  type="button"
+                  class="ec-color-preset"
+                  [class.ec-color-preset--active]="form.value.colorPrimario === color"
+                  [style.background-color]="color"
+                  [title]="color"
+                  (click)="selectColor(color)"
+                >
+                  @if (form.value.colorPrimario === color) {
+                    <span class="material-symbols-outlined ec-color-check" aria-hidden="true">check</span>
+                  }
+                </button>
+              }
+            </div>
+
+            <div class="ec-color-preview">
+              <span class="ec-color-preview-label">Vista previa</span>
+              <div class="ec-color-preview-items">
+                <span
+                  class="ec-preview-button"
+                  [style.background]="
+                    'linear-gradient(135deg, ' + form.value.colorPrimario + ', ' + getDarkerColor(form.value.colorPrimario) + ')'
+                  "
+                >Botón</span>
+                <span
+                  class="ec-preview-badge"
+                  [style.background-color]="form.value.colorPrimario + '20'"
+                  [style.color]="form.value.colorPrimario"
+                >Badge</span>
+                <span
+                  class="ec-preview-icon"
+                  [style.color]="form.value.colorPrimario"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">favorite</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          @if (error()) {
+            <div class="ec-error" role="alert">
+              <span class="material-symbols-outlined" aria-hidden="true">error</span>
+              {{ error() }}
+            </div>
+          }
+        </form>
+      </ui2-dialog-content>
+
+      <ui2-dialog-actions align="end">
+        <ui2-button variant="secondary" (clicked)="cerrar.emit()">Cancelar</ui2-button>
+        <ui2-button
+          variant="primary"
+          [disabled]="form.invalid"
+          [loading]="loading()"
+          iconLeft="save"
+          (clicked)="onSubmit()"
         >
-          @if (loading()) {
-            <span class="spinner"></span>
-            Guardando...
-          } @else {
-            Guardar cambios
-          }
-        </button>
-      </div>
-    </form>
+          Guardar cambios
+        </ui2-button>
+      </ui2-dialog-actions>
+    </ui2-dialog-host>
   </div>
 </div>

@@ -1,48 +1,68 @@
-<ui-dialog-container>
-  <ui-dialog-header title="Acceso del paciente" (closeClick)="close()"></ui-dialog-header>
+<ui2-dialog-host>
+  <ui2-dialog-header
+    title="Acceso del paciente"
+    subtitle="Genera, comparte o regenera el QR de acceso"
+    (closeClick)="close()"
+  ></ui2-dialog-header>
 
-  <ui-dialog-content>
+  <ui2-dialog-content>
     <!-- Loading State -->
     @if (isLoadingToken()) {
       <div class="loading-container">
-        <div class="loading-qr">
-          <span class="material-symbols-outlined pulse">qr_code_2</span>
-        </div>
-        <p class="loading-text">Cargando información de acceso...</p>
+        <ui2-spinner size="lg" color="primary" label="Cargando información de acceso..."></ui2-spinner>
       </div>
     }
 
     <!-- Error State -->
     @if (error() && !isLoadingToken()) {
       <div class="error-container">
-        <span class="material-symbols-outlined error-icon">error</span>
+        <ui2-icon-badge
+          icon="error"
+          color="var(--danger)"
+          [size]="56"
+          [radius]="18"
+        ></ui2-icon-badge>
         <p class="error-text">{{ error() }}</p>
-        <button type="button" class="btn-retry" (click)="cargarTokenActivo()">
-          <span class="material-symbols-outlined">refresh</span>
-          Reintentar
-        </button>
+        <ui2-button
+          variant="secondary"
+          size="sm"
+          iconLeft="refresh"
+          (clicked)="cargarTokenActivo()"
+        >Reintentar</ui2-button>
       </div>
     }
 
     <!-- Token Info -->
     @if (tokenInfo() && !isLoadingToken()) {
       <div class="token-content">
-        <!-- QR Code -->
-        <div class="qr-container">
-          <canvas #qrCanvas width="200" height="200" class="qr-canvas"></canvas>
-        </div>
+        <!-- QR Code Card -->
+        <ui2-card [padding]="20">
+          <div class="qr-container">
+            <canvas #qrCanvas width="200" height="200" class="qr-canvas"></canvas>
+          </div>
+        </ui2-card>
 
         <!-- Token Stats -->
         <div class="token-stats">
           <div class="stat-item">
-            <span class="material-symbols-outlined stat-icon">schedule</span>
+            <ui2-icon-badge
+              icon="schedule"
+              color="var(--ink-500)"
+              [size]="36"
+              [radius]="12"
+            ></ui2-icon-badge>
             <div class="stat-info">
               <span class="stat-label">Último acceso</span>
               <span class="stat-value">{{ formatearUltimoUso(tokenInfo()!.ultimoUso) }}</span>
             </div>
           </div>
           <div class="stat-item">
-            <span class="material-symbols-outlined stat-icon">touch_app</span>
+            <ui2-icon-badge
+              icon="touch_app"
+              color="var(--ink-500)"
+              [size]="36"
+              [radius]="12"
+            ></ui2-icon-badge>
             <div class="stat-info">
               <span class="stat-label">Usos</span>
               <span class="stat-value">
@@ -59,16 +79,18 @@
 
         <!-- Success Messages -->
         @if (emailSent()) {
-          <div class="success-message">
-            <span class="material-symbols-outlined">check_circle</span>
-            Email enviado correctamente
+          <div class="status-pill-wrap">
+            <ui2-pill variant="success" icon="check_circle" size="md">
+              Email enviado correctamente
+            </ui2-pill>
           </div>
         }
 
         @if (linkCopied()) {
-          <div class="success-message">
-            <span class="material-symbols-outlined">check_circle</span>
-            Enlace copiado al portapapeles
+          <div class="status-pill-wrap">
+            <ui2-pill variant="success" icon="check_circle" size="md">
+              Enlace copiado al portapapeles
+            </ui2-pill>
           </div>
         }
 
@@ -82,14 +104,20 @@
             (click)="enviarPorEmail()"
           >
             @if (isSendingEmail()) {
-              <div class="action-icon loading">
-                <span class="spinner"></span>
-              </div>
+              <ui2-icon-badge
+                icon="hourglass_empty"
+                color="var(--ink-500)"
+                [size]="40"
+                [radius]="12"
+              ></ui2-icon-badge>
               <span class="action-text">Enviando...</span>
             } @else {
-              <div class="action-icon email">
-                <span class="material-symbols-outlined">mail</span>
-              </div>
+              <ui2-icon-badge
+                icon="mail"
+                color="#3b82f6"
+                [size]="40"
+                [radius]="12"
+              ></ui2-icon-badge>
               <span class="action-text">Enviar por email</span>
               @if (!paciente.email) {
                 <span class="action-hint">Sin email registrado</span>
@@ -104,48 +132,51 @@
             [disabled]="!tokenInfo()?.url"
             (click)="copiarEnlace()"
           >
-            <div class="action-icon copy">
-              <span class="material-symbols-outlined">content_copy</span>
-            </div>
+            <ui2-icon-badge
+              icon="content_copy"
+              color="#8b5cf6"
+              [size]="40"
+              [radius]="12"
+            ></ui2-icon-badge>
             <span class="action-text">Copiar enlace</span>
           </button>
 
           <!-- Regenerar token -->
           <button
             type="button"
-            class="action-card warning"
+            class="action-card action-card--warning"
             [disabled]="isRegenerating()"
             (click)="regenerarToken()"
           >
             @if (isRegenerating()) {
-              <div class="action-icon loading">
-                <span class="spinner"></span>
-              </div>
+              <ui2-icon-badge
+                icon="hourglass_empty"
+                color="var(--warning)"
+                [size]="40"
+                [radius]="12"
+              ></ui2-icon-badge>
               <span class="action-text">Regenerando...</span>
             } @else {
-              <div class="action-icon regenerate">
-                <span class="material-symbols-outlined">refresh</span>
-              </div>
+              <ui2-icon-badge
+                icon="refresh"
+                color="var(--warning)"
+                [size]="40"
+                [radius]="12"
+              ></ui2-icon-badge>
               <span class="action-text">Regenerar token</span>
             }
           </button>
         </div>
 
         <p class="hint-text">
-          <span class="material-symbols-outlined">info</span>
+          <span class="material-symbols-outlined" aria-hidden="true">info</span>
           El paciente puede escanear el QR o usar el enlace para acceder sin contraseña.
         </p>
       </div>
     }
-  </ui-dialog-content>
+  </ui2-dialog-content>
 
-  <ui-dialog-actions align="center">
-    <button
-      type="button"
-      class="btn-close"
-      (click)="close()"
-    >
-      Cerrar
-    </button>
-  </ui-dialog-actions>
-</ui-dialog-container>
+  <ui2-dialog-actions align="end">
+    <ui2-button variant="secondary" (clicked)="close()">Cerrar</ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

@@ -1,181 +1,143 @@
-<section class="content-section stats-section animate-in" style="--delay: 0.15s">
-  <header class="section-header clickable" (click)="toggle()">
-    <div class="section-header-left">
-      <div class="section-icon gold">
-        <span class="material-symbols-outlined">analytics</span>
-      </div>
-      <div>
-        <h2 class="section-title">Estadísticas</h2>
-        <p class="section-subtitle">Resumen de cumplimiento</p>
-      </div>
-    </div>
+<ui2-card [padding]="0">
+  <button type="button" class="stats-header" (click)="toggle()">
+    <span class="stats-header__left">
+      <ui2-icon-badge icon="analytics" color="var(--kengo-primary)" [size]="36" [radius]="12" />
+      <span class="stats-header__text">
+        <span class="stats-header__title">Estadísticas</span>
+        <span class="stats-header__subtitle">Resumen de cumplimiento</span>
+      </span>
+    </span>
     <span
-      class="material-symbols-outlined expand-icon"
-      [class.rotated]="expanded()"
+      class="material-symbols-outlined stats-header__chev"
+      [class.stats-header__chev--open]="expanded()"
+      aria-hidden="true"
     >expand_more</span>
-  </header>
+  </button>
 
   @if (expanded()) {
-    <div class="section-content">
-      <div class="stats-filter">
-        <div class="filter-chips">
-          <button type="button" class="filter-chip" [class.filter-chip--active]="filtroRango() === '15'" (click)="aplicarFiltroRango.emit('15')">15d</button>
-          <button type="button" class="filter-chip" [class.filter-chip--active]="filtroRango() === '30'" (click)="aplicarFiltroRango.emit('30')">30d</button>
-          <button type="button" class="filter-chip" [class.filter-chip--active]="filtroRango() === '60'" (click)="aplicarFiltroRango.emit('60')">60d</button>
-          <button type="button" class="filter-chip" [class.filter-chip--active]="filtroRango() === '90'" (click)="aplicarFiltroRango.emit('90')">90d</button>
-          <button type="button" class="filter-chip" [class.filter-chip--active]="filtroRango() === 'todo'" (click)="aplicarFiltroRango.emit('todo')">Todo</button>
-          <button type="button" class="filter-chip" [class.filter-chip--active]="filtroRango() === 'custom'" (click)="aplicarFiltroRango.emit('custom')">
-            <span class="material-symbols-outlined" style="font-size: 14px">date_range</span>
-            Rango
+    <div class="stats-body">
+      <ui2-segmented
+        [options]="rangoOptions"
+        [value]="filtroRango()"
+        (valueChange)="onRangoSelect($event)"
+      />
+
+      @if (filterPanelOpen()) {
+        <div class="stats-range">
+          <ui2-datepicker
+            label="Desde"
+            mode="date"
+            [max]="filtroHasta() ?? hoy()"
+            [clearable]="false"
+            [value]="filtroDesde() ?? ''"
+            (valueChange)="desdeChange.emit($event)"
+          />
+          <ui2-datepicker
+            label="Hasta"
+            mode="date"
+            [min]="filtroDesde() ?? ''"
+            [max]="hoy()"
+            [clearable]="false"
+            [value]="filtroHasta() ?? ''"
+            (valueChange)="hastaChange.emit($event)"
+          />
+          <button
+            type="button"
+            class="stats-range__apply"
+            [disabled]="!canApplyCustom()"
+            (click)="aplicarRangoPersonalizado.emit()"
+            aria-label="Aplicar rango"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">check</span>
           </button>
         </div>
+      }
 
-        @if (filterPanelOpen()) {
-          <div class="filter-date-range">
-            <label class="filter-date-field">
-              <span class="filter-date-label">Desde</span>
-              <input
-                type="date"
-                class="filter-date-input"
-                [value]="filtroDesde() ?? ''"
-                [max]="filtroHasta() ?? hoy()"
-                (change)="onDesde($event)"
-              />
-            </label>
-            <span class="filter-date-arrow">
-              <span class="material-symbols-outlined" style="font-size: 16px">arrow_forward</span>
-            </span>
-            <label class="filter-date-field">
-              <span class="filter-date-label">Hasta</span>
-              <input
-                type="date"
-                class="filter-date-input"
-                [value]="filtroHasta() ?? ''"
-                [min]="filtroDesde() ?? ''"
-                [max]="hoy()"
-                (change)="onHasta($event)"
-              />
-            </label>
-            <button
-              type="button"
-              class="filter-apply-btn"
-              [disabled]="!filtroDesde() || !filtroHasta() || filtroDesde()! > filtroHasta()!"
-              (click)="aplicarRangoPersonalizado.emit()"
-              aria-label="Aplicar rango"
-            >
-              <span class="material-symbols-outlined">check</span>
-            </button>
-          </div>
-        }
-
-        @if (isCustomRange() && !filterPanelOpen()) {
-          <div class="filter-active-indicator">
-            <span class="material-symbols-outlined" style="font-size: 14px">filter_alt</span>
-            <span class="filter-active-label">{{ rangoLabel() }}</span>
-            <button
-              type="button"
-              class="filter-reset-btn"
-              (click)="resetearFiltro.emit()"
-              aria-label="Resetear filtro"
-            >
-              <span class="material-symbols-outlined" style="font-size: 14px">close</span>
-            </button>
-          </div>
-        }
-      </div>
+      @if (isCustomRange() && !filterPanelOpen()) {
+        <ui2-pill
+          variant="soft"
+          icon="filter_alt"
+          [clickable]="true"
+          (pillClick)="resetearFiltro.emit()"
+        >{{ rangoLabel() }} ✕</ui2-pill>
+      }
 
       @if (isLoading()) {
-        <div class="loading-inline">
-          <div class="shimmer-bar"></div>
-          <div class="shimmer-bar short"></div>
+        <div class="stats-loading">
+          <ui2-spinner />
         </div>
-      } @else if (estadisticas()) {
+      } @else if (estadisticas(); as stats) {
         <div class="stats-grid">
-          <div class="stat-card primary">
-            <div class="stat-header">
-              <span class="stat-label">Adherencia</span>
-              <span class="material-symbols-outlined stat-icon">trending_up</span>
-            </div>
-            <div class="stat-value-large">{{ estadisticas()?.adherenciaGeneral }}%</div>
-            <div class="stat-progress">
-              <div class="stat-progress-fill" [style.width.%]="estadisticas()?.adherenciaGeneral ?? 0"></div>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Sesiones</span>
-              <span class="material-symbols-outlined stat-icon">event_available</span>
-            </div>
-            <div class="stat-value-large">{{ estadisticas()?.totalSesiones }}</div>
-            <span class="stat-hint">días con ejercicios</span>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-label">Dolor promedio</span>
-              <span class="material-symbols-outlined stat-icon" [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)">sentiment_dissatisfied</span>
-            </div>
-            @if (estadisticas()?.promedioDolorGeneral !== null && estadisticas()?.promedioDolorGeneral !== undefined) {
-              <div class="stat-value-large" [class]="getDolorColor(estadisticas()?.promedioDolorGeneral ?? null)">
-                {{ estadisticas()?.promedioDolorGeneral | number:'1.0-1' }}<span class="stat-unit">/10</span>
-              </div>
-            } @else {
-              <div class="stat-value-large muted">—</div>
-              <span class="stat-hint">Sin datos</span>
-            }
-          </div>
-
-          <div class="stat-card gold">
-            <div class="stat-header">
-              <span class="stat-label">Racha actual</span>
-              <span class="material-symbols-outlined stat-icon icon-filled">local_fire_department</span>
-            </div>
-            <div class="stat-value-large">{{ estadisticas()?.rachaActual }}</div>
-            <span class="stat-hint">días seguidos</span>
-          </div>
+          <ui2-kpi-card
+            icon="trending_up"
+            label="Adherencia"
+            [value]="stats.adherenciaGeneral"
+            unit="%"
+          />
+          <ui2-kpi-card
+            icon="event_available"
+            iconColor="var(--success)"
+            label="Sesiones"
+            [value]="stats.totalSesiones"
+            delta="días con ejercicios"
+            deltaColor="var(--ink-500)"
+          />
+          <ui2-kpi-card
+            icon="sentiment_dissatisfied"
+            [iconColor]="(dolorPromedio() ?? 0) >= 7 ? 'var(--danger)' : (dolorPromedio() ?? 0) >= 4 ? 'var(--warning)' : 'var(--success)'"
+            label="Dolor promedio"
+            [value]="dolorPromedio() === null ? '—' : (dolorPromedio() | number:'1.0-1') ?? '—'"
+            [unit]="dolorPromedio() !== null ? '/10' : null"
+          />
+          <ui2-kpi-card
+            icon="local_fire_department"
+            iconColor="var(--warning)"
+            label="Racha actual"
+            [value]="stats.rachaActual"
+            delta="días seguidos"
+            deltaColor="var(--ink-500)"
+          />
         </div>
 
-        @if (estadisticas()?.adherenciaSemanal && estadisticas()!.adherenciaSemanal.length > 0) {
-          <div class="weekly-chart">
-            <h4 class="chart-title">Adherencia semanal</h4>
-            <div class="chart-bars">
-              @for (semana of estadisticas()!.adherenciaSemanal; track semana.semana) {
-                <div class="chart-bar-container">
-                  <div class="chart-bar-bg">
-                    <div class="chart-bar-fill" [style.height.%]="semana.porcentaje"></div>
+        @if (stats.adherenciaSemanal && stats.adherenciaSemanal.length > 0) {
+          <section class="stats-weekly">
+            <h4 class="stats-weekly__title">Adherencia semanal</h4>
+            <div class="stats-weekly__bars">
+              @for (semana of stats.adherenciaSemanal; track semana.semana) {
+                <div class="stats-weekly__bar">
+                  <div class="stats-weekly__track">
+                    <div class="stats-weekly__fill" [style.height.%]="semana.porcentaje"></div>
                   </div>
-                  <span class="chart-bar-label">{{ semana.semana }}</span>
-                  <span class="chart-bar-value">{{ semana.porcentaje }}%</span>
+                  <span class="stats-weekly__value">{{ semana.porcentaje }}%</span>
+                  <span class="stats-weekly__label">{{ semana.semana }}</span>
                 </div>
               }
             </div>
-          </div>
+          </section>
         }
 
-        @if (estadisticas()?.diasDesdeUltimaSesion !== null && estadisticas()?.diasDesdeUltimaSesion !== undefined) {
-          <div class="last-activity">
-            <span class="material-symbols-outlined activity-icon">schedule</span>
-            <span class="activity-text">
+        @if (stats.diasDesdeUltimaSesion !== null && stats.diasDesdeUltimaSesion !== undefined) {
+          <div class="stats-last">
+            <ui2-icon-badge icon="schedule" color="var(--ink-500)" [size]="32" [radius]="10" />
+            <span class="stats-last__text">
               Última actividad:
-              @if (estadisticas()?.diasDesdeUltimaSesion === 0) {
-                <strong class="text-success">Hoy</strong>
-              } @else if (estadisticas()?.diasDesdeUltimaSesion === 1) {
+              @if (stats.diasDesdeUltimaSesion === 0) {
+                <strong style="color: var(--success)">Hoy</strong>
+              } @else if (stats.diasDesdeUltimaSesion === 1) {
                 <strong>Ayer</strong>
               } @else {
-                <strong>hace {{ estadisticas()?.diasDesdeUltimaSesion }} días</strong>
+                <strong>hace {{ stats.diasDesdeUltimaSesion }} días</strong>
               }
             </span>
           </div>
         }
       } @else {
-        <div class="empty-state-inline">
-          <div class="empty-icon">
-            <span class="material-symbols-outlined">bar_chart</span>
-          </div>
-          <p class="empty-text">Sin datos suficientes</p>
-        </div>
+        <ui2-empty-state
+          icon="bar_chart"
+          title="Sin datos suficientes"
+          message="Cuando el paciente registre actividad aparecerán aquí sus métricas."
+        />
       }
     </div>
   }
-</section>
+</ui2-card>

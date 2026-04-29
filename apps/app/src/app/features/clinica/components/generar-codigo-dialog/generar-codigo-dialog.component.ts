@@ -1,14 +1,38 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, inject, signal, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { emailOptional } from '../../../../shared';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
+import {
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+  Ui2ToggleComponent,
+  Ui2RadioGroupComponent,
+  Ui2PillComponent,
+  type Ui2RadioOption,
+} from '../../../../shared/ui-v2';
 
 @Component({
   standalone: true,
   selector: 'app-generar-codigo-dialog',
-  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
+    Ui2DialogActionsComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+    Ui2ToggleComponent,
+    Ui2RadioGroupComponent,
+    Ui2PillComponent,
+  ],
   templateUrl: './generar-codigo-dialog.component.html',
   styleUrl: './generar-codigo-dialog.component.css',
 })
@@ -46,6 +70,31 @@ export class GenerarCodigoDialogComponent implements OnInit {
   // El formulario es válido si pasa validaciones base Y la validación de email
   formValido = computed(() => this.form.valid && this.emailValido());
 
+  // Opciones radio reactivas según permisos
+  tipoOptions = computed<Ui2RadioOption[]>(() => {
+    const opts: Ui2RadioOption[] = [
+      {
+        value: 'paciente',
+        label: 'Paciente',
+        description: 'Se unirá como paciente de la clínica',
+      },
+    ];
+    if (this.esAdmin) {
+      opts.push({
+        value: 'fisioterapeuta',
+        label: 'Fisioterapeuta',
+        description: 'Podrá gestionar pacientes',
+      });
+    }
+    return opts;
+  });
+
+  // Opciones avanzadas expandibles
+  showAdvanced = signal(false);
+
+  // Sección email expandida — calculado a partir del valor
+  vincularEmail = computed(() => !!this.formValue().vincularEmail);
+
   ngOnInit() {
     if (this.tipoInicial) {
       this.form.patchValue({ tipo: this.tipoInicial });
@@ -56,6 +105,10 @@ export class GenerarCodigoDialogComponent implements OnInit {
   error = signal<string | null>(null);
   codigoResult = signal<string | null>(null);
   emailEnviado = signal(false);
+
+  toggleAdvanced() {
+    this.showAdvanced.update((v) => !v);
+  }
 
   async onSubmit() {
     if (!this.formValido() || this.loading()) return;

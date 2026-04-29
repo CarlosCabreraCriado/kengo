@@ -40,6 +40,27 @@ export { Ui2SearchBoxComponent } from './search-box/search-box.component';
 export { Ui2SpinnerComponent } from './spinner/spinner.component';
 export { Ui2BackButtonComponent } from './back-button/back-button.component';
 export { Ui2EmptyStateComponent } from './empty-state/empty-state.component';
+export { Ui2DatepickerComponent } from './datepicker/datepicker.component';
+export type { Ui2DatepickerMode } from './datepicker/datepicker.component';
+export { Ui2ProgressBarComponent } from './progress-bar/progress-bar.component';
+export type {
+  Ui2ProgressBarSize,
+  Ui2ProgressBarMode,
+  Ui2ProgressBarColor,
+} from './progress-bar/progress-bar.component';
+
+// --- Diálogos ---
+export {
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+} from './dialog/dialog.component';
+export type { Ui2DialogActionsAlign } from './dialog/dialog.component';
+
+// --- Stepper ---
+export { Ui2StepperComponent, Ui2StepComponent } from './stepper/stepper.component';
+export type { Ui2StepperOrientation } from './stepper/stepper.component';
 
 // --- Moléculas ---
 export { Ui2ListRowComponent } from './list-row/list-row.component';

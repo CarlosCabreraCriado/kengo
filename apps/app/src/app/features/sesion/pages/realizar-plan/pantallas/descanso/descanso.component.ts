@@ -12,6 +12,7 @@ import { SesionProgressHeaderComponent } from '../../componentes/sesion-progress
 import { DescansoRespiracionComponent } from '../../componentes/descanso-piezas/descanso-respiracion/descanso-respiracion.component';
 import { DescansoProximoComponent } from '../../componentes/descanso-piezas/descanso-proximo/descanso-proximo.component';
 import { EjercicioPlan } from '../../../../../../../types/global';
+import { Ui2ButtonComponent } from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-descanso',
@@ -20,6 +21,7 @@ import { EjercicioPlan } from '../../../../../../../types/global';
     SesionProgressHeaderComponent,
     DescansoRespiracionComponent,
     DescansoProximoComponent,
+    Ui2ButtonComponent,
   ],
   templateUrl: './descanso.component.html',
   styleUrl: './descanso.component.css',

@@ -1,62 +1,59 @@
-<section class="content-section comments-section animate-in" style="--delay: 0.17s">
-  <header class="section-header clickable" (click)="toggle()">
-    <div class="section-header-left">
-      <div class="section-icon">
-        <span class="material-symbols-outlined">chat_bubble</span>
-      </div>
-      <div>
-        <h2 class="section-title">Comentarios del paciente</h2>
-        <p class="section-subtitle">{{ subtitle() }}</p>
-      </div>
-    </div>
-    @if (comentariosPendientes() > 0) {
-      <span class="comments-pending-badge">{{ comentariosPendientes() }}</span>
-    }
-    <span
-      class="material-symbols-outlined expand-icon"
-      [class.rotated]="expanded()"
-    >expand_more</span>
-  </header>
+<ui2-card [padding]="0">
+  <button type="button" class="cmt-header" (click)="toggle()">
+    <span class="cmt-header__left">
+      <ui2-icon-badge icon="chat_bubble" color="var(--kengo-primary)" [size]="36" [radius]="12" />
+      <span class="cmt-header__text">
+        <span class="cmt-header__title">Comentarios del paciente</span>
+        <span class="cmt-header__subtitle">{{ subtitle() }}</span>
+      </span>
+    </span>
+    <span class="cmt-header__right">
+      @if (comentariosPendientes() > 0) {
+        <ui2-pill variant="primary">{{ comentariosPendientes() }}</ui2-pill>
+      }
+      <span
+        class="material-symbols-outlined cmt-header__chev"
+        [class.cmt-header__chev--open]="expanded()"
+        aria-hidden="true"
+      >expand_more</span>
+    </span>
+  </button>
 
   @if (expanded()) {
-    <div class="section-content">
+    <div class="cmt-body">
       @if (isLoading()) {
-        <div class="loading-inline">
-          <div class="shimmer-bar"></div>
-          <div class="shimmer-bar short"></div>
+        <div class="cmt-loading">
+          <ui2-spinner />
         </div>
       } @else if (comentarios().length === 0) {
-        <div class="empty-state-inline">
-          <div class="empty-icon">
-            <span class="material-symbols-outlined">speaker_notes_off</span>
-          </div>
-          <p class="empty-text">Sin comentarios del paciente</p>
-        </div>
+        <ui2-empty-state
+          icon="speaker_notes_off"
+          title="Sin comentarios"
+          message="No hay comentarios del paciente todavía."
+        />
       } @else {
         @if (comentariosPendientes() > 0) {
-          <button
-            type="button"
-            class="see-all-btn mb-3 mt-0"
-            (click)="marcarTodosRevisados.emit()"
-          >
-            <span class="material-symbols-outlined" style="font-size: 1.125rem">done_all</span>
-            Marcar todos como leídos
-          </button>
+          <ui2-button
+            variant="secondary"
+            size="sm"
+            iconLeft="done_all"
+            (clicked)="marcarTodosRevisados.emit()"
+          >Marcar todos como leídos</ui2-button>
         }
 
-        <div class="comments-list">
+        <div class="cmt-list">
           @for (comentario of comentarios(); track comentario.id) {
             <article
-              class="comment-card comment-card--clickable"
-              [class.comment-card--unread]="!comentario.revisada"
+              class="cmt-card"
+              [class.cmt-card--unread]="!comentario.revisada"
               (click)="irASesionComentario.emit(comentario)"
             >
-              <div class="comment-header">
+              <div class="cmt-card__head">
                 <span
-                  class="comment-unread-dot"
-                  [class.comment-unread-dot--active]="!comentario.revisada"
+                  class="cmt-card__dot"
+                  [class.cmt-card__dot--active]="!comentario.revisada"
                 ></span>
-                <span class="comment-context">
+                <span class="cmt-card__context">
                   {{ formatearFechaComentario(comentario.fechaRegistro) }}
                   @if (comentario.nombre) {
                     @if (comentario.tituloPlan) {
@@ -71,29 +68,26 @@
                 </span>
               </div>
               @if (comentario.texto) {
-                <p class="comment-text">
-                  <span class="material-symbols-outlined act-quote-icon">format_quote</span>
+                <p class="cmt-card__text">
+                  <span class="material-symbols-outlined cmt-card__quote" aria-hidden="true">format_quote</span>
                   {{ comentario.texto }}
                 </p>
               }
-              <div class="comment-footer">
+              <div class="cmt-card__foot">
                 @if (comentario.dolorEscala !== null && comentario.dolorEscala !== undefined) {
-                  <span
-                    class="act-pain"
-                    [class]="getDolorColor(comentario.dolorEscala)"
-                  >
-                    <span class="material-symbols-outlined">sentiment_dissatisfied</span>
+                  <span class="cmt-card__pain" [class]="getDolorColor(comentario.dolorEscala)">
+                    <span class="material-symbols-outlined" aria-hidden="true">sentiment_dissatisfied</span>
                     Dolor: {{ comentario.dolorEscala }}/10
                   </span>
                 }
-                <div class="act-spacer"></div>
+                <span class="cmt-card__spacer"></span>
                 @if (!comentario.revisada) {
                   <button
                     type="button"
-                    class="act-comment-btn"
+                    class="cmt-card__read"
                     (click)="$event.stopPropagation(); marcarRevisado.emit(comentario)"
                   >
-                    <span class="material-symbols-outlined">check</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">check</span>
                     Marcar como leído
                   </button>
                 }
@@ -104,4 +98,4 @@
       }
     </div>
   }
-</section>
+</ui2-card>

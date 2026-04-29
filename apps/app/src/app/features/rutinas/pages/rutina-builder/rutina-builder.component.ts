@@ -1,27 +1,42 @@
 import {
+  ChangeDetectionStrategy,
   Component,
-  inject,
-  OnInit,
-  OnDestroy,
-  signal,
   computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
 } from '@angular/core';
-import { assetUrl } from '../../../../core/utils/asset-url';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   FormBuilder,
-  Validators,
-  ReactiveFormsModule,
   FormsModule,
+  ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { Dialog } from '@angular/cdk/dialog';
 
+import { assetUrl } from '../../../../core/utils/asset-url';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { SafeHtmlPipe, useResponsive, EmptyStateComponent, BackButtonComponent } from '../../../../shared';
+import { SafeHtmlPipe, useResponsive } from '../../../../shared';
+import {
+  Ui2BackButtonComponent,
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2InputComponent,
+  Ui2PillComponent,
+  Ui2RadioGroupComponent,
+  Ui2SectionComponent,
+  Ui2SpinnerComponent,
+  Ui2TextareaComponent,
+  type Ui2RadioOption,
+} from '../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-rutina-builder',
@@ -32,11 +47,21 @@ import { SafeHtmlPipe, useResponsive, EmptyStateComponent, BackButtonComponent }
     DragDropModule,
     RouterLink,
     SafeHtmlPipe,
-    EmptyStateComponent,
-    BackButtonComponent,
+    Ui2BackButtonComponent,
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2InputComponent,
+    Ui2PillComponent,
+    Ui2RadioGroupComponent,
+    Ui2SectionComponent,
+    Ui2SpinnerComponent,
+    Ui2TextareaComponent,
   ],
   templateUrl: './rutina-builder.component.html',
   styleUrl: './rutina-builder.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
   },
@@ -63,22 +88,48 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     D: 'Domingo',
   };
 
-  isSaving = signal(false);
-  isLoading = signal(false);
-  isEditMode = signal(false);
+  readonly visibilidadOptions: Ui2RadioOption[] = [
+    {
+      value: 'privado',
+      label: 'Privada',
+      description: 'Solo tú puedes usarla',
+    },
+    {
+      value: 'clinica',
+      label: 'Clínica',
+      description: 'Visible para los fisios de tu clínica',
+    },
+  ];
+
+  readonly isSaving = signal(false);
+  readonly isLoading = signal(false);
+  readonly isEditMode = signal(false);
 
   // Signals para modo edicion por ejercicio
-  ejercicioEditando = signal<number | null>(null);
+  readonly ejercicioEditando = signal<number | null>(null);
 
   // Computed para UI
-  items = computed(() => this.svc.items());
-  totalItems = computed(() => this.svc.totalItems());
-  canSave = computed(() => this.svc.canSave() && !this.isSaving());
+  readonly items = computed(() => this.svc.items());
+  readonly totalItems = computed(() => this.svc.totalItems());
+  readonly canSave = computed(() => this.svc.canSave() && !this.isSaving());
+
+  readonly pageOverline = computed(() => {
+    const total = this.totalItems();
+    return `${total} ejercicio${total === 1 ? '' : 's'} en la plantilla`;
+  });
 
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
     descripcion: [''],
     visibilidad: ['privado' as 'privado' | 'clinica'],
+  });
+
+  readonly nombreError = computed<string | null>(() => {
+    const c = this.form.controls.nombre;
+    if (!c.touched) return null;
+    if (c.hasError('required')) return 'El nombre es requerido';
+    if (c.hasError('minlength')) return 'Mínimo 3 caracteres';
+    return null;
   });
 
   async ngOnInit() {
@@ -140,6 +191,16 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.svc.updateItem(i, patch);
   }
 
+  updateNumber(i: number, key: keyof EjercicioPlan, ev: Event) {
+    const v = +(ev.target as HTMLInputElement).value || 0;
+    this.svc.updateItem(i, { [key]: v } as Partial<EjercicioPlan>);
+  }
+
+  updateText(i: number, key: keyof EjercicioPlan, ev: Event) {
+    const v = (ev.target as HTMLInputElement | HTMLTextAreaElement).value;
+    this.svc.updateItem(i, { [key]: v } as Partial<EjercicioPlan>);
+  }
+
   isDia(it: EjercicioPlan, d: DiaSemana) {
     return it.diasSemana?.includes(d);
   }
@@ -153,6 +214,10 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
       set.add(d);
     }
     this.svc.updateItem(i, { diasSemana: Array.from(set) as DiaSemana[] });
+  }
+
+  toggleEdicion(i: number) {
+    this.ejercicioEditando.set(this.ejercicioEditando() === i ? null : i);
   }
 
   removeEjercicio(ejercicioId: string) {
@@ -183,7 +248,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
       const v = this.form.value;
       const nombre = v.nombre || 'Plantilla sin nombre';
       const descripcion = v.descripcion || '';
-      const visibilidad = v.visibilidad || 'privado';
+      const visibilidad = (v.visibilidad as 'privado' | 'clinica') || 'privado';
 
       if (this.isEditMode()) {
         const success = await this.svc.update(nombre, descripcion, visibilidad);

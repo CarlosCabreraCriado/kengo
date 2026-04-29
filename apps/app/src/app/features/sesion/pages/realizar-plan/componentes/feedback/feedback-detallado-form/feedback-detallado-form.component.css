@@ -1,11 +1,6 @@
 @reference "tailwindcss";
 
 :host {
-  --primary: var(--kengo-primary);
-  --tertiary: var(--kengo-tertiary);
-  --surface: rgba(255, 255, 255, 0.6);
-  --border: rgba(255, 255, 255, 0.5);
-
   display: contents;
 }
 
@@ -15,20 +10,18 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 16px 18px;
+  padding: 14px 18px;
   margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(var(--kengo-primary-rgb), 0.12);
-  border-radius: 16px;
+  background: var(--cream-50);
+  border: 1px solid rgba(231, 92, 62, 0.18);
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .collapse-detail-btn:hover {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(var(--kengo-primary-rgb), 0.2);
+  background: white;
+  border-color: var(--kengo-primary);
 }
 
 .collapse-detail-btn:active {
@@ -37,67 +30,55 @@
 
 .arrow-icon {
   font-size: 1.25rem;
-  color: var(--primary);
+  color: var(--kengo-primary);
 }
 
 .detail-text {
   flex: 1;
   text-align: center;
+  font-family: Galvji, sans-serif;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--primary);
+  font-weight: 700;
+  color: var(--kengo-primary);
 }
 
 /* === Tarjeta de ejercicio === */
-.exercise-card {
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: all 0.3s ease;
+.exercise-card-wrapper {
+  display: block;
 }
 
-.exercise-card.completed {
-  border-color: rgba(34, 197, 94, 0.2);
-  box-shadow:
-    0 4px 24px rgba(34, 197, 94, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+.exercise-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.exercise-card-wrapper.completed ::ng-deep .ui2-card {
+  border-color: rgba(34, 197, 94, 0.25);
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.08);
 }
 
 .exercise-header {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 16px;
 }
 
 .exercise-number {
+  flex-shrink: 0;
+}
+
+.number-badge {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: rgba(var(--kengo-primary-rgb), 0.1);
+  background: color-mix(in srgb, var(--kengo-primary) 12%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--primary);
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-}
-
-.exercise-card.completed .exercise-number {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: white;
-}
-
-.check-icon {
-  font-size: 1.25rem;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 0.95rem;
+  color: var(--kengo-primary);
 }
 
 .exercise-info {
@@ -110,23 +91,15 @@
 }
 
 .exercise-name {
+  font-family: Galvji, sans-serif;
   font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.dolor-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
   font-weight: 700;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  color: var(--ink-900);
 }
 
 /* === Sección de nota === */
 .note-section {
-  margin-top: 14px;
+  margin-top: 4px;
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.02);
   overflow: hidden;
@@ -139,7 +112,7 @@
   width: 100%;
   padding: 12px 14px;
   background: transparent;
-  border: none;
+  border: 0;
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -148,26 +121,23 @@
   background: rgba(0, 0, 0, 0.03);
 }
 
-.note-toggle:active {
-  background: rgba(0, 0, 0, 0.05);
-}
-
 .note-icon {
   font-size: 1.15rem;
-  color: #9ca3af;
+  color: var(--ink-500);
 }
 
 .note-label {
   flex: 1;
   text-align: left;
+  font-family: Galvji, sans-serif;
   font-size: 0.8rem;
-  font-weight: 500;
-  color: #6b7280;
+  font-weight: 600;
+  color: var(--ink-700);
 }
 
 .expand-icon {
   font-size: 1.25rem;
-  color: #9ca3af;
+  color: var(--ink-500);
   transition: transform 0.3s ease;
 }
 
@@ -179,111 +149,25 @@
   padding: 0 14px 14px;
 }
 
-.note-input {
-  width: 100%;
-  padding: 14px;
-  border: 1.5px solid rgba(var(--kengo-primary-rgb), 0.15);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-  color: #374151;
-  resize: none;
-  transition: all 0.2s ease;
-}
-
-.note-input::placeholder {
-  color: #9ca3af;
-}
-
-.note-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.1);
-}
-
 /* === Tarjeta observaciones === */
-.observations-card {
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+.observations-wrapper {
+  display: block;
 }
 
 .observations-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-.observations-icon {
-  font-size: 1.25rem;
-  color: var(--tertiary);
+.observations-header ui2-section-label {
+  margin-bottom: 0;
 }
 
-.observations-title {
-  font-size: 0.95rem;
+.optional {
   font-weight: 600;
-  color: #1f2937;
-}
-
-.observations-optional {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #9ca3af;
-}
-
-.observations-input {
-  width: 100%;
-  padding: 16px;
-  border: 1.5px solid rgba(var(--kengo-tertiary-rgb), 0.2);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem;
-  color: #374151;
-  resize: none;
-  transition: all 0.2s ease;
-}
-
-.observations-input::placeholder {
-  color: #9ca3af;
-}
-
-.observations-input:focus {
-  outline: none;
-  border-color: var(--tertiary);
-  box-shadow: 0 0 0 3px rgba(var(--kengo-tertiary-rgb), 0.15);
-}
-
-.icon-filled {
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-}
-
-/* === Escala dolor embebida === */
-:host ::ng-deep .escala-container {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: none;
-}
-
-@media (min-width: 768px) {
-  .exercise-card,
-  .observations-card {
-    padding: 24px;
-    border-radius: 28px;
-  }
-
-  .collapse-detail-btn {
-    padding: 18px 20px;
-    border-radius: 18px;
-  }
+  color: var(--ink-500);
+  text-transform: none;
+  letter-spacing: 0;
 }

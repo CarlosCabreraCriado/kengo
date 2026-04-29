@@ -1,10 +1,16 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  Ui2BackButtonComponent,
+  Ui2PillComponent,
+  Ui2ProgressBarComponent,
+} from '../../../../../../shared/ui-v2';
 
 export type SesionProgressHeaderVariant = 'plain' | 'overlay';
 
 @Component({
   selector: 'app-sesion-progress-header',
   standalone: true,
+  imports: [Ui2BackButtonComponent, Ui2PillComponent, Ui2ProgressBarComponent],
   templateUrl: './sesion-progress-header.component.html',
   styleUrl: './sesion-progress-header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,7 +29,7 @@ export class SesionProgressHeaderComponent {
 
   readonly salir = output<void>();
 
-  onSalir(event: Event): void {
+  onSalir(event: MouseEvent): void {
     event.stopPropagation();
     this.salir.emit();
   }

@@ -9,6 +9,7 @@ import {
   DestroyRef,
   ElementRef,
   ViewChild,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { assetUrl } from '../../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -29,15 +30,38 @@ import {
   emailRequired,
   passwordRequired,
   postalCode,
-  BackButtonComponent,
 } from '../../../../../shared';
+
+// V2 components
+import {
+  Ui2AvatarComponent,
+  Ui2BackButtonComponent,
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2IconBadgeComponent,
+  Ui2InputComponent,
+  Ui2PillComponent,
+  Ui2SectionComponent,
+  Ui2SpinnerComponent,
+} from '../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    BackButtonComponent,
+    Ui2AvatarComponent,
+    Ui2BackButtonComponent,
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2IconBadgeComponent,
+    Ui2InputComponent,
+    Ui2PillComponent,
+    Ui2SectionComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css',
@@ -86,6 +110,11 @@ export class PerfilComponent implements OnInit, OnDestroy {
       : null;
   });
 
+  public nombreCompleto = computed(() => {
+    const u = this.usuario();
+    return `${u?.first_name ?? ''} ${u?.last_name ?? ''}`.trim();
+  });
+
   public formularioCambiado = signal(false);
   public formularioInicializado = signal(false);
   readonly subiendoAvatar = signal(false);
@@ -117,9 +146,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
   });
 
   // === SEGURIDAD (Cambio de contraseña) ===
-  public hideCurrentPassword = signal(true);
-  public hideNewPassword = signal(true);
-  public hideConfirmPassword = signal(true);
   public cambiandoPassword = signal(false);
 
   public formularioPassword = this.fb.group({
@@ -147,31 +173,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   async guardarCambios() {
     if (this.formularioUsuario.invalid) {
-      /*
-      this.dialog.open(DialogoComponent, {
-        data: {
-          tipo: 'error',
-          titulo: 'Formulario no válido',
-          mensaje: 'Por favor, revisa los campos marcados en rojo.',
-        },
-      });
-      */
       return;
     }
 
     if (!this.formularioCambiado()) {
       return;
     }
-
-    /*
-    const dialogoProcesando = this.dialog.open(DialogoComponent, {
-      data: {
-        tipo: 'procesando',
-        titulo: 'Guardando cambios...',
-        mensaje: '',
-      },
-    });
-    */
 
     const payload = this.formularioUsuario.value;
 
@@ -193,7 +200,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
   }
 
   cambiarFotoPerfil() {
-    // Usar el input nativo de archivos
     if (!this.subiendoAvatar()) {
       this.fileInput?.nativeElement.click();
     }
@@ -258,42 +264,14 @@ export class PerfilComponent implements OnInit, OnDestroy {
       this.formularioPassword.value;
 
     if (this.formularioPassword.invalid) {
-      /*
-      this.dialog.open(DialogoComponent, {
-        data: {
-          tipo: 'error',
-          titulo: 'Formulario no válido',
-          mensaje: 'Por favor, completa todos los campos correctamente.',
-        },
-      });
-      */
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      /*
-      this.dialog.open(DialogoComponent, {
-        data: {
-          tipo: 'error',
-          titulo: 'Las contraseñas no coinciden',
-          mensaje: 'La nueva contraseña y su confirmación deben ser iguales.',
-        },
-      });
-      */
       return;
     }
 
     this.cambiandoPassword.set(true);
-
-    /*
-    const dialogoProcesando = this.dialog.open(DialogoComponent, {
-      data: {
-        tipo: 'procesando',
-        titulo: 'Cambiando contraseña...',
-        mensaje: '',
-      },
-    });
-    */
 
     try {
       const usuario = this.sessionService.usuario();
@@ -311,26 +289,8 @@ export class PerfilComponent implements OnInit, OnDestroy {
       }
 
       this.formularioPassword.reset();
-      /*
-      this.dialog.open(DialogoComponent, {
-        data: {
-          tipo: 'exito',
-          titulo: 'Contraseña actualizada',
-          mensaje: 'Tu contraseña ha sido cambiada correctamente.',
-        },
-      });
-      */
     } catch (e) {
-      //dialogoProcesando.close();
-      /*
-      this.dialog.open(DialogoComponent, {
-        data: {
-          tipo: 'error',
-          titulo: 'Error',
-          mensaje: 'No se pudo cambiar la contraseña. Inténtalo de nuevo.',
-        },
-      });
-      */
+      // error handled silently for now
     } finally {
       this.cambiandoPassword.set(false);
     }
@@ -434,7 +394,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   onCodeInput(event: Event) {
     const input = event.target as HTMLInputElement;
-    // Solo permitir dígitos y máximo 6 caracteres
     const value = input.value.replace(/\D/g, '').slice(0, 6);
     this.verificationCode.set(value);
     input.value = value;
@@ -461,9 +420,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
           type: 'success',
           text: 'Email verificado correctamente',
         });
-        // Recargar usuario para actualizar el estado
         await this.sessionService.refreshUsuario();
-        // Cerrar panel después de un momento
         setTimeout(() => {
           this.showVerificationPanel.set(false);
           this.resetVerificationState();

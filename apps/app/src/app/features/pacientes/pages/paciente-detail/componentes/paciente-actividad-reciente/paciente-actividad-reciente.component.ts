@@ -17,11 +17,23 @@ import {
   getTipoColor,
   getTipoIcon,
 } from '../../../../utils/format-helpers';
+import {
+  Ui2CardComponent,
+  Ui2EmptyStateComponent,
+  Ui2IconBadgeComponent,
+  Ui2SpinnerComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-paciente-actividad-reciente',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [
+    DecimalPipe,
+    Ui2CardComponent,
+    Ui2EmptyStateComponent,
+    Ui2IconBadgeComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './paciente-actividad-reciente.component.html',
   styleUrl: './paciente-actividad-reciente.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,9 +47,6 @@ export class PacienteActividadRecienteComponent {
   readonly diasSinActividad = input<number>(0);
   readonly filtroRango = input<RangoFiltro>('15');
   readonly fechaExpandida = input<string | null>(null);
-  /** Map idRegistro → NotificacionFisio (typed como id de la alerta).
-   *  Permite al subcomponente saber si una nota individual tiene una
-   *  notificación pendiente de revisar sin conocer la lista global. */
   readonly notificacionesPorRegistro = input<
     Record<string, NotificacionFisio>
   >({});

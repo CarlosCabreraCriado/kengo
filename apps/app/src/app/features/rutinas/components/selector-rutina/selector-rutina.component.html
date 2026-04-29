@@ -1,0 +1,104 @@
+<ui2-dialog-host>
+  <ui2-dialog-header
+    title="Seleccionar rutina"
+    subtitle="Carga una de tus plantillas como base"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    <div class="sr-toolbar">
+      <ui2-search-box
+        placeholder="Nombre de la rutina..."
+        [ngModel]="busqueda()"
+        (valueChange)="onBusquedaChange($event)"
+      ></ui2-search-box>
+
+      <ui2-select
+        [options]="filtroOptions"
+        [ngModel]="filtro()"
+        (ngModelChange)="onFiltroChange($any($event))"
+      ></ui2-select>
+    </div>
+
+    @if (rutinasService.isLoading()) {
+      <ui2-progress-bar mode="indeterminate" size="sm"></ui2-progress-bar>
+    }
+
+    @if (rutinas().length === 0 && !rutinasService.isLoading()) {
+      <ui2-empty-state
+        icon="folder_off"
+        title="Sin resultados"
+        message="No encontramos rutinas que coincidan con la búsqueda."
+      ></ui2-empty-state>
+    } @else {
+      <div class="sr-list">
+        @for (rutina of rutinas(); track rutina.id; let i = $index) {
+          <button
+            type="button"
+            class="sr-row"
+            [class.sr-row--active]="selectedId() === rutina.id"
+            (click)="selectRutina(rutina)"
+          >
+            <ui2-list-row
+              [icon]="rutina.visibilidad === 'privado' ? 'lock' : 'domain'"
+              [iconColor]="rutina.visibilidad === 'privado' ? 'var(--ink-500)' : 'var(--kengo-primary)'"
+              [title]="rutina.nombre"
+              [subtitle]="rutina.descripcion || null"
+              [isFirst]="i === 0"
+            >
+              @if (selectedId() === rutina.id) {
+                <ui2-pill variant="primary" size="sm" icon="check">Seleccionada</ui2-pill>
+              }
+            </ui2-list-row>
+          </button>
+        }
+      </div>
+    }
+
+    @if (selectedRutina(); as rutina) {
+      <div class="sr-preview">
+        <div class="sr-preview__head">
+          <span class="sr-preview__label">Vista previa</span>
+          <span class="sr-preview__title">{{ rutina.nombre }}</span>
+        </div>
+
+        @if (isLoadingPreview()) {
+          <ui2-progress-bar mode="indeterminate" size="sm"></ui2-progress-bar>
+        } @else if (previewEjercicios().length > 0) {
+          <ul class="sr-preview__list">
+            @for (ej of previewEjercicios(); track ej.id; let i = $index) {
+              <li class="sr-preview__item">
+                <div class="sr-preview__thumb">
+                  @if (ej.ejercicio.portada) {
+                    <img
+                      [src]="thumbUrl(ej.ejercicio.portada)"
+                      [alt]="ej.ejercicio.nombre"
+                    />
+                  } @else {
+                    <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                  }
+                </div>
+                <span class="sr-preview__name">
+                  {{ i + 1 }}. {{ ej.ejercicio.nombre }}
+                </span>
+                <ui2-pill variant="soft" size="sm">
+                  {{ ej.series || 3 }}×{{ ej.repeticiones || 12 }}
+                </ui2-pill>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </ui2-dialog-content>
+
+  <ui2-dialog-actions align="end">
+    <ui2-button variant="secondary" (clicked)="cerrar()">Cancelar</ui2-button>
+    <ui2-button
+      variant="primary"
+      iconLeft="check"
+      [disabled]="!selectedId()"
+      (clicked)="confirmar()"
+    >Usar rutina</ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

@@ -5,10 +5,26 @@ import {
   output,
 } from '@angular/core';
 import { Usuario } from '../../../../../../../types/global';
+import {
+  Ui2AvatarComponent,
+  Ui2BackButtonComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2IconBadgeComponent,
+  Ui2PillComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-paciente-hero-card',
   standalone: true,
+  imports: [
+    Ui2AvatarComponent,
+    Ui2BackButtonComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2IconBadgeComponent,
+    Ui2PillComponent,
+  ],
   templateUrl: './paciente-hero-card.component.html',
   styleUrl: './paciente-hero-card.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
