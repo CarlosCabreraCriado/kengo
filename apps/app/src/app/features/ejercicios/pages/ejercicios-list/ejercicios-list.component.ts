@@ -60,8 +60,8 @@ export class EjerciciosListComponent implements OnInit {
   public vista = signal<Vista>('lista');
 
   readonly vistaOptions: Ui2SegmentedOption[] = [
-    { id: 'vineta', label: 'Cuadrícula' },
-    { id: 'lista', label: 'Lista' },
+    { id: 'vineta', label: 'Cuadrícula', icon: 'grid_view' },
+    { id: 'lista', label: 'Lista', icon: 'view_list' },
   ];
 
   readonly catalogoTabs: Ui2SegmentedOption[] = [

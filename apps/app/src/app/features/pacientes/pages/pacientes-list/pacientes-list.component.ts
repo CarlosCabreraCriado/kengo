@@ -84,8 +84,8 @@ export class PacientesListComponent {
   // Vista (toggle entre cuadrícula y lista)
   public vista = signal<Vista>('card');
   readonly vistaOptions: Ui2SegmentedOption[] = [
-    { id: 'card', label: 'Cuadrícula' },
-    { id: 'lista', label: 'Lista' },
+    { id: 'card', label: 'Cuadrícula', icon: 'grid_view' },
+    { id: 'lista', label: 'Lista', icon: 'view_list' },
   ];
 
   isMovil = useResponsive().esMobile;

@@ -1,14 +1,16 @@
 <div class="el-page">
   <!-- ========================================================== -->
-  <!-- Tabs Ejercicios / Rutinas                                   -->
+  <!-- Tabs Ejercicios / Rutinas (solo móvil)                      -->
   <!-- ========================================================== -->
-  <ui2-section [padding]="'4px 20px 8px'">
-    <ui2-segmented
-      [options]="catalogoTabs"
-      value="ejercicios"
-      (valueChange)="onCatalogoTabChange($event)"
-    ></ui2-segmented>
-  </ui2-section>
+  <div class="lg:hidden">
+    <ui2-section [padding]="'4px 20px 8px'">
+      <ui2-segmented
+        [options]="catalogoTabs"
+        value="ejercicios"
+        (valueChange)="onCatalogoTabChange($event)"
+      ></ui2-segmented>
+    </ui2-section>
+  </div>
 
   <!-- ========================================================== -->
   <!-- Header                                                       -->

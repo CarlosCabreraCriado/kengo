@@ -3,11 +3,13 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 export interface Ui2SegmentedOption {
   id: string;
   label: string;
+  icon?: string;
 }
 
 /**
  * Segmented control V2 — pill glassmorphism con N pestañas.
  * El segmento activo se resalta en coral con sombra. Resto en transparente con `--ink-500`.
+ * Si `opt.icon` está presente, se renderiza el icono (Material Symbol) y `label` se usa como aria-label.
  */
 @Component({
   selector: 'ui2-segmented',
@@ -21,9 +23,18 @@ export interface Ui2SegmentedOption {
           role="tab"
           class="ui2-seg__item"
           [class.ui2-seg__item--active]="opt.id === value()"
+          [class.ui2-seg__item--icon]="!!opt.icon"
           [attr.aria-selected]="opt.id === value() ? 'true' : 'false'"
+          [attr.aria-label]="opt.icon ? opt.label : null"
+          [attr.title]="opt.icon ? opt.label : null"
           (click)="select(opt.id)"
-        >{{ opt.label }}</button>
+        >
+          @if (opt.icon) {
+            <span class="material-symbols-outlined ui2-seg__icon" aria-hidden="true">{{ opt.icon }}</span>
+          } @else {
+            {{ opt.label }}
+          }
+        </button>
       }
     </div>
   `,
@@ -41,6 +52,9 @@ export interface Ui2SegmentedOption {
     }
     .ui2-seg__item {
       flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 0;
       padding: 8px 0;
       border-radius: 9999px;
@@ -56,6 +70,13 @@ export interface Ui2SegmentedOption {
       background: var(--kengo-primary);
       color: white;
       box-shadow: 0 4px 10px -3px rgba(231, 92, 62, 0.4);
+    }
+    .ui2-seg__item--icon {
+      padding: 8px 18px;
+    }
+    .ui2-seg__icon {
+      font-size: 20px;
+      line-height: 1;
     }
   `],
 })

@@ -1,9 +1,10 @@
 import type { SidebarNavGroup, TabItem } from '../../../../../shared/ui-v2';
 
 export const FISIO_TAB_BAR_TABS: TabItem[] = [
-  { id: 'home',     label: 'Inicio',    icon: 'home',     route: '/inicio/fisio',   matchPrefix: '/inicio/fisio' },
-  { id: 'pacientes', label: 'Pacientes', icon: 'group',    route: '/mis-pacientes',  matchPrefix: '/mis-pacientes' },
-  { id: 'clinica',  label: 'Clínica',   icon: 'apartment', route: '/mi-clinica',     matchPrefix: '/mi-clinica' },
+  { id: 'home',      label: 'Inicio',    icon: 'home',            route: '/inicio/fisio',  matchPrefix: '/inicio/fisio' },
+  { id: 'ejercicios', label: 'Ejercicios', icon: 'fitness_center', route: '/ejercicios',    matchPrefix: ['/ejercicios', '/rutinas'] },
+  { id: 'pacientes', label: 'Pacientes', icon: 'group',           route: '/mis-pacientes', matchPrefix: '/mis-pacientes' },
+  { id: 'clinica',   label: 'Clínica',   icon: 'apartment',       route: '/mi-clinica',    matchPrefix: '/mi-clinica' },
 ];
 
 export const FISIO_SIDEBAR_GROUPS: SidebarNavGroup[] = [

@@ -8,7 +8,7 @@ export interface TabItem {
   label: string;
   icon: string;
   route: string;
-  matchPrefix: string;
+  matchPrefix: string | readonly string[];
 }
 
 const DEFAULT_TABS: TabItem[] = [
@@ -112,7 +112,10 @@ export class Ui2PatientTabBarComponent {
 
   readonly activeId = computed(() => {
     const url = this.currentUrl() ?? '';
-    const match = this.tabs().find((t) => url.startsWith(t.matchPrefix));
+    const match = this.tabs().find((t) => {
+      const prefixes = Array.isArray(t.matchPrefix) ? t.matchPrefix : [t.matchPrefix as string];
+      return prefixes.some((p) => url.startsWith(p));
+    });
     return match?.id ?? null;
   });
 }

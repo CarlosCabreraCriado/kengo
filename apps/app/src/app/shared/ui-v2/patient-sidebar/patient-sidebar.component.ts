@@ -199,6 +199,8 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
     :host {
       display: block;
       height: 100%;
+      position: relative;
+      z-index: 20;
     }
     .ui2-sidebar {
       position: relative;
