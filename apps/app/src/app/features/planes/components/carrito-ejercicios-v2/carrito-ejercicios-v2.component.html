@@ -1,0 +1,202 @@
+@if (drawerAbierto()) {
+  <div class="ui2-cart__backdrop" (click)="cerrar()" aria-hidden="true"></div>
+}
+
+<aside
+  class="ui2-cart__panel"
+  [class.ui2-cart__panel--open]="drawerAbierto()"
+  role="dialog"
+  aria-label="Carrito de ejercicios"
+>
+  <header class="ui2-cart__header">
+    <h2 class="ui2-cart__title">{{ headerTitle() }}</h2>
+    <button
+      type="button"
+      class="ui2-cart__icon-btn"
+      (click)="cerrar()"
+      aria-label="Cerrar"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
+  </header>
+
+  <section class="ui2-cart__subject">
+    <ui2-card variant="tinted" [padding]="14" [radius]="22">
+      <div class="ui2-cart__subject-row">
+        @if (isRutinaMode()) {
+          <span class="ui2-cart__subject-icon">
+            <ui2-icon-badge icon="bookmark_add" [size]="56" [radius]="18"></ui2-icon-badge>
+          </span>
+        } @else {
+          <ui2-avatar
+            [src]="perfilUrl()"
+            [name]="pacienteNombre()"
+            size="lg"
+            gradient="coral"
+            [border]="true"
+          ></ui2-avatar>
+        }
+        <div class="ui2-cart__subject-text">
+          <p class="ui2-cart__subject-name">
+            {{ isRutinaMode() ? 'Creando rutina' : pacienteNombre() }}
+          </p>
+          <p class="ui2-cart__subject-sub">{{ subjectSubtitle() }}</p>
+        </div>
+        @if (isRutinaMode()) {
+          <button
+            type="button"
+            class="ui2-cart__icon-btn ui2-cart__icon-btn--ghost"
+            (click)="salirModoRutina()"
+            aria-label="Salir del modo rutina"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        } @else if (svc.paciente()) {
+          <button
+            type="button"
+            class="ui2-cart__icon-btn ui2-cart__icon-btn--ghost"
+            (click)="eliminarAsignacion()"
+            aria-label="Eliminar asignación"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">person_remove</span>
+          </button>
+        }
+      </div>
+    </ui2-card>
+  </section>
+
+  <section class="ui2-cart__items">
+    @if (items().length) {
+      @for (it of items(); track it.ejercicio.id) {
+        <ui2-card [padding]="10" [radius]="18">
+          <div class="ui2-cart__item">
+            <div class="ui2-cart__thumb">
+              @if (it.ejercicio.portada) {
+                <img [src]="thumbUrl(it.ejercicio.portada)" alt="" />
+              } @else {
+                <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+              }
+            </div>
+            <div class="ui2-cart__item-text">
+              <p class="ui2-cart__item-name">{{ it.ejercicio.nombre }}</p>
+              <p class="ui2-cart__item-meta">{{ dosificacion(it) }}</p>
+            </div>
+            <button
+              type="button"
+              class="ui2-cart__icon-btn ui2-cart__icon-btn--danger"
+              (click)="eliminar(it.ejercicio.id)"
+              aria-label="Eliminar ejercicio"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+            </button>
+          </div>
+        </ui2-card>
+      }
+      <button
+        type="button"
+        class="ui2-cart__add-row"
+        (click)="irAEjercicios()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        <span>Añadir ejercicio</span>
+      </button>
+    } @else {
+      <ui2-empty-state
+        icon="fitness_center"
+        title="Sin ejercicios"
+        message="Añade ejercicios desde la galería para empezar."
+        actionLabel="Ir a ejercicios"
+        actionIcon="add"
+        (action)="irAEjercicios()"
+      ></ui2-empty-state>
+    }
+  </section>
+
+  <footer class="ui2-cart__footer">
+    @if (isRutinaMode()) {
+      <ui2-cta-bar
+        variant="primary"
+        icon="bookmark_add"
+        trailingIcon="arrow_forward"
+        title="Guardar rutina"
+        [subtitle]="canGuardarRutina() ? 'Crear con los ejercicios actuales' : 'Añade ejercicios primero'"
+        [disabled]="!canGuardarRutina()"
+        (clicked)="guardarRutinaDirectamente()"
+      ></ui2-cta-bar>
+      <div class="ui2-cart__footer-row">
+        <ui2-button
+          variant="secondary"
+          iconLeft="tune"
+          [fullWidth]="true"
+          [disabled]="!canGuardarRutina()"
+          (clicked)="configurarRutina()"
+        >Dosificación</ui2-button>
+        <ui2-button
+          variant="secondary"
+          iconLeft="folder_open"
+          [fullWidth]="true"
+          (clicked)="cargarRutina()"
+        >Cargar</ui2-button>
+      </div>
+    } @else {
+      <ui2-cta-bar
+        variant="primary"
+        [icon]="isEditMode() ? 'arrow_back' : 'arrow_forward'"
+        [trailingIcon]="isEditMode() ? 'edit' : 'arrow_forward'"
+        [title]="isEditMode() ? 'Volver al plan' : 'Configurar plan'"
+        [subtitle]="canConfigurarPlan() ? null : 'Selecciona paciente y ejercicios'"
+        [disabled]="!canConfigurarPlan()"
+        (clicked)="configurarPlan()"
+      ></ui2-cta-bar>
+      @if (!isEditMode()) {
+        <div class="ui2-cart__footer-row">
+          <ui2-button
+            variant="secondary"
+            iconLeft="bookmarks"
+            [fullWidth]="true"
+            [disabled]="!svc.paciente()"
+            (clicked)="cargarRutina()"
+          >Rutinas</ui2-button>
+          <ui2-button
+            variant="secondary"
+            iconLeft="person_search"
+            [fullWidth]="true"
+            (clicked)="cambiarPaciente()"
+          >Paciente</ui2-button>
+        </div>
+      }
+    }
+  </footer>
+</aside>
+
+@if ((svc.paciente() || isRutinaMode()) && !ocultarTab()) {
+  <button
+    type="button"
+    class="ui2-cart__tab"
+    [class.ui2-cart__tab--hidden]="drawerAbierto()"
+    (click)="toggle()"
+    [attr.aria-label]="isRutinaMode() ? 'Abrir carrito de rutina' : 'Abrir carrito de ejercicios'"
+  >
+    <span class="ui2-cart__tab-content">
+      @if (isRutinaMode()) {
+        <span class="ui2-cart__tab-icon">
+          <span class="material-symbols-outlined" aria-hidden="true">bookmark_add</span>
+        </span>
+      } @else if (perfilUrl()) {
+        <img
+          [src]="perfilUrl()"
+          alt=""
+          class="ui2-cart__tab-avatar"
+        />
+      } @else {
+        <span class="ui2-cart__tab-icon">
+          <span class="material-symbols-outlined" aria-hidden="true">personal_injury</span>
+        </span>
+      }
+      @if (total() > 0) {
+        <span class="ui2-cart__tab-badge">{{ total() }}</span>
+      }
+    </span>
+    <span class="ui2-cart__tab-label">{{ tabLabel() }}</span>
+  </button>
+}

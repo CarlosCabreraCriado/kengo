@@ -14,6 +14,7 @@ import {
   ThemeService,
 } from './core';
 import { CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios/carrito-ejercicios.component';
+import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
   Ui2PatientHeaderComponent,
@@ -32,6 +33,7 @@ import {
   imports: [
     RouterOutlet,
     CarritoEjerciciosComponent,
+    Ui2CarritoEjerciciosComponent,
     NavegacionComponent,
     Ui2CreamBgComponent,
     Ui2PatientHeaderComponent,
