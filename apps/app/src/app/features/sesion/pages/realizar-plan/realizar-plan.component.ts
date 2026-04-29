@@ -24,7 +24,7 @@ import {
   PreviewEjercicioDialogComponent,
   PreviewEjercicioData,
 } from '../../../../shared/ui/preview-ejercicio/preview-ejercicio-dialog.component';
-import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
+import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { EjercicioPlan } from '../../../../../types/global';
 import {
   Ui2ButtonComponent,

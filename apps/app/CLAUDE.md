@@ -11,16 +11,13 @@ Reglas específicas para la app Angular 20. El CLAUDE.md raíz cubre el monorepo
 - **`@if / @for / @switch`** (control flow). No usar `*ngIf`, `*ngFor`, `*ngSwitch`.
 - **Reactive Forms** (`FormBuilder`, `FormGroup`). No template-driven forms para formularios serios.
 
-## UI: dos catálogos coexistentes — `ui-*` (legacy) y `ui2-*` (V2 cream wellness)
+## UI: catálogo V2 + componentes legacy especializados
 
-El proyecto tiene **dos catálogos de componentes**:
+- **`apps/app/src/app/shared/ui-v2/`** (selector `ui2-*`) — catálogo principal con la estética "cream wellness". Usar siempre que se vaya a construir UI nueva.
+- **`apps/app/src/app/shared/ui/`** — solo conserva los componentes especializados sin equivalente V2: `app-video-ejercicio`, `app-image-upload`, `app-preview-ejercicio-dialog`, `app-selector-paciente`, `app-dialogo-pdf`, `app-user-menu`, y los wrappers internos del sistema legacy de diálogos (`ui-dialog-container/header/content/actions`, `ui-confirm-dialog`).
+- **`apps/app/src/app/shared/services/`** — servicios neutrales (`ToastService`, `DialogService`) usables desde cualquier catálogo. Importar desde `'.../shared/services/toast'` y `'.../shared/services/dialog'` (o desde el barrel `'.../shared'`).
 
-- **`apps/app/src/app/shared/ui/`** (selector `ui-*`) — catálogo legacy. Lo usan todas las pantallas no migradas. **No se modifica visualmente.** Sigue siendo válido para mantenimiento de pantallas legacy.
-- **`apps/app/src/app/shared/ui-v2/`** (selector `ui2-*`) — catálogo V2 con la estética "cream wellness" de la guía de Claude Design (`diseño/design_handoff_kengo_ui_library/`). Se usa en pantallas rediseñadas.
-
-**Regla crítica: no mezclar `ui-*` y `ui2-*` en una misma pantalla.** Una pantalla migra completa al set V2 o no migra. Excepción permitida: componentes especializados sin equivalente V2 (`app-video-ejercicio`, `app-image-upload`, `app-qr-dialog`, `app-preview-ejercicio-dialog`, `app-selector-paciente`, `dialogo-pdf`) y servicios (`DialogService`, `ToastService`) se pueden usar dentro de pantallas `ui2-*`.
-
-**Antes de escribir un `<input>`, `<button>`, dropdown, badge o card, comprueba si ya existe un componente compartido en el catálogo correspondiente** (V2 si la pantalla está migrada, legacy si no). Si existe pero le falta una variante, **extiéndelo** en lugar de duplicar HTML.
+**Antes de escribir un `<input>`, `<button>`, dropdown, badge o card, comprueba si ya existe un componente compartido `ui2-*`.** Si existe pero le falta una variante, **extiéndelo** en lugar de duplicar HTML.
 
 ### Componentes que debes preferir sobre HTML inline
 
@@ -64,26 +61,16 @@ El proyecto tiene **dos catálogos de componentes**:
 
 Importa desde `apps/app/src/app/shared/ui-v2`.
 
-#### Catálogo legacy (`ui-*` — usar en pantallas no migradas)
+#### Componentes legacy especializados (sin equivalente V2)
 
-| En vez de... | Usa... |
-|--------------|--------|
-| `<button class="bg-kengo-primary px-4 py-2 ...">` | `<ui-button variant="primary">` |
-| `<input class="w-full rounded-xl border ...">` | `<ui-input>` (con `formControlName`) |
-| `<textarea class="...">` | `<ui-textarea>` |
-| `<select>` o dropdowns con `<option>` | `<ui-select>` |
-| `<input type="checkbox">` con label | `<ui-checkbox>` |
-| Radios sueltos | `<ui-radio-group>` |
-| Datepicker hecho a mano | `<ui-datepicker>` |
-| `<div>` empty state con icono+título+CTA | `<ui-empty-state>` |
-| Toasts/snackbars | `ToastService.success/error/info/warning(...)` |
-| Modales/diálogos | `DialogService.open(...)` con `<ui-dialog-header/content/actions>` |
-| Spinner inline | `<ui-spinner>` |
-| Progress bar | `<ui-progress-bar>` |
-| Chip/tag | `<ui-chip>` |
-| Dropdown menu | `<ui-menu [items]="...">` |
-| Drawer/sidebar | `<ui-drawer>` |
-| Stepper/wizard | `<ui-stepper>` + `<ui-step>` |
+| Componente | Uso |
+|------------|-----|
+| `<app-video-ejercicio>` | Reproductor de vídeo de ejercicio con poster |
+| `<app-image-upload>` | Subida de imagen con preview y crop |
+| `<app-preview-ejercicio-dialog>` | Diálogo de preview de ejercicio |
+| `<app-selector-paciente>` | Selector tipo combo de paciente |
+| `<app-dialogo-pdf>` | Diálogo de descarga/impresión/envío de PDF |
+| `<app-user-menu>` | Menú de usuario del shell legacy del modo fisio |
 
 Importa desde `apps/app/src/app/shared` (barrel). Comprueba `apps/app/src/app/shared/index.ts`.
 
@@ -94,13 +81,6 @@ Crea uno cuando un patrón visual aparece **3 o más veces** en features distint
 2. ¿Es realmente compartido o pertenece a una feature concreta? (Si es solo de una feature, vive en esa feature.)
 
 ## Tokens y colores: nada hardcodeado
-
-### Tokens legacy (consumidos por `ui-*`)
-- **Colores**: usa las clases `bg-kengo-primary`, `text-kengo-primary`, `border-kengo-primary/20`, etc. (ver `apps/app/src/styles.css`). **Nunca** uses `#e75c3e` ni `rgb(231,92,62)` directamente — el `ThemeService` cambia el primario en runtime para white-labeling.
-- **Grises**: usa la escala Tailwind (`text-zinc-700`, `bg-zinc-100`...). No hardcodees `#3f3f46`, `#71717a`, etc.
-- **Sombras**: usa las utilities `shadow-md/lg/xl-kengo-primary/25-30-40` cuando son del primario, o las default Tailwind para neutras.
-- **Tipografía**: usa la escala Tailwind (`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`). Evita `text-[10px]`, `text-[15px]` — si necesitas un tamaño nuevo, propónlo como token en `@theme`.
-- **Border radius**: usa la escala Tailwind (`rounded`, `rounded-lg`, `rounded-xl`, `rounded-2xl`, `rounded-3xl`). No `border-radius: 9px` o valores fuera de escala.
 
 ### Tokens V2 (consumidos por `ui2-*`)
 - **Coral primario**: `var(--kengo-primary)` / `var(--kengo-primary-dark)` / `var(--kengo-primary-light)` (mismas variables que legacy — el `ThemeService` también las gobierna).

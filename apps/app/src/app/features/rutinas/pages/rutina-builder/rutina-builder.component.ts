@@ -20,7 +20,7 @@ import { Dialog } from '@angular/cdk/dialog';
 
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
-import { ToastService } from '../../../../shared/ui/toast/toast.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe, useResponsive } from '../../../../shared';
 import {

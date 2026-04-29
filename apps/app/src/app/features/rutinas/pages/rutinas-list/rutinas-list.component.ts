@@ -5,7 +5,7 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
-import { ToastService } from '../../../../shared/ui/toast/toast.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { useResponsive } from '../../../../shared';

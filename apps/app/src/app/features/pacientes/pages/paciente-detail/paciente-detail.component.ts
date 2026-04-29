@@ -13,7 +13,7 @@ import { useResponsive } from '../../../../shared';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
-import { DialogService } from '../../../../shared/ui/dialog/dialog.service';
+import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { ComentariosPacienteService } from '../../data-access/comentarios-paciente.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';

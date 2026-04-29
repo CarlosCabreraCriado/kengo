@@ -21,7 +21,7 @@ import { Dialog } from '@angular/cdk/dialog';
 
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
-import { ToastService } from '../../../../shared/ui/toast/toast.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
 import {

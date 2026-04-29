@@ -4,7 +4,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { DialogContainerComponent } from '../dialog/dialog-container.component';
 import { DialogHeaderComponent } from '../dialog/dialog-header.component';
 import { DialogContentComponent } from '../dialog/dialog-content.component';
-import { ToastService } from '../toast';
+import { ToastService } from '../../services/toast';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 

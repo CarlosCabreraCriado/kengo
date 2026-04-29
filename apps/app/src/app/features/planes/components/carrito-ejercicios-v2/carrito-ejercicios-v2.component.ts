@@ -22,7 +22,7 @@ import {
   Ui2EmptyStateComponent,
   Ui2IconBadgeComponent,
 } from '../../../../shared/ui-v2';
-import { ToastService } from '../../../../shared/ui/toast/toast.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { Usuario } from '../../../../../types/global';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';

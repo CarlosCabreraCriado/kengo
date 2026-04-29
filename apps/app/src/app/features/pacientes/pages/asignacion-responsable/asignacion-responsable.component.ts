@@ -23,7 +23,7 @@ import {
   BulkAsignacionPayload,
 } from '../../../../../types/global';
 import { useResponsive } from '../../../../shared';
-import { ToastService } from '../../../../shared/ui/toast/toast.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 
 import {
   Ui2BackButtonComponent,
