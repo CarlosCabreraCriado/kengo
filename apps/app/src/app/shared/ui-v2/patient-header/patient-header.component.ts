@@ -69,14 +69,14 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
                   type="button"
                   class="ui2-user-menu__item ui2-user-menu__item--switch"
                   role="switch"
-                  [attr.aria-checked]="modoPaciente()"
+                  [attr.aria-checked]="modoFisio()"
                   (click)="onToggleModo($event)"
                   (keydown.space)="onToggleModo($event)"
                   (keydown.enter)="onToggleModo($event)"
                 >
                   <span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>
-                  <span class="ui2-user-menu__label">{{ modoLabel() }}</span>
-                  <span class="ui2-user-menu__switch" [class.ui2-user-menu__switch--on]="modoPaciente()" aria-hidden="true">
+                  <span class="ui2-user-menu__label">Modo fisio</span>
+                  <span class="ui2-user-menu__switch" [class.ui2-user-menu__switch--on]="modoFisio()" aria-hidden="true">
                     <span class="ui2-user-menu__thumb"></span>
                   </span>
                 </button>
@@ -327,10 +327,7 @@ export class Ui2PatientHeaderComponent {
 
   readonly menuOpen = signal(false);
   readonly modoPaciente = this.sessionService.enModoPaciente;
-
-  readonly modoLabel = computed(() =>
-    this.modoPaciente() ? 'Modo paciente' : 'Modo fisio',
-  );
+  readonly modoFisio = computed(() => !this.modoPaciente());
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
