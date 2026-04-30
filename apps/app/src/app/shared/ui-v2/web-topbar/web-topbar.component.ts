@@ -26,7 +26,7 @@ const MONTHS = [
     <header class="ui2-topbar">
       <div class="ui2-topbar__greeting">
         <span class="ui2-topbar__eyebrow">{{ eyebrow() }}</span>
-        <h2 class="ui2-topbar__title">Hola {{ userName() }} 👋</h2>
+        <h2 class="ui2-topbar__title">Hola {{ userName() }}</h2>
       </div>
 
       <div class="ui2-topbar__right">
