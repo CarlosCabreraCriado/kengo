@@ -358,13 +358,11 @@ export class EstadisticasService {
   }
 
   private weeklyAnterior(): WeeklyRollup | null {
-    const semanaHoy = formatISOWeek(new Date());
-    const ordenadas = [...this.weeklyHistorico()].sort((a, b) =>
-      a.anioSemana.localeCompare(b.anioSemana),
+    const haceUnaSemana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const semanaPrevia = formatISOWeek(haceUnaSemana);
+    return (
+      this.weeklyHistorico().find((w) => w.anioSemana === semanaPrevia) ?? null
     );
-    const idx = ordenadas.findIndex((w) => w.anioSemana === semanaHoy);
-    if (idx > 0) return ordenadas[idx - 1] ?? null;
-    return ordenadas.length > 0 ? ordenadas[ordenadas.length - 1] ?? null : null;
   }
 
   private monthlyActual(): MonthlyRollup | null {
