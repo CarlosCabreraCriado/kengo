@@ -68,7 +68,7 @@ let nextId = 0;
     .ui2-select__shell {
       position: relative;
       background: var(--cream-50);
-      border: 1px solid var(--ink-300);
+      border: 1px solid rgba(var(--kengo-primary-rgb), 0.6);
       border-radius: 14px;
       transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     }
