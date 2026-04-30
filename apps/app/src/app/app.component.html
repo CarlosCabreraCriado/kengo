@@ -6,38 +6,47 @@
 }
 
 <!-- Modo paciente con navegación: shell V2 cream wellness (responsive) -->
-@if (mostrarNavegacion && sessionService.sesionInicializada() && sessionService.enModoPaciente()) {
+@if (
+  mostrarNavegacion &&
+  sessionService.sesionInicializada() &&
+  sessionService.enModoPaciente()
+) {
   <ui2-cream-bg></ui2-cream-bg>
 
   @if (esDesktop()) {
     <!-- Desktop shell: sidebar fija + topbar + main scrollable -->
-    <section class="flex h-dvh flex-row relative z-10">
+    <section class="relative z-10 flex h-dvh flex-row">
       <ui2-patient-sidebar
-        class="shrink-0 h-full"
+        class="z-200 h-full shrink-0"
         [userName]="firstName()"
         [userSubtitle]="userSubtitle()"
         [avatarUrl]="avatarUrl()"
         [clinicaNombre]="clinicaActual()"
       ></ui2-patient-sidebar>
-      <div class="flex-1 flex flex-col min-w-0">
+      <div class="z-100 flex min-w-0 flex-1 flex-col">
         <ui2-web-topbar
           [userName]="firstName()"
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
-        <main class="flex-1 min-h-0 overflow-y-auto">
+        <main class="min-h-0 flex-1 overflow-y-auto">
           <router-outlet></router-outlet>
         </main>
       </div>
     </section>
   } @else {
     <!-- Mobile shell: header floating + main scrollable + tab bar floating -->
-    <section class="flex h-dvh max-w-3xl flex-col m-auto overflow-hidden relative z-10">
+    <section
+      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col overflow-hidden"
+    >
       <ui2-patient-header
         [clinica]="clinicaActual()"
         [userName]="userName()"
         [avatarUrl]="avatarUrl()"
       ></ui2-patient-header>
-      <main class="flex-1 min-h-0 overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
+      <main
+        class="min-h-0 flex-1 overflow-y-auto"
+        style="padding-top: 56px; padding-bottom: 110px"
+      >
         <router-outlet></router-outlet>
       </main>
       <ui2-patient-tab-bar></ui2-patient-tab-bar>
@@ -46,7 +55,11 @@
 }
 
 <!-- Modo fisio con navegación: shell V2 cream wellness (responsive) -->
-@if (mostrarNavegacion && sessionService.sesionInicializada() && sessionService.enModoFisio()) {
+@if (
+  mostrarNavegacion &&
+  sessionService.sesionInicializada() &&
+  sessionService.enModoFisio()
+) {
   <ui2-cream-bg></ui2-cream-bg>
 
   <!-- Carrito V2 (overlay flotante) -->
@@ -54,9 +67,9 @@
 
   @if (esDesktop()) {
     <!-- Desktop: sidebar + topbar + main scrollable -->
-    <section class="flex h-dvh flex-row relative z-10">
+    <section class="relative z-10 flex h-dvh flex-row">
       <ui2-patient-sidebar
-        class="shrink-0 h-full"
+        class="h-full shrink-0"
         brandTag="FISIOTERAPIA"
         [groups]="fisioSidebarGroups"
         [userName]="firstName()"
@@ -64,26 +77,31 @@
         [avatarUrl]="avatarUrl()"
         [clinicaNombre]="clinicaActual()"
       ></ui2-patient-sidebar>
-      <div class="flex-1 flex flex-col min-w-0">
+      <div class="flex min-w-0 flex-1 flex-col">
         <ui2-web-topbar
           [userName]="firstName()"
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
         <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
-        <main class="flex-1 min-h-0 flex flex-col overflow-y-auto">
+        <main class="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <router-outlet></router-outlet>
         </main>
       </div>
     </section>
   } @else {
     <!-- Mobile: header floating + main scrollable + tab bar floating -->
-    <section class="flex h-dvh max-w-3xl flex-col m-auto overflow-hidden relative z-10">
+    <section
+      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col overflow-hidden"
+    >
       <ui2-patient-header
         [clinica]="clinicaActual()"
         [userName]="userName()"
         [avatarUrl]="avatarUrl()"
       ></ui2-patient-header>
-      <main class="flex-1 min-h-0 flex flex-col overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
+      <main
+        class="flex min-h-0 flex-1 flex-col overflow-y-auto"
+        style="padding-top: 56px; padding-bottom: 110px"
+      >
         <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
         <router-outlet></router-outlet>
       </main>
@@ -94,8 +112,8 @@
 
 <!-- Auth / sin navegación: layout mínimo -->
 @if (!mostrarNavegacion) {
-  <section class="flex h-dvh max-w-7xl flex-col m-auto overflow-hidden">
-    <main class="main z-10 flex-1 min-h-0 flex flex-col">
+  <section class="m-auto flex h-dvh max-w-7xl flex-col overflow-hidden">
+    <main class="main z-10 flex min-h-0 flex-1 flex-col">
       <router-outlet></router-outlet>
     </main>
   </section>

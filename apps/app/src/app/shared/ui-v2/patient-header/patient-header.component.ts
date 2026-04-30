@@ -1,19 +1,22 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { NotificacionesService } from '../../../core/services/notificaciones.service';
 import type { RolUsuario } from '../../../../types/global';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
+import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificaciones-menu.component';
 
 /**
- * Patient header V2 — top fixed: logo K + nombre clínica + bell (con dot opcional) + avatar inicial.
+ * Patient header V2 — top fixed: logo K + nombre clínica + bell (con badge opcional) + avatar inicial.
  * El avatar abre un menú desplegable con: Mi perfil, Cambiar de modo (si aplica) y Cerrar sesión.
+ * La campana abre el menú de notificaciones (solo en modo fisio).
  * 56px de alto. Glassmorphism cream sobre el cream-bg.
  */
 @Component({
   selector: 'ui2-patient-header',
   standalone: true,
-  imports: [Ui2AvatarComponent],
+  imports: [Ui2AvatarComponent, Ui2NotificacionesMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="ui2-patient-header">
@@ -24,17 +27,30 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
         <span class="ui2-patient-header__clinica">{{ clinica() }}</span>
       </div>
       <div class="ui2-patient-header__right">
-        <button
-          type="button"
-          class="ui2-patient-header__bell"
-          aria-label="Notificaciones"
-          (click)="bellClick.emit()"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
-          @if (hasNotifications()) {
-            <span class="ui2-patient-header__bell-dot" aria-hidden="true"></span>
-          }
-        </button>
+        @if (sessionService.puedeRecibirNotificaciones()) {
+          <div class="ui2-patient-header__bell-wrap">
+            <button
+              type="button"
+              class="ui2-patient-header__bell"
+              aria-label="Notificaciones"
+              [attr.aria-expanded]="notificacionesMenuOpen()"
+              aria-haspopup="dialog"
+              (click)="toggleNotificacionesMenu($event)"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+              @if (pendientes() > 0) {
+                <span class="ui2-patient-header__bell-badge" aria-hidden="true">
+                  {{ pendientes() > 9 ? '9+' : pendientes() }}
+                </span>
+              }
+            </button>
+
+            <ui2-notificaciones-menu
+              [open]="notificacionesMenuOpen()"
+              (closed)="cerrarNotificacionesMenu()"
+            />
+          </div>
+        }
         <div class="ui2-patient-header__avatar-wrap">
           <button
             type="button"
@@ -161,6 +177,7 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
       gap: 10px;
       flex-shrink: 0;
     }
+    .ui2-patient-header__bell-wrap { position: relative; }
     .ui2-patient-header__bell {
       position: relative;
       width: 36px;
@@ -175,17 +192,28 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
       place-items: center;
       cursor: pointer;
       color: var(--ink-700);
+      transition: color 0.12s;
     }
+    .ui2-patient-header__bell:hover { color: var(--kengo-primary); }
     .ui2-patient-header__bell .material-symbols-outlined { font-size: 20px; }
-    .ui2-patient-header__bell-dot {
+    .ui2-patient-header__bell-badge {
       position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--danger);
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9999px;
+      background: var(--kengo-primary);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1.5px solid white;
+      box-shadow: 0 2px 6px rgba(231, 92, 62, 0.35);
     }
 
     .ui2-patient-header__avatar-wrap {
@@ -318,24 +346,36 @@ export class Ui2PatientHeaderComponent {
   readonly clinica = input<string>('Mi clínica');
   readonly userName = input<string>('Usuario');
   readonly avatarUrl = input<string | null>(null);
-  readonly hasNotifications = input<boolean>(false);
-  readonly bellClick = output<void>();
 
   public readonly sessionService = inject(SessionService);
+  public readonly notificacionesService = inject(NotificacionesService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly menuOpen = signal(false);
+  readonly notificacionesMenuOpen = signal(false);
   readonly modoPaciente = this.sessionService.enModoPaciente;
   readonly modoFisio = computed(() => !this.modoPaciente());
+  readonly pendientes = this.notificacionesService.pendientes;
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
+    this.notificacionesMenuOpen.set(false);
     this.menuOpen.update((v) => !v);
   }
 
   cerrarMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  toggleNotificacionesMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.menuOpen.set(false);
+    this.notificacionesMenuOpen.update((v) => !v);
+  }
+
+  cerrarNotificacionesMenu(): void {
+    this.notificacionesMenuOpen.set(false);
   }
 
   irAPerfil(): void {
@@ -361,5 +401,6 @@ export class Ui2PatientHeaderComponent {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.menuOpen()) this.cerrarMenu();
+    if (this.notificacionesMenuOpen()) this.cerrarNotificacionesMenu();
   }
 }

@@ -96,3 +96,4 @@ export type { TabItem } from './patient-tab-bar/patient-tab-bar.component';
 export { Ui2PatientSidebarComponent } from './patient-sidebar/patient-sidebar.component';
 export type { SidebarNavGroup, SidebarNavItem } from './patient-sidebar/patient-sidebar.component';
 export { Ui2WebTopbarComponent } from './web-topbar/web-topbar.component';
+export { Ui2NotificacionesMenuComponent } from './notificaciones-menu/notificaciones-menu.component';
