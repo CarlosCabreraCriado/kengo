@@ -214,7 +214,7 @@
 .ed-chip:hover:not(.ed-chip--active) {
   background: white;
   color: var(--kengo-primary);
-  border-color: rgba(231, 92, 62, 0.3);
+  border-color: rgba(var(--kengo-primary-rgb), 0.3);
 }
 
 .ed-chip:active {
@@ -245,7 +245,7 @@
 }
 
 .ed-chip-input:focus-visible {
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.18);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.18);
 }
 
 /* Hide arrows in number input */

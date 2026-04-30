@@ -90,7 +90,7 @@
 .rl-filter-trigger--active {
   border-color: var(--kengo-primary);
   color: var(--kengo-primary);
-  background: rgba(231, 92, 62, 0.08);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
 }
 
 .rl-filter-trigger .material-symbols-outlined { font-size: 18px; }
@@ -141,7 +141,7 @@
 
 .rl-filter-option--selected {
   color: var(--kengo-primary);
-  background: rgba(231, 92, 62, 0.08);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
 }
 
 .rl-filter-option input[type='radio'] {
@@ -239,7 +239,7 @@
   height: 44px;
   flex-shrink: 0;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(231, 92, 62, 0.12), rgba(231, 92, 62, 0.04));
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12), rgba(var(--kengo-primary-rgb), 0.04));
   color: var(--kengo-primary);
 }
 

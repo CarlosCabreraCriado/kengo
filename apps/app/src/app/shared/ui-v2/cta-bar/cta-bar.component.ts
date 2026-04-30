@@ -76,7 +76,7 @@ export type Ui2CtaBarVariant = 'primary' | 'secondary';
     }
     .ui2-cta--secondary .ui2-cta__icon-circle {
       background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
-      box-shadow: 0 6px 14px -3px rgba(231, 92, 62, 0.5);
+      box-shadow: 0 6px 14px -3px rgba(var(--kengo-primary-rgb), 0.5);
     }
     .ui2-cta__icon-circle .material-symbols-outlined {
       font-size: 26px;

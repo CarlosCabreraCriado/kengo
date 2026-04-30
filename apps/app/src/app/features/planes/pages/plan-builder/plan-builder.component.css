@@ -114,7 +114,7 @@
 
 .pb-date-input:focus {
   border-color: var(--kengo-primary);
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
   background: white;
 }
 
@@ -135,8 +135,8 @@
 
 .pb-drag-placeholder {
   height: 84px;
-  border: 2px dashed rgba(231, 92, 62, 0.35);
-  background: rgba(231, 92, 62, 0.04);
+  border: 2px dashed rgba(var(--kengo-primary-rgb), 0.35);
+  background: rgba(var(--kengo-primary-rgb), 0.04);
   border-radius: 22px;
 }
 
@@ -340,7 +340,7 @@
 
 .pb-dosage-input:focus {
   border-color: var(--kengo-primary);
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
   background: white;
 }
 
@@ -430,7 +430,7 @@
 
 .pb-instructions__input:focus {
   border-color: var(--kengo-primary);
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
   background: white;
 }
 

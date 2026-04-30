@@ -80,8 +80,8 @@
   gap: 8px;
   transition: border-color 0.15s, background 0.15s;
 }
-.cmt-card:hover { border-color: rgba(231, 92, 62, 0.25); background: var(--cream-50); }
-.cmt-card--unread { border-color: rgba(231, 92, 62, 0.3); background: linear-gradient(135deg, #fff5ee, white); }
+.cmt-card:hover { border-color: rgba(var(--kengo-primary-rgb), 0.25); background: var(--cream-50); }
+.cmt-card--unread { border-color: rgba(var(--kengo-primary-rgb), 0.3); background: linear-gradient(135deg, #fff5ee, white); }
 
 .cmt-card__head {
   display: flex;
@@ -95,7 +95,7 @@
   background: var(--ink-300);
   flex-shrink: 0;
 }
-.cmt-card__dot--active { background: var(--kengo-primary); box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.2); }
+.cmt-card__dot--active { background: var(--kengo-primary); box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.2); }
 .cmt-card__context {
   font-size: 12px;
   color: var(--ink-500);

@@ -27,7 +27,7 @@
     color-mix(in srgb, var(--warning) 6%, transparent)
   );
   border-radius: 14px;
-  border: 1px solid rgba(231, 92, 62, 0.12);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.12);
 }
 
 .summary-icon {
@@ -50,7 +50,7 @@
   width: 100%;
   padding: 14px 18px;
   background: var(--cream-50);
-  border: 1px solid rgba(231, 92, 62, 0.18);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.18);
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;

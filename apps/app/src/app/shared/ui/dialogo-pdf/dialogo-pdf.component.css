@@ -14,7 +14,7 @@
 
 .option-card:hover:not(:disabled) {
   border-color: var(--kengo-primary);
-  background-color: rgba(231, 92, 62, 0.04);
+  background-color: rgba(var(--kengo-primary-rgb), 0.04);
 }
 
 .option-card:disabled {
@@ -35,7 +35,7 @@
 }
 
 .option-card:hover:not(:disabled) .option-icon {
-  background-color: rgba(231, 92, 62, 0.1);
+  background-color: rgba(var(--kengo-primary-rgb), 0.1);
   color: var(--kengo-primary);
 }
 
@@ -100,7 +100,7 @@
 
 .email-input:focus {
   border-color: var(--kengo-primary);
-  box-shadow: 0 0 0 2px rgba(231, 92, 62, 0.1);
+  box-shadow: 0 0 0 2px rgba(var(--kengo-primary-rgb), 0.1);
 }
 
 .email-actions {

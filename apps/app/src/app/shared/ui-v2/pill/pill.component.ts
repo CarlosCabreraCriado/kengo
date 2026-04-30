@@ -16,7 +16,7 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
     shadow: 'var(--shadow-pill-coral)',
   },
   soft: {
-    bg: 'rgba(231, 92, 62, 0.1)',
+    bg: 'rgba(var(--kengo-primary-rgb), 0.1)',
     fg: 'var(--kengo-primary)',
     shadow: 'none',
   },

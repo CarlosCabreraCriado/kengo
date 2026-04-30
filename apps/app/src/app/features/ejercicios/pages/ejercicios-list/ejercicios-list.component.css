@@ -68,7 +68,7 @@
   background: var(--kengo-primary);
   border-color: var(--kengo-primary);
   color: white;
-  box-shadow: 0 4px 10px -3px rgba(231, 92, 62, 0.4);
+  box-shadow: 0 4px 10px -3px rgba(var(--kengo-primary-rgb), 0.4);
 }
 
 .el-fav-toggle--on:hover { background: var(--kengo-primary-dark); color: white; }
@@ -117,7 +117,7 @@
 .el-cat-trigger--active {
   border-color: var(--kengo-primary);
   color: var(--kengo-primary);
-  background: rgba(231, 92, 62, 0.08);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
 }
 
 .el-cat-trigger .material-symbols-outlined { font-size: 18px; }
@@ -425,7 +425,7 @@
 .el-fav--on {
   background: var(--kengo-primary);
   color: white;
-  box-shadow: 0 4px 10px -3px rgba(231, 92, 62, 0.5);
+  box-shadow: 0 4px 10px -3px rgba(var(--kengo-primary-rgb), 0.5);
 }
 
 .el-fav--on:hover { background: var(--kengo-primary-dark); color: white; }

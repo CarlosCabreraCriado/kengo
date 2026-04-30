@@ -73,7 +73,7 @@ let nextId = 0;
     }
     .ui2-textarea__shell:focus-within {
       border-color: var(--kengo-primary);
-      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.15);
+      box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
       background: white;
     }
     .ui2-textarea__shell--error { border-color: var(--danger); }

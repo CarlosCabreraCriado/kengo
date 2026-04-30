@@ -129,7 +129,7 @@
 
 .ec-logo-upload:hover {
   border-color: var(--kengo-primary);
-  background: rgba(231, 92, 62, 0.05);
+  background: rgba(var(--kengo-primary-rgb), 0.05);
   color: var(--kengo-primary);
 }
 
@@ -271,7 +271,7 @@
 
 .ec-gallery-add:hover {
   border-color: var(--kengo-primary);
-  background: rgba(231, 92, 62, 0.05);
+  background: rgba(var(--kengo-primary-rgb), 0.05);
   color: var(--kengo-primary);
 }
 

@@ -126,8 +126,8 @@
     padding: 28px;
     border-radius: 24px;
     background: linear-gradient(135deg, #fff5ee, #ffffff 60%, #fff8eb);
-    border: 1px solid rgba(231, 92, 62, 0.12);
-    box-shadow: 0 6px 18px rgba(231, 92, 62, 0.05);
+    border: 1px solid rgba(var(--kengo-primary-rgb), 0.12);
+    box-shadow: 0 6px 18px rgba(var(--kengo-primary-rgb), 0.05);
   }
 
   .if-hero-web__main {
@@ -187,7 +187,7 @@
     font-weight: 700;
     color: white;
     background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
-    box-shadow: 0 8px 18px -5px rgba(231, 92, 62, 0.5);
+    box-shadow: 0 8px 18px -5px rgba(var(--kengo-primary-rgb), 0.5);
     cursor: pointer;
     line-height: 1;
   }
@@ -216,7 +216,7 @@
     flex-direction: column;
     gap: 12px;
     padding-left: 22px;
-    border-left: 1px dashed rgba(231, 92, 62, 0.2);
+    border-left: 1px dashed rgba(var(--kengo-primary-rgb), 0.2);
     flex-shrink: 0;
   }
 

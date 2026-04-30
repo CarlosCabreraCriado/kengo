@@ -69,7 +69,7 @@
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 .act-card--clickable { cursor: pointer; }
-.act-card--clickable:hover { border-color: rgba(231, 92, 62, 0.25); box-shadow: var(--shadow-card); }
+.act-card--clickable:hover { border-color: rgba(var(--kengo-primary-rgb), 0.25); box-shadow: var(--shadow-card); }
 .act-card--completado { border-left: 4px solid var(--success); }
 .act-card--parcial { border-left: 4px solid var(--warning); }
 .act-card--fallido { border-left: 4px solid var(--danger); }
@@ -93,7 +93,7 @@
   width: 24px;
   height: 24px;
   border-radius: 9999px;
-  background: rgba(231, 92, 62, 0.1);
+  background: rgba(var(--kengo-primary-rgb), 0.1);
   color: var(--kengo-primary);
 }
 .act-card__chat .material-symbols-outlined { font-size: 14px; }

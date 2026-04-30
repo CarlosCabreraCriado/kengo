@@ -147,7 +147,7 @@
 .series-dot.current {
   background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
   box-shadow:
-    0 0 0 3px rgba(231, 92, 62, 0.18),
+    0 0 0 3px rgba(var(--kengo-primary-rgb), 0.18),
     var(--shadow-pill-coral);
   transform: scale(1.12);
   animation: pulse-current 2s ease-in-out infinite;
@@ -172,13 +172,13 @@
 @keyframes pulse-current {
   0%, 100% {
     box-shadow:
-      0 0 0 3px rgba(231, 92, 62, 0.18),
-      0 3px 12px rgba(231, 92, 62, 0.32);
+      0 0 0 3px rgba(var(--kengo-primary-rgb), 0.18),
+      0 3px 12px rgba(var(--kengo-primary-rgb), 0.32);
   }
   50% {
     box-shadow:
-      0 0 0 5px rgba(231, 92, 62, 0.1),
-      0 3px 16px rgba(231, 92, 62, 0.42);
+      0 0 0 5px rgba(var(--kengo-primary-rgb), 0.1),
+      0 3px 16px rgba(var(--kengo-primary-rgb), 0.42);
   }
 }
 

@@ -483,7 +483,7 @@ interface EjercicioTimeline {
     .activo .node-circle {
       background: var(--kengo-primary);
       border: 2px solid var(--kengo-primary);
-      box-shadow: 0 0 0 4px rgba(231, 92, 62, 0.18);
+      box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.18);
       animation: pulse-node 2s ease-in-out infinite;
     }
 
@@ -507,10 +507,10 @@ interface EjercicioTimeline {
     @keyframes pulse-node {
       0%,
       100% {
-        box-shadow: 0 0 0 4px rgba(231, 92, 62, 0.18);
+        box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.18);
       }
       50% {
-        box-shadow: 0 0 0 8px rgba(231, 92, 62, 0.08);
+        box-shadow: 0 0 0 8px rgba(var(--kengo-primary-rgb), 0.08);
       }
     }
 
@@ -553,8 +553,8 @@ interface EjercicioTimeline {
 
     .activo .exercise-card {
       background: linear-gradient(135deg, #fff5ee, #ffffff);
-      border-color: rgba(231, 92, 62, 0.15);
-      box-shadow: 0 4px 14px rgba(231, 92, 62, 0.08);
+      border-color: rgba(var(--kengo-primary-rgb), 0.15);
+      box-shadow: 0 4px 14px rgba(var(--kengo-primary-rgb), 0.08);
     }
 
     .completado .exercise-card {

@@ -13,7 +13,7 @@
   padding: 14px 18px;
   margin-bottom: 8px;
   background: var(--cream-50);
-  border: 1px solid rgba(231, 92, 62, 0.18);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.18);
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;

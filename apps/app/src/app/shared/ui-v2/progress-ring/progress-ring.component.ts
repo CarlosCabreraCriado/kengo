@@ -67,7 +67,7 @@ export class Ui2ProgressRingComponent {
   readonly stroke = input<number>(18);
   readonly value = input<number>(0.6);
   readonly color = input<string>('var(--kengo-primary)');
-  readonly trackColor = input<string>('rgba(231, 92, 62, 0.12)');
+  readonly trackColor = input<string>('rgba(var(--kengo-primary-rgb), 0.12)');
   readonly rounded = input<boolean>(true);
 
   readonly center = computed(() => this.size() / 2);

@@ -113,7 +113,7 @@
 }
 
 .asignacion-row--changed {
-  background: rgba(231, 92, 62, 0.04);
+  background: rgba(var(--kengo-primary-rgb), 0.04);
 }
 
 @media (min-width: 640px) {
@@ -165,7 +165,7 @@
   border-radius: 9999px;
   background: var(--kengo-primary);
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.18);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.18);
 }
 
 .asignacion-row__selector {

@@ -96,7 +96,7 @@ let nextGroup = 0;
     .ui2-radio--checked {
       border-color: var(--kengo-primary);
       background: white;
-      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.12);
+      box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.12);
     }
     .ui2-radio--disabled { opacity: 0.5; cursor: not-allowed; }
     .ui2-radio input { position: absolute; opacity: 0; pointer-events: none; }

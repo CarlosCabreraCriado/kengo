@@ -69,7 +69,7 @@ export interface Ui2SegmentedOption {
     .ui2-seg__item--active {
       background: var(--kengo-primary);
       color: white;
-      box-shadow: 0 4px 10px -3px rgba(231, 92, 62, 0.4);
+      box-shadow: 0 4px 10px -3px rgba(var(--kengo-primary-rgb), 0.4);
     }
     .ui2-seg__item--icon {
       padding: 8px 18px;

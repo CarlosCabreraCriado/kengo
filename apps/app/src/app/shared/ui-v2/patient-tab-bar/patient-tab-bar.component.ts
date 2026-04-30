@@ -87,7 +87,7 @@ const DEFAULT_TABS: TabItem[] = [
     .ui2-tab-bar__item--active {
       background: var(--kengo-primary);
       color: white;
-      box-shadow: 0 6px 16px -4px rgba(231, 92, 62, 0.5);
+      box-shadow: 0 6px 16px -4px rgba(var(--kengo-primary-rgb), 0.5);
     }
     .ui2-tab-bar__icon { font-size: 22px; }
     .ui2-tab-bar__label {

@@ -200,7 +200,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
       display: block;
       height: 100%;
       position: relative;
-      z-index: 20;
+      z-index: 40;
     }
     .ui2-sidebar {
       position: relative;
@@ -328,7 +328,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
     .ui2-sidebar__item--active {
       background: var(--kengo-primary);
       color: white;
-      box-shadow: 0 6px 14px -4px rgba(231, 92, 62, 0.4);
+      box-shadow: 0 6px 14px -4px rgba(var(--kengo-primary-rgb), 0.4);
     }
     .ui2-sidebar__item--active:hover { background: var(--kengo-primary); }
     .ui2-sidebar__item--disabled {

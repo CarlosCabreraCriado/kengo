@@ -24,7 +24,7 @@
 
 .breath-hint.inhale {
   background: linear-gradient(135deg, #fff5ee, #ffffff);
-  border-color: rgba(231, 92, 62, 0.25);
+  border-color: rgba(var(--kengo-primary-rgb), 0.25);
 }
 
 .breath-text {
@@ -54,7 +54,7 @@
   width: calc(100% + 40px);
   height: calc(100% + 40px);
   border-radius: 50%;
-  border: 2px solid rgba(231, 92, 62, 0.15);
+  border: 2px solid rgba(var(--kengo-primary-rgb), 0.15);
   transition: all var(--breath-duration) cubic-bezier(0.4, 0, 0.6, 1);
   animation: breathe var(--breath-duration) ease-in-out infinite;
   pointer-events: none;
@@ -65,13 +65,13 @@
   position: absolute;
   inset: -8px;
   border-radius: 50%;
-  border: 1px solid rgba(231, 92, 62, 0.08);
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.08);
   animation: breathe var(--breath-duration) ease-in-out infinite;
   animation-delay: 0.15s;
 }
 
 .breath-ring.inhale {
-  border-color: rgba(231, 92, 62, 0.28);
+  border-color: rgba(var(--kengo-primary-rgb), 0.28);
 }
 
 @keyframes breathe {

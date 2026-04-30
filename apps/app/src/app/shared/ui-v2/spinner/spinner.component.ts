@@ -66,7 +66,7 @@ export class Ui2SpinnerComponent {
   readonly strokeColor = computed(() => COLORS[this.color()]);
   readonly track = computed(() => {
     const c = this.color();
-    if (c === 'primary') return 'rgba(231, 92, 62, 0.18)';
+    if (c === 'primary') return 'rgba(var(--kengo-primary-rgb), 0.18)';
     if (c === 'white') return 'rgba(255, 255, 255, 0.25)';
     return 'rgba(107, 114, 128, 0.2)';
   });

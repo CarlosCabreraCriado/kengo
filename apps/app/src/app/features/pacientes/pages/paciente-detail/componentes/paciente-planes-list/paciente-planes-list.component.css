@@ -71,7 +71,7 @@
   transition: border-color 0.15s, background 0.15s;
 }
 .pln-card:hover {
-  border-color: rgba(231, 92, 62, 0.25);
+  border-color: rgba(var(--kengo-primary-rgb), 0.25);
   background: var(--cream-50);
 }
 .pln-card--completed {

@@ -26,7 +26,7 @@ import { Ui2ProgressRingComponent } from '../../../../../../shared/ui-v2';
         [trackColor]="
           esAdvertencia()
             ? 'rgba(245, 158, 11, 0.16)'
-            : 'rgba(231, 92, 62, 0.12)'
+            : 'rgba(var(--kengo-primary-rgb), 0.12)'
         "
       >
         <div class="timer-content">

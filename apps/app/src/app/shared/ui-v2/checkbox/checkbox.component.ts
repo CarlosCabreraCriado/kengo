@@ -81,7 +81,7 @@ let nextId = 0;
       line-height: 1.3;
     }
     .ui2-checkbox input:focus-visible + .ui2-checkbox__box {
-      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.2);
+      box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.2);
     }
   `],
 })

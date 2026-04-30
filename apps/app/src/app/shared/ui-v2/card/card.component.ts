@@ -29,9 +29,9 @@ export type Ui2CardVariant = 'default' | 'tinted';
       box-shadow: var(--shadow-card);
     }
     .ui2-card--tinted {
-      border-color: rgba(231, 92, 62, 0.15);
+      border-color: rgba(var(--kengo-primary-rgb), 0.15);
       background: linear-gradient(135deg, #fff5ee, #ffffff);
-      box-shadow: 0 4px 14px rgba(231, 92, 62, 0.05);
+      box-shadow: 0 4px 14px rgba(var(--kengo-primary-rgb), 0.05);
     }
   `],
 })

@@ -142,6 +142,6 @@ export class Ui2ExerciseCardComponent {
       return 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))';
     }
     const base = Math.max(0.05, 0.18 - this.index() * 0.02);
-    return `linear-gradient(135deg, rgba(231,92,62,${base}), rgba(239,192,72,${base}))`;
+    return `linear-gradient(135deg, rgba(var(--kengo-primary-rgb),${base}), rgba(239,192,72,${base}))`;
   });
 }

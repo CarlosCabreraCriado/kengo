@@ -22,7 +22,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       color: white;
       border-radius: 16px;
       padding: 10px 0;
-      box-shadow: 0 6px 14px -3px rgba(231, 92, 62, 0.4);
+      box-shadow: 0 6px 14px -3px rgba(var(--kengo-primary-rgb), 0.4);
     }
     .ui2-date-tile__weekday {
       font-size: 10px;

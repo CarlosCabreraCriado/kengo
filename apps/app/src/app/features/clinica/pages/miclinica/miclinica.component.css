@@ -102,7 +102,7 @@
 }
 
 .mc-picker-option--active {
-  background: rgba(231, 92, 62, 0.08);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
 }
 
 .mc-picker-text {
@@ -220,7 +220,7 @@
 }
 
 .mc-quick-card--soft .mc-quick-icon {
-  background: rgba(231, 92, 62, 0.12);
+  background: rgba(var(--kengo-primary-rgb), 0.12);
 }
 
 .mc-quick-card--soft .mc-quick-icon .material-symbols-outlined {
@@ -345,7 +345,7 @@
 }
 
 .mc-section-icon--coral {
-  background: rgba(231, 92, 62, 0.12);
+  background: rgba(var(--kengo-primary-rgb), 0.12);
 }
 
 .mc-section-icon--coral .material-symbols-outlined {
@@ -503,7 +503,7 @@
   width: 36px;
   height: 36px;
   border-radius: 9999px;
-  background: rgba(231, 92, 62, 0.1);
+  background: rgba(var(--kengo-primary-rgb), 0.1);
   color: var(--kengo-primary);
   text-decoration: none;
   transition: background 0.15s, color 0.15s, transform 0.1s;
