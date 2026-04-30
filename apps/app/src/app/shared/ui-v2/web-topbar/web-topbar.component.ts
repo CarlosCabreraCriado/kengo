@@ -97,7 +97,7 @@ const MONTHS = [
     </header>
   `,
   styles: [`
-    :host { display: block; }
+    :host { display: block; position: relative; z-index: 60; }
     .ui2-topbar {
       display: flex;
       align-items: center;
@@ -184,7 +184,7 @@ const MONTHS = [
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      z-index: 100;
+      z-index: 1100;
       min-width: 220px;
       display: flex;
       flex-direction: column;
@@ -257,7 +257,7 @@ const MONTHS = [
     .ui2-user-menu__backdrop {
       position: fixed;
       inset: 0;
-      z-index: 99;
+      z-index: 1099;
     }
   `],
 })

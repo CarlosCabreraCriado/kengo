@@ -109,7 +109,7 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
       top: 0;
       left: 0;
       right: 0;
-      z-index: 40;
+      z-index: 60;
       display: block;
       pointer-events: none;
     }
@@ -211,7 +211,7 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      z-index: 100;
+      z-index: 1100;
       min-width: 220px;
       display: flex;
       flex-direction: column;
@@ -310,7 +310,7 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
     .ui2-user-menu__backdrop {
       position: fixed;
       inset: 0;
-      z-index: 99;
+      z-index: 1099;
     }
   `],
 })
