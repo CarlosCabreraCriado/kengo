@@ -196,15 +196,17 @@
 }
 
 .rl-card {
+  position: relative;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 22px;
   box-shadow: var(--shadow-card);
-  overflow: hidden;
   transition: box-shadow 0.2s ease;
 }
 
 .rl-card:hover { box-shadow: var(--shadow-card-strong); }
+
+.rl-card--menu-open { z-index: 20; }
 
 .rl-card__row {
   display: flex;
@@ -386,6 +388,7 @@
 
 .rl-card__preview {
   border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0 0 22px 22px;
   background: var(--cream-50);
   padding: 14px 16px 16px;
 }
