@@ -15,7 +15,7 @@
   <!-- ========================================================== -->
   <section class="if-hero-web if-desktop-only">
     <div class="if-hero-web__main">
-      <span class="if-hero-web__eyebrow">Resumen de hoy</span>
+      <span class="if-hero-web__eyebrow">{{ clinicaActual()?.nombre || '' }}</span>
       <h1 class="if-hero-web__title">{{ heroTitle() || 'CARGANDO…' }}</h1>
       <p class="if-hero-web__sub" [innerHTML]="heroSubDesktop()"></p>
 

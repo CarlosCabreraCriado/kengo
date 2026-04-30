@@ -12,7 +12,7 @@ export interface TabItem {
 }
 
 const DEFAULT_TABS: TabItem[] = [
-  { id: 'home',     label: 'Hoy',      icon: 'home',         route: '/inicio',              matchPrefix: '/inicio' },
+  { id: 'home',     label: 'Inicio',   icon: 'home',         route: '/inicio',              matchPrefix: '/inicio' },
   { id: 'progress', label: 'Progreso', icon: 'trending_up',  route: '/actividad-personal/estadisticas', matchPrefix: '/actividad-personal/estadisticas' },
   { id: 'fisio',    label: 'Fisio',    icon: 'chat',         route: '/mi-clinica',          matchPrefix: '/mi-clinica' },
 ];

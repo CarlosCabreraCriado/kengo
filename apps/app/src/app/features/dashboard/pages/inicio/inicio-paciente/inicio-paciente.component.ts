@@ -107,7 +107,7 @@ export class InicioPacienteComponent {
     if (t === 'completed') return '¡BIEN HECHO!';
     if (t === 'rest') return 'A DESCANSAR';
     if (t === 'loading') return '';
-    return 'VAMOS ALLÁ 💪';
+    return 'VAMOS ALLÁ';
   });
 
   heroSub = computed<string>(() => {

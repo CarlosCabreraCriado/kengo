@@ -1,10 +1,13 @@
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { Dialog } from '@angular/cdk/dialog';
 import { DashboardFisioService } from '../../../data-access/dashboard-fisio.service';
 import { NotificacionesService } from '../../../../../core/services/notificaciones.service';
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
-import type { Clinica, NotificacionApp, PlanPorVencer } from '../../../../../../types/global';
+import { PlanBuilderService } from '../../../../planes/data-access/plan-builder.service';
+import { RutinaBuilderService } from '../../../../rutinas/data-access/rutina-builder.service';
+import type { Clinica, NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
 import { rawAssetUrl, assetUrl } from '../../../../../core/utils/asset-url';
 import {
   Ui2ActivityDay,
@@ -41,6 +44,9 @@ export class InicioFisioComponent {
   private router = inject(Router);
   private sessionService = inject(SessionService);
   private clinicasService = inject(ClinicasService);
+  private dialog = inject(Dialog);
+  private planBuilderService = inject(PlanBuilderService);
+  private rutinaBuilderService = inject(RutinaBuilderService);
 
   dashboardService = inject(DashboardFisioService);
   notificacionesService = inject(NotificacionesService);
@@ -70,7 +76,7 @@ export class InicioFisioComponent {
   heroTitle = computed(() => {
     const e = this.estadoSituacion();
     if (e === 'cargando') return '';
-    if (e === 'urgente') return 'REVISA LO URGENTE';
+    if (e === 'urgente') return 'PANEL DEL FISIO';
     if (e === 'pendiente') return 'VAMOS A POR HOY';
     return 'TODO BAJO CONTROL 🌿';
   });
@@ -97,25 +103,7 @@ export class InicioFisioComponent {
 
   heroSubDesktop = computed<string>(() => {
     if (this.estadoSituacion() === 'cargando') return 'Cargando…';
-    const pacientes = this.dashboardService.pacientesActivos();
-    const adherencia = this.dashboardService.adherenciaPromedio();
-    const alertas = this.alertasCount();
-    const planes = this.planesCount();
-
-    if (pacientes === 0) {
-      return 'Aún no tienes pacientes activos. Empieza añadiendo uno desde Mi Clínica.';
-    }
-    const adhTxt = `adherencia media <b>${adherencia}%</b>`;
-    if (alertas > 0 && planes > 0) {
-      return `Tienes <b>${pacientes} pacientes</b> · ${adhTxt} · <b>${alertas} alertas</b> y <b>${planes} planes</b> por revisar.`;
-    }
-    if (alertas > 0) {
-      return `Tienes <b>${pacientes} pacientes</b> · ${adhTxt}. <b>${alertas} alertas</b> requieren tu atención.`;
-    }
-    if (planes > 0) {
-      return `Tienes <b>${pacientes} pacientes</b> · ${adhTxt}. <b>${planes} planes</b> por vencer en los próximos días.`;
-    }
-    return `Tienes <b>${pacientes} pacientes</b> · ${adhTxt}. Sin alertas pendientes.`;
+    return 'Crea planes, asigna rutinas y sigue la adherencia de tus pacientes en tiempo real.';
   });
 
   // --- KPIs ---
@@ -235,7 +223,44 @@ export class InicioFisioComponent {
   }
 
   irACrearPlan(): void {
-    this.router.navigate(['/planes/nuevo']);
+    if (this.rutinaBuilderService.isActive()) {
+      this.rutinaBuilderService.openDrawer();
+      return;
+    }
+    if (this.planBuilderService.paciente()) {
+      this.planBuilderService.openDrawer();
+      return;
+    }
+    void this.iniciarCreacionPlan();
+  }
+
+  private async iniciarCreacionPlan(): Promise<void> {
+    const paciente = await this.seleccionarPaciente();
+    if (!paciente) return;
+
+    this.planBuilderService.paciente.set(paciente);
+    localStorage.setItem('carrito:last_paciente_id', paciente.id);
+    const fisioId = this.planBuilderService.fisioId();
+    if (fisioId) {
+      localStorage.setItem('carrito:last_fisio_id', fisioId);
+    }
+    this.planBuilderService.openDrawer();
+  }
+
+  private async seleccionarPaciente(): Promise<Usuario | null> {
+    const { SelectorPacienteComponent } = await import(
+      '../../../../../shared/ui/selector-paciente/selector-paciente.component'
+    );
+
+    const dialogRef = this.dialog.open<Usuario>(SelectorPacienteComponent, {
+      width: '500px',
+      maxWidth: '95vw',
+      panelClass: 'selector-paciente-dialog',
+    });
+
+    return new Promise((resolve) => {
+      dialogRef.closed.subscribe((paciente) => resolve(paciente ?? null));
+    });
   }
 
   irAPaciente(pacienteId: string): void {
