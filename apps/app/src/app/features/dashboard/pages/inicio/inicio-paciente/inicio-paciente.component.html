@@ -12,7 +12,7 @@
       [size]="130"
       [stroke]="14"
       [value]="progresoRatio()"
-      trackColor="rgba(231, 92, 62, 0.1)"
+      trackColor="rgba(var(--kengo-primary-rgb), 0.1)"
     >
       <div class="ip-hero__ring-num">
         {{ progreso().completados
@@ -31,7 +31,7 @@
         [size]="170"
         [stroke]="16"
         [value]="progresoRatio()"
-        trackColor="rgba(231, 92, 62, 0.12)"
+        trackColor="rgba(var(--kengo-primary-rgb), 0.12)"
       >
         <div class="ip-hero-web__ring-num">
           {{ progreso().completados
@@ -193,13 +193,6 @@
         (rescheduleClick)="irAClinica()"
         (calendarClick)="irAClinica()"
       ></ui2-next-appointment>
-
-      <!-- Logros recientes — solo desktop (mock) -->
-      <ui2-web-achievements-list
-        class="ip-desktop-only"
-        [items]="logros()"
-        (actionClick)="irAActividad()"
-      ></ui2-web-achievements-list>
 
       <!-- Clínica hero — solo mobile (en desktop la clínica vive en sidebar) -->
       @if (clinicaActual(); as clinica) {

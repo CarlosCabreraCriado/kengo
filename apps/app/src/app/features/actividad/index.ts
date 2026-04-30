@@ -11,3 +11,4 @@ export { ActividadEstadisticasComponent } from './pages/actividad-estadisticas/a
 
 // Services
 export { ActividadHoyService } from './data-access/actividad-hoy.service';
+export { EstadisticasService } from './data-access/estadisticas.service';

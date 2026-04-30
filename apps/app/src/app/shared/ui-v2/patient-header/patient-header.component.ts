@@ -109,7 +109,7 @@ import { Ui2AvatarComponent } from '../avatar/avatar.component';
       top: 0;
       left: 0;
       right: 0;
-      z-index: 20;
+      z-index: 40;
       display: block;
       pointer-events: none;
     }

@@ -22,6 +22,54 @@ export const listByPaciente = query({
 });
 
 /**
+ * Devuelve las últimas N sesiones de un paciente (orden descendente por
+ * fecha) con el título del primer plan asociado denormalizado. Pensado para
+ * el historial reciente de la página de estadísticas.
+ */
+export const listRecentByPaciente = query({
+  args: {
+    pacienteId: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const limit = args.limit ?? 5;
+
+    const sessions = await ctx.db
+      .query("sessions")
+      .withIndex("by_pacienteId_fecha", (q) =>
+        q.eq("pacienteId", targetUserId),
+      )
+      .order("desc")
+      .take(limit);
+
+    const planIds = sessions
+      .map((s) => s.planIds?.[0])
+      .filter((id): id is NonNullable<typeof id> => Boolean(id));
+    const plansMap = await batchGetMap(ctx, planIds);
+
+    return sessions.map((s) => {
+      const firstPlanId = s.planIds?.[0];
+      const plan = firstPlanId ? plansMap.get(firstPlanId) ?? null : null;
+      return {
+        sessionId: s._id,
+        fecha: s.fecha,
+        fechaInicio: s.fechaInicio,
+        fechaFin: s.fechaFin,
+        estado: s.estado,
+        totalEsperados: s.totalEsperados,
+        totalCompletados: s.totalCompletados,
+        duracionTotalSeg: s.duracionTotalSeg,
+        dolorPromedio: s.dolorPromedio,
+        esSintetica: s.esSintetica,
+        planTitulo: plan?.titulo ?? null,
+      };
+    });
+  },
+});
+
+/**
  * Devuelve las sesiones de un paciente en una fecha (típicamente 1 según BN1)
  * con sus `exerciseExecutions` expandidas (planExercise + exercise + plan).
  *

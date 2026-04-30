@@ -4,9 +4,7 @@
     title="VAS GENIAL 📈"
   >
   </ui2-big-title>
-  <p class="ae-hero-sub">
-    Llevas <b>3 semanas</b> con tu plan de hombro. El dolor ha bajado de 6 a 3.
-  </p>
+  <p class="ae-hero-sub">{{ subtituloHero() }}</p>
 
   <ui2-section [padding]="'0 20px 14px'">
     <ui2-segmented
@@ -16,180 +14,197 @@
     ></ui2-segmented>
   </ui2-section>
 
-  <ui2-section [padding]="'0 20px 14px'">
-    <div class="ae-kpi-grid">
-      <ui2-kpi-card
+  @if (cargando() && !hayDatos()) {
+    <ui2-section [padding]="'24px 20px'">
+      <div class="ae-loading">
+        <ui2-spinner size="lg" label="Cargando tu progreso…"></ui2-spinner>
+      </div>
+    </ui2-section>
+  } @else if (!hayDatos()) {
+    <ui2-section [padding]="'12px 20px'">
+      <ui2-empty-state
         icon="trending_up"
-        iconColor="#22c55e"
-        label="Adherencia"
-        value="87"
-        unit="%"
-        delta="↑ +12% vs sem pasada"
-      ></ui2-kpi-card>
-      <ui2-kpi-card
-        icon="local_fire_department"
-        iconColor="#d9a832"
-        label="Racha"
-        value="12"
-        unit="días"
-        delta="Mejor racha: 14 días"
-        deltaColor="var(--ink-500)"
-      ></ui2-kpi-card>
-    </div>
-  </ui2-section>
+        title="Aún no hay datos"
+        message="Cuando completes tus primeras sesiones, verás aquí tu progreso, racha y evolución del dolor."
+      ></ui2-empty-state>
+    </ui2-section>
+  } @else {
+    <ui2-section [padding]="'0 20px 14px'">
+      <div class="ae-kpi-grid">
+        <ui2-kpi-card
+          icon="trending_up"
+          iconColor="#22c55e"
+          label="Adherencia"
+          [value]="adherenciaValue()"
+          [unit]="adherenciaUnit()"
+          [delta]="deltaTexto()"
+          [deltaColor]="deltaColor()"
+        ></ui2-kpi-card>
+        <ui2-kpi-card
+          icon="local_fire_department"
+          iconColor="#d9a832"
+          label="Racha"
+          [value]="racha()"
+          unit="días"
+          [delta]="mejorRachaTexto()"
+          deltaColor="var(--ink-500)"
+        ></ui2-kpi-card>
+      </div>
+    </ui2-section>
 
-  <ui2-section [padding]="'6px 20px 14px'">
-    <ui2-card [padding]="0">
-      <div class="ae-chart">
-        <div class="ae-chart__head">
-          <div>
-            <div class="ae-chart__overline">Actividad · 10 días</div>
-            <div class="ae-chart__title">{{ diasActivosTotal() }} DE 10 DÍAS</div>
+    <ui2-section [padding]="'6px 20px 14px'">
+      <ui2-card [padding]="0">
+        <div class="ae-chart">
+          <div class="ae-chart__head">
+            <div>
+              <div class="ae-chart__overline">Actividad · 10 días</div>
+              <div class="ae-chart__title">{{ diasActivosTotal() }} DE 10 DÍAS</div>
+            </div>
+            <ui2-pill variant="soft">{{ periodoLabel() }}</ui2-pill>
           </div>
-          <ui2-pill variant="soft">Esta semana</ui2-pill>
-        </div>
-        <div class="ae-chart__bars">
-          @for (w of weeks; track w.label) {
-            <div class="ae-chart__col">
-              <div class="ae-chart__bar-wrap">
+          <div class="ae-chart__bars">
+            @for (w of weeks(); track w.label) {
+              <div class="ae-chart__col">
+                <div class="ae-chart__bar-wrap">
+                  <div
+                    class="ae-chart__bar"
+                    [style.height.%]="barHeightPct(w)"
+                    [style.background]="barColor(w)"
+                    [class.ae-chart__bar--today]="w.today"
+                  ></div>
+                </div>
                 <div
-                  class="ae-chart__bar"
-                  [style.height.%]="barHeightPct(w)"
-                  [style.background]="barColor(w)"
-                  [class.ae-chart__bar--today]="w.today"
-                ></div>
+                  class="ae-chart__label"
+                  [class.ae-chart__label--today]="w.today"
+                >{{ w.label }}</div>
               </div>
-              <div
-                class="ae-chart__label"
-                [class.ae-chart__label--today]="w.today"
-              >{{ w.label }}</div>
+            }
+          </div>
+        </div>
+      </ui2-card>
+    </ui2-section>
+
+    @if (tieneDolor()) {
+      <ui2-section [padding]="'0 20px 14px'">
+        <ui2-card variant="tinted" [padding]="0">
+          <div class="ae-pain">
+            <div class="ae-pain__head">
+              <div>
+                <div class="ae-pain__overline">Nivel de dolor</div>
+                <div class="ae-pain__title">
+                  @if (dolorInicial() !== null && dolorActual() !== null && dolorInicial()! > dolorActual()!) {
+                    DE {{ dolorInicial() }} A {{ dolorActual() }} <span class="ae-pain__arrow">↓</span>
+                  } @else if (dolorActual() !== null) {
+                    {{ dolorActual() }}/10
+                  } @else {
+                    —
+                  }
+                </div>
+                <div class="ae-pain__sub">Escala 0-10 · {{ periodoLabel().toLowerCase() }}</div>
+              </div>
+              <ui2-icon-badge
+                icon="favorite"
+                color="#22c55e"
+                [size]="44"
+                [radius]="22"
+              ></ui2-icon-badge>
+            </div>
+            <svg viewBox="0 0 300 90" class="ae-pain__svg" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="painGrad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="var(--kengo-primary)" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="var(--kengo-primary)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <polyline [attr.points]="painArea()" fill="url(#painGrad)" />
+              <polyline
+                [attr.points]="painPolyline()"
+                fill="none"
+                stroke="var(--kengo-primary)"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+              />
+              @for (p of painPlot(); track p.d) {
+                <g>
+                  <circle
+                    [attr.cx]="p.x"
+                    [attr.cy]="p.y"
+                    r="4"
+                    fill="white"
+                    stroke="var(--kengo-primary)"
+                    stroke-width="2"
+                  />
+                  <text
+                    [attr.x]="p.x"
+                    y="88"
+                    text-anchor="middle"
+                    font-size="9"
+                    font-weight="700"
+                    fill="rgba(60, 60, 60, 0.6)"
+                    font-family="Galvji, sans-serif"
+                  >{{ p.d }}</text>
+                </g>
+              }
+            </svg>
+          </div>
+        </ui2-card>
+      </ui2-section>
+    }
+
+    @if (history().length > 0) {
+      <ui2-section
+        label="Historial reciente"
+        [padding]="'6px 20px 14px'"
+      >
+        <ui2-card [padding]="0">
+          @for (h of history(); track h.day; let i = $index) {
+            <div
+              class="ae-hist"
+              [class.ae-hist--bordered]="i > 0"
+            >
+              <span
+                class="ae-hist__badge"
+                [class.ae-hist__badge--rest]="h.rest"
+                [class.ae-hist__badge--done]="!h.rest && h.pct === 100"
+                [class.ae-hist__badge--partial]="!h.rest && h.pct < 100"
+              >
+                @if (h.rest) {
+                  —
+                } @else if (h.pct === 100) {
+                  <span class="material-symbols-outlined ae-hist__check" aria-hidden="true">check</span>
+                } @else {
+                  {{ h.pct }}%
+                }
+              </span>
+              <div class="ae-hist__text">
+                <span class="ae-hist__day">{{ h.day }}</span>
+                <span class="ae-hist__plan">{{ h.plan }}</span>
+              </div>
+              <div class="ae-hist__trail">
+                <span class="ae-hist__time">{{ h.time }}</span>
+                @if (h.pain !== null) {
+                  <span class="ae-hist__pain">
+                    <ui2-status-dot [color]="painDotColor(h.pain)">
+                      <span class="ae-hist__pain-text">Dolor {{ h.pain }}/10</span>
+                    </ui2-status-dot>
+                  </span>
+                }
+              </div>
             </div>
           }
-        </div>
-      </div>
-    </ui2-card>
-  </ui2-section>
-
-  <ui2-section [padding]="'0 20px 14px'">
-    <ui2-card variant="tinted" [padding]="0">
-      <div class="ae-pain">
-        <div class="ae-pain__head">
-          <div>
-            <div class="ae-pain__overline">Nivel de dolor</div>
-            <div class="ae-pain__title">DE 6 A 3 <span class="ae-pain__arrow">↓</span></div>
-            <div class="ae-pain__sub">Escala 0-10 · últimos 7 días</div>
-          </div>
-          <ui2-icon-badge
-            icon="favorite"
-            color="#22c55e"
-            [size]="44"
-            [radius]="22"
-          ></ui2-icon-badge>
-        </div>
-        <svg viewBox="0 0 300 90" class="ae-pain__svg" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="painGrad" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="var(--kengo-primary)" stop-opacity="0.3" />
-              <stop offset="100%" stop-color="var(--kengo-primary)" stop-opacity="0" />
-            </linearGradient>
-          </defs>
-          <polyline [attr.points]="painArea()" fill="url(#painGrad)" />
-          <polyline
-            [attr.points]="painPolyline()"
-            fill="none"
-            stroke="var(--kengo-primary)"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            vector-effect="non-scaling-stroke"
-          />
-          @for (p of painPlot(); track p.d) {
-            <g>
-              <circle
-                [attr.cx]="p.x"
-                [attr.cy]="p.y"
-                r="4"
-                fill="white"
-                stroke="var(--kengo-primary)"
-                stroke-width="2"
-              />
-              <text
-                [attr.x]="p.x"
-                y="88"
-                text-anchor="middle"
-                font-size="9"
-                font-weight="700"
-                fill="rgba(60, 60, 60, 0.6)"
-                font-family="Galvji, sans-serif"
-              >{{ p.d }}</text>
-            </g>
-          }
-        </svg>
-      </div>
-    </ui2-card>
-  </ui2-section>
-
-  <ui2-horizontal-scroller label="Logros" action="Ver todos →">
-    @for (a of achievements; track a.title) {
-      <ui2-achievement-card
-        [emoji]="a.emoji"
-        [title]="a.title"
-        [subtitle]="a.subtitle"
-        [color]="a.color"
-        [earned]="a.earned"
-      ></ui2-achievement-card>
+        </ui2-card>
+      </ui2-section>
     }
-  </ui2-horizontal-scroller>
 
-  <ui2-section
-    label="Historial reciente"
-    action="Ver todo →"
-    [padding]="'6px 20px 14px'"
-  >
-    <ui2-card [padding]="0">
-      @for (h of history; track h.day; let i = $index) {
-        <div
-          class="ae-hist"
-          [class.ae-hist--bordered]="i > 0"
-        >
-          <span
-            class="ae-hist__badge"
-            [class.ae-hist__badge--rest]="h.rest"
-            [class.ae-hist__badge--done]="!h.rest && h.pct === 100"
-            [class.ae-hist__badge--partial]="!h.rest && h.pct < 100"
-          >
-            @if (h.rest) {
-              —
-            } @else if (h.pct === 100) {
-              <span class="material-symbols-outlined ae-hist__check" aria-hidden="true">check</span>
-            } @else {
-              {{ h.pct }}%
-            }
-          </span>
-          <div class="ae-hist__text">
-            <span class="ae-hist__day">{{ h.day }}</span>
-            <span class="ae-hist__plan">{{ h.plan }}</span>
-          </div>
-          <div class="ae-hist__trail">
-            <span class="ae-hist__time">{{ h.time }}</span>
-            @if (h.pain !== null) {
-              <span class="ae-hist__pain">
-                <ui2-status-dot [color]="painDotColor(h.pain)">
-                  <span class="ae-hist__pain-text">Dolor {{ h.pain }}/10</span>
-                </ui2-status-dot>
-              </span>
-            }
-          </div>
-        </div>
-      }
-    </ui2-card>
-  </ui2-section>
-
-  <ui2-section [padding]="'6px 20px 14px'">
-    <ui2-cta-bar
-      icon="chat"
-      title="COMPARTE TU PROGRESO"
-      subtitle="Envía tu resumen semanal a Carlos"
-    ></ui2-cta-bar>
-  </ui2-section>
+    <ui2-section [padding]="'6px 20px 14px'">
+      <ui2-cta-bar
+        icon="ios_share"
+        title="COMPARTE TU PROGRESO"
+        subtitle="Comparte tu resumen con quien quieras"
+        (clicked)="onCompartir()"
+      ></ui2-cta-bar>
+    </ui2-section>
+  }
 </div>

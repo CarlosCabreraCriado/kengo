@@ -16,7 +16,6 @@ import type {
 import { rawAssetUrl, thumbnailUrl } from '../../../../../core/utils/asset-url';
 import {
   Ui2ActivityDay,
-  Ui2AchievementListItem,
   Ui2AppointmentVm,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
@@ -27,7 +26,6 @@ import {
   Ui2NextAppointmentComponent,
   Ui2ProgressRingComponent,
   Ui2SectionComponent,
-  Ui2WebAchievementsListComponent,
   Ui2WebActivityChartComponent,
 } from '../../../../../shared/ui-v2';
 
@@ -61,7 +59,6 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
     Ui2NextAppointmentComponent,
     Ui2ProgressRingComponent,
     Ui2SectionComponent,
-    Ui2WebAchievementsListComponent,
     Ui2WebActivityChartComponent,
   ],
   templateUrl: './inicio-paciente.component.html',
@@ -196,12 +193,6 @@ export class InicioPacienteComponent {
     { label: 'L', value: 1.0 },
     { label: 'M', value: 0.85 },
     { label: 'X', value: 0.33, today: true },
-  ]);
-
-  readonly logros = signal<Ui2AchievementListItem[]>([
-    { emoji: '🔥', title: '12 días de racha', sub: '¡Sigue así!', color: '#f59e0b', earned: true },
-    { emoji: '💪', title: '50 ejercicios', sub: 'Completados', color: '#22c55e', earned: true },
-    { emoji: '🎯', title: 'Mes perfecto', sub: 'Faltan 4 días', color: '#6366f1', earned: false },
   ]);
 
   readonly proximaCita = signal<Ui2AppointmentVm>({
