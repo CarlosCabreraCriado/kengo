@@ -26,7 +26,12 @@ export const FISIO_SIDEBAR_GROUPS: SidebarNavGroup[] = [
     items: [
       { id: 'galeria', label: 'Galería',  icon: 'fitness_center', route: '/ejercicios', matchPrefix: '/ejercicios' },
       { id: 'rutinas', label: 'Rutinas',  icon: 'list_alt',       route: '/rutinas',    matchPrefix: '/rutinas' },
-      { id: 'clinica', label: 'Mi clínica', icon: 'apartment',    route: '/mi-clinica', matchPrefix: '/mi-clinica' },
+    ],
+  },
+  {
+    label: 'Clínica',
+    items: [
+      { id: 'clinica', label: 'Mi clínica', icon: 'apartment', route: '/mi-clinica', matchPrefix: '/mi-clinica' },
     ],
   },
 ];

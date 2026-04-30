@@ -38,7 +38,6 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
     label: 'Mi clínica',
     items: [
       { id: 'fisio', label: 'Mi fisio', icon: 'chat', route: '/mi-clinica', matchPrefix: '/mi-clinica', badge: '2' },
-      { id: 'appointments', label: 'Citas', icon: 'calendar_month', route: null },
       { id: 'clinic', label: 'Clínica', icon: 'apartment', route: '/mi-clinica', matchPrefix: '/mi-clinica' },
     ],
   },
