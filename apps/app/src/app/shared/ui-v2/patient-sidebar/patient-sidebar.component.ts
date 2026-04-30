@@ -635,11 +635,16 @@ export class Ui2PatientSidebarComponent {
 
   readonly activeId = computed(() => {
     const url = this.currentUrl() ?? '';
+    let best: { id: string; length: number } | null = null;
     for (const g of this.groups()) {
-      const match = g.items.find((i) => i.matchPrefix && url.startsWith(i.matchPrefix));
-      if (match) return match.id;
+      for (const item of g.items) {
+        if (!item.matchPrefix || !url.startsWith(item.matchPrefix)) continue;
+        if (!best || item.matchPrefix.length > best.length) {
+          best = { id: item.id, length: item.matchPrefix.length };
+        }
+      }
     }
-    return null;
+    return best?.id ?? null;
   });
 
   constructor() {
