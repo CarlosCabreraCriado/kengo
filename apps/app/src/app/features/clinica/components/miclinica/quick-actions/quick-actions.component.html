@@ -1,0 +1,35 @@
+<div class="mqa">
+  @if (phone(); as tel) {
+    <a [href]="'tel:' + tel" class="mqa__tile mqa__tile--primary" aria-label="Llamar">
+      <span class="mqa__icon">
+        <span class="material-symbols-outlined" aria-hidden="true">call</span>
+      </span>
+      <span class="mqa__label">Llamar</span>
+    </a>
+  }
+
+  @if (email(); as mail) {
+    <a [href]="'mailto:' + mail" class="mqa__tile" aria-label="Enviar email">
+      <span class="mqa__icon mqa__icon--soft">
+        <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+      </span>
+      <span class="mqa__label">Email</span>
+    </a>
+  }
+
+  @if (mapaUrl(); as url) {
+    <a [href]="url" target="_blank" rel="noopener" class="mqa__tile" aria-label="Abrir en mapa">
+      <span class="mqa__icon mqa__icon--soft">
+        <span class="material-symbols-outlined" aria-hidden="true">map</span>
+      </span>
+      <span class="mqa__label">Mapa</span>
+    </a>
+  }
+
+  <button type="button" class="mqa__tile" (click)="compartir()" aria-label="Compartir">
+    <span class="mqa__icon mqa__icon--soft">
+      <span class="material-symbols-outlined" aria-hidden="true">share</span>
+    </span>
+    <span class="mqa__label">Compartir</span>
+  </button>
+</div>

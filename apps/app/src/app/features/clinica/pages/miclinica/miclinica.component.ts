@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
@@ -24,21 +31,27 @@ import { ToastService } from '../../../../shared/services/toast/toast.service';
 
 // V2 catalog
 import {
-  Ui2CardComponent,
   Ui2SectionComponent,
-  Ui2BigTitleComponent,
-  Ui2ClinicHeroCardComponent,
   Ui2ButtonComponent,
   Ui2CtaBarComponent,
   Ui2EmptyStateComponent,
   Ui2AvatarComponent,
-  Ui2PillComponent,
+  Ui2CardComponent,
   Ui2SpinnerComponent,
-  Ui2ListRowComponent,
   Ui2PillVariant,
 } from '../../../../shared/ui-v2';
 
-import { DatePipe } from '@angular/common';
+// Subcomponentes presentacionales del rediseño desktop
+import {
+  MiClinicaHeroComponent,
+  MiClinicaQuickActionsComponent,
+  MiClinicaTeamGridComponent,
+  MiClinicaAccessCodesComponent,
+  MiClinicaRoleCardComponent,
+  MiClinicaInfoCardComponent,
+  MiClinicaInfoField,
+  MiClinicaSubscriptionCardComponent,
+} from '../../components/miclinica';
 
 @Component({
   standalone: true,
@@ -46,22 +59,24 @@ import { DatePipe } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
     VincularClinicaDialogComponent,
     CrearClinicaDialogComponent,
     GenerarCodigoDialogComponent,
     EditarClinicaDialogComponent,
-    Ui2CardComponent,
     Ui2SectionComponent,
-    Ui2BigTitleComponent,
-    Ui2ClinicHeroCardComponent,
     Ui2ButtonComponent,
     Ui2CtaBarComponent,
     Ui2EmptyStateComponent,
     Ui2AvatarComponent,
-    Ui2PillComponent,
+    Ui2CardComponent,
     Ui2SpinnerComponent,
-    Ui2ListRowComponent,
+    MiClinicaHeroComponent,
+    MiClinicaQuickActionsComponent,
+    MiClinicaTeamGridComponent,
+    MiClinicaAccessCodesComponent,
+    MiClinicaRoleCardComponent,
+    MiClinicaInfoCardComponent,
+    MiClinicaSubscriptionCardComponent,
   ],
   templateUrl: './miclinica.component.html',
   styleUrl: './miclinica.component.css',
@@ -80,6 +95,17 @@ export class MiClinicaComponent {
   private toastService = inject(ToastService);
 
   isMovil = useResponsive().esMobile;
+
+  constructor() {
+    // Auto-cargar códigos al entrar / cambiar de clínica si el usuario tiene permisos.
+    // Mantiene paridad mobile/desktop sin depender del toggle expandible.
+    effect(() => {
+      const c = this.currentClinic();
+      if (c && this.esFisioOAdmin()) {
+        this.cargarCodigos();
+      }
+    });
+  }
 
   public usuario = computed(
     () => this.sessionService.usuario() as Usuario | null,
@@ -488,4 +514,90 @@ export class MiClinicaComponent {
   irASuscripcion(): void {
     void this.router.navigate(['/mi-clinica/suscripcion']);
   }
+
+  // ===== Datos derivados para el rediseño desktop =====
+
+  /** Nombre del plan actual en mayúsculas — fallback "FREE" si no hay suscripción. */
+  protected readonly suscripcionPlanNombre = computed<string>(() => {
+    const sub = this.subscriptionService.suscripcion();
+    return sub?.plan?.nombre?.toUpperCase() ?? 'FREE';
+  });
+
+  /** Línea descriptiva del plan: "hasta N fisios" o copy free por defecto. */
+  protected readonly suscripcionPlanLimite = computed<string>(() => {
+    const sub = this.subscriptionService.suscripcion();
+    if (!sub?.plan) return 'hasta 3 fisios';
+    return `hasta ${sub.plan.rangoFisiosMax} fisios`;
+  });
+
+  /**
+   * `true` si conviene mostrar el banner amarillo dentro de la subscription card.
+   * Lo activan: el plan está bloqueado por impago o el equipo supera el plan free.
+   */
+  protected readonly mostrarWarningSuscripcion = computed<boolean>(
+    () => this.enLimiteFisios() || this.subscriptionService.bloqueada(),
+  );
+
+  protected readonly mensajeWarningSuscripcion = computed<string>(() => {
+    if (this.subscriptionService.bloqueada())
+      return 'Tu suscripción está suspendida. Actualiza el método de pago.';
+    if (this.enLimiteFisios())
+      return 'Has alcanzado el plan máximo (10 fisios). Contacta con ventas.';
+    return 'Tu equipo supera el plan free. Activa una suscripción.';
+  });
+
+  /** Fecha de renovación legible, o "—" si no aplica. */
+  protected readonly suscripcionRenovacion = computed<string>(() => {
+    const fin = this.subscriptionService.suscripcion()?.currentPeriodEnd;
+    if (!fin) return '—';
+    return new Date(fin).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  });
+
+  /** Etiqueta del CTA principal de la suscripción según estado. */
+  protected readonly suscripcionCtaLabel = computed<string>(() => {
+    const sub = this.subscriptionService.suscripcion();
+    if (!sub || sub.estado === 'none') return 'Activar suscripción';
+    if (this.subscriptionService.bloqueada()) return 'Actualizar pago';
+    return 'Gestionar suscripción';
+  });
+
+  /** Campos de la InfoCard "Contacto" (rediseño desktop). */
+  protected readonly camposContacto = computed<MiClinicaInfoField[]>(() => {
+    const c = this.currentClinic();
+    return [
+      { label: 'Teléfono', value: c?.telefono ?? null },
+      { label: 'Email', value: c?.email ?? null },
+    ];
+  });
+
+  /** Campos de la InfoCard "Datos fiscales" (rediseño desktop). */
+  protected readonly camposFiscales = computed<MiClinicaInfoField[]>(() => {
+    const c = this.currentClinic();
+    return [
+      { label: 'NIF', value: c?.nif ?? null, mono: true },
+      { label: 'Código postal', value: c?.postal ?? null },
+      { label: 'Dirección', value: c?.direccion ?? null },
+    ];
+  });
+
+  /** Devuelve si un fisio concreto es admin de la clínica activa (para etiqueta de rol). */
+  esAdminFisioFn = (fisioId: string): boolean => {
+    const clinica = this.currentClinic();
+    if (!clinica) return false;
+    const usuario = this.sessionService.usuario();
+    if (!usuario) return false;
+    // Si el fisio coincide con el usuario actual, podemos usar el computed esAdmin().
+    if (usuario.id === fisioId) return this.esAdmin();
+    // Para otros fisios necesitaríamos el listado de miembros con su puesto.
+    // Como ese dato no está disponible aquí, devolvemos false (la pill seguirá mostrando "Fisioterapeuta").
+    return false;
+  };
+
+  /** Resolver de URL de avatar para el componente team-grid. */
+  resolverAvatarFisio = (avatar: string | null | undefined): string | null =>
+    this.fisioAvatarUrl(avatar);
 }

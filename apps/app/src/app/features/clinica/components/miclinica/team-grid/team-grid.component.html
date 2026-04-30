@@ -1,0 +1,100 @@
+<ui2-card [padding]="20">
+  <header class="mtg__head" [class.mtg__head--stacked]="expandable()">
+    <div class="mtg__head-left">
+      <ui2-icon-badge icon="groups" color="var(--kengo-primary)" [size]="36" [radius]="10" />
+      <div class="mtg__head-text">
+        <span class="mtg__overline">Equipo</span>
+        <h3 class="mtg__title">
+          @if (fisios().length === 1) {
+            1 FISIOTERAPEUTA
+          } @else {
+            {{ fisios().length }} FISIOTERAPEUTAS
+          }
+        </h3>
+      </div>
+    </div>
+
+    @if (!expandable() && puedeAnadirFisio()) {
+      <ui2-button
+        variant="primary"
+        size="sm"
+        iconLeft="person_add"
+        (clicked)="anadirFisio.emit()"
+      >
+        Añadir
+      </ui2-button>
+    }
+  </header>
+
+  @if (expandable() && puedeAnadirFisio()) {
+    <div class="mtg__head-cta">
+      <ui2-button
+        variant="primary"
+        size="sm"
+        iconLeft="person_add"
+        (clicked)="anadirFisio.emit()"
+      >
+        Añadir fisioterapeuta
+      </ui2-button>
+    </div>
+  }
+
+  @if (fisios().length === 0) {
+    <div class="mtg__empty">
+      <span class="material-symbols-outlined" aria-hidden="true">person_off</span>
+      <p>Sin fisioterapeutas asignados</p>
+    </div>
+  } @else if (expandable() && !expanded()) {
+    @if (preview().length > 0) {
+      <div class="mtg__preview">
+        <span class="mtg__avatar-stack">
+          @for (f of preview(); track f.id; let i = $index) {
+            <span class="mtg__avatar-stack-item" [style.--stack-index]="i">
+              <ui2-avatar
+                size="sm"
+                gradient="coral"
+                [border]="true"
+                [name]="(f.first_name || '') + ' ' + (f.last_name || '')"
+                [src]="resolveAvatar(f.avatar)"
+              ></ui2-avatar>
+            </span>
+          }
+          @if (extras() > 0) {
+            <span class="mtg__avatar-stack-more" [style.--stack-index]="4">
+              +{{ extras() }}
+            </span>
+          }
+        </span>
+      </div>
+    }
+  } @else {
+    <div class="mtg__grid">
+      @for (f of fisios(); track f.id; let i = $index) {
+        <app-mc-team-member-card
+          [fisio]="f"
+          [index]="i"
+          [avatarUrl]="resolveAvatar(f.avatar)"
+          [esAdmin]="esAdminFisio(f.id)"
+        />
+      }
+    </div>
+  }
+
+  @if (expandable() && fisios().length > 0) {
+    <button
+      type="button"
+      class="mtg__expander"
+      (click)="toggleExpand.emit()"
+      [attr.aria-expanded]="expanded()"
+    >
+      <span class="mtg__expander-text">
+        {{ expanded() ? 'Ocultar equipo' : 'Ver el equipo' }}
+      </span>
+      <span
+        class="material-symbols-outlined mtg__expander-icon"
+        [class.mtg__expander-icon--rotated]="expanded()"
+        aria-hidden="true"
+      >expand_more</span>
+    </button>
+  }
+</ui2-card>

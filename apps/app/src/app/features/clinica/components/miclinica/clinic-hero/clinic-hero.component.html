@@ -1,0 +1,26 @@
+<div class="mch">
+  <div class="mch__bg" [style.background-image]="bgUrl()"></div>
+  <div class="mch__overlay"></div>
+
+  <div class="mch__top">
+    <p class="mch__overline">Mi clínica</p>
+    <h2 class="mch__name">{{ name() }}</h2>
+  </div>
+
+  @if (address() || phone()) {
+    <div class="mch__bottom">
+      @if (address()) {
+        <span class="mch__meta mch__meta--address">
+          <span class="material-symbols-outlined mch__icon" aria-hidden="true">location_on</span>
+          <span class="mch__meta-text">{{ address() }}</span>
+        </span>
+      }
+      @if (phone()) {
+        <span class="mch__meta">
+          <span class="material-symbols-outlined mch__icon" aria-hidden="true">phone</span>
+          <span class="mch__meta-text">{{ phone() }}</span>
+        </span>
+      }
+    </div>
+  }
+</div>

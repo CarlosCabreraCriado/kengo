@@ -1,0 +1,99 @@
+:host {
+  display: block;
+}
+
+:host ::ng-deep .ui2-card {
+  background: linear-gradient(135deg, #fff5ee 0%, #ffffff 60%, #fff8eb 100%) !important;
+  border: 1px solid rgba(var(--kengo-primary-rgb), 0.15) !important;
+}
+
+.msc__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.msc__overline {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.msc__plan {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.msc__plan-name {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--kengo-primary);
+}
+
+@media (min-width: 1024px) {
+  .msc__plan-name {
+    font-size: 38px;
+  }
+}
+
+.msc__plan-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-500);
+}
+
+.msc__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.msc__warning-icon {
+  font-size: 18px;
+  color: var(--warning);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.msc__warning p {
+  margin: 0;
+  flex: 1;
+  font-size: 12px;
+  color: var(--ink-900);
+  line-height: 1.5;
+}
+
+.msc__cta {
+  margin-top: 14px;
+}
+
+.msc__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+  font-size: 11px;
+}
+
+.msc__footer-label {
+  color: var(--ink-500);
+}
+
+.msc__footer-value {
+  font-weight: 700;
+  color: var(--ink-700);
+}

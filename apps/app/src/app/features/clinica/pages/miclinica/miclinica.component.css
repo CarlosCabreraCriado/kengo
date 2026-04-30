@@ -2,6 +2,7 @@
 
 /* ============================================
    MI CLÍNICA — V2 cream wellness
+   Layout responsive: 1-col mobile / 2-col grid en lg+ (≥1024px)
    ============================================ */
 
 :host {
@@ -20,6 +21,8 @@
 }
 
 .mc-main {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
@@ -34,18 +37,54 @@
   }
 }
 
-/* === Header con switcher === */
-.mc-header-row {
+@media (min-width: 1024px) {
+  .mc-main {
+    max-width: 1280px;
+    padding: 12px 12px 40px;
+  }
+}
+
+/* === Blur circles decorativos (solo desktop) === */
+.mc-blur {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(20px);
+  pointer-events: none;
+  display: none;
+  z-index: 0;
+}
+
+@media (min-width: 1024px) {
+  .mc-blur {
+    display: block;
+  }
+}
+
+.mc-blur--1 {
+  top: -120px;
+  right: -80px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(var(--kengo-primary-rgb), 0.18), transparent 70%);
+}
+
+.mc-blur--2 {
+  bottom: -60px;
+  left: 200px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(239, 192, 72, 0.20), transparent 70%);
+}
+
+/* === Switcher de clínica === */
+.mc-switcher-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-end;
 }
 
 .mc-switcher-wrap {
   position: relative;
   flex-shrink: 0;
-  margin-top: 6px;
 }
 
 .mc-picker-overlay {
@@ -53,6 +92,9 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.18);
   z-index: 40;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   animation: mc-fade-in 0.2s ease-out;
 }
 
@@ -148,491 +190,92 @@
   color: var(--ink-500);
 }
 
-/* === CTA stack (empty state buttons) === */
+/* === CTA stack (empty state) === */
 .mc-cta-stack {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* === Hero — fila de rol bajo el banner === */
-.mc-role-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-/* === Quick actions === */
-.mc-quick-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.mc-quick-card {
+/* === Grid responsive principal === */
+.mc-grid {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 14px 8px;
-  border-radius: 18px;
-  border: 1px solid var(--ink-100);
-  background: white;
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-  font: inherit;
+  gap: 16px;
 }
 
-.mc-quick-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-card);
-  border-color: var(--ink-300);
-}
-
-.mc-quick-card:active {
-  transform: translateY(0);
-}
-
-.mc-quick-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  display: inline-grid;
-  place-items: center;
-}
-
-.mc-quick-icon .material-symbols-outlined {
-  font-size: 22px;
-}
-
-.mc-quick-card--primary .mc-quick-icon {
-  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
-  box-shadow: var(--shadow-pill-coral);
-}
-
-.mc-quick-card--primary .mc-quick-icon .material-symbols-outlined {
-  color: white;
-}
-
-.mc-quick-card--soft .mc-quick-icon {
-  background: rgba(var(--kengo-primary-rgb), 0.12);
-}
-
-.mc-quick-card--soft .mc-quick-icon .material-symbols-outlined {
-  color: var(--kengo-primary);
-}
-
-.mc-quick-card--neutral .mc-quick-icon {
-  background: var(--cream-100);
-}
-
-.mc-quick-card--neutral .mc-quick-icon .material-symbols-outlined {
-  color: var(--ink-700);
-}
-
-.mc-quick-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-700);
-}
-
-/* === Info grid === */
-.mc-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.mc-info-card {
+.mc-col-left,
+.mc-col-right {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+  min-width: 0;
 }
 
-.mc-info-head {
+@media (min-width: 1024px) {
+  .mc-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .mc-col-left,
+  .mc-col-right {
+    gap: 22px;
+  }
+}
+
+/* === Visibility helpers (mobile/desktop sólo) === */
+.mc-only-mobile {
+  display: block;
+}
+
+.mc-only-desktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .mc-only-mobile {
+    display: none;
+  }
+
+  .mc-only-desktop {
+    display: block;
+  }
+}
+
+/* === Aviso límite fisios === */
+.mc-limite-fisios {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--ink-100);
-}
-
-.mc-info-icon {
-  font-size: 18px;
-  color: var(--kengo-primary);
-}
-
-.mc-info-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-500);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.mc-info-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.mc-info-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.mc-info-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--ink-400);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.mc-info-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-900);
-}
-
-.mc-info-value--truncate {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mc-info-value--mono {
-  font-family: ui-monospace, "SF Mono", monospace;
-  letter-spacing: 0.05em;
-}
-
-/* === Section heads (equipo / códigos) === */
-.mc-section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 12px;
-  padding: 14px 16px;
-  cursor: pointer;
-  transition: background 0.15s;
 }
 
-.mc-section-head:hover {
-  background: var(--cream-50);
+.mc-limite-icon {
+  font-size: 22px;
+  color: var(--warning);
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
-.mc-section-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.mc-limite-text {
   flex: 1;
   min-width: 0;
 }
 
-.mc-section-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  display: inline-grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-
-.mc-section-icon--coral {
-  background: rgba(var(--kengo-primary-rgb), 0.12);
-}
-
-.mc-section-icon--coral .material-symbols-outlined {
-  color: var(--kengo-primary);
-  font-size: 20px;
-  font-variation-settings: "FILL" 1;
-}
-
-.mc-section-icon--ink {
-  background: var(--cream-100);
-}
-
-.mc-section-icon--ink .material-symbols-outlined {
-  color: var(--ink-700);
-  font-size: 20px;
-  font-variation-settings: "FILL" 1;
-}
-
-.mc-section-name {
+.mc-limite-title {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
   color: var(--ink-900);
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
-.mc-section-sub {
-  margin: 2px 0 0;
-  font-size: 11px;
-  color: var(--ink-500);
-}
-
-.mc-section-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.mc-chevron {
-  font-size: 22px;
-  color: var(--ink-400);
-  transition: transform 0.2s;
-}
-
-.mc-chevron--rotated {
-  transform: rotate(180deg);
-}
-
-/* === Empty blocks === */
-.mc-empty-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 28px 20px;
-  text-align: center;
-}
-
-.mc-empty-block > .material-symbols-outlined {
-  font-size: 36px;
-  color: var(--ink-300);
-}
-
-.mc-empty-block p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink-500);
-}
-
-/* === Team === */
-.mc-team-preview {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px 14px;
-}
-
-.mc-avatar-stack {
-  display: inline-flex;
-  align-items: center;
-}
-
-.mc-avatar-stack-item {
-  display: inline-flex;
-  margin-left: calc(var(--stack-index, 0) * -10px);
-  z-index: calc(10 - var(--stack-index, 0));
-}
-
-.mc-avatar-stack-item:first-child {
-  margin-left: 0;
-}
-
-.mc-avatar-stack-more {
-  display: inline-grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  background: var(--ink-700);
-  color: white;
+.mc-limite-desc {
+  margin: 4px 0 8px;
   font-size: 12px;
-  font-weight: 700;
-  border: 2.5px solid white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-  margin-left: -10px;
-}
-
-.mc-preview-hint {
-  font-size: 11px;
-  color: var(--ink-400);
-}
-
-.mc-team-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.mc-team-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--ink-100);
-}
-
-.mc-team-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.mc-team-name {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink-900);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mc-team-meta {
-  margin-top: 4px;
-}
-
-.mc-team-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.mc-team-action {
-  display: inline-grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  background: rgba(var(--kengo-primary-rgb), 0.1);
-  color: var(--kengo-primary);
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
-}
-
-.mc-team-action:hover {
-  background: var(--kengo-primary);
-  color: white;
-}
-
-.mc-team-action:active {
-  transform: scale(0.95);
-}
-
-.mc-team-action .material-symbols-outlined {
-  font-size: 18px;
-}
-
-/* === Códigos === */
-.mc-codes-content {
-  border-top: 1px solid var(--ink-100);
-}
-
-.mc-codes-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.mc-code-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-top: 1px solid var(--ink-100);
-}
-
-.mc-code-item:first-child {
-  border-top: 0;
-}
-
-.mc-code-item--inactive {
-  opacity: 0.55;
-}
-
-.mc-code-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.mc-code-value {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mc-code-text {
-  font-family: ui-monospace, "SF Mono", monospace;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: var(--ink-900);
-}
-
-.mc-copy-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink-400);
-  border: 0;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.mc-copy-btn:hover {
-  background: var(--cream-100);
   color: var(--ink-700);
-}
-
-.mc-copy-btn .material-symbols-outlined {
-  font-size: 16px;
-}
-
-.mc-code-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.mc-code-uses {
-  font-size: 11px;
-  color: var(--ink-500);
-}
-
-.mc-code-expiry {
-  font-size: 11px;
-  color: var(--ink-400);
-}
-
-.mc-code-toggle {
-  display: inline-grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  border: 0;
-  cursor: pointer;
-  transition: filter 0.15s;
-}
-
-.mc-code-toggle:hover {
-  filter: brightness(1.05);
-}
-
-.mc-code-toggle--off {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
-}
-
-.mc-code-toggle--on {
-  background: rgba(34, 197, 94, 0.12);
-  color: var(--success);
-}
-
-.mc-code-toggle .material-symbols-outlined {
-  font-size: 18px;
+  line-height: 1.5;
 }
 
 /* === Snackbar === */
@@ -652,18 +295,13 @@
   animation: mc-snackbar-in 0.3s ease-out;
 }
 
+@media (min-width: 1024px) {
+  .mc-snackbar {
+    bottom: 32px;
+  }
+}
+
 @keyframes mc-snackbar-in {
   from { opacity: 0; transform: translate(-50%, 16px); }
   to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-/* === Desktop tweaks === */
-@media (min-width: 768px) {
-  .mc-quick-grid {
-    gap: 12px;
-  }
-
-  .mc-info-grid {
-    gap: 12px;
-  }
 }
