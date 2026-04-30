@@ -77,13 +77,13 @@
       <ui2-mini-stat
         icon="trending_up"
         label="Adherencia"
-        [value]="adherencia() + '%'"
+        [value]="adherenciaTexto()"
         color="#22c55e"
       ></ui2-mini-stat>
       <ui2-mini-stat
         icon="favorite"
         label="Dolor"
-        [value]="dolorActual() + '/10'"
+        [value]="dolorActualTexto()"
         [sub]="dolorSub()"
         color="#22c55e"
       ></ui2-mini-stat>
@@ -164,11 +164,11 @@
         </section>
       }
 
-      <!-- Activity chart — solo desktop (mock) -->
+      <!-- Activity chart — solo desktop (datos reales vía EstadisticasService) -->
       <ui2-web-activity-chart
         class="ip-desktop-only"
         [data]="actividad10dias()"
-        delta="↑ +12% vs semana anterior"
+        [delta]="adherenciaDeltaTexto()"
       ></ui2-web-activity-chart>
     </div>
 
@@ -186,13 +186,14 @@
         </ui2-section>
       }
 
-      <!-- Próxima cita — solo desktop (mock) -->
-      <ui2-next-appointment
-        class="ip-desktop-only"
-        [data]="proximaCita()"
-        (rescheduleClick)="irAClinica()"
-        (calendarClick)="irAClinica()"
-      ></ui2-next-appointment>
+      <!-- Próxima sesión — solo desktop (siguiente día con entrenamiento programado) -->
+      @if (proximaSesion(); as ps) {
+        <ui2-next-appointment
+          class="ip-desktop-only"
+          [data]="ps"
+          (planClick)="irAPlan()"
+        ></ui2-next-appointment>
+      }
 
       <!-- Clínica hero — solo mobile (en desktop la clínica vive en sidebar) -->
       @if (clinicaActual(); as clinica) {

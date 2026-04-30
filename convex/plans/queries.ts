@@ -1,8 +1,10 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { Id } from "../_generated/dataModel";
+import { Doc, Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { batchGetMap } from "../_helpers/batchGet";
+import { getDiaSemana, getMadridDateOffset } from "../_helpers/datetime";
+import { getExpectedExercisesForPatientOnDate } from "../_helpers/expectedExercises";
 
 function resolvePacienteId(
   pacienteId: string | undefined,
@@ -267,6 +269,53 @@ export const listExercisesByPlanId = query({
   },
   handler: async (ctx, args) => {
     return await loadPlanExercises(ctx, args.planId);
+  },
+});
+
+// ─── GET NEXT SESSION FOR PATIENT ───
+
+export const getNextSessionForPatient = query({
+  args: {
+    pacienteId: v.optional(v.string()),
+    maxDaysLookahead: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    const targetId = resolvePacienteId(args.pacienteId, user._id);
+    const lookahead = args.maxDaysLookahead ?? 30;
+
+    for (let offset = 1; offset <= lookahead; offset++) {
+      const fecha = getMadridDateOffset(offset);
+      const diaSemana = getDiaSemana(fecha);
+      const expected = await getExpectedExercisesForPatientOnDate(
+        ctx,
+        targetId,
+        fecha,
+        diaSemana,
+      );
+      if (expected.length === 0) continue;
+
+      const planIds = Array.from(new Set(expected.map((e) => e.planId)));
+      const planes = await Promise.all(planIds.map((id) => ctx.db.get(id)));
+      const planConFechaMasAntigua = planes
+        .filter((p): p is Doc<"plans"> => p !== null)
+        .sort((a, b) =>
+          (a.fechaInicio ?? "").localeCompare(b.fechaInicio ?? ""),
+        )[0];
+
+      const totalEjercicios = expected.reduce(
+        (acc, e) => acc + e.vecesDia,
+        0,
+      );
+
+      return {
+        fecha,
+        diaSemana,
+        planTitulo: planConFechaMasAntigua?.titulo ?? null,
+        totalEjercicios,
+      };
+    }
+    return null;
   },
 });
 

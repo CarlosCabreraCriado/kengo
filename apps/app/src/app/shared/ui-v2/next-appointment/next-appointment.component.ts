@@ -13,8 +13,9 @@ export interface Ui2AppointmentVm {
 }
 
 /**
- * Next appointment V2 — card con eyebrow + DateTile + datos cita + pills "Reagendar" / "Añadir al calendario".
- * Usado solo en vista desktop de `/inicio/paciente`.
+ * Próxima sesión V2 — card con eyebrow + DateTile + datos del próximo día con
+ * entrenamiento programado + pill "Ver plan". Usado solo en vista desktop de
+ * `/inicio/paciente`.
  */
 @Component({
   selector: 'ui2-next-appointment',
@@ -23,7 +24,7 @@ export interface Ui2AppointmentVm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ui2-card [padding]="18">
-      <span class="ui2-na__eyebrow">Próxima cita</span>
+      <span class="ui2-na__eyebrow">Próxima sesión</span>
       <div class="ui2-na__body">
         <ui2-date-tile
           [weekday]="data().weekday"
@@ -46,14 +47,8 @@ export interface Ui2AppointmentVm {
           variant="soft"
           size="md"
           [clickable]="true"
-          (pillClick)="rescheduleClick.emit()"
-        >Reagendar</ui2-pill>
-        <ui2-pill
-          variant="neutral"
-          size="md"
-          [clickable]="true"
-          (pillClick)="calendarClick.emit()"
-        >Añadir al calendario</ui2-pill>
+          (pillClick)="planClick.emit()"
+        >Ver plan</ui2-pill>
       </div>
     </ui2-card>
   `,
@@ -115,6 +110,5 @@ export interface Ui2AppointmentVm {
 })
 export class Ui2NextAppointmentComponent {
   readonly data = input.required<Ui2AppointmentVm>();
-  readonly rescheduleClick = output<void>();
-  readonly calendarClick = output<void>();
+  readonly planClick = output<void>();
 }

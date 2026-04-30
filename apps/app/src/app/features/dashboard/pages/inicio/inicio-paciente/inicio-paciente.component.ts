@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { ActividadHoyService, EjercicioUnificadoHoy } from '../../../../actividad/data-access/actividad-hoy.service';
+import { EstadisticasService } from '../../../../actividad/data-access/estadisticas.service';
+import { NextSessionService } from '../../../../actividad/data-access/next-session.service';
 import { RachaPacienteService } from '../../../data-access/racha-paciente.service';
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
@@ -15,8 +17,6 @@ import type {
 } from '../../../../../../types/global';
 import { rawAssetUrl, thumbnailUrl } from '../../../../../core/utils/asset-url';
 import {
-  Ui2ActivityDay,
-  Ui2AppointmentVm,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2ExerciseCardComponent,
@@ -75,6 +75,8 @@ export class InicioPacienteComponent {
 
   actividadHoyService = inject(ActividadHoyService);
   rachaService = inject(RachaPacienteService);
+  private estadisticasService = inject(EstadisticasService);
+  private nextSessionService = inject(NextSessionService);
 
   hayActividadHoy = this.actividadHoyService.hayActividadHoy;
   todoCompletado = this.actividadHoyService.todoCompletado;
@@ -166,43 +168,36 @@ export class InicioPacienteComponent {
   });
 
   // ============================================================
-  // Datos mockeados para vista desktop — reemplazar cuando haya backend
-  // (adherencia, dolor, actividad histórica, logros, próxima cita).
+  // Vista desktop: adherencia, dolor y actividad histórica leen del
+  // EstadisticasService (singleton root, mismo origen que /actividad-personal/estadisticas).
   // ============================================================
 
-  readonly adherencia = signal<number>(87);
-  readonly dolorActual = signal<number>(3);
-  readonly dolorAnterior = signal<number>(6);
+  readonly actividad10dias = this.estadisticasService.actividadSerie;
+
+  readonly adherenciaDeltaTexto = computed<string | null>(
+    () => this.estadisticasService.adherenciaDelta()?.texto ?? null,
+  );
+
+  readonly adherenciaTexto = computed<string>(() => {
+    const v = this.estadisticasService.adherencia();
+    return v == null ? '—' : `${v}%`;
+  });
+
+  readonly dolorActualTexto = computed<string>(() => {
+    const v = this.estadisticasService.dolorActual();
+    return v == null ? '—' : `${v}/10`;
+  });
 
   readonly dolorSub = computed<string>(() => {
-    const actual = this.dolorActual();
-    const anterior = this.dolorAnterior();
-    if (anterior > actual) return `↓ desde ${anterior}`;
-    if (anterior < actual) return `↑ desde ${anterior}`;
+    const actual = this.estadisticasService.dolorActual();
+    const inicial = this.estadisticasService.dolorInicial();
+    if (actual == null || inicial == null) return '';
+    if (inicial > actual) return `↓ desde ${inicial}`;
+    if (inicial < actual) return `↑ desde ${inicial}`;
     return 'sin cambios';
   });
 
-  readonly actividad10dias = signal<Ui2ActivityDay[]>([
-    { label: 'L', value: 1.0 },
-    { label: 'M', value: 0.85 },
-    { label: 'X', value: 0.6 },
-    { label: 'J', value: 1.0 },
-    { label: 'V', value: 0.9 },
-    { label: 'S', value: 0 },
-    { label: 'D', value: 0.4 },
-    { label: 'L', value: 1.0 },
-    { label: 'M', value: 0.85 },
-    { label: 'X', value: 0.33, today: true },
-  ]);
-
-  readonly proximaCita = signal<Ui2AppointmentVm>({
-    weekday: 'LUN',
-    day: '28',
-    month: 'ABR',
-    titulo: 'Revisión hombro',
-    meta: '17:30 · 30 min · Presencial',
-    ubicacion: 'Myo Active Orotava',
-  });
+  readonly proximaSesion = this.nextSessionService.nextSessionVm;
 
   readonly heroSubDesktop = computed<string>(() => {
     const racha = this.rachaActual();
@@ -252,6 +247,10 @@ export class InicioPacienteComponent {
 
   irAClinica(): void {
     this.router.navigate(['/mi-clinica']);
+  }
+
+  irAPlan(): void {
+    this.router.navigate(['/actividad-personal']);
   }
 
   iniciarSesionHoy(): void {
