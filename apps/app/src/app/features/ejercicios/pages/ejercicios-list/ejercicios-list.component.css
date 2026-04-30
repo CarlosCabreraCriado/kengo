@@ -405,42 +405,34 @@
   place-items: center;
   width: 36px;
   height: 36px;
+  padding: 0;
   border: 0;
-  border-radius: 50%;
+  background: transparent;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--ink-700);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: background 0.15s, color 0.15s, transform 0.1s;
+  transition: color 0.15s, transform 0.1s;
   flex-shrink: 0;
 }
 
-.el-fav:hover { background: white; color: var(--kengo-primary); }
-.el-fav:active { transform: scale(0.94); }
+.el-fav:active { transform: scale(0.9); }
 .el-fav:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.el-fav .material-symbols-outlined { font-size: 20px; }
-
-.el-fav--on {
-  background: var(--kengo-primary);
-  color: white;
-  box-shadow: 0 4px 10px -3px rgba(var(--kengo-primary-rgb), 0.5);
-}
-
-.el-fav--on:hover { background: var(--kengo-primary-dark); color: white; }
+.el-fav .material-symbols-outlined { font-size: 24px; }
 
 .el-fav--overlay {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   z-index: 2;
 }
 
-.el-fav--inline {
-  background: var(--cream-50);
-  border: 1px solid var(--ink-300);
-}
+.el-fav--overlay,
+.el-fav--inline { color: var(--ink-400); }
+
+.el-fav--overlay:hover,
+.el-fav--inline:hover { color: var(--ink-700); }
+
+.el-fav--on,
+.el-fav--on:hover { color: #facc15; }
 
 /* ========================================================== */
 /*  Paginación                                                 */
