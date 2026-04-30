@@ -7,7 +7,6 @@ import {
   signal,
 } from '@angular/core';
 import { assetUrl } from '../../../../core/utils/asset-url';
-import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
@@ -26,7 +25,6 @@ import { useResponsive } from '../../../../shared';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 
 import {
-  Ui2BackButtonComponent,
   Ui2AvatarComponent,
   Ui2SearchBoxComponent,
   Ui2SelectComponent,
@@ -34,6 +32,7 @@ import {
   Ui2EmptyStateComponent,
   Ui2ButtonComponent,
   Ui2CardComponent,
+  Ui2SectionComponent,
   Ui2SelectOption,
 } from '../../../../shared/ui-v2';
 
@@ -43,7 +42,6 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    Ui2BackButtonComponent,
     Ui2AvatarComponent,
     Ui2SearchBoxComponent,
     Ui2SelectComponent,
@@ -51,15 +49,12 @@ import {
     Ui2EmptyStateComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
+    Ui2SectionComponent,
   ],
   templateUrl: './asignacion-responsable.component.html',
   styleUrl: './asignacion-responsable.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
-  },
 })
 export class AsignacionResponsableComponent {
-  private router = inject(Router);
   private sessionService = inject(SessionService);
   private clinicasService = inject(ClinicasService);
   private asignacionesService = inject(AsignacionesService);
@@ -253,10 +248,6 @@ export class AsignacionResponsableComponent {
     } finally {
       this.guardando.set(false);
     }
-  }
-
-  volver() {
-    this.router.navigate(['/mis-pacientes']);
   }
 
   fullName(u: Usuario): string {

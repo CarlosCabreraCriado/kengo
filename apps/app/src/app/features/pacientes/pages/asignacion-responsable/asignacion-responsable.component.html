@@ -1,37 +1,45 @@
-<section class="asignacion-page">
-  <!-- Topbar -->
-  <header class="asignacion-topbar">
-    <ui2-back-button (clicked)="volver()" ariaLabel="Volver a pacientes" />
-    <div class="asignacion-topbar__titles">
-      <h1 class="asignacion-topbar__title">Fisio responsable</h1>
-      <p class="asignacion-topbar__subtitle">
-        Asignar fisioterapeuta a cada paciente
-      </p>
-    </div>
-  </header>
+<div
+  class="asignacion-page"
+  [class.asignacion-page--with-savebar]="cambiosPendientes() > 0"
+>
+  <!-- Header -->
+  <ui2-section [padding]="'4px 20px 14px'">
+    <header class="asignacion-header">
+      <div class="asignacion-header__title">
+        <h1 class="asignacion-header__h1">Asignar Fisio</h1>
+        <p class="asignacion-header__sub">
+          Asignar fisioterapeuta a cada paciente
+        </p>
+      </div>
+    </header>
+  </ui2-section>
 
   <!-- Filtros -->
-  <div class="asignacion-filters">
-    @if (clinicasAdmin().length > 1) {
-      <ui2-select
-        placeholder="Selecciona clínica"
-        [options]="clinicasOptions()"
-        [ngModel]="clinicaSeleccionada()"
-        (ngModelChange)="onClinicaChange($event)"
-      ></ui2-select>
-    }
+  @if (clinicasAdmin().length > 1 || pacientes().length > 0) {
+    <ui2-section [padding]="'0 20px 12px'">
+      <div class="asignacion-filters">
+        @if (clinicasAdmin().length > 1) {
+          <ui2-select
+            placeholder="Selecciona clínica"
+            [options]="clinicasOptions()"
+            [ngModel]="clinicaSeleccionada()"
+            (ngModelChange)="onClinicaChange($event)"
+          ></ui2-select>
+        }
 
-    @if (pacientes().length > 0) {
-      <ui2-search-box
-        placeholder="Buscar paciente..."
-        [ngModel]="busqueda()"
-        (valueChange)="busqueda.set($event)"
-      ></ui2-search-box>
-    }
-  </div>
+        @if (pacientes().length > 0) {
+          <ui2-search-box
+            placeholder="Buscar paciente..."
+            [ngModel]="busqueda()"
+            (valueChange)="busqueda.set($event)"
+          ></ui2-search-box>
+        }
+      </div>
+    </ui2-section>
+  }
 
-  <!-- Main -->
-  <main class="asignacion-main">
+  <!-- Contenido -->
+  <ui2-section [padding]="'0 20px 24px'">
     @if (isLoadingPacientes()) {
       <div class="asignacion-state">
         <ui2-spinner size="lg" label="Cargando pacientes..." />
@@ -57,7 +65,7 @@
     } @else {
       <ui2-card [padding]="0" [radius]="22">
         <ul class="asignacion-list">
-          @for (p of pacientesFiltrados(); track p.id; let i = $index; let isLast = $last) {
+          @for (p of pacientesFiltrados(); track p.id; let i = $index) {
             <li
               class="asignacion-row"
               [class.asignacion-row--bordered]="i > 0"
@@ -97,7 +105,7 @@
         </ul>
       </ui2-card>
     }
-  </main>
+  </ui2-section>
 
   <!-- Save bar flotante -->
   @if (cambiosPendientes() > 0) {
@@ -118,4 +126,4 @@
       </ui2-button>
     </div>
   }
-</section>
+</div>
