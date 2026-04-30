@@ -22,7 +22,6 @@
       <div class="if-hero-web__ctas">
         @if (estadoSituacion() === 'urgente' || estadoSituacion() === 'pendiente') {
           <button type="button" class="if-hero-web__cta-primary" (click)="irAPacientes()">
-            <span class="material-symbols-outlined" aria-hidden="true">priority_high</span>
             <span>Ver pacientes</span>
           </button>
           <button type="button" class="if-hero-web__cta-secondary" (click)="irACrearPlan()">
@@ -43,7 +42,7 @@
     <div class="if-hero-web__stats">
       <ui2-mini-stat
         icon="group"
-        label="Pacientes"
+        label="Pacientes Activos"
         [value]="dashboardService.pacientesActivos().toString()"
         color="var(--kengo-primary)"
       ></ui2-mini-stat>
