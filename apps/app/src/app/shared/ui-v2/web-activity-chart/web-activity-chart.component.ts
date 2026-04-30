@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { Ui2CardComponent } from '../card/card.component';
 import { Ui2PillComponent } from '../pill/pill.component';
 
@@ -23,9 +23,9 @@ export interface Ui2ActivityDay {
       <header class="ui2-wac__head">
         <div class="ui2-wac__head-text">
           <span class="ui2-wac__eyebrow">{{ eyebrow() }}</span>
-          <h3 class="ui2-wac__title">{{ title() }}</h3>
+          <h3 class="ui2-wac__title">{{ title() ?? autoTitle() }}</h3>
           @if (delta()) {
-            <span class="ui2-wac__delta">{{ delta() }}</span>
+            <span class="ui2-wac__delta" [style.color]="deltaColor()">{{ delta() }}</span>
           }
         </div>
         @if (pillLabel()) {
@@ -83,7 +83,6 @@ export interface Ui2ActivityDay {
     .ui2-wac__delta {
       font-size: 12px;
       font-weight: 700;
-      color: var(--success);
       margin-top: 4px;
       line-height: 1;
     }
@@ -119,10 +118,18 @@ export interface Ui2ActivityDay {
 })
 export class Ui2WebActivityChartComponent {
   readonly eyebrow = input<string>('Actividad · 10 días');
-  readonly title = input<string>('7 DE 10 DÍAS');
+  readonly title = input<string | null>(null);
   readonly delta = input<string | null>(null);
-  readonly pillLabel = input<string | null>('Esta semana');
+  readonly deltaColor = input<string>('var(--success)');
+  readonly pillLabel = input<string | null>(null);
   readonly data = input.required<Ui2ActivityDay[]>();
+
+  readonly autoTitle = computed<string>(() => {
+    const items = this.data();
+    const total = items.length;
+    const activos = items.filter((d) => d.value > 0).length;
+    return `${activos} DE ${total} DÍAS`;
+  });
 
   barHeight(value: number): number {
     return Math.max(value * 100, 3);

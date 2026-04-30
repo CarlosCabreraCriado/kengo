@@ -12,17 +12,16 @@ import {
   Ui2EmptyStateComponent,
   Ui2IconBadgeComponent,
   Ui2KpiCardComponent,
-  Ui2PillComponent,
   Ui2SectionComponent,
   Ui2SegmentedComponent,
   Ui2SegmentedOption,
   Ui2SpinnerComponent,
   Ui2StatusDotComponent,
+  Ui2WebActivityChartComponent,
 } from '../../../../shared/ui-v2';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import {
   EstadisticasService,
-  type DiaActividadVm,
   type PuntoDolorVm,
 } from '../../data-access/estadisticas.service';
 
@@ -47,11 +46,11 @@ const PERIODO_OPTIONS: Ui2SegmentedOption[] = [
     Ui2EmptyStateComponent,
     Ui2IconBadgeComponent,
     Ui2KpiCardComponent,
-    Ui2PillComponent,
     Ui2SectionComponent,
     Ui2SegmentedComponent,
     Ui2SpinnerComponent,
     Ui2StatusDotComponent,
+    Ui2WebActivityChartComponent,
   ],
   templateUrl: './actividad-estadisticas.component.html',
   styleUrl: './actividad-estadisticas.component.css',
@@ -79,10 +78,6 @@ export class ActividadEstadisticasComponent implements OnInit {
   readonly mejorRacha = this.estadisticas.mejorRachaHistorica;
   readonly dolorInicial = this.estadisticas.dolorInicial;
   readonly dolorActual = this.estadisticas.dolorActual;
-
-  readonly diasActivosTotal = computed(
-    () => this.weeks().filter((w) => w.value > 0).length,
-  );
 
   readonly adherenciaValue = computed<string | number>(() => {
     const ad = this.adherencia();
@@ -158,19 +153,6 @@ export class ActividadEstadisticasComponent implements OnInit {
       }
     }
     this.toast.warning('Tu dispositivo no permite compartir el resumen.');
-  }
-
-  barColor(w: DiaActividadVm): string {
-    if (w.value === 0) return 'rgba(0, 0, 0, 0.06)';
-    if (w.today) {
-      return 'repeating-linear-gradient(45deg, var(--kengo-primary), var(--kengo-primary) 3px, var(--kengo-primary-light) 3px, var(--kengo-primary-light) 6px)';
-    }
-    if (w.value >= 1) return 'linear-gradient(180deg, var(--kengo-primary), var(--kengo-primary-dark))';
-    return 'linear-gradient(180deg, var(--kengo-primary-light), var(--kengo-primary))';
-  }
-
-  barHeightPct(w: DiaActividadVm): number {
-    return Math.max(w.value * 100, 3);
   }
 
   painDotColor(v: number): string {

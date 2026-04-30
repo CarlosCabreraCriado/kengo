@@ -53,35 +53,10 @@
     </ui2-section>
 
     <ui2-section [padding]="'6px 20px 14px'">
-      <ui2-card [padding]="0">
-        <div class="ae-chart">
-          <div class="ae-chart__head">
-            <div>
-              <div class="ae-chart__overline">Actividad · 10 días</div>
-              <div class="ae-chart__title">{{ diasActivosTotal() }} DE 10 DÍAS</div>
-            </div>
-            <ui2-pill variant="soft">{{ periodoLabel() }}</ui2-pill>
-          </div>
-          <div class="ae-chart__bars">
-            @for (w of weeks(); track w.label) {
-              <div class="ae-chart__col">
-                <div class="ae-chart__bar-wrap">
-                  <div
-                    class="ae-chart__bar"
-                    [style.height.%]="barHeightPct(w)"
-                    [style.background]="barColor(w)"
-                    [class.ae-chart__bar--today]="w.today"
-                  ></div>
-                </div>
-                <div
-                  class="ae-chart__label"
-                  [class.ae-chart__label--today]="w.today"
-                >{{ w.label }}</div>
-              </div>
-            }
-          </div>
-        </div>
-      </ui2-card>
+      <ui2-web-activity-chart
+        [data]="weeks()"
+        [pillLabel]="periodoLabel()"
+      ></ui2-web-activity-chart>
     </ui2-section>
 
     @if (tieneDolor()) {

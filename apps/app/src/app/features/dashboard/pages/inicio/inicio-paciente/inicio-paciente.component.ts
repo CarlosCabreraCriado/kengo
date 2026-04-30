@@ -173,10 +173,19 @@ export class InicioPacienteComponent {
   // ============================================================
 
   readonly actividad10dias = this.estadisticasService.actividadSerie;
+  readonly periodoLabel = this.estadisticasService.periodoLabel;
 
   readonly adherenciaDeltaTexto = computed<string | null>(
     () => this.estadisticasService.adherenciaDelta()?.texto ?? null,
   );
+
+  readonly adherenciaDeltaColor = computed<string>(() => {
+    const delta = this.estadisticasService.adherenciaDelta();
+    if (!delta) return 'var(--ink-500)';
+    if (delta.valor > 0) return 'var(--success)';
+    if (delta.valor < 0) return 'var(--danger)';
+    return 'var(--ink-500)';
+  });
 
   readonly adherenciaTexto = computed<string>(() => {
     const v = this.estadisticasService.adherencia();
