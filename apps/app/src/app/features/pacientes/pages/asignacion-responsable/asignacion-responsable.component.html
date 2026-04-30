@@ -2,6 +2,17 @@
   class="asignacion-page"
   [class.asignacion-page--with-savebar]="cambiosPendientes() > 0"
 >
+  <!-- Tabs Pacientes / Asignación (solo móvil) -->
+  <div class="lg:hidden">
+    <ui2-section [padding]="'4px 20px 8px'">
+      <ui2-segmented
+        [options]="pacientesTabs"
+        value="asignacion"
+        (valueChange)="onPacientesTabChange($event)"
+      ></ui2-segmented>
+    </ui2-section>
+  </div>
+
   <!-- Header -->
   <ui2-section [padding]="'4px 20px 14px'">
     <header class="asignacion-header">

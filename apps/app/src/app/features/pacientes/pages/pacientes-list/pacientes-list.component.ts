@@ -88,6 +88,11 @@ export class PacientesListComponent {
     { id: 'lista', label: 'Lista', icon: 'view_list' },
   ];
 
+  readonly pacientesTabs: Ui2SegmentedOption[] = [
+    { id: 'pacientes', label: 'Pacientes' },
+    { id: 'asignacion', label: 'Asignación' },
+  ];
+
   isMovil = useResponsive().esMobile;
 
   public idsClinicas = computed(() => {
@@ -324,6 +329,12 @@ export class PacientesListComponent {
 
   irAsignacion() {
     this.router.navigate(['/mis-pacientes', 'asignacion']);
+  }
+
+  onPacientesTabChange(value: string) {
+    if (value === 'asignacion') {
+      this.router.navigate(['/mis-pacientes', 'asignacion']);
+    }
   }
 
   fullName(u: Usuario) {

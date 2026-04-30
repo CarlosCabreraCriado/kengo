@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { assetUrl } from '../../../../core/utils/asset-url';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
@@ -33,6 +34,8 @@ import {
   Ui2ButtonComponent,
   Ui2CardComponent,
   Ui2SectionComponent,
+  Ui2SegmentedComponent,
+  Ui2SegmentedOption,
   Ui2SelectOption,
 } from '../../../../shared/ui-v2';
 
@@ -50,11 +53,13 @@ import {
     Ui2ButtonComponent,
     Ui2CardComponent,
     Ui2SectionComponent,
+    Ui2SegmentedComponent,
   ],
   templateUrl: './asignacion-responsable.component.html',
   styleUrl: './asignacion-responsable.component.css',
 })
 export class AsignacionResponsableComponent {
+  private router = inject(Router);
   private sessionService = inject(SessionService);
   private clinicasService = inject(ClinicasService);
   private asignacionesService = inject(AsignacionesService);
@@ -72,6 +77,17 @@ export class AsignacionResponsableComponent {
   }
 
   isMovil = useResponsive().esMobile;
+
+  readonly pacientesTabs: Ui2SegmentedOption[] = [
+    { id: 'pacientes', label: 'Pacientes' },
+    { id: 'asignacion', label: 'Asignación' },
+  ];
+
+  onPacientesTabChange(value: string) {
+    if (value === 'pacientes') {
+      this.router.navigate(['/mis-pacientes']);
+    }
+  }
 
   // Clínicas donde el usuario es admin
   readonly clinicasAdmin = computed(() => {

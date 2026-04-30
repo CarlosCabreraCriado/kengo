@@ -1,5 +1,20 @@
 <div class="pl-page">
   <!-- ========================================================== -->
+  <!-- Tabs Pacientes / Asignación (solo móvil, solo admin)        -->
+  <!-- ========================================================== -->
+  @if (esAdmin()) {
+    <div class="lg:hidden">
+      <ui2-section [padding]="'4px 20px 8px'">
+        <ui2-segmented
+          [options]="pacientesTabs"
+          value="pacientes"
+          (valueChange)="onPacientesTabChange($event)"
+        ></ui2-segmented>
+      </ui2-section>
+    </div>
+  }
+
+  <!-- ========================================================== -->
   <!-- Header                                                       -->
   <!-- ========================================================== -->
   <ui2-section [padding]="'4px 20px 14px'">
