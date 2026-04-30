@@ -7,12 +7,7 @@ import {
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-import {
-  AuthService,
-  NavegacionComponent,
-  SessionService,
-  ThemeService,
-} from './core';
+import { AuthService, SessionService, ThemeService } from './core';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
@@ -32,7 +27,6 @@ import {
   imports: [
     RouterOutlet,
     Ui2CarritoEjerciciosComponent,
-    NavegacionComponent,
     Ui2CreamBgComponent,
     Ui2PatientHeaderComponent,
     Ui2PatientSidebarComponent,
@@ -56,25 +50,6 @@ export class AppComponent implements OnInit {
   /** Configuración de navegación V2 del modo fisio (sidebar + tab-bar). */
   public readonly fisioSidebarGroups = FISIO_SIDEBAR_GROUPS;
   public readonly fisioTabBarTabs = FISIO_TAB_BAR_TABS;
-
-  /** URL actual reactiva — usada para conmutar shell V2 ↔ legacy en modo fisio. */
-  private readonly currentUrl = signal<string>(this.router.url);
-
-  /** Rutas del modo fisio que ya están migradas al shell V2. */
-  private readonly rutasV2Fisio = [
-    '/inicio/fisio',
-    '/mis-pacientes',
-    '/ejercicios',
-    '/rutinas',
-    '/mi-clinica',
-    '/planes',
-  ];
-
-  /** True cuando la URL pertenece a una ruta del fisio ya migrada al shell V2. */
-  public readonly enRutaV2Fisio = computed(() => {
-    const url = this.currentUrl();
-    return this.rutasV2Fisio.some((r) => url.startsWith(r));
-  });
 
   /** Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado). */
   public clinicaActual = computed(() => {
@@ -146,7 +121,6 @@ export class AppComponent implements OnInit {
   }
 
   private actualizarNavegacion(url: string) {
-    this.currentUrl.set(url);
     this.mostrarNavegacion = !this.rutasSinNavegacion.some((ruta) =>
       url.startsWith(ruta),
     );

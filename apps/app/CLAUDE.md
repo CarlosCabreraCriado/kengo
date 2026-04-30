@@ -14,7 +14,7 @@ Reglas específicas para la app Angular 20. El CLAUDE.md raíz cubre el monorepo
 ## UI: catálogo V2 + componentes legacy especializados
 
 - **`apps/app/src/app/shared/ui-v2/`** (selector `ui2-*`) — catálogo principal con la estética "cream wellness". Usar siempre que se vaya a construir UI nueva.
-- **`apps/app/src/app/shared/ui/`** — solo conserva los componentes especializados sin equivalente V2: `app-video-ejercicio`, `app-image-upload`, `app-preview-ejercicio-dialog`, `app-selector-paciente`, `app-dialogo-pdf`, `app-user-menu`, y los wrappers internos del sistema legacy de diálogos (`ui-dialog-container/header/content/actions`, `ui-confirm-dialog`).
+- **`apps/app/src/app/shared/ui/`** — solo conserva los componentes especializados sin equivalente V2: `app-video-ejercicio`, `app-image-upload`, `app-preview-ejercicio-dialog`, `app-selector-paciente`, `app-dialogo-pdf`, y los wrappers internos del sistema legacy de diálogos (`ui-dialog-container/header/content/actions`, `ui-confirm-dialog`).
 - **`apps/app/src/app/shared/services/`** — servicios neutrales (`ToastService`, `DialogService`) usables desde cualquier catálogo. Importar desde `'.../shared/services/toast'` y `'.../shared/services/dialog'` (o desde el barrel `'.../shared'`).
 
 **Antes de escribir un `<input>`, `<button>`, dropdown, badge o card, comprueba si ya existe un componente compartido `ui2-*`.** Si existe pero le falta una variante, **extiéndelo** en lugar de duplicar HTML.
@@ -70,7 +70,6 @@ Importa desde `apps/app/src/app/shared/ui-v2`.
 | `<app-preview-ejercicio-dialog>` | Diálogo de preview de ejercicio |
 | `<app-selector-paciente>` | Selector tipo combo de paciente |
 | `<app-dialogo-pdf>` | Diálogo de descarga/impresión/envío de PDF |
-| `<app-user-menu>` | Menú de usuario del shell legacy del modo fisio |
 
 Importa desde `apps/app/src/app/shared` (barrel). Comprueba `apps/app/src/app/shared/index.ts`.
 

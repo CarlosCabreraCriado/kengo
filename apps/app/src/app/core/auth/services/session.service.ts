@@ -23,11 +23,16 @@ export class SessionService {
   private _usuario = signal<Usuario | null>(null);
   private _loading = signal<boolean>(false);
   private _error = signal<string | null>(null);
+  // Gate del primer paint: false hasta que termina la primera resolución de
+  // sesión (con o sin usuario). Evita renderizar shells legacy/V2 con datos
+  // por defecto antes de saber el rol real.
+  private _sesionInicializada = signal<boolean>(false);
 
   public usuario = computed(() => this._usuario());
   public isLoggedIn = computed(() => this._usuario() !== null);
   public loading = computed(() => this._loading());
   public error = computed(() => this._error());
+  public sesionInicializada = computed(() => this._sesionInicializada());
   public nombreCompleto = computed(() => {
     const u = this._usuario();
     return u ? `${u.first_name} ${u.last_name}`.trim() : '';
@@ -123,6 +128,10 @@ export class SessionService {
     this.cargarMiUsuario();
   }
 
+  marcarSesionInicializada(): void {
+    this._sesionInicializada.set(true);
+  }
+
   async refreshUsuario() {
     return this.cargarMiUsuario();
   }
@@ -181,6 +190,7 @@ export class SessionService {
       }
 
       this._loading.set(false);
+      this._sesionInicializada.set(true);
     }
   }
 

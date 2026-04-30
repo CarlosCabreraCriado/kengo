@@ -101,10 +101,14 @@ export class AuthService {
    * Inicializa la app si hay sesión activa.
    */
   async iniciarApp(): Promise<void> {
-    this.restaurarConvexAuth();
-    const hasSession = await this.checkSession();
-    if (hasSession) {
-      await this.sessionService.cargarMiUsuario();
+    try {
+      this.restaurarConvexAuth();
+      const hasSession = await this.checkSession();
+      if (hasSession) {
+        await this.sessionService.cargarMiUsuario();
+      }
+    } finally {
+      this.sessionService.marcarSesionInicializada();
     }
   }
 
