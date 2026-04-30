@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '../../core';
+import { AuthGuard, ClinicAdminGuard } from '../../core';
 
 export const CLINICA_ROUTES: Routes = [
   {
@@ -9,5 +9,13 @@ export const CLINICA_ROUTES: Routes = [
         (m) => m.MiClinicaComponent
       ),
     canActivate: [AuthGuard],
+  },
+  {
+    path: 'suscripcion',
+    loadComponent: () =>
+      import('./pages/suscripcion/suscripcion.component').then(
+        (m) => m.SuscripcionComponent
+      ),
+    canActivate: [AuthGuard, ClinicAdminGuard],
   },
 ];

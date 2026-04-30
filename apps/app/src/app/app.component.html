@@ -69,6 +69,7 @@
           [userName]="firstName()"
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
+        <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
         <main class="flex-1 min-h-0 flex flex-col overflow-y-auto">
           <router-outlet></router-outlet>
         </main>
@@ -83,6 +84,7 @@
         [avatarUrl]="avatarUrl()"
       ></ui2-patient-header>
       <main class="flex-1 min-h-0 flex flex-col overflow-y-auto" style="padding-top: 56px; padding-bottom: 110px;">
+        <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
         <router-outlet></router-outlet>
       </main>
       <ui2-patient-tab-bar [tabs]="fisioTabBarTabs"></ui2-patient-tab-bar>

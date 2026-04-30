@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard, FisioGuard } from '../../core';
+import { ActiveSubscriptionGuard, AuthGuard, FisioGuard } from '../../core';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 
 export const PLANES_ROUTES: Routes = [
@@ -10,7 +10,7 @@ export const PLANES_ROUTES: Routes = [
       import('./pages/plan-builder/plan-builder.component').then(
         (m) => m.PlanBuilderComponent,
       ),
-    canActivate: [AuthGuard, FisioGuard],
+    canActivate: [AuthGuard, FisioGuard, ActiveSubscriptionGuard],
   },
   {
     path: ':id/editar',
@@ -18,7 +18,7 @@ export const PLANES_ROUTES: Routes = [
       import('./pages/plan-builder/plan-builder.component').then(
         (m) => m.PlanBuilderComponent,
       ),
-    canActivate: [AuthGuard, FisioGuard],
+    canActivate: [AuthGuard, FisioGuard, ActiveSubscriptionGuard],
     canDeactivate: [unsavedChangesGuard],
   },
   {

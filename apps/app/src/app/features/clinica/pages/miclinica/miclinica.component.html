@@ -220,6 +220,55 @@
         </div>
       </ui2-section>
 
+      <!-- Suscripción (solo admin) -->
+      @if (esAdmin()) {
+        <ui2-section label="Suscripción">
+          <ui2-card [padding]="0">
+            <ui2-list-row
+              icon="credit_card"
+              title="Gestionar suscripción"
+              [subtitle]="suscripcionSubtitle()"
+              [rowClickable]="true"
+              (rowClick)="irASuscripcion()"
+            >
+              <ui2-pill [variant]="suscripcionPillVariant()" size="sm">
+                {{ suscripcionPillTexto() }}
+              </ui2-pill>
+              <span class="material-symbols-outlined text-ink-400 ml-1" aria-hidden="true">arrow_forward</span>
+            </ui2-list-row>
+          </ui2-card>
+
+          @if (enLimiteFisios()) {
+            <ui2-card
+              class="block mt-2"
+              [padding]="14"
+              [style.background]="'rgba(245, 158, 11, 0.10)'"
+              [style.border]="'1px solid rgba(245, 158, 11, 0.25)'"
+            >
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-warning" aria-hidden="true">info</span>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-ink-900 text-sm">
+                    Has alcanzado el plan máximo (10 fisios)
+                  </p>
+                  <p class="text-xs text-ink-700 mt-1">
+                    Para añadir más fisioterapeutas necesitas un plan a medida.
+                  </p>
+                  <div class="mt-2">
+                    <ui2-button
+                      variant="ghost"
+                      size="sm"
+                      iconRight="forward_to_inbox"
+                      (clicked)="abrirDialogContactarVentas()"
+                    >Contactar con ventas</ui2-button>
+                  </div>
+                </div>
+              </div>
+            </ui2-card>
+          }
+        </ui2-section>
+      }
+
       <!-- Equipo -->
       <ui2-section label="Equipo">
         <ui2-card [padding]="0">
@@ -470,6 +519,7 @@
       [tipoInicial]="tipoInicialCodigo()"
       (cerrar)="cerrarGenerarCodigo()"
       (codigoGenerado)="onCodigoGenerado($event)"
+      (requiereContactoVentas)="onRequiereContactoVentas()"
     />
   }
 

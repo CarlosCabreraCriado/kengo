@@ -435,4 +435,31 @@ export default defineSchema({
     intentos_fallidos: v.number(),
   }).index("by_userId", ["userId"]),
 
+  // === BILLING / SUSCRIPCIONES STRIPE ===
+  // Cache local del estado de suscripción de cada clínica. El componente
+  // @convex-dev/stripe persiste customer/subscription/invoices en sus propias
+  // tablas; aquí guardamos campos custom (gracia local, banderas) y un espejo
+  // del estado para queries rápidas y gating sin race conditions.
+  clinicBilling: defineTable({
+    clinicId: v.id("clinics"),
+    estadoLocal: v.union(
+      v.literal("trialing"),
+      v.literal("active"),
+      v.literal("past_due"),
+      v.literal("canceled"),
+      v.literal("incomplete"),
+      v.literal("unpaid"),
+      v.literal("none"),
+    ),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    trialEnd: v.optional(v.number()),
+    currentPeriodEnd: v.optional(v.number()),
+    cancelAtPeriodEnd: v.optional(v.boolean()),
+    graceUntil: v.optional(v.number()),
+    cantidadFisios: v.optional(v.number()),
+    requiereContactoVentas: v.optional(v.boolean()),
+    actualizadoEn: v.number(),
+  }).index("by_clinicId", ["clinicId"]),
+
 });

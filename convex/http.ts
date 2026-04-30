@@ -1,6 +1,8 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { internal, components } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import { registerRoutes as registerStripeRoutes } from "@convex-dev/stripe";
 import {
   authComponent,
   createAuth,
@@ -14,6 +16,100 @@ const http = httpRouter();
 
 // Better-Auth standard routes (login, signup, signout, etc.)
 authComponent.registerRoutes(http, createAuth, { cors: true });
+
+// Stripe webhook handler (eventos auto-persistidos por el componente).
+// `onEvent` corre tras el procesamiento por defecto del componente y nosotros
+// sincronizamos `clinicBilling` + disparamos emails al admin.
+registerStripeRoutes(http, components.stripe, {
+  webhookPath: "/stripe/webhook",
+  onEvent: async (ctx, event) => {
+    try {
+      switch (event.type) {
+        case "customer.subscription.created":
+        case "customer.subscription.updated": {
+          const sub = event.data.object;
+          const orgId = sub.metadata?.["orgId"];
+          if (!orgId) return;
+          const item = sub.items.data[0];
+          await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
+            clinicId: orgId as Id<"clinics">,
+            status: sub.status,
+            trialEnd: sub.trial_end ? sub.trial_end * 1000 : undefined,
+            currentPeriodEnd: item?.current_period_end
+              ? item.current_period_end * 1000
+              : undefined,
+            cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+            quantity: item?.quantity,
+          });
+          break;
+        }
+        case "customer.subscription.deleted": {
+          const sub = event.data.object;
+          const orgId = sub.metadata?.["orgId"];
+          if (!orgId) return;
+          await ctx.runMutation(internal.billing.internal.markCanceled, {
+            clinicId: orgId as Id<"clinics">,
+          });
+          break;
+        }
+        case "customer.subscription.trial_will_end": {
+          const sub = event.data.object;
+          const orgId = sub.metadata?.["orgId"];
+          if (!orgId) return;
+          await ctx.runMutation(
+            internal.billing.internal.enqueueTrialEndingNotification,
+            { clinicId: orgId as Id<"clinics"> },
+          );
+          break;
+        }
+        case "invoice.paid": {
+          const invoice = event.data.object;
+          const subId =
+            (invoice as unknown as { subscription?: string }).subscription;
+          if (!subId) return;
+          const sub = await ctx.runQuery(
+            components.stripe.public.getSubscription,
+            { stripeSubscriptionId: subId },
+          );
+          const orgId = sub?.orgId;
+          if (!orgId) return;
+          await ctx.runMutation(
+            internal.billing.internal.markActiveAfterPayment,
+            { clinicId: orgId as Id<"clinics"> },
+          );
+          break;
+        }
+        case "invoice.payment_failed": {
+          const invoice = event.data.object;
+          const subId =
+            (invoice as unknown as { subscription?: string }).subscription;
+          if (!subId) return;
+          const sub = await ctx.runQuery(
+            components.stripe.public.getSubscription,
+            { stripeSubscriptionId: subId },
+          );
+          const orgId = sub?.orgId;
+          if (!orgId) return;
+          const days = Number(process.env["STRIPE_GRACE_PERIOD_DAYS"] ?? 7);
+          await ctx.runMutation(
+            internal.billing.internal.markPastDueWithGrace,
+            { clinicId: orgId as Id<"clinics">, gracePeriodDays: days },
+          );
+          break;
+        }
+        default:
+          // Otros eventos (customer.created/updated, payment_intent.*,
+          // checkout.session.completed, invoice.created/finalized) ya los
+          // persiste el componente Stripe en sus tablas; no requieren acción.
+          break;
+      }
+    } catch (err) {
+      console.error("[stripe webhook] Error procesando evento", event.type, err);
+      // Re-lanzamos para que Stripe reintente el webhook automáticamente.
+      throw err;
+    }
+  },
+});
 
 // ─── CORS helpers ───
 

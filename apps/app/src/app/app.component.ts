@@ -7,7 +7,12 @@ import {
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-import { AuthService, SessionService, ThemeService } from './core';
+import {
+  AuthService,
+  BillingBannerComponent,
+  SessionService,
+  ThemeService,
+} from './core';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
@@ -26,6 +31,7 @@ import {
   standalone: true,
   imports: [
     RouterOutlet,
+    BillingBannerComponent,
     Ui2CarritoEjerciciosComponent,
     Ui2CreamBgComponent,
     Ui2PatientHeaderComponent,

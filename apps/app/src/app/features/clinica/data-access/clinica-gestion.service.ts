@@ -187,8 +187,9 @@ export class ClinicaGestionService {
       };
     } catch (err: any) {
       const errorMsg = err?.data?.message || err?.message || 'Error al generar código';
+      const errorCode: string | undefined = err?.data?.code;
       this.error.set(errorMsg);
-      return { success: false, error: errorMsg };
+      return { success: false, error: errorMsg, errorCode };
     } finally {
       this.loading.set(false);
     }

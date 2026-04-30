@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import {
   getAuthenticatedUser,
   checkClinicPermission,
@@ -47,6 +48,15 @@ export const create = mutation({
       clinicId,
       puesto: "admin",
     });
+
+    // Encolar creación del customer + suscripción con trial en Stripe.
+    // Si falla no afecta a la creación de la clínica (se podrá reintentar
+    // desde la pantalla de suscripción en sesiones futuras).
+    await ctx.scheduler.runAfter(
+      0,
+      internal.billing.actions.startTrialForClinic,
+      { clinicId },
+    );
 
     return clinicId;
   },

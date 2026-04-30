@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
+import { SubscriptionService } from '../../../../core/billing/subscription.service';
 
 // Types:
 import { Usuario, Clinica, ID, CodigoAcceso } from '../../../../../types/global';
@@ -16,6 +18,9 @@ import { VincularClinicaDialogComponent } from '../../components/vincular-clinic
 import { CrearClinicaDialogComponent } from '../../components/crear-clinica-dialog/crear-clinica-dialog.component';
 import { GenerarCodigoDialogComponent } from '../../components/generar-codigo-dialog/generar-codigo-dialog.component';
 import { EditarClinicaDialogComponent } from '../../components/editar-clinica-dialog/editar-clinica-dialog.component';
+import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
+import { DialogService } from '../../../../shared/services/dialog/dialog.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 
 // V2 catalog
 import {
@@ -29,6 +34,8 @@ import {
   Ui2AvatarComponent,
   Ui2PillComponent,
   Ui2SpinnerComponent,
+  Ui2ListRowComponent,
+  Ui2PillVariant,
 } from '../../../../shared/ui-v2';
 
 import { DatePipe } from '@angular/common';
@@ -54,6 +61,7 @@ import { DatePipe } from '@angular/common';
     Ui2AvatarComponent,
     Ui2PillComponent,
     Ui2SpinnerComponent,
+    Ui2ListRowComponent,
   ],
   templateUrl: './miclinica.component.html',
   styleUrl: './miclinica.component.css',
@@ -63,9 +71,13 @@ import { DatePipe } from '@angular/common';
 })
 export class MiClinicaComponent {
   private fb = inject(FormBuilder);
+  private router = inject(Router);
   private sessionService = inject(SessionService);
   public clinicasService = inject(ClinicasService);
   public clinicaGestionService = inject(ClinicaGestionService);
+  protected subscriptionService = inject(SubscriptionService);
+  private dialogService = inject(DialogService);
+  private toastService = inject(ToastService);
 
   isMovil = useResponsive().esMobile;
 
@@ -108,6 +120,17 @@ export class MiClinicaComponent {
   puedeEditarClinica = computed(
     () => this.esAdmin() && this.sessionService.enModoFisio(),
   );
+
+  /**
+   * `true` cuando el admin ha alcanzado el límite de fisios del plan
+   * autoservicio (10) y necesita contactar comercial para crecer. Se evalúa
+   * a partir de la suscripción de la clínica donde el usuario es admin.
+   */
+  enLimiteFisios = computed(() => {
+    const sub = this.subscriptionService.suscripcion();
+    if (!sub) return false;
+    return sub.fisiosActuales >= 10;
+  });
 
   esFisioOAdmin = computed(() => {
     const clinica = this.currentClinic();
@@ -203,6 +226,33 @@ export class MiClinicaComponent {
     this.cerrarGenerarCodigo();
     this.showSnackbar(`Código generado: ${codigo}`);
     this.cargarCodigos();
+  }
+
+  /**
+   * El admin intentó generar un código de fisio que llevaría a la clínica
+   * por encima del plan autoservicio (>10 fisios). Cerramos el dialog actual
+   * y abrimos el formulario de contacto comercial con el contexto adecuado.
+   */
+  onRequiereContactoVentas() {
+    this.cerrarGenerarCodigo();
+    this.toastService.warning(
+      'Has alcanzado el plan máximo (10 fisios). Contacta con ventas para un plan a medida.',
+    );
+    this.abrirDialogContactarVentas();
+  }
+
+  /** Abre el formulario de contacto comercial. Reutilizable desde el aviso de límite. */
+  abrirDialogContactarVentas() {
+    const clinica = this.currentClinic();
+    if (!clinica) return;
+    this.dialogService.open(ContactarVentasDialogComponent, {
+      data: {
+        clinicId: clinica.id,
+        fisiosActuales:
+          this.subscriptionService.suscripcion()?.fisiosActuales ?? 10,
+      },
+      maxWidth: '480px',
+    });
   }
 
   // ===== Códigos de Acceso =====
@@ -388,5 +438,54 @@ export class MiClinicaComponent {
     const n = (nombre || '').trim();
     const a = (apellidos || '').trim();
     return ((n[0] || '') + (a[0] || '')).toUpperCase();
+  }
+
+  // ===== Suscripción (solo admin) =====
+  protected readonly suscripcionSubtitle = computed<string>(() => {
+    const sub = this.subscriptionService.suscripcion();
+    if (!sub || sub.estado === 'none') return 'Sin suscripción activa';
+    if (this.subscriptionService.bloqueada())
+      return 'Suspendida — actualiza el método de pago';
+    if (sub.estado === 'trialing') {
+      const dias = this.subscriptionService.diasRestantesTrial();
+      return `Trial · ${dias} día${dias === 1 ? '' : 's'} restante${dias === 1 ? '' : 's'}`;
+    }
+    if (this.subscriptionService.cancelaAlFinDelPeriodo() && sub.currentPeriodEnd) {
+      const fecha = new Date(sub.currentPeriodEnd).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+      return `Se cancelará el ${fecha}`;
+    }
+    if (sub.estado === 'past_due') return 'Pago pendiente';
+    if (sub.plan) {
+      return `Activa · ${sub.plan.nombre} · ${sub.plan.precioMensualEur} €/mes`;
+    }
+    return 'Activa';
+  });
+
+  protected readonly suscripcionPillVariant = computed<Ui2PillVariant>(() => {
+    const sub = this.subscriptionService.suscripcion();
+    if (!sub || sub.estado === 'none') return 'neutral';
+    if (this.subscriptionService.bloqueada()) return 'danger';
+    if (sub.estado === 'trialing') return 'soft';
+    if (sub.estado === 'past_due') return 'warning';
+    if (this.subscriptionService.cancelaAlFinDelPeriodo()) return 'neutral';
+    return 'success';
+  });
+
+  protected readonly suscripcionPillTexto = computed<string>(() => {
+    const sub = this.subscriptionService.suscripcion();
+    if (!sub || sub.estado === 'none') return 'Inactiva';
+    if (this.subscriptionService.bloqueada()) return 'Suspendida';
+    if (sub.estado === 'trialing') return 'Trial';
+    if (sub.estado === 'past_due') return 'Pendiente';
+    if (this.subscriptionService.cancelaAlFinDelPeriodo()) return 'Cancelará';
+    return 'Activa';
+  });
+
+  irASuscripcion(): void {
+    void this.router.navigate(['/mi-clinica/suscripcion']);
   }
 }

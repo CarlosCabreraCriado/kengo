@@ -6,6 +6,10 @@ import { internalAction } from "../_generated/server";
 import {
   planPdfEmailTemplate,
   contactFormTemplate,
+  trialEndingTemplate,
+  paymentFailedTemplate,
+  migrationAnnouncementTemplate,
+  enterpriseInvitationTemplate,
 } from "./templates";
 
 export const sendEmail = internalAction({
@@ -87,6 +91,152 @@ export const sendPlanPdfEmail = internalAction({
     }
 
     console.log(`[Email] PDF del plan enviado a ${args.email}`);
+    return true;
+  },
+});
+
+export const sendTrialEndingEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreAdmin: v.string(),
+    clinicaNombre: v.string(),
+    diasRestantes: v.number(),
+    portalUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `Tu trial de Kengo termina pronto - ${args.clinicaNombre}`,
+      html: trialEndingTemplate(
+        args.nombreAdmin,
+        args.clinicaNombre,
+        args.diasRestantes,
+        args.portalUrl,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando trial-ending:", error);
+      return false;
+    }
+    console.log(`[Email] Trial-ending enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendPaymentFailedEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreAdmin: v.string(),
+    clinicaNombre: v.string(),
+    portalUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `Hay un problema con el pago - ${args.clinicaNombre}`,
+      html: paymentFailedTemplate(
+        args.nombreAdmin,
+        args.clinicaNombre,
+        args.portalUrl,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando payment-failed:", error);
+      return false;
+    }
+    console.log(`[Email] Payment-failed enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendMigrationAnnouncementEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreAdmin: v.string(),
+    clinicaNombre: v.string(),
+    diasGracia: v.number(),
+    portalUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `Hemos lanzado planes de suscripción - ${args.clinicaNombre}`,
+      html: migrationAnnouncementTemplate(
+        args.nombreAdmin,
+        args.clinicaNombre,
+        args.diasGracia,
+        args.portalUrl,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando migration-announcement:", error);
+      return false;
+    }
+    console.log(`[Email] Migration announcement enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendEnterpriseInvitationEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreAdmin: v.string(),
+    clinicaNombre: v.string(),
+    fisiosActuales: v.number(),
+    contactUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `Plan a medida para ${args.clinicaNombre} (+10 fisios)`,
+      html: enterpriseInvitationTemplate(
+        args.nombreAdmin,
+        args.clinicaNombre,
+        args.fisiosActuales,
+        args.contactUrl,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando enterprise-invitation:", error);
+      return false;
+    }
+    console.log(`[Email] Enterprise invitation enviado a ${args.to}`);
     return true;
   },
 });

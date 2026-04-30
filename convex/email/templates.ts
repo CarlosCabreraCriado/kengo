@@ -217,6 +217,152 @@ ${ctaButton(`mailto:${email}?subject=Re: ${asunto}`, "Responder")}`;
   );
 }
 
+export function trialEndingTemplate(
+  nombreAdmin: string,
+  clinicaNombre: string,
+  diasRestantes: number,
+  portalUrl: string,
+): string {
+  const diasTexto =
+    diasRestantes <= 0
+      ? "hoy"
+      : diasRestantes === 1
+        ? "mañana"
+        : `en ${diasRestantes} días`;
+
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Tu trial termina ${diasTexto}
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${nombreAdmin}, el periodo de prueba de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong> está a punto de finalizar.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Para que tu equipo pueda seguir trabajando sin interrupciones, añade un método de pago antes de que termine.
+</p>
+${ctaButton(portalUrl, "Activar suscripción")}
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Si no añades método de pago, la suscripción quedará suspendida hasta que se regularice.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres administrador de la clínica.",
+  );
+}
+
+export function paymentFailedTemplate(
+  nombreAdmin: string,
+  clinicaNombre: string,
+  portalUrl: string,
+): string {
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Hubo un problema con el pago
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${nombreAdmin}, no hemos podido cobrar la última factura de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong>.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Te avisamos pronto para que puedas resolverlo sin que tu equipo pierda acceso. Tienes unos días de margen para actualizar el método de pago antes de que la suscripción quede suspendida.
+</p>
+${ctaButton(portalUrl, "Actualizar método de pago")}
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Si ya has actualizado el pago, puedes ignorar este mensaje.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres administrador de la clínica.",
+  );
+}
+
+export function migrationAnnouncementTemplate(
+  nombreAdmin: string,
+  clinicaNombre: string,
+  diasGracia: number,
+  portalUrl: string,
+): string {
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Hemos lanzado planes de suscripción en Kengo
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${nombreAdmin}, te escribimos como administrador/a de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong> para anunciarte un cambio importante.
+</p>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  A partir de ahora, Kengo funciona con un modelo de suscripción mensual escalado por número de fisioterapeutas:
+</p>
+<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 24px 0; background-color: #f8f8f8; border-radius: 12px; overflow: hidden;">
+  <tr>
+    <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; color: #4a4a4a; font-size: 15px;">
+      <strong>1 fisio</strong>
+    </td>
+    <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; text-align: right; color: #1a1a1a; font-size: 15px; font-weight: 600;">
+      65 € / mes
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; color: #4a4a4a; font-size: 15px;">
+      <strong>2 a 4 fisios</strong>
+    </td>
+    <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; text-align: right; color: #1a1a1a; font-size: 15px; font-weight: 600;">
+      170 € / mes
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 16px 20px; color: #4a4a4a; font-size: 15px;">
+      <strong>5 a 10 fisios</strong>
+    </td>
+    <td style="padding: 16px 20px; text-align: right; color: #1a1a1a; font-size: 15px; font-weight: 600;">
+      280 € / mes
+    </td>
+  </tr>
+</table>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Para que tengas tiempo suficiente, hemos activado un periodo de prueba de <strong style="color: ${BRAND_COLOR};">${diasGracia} días sin tarjeta</strong> en tu clínica. Cuando quieras, entra en el panel de suscripción y añade un método de pago.
+</p>
+${ctaButton(portalUrl, "Ver plan y activar suscripción")}
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Si no añades método de pago al final del periodo de prueba, la cuenta quedará suspendida hasta que se regularice. Tus pacientes seguirán pudiendo acceder con normalidad.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres administrador de la clínica.",
+  );
+}
+
+export function enterpriseInvitationTemplate(
+  nombreAdmin: string,
+  clinicaNombre: string,
+  fisiosActuales: number,
+  contactUrl: string,
+): string {
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Plan a medida para ${clinicaNombre}
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${nombreAdmin}, te escribimos como administrador/a de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong>.
+</p>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hemos lanzado planes de suscripción mensual en Kengo. Tu clínica cuenta actualmente con <strong>${fisiosActuales} fisioterapeutas</strong>, lo que excede el plan estándar de hasta 10 fisios. Por eso queremos prepararte un plan a medida que se ajuste a tu equipo.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Mientras cerramos los detalles, tu clínica seguirá funcionando con normalidad. Cuéntanos cómo prefieres organizarlo y nuestro equipo te enviará una propuesta.
+</p>
+${ctaButton(contactUrl, "Hablar con ventas")}
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Si tienes dudas, responde a este correo y te ayudamos.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres administrador de la clínica.",
+  );
+}
+
 export function accessLinkEmailTemplate(
   nombre: string,
   accessUrl: string,

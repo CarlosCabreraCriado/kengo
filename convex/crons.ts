@@ -37,4 +37,15 @@ crons.daily(
   {},
 );
 
+// Periodos de gracia agotados: marca `unpaid` las clínicas en `past_due` cuyo
+// `graceUntil` ya expiró. Hora 03:30 UTC, después del `daily-maintenance` para
+// no solapar y dejar que cualquier `invoice.paid` del día anterior se procese
+// antes.
+crons.daily(
+  "billing-grace-expired",
+  { hourUTC: 3, minuteUTC: 30 },
+  internal.billing.internal.checkGracePeriodsExpired,
+  {},
+);
+
 export default crons;

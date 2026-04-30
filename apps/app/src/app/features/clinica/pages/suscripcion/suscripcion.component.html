@@ -1,0 +1,261 @@
+<div class="px-5 pt-6 pb-12 max-w-3xl mx-auto flex flex-col gap-5">
+  <header class="flex items-center gap-3">
+    <ui2-back-button [route]="['/mi-clinica']" ariaLabel="Volver a mi clínica"></ui2-back-button>
+    <h1 class="text-2xl font-display text-ink-900 leading-none">Suscripción</h1>
+  </header>
+
+  @if (llegadaPorBloqueo() && bloqueada()) {
+    <ui2-card
+      class="block"
+      [padding]="16"
+      [style.background]="'rgba(239, 68, 68, 0.10)'"
+      [style.border]="'1px solid rgba(239, 68, 68, 0.30)'"
+    >
+      <div class="flex items-start gap-3">
+        <span
+          class="material-symbols-outlined text-danger"
+          aria-hidden="true"
+          style="font-size: 28px; line-height: 1;"
+        >lock</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-danger">Suscripción suspendida</p>
+          <p class="text-sm text-ink-700 mt-1">
+            Para volver a usar la aplicación necesitas actualizar el método de pago.
+            Tus pacientes pueden seguir realizando sus rutinas con normalidad.
+          </p>
+          <div class="mt-3">
+            <ui2-button
+              variant="primary"
+              size="md"
+              iconLeft="credit_card"
+              (clicked)="accionPrincipal()"
+            >Actualizar método de pago</ui2-button>
+          </div>
+        </div>
+      </div>
+    </ui2-card>
+  }
+
+  @if (retornoStripe() === 'ok') {
+    <ui2-card variant="tinted" class="block">
+      <div class="flex items-start gap-3 p-1">
+        <span class="material-symbols-outlined text-success" aria-hidden="true">check_circle</span>
+        <div>
+          <p class="font-semibold text-ink-900">¡Suscripción activada!</p>
+          <p class="text-sm text-ink-500 mt-1">El estado puede tardar unos segundos en sincronizarse.</p>
+        </div>
+      </div>
+    </ui2-card>
+  }
+
+  @if (loading() && !suscripcion()) {
+    <div class="py-12 flex justify-center">
+      <ui2-spinner></ui2-spinner>
+    </div>
+  } @else if (error()) {
+    <ui2-empty-state
+      icon="error"
+      title="No pudimos cargar la suscripción"
+      message="Inténtalo de nuevo en unos segundos."
+    ></ui2-empty-state>
+  } @else if (!clinicId()) {
+    <ui2-empty-state
+      icon="apartment"
+      title="Sin clínica administrada"
+      message="No estás como administrador en ninguna clínica. La suscripción la gestiona el admin."
+    ></ui2-empty-state>
+  } @else if (suscripcion()) {
+    <!-- Estado actual -->
+    <ui2-card variant="tinted" class="block">
+      <div class="p-1 flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <ui2-pill [variant]="estadoVm().variant" size="md" [icon]="estadoVm().icon">
+            @if (suscripcion()!.estado === 'trialing' && diasRestantesTrial() > 0) {
+              Trial · {{ diasRestantesTrial() }} días
+            } @else {
+              {{ estadoVm().texto }}
+            }
+          </ui2-pill>
+          @if (cancelaAlFinDelPeriodo() && suscripcion()!.currentPeriodEnd) {
+            <span class="text-xs text-ink-500">
+              Se cancelará el {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
+            </span>
+          }
+        </div>
+
+        @if (planActual(); as plan) {
+          <div>
+            <p class="text-xs uppercase tracking-wider text-ink-500 font-semibold">Plan actual</p>
+            <p class="text-xl text-ink-900 font-display mt-1">
+              {{ plan.nombre }} · {{ plan.precioMensualEur | number:'1.0-0' }} €/mes
+            </p>
+          </div>
+
+          <!-- Indicador de uso de fisios (capacidad del tier actual) -->
+          <div class="flex flex-col gap-2 pt-2 border-t border-ink-100">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs uppercase tracking-wider text-ink-500 font-semibold">
+                Fisios usados
+              </p>
+              <p class="text-sm font-semibold text-ink-900 tabular-nums">
+                {{ fisiosActuales() }} / {{ plan.rangoFisiosMax }}
+              </p>
+            </div>
+            <ui2-progress-bar
+              [value]="progresoFisios()"
+              size="md"
+              [color]="tierLleno() ? 'warning' : 'success'"
+            ></ui2-progress-bar>
+            @if (tierLleno() && siguientePlan(); as siguiente) {
+              <p class="text-xs text-ink-500 mt-1">
+                +1 fisio más → {{ siguiente.nombre }} ({{ siguiente.precioMensualEur | number:'1.0-0' }} €/mes)
+              </p>
+            }
+          </div>
+        }
+
+        @if (suscripcion()!.currentPeriodEnd && !cancelaAlFinDelPeriodo()) {
+          <div class="pt-2 border-t border-ink-100">
+            <p class="text-xs uppercase tracking-wider text-ink-500 font-semibold">Próximo cargo</p>
+            <p class="text-base text-ink-900 mt-1">
+              {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
+            </p>
+          </div>
+        }
+
+        @if (bloqueada()) {
+          <div class="rounded-lg bg-danger/10 text-danger px-3 py-2 text-sm flex items-center gap-2">
+            <span class="material-symbols-outlined text-base" aria-hidden="true">lock</span>
+            Suscripción suspendida. Actualiza tu método de pago para continuar.
+          </div>
+        }
+      </div>
+    </ui2-card>
+
+    <!-- Acción principal -->
+    @if (!requiereContactoVentas()) {
+      <ui2-button
+        variant="primary"
+        size="lg"
+        [iconLeft]="iconoAccionPrincipal()"
+        [fullWidth]="true"
+        [loading]="loading()"
+        (clicked)="accionPrincipal()"
+      >{{ etiquetaAccionPrincipal() }}</ui2-button>
+
+      <!-- Acción secundaria: cancelar suscripción -->
+      @if (suscripcion()!.estado === 'active' && !cancelaAlFinDelPeriodo()) {
+        <ui2-button
+          variant="ghost"
+          size="md"
+          iconLeft="cancel"
+          [fullWidth]="true"
+          (clicked)="cancelarSuscripcion()"
+        >Cancelar suscripción</ui2-button>
+      }
+    }
+
+    <!-- Caso +10 fisios -->
+    @if (requiereContactoVentas()) {
+      <ui2-empty-state
+        icon="forum"
+        title="Plan a medida"
+        message="Tu equipo supera los 10 fisioterapeutas. Cuéntanos tu caso y nuestro equipo de ventas te contactará."
+        actionLabel="Contactar con ventas"
+        actionIcon="forward_to_inbox"
+        (action)="abrirDialogContactarVentas()"
+      ></ui2-empty-state>
+    }
+
+    <!-- Tabla de planes -->
+    <section class="flex flex-col gap-2">
+      <ui2-section-label>Planes disponibles</ui2-section-label>
+      <ui2-card>
+        @for (plan of planes(); track plan.nombre; let isFirst = $first) {
+          <ui2-list-row
+            icon="workspace_premium"
+            [iconColor]="esPlanActual(plan) ? 'var(--kengo-primary)' : 'var(--ink-500)'"
+            [title]="plan.nombre"
+            [subtitle]="(plan.precioMensualEur | number:'1.0-0') + ' €/mes · hasta ' + plan.rangoFisiosMax + ' fisio' + (plan.rangoFisiosMax === 1 ? '' : 's')"
+            [isFirst]="isFirst"
+          >
+            @if (esPlanActual(plan)) {
+              <ui2-pill variant="primary" size="sm" icon="check">Plan actual</ui2-pill>
+            }
+          </ui2-list-row>
+        }
+        <div class="border-t border-black/5">
+          <ui2-list-row
+            icon="contact_support"
+            iconColor="var(--ink-500)"
+            title="+10 fisios"
+            subtitle="Plan a medida — contacta con ventas"
+            [isFirst]="false"
+            [rowClickable]="true"
+            (rowClick)="abrirDialogContactarVentas()"
+          >
+            <span class="material-symbols-outlined text-ink-400" aria-hidden="true">arrow_forward</span>
+          </ui2-list-row>
+        </div>
+      </ui2-card>
+    </section>
+
+    <!-- Histórico de facturas -->
+    @if (suscripcion()!.estado !== 'none') {
+      <section class="flex flex-col gap-2">
+        <ui2-section-label>Facturas</ui2-section-label>
+        <ui2-card>
+          @if (facturasCargando() && facturas().length === 0) {
+            <div class="py-6 flex justify-center">
+              <ui2-spinner></ui2-spinner>
+            </div>
+          } @else if (facturasError() && facturas().length === 0) {
+            <p class="text-sm text-ink-500 text-center py-4">{{ facturasError() }}</p>
+          } @else if (facturas().length === 0) {
+            <p class="text-sm text-ink-500 text-center py-4">
+              Aún no hay facturas. Aparecerán aquí tras el primer cargo.
+            </p>
+          } @else {
+            @for (factura of facturas(); track factura.id; let isFirst = $first) {
+              <ui2-list-row
+                icon="receipt_long"
+                iconColor="var(--ink-500)"
+                [title]="factura.numero ?? ('Factura ' + (factura.creadoEn | date:'dd/MM/yyyy'))"
+                [subtitle]="(factura.creadoEn | date:'dd/MM/yyyy') + ' · ' + (factura.importeTotal / 100 | number:'1.2-2') + ' ' + (factura.moneda | uppercase)"
+                [isFirst]="isFirst"
+              >
+                <ui2-pill [variant]="estadoFactura(factura.estado).variant" size="sm">
+                  {{ estadoFactura(factura.estado).texto }}
+                </ui2-pill>
+                @if (factura.hostedUrl) {
+                  <a
+                    [href]="factura.hostedUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="ml-1 inline-flex items-center justify-center w-9 h-9 rounded-full text-ink-700 hover:bg-black/5 transition"
+                    [attr.aria-label]="'Descargar factura ' + (factura.numero ?? '')"
+                  >
+                    <span class="material-symbols-outlined text-lg" aria-hidden="true">download</span>
+                  </a>
+                }
+              </ui2-list-row>
+            }
+            <div class="border-t border-black/5">
+              <ui2-list-row
+                icon="open_in_new"
+                iconColor="var(--ink-500)"
+                title="Ver todas las facturas"
+                subtitle="Abre el portal de Stripe"
+                [isFirst]="false"
+                [rowClickable]="true"
+                (rowClick)="accionPrincipal()"
+              >
+                <span class="material-symbols-outlined text-ink-400" aria-hidden="true">arrow_forward</span>
+              </ui2-list-row>
+            </div>
+          }
+        </ui2-card>
+      </section>
+    }
+  }
+</div>

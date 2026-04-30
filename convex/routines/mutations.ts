@@ -1,6 +1,9 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import {
+  getAuthenticatedUser,
+  requireAnyActiveSubscriptionForUser,
+} from "../_helpers/permissions";
 import { getRoutineIfOwned } from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
 
@@ -26,6 +29,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
+    await requireAnyActiveSubscriptionForUser(ctx, user._id);
 
     const routineId = await ctx.db.insert("routines", {
       nombre: args.nombre,
@@ -83,6 +87,8 @@ export const update = mutation({
     ejercicios: v.optional(v.array(ejercicioRutinaValidator)),
   },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await requireAnyActiveSubscriptionForUser(ctx, user._id);
     await getRoutineIfOwned(ctx, args.routineId);
 
     // Patch metadata
@@ -134,6 +140,7 @@ export const duplicate = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
+    await requireAnyActiveSubscriptionForUser(ctx, user._id);
     const routine = await ctx.db.get(args.routineId);
     if (!routine) throw new Error("Rutina no encontrada");
 

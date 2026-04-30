@@ -1,6 +1,9 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import {
+  getAuthenticatedUser,
+  requireAnyActiveSubscriptionForUser,
+} from "../_helpers/permissions";
 import { getPlanIfOwned } from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
 
@@ -76,6 +79,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const fisio = await getAuthenticatedUser(ctx);
+    await requireAnyActiveSubscriptionForUser(ctx, fisio._id);
     const paciente = await ctx.db.get(args.pacienteId);
     if (!paciente) throw new Error("Paciente no encontrado");
 
@@ -108,7 +112,8 @@ export const updateEstado = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    await requireAnyActiveSubscriptionForUser(ctx, user._id);
     if (args.estado === "activo") {
       const plan = await ctx.db.get(args.planId);
       if (!plan) throw new Error("Plan no encontrado");
@@ -158,6 +163,8 @@ export const update = mutation({
     ejercicios: v.optional(v.array(ejercicioPlanArgs)),
   },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await requireAnyActiveSubscriptionForUser(ctx, user._id);
     await getPlanIfOwned(ctx, args.planId);
 
     if (args.ejercicios) {
