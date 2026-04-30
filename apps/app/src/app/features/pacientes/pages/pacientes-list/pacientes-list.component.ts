@@ -131,23 +131,21 @@ export class PacientesListComponent {
     { id: 'inactivos', label: `Inactivos · ${this.conteoInactivos()}` },
   ]);
 
-  // Suscripción reactiva a planes activos del fisio para derivar IDs de pacientes activos
-  private readonly planesActivosQuery = this.convex.watchQuery(
-    api.plans.queries.listByFisio,
+  // Suscripción reactiva: pacientes con plan en curso dentro de mis clínicas.
+  // "En curso" = estado='activo' AND fechas vigentes (hoy en zona Madrid).
+  // Cubre planes creados por cualquier fisio del equipo, no solo el actual.
+  private readonly pacientesActivosQuery = this.convex.watchQuery(
+    api.plans.queries.listEnCursoPacientesInClinics,
     () => {
       const cid = this.idsClinicas();
       if (!cid || cid.length === 0) return 'skip';
-      return { estado: 'activo' as const };
+      return { clinicIds: cid as never };
     },
   );
 
   readonly idsPacientesActivos = computed(() => {
-    const planes = this.planesActivosQuery.value() ?? [];
-    return new Set(
-      planes
-        .map((p) => p.pacienteId as unknown as string)
-        .filter(Boolean),
-    );
+    const ids = this.pacientesActivosQuery.value() ?? [];
+    return new Set(ids as unknown as string[]);
   });
 
   readonly totalPacientes = computed(() => this.pacientesRes.value()?.length ?? 0);

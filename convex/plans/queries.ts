@@ -1,9 +1,13 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import { esPaciente, getAuthenticatedUser } from "../_helpers/permissions";
 import { batchGetMap } from "../_helpers/batchGet";
-import { getDiaSemana, getMadridDateOffset } from "../_helpers/datetime";
+import {
+  getCurrentMadridDate,
+  getDiaSemana,
+  getMadridDateOffset,
+} from "../_helpers/datetime";
 import { getExpectedExercisesForPatientOnDate } from "../_helpers/expectedExercises";
 
 function resolvePacienteId(
@@ -119,9 +123,61 @@ async function loadPlanExercises(ctx: any, planId: any) {
   });
 }
 
-function getTodayString(): string {
-  return new Date().toISOString().split("T")[0]!;
-}
+// ─── LIST PACIENTES CON PLAN EN CURSO EN UN CONJUNTO DE CLÍNICAS ───
+//
+// Devuelve los pacienteIds que, en alguna de las clínicas indicadas, tienen
+// al menos un plan "en curso": estado='activo' y (fechaInicio ≤ hoy o nula)
+// y (fechaFin ≥ hoy o nula). "Hoy" se calcula en zona Europe/Madrid para
+// alinear con crons y rollups.
+
+export const listEnCursoPacientesInClinics = query({
+  args: {
+    clinicIds: v.array(v.id("clinics")),
+  },
+  handler: async (ctx, args) => {
+    await getAuthenticatedUser(ctx);
+    if (args.clinicIds.length === 0) return [];
+
+    const memberships = (
+      await Promise.all(
+        args.clinicIds.map((cid) =>
+          ctx.db
+            .query("clinicMemberships")
+            .withIndex("by_clinicId", (q) => q.eq("clinicId", cid))
+            .collect(),
+        ),
+      )
+    ).flat();
+
+    const pacienteIds = Array.from(
+      new Set(
+        memberships
+          .filter((m) => esPaciente(m.puesto))
+          .map((m) => m.userId),
+      ),
+    );
+
+    const today = getCurrentMadridDate();
+    const results = await Promise.all(
+      pacienteIds.map(async (pid) => {
+        const plans = await ctx.db
+          .query("plans")
+          .withIndex("by_pacienteId_estado", (q) =>
+            q.eq("pacienteId", pid).eq("estado", "activo"),
+          )
+          .collect();
+        const enCurso = plans.some((p) => {
+          if (p.fechaInicio && p.fechaInicio > today) return false;
+          if (p.fechaFin && p.fechaFin < today) return false;
+          return true;
+        });
+        return enCurso ? pid : null;
+      }),
+    );
+
+    return results.filter((id): id is Id<"users"> => id !== null);
+  },
+});
 
 // ─── LIST BY FISIO ───
 
@@ -215,7 +271,7 @@ export const getActiveForPatientToday = query({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     const targetId = resolvePacienteId(args.pacienteId, user._id);
-    const today = getTodayString();
+    const today = getCurrentMadridDate();
 
     const activePlans = await ctx.db
       .query("plans")
@@ -243,7 +299,7 @@ export const getActiveAndFuture = query({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     const targetId = resolvePacienteId(args.pacienteId, user._id);
-    const today = getTodayString();
+    const today = getCurrentMadridDate();
 
     const activePlans = await ctx.db
       .query("plans")
