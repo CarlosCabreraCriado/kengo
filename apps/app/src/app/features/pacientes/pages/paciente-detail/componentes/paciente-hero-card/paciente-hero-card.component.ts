@@ -36,9 +36,11 @@ export class PacienteHeroCardComponent {
   readonly clinicaNombre = input<string | null>(null);
   readonly fisioResponsableNombre = input<string | null>(null);
   readonly isMobile = input<boolean>(false);
+  readonly enviandoMensaje = input<boolean>(false);
 
   readonly editarPaciente = output<void>();
   readonly gestionarAcceso = output<void>();
   readonly crearPlan = output<void>();
+  readonly enviarMensaje = output<void>();
   readonly volver = output<void>();
 }

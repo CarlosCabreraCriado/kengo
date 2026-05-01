@@ -218,15 +218,16 @@ export class MensajesService {
 
   async startConversationWithPatient(
     pacienteId: string,
-    clinicId: string,
+    clinicId?: string,
   ): Promise<string | null> {
     try {
+      const args: { pacienteId: Id<'users'>; clinicId?: Id<'clinics'> } = {
+        pacienteId: pacienteId as Id<'users'>,
+      };
+      if (clinicId) args.clinicId = clinicId as Id<'clinics'>;
       const id = await this.convex.mutation(
         api.conversations.mutations.startConversationWithPatient,
-        {
-          pacienteId: pacienteId as Id<'users'>,
-          clinicId: clinicId as Id<'clinics'>,
-        },
+        args,
       );
       return id ? (id as unknown as string) : null;
     } catch (err) {

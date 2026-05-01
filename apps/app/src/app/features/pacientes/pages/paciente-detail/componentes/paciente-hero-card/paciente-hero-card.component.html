@@ -71,6 +71,14 @@
     <ui2-button
       variant="secondary"
       size="md"
+      iconLeft="chat"
+      [fullWidth]="true"
+      [loading]="enviandoMensaje()"
+      (clicked)="enviarMensaje.emit()"
+    >Enviar mensaje</ui2-button>
+    <ui2-button
+      variant="secondary"
+      size="md"
       iconLeft="key"
       [fullWidth]="true"
       (clicked)="gestionarAcceso.emit()"

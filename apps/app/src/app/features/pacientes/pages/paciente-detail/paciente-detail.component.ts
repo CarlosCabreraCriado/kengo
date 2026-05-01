@@ -18,6 +18,8 @@ import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { ComentariosPacienteService } from '../../data-access/comentarios-paciente.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
+import { MensajesService } from '../../../mensajes/data-access/mensajes.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 
@@ -78,6 +80,8 @@ export class PacienteDetailComponent implements OnInit {
   private comentariosService = inject(ComentariosPacienteService);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
+  private mensajesService = inject(MensajesService);
+  private toast = inject(ToastService);
   private convex = inject(ConvexService);
 
   // Responsive: < 768px se considera móvil (KENGO_BREAKPOINTS.MOBILE).
@@ -103,6 +107,9 @@ export class PacienteDetailComponent implements OnInit {
 
   // Fisio responsable
   readonly fisioResponsableNombre = signal<string | null>(null);
+
+  // Estado del CTA "Enviar mensaje"
+  readonly enviandoMensaje = signal(false);
 
   // Error state
   readonly error = signal<string | null>(null);
@@ -546,6 +553,25 @@ export class PacienteDetailComponent implements OnInit {
     if (p) {
       this.planBuilderService.prepareForPaciente(p);
       this.planBuilderService.navigateAndOpenDrawer();
+    }
+  }
+
+  async onEnviarMensaje() {
+    const p = this.paciente();
+    if (!p?.id || this.enviandoMensaje()) return;
+    this.enviandoMensaje.set(true);
+    try {
+      const conversationId =
+        await this.mensajesService.startConversationWithPatient(p.id);
+      if (conversationId) {
+        this.router.navigate(['/mensajes', conversationId]);
+      } else {
+        this.toast.error(
+          'No se pudo iniciar la conversación con este paciente.',
+        );
+      }
+    } finally {
+      this.enviandoMensaje.set(false);
     }
   }
 

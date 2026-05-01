@@ -29,36 +29,53 @@ async function findExistingConversation(
 export const startConversationWithPatient = mutation({
   args: {
     pacienteId: v.id("users"),
-    clinicId: v.id("clinics"),
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args) => {
     const fisio = await getAuthenticatedUser(ctx);
 
-    const assignment = await ctx.db
-      .query("assignments")
-      .withIndex("by_pacienteId_clinicId", (q) =>
-        q.eq("pacienteId", args.pacienteId).eq("clinicId", args.clinicId),
-      )
-      .unique();
+    let clinicId: Id<"clinics"> | null = null;
 
-    if (!assignment || assignment.fisioId !== fisio._id) {
-      throw new Error(
-        "No puedes iniciar una conversación con este paciente: no eres su fisio asignado.",
-      );
+    if (args.clinicId) {
+      const assignment = await ctx.db
+        .query("assignments")
+        .withIndex("by_pacienteId_clinicId", (q) =>
+          q.eq("pacienteId", args.pacienteId).eq("clinicId", args.clinicId!),
+        )
+        .unique();
+
+      if (!assignment || assignment.fisioId !== fisio._id) {
+        throw new Error(
+          "No puedes iniciar una conversación con este paciente: no eres su fisio asignado.",
+        );
+      }
+      clinicId = args.clinicId;
+    } else {
+      const candidates = await ctx.db
+        .query("assignments")
+        .filter((q) => q.eq(q.field("pacienteId"), args.pacienteId))
+        .collect();
+      const mine = candidates.find((a) => a.fisioId === fisio._id);
+      if (!mine) {
+        throw new Error(
+          "No tienes a este paciente asignado en ninguna clínica.",
+        );
+      }
+      clinicId = mine.clinicId;
     }
 
     const existing = await findExistingConversation(
       ctx,
       args.pacienteId,
       fisio._id,
-      args.clinicId,
+      clinicId,
     );
     if (existing) return existing._id;
 
     return await ctx.db.insert("conversations", {
       pacienteId: args.pacienteId,
       fisioId: fisio._id,
-      clinicId: args.clinicId,
+      clinicId,
       pacienteUnreadCount: 0,
       fisioUnreadCount: 0,
     });
