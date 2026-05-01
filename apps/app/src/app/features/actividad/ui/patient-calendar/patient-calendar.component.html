@@ -1,0 +1,182 @@
+<div class="cal-page">
+  @if (cargando()) {
+    <ui2-section [padding]="'40px 20px'">
+      <div class="cal-loading">
+        <ui2-spinner></ui2-spinner>
+        <p class="cal-loading__text">Cargando calendario...</p>
+      </div>
+    </ui2-section>
+  }
+
+  @if (error()) {
+    <ui2-section [padding]="'12px 20px 20px'">
+      <ui2-empty-state
+        icon="error"
+        title="Algo salió mal"
+        [message]="error()"
+        actionLabel="Reintentar"
+        actionIcon="refresh"
+        (action)="cargarDatos()"
+      ></ui2-empty-state>
+    </ui2-section>
+  }
+
+  @if (sinPlanesActivos()) {
+    <ui2-section [padding]="'12px 20px 20px'">
+      <ui2-empty-state
+        icon="calendar_today"
+        title="Sin planes activos"
+        message="No tienes planes de ejercicios asignados. Contacta con tu fisio para que te asigne un plan personalizado."
+      ></ui2-empty-state>
+    </ui2-section>
+  }
+
+  @if (!cargando() && !error() && !sinPlanesActivos()) {
+    <ui2-section [padding]="'4px 20px 14px'">
+      <ui2-card [padding]="0">
+        <div class="cal-card">
+          <header class="cal-card__head">
+            <button
+              type="button"
+              class="cal-nav"
+              (click)="mesAnterior()"
+              aria-label="Mes anterior"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+            </button>
+            <h2 class="cal-card__title">{{ tituloMes() }}</h2>
+            <button
+              type="button"
+              class="cal-nav"
+              (click)="mesSiguiente()"
+              aria-label="Mes siguiente"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+            </button>
+          </header>
+
+          <div class="cal-weekdays">
+            @for (dia of diasSemanaHeaders; track dia) {
+              <span class="cal-weekday">{{ dia }}</span>
+            }
+          </div>
+
+          <div class="cal-grid">
+            @for (dia of diasCalendario(); track dia.fecha.toISOString()) {
+              <button
+                type="button"
+                class="cal-day"
+                [class.cal-day--other]="!dia.esMesActual"
+                [class.cal-day--today]="dia.esHoy"
+                [class.cal-day--activity]="dia.tieneActividad"
+                [class.cal-day--selected]="esDiaSeleccionado(dia)"
+                (click)="seleccionarDia(dia)"
+                [attr.aria-label]="dia.diaNumero + (dia.tieneActividad ? ', tiene actividad' : '')"
+              >
+                <span class="cal-day__num">{{ dia.diaNumero }}</span>
+                @if (dia.tieneActividad) {
+                  <span class="cal-day__dot" aria-hidden="true"></span>
+                }
+              </button>
+            }
+          </div>
+        </div>
+      </ui2-card>
+    </ui2-section>
+
+    @if (diaSeleccionado(); as sel) {
+      <ui2-section [padding]="'4px 20px 14px'">
+        <ui2-card [padding]="16">
+          <header class="cal-detail__head">
+            <div class="cal-detail__title-wrap">
+              <ui2-icon-badge icon="event" [size]="32" [radius]="10"></ui2-icon-badge>
+              <span class="cal-detail__title">{{ formatearFechaSeleccionada() }}</span>
+            </div>
+            @if (sel.totalEjercicios > 0) {
+              <ui2-pill variant="soft">
+                {{ sel.totalEjercicios }} ejercicio{{ sel.totalEjercicios !== 1 ? 's' : '' }}
+              </ui2-pill>
+            }
+          </header>
+
+          @if (sel.ejercicios.length === 0) {
+            <div class="cal-detail__empty">
+              <ui2-icon-badge icon="self_improvement" [size]="48" [radius]="14" color="var(--ink-500)"></ui2-icon-badge>
+              <p class="cal-detail__empty-text">No hay ejercicios programados para este día</p>
+            </div>
+          } @else {
+            <ul class="cal-detail__list">
+              @for (ejercicio of sel.ejercicios; track $index) {
+                <li class="cal-detail__item">
+                  <div class="cal-detail__thumb">
+                    @if (ejercicio.portada) {
+                      <img
+                        [src]="getAssetUrl(ejercicio.portada)"
+                        [alt]="ejercicio.nombre"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <ui2-icon-badge icon="fitness_center" [size]="40" [radius]="10"></ui2-icon-badge>
+                    }
+                  </div>
+                  <div class="cal-detail__info">
+                    <span class="cal-detail__name">{{ ejercicio.nombre }}</span>
+                    <span class="cal-detail__meta">
+                      {{ ejercicio.series }} series ×
+                      @if (ejercicio.duracionSeg) {
+                        {{ ejercicio.duracionSeg }}s
+                      } @else {
+                        {{ ejercicio.repeticiones ?? 12 }} reps
+                      }
+                    </span>
+                    @if (sel.planes.length > 1) {
+                      <span class="cal-detail__plan-tag">
+                        <ui2-pill variant="neutral">{{ ejercicio.planTitulo }}</ui2-pill>
+                      </span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+
+            <ui2-cta-bar
+              icon="play_arrow"
+              trailingIcon="arrow_forward"
+              title="Iniciar sesión"
+              [subtitle]="sel.planes.length > 1 ? sel.planes.length + ' planes combinados' : null"
+              variant="primary"
+              (clicked)="iniciarSesionDia(sel)"
+            ></ui2-cta-bar>
+          }
+        </ui2-card>
+      </ui2-section>
+    }
+
+    @if (proximosDias().length > 0) {
+      <ui2-section [padding]="'4px 20px 24px'" label="Próximos días">
+        <div class="cal-upcoming">
+          @for (dia of proximosDias(); track dia.fecha.toISOString()) {
+            <ui2-card [padding]="14">
+              <article class="cal-upcoming__row">
+                <div class="cal-upcoming__date">
+                  <span class="cal-upcoming__weekday">{{ dia.diaSemana }}</span>
+                  <span class="cal-upcoming__short">{{ dia.fechaFormateada }}</span>
+                </div>
+                <div class="cal-upcoming__count">
+                  <span class="cal-upcoming__num">{{ dia.totalEjercicios }}</span>
+                  <span class="cal-upcoming__label">ejercicio{{ dia.totalEjercicios !== 1 ? 's' : '' }}</span>
+                </div>
+                <ui2-button
+                  variant="primary"
+                  size="sm"
+                  iconLeft="play_arrow"
+                  (clicked)="iniciarSesionDia(dia)"
+                >Comenzar</ui2-button>
+              </article>
+            </ui2-card>
+          }
+        </div>
+      </ui2-section>
+    }
+  }
+</div>

@@ -9,6 +9,9 @@ export { ActividadHoyComponent } from './pages/actividad-hoy/actividad-hoy.compo
 export { ActividadCalendarioComponent } from './pages/actividad-calendario/actividad-calendario.component';
 export { ActividadEstadisticasComponent } from './pages/actividad-estadisticas/actividad-estadisticas.component';
 
+// UI components
+export { PatientCalendarComponent } from './ui/patient-calendar/patient-calendar.component';
+
 // Services
 export { ActividadHoyService } from './data-access/actividad-hoy.service';
 export { EstadisticasService } from './data-access/estadisticas.service';
