@@ -78,6 +78,21 @@
 .if-kpi-grid ::ng-deep .ui2-kpi__value { font-size: 26px; }
 .if-kpi-grid ::ng-deep .ui2-kpi__unit { font-size: 14px; }
 
+/* Mobile: las KPI cards apilan icono+label en columna y centran el contenido
+   para ahorrar espacio horizontal cuando los tres KPIs comparten fila. */
+.if-kpi-grid ::ng-deep .ui2-kpi__head {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.if-kpi-grid ::ng-deep .ui2-kpi__label,
+.if-kpi-grid ::ng-deep .ui2-kpi__value,
+.if-kpi-grid ::ng-deep .ui2-kpi__delta {
+  text-align: center;
+}
+
 /* ========================================================== */
 /*  Listas (actividad reciente, planes por vencer)             */
 /* ========================================================== */

@@ -34,6 +34,36 @@
   gap: 8px;
 }
 
+/* Mobile: las KPI cards apilan icono+label en columna y centran el contenido
+   para ahorrar espacio horizontal cuando los tres KPIs comparten fila. */
+.ae-kpi-grid ::ng-deep .ui2-kpi__head {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.ae-kpi-grid ::ng-deep .ui2-kpi__label,
+.ae-kpi-grid ::ng-deep .ui2-kpi__value,
+.ae-kpi-grid ::ng-deep .ui2-kpi__delta {
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .ae-kpi-grid ::ng-deep .ui2-kpi__head {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .ae-kpi-grid ::ng-deep .ui2-kpi__label,
+  .ae-kpi-grid ::ng-deep .ui2-kpi__value,
+  .ae-kpi-grid ::ng-deep .ui2-kpi__delta {
+    text-align: left;
+  }
+}
+
 .ae-pain { padding: 16px 14px 8px; }
 
 .ae-pain__head {
