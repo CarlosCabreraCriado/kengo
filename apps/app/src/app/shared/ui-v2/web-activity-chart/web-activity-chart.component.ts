@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { Ui2CardComponent } from '../card/card.component';
 import { Ui2PillComponent } from '../pill/pill.component';
 
@@ -25,7 +30,9 @@ export interface Ui2ActivityDay {
           <span class="ui2-wac__eyebrow">{{ eyebrow() }}</span>
           <h3 class="ui2-wac__title">{{ title() ?? autoTitle() }}</h3>
           @if (delta()) {
-            <span class="ui2-wac__delta" [style.color]="deltaColor()">{{ delta() }}</span>
+            <span class="ui2-wac__delta" [style.color]="deltaColor()">{{
+              delta()
+            }}</span>
           }
         </div>
         @if (pillLabel()) {
@@ -44,77 +51,85 @@ export interface Ui2ActivityDay {
             <span
               class="ui2-wac__day-label"
               [class.ui2-wac__day-label--today]="d.today"
-            >{{ d.label }}</span>
+              >{{ d.label }}</span
+            >
           </div>
         }
       </div>
     </ui2-card>
   `,
-  styles: [`
-    :host { display: block; }
-    .ui2-wac__head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .ui2-wac__head-text {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-    .ui2-wac__eyebrow {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--ink-500);
-      line-height: 1;
-    }
-    .ui2-wac__title {
-      font-family: KengoDisplay, kengoFont, sans-serif;
-      font-size: 28px;
-      letter-spacing: -0.3px;
-      color: var(--ink-900);
-      line-height: 1;
-      margin: 6px 0 0;
-    }
-    .ui2-wac__delta {
-      font-size: 12px;
-      font-weight: 700;
-      margin-top: 4px;
-      line-height: 1;
-    }
-    .ui2-wac__chart {
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-      height: 120px;
-    }
-    .ui2-wac__bar-col {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      height: 100%;
-      justify-content: flex-end;
-    }
-    .ui2-wac__bar {
-      width: 100%;
-      min-height: 4px;
-      border-radius: 8px;
-      transition: height 0.3s ease;
-    }
-    .ui2-wac__day-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--ink-400);
-      line-height: 1;
-    }
-    .ui2-wac__day-label--today { color: var(--kengo-primary); }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+      .ui2-wac__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .ui2-wac__head-text {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .ui2-wac__eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--ink-500);
+        line-height: 1;
+      }
+      .ui2-wac__title {
+        font-family: KengoDisplay, kengoFont, sans-serif;
+        font-size: 28px;
+        letter-spacing: -0.3px;
+        color: var(--ink-900);
+        line-height: 1;
+        margin: 6px 0 0;
+      }
+      .ui2-wac__delta {
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 4px;
+        line-height: 1;
+      }
+      .ui2-wac__chart {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        height: 120px;
+      }
+      .ui2-wac__bar-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        height: 100%;
+        justify-content: flex-end;
+      }
+      .ui2-wac__bar {
+        width: 100%;
+        min-height: 4px;
+        border-radius: 8px;
+        transition: height 0.3s ease;
+      }
+      .ui2-wac__day-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--ink-400);
+        line-height: 1;
+        text-wrap-mode: nowrap;
+      }
+      .ui2-wac__day-label--today {
+        color: var(--kengo-primary);
+      }
+    `,
+  ],
 })
 export class Ui2WebActivityChartComponent {
   readonly eyebrow = input<string>('Actividad · 10 días');
