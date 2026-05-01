@@ -317,11 +317,35 @@
   .ip-exercises-web__grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    gap: 16px;
   }
 
   .ip-exercises-web__card {
     width: 100%;
+  }
+
+  /* Aspect-ratio en lugar de altura fija para que la imagen no se vea como franja
+     cuando la card crece a 200-280px de ancho en desktop. */
+  .ip-exercises-web__card ::ng-deep .ui2-ex-card__head {
+    height: auto;
+    aspect-ratio: 16 / 10;
+  }
+
+  .ip-exercises-web__card ::ng-deep .ui2-ex-card__icon {
+    font-size: 44px;
+  }
+
+  .ip-exercises-web__card ::ng-deep .ui2-ex-card__body {
+    padding: 12px 14px 14px;
+  }
+
+  .ip-exercises-web__card ::ng-deep .ui2-ex-card__name {
+    font-size: 14px;
+  }
+
+  .ip-exercises-web__card ::ng-deep .ui2-ex-card__sets {
+    font-size: 11px;
+    margin-top: 4px;
   }
 
   /* En desktop la columna ya tiene padding desde .ip-page, anular el padding interno
