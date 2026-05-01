@@ -24,7 +24,6 @@ import {
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2ExerciseCardComponent,
-  Ui2FisioMessageCardComponent,
   Ui2HorizontalScrollerComponent,
   Ui2MiniStatComponent,
   Ui2NextAppointmentComponent,
@@ -60,7 +59,6 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
     Ui2ClinicHeroCardComponent,
     Ui2CtaBarComponent,
     Ui2ExerciseCardComponent,
-    Ui2FisioMessageCardComponent,
     Ui2HorizontalScrollerComponent,
     Ui2MiniStatComponent,
     Ui2NextAppointmentComponent,
@@ -89,6 +87,7 @@ export class InicioPacienteComponent {
   hayActividadHoy = this.actividadHoyService.hayActividadHoy;
   todoCompletado = this.actividadHoyService.todoCompletado;
   tiempoEstimadoHoy = this.actividadHoyService.tiempoEstimadoHoy;
+  sinPlanesActivos = this.actividadHoyService.sinPlanesActivos;
 
   fisioAsignado = signal<AsignacionResponsable | null>(null);
   cargandoFisio = signal(true);
@@ -112,15 +111,19 @@ export class InicioPacienteComponent {
 
   heroTitle = computed(() => {
     const t = this.actividadHoyService.badgeType();
+    if (t === 'loading') return '';
+    if (this.sinPlanesActivos()) return 'SIN PLAN ACTIVO';
     if (t === 'completed') return '¡BIEN HECHO!';
     if (t === 'rest') return 'A DESCANSAR';
-    if (t === 'loading') return '';
     return 'VAMOS ALLÁ';
   });
 
   heroSub = computed<string>(() => {
     const t = this.actividadHoyService.badgeType();
     if (t === 'loading') return 'Cargando…';
+    if (this.sinPlanesActivos()) {
+      return 'Aún no tienes ningún plan asignado.<br>Contacta con tu fisio para empezar.';
+    }
     const racha = this.rachaActual();
     if (t === 'completed') return '¡Disfruta del día!';
     if (t === 'rest') return 'Hoy descansas. Vuelve mañana.';
@@ -157,10 +160,6 @@ export class InicioPacienteComponent {
     if (!fisio) return 'Tu fisio';
     return [fisio.nombreFisio, fisio.apellidoFisio].filter(Boolean).join(' ').trim() || 'Tu fisio';
   });
-
-  mensajeFisio = signal<string>(
-    '¿Cómo te has sentido hoy con los ejercicios? Cuéntame y ajusto el plan si lo necesitas.',
-  );
 
   // --- Clínica ---
   clinicaActual = computed<Clinica | null>(() => {
@@ -217,6 +216,9 @@ export class InicioPacienteComponent {
   readonly proximaSesion = this.nextSessionService.nextSessionVm;
 
   readonly heroSubDesktop = computed<string>(() => {
+    if (this.sinPlanesActivos()) {
+      return 'Aún no tienes ningún plan asignado. Contacta con tu fisio para empezar.';
+    }
     const racha = this.rachaActual();
     const total = this.progreso().total;
     const completados = this.progreso().completados;

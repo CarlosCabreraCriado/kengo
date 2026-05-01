@@ -62,6 +62,11 @@
   font-weight: 700;
 }
 
+.ip-hero__cta {
+  display: block;
+  margin-top: 14px;
+}
+
 .ip-hero__ring-num {
   font-family: KengoDisplay, kengoFont, sans-serif;
   font-size: 36px;
@@ -392,8 +397,7 @@
   }
 
   /* En desktop la columna ya tiene padding desde .ip-page, anular el padding interno
-     del <ui2-section> que envuelve la fisio-message-card (estilos inline del componente). */
-  .ip-fisio-section ::ng-deep .ui2-section,
+     del <ui2-section> que envuelve la card de mi fisio (estilos inline del componente). */
   .ip-mi-fisio-section ::ng-deep .ui2-section {
     padding: 0 !important;
   }

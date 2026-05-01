@@ -2,47 +2,70 @@
   <!-- ========================================================== -->
   <!-- HERO mobile (compact)                                       -->
   <!-- ========================================================== -->
-  <section class="ip-hero ip-hero--mobile">
+  <section
+    class="ip-hero ip-hero--mobile"
+    [class.ip-hero--sin-plan]="sinPlanesActivos()"
+  >
     <div class="ip-hero__text">
       <p class="ip-hero__overline">Hola {{ userName() }},</p>
       <h1 class="ip-hero__title">{{ heroTitle() }}</h1>
       <p class="ip-hero__sub" [innerHTML]="heroSub()"></p>
+      @if (sinPlanesActivos() && !cargandoFisio() && fisioAsignado()) {
+        <ui2-button
+          class="ip-hero__cta"
+          variant="primary"
+          size="md"
+          iconLeft="chat"
+          (clicked)="enviarMensajeAFisio()"
+        >
+          Enviar mensaje
+        </ui2-button>
+      }
     </div>
-    <ui2-progress-ring
-      [size]="130"
-      [stroke]="14"
-      [value]="progresoRatio()"
-      trackColor="rgba(var(--kengo-primary-rgb), 0.1)"
-    >
-      <div class="ip-hero__ring-num">
-        {{ progreso().completados
-        }}<span class="ip-hero__ring-den">/{{ progreso().total }}</span>
-      </div>
-      <div class="ip-hero__ring-label">hoy</div>
-    </ui2-progress-ring>
+    @if (!sinPlanesActivos()) {
+      <ui2-progress-ring
+        [size]="130"
+        [stroke]="14"
+        [value]="progresoRatio()"
+        trackColor="rgba(var(--kengo-primary-rgb), 0.1)"
+      >
+        <div class="ip-hero__ring-num">
+          {{ progreso().completados
+          }}<span class="ip-hero__ring-den">/{{ progreso().total }}</span>
+        </div>
+        <div class="ip-hero__ring-label">hoy</div>
+      </ui2-progress-ring>
+    }
   </section>
 
   <!-- ========================================================== -->
   <!-- HERO desktop (expanded block: ring + text + CTAs + stats)   -->
   <!-- ========================================================== -->
-  <section class="ip-hero-web">
-    <div class="ip-hero-web__ring-col">
-      <ui2-progress-ring
-        [size]="170"
-        [stroke]="16"
-        [value]="progresoRatio()"
-        trackColor="rgba(var(--kengo-primary-rgb), 0.12)"
-      >
-        <div class="ip-hero-web__ring-num">
-          {{ progreso().completados
-          }}<span class="ip-hero-web__ring-den">/{{ progreso().total }}</span>
-        </div>
-        <div class="ip-hero-web__ring-label">hoy</div>
-      </ui2-progress-ring>
-    </div>
+  <section
+    class="ip-hero-web"
+    [class.ip-hero-web--sin-plan]="sinPlanesActivos()"
+  >
+    @if (!sinPlanesActivos()) {
+      <div class="ip-hero-web__ring-col">
+        <ui2-progress-ring
+          [size]="170"
+          [stroke]="16"
+          [value]="progresoRatio()"
+          trackColor="rgba(var(--kengo-primary-rgb), 0.12)"
+        >
+          <div class="ip-hero-web__ring-num">
+            {{ progreso().completados
+            }}<span class="ip-hero-web__ring-den">/{{ progreso().total }}</span>
+          </div>
+          <div class="ip-hero-web__ring-label">hoy</div>
+        </ui2-progress-ring>
+      </div>
+    }
 
     <div class="ip-hero-web__main">
-      <span class="ip-hero-web__eyebrow">Tu sesión de hoy</span>
+      <span class="ip-hero-web__eyebrow">{{
+        sinPlanesActivos() ? 'Panel del paciente' : 'Tu sesión de hoy'
+      }}</span>
       <h1 class="ip-hero-web__title">{{ heroTitle() }}</h1>
       <p class="ip-hero-web__sub" [innerHTML]="heroSubDesktop()"></p>
 
@@ -63,6 +86,19 @@
           >
             Ver plan completo
           </button>
+        </div>
+      }
+
+      @if (sinPlanesActivos() && !cargandoFisio() && fisioAsignado()) {
+        <div class="ip-hero-web__ctas">
+          <ui2-button
+            variant="primary"
+            size="md"
+            iconLeft="chat"
+            (clicked)="enviarMensajeAFisio()"
+          >
+            Enviar mensaje
+          </ui2-button>
         </div>
       }
     </div>
@@ -204,19 +240,6 @@
               Enviar mensaje
             </ui2-button>
           </ui2-card>
-        </ui2-section>
-      }
-
-      <!-- Fisio message — siempre, en ambos viewports -->
-      @if (!cargandoFisio() && fisioAsignado()) {
-        <ui2-section class="ip-fisio-section" [padding]="'6px 20px 14px'">
-          <ui2-fisio-message-card
-            [name]="fisioNombreCompleto()"
-            [avatarUrl]="fisioAvatarUrl()"
-            [text]="mensajeFisio()"
-            action="Responder"
-            (actionClick)="irAClinica()"
-          ></ui2-fisio-message-card>
         </ui2-section>
       }
 
