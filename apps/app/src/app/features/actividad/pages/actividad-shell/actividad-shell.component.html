@@ -1,11 +1,13 @@
 <section class="actividad-shell">
-  <ui2-section [padding]="'12px 20px 8px'">
-    <ui2-segmented
-      [options]="tabs"
-      [value]="activeTab()"
-      (valueChange)="onTabChange($event)"
-    ></ui2-segmented>
-  </ui2-section>
+  <div class="md:hidden">
+    <ui2-section [padding]="'12px 20px 8px'">
+      <ui2-segmented
+        [options]="tabs"
+        [value]="activeTab()"
+        (valueChange)="onTabChange($event)"
+      ></ui2-segmented>
+    </ui2-section>
+  </div>
 
   <main class="actividad-shell__content">
     <router-outlet />

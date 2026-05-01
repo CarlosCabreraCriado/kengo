@@ -25,7 +25,8 @@ import { Ui2IconBadgeComponent } from '../icon-badge/icon-badge.component';
     </ui2-card>
   `,
   styles: [`
-    :host { display: block; }
+    :host { display: block; height: 100%; }
+    ui2-card { display: block; height: 100%; }
     .ui2-kpi__head {
       display: flex;
       align-items: center;

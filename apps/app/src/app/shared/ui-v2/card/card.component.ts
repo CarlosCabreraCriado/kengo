@@ -23,6 +23,7 @@ export type Ui2CardVariant = 'default' | 'tinted';
   `,
   styles: [`
     :host { display: block; }
+    :host > div { height: 100%; box-sizing: border-box; }
     .ui2-card {
       border: 1px solid rgba(0, 0, 0, 0.04);
       background: white;

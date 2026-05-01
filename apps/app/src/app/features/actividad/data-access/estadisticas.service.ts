@@ -132,6 +132,13 @@ export class EstadisticasService {
     return serie.length > 0 ? serie[serie.length - 1]!.v : null;
   });
 
+  readonly dolorMedio = computed<number | null>(() => {
+    const serie = this.dolorSerie();
+    if (serie.length === 0) return null;
+    const sum = serie.reduce((acc, p) => acc + p.v, 0);
+    return Math.round((sum / serie.length) * 10) / 10;
+  });
+
   readonly adherencia = computed<number | null>(() => {
     const periodo = this.periodo();
     if (periodo === 'semana') {

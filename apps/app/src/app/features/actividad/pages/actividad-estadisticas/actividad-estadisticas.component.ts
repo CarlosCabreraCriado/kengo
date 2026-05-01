@@ -35,7 +35,7 @@ interface PuntoDolorPlot extends PuntoDolorVm {
 const PERIODO_OPTIONS: Ui2SegmentedOption[] = [
   { id: 'semana', label: 'Semana' },
   { id: 'mes', label: 'Mes' },
-  { id: 'plan', label: 'Plan completo' },
+  { id: 'plan', label: 'Histórico' },
 ];
 
 @Component({
@@ -82,6 +82,24 @@ export class ActividadEstadisticasComponent implements OnInit {
   readonly mejorRacha = this.estadisticas.mejorRachaHistorica;
   readonly dolorInicial = this.estadisticas.dolorInicial;
   readonly dolorActual = this.estadisticas.dolorActual;
+  readonly dolorMedio = this.estadisticas.dolorMedio;
+
+  readonly dolorMedioValue = computed<string | number>(() => {
+    const v = this.dolorMedio();
+    return v === null ? '—' : v;
+  });
+
+  readonly dolorMedioUnit = computed<string | null>(() =>
+    this.dolorMedio() === null ? null : '/10',
+  );
+
+  readonly dolorMedioColor = computed<string>(() => {
+    const v = this.dolorMedio();
+    if (v === null) return 'var(--ink-400)';
+    if (v <= 3) return '#22c55e';
+    if (v <= 5) return 'var(--kengo-tertiary)';
+    return 'var(--danger)';
+  });
 
   readonly adherenciaValue = computed<string | number>(() => {
     const ad = this.adherencia();
@@ -138,7 +156,10 @@ export class ActividadEstadisticasComponent implements OnInit {
     const texto = this.estadisticas.resumenCompartible();
 
     if (this.share.isAvailable) {
-      const shared = await this.share.share({ title: 'Mi progreso en Kengo', text: texto });
+      const shared = await this.share.share({
+        title: 'Mi progreso en Kengo',
+        text: texto,
+      });
       if (shared) return;
     }
 
