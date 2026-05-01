@@ -397,9 +397,11 @@
   }
 
   /* En desktop la columna ya tiene padding desde .ip-page, anular el padding interno
-     del <ui2-section> que envuelve la card de mi fisio (estilos inline del componente). */
+     del <ui2-section> que envuelve las cards (estilos inline del componente). */
   .ip-mi-fisio-section ::ng-deep .ui2-section,
-  .ip-clinica-section ::ng-deep .ui2-section {
+  .ip-clinica-section ::ng-deep .ui2-section,
+  .ip-activity-chart-section ::ng-deep .ui2-section,
+  .ip-next-appointment-section ::ng-deep .ui2-section {
     padding: 0 !important;
   }
 }

@@ -12,7 +12,7 @@
       <p class="ip-hero__sub" [innerHTML]="heroSub()"></p>
       @if (sinPlanesActivos() && !cargandoFisio() && fisioAsignado()) {
         <ui2-button
-          class="ip-hero__cta"
+          class="hidden! md:block! ip-hero__cta"
           variant="primary"
           size="md"
           iconLeft="chat"
@@ -22,7 +22,7 @@
         </ui2-button>
       }
     </div>
-    @if (!sinPlanesActivos()) {
+    @if (!sinPlanesActivos() && !esDescanso()) {
       <ui2-progress-ring
         [size]="130"
         [stroke]="14"
@@ -45,7 +45,7 @@
     class="ip-hero-web"
     [class.ip-hero-web--sin-plan]="sinPlanesActivos()"
   >
-    @if (!sinPlanesActivos()) {
+    @if (!sinPlanesActivos() && !esDescanso()) {
       <div class="ip-hero-web__ring-col">
         <ui2-progress-ring
           [size]="170"
@@ -201,14 +201,15 @@
         </section>
       }
 
-      <!-- Activity chart — solo desktop (datos reales vía EstadisticasService) -->
-      <ui2-web-activity-chart
-        class="ip-desktop-only"
-        [data]="actividad10dias()"
-        [delta]="adherenciaDeltaTexto()"
-        [deltaColor]="adherenciaDeltaColor()"
-        [pillLabel]="periodoLabel()"
-      ></ui2-web-activity-chart>
+      <!-- Activity chart — datos reales vía EstadisticasService -->
+      <ui2-section [padding]="'6px 20px 10px'" class="ip-activity-chart-section">
+        <ui2-web-activity-chart
+          [data]="actividad10dias()"
+          [delta]="adherenciaDeltaTexto()"
+          [deltaColor]="adherenciaDeltaColor()"
+          [pillLabel]="periodoLabel()"
+        ></ui2-web-activity-chart>
+      </ui2-section>
     </div>
 
     <div class="ip-col-right">
@@ -243,13 +244,14 @@
         </ui2-section>
       }
 
-      <!-- Próxima sesión — solo desktop (siguiente día con entrenamiento programado) -->
+      <!-- Próxima sesión — siguiente día con entrenamiento programado -->
       @if (proximaSesion(); as ps) {
-        <ui2-next-appointment
-          class="ip-desktop-only"
-          [data]="ps"
-          (planClick)="irAPlan()"
-        ></ui2-next-appointment>
+        <ui2-section [padding]="'6px 20px 10px'" class="ip-next-appointment-section">
+          <ui2-next-appointment
+            [data]="ps"
+            (planClick)="irAPlan()"
+          ></ui2-next-appointment>
+        </ui2-section>
       }
 
       <!-- Clínica hero — card con imagen de fondo de la clínica -->

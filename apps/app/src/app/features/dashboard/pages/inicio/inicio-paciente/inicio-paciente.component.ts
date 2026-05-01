@@ -1,8 +1,19 @@
-import { Component, ChangeDetectionStrategy, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
-import { ActividadHoyService, EjercicioUnificadoHoy } from '../../../../actividad/data-access/actividad-hoy.service';
+import {
+  ActividadHoyService,
+  EjercicioUnificadoHoy,
+} from '../../../../actividad/data-access/actividad-hoy.service';
 import { EstadisticasService } from '../../../../actividad/data-access/estadisticas.service';
 import { NextSessionService } from '../../../../actividad/data-access/next-session.service';
 import { RachaPacienteService } from '../../../data-access/racha-paciente.service';
@@ -42,7 +53,9 @@ interface ExerciseVm {
 
 function formatSets(ej: EjercicioUnificadoHoy): string {
   if (ej.duracionSeg && ej.duracionSeg > 0) {
-    return ej.duracionSeg >= 60 ? `${Math.round(ej.duracionSeg / 60)} min` : `${ej.duracionSeg} seg`;
+    return ej.duracionSeg >= 60
+      ? `${Math.round(ej.duracionSeg / 60)} min`
+      : `${ej.duracionSeg} seg`;
   }
   const series = ej.series ?? 3;
   const reps = ej.repeticiones ?? 12;
@@ -88,6 +101,7 @@ export class InicioPacienteComponent {
   todoCompletado = this.actividadHoyService.todoCompletado;
   tiempoEstimadoHoy = this.actividadHoyService.tiempoEstimadoHoy;
   sinPlanesActivos = this.actividadHoyService.sinPlanesActivos;
+  esDescanso = computed(() => this.actividadHoyService.badgeType() === 'rest');
 
   fisioAsignado = signal<AsignacionResponsable | null>(null);
   cargandoFisio = signal(true);
@@ -97,8 +111,21 @@ export class InicioPacienteComponent {
     return clinicas.find((c) => c.puesto === 'paciente')?.clinicId ?? null;
   });
 
+  // Clínica a mostrar en la card "Mi clínica" del paciente. Preferimos la
+  // clínica donde el usuario está registrado como paciente; si no existe
+  // (caso de un fisio que ha activado el modo paciente y solo tiene puesto
+  // 'fisio'/'admin'), caemos a la primera clínica disponible.
+  private clinicaActualId = computed(() => {
+    const pacienteId = this.clinicaPaciente();
+    if (pacienteId) return pacienteId;
+    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
+    return clinicas[0]?.clinicId ?? null;
+  });
+
   // --- Hero ---
-  userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Hola');
+  userName = computed(
+    () => this.sessionService.usuario()?.first_name ?? 'Hola',
+  );
 
   progreso = computed(() => this.actividadHoyService.progresoTotal());
 
@@ -114,7 +141,7 @@ export class InicioPacienteComponent {
     if (t === 'loading') return '';
     if (this.sinPlanesActivos()) return 'SIN PLAN ACTIVO';
     if (t === 'completed') return '¡BIEN HECHO!';
-    if (t === 'rest') return 'A DESCANSAR';
+    if (t === 'rest') return 'Hoy descansas';
     return 'VAMOS ALLÁ';
   });
 
@@ -126,7 +153,8 @@ export class InicioPacienteComponent {
     }
     const racha = this.rachaActual();
     if (t === 'completed') return '¡Disfruta del día!';
-    if (t === 'rest') return 'Hoy descansas. Vuelve mañana.';
+    if (t === 'rest')
+      return 'Revisa tu plan para ver cuando toca la siguiente sesión.';
     if (racha > 0) {
       const dias = racha === 1 ? '1 día' : `${racha} días`;
       return `Llevas <b>${dias}</b> de racha.<br>Sigue así.`;
@@ -158,13 +186,18 @@ export class InicioPacienteComponent {
   fisioNombreCompleto = computed(() => {
     const fisio = this.fisioAsignado();
     if (!fisio) return 'Tu fisio';
-    return [fisio.nombreFisio, fisio.apellidoFisio].filter(Boolean).join(' ').trim() || 'Tu fisio';
+    return (
+      [fisio.nombreFisio, fisio.apellidoFisio]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || 'Tu fisio'
+    );
   });
 
   // --- Clínica ---
   clinicaActual = computed<Clinica | null>(() => {
     const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
-    const id = this.clinicaPaciente();
+    const id = this.clinicaActualId();
     if (!id) return null;
     return clinicas.find((c) => c.id === id) ?? null;
   });
@@ -223,10 +256,13 @@ export class InicioPacienteComponent {
     const total = this.progreso().total;
     const completados = this.progreso().completados;
     const restantes = total - completados;
-    if (this.todoCompletado()) return '¡Sesión de hoy completada! Disfruta del descanso.';
-    if (this.actividadHoyService.badgeType() === 'rest') return 'Hoy descansas. Vuelve mañana con energía.';
+    if (this.todoCompletado())
+      return '¡Sesión de hoy completada! Disfruta del descanso.';
+    if (this.actividadHoyService.badgeType() === 'rest')
+      return 'Revisa tu plan para ver cuando toca la siguiente sesión.';
     const rachaTxt = racha > 0 ? `Llevas <b>${racha} días de racha</b>. ` : '';
-    if (restantes > 0) return `${rachaTxt}Solo te quedan ${restantes} ejercicios para terminar la sesión de hoy.`;
+    if (restantes > 0)
+      return `${rachaTxt}Solo te quedan ${restantes} ejercicios para terminar la sesión de hoy.`;
     return 'Empieza tu sesión de hoy.';
   });
 
@@ -241,22 +277,28 @@ export class InicioPacienteComponent {
     effect(() => {
       const userId = this.sessionService.usuario()?.id;
       const clinicaId = this.clinicaPaciente();
-      if (userId && clinicaId) {
-        this.cargandoFisio.set(true);
-        this.asignacionesService
-          .getFisioResponsable(userId, clinicaId)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: (asignacion) => {
-              this.fisioAsignado.set(asignacion);
-              this.cargandoFisio.set(false);
-            },
-            error: () => {
-              this.fisioAsignado.set(null);
-              this.cargandoFisio.set(false);
-            },
-          });
+      if (!userId || !clinicaId) {
+        // Sin contexto de paciente (p. ej. fisio en modo paciente sin puesto
+        // 'paciente') no hay asignación que buscar. Liberamos el gate de carga
+        // para que la UI no quede bloqueada esperando indefinidamente.
+        this.fisioAsignado.set(null);
+        this.cargandoFisio.set(false);
+        return;
       }
+      this.cargandoFisio.set(true);
+      this.asignacionesService
+        .getFisioResponsable(userId, clinicaId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (asignacion) => {
+            this.fisioAsignado.set(asignacion);
+            this.cargandoFisio.set(false);
+          },
+          error: () => {
+            this.fisioAsignado.set(null);
+            this.cargandoFisio.set(false);
+          },
+        });
     });
   }
 
@@ -280,7 +322,8 @@ export class InicioPacienteComponent {
       return;
     }
 
-    const conversationId = await this.mensajesService.startConversationWithFisio();
+    const conversationId =
+      await this.mensajesService.startConversationWithFisio();
     if (conversationId) {
       this.router.navigate(['/mensajes', conversationId]);
     } else {
