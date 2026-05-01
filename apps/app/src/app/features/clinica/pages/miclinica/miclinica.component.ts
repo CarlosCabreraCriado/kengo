@@ -28,6 +28,7 @@ import { EditarClinicaDialogComponent } from '../../components/editar-clinica-di
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
+import { ClipboardService } from '../../../../core/services/clipboard.service';
 
 // V2 catalog
 import {
@@ -93,6 +94,7 @@ export class MiClinicaComponent {
   protected subscriptionService = inject(SubscriptionService);
   private dialogService = inject(DialogService);
   private toastService = inject(ToastService);
+  private clipboard = inject(ClipboardService);
 
   isMovil = useResponsive().esMobile;
 
@@ -332,7 +334,7 @@ export class MiClinicaComponent {
   }
 
   copiarCodigo(codigo: string) {
-    navigator.clipboard.writeText(codigo);
+    void this.clipboard.write(codigo);
     this.showSnackbar('Código copiado al portapapeles');
   }
 

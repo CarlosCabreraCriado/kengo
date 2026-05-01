@@ -102,6 +102,9 @@ export class AuthService {
    */
   async iniciarApp(): Promise<void> {
     try {
+      // En native: rehidratar localStorage desde @capacitor/preferences si la
+      // WebView purgó el storage. No-op en web.
+      await this.betterAuth.restoreFromNative();
       this.restaurarConvexAuth();
       const hasSession = await this.checkSession();
       if (hasSession) {

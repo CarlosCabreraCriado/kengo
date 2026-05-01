@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, NgZone, OnInit, computed, effect, inject, signal } from '@angular/core';
 import {
   RouterOutlet,
   Router,
@@ -6,6 +6,9 @@ import {
   NavigationEnd,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { App as CapacitorApp } from '@capacitor/app';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 import {
   AuthService,
@@ -13,6 +16,9 @@ import {
   SessionService,
   ThemeService,
 } from './core';
+import { PlatformService } from './core/services/platform.service';
+import { ExternalBrowserService } from './core/services/external-browser.service';
+import { ToastService } from './shared/services/toast/toast.service';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
@@ -48,6 +54,10 @@ export class AppComponent implements OnInit {
   private router = inject(Router);
   private authService = inject(AuthService);
   private destroyRef = inject(DestroyRef);
+  private ngZone = inject(NgZone);
+  private platform = inject(PlatformService);
+  private externalBrowser = inject(ExternalBrowserService);
+  private toast = inject(ToastService);
   public sessionService = inject(SessionService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
 
@@ -97,6 +107,20 @@ export class AppComponent implements OnInit {
       mq.addEventListener('change', handler);
       this.destroyRef.onDestroy(() => mq.removeEventListener('change', handler));
     }
+
+    if (this.platform.isNative()) {
+      this.configurarPlataformaNativa();
+
+      // Ocultar splash cuando la sesión esté inicializada (evita flash blanco
+      // del WebView mientras Better-Auth restaura y Convex carga el usuario).
+      effect(() => {
+        if (this.sessionService.sesionInicializada()) {
+          SplashScreen.hide({ fadeOutDuration: 200 }).catch(() => {
+            // ya estaba oculto
+          });
+        }
+      });
+    }
   }
 
   ngOnInit() {
@@ -105,6 +129,53 @@ export class AppComponent implements OnInit {
       this.authService.iniciarApp();
     }
     this.observarRutas();
+  }
+
+  /**
+   * Setup específico de plataforma nativa: deep links (`appUrlOpen`) y status
+   * bar. Solo se invoca en iOS/Android.
+   */
+  private configurarPlataformaNativa(): void {
+    // Deep links: `kengo://magic?t=...`, `https://kengoapp.com/...`,
+    // `kengo://billing/return?status=...`. Los listeners de Capacitor corren
+    // fuera de NgZone — hay que entrar para que el Router dispare CD.
+    CapacitorApp.addListener('appUrlOpen', (event) => {
+      this.ngZone.run(() => {
+        try {
+          const parsed = new URL(event.url);
+          const path = parsed.pathname + parsed.search + parsed.hash;
+          if (!path || path === '/') return;
+
+          // Retorno desde Stripe Checkout / Customer Portal (browser modal
+          // abierto vía ExternalBrowserService.redirect): cerramos el browser
+          // y navegamos al panel de suscripción sin pasar por la URL real
+          // /billing/return (no es una ruta Angular, solo un canal de señal).
+          // El watchQuery de SubscriptionService recogerá el cambio cuando el
+          // webhook de Stripe lo propague (delay típico 1-3 s).
+          if (path.startsWith('/billing/return')) {
+            void this.externalBrowser.close();
+            const status = parsed.searchParams.get('status');
+            if (status === 'success') {
+              this.toast.success('¡Suscripción activada!');
+            } else if (status === 'cancel') {
+              this.toast.info('Has cancelado el pago.');
+            }
+            this.router.navigateByUrl('/mi-clinica/suscripcion');
+            return;
+          }
+
+          this.router.navigateByUrl(path);
+        } catch (err) {
+          console.warn('[appUrlOpen] URL inválida:', event.url, err);
+        }
+      });
+    });
+
+    // Status bar: estilo claro sobre fondo coral por defecto. ThemeService
+    // puede sobrescribir según clínica activa en fase 5.
+    StatusBar.setStyle({ style: Style.Default }).catch(() => {
+      /* simulator/web fallback */
+    });
   }
 
   private observarRutas() {

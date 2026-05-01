@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
+import { ClipboardService } from '../../../../core/services/clipboard.service';
 import { emailOptional } from '../../../../shared';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
 import {
@@ -52,6 +53,7 @@ export class GenerarCodigoDialogComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private clinicaGestionService = inject(ClinicaGestionService);
+  private clipboard = inject(ClipboardService);
 
   form = this.fb.group({
     tipo: ['paciente' as TipoCodigoAcceso, [Validators.required]],
@@ -157,7 +159,7 @@ export class GenerarCodigoDialogComponent implements OnInit {
   copiarCodigo() {
     const codigo = this.codigoResult();
     if (codigo) {
-      navigator.clipboard.writeText(codigo);
+      void this.clipboard.write(codigo);
     }
   }
 

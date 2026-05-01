@@ -7,6 +7,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 // Core imports
 import { CustomRouteReuseStrategy, provideConvex } from './core';
+import { isCapacitorNativePlatform } from './core/services/platform.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,7 +17,9 @@ export const appConfig: ApplicationConfig = {
     { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
     ...provideConvex(),
     provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
+      // Deshabilitado en native: el SW interfiere con WKWebView (capacitor://) y
+      // el bridge nativo. La caché en native la gestiona el packager.
+      enabled: !isDevMode() && !isCapacitorNativePlatform(),
       registrationStrategy: 'registerWhenStable:30000'
     }),
   ],

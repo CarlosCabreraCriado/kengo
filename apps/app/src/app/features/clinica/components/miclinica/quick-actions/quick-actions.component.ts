@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ShareService } from '../../../../../core/services/share.service';
+import { ClipboardService } from '../../../../../core/services/clipboard.service';
 
 @Component({
   selector: 'app-mc-quick-actions',
@@ -15,6 +17,9 @@ export class MiClinicaQuickActionsComponent {
 
   readonly notify = output<string>();
 
+  private readonly share = inject(ShareService);
+  private readonly clipboard = inject(ClipboardService);
+
   readonly mapaUrl = computed(() => {
     const dir = this.direccion();
     if (!dir) return null;
@@ -29,23 +34,12 @@ export class MiClinicaQuickActionsComponent {
     const lineas = [nombre, dir, tel, mail].filter(Boolean);
     const text = lineas.join(' · ');
 
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({ title: nombre, text });
-        return;
-      } catch {
-        /* usuario canceló: no notificar */
-        return;
-      }
+    if (this.share.isAvailable) {
+      const shared = await this.share.share({ title: nombre, text });
+      if (shared) return;
     }
 
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(text);
-        this.notify.emit('Datos copiados al portapapeles');
-      } catch {
-        this.notify.emit('No se pudo copiar la información');
-      }
-    }
+    const copied = await this.clipboard.write(text);
+    this.notify.emit(copied ? 'Datos copiados al portapapeles' : 'No se pudo copiar la información');
   }
 }

@@ -1,6 +1,9 @@
 import { Injectable, TemplateRef, inject } from '@angular/core';
 import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { ComponentType } from '@angular/cdk/portal';
+import { firstValueFrom } from 'rxjs';
+
+import { ConfirmDialogComponent } from '../../ui/dialog/confirm-dialog.component';
 
 export interface DialogOptions<D = unknown> {
   data?: D;
@@ -65,6 +68,20 @@ export class DialogService {
 
   closeAll(): void {
     this.dialog.closeAll();
+  }
+
+  /**
+   * Diálogo de confirmación reutilizable. Reemplaza a `window.confirm()`, que
+   * en WebView nativa (Capacitor) puede no renderizarse o bloquear el thread.
+   * Resuelve a `true` si el usuario confirma, `false` si cancela o cierra.
+   */
+  async confirm(data: ConfirmDialogData): Promise<boolean> {
+    const ref = this.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
+      ConfirmDialogComponent,
+      { data },
+    );
+    const result = await firstValueFrom(ref.closed);
+    return result === true;
   }
 
   private buildPanelClasses(customClasses?: string | string[]): string[] {

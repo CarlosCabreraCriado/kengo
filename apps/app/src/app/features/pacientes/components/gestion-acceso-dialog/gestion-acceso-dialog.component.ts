@@ -24,6 +24,7 @@ import {
   Ui2IconBadgeComponent,
 } from '../../../../shared/ui-v2';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { ClipboardService } from '../../../../core/services/clipboard.service';
 
 import type { Usuario } from '../../../../../types/global';
 
@@ -65,6 +66,7 @@ export class GestionAccesoDialogComponent implements OnInit {
   private authService = inject(AuthService);
   private dialogRef = inject(DialogRef);
   private dialogService = inject(DialogService);
+  private clipboard = inject(ClipboardService);
   data = inject<DialogData>(DIALOG_DATA);
 
   // State
@@ -178,12 +180,11 @@ export class GestionAccesoDialogComponent implements OnInit {
     const token = this.tokenInfo();
     if (!token?.url) return;
 
-    try {
-      await navigator.clipboard.writeText(token.url);
+    const ok = await this.clipboard.write(token.url);
+    if (ok) {
       this.linkCopied.set(true);
       setTimeout(() => this.linkCopied.set(false), 2000);
-    } catch (err) {
-      console.error('Error copiando enlace:', err);
+    } else {
       this.error.set('Error al copiar el enlace');
     }
   }

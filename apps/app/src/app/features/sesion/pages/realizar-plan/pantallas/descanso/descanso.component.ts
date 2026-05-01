@@ -8,6 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
+import { HapticsService } from '../../../../../../core/services/haptics.service';
 import { SesionProgressHeaderComponent } from '../../componentes/sesion-progress-header/sesion-progress-header.component';
 import { DescansoRespiracionComponent } from '../../componentes/descanso-piezas/descanso-respiracion/descanso-respiracion.component';
 import { DescansoProximoComponent } from '../../componentes/descanso-piezas/descanso-proximo/descanso-proximo.component';
@@ -39,6 +40,7 @@ export class DescansoComponent {
   }>();
 
   private readonly registroService = inject(SesionStateService);
+  private readonly haptics = inject(HapticsService);
   private readonly respiracion = viewChild(DescansoRespiracionComponent);
 
   readonly serieActual = this.registroService.serieActual;
@@ -59,9 +61,7 @@ export class DescansoComponent {
   });
 
   onTiempoAgotado(): void {
-    if ('vibrate' in navigator) {
-      navigator.vibrate([100, 50, 100, 50, 100]);
-    }
+    void this.haptics.restEnd();
     this.tiempoAgotado.emit();
   }
 

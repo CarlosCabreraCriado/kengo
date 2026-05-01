@@ -111,8 +111,19 @@ export const startTrialForClinic = internalAction({
  * y active la suscripción tras el trial. Devuelve `{ url }`.
  */
 export const createCheckoutSession = action({
-  args: { clinicId: v.id("clinics") },
-  handler: async (ctx, { clinicId }): Promise<{ url: string }> => {
+  args: {
+    clinicId: v.id("clinics"),
+    /**
+     * Plataforma desde la que se llama. En `native` Stripe redirige al
+     * interstitial estático `/billing-return.html` que dispara el deep link
+     * `kengo://billing/return?status=...` para devolver el control a la app.
+     */
+    returnTo: v.optional(v.union(v.literal("native"), v.literal("web"))),
+  },
+  handler: async (
+    ctx,
+    { clinicId, returnTo = "web" },
+  ): Promise<{ url: string }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
       internal.billing.internal.assertAdminOnClinicByExternalId,
@@ -136,12 +147,20 @@ export const createCheckoutSession = action({
     }
 
     const appUrl = getEnv("KENGO_APP_URL");
+    const isNative = returnTo === "native";
+    const successUrl = isNative
+      ? `${appUrl}/billing-return.html?status=success`
+      : `${appUrl}/mi-clinica/suscripcion?ok=1`;
+    const cancelUrl = isNative
+      ? `${appUrl}/billing-return.html?status=cancel`
+      : `${appUrl}/mi-clinica/suscripcion?cancel=1`;
+
     const session = await stripeApi.createCheckoutSession(ctx, {
       priceId: getEnv("STRIPE_PRICE_ID"),
       customerId,
       mode: "subscription",
-      successUrl: `${appUrl}/mi-clinica/suscripcion?ok=1`,
-      cancelUrl: `${appUrl}/mi-clinica/suscripcion?cancel=1`,
+      successUrl,
+      cancelUrl,
       quantity: Math.max(1, data.cantidadFisios),
       metadata: { orgId: clinicId },
       subscriptionMetadata: { orgId: clinicId },
@@ -157,8 +176,14 @@ export const createCheckoutSession = action({
  * cancelar, descargar facturas, etc. Devuelve `{ url }`.
  */
 export const createCustomerPortalSession = action({
-  args: { clinicId: v.id("clinics") },
-  handler: async (ctx, { clinicId }): Promise<{ url: string }> => {
+  args: {
+    clinicId: v.id("clinics"),
+    returnTo: v.optional(v.union(v.literal("native"), v.literal("web"))),
+  },
+  handler: async (
+    ctx,
+    { clinicId, returnTo = "web" },
+  ): Promise<{ url: string }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
       internal.billing.internal.assertAdminOnClinicByExternalId,
@@ -175,9 +200,14 @@ export const createCustomerPortalSession = action({
     }
 
     const appUrl = getEnv("KENGO_APP_URL");
+    const returnUrl =
+      returnTo === "native"
+        ? `${appUrl}/billing-return.html?status=portal`
+        : `${appUrl}/mi-clinica/suscripcion`;
+
     const session = await stripeApi.createCustomerPortalSession(ctx, {
       customerId,
-      returnUrl: `${appUrl}/mi-clinica/suscripcion`,
+      returnUrl,
     });
     return { url: session.url };
   },

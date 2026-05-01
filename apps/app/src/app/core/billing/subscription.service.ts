@@ -1,6 +1,8 @@
 import { Injectable, computed, inject, type Signal } from '@angular/core';
 import { ConvexService } from '../convex/convex.service';
 import { SessionService } from '../auth/services/session.service';
+import { ExternalBrowserService } from '../services/external-browser.service';
+import { PlatformService } from '../services/platform.service';
 import { ToastService } from '../../shared/services/toast/toast.service';
 import { api } from '../../../../../../convex/_generated/api';
 import type { ClinicSubscription } from '@kengo/shared-models';
@@ -18,6 +20,12 @@ export class SubscriptionService {
   private readonly convex = inject(ConvexService);
   private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
+  private readonly externalBrowser = inject(ExternalBrowserService);
+  private readonly platform = inject(PlatformService);
+
+  private get returnTo(): 'native' | 'web' {
+    return this.platform.isNative() ? 'native' : 'web';
+  }
 
   /** ID de la clínica donde el usuario es admin (primera coincidencia). */
   public readonly clinicIdAdmin = computed<string | null>(() => {
@@ -84,9 +92,9 @@ export class SubscriptionService {
     try {
       const { url } = await this.convex.action(
         api.billing.actions.createCheckoutSession,
-        { clinicId: clinicId as never },
+        { clinicId: clinicId as never, returnTo: this.returnTo },
       );
-      window.location.href = url;
+      await this.externalBrowser.redirect(url);
     } catch (err) {
       console.error('[SubscriptionService] checkout', err);
       this.toast.error('No se pudo iniciar el proceso de pago');
@@ -98,9 +106,9 @@ export class SubscriptionService {
     try {
       const { url } = await this.convex.action(
         api.billing.actions.createCustomerPortalSession,
-        { clinicId: clinicId as never },
+        { clinicId: clinicId as never, returnTo: this.returnTo },
       );
-      window.location.href = url;
+      await this.externalBrowser.redirect(url);
     } catch (err) {
       console.error('[SubscriptionService] portal', err);
       this.toast.error('No se pudo abrir el portal de gestión');

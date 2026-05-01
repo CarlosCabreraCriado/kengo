@@ -6,6 +6,7 @@ import { DialogHeaderComponent } from '../dialog/dialog-header.component';
 import { DialogContentComponent } from '../dialog/dialog-content.component';
 import { ToastService } from '../../services/toast';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { ExternalBrowserService } from '../../../core/services/external-browser.service';
 import { api } from '../../../../../../../convex/_generated/api';
 
 export interface DialogoPdfData {
@@ -29,6 +30,7 @@ export class DialogoPdfComponent {
   private convex = inject(ConvexService);
   private dialogRef = inject(DialogRef);
   private toast = inject(ToastService);
+  private externalBrowser = inject(ExternalBrowserService);
   data = inject<DialogoPdfData>(DIALOG_DATA);
 
   descargando = signal(false);
@@ -87,7 +89,7 @@ export class DialogoPdfComponent {
 
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        window.open(blobUrl);
+        await this.externalBrowser.open(blobUrl);
       } else {
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';

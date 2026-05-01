@@ -118,6 +118,12 @@ const ALLOWED_ORIGINS = [
   "https://www.kengoapp.com",
   "http://localhost:4200",
   "http://localhost:4210",
+  // App nativa (Capacitor): origin estable definido en `apps/app/capacitor.config.ts`
+  // (`server.hostname`) — usado tanto en iOS como en Android.
+  "https://app.kengoapp.local",
+  // Esquemas por defecto del WebView Capacitor cuando no se sobreescriben.
+  "capacitor://localhost",
+  "https://localhost",
 ];
 
 function corsHeaders(request: Request): Record<string, string> {

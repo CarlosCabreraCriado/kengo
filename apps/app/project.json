@@ -56,6 +56,28 @@
           "optimization": false,
           "extractLicenses": false,
           "sourceMap": true
+        },
+        "native": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "700kb",
+              "maximumError": "2mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "50kb",
+              "maximumError": "80kb"
+            }
+          ],
+          "allowedCommonJsDependencies": ["qrcode"],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/app/src/environments/environment.ts",
+              "with": "apps/app/src/environments/environment.native.ts"
+            }
+          ]
         }
       },
       "defaultConfiguration": "production"

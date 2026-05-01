@@ -20,6 +20,8 @@ import {
   Ui2WebActivityChartComponent,
 } from '../../../../shared/ui-v2';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
+import { ShareService } from '../../../../core/services/share.service';
+import { ClipboardService } from '../../../../core/services/clipboard.service';
 import {
   EstadisticasService,
   type PuntoDolorVm,
@@ -59,6 +61,8 @@ const PERIODO_OPTIONS: Ui2SegmentedOption[] = [
 export class ActividadEstadisticasComponent implements OnInit {
   private estadisticas = inject(EstadisticasService);
   private toast = inject(ToastService);
+  private share = inject(ShareService);
+  private clipboard = inject(ClipboardService);
 
   readonly periodoOptions = PERIODO_OPTIONS;
   readonly periodoActivo = this.estadisticas.periodo;
@@ -132,25 +136,16 @@ export class ActividadEstadisticasComponent implements OnInit {
 
   async onCompartir(): Promise<void> {
     const texto = this.estadisticas.resumenCompartible();
-    const data: ShareData = { title: 'Mi progreso en Kengo', text: texto };
 
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try {
-        await navigator.share(data);
-        return;
-      } catch (err) {
-        if ((err as DOMException)?.name === 'AbortError') return;
-      }
+    if (this.share.isAvailable) {
+      const shared = await this.share.share({ title: 'Mi progreso en Kengo', text: texto });
+      if (shared) return;
     }
 
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(texto);
-        this.toast.success('Resumen copiado al portapapeles');
-        return;
-      } catch {
-        // fall-through
-      }
+    const copied = await this.clipboard.write(texto);
+    if (copied) {
+      this.toast.success('Resumen copiado al portapapeles');
+      return;
     }
     this.toast.warning('Tu dispositivo no permite compartir el resumen.');
   }
