@@ -435,6 +435,32 @@ export default defineSchema({
     intentos_fallidos: v.number(),
   }).index("by_userId", ["userId"]),
 
+  // === MENSAJERÍA (chat 1-1 fisio↔paciente dentro de una clínica) ===
+  conversations: defineTable({
+    pacienteId: v.id("users"),
+    fisioId: v.id("users"),
+    clinicId: v.id("clinics"),
+    lastMessageText: v.optional(v.string()),
+    lastMessageAt: v.optional(v.number()),
+    lastMessageSenderId: v.optional(v.id("users")),
+    pacienteUnreadCount: v.number(),
+    fisioUnreadCount: v.number(),
+  })
+    .index("by_pacienteId_lastMessageAt", ["pacienteId", "lastMessageAt"])
+    .index("by_fisioId_lastMessageAt", ["fisioId", "lastMessageAt"])
+    .index("by_paciente_fisio_clinic", [
+      "pacienteId",
+      "fisioId",
+      "clinicId",
+    ]),
+
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    senderId: v.id("users"),
+    text: v.string(),
+    readAt: v.optional(v.number()),
+  }).index("by_conversationId", ["conversationId"]),
+
   // === BILLING / SUSCRIPCIONES STRIPE ===
   // Cache local del estado de suscripción de cada clínica. El componente
   // @convex-dev/stripe persiste customer/subscription/invoices en sus propias

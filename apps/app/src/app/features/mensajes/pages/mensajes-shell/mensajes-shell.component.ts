@@ -4,6 +4,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { filter, map, startWith } from 'rxjs/operators';
 import { Ui2EmptyStateComponent } from '../../../../shared/ui-v2';
 import { useResponsive } from '../../../../shared/composables/use-responsive';
+import { SessionService } from '../../../../core';
 import { MensajesService } from '../../data-access/mensajes.service';
 import { MensajesInboxComponent } from '../mensajes-inbox/mensajes-inbox.component';
 
@@ -19,6 +20,7 @@ export class MensajesShellComponent {
   protected mensajes = inject(MensajesService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private session = inject(SessionService);
 
   private readonly responsive = useResponsive();
   protected readonly esDesktop = this.responsive.esDesktop;
@@ -42,6 +44,16 @@ export class MensajesShellComponent {
     effect(() => {
       const id = this.activeIdFromUrl();
       this.mensajes.selectConversation(id);
+    });
+
+    effect(async () => {
+      if (!this.session.enModoPaciente()) return;
+      if (this.mensajes.isLoading()) return;
+      if (this.mensajes.autoStartAttempted()) return;
+      if (this.mensajes.conversations().length > 0) return;
+
+      const id = await this.mensajes.startConversationWithFisio();
+      if (id) this.router.navigate(['/mensajes', id]);
     });
   }
 

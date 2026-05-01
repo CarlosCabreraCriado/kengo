@@ -162,7 +162,9 @@ export class ChatRowComponent {
 
   readonly previewText = computed(() => {
     const conv = this.conversation();
+    const text = conv.lastMessage.text;
+    if (!text) return 'Conversación nueva';
     const prefix = conv.lastMessage.fromMe ? 'Tú: ' : '';
-    return prefix + conv.lastMessage.text;
+    return prefix + text;
   });
 }

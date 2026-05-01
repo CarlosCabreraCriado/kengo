@@ -40,6 +40,8 @@ import type * as clinicMemberships_queries from "../clinicMemberships/queries.js
 import type * as clinics_mutations from "../clinics/mutations.js";
 import type * as clinics_queries from "../clinics/queries.js";
 import type * as compliance_internal from "../compliance/internal.js";
+import type * as conversations_mutations from "../conversations/mutations.js";
+import type * as conversations_queries from "../conversations/queries.js";
 import type * as crons from "../crons.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as email_actions from "../email/actions.js";
@@ -115,6 +117,8 @@ declare const fullApi: ApiFromModules<{
   "clinics/mutations": typeof clinics_mutations;
   "clinics/queries": typeof clinics_queries;
   "compliance/internal": typeof compliance_internal;
+  "conversations/mutations": typeof conversations_mutations;
+  "conversations/queries": typeof conversations_queries;
   crons: typeof crons;
   "dashboard/queries": typeof dashboard_queries;
   "email/actions": typeof email_actions;

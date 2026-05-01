@@ -33,7 +33,9 @@ import type { Conversation } from '../../data-access/models/conversation.model';
 
         <div class="hdr__identity">
           <h1 class="hdr__name" [class.hdr__name--mobile]="mobile()">{{ conversation().participantName }}</h1>
-          <p class="hdr__sub">{{ subtitle() }}</p>
+          @if (subtitle()) {
+            <p class="hdr__sub">{{ subtitle() }}</p>
+          }
         </div>
 
         @if (!mobile() && mostrarStats() && conversation().patientStats; as stats) {
@@ -163,9 +165,11 @@ export class ChatHeaderComponent {
 
   readonly subtitle = computed(() => {
     const conv = this.conversation();
-    const presence = conv.participantOnline ? 'Activo ahora' : 'Última conexión hoy';
     const stats = conv.patientStats;
-    if (!this.mostrarStats() || !stats) return presence;
-    return `${presence} · ${stats.age} años · ${stats.activePlan}`;
+    if (!this.mostrarStats() || !stats) return '';
+    const parts: string[] = [];
+    if (stats.age > 0) parts.push(`${stats.age} años`);
+    if (stats.activePlan) parts.push(stats.activePlan);
+    return parts.join(' · ');
   });
 }
