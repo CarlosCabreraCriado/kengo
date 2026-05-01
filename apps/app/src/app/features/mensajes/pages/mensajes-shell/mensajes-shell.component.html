@@ -1,0 +1,28 @@
+@if (esDesktop()) {
+  <section class="shell shell--desktop">
+    <aside class="shell__inbox">
+      <app-mensajes-inbox (conversationSelect)="onSelect($event)"></app-mensajes-inbox>
+    </aside>
+    <div class="shell__detail">
+      @if (mostrarDetalle()) {
+        <router-outlet></router-outlet>
+      } @else {
+        <div class="shell__empty">
+          <ui2-empty-state
+            icon="chat"
+            title="Selecciona una conversación"
+            message="Cuando elijas un chat de la izquierda lo verás aquí."
+          ></ui2-empty-state>
+        </div>
+      }
+    </div>
+  </section>
+} @else {
+  <section class="shell shell--mobile">
+    @if (mostrarDetalle()) {
+      <router-outlet></router-outlet>
+    } @else {
+      <app-mensajes-inbox [mobile]="true" (conversationSelect)="onSelect($event)"></app-mensajes-inbox>
+    }
+  </section>
+}

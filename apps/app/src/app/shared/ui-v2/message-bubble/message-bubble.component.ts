@@ -19,7 +19,9 @@ export type Ui2MessageBubbleFrom = 'me' | 'fisio';
             @if (unread()) {
               <span class="ui2-bubble__dot"></span>
             }
-            {{ time() }}@if (unread()) { · Nuevo }
+            {{ time() }}@if (unread()) { · Nuevo }@if (isMe() && read()) {
+              <span class="ui2-bubble__read"> · Leído</span>
+            }
           </div>
         }
       </div>
@@ -63,6 +65,10 @@ export type Ui2MessageBubbleFrom = 'me' | 'fisio';
       border-radius: 50%;
       background: var(--kengo-primary);
     }
+    .ui2-bubble__read {
+      color: var(--success);
+      font-weight: 700;
+    }
   `],
 })
 export class Ui2MessageBubbleComponent {
@@ -70,6 +76,7 @@ export class Ui2MessageBubbleComponent {
   readonly text = input.required<string>();
   readonly time = input<string | null>(null);
   readonly unread = input<boolean>(false);
+  readonly read = input<boolean>(false);
 
   readonly isMe = computed(() => this.from() === 'me');
 }

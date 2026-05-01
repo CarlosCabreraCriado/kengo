@@ -34,4 +34,10 @@ export const FISIO_SIDEBAR_GROUPS: SidebarNavGroup[] = [
       { id: 'clinica', label: 'Mi clínica', icon: 'apartment', route: '/mi-clinica', matchPrefix: '/mi-clinica' },
     ],
   },
+  {
+    label: 'Comunicación',
+    items: [
+      { id: 'mensajes', label: 'Mensajes', icon: 'chat', route: '/mensajes', matchPrefix: '/mensajes' },
+    ],
+  },
 ];

@@ -1,0 +1,39 @@
+@if (conversation(); as conv) {
+  @if (esDesktop()) {
+    <section class="thread-page thread-page--desktop">
+      <app-chat-header
+        [conversation]="conv"
+        [mostrarStats]="mostrarStats()"
+        (openProfile)="onOpenProfile()"
+      ></app-chat-header>
+      <div class="thread-page__body">
+        <app-chat-thread [items]="items()"></app-chat-thread>
+      </div>
+      <app-chat-composer
+        [placeholder]="placeholder()"
+        (send)="onSend($event)"
+      ></app-chat-composer>
+    </section>
+  } @else {
+    <section class="thread-page thread-page--mobile">
+      <div class="thread-page__hdr">
+        <app-chat-header
+          [conversation]="conv"
+          [mobile]="true"
+          [mostrarStats]="mostrarStats()"
+          (back)="onBack()"
+          (openProfile)="onOpenProfile()"
+        ></app-chat-header>
+      </div>
+      <div class="thread-page__thread" [class.thread-page__thread--with-subbar]="mostrarStats() && !!conv.patientStats">
+        <app-chat-thread [items]="items()" [mobile]="true"></app-chat-thread>
+      </div>
+      <div class="thread-page__composer">
+        <app-chat-composer
+          [placeholder]="placeholder()"
+          (send)="onSend($event)"
+        ></app-chat-composer>
+      </div>
+    </section>
+  }
+}

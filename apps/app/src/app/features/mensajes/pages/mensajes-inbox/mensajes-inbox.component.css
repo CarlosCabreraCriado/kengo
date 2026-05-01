@@ -1,0 +1,57 @@
+:host {
+  display: block;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.inbox {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 14px;
+  gap: 12px;
+}
+
+.inbox--mobile {
+  padding: 12px 14px 16px;
+  gap: 8px;
+  background: transparent;
+}
+
+.inbox__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 4px 0;
+}
+
+.inbox__counter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--kengo-primary);
+  letter-spacing: 0.5px;
+}
+
+.inbox__search {
+  padding: 0 4px;
+}
+
+.inbox__search--mobile {
+  padding: 4px 4px 8px;
+}
+
+.inbox__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 2px;
+}
+
+.inbox__list--mobile {
+  gap: 6px;
+  padding: 0;
+  overflow-y: visible;
+}
