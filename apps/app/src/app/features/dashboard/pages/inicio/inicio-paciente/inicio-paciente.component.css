@@ -115,6 +115,49 @@
 }
 
 /* ========================================================== */
+/*  Mi fisio — card de presentación con CTA "Enviar mensaje"   */
+/* ========================================================== */
+
+.ip-mi-fisio {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ip-mi-fisio__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ip-mi-fisio__overline {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  line-height: 1;
+}
+
+.ip-mi-fisio__name {
+  margin: 6px 0 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.3px;
+  color: var(--ink-900);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ip-mi-fisio__cta {
+  display: block;
+  margin-top: 14px;
+}
+
+/* ========================================================== */
 /*  Grid contenido (1-col mobile / 2-col desktop)              */
 /* ========================================================== */
 
@@ -350,7 +393,8 @@
 
   /* En desktop la columna ya tiene padding desde .ip-page, anular el padding interno
      del <ui2-section> que envuelve la fisio-message-card (estilos inline del componente). */
-  .ip-fisio-section ::ng-deep .ui2-section {
+  .ip-fisio-section ::ng-deep .ui2-section,
+  .ip-mi-fisio-section ::ng-deep .ui2-section {
     padding: 0 !important;
   }
 }

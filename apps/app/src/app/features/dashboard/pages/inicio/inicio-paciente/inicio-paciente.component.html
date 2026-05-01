@@ -176,6 +176,37 @@
     </div>
 
     <div class="ip-col-right">
+      <!-- Mi fisio — card de presentación con CTA "Enviar mensaje" -->
+      @if (!cargandoFisio() && fisioAsignado()) {
+        <ui2-section class="ip-mi-fisio-section" [padding]="'6px 20px 10px'">
+          <ui2-card class="ip-mi-fisio-card" [padding]="18">
+            <div class="ip-mi-fisio">
+              <ui2-avatar
+                [name]="fisioNombreCompleto()"
+                [src]="fisioAvatarUrl()"
+                size="lg"
+                gradient="coral"
+                [border]="true"
+              ></ui2-avatar>
+              <div class="ip-mi-fisio__text">
+                <span class="ip-mi-fisio__overline">Tu fisio responsable</span>
+                <h3 class="ip-mi-fisio__name">{{ fisioNombreCompleto() }}</h3>
+              </div>
+            </div>
+            <ui2-button
+              class="ip-mi-fisio__cta"
+              variant="primary"
+              size="md"
+              iconLeft="chat"
+              [fullWidth]="true"
+              (clicked)="enviarMensajeAFisio()"
+            >
+              Enviar mensaje
+            </ui2-button>
+          </ui2-card>
+        </ui2-section>
+      }
+
       <!-- Fisio message — siempre, en ambos viewports -->
       @if (!cargandoFisio() && fisioAsignado()) {
         <ui2-section class="ip-fisio-section" [padding]="'6px 20px 14px'">

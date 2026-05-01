@@ -8,6 +8,7 @@ import { NextSessionService } from '../../../../actividad/data-access/next-sessi
 import { RachaPacienteService } from '../../../data-access/racha-paciente.service';
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
+import { MensajesService } from '../../../../mensajes/data-access/mensajes.service';
 import { SesionStateService } from '../../../../sesion/data-access/sesion-state.service';
 import type {
   AsignacionResponsable,
@@ -17,6 +18,9 @@ import type {
 } from '../../../../../../types/global';
 import { rawAssetUrl, thumbnailUrl } from '../../../../../core/utils/asset-url';
 import {
+  Ui2AvatarComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2ExerciseCardComponent,
@@ -50,6 +54,9 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
   selector: 'app-inicio-paciente',
   standalone: true,
   imports: [
+    Ui2AvatarComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
     Ui2ClinicHeroCardComponent,
     Ui2CtaBarComponent,
     Ui2ExerciseCardComponent,
@@ -70,6 +77,7 @@ export class InicioPacienteComponent {
   private router = inject(Router);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
+  private mensajesService = inject(MensajesService);
   private registroService = inject(SesionStateService);
   private destroyRef = inject(DestroyRef);
 
@@ -256,6 +264,26 @@ export class InicioPacienteComponent {
 
   irAClinica(): void {
     this.router.navigate(['/mi-clinica']);
+  }
+
+  async enviarMensajeAFisio(): Promise<void> {
+    const idFisio = this.fisioAsignado()?.idFisio;
+    if (!idFisio) return;
+
+    const existing = this.mensajesService
+      .conversations()
+      .find((c) => c.participantId === idFisio);
+    if (existing) {
+      this.router.navigate(['/mensajes', existing.id]);
+      return;
+    }
+
+    const conversationId = await this.mensajesService.startConversationWithFisio();
+    if (conversationId) {
+      this.router.navigate(['/mensajes', conversationId]);
+    } else {
+      this.router.navigate(['/mensajes']);
+    }
   }
 
   irAPlan(): void {

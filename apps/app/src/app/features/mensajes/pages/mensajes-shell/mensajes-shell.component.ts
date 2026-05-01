@@ -26,14 +26,17 @@ export class MensajesShellComponent {
   protected readonly esDesktop = this.responsive.esDesktop;
   protected readonly esMobile = this.responsive.esMobile;
 
-  /** Sincroniza :id de la URL hijo con activeConversationId. */
+  /** Sincroniza :id de la URL hijo con activeConversationId.
+   * Usa `route.snapshot.firstChild` (el snapshot del padre nunca es undefined)
+   * en lugar de `route.firstChild?.snapshot`, que puede romper al navegar
+   * directamente a `/mensajes/<id>` desde otra ruta. */
   private readonly activeIdFromUrl = toSignal(
     this.router.events.pipe(
       filter((e) => e instanceof NavigationEnd),
       startWith(null),
-      map(() => this.route.firstChild?.snapshot.paramMap.get('id') ?? null),
+      map(() => this.route.snapshot.firstChild?.paramMap.get('id') ?? null),
     ),
-    { initialValue: this.route.firstChild?.snapshot.paramMap.get('id') ?? null },
+    { initialValue: this.route.snapshot.firstChild?.paramMap.get('id') ?? null },
   );
 
   protected readonly mostrarDetalle = computed(
@@ -52,6 +55,7 @@ export class MensajesShellComponent {
       if (this.mensajes.autoStartAttempted()) return;
       if (this.mensajes.conversations().length > 0) return;
 
+      this.mensajes.markAutoStartAttempted();
       const id = await this.mensajes.startConversationWithFisio();
       if (id) this.router.navigate(['/mensajes', id]);
     });

@@ -202,8 +202,6 @@ export class MensajesService {
   }
 
   async startConversationWithFisio(): Promise<string | null> {
-    if (this._autoStartAttempted()) return null;
-    this._autoStartAttempted.set(true);
     try {
       const id = await this.convex.mutation(
         api.conversations.mutations.startConversationWithFisio,
@@ -214,6 +212,10 @@ export class MensajesService {
       console.error('Error al iniciar conversación con fisio:', err);
       return null;
     }
+  }
+
+  markAutoStartAttempted(): void {
+    this._autoStartAttempted.set(true);
   }
 
   async startConversationWithPatient(
