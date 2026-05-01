@@ -48,8 +48,15 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         id: 'plan',
         label: 'Mi plan',
         icon: 'fitness_center',
-        route: '/mi-plan',
-        matchPrefix: '/mi-plan',
+        route: '/actividad-personal/hoy',
+        matchPrefix: '/actividad-personal/hoy',
+      },
+      {
+        id: 'calendar',
+        label: 'Calendario',
+        icon: 'calendar_month',
+        route: '/actividad-personal/calendario',
+        matchPrefix: '/actividad-personal/calendario',
       },
       {
         id: 'progress',
@@ -67,8 +74,8 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         id: 'fisio',
         label: 'Mi fisio',
         icon: 'chat',
-        route: '/mi-clinica',
-        matchPrefix: '/mi-clinica',
+        route: '/mensajes',
+        matchPrefix: '/mensajes',
         badge: '2',
       },
       {

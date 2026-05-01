@@ -12,9 +12,10 @@ export interface TabItem {
 }
 
 const DEFAULT_TABS: TabItem[] = [
-  { id: 'home',     label: 'Inicio',   icon: 'home',         route: '/inicio',              matchPrefix: '/inicio' },
-  { id: 'progress', label: 'Progreso', icon: 'trending_up',  route: '/actividad-personal/estadisticas', matchPrefix: '/actividad-personal/estadisticas' },
-  { id: 'fisio',    label: 'Fisio',    icon: 'chat',         route: '/mi-clinica',          matchPrefix: '/mi-clinica' },
+  { id: 'home',   label: 'Inicio',  icon: 'home',            route: '/inicio',                 matchPrefix: '/inicio' },
+  { id: 'plan',   label: 'Mi plan', icon: 'fitness_center',  route: '/actividad-personal/hoy', matchPrefix: '/actividad-personal' },
+  { id: 'fisio',  label: 'Fisio',   icon: 'chat',            route: '/mensajes',               matchPrefix: '/mensajes' },
+  { id: 'clinic', label: 'Clínica', icon: 'apartment',       route: '/mi-clinica',             matchPrefix: '/mi-clinica' },
 ];
 
 /**
@@ -78,7 +79,7 @@ const DEFAULT_TABS: TabItem[] = [
       flex-direction: column;
       align-items: center;
       gap: 2px;
-      padding: 8px 20px;
+      padding: 8px 14px;
       border-radius: 24px;
       color: var(--ink-500);
       text-decoration: none;
