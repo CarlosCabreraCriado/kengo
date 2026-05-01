@@ -4,7 +4,7 @@
       <app-chat-header
         [conversation]="conv"
         [mostrarStats]="mostrarStats()"
-        (openProfile)="onOpenProfile()"
+        [participantRole]="participantRole()"
       ></app-chat-header>
       <div class="thread-page__body">
         <app-chat-thread [items]="items()"></app-chat-thread>
@@ -21,8 +21,8 @@
           [conversation]="conv"
           [mobile]="true"
           [mostrarStats]="mostrarStats()"
+          [participantRole]="participantRole()"
           (back)="onBack()"
-          (openProfile)="onOpenProfile()"
         ></app-chat-header>
       </div>
       <div class="thread-page__thread" [class.thread-page__thread--with-subbar]="mostrarStats() && !!conv.patientStats">

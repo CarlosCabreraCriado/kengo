@@ -28,6 +28,10 @@ export class MensajesThreadPageComponent {
 
   protected readonly mostrarStats = computed(() => this.session.enModoFisio());
 
+  protected readonly participantRole = computed<'fisio' | 'paciente'>(() =>
+    this.session.enModoFisio() ? 'paciente' : 'fisio',
+  );
+
   protected readonly placeholder = computed(() => {
     const conv = this.conversation();
     if (!conv) return 'Escribe un mensaje…';
@@ -42,9 +46,5 @@ export class MensajesThreadPageComponent {
 
   onSend(text: string): void {
     this.mensajes.sendMessage(text);
-  }
-
-  onOpenProfile(): void {
-    // placeholder — perfil del paciente no está implementado en esta fase mockup.
   }
 }

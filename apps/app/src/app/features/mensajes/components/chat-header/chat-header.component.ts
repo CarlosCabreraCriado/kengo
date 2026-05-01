@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import {
   Ui2AvatarComponent,
   Ui2BackButtonComponent,
-  Ui2IconBadgeComponent,
   Ui2PillComponent,
 } from '../../../../shared/ui-v2';
 import type { Conversation } from '../../data-access/models/conversation.model';
+
+export type ChatHeaderParticipantRole = 'fisio' | 'paciente';
 
 @Component({
   selector: 'app-chat-header',
@@ -13,7 +14,6 @@ import type { Conversation } from '../../data-access/models/conversation.model';
   imports: [
     Ui2AvatarComponent,
     Ui2BackButtonComponent,
-    Ui2IconBadgeComponent,
     Ui2PillComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,14 +49,9 @@ import type { Conversation } from '../../data-access/models/conversation.model';
           </div>
         }
 
-        <button
-          type="button"
-          class="hdr__profile"
-          [attr.aria-label]="'Ver perfil de ' + conversation().participantName"
-          (click)="openProfile.emit(conversation().participantId)"
-        >
-          <ui2-icon-badge icon="person" color="var(--ink-700)" [size]="mobile() ? 36 : 40" [radius]="12"></ui2-icon-badge>
-        </button>
+        <ui2-pill variant="custom" [color]="roleBadgeColor()" [size]="mobile() ? 'sm' : 'md'">
+          {{ roleBadgeLabel() }}
+        </ui2-pill>
       </div>
 
       @if (mobile() && mostrarStats() && conversation().patientStats; as stats) {
@@ -135,13 +130,6 @@ import type { Conversation } from '../../data-access/models/conversation.model';
       gap: 8px;
       flex-shrink: 0;
     }
-    .hdr__profile {
-      background: transparent;
-      border: 0;
-      padding: 0;
-      cursor: pointer;
-      display: inline-flex;
-    }
     .hdr__subbar {
       display: flex;
       gap: 6px;
@@ -157,11 +145,19 @@ export class ChatHeaderComponent {
   readonly conversation = input.required<Conversation>();
   readonly mobile = input<boolean>(false);
   readonly mostrarStats = input<boolean>(true);
+  readonly participantRole = input<ChatHeaderParticipantRole>('paciente');
   readonly back = output<void>();
-  readonly openProfile = output<string>();
 
   readonly successColor = 'var(--success)';
   readonly dangerColor = 'var(--danger)';
+
+  readonly roleBadgeLabel = computed(() =>
+    this.participantRole() === 'fisio' ? 'Fisio' : 'Paciente',
+  );
+
+  readonly roleBadgeColor = computed(() =>
+    this.participantRole() === 'fisio' ? 'var(--kengo-primary)' : 'var(--ink-700)',
+  );
 
   readonly subtitle = computed(() => {
     const conv = this.conversation();
