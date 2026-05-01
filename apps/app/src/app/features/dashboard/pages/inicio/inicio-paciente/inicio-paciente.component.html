@@ -252,9 +252,9 @@
         ></ui2-next-appointment>
       }
 
-      <!-- Clínica hero — solo mobile (en desktop la clínica vive en sidebar) -->
+      <!-- Clínica hero — card con imagen de fondo de la clínica -->
       @if (clinicaActual(); as clinica) {
-        <ui2-section [padding]="'0 20px 14px'" class="ip-mobile-only">
+        <ui2-section [padding]="'0 20px 14px'" class="ip-clinica-section">
           <ui2-clinic-hero-card
             [name]="clinica.nombre"
             [imageUrl]="clinicaImagenUrl()"
