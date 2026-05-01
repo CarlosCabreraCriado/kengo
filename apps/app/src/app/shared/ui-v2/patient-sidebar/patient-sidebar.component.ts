@@ -58,7 +58,6 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         route: '/actividad-personal/estadisticas',
         matchPrefix: '/actividad-personal/estadisticas',
       },
-      { id: 'history', label: 'Historial', icon: 'event_note', route: null },
     ],
   },
   {
