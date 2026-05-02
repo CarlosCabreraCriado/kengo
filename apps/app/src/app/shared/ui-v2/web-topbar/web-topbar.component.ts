@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { NotificacionesService } from '../../../core/services/notificaciones.service';
+import { MensajesService } from '../../../features/mensajes/data-access/mensajes.service';
 import type { RolUsuario } from '../../../../types/global';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
 import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificaciones-menu.component';
@@ -30,6 +31,21 @@ const MONTHS = [
       </div>
 
       <div class="ui2-topbar__right">
+        @if (modoFisio()) {
+          <button
+            type="button"
+            class="ui2-topbar__bell"
+            aria-label="Mensajes"
+            (click)="irAMensajes()"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+            @if (mensajesPendientes() > 0) {
+              <span class="ui2-topbar__bell-badge" aria-hidden="true">
+                {{ mensajesPendientes() > 9 ? '9+' : mensajesPendientes() }}
+              </span>
+            }
+          </button>
+        }
         @if (sessionService.puedeRecibirNotificaciones()) {
           <div class="ui2-topbar__bell-wrap">
             <button
@@ -297,6 +313,7 @@ export class Ui2WebTopbarComponent {
 
   public readonly sessionService = inject(SessionService);
   public readonly notificacionesService = inject(NotificacionesService);
+  public readonly mensajesService = inject(MensajesService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -305,6 +322,7 @@ export class Ui2WebTopbarComponent {
   readonly modoPaciente = this.sessionService.enModoPaciente;
   readonly modoFisio = computed(() => !this.modoPaciente());
   readonly pendientes = this.notificacionesService.pendientes;
+  readonly mensajesPendientes = this.mensajesService.totalUnread;
 
   readonly eyebrow = computed(() => {
     const now = new Date();
@@ -339,6 +357,12 @@ export class Ui2WebTopbarComponent {
   irAPerfil(): void {
     this.menuOpen.set(false);
     this.router.navigate(['/perfil']);
+  }
+
+  irAMensajes(): void {
+    this.menuOpen.set(false);
+    this.notificacionesMenuOpen.set(false);
+    this.router.navigate(['/mensajes']);
   }
 
   async cerrarSesion(): Promise<void> {
