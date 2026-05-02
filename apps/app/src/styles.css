@@ -486,6 +486,11 @@ html,
 body {
   height: 100%;
   overflow: hidden;
+  /* Pintar el fondo cream en html/body evita que en iOS WKWebView la zona
+     del home indicator (safe-area-inset-bottom) o cualquier gap visible
+     entre el shell y el viewport real se vea como una banda blanca cuando
+     el cream-bg fixed no logra cubrir hasta el último píxel. */
+  background-color: var(--cream-50);
 }
 
 ::-webkit-scrollbar {

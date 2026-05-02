@@ -36,7 +36,7 @@
   } @else {
     <!-- Mobile shell: header floating + main scrollable + tab bar floating -->
     <section
-      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col overflow-hidden"
+      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col"
     >
       <ui2-patient-header
         [clinica]="clinicaActual()"
@@ -91,7 +91,7 @@
   } @else {
     <!-- Mobile: header floating + main scrollable + tab bar floating -->
     <section
-      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col overflow-hidden"
+      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col"
     >
       <ui2-patient-header
         [clinica]="clinicaActual()"
@@ -112,7 +112,7 @@
 
 <!-- Auth / sin navegación: layout mínimo -->
 @if (!mostrarNavegacion) {
-  <section class="m-auto flex h-dvh max-w-7xl flex-col overflow-hidden">
+  <section class="m-auto flex h-dvh max-w-7xl flex-col">
     <main class="main z-10 flex min-h-0 flex-1 flex-col">
       <router-outlet></router-outlet>
     </main>
@@ -121,14 +121,3 @@
 
 <!-- Banner offline (visible en cualquier ruta cuando se pierde conexión) -->
 <ui2-offline-banner></ui2-offline-banner>
-
-<!-- Indicador de breakpoint (desarrollo) -->
-<div
-  class="fixed right-0 bottom-0 z-50 bg-red-700 sm:bg-yellow-700 md:bg-purple-500 lg:bg-blue-700 xl:bg-green-700"
->
-  <span class="block text-white sm:hidden">M</span>
-  <span class="hidden text-white sm:block md:hidden">SM</span>
-  <span class="hidden text-white md:block lg:hidden">MD</span>
-  <span class="hidden text-white lg:block xl:hidden">LG</span>
-  <span class="hidden text-white xl:block">XL</span>
-</div>
