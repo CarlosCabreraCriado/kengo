@@ -17,7 +17,17 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styles: [`
     :host {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      /* En iOS WKWebView con viewport-fit=cover el initial containing block
+         excluye la zona del safe-area-inset-bottom (home indicator), así
+         que un position:fixed inset:0 termina antes del último píxel real
+         del display. Forzamos la altura al "large viewport" para cubrir
+         también esa banda. Fallback 100vh para navegadores sin lvh. */
+      height: 100vh;
+      height: 100lvh;
       z-index: 0;
       pointer-events: none;
     }
