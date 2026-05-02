@@ -497,6 +497,24 @@ body {
   background-color: var(--cream-50);
 }
 
+/* Ocultar barras de scroll en mobile (≤767px). En desktop se conserva la
+   visual nativa para no romper la usabilidad de listas largas. Cubrimos
+   webkit (iOS WebView, Safari, Chrome) + Firefox + IE/Edge legacy. */
+@media (max-width: 767px) {
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* IE 10+ / Edge legacy */
+  }
+  *::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;                /* Chrome / Safari / iOS WebView */
+  }
+}
+
 ::-webkit-scrollbar {
   width: 0px;
   background: transparent; /* make scrollbar transparent */
