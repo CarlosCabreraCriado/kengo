@@ -484,12 +484,16 @@
 
 html,
 body {
-  height: 100%;
+  /* En iOS WKWebView con viewport-fit=cover, height: 100% en html se
+     calcula sobre el "initial containing block", que excluye la zona del
+     home indicator (safe-area-inset-bottom). Resultado: html no llegaba
+     al fondo del display y todo lo que se anclaba a 100% (incluido
+     position:fixed con inset:0) se quedaba corto. Usamos 100lvh (large
+     viewport height) que sí incluye safe-areas; fallback a 100vh para
+     navegadores antiguos. */
+  height: 100vh;
+  height: 100lvh;
   overflow: hidden;
-  /* Pintar el fondo cream en html/body evita que en iOS WKWebView la zona
-     del home indicator (safe-area-inset-bottom) o cualquier gap visible
-     entre el shell y el viewport real se vea como una banda blanca cuando
-     el cream-bg fixed no logra cubrir hasta el último píxel. */
   background-color: var(--cream-50);
 }
 
