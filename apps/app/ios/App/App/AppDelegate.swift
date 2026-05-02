@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import WebKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,8 +8,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Deshabilitar el gesto nativo de "swipe-back" del WKWebView para
+        // evitar conflictos con los gestos custom de la SPA (p. ej. en
+        // /realizar-plan, donde un swipe horizontal pausa la sesión). La
+        // navegación atrás se hace siempre por UI o por back hardware/gestural.
+        // El WebView se instancia tras el launch; un pequeño delay garantiza
+        // que ya está montado en la jerarquía cuando lo recorremos.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            if let webView = self.findWebView(in: self.window?.rootViewController?.view) {
+                webView.allowsBackForwardNavigationGestures = false
+            }
+        }
         return true
+    }
+
+    private func findWebView(in view: UIView?) -> WKWebView? {
+        guard let view = view else { return nil }
+        if let webView = view as? WKWebView { return webView }
+        for sub in view.subviews {
+            if let found = findWebView(in: sub) { return found }
+        }
+        return nil
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

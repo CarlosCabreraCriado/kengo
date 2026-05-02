@@ -97,3 +97,4 @@ export { Ui2PatientSidebarComponent } from './patient-sidebar/patient-sidebar.co
 export type { SidebarNavGroup, SidebarNavItem } from './patient-sidebar/patient-sidebar.component';
 export { Ui2WebTopbarComponent } from './web-topbar/web-topbar.component';
 export { Ui2NotificacionesMenuComponent } from './notificaciones-menu/notificaciones-menu.component';
+export { Ui2OfflineBannerComponent } from './offline-banner/offline-banner.component';

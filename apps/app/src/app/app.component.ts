@@ -22,6 +22,7 @@ import { ToastService } from './shared/services/toast/toast.service';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
+  Ui2OfflineBannerComponent,
   Ui2PatientHeaderComponent,
   Ui2PatientSidebarComponent,
   Ui2PatientTabBarComponent,
@@ -40,6 +41,7 @@ import {
     BillingBannerComponent,
     Ui2CarritoEjerciciosComponent,
     Ui2CreamBgComponent,
+    Ui2OfflineBannerComponent,
     Ui2PatientHeaderComponent,
     Ui2PatientSidebarComponent,
     Ui2PatientTabBarComponent,
@@ -171,11 +173,47 @@ export class AppComponent implements OnInit {
       });
     });
 
-    // Status bar: estilo claro sobre fondo coral por defecto. ThemeService
-    // puede sobrescribir según clínica activa en fase 5.
-    StatusBar.setStyle({ style: Style.Default }).catch(() => {
+    // Status bar dinámica por ruta. Style.Light = contenido claro → texto
+    // oscuro; Style.Dark = contenido oscuro → texto claro; Style.Default sigue
+    // al sistema (que en la app nativa Kengo significa fondo coral con texto
+    // claro). Se aplica al cargar y en cada NavigationEnd.
+    this.aplicarStatusBarPorRuta(this.router.url);
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        this.aplicarStatusBarPorRuta(e.urlAfterRedirects || e.url);
+      });
+  }
+
+  /**
+   * Resuelve el estilo de status bar adecuado para la ruta y lo aplica.
+   * Solo tiene efecto en plataforma nativa.
+   */
+  private aplicarStatusBarPorRuta(url: string): void {
+    const style = this.resolverStatusBarStyle(url);
+    StatusBar.setStyle({ style }).catch(() => {
       /* simulator/web fallback */
     });
+  }
+
+  private resolverStatusBarStyle(url: string): Style {
+    // Auth y onboarding: fondo claro → texto oscuro.
+    if (
+      url.startsWith('/login') ||
+      url.startsWith('/registro') ||
+      url.startsWith('/magic') ||
+      url.startsWith('/establecer-password') ||
+      url.startsWith('/recuperar-password') ||
+      url.startsWith('/reset-password')
+    ) {
+      return Style.Light;
+    }
+    // Sesión activa fullscreen sobre cream-50 (oscuro relativo): texto claro.
+    if (url.startsWith('/mi-plan') || url.startsWith('/realizar-plan')) {
+      return Style.Dark;
+    }
+    // App principal sobre coral / cream: texto claro.
+    return Style.Default;
   }
 
   private observarRutas() {

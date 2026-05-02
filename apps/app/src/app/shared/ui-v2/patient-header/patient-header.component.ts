@@ -144,11 +144,13 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
       z-index: 60;
       display: block;
       pointer-events: none;
+      padding-top: env(safe-area-inset-top, 0px);
     }
     .ui2-patient-header {
       max-width: 720px;
       margin: 0 auto;
-      padding: 10px 16px;
+      padding: 10px max(16px, env(safe-area-inset-right, 0px))
+               10px max(16px, env(safe-area-inset-left, 0px));
       display: flex;
       align-items: center;
       justify-content: space-between;

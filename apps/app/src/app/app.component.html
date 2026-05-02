@@ -45,7 +45,7 @@
       ></ui2-patient-header>
       <main
         class="min-h-0 flex-1 overflow-y-auto"
-        style="padding-top: 56px; padding-bottom: 110px"
+        style="padding-top: calc(56px + env(safe-area-inset-top, 0px)); padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px))"
       >
         <router-outlet></router-outlet>
       </main>
@@ -100,7 +100,7 @@
       ></ui2-patient-header>
       <main
         class="flex min-h-0 flex-1 flex-col overflow-y-auto"
-        style="padding-top: 56px; padding-bottom: 110px"
+        style="padding-top: calc(56px + env(safe-area-inset-top, 0px)); padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px))"
       >
         <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
         <router-outlet></router-outlet>
@@ -118,6 +118,9 @@
     </main>
   </section>
 }
+
+<!-- Banner offline (visible en cualquier ruta cuando se pierde conexión) -->
+<ui2-offline-banner></ui2-offline-banner>
 
 <!-- Indicador de breakpoint (desarrollo) -->
 <div

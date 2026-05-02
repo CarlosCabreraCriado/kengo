@@ -1,7 +1,9 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
+import { StatusBar } from '@capacitor/status-bar';
 import { rawAssetUrl } from '../utils/asset-url';
 
 import { ClinicasService } from '../../features/clinica/data-access/clinicas.service';
+import { PlatformService } from './platform.service';
 import type { Clinica } from '../../../types/global';
 interface ColorPalette {
   primary: string;
@@ -55,6 +57,7 @@ export class ThemeService {
   private readonly CACHE_TTL_DAYS = 30;
 
   private clinicasService = inject(ClinicasService);
+  private platform = inject(PlatformService);
 
   currentPrimary = signal<string>(this.DEFAULT_PRIMARY);
   currentTertiary = signal<string>(this.DEFAULT_TERTIARY);
@@ -94,6 +97,18 @@ export class ThemeService {
       this.aplicarTemaClinica(clinica);
       this.actualizarLogo(clinica);
       this.guardarCache(clinica);
+    });
+
+    // Android: la status bar tiene background propio (no es translúcida como
+    // en iOS). Sincronizar su color con el primario activo para que la franja
+    // de sistema acompañe el tema de la clínica.
+    effect(() => {
+      const color = this.currentPrimary();
+      if (this.platform.isAndroid()) {
+        StatusBar.setBackgroundColor({ color }).catch(() => {
+          /* plugin no disponible en simulator/web */
+        });
+      }
     });
   }
 
