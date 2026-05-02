@@ -69,6 +69,13 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Altura del teclado virtual gestionada por `KeyboardService`. En web y en
+     simulador sin teclado activo se queda en 0. En nativo se actualiza con
+     cada `keyboardWillShow` / `keyboardWillHide`. La consume `.ui2-main-mobile`
+     y elementos flotantes (chat composer, CTAs) que necesiten "subir" sobre
+     el teclado. */
+  --keyboard-height: 0px;
 }
 
 /* =========================================
@@ -490,11 +497,52 @@ body {
      al fondo del display y todo lo que se anclaba a 100% (incluido
      position:fixed con inset:0) se quedaba corto. Usamos 100lvh (large
      viewport height) que sí incluye safe-areas; fallback a 100vh para
-     navegadores antiguos. */
+     navegadores antiguos.
+
+     Mantenemos `lvh` (no `dvh`) en `html/body` a propósito: con
+     `Keyboard.resize: native` la WKWebView ya redimensiona su frame al abrir
+     el teclado, y los shells internos usan `h-dvh` para reaccionar. Si
+     `html/body` también usaran `dvh`, habría doble redimensionado y el
+     fondo cream se contraería dejando una banda. */
   height: 100vh;
   height: 100lvh;
   overflow: hidden;
   background-color: var(--cream-50);
+}
+
+/* =========================================
+   Shell móvil V2 con adaptación al teclado virtual
+   ========================================= */
+
+/* Reemplaza el `style="..."` inline que llevaba `<main>` en el shell móvil.
+   Centraliza padding (header + tab-bar + safe-area). Cuando el teclado se
+   abre, `body.kb-visible` libera el espacio del tab-bar oculto. NO usamos
+   `transition` sobre `padding-bottom`: con `Keyboard.resize: native`/`body`
+   la WebView ya redimensiona con su propia animación nativa, y una
+   transición CSS encima provoca jitter / doble animación. */
+.ui2-main-mobile {
+  padding-top: calc(56px + var(--safe-top));
+  padding-bottom: calc(110px + var(--safe-bottom));
+}
+
+body.kb-visible .ui2-main-mobile {
+  /* Tab-bar oculta cuando el teclado está abierto: solo conservamos el
+     home indicator (safe-bottom) + un pequeño respiro para que el último
+     campo del formulario no quede pegado al borde del teclado. */
+  padding-bottom: calc(8px + var(--safe-bottom));
+}
+
+/* Tab-bar paciente: cuando el teclado está abierto la deslizamos fuera para
+   liberar espacio vertical y evitar el "doble suelo" visual (tab-bar +
+   teclado). El `transform` sí se mantiene con transición porque no hay
+   ninguna animación nativa que lo gobierne. */
+ui2-patient-tab-bar {
+  transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+body.kb-visible ui2-patient-tab-bar {
+  transform: translateY(120%);
+  pointer-events: none;
 }
 
 /* Ocultar barras de scroll en mobile (≤767px). En desktop se conserva la

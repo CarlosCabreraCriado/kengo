@@ -13,7 +13,12 @@ const config: CapacitorConfig = {
     hostname: 'app.kengoapp.local',
   },
   ios: {
-    contentInset: 'automatic',
+    // `never` desactiva los insets automáticos del WKScrollView. Con
+    // `viewport-fit=cover` + `100lvh` en html/body, `automatic` provoca un
+    // desfase tras cerrar el teclado (banda blanca debajo del notch porque
+    // iOS no restaura el frame de la WebView). El cálculo de safe-area lo
+    // hacemos nosotros vía `env(safe-area-inset-*)`.
+    contentInset: 'never',
   },
   android: {
     allowMixedContent: false,
@@ -31,7 +36,11 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     Keyboard: {
-      resize: 'body',
+      // En iOS la WKWebView se redimensiona sola al abrir el teclado y
+      // `100dvh` lo recoge sin saltos. En Android el modo `native` ha tenido
+      // bugs con `position: fixed` en versiones recientes del plugin, así que
+      // el `KeyboardService` lo sobrescribe a `Body` en runtime para Android.
+      resize: 'native',
       resizeOnFullScreen: true,
     },
   },

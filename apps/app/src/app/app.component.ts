@@ -17,6 +17,7 @@ import {
   ThemeService,
 } from './core';
 import { PlatformService } from './core/services/platform.service';
+import { KeyboardService } from './core/services/keyboard.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
 import { ToastService } from './shared/services/toast/toast.service';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
@@ -58,6 +59,10 @@ export class AppComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private ngZone = inject(NgZone);
   private platform = inject(PlatformService);
+  // KeyboardService es referenciado para forzar la creación del servicio en
+  // el bootstrap (registra listeners de Capacitor y propaga
+  // `--keyboard-height` al DOM). No se usa directamente desde el template.
+  private keyboard = inject(KeyboardService);
   private externalBrowser = inject(ExternalBrowserService);
   private toast = inject(ToastService);
   public sessionService = inject(SessionService);
@@ -183,6 +188,93 @@ export class AppComponent implements OnInit {
       .subscribe((e) => {
         this.aplicarStatusBarPorRuta(e.urlAfterRedirects || e.url);
       });
+
+    this.configurarTeclado();
+  }
+
+  /**
+   * Listeners globales para integrar el teclado virtual con la UX:
+   *
+   * 1. `focusin`: cuando el usuario enfoca un input/textarea y el teclado se
+   *    abre por primera vez, comprobamos tras un delay si el campo queda
+   *    tapado. Solo hacemos `scrollIntoView` si el rect está claramente
+   *    fuera de la zona visible (margen de 32 px) — un guard agresivo para
+   *    evitar saltos cuando la WebView ya se redimensionó por sí sola.
+   *
+   * 2. `pointerdown` (capture): si el usuario toca **fuera** de cualquier
+   *    control interactivo, hacemos `blur()` del input activo. Esto deja
+   *    que el sistema cierre el teclado de forma natural — `Keyboard.hide()`
+   *    solo cierra el panel pero no quita el foco, lo que provocaba que iOS
+   *    detectara un input visible enfocado y lo reabriera (ping-pong).
+   *
+   *    Excluimos del cierre los controles interactivos comunes
+   *    (`button, a, [role=button]`) para que el usuario pueda pulsar
+   *    "enviar", "guardar" o un dropdown sin perder el teclado.
+   *
+   *    Se usa fase de captura para correr antes que el ciclo de focus
+   *    natural del navegador.
+   */
+  private configurarTeclado(): void {
+    let ultimoScrollTarget: HTMLElement | null = null;
+
+    const focusInHandler = (ev: FocusEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target?.matches('input, textarea, [contenteditable="true"]')) {
+        return;
+      }
+      // Evita re-disparar scrollIntoView sobre el mismo target durante
+      // animaciones rápidas de show/hide del teclado.
+      if (ultimoScrollTarget === target) return;
+      ultimoScrollTarget = target;
+      window.setTimeout(() => {
+        ultimoScrollTarget = null;
+        // Si el target perdió el foco mientras esperábamos, no hacer scroll.
+        if (document.activeElement !== target) return;
+        const rect = target.getBoundingClientRect();
+        const visibleBottom = window.innerHeight - this.keyboard.height();
+        // Threshold amplio (32 px): solo centramos si el campo está
+        // claramente cubierto por el teclado.
+        if (rect.bottom > visibleBottom - 32) {
+          target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }, 280);
+    };
+
+    const SELECTOR_EDITABLE =
+      'input, textarea, select, [contenteditable="true"]';
+    const SELECTOR_INTERACTIVO =
+      'button, a, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="option"], label, .cdk-overlay-container';
+
+    const pointerDownHandler = (ev: PointerEvent) => {
+      if (!this.keyboard.isVisible()) return;
+      const t = ev.target as HTMLElement | null;
+      if (!t) return;
+      // Si el tap es sobre otro campo editable o un overlay CDK, dejar que
+      // el navegador gestione el cambio de foco / modal naturalmente.
+      if (t.closest(SELECTOR_EDITABLE)) return;
+      // Si es un control interactivo (botón, enlace, rol asignable), el
+      // usuario probablemente está accionando el formulario — mantener
+      // el teclado abierto.
+      if (t.closest(SELECTOR_INTERACTIVO)) return;
+      // Tap en zona "de fondo": quitar el foco del input activo. El SO
+      // cerrará el teclado por sí solo, sin riesgo de reapertura.
+      const active = document.activeElement as HTMLElement | null;
+      if (active?.matches(SELECTOR_EDITABLE)) {
+        active.blur();
+      }
+    };
+
+    document.addEventListener('focusin', focusInHandler);
+    document.addEventListener('pointerdown', pointerDownHandler, {
+      capture: true,
+    });
+
+    this.destroyRef.onDestroy(() => {
+      document.removeEventListener('focusin', focusInHandler);
+      document.removeEventListener('pointerdown', pointerDownHandler, {
+        capture: true,
+      } as EventListenerOptions);
+    });
   }
 
   /**
