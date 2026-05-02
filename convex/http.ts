@@ -121,6 +121,9 @@ const ALLOWED_ORIGINS = [
   // App nativa (Capacitor): origin estable definido en `apps/app/capacitor.config.ts`
   // (`server.hostname`) — usado tanto en iOS como en Android.
   "https://app.kengoapp.local",
+  // iOS WKWebView puede enviar el Origin con el esquema interno aunque la SPA
+  // se cargue por https. Lo permitimos explícitamente.
+  "capacitor://app.kengoapp.local",
   // Esquemas por defecto del WebView Capacitor cuando no se sobreescriben.
   "capacitor://localhost",
   "https://localhost",

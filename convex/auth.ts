@@ -90,7 +90,20 @@ export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
-    trustedOrigins: [siteUrl, "http://localhost:4200", "http://localhost:4210"],
+    trustedOrigins: [
+      siteUrl,
+      "http://localhost:4200",
+      "http://localhost:4210",
+      // App nativa Capacitor: origin definido en `apps/app/capacitor.config.ts`
+      // (`server.hostname` + `iosScheme/androidScheme: 'https'`).
+      "https://app.kengoapp.local",
+      // iOS WKWebView puede enviar el Origin con el esquema interno aunque la
+      // SPA cargue por https. Lo permitimos explícitamente.
+      "capacitor://app.kengoapp.local",
+      // Esquemas por defecto del WebView Capacitor cuando no se sobreescriben.
+      "capacitor://localhost",
+      "https://localhost",
+    ],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,
