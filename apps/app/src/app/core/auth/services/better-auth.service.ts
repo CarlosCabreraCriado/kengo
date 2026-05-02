@@ -29,13 +29,17 @@ export class BetterAuthService {
   });
 
   /**
-   * Inicia sesion en Better-Auth. Si el usuario no existe, lo crea primero.
+   * Inicia sesion en Better-Auth. Si las credenciales no son válidas, devuelve
+   * `{ ok: false, code }` para que el caller pueda diferenciar password
+   * incorrecto, usuario inexistente o error de red.
+   *
+   * IMPORTANTE: el registro es un flujo separado (`AuthService.register` →
+   * `convex/auth/actions.ts:register`). No crear usuarios desde aquí.
    */
   async signIn(
     email: string,
     password: string,
-    name?: string,
-  ): Promise<boolean> {
+  ): Promise<{ ok: boolean; code?: string }> {
     try {
       const result = await this.authClient.signIn.email({
         email,
@@ -43,51 +47,14 @@ export class BetterAuthService {
       });
 
       if (result.error) {
-        // Usuario no existe en Better-Auth — crearlo y reintentar
-        if (
-          result.error.code === 'INVALID_EMAIL_OR_PASSWORD' ||
-          result.error.code === 'USER_NOT_FOUND'
-        ) {
-          return this.signUpAndSignIn(email, password, name);
-        }
-        console.warn('Better-Auth signIn error:', result.error);
-        return false;
+        return { ok: false, code: result.error.code };
       }
 
       await this.backupToNative();
-      return true;
+      return { ok: true };
     } catch (err) {
       console.warn('Better-Auth signIn failed:', err);
-      return false;
-    }
-  }
-
-  /**
-   * Registra un nuevo usuario en Better-Auth y luego inicia sesion.
-   */
-  private async signUpAndSignIn(
-    email: string,
-    password: string,
-    name?: string,
-  ): Promise<boolean> {
-    try {
-      const signUpResult = await this.authClient.signUp.email({
-        email,
-        password,
-        name: name ?? email.split('@')[0],
-      });
-
-      if (signUpResult.error) {
-        console.warn('Better-Auth signUp error:', signUpResult.error);
-        return false;
-      }
-
-      // signUp ya deja la sesion activa en better-auth
-      await this.backupToNative();
-      return true;
-    } catch (err) {
-      console.warn('Better-Auth signUp failed:', err);
-      return false;
+      return { ok: false, code: 'NETWORK_ERROR' };
     }
   }
 

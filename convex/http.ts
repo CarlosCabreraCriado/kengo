@@ -226,27 +226,62 @@ http.route({
     const auth = createAuth(ctx);
 
     try {
-      // 2a: Generar token de reset (el callback captura el token en memoria)
       clearPendingResetToken(email);
       await auth.api.requestPasswordReset({
         body: { email, redirectTo: "https://kengoapp.com/reset" },
       });
 
-      // 2b: Recuperar token capturado por el callback sendResetPassword
       const resetToken = getPendingResetToken(email);
-      if (!resetToken) {
-        // Usuario no existe en Better-Auth — no es error crítico
-        console.warn("[HTTP] No se generó token de reset para:", email);
-      } else {
-        // 2c: Consumir token para actualizar el hash del password
+      if (resetToken) {
         await auth.api.resetPassword({
           body: { newPassword: nuevaPassword, token: resetToken },
         });
+      } else {
+        // No hay BA user para este email. Solo es un caso legítimo si la fila
+        // en `users` aún está en pre-registro (`externalId: pending-…`):
+        // paciente creado por el fisio que pidió reset antes de consumir el
+        // magic link. En ese caso creamos el BA user con la nueva password.
+        // En cualquier otro caso devolvemos 500 — antes había un "fallback
+        // silencioso" que delegaba la sincronización al siguiente login vía
+        // signUpAndSignIn, lo que generaba la vulnerabilidad de takeover.
+        const convexUser = await ctx.runQuery(
+          internal.auth.queries.findUserByEmail,
+          { email },
+        );
+        const isPending =
+          convexUser?.externalId?.startsWith("pending-") ?? false;
+
+        if (!convexUser || !isPending) {
+          console.error("[HTTP reset-password] BA user no existe y no es pending", {
+            email,
+            hasConvexUser: !!convexUser,
+            externalId: convexUser?.externalId,
+          });
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "No se pudo actualizar la contraseña. Vuelve a solicitar un código.",
+              code: "RESET_FAILED",
+            }),
+            { status: 500, headers },
+          );
+        }
+
+        const name = `${convexUser.firstName} ${convexUser.lastName}`.trim() || email;
+        await auth.api.signUpEmail({
+          body: { email, password: nuevaPassword, name },
+        });
       }
     } catch (err) {
-      // Si Better-Auth falla, el código ya fue consumido y el password
-      // se sincronizará en el próximo login via signUpAndSignIn
-      console.warn("[HTTP] Better-Auth password update failed:", err);
+      console.error("[HTTP reset-password] Better-Auth password update failed:", err);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "No se pudo actualizar la contraseña. Vuelve a solicitar un código.",
+          code: "RESET_FAILED",
+        }),
+        { status: 500, headers },
+      );
     }
 
     return new Response(
@@ -304,10 +339,14 @@ http.route({
 
       const resetToken = getPendingResetToken(email);
       if (!resetToken) {
-        console.warn("[HTTP] No reset token for set-password:", email);
+        // En el flujo legítimo (magic link → /establecer-password) el BA user
+        // ya existe (lo crea `auth.api.signInMagicLink` en
+        // `consume-access-token`). Llegar aquí sin BA user indica un bug
+        // aguas arriba — no enmascararlo creando uno nuevo.
+        console.error("[HTTP set-password] BA user no existe para email autenticado", { email });
         return new Response(
-          JSON.stringify({ success: false, message: "Usuario no encontrado en el sistema de auth" }),
-          { status: 400, headers },
+          JSON.stringify({ success: false, message: "Error al establecer la contraseña" }),
+          { status: 500, headers },
         );
       }
 
@@ -315,7 +354,7 @@ http.route({
         body: { newPassword: password, token: resetToken },
       });
     } catch (err) {
-      console.error("[HTTP] Error setting password:", err);
+      console.error("[HTTP set-password] Error:", err);
       return new Response(
         JSON.stringify({ success: false, message: "Error al establecer la contraseña" }),
         { status: 500, headers },

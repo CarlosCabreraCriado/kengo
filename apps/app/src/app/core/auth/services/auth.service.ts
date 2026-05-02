@@ -29,13 +29,8 @@ export class AuthService {
    * automático del token; no necesitamos timer propio.
    */
   async login(email: string, password: string): Promise<void> {
-    const usuario = this.sessionService.usuario();
-    const nombre = usuario
-      ? `${usuario.first_name} ${usuario.last_name}`.trim()
-      : undefined;
-
-    const ok = await this.betterAuth.signIn(email, password, nombre);
-    if (!ok) throw new Error('CREDENCIALES_INCORRECTAS');
+    const result = await this.betterAuth.signIn(email, password);
+    if (!result.ok) throw new Error('CREDENCIALES_INCORRECTAS');
 
     this.convex.setAuth(() => this.betterAuth.getConvexToken());
     this.isLoggedIn.set(true);

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -90,16 +89,7 @@ export class LoginComponent implements OnInit {
     try {
       await this.auth.login(email!, password!);
       await this.router.navigateByUrl('/inicio');
-    } catch (err) {
-      if (err instanceof HttpErrorResponse && err.status === 401) {
-        try {
-          await this.auth.login(email!, password!);
-          await this.router.navigateByUrl('/inicio');
-          return;
-        } catch {
-          // El reintento también falló
-        }
-      }
+    } catch {
       this.error.set('No se pudo iniciar sesión. Verifica tus credenciales.');
     } finally {
       this.loading.set(false);
