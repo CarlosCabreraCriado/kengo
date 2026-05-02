@@ -26,11 +26,10 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       // Lo ocultamos manualmente desde AppComponent cuando
-      // `sessionService.sesionInicializada()` sea true, evitando flash
-      // blanco mientras Better-Auth restaura sesión.
+      // `sessionService.sesionInicializada()` sea true (con un mínimo de
+      // 600 ms para evitar parpadeo en cold start sin sesión).
       launchAutoHide: false,
-      launchShowDuration: 0,
-      backgroundColor: '#e75c3e',
+      backgroundColor: '#ffffff',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,

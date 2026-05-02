@@ -120,11 +120,22 @@ export class AppComponent implements OnInit {
 
       // Ocultar splash cuando la sesión esté inicializada (evita flash blanco
       // del WebView mientras Better-Auth restaura y Convex carga el usuario).
+      // En cold start sin sesión, `sesionInicializada()` puede pasar a true en
+      // pocos ms (antes del primer paint), así que garantizamos un suelo
+      // mínimo visible para que el splash no parpadee.
+      const splashStart = Date.now();
+      const MIN_SPLASH_MS = 600;
+      let splashHidden = false;
       effect(() => {
+        if (splashHidden) return;
         if (this.sessionService.sesionInicializada()) {
-          SplashScreen.hide({ fadeOutDuration: 200 }).catch(() => {
-            // ya estaba oculto
-          });
+          splashHidden = true;
+          const wait = Math.max(0, MIN_SPLASH_MS - (Date.now() - splashStart));
+          setTimeout(() => {
+            SplashScreen.hide({ fadeOutDuration: 250 }).catch(() => {
+              // ya estaba oculto
+            });
+          }, wait);
         }
       });
     }

@@ -129,3 +129,12 @@ La lógica de roles vive en `SessionService` (modo paciente vs fisio, permisos p
 ## Imports y alias
 
 Importa desde `@kengo/shared-models` para tipos compartidos del monorepo. Para utilidades y componentes locales usa rutas relativas o el barrel `apps/app/src/app/shared/index.ts`.
+
+## Splash screen nativo
+
+- Asset fuente único: `apps/app/assets/splash.png` (idealmente **2732×2732** con el logo centrado dentro del 66 % central — Android 12+ recorta el `windowSplashScreenAnimatedIcon` a un círculo). Para iconos: `assets/icon.png` (1024×1024 opaco) y `assets/icon-only.png` (transparente, opcional).
+- Regenera todos los recursos nativos con `npm run cap:assets` (usa `@capacitor/assets`). Después `npm run cap:sync` para propagar al proyecto Xcode/Android Studio.
+- Tras cambiar splash o icono, **clean build obligatorio** (Xcode: `Product > Clean Build Folder`; Android Studio: `Build > Clean Project`). El simulador/emulador cachean la launch image.
+- iOS: `LaunchScreen.storyboard` tiene root view blanco (coincide con el fondo del PNG fuente) y un imageView con constraints a los 4 bordes y `scaleAspectFit`. No editar el storyboard a mano salvo necesidad real — Xcode puede reformatearlo.
+- Android: `values/styles.xml > AppTheme.NoActionBarLaunch` usa el API moderno `Theme.SplashScreen` (background = `@color/splashBackground` blanco, animated icon = `@drawable/splash`, post = `AppTheme.NoActionBar`). Los colores están en `values/colors.xml`.
+- El splash se oculta desde `app.component.ts` cuando `SessionService.sesionInicializada()` pasa a true, con un suelo mínimo de **600 ms** para evitar parpadeo en cold start sin sesión. Fade out 250 ms.

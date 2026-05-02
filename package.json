@@ -14,6 +14,7 @@
     "build:all": "nx run-many -t build",
     "build:native": "nx build app --configuration native",
     "watch": "nx build app --watch --configuration development",
+    "cap:assets": "cd apps/app && npx @capacitor/assets generate --iconBackgroundColor '#e75c3e' --iconBackgroundColorDark '#e75c3e' --splashBackgroundColor '#ffffff' --splashBackgroundColorDark '#ffffff'",
     "cap:sync": "npm run build:native && cd apps/app && npx cap sync",
     "cap:sync:ios": "npm run build:native && cd apps/app && npx cap sync ios",
     "cap:sync:android": "npm run build:native && cd apps/app && npx cap sync android",
