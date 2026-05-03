@@ -296,6 +296,9 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 2px;
+  /* Reserva la altura de las pills mientras llegan las métricas o el
+     skeleton, para evitar que la card haga reflow vertical al rellenar. */
+  min-height: 22px;
 }
 
 /* ========================================================== */

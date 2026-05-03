@@ -2,6 +2,8 @@ import {
   Component,
   ChangeDetectionStrategy,
   DestroyRef,
+  OnDestroy,
+  OnInit,
   computed,
   effect,
   inject,
@@ -10,6 +12,7 @@ import {
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
+import { PageLoaderService } from '../../../../../core/services/page-loader.service';
 import {
   ActividadHoyService,
   EjercicioUnificadoHoy,
@@ -83,7 +86,7 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
   styleUrl: './inicio-paciente.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InicioPacienteComponent {
+export class InicioPacienteComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private router = inject(Router);
   private asignacionesService = inject(AsignacionesService);
@@ -91,11 +94,16 @@ export class InicioPacienteComponent {
   private mensajesService = inject(MensajesService);
   private registroService = inject(SesionStateService);
   private destroyRef = inject(DestroyRef);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'inicio-paciente';
 
   actividadHoyService = inject(ActividadHoyService);
   rachaService = inject(RachaPacienteService);
   private estadisticasService = inject(EstadisticasService);
   private nextSessionService = inject(NextSessionService);
+
+  /** Datos críticos cargados: actividad del día (planes + registros). */
+  readonly pageReady = computed(() => this.actividadHoyService.cargada());
 
   hayActividadHoy = this.actividadHoyService.hayActividadHoy;
   todoCompletado = this.actividadHoyService.todoCompletado;
@@ -300,6 +308,14 @@ export class InicioPacienteComponent {
           },
         });
     });
+  }
+
+  ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   irAActividad(): void {

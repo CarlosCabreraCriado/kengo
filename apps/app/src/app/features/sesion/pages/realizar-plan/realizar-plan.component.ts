@@ -1,6 +1,7 @@
 import {
   Component,
   inject,
+  OnDestroy,
   OnInit,
   computed,
   HostListener,
@@ -8,6 +9,7 @@ import {
 } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SesionStateService } from '../../data-access/sesion-state.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 
 // Pantallas
 import { ResumenSesionComponent } from './pantallas/resumen-sesion/resumen-sesion.component';
@@ -29,7 +31,6 @@ import { EjercicioPlan } from '../../../../../types/global';
 import {
   Ui2ButtonComponent,
   Ui2IconBadgeComponent,
-  Ui2SpinnerComponent,
 } from '../../../../shared/ui-v2';
 
 // Animaciones
@@ -46,7 +47,6 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     TimelineSesionComponent,
     Ui2ButtonComponent,
     Ui2IconBadgeComponent,
-    Ui2SpinnerComponent,
   ],
   animations: [slideAnimation, fadeAnimation],
   template: `
@@ -88,13 +88,6 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
         (closed)="timelineAbierto.set(false)"
         (previewEjercicio)="onPreviewEjercicio($event)"
       />
-
-      @if (cargando()) {
-        <div class="rp-overlay rp-overlay--loading">
-          <ui2-spinner size="lg" />
-          <span class="rp-overlay__hint">Cargando tu plan…</span>
-        </div>
-      }
 
       @if (error()) {
         <div class="rp-overlay rp-overlay--error" @fade>
@@ -227,11 +220,16 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     }
   `,
 })
-export class RealizarPlanComponent implements OnInit {
+export class RealizarPlanComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private registroService = inject(SesionStateService);
   private dialogService = inject(DialogService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'realizar-plan';
+
+  /** Datos críticos: plan/sesión cargado. */
+  readonly pageReady = computed(() => !this.cargando());
 
   // Estado desde el servicio
   readonly estadoPantalla = this.registroService.estadoPantalla;
@@ -269,7 +267,12 @@ export class RealizarPlanComponent implements OnInit {
   private touchEndX = 0;
 
   ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
     this.inicializarSesion();
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   private async inicializarSesion(): Promise<void> {

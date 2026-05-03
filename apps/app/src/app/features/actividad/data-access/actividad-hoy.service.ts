@@ -31,6 +31,13 @@ export class ActividadHoyService {
   readonly planesActivos = signal<PlanCompleto[]>([]);
   readonly registrosHoy = signal<RegistroEjercicio[]>([]);
   private datosCargados = signal<boolean>(false);
+  /**
+   * True tras la primera resolución (éxito o error) de los datos. A
+   * diferencia de `datosCargados` (que solo refleja éxito y bloquea
+   * recargas), esta signal libera el gate de `pageReady` aunque la query
+   * haya fallado, para que la UI no quede bloqueada en spinner.
+   */
+  readonly cargada = signal<boolean>(false);
 
   constructor() {
     // Effect que carga automáticamente cuando el usuario está disponible
@@ -244,6 +251,7 @@ export class ActividadHoyService {
       console.error('Error al cargar actividad de hoy:', err);
     } finally {
       this.cargando.set(false);
+      this.cargada.set(true);
     }
   }
 

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
 import { DashboardFisioService } from '../../../data-access/dashboard-fisio.service';
@@ -7,6 +7,7 @@ import { SessionService } from '../../../../../core/auth/services/session.servic
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
 import { PlanBuilderService } from '../../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../../../rutinas/data-access/rutina-builder.service';
+import { PageLoaderService } from '../../../../../core/services/page-loader.service';
 import type { Clinica, NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
 import { rawAssetUrl, assetUrl } from '../../../../../core/utils/asset-url';
 import {
@@ -40,16 +41,21 @@ import {
   styleUrl: './inicio-fisio.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InicioFisioComponent {
+export class InicioFisioComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private sessionService = inject(SessionService);
   private clinicasService = inject(ClinicasService);
   private dialog = inject(Dialog);
   private planBuilderService = inject(PlanBuilderService);
   private rutinaBuilderService = inject(RutinaBuilderService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'inicio-fisio';
 
   dashboardService = inject(DashboardFisioService);
   notificacionesService = inject(NotificacionesService);
+
+  /** Datos críticos: clínicas gestionadas resueltas. */
+  readonly pageReady = computed(() => this.dashboardService.cargada());
 
   // --- Saludo / hero ---
   firstName = computed(() => this.sessionService.usuario()?.first_name ?? '');
@@ -215,6 +221,14 @@ export class InicioFisioComponent {
     { label: 'M', value: 0.75 },
     { label: 'X', value: 0.5, today: true },
   ]);
+
+  ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
+  }
 
   // --- Navegación ---
   irANotificacion(n: NotificacionApp): void {

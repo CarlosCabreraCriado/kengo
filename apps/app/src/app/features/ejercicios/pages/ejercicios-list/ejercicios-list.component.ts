@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   computed,
   ElementRef,
   HostListener,
@@ -12,6 +13,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { EjerciciosService } from '../../data-access/ejercicios.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { Ejercicio } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 
@@ -51,11 +53,18 @@ type Vista = 'vineta' | 'lista';
   styleUrl: './ejercicios-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EjerciciosListComponent implements OnInit {
+export class EjerciciosListComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private elementRef = inject(ElementRef);
   private router = inject(Router);
   public ejerciciosService = inject(EjerciciosService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'ejercicios-list';
+
+  /** Datos críticos: lista de ejercicios resuelta. */
+  readonly pageReady = computed(
+    () => !this.ejerciciosService.listaEjerciciosRes.isLoading(),
+  );
 
   public vista = signal<Vista>('lista');
 
@@ -169,6 +178,11 @@ export class EjerciciosListComponent implements OnInit {
 
     // Cargar favoritos del usuario
     this.ejerciciosService.cargarFavoritos();
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy() {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   getAssetUrl(id: number | string) {

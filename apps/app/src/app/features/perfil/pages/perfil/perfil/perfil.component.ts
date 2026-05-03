@@ -35,7 +35,6 @@ import {
 // V2 components
 import {
   Ui2AvatarComponent,
-  Ui2BackButtonComponent,
   Ui2BigTitleComponent,
   Ui2ButtonComponent,
   Ui2CardComponent,
@@ -45,6 +44,7 @@ import {
   Ui2SectionComponent,
   Ui2SpinnerComponent,
 } from '../../../../../shared/ui-v2';
+import { PageLoaderService } from '../../../../../core/services/page-loader.service';
 
 @Component({
   selector: 'app-perfil',
@@ -53,7 +53,6 @@ import {
   imports: [
     ReactiveFormsModule,
     Ui2AvatarComponent,
-    Ui2BackButtonComponent,
     Ui2BigTitleComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
@@ -73,6 +72,11 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private storage = inject(StorageService);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'perfil';
+
+  /** Datos críticos: usuario disponible. */
+  readonly pageReady = computed(() => this.sessionService.usuario() !== null);
 
   isMobile = useResponsive().esMobile;
 
@@ -155,12 +159,14 @@ export class PerfilComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
     this.formularioUsuario.valueChanges.subscribe(() => {
       this.formularioCambiado.set(true);
     });
   }
 
   ngOnDestroy() {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
     const url = this.previewUrl();
     if (url) URL.revokeObjectURL(url);
   }

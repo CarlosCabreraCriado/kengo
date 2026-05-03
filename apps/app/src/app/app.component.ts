@@ -24,6 +24,7 @@ import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carr
 import {
   Ui2CreamBgComponent,
   Ui2OfflineBannerComponent,
+  Ui2PageLoaderOverlayComponent,
   Ui2PatientHeaderComponent,
   Ui2PatientSidebarComponent,
   Ui2PatientTabBarComponent,
@@ -43,6 +44,7 @@ import {
     Ui2CarritoEjerciciosComponent,
     Ui2CreamBgComponent,
     Ui2OfflineBannerComponent,
+    Ui2PageLoaderOverlayComponent,
     Ui2PatientHeaderComponent,
     Ui2PatientSidebarComponent,
     Ui2PatientTabBarComponent,

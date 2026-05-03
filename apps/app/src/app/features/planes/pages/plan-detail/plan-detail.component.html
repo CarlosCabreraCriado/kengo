@@ -29,11 +29,8 @@
     </div>
   </div>
 
-  @if (isLoading()) {
-    <div class="pd-state">
-      <ui2-spinner size="md" color="primary" label="Cargando plan…"></ui2-spinner>
-    </div>
-  } @else if (plan(); as p) {
+  @if (!isLoading()) {
+    @if (plan(); as p) {
     <!-- Success hero (created/updated) -->
     @if (showSuccessHero()) {
       <ui2-section [padding]="'4px 20px 12px'">
@@ -186,16 +183,17 @@
         }
       </div>
     </ui2-section>
-  } @else {
-    <ui2-section [padding]="'24px 20px 24px'">
-      <ui2-empty-state
-        icon="search_off"
-        title="Plan no encontrado"
-        message="No pudimos encontrar el plan que buscas. Es posible que haya sido eliminado o que no tengas acceso."
-        actionLabel="Volver al inicio"
-        actionIcon="home"
-        (action)="irAInicio()"
-      ></ui2-empty-state>
-    </ui2-section>
+    } @else {
+      <ui2-section [padding]="'24px 20px 24px'">
+        <ui2-empty-state
+          icon="search_off"
+          title="Plan no encontrado"
+          message="No pudimos encontrar el plan que buscas. Es posible que haya sido eliminado o que no tengas acceso."
+          actionLabel="Volver al inicio"
+          actionIcon="home"
+          (action)="irAInicio()"
+        ></ui2-empty-state>
+      </ui2-section>
+    }
   }
 </div>

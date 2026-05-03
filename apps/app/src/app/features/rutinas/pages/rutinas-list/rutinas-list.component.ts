@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, HostListener, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
@@ -45,14 +46,19 @@ interface OpcionFiltro {
   styleUrl: './rutinas-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RutinasListComponent {
+export class RutinasListComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private toastService = inject(ToastService);
   private planBuilderService = inject(PlanBuilderService);
   private rutinaBuilderService = inject(RutinaBuilderService);
   private dialog = inject(Dialog);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'rutinas-list';
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
+
+  /** Datos críticos: lista de rutinas resuelta. */
+  readonly pageReady = computed(() => !this.rutinasService.isLoading());
 
   isMovil = useResponsive().esMobile;
 
@@ -91,6 +97,14 @@ export class RutinasListComponent {
   constructor() {
     // Cargar rutinas al iniciar
     this.rutinasService.reload();
+  }
+
+  ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   @HostListener('document:click', ['$event'])

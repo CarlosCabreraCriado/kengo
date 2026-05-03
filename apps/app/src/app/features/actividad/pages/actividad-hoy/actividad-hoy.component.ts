@@ -1,5 +1,6 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -11,6 +12,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 
 import {
   PlanCompleto,
@@ -73,13 +75,18 @@ interface DiaProximoConEjercicios {
     class: 'flex flex-col flex-1 min-h-0 w-full',
   },
 })
-export class ActividadHoyComponent implements OnInit {
+export class ActividadHoyComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
   private registroService = inject(SesionStateService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private dialogService = inject(DialogService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'actividad-hoy';
+
+  /** Datos críticos: actividad de hoy resuelta. */
+  readonly pageReady = computed(() => this.actividadHoyService.cargada());
 
   isMovil = useResponsive().esMobile;
 
@@ -207,7 +214,12 @@ export class ActividadHoyComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
     this.cargarDatos();
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   async cargarDatos(): Promise<void> {

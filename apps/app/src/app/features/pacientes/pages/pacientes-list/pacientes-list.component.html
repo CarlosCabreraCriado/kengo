@@ -70,13 +70,10 @@
   </ui2-section>
 
   <!-- ========================================================== -->
-  <!-- Estados (loading, error, empty global)                       -->
+  <!-- Estados (error, empty global) — el loading inicial lo cubre  -->
+  <!-- el overlay global de página (PageLoaderService).             -->
   <!-- ========================================================== -->
-  @if (pacientesRes.isLoading() && idsClinicas() !== null) {
-    <div class="pl-state">
-      <ui2-spinner size="md" color="primary" label="Cargando pacientes…"></ui2-spinner>
-    </div>
-  } @else if (pacientesRes.error()) {
+  @if (!pacientesRes.isLoading() && pacientesRes.error()) {
     <ui2-empty-state
       icon="error"
       title="No se pudieron cargar"
@@ -222,6 +219,11 @@
                     >{{ getDolorPromedio(p.id) | number:'1.1-1' }}</ui2-pill>
                   }
                 </div>
+              } @else if (metricasCargando()) {
+                <div class="pl-card__metrics">
+                  <ui2-skeleton variant="pill" width="58px" height="22px"></ui2-skeleton>
+                  <ui2-skeleton variant="pill" width="48px" height="22px"></ui2-skeleton>
+                </div>
               }
             </button>
           }
@@ -247,11 +249,15 @@
                 <ui2-pill variant="custom" [color]="adherenciaColor(getAdherencia(p.id)!)">
                   {{ getAdherencia(p.id) }}%
                 </ui2-pill>
+              } @else if (metricasCargando()) {
+                <ui2-skeleton variant="pill" width="48px" height="20px"></ui2-skeleton>
               }
               @if (getDolorPromedio(p.id) !== null) {
                 <ui2-pill variant="custom" [color]="dolorColor(getDolorPromedio(p.id)!)">
                   {{ getDolorPromedio(p.id) | number:'1.1-1' }}
                 </ui2-pill>
+              } @else if (metricasCargando()) {
+                <ui2-skeleton variant="pill" width="40px" height="20px"></ui2-skeleton>
               }
               <span class="material-symbols-outlined pl-list__arrow" aria-hidden="true">chevron_right</span>
             </ui2-list-row>

@@ -1,10 +1,11 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
 import { DialogService, DialogoPdfComponent } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
@@ -19,7 +20,6 @@ import {
   Ui2PillComponent,
   Ui2SectionComponent,
   Ui2SectionLabelComponent,
-  Ui2SpinnerComponent,
 } from '../../../../shared/ui-v2';
 
 @Component({
@@ -36,7 +36,6 @@ import {
     Ui2PillComponent,
     Ui2SectionComponent,
     Ui2SectionLabelComponent,
-    Ui2SpinnerComponent,
   ],
   templateUrl: './plan-detail.component.html',
   styleUrl: './plan-detail.component.css',
@@ -44,16 +43,21 @@ import {
     class: 'flex flex-col flex-1 min-h-0 w-full',
   },
 })
-export class PlanDetailComponent implements OnInit {
+export class PlanDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
   public sessionService = inject(SessionService);
   private dialogService = inject(DialogService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'plan-detail';
 
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);
+
+  /** Datos críticos: plan cargado. */
+  readonly pageReady = computed(() => !this.isLoading());
 
   actionType = signal<'created' | 'updated' | null>(null);
 
@@ -105,6 +109,8 @@ export class PlanDetailComponent implements OnInit {
   diasSemanaArray: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   ngOnInit() {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+
     const action = this.route.snapshot.queryParams['action'];
     if (action === 'created' || action === 'updated') {
       this.actionType.set(action);
@@ -116,6 +122,10 @@ export class PlanDetailComponent implements OnInit {
     } else {
       this.router.navigate(this.backRoute());
     }
+  }
+
+  ngOnDestroy() {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   private async loadPlan(id: string) {

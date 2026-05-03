@@ -458,6 +458,7 @@
 @font-face {
   font-family: kengoFont;
   src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+  font-display: swap;
 }
 
 /* Alias V2: misma fuente, nombre alineado con la guía de diseño */
@@ -473,6 +474,7 @@
   src: url(./assets/fonts/galvji.ttf) format("truetype");
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -480,6 +482,7 @@
   src: url(./assets/fonts/galvji-bold.ttf) format("truetype");
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -487,6 +490,7 @@
   src: url(./assets/fonts/galvji-oblique.ttf) format("truetype");
   font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -494,6 +498,7 @@
   src: url(./assets/fonts/galvji-bold-oblique.ttf) format("truetype");
   font-weight: 700;
   font-style: italic;
+  font-display: swap;
 }
 
 html,

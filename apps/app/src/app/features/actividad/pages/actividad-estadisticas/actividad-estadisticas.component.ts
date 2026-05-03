@@ -1,10 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
 } from '@angular/core';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import {
   Ui2BigTitleComponent,
   Ui2CardComponent,
@@ -58,11 +60,16 @@ const PERIODO_OPTIONS: Ui2SegmentedOption[] = [
   styleUrl: './actividad-estadisticas.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ActividadEstadisticasComponent implements OnInit {
+export class ActividadEstadisticasComponent implements OnInit, OnDestroy {
   private estadisticas = inject(EstadisticasService);
   private toast = inject(ToastService);
   private share = inject(ShareService);
   private clipboard = inject(ClipboardService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'actividad-estadisticas';
+
+  /** Datos críticos: estadísticas resueltas (no cargando). */
+  readonly pageReady = computed(() => !this.estadisticas.cargando());
 
   readonly periodoOptions = PERIODO_OPTIONS;
   readonly periodoActivo = this.estadisticas.periodo;
@@ -146,6 +153,11 @@ export class ActividadEstadisticasComponent implements OnInit {
 
   ngOnInit(): void {
     this.estadisticas.cargarSiNecesario();
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   onPeriodoChange(id: string): void {

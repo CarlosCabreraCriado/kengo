@@ -28,8 +28,9 @@
           [userName]="firstName()"
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
-        <main class="min-h-0 flex-1 overflow-y-auto">
+        <main class="relative min-h-0 flex-1 overflow-y-auto">
           <router-outlet></router-outlet>
+          <ui2-page-loader-overlay></ui2-page-loader-overlay>
         </main>
       </div>
     </section>
@@ -43,8 +44,9 @@
         [userName]="userName()"
         [avatarUrl]="avatarUrl()"
       ></ui2-patient-header>
-      <main class="ui2-main-mobile min-h-0 flex-1 overflow-y-auto">
+      <main class="ui2-main-mobile relative min-h-0 flex-1 overflow-y-auto">
         <router-outlet></router-outlet>
+        <ui2-page-loader-overlay></ui2-page-loader-overlay>
       </main>
       <ui2-patient-tab-bar></ui2-patient-tab-bar>
     </section>
@@ -80,8 +82,9 @@
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
         <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
-        <main class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <main class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
           <router-outlet></router-outlet>
+          <ui2-page-loader-overlay></ui2-page-loader-overlay>
         </main>
       </div>
     </section>
@@ -96,10 +99,11 @@
         [avatarUrl]="avatarUrl()"
       ></ui2-patient-header>
       <main
-        class="ui2-main-mobile flex min-h-0 flex-1 flex-col overflow-y-auto"
+        class="ui2-main-mobile relative flex min-h-0 flex-1 flex-col overflow-y-auto"
       >
         <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
         <router-outlet></router-outlet>
+        <ui2-page-loader-overlay></ui2-page-loader-overlay>
       </main>
       <ui2-patient-tab-bar [tabs]="fisioTabBarTabs"></ui2-patient-tab-bar>
     </section>
@@ -109,8 +113,9 @@
 <!-- Auth / sin navegación: layout mínimo -->
 @if (!mostrarNavegacion) {
   <section class="m-auto flex h-dvh max-w-7xl flex-col">
-    <main class="main z-10 flex min-h-0 flex-1 flex-col">
+    <main class="main relative z-10 flex min-h-0 flex-1 flex-col">
       <router-outlet></router-outlet>
+      <ui2-page-loader-overlay></ui2-page-loader-overlay>
     </main>
   </section>
 }

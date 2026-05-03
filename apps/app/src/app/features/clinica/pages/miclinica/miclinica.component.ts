@@ -1,11 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
+  OnInit,
   computed,
   effect,
   inject,
   signal,
 } from '@angular/core';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
@@ -85,7 +88,7 @@ import {
     class: 'block w-full',
   },
 })
-export class MiClinicaComponent {
+export class MiClinicaComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private sessionService = inject(SessionService);
@@ -95,6 +98,19 @@ export class MiClinicaComponent {
   private dialogService = inject(DialogService);
   private toastService = inject(ToastService);
   private clipboard = inject(ClipboardService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'miclinica';
+
+  /** Datos críticos: lista de clínicas resuelta. */
+  readonly pageReady = computed(() => !this.clinicasService.misClinicasRes.isLoading());
+
+  ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
+  }
 
   isMovil = useResponsive().esMobile;
 

@@ -61,6 +61,13 @@ export class DashboardFisioService {
     () => this.snapshotSub.isLoading() || this.planesSub.isLoading(),
   );
 
+  /**
+   * Datos críticos del dashboard listos: la lista de clínicas gestionadas
+   * por el fisio se ha resuelto. Las métricas/planes secundarios pueden
+   * llegar más tarde y se renderizan con skeleton.
+   */
+  readonly cargada = computed(() => !this.clinicIdsSub.isLoading());
+
   readonly resumen = computed<ResumenFisioDashboard | null>(() => {
     const snap = this.snapshotSub.value() as ClinicSnapshot | null;
     const planes = (this.planesSub.value() as PlanPorVencer[] | null) ?? [];

@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
+  OnInit,
   computed,
   HostListener,
   inject,
@@ -12,6 +14,7 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 
 // Componente Add-Paciente:
@@ -36,7 +39,7 @@ import {
   Ui2SectionComponent,
   Ui2SegmentedComponent,
   Ui2SegmentedOption,
-  Ui2SpinnerComponent,
+  Ui2SkeletonComponent,
 } from '../../../../shared/ui-v2';
 
 type FiltroActividad = 'todos' | 'activos' | 'inactivos';
@@ -64,13 +67,13 @@ interface OrdenOption {
     Ui2SearchBoxComponent,
     Ui2SectionComponent,
     Ui2SegmentedComponent,
-    Ui2SpinnerComponent,
+    Ui2SkeletonComponent,
   ],
   templateUrl: './pacientes-list.component.html',
   styleUrl: './pacientes-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PacientesListComponent {
+export class PacientesListComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private dialogService = inject(DialogService);
   private router = inject(Router);
@@ -80,6 +83,19 @@ export class PacientesListComponent {
   private metricasService = inject(MetricasPacientesService);
   private clinicasService = inject(ClinicasService);
   private convex = inject(ConvexService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'pacientes-list';
+
+  /**
+   * Datos críticos: lista de pacientes resuelta. Métricas y asignaciones
+   * (HTTP) son secundarias y se renderizan con skeleton mientras llegan.
+   * Si no hay clínicas todavía no se ha disparado la query — consideramos
+   * la página lista para no quedar bloqueada en spinner.
+   */
+  readonly pageReady = computed(() => {
+    if (this.idsClinicas() === null) return false; // sesión aún no resuelta
+    return !this.pacientesRes.isLoading();
+  });
 
   // Vista (toggle entre cuadrícula y lista)
   public vista = signal<Vista>('card');
@@ -224,6 +240,17 @@ export class PacientesListComponent {
       // No-op: Convex watchQuery se actualiza automáticamente
     },
   };
+
+  ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
+  }
+
+  /** True mientras las métricas (HTTP) están cargando — para mostrar skeleton. */
+  readonly metricasCargando = computed(() => Object.keys(this.metricasMap()).length === 0);
 
   avatarUrl(p: Usuario): string | null {
     const id_avatar = p?.avatar;
