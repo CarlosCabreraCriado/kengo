@@ -3,8 +3,10 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -21,7 +23,7 @@ import {
 } from '../../../../../types/global';
 
 import {
-  Ui2ButtonComponent,
+  Ui2BigTitleComponent,
   Ui2CardComponent,
   Ui2CtaBarComponent,
   Ui2EmptyStateComponent,
@@ -53,21 +55,12 @@ interface DiaCalendario {
   ejercicios: EjercicioCalendario[];
 }
 
-interface DiaProximoConEjercicios {
-  fecha: Date;
-  fechaFormateada: string;
-  diaSemana: string;
-  totalEjercicios: number;
-  planes: { planId: string; titulo: string; ejercicios: number }[];
-  ejercicios: EjercicioCalendario[];
-}
-
 @Component({
   selector: 'app-patient-calendar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    Ui2ButtonComponent,
+    Ui2BigTitleComponent,
     Ui2CardComponent,
     Ui2CtaBarComponent,
     Ui2EmptyStateComponent,
@@ -125,6 +118,14 @@ export class PatientCalendarComponent implements OnInit {
     return `${this.NOMBRES_MESES[fecha.getMonth()]} ${fecha.getFullYear()}`;
   });
 
+  readonly fechaHoy = computed(() => {
+    const hoy = new Date();
+    const dia = this.NOMBRES_DIAS[hoy.getDay()];
+    const numero = hoy.getDate();
+    const mes = this.NOMBRES_MESES[hoy.getMonth()].toLowerCase();
+    return `${dia}, ${numero} de ${mes}`;
+  });
+
   readonly diasSemanaHeaders = this.NOMBRES_DIAS_CORTOS;
 
   readonly diasCalendario = computed<DiaCalendario[]>(() => {
@@ -174,37 +175,38 @@ export class PatientCalendarComponent implements OnInit {
     return dias;
   });
 
-  readonly proximosDias = computed<DiaProximoConEjercicios[]>(() => {
-    const planes = this.planesActivosYFuturos();
-    const resultado: DiaProximoConEjercicios[] = [];
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    for (let i = 1; i <= 14 && resultado.length < 5; i++) {
-      const fecha = new Date(hoy);
-      fecha.setDate(hoy.getDate() + i);
-
-      const diaSemana = this.DIAS_SEMANA[fecha.getDay()];
-      const { ejercicios, planes: planesDelDia } = this.obtenerEjerciciosDia(planes, fecha, diaSemana);
-
-      if (ejercicios.length > 0) {
-        resultado.push({
-          fecha,
-          fechaFormateada: this.formatearFechaCorta(fecha),
-          diaSemana: this.NOMBRES_DIAS[fecha.getDay()],
-          totalEjercicios: ejercicios.length,
-          planes: planesDelDia,
-          ejercicios,
-        });
-      }
-    }
-
-    return resultado;
-  });
-
   readonly sinPlanesActivos = computed(
     () => !this.cargando() && this.planesActivosYFuturos().length === 0
   );
+
+  private inicializado = false;
+
+  constructor() {
+    effect(() => {
+      const dias = this.diasCalendario();
+      if (dias.length === 0) return;
+
+      const actual = untracked(() => this.diaSeleccionado());
+
+      if (actual) {
+        const equiv = dias.find(
+          (d) => d.fecha.getTime() === actual.fecha.getTime()
+        );
+        if (equiv && equiv !== actual) {
+          this.diaSeleccionado.set(equiv);
+        }
+        return;
+      }
+
+      if (!this.inicializado) {
+        const hoy = dias.find((d) => d.esHoy && d.esMesActual);
+        if (hoy) {
+          this.diaSeleccionado.set(hoy);
+          this.inicializado = true;
+        }
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.cargarDatos();
@@ -266,7 +268,7 @@ export class PatientCalendarComponent implements OnInit {
     return this.planesService.getAssetUrl(id, width, height);
   }
 
-  iniciarSesionDia(dia: DiaCalendario | DiaProximoConEjercicios): void {
+  iniciarSesionDia(dia: DiaCalendario): void {
     if (dia.ejercicios.length === 0) return;
 
     const ejercicios: EjercicioSesionMultiPlan[] = [];
@@ -285,9 +287,7 @@ export class PatientCalendarComponent implements OnInit {
 
     if (ejercicios.length === 0) return;
 
-    const diaSemana = 'diaSemana' in dia
-      ? dia.diaSemana
-      : this.NOMBRES_DIAS[dia.fecha.getDay()];
+    const diaSemana = this.NOMBRES_DIAS[dia.fecha.getDay()];
 
     const config: ConfigSesionMultiPlan = {
       titulo: `Ejercicios del ${diaSemana}`,
@@ -381,11 +381,5 @@ export class PatientCalendarComponent implements OnInit {
     }
 
     return true;
-  }
-
-  private formatearFechaCorta(fecha: Date): string {
-    const dia = fecha.getDate();
-    const mes = this.NOMBRES_MESES[fecha.getMonth()].substring(0, 3).toLowerCase();
-    return `${dia} ${mes}`;
   }
 }

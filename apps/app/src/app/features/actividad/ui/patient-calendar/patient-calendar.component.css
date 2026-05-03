@@ -256,58 +256,28 @@
   display: inline-flex;
 }
 
-.cal-upcoming {
+.cal-layout {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  width: 100%;
 }
 
-.cal-upcoming__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.cal-upcoming__date {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.cal-layout__calendar,
+.cal-layout__detail {
   min-width: 0;
 }
 
-.cal-upcoming__weekday {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-900);
-  line-height: 1.2;
-}
+@media (min-width: 1024px) {
+  .cal-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+  }
 
-.cal-upcoming__short {
-  font-size: 11px;
-  color: var(--ink-500);
-  line-height: 1.2;
-  text-transform: capitalize;
-}
-
-.cal-upcoming__count {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-left: auto;
-  margin-right: 4px;
-}
-
-.cal-upcoming__num {
-  font-family: KengoDisplay, kengoFont, sans-serif;
-  font-size: 20px;
-  color: var(--kengo-primary);
-  line-height: 1;
-}
-
-.cal-upcoming__label {
-  font-size: 11px;
-  color: var(--ink-500);
+  .cal-layout__calendar {
+    max-width: 520px;
+  }
 }
 
 @media (min-width: 768px) {
