@@ -9,7 +9,7 @@
 }
 
 .dialog-shell {
-  @apply w-full max-w-lg my-6;
+  @apply w-full max-w-3xl my-6;
   animation: ec-slide-up 0.25s ease-out;
 }
 
@@ -23,10 +23,25 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+.ec-tabs {
+  margin-bottom: 16px;
+}
+
 .ec-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+}
+
+.ec-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: ec-tab-fade 0.18s ease-out;
+}
+
+@keyframes ec-tab-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .ec-row {
@@ -38,6 +53,20 @@
 @media (max-width: 480px) {
   .ec-row {
     grid-template-columns: 1fr;
+  }
+}
+
+.ec-branding-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .ec-branding-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
@@ -157,8 +186,20 @@
 
 .ec-gallery-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .ec-gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .ec-gallery-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .ec-gallery-item {
@@ -307,6 +348,12 @@
   gap: 8px;
 }
 
+@media (max-width: 480px) {
+  .ec-color-presets {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 .ec-color-preset {
   position: relative;
   width: 100%;
@@ -398,6 +445,7 @@
   color: var(--danger);
   font-size: 13px;
   font-weight: 600;
+  margin-bottom: 12px;
 }
 
 .ec-error .material-symbols-outlined {
