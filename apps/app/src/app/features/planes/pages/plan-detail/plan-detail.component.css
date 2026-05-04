@@ -211,7 +211,7 @@
 
 @media (min-width: 1024px) {
   .pd-ex {
-    grid-template-columns: 56px 96px 1fr 280px;
+    grid-template-columns: 56px 96px minmax(0, 1fr) 110px;
     grid-template-areas: "index thumb body dose";
     align-items: center;
     gap: 0;
@@ -361,7 +361,7 @@
     flex-direction: column;
     justify-content: center;
     gap: 10px;
-    padding: 16px 20px;
+    padding: 14px 14px;
     border-top: 0;
     border-left: 1px solid rgba(0, 0, 0, 0.04);
     align-self: stretch;
@@ -375,10 +375,9 @@
 }
 @media (min-width: 1024px) {
   .pd-dose {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
     flex: initial;
   }
 }

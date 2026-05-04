@@ -165,6 +165,13 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   );
 
   /**
+   * El CTA inferior solo se muestra cuando hay algo que guardar:
+   * - En modo creación: siempre (al haber datos en el draft).
+   * - En modo edición: solo si hay cambios sin persistir (`isDirty`).
+   */
+  showCta = computed(() => !this.isEditMode() || this.svc.isDirty());
+
+  /**
    * Tip resumen de duración: "30 días totales · 13 sesiones programadas".
    * Sesiones = días dentro del rango cuyo día de la semana cae en al menos un ejercicio.
    */
@@ -442,9 +449,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
             r.visibilidad,
           );
           if (rutinaId) {
-            this.toastService.show('Plantilla guardada');
+            this.toastService.show('Rutina guardada');
           } else {
-            this.toastService.show('Error al guardar plantilla', 'error');
+            this.toastService.show('Error al guardar la rutina', 'error');
           }
         } finally {
           this.isSaving.set(false);
@@ -470,12 +477,12 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
         try {
           const success = await this.svc.loadFromRutina(id);
           if (success) {
-            this.toastService.show('Plantilla cargada');
+            this.toastService.show('Rutina cargada');
             if (!this.form.value.titulo && this.svc.titulo()) {
               this.form.patchValue({ titulo: this.svc.titulo() });
             }
           } else {
-            this.toastService.show('Error al cargar plantilla', 'error');
+            this.toastService.show('Error al cargar la rutina', 'error');
           }
         } finally {
           this.isLoading.set(false);

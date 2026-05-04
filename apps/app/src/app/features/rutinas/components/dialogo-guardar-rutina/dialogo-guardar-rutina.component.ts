@@ -42,7 +42,7 @@ export interface DialogoGuardarRutinaResult {
   template: `
     <ui2-dialog-host>
       <ui2-dialog-header
-        title="Guardar como plantilla"
+        title="Guardar rutina"
         subtitle="Reutiliza esta selección de ejercicios cuando lo necesites"
         (closeClick)="cancelar()"
       ></ui2-dialog-header>
@@ -50,7 +50,7 @@ export interface DialogoGuardarRutinaResult {
       <ui2-dialog-content>
         <form [formGroup]="form" class="dgr-form" (ngSubmit)="guardar()">
           <ui2-input
-            label="Nombre de la plantilla"
+            label="Nombre de la rutina"
             placeholder="Ej: Rutina fortalecimiento rodilla"
             iconLeft="title"
             formControlName="nombre"
@@ -60,7 +60,7 @@ export interface DialogoGuardarRutinaResult {
 
           <ui2-textarea
             label="Descripción"
-            placeholder="Para qué se usa esta plantilla, contexto..."
+            placeholder="Para qué se usa esta rutina, contexto..."
             formControlName="descripcion"
             [rows]="3"
           ></ui2-textarea>
@@ -80,7 +80,7 @@ export interface DialogoGuardarRutinaResult {
           iconLeft="bookmark_add"
           [disabled]="!form.valid"
           (clicked)="guardar()"
-        >Guardar plantilla</ui2-button>
+        >Guardar rutina</ui2-button>
       </ui2-dialog-actions>
     </ui2-dialog-host>
   `,

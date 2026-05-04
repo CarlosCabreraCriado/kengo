@@ -17,18 +17,18 @@
     </div>
     <div class="pb-header__actions">
       <ui2-button
-        variant="ghost"
+        variant="secondary"
         size="sm"
-        iconLeft="folder_open"
+        iconLeft="library_books"
         (clicked)="cargarPlantilla()"
-      >Cargar plantilla</ui2-button>
+      >Cargar rutina</ui2-button>
       <ui2-button
-        variant="ghost"
+        variant="secondary"
         size="sm"
         iconLeft="bookmark_add"
         [disabled]="totalItems() === 0"
         (clicked)="guardarComoPlantilla()"
-      >Guardar plantilla</ui2-button>
+      >Guardar rutina</ui2-button>
     </div>
   </header>
 
@@ -126,7 +126,7 @@
         </div>
         @if (totalItems() > 0) {
           <ui2-button
-            variant="ghost"
+            variant="primary"
             size="sm"
             iconLeft="add"
             (clicked)="irAGaleria()"
@@ -339,15 +339,17 @@
   </form>
 
   <!-- Sticky CTA -->
-  <div class="pb-cta-bar">
-    <ui2-button
-      variant="primary"
-      size="lg"
-      iconLeft="check_circle"
-      [fullWidth]="true"
-      [loading]="isSaving()"
-      [disabled]="saveDisabled()"
-      (clicked)="guardarPlan()"
-    >{{ isEditMode() ? 'Actualizar plan' : 'Guardar plan' }}</ui2-button>
-  </div>
+  @if (showCta()) {
+    <div class="pb-cta-bar">
+      <ui2-button
+        variant="primary"
+        size="lg"
+        iconLeft="check_circle"
+        [fullWidth]="true"
+        [loading]="isSaving()"
+        [disabled]="saveDisabled()"
+        (clicked)="guardarPlan()"
+      >Guardar plan</ui2-button>
+    </div>
+  }
 </div>
