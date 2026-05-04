@@ -24,6 +24,21 @@ import {
   offsetMadridDate,
   ymdMadridFromInstant,
 } from '../../../shared/utils/madrid-date.util';
+
+export interface CumplimientoConTendencia {
+  actual: CumplimientoResponse;
+  anterior: CumplimientoResponse;
+  /**
+   * Delta absolutos vs período anterior del mismo tamaño. Signo crudo:
+   * los componentes (`ui2-trend`) deciden la semántica con `inverse`.
+   */
+  trend: {
+    /** Diferencia en puntos porcentuales (0–100). null si no hay datos previos. */
+    adherence: number | null;
+    /** Diferencia en escala /10. null si alguno de los dos períodos no tiene dolor registrado. */
+    pain: number | null;
+  };
+}
 import { formatDate } from '../../../shared/utils/format-date';
 
 // Estructura del doc del modelo nuevo `dailyPatientRollup` (camelCase desde Convex).
@@ -174,6 +189,58 @@ export class CumplimientoService {
       dolorPromedio: dolorPromedio,
       planes: planesDetalle,
     };
+  }
+
+  /**
+   * Cumplimiento del rango actual + del rango anterior del mismo tamaño.
+   * Permite calcular tendencias (adherencia, dolor) sin tocar el backend.
+   */
+  async getCumplimientoConTendencia(
+    pacienteId: string,
+    desde: string,
+    hasta: string,
+  ): Promise<CumplimientoConTendencia> {
+    const dias = daysBetweenYMD(desde, hasta) + 1; // ambos inclusive
+    const offsetDesde = -dias;
+    const desdeAnterior = offsetMadridDate(offsetDesde, new Date(`${desde}T12:00:00Z`));
+    const hastaAnterior = offsetMadridDate(-1, new Date(`${desde}T12:00:00Z`));
+
+    const [actual, anterior] = await Promise.all([
+      this.getCumplimiento(pacienteId, desde, hasta),
+      this.getCumplimiento(pacienteId, desdeAnterior, hastaAnterior),
+    ]);
+
+    const adherenceActual = actual.resumen.adherenciaReal;
+    const adherenceAnterior = anterior.resumen.adherenciaReal;
+    const adherenceDelta =
+      anterior.resumen.diasProgramados > 0
+        ? adherenceActual - adherenceAnterior
+        : null;
+
+    const painActual = this.promedioDolor(actual.dias);
+    const painAnterior = this.promedioDolor(anterior.dias);
+    const painDelta =
+      painActual != null && painAnterior != null
+        ? Math.round((painActual - painAnterior) * 10) / 10
+        : null;
+
+    return {
+      actual,
+      anterior,
+      trend: { adherence: adherenceDelta, pain: painDelta },
+    };
+  }
+
+  private promedioDolor(dias: CumplimientoDia[]): number | null {
+    const valores = dias
+      .map((d) => d.dolorPromedio)
+      .filter((v): v is number => v != null);
+    if (valores.length === 0) return null;
+    return (
+      Math.round(
+        (valores.reduce((a, b) => a + b, 0) / valores.length) * 10,
+      ) / 10
+    );
   }
 
   // ========= Helpers =========

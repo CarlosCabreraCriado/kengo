@@ -1,15 +1,16 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   inject,
-  signal,
   OnInit,
+  signal,
 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { assetUrl } from '../../../../core/utils/asset-url';
-import { Router, ActivatedRoute } from '@angular/router';
 import { useResponsive } from '../../../../shared';
 
-// Servicios
+// Servicios (mismos que paciente-detail actual)
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
@@ -27,51 +28,362 @@ import {
   offsetMadridDate,
 } from '../../../../shared/utils/madrid-date.util';
 
-// Componentes
+// Diálogos
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
 import { GestionAccesoDialogComponent } from '../../components/gestion-acceso-dialog/gestion-acceso-dialog.component';
-import { PacientePlanesListComponent } from './componentes/paciente-planes-list/paciente-planes-list.component';
-import { PacienteComentariosPanelComponent } from './componentes/paciente-comentarios-panel/paciente-comentarios-panel.component';
-import { PacienteHeroCardComponent } from './componentes/paciente-hero-card/paciente-hero-card.component';
-import { PacienteEstadisticasComponent } from './componentes/paciente-estadisticas/paciente-estadisticas.component';
-import { PacienteActividadRecienteComponent } from './componentes/paciente-actividad-reciente/paciente-actividad-reciente.component';
+
+// UI v2
 import {
   Ui2BackButtonComponent,
+  Ui2CollapsibleComponent,
   Ui2EmptyStateComponent,
   Ui2SpinnerComponent,
 } from '../../../../shared/ui-v2';
 
+// Subcomponentes V2
+import { PdHeroComponent, PdHeroMeta } from './componentes/pd-hero/pd-hero.component';
+import { PdKpiStripComponent, PdKpiVm } from './componentes/pd-kpi-strip/pd-kpi-strip.component';
+import { PdInactivityBannerComponent } from './componentes/pd-inactivity-banner/pd-inactivity-banner.component';
+import { PdWeeklyBarsCardComponent } from './componentes/pd-weekly-bars-card/pd-weekly-bars-card.component';
+import { PdActivityTimelineComponent } from './componentes/pd-activity-timeline/pd-activity-timeline.component';
+import { PdActivePlanCardComponent } from './componentes/pd-active-plan-card/pd-active-plan-card.component';
+import { PdPlansListComponent } from './componentes/pd-plans-list/pd-plans-list.component';
+import { PdCommentsComponent } from './componentes/pd-comments/pd-comments.component';
+import {
+  PdPacienteDataComponent,
+  PdPacienteMeta,
+} from './componentes/pd-paciente-data/pd-paciente-data.component';
+
 // Tipos
 import {
-  Usuario,
+  NotificacionFisio,
   Plan,
   RegistroEjercicioRecord,
-  NotificacionFisio,
+  Usuario,
 } from '../../../../../types/global';
 import {
   EstadisticasPaciente,
-  RangoFiltro,
   SesionAgrupada,
 } from '../../data-access/paciente-detail.types';
+
+const RANGO_DIAS = 15;
+
+interface ConvexExecutionRecord {
+  _id: string;
+  planExerciseId: string;
+  pacienteId: string;
+  fechaHora: string;
+  completado: boolean;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  notaPaciente?: string;
+}
+
+interface DialogClosedResult {
+  updated?: boolean;
+}
 
 @Component({
   selector: 'app-paciente-detail',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    PacientePlanesListComponent,
-    PacienteComentariosPanelComponent,
-    PacienteHeroCardComponent,
-    PacienteEstadisticasComponent,
-    PacienteActividadRecienteComponent,
     Ui2BackButtonComponent,
+    Ui2CollapsibleComponent,
     Ui2EmptyStateComponent,
     Ui2SpinnerComponent,
+    PdHeroComponent,
+    PdKpiStripComponent,
+    PdInactivityBannerComponent,
+    PdWeeklyBarsCardComponent,
+    PdActivityTimelineComponent,
+    PdActivePlanCardComponent,
+    PdPlansListComponent,
+    PdCommentsComponent,
+    PdPacienteDataComponent,
   ],
-  templateUrl: './paciente-detail.component.html',
-  styleUrl: './paciente-detail.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
-  },
+  template: `
+    <section class="pd2-page" [class.pd2-page--mobile]="isMovil()">
+      @if (isMovil()) {
+        <header class="pd2-topbar">
+          <ui2-back-button (clicked)="volver()" ariaLabel="Volver a pacientes" />
+          <h1 class="pd2-topbar__title">Paciente</h1>
+          <button
+            type="button"
+            class="pd2-topbar__action"
+            aria-label="Gestionar acceso"
+            (click)="gestionarAcceso()"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">key</span>
+          </button>
+        </header>
+      }
+
+      <main class="pd2-main" [class.pd2-main--mobile]="isMovil()">
+        @if (isLoadingPaciente()) {
+          <div class="pd2-state">
+            <ui2-spinner />
+            <p>Cargando paciente…</p>
+          </div>
+        } @else if (error()) {
+          <ui2-empty-state
+            icon="error"
+            title="Algo salió mal"
+            [message]="error()"
+            actionLabel="Volver a pacientes"
+            actionIcon="arrow_back"
+            (action)="volver()"
+          />
+        } @else if (paciente()) {
+          <app-pd-hero
+            [paciente]="paciente()"
+            [fullName]="fullName()"
+            [avatarUrl]="avatarUrl()"
+            [meta]="heroMeta()"
+            [lastActivityDays]="diasUltimaActividad()"
+            [enviandoMensaje]="enviandoMensaje()"
+            [isMobile]="isMovil()"
+            (enviarMensaje)="onEnviarMensaje()"
+            (crearPlan)="crearPlan()"
+            (editarPaciente)="editarPaciente()"
+            (gestionarAcceso)="gestionarAcceso()"
+            (volver)="volver()"
+          />
+
+          <app-pd-kpi-strip [kpis]="kpisVm()" />
+
+          <app-pd-inactivity-banner
+            [dias]="diasUltimaActividad()"
+            (recordar)="onEnviarMensaje()"
+          />
+
+          @if (!isMovil()) {
+            <div class="pd2-grid">
+              <div class="pd2-col pd2-col--main">
+                <app-pd-weekly-bars-card
+                  [weeks]="estadisticas()?.adherenciaSemanal ?? []"
+                  [rangoLabel]="rangoLabel"
+                />
+                <app-pd-activity-timeline
+                  [sesiones]="sesionesVisibles()"
+                  [notificacionesPorRegistro]="notificacionesPorRegistro()"
+                  [fechaExpandida]="sesionExpandida()"
+                  [totalSesiones]="sesiones().length"
+                  [rangoLabel]="rangoLabel"
+                  [diasProgramados]="diasProgramados()"
+                  [diasSinActividad]="diasSinActividad()"
+                  [isLoading]="isLoadingSesiones()"
+                  (verSesion)="verSesion($event)"
+                  (toggleComentarios)="toggleComentarios($event)"
+                  (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
+                />
+              </div>
+              <aside class="pd2-col pd2-col--side">
+                <app-pd-active-plan-card
+                  [plan]="planActivo()"
+                  (verPlan)="verPlan($event)"
+                  (crearPlan)="crearPlan()"
+                />
+                <app-pd-plans-list
+                  [planes]="planes()"
+                  [isLoading]="isLoadingPlanes()"
+                  (verPlan)="verPlan($event)"
+                  (crearPlan)="crearPlan()"
+                />
+                <app-pd-comments
+                  [comentarios]="comentarios()"
+                  [comentariosPendientes]="comentariosPendientes()"
+                  [isLoading]="isLoadingComentarios()"
+                  (irASesion)="irASesionComentario($event)"
+                  (marcarRevisado)="marcarComentarioRevisado($event)"
+                  (marcarTodosRevisados)="marcarTodosRevisados()"
+                />
+              </aside>
+            </div>
+          } @else {
+            <ui2-collapsible title="Plan activo" [defaultOpen]="true">
+              <app-pd-active-plan-card
+                [plan]="planActivo()"
+                [bare]="true"
+                (verPlan)="verPlan($event)"
+                (crearPlan)="crearPlan()"
+              />
+            </ui2-collapsible>
+
+            <ui2-collapsible title="Adherencia semanal" [defaultOpen]="true">
+              <app-pd-weekly-bars-card
+                [weeks]="estadisticas()?.adherenciaSemanal ?? []"
+                [rangoLabel]="rangoLabel"
+                [bare]="true"
+              />
+            </ui2-collapsible>
+
+            <ui2-collapsible
+              title="Actividad"
+              [count]="sesiones().length"
+              [defaultOpen]="false"
+            >
+              <app-pd-activity-timeline
+                [sesiones]="sesionesVisibles()"
+                [notificacionesPorRegistro]="notificacionesPorRegistro()"
+                [fechaExpandida]="sesionExpandida()"
+                [totalSesiones]="sesiones().length"
+                [rangoLabel]="rangoLabel"
+                [diasProgramados]="diasProgramados()"
+                [diasSinActividad]="diasSinActividad()"
+                [isLoading]="isLoadingSesiones()"
+                [bare]="true"
+                (verSesion)="verSesion($event)"
+                (toggleComentarios)="toggleComentarios($event)"
+                (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
+              />
+            </ui2-collapsible>
+
+            <ui2-collapsible
+              title="Planes asignados"
+              [count]="planes().length"
+              [defaultOpen]="false"
+            >
+              <app-pd-plans-list
+                [planes]="planes()"
+                [isLoading]="isLoadingPlanes()"
+                [bare]="true"
+                (verPlan)="verPlan($event)"
+                (crearPlan)="crearPlan()"
+              />
+            </ui2-collapsible>
+
+            <ui2-collapsible
+              title="Comentarios"
+              [count]="comentariosPendientes() || null"
+              [defaultOpen]="false"
+            >
+              <app-pd-comments
+                [comentarios]="comentarios()"
+                [comentariosPendientes]="comentariosPendientes()"
+                [isLoading]="isLoadingComentarios()"
+                [bare]="true"
+                (irASesion)="irASesionComentario($event)"
+                (marcarRevisado)="marcarComentarioRevisado($event)"
+                (marcarTodosRevisados)="marcarTodosRevisados()"
+              />
+            </ui2-collapsible>
+
+            <ui2-collapsible title="Datos del paciente" [defaultOpen]="false">
+              <app-pd-paciente-data
+                [paciente]="paciente()"
+                [meta]="dataMeta()"
+              />
+            </ui2-collapsible>
+          }
+        }
+      </main>
+    </section>
+  `,
+  styles: [
+    `
+      :host {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        overflow: hidden;
+      }
+      .pd2-page {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .pd2-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        background: rgba(250, 247, 242, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      }
+      .pd2-topbar__title {
+        flex: 1;
+        font-family: KengoDisplay, kengoFont, sans-serif;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--ink-900);
+        margin: 0;
+        text-align: center;
+      }
+      .pd2-topbar__action {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: 1px solid var(--ink-100);
+        background: white;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+      }
+      .pd2-topbar__action:hover { background: var(--cream-50); }
+      .pd2-topbar__action .material-symbols-outlined {
+        font-size: 20px;
+        color: var(--ink-700);
+      }
+
+      .pd2-main {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 1280px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .pd2-main--mobile {
+        padding: 16px 16px 32px;
+        gap: 12px;
+      }
+
+      .pd2-state {
+        display: grid;
+        place-items: center;
+        gap: 12px;
+        padding: 48px 16px;
+      }
+      .pd2-state p {
+        font-size: 13px;
+        color: var(--ink-500);
+        margin: 0;
+      }
+
+      .pd2-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        gap: 24px;
+        align-items: flex-start;
+      }
+      .pd2-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+      }
+      .pd2-col--side {
+        position: sticky;
+        top: 16px;
+        align-self: flex-start;
+      }
+    `,
+  ],
 })
 export class PacienteDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -88,7 +400,6 @@ export class PacienteDetailComponent implements OnInit {
   private toast = inject(ToastService);
   private convex = inject(ConvexService);
 
-  // Responsive: < 768px se considera móvil (KENGO_BREAKPOINTS.MOBILE).
   private readonly responsive = useResponsive();
   readonly isMovil = this.responsive.esMobile;
 
@@ -97,335 +408,36 @@ export class PacienteDetailComponent implements OnInit {
   readonly planes = signal<Plan[]>([]);
   readonly sesiones = signal<SesionAgrupada[]>([]);
   readonly estadisticas = signal<EstadisticasPaciente | null>(null);
+  readonly trend = signal<{ adherence: number | null; pain: number | null }>({
+    adherence: null,
+    pain: null,
+  });
 
-  // Loading states
   readonly isLoadingPaciente = signal(true);
   readonly isLoadingPlanes = signal(true);
   readonly isLoadingSesiones = signal(true);
   readonly isLoadingEstadisticas = signal(true);
-
-  // Comentarios del paciente (notificaciones)
-  readonly comentarios = signal<NotificacionFisio[]>([]);
-  readonly comentariosPendientes = signal<number>(0);
   readonly isLoadingComentarios = signal(true);
 
-  // Fisio responsable
+  readonly comentarios = signal<NotificacionFisio[]>([]);
+  readonly comentariosPendientes = signal<number>(0);
+
   readonly fisioResponsableNombre = signal<string | null>(null);
-
-  // Estado del CTA "Enviar mensaje"
   readonly enviandoMensaje = signal(false);
-
-  // Error state
   readonly error = signal<string | null>(null);
-
-  // Comentarios expansion
   readonly sesionExpandida = signal<string | null>(null);
 
-  // Filtro de rango temporal
-  readonly filtroRango = signal<RangoFiltro>('15');
-  readonly filtroDesde = signal<string | null>(null);
-  readonly filtroHasta = signal<string | null>(null);
-  readonly filterPanelOpen = signal(false);
-  readonly hoy = getMadridDate();
+  readonly rangoLabel = `${RANGO_DIAS} días`;
 
-  // Computed
-  readonly idsClinicas = computed(() => {
-    return this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) || [];
-  });
-
-  readonly isCustomRange = computed(() => {
-    const r = this.filtroRango();
-    return r !== '15' && r !== 'todo';
-  });
-
-  readonly rangoLabel = computed(() => {
-    const rango = this.filtroRango();
-    if (rango === '15') return 'Últimos 15 días';
-    if (rango === '30') return 'Últimos 30 días';
-    if (rango === '60') return 'Últimos 60 días';
-    if (rango === '90') return 'Últimos 90 días';
-    if (rango === 'todo') return 'Todo el historial';
-    const desde = this.filtroDesde();
-    const hasta = this.filtroHasta();
-    if (desde && hasta) {
-      const formatShort = (s: string) => {
-        const d = new Date(s);
-        return `${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' })}`;
-      };
-      return `${formatShort(desde)} - ${formatShort(hasta)}`;
-    }
-    return 'Rango personalizado';
-  });
-
-  readonly sesionesVisibles = computed(() => {
-    const all = this.sesionesEnriquecidas();
-    return this.filtroRango() === '15' ? all.slice(0, 15) : all;
-  });
-
-  /**
-   * Re-evalúa `tieneObservacionSesion` reactivamente cada vez que
-   * cambian sesiones o comentarios. Esto asegura que el badge
-   * `act-has-comments` aparezca cuando llega la lista de notificaciones
-   * después de las sesiones (orden de carga no garantizado).
-   */
-  readonly sesionesEnriquecidas = computed(() =>
-    this.cumplimientoService.enriquecerSesionesConNotificaciones(
-      this.sesiones(),
-      this.comentarios(),
-    ),
+  // Computeds
+  readonly idsClinicas = computed(
+    () => this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) ?? [],
   );
-
-  /**
-   * Index `idRegistro -> NotificacionFisio` para que el subcomponente de
-   * actividad pueda decidir si mostrar el botón "marcar como leído" sin
-   * leer la lista global de comentarios.
-   */
-  readonly notificacionesPorRegistro = computed(() => {
-    const map: Record<string, NotificacionFisio> = {};
-    for (const n of this.comentarios()) {
-      if (n.id !== null && n.id !== undefined) {
-        map[String(n.id)] = n;
-      }
-    }
-    return map;
-  });
-
-  ngOnInit() {
-    const pacienteId = this.route.snapshot.params['id'];
-    if (pacienteId) {
-      this.cargarPaciente(pacienteId);
-      this.cargarPlanes(pacienteId);
-      this.cargarCumplimiento(pacienteId);
-      this.cargarComentarios(pacienteId);
-      this.cargarFisioResponsable(pacienteId);
-    } else {
-      this.router.navigate(['/mis-pacientes']);
-    }
-  }
-
-  // === Carga de datos ===
-
-  private async cargarPaciente(id: string) {
-    this.isLoadingPaciente.set(true);
-    this.error.set(null);
-
-    try {
-      const data = await this.convex.query(api.users.queries.getById, {
-        userId: id as any,
-      });
-
-      if (data) {
-        const usuario = this.sessionService.transformarUsuarioConvex(data);
-        this.paciente.set(usuario);
-      } else {
-        this.error.set('Paciente no encontrado');
-        this.router.navigate(['/mis-pacientes']);
-      }
-    } catch (err) {
-      console.error('Error cargando paciente:', err);
-      this.error.set('Error al cargar el paciente');
-    } finally {
-      this.isLoadingPaciente.set(false);
-    }
-  }
-
-  private async cargarPlanes(pacienteId: string) {
-    this.isLoadingPlanes.set(true);
-
-    try {
-      const planes = await this.planesService.getPlanesByPaciente(pacienteId);
-
-      // Corregir estado de planes expirados localmente. `plan.fechaFin` es
-      // YYYY-MM-DD calendario Madrid → comparación lexicográfica equivalente
-      // a la calendario.
-      const hoyYMD = getMadridDate();
-      const planesCorregidos = planes.map(plan => {
-        if (
-          plan.estado === 'activo' &&
-          plan.fechaFin &&
-          plan.fechaFin < hoyYMD
-        ) {
-          return { ...plan, estado: 'completado' as const };
-        }
-        return plan;
-      });
-
-      this.planes.set(planesCorregidos);
-    } catch (err) {
-      console.error('Error cargando planes:', err);
-    } finally {
-      this.isLoadingPlanes.set(false);
-    }
-  }
-
-  private async cargarCumplimiento(pacienteId: string, desde?: string, hasta?: string) {
-    this.isLoadingSesiones.set(true);
-    this.isLoadingEstadisticas.set(true);
-
-    try {
-      const cumplimiento = await this.cumplimientoService.getCumplimiento(pacienteId, desde, hasta);
-      const dias = cumplimiento.dias;
-
-      // Cargar registros desde Convex para días con actividad (para comentarios y drill-down)
-      const diasConActividad = dias.filter(d => d.tipo !== 'fallido' && d.tipo !== 'descanso');
-      const registros: RegistroEjercicioRecord[] =
-        diasConActividad.length > 0
-          ? await this.cargarRegistrosParaFechas(
-              pacienteId,
-              diasConActividad.map((d) => d.fecha),
-            )
-          : [];
-
-      const sesiones = this.cumplimientoService.buildSesionesAgrupadas(
-        dias,
-        registros,
-        this.comentarios(),
-      );
-      this.sesiones.set(sesiones);
-      this.estadisticas.set(
-        this.cumplimientoService.buildEstadisticas(
-          dias,
-          sesiones,
-          cumplimiento.resumen,
-        ),
-      );
-    } catch (err) {
-      console.error('Error cargando cumplimiento:', err);
-    } finally {
-      this.isLoadingSesiones.set(false);
-      this.isLoadingEstadisticas.set(false);
-    }
-  }
-
-  private async cargarRegistrosParaFechas(
-    pacienteId: string,
-    fechas: string[],
-  ): Promise<RegistroEjercicioRecord[]> {
-    // Determinar rango de fechas para filtrar
-    const sortedFechas = [...fechas].sort();
-    const desde = sortedFechas[0];
-    const hasta = sortedFechas[sortedFechas.length - 1];
-
-    // Modelo nuevo (Fase 3 rediseño records): lectura desde `exerciseExecutions`.
-    // Sin paginationOpts → devuelve array (no PaginationResult).
-    const records = (await this.convex.query(
-      api.executions.queries.listByPacienteInRange,
-      {
-        pacienteId,
-        desde,
-        hasta,
-        soloCompletados: true,
-      },
-    )) as Array<{
-      _id: string;
-      planExerciseId: string;
-      pacienteId: string;
-      fechaHora: string;
-      completado: boolean;
-      repeticionesRealizadas?: number;
-      duracionRealSeg?: number;
-      dolorEscala?: number;
-      notaPaciente?: string;
-    }>;
-
-    return (records ?? []).map((r) => ({
-      id: r._id,
-      planItemId: r.planExerciseId,
-      pacienteId: r.pacienteId,
-      fechaHora: r.fechaHora,
-      completado: r.completado,
-      repeticionesRealizadas: r.repeticionesRealizadas,
-      duracionRealSeg: r.duracionRealSeg,
-      dolorEscala: r.dolorEscala,
-      notaPaciente: r.notaPaciente,
-    }));
-  }
-
-  // === Comentarios del paciente ===
-
-  private async cargarComentarios(pacienteId: string) {
-    this.isLoadingComentarios.set(true);
-    try {
-      const response = await this.comentariosService.getComentarios(pacienteId);
-      this.comentarios.set(response.comentarios);
-      this.comentariosPendientes.set(response.pendientes);
-    } catch (err) {
-      console.error('Error cargando comentarios:', err);
-    } finally {
-      this.isLoadingComentarios.set(false);
-    }
-  }
-
-  private cargarFisioResponsable(pacienteId: string) {
-    const clinicaIds = this.idsClinicas();
-    if (!clinicaIds || clinicaIds.length === 0) return;
-
-    this.asignacionesService
-      .getFisioResponsable(pacienteId, String(clinicaIds[0]))
-      .subscribe({
-        next: (asignacion) => {
-          if (asignacion) {
-            const fn = (asignacion.nombreFisio || '').trim();
-            const ln = (asignacion.apellidoFisio || '').trim();
-            this.fisioResponsableNombre.set(
-              fn || ln ? `${fn} ${ln}`.trim() : null
-            );
-          }
-        },
-        error: () => {},
-      });
-  }
-
-  async marcarComentarioRevisado(comentario: NotificacionFisio) {
-    if (comentario.revisada) return;
-
-    // Optimistic update
-    this.comentarios.update(list =>
-      list.map(c => c.id === comentario.id ? { ...c, revisada: true, fechaRevision: new Date().toISOString() } : c)
-    );
-    this.comentariosPendientes.update(n => Math.max(0, n - 1));
-
-    try {
-      await this.comentariosService.marcarRevisada(comentario.id);
-    } catch (err) {
-      console.error('Error marcando comentario como revisado:', err);
-      // Revert on error
-      this.comentarios.update(list =>
-        list.map(c => c.id === comentario.id ? { ...c, revisada: false, fechaRevision: null } : c)
-      );
-      this.comentariosPendientes.update(n => n + 1);
-    }
-  }
-
-  async marcarTodosRevisados() {
-    const pacienteId = this.route.snapshot.params['id'];
-    if (!pacienteId) return;
-
-    const prevComentarios = this.comentarios();
-    const prevPendientes = this.comentariosPendientes();
-
-    // Optimistic update
-    this.comentarios.update(list =>
-      list.map(c => ({ ...c, revisada: true, fechaRevision: c.fechaRevision || new Date().toISOString() }))
-    );
-    this.comentariosPendientes.set(0);
-
-    try {
-      await this.comentariosService.marcarTodasRevisadas(pacienteId);
-    } catch (err) {
-      console.error('Error marcando todos como revisados:', err);
-      // Revert
-      this.comentarios.set(prevComentarios);
-      this.comentariosPendientes.set(prevPendientes);
-    }
-  }
-
-  // === Computed de presentación del paciente (consumidos por hero-card) ===
 
   readonly avatarUrl = computed<string | null>(() => {
     const p = this.paciente();
     if (!p?.avatar) return null;
-    return `${assetUrl(p.avatar, { fit: 'cover', width: 128, height: 128, quality: 80 })}`;
+    return assetUrl(p.avatar, { fit: 'cover', width: 128, height: 128, quality: 80 });
   });
 
   readonly fullName = computed<string>(() => {
@@ -440,126 +452,357 @@ export class PacienteDetailComponent implements OnInit {
     const p = this.paciente();
     if (!p?.clinicas || p.clinicas.length === 0) return null;
     const clinicId = p.clinicas[0].clinicId;
-    const clinica = this.clinicasService
-      .misClinicasRes
+    const clinica = this.clinicasService.misClinicasRes
       .value()
       ?.find((c) => c.id === clinicId);
     return clinica?.nombre ?? null;
   });
 
+  readonly heroMeta = computed<PdHeroMeta>(() => ({
+    fisio: this.fisioResponsableNombre(),
+    clinica: this.clinicaNombre(),
+  }));
+
+  readonly dataMeta = computed<PdPacienteMeta>(() => ({
+    fisio: this.fisioResponsableNombre(),
+    clinica: this.clinicaNombre(),
+  }));
+
+  readonly diasUltimaActividad = computed<number | null>(
+    () => this.estadisticas()?.diasDesdeUltimaSesion ?? null,
+  );
+
+  readonly planActivo = computed<Plan | null>(
+    () => this.planes().find((p) => p.estado === 'activo') ?? null,
+  );
+
+  readonly sesionesEnriquecidas = computed(() =>
+    this.cumplimientoService.enriquecerSesionesConNotificaciones(
+      this.sesiones(),
+      this.comentarios(),
+    ),
+  );
+
+  readonly sesionesVisibles = computed(() => this.sesionesEnriquecidas().slice(0, 15));
+
+  readonly notificacionesPorRegistro = computed(() => {
+    const map: Record<string, NotificacionFisio> = {};
+    for (const n of this.comentarios()) {
+      if (n.id != null) map[String(n.id)] = n;
+    }
+    return map;
+  });
+
+  readonly kpisVm = computed<PdKpiVm[]>(() => {
+    const stats = this.estadisticas();
+    const t = this.trend();
+    if (!stats) return [];
+    return [
+      {
+        label: 'Adherencia',
+        value: `${stats.adherenciaGeneral}`,
+        unit: '%',
+        ringValue: stats.adherenciaGeneral / 100,
+        trend: t.adherence,
+        trendSuffix: '%',
+      },
+      {
+        label: 'Sesiones',
+        value: `${stats.totalSesiones}`,
+        ringValue: Math.min(1, stats.totalSesiones / RANGO_DIAS),
+      },
+      {
+        label: 'Dolor',
+        value: stats.promedioDolorGeneral != null ? stats.promedioDolorGeneral.toFixed(1) : '–',
+        unit: stats.promedioDolorGeneral != null ? '/10' : '',
+        ringValue: stats.promedioDolorGeneral != null ? stats.promedioDolorGeneral / 10 : 0,
+        ringColor: this.painRingColor(stats.promedioDolorGeneral),
+        trend: t.pain,
+        trendInverse: true,
+        trendDecimals: 1,
+      },
+      {
+        label: 'Racha',
+        value: `${stats.rachaActual}`,
+        unit: stats.rachaActual === 1 ? 'día' : 'días',
+        ringValue: Math.min(1, stats.rachaActual / 30),
+        ringColor: stats.rachaActual > 0 ? '#f59e0b' : 'var(--ink-300)',
+      },
+    ];
+  });
+
+  ngOnInit(): void {
+    const pacienteId = this.route.snapshot.params['id'];
+    if (!pacienteId) {
+      this.router.navigate(['/mis-pacientes']);
+      return;
+    }
+    this.cargarPaciente(pacienteId);
+    this.cargarPlanes(pacienteId);
+    this.cargarCumplimiento(pacienteId);
+    this.cargarComentarios(pacienteId);
+    this.cargarFisioResponsable(pacienteId);
+  }
+
+  // === Carga de datos ===
+
+  private async cargarPaciente(id: string): Promise<void> {
+    this.isLoadingPaciente.set(true);
+    this.error.set(null);
+    try {
+      const data = await this.convex.query(api.users.queries.getById, {
+        userId: id as never,
+      });
+      if (data) {
+        this.paciente.set(this.sessionService.transformarUsuarioConvex(data));
+      } else {
+        this.error.set('Paciente no encontrado');
+        this.router.navigate(['/mis-pacientes']);
+      }
+    } catch (err) {
+      console.error('Error cargando paciente:', err);
+      this.error.set('Error al cargar el paciente');
+    } finally {
+      this.isLoadingPaciente.set(false);
+    }
+  }
+
+  private async cargarPlanes(pacienteId: string): Promise<void> {
+    this.isLoadingPlanes.set(true);
+    try {
+      const planes = await this.planesService.getPlanesByPaciente(pacienteId);
+      const hoyYMD = getMadridDate();
+      const corregidos = planes.map((plan) => {
+        if (
+          plan.estado === 'activo' &&
+          plan.fechaFin &&
+          plan.fechaFin < hoyYMD
+        ) {
+          return { ...plan, estado: 'completado' as const };
+        }
+        return plan;
+      });
+      this.planes.set(corregidos);
+    } catch (err) {
+      console.error('Error cargando planes:', err);
+    } finally {
+      this.isLoadingPlanes.set(false);
+    }
+  }
+
+  private async cargarCumplimiento(pacienteId: string): Promise<void> {
+    this.isLoadingSesiones.set(true);
+    this.isLoadingEstadisticas.set(true);
+
+    try {
+      const hasta = getMadridDate();
+      const desde = offsetMadridDate(-(RANGO_DIAS - 1));
+
+      const { actual, trend } =
+        await this.cumplimientoService.getCumplimientoConTendencia(
+          pacienteId,
+          desde,
+          hasta,
+        );
+
+      this.trend.set(trend);
+
+      const dias = actual.dias;
+      const diasConActividad = dias.filter(
+        (d) => d.tipo !== 'fallido' && d.tipo !== 'descanso',
+      );
+      const registros: RegistroEjercicioRecord[] =
+        diasConActividad.length > 0
+          ? await this.cargarRegistrosParaFechas(
+              pacienteId,
+              diasConActividad.map((d) => d.fecha),
+            )
+          : [];
+
+      const sesionesAg = this.cumplimientoService.buildSesionesAgrupadas(
+        dias,
+        registros,
+        this.comentarios(),
+      );
+      // Sesiones más recientes primero.
+      this.sesiones.set([...sesionesAg].reverse());
+      this.estadisticas.set(
+        this.cumplimientoService.buildEstadisticas(dias, sesionesAg, actual.resumen),
+      );
+    } catch (err) {
+      console.error('Error cargando cumplimiento:', err);
+    } finally {
+      this.isLoadingSesiones.set(false);
+      this.isLoadingEstadisticas.set(false);
+    }
+  }
+
+  private async cargarRegistrosParaFechas(
+    pacienteId: string,
+    fechas: string[],
+  ): Promise<RegistroEjercicioRecord[]> {
+    const sorted = [...fechas].sort();
+    const desde = sorted[0];
+    const hasta = sorted[sorted.length - 1];
+
+    const records = (await this.convex.query(
+      api.executions.queries.listByPacienteInRange,
+      { pacienteId, desde, hasta, soloCompletados: true },
+    )) as ConvexExecutionRecord[];
+
+    return (records ?? []).map((r) => ({
+      id: r._id,
+      planItemId: r.planExerciseId,
+      pacienteId: r.pacienteId,
+      fechaHora: r.fechaHora,
+      completado: r.completado,
+      repeticionesRealizadas: r.repeticionesRealizadas,
+      duracionRealSeg: r.duracionRealSeg,
+      dolorEscala: r.dolorEscala,
+      notaPaciente: r.notaPaciente,
+    }));
+  }
+
+  private async cargarComentarios(pacienteId: string): Promise<void> {
+    this.isLoadingComentarios.set(true);
+    try {
+      const response = await this.comentariosService.getComentarios(pacienteId);
+      this.comentarios.set(response.comentarios);
+      this.comentariosPendientes.set(response.pendientes);
+    } catch (err) {
+      console.error('Error cargando comentarios:', err);
+    } finally {
+      this.isLoadingComentarios.set(false);
+    }
+  }
+
+  private cargarFisioResponsable(pacienteId: string): void {
+    const clinicas = this.idsClinicas();
+    if (!clinicas.length) return;
+    this.asignacionesService
+      .getFisioResponsable(pacienteId, String(clinicas[0]))
+      .subscribe({
+        next: (asignacion) => {
+          if (asignacion) {
+            const fn = (asignacion.nombreFisio ?? '').trim();
+            const ln = (asignacion.apellidoFisio ?? '').trim();
+            this.fisioResponsableNombre.set(
+              fn || ln ? `${fn} ${ln}`.trim() : null,
+            );
+          }
+        },
+        error: () => undefined,
+      });
+  }
+
+  // === Comentarios ===
+
+  async marcarComentarioRevisado(comentario: NotificacionFisio): Promise<void> {
+    if (comentario.revisada) return;
+    this.comentarios.update((list) =>
+      list.map((c) =>
+        c.id === comentario.id
+          ? { ...c, revisada: true, fechaRevision: new Date().toISOString() }
+          : c,
+      ),
+    );
+    this.comentariosPendientes.update((n) => Math.max(0, n - 1));
+    try {
+      await this.comentariosService.marcarRevisada(comentario.id);
+    } catch (err) {
+      console.error('Error marcando comentario:', err);
+      this.comentarios.update((list) =>
+        list.map((c) =>
+          c.id === comentario.id
+            ? { ...c, revisada: false, fechaRevision: null }
+            : c,
+        ),
+      );
+      this.comentariosPendientes.update((n) => n + 1);
+    }
+  }
+
+  async marcarTodosRevisados(): Promise<void> {
+    const pacienteId = this.route.snapshot.params['id'];
+    if (!pacienteId) return;
+    const prevComentarios = this.comentarios();
+    const prevPendientes = this.comentariosPendientes();
+    this.comentarios.update((list) =>
+      list.map((c) => ({
+        ...c,
+        revisada: true,
+        fechaRevision: c.fechaRevision || new Date().toISOString(),
+      })),
+    );
+    this.comentariosPendientes.set(0);
+    try {
+      await this.comentariosService.marcarTodasRevisadas(pacienteId);
+    } catch (err) {
+      console.error('Error marcando todos:', err);
+      this.comentarios.set(prevComentarios);
+      this.comentariosPendientes.set(prevPendientes);
+    }
+  }
+
+  // === Helpers UI ===
+
   toggleComentarios(fecha: string): void {
-    this.sesionExpandida.update(current => current === fecha ? null : fecha);
+    this.sesionExpandida.update((c) => (c === fecha ? null : fecha));
   }
 
   diasSinActividad(): number {
-    return this.sesiones().filter(s => s.tipo === 'fallido').length;
+    return this.sesiones().filter((s) => s.tipo === 'fallido').length;
   }
 
   diasProgramados(): number {
-    return this.sesiones().filter(s => s.tipo !== 'descanso').length;
+    return this.sesiones().filter((s) => s.tipo !== 'descanso').length;
   }
 
-  aplicarFiltroRango(rango: '15' | '30' | '60' | '90' | 'todo' | 'custom') {
-    if (rango === 'custom') {
-      this.filtroRango.set('custom');
-      this.filterPanelOpen.set(true);
-      return;
-    }
-
-    this.filterPanelOpen.set(false);
-    this.filtroRango.set(rango);
-
-    const pacienteId = this.route.snapshot.params['id'];
-    if (!pacienteId) return;
-
-    if (rango === '15') {
-      // Default: let backend use its default 30d, we slice to 15
-      this.filtroDesde.set(null);
-      this.filtroHasta.set(null);
-      this.cargarCumplimiento(pacienteId);
-    } else if (rango === 'todo') {
-      const desdeStr = '2020-01-01';
-      const hastaStr = getMadridDate();
-      this.filtroDesde.set(desdeStr);
-      this.filtroHasta.set(hastaStr);
-      this.cargarCumplimiento(pacienteId, desdeStr, hastaStr);
-    } else {
-      const dias = parseInt(rango);
-      // Rango en días calendario Madrid (estable frente a DST).
-      const hastaStr = getMadridDate();
-      const desdeStr = offsetMadridDate(-dias);
-      this.filtroDesde.set(desdeStr);
-      this.filtroHasta.set(hastaStr);
-      this.cargarCumplimiento(pacienteId, desdeStr, hastaStr);
-    }
-  }
-
-  aplicarRangoPersonalizado() {
-    const desde = this.filtroDesde();
-    const hasta = this.filtroHasta();
-    if (!desde || !hasta || desde > hasta) return;
-
-    this.filterPanelOpen.set(false);
-    const pacienteId = this.route.snapshot.params['id'];
-    if (pacienteId) {
-      this.cargarCumplimiento(pacienteId, desde, hasta);
-    }
-  }
-
-  onDesdeChange(event: Event) {
-    this.filtroDesde.set((event.target as HTMLInputElement).value || null);
-  }
-
-  onHastaChange(event: Event) {
-    this.filtroHasta.set((event.target as HTMLInputElement).value || null);
-  }
-
-  resetearFiltro() {
-    this.aplicarFiltroRango('15');
+  private painRingColor(dolor: number | null): string {
+    if (dolor == null) return 'var(--ink-300)';
+    if (dolor <= 3) return '#16a34a';
+    if (dolor <= 6) return '#efc048';
+    return '#ef4444';
   }
 
   // === Acciones ===
 
-  volver() {
+  volver(): void {
     this.router.navigate(['/mis-pacientes']);
   }
 
-  editarPaciente() {
+  editarPaciente(): void {
     const p = this.paciente();
     if (!p) return;
-
     this.dialogService
       .open(AddPacienteDialogComponent, {
         maxWidth: '520px',
         data: { clinicIds: this.idsClinicas(), usuario: p },
       })
-      .closed
-      .subscribe((r: any) => {
-        if (r?.updated) {
+      .closed.subscribe((r: unknown) => {
+        if ((r as DialogClosedResult | undefined)?.updated) {
           this.cargarPaciente(p.id);
         }
       });
   }
 
-  gestionarAcceso() {
+  gestionarAcceso(): void {
     const p = this.paciente();
     if (!p) return;
-
     this.dialogService.open(GestionAccesoDialogComponent, {
       data: { paciente: p },
       maxWidth: '400px',
     });
   }
 
-  crearPlan() {
+  crearPlan(): void {
     const p = this.paciente();
-    if (p) {
-      this.planBuilderService.prepareForPaciente(p);
-      this.planBuilderService.navigateAndOpenDrawer();
-    }
+    if (!p) return;
+    this.planBuilderService.prepareForPaciente(p);
+    this.planBuilderService.navigateAndOpenDrawer();
   }
 
-  async onEnviarMensaje() {
+  async onEnviarMensaje(): Promise<void> {
     const p = this.paciente();
     if (!p?.id || this.enviandoMensaje()) return;
     this.enviandoMensaje.set(true);
@@ -569,34 +812,26 @@ export class PacienteDetailComponent implements OnInit {
       if (conversationId) {
         this.router.navigate(['/mensajes', conversationId]);
       } else {
-        this.toast.error(
-          'No se pudo iniciar la conversación con este paciente.',
-        );
+        this.toast.error('No se pudo iniciar la conversación con este paciente.');
       }
     } finally {
       this.enviandoMensaje.set(false);
     }
   }
 
-  verPlan(plan: Plan) {
+  verPlan(plan: Plan): void {
     this.router.navigate(['/planes', plan.id]);
   }
 
-  editarPlan(plan: Plan) {
-    this.router.navigate(['/planes', plan.id, 'editar']);
-  }
-
-  verSesion(sesion: SesionAgrupada) {
-    // No navegar para días sin actividad o de descanso
+  verSesion(sesion: SesionAgrupada): void {
     if (sesion.tipo === 'descanso') return;
     const pacienteId = this.route.snapshot.params['id'];
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', sesion.fecha]);
   }
 
-  irASesionComentario(comentario: NotificacionFisio) {
+  irASesionComentario(comentario: NotificacionFisio): void {
     const pacienteId = this.route.snapshot.params['id'];
     const fecha = comentario.fechaRegistro.split('T')[0];
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', fecha]);
   }
-
 }

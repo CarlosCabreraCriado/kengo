@@ -51,6 +51,13 @@ export type {
   Ui2ProgressBarMode,
   Ui2ProgressBarColor,
 } from './progress-bar/progress-bar.component';
+export { Ui2CollapsibleComponent } from './collapsible/collapsible.component';
+export { Ui2TrendComponent } from './trend/trend.component';
+export type { Ui2TrendSize } from './trend/trend.component';
+export { Ui2WeeklyBarsComponent } from './weekly-bars/weekly-bars.component';
+export type { Ui2WeeklyBar } from './weekly-bars/weekly-bars.component';
+export { Ui2InactivityBannerComponent } from './inactivity-banner/inactivity-banner.component';
+export type { Ui2InactivityBannerVariant } from './inactivity-banner/inactivity-banner.component';
 
 // --- Diálogos ---
 export {
