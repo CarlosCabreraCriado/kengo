@@ -16,6 +16,7 @@ import { ConvexService } from '../../../../core/convex/convex.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { ConfirmDialogComponent } from '../../../../shared';
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
+import { PricingCardsComponent } from '../../components/pricing-cards/pricing-cards.component';
 import {
   Ui2BackButtonComponent,
   Ui2ButtonComponent,
@@ -74,6 +75,7 @@ const INVOICE_ESTADO_VM: Record<InvoiceEstado, InvoiceEstadoVm> = {
     DatePipe,
     DecimalPipe,
     UpperCasePipe,
+    PricingCardsComponent,
     Ui2BackButtonComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
@@ -85,6 +87,7 @@ const INVOICE_ESTADO_VM: Record<InvoiceEstado, InvoiceEstadoVm> = {
     Ui2SpinnerComponent,
   ],
   templateUrl: './suscripcion.component.html',
+  styleUrl: './suscripcion.component.css',
   host: { class: 'block w-full' },
 })
 export class SuscripcionComponent {
@@ -144,11 +147,6 @@ export class SuscripcionComponent {
     if (idx < 0 || idx === todos.length - 1) return null;
     return todos[idx + 1];
   });
-
-  protected esPlanActual(plan: PlanInfo): boolean {
-    const actual = this.planActual();
-    return !!actual && actual.nombre === plan.nombre;
-  }
 
   protected readonly facturas = signal<InvoiceItem[]>([]);
   protected readonly facturasError = signal<string | null>(null);

@@ -66,40 +66,47 @@
     ></ui2-empty-state>
   } @else if (suscripcion()) {
     <!-- Estado actual -->
-    <ui2-card variant="tinted" class="block">
-      <div class="p-1 flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-3 flex-wrap">
-          <ui2-pill [variant]="estadoVm().variant" size="md" [icon]="estadoVm().icon">
-            @if (suscripcion()!.estado === 'trialing' && diasRestantesTrial() > 0) {
-              Trial · {{ diasRestantesTrial() }} días
-            } @else {
-              {{ estadoVm().texto }}
-            }
-          </ui2-pill>
-          @if (cancelaAlFinDelPeriodo() && suscripcion()!.currentPeriodEnd) {
-            <span class="text-xs text-ink-500">
-              Se cancelará el {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
-            </span>
+    <section class="plan-hero" [class.plan-hero--blocked]="bloqueada()">
+      <span class="plan-hero__halo" aria-hidden="true"></span>
+      <span class="plan-hero__deco" aria-hidden="true"></span>
+
+      <div class="plan-hero__top">
+        <p class="plan-hero__overline">Tu plan actual</p>
+        <ui2-pill [variant]="estadoVm().variant" size="md" [icon]="estadoVm().icon">
+          @if (suscripcion()!.estado === 'trialing' && diasRestantesTrial() > 0) {
+            Trial · {{ diasRestantesTrial() }} días
+          } @else {
+            {{ estadoVm().texto }}
           }
+        </ui2-pill>
+      </div>
+
+      @if (planActual(); as plan) {
+        <div class="plan-hero__name-row">
+          <h2 class="plan-hero__name">{{ plan.nombre }}</h2>
+          <p class="plan-hero__price">
+            <span class="plan-hero__currency">€</span>
+            <span class="plan-hero__amount">{{ plan.precioMensualEur | number:'1.0-0' }}</span>
+            <span class="plan-hero__period">/mes</span>
+          </p>
         </div>
 
-        @if (planActual(); as plan) {
-          <div>
-            <p class="text-xs uppercase tracking-wider text-ink-500 font-semibold">Plan actual</p>
-            <p class="text-xl text-ink-900 font-display mt-1">
-              {{ plan.nombre }} · {{ plan.precioMensualEur | number:'1.0-0' }} €/mes
-            </p>
-          </div>
+        @if (cancelaAlFinDelPeriodo() && suscripcion()!.currentPeriodEnd) {
+          <p class="plan-hero__cancel-note">
+            <span class="material-symbols-outlined" aria-hidden="true">event_busy</span>
+            Se cancelará el {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
+          </p>
+        }
 
-          <!-- Indicador de uso de fisios (capacidad del tier actual) -->
-          <div class="flex flex-col gap-2 pt-2 border-t border-ink-100">
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-xs uppercase tracking-wider text-ink-500 font-semibold">
-                Fisios usados
-              </p>
-              <p class="text-sm font-semibold text-ink-900 tabular-nums">
-                {{ fisiosActuales() }} / {{ plan.rangoFisiosMax }}
-              </p>
+        <div class="plan-hero__divider" aria-hidden="true"></div>
+
+        <div class="plan-hero__stats">
+          <div class="stat">
+            <div class="stat__head">
+              <span class="stat__label">Fisios usados</span>
+              <span class="stat__value">
+                {{ fisiosActuales() }}<em> / {{ plan.rangoFisiosMax }}</em>
+              </span>
             </div>
             <ui2-progress-bar
               [value]="progresoFisios()"
@@ -107,30 +114,35 @@
               [color]="tierLleno() ? 'warning' : 'success'"
             ></ui2-progress-bar>
             @if (tierLleno() && siguientePlan(); as siguiente) {
-              <p class="text-xs text-ink-500 mt-1">
+              <p class="stat__hint">
                 +1 fisio más → {{ siguiente.nombre }} ({{ siguiente.precioMensualEur | number:'1.0-0' }} €/mes)
               </p>
             }
           </div>
-        }
 
-        @if (suscripcion()!.currentPeriodEnd && !cancelaAlFinDelPeriodo()) {
-          <div class="pt-2 border-t border-ink-100">
-            <p class="text-xs uppercase tracking-wider text-ink-500 font-semibold">Próximo cargo</p>
-            <p class="text-base text-ink-900 mt-1">
-              {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
-            </p>
-          </div>
-        }
+          @if (suscripcion()!.currentPeriodEnd && !cancelaAlFinDelPeriodo()) {
+            <div class="stat stat--billing">
+              <span class="stat__label">Próximo cargo</span>
+              <span class="stat__date">
+                <span class="material-symbols-outlined" aria-hidden="true">event</span>
+                {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="plan-hero__empty">
+          Activa tu suscripción para empezar a gestionar pacientes.
+        </p>
+      }
 
-        @if (bloqueada()) {
-          <div class="rounded-lg bg-danger/10 text-danger px-3 py-2 text-sm flex items-center gap-2">
-            <span class="material-symbols-outlined text-base" aria-hidden="true">lock</span>
-            Suscripción suspendida. Actualiza tu método de pago para continuar.
-          </div>
-        }
-      </div>
-    </ui2-card>
+      @if (bloqueada()) {
+        <div class="plan-hero__lock">
+          <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+          <span>Suscripción suspendida. Actualiza tu método de pago para continuar.</span>
+        </div>
+      }
+    </section>
 
     <!-- Acción principal -->
     @if (!requiereContactoVentas()) {
@@ -167,37 +179,14 @@
       ></ui2-empty-state>
     }
 
-    <!-- Tabla de planes -->
+    <!-- Pricing cards -->
     <section class="flex flex-col gap-2">
       <ui2-section-label>Planes disponibles</ui2-section-label>
-      <ui2-card>
-        @for (plan of planes(); track plan.nombre; let isFirst = $first) {
-          <ui2-list-row
-            icon="workspace_premium"
-            [iconColor]="esPlanActual(plan) ? 'var(--kengo-primary)' : 'var(--ink-500)'"
-            [title]="plan.nombre"
-            [subtitle]="(plan.precioMensualEur | number:'1.0-0') + ' €/mes · hasta ' + plan.rangoFisiosMax + ' fisio' + (plan.rangoFisiosMax === 1 ? '' : 's')"
-            [isFirst]="isFirst"
-          >
-            @if (esPlanActual(plan)) {
-              <ui2-pill variant="primary" size="sm" icon="check">Plan actual</ui2-pill>
-            }
-          </ui2-list-row>
-        }
-        <div class="border-t border-black/5">
-          <ui2-list-row
-            icon="contact_support"
-            iconColor="var(--ink-500)"
-            title="+10 fisios"
-            subtitle="Plan a medida — contacta con ventas"
-            [isFirst]="false"
-            [rowClickable]="true"
-            (rowClick)="abrirDialogContactarVentas()"
-          >
-            <span class="material-symbols-outlined text-ink-400" aria-hidden="true">arrow_forward</span>
-          </ui2-list-row>
-        </div>
-      </ui2-card>
+      <app-pricing-cards
+        [planes]="planes()"
+        [planActualNombre]="planActual()?.nombre ?? null"
+        (contactarVentas)="abrirDialogContactarVentas()"
+      ></app-pricing-cards>
     </section>
 
     <!-- Histórico de facturas -->
