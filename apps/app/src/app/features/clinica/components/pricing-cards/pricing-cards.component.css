@@ -1,0 +1,347 @@
+:host {
+  display: block;
+}
+
+/* ─────────────────────────  GRID  ───────────────────────── */
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  /* deja aire para el pill flotante "Más popular" (translateY -12px) */
+  padding-top: 14px;
+}
+
+@media (min-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+}
+
+/* ─────────────────────────  CARD  ───────────────────────── */
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px 24px;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  isolation: isolate;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: card-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(60ms + var(--card-index, 0) * 70ms);
+  transition:
+    transform 280ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes card-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (hover: hover) {
+  .pricing-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-strong);
+  }
+}
+
+/* ─────────────────────  CARD: POPULAR  ───────────────────── */
+
+.pricing-card.is-popular {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--kengo-primary) 12%, transparent) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      165deg,
+      #ffffff 0%,
+      #fff5ee 55%,
+      color-mix(in srgb, var(--kengo-primary) 8%, #fff5ee) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--kengo-primary) 22%, transparent);
+  box-shadow:
+    0 18px 40px -12px color-mix(in srgb, var(--kengo-primary) 38%, transparent),
+    0 4px 12px -4px rgba(0, 0, 0, 0.06);
+}
+
+@media (hover: hover) {
+  .pricing-card.is-popular:hover {
+    transform: translateY(-5px);
+    box-shadow:
+      0 26px 52px -14px color-mix(in srgb, var(--kengo-primary) 45%, transparent),
+      0 6px 16px -4px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* dot pattern decorativo top-right */
+.pricing-card__deco {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 44px;
+  height: 28px;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--kengo-primary) 35%, transparent) 1.6px,
+    transparent 2px
+  );
+  background-size: 11px 11px;
+  background-position: 0 0;
+  transform: rotate(-8deg);
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─────────────────────  CARD: PLAN ACTUAL  ───────────────────── */
+
+.pricing-card.is-current {
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--success) 20%, transparent),
+    var(--shadow-card-strong);
+}
+
+.pricing-card.is-current.is-popular {
+  /* mantener calidez coral pero anclar el ring success */
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--success) 22%, transparent),
+    0 18px 40px -12px color-mix(in srgb, var(--kengo-primary) 32%, transparent),
+    0 4px 12px -4px rgba(0, 0, 0, 0.06);
+}
+
+/* ─────────────────────  BADGE ROW  ───────────────────── */
+
+.pricing-card__badge-row {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: 22px;
+  margin-bottom: 6px;
+}
+
+.pricing-card__pill-popular {
+  /* glow pulse sutil sobre el shadow coral del ui2-pill primary */
+  animation: pill-glow 3.2s ease-in-out infinite;
+  border-radius: 9999px;
+}
+
+@keyframes pill-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(
+      0 4px 10px color-mix(in srgb, var(--kengo-primary) 45%, transparent)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-card { animation: none; opacity: 1; transform: none; }
+  .pricing-card__pill-popular { animation: none; }
+}
+
+/* ─────────────────────  HEAD  ───────────────────── */
+
+.pricing-card__head {
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-card__overline {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--ink-400);
+  margin: 0;
+}
+
+.pricing-card__name {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink-900);
+  margin: 6px 0 0;
+}
+
+@media (min-width: 768px) {
+  .pricing-card__name { font-size: 22px; }
+}
+
+/* ─────────────────────  PRICE  ───────────────────── */
+
+.pricing-card__price {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 28px;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  color: var(--ink-900);
+  line-height: 0.95;
+}
+
+.pricing-card__currency {
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink-700);
+  align-self: flex-start;
+  margin-top: 6px;
+  letter-spacing: -0.5px;
+}
+
+.pricing-card__amount {
+  font-size: 52px;
+  font-weight: 400;
+  letter-spacing: -2px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.pricing-card__period {
+  font-family: Galvji, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-500);
+  letter-spacing: 0.1px;
+  margin-left: 2px;
+}
+
+@media (min-width: 768px) {
+  .pricing-card__amount { font-size: 60px; }
+  .pricing-card__currency { font-size: 24px; margin-top: 8px; }
+  .pricing-card__period { font-size: 14px; }
+}
+
+/* ─────────────────────  HAIRLINE  ───────────────────── */
+
+.pricing-card__hairline {
+  position: relative;
+  z-index: 1;
+  height: 1px;
+  margin: 24px -4px 0;
+  background: var(--ink-100);
+}
+
+.pricing-card.is-popular .pricing-card__hairline {
+  background: color-mix(in srgb, var(--kengo-primary) 18%, transparent);
+}
+
+/* ─────────────────────  FEATURES  ───────────────────── */
+
+.pricing-card__features {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pricing-card__feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: Galvji, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-700);
+  line-height: 1.3;
+}
+
+.pricing-card__check {
+  font-size: 18px;
+  font-variation-settings: 'wght' 400;
+  color: var(--ink-700);
+  flex-shrink: 0;
+}
+
+.pricing-card.is-popular .pricing-card__check {
+  color: var(--kengo-primary);
+}
+
+.pricing-card.is-current .pricing-card__check {
+  color: var(--success);
+}
+
+/* ─────────────────────  BANNER +10  ───────────────────── */
+
+.pricing-banner {
+  margin-top: 14px;
+  border-radius: 22px;
+  background: var(--cream-100);
+  border: 1px dashed color-mix(in srgb, var(--ink-300) 65%, transparent);
+}
+
+.pricing-banner__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+.pricing-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pricing-banner__title {
+  margin: 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--ink-900);
+}
+
+.pricing-banner__subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+  line-height: 1.4;
+}
+
+.pricing-banner__action {
+  display: flex;
+}
+
+.pricing-banner__action :host ::ng-deep ui2-button,
+.pricing-banner__action ui2-button {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .pricing-banner__inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 22px;
+  }
+  .pricing-banner__title { font-size: 18px; }
+  .pricing-banner__action { flex-shrink: 0; }
+  .pricing-banner__action ui2-button { width: auto; }
+}
