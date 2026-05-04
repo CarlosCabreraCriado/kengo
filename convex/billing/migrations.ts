@@ -21,6 +21,18 @@ import { LIMITE_FISIOS_AUTOSERVICIO } from "./_helpers";
 const TRIAL_DAYS_MIGRATION = 30;
 const APP_URL_FALLBACK = "https://kengoapp.com";
 
+function parseAppUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return APP_URL_FALLBACK;
+    }
+    return url.origin;
+  } catch {
+    return APP_URL_FALLBACK;
+  }
+}
+
 /**
  * Vista previa sin efectos colaterales. Devuelve cuántas clínicas se
  * procesarían y cómo. Útil para verificar el alcance antes de ejecutar
@@ -78,7 +90,9 @@ export const migrateExistingClinics = internalMutation({
   },
   handler: async (ctx, { trialDaysOverride }) => {
     const trialDays = trialDaysOverride ?? TRIAL_DAYS_MIGRATION;
-    const appUrl = process.env["KENGO_APP_URL"] ?? APP_URL_FALLBACK;
+    const appUrl = parseAppUrl(
+      process.env["KENGO_APP_URL"] ?? APP_URL_FALLBACK,
+    );
     const portalUrl = `${appUrl}/mi-clinica/suscripcion`;
 
     const clinics = await ctx.db.query("clinics").collect();

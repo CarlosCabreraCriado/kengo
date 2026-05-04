@@ -20,6 +20,48 @@ function getEnv(name: string): string {
   return value;
 }
 
+/**
+ * Devuelve `KENGO_APP_URL` normalizada al origin (sin path ni slash final).
+ * Lanza con mensaje accionable si la variable falta o no es una URL absoluta
+ * http(s); Stripe rechaza cualquier `success_url`/`cancel_url` que no parsee.
+ */
+function getAppUrl(): string {
+  const value = process.env["KENGO_APP_URL"];
+  if (!value) throw new Error("KENGO_APP_URL no configurada");
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(
+      `KENGO_APP_URL inválida: "${value}" — debe ser una URL absoluta http(s)://, sin comas ni espacios`,
+    );
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(
+      `KENGO_APP_URL inválida: "${value}" — protocolo "${parsed.protocol}" no soportado, usa http(s)://`,
+    );
+  }
+  return parsed.origin;
+}
+
+const APP_URL_FALLBACK = "https://kengoapp.com";
+
+/**
+ * Variante tolerante: si la variable es inválida cae al fallback en vez de
+ * abortar, para no perder envíos de email por una mala configuración. Loguea
+ * un warning para que la mala config siga siendo visible en los runs.
+ */
+function getAppUrlOrFallback(): string {
+  try {
+    return getAppUrl();
+  } catch (err) {
+    console.warn(
+      `[billing] KENGO_APP_URL inválida o ausente, usando fallback ${APP_URL_FALLBACK}: ${(err as Error).message}`,
+    );
+    return APP_URL_FALLBACK;
+  }
+}
+
 async function requireExternalId(ctx: {
   auth: { getUserIdentity: () => Promise<{ subject: string } | null> };
 }): Promise<string> {
@@ -146,7 +188,7 @@ export const createCheckoutSession = action({
       customerId = created.customerId;
     }
 
-    const appUrl = getEnv("KENGO_APP_URL");
+    const appUrl = getAppUrl();
     const isNative = returnTo === "native";
     const successUrl = isNative
       ? `${appUrl}/billing-return.html?status=success`
@@ -199,7 +241,7 @@ export const createCustomerPortalSession = action({
       throw new Error("La clínica aún no tiene customer en Stripe");
     }
 
-    const appUrl = getEnv("KENGO_APP_URL");
+    const appUrl = getAppUrl();
     const returnUrl =
       returnTo === "native"
         ? `${appUrl}/billing-return.html?status=portal`
@@ -310,7 +352,7 @@ export const notifyTrialEnding = internalAction({
     );
     const diasRestantes = diasHasta(billing?.trialEnd);
 
-    const appUrl = process.env["KENGO_APP_URL"] ?? "https://kengoapp.com";
+    const appUrl = getAppUrlOrFallback();
     await ctx.runAction(internal.email.actions.sendTrialEndingEmail, {
       to: data.owner.email,
       nombreAdmin: data.owner.name,
@@ -334,7 +376,7 @@ export const notifyPaymentFailed = internalAction({
     );
     if (!data.owner) return;
 
-    const appUrl = process.env["KENGO_APP_URL"] ?? "https://kengoapp.com";
+    const appUrl = getAppUrlOrFallback();
     await ctx.runAction(internal.email.actions.sendPaymentFailedEmail, {
       to: data.owner.email,
       nombreAdmin: data.owner.name,
