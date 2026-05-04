@@ -13,6 +13,10 @@ import { api } from '../../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../../convex/_generated/dataModel';
 import { SesionPersistenceService } from './sesion-persistence.service';
 import { SesionTemporizadorService } from './sesion-temporizador.service';
+import {
+  getMadridDate,
+  getMadridDiaSemana,
+} from '../../../shared/utils/madrid-date.util';
 
 import {
   PlanCompleto,
@@ -22,7 +26,6 @@ import {
   FeedbackEjercicio,
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
-  DiaSemana,
 } from '../../../../types/global';
 
 interface PendingExecutionPayload {
@@ -428,7 +431,7 @@ export class SesionStateService {
       : ejercicio.id;
 
     const fechaHora = new Date().toISOString();
-    const fecha = fechaHora.split('T')[0]!;
+    const fecha = getMadridDate();
 
     let planExerciseId: Id<'planExercises'>;
     try {
@@ -666,7 +669,7 @@ export class SesionStateService {
    */
   private async consultarSesionHoy(): Promise<SesionRehidratable | null> {
     try {
-      const fecha = this.getMadridDate();
+      const fecha = getMadridDate();
       const sessions = await this.convex.query(
         api.sessions.queries.getByPacienteAndDateWithExecutions,
         { fecha },
@@ -706,7 +709,7 @@ export class SesionStateService {
    * `actividad`). Lee de `exerciseExecutions` directamente.
    */
   async obtenerRegistrosHoy(pacienteId: string): Promise<RegistroEjercicio[]> {
-    const hoy = new Date().toISOString().split('T')[0]!;
+    const hoy = getMadridDate();
 
     try {
       const convexUserId = this.resolveUserConvexId(pacienteId);
@@ -728,20 +731,8 @@ export class SesionStateService {
 
   // ========= Helpers =========
 
-  /**
-   * Fecha actual en zona horaria Europe/Madrid en formato YYYY-MM-DD.
-   * Imprescindible para emparejar con la `fecha` que el backend usa
-   * (`getCurrentMadridDate`).
-   */
-  private getMadridDate(): string {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Madrid',
-    }).format(new Date());
-  }
-
   private filtrarEjerciciosHoy(items: EjercicioPlan[]): EjercicioPlan[] {
-    const diasSemana: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-    const hoy = diasSemana[new Date().getDay()];
+    const hoy = getMadridDiaSemana();
 
     return items.filter((item) => {
       if (!item.diasSemana || item.diasSemana.length === 0) {

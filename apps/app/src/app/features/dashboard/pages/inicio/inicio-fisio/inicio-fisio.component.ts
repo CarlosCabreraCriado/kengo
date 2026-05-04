@@ -11,6 +11,12 @@ import { PageLoaderService } from '../../../../../core/services/page-loader.serv
 import type { Clinica, NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
 import { rawAssetUrl, assetUrl } from '../../../../../core/utils/asset-url';
 import {
+  daysBetweenYMD,
+  getMadridDate,
+  offsetMadridDate,
+  ymdMadridFromInstant,
+} from '../../../../../shared/utils/madrid-date.util';
+import {
   Ui2ActivityDay,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
@@ -147,11 +153,9 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
   planesPorVencer = this.dashboardService.planesProximosAExpirar;
 
   diasParaVencer(fechaFin: string): number {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const fin = new Date(fechaFin);
-    fin.setHours(0, 0, 0, 0);
-    return Math.ceil((fin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+    // `fechaFin` viene como YYYY-MM-DD (calendario Madrid). `daysBetweenYMD`
+    // cuenta días enteros del calendario, estable frente a DST.
+    return daysBetweenYMD(getMadridDate(), fechaFin);
   }
 
   textoVencimiento(plan: PlanPorVencer): string {
@@ -170,6 +174,9 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
   }
 
   formatearTiempoRelativo(fecha: string): string {
+    // `fecha` es un instante absoluto (ISO con `Z`). Las primeras
+    // ramas (Ahora / Hace X min / Hace Xh) son sobre tiempo absoluto, así
+    // que `Date.now() - new Date(fecha).getTime()` es correcto.
     const ahora = Date.now();
     const diff = ahora - new Date(fecha).getTime();
     const mins = Math.floor(diff / 60000);
@@ -177,11 +184,16 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
     if (mins < 60) return `Hace ${mins} min`;
     const horas = Math.floor(mins / 60);
     if (horas < 24) return `Hace ${horas}h`;
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
-    ayer.setHours(0, 0, 0, 0);
-    if (new Date(fecha) >= ayer) return 'Ayer';
-    return new Date(fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+
+    // A partir de "Ayer" estamos comparando días calendario Madrid.
+    const fechaYMD = ymdMadridFromInstant(fecha);
+    const ayerYMD = offsetMadridDate(-1);
+    if (fechaYMD === ayerYMD) return 'Ayer';
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      timeZone: 'Europe/Madrid',
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   emisorAvatarUrl(avatar: string | null): string | null {

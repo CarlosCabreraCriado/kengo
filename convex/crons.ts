@@ -27,9 +27,19 @@ crons.weekly(
 // Hora fija: 02:00 UTC.
 //   Península invierno (CET): 03:00 / verano (CEST): 04:00
 //   Canarias  invierno (WET): 02:00 / verano (WEST): 03:00
-// Se ejecuta antes que `daily-maintenance` (03:00 UTC) para que las sesiones
-// del día anterior estén cerradas cuando éste recompute rollups y snapshots.
-// El handler es un stub durante Fase 0; se rellena en Fase 1 funcional.
+//
+// NOTA: la spec original (`docs/PLAN_REDISENO_RECORDS.md` y
+// `_helpers/datetime.ts:55-73`) hablaba de "23:55 hora Madrid". El cron real
+// corre a 02:00 UTC fijo y eso es **intencional y seguro**: el handler
+// `closeOpenSessionsAtEndOfDay` cierra únicamente sesiones cuya `fecha` sea
+// estrictamente anterior a `getCurrentMadridDate()`, así que el desfase de
+// 3-4h con respecto a las 23:55 Madrid no causa cierres prematuros ni
+// pérdidas de datos. El único efecto es que las sesiones del día anterior
+// se cierran 3-4h más tarde que en la spec, pero antes de que
+// `daily-maintenance` (03:00 UTC = 04:00/05:00 Madrid) recompute rollups y
+// snapshots. Si en el futuro se quiere alinear con la spec literalmente,
+// usar `madridCronHourForLocal2355()` y rotar el cron — Convex ya no
+// soporta horas dinámicas, así que requeriría un re-deploy.
 crons.daily(
   "nightly-session-close",
   { hourUTC: 2, minuteUTC: 0 },

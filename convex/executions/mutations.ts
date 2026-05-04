@@ -8,6 +8,31 @@ import {
   openOrResumeImpl,
   recomputeAggregatesAndCheckAutoCloseImpl,
 } from "../sessions/internal";
+import { getCurrentMadridDate } from "../_helpers/datetime";
+
+/**
+ * Defensa híbrida contra clientes desfasados: si el cliente envió una `fecha`
+ * distinta a la fecha actual del calendario Europe/Madrid (típicamente porque
+ * usaba `new Date().toISOString().split('T')[0]`, que devuelve UTC), la
+ * forzamos a la fecha canónica y dejamos un log con `tz_mismatch` para
+ * detectar builds antiguas en producción.
+ *
+ * Devuelve la fecha corregida que se debe persistir.
+ */
+function enforceMadridFecha(
+  pacienteId: Id<"users">,
+  fechaRecibida: string,
+): string {
+  const expected = getCurrentMadridDate();
+  if (fechaRecibida !== expected) {
+    console.warn(
+      `[tz_mismatch] paciente=${pacienteId} fecha_recibida=${fechaRecibida} ` +
+        `fecha_esperada=${expected} — cliente desfasado o antiguo. Forzando fecha Madrid.`,
+    );
+    return expected;
+  }
+  return fechaRecibida;
+}
 
 const exerciseExecutionArgs = {
   planExerciseId: v.id("planExercises"),
@@ -70,7 +95,8 @@ export const createBatch = mutation({
         planIdCache.set(entrada.planExerciseId, planId);
       }
 
-      const sessionId = await openOrResumeImpl(ctx, user._id, entrada.fecha);
+      const fecha = enforceMadridFecha(user._id, entrada.fecha);
+      const sessionId = await openOrResumeImpl(ctx, user._id, fecha);
 
       // Idempotencia: ya existe execution con esta terna?
       const dup = await ctx.db
@@ -94,7 +120,7 @@ export const createBatch = mutation({
           pacienteId: user._id,
           planId,
           clinicId,
-          fecha: entrada.fecha,
+          fecha,
           fechaHora: entrada.fechaHora,
           completado: entrada.completado,
           repeticionesRealizadas: entrada.repeticionesRealizadas,
@@ -227,7 +253,9 @@ async function createImpl(
   const clinicId = await getClinicIdForPatient(ctx, pacienteId);
   if (!clinicId) throw new Error("Paciente sin clínica asignada");
 
-  const sessionId = await openOrResumeImpl(ctx, pacienteId, args.fecha);
+  const fecha = enforceMadridFecha(pacienteId, args.fecha);
+
+  const sessionId = await openOrResumeImpl(ctx, pacienteId, fecha);
 
   // Idempotencia.
   const dup = await ctx.db
@@ -248,7 +276,7 @@ async function createImpl(
     pacienteId,
     planId,
     clinicId,
-    fecha: args.fecha,
+    fecha,
     fechaHora: args.fechaHora,
     completado: args.completado,
     repeticionesRealizadas: args.repeticionesRealizadas,

@@ -3,6 +3,12 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { CumplimientoService } from '../../pacientes/data-access/cumplimiento.service';
 import { ActividadHoyService } from '../../actividad/data-access/actividad-hoy.service';
 import type { CumplimientoDia, DiaSemana } from '../../../../types/global';
+import {
+  daysBetweenYMD,
+  diaSemanaFromYMD,
+  getMadridDate,
+  offsetMadridDate,
+} from '../../../shared/utils/madrid-date.util';
 
 export interface DiaSemanaCalendario {
   fecha: string;
@@ -32,25 +38,23 @@ export class RachaPacienteService {
     const sorted = [...dias].sort((a, b) => a.fecha.localeCompare(b.fecha));
     let mejor = 0;
     let actual = 0;
-    let ultimaFecha: Date | null = null;
+    let ultimaFechaYMD: string | null = null;
 
     for (const dia of sorted) {
       if (dia.tipo === 'descanso') continue;
       if (dia.tipo === 'completado') {
-        const fechaDia = new Date(dia.fecha);
-        if (ultimaFecha) {
-          const diffDias = Math.floor(
-            (fechaDia.getTime() - ultimaFecha.getTime()) / (1000 * 60 * 60 * 24),
-          );
+        if (ultimaFechaYMD) {
+          // Diferencia de días calendario Madrid (estable frente a DST).
+          const diffDias = daysBetweenYMD(ultimaFechaYMD, dia.fecha);
           actual = diffDias <= 1 ? actual + 1 : 1;
         } else {
           actual = 1;
         }
-        ultimaFecha = fechaDia;
+        ultimaFechaYMD = dia.fecha;
         if (actual > mejor) mejor = actual;
       } else {
         actual = 0;
-        ultimaFecha = null;
+        ultimaFechaYMD = null;
       }
     }
 
@@ -60,32 +64,25 @@ export class RachaPacienteService {
   readonly cumplimientoSemana = computed<DiaSemanaCalendario[]>(() => {
     const dias = this.diasCumplimiento();
     const planes = this.actividadHoyService.planesActivos();
-    const hoy = new Date();
-    const hoyStr = hoy.toISOString().split('T')[0];
+    const hoyStr = getMadridDate();
 
-    // Encontrar lunes de esta semana
-    const lunes = new Date(hoy);
-    const dow = hoy.getDay(); // 0=dom
-    const diff = dow === 0 ? -6 : 1 - dow;
-    lunes.setDate(hoy.getDate() + diff);
-    lunes.setHours(0, 0, 0, 0);
-
-    const DIAS_SEMANA_JS: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+    // Lunes = 0..., Domingo = 6. `diaSemanaFromYMD` devuelve 'L'..'D'.
+    // Iteramos los 7 días de la semana actual partiendo del lunes Madrid.
+    const LETRAS_LMD = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
+    const idxHoy = LETRAS_LMD.indexOf(diaSemanaFromYMD(hoyStr));
 
     const resultado: DiaSemanaCalendario[] = [];
 
     for (let i = 0; i < 7; i++) {
-      const fecha = new Date(lunes);
-      fecha.setDate(lunes.getDate() + i);
-      const fechaStr = fecha.toISOString().split('T')[0];
+      // Offset desde hoy hasta el día i de la semana (lunes = 0).
+      const fechaStr = offsetMadridDate(i - idxHoy);
       const esHoy = fechaStr === hoyStr;
-      const esFuturo = fecha > hoy && !esHoy;
-      const letraIdx = i; // 0=lunes -> L, 1=martes -> M, etc.
+      const esFuturo = fechaStr > hoyStr;
+      const letraIdx = i; // 0=lunes → L, 1=martes → M, etc.
 
       if (esFuturo) {
-        // Días futuros: ver si hay ejercicios programados
-        const diaJs = fecha.getDay();
-        const diaSemana = DIAS_SEMANA_JS[diaJs];
+        // Días futuros: ver si hay ejercicios programados.
+        const diaSemana = diaSemanaFromYMD(fechaStr);
         const tieneEjercicios = planes.some((plan) =>
           plan.items.some((item) => {
             if (!item.diasSemana || item.diasSemana.length === 0) return true;
@@ -99,12 +96,12 @@ export class RachaPacienteService {
           estado: tieneEjercicios ? 'programado' : 'futuro-descanso',
         });
       } else {
-        // Día pasado o hoy: buscar en cumplimiento
+        // Día pasado o hoy: buscar en cumplimiento.
         const diaCumplimiento = dias.find((d) => d.fecha === fechaStr);
 
         let estado: DiaSemanaCalendario['estado'];
         if (esHoy) {
-          // Para hoy, usar datos en tiempo real del ActividadHoyService
+          // Para hoy, usar datos en tiempo real del ActividadHoyService.
           const cumplimientoHoy = this.cumplimientoService.getCumplimientoHoy(
             this.actividadHoyService.planesActivos(),
             this.actividadHoyService.registrosHoy(),
@@ -160,14 +157,15 @@ export class RachaPacienteService {
 
     this.cargando.set(true);
     try {
-      const hace14 = new Date();
-      hace14.setDate(hace14.getDate() - 14);
-      const hoy = new Date();
+      // Rango de los últimos 14 días en calendario Europe/Madrid (mismo
+      // huso que `dailyPatientRollup.fecha`).
+      const desdeStr = offsetMadridDate(-14);
+      const hastaStr = getMadridDate();
 
       const resp = await this.cumplimientoService.getCumplimiento(
         userId,
-        hace14.toISOString().split('T')[0],
-        hoy.toISOString().split('T')[0],
+        desdeStr,
+        hastaStr,
       );
 
       this.diasCumplimiento.set(resp.dias);
@@ -182,23 +180,17 @@ export class RachaPacienteService {
 
   private calcularRacha(dias: CumplimientoDia[]): number {
     const sorted = [...dias].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    const hoy = new Date().toISOString().split('T')[0];
-
+    let fechaEsperada = getMadridDate();
     let racha = 0;
-    let fechaEsperada = new Date(hoy);
 
     for (const dia of sorted) {
       if (dia.tipo === 'descanso') continue;
 
-      const fechaDia = new Date(dia.fecha);
-      const diffDias = Math.floor(
-        (fechaEsperada.getTime() - fechaDia.getTime()) / (1000 * 60 * 60 * 24),
-      );
-
+      const diffDias = daysBetweenYMD(dia.fecha, fechaEsperada);
       if (diffDias <= 1) {
         if (dia.tipo === 'completado') {
           racha++;
-          fechaEsperada = fechaDia;
+          fechaEsperada = dia.fecha;
         } else {
           break;
         }

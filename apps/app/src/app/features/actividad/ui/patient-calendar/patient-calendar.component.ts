@@ -21,6 +21,11 @@ import {
   ConfigSesionMultiPlan,
   DiaSemana,
 } from '../../../../../types/global';
+import {
+  diaSemanaFromYMD,
+  getMadridDate,
+  ymdToDateForDisplay,
+} from '../../../../shared/utils/madrid-date.util';
 
 import {
   Ui2BigTitleComponent,
@@ -79,7 +84,6 @@ export class PatientCalendarComponent implements OnInit {
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
 
-  private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   private readonly NOMBRES_DIAS_CORTOS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   private readonly NOMBRES_DIAS = [
     'Domingo',
@@ -108,21 +112,23 @@ export class PatientCalendarComponent implements OnInit {
   readonly cargando = this.actividadHoyService.cargando;
   readonly error = signal<string | null>(null);
   readonly planesActivosYFuturos = signal<PlanCompleto[]>([]);
-  readonly mesActual = signal<Date>(new Date());
+  // `mesActual` siempre es un Date a 12:00 UTC (Madrid-safe). Lecturas con
+  // `getUTC*`, mutaciones con `setUTC*`.
+  readonly mesActual = signal<Date>(ymdToDateForDisplay(getMadridDate()));
   readonly diaSeleccionado = signal<DiaCalendario | null>(null);
 
   readonly usuarioId = computed(() => this.sessionService.usuario()?.id);
 
   readonly tituloMes = computed(() => {
     const fecha = this.mesActual();
-    return `${this.NOMBRES_MESES[fecha.getMonth()]} ${fecha.getFullYear()}`;
+    return `${this.NOMBRES_MESES[fecha.getUTCMonth()]} ${fecha.getUTCFullYear()}`;
   });
 
   readonly fechaHoy = computed(() => {
-    const hoy = new Date();
-    const dia = this.NOMBRES_DIAS[hoy.getDay()];
-    const numero = hoy.getDate();
-    const mes = this.NOMBRES_MESES[hoy.getMonth()].toLowerCase();
+    const hoy = ymdToDateForDisplay(getMadridDate());
+    const dia = this.NOMBRES_DIAS[hoy.getUTCDay()];
+    const numero = hoy.getUTCDate();
+    const mes = this.NOMBRES_MESES[hoy.getUTCMonth()].toLowerCase();
     return `${dia}, ${numero} de ${mes}`;
   });
 
@@ -131,36 +137,51 @@ export class PatientCalendarComponent implements OnInit {
   readonly diasCalendario = computed<DiaCalendario[]>(() => {
     const planes = this.planesActivosYFuturos();
     const mesActual = this.mesActual();
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+    // Hoy en calendario Madrid, materializado a 12:00 UTC. Comparamos con
+    // `getTime()` porque todos los Date del calendario se construyen igual.
+    const hoyDate = ymdToDateForDisplay(getMadridDate());
+    const hoyTime = hoyDate.getTime();
 
-    const primerDiaMes = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1);
-    const ultimoDiaMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0);
+    const year = mesActual.getUTCFullYear();
+    const month = mesActual.getUTCMonth();
 
+    // Primer y último día del mes a 12:00 UTC.
+    const primerDiaMes = new Date(Date.UTC(year, month, 1, 12));
+    const ultimoDiaMes = new Date(Date.UTC(year, month + 1, 0, 12));
+
+    // Lunes que precede al primer día del mes (puede caer en mes anterior).
     const diaInicio = new Date(primerDiaMes);
-    const diaSemanaInicio = diaInicio.getDay();
-    const offset = diaSemanaInicio === 0 ? 6 : diaSemanaInicio - 1;
-    diaInicio.setDate(diaInicio.getDate() - offset);
+    const dowPrimer = diaInicio.getUTCDay();
+    const offset = dowPrimer === 0 ? 6 : dowPrimer - 1;
+    diaInicio.setUTCDate(diaInicio.getUTCDate() - offset);
 
+    // Domingo que sigue al último día del mes.
     const diaFin = new Date(ultimoDiaMes);
-    const diaSemanaFin = diaFin.getDay();
-    const offsetFin = diaSemanaFin === 0 ? 0 : 7 - diaSemanaFin;
-    diaFin.setDate(diaFin.getDate() + offsetFin);
+    const dowUltimo = diaFin.getUTCDay();
+    const offsetFin = dowUltimo === 0 ? 0 : 7 - dowUltimo;
+    diaFin.setUTCDate(diaFin.getUTCDate() + offsetFin);
 
     const dias: DiaCalendario[] = [];
     const fechaIterador = new Date(diaInicio);
 
     while (fechaIterador <= diaFin) {
       const fecha = new Date(fechaIterador);
-      const diaSemana = this.DIAS_SEMANA[fecha.getDay()];
-      const esMesActual = fecha.getMonth() === mesActual.getMonth();
-      const esHoy = fecha.getTime() === hoy.getTime();
+      // Como `fecha` está a 12:00 UTC, `toISOString().slice(0, 10)`
+      // devuelve el mismo YYYY-MM-DD que representa.
+      const fechaYMD = fecha.toISOString().slice(0, 10);
+      const diaSemana = diaSemanaFromYMD(fechaYMD);
+      const esMesActual = fecha.getUTCMonth() === month;
+      const esHoy = fecha.getTime() === hoyTime;
 
-      const { ejercicios, planes: planesDelDia } = this.obtenerEjerciciosDia(planes, fecha, diaSemana);
+      const { ejercicios, planes: planesDelDia } = this.obtenerEjerciciosDia(
+        planes,
+        fechaYMD,
+        diaSemana,
+      );
 
       dias.push({
         fecha,
-        diaNumero: fecha.getDate(),
+        diaNumero: fecha.getUTCDate(),
         esHoy,
         esMesActual,
         tieneActividad: ejercicios.length > 0,
@@ -169,7 +190,7 @@ export class PatientCalendarComponent implements OnInit {
         ejercicios,
       });
 
-      fechaIterador.setDate(fechaIterador.getDate() + 1);
+      fechaIterador.setUTCDate(fechaIterador.getUTCDate() + 1);
     }
 
     return dias;
@@ -239,14 +260,14 @@ export class PatientCalendarComponent implements OnInit {
 
   mesAnterior(): void {
     const fecha = new Date(this.mesActual());
-    fecha.setMonth(fecha.getMonth() - 1);
+    fecha.setUTCMonth(fecha.getUTCMonth() - 1);
     this.mesActual.set(fecha);
     this.diaSeleccionado.set(null);
   }
 
   mesSiguiente(): void {
     const fecha = new Date(this.mesActual());
-    fecha.setMonth(fecha.getMonth() + 1);
+    fecha.setUTCMonth(fecha.getUTCMonth() + 1);
     this.mesActual.set(fecha);
     this.diaSeleccionado.set(null);
   }
@@ -287,7 +308,7 @@ export class PatientCalendarComponent implements OnInit {
 
     if (ejercicios.length === 0) return;
 
-    const diaSemana = this.NOMBRES_DIAS[dia.fecha.getDay()];
+    const diaSemana = this.NOMBRES_DIAS[dia.fecha.getUTCDay()];
 
     const config: ConfigSesionMultiPlan = {
       titulo: `Ejercicios del ${diaSemana}`,
@@ -310,22 +331,22 @@ export class PatientCalendarComponent implements OnInit {
     const dia = this.diaSeleccionado();
     if (!dia) return '';
 
-    const nombreDia = this.NOMBRES_DIAS[dia.fecha.getDay()];
-    const numero = dia.fecha.getDate();
-    const mes = this.NOMBRES_MESES[dia.fecha.getMonth()];
+    const nombreDia = this.NOMBRES_DIAS[dia.fecha.getUTCDay()];
+    const numero = dia.fecha.getUTCDate();
+    const mes = this.NOMBRES_MESES[dia.fecha.getUTCMonth()];
     return `${nombreDia} ${numero} de ${mes}`;
   }
 
   private obtenerEjerciciosDia(
     planes: PlanCompleto[],
-    fecha: Date,
+    fechaYMD: string,
     diaSemana: DiaSemana
   ): { ejercicios: EjercicioCalendario[]; planes: { planId: string; titulo: string; ejercicios: number }[] } {
     const ejercicios: EjercicioCalendario[] = [];
     const planesConEjercicios: { planId: string; titulo: string; ejercicios: number }[] = [];
 
     for (const plan of planes) {
-      if (!this.esFechaEnRangoPlan(plan, fecha)) continue;
+      if (!this.esFechaEnRangoPlan(plan, fechaYMD)) continue;
 
       const ejerciciosDia = plan.items.filter((item) => {
         if (!item.diasSemana || item.diasSemana.length === 0) {
@@ -370,13 +391,17 @@ export class PatientCalendarComponent implements OnInit {
     return null;
   }
 
-  private esFechaEnRangoPlan(plan: PlanCompleto, fecha: Date): boolean {
-    const fechaStr = fecha.toISOString().split('T')[0];
-
-    if (plan.fechaInicio && fechaStr < plan.fechaInicio) {
+  /**
+   * Comprueba si una fecha YYYY-MM-DD (calendario Madrid) cae dentro del
+   * intervalo de vigencia del plan. `plan.fechaInicio`/`fechaFin` también
+   * son YYYY-MM-DD Madrid → comparación lexicográfica equivalente al
+   * orden calendario.
+   */
+  private esFechaEnRangoPlan(plan: PlanCompleto, fechaYMD: string): boolean {
+    if (plan.fechaInicio && fechaYMD < plan.fechaInicio) {
       return false;
     }
-    if (plan.fechaFin && fechaStr > plan.fechaFin) {
+    if (plan.fechaFin && fechaYMD > plan.fechaFin) {
       return false;
     }
 

@@ -22,6 +22,10 @@ import { MensajesService } from '../../../mensajes/data-access/mensajes.service'
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
+import {
+  getMadridDate,
+  offsetMadridDate,
+} from '../../../../shared/utils/madrid-date.util';
 
 // Componentes
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -122,7 +126,7 @@ export class PacienteDetailComponent implements OnInit {
   readonly filtroDesde = signal<string | null>(null);
   readonly filtroHasta = signal<string | null>(null);
   readonly filterPanelOpen = signal(false);
-  readonly hoy = new Date().toISOString().split('T')[0];
+  readonly hoy = getMadridDate();
 
   // Computed
   readonly idsClinicas = computed(() => {
@@ -231,16 +235,17 @@ export class PacienteDetailComponent implements OnInit {
     try {
       const planes = await this.planesService.getPlanesByPaciente(pacienteId);
 
-      // Corregir estado de planes expirados localmente
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
+      // Corregir estado de planes expirados localmente. `plan.fechaFin` es
+      // YYYY-MM-DD calendario Madrid → comparación lexicográfica equivalente
+      // a la calendario.
+      const hoyYMD = getMadridDate();
       const planesCorregidos = planes.map(plan => {
-        if (plan.estado === 'activo' && plan.fechaFin) {
-          const fechaFin = new Date(plan.fechaFin);
-          fechaFin.setHours(0, 0, 0, 0);
-          if (fechaFin < hoy) {
-            return { ...plan, estado: 'completado' as const };
-          }
+        if (
+          plan.estado === 'activo' &&
+          plan.fechaFin &&
+          plan.fechaFin < hoyYMD
+        ) {
+          return { ...plan, estado: 'completado' as const };
         }
         return plan;
       });
@@ -474,17 +479,15 @@ export class PacienteDetailComponent implements OnInit {
       this.cargarCumplimiento(pacienteId);
     } else if (rango === 'todo') {
       const desdeStr = '2020-01-01';
-      const hastaStr = new Date().toISOString().split('T')[0];
+      const hastaStr = getMadridDate();
       this.filtroDesde.set(desdeStr);
       this.filtroHasta.set(hastaStr);
       this.cargarCumplimiento(pacienteId, desdeStr, hastaStr);
     } else {
       const dias = parseInt(rango);
-      const hasta = new Date();
-      const desde = new Date();
-      desde.setDate(hasta.getDate() - dias);
-      const desdeStr = desde.toISOString().split('T')[0];
-      const hastaStr = hasta.toISOString().split('T')[0];
+      // Rango en días calendario Madrid (estable frente a DST).
+      const hastaStr = getMadridDate();
+      const desdeStr = offsetMadridDate(-dias);
       this.filtroDesde.set(desdeStr);
       this.filtroHasta.set(hastaStr);
       this.cargarCumplimiento(pacienteId, desdeStr, hastaStr);

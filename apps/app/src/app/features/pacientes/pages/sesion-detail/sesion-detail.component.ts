@@ -8,6 +8,10 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 import {
+  diaSemanaFromYMD,
+  ymdToDateForDisplay,
+} from '../../../../shared/utils/madrid-date.util';
+import {
   Ui2BackButtonComponent,
   Ui2CardComponent,
   Ui2EmptyStateComponent,
@@ -17,8 +21,6 @@ import {
   Ui2ProgressBarComponent,
   Ui2SpinnerComponent,
 } from '../../../../shared/ui-v2';
-
-const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
 interface RegistroExpandido {
   id: string;
@@ -256,8 +258,7 @@ export class SesionDetailComponent implements OnInit {
 
       this.esFallido.set(true);
 
-      const diaSemana =
-        DIAS_SEMANA[new Date(this.fecha() + 'T12:00:00').getDay()];
+      const diaSemana = diaSemanaFromYMD(this.fecha());
 
       const ejerciciosPorPlan = await Promise.all(
         planesConEjercicios.map((p) =>
@@ -298,8 +299,9 @@ export class SesionDetailComponent implements OnInit {
   // === Helpers ===
 
   formatearFechaLarga(fecha: string): string {
-    const d = new Date(fecha + 'T12:00:00');
+    const d = ymdToDateForDisplay(fecha);
     return d.toLocaleDateString('es-ES', {
+      timeZone: 'UTC',
       weekday: 'long',
       day: 'numeric',
       month: 'long',

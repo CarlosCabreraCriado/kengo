@@ -2,6 +2,12 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import {
+  diaSemanaFromYMD,
+  getMadridDate,
+  offsetMadridDate,
+  ymdToDateForDisplay,
+} from '../../../shared/utils/madrid-date.util';
 
 export type PeriodoEstadisticas = 'semana' | 'mes' | 'plan';
 
@@ -69,7 +75,6 @@ interface PlanActivo {
   fechaInicio?: string;
 }
 
-const DIAS_LETRA = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
 const MESES_CORTO = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
   'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
@@ -102,7 +107,7 @@ export class EstadisticasService {
     const daily = this.dailyHistorico();
     const ult10 = ultimosNDias(10);
     const mapaPorFecha = new Map(daily.map((d) => [d.fecha, d]));
-    const hoyStr = toIsoDate(new Date());
+    const hoyStr = getMadridDate();
 
     return ult10.map((fecha) => {
       const r = mapaPorFecha.get(fecha);
@@ -303,19 +308,21 @@ export class EstadisticasService {
     this.cargando.set(true);
     this.error.set(null);
     try {
-      const hoy = new Date();
-      const desde30 = new Date(hoy);
-      desde30.setDate(hoy.getDate() - 29);
+      const hoyYMD = getMadridDate();
+      const desde30YMD = offsetMadridDate(-29);
+      // Date a 12:00 UTC, seguro para los formatters de semana/mes (no
+      // dependen del huso del navegador con esa hora).
+      const hoyDate = ymdToDateForDisplay(hoyYMD);
       const desdeAnioSemana = '2020-W01';
-      const hastaAnioSemana = formatISOWeek(hoy);
+      const hastaAnioSemana = formatISOWeek(hoyDate);
       const desdeAnioMes = '2020-01';
-      const hastaAnioMes = formatYearMonth(hoy);
+      const hastaAnioMes = formatYearMonth(hoyDate);
 
       const [daily, weekly, monthly, planes, historial] = await Promise.all([
         this.convex.query(api.rollups.queries.getDailyByPaciente, {
           pacienteId: convexId,
-          desde: toIsoDate(desde30),
-          hasta: toIsoDate(hoy),
+          desde: desde30YMD,
+          hasta: hoyYMD,
         }),
         this.convex.query(api.rollups.queries.getWeeklyByPaciente, {
           pacienteId: convexId,
@@ -360,20 +367,25 @@ export class EstadisticasService {
   }
 
   private weeklyActual(): WeeklyRollup | null {
-    const semanaHoy = formatISOWeek(new Date());
+    // Date Madrid-safe (12:00 UTC) para que `formatISOWeek` lea día/mes
+    // correctamente sin importar el huso del navegador ni el DST.
+    const semanaHoy = formatISOWeek(ymdToDateForDisplay(getMadridDate()));
     return this.weeklyHistorico().find((w) => w.anioSemana === semanaHoy) ?? null;
   }
 
   private weeklyAnterior(): WeeklyRollup | null {
-    const haceUnaSemana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const semanaPrevia = formatISOWeek(haceUnaSemana);
+    // -7 días sobre el calendario Madrid (no sobre milisegundos: el cambio
+    // CET↔CEST haría que 7×86400000 ms saltase a otro día).
+    const semanaPrevia = formatISOWeek(
+      ymdToDateForDisplay(offsetMadridDate(-7)),
+    );
     return (
       this.weeklyHistorico().find((w) => w.anioSemana === semanaPrevia) ?? null
     );
   }
 
   private monthlyActual(): MonthlyRollup | null {
-    const mesHoy = formatYearMonth(new Date());
+    const mesHoy = formatYearMonth(ymdToDateForDisplay(getMadridDate()));
     return this.monthlyHistorico().find((m) => m.anioMes === mesHoy) ?? null;
   }
 
@@ -447,34 +459,19 @@ export class EstadisticasService {
 // Helpers (puros)
 // ============================================================
 
-function toIsoDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 function ultimosNDias(n: number): string[] {
-  const hoy = new Date();
   const result: string[] = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(hoy);
-    d.setDate(hoy.getDate() - i);
-    result.push(toIsoDate(d));
-  }
+  for (let i = n - 1; i >= 0; i--) result.push(offsetMadridDate(-i));
   return result;
 }
 
 function dayLetterFor(fecha: string): string {
-  const d = new Date(fecha);
-  const dow = d.getDay(); // 0=Dom..6=Sab
-  const idx = dow === 0 ? 6 : dow - 1;
-  return DIAS_LETRA[idx]!;
+  return diaSemanaFromYMD(fecha);
 }
 
 function dayLabel(fecha: string): string {
-  const d = new Date(fecha);
-  return `${dayLetterFor(fecha)} ${d.getDate()}`;
+  const d = ymdToDateForDisplay(fecha);
+  return `${dayLetterFor(fecha)} ${d.getUTCDate()}`;
 }
 
 function computeBarValue(r: DailyRollup | undefined): number {
@@ -532,28 +529,24 @@ function buildSesionVm(s: SesionReciente): SesionHistoricaVm {
     plan: esDescanso ? 'Descanso' : s.planTitulo ?? 'Sesión',
     pct,
     time: minutos > 0 ? `${minutos} min` : '—',
-    pain: s.dolorPromedio != null ? Math.round(s.dolorPromedio) : null,
+    pain:
+      !esDescanso && s.dolorPromedio != null
+        ? Math.round(s.dolorPromedio)
+        : null,
     rest: esDescanso || undefined,
   };
 }
 
 function formatHistoryDay(fecha: string): string {
-  const d = new Date(`${fecha}T00:00:00`);
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const ayer = new Date(hoy);
-  ayer.setDate(hoy.getDate() - 1);
-
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
+  const d = ymdToDateForDisplay(fecha);
+  const hoyYMD = getMadridDate();
+  const ayerYMD = offsetMadridDate(-1);
 
   const dayLetter = dayLetterFor(fecha);
-  const dia = d.getDate();
-  const mes = MESES_CORTO[d.getMonth()] ?? '';
+  const dia = d.getUTCDate();
+  const mes = MESES_CORTO[d.getUTCMonth()] ?? '';
 
-  if (sameDay(d, hoy)) return `Hoy · ${dayLetter} ${dia} ${mes}`;
-  if (sameDay(d, ayer)) return `Ayer · ${dayLetter} ${dia} ${mes}`;
+  if (fecha === hoyYMD) return `Hoy · ${dayLetter} ${dia} ${mes}`;
+  if (fecha === ayerYMD) return `Ayer · ${dayLetter} ${dia} ${mes}`;
   return `${dayLetter} ${dia} ${mes}`;
 }

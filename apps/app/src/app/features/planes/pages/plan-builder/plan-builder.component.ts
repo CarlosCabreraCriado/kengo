@@ -25,6 +25,10 @@ import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
 import {
+  getMadridDate,
+  offsetMadridDate,
+} from '../../../../shared/utils/madrid-date.util';
+import {
   Ui2AvatarComponent,
   Ui2BackButtonComponent,
   Ui2BigTitleComponent,
@@ -113,7 +117,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     return v === 'custom' ? 'custom' : String(v);
   });
 
-  minDate = new Date().toISOString().split('T')[0];
+  minDate = getMadridDate();
 
   isEditMode = computed(() => this.svc.isEditMode());
   paciente = computed(() => this.svc.paciente());
@@ -242,19 +246,24 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   private formatDateShort(dateStr: string): string {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
-    const day = date.getDate();
+    // `dateStr` es YYYY-MM-DD (Madrid). Construimos a 12:00 UTC y leemos
+    // en UTC para que el huso del navegador no desplace el día.
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d, 12));
+    const day = date.getUTCDate();
     const months = [
       'ene', 'feb', 'mar', 'abr', 'may', 'jun',
       'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
     ];
-    return `${day} ${months[date.getMonth()]}`;
+    return `${day} ${months[date.getUTCMonth()]}`;
   }
 
   private generarDescripcionPorDefecto(): string {
     const paciente = this.svc.paciente();
     const fisio = this.sessionService.usuario();
-    const fechaHoy = this.formatDateFull(new Date());
+    // Fecha "hoy" en calendario Europe/Madrid (no en zona del navegador
+    // del fisio).
+    const fechaHoy = this.formatDateFull(getMadridDate());
 
     const nombrePaciente = paciente
       ? `${paciente.first_name} ${paciente.last_name}`
@@ -266,14 +275,15 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     return `Plan personalizado realizado específicamente para ${nombrePaciente} por nuestro equipo de fisioterapeutas (${nombreFisio}) el ${fechaHoy}.`;
   }
 
-  private formatDateFull(date: Date): string {
-    const day = date.getDate();
+  private formatDateFull(ymd: string): string {
+    const [y, m, d] = ymd.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d, 12));
+    const day = date.getUTCDate();
     const months = [
       'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
     ];
-    const year = date.getFullYear();
-    return `${day} de ${months[date.getMonth()]} de ${year}`;
+    return `${day} de ${months[date.getUTCMonth()]} de ${date.getUTCFullYear()}`;
   }
 
   private syncServiceFromForm() {
@@ -511,21 +521,18 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     const dias = this.duracionSeleccionada();
 
     if (fechaInicio && typeof dias === 'number') {
-      const inicio = new Date(fechaInicio);
-      const fin = new Date(inicio);
-      fin.setDate(fin.getDate() + dias);
-      this.form.patchValue({ fechaFin: this.toDateString(fin) });
+      // Sumar `dias` calendario sobre el YYYY-MM-DD de inicio (Madrid).
+      // Iteramos sobre Date a 12:00 UTC para evitar saltos de DST.
+      const [y, m, d] = fechaInicio.split('-').map(Number);
+      const utc = new Date(Date.UTC(y, m - 1, d, 12));
+      utc.setUTCDate(utc.getUTCDate() + dias);
+      const fechaFin = utc.toISOString().slice(0, 10);
+      this.form.patchValue({ fechaFin });
     }
   }
 
-  private toDateString(date: Date): string {
-    return date.toISOString().split('T')[0];
-  }
-
   getTomorrowString(): string {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return this.toDateString(tomorrow);
+    return offsetMadridDate(1);
   }
 
   getDuracionLabel(): string {
