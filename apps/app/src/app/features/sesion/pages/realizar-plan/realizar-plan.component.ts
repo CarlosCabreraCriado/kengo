@@ -141,8 +141,6 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
       inset: 0;
       display: flex;
       flex-direction: column;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
     }
     .rp-main {
       display: flex;
