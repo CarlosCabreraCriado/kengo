@@ -76,6 +76,13 @@
   background: rgba(255, 255, 255, 0.22) !important;
 }
 
+@media (min-width: 640px) {
+  :host(.overlay) {
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+  }
+}
+
 @media (min-width: 1024px) {
   :host(.overlay) {
     padding: 20px 24px;

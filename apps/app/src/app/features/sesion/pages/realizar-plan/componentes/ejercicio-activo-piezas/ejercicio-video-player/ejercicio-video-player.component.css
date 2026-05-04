@@ -9,9 +9,14 @@
   height: 100%;
   cursor: pointer;
   overflow: hidden;
-  border-radius: 22px;
   background: #1a1818;
   box-shadow: var(--shadow-card-strong, var(--shadow-card));
+}
+
+@media (min-width: 640px) {
+  :host {
+    border-radius: 22px;
+  }
 }
 
 .media-element {
