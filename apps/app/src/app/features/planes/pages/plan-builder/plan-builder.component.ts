@@ -25,6 +25,8 @@ import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
 import {
+  daysBetweenYMD,
+  diaSemanaFromYMD,
   getMadridDate,
   offsetMadridDate,
 } from '../../../../shared/utils/madrid-date.util';
@@ -37,12 +39,14 @@ import {
   Ui2EmptyStateComponent,
   Ui2InputComponent,
   Ui2PillComponent,
-  Ui2SectionComponent,
+  Ui2SectionLabelComponent,
   Ui2SegmentedComponent,
   Ui2SegmentedOption,
   Ui2SpinnerComponent,
   Ui2TextareaComponent,
 } from '../../../../shared/ui-v2';
+import { PlanDayTogglesComponent } from '../../components/plan-day-toggles/plan-day-toggles.component';
+import { PlanWeekDotsComponent } from '../../components/plan-week-dots/plan-week-dots.component';
 
 @Component({
   selector: 'app-plan-builder',
@@ -60,10 +64,12 @@ import {
     Ui2EmptyStateComponent,
     Ui2InputComponent,
     Ui2PillComponent,
-    Ui2SectionComponent,
+    Ui2SectionLabelComponent,
     Ui2SegmentedComponent,
     Ui2SpinnerComponent,
     Ui2TextareaComponent,
+    PlanDayTogglesComponent,
+    PlanWeekDotsComponent,
   ],
   templateUrl: './plan-builder.component.html',
   styleUrl: './plan-builder.component.css',
@@ -158,6 +164,33 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       (this.isEditMode() && !this.svc.isDirty()),
   );
 
+  /**
+   * Tip resumen de duración: "30 días totales · 13 sesiones programadas".
+   * Sesiones = días dentro del rango cuyo día de la semana cae en al menos un ejercicio.
+   */
+  resumenDuracion = computed<string | null>(() => {
+    const ini = this.svc.fechaInicio();
+    const fin = this.svc.fechaFin();
+    if (!ini || !fin) return null;
+    const totalDias = daysBetweenYMD(ini, fin) + 1;
+    if (totalDias <= 0) return null;
+    const diasUnion = new Set<DiaSemana>();
+    for (const it of this.items()) {
+      for (const d of it.diasSemana ?? []) diasUnion.add(d);
+    }
+    if (diasUnion.size === 0) {
+      return `${totalDias} días totales`;
+    }
+    let sesiones = 0;
+    let cursor = ini;
+    for (let i = 0; i < totalDias; i++) {
+      const dia = diaSemanaFromYMD(cursor);
+      if (diasUnion.has(dia)) sesiones++;
+      cursor = offsetMadridDateFromYmd(cursor, 1);
+    }
+    return `${totalDias} días totales · ${sesiones} sesion${sesiones === 1 ? '' : 'es'} programada${sesiones === 1 ? '' : 's'}`;
+  });
+
   form = this.fb.group({
     titulo: ['', [Validators.required, Validators.minLength(3)]],
     descripcion: [''],
@@ -246,8 +279,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   private formatDateShort(dateStr: string): string {
     if (!dateStr) return '';
-    // `dateStr` es YYYY-MM-DD (Madrid). Construimos a 12:00 UTC y leemos
-    // en UTC para que el huso del navegador no desplace el día.
     const [y, m, d] = dateStr.split('-').map(Number);
     const date = new Date(Date.UTC(y, m - 1, d, 12));
     const day = date.getUTCDate();
@@ -261,8 +292,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private generarDescripcionPorDefecto(): string {
     const paciente = this.svc.paciente();
     const fisio = this.sessionService.usuario();
-    // Fecha "hoy" en calendario Europe/Madrid (no en zona del navegador
-    // del fisio).
     const fechaHoy = this.formatDateFull(getMadridDate());
 
     const nombrePaciente = paciente
@@ -322,12 +351,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     return it.diasSemana?.includes(d);
   }
 
-  toggleDia(i: number, d: DiaSemana) {
-    const it = this.svc.items()[i];
-    const set = new Set(it.diasSemana || []);
-    if (set.has(d)) set.delete(d);
-    else set.add(d);
-    this.svc.updateItem(i, { diasSemana: Array.from(set) as DiaSemana[] });
+  setDias(i: number, dias: DiaSemana[]) {
+    this.svc.updateItem(i, { diasSemana: dias });
   }
 
   removeEjercicio(ejercicioId: string) {
@@ -521,8 +546,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     const dias = this.duracionSeleccionada();
 
     if (fechaInicio && typeof dias === 'number') {
-      // Sumar `dias` calendario sobre el YYYY-MM-DD de inicio (Madrid).
-      // Iteramos sobre Date a 12:00 UTC para evitar saltos de DST.
       const [y, m, d] = fechaInicio.split('-').map(Number);
       const utc = new Date(Date.UTC(y, m - 1, d, 12));
       utc.setUTCDate(utc.getUTCDate() + dias);
@@ -541,4 +564,14 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     const preset = this.duracionPresets.find((p) => p.dias === dias);
     return preset ? preset.label : `${dias} días`;
   }
+}
+
+/**
+ * Suma `offset` días a un YYYY-MM-DD interpretado como Madrid sin saltos DST.
+ */
+function offsetMadridDateFromYmd(ymd: string, offset: number): string {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const utc = new Date(Date.UTC(y, m - 1, d, 12));
+  utc.setUTCDate(utc.getUTCDate() + offset);
+  return utc.toISOString().slice(0, 10);
 }

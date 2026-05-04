@@ -6,7 +6,7 @@
   }
 
   <!-- Header -->
-  <div class="pb-header">
+  <header class="pb-header">
     <ui2-back-button (clicked)="cancelar()" ariaLabel="Volver"></ui2-back-button>
     <div class="pb-header__title">
       <ui2-big-title
@@ -15,11 +15,7 @@
         sub="Configura los ejercicios y dosis del plan"
       ></ui2-big-title>
     </div>
-  </div>
-
-  <!-- Acciones rápidas -->
-  <ui2-section [padding]="'0 20px 12px'">
-    <div class="pb-quick-actions">
+    <div class="pb-header__actions">
       <ui2-button
         variant="ghost"
         size="sm"
@@ -32,38 +28,38 @@
         iconLeft="bookmark_add"
         [disabled]="totalItems() === 0"
         (clicked)="guardarComoPlantilla()"
-      >Guardar como plantilla</ui2-button>
+      >Guardar plantilla</ui2-button>
     </div>
-  </ui2-section>
+  </header>
 
-  <!-- Card paciente -->
+  <!-- Patient strip compacta -->
   @if (paciente(); as pac) {
-    <ui2-section [padding]="'0 20px 12px'">
-      <ui2-card [padding]="14">
-        <div class="pb-patient">
-          <ui2-avatar
-            [name]="pacienteNombre()"
-            [src]="avatarUrl(pac.avatar)"
-            size="md"
-            gradient="coral"
-          ></ui2-avatar>
-          <div class="pb-patient__info">
-            <h3 class="pb-patient__name">{{ pac.first_name }} {{ pac.last_name }}</h3>
-            @if (pac.email) {
-              <p class="pb-patient__email">{{ pac.email }}</p>
-            }
-          </div>
-          <ui2-pill variant="soft" size="sm" icon="healing">Paciente</ui2-pill>
+    <ui2-card [padding]="14">
+      <div class="pb-patient">
+        <ui2-avatar
+          [name]="pacienteNombre()"
+          [src]="avatarUrl(pac.avatar)"
+          size="md"
+          gradient="coral"
+        ></ui2-avatar>
+        <div class="pb-patient__info">
+          <h3 class="pb-patient__name">{{ pac.first_name }} {{ pac.last_name }}</h3>
+          @if (pac.email) {
+            <p class="pb-patient__email">{{ pac.email }}</p>
+          }
         </div>
-      </ui2-card>
-    </ui2-section>
+        <ui2-pill variant="soft" size="sm" icon="healing">Paciente</ui2-pill>
+      </div>
+    </ui2-card>
   }
 
-  <!-- Form: detalles + duración -->
-  <form [formGroup]="form" novalidate>
-    <ui2-section [padding]="'0 20px 12px'">
+  <!-- Main grid -->
+  <form [formGroup]="form" novalidate class="pb-main">
+    <!-- Columna izquierda: configuración -->
+    <aside class="pb-config">
       <ui2-card [padding]="14">
-        <div class="pb-form">
+        <div class="pb-section">
+          <ui2-section-label>Datos del plan</ui2-section-label>
           <ui2-input
             label="Título del plan"
             placeholder="Ej: Rehabilitación rodilla"
@@ -80,255 +76,269 @@
           ></ui2-textarea>
         </div>
       </ui2-card>
-    </ui2-section>
 
-    <ui2-section [label]="'Duración'" [padding]="'8px 20px 12px'">
       <ui2-card [padding]="14">
-        <div class="pb-dates">
-          <label class="pb-date-field">
-            <span class="pb-date-field__label">Inicio</span>
-            <input
-              type="date"
-              class="pb-date-input"
-              formControlName="fechaInicio"
-              [min]="minDate"
-              (change)="onFechaInicioChange($event)"
-            />
-          </label>
-          <label class="pb-date-field">
-            <span class="pb-date-field__label">Fin</span>
-            <input
-              type="date"
-              class="pb-date-input"
-              formControlName="fechaFin"
-              [min]="form.value.fechaInicio || minDate"
-              (change)="onFechaFinChange($event)"
-            />
-          </label>
-        </div>
-        <div class="pb-duration-presets">
+        <div class="pb-section">
+          <ui2-section-label>Duración</ui2-section-label>
+          <div class="pb-dates">
+            <label class="pb-date-field">
+              <span class="pb-date-field__label">Inicio</span>
+              <input
+                type="date"
+                class="pb-date-input"
+                formControlName="fechaInicio"
+                [min]="minDate"
+                (change)="onFechaInicioChange($event)"
+              />
+            </label>
+            <label class="pb-date-field">
+              <span class="pb-date-field__label">Fin</span>
+              <input
+                type="date"
+                class="pb-date-input"
+                formControlName="fechaFin"
+                [min]="form.value.fechaInicio || minDate"
+                (change)="onFechaFinChange($event)"
+              />
+            </label>
+          </div>
           <ui2-segmented
             [options]="duracionOptions"
             [value]="duracionSeleccionadaId()"
             (valueChange)="onDuracionChange($event)"
           ></ui2-segmented>
+          @if (resumenDuracion(); as resumen) {
+            <p class="pb-duration-tip">
+              <span class="material-symbols-outlined" aria-hidden="true">event_repeat</span>
+              <span>{{ resumen }}</span>
+            </p>
+          }
         </div>
       </ui2-card>
-    </ui2-section>
-  </form>
+    </aside>
 
-  <!-- Ejercicios -->
-  <ui2-section
-    [label]="'Ejercicios del plan (' + totalItems() + ')'"
-    [action]="totalItems() > 0 ? 'Añadir' : null"
-    [padding]="'8px 20px 16px'"
-    (actionClick)="irAGaleria()"
-  >
-    @if (items().length === 0) {
-      <ui2-empty-state
-        icon="fitness_center"
-        title="Sin ejercicios todavía"
-        message="Añade ejercicios del catálogo para construir el plan."
-        actionLabel="Agregar ejercicios"
-        actionIcon="add"
-        (action)="irAGaleria()"
-      ></ui2-empty-state>
-    } @else {
-      <div
-        class="pb-ex-list"
-        cdkDropList
-        (cdkDropListDropped)="onDrop($event)"
-      >
-        @for (it of items(); track trackByIndex($index); let i = $index) {
-          <article
-            class="pb-ex-item"
-            cdkDrag
-            [cdkDragDisabled]="ejercicioEditando() === i"
-          >
-            <div *cdkDragPreview class="pb-ex-preview">
-              <ui2-card [padding]="12">
-                <div class="pb-ex-preview__row">
-                  <div class="pb-ex__thumb pb-ex__thumb--sm">
-                    @if (it.ejercicio.portada) {
-                      <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
-                    } @else {
-                      <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
-                    }
-                  </div>
-                  <span class="pb-ex__name">{{ it.ejercicio.nombre }}</span>
-                </div>
-              </ui2-card>
-            </div>
+    <!-- Columna derecha: ejercicios -->
+    <section class="pb-exercises">
+      <header class="pb-ex-head">
+        <div class="pb-ex-head__left">
+          <ui2-section-label>Ejercicios</ui2-section-label>
+          <span class="pb-ex-head__count">{{ totalItems() }} ejercicio{{ totalItems() === 1 ? '' : 's' }}</span>
+        </div>
+        @if (totalItems() > 0) {
+          <ui2-button
+            variant="ghost"
+            size="sm"
+            iconLeft="add"
+            (clicked)="irAGaleria()"
+          >Añadir</ui2-button>
+        }
+      </header>
 
-            <div *cdkDragPlaceholder class="pb-drag-placeholder"></div>
-
-            <ui2-card [padding]="12">
-              @if (ejercicioEditando() !== i) {
-                <!-- Vista compacta -->
-                <div class="pb-ex pb-ex--compact">
-                  <button
-                    type="button"
-                    class="pb-drag-handle"
-                    cdkDragHandle
-                    aria-label="Reordenar"
-                  >
-                    <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
-                  </button>
-
-                  <div class="pb-ex__thumb">
-                    @if (it.ejercicio.portada) {
-                      <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
-                    } @else {
-                      <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
-                    }
-                  </div>
-
-                  <div class="pb-ex__body">
-                    <h4 class="pb-ex__name">{{ it.ejercicio.nombre }}</h4>
-                    <div class="pb-ex__pills">
-                      <ui2-pill variant="primary" size="sm" icon="repeat">
-                        {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
-                      </ui2-pill>
-                      @if (it.descansoSeg) {
-                        <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
-                      }
-                      @if (it.vecesDia && it.vecesDia > 1) {
-                        <ui2-pill variant="soft" size="sm" icon="schedule">{{ it.vecesDia }}×/día</ui2-pill>
-                      }
-                    </div>
-                    <div class="pb-ex__days">
-                      @for (d of dias; track d) {
-                        <span
-                          class="pb-day"
-                          [class.pb-day--active]="isDia(it, d)"
-                        >{{ d }}</span>
-                      }
-                    </div>
-                  </div>
-
-                  <ui2-button
-                    variant="ghost"
-                    size="sm"
-                    iconLeft="edit"
-                    [iconOnly]="true"
-                    (clicked)="toggleEdicion(i)"
-                  ></ui2-button>
-                </div>
-              } @else {
-                <!-- Vista expandida -->
-                <div class="pb-ex pb-ex--expanded">
-                  <div class="pb-ex__head">
-                    <div class="pb-ex__thumb pb-ex__thumb--lg">
+      @if (items().length === 0) {
+        <ui2-empty-state
+          icon="fitness_center"
+          title="Sin ejercicios todavía"
+          message="Añade ejercicios del catálogo para construir el plan."
+          actionLabel="Agregar ejercicios"
+          actionIcon="add"
+          (action)="irAGaleria()"
+        ></ui2-empty-state>
+      } @else {
+        <div
+          class="pb-ex-list"
+          cdkDropList
+          (cdkDropListDropped)="onDrop($event)"
+        >
+          @for (it of items(); track trackByIndex($index); let i = $index) {
+            <article
+              class="pb-ex-item"
+              [attr.data-collapsed]="ejercicioEditando() !== i ? 'true' : 'false'"
+              cdkDrag
+              [cdkDragDisabled]="ejercicioEditando() === i"
+            >
+              <div *cdkDragPreview class="pb-ex-preview">
+                <ui2-card [padding]="12">
+                  <div class="pb-ex-preview__row">
+                    <div class="pb-ex__thumb pb-ex__thumb--sm">
                       @if (it.ejercicio.portada) {
-                        <img [src]="assetUrl(it.ejercicio.portada, 160, 160)" [alt]="it.ejercicio.nombre" />
+                        <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
                       } @else {
                         <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
                       }
                     </div>
-                    <div class="pb-ex__head-text">
+                    <span class="pb-ex__name">{{ it.ejercicio.nombre }}</span>
+                  </div>
+                </ui2-card>
+              </div>
+
+              <div *cdkDragPlaceholder class="pb-drag-placeholder"></div>
+
+              <ui2-card [padding]="0">
+                <div class="pb-ex">
+                  <!-- Cabecera siempre visible -->
+                  <div class="pb-ex__head">
+                    <button
+                      type="button"
+                      class="pb-drag-handle"
+                      cdkDragHandle
+                      aria-label="Reordenar ejercicio"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
+                    </button>
+
+                    <span class="pb-ex__order" aria-hidden="true">{{ i + 1 }}</span>
+
+                    <div class="pb-ex__thumb">
+                      @if (it.ejercicio.portada) {
+                        <img [src]="assetUrl(it.ejercicio.portada, 128, 128)" [alt]="it.ejercicio.nombre" />
+                      } @else {
+                        <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                      }
+                    </div>
+
+                    <div class="pb-ex__name-block">
                       <h4 class="pb-ex__name">{{ it.ejercicio.nombre }}</h4>
-                      @if (it.ejercicio.descripcion) {
+                      <!-- Resumen pills (mobile-collapsed only, oculto en desktop) -->
+                      <div class="pb-ex__summary">
+                        <ui2-pill variant="primary" size="sm" icon="repeat">
+                          {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
+                        </ui2-pill>
+                        @if (it.descansoSeg) {
+                          <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
+                        }
+                        @if (it.vecesDia && it.vecesDia > 1) {
+                          <ui2-pill variant="soft" size="sm" icon="schedule">{{ it.vecesDia }}×/día</ui2-pill>
+                        }
+                      </div>
+                      <app-plan-week-dots
+                        class="pb-ex__weekdots-summary"
+                        [dias]="it.diasSemana ?? []"
+                      ></app-plan-week-dots>
+                    </div>
+
+                    <ui2-button
+                      class="pb-ex__toggle"
+                      variant="ghost"
+                      size="sm"
+                      [iconLeft]="ejercicioEditando() === i ? 'check' : 'edit'"
+                      [iconOnly]="true"
+                      (clicked)="toggleEdicion(i)"
+                    ></ui2-button>
+                  </div>
+
+                  <!-- Detalles editables (visibles en desktop o cuando expandido) -->
+                  <div class="pb-ex__details">
+                    <div class="pb-dosage-grid">
+                      <label class="pb-dosage-field">
+                        <span class="pb-dosage-field__label">Series</span>
+                        <input
+                          type="number"
+                          min="1"
+                          class="pb-dosage-input"
+                          [value]="it.series ?? ''"
+                          (change)="updateNumber(i, 'series', $event)"
+                        />
+                      </label>
+                      <label class="pb-dosage-field">
+                        <span class="pb-dosage-field__label">Reps</span>
+                        <input
+                          type="number"
+                          min="1"
+                          class="pb-dosage-input"
+                          [value]="it.repeticiones ?? ''"
+                          (change)="updateNumber(i, 'repeticiones', $event)"
+                        />
+                      </label>
+                      <label class="pb-dosage-field">
+                        <span class="pb-dosage-field__label">Descanso (s)</span>
+                        <input
+                          type="number"
+                          min="0"
+                          class="pb-dosage-input"
+                          [value]="it.descansoSeg ?? ''"
+                          (change)="updateNumber(i, 'descansoSeg', $event)"
+                        />
+                      </label>
+                      <label class="pb-dosage-field">
+                        <span class="pb-dosage-field__label">Veces/día</span>
+                        <input
+                          type="number"
+                          min="1"
+                          class="pb-dosage-input"
+                          [value]="it.vecesDia ?? ''"
+                          (change)="updateNumber(i, 'vecesDia', $event)"
+                        />
+                      </label>
+                    </div>
+
+                    <div class="pb-days-block">
+                      <span class="pb-days-block__label">Días de la semana</span>
+                      <app-plan-day-toggles
+                        [value]="it.diasSemana ?? []"
+                        (valueChange)="setDias(i, $event)"
+                      ></app-plan-day-toggles>
+                    </div>
+
+                    <label class="pb-textarea">
+                      <span class="pb-textarea__label">Instrucciones para el paciente</span>
+                      <textarea
+                        class="pb-textarea__input"
+                        rows="2"
+                        [value]="it.instruccionesPaciente ?? ''"
+                        placeholder="Notas o indicaciones específicas"
+                        (change)="updateText(i, 'instruccionesPaciente', $event)"
+                      ></textarea>
+                    </label>
+
+                    <label class="pb-textarea pb-textarea--private">
+                      <span class="pb-textarea__label">Notas privadas (solo fisio)</span>
+                      <textarea
+                        class="pb-textarea__input"
+                        rows="2"
+                        [value]="it.notasFisio ?? ''"
+                        placeholder="Notas internas no visibles para el paciente"
+                        (change)="updateText(i, 'notasFisio', $event)"
+                      ></textarea>
+                    </label>
+
+                    @if (it.ejercicio.descripcion) {
+                      <details class="pb-ex__desc-fold">
+                        <summary>Ver descripción del ejercicio</summary>
                         <div
                           class="pb-ex__desc"
                           [innerHTML]="it.ejercicio.descripcion | safeHtml"
                         ></div>
-                      }
+                      </details>
+                    }
+
+                    <div class="pb-ex__footer">
+                      <ui2-button
+                        variant="danger"
+                        size="sm"
+                        iconLeft="delete"
+                        (clicked)="removeEjercicio(it.ejercicio.id)"
+                      >Eliminar</ui2-button>
                     </div>
-                  </div>
-
-                  <div class="pb-dosage-grid">
-                    <label class="pb-dosage-field">
-                      <span class="pb-dosage-field__label">Series</span>
-                      <input
-                        type="number"
-                        min="1"
-                        class="pb-dosage-input"
-                        [value]="it.series ?? ''"
-                        (change)="updateNumber(i, 'series', $event)"
-                      />
-                    </label>
-                    <label class="pb-dosage-field">
-                      <span class="pb-dosage-field__label">Reps</span>
-                      <input
-                        type="number"
-                        min="1"
-                        class="pb-dosage-input"
-                        [value]="it.repeticiones ?? ''"
-                        (change)="updateNumber(i, 'repeticiones', $event)"
-                      />
-                    </label>
-                    <label class="pb-dosage-field">
-                      <span class="pb-dosage-field__label">Descanso (s)</span>
-                      <input
-                        type="number"
-                        min="0"
-                        class="pb-dosage-input"
-                        [value]="it.descansoSeg ?? ''"
-                        (change)="updateNumber(i, 'descansoSeg', $event)"
-                      />
-                    </label>
-                    <label class="pb-dosage-field">
-                      <span class="pb-dosage-field__label">Veces/día</span>
-                      <input
-                        type="number"
-                        min="1"
-                        class="pb-dosage-input"
-                        [value]="it.vecesDia ?? ''"
-                        (change)="updateNumber(i, 'vecesDia', $event)"
-                      />
-                    </label>
-                  </div>
-
-                  <div class="pb-days-block">
-                    <span class="pb-days-block__label">Días de la semana</span>
-                    <div class="pb-days">
-                      @for (d of dias; track d) {
-                        <button
-                          type="button"
-                          class="pb-day-btn"
-                          [class.pb-day-btn--active]="isDia(it, d)"
-                          [attr.aria-label]="diasNombres[d]"
-                          (click)="toggleDia(i, d)"
-                        >{{ d }}</button>
-                      }
-                    </div>
-                  </div>
-
-                  <label class="pb-instructions">
-                    <span class="pb-instructions__label">Instrucciones para el paciente</span>
-                    <textarea
-                      class="pb-instructions__input"
-                      rows="3"
-                      [value]="it.instruccionesPaciente ?? ''"
-                      placeholder="Notas o indicaciones específicas"
-                      (change)="updateText(i, 'instruccionesPaciente', $event)"
-                    ></textarea>
-                  </label>
-
-                  <div class="pb-ex__footer">
-                    <ui2-button
-                      variant="danger"
-                      size="sm"
-                      iconLeft="delete"
-                      (clicked)="removeEjercicio(it.ejercicio.id)"
-                    >Eliminar</ui2-button>
-                    <ui2-button
-                      variant="primary"
-                      size="sm"
-                      iconLeft="check"
-                      (clicked)="toggleEdicion(i)"
-                    >Listo</ui2-button>
                   </div>
                 </div>
-              }
-            </ui2-card>
-          </article>
-        }
-      </div>
-    }
-  </ui2-section>
+              </ui2-card>
+            </article>
+          }
+        </div>
 
-  <!-- CTA bottom -->
+        <button
+          type="button"
+          class="pb-add-cta"
+          (click)="irAGaleria()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+          <span>Añadir ejercicio desde la galería</span>
+        </button>
+      }
+    </section>
+  </form>
+
+  <!-- Sticky CTA -->
   <div class="pb-cta-bar">
     <ui2-button
       variant="primary"

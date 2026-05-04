@@ -1,275 +1,410 @@
 @reference "tailwindcss";
 
 .pd-page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 20px 32px;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  min-height: 100%;
+  gap: 16px;
 }
 
+@media (min-width: 1024px) {
+  .pd-page {
+    padding: 28px 32px 48px;
+    gap: 24px;
+  }
+}
+
+/* ===== Header ===== */
 .pd-header {
   display: flex;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
-  padding: 12px 20px 4px;
+  padding: 4px 0;
 }
-
 .pd-header__title {
   flex: 1;
   min-width: 0;
 }
-
 .pd-header__actions {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  margin-top: 4px;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  justify-content: flex-end;
 }
 
-.pd-state {
+@media (min-width: 768px) {
+  .pd-header__actions {
+    width: auto;
+  }
+}
+
+/* ===== Bloques verticales ===== */
+.pd-block {
+  display: block;
+}
+
+/* ===== Success hero ===== */
+.pd-success {
   display: flex;
-  justify-content: center;
-  padding: 48px 20px;
-}
-
-/* Hero */
-.pd-hero {
-  display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
-
-.pd-hero__text {
-  min-width: 0;
-}
-
-.pd-hero__title {
+.pd-success__title {
   font-family: KengoDisplay, kengoFont, sans-serif;
-  font-size: 22px;
-  color: var(--kengo-primary);
-  line-height: 1.1;
+  font-size: 18px;
   margin: 0;
+  letter-spacing: -0.2px;
+  color: var(--kengo-primary);
 }
-
-.pd-hero__sub {
+.pd-success__sub {
   font-size: 13px;
-  color: var(--ink-500);
   margin: 4px 0 0;
+  color: var(--ink-500);
   line-height: 1.4;
 }
 
-/* Patient */
-.pd-patient {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.pd-patient--clickable {
-  cursor: pointer;
-}
-
-.pd-patient--clickable:focus-visible {
-  outline: 2px solid var(--kengo-primary);
-  outline-offset: 2px;
-  border-radius: 12px;
-}
-
-.pd-patient__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.pd-patient__name {
-  font-family: KengoDisplay, kengoFont, sans-serif;
-  font-size: 18px;
-  color: var(--ink-900);
-  line-height: 1.1;
-  margin: 4px 0 2px;
-}
-
-.pd-patient__email {
-  font-size: 13px;
-  color: var(--ink-500);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pd-patient__chevron {
-  color: var(--ink-400);
-  font-size: 22px;
-}
-
-/* Plan info */
-.pd-plan__head {
-  display: flex;
-  align-items: flex-start;
+/* ===== KPI strip ===== */
+.pd-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.pd-plan__head-text {
-  min-width: 0;
+@media (min-width: 768px) {
+  .pd-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
 }
 
-.pd-plan__title {
-  font-family: KengoDisplay, kengoFont, sans-serif;
-  font-size: 22px;
-  color: var(--kengo-primary);
-  line-height: 1.1;
-  margin: 0;
-}
-
-.pd-plan__desc {
-  font-size: 13px;
-  color: var(--ink-500);
-  margin: 6px 0 0;
-  line-height: 1.45;
-}
-
-.pd-stats {
+/* ===== Main grid ===== */
+.pd-main {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--ink-100);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
 }
 
-.pd-stat {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
+@media (min-width: 1024px) {
+  .pd-main {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .pd-main .pd-aside {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .pd-main .pd-list {
+    grid-column: 1;
+    grid-row: 1;
+  }
 }
 
-.pd-stat__text {
+.pd-aside {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .pd-aside {
+    position: sticky;
+    top: 16px;
+    gap: 16px;
+  }
+}
+
+/* ===== Patient card ===== */
+.pd-patient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pd-patient__info {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-
-.pd-stat__label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--ink-500);
-}
-
-.pd-stat__value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-900);
-}
-
-.pd-stat__value--accent {
-  color: var(--kengo-primary);
+.pd-patient__name {
   font-family: KengoDisplay, kengoFont, sans-serif;
   font-size: 18px;
+  margin: 2px 0 0;
+  letter-spacing: -0.2px;
+  color: var(--ink-900);
+  line-height: 1.1;
+}
+.pd-patient__email {
+  font-size: 12px;
+  color: var(--ink-500);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pd-patient__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.pd-patient__cta {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* Ejercicios */
+/* ===== Descripción ===== */
+.pd-desc {
+  font-size: 13px;
+  color: var(--ink-700);
+  line-height: 1.55;
+  margin: 6px 0 0;
+}
+
+/* ===== Lista ejercicios ===== */
+.pd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pd-list__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.pd-list__count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-500);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
 .pd-ex-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+/* ===== Exercise row ===== */
 .pd-ex {
   display: grid;
-  grid-template-columns: 28px 64px 1fr;
-  gap: 12px;
-  align-items: start;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "thumb body"
+    "thumb body"
+    "dose dose";
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px;
+}
+
+@media (min-width: 1024px) {
+  .pd-ex {
+    grid-template-columns: 56px 96px 1fr 280px;
+    grid-template-areas: "index thumb body dose";
+    align-items: center;
+    gap: 0;
+    padding: 0;
+  }
 }
 
 .pd-ex__index {
-  font-family: KengoDisplay, kengoFont, sans-serif;
-  font-size: 22px;
-  color: var(--kengo-primary);
-  text-align: center;
-  line-height: 1;
-  padding-top: 6px;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .pd-ex__index {
+    grid-area: index;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    background: linear-gradient(180deg, rgba(var(--kengo-primary-rgb), 0.08), rgba(var(--kengo-primary-rgb), 0.02));
+    border-right: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
+    padding: 18px 0;
+    gap: 6px;
+  }
+  .pd-ex__index-num {
+    font-family: KengoDisplay, kengoFont, sans-serif;
+    font-size: 28px;
+    color: var(--kengo-primary);
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .pd-ex__index-line {
+    width: 18px;
+    height: 2px;
+    background: rgba(var(--kengo-primary-rgb), 0.4);
+    border-radius: 2px;
+  }
 }
 
 .pd-ex__thumb {
-  width: 64px;
-  height: 64px;
+  grid-area: thumb;
+  width: 80px;
+  height: 80px;
   border-radius: 14px;
-  background: var(--cream-100);
-  overflow: hidden;
+  background: linear-gradient(135deg, #fff5ee, #fff);
   display: grid;
   place-items: center;
+  overflow: hidden;
   flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
-
 .pd-ex__thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
 .pd-ex__thumb .material-symbols-outlined {
-  color: var(--ink-400);
-  font-size: 28px;
+  font-size: 32px;
+  color: var(--kengo-primary);
+  opacity: 0.4;
+}
+
+@media (min-width: 1024px) {
+  .pd-ex__thumb {
+    width: 96px;
+    height: 96px;
+    margin: 12px 0;
+  }
 }
 
 .pd-ex__body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
 }
-
-.pd-ex__name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-900);
-  margin: 0 0 6px;
-  line-height: 1.2;
+@media (min-width: 1024px) {
+  .pd-ex__body {
+    padding: 14px 18px;
+  }
 }
-
+.pd-ex__name {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.2px;
+  color: var(--ink-900);
+  line-height: 1.15;
+  word-break: break-word;
+}
+@media (min-width: 1024px) {
+  .pd-ex__name {
+    font-size: 20px;
+  }
+}
 .pd-ex__pills {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-
-.pd-ex__days {
-  display: flex;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.pd-day {
-  display: inline-grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--ink-400);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.pd-day--active {
-  background: var(--kengo-primary);
-  color: white;
-}
-
 .pd-ex__notes {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   font-size: 12px;
   color: var(--ink-500);
-  margin: 8px 0 0;
-  line-height: 1.4;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.025);
+  border-radius: 10px;
+  border-left: 2px solid rgba(var(--kengo-primary-rgb), 0.25);
+  font-style: italic;
+  line-height: 1.45;
 }
-
 .pd-ex__notes .material-symbols-outlined {
   font-size: 16px;
-  color: var(--ink-400);
+  color: var(--kengo-primary);
   flex-shrink: 0;
-  margin-top: 1px;
+}
+.pd-ex__notes--private {
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+  border-left-color: var(--kengo-primary);
+  font-style: normal;
+  color: var(--ink-700);
+}
+.pd-ex__notes--private strong {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--kengo-primary);
+  font-size: 10px;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+/* ===== Dose panel ===== */
+.pd-ex__dose {
+  grid-area: dose;
+  display: flex;
+  gap: 14px;
+  padding: 10px 0 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+@media (min-width: 1024px) {
+  .pd-ex__dose {
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 0;
+    border-left: 1px solid rgba(0, 0, 0, 0.04);
+    align-self: stretch;
+  }
+}
+.pd-dose {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+@media (min-width: 1024px) {
+  .pd-dose {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    flex: initial;
+  }
+}
+.pd-dose__label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--ink-400);
+  text-transform: uppercase;
+}
+.pd-dose__value {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 22px;
+  color: var(--ink-900);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+@media (min-width: 1024px) {
+  .pd-dose__value {
+    font-size: 26px;
+  }
+}
+.pd-dose__unit {
+  font-size: 12px;
+  color: var(--ink-400);
+  margin-left: 2px;
+  font-family: Galvji, kengoFont, sans-serif;
+  font-weight: 700;
 }

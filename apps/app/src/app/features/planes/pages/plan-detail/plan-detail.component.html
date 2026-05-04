@@ -1,6 +1,6 @@
 <div class="pd-page">
   <!-- Header -->
-  <div class="pd-header">
+  <header class="pd-header">
     <ui2-back-button [route]="backRoute()" ariaLabel="Volver"></ui2-back-button>
     <div class="pd-header__title">
       <ui2-big-title
@@ -9,8 +9,8 @@
         sub="Plan de tratamiento"
       ></ui2-big-title>
     </div>
-    <div class="pd-header__actions">
-      @if (plan()) {
+    @if (plan()) {
+      <div class="pd-header__actions">
         <ui2-button
           variant="ghost"
           iconLeft="picture_as_pdf"
@@ -19,172 +19,226 @@
         >PDF</ui2-button>
         @if (sessionService.puedeEditarRecursos()) {
           <ui2-button
-            variant="ghost"
+            variant="primary"
             iconLeft="edit"
             size="sm"
             (clicked)="editarPlan()"
-          >Editar</ui2-button>
+          >Editar plan</ui2-button>
         }
-      }
-    </div>
-  </div>
+      </div>
+    }
+  </header>
 
   @if (!isLoading()) {
     @if (plan(); as p) {
-    <!-- Success hero (created/updated) -->
-    @if (showSuccessHero()) {
-      <ui2-section [padding]="'4px 20px 12px'">
-        <ui2-card variant="tinted" [padding]="14">
-          <div class="pd-hero">
-            <ui2-icon-badge
-              icon="check_circle"
-              [size]="48"
-              [radius]="16"
-            ></ui2-icon-badge>
-            <div class="pd-hero__text">
-              <h2 class="pd-hero__title">{{ heroTitle() }}</h2>
-              <p class="pd-hero__sub">{{ heroSubtitle() }}</p>
-            </div>
-          </div>
-        </ui2-card>
-      </ui2-section>
-    }
-
-    <!-- Patient card (oculta en modo paciente) -->
-    @if (paciente(); as pac) {
-      @if (!sessionService.enModoPaciente()) {
-        <ui2-section [padding]="'4px 20px 12px'">
-          <ui2-card [padding]="14">
-            <div
-              class="pd-patient"
-              [class.pd-patient--clickable]="sessionService.puedeGestionarPacientes()"
-              [attr.role]="sessionService.puedeGestionarPacientes() ? 'button' : null"
-              [attr.tabindex]="sessionService.puedeGestionarPacientes() ? '0' : null"
-              (click)="verPerfilPaciente()"
-              (keydown.enter)="verPerfilPaciente()"
-            >
-              <ui2-avatar
-                [name]="(pac.first_name || '') + ' ' + (pac.last_name || '')"
-                [src]="avatarUrl(pac.avatar)"
-                size="md"
-                gradient="coral"
-              ></ui2-avatar>
-              <div class="pd-patient__info">
-                <ui2-section-label>Paciente</ui2-section-label>
-                <h3 class="pd-patient__name">{{ pac.first_name }} {{ pac.last_name }}</h3>
-                @if (pac.email) {
-                  <p class="pd-patient__email">{{ pac.email }}</p>
-                }
+      <!-- Success hero (created/updated) -->
+      @if (showSuccessHero()) {
+        <section class="pd-block">
+          <ui2-card variant="tinted" [padding]="14">
+            <div class="pd-success">
+              <ui2-icon-badge
+                icon="check_circle"
+                [size]="48"
+                [radius]="16"
+              ></ui2-icon-badge>
+              <div class="pd-success__text">
+                <h2 class="pd-success__title">{{ heroTitle() }}</h2>
+                <p class="pd-success__sub">{{ heroSubtitle() }}</p>
               </div>
-              @if (sessionService.puedeGestionarPacientes()) {
-                <span class="material-symbols-outlined pd-patient__chevron" aria-hidden="true">chevron_right</span>
-              }
             </div>
           </ui2-card>
-        </ui2-section>
+        </section>
       }
-    }
 
-    <!-- Plan info -->
-    <ui2-section [padding]="'4px 20px 12px'">
-      <ui2-card [padding]="14">
-        <div class="pd-plan__head">
-          <ui2-icon-badge icon="assignment" [size]="40" [radius]="14"></ui2-icon-badge>
-          <div class="pd-plan__head-text">
-            <h2 class="pd-plan__title">{{ p.titulo }}</h2>
-            @if (p.descripcion) {
-              <p class="pd-plan__desc">{{ p.descripcion }}</p>
-            }
-          </div>
+      <!-- KPI strip -->
+      <section class="pd-block">
+        <div class="pd-kpis">
+          <ui2-kpi-card
+            icon="event_available"
+            iconColor="var(--success, #22c55e)"
+            label="Inicio"
+            [value]="formatDateShort(p.fechaInicio)"
+          ></ui2-kpi-card>
+          <ui2-kpi-card
+            icon="event_busy"
+            iconColor="var(--ink-500)"
+            label="Fin"
+            [value]="formatDateShort(p.fechaFin)"
+          ></ui2-kpi-card>
+          <ui2-kpi-card
+            icon="fitness_center"
+            label="Ejercicios"
+            [value]="totalEjercicios()"
+            [delta]="diasPorSemana() > 0 ? diasPorSemana() + ' días/semana' : null"
+            deltaColor="var(--ink-500)"
+          ></ui2-kpi-card>
+          @if (adherencia() !== null) {
+            <ui2-kpi-card
+              icon="local_fire_department"
+              iconColor="var(--kengo-tertiary-dark, #d9a832)"
+              label="Adherencia"
+              [value]="adherencia() + ''"
+              unit="%"
+            ></ui2-kpi-card>
+          }
         </div>
-        <div class="pd-stats">
-          <div class="pd-stat">
-            <ui2-icon-badge icon="event_available" [size]="32" [radius]="10" color="var(--success)"></ui2-icon-badge>
-            <div class="pd-stat__text">
-              <span class="pd-stat__label">Inicio</span>
-              <span class="pd-stat__value">{{ formatDate(p.fechaInicio) }}</span>
-            </div>
-          </div>
-          <div class="pd-stat">
-            <ui2-icon-badge icon="event_busy" [size]="32" [radius]="10" color="var(--ink-500)"></ui2-icon-badge>
-            <div class="pd-stat__text">
-              <span class="pd-stat__label">Fin</span>
-              <span class="pd-stat__value">{{ formatDate(p.fechaFin) }}</span>
-            </div>
-          </div>
-          <div class="pd-stat">
-            <ui2-icon-badge icon="fitness_center" [size]="32" [radius]="10"></ui2-icon-badge>
-            <div class="pd-stat__text">
-              <span class="pd-stat__label">Ejercicios</span>
-              <span class="pd-stat__value pd-stat__value--accent">{{ totalEjercicios() }}</span>
-            </div>
-          </div>
-        </div>
-      </ui2-card>
-    </ui2-section>
+      </section>
 
-    <!-- Lista de ejercicios -->
-    <ui2-section
-      [label]="'Rutina de ejercicios'"
-      [padding]="'8px 20px 24px'"
-    >
-      <div class="pd-ex-list">
-        @for (item of items(); track item.id; let i = $index) {
-          <ui2-card [padding]="14">
-            <div class="pd-ex">
-              <span class="pd-ex__index">{{ i + 1 }}</span>
-              <div class="pd-ex__thumb">
-                @if (item.ejercicio.portada) {
-                  <img
-                    [src]="assetUrl(item.ejercicio.portada, 120, 120)"
-                    [alt]="item.ejercicio.nombre"
-                    loading="lazy"
-                  />
-                } @else {
-                  <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
-                }
-              </div>
-              <div class="pd-ex__body">
-                <h4 class="pd-ex__name">{{ item.ejercicio.nombre }}</h4>
-                <div class="pd-ex__pills">
-                  <ui2-pill variant="primary" size="sm" icon="repeat">
-                    {{ item.series || 3 }} × {{ item.repeticiones || 12 }}
-                  </ui2-pill>
-                  @if (item.descansoSeg) {
-                    <ui2-pill variant="soft" size="sm" icon="timer">
-                      {{ item.descansoSeg }}s
-                    </ui2-pill>
-                  }
-                  @if (item.vecesDia && item.vecesDia > 1) {
-                    <ui2-pill variant="soft" size="sm" icon="schedule">
-                      {{ item.vecesDia }}×/día
-                    </ui2-pill>
-                  }
-                </div>
-                @if (item.diasSemana && item.diasSemana.length > 0) {
-                  <div class="pd-ex__days">
-                    @for (dia of diasSemanaArray; track dia) {
-                      <span
-                        class="pd-day"
-                        [class.pd-day--active]="item.diasSemana.includes(dia)"
-                      >{{ dia }}</span>
+      <!-- Main grid -->
+      <div class="pd-main">
+        <!-- Aside (paciente + calendar + descripción + notas internas) -->
+        <aside class="pd-aside">
+          @if (paciente(); as pac) {
+            @if (!sessionService.enModoPaciente()) {
+              <ui2-card [padding]="14">
+                <div class="pd-patient">
+                  <ui2-avatar
+                    [name]="(pac.first_name || '') + ' ' + (pac.last_name || '')"
+                    [src]="avatarUrl(pac.avatar)"
+                    size="lg"
+                    gradient="coral"
+                  ></ui2-avatar>
+                  <div class="pd-patient__info">
+                    <ui2-section-label>Paciente</ui2-section-label>
+                    <h3 class="pd-patient__name">{{ pac.first_name }} {{ pac.last_name }}</h3>
+                    @if (pac.email) {
+                      <p class="pd-patient__email">{{ pac.email }}</p>
+                    }
+                    @if (adherenciaLabel() || dolorPromedio() !== null) {
+                      <div class="pd-patient__pills">
+                        @if (adherenciaLabel(); as al) {
+                          <ui2-pill variant="success" size="sm" icon="local_fire_department">{{ al }}</ui2-pill>
+                        }
+                        @if (dolorPromedio() !== null) {
+                          <ui2-pill variant="custom" size="sm" icon="mood_bad" [color]="dolorColor()">
+                            Dolor {{ dolorPromedio() }}/10
+                          </ui2-pill>
+                        }
+                      </div>
                     }
                   </div>
+                </div>
+                @if (sessionService.puedeGestionarPacientes()) {
+                  <div class="pd-patient__cta">
+                    <ui2-button
+                      variant="ghost"
+                      size="sm"
+                      iconLeft="person"
+                      (clicked)="verPerfilPaciente()"
+                    >Ver ficha</ui2-button>
+                  </div>
                 }
-                @if (item.instruccionesPaciente) {
-                  <p class="pd-ex__notes">
-                    <span class="material-symbols-outlined" aria-hidden="true">info</span>
-                    <span>{{ item.instruccionesPaciente }}</span>
-                  </p>
-                }
-              </div>
+              </ui2-card>
+            }
+          }
+
+          @if (p.fechaInicio || p.fechaFin) {
+            <ui2-card [padding]="14">
+              <app-plan-mini-calendar
+                [fechaInicio]="p.fechaInicio"
+                [fechaFin]="p.fechaFin"
+                [diasActivos]="diasActivos()"
+              ></app-plan-mini-calendar>
+            </ui2-card>
+          }
+
+          @if (p.descripcion) {
+            <ui2-card [padding]="14">
+              <ui2-section-label>Descripción</ui2-section-label>
+              <p class="pd-desc">{{ p.descripcion }}</p>
+            </ui2-card>
+          }
+        </aside>
+
+        <!-- Lista de ejercicios -->
+        <section class="pd-list">
+          <header class="pd-list__head">
+            <ui2-section-label>Rutina de ejercicios</ui2-section-label>
+            @if (totalEjercicios() > 0) {
+              <span class="pd-list__count">
+                {{ totalEjercicios() }} ejercicio{{ totalEjercicios() === 1 ? '' : 's' }}
+              </span>
+            }
+          </header>
+
+          @if (totalEjercicios() === 0) {
+            <ui2-empty-state
+              icon="fitness_center"
+              title="Plan sin ejercicios"
+              message="Este plan aún no tiene ejercicios asignados."
+            ></ui2-empty-state>
+          } @else {
+            <div class="pd-ex-list">
+              @for (item of items(); track item.id; let i = $index) {
+                <ui2-card [padding]="0">
+                  <article class="pd-ex">
+                    <div class="pd-ex__index" aria-hidden="true">
+                      <span class="pd-ex__index-num">{{ i + 1 }}</span>
+                      <span class="pd-ex__index-line"></span>
+                    </div>
+                    <div class="pd-ex__thumb">
+                      @if (item.ejercicio.portada) {
+                        <img
+                          [src]="assetUrl(item.ejercicio.portada, 160, 160)"
+                          [alt]="item.ejercicio.nombre"
+                          loading="lazy"
+                        />
+                      } @else {
+                        <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                      }
+                    </div>
+                    <div class="pd-ex__body">
+                      <h4 class="pd-ex__name">{{ item.ejercicio.nombre }}</h4>
+                      <div class="pd-ex__pills">
+                        <ui2-pill variant="primary" size="sm" icon="repeat">
+                          {{ item.series || 3 }} × {{ item.repeticiones || 12 }}
+                        </ui2-pill>
+                        @if (item.descansoSeg) {
+                          <ui2-pill variant="soft" size="sm" icon="timer">{{ item.descansoSeg }}s</ui2-pill>
+                        }
+                        @if (item.vecesDia && item.vecesDia > 1) {
+                          <ui2-pill variant="soft" size="sm" icon="schedule">{{ item.vecesDia }}×/día</ui2-pill>
+                        }
+                      </div>
+                      @if (item.diasSemana && item.diasSemana.length > 0) {
+                        <app-plan-week-dots [dias]="item.diasSemana"></app-plan-week-dots>
+                      }
+                      @if (item.instruccionesPaciente) {
+                        <p class="pd-ex__notes">
+                          <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                          <span>{{ item.instruccionesPaciente }}</span>
+                        </p>
+                      }
+                      @if (item.notasFisio && sessionService.puedeEditarRecursos()) {
+                        <p class="pd-ex__notes pd-ex__notes--private">
+                          <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+                          <span><strong>Solo fisio:</strong> {{ item.notasFisio }}</span>
+                        </p>
+                      }
+                    </div>
+                    <div class="pd-ex__dose">
+                      <div class="pd-dose">
+                        <span class="pd-dose__label">Series</span>
+                        <span class="pd-dose__value">{{ item.series || 3 }}</span>
+                      </div>
+                      <div class="pd-dose">
+                        <span class="pd-dose__label">Reps</span>
+                        <span class="pd-dose__value">{{ item.repeticiones || 12 }}</span>
+                      </div>
+                      <div class="pd-dose">
+                        <span class="pd-dose__label">Descanso</span>
+                        <span class="pd-dose__value">{{ item.descansoSeg || 0 }}<span class="pd-dose__unit">s</span></span>
+                      </div>
+                    </div>
+                  </article>
+                </ui2-card>
+              }
             </div>
-          </ui2-card>
-        }
+          }
+        </section>
       </div>
-    </ui2-section>
     } @else {
-      <ui2-section [padding]="'24px 20px 24px'">
+      <section class="pd-block">
         <ui2-empty-state
           icon="search_off"
           title="Plan no encontrado"
@@ -193,7 +247,7 @@
           actionIcon="home"
           (action)="irAInicio()"
         ></ui2-empty-state>
-      </ui2-section>
+      </section>
     }
   }
 </div>
