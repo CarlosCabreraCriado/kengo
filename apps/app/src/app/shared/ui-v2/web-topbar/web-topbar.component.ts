@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, computed, inject, signal, input } from '@angular/core';
-import { Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { NotificacionesService } from '../../../core/services/notificaciones.service';
@@ -85,6 +87,7 @@ const MONTHS = [
               [src]="avatarUrl()"
               size="sm"
               [border]="true"
+              [active]="isPerfilActive()"
             ></ui2-avatar>
           </button>
 
@@ -323,6 +326,18 @@ export class Ui2WebTopbarComponent {
   readonly modoFisio = computed(() => !this.modoPaciente());
   readonly pendientes = this.notificacionesService.pendientes;
   readonly mensajesPendientes = this.mensajesService.totalUnread;
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects || e.url),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+  readonly isPerfilActive = computed(() =>
+    (this.currentUrl() ?? '').startsWith('/perfil'),
+  );
 
   readonly eyebrow = computed(() => {
     const now = new Date();

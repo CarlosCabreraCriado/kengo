@@ -212,6 +212,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
             [src]="avatarUrl()"
             size="sm"
             gradient="coral"
+            [active]="isPerfilActive()"
           ></ui2-avatar>
           <span class="ui2-sidebar__user-text">
             <span class="ui2-sidebar__user-name">{{ userName() }}</span>
@@ -823,6 +824,10 @@ export class Ui2PatientSidebarComponent {
     }
     return best?.id ?? null;
   });
+
+  readonly isPerfilActive = computed(() =>
+    (this.currentUrl() ?? '').startsWith('/perfil'),
+  );
 
   constructor() {
     if (typeof window === 'undefined') return;

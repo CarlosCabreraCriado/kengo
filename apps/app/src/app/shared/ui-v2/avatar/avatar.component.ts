@@ -37,6 +37,7 @@ const GRADIENTS: Record<Ui2AvatarGradient, string> = {
         [style.background]="src() ? 'transparent' : gradientCss()"
         [style.font-size.px]="fontSizePx()"
         [class.ui2-avatar__inner--bordered]="border()"
+        [class.ui2-avatar__inner--active]="active()"
       >
         @if (src()) {
           <img [src]="src()!" [alt]="name()" class="ui2-avatar__img" />
@@ -75,6 +76,16 @@ const GRADIENTS: Record<Ui2AvatarGradient, string> = {
       border: 2.5px solid white;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     }
+    .ui2-avatar__inner--active {
+      box-shadow:
+        0 0 0 2px var(--kengo-primary),
+        0 6px 16px rgba(var(--kengo-primary-rgb), 0.35);
+    }
+    .ui2-avatar__inner--bordered.ui2-avatar__inner--active {
+      box-shadow:
+        0 0 0 2px var(--kengo-primary),
+        0 6px 16px rgba(var(--kengo-primary-rgb), 0.35);
+    }
     .ui2-avatar__img {
       width: 100%;
       height: 100%;
@@ -97,6 +108,7 @@ export class Ui2AvatarComponent {
   readonly gradient = input<Ui2AvatarGradient>('indigo');
   readonly border = input<boolean>(false);
   readonly online = input<boolean>(false);
+  readonly active = input<boolean>(false);
 
   readonly px = computed(() => SIZE_PX[this.size()]);
   readonly dotPx = computed(() => Math.round(this.px() * 0.28));
