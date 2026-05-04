@@ -12,6 +12,7 @@ import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
 
 const siteUrl = process.env["SITE_URL"]!;
+const appUrl = process.env["APP_URL"] ?? "https://kengoapp.com";
 
 /**
  * Map para capturar tokens de reset generados por Better-Auth.
@@ -113,7 +114,8 @@ export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
     trustedOrigins: [
-      siteUrl,
+      appUrl,
+      `https://www.${appUrl.replace(/^https?:\/\//, "")}`,
       "http://localhost:4200",
       "http://localhost:4210",
       // App nativa Capacitor: origin definido en `apps/app/capacitor.config.ts`
