@@ -1,11 +1,4 @@
 <div class="feedback-container">
-  <div class="ambient-background">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <div class="orb orb-4"></div>
-  </div>
-
   <app-feedback-celebracion
     [totalEjercicios]="totalEjercicios()"
     [ejerciciosConDolor]="ejerciciosConDolor()"
@@ -45,27 +38,28 @@
   <footer class="actions-footer">
     <div class="footer-content">
       @if (!todosCompletados()) {
-        <div class="incomplete-hint">
-          <span class="material-symbols-outlined hint-icon">info</span>
-          @if (modoDetallado()) {
-            <span>Completa la escala de dolor de todos los ejercicios</span>
-          } @else {
-            <span>Indica cómo te sentiste durante la sesión</span>
-          }
-        </div>
+        <ui2-card [padding]="10" class="incomplete-hint">
+          <div class="hint-row">
+            <span class="material-symbols-outlined hint-icon" aria-hidden="true">info</span>
+            @if (modoDetallado()) {
+              <span class="hint-text">Completa la escala de dolor de todos los ejercicios</span>
+            } @else {
+              <span class="hint-text">Indica cómo te sentiste durante la sesión</span>
+            }
+          </div>
+        </ui2-card>
       }
 
-      <button
-        type="button"
-        class="cta-button"
-        [class.ready]="todosCompletados()"
+      <ui2-button
+        variant="primary"
+        size="lg"
+        iconRight="arrow_forward"
+        [fullWidth]="true"
         [disabled]="!todosCompletados()"
-        (click)="onFinalizar()"
+        (clicked)="onFinalizar()"
       >
-        <span class="btn-text">Finalizar sesión</span>
-        <span class="material-symbols-outlined btn-icon icon-filled">arrow_forward</span>
-        <div class="btn-shimmer"></div>
-      </button>
+        Finalizar sesión
+      </ui2-button>
     </div>
   </footer>
 </div>

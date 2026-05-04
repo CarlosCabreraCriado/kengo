@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   input,
   Output,
@@ -11,7 +12,10 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
-import { DrawerComponent } from '../../../../../../shared/ui/drawer/drawer.component';
+import {
+  Ui2PillComponent,
+  Ui2ProgressBarComponent,
+} from '../../../../../../shared/ui-v2';
 import {
   EjercicioPlan,
   EjercicioSesionMultiPlan,
@@ -31,64 +35,61 @@ interface EjercicioTimeline {
 @Component({
   selector: 'app-timeline-sesion',
   standalone: true,
-  imports: [DrawerComponent, NgTemplateOutlet],
+  imports: [NgTemplateOutlet, Ui2PillComponent, Ui2ProgressBarComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (mode() === 'drawer') {
-      <!-- Modo drawer (movil) -->
-      <ui-drawer
-        [isOpen]="isOpen()"
-        position="bottom"
-        size="lg"
-        (closed)="closed.emit()"
-      >
-        <div class="timeline-drawer">
-          <!-- Handle bar -->
-          <div class="flex justify-center pt-3 pb-1">
-            <div class="h-1.5 w-12 rounded-full bg-zinc-300"></div>
-          </div>
-
-          <!-- Header -->
-          <div class="flex items-center justify-between px-5 py-3">
-            <div class="flex flex-col gap-0.5">
-              <h2 class="text-base font-bold text-zinc-800">Tu sesion</h2>
-              <span class="text-xs font-medium text-zinc-400">
-                Ejercicio {{ ejercicioActualIndex() + 1 }} de
-                {{ totalEjercicios() }}
-              </span>
+      <!-- Modo drawer (móvil) -->
+      @if (isOpen()) {
+        <div class="drawer-backdrop" (click)="closed.emit()"></div>
+        <aside class="drawer-sheet">
+          <div class="timeline-drawer">
+            <!-- Handle bar -->
+            <div class="drawer-handle">
+              <div class="drawer-handle-bar"></div>
             </div>
-            <button
-              type="button"
-              class="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 transition-colors active:bg-zinc-200"
-              (click)="closed.emit()"
-            >
-              <span class="material-symbols-outlined text-xl">close</span>
-            </button>
-          </div>
 
-          <!-- Barra de progreso -->
-          <div
-            class="mx-5 mb-4 h-1.5 overflow-hidden rounded-full bg-zinc-100"
-          >
-            <div
-              class="progress-fill h-full rounded-full transition-all duration-500 ease-out"
-              [style.width.%]="progresoSesion()"
-            ></div>
-          </div>
+            <!-- Header -->
+            <div class="drawer-header">
+              <div class="drawer-header-text">
+                <h2 class="drawer-title">Tu sesión</h2>
+                <span class="drawer-subtitle">
+                  Ejercicio {{ ejercicioActualIndex() + 1 }} de
+                  {{ totalEjercicios() }}
+                </span>
+              </div>
+              <button
+                type="button"
+                class="drawer-close-btn"
+                (click)="closed.emit()"
+                aria-label="Cerrar"
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
-          <!-- Timeline scrollable -->
-          <div #timelineContainer class="timeline-scroll">
-            <ng-container
-              *ngTemplateOutlet="timelineNodes"
-            ></ng-container>
+            <!-- Barra de progreso -->
+            <div class="drawer-progress">
+              <ui2-progress-bar
+                [value]="progresoSesion()"
+                size="sm"
+                color="primary"
+              />
+            </div>
+
+            <!-- Timeline scrollable -->
+            <div #timelineContainer class="timeline-scroll">
+              <ng-container [ngTemplateOutlet]="timelineNodes" />
+            </div>
           </div>
-        </div>
-      </ui-drawer>
+        </aside>
+      }
     } @else {
       <!-- Modo inline (desktop) -->
       <div class="timeline-inline">
         <div class="inline-header">
           <div class="inline-header-left">
-            <span class="material-symbols-outlined inline-header-icon"
+            <span class="material-symbols-outlined inline-header-icon" aria-hidden="true"
               >timeline</span
             >
             <span class="inline-header-title">Ejercicios</span>
@@ -98,18 +99,14 @@ interface EjercicioTimeline {
           </span>
         </div>
 
-        <!-- Barra de progreso compacta -->
-        <div class="inline-progress-bar">
-          <div
-            class="progress-fill"
-            [style.width.%]="progresoSesion()"
-          ></div>
-        </div>
+        <ui2-progress-bar
+          [value]="progresoSesion()"
+          size="sm"
+          color="primary"
+        />
 
         <div #timelineContainer class="timeline-scroll-inline">
-          <ng-container
-            *ngTemplateOutlet="timelineNodes"
-          ></ng-container>
+          <ng-container [ngTemplateOutlet]="timelineNodes" />
         </div>
       </div>
     }
@@ -119,14 +116,12 @@ interface EjercicioTimeline {
       @for (item of ejerciciosConEstado(); track item.index) {
         <!-- Separador de plan en modo multi-plan -->
         @if (item.showPlanDivider && item.planTitulo) {
-          <div class="flex items-center gap-3 px-5 pb-2 pt-4">
-            <div class="h-px flex-1 bg-zinc-200"></div>
-            <span
-              class="text-[0.6875rem] font-semibold uppercase tracking-wider text-zinc-400"
-            >
+          <div class="plan-divider">
+            <div class="plan-divider-line"></div>
+            <span class="plan-divider-text">
               {{ item.planTitulo }}
             </span>
-            <div class="h-px flex-1 bg-zinc-200"></div>
+            <div class="plan-divider-line"></div>
           </div>
         }
 
@@ -138,7 +133,7 @@ interface EjercicioTimeline {
           [class.pendiente]="item.estado === 'pendiente'"
           (click)="onTapEjercicio(item)"
         >
-          <!-- Linea conectora superior -->
+          <!-- Línea conectora superior -->
           @if (item.index > 0) {
             <div
               class="connector-line top"
@@ -149,13 +144,13 @@ interface EjercicioTimeline {
           <!-- Nodo circular -->
           <div class="node-circle">
             @if (item.estado === 'completado') {
-              <span class="material-symbols-outlined icon-check">check</span>
+              <span class="material-symbols-outlined icon-check" aria-hidden="true">check</span>
             } @else {
               <span class="node-number">{{ item.index + 1 }}</span>
             }
           </div>
 
-          <!-- Linea conectora inferior -->
+          <!-- Línea conectora inferior -->
           @if (item.index < ejerciciosConEstado().length - 1) {
             <div
               class="connector-line bottom"
@@ -173,11 +168,8 @@ interface EjercicioTimeline {
                   loading="lazy"
                 />
               } @else {
-                <div
-                  class="flex h-full w-full items-center justify-center bg-zinc-100"
-                >
-                  <span
-                    class="material-symbols-outlined text-lg text-zinc-300"
+                <div class="exercise-thumb-placeholder">
+                  <span class="material-symbols-outlined" aria-hidden="true"
                     >fitness_center</span
                   >
                 </div>
@@ -197,31 +189,57 @@ interface EjercicioTimeline {
                 }
               </span>
               @if (item.estado === 'completado') {
-                <span class="status-badge completado">
-                  <span class="material-symbols-outlined text-[0.625rem]"
-                    >check_circle</span
-                  >
-                  Completado
+                <span class="status-pill">
+                  <ui2-pill variant="success" size="sm" icon="check_circle">
+                    Completado
+                  </ui2-pill>
                 </span>
               } @else if (item.estado === 'activo') {
-                <span class="status-badge activo"> En curso </span>
+                <span class="status-pill">
+                  <ui2-pill variant="primary" size="sm">En curso</ui2-pill>
+                </span>
               }
             </div>
 
-            <!-- Boton play preview -->
+            <!-- Botón play preview -->
             <div class="preview-btn">
-              <span class="material-symbols-outlined">play_circle</span>
+              <span class="material-symbols-outlined" aria-hidden="true">play_circle</span>
             </div>
           </div>
         </div>
       }
 
-      <!-- Espaciado inferior -->
-      <div class="h-6"></div>
+      <div class="bottom-spacer"></div>
     </ng-template>
   `,
   styles: `
-    /* ===== Modo Drawer ===== */
+    :host { display: contents; }
+
+    /* ===== Drawer (bottom sheet) ===== */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 90;
+      animation: fadeBackdrop 0.2s ease-out;
+    }
+
+    .drawer-sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 91;
+      max-height: 85vh;
+      background: var(--cream-50);
+      border-top-left-radius: 22px;
+      border-top-right-radius: 22px;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.18);
+      animation: slideUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
     .timeline-drawer {
       display: flex;
       flex-direction: column;
@@ -229,21 +247,94 @@ interface EjercicioTimeline {
       overflow: hidden;
     }
 
+    .drawer-handle {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 4px;
+    }
+
+    .drawer-handle-bar {
+      width: 48px;
+      height: 5px;
+      border-radius: 9999px;
+      background: var(--ink-300);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 20px 12px;
+    }
+
+    .drawer-header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .drawer-title {
+      margin: 0;
+      font-family: KengoDisplay, kengoFont, sans-serif;
+      font-size: 1.05rem;
+      color: var(--ink-900);
+      letter-spacing: -0.2px;
+    }
+
+    .drawer-subtitle {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--ink-500);
+    }
+
+    .drawer-close-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      background: var(--cream-100);
+      color: var(--ink-700);
+      border: 0;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .drawer-close-btn:hover {
+      background: var(--ink-100);
+    }
+
+    .drawer-close-btn .material-symbols-outlined {
+      font-size: 20px;
+    }
+
+    .drawer-progress {
+      padding: 0 20px 12px;
+    }
+
     .timeline-scroll {
       flex: 1;
       overflow-y: auto;
-      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    @keyframes fadeBackdrop {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
     }
 
     /* ===== Modo Inline ===== */
     .timeline-inline {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       padding: 14px;
-      background: rgba(0, 0, 0, 0.03);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      border-radius: 16px;
+      background: var(--cream-50);
+      border: 1px solid var(--ink-100);
+      border-radius: 18px;
     }
 
     .inline-header {
@@ -267,25 +358,15 @@ interface EjercicioTimeline {
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #52525b;
+      letter-spacing: 1px;
+      color: var(--ink-700);
     }
 
     .inline-header-progress {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      color: #a1a1aa;
-    }
-
-    .inline-progress-bar {
-      height: 3px;
-      border-radius: 2px;
-      background: #e4e4e7;
-      overflow: hidden;
-    }
-
-    .timeline-scroll-inline {
-      /* El scroll lo controla el panel-content padre */
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--ink-500);
+      font-variant-numeric: tabular-nums;
     }
 
     .timeline-inline .timeline-node {
@@ -335,16 +416,27 @@ interface EjercicioTimeline {
       font-size: 1.25rem;
     }
 
-    /* ===== Compartido ===== */
-    .progress-fill {
-      background: linear-gradient(
-        90deg,
-        var(--kengo-primary) 0%,
-        var(--kengo-tertiary) 100%
-      );
-      height: 100%;
-      border-radius: 9999px;
-      transition: width 0.5s ease-out;
+    /* ===== Plan divider ===== */
+    .plan-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px 8px;
+    }
+
+    .plan-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--ink-100);
+    }
+
+    .plan-divider-text {
+      font-family: Galvji, sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--ink-500);
     }
 
     /* ===== Timeline Node ===== */
@@ -378,32 +470,32 @@ interface EjercicioTimeline {
     }
 
     .pendiente .node-circle {
-      background: #f4f4f5;
-      border: 2px solid #d4d4d8;
+      background: var(--cream-100);
+      border: 2px solid var(--ink-300);
     }
 
     .pendiente .node-number {
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: #a1a1aa;
+      font-family: KengoDisplay, kengoFont, sans-serif;
+      font-size: 0.7rem;
+      color: var(--ink-500);
     }
 
     .activo .node-circle {
       background: var(--kengo-primary);
       border: 2px solid var(--kengo-primary);
-      box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.15);
+      box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.18);
       animation: pulse-node 2s ease-in-out infinite;
     }
 
     .activo .node-number {
-      font-size: 0.6875rem;
-      font-weight: 700;
+      font-family: KengoDisplay, kengoFont, sans-serif;
+      font-size: 0.7rem;
       color: white;
     }
 
     .completado .node-circle {
-      background: #10b981;
-      border: 2px solid #10b981;
+      background: var(--success);
+      border: 2px solid var(--success);
     }
 
     .icon-check {
@@ -415,19 +507,19 @@ interface EjercicioTimeline {
     @keyframes pulse-node {
       0%,
       100% {
-        box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.15);
+        box-shadow: 0 0 0 4px rgba(var(--kengo-primary-rgb), 0.18);
       }
       50% {
         box-shadow: 0 0 0 8px rgba(var(--kengo-primary-rgb), 0.08);
       }
     }
 
-    /* ===== Lineas conectoras ===== */
+    /* ===== Líneas conectoras ===== */
     .connector-line {
       position: absolute;
       left: 33px;
       width: 2px;
-      background: #e4e4e7;
+      background: var(--ink-100);
       z-index: 1;
     }
 
@@ -442,7 +534,7 @@ interface EjercicioTimeline {
     }
 
     .connector-line.filled {
-      background: #10b981;
+      background: var(--success);
     }
 
     /* ===== Exercise Card ===== */
@@ -453,19 +545,20 @@ interface EjercicioTimeline {
       flex: 1;
       padding: 10px 12px;
       border-radius: 14px;
-      background: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      box-shadow: var(--shadow-card);
       transition: all 0.2s;
     }
 
     .activo .exercise-card {
-      background: rgba(var(--kengo-primary-rgb), 0.04);
+      background: linear-gradient(135deg, #fff5ee, #ffffff);
       border-color: rgba(var(--kengo-primary-rgb), 0.15);
-      box-shadow: 0 2px 8px rgba(var(--kengo-primary-rgb), 0.08);
+      box-shadow: 0 4px 14px rgba(var(--kengo-primary-rgb), 0.08);
     }
 
     .completado .exercise-card {
-      opacity: 0.7;
+      opacity: 0.75;
     }
 
     .exercise-thumb {
@@ -482,18 +575,33 @@ interface EjercicioTimeline {
       object-fit: cover;
     }
 
+    .exercise-thumb-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--cream-100);
+      color: var(--ink-300);
+    }
+
+    .exercise-thumb-placeholder .material-symbols-outlined {
+      font-size: 1.1rem;
+    }
+
     .exercise-info {
       flex: 1;
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
     }
 
     .exercise-name {
+      font-family: Galvji, sans-serif;
       font-size: 0.8125rem;
-      font-weight: 600;
-      color: #27272a;
+      font-weight: 700;
+      color: var(--ink-900);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -501,30 +609,17 @@ interface EjercicioTimeline {
 
     .exercise-details {
       font-size: 0.6875rem;
-      color: #71717a;
+      color: var(--ink-500);
     }
 
-    .status-badge {
+    .status-pill {
       display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 0.625rem;
-      font-weight: 600;
-      margin-top: 2px;
-      width: fit-content;
-    }
-
-    .status-badge.completado {
-      color: #10b981;
-    }
-
-    .status-badge.activo {
-      color: var(--kengo-primary);
+      margin-top: 4px;
     }
 
     .preview-btn {
       flex-shrink: 0;
-      color: #a1a1aa;
+      color: var(--ink-300);
       transition: color 0.15s;
     }
 
@@ -534,6 +629,10 @@ interface EjercicioTimeline {
 
     .preview-btn .material-symbols-outlined {
       font-size: 1.5rem;
+    }
+
+    .bottom-spacer {
+      height: 24px;
     }
   `,
 })

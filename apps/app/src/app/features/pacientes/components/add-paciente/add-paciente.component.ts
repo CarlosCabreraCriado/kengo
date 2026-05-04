@@ -1,19 +1,20 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
 import {
-  DialogContainerComponent,
-  DialogHeaderComponent,
-  DialogContentComponent,
-  DialogActionsComponent,
-  ProgressBarComponent,
-  InputComponent,
-  SelectComponent,
-  ButtonComponent,
-  type SelectOption,
-  emailRequired,
-} from '../../../../shared';
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+  Ui2ProgressBarComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+  Ui2CheckboxComponent,
+  Ui2SectionLabelComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
+import { emailRequired } from '../../../../shared';
 
 import { Usuario } from '../../../../../types/global';
 import { ConvexService } from '../../../../core/convex/convex.service';
@@ -35,23 +36,27 @@ interface Clinica {
 @Component({
   selector: 'app-add-paciente',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    DialogContainerComponent,
-    DialogHeaderComponent,
-    DialogContentComponent,
-    DialogActionsComponent,
-    ProgressBarComponent,
-    InputComponent,
-    SelectComponent,
-    ButtonComponent,
+    FormsModule,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
+    Ui2DialogActionsComponent,
+    Ui2ProgressBarComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+    Ui2CheckboxComponent,
+    Ui2SectionLabelComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './add-paciente.component.html',
   styleUrl: './add-paciente.component.css',
 })
 export class AddPacienteDialogComponent {
   private fb = inject(FormBuilder);
-  private dialogRef = inject(DialogRef<{ created?: unknown; updated?: boolean }>);
+  protected dialogRef = inject(DialogRef<{ created?: unknown; updated?: boolean }>);
   private data = inject<DialogData>(DIALOG_DATA);
   private convex = inject(ConvexService);
   private clinicasService = inject(ClinicasService);
@@ -73,8 +78,6 @@ export class AddPacienteDialogComponent {
       const filtered = all.filter(
         (c) => !allowedIds || allowedIds.has(String(c.id)),
       );
-      // Habilitar select en el primer render con datos
-      queueMicrotask(() => this.form.get('clinicas')?.enable({ emitEvent: false }));
       return filtered.map((c) => ({ id: c.id, nombre: c.nombre }));
     }),
     isLoading: computed(() => {
@@ -83,20 +86,28 @@ export class AddPacienteDialogComponent {
     }),
   };
 
-  clinicasOptions = computed<SelectOption[]>(() =>
-    this.clinicasRes.value().map((c) => ({
-      value: String(c.id),
-      label: c.nombre ?? `Clínica ${c.id}`,
-    })),
-  );
-
-  clinicasPlaceholder = computed(() =>
-    this.clinicasRes.isLoading() ? 'Cargando clínicas...' : 'Seleccionar clínicas...',
-  );
-
-  get emailError(): string | undefined {
+  get emailError(): string | null {
     const ctrl = this.form.controls.email;
-    return ctrl.invalid && ctrl.touched ? 'Email inválido' : undefined;
+    return ctrl.invalid && ctrl.touched ? 'Email inválido' : null;
+  }
+
+  // Selección reactiva de clínicas
+  readonly selectedClinicIds = signal<Set<string>>(
+    new Set((this.data.idsClinicas ?? []).map(String)),
+  );
+
+  readonly selectedCount = computed(() => this.selectedClinicIds().size);
+
+  isClinicSelected(id: ID): boolean {
+    return this.selectedClinicIds().has(String(id));
+  }
+
+  toggleClinic(id: ID, checked: boolean) {
+    const next = new Set(this.selectedClinicIds());
+    const key = String(id);
+    if (checked) next.add(key);
+    else next.delete(key);
+    this.selectedClinicIds.set(next);
   }
 
   form = this.fb.group({
@@ -104,9 +115,6 @@ export class AddPacienteDialogComponent {
     last_name: [this.data.usuario?.last_name ?? ''],
     email: [this.data.usuario?.email ?? '', emailRequired],
     telefono: [this.data.usuario?.telefono ?? ''],
-    clinicas: [
-      { value: (this.data.idsClinicas ?? []).map(String), disabled: true },
-    ],
   });
 
   constructor() {
@@ -129,14 +137,14 @@ export class AddPacienteDialogComponent {
       );
 
       this.currentLinks.clear();
-      const ids: ID[] = [];
+      const ids: string[] = [];
       for (const m of memberships ?? []) {
         if (m.puesto !== 'paciente') continue;
         this.currentLinks.set(m.clinicId, m._id as unknown as string);
-        ids.push(m.clinicId);
+        ids.push(String(m.clinicId));
       }
 
-      this.form.patchValue({ clinicas: ids.map(String) }, { emitEvent: false });
+      this.selectedClinicIds.set(new Set(ids));
     } catch (e) {
       console.warn('No se pudieron cargar las clínicas del usuario:', e);
     }
@@ -154,7 +162,7 @@ export class AddPacienteDialogComponent {
       if (!this.isEdit()) {
         // ---- CREAR — usamos createPatient para la primera clínica.
         // Si hay varias clínicas seleccionadas, añadimos las demás vía add().
-        const selectedClinics = (v.clinicas as ID[]) || [];
+        const selectedClinics = [...this.selectedClinicIds()];
         if (selectedClinics.length === 0) {
           throw new Error('Debe seleccionar al menos una clínica.');
         }
@@ -192,11 +200,15 @@ export class AddPacienteDialogComponent {
         // ---- EDITAR
         const userId = this.data.usuario!.id;
 
-        const targetIds = new Set<ID>(v.clinicas || []);
-        const currentIds = new Set<ID>([...this.currentLinks.keys()].map(String));
+        const targetIds = new Set<string>([...this.selectedClinicIds()]);
+        const currentIds = new Set<string>(
+          [...this.currentLinks.keys()].map(String),
+        );
 
-        const toAdd: ID[] = [...targetIds].filter((x) => !currentIds.has(String(x)));
-        const toRemove: ID[] = [...this.currentLinks.keys()].filter((x) => !targetIds.has(String(x)));
+        const toAdd: string[] = [...targetIds].filter((x) => !currentIds.has(x));
+        const toRemove: ID[] = [...this.currentLinks.keys()].filter(
+          (x) => !targetIds.has(String(x)),
+        );
 
         await this.convex.mutation(api.users.mutations.updatePatient, {
           patientId: userId as Id<'users'>,

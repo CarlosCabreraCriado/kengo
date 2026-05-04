@@ -51,6 +51,7 @@ export class ClinicasService {
 
   readonly misClinicasRes = {
     value: this.misClinicas,
+    isLoading: this.misClinicasQuery.isLoading,
     reload: () => {
       // No-op: Convex watchQuery se actualiza automaticamente
     },

@@ -1,92 +1,124 @@
-<!-- Contenedor principal full-height -->
-<section class="flex h-dvh max-w-7xl flex-col m-auto overflow-hidden">
-  <!-- Fondo decorativo -->
-  <div class="fixed top-0 left-0 -z-10 h-dvh w-screen overflow-hidden">
-    <!-- SVG con ondas dinámicas - colores basados en el tema de la clínica -->
-    <svg
-      class="fixed bottom-0 left-0 -z-10 min-w-screen rotate-180"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 1730 992"
-      preserveAspectRatio="xMidYMid"
-      width="1730"
-      height="992"
-      style="shape-rendering: auto; display: block; background: transparent;"
+<!-- Gate de primer paint: hasta que la sesión esté resuelta solo se muestra
+     el fondo cream V2, sin nav ni contenido, para evitar el flash del shell
+     legacy del modo fisio cuando el rol por defecto aún no se ha sustituido. -->
+@if (mostrarNavegacion && !sessionService.sesionInicializada()) {
+  <ui2-cream-bg></ui2-cream-bg>
+}
+
+<!-- Modo paciente con navegación: shell V2 cream wellness (responsive) -->
+@if (
+  mostrarNavegacion &&
+  sessionService.sesionInicializada() &&
+  sessionService.enModoPaciente()
+) {
+  <ui2-cream-bg></ui2-cream-bg>
+
+  @if (esDesktop()) {
+    <!-- Desktop shell: sidebar fija + topbar + main scrollable -->
+    <section class="relative z-10 flex h-dvh flex-row">
+      <ui2-patient-sidebar
+        class="z-200 h-full shrink-0"
+        [userName]="firstName()"
+        [userSubtitle]="userSubtitle()"
+        [avatarUrl]="avatarUrl()"
+        [clinicaNombre]="clinicaActual()"
+      ></ui2-patient-sidebar>
+      <div class="z-100 flex min-w-0 flex-1 flex-col">
+        <ui2-web-topbar
+          [userName]="firstName()"
+          [avatarUrl]="avatarUrl()"
+        ></ui2-web-topbar>
+        <main class="relative min-h-0 flex-1 overflow-y-auto">
+          <router-outlet></router-outlet>
+          <ui2-page-loader-overlay></ui2-page-loader-overlay>
+        </main>
+      </div>
+    </section>
+  } @else {
+    <!-- Mobile shell: header floating + main scrollable + tab bar floating -->
+    <section
+      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col"
     >
-      <defs>
-        <linearGradient id="wave-gradient-0" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style="stop-color: var(--kengo-svg-wave-1)" />
-          <stop offset="1" style="stop-color: var(--kengo-svg-wave-2)" />
-        </linearGradient>
-        <linearGradient id="wave-gradient-1" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" style="stop-color: var(--kengo-svg-wave-2)" />
-          <stop offset="1" style="stop-color: var(--kengo-svg-wave-3)" />
-        </linearGradient>
-      </defs>
-      <g>
-        <path fill-opacity="0.5" fill="url(#wave-gradient-0)" d="M0 0L0 816.55Q288.33 739.18 576.67 706.65T1153.33 639.37T1730 497.68L1730 0Z">
-          <animate
-            attributeName="d"
-            values="M0 0L0 816.55Q288.33 739.18 576.67 706.65T1153.33 639.37T1730 497.68L1730 0Z;M0 0L0 801.97Q288.33 783.61 576.67 761.57T1153.33 611.56T1730 538.74L1730 0Z;M0 0L0 861.14Q288.33 789.16 576.67 764.35T1153.33 633.06T1730 503.65L1730 0Z;M0 0L0 816.55Q288.33 739.18 576.67 706.65T1153.33 639.37T1730 497.68L1730 0Z"
-            keyTimes="0;0.333;0.667;1"
-            keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1"
-            calcMode="spline"
-            dur="33.33s"
-            repeatCount="indefinite"
-            begin="0s"
-          />
-        </path>
-        <path fill-opacity="0.8" fill="url(#wave-gradient-1)" d="M0 0L0 405.20Q288.33 389.26 576.67 343.88T1153.33 268.76T1730 253.26L1730 0Z">
-          <animate
-            attributeName="d"
-            values="M0 0L0 405.20Q288.33 389.26 576.67 343.88T1153.33 268.76T1730 253.26L1730 0Z;M0 0L0 424.88Q288.33 369.72 576.67 334.51T1153.33 293.36T1730 291.58L1730 0Z;M0 0L0 423.86Q288.33 404.38 576.67 384.80T1153.33 335.63T1730 238.76L1730 0Z;M0 0L0 405.20Q288.33 389.26 576.67 343.88T1153.33 268.76T1730 253.26L1730 0Z"
-            keyTimes="0;0.333;0.667;1"
-            keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1"
-            calcMode="spline"
-            dur="33.33s"
-            repeatCount="indefinite"
-            begin="-16.67s"
-          />
-        </path>
-      </g>
-    </svg>
-
-    <div class="kengoBackground fixed -z-20">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </div>
-
-  <!-- Navegación - order-2 en móvil (abajo), order-1 en desktop (arriba) -->
-  @if (mostrarNavegacion) {
-    <app-navegacion class="order-2 md:order-1 flex-shrink-0"></app-navegacion>
+      <ui2-patient-header
+        [clinica]="clinicaActual()"
+        [userName]="userName()"
+        [avatarUrl]="avatarUrl()"
+      ></ui2-patient-header>
+      <main class="ui2-main-mobile relative min-h-0 flex-1 overflow-y-auto">
+        <router-outlet></router-outlet>
+        <ui2-page-loader-overlay></ui2-page-loader-overlay>
+      </main>
+      <ui2-patient-tab-bar></ui2-patient-tab-bar>
+    </section>
   }
+}
 
-  <!-- Contenido principal -->
-  <main
-    class="main z-10 flex-1 min-h-0 flex flex-col"
-    [class.order-1]="mostrarNavegacion"
-    [class.md:order-2]="mostrarNavegacion"
-    [class.pt-nav]="mostrarNavegacion"
-  >
-    <router-outlet></router-outlet>
-  </main>
+<!-- Modo fisio con navegación: shell V2 cream wellness (responsive) -->
+@if (
+  mostrarNavegacion &&
+  sessionService.sesionInicializada() &&
+  sessionService.enModoFisio()
+) {
+  <ui2-cream-bg></ui2-cream-bg>
 
-  @if (mostrarNavegacion && sessionService.enModoFisio()) {
-    <app-carrito-ejercicios></app-carrito-ejercicios>
+  <!-- Carrito V2 (overlay flotante) -->
+  <ui2-carrito-ejercicios></ui2-carrito-ejercicios>
+
+  @if (esDesktop()) {
+    <!-- Desktop: sidebar + topbar + main scrollable -->
+    <section class="relative z-10 flex h-dvh flex-row">
+      <ui2-patient-sidebar
+        class="h-full shrink-0"
+        brandTag="FISIOTERAPIA"
+        [groups]="fisioSidebarGroups"
+        [userName]="firstName()"
+        [userSubtitle]="userSubtitle()"
+        [avatarUrl]="avatarUrl()"
+        [clinicaNombre]="clinicaActual()"
+      ></ui2-patient-sidebar>
+      <div class="flex min-w-0 flex-1 flex-col">
+        <ui2-web-topbar
+          [userName]="firstName()"
+          [avatarUrl]="avatarUrl()"
+        ></ui2-web-topbar>
+        <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
+        <main class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <router-outlet></router-outlet>
+          <ui2-page-loader-overlay></ui2-page-loader-overlay>
+        </main>
+      </div>
+    </section>
+  } @else {
+    <!-- Mobile: header floating + main scrollable + tab bar floating -->
+    <section
+      class="relative z-10 m-auto flex h-dvh max-w-3xl flex-col"
+    >
+      <ui2-patient-header
+        [clinica]="clinicaActual()"
+        [userName]="userName()"
+        [avatarUrl]="avatarUrl()"
+      ></ui2-patient-header>
+      <main
+        class="ui2-main-mobile relative flex min-h-0 flex-1 flex-col overflow-y-auto"
+      >
+        <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
+        <router-outlet></router-outlet>
+        <ui2-page-loader-overlay></ui2-page-loader-overlay>
+      </main>
+      <ui2-patient-tab-bar [tabs]="fisioTabBarTabs"></ui2-patient-tab-bar>
+    </section>
   }
-</section>
+}
 
-<!-- Indicador de breakpoint (desarrollo) -->
-<div
-  class="fixed right-0 bottom-0 z-50 bg-red-700 sm:bg-yellow-700 md:bg-purple-500 lg:bg-blue-700 xl:bg-green-700"
->
-  <span class="block text-white sm:hidden">M</span>
-  <span class="hidden text-white sm:block md:hidden">SM</span>
-  <span class="hidden text-white md:block lg:hidden">MD</span>
-  <span class="hidden text-white lg:block xl:hidden">LG</span>
-  <span class="hidden text-white xl:block">XL</span>
-</div>
+<!-- Auth / sin navegación: layout mínimo -->
+@if (!mostrarNavegacion) {
+  <section class="m-auto flex h-dvh max-w-7xl flex-col">
+    <main class="main relative z-10 flex min-h-0 flex-1 flex-col">
+      <router-outlet></router-outlet>
+      <ui2-page-loader-overlay></ui2-page-loader-overlay>
+    </main>
+  </section>
+}
+
+<!-- Banner offline (visible en cualquier ruta cuando se pierde conexión) -->
+<ui2-offline-banner></ui2-offline-banner>

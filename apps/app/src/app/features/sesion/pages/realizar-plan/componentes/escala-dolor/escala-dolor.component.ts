@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   Input,
   Output,
@@ -6,68 +7,66 @@ import {
   signal,
   computed,
 } from '@angular/core';
+import {
+  Ui2CardComponent,
+  Ui2SectionLabelComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-escala-dolor',
   standalone: true,
-  imports: [],
+  imports: [Ui2CardComponent, Ui2SectionLabelComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="escala-container">
-      <label class="escala-label">{{ label }}</label>
+    <ui2-card [padding]="16">
+      <div class="escala-container">
+        <ui2-section-label color="var(--ink-700)">{{ label }}</ui2-section-label>
 
-      <div class="escala-visual">
-        <div class="escala-bar">
-          @for (valor of valores; track valor) {
-            <button
-              type="button"
-              class="escala-btn"
-              [class.selected]="valorSeleccionado() === valor"
-              [style.backgroundColor]="getColor(valor)"
-              [style.borderColor]="valorSeleccionado() === valor ? getColor(valor) : 'transparent'"
-              (click)="seleccionar(valor)"
-            >
-              {{ valor }}
-            </button>
-          }
+        <div class="escala-visual">
+          <div class="escala-bar">
+            @for (valor of valores; track valor) {
+              <button
+                type="button"
+                class="escala-btn"
+                [class.selected]="valorSeleccionado() === valor"
+                [style.backgroundColor]="getColor(valor)"
+                (click)="seleccionar(valor)"
+                [attr.aria-label]="'Dolor ' + valor + ' de 10'"
+                [attr.aria-pressed]="valorSeleccionado() === valor"
+              >
+                {{ valor }}
+              </button>
+            }
+          </div>
+
+          <div class="escala-labels">
+            <span class="emoji" aria-hidden="true">😊</span>
+            <span class="texto">Sin dolor</span>
+            <span class="spacer"></span>
+            <span class="texto">Dolor intenso</span>
+            <span class="emoji" aria-hidden="true">😣</span>
+          </div>
         </div>
 
-        <div class="escala-labels">
-          <span class="emoji">😊</span>
-          <span class="texto">Sin dolor</span>
-          <span class="spacer"></span>
-          <span class="texto">Dolor intenso</span>
-          <span class="emoji">😣</span>
-        </div>
+        @if (valorSeleccionado() !== null) {
+          <div
+            class="valor-display"
+            [style.color]="getColor(valorSeleccionado()!)"
+          >
+            {{ getDescripcion(valorSeleccionado()!) }}
+          </div>
+        }
       </div>
-
-      @if (valorSeleccionado() !== null) {
-        <div class="valor-display" [style.color]="getColor(valorSeleccionado()!)">
-          {{ getDescripcion(valorSeleccionado()!) }}
-        </div>
-      }
-    </div>
+    </ui2-card>
   `,
   styles: `
+    :host { display: block; }
+
     .escala-container {
       display: flex;
       flex-direction: column;
       gap: 14px;
       width: 100%;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 16px;
-      box-shadow:
-        0 4px 24px rgba(0, 0, 0, 0.06),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-    }
-
-    .escala-label {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #18181b; /* zinc-900 */
-      text-align: center;
     }
 
     .escala-visual {
@@ -81,18 +80,18 @@ import {
       justify-content: space-between;
       gap: 4px;
       padding: 6px;
-      background: rgba(0, 0, 0, 0.03);
-      border-radius: 10px;
+      background: var(--cream-100);
+      border-radius: 14px;
     }
 
     .escala-btn {
       flex: 1;
       aspect-ratio: 1;
       max-width: 28px;
-      border-radius: 8px;
+      border-radius: 9px;
       border: 2px solid transparent;
-      font-size: 0.6875rem;
-      font-weight: 700;
+      font-family: KengoDisplay, kengoFont, sans-serif;
+      font-size: 0.75rem;
       color: white;
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -132,9 +131,10 @@ import {
     }
 
     .escala-labels .texto {
+      font-family: Galvji, sans-serif;
       font-size: 0.6875rem;
-      font-weight: 500;
-      color: #71717a; /* zinc-500 */
+      font-weight: 600;
+      color: var(--ink-500);
     }
 
     .escala-labels .spacer {
@@ -143,12 +143,13 @@ import {
 
     .valor-display {
       text-align: center;
+      font-family: Galvji, sans-serif;
       font-size: 0.875rem;
-      font-weight: 600;
+      font-weight: 700;
       padding: 10px 16px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      background: var(--cream-50);
+      border-radius: 14px;
+      box-shadow: var(--shadow-card);
       transition: all 0.3s ease;
     }
   `,
@@ -166,13 +167,14 @@ export class EscalaDolorComponent {
 
   readonly valores = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
+  // Mapping a tonos semánticos: 0-3 verde (success-like), 4-6 ámbar (warning), 7-10 rojo (danger).
   private readonly colores: Record<number, string> = {
     0: '#22c55e',
-    1: '#4ade80',
-    2: '#86efac',
+    1: '#34d399',
+    2: '#5eead4',
     3: '#a3e635',
     4: '#facc15',
-    5: '#fbbf24',
+    5: '#f59e0b',
     6: '#fb923c',
     7: '#f97316',
     8: '#ef4444',
@@ -195,7 +197,7 @@ export class EscalaDolorComponent {
   };
 
   getColor(valor: number): string {
-    return this.colores[valor] || '#71717a';
+    return this.colores[valor] || 'var(--ink-500)';
   }
 
   getDescripcion(valor: number): string {

@@ -1,5 +1,6 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -11,13 +12,20 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 
 import {
   PlanCompleto,
   EjercicioSesionMultiPlan,
   ConfigSesionMultiPlan,
-  DiaSemana,
 } from '../../../../../types/global';
+import {
+  diaSemanaFromYMD,
+  getMadridDate,
+  getMadridDiaSemana,
+  offsetMadridDate,
+  ymdToDateForDisplay,
+} from '../../../../shared/utils/madrid-date.util';
 import {
   useResponsive,
   DialogService,
@@ -25,6 +33,16 @@ import {
   type PreviewEjercicioData,
 } from '../../../../shared';
 import type { EjercicioPlanConEstado } from '../../../../../types/global';
+import {
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2CtaBarComponent,
+  Ui2EmptyStateComponent,
+  Ui2PillComponent,
+  Ui2SectionComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 interface EjercicioProximo {
   nombre: string;
@@ -47,24 +65,37 @@ interface DiaProximoConEjercicios {
 @Component({
   selector: 'app-actividad-hoy',
   standalone: true,
-  imports: [],
+  imports: [
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2CtaBarComponent,
+    Ui2EmptyStateComponent,
+    Ui2PillComponent,
+    Ui2SectionComponent,
+    Ui2SpinnerComponent,
+  ],
   templateUrl: './actividad-hoy.component.html',
   styleUrl: './actividad-hoy.component.css',
   host: {
     class: 'flex flex-col flex-1 min-h-0 w-full',
   },
 })
-export class ActividadHoyComponent implements OnInit {
+export class ActividadHoyComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private planesService = inject(PlanesService);
   private registroService = inject(SesionStateService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
   private dialogService = inject(DialogService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'actividad-hoy';
+
+  /** Datos críticos: actividad de hoy resuelta. */
+  readonly pageReady = computed(() => this.actividadHoyService.cargada());
 
   isMovil = useResponsive().esMobile;
 
-  private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
   private readonly NOMBRES_DIAS = [
     'Domingo',
     'Lunes',
@@ -98,14 +129,14 @@ export class ActividadHoyComponent implements OnInit {
 
   readonly usuarioId = computed(() => this.sessionService.usuario()?.id);
   readonly fechaHoy = computed(() => {
-    const hoy = new Date();
-    const dia = this.NOMBRES_DIAS[hoy.getDay()];
-    const numero = hoy.getDate();
-    const mes = this.NOMBRES_MESES[hoy.getMonth()];
+    const hoy = ymdToDateForDisplay(getMadridDate());
+    const dia = this.NOMBRES_DIAS[hoy.getUTCDay()];
+    const numero = hoy.getUTCDate();
+    const mes = this.NOMBRES_MESES[hoy.getUTCMonth()];
     return `${dia}, ${numero} de ${mes}`;
   });
 
-  readonly diaHoy = computed(() => this.DIAS_SEMANA[new Date().getDay()]);
+  readonly diaHoy = computed(() => getMadridDiaSemana());
 
   readonly actividadHoy = this.actividadHoyService.actividadHoy;
   readonly hayActividadHoy = this.actividadHoyService.hayActividadHoy;
@@ -119,13 +150,12 @@ export class ActividadHoyComponent implements OnInit {
   readonly proximosDias = computed<DiaProximoConEjercicios[]>(() => {
     const planes = this.planesActivosYFuturos();
     const resultado: DiaProximoConEjercicios[] = [];
-    const hoy = new Date();
 
     for (let i = 1; i <= 14 && resultado.length < 7; i++) {
-      const fecha = new Date(hoy);
-      fecha.setDate(hoy.getDate() + i);
+      const fechaYMD = offsetMadridDate(i);
+      const diaSemana = diaSemanaFromYMD(fechaYMD);
+      const fecha = ymdToDateForDisplay(fechaYMD);
 
-      const diaSemana = this.DIAS_SEMANA[fecha.getDay()];
       const planesConEjercicios: {
         planId: string;
         titulo: string;
@@ -136,7 +166,7 @@ export class ActividadHoyComponent implements OnInit {
       let totalEjerciciosDia = 0;
 
       for (const plan of planes) {
-        if (!this.esFechaEnRangoPlan(plan, fecha)) continue;
+        if (!this.esFechaEnRangoPlan(plan, fechaYMD)) continue;
 
         const ejerciciosDia = plan.items.filter((item) => {
           if (!item.diasSemana || item.diasSemana.length === 0) {
@@ -170,7 +200,7 @@ export class ActividadHoyComponent implements OnInit {
         resultado.push({
           fecha,
           fechaFormateada: this.formatearFecha(fecha),
-          diaSemana: this.NOMBRES_DIAS[fecha.getDay()],
+          diaSemana: this.NOMBRES_DIAS[fecha.getUTCDay()],
           totalEjercicios: totalEjerciciosDia,
           planes: planesConEjercicios,
           ejercicios: ejerciciosDelDia,
@@ -188,7 +218,12 @@ export class ActividadHoyComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
     this.cargarDatos();
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   async cargarDatos(): Promise<void> {
@@ -280,10 +315,13 @@ export class ActividadHoyComponent implements OnInit {
   iniciarSesionDia(dia: DiaProximoConEjercicios): void {
     const ejercicios: EjercicioSesionMultiPlan[] = [];
     const planes = this.planesActivosYFuturos();
-    const diaSemana = this.DIAS_SEMANA[dia.fecha.getDay()];
+    // `dia.fecha` se construyó a 12:00 UTC con `ymdToDateForDisplay`, así que
+    // formatearla en Madrid devuelve siempre el mismo YYYY-MM-DD.
+    const fechaYMD = getMadridDate(dia.fecha);
+    const diaSemana = diaSemanaFromYMD(fechaYMD);
 
     for (const plan of planes) {
-      if (!this.esFechaEnRangoPlan(plan, dia.fecha)) continue;
+      if (!this.esFechaEnRangoPlan(plan, fechaYMD)) continue;
 
       const ejerciciosDia = plan.items.filter((item) => {
         if (!item.diasSemana || item.diasSemana.length === 0) return true;
@@ -319,13 +357,17 @@ export class ActividadHoyComponent implements OnInit {
     this.router.navigate(['/mi-plan']);
   }
 
-  private esFechaEnRangoPlan(plan: PlanCompleto, fecha: Date): boolean {
-    const fechaStr = fecha.toISOString().split('T')[0];
-
-    if (plan.fechaInicio && fechaStr < plan.fechaInicio) {
+  /**
+   * Comprueba si una fecha (en formato YYYY-MM-DD calendario Madrid) cae
+   * dentro del intervalo de vigencia del plan. `plan.fechaInicio` y
+   * `plan.fechaFin` también son YYYY-MM-DD Madrid, así que la comparación
+   * lexicográfica de strings funciona.
+   */
+  private esFechaEnRangoPlan(plan: PlanCompleto, fechaYMD: string): boolean {
+    if (plan.fechaInicio && fechaYMD < plan.fechaInicio) {
       return false;
     }
-    if (plan.fechaFin && fechaStr > plan.fechaFin) {
+    if (plan.fechaFin && fechaYMD > plan.fechaFin) {
       return false;
     }
 
@@ -333,8 +375,8 @@ export class ActividadHoyComponent implements OnInit {
   }
 
   private formatearFecha(fecha: Date): string {
-    const dia = fecha.getDate();
-    const mes = this.NOMBRES_MESES[fecha.getMonth()].substring(0, 3);
+    const dia = fecha.getUTCDate();
+    const mes = this.NOMBRES_MESES[fecha.getUTCMonth()].substring(0, 3);
     return `${dia} ${mes}`;
   }
 

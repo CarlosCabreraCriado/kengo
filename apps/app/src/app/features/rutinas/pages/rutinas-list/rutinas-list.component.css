@@ -1,258 +1,508 @@
-@reference "tailwindcss";
-
-/* ========================================
-   RUTINAS LIST - Kengo Design System
-   ======================================== */
-
-/* === Variables CSS === */
 :host {
-  /* Color variables now defined globally via ThemeService */
-  --kengo-glass: rgba(255, 255, 255, 0.65);
-  --kengo-glass-strong: rgba(255, 255, 255, 0.85);
-  --kengo-border: rgba(255, 255, 255, 0.25);
-  --kengo-border-strong: rgba(255, 255, 255, 0.4);
-  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --kengo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
+  display: block;
+  width: 100%;
+}
+
+.rl-page {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+  padding-bottom: 24px;
+}
+
+/* ========================================================== */
+/*  Header                                                     */
+/* ========================================================== */
+
+.rl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rl-header__title { display: flex; flex-direction: column; gap: 2px; }
+
+.rl-header__h1 {
+  margin: 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.3px;
+  color: var(--kengo-primary);
+  text-transform: uppercase;
+}
+
+.rl-header__sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1;
+}
+
+.rl-header__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ========================================================== */
+/*  Controles (búsqueda + filtro visibilidad)                  */
+/* ========================================================== */
+
+.rl-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rl-controls__search {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  width: 100%;
+  min-width: 220px;
 }
 
-/* === Header con glassmorphism refinado === */
-.header-glass {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+.rl-filter-dropdown {
+  position: relative;
+  flex-shrink: 0;
 }
 
-@media (max-width: 767.98px) {
-  .header-glass {
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(255, 255, 255, 0.92) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-  }
+.rl-filter-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--ink-300);
+  background: var(--cream-50);
+  color: var(--ink-700);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
-/* === Tarjeta Kengo Premium === */
-.tarjeta-kengo {
-  background: var(--kengo-glass-strong);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid var(--kengo-border-strong);
-  box-shadow: var(--kengo-shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+.rl-filter-trigger:hover { background: white; }
 
-.tarjeta-kengo:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--kengo-shadow-lg);
-  border-color: rgba(231, 92, 62, 0.2);
-}
-
-/* === Búsqueda con glow effect === */
-.search-container:focus-within .search-glow {
-  opacity: 1;
-}
-
-.search-input:focus {
-  transform: scale(1.01);
-}
-
-/* === Dropdown de filtros === */
-.filter-dropdown {
-  animation: dropdownFadeIn 0.2s ease-out;
-}
-
-/* === Custom radio button styles === */
-.filter-dropdown label input[type="radio"]:checked + div {
+.rl-filter-trigger--active {
   border-color: var(--kengo-primary);
+  color: var(--kengo-primary);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
 }
 
-.filter-dropdown label input[type="radio"]:checked + div div {
-  transform: scale(1);
-}
+.rl-filter-trigger .material-symbols-outlined { font-size: 18px; }
+.rl-filter-trigger__label { line-height: 1; }
 
-/* === Bounce sutil para badges === */
-.animate-bounce-subtle {
-  animation: bounceSoft 2s ease-in-out infinite;
-}
-
-@keyframes bounceSoft {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
-  }
-}
-
-/* === Active scale utility === */
-.active\:scale-98:active {
-  transform: scale(0.98);
-}
-
-/* === Dropdown Menu Premium === */
-.dropdown-menu {
+.rl-filter-menu {
   position: absolute;
   right: 0;
-  top: 100%;
-  margin-top: 0.5rem;
-  min-width: 12rem;
-  padding: 0.375rem;
-  background: white;
-  border-radius: 1rem;
-  box-shadow:
-    0 20px 40px -8px rgba(0, 0, 0, 0.15),
-    0 8px 16px -4px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  z-index: 100;
-  animation: dropdownFadeIn 0.2s ease-out;
+  top: calc(100% + 6px);
+  z-index: 50;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card-strong);
+  overflow: hidden;
+  animation: rl-menu-in 0.16s ease-out;
 }
 
-.dropdown-item {
+@keyframes rl-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.rl-filter-menu__list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.rl-filter-option {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 0.625rem;
-  border: none;
-  background: transparent;
-  font-size: 0.875rem;
-  color: #3f3f46;
+  gap: 10px;
+  padding: 10px 14px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: left;
-}
-
-.dropdown-item:hover {
-  background: rgba(231, 92, 62, 0.08);
-  color: var(--kengo-primary);
-}
-
-.dropdown-item:active {
-  background: rgba(231, 92, 62, 0.15);
-}
-
-.dropdown-item.danger {
-  color: #ef4444;
-}
-
-.dropdown-item.danger:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: #dc2626;
-}
-
-/* === Rutina Card Expanded === */
-.rutina-card {
-  position: relative;
-  border-radius: 1rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.rutina-card.expanded {
-  box-shadow: var(--kengo-shadow-lg);
-}
-
-.rutina-card.menu-open {
-  z-index: 10;
-}
-
-.rutina-expand-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  width: 100%;
-  padding: 0.625rem;
-  border: none;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  background: transparent;
-  color: #71717a;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.rutina-expand-btn:hover {
-  background: rgba(0, 0, 0, 0.02);
-  color: var(--kengo-primary);
-}
-
-/* === Visibility Badge === */
-.visibility-badge {
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.625rem;
-  border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
+  color: var(--ink-700);
+  transition: background 0.12s, color 0.12s;
 }
 
-.visibility-badge.private {
-  background: linear-gradient(135deg, #f4f4f5, #e4e4e7);
-  color: #52525b;
+.rl-filter-option:hover { background: var(--cream-100); }
+
+.rl-filter-option--selected {
+  color: var(--kengo-primary);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
 }
 
-.visibility-badge.public {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #d97706;
+.rl-filter-option input[type='radio'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--kengo-primary);
+  flex-shrink: 0;
 }
 
-/* === Progress Bar Indeterminate === */
-.progress-bar-indeterminate {
-  animation: progressIndeterminate 1.5s ease-in-out infinite;
-  background: linear-gradient(90deg, var(--kengo-primary), var(--kengo-tertiary), var(--kengo-primary));
-  background-size: 200% 100%;
+.rl-filter-option .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--ink-500);
 }
 
-/* === Line Clamp === */
-.line-clamp-2 {
+.rl-filter-option--selected .material-symbols-outlined { color: var(--kengo-primary); }
+
+.rl-filter-option__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rl-filter-menu__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--cream-50);
+}
+
+/* ========================================================== */
+/*  Estado de carga                                            */
+/* ========================================================== */
+
+.rl-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+/* ========================================================== */
+/*  Lista de rutinas (cards expandibles)                       */
+/* ========================================================== */
+
+.rl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rl-card {
+  position: relative;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 22px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease;
+}
+
+.rl-card:hover { box-shadow: var(--shadow-card-strong); }
+
+.rl-card--menu-open { z-index: 20; }
+
+.rl-card__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 12px 14px 16px;
+  border-radius: 22px;
+  transition: background 0.12s ease;
+}
+
+.rl-card__row:hover { background: rgba(0, 0, 0, 0.02); }
+
+.rl-card__head {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.rl-card__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12), rgba(var(--kengo-primary-rgb), 0.04));
+  color: var(--kengo-primary);
+}
+
+.rl-card__icon .material-symbols-outlined { font-size: 22px; }
+
+.rl-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rl-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rl-card__name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.2;
+}
+
+.rl-card__desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* === Animaciones === */
-@keyframes progressIndeterminate {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+.rl-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 2px;
 }
 
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.rl-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-500);
+  line-height: 1;
 }
 
-/* === Safe area padding for mobile nav === */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  main {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 7rem);
+.rl-card__meta-item .material-symbols-outlined {
+  font-size: 14px;
+  color: var(--ink-400);
+}
+
+/* ========================================================== */
+/*  Menú de acciones (3 puntos)                                */
+/* ========================================================== */
+
+.rl-card__actions {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.rl-card__menu-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.rl-card__menu-btn:hover { background: var(--cream-100); color: var(--ink-700); }
+.rl-card__menu-btn .material-symbols-outlined { font-size: 20px; }
+
+.rl-action-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 50;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card-strong);
+  animation: rl-menu-in 0.16s ease-out;
+}
+
+.rl-action-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.rl-action-option:hover { background: var(--cream-100); }
+
+.rl-action-option .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--ink-500);
+}
+
+.rl-action-option:hover .material-symbols-outlined { color: var(--kengo-primary); }
+
+.rl-action-option--danger { color: var(--danger); }
+.rl-action-option--danger .material-symbols-outlined { color: var(--danger); }
+.rl-action-option--danger:hover { background: rgba(239, 68, 68, 0.08); }
+.rl-action-option--danger:hover .material-symbols-outlined { color: var(--danger); }
+
+.rl-action-sep {
+  margin: 4px 0;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ========================================================== */
+/*  Preview expandido (ejercicios de la rutina)                */
+/* ========================================================== */
+
+.rl-card__preview {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0 0 22px 22px;
+  background: var(--cream-50);
+  padding: 14px 16px 16px;
+}
+
+.rl-card__preview-loader {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.rl-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rl-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.rl-preview-item__media {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--cream-100);
+  display: grid;
+  place-items: center;
+}
+
+.rl-preview-item__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rl-preview-item__media .material-symbols-outlined {
+  font-size: 22px;
+  color: var(--ink-400);
+}
+
+.rl-preview-item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rl-preview-item__name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rl-preview-item__meta {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-500);
+  line-height: 1.3;
+}
+
+.rl-preview-item__sep {
+  margin: 0 4px;
+  color: var(--ink-300);
+}
+
+.rl-card__preview-cta {
+  margin-top: 12px;
+}
+
+.rl-preview-empty {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+/* ========================================================== */
+/*  ≥ md: ajustes desktop                                      */
+/* ========================================================== */
+
+@media (min-width: 768px) {
+  .rl-page {
+    padding: 16px 8px 32px;
+    gap: 8px;
   }
 
-  @media (min-width: 1024px) {
-    main {
-      padding-bottom: 2rem;
-    }
+  .rl-header__h1 { font-size: 32px; }
+
+  .rl-card__row { padding: 18px 16px 18px 20px; }
+  .rl-card__icon { width: 48px; height: 48px; }
+  .rl-card__name { font-size: 16px; }
+}
+
+@media (min-width: 1024px) {
+  .rl-page {
+    padding: 24px 16px 40px;
   }
 }

@@ -1,84 +1,90 @@
-@if (verificandoSesion()) {
-  <section class="absolute top-0 left-0 flex h-dvh w-screen items-center justify-center">
-    <ui-spinner size="lg"></ui-spinner>
-  </section>
-} @else {
-<section
-  class="absolute top-0 left-0 flex h-dvh w-screen items-center justify-center"
->
-  <div
-    class="flex w-80 flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-3 shadow-xl backdrop-blur-md backdrop-filter"
-  >
-    <div
-      class="baseline-end relative flex h-15 w-full items-end justify-center"
-    >
-      <img src="../../assets/logo.svg" class="relative h-[175%]" />
+<ui2-cream-bg></ui2-cream-bg>
+
+<section class="auth-shell">
+  @if (verificandoSesion()) {
+    <div class="auth-shell__loader">
+      <ui2-spinner size="lg" label="Verificando sesión..."></ui2-spinner>
     </div>
+  } @else {
+    <div class="auth-shell__panel">
+      <div class="auth-shell__brand">
+        <img src="../../assets/logo.svg" alt="Kengo" class="auth-shell__logo" />
+      </div>
 
-    <div class="fuente-kengo mb-2 w-full text-center text-3xl">Kengo</div>
-    <div class="relative">
-      <form
-        [formGroup]="loginForm"
-        [class.invisible]="loading()"
-        [attr.aria-hidden]="loading() ? 'true' : null"
-        (ngSubmit)="onSubmit()"
-        class="flex w-full flex-col gap-4"
-      >
-        <ui-input
-          label="Email"
-          type="email"
-          formControlName="email"
-          [error]="emailError"
-        ></ui-input>
+      <ui2-big-title
+        title="Bienvenido"
+        overline="KENGO"
+        sub="Inicia sesión para continuar con tus rutinas."
+      ></ui2-big-title>
 
-        <div class="flex flex-col gap-1.5">
-          <ui-input
-            label="Contraseña"
-            type="password"
-            formControlName="password"
-            [error]="passwordError"
-          ></ui-input>
-          <a
-            routerLink="/recuperar-password"
-            class="self-end text-sm font-medium text-primary hover:underline"
-            [class.pointer-events-none]="loading()"
+      <ui2-card [padding]="22">
+        <div class="auth-form-wrapper">
+          <form
+            [formGroup]="loginForm"
+            [class.auth-form--hidden]="loading()"
+            [attr.aria-hidden]="loading() ? 'true' : null"
+            (ngSubmit)="onSubmit()"
+            class="auth-form"
           >
-            He olvidado mi contraseña
-          </a>
+            <ui2-input
+              label="Email"
+              type="email"
+              placeholder="tu@email.com"
+              iconLeft="mail"
+              autocomplete="email"
+              formControlName="email"
+              [error]="emailError ?? null"
+            ></ui2-input>
+
+            <div class="auth-form__field">
+              <ui2-input
+                label="Contraseña"
+                type="password"
+                placeholder="••••••••"
+                iconLeft="lock"
+                autocomplete="current-password"
+                formControlName="password"
+                [error]="passwordError ?? null"
+              ></ui2-input>
+              <a
+                routerLink="/recuperar-password"
+                class="auth-form__link auth-form__link--end"
+                [class.auth-form__link--disabled]="loading()"
+              >
+                He olvidado mi contraseña
+              </a>
+            </div>
+
+            @if (error()) {
+              <p class="auth-form__error" role="alert">{{ error() }}</p>
+            }
+
+            <ui2-button
+              type="submit"
+              variant="primary"
+              size="lg"
+              [fullWidth]="true"
+              [disabled]="loginForm.invalid || loading()"
+            >
+              Iniciar sesión
+            </ui2-button>
+
+            <a
+              routerLink="/registro"
+              class="auth-form__link auth-form__link--center"
+              [class.auth-form__link--disabled]="loading()"
+            >
+              ¿No tienes cuenta? <span>Regístrate</span>
+            </a>
+          </form>
+
+          @if (loading()) {
+            <div class="auth-form__overlay">
+              <ui2-spinner size="lg"></ui2-spinner>
+            </div>
+          }
         </div>
-
-        <ui-button
-          type="submit"
-          variant="primary"
-          size="lg"
-          [fullWidth]="true"
-          [disabled]="loginForm.invalid || loading()"
-        >
-          Iniciar sesión
-        </ui-button>
-
-        <a
-          routerLink="/registro"
-          class="flex h-10 w-full items-center justify-center rounded-xl text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-          [class.pointer-events-none]="loading()"
-          [class.opacity-50]="loading()"
-        >
-          ¿No tienes cuenta? Registrate
-        </a>
-
-        @if (error()) {
-          <div class="rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-600">
-            {{ error() }}
-          </div>
-        }
-      </form>
-
-      @if (loading()) {
-        <div class="absolute inset-0 flex items-center justify-center">
-          <ui-spinner size="lg"></ui-spinner>
-        </div>
-      }
+      </ui2-card>
     </div>
-  </div>
+  }
 </section>
-}

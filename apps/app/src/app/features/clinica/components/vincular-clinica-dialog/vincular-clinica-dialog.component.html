@@ -1,62 +1,51 @@
 <div class="dialog-overlay" (click)="onOverlayClick($event)">
-  <div class="dialog-content">
-    <header class="dialog-header">
-      <div class="dialog-icon">
-        <span class="material-symbols-outlined icon-filled">link</span>
-      </div>
-      <h2 class="dialog-title">Vincularme a una clínica</h2>
-      <p class="dialog-subtitle">Introduce el código de acceso que te han proporcionado</p>
-      <button type="button" class="close-btn" (click)="cerrar.emit()" aria-label="Cerrar">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </header>
+  <div class="dialog-shell">
+    <ui2-dialog-host>
+      <ui2-dialog-header
+        title="Vincularme a una clínica"
+        subtitle="Introduce el código de acceso que te han proporcionado"
+        (closeClick)="cerrar.emit()"
+      ></ui2-dialog-header>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="dialog-body">
-      <div class="form-group">
-        <label for="codigo" class="form-label">Código de acceso</label>
-        <input
-          id="codigo"
-          type="text"
-          formControlName="codigo"
-          class="form-input code-input"
-          placeholder="XXXXXXXX"
-          maxlength="8"
-          autocomplete="off"
-          (input)="formatCodigo($event)"
-          [class.error]="form.get('codigo')?.touched && form.get('codigo')?.invalid"
-        />
-        @if (form.get('codigo')?.touched && form.get('codigo')?.errors?.['required']) {
-          <span class="field-error">El código es requerido</span>
-        }
-        @if (form.get('codigo')?.touched && form.get('codigo')?.errors?.['minlength']) {
-          <span class="field-error">El código debe tener 8 caracteres</span>
-        }
-      </div>
+      <ui2-dialog-content>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="vc-form">
+          <div class="vc-input-wrap">
+            <ui2-input
+              label="Código de acceso"
+              formControlName="codigo"
+              placeholder="XXXXXXXX"
+              autocomplete="off"
+              iconLeft="key"
+              [error]="
+                form.get('codigo')?.touched && form.get('codigo')?.errors?.['required']
+                  ? 'El código es requerido'
+                  : form.get('codigo')?.touched && form.get('codigo')?.errors?.['minlength']
+                  ? 'El código debe tener 8 caracteres'
+                  : null
+              "
+            ></ui2-input>
+          </div>
 
-      @if (error()) {
-        <div class="error-message">
-          <span class="material-symbols-outlined">error</span>
-          {{ error() }}
-        </div>
-      }
-
-      <div class="dialog-actions">
-        <button type="button" class="btn-secondary" (click)="cerrar.emit()">
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          class="btn-primary"
-          [disabled]="form.invalid || loading()"
-        >
-          @if (loading()) {
-            <span class="spinner"></span>
-            Vinculando...
-          } @else {
-            Vincularme
+          @if (error()) {
+            <div class="vc-error" role="alert">
+              <span class="material-symbols-outlined" aria-hidden="true">error</span>
+              {{ error() }}
+            </div>
           }
-        </button>
-      </div>
-    </form>
+        </form>
+      </ui2-dialog-content>
+
+      <ui2-dialog-actions align="end">
+        <ui2-button variant="secondary" (clicked)="cerrar.emit()">Cancelar</ui2-button>
+        <ui2-button
+          variant="primary"
+          [disabled]="form.invalid"
+          [loading]="loading()"
+          (clicked)="onSubmit()"
+        >
+          Vincularme
+        </ui2-button>
+      </ui2-dialog-actions>
+    </ui2-dialog-host>
   </div>
 </div>

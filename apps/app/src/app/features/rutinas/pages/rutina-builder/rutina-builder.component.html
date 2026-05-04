@@ -1,389 +1,286 @@
-<!-- Loading bar -->
-@if (isSaving() || isLoading()) {
-  <div class="fixed top-0 right-0 left-0 z-50 h-1.5 overflow-hidden bg-zinc-100">
-    <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
-  </div>
-}
-
-@if (isLoading()) {
-  <div class="flex flex-1 items-center justify-center">
-    <p class="text-sm text-zinc-500">Cargando rutina...</p>
-  </div>
-} @else {
-<section class="flex flex-col w-full h-full overflow-y-auto overflow-x-hidden pb-28 lg:pb-8">
-  <!-- Header sticky -->
-  <header
-    class="sticky top-0 z-40 mx-auto mb-6 px-4 pt-4 pb-2 w-full"
-    [class.bg-gradient-to-b]="!isDesktop()"
-    [class.from-amber-50/98]="!isDesktop()"
-    [class.via-white/95]="!isDesktop()"
-    [class.to-transparent]="!isDesktop()"
-    [class.backdrop-blur-xl]="!isDesktop()"
-  >
-    <div class="mx-auto max-w-3xl">
-      <!-- Header para móvil y desktop -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <ui-back-button size="lg" (clicked)="cancelar()"></ui-back-button>
-          <div>
-            <h1 class="titulo-kengo text-xl font-bold text-amber-600">
-              {{ isEditMode() ? 'Editar rutina' : 'Configurar rutina' }}
-            </h1>
-            <p class="text-xs font-medium text-zinc-500">
-              {{ totalItems() }}
-              {{ totalItems() === 1 ? "ejercicio" : "ejercicios" }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Botón cerrar modo rutina -->
-        <button
-          type="button"
-          class="flex h-10 w-10 items-center justify-center rounded-xl
-                 text-zinc-400 transition-all hover:bg-red-50 hover:text-red-500"
-          aria-label="Salir modo rutina"
-          (click)="salirModoRutina()"
-        >
-          <span class="material-symbols-outlined text-xl">close</span>
-        </button>
-      </div>
+<div class="rb-page">
+  @if (isLoading()) {
+    <div class="rb-loading">
+      <ui2-spinner size="lg" color="primary" label="Cargando rutina..."></ui2-spinner>
     </div>
-  </header>
-
-  <!-- Contenido principal -->
-  <div class="mx-auto w-full max-w-3xl px-4">
-    <!-- Card: Detalles de la rutina -->
-    <article class="tarjeta-kengo mb-5 overflow-hidden rounded-2xl">
-      <!-- Icono rutina -->
-      <div class="flex items-center gap-4 border-b border-zinc-100/80 p-5 bg-amber-50/30">
-        <div class="flex h-14 w-14 items-center justify-center rounded-full
-                    bg-gradient-to-br from-amber-400 to-amber-500 shadow-md
-                    ring-[3px] ring-white">
-          <span class="material-symbols-outlined text-2xl text-white">bookmark_add</span>
-        </div>
-        <div class="min-w-0 flex-1">
-          <h3 class="truncate font-bold text-zinc-800 text-lg">
-            Nueva rutina
-          </h3>
-          <p class="text-sm text-zinc-500">Define nombre y visibilidad</p>
-        </div>
+  } @else {
+    <!-- Header -->
+    <div class="rb-header">
+      <ui2-back-button (clicked)="cancelar()" ariaLabel="Volver"></ui2-back-button>
+      <div class="rb-header__title">
+        <ui2-big-title
+          [overline]="pageOverline()"
+          [title]="isEditMode() ? 'Editar plantilla' : 'Configurar plantilla'"
+          sub="Define nombre, visibilidad y dosis de los ejercicios"
+        ></ui2-big-title>
       </div>
+      <ui2-button
+        variant="ghost"
+        size="sm"
+        iconLeft="close"
+        [iconOnly]="true"
+        ariaLabel="Salir"
+        (clicked)="salirModoRutina()"
+      ></ui2-button>
+    </div>
 
-      <!-- Formulario -->
-      <div class="p-5">
-        <form [formGroup]="form" class="space-y-4">
-          <div>
-            <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-              Nombre de la rutina
-            </label>
-            <input
-              type="text"
-              class="input-compact w-full"
-              formControlName="nombre"
+    <!-- Form: detalles -->
+    <form [formGroup]="form" novalidate>
+      <ui2-section [padding]="'0 20px 12px'">
+        <ui2-card [padding]="14">
+          <div class="rb-form">
+            <ui2-input
+              label="Nombre de la rutina"
               placeholder="Ej: Fortalecimiento lumbar"
-            />
-            @if (form.controls.nombre.hasError("required") && form.controls.nombre.touched) {
-              <p class="mt-1.5 text-xs font-medium text-red-500">El nombre es requerido</p>
-            }
-          </div>
-
-          <div>
-            <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-              Descripcion (opcional)
-            </label>
-            <textarea
-              rows="2"
-              class="input-compact w-full resize-none"
+              iconLeft="title"
+              formControlName="nombre"
+              [required]="true"
+              [error]="nombreError()"
+            ></ui2-input>
+            <ui2-textarea
+              label="Descripción (opcional)"
+              placeholder="Breve descripción de la rutina..."
               formControlName="descripcion"
-              placeholder="Breve descripcion de la rutina..."
-            ></textarea>
+              [rows]="2"
+            ></ui2-textarea>
+            <ui2-radio-group
+              label="Visibilidad"
+              [options]="visibilidadOptions"
+              formControlName="visibilidad"
+              orientation="horizontal"
+            ></ui2-radio-group>
           </div>
+        </ui2-card>
+      </ui2-section>
+    </form>
 
-          <div>
-            <label class="mb-2 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-              Visibilidad
-            </label>
-            <div class="flex gap-3">
-              <label class="visibilidad-option flex-1"
-                     [class.visibilidad-option--active]="form.value.visibilidad === 'privado'">
-                <input type="radio" formControlName="visibilidad" value="privado" class="sr-only" />
-                <span class="material-symbols-outlined text-lg">lock</span>
-                <span class="font-medium">Privada</span>
-              </label>
-              <label class="visibilidad-option flex-1"
-                     [class.visibilidad-option--active]="form.value.visibilidad === 'clinica'">
-                <input type="radio" formControlName="visibilidad" value="clinica" class="sr-only" />
-                <span class="material-symbols-outlined text-lg">domain</span>
-                <span class="font-medium">Clínica</span>
-              </label>
-            </div>
-          </div>
-        </form>
-      </div>
-    </article>
-
-    <!-- Lista de ejercicios -->
-    @if (items().length === 0) {
-      <ui-empty-state
-        icon="fitness_center"
-        title="No hay ejercicios en la rutina"
-        message="Agrega ejercicios del catalogo para comenzar"
-        actionLabel="Agregar ejercicios"
-        (action)="navegarACatalogo()"
-      ></ui-empty-state>
-    } @else {
-      <div cdkDropList class="space-y-4" (cdkDropListDropped)="onDrop($event)">
-        @for (it of items(); track trackByIndex($index); let i = $index) {
-          <article
-            class="tarjeta-kengo exercise-item overflow-hidden rounded-2xl transition-all"
-            [class.exercise-card-editing]="ejercicioEditando() === i"
-            cdkDrag
-            [cdkDragDisabled]="ejercicioEditando() === i"
-          >
-            <!-- Drag preview -->
-            <div *cdkDragPreview class="rounded-2xl bg-white p-4 shadow-2xl">
-              <div class="flex items-center gap-3">
-                @if (it.ejercicio.portada) {
-                  <img
-                    [src]="assetUrl(it.ejercicio.portada, 48, 48)"
-                    class="h-12 w-12 rounded-xl object-cover"
-                  />
-                }
-                <span class="font-bold text-zinc-800">{{ it.ejercicio.nombre }}</span>
-              </div>
-            </div>
-
-            <!-- Placeholder -->
-            <div
-              *cdkDragPlaceholder
-              class="h-24 rounded-2xl border-2 border-dashed border-amber-500/30 bg-amber-500/5"
-            ></div>
-
-            @if (ejercicioEditando() !== i) {
-              <!-- Modo vista compacto -->
-              <div class="flex items-center gap-4 p-4">
-                <div class="drag-handle text-amber-500" cdkDragHandle>
-                  <span class="material-symbols-outlined text-2xl">drag_indicator</span>
-                </div>
-
-                <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-100 shadow-sm">
-                  @if (it.ejercicio.portada) {
-                    <img
-                      [src]="assetUrl(it.ejercicio.portada, 80, 80)"
-                      [alt]="it.ejercicio.nombre"
-                      class="h-full w-full object-cover"
-                    />
-                  } @else {
-                    <div class="flex h-full w-full items-center justify-center">
-                      <span class="material-symbols-outlined text-2xl text-zinc-300">fitness_center</span>
-                    </div>
-                  }
-                </div>
-
-                <div class="min-w-0 flex-1">
-                  <h3 class="truncate font-bold text-zinc-800">
-                    {{ it.ejercicio.nombre }}
-                  </h3>
-                  <p class="mt-1 text-sm text-zinc-500">
-                    <span class="font-semibold text-amber-600">{{ it.series || 3 }}x{{ it.repeticiones || 10 }}</span>
-                    @if (it.descansoSeg) {
-                      <span class="text-zinc-400"> · {{ it.descansoSeg }}s</span>
-                    }
-                    @if (it.vecesDia && it.vecesDia > 1) {
-                      <span class="text-zinc-400"> · {{ it.vecesDia }}/dia</span>
-                    }
-                  </p>
-                  <!-- Días de la semana visual -->
-                  <div class="mt-2 flex gap-1">
-                    @for (d of dias; track d) {
-                      <span class="dia-mini" [class.dia-mini--activo]="isDia(it, d)">{{ d }}</span>
-                    }
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
-                         text-zinc-400 transition-all hover:bg-amber-500/10 hover:text-amber-600"
-                  (click)="ejercicioEditando.set(i)"
-                  title="Editar"
-                >
-                  <span class="material-symbols-outlined text-xl">edit</span>
-                </button>
-              </div>
-            } @else {
-              <!-- Modo edición expandido -->
-              <div class="p-5">
-                <div class="mb-5 flex items-start gap-4">
-                  <div class="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 shadow-md">
-                    @if (it.ejercicio.portada) {
-                      <img
-                        [src]="assetUrl(it.ejercicio.portada, 120, 120)"
-                        [alt]="it.ejercicio.nombre"
-                        class="h-full w-full object-cover"
-                      />
-                    }
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <h3 class="font-bold text-lg text-zinc-800">
-                      {{ it.ejercicio.nombre }}
-                    </h3>
-                    @if (it.ejercicio.descripcion) {
-                      <div
-                        class="prose prose-sm mt-1 line-clamp-2 text-sm text-zinc-500"
-                        [innerHTML]="it.ejercicio.descripcion | safeHtml"
-                      ></div>
-                    }
-                  </div>
-                </div>
-
-                <!-- Dosificación -->
-                <div class="grid grid-cols-4 gap-3">
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Series
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      class="input-compact text-center"
-                      [value]="it.series || 3"
-                      (input)="update(i, { series: +$any($event.target).value || 1 })"
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Reps
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      class="input-compact text-center"
-                      [value]="it.repeticiones || 10"
-                      (input)="update(i, { repeticiones: +$any($event.target).value || 1 })"
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Desc (s)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      class="input-compact text-center"
-                      [value]="it.descansoSeg ?? 45"
-                      (input)="update(i, { descansoSeg: +$any($event.target).value || 0 })"
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                      Veces/dia
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      class="input-compact text-center"
-                      [value]="it.vecesDia ?? 1"
-                      (input)="update(i, { vecesDia: +$any($event.target).value || 1 })"
-                    />
-                  </div>
-                </div>
-
-                <!-- Días de la semana -->
-                <div class="mt-5">
-                  <label class="mb-2 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                    Días de la semana
-                  </label>
-                  <div class="flex justify-center gap-2">
-                    @for (d of dias; track d) {
-                      <button
-                        type="button"
-                        class="dia-btn"
-                        [class.dia-btn--activo]="isDia(it, d)"
-                        (click)="toggleDia(i, d)"
-                      >
-                        {{ d }}
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                <!-- Instrucciones -->
-                <div class="mt-5">
-                  <label class="mb-1.5 block text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                    Instrucciones (opcional)
-                  </label>
-                  <textarea
-                    rows="2"
-                    class="input-compact w-full resize-none"
-                    placeholder="Indicaciones especiales..."
-                    [value]="it.instruccionesPaciente || ''"
-                    (input)="update(i, { instruccionesPaciente: $any($event.target).value })"
-                  ></textarea>
-                </div>
-
-                <!-- Acciones -->
-                <div class="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4">
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-red-500
-                           transition-all hover:text-red-600 active:scale-98"
-                    (click)="removeEjercicio(it.ejercicio.id)"
-                  >
-                    <span class="material-symbols-outlined text-xl">delete</span>
-                    Eliminar
-                  </button>
-                  <button
-                    type="button"
-                    class="inline-flex h-10 items-center justify-center rounded-xl
-                           bg-zinc-800 px-5 text-sm font-semibold text-white
-                           transition-all hover:bg-zinc-700 active:scale-98"
-                    (click)="ejercicioEditando.set(null)"
-                  >
-                    Listo
-                  </button>
-                </div>
-              </div>
-            }
-          </article>
-        }
-      </div>
-
-      <!-- Botón añadir más ejercicios -->
-      <a
-        routerLink="/ejercicios"
-        class="mt-4 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed
-               border-zinc-300 bg-white/40 p-4 text-zinc-500
-               transition-all hover:border-amber-500 hover:bg-amber-500/5 hover:text-amber-600"
-      >
-        <span class="material-symbols-outlined text-2xl">add</span>
-        <span class="text-sm font-medium">Añadir más ejercicios</span>
-      </a>
-    }
-  </div>
-</section>
-
-<!-- Barra de acción fija -->
-<div class="fixed right-0 bottom-0 left-0 z-40 p-4
-            bg-gradient-to-t from-white via-white/95 to-transparent
-            pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-  <div class="mx-auto flex max-w-3xl items-center justify-center">
-    <button
-      type="button"
-      class="cta-button-fixed cta-button-amber w-full max-w-md"
-      (click)="guardarPlantilla()"
-      [disabled]="!canSave() || isSaving()"
+    <!-- Ejercicios -->
+    <ui2-section
+      [label]="'Ejercicios (' + totalItems() + ')'"
+      [action]="totalItems() > 0 ? 'Añadir' : null"
+      [padding]="'8px 20px 16px'"
+      (actionClick)="navegarACatalogo()"
     >
-      @if (isSaving()) {
-        <span class="flex items-center justify-center gap-2">
-          <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
-          Guardando...
-        </span>
+      @if (items().length === 0) {
+        <ui2-empty-state
+          icon="fitness_center"
+          title="Sin ejercicios todavía"
+          message="Agrega ejercicios del catálogo para comenzar."
+          actionLabel="Agregar ejercicios"
+          actionIcon="add"
+          (action)="navegarACatalogo()"
+        ></ui2-empty-state>
       } @else {
-        <span class="material-symbols-outlined text-xl">{{ isEditMode() ? 'save' : 'bookmark_add' }}</span>
-        {{ isEditMode() ? 'Actualizar rutina' : 'Guardar rutina' }}
+        <div
+          class="rb-ex-list"
+          cdkDropList
+          (cdkDropListDropped)="onDrop($event)"
+        >
+          @for (it of items(); track trackByIndex($index); let i = $index) {
+            <article
+              class="rb-ex-item"
+              cdkDrag
+              [cdkDragDisabled]="ejercicioEditando() === i"
+            >
+              <div *cdkDragPreview class="rb-ex-preview">
+                <ui2-card [padding]="12">
+                  <div class="rb-ex-preview__row">
+                    <div class="rb-ex__thumb rb-ex__thumb--sm">
+                      @if (it.ejercicio.portada) {
+                        <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
+                      } @else {
+                        <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                      }
+                    </div>
+                    <span class="rb-ex__name">{{ it.ejercicio.nombre }}</span>
+                  </div>
+                </ui2-card>
+              </div>
+
+              <div *cdkDragPlaceholder class="rb-drag-placeholder"></div>
+
+              <ui2-card [padding]="12">
+                @if (ejercicioEditando() !== i) {
+                  <!-- Vista compacta -->
+                  <div class="rb-ex rb-ex--compact">
+                    <button
+                      type="button"
+                      class="rb-drag-handle"
+                      cdkDragHandle
+                      aria-label="Reordenar"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
+                    </button>
+
+                    <div class="rb-ex__thumb">
+                      @if (it.ejercicio.portada) {
+                        <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
+                      } @else {
+                        <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                      }
+                    </div>
+
+                    <div class="rb-ex__body">
+                      <h4 class="rb-ex__name">{{ it.ejercicio.nombre }}</h4>
+                      <div class="rb-ex__pills">
+                        <ui2-pill variant="primary" size="sm" icon="repeat">
+                          {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
+                        </ui2-pill>
+                        @if (it.descansoSeg) {
+                          <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
+                        }
+                        @if (it.vecesDia && it.vecesDia > 1) {
+                          <ui2-pill variant="soft" size="sm" icon="schedule">{{ it.vecesDia }}×/día</ui2-pill>
+                        }
+                      </div>
+                      <div class="rb-ex__days">
+                        @for (d of dias; track d) {
+                          <span
+                            class="rb-day"
+                            [class.rb-day--active]="isDia(it, d)"
+                          >{{ d }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <ui2-button
+                      variant="ghost"
+                      size="sm"
+                      iconLeft="edit"
+                      [iconOnly]="true"
+                      (clicked)="toggleEdicion(i)"
+                    ></ui2-button>
+                  </div>
+                } @else {
+                  <!-- Vista expandida -->
+                  <div class="rb-ex rb-ex--expanded">
+                    <div class="rb-ex__head">
+                      <div class="rb-ex__thumb rb-ex__thumb--lg">
+                        @if (it.ejercicio.portada) {
+                          <img [src]="assetUrl(it.ejercicio.portada, 160, 160)" [alt]="it.ejercicio.nombre" />
+                        } @else {
+                          <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                        }
+                      </div>
+                      <div class="rb-ex__head-text">
+                        <h4 class="rb-ex__name">{{ it.ejercicio.nombre }}</h4>
+                        @if (it.ejercicio.descripcion) {
+                          <div
+                            class="rb-ex__desc"
+                            [innerHTML]="it.ejercicio.descripcion | safeHtml"
+                          ></div>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="rb-dosage-grid">
+                      <label class="rb-dosage-field">
+                        <span class="rb-dosage-field__label">Series</span>
+                        <input
+                          type="number"
+                          min="1"
+                          class="rb-dosage-input"
+                          [value]="it.series ?? ''"
+                          (change)="updateNumber(i, 'series', $event)"
+                        />
+                      </label>
+                      <label class="rb-dosage-field">
+                        <span class="rb-dosage-field__label">Reps</span>
+                        <input
+                          type="number"
+                          min="1"
+                          class="rb-dosage-input"
+                          [value]="it.repeticiones ?? ''"
+                          (change)="updateNumber(i, 'repeticiones', $event)"
+                        />
+                      </label>
+                      <label class="rb-dosage-field">
+                        <span class="rb-dosage-field__label">Descanso (s)</span>
+                        <input
+                          type="number"
+                          min="0"
+                          class="rb-dosage-input"
+                          [value]="it.descansoSeg ?? ''"
+                          (change)="updateNumber(i, 'descansoSeg', $event)"
+                        />
+                      </label>
+                      <label class="rb-dosage-field">
+                        <span class="rb-dosage-field__label">Veces/día</span>
+                        <input
+                          type="number"
+                          min="1"
+                          class="rb-dosage-input"
+                          [value]="it.vecesDia ?? ''"
+                          (change)="updateNumber(i, 'vecesDia', $event)"
+                        />
+                      </label>
+                    </div>
+
+                    <div class="rb-days-block">
+                      <span class="rb-days-block__label">Días de la semana</span>
+                      <div class="rb-days">
+                        @for (d of dias; track d) {
+                          <button
+                            type="button"
+                            class="rb-day-btn"
+                            [class.rb-day-btn--active]="isDia(it, d)"
+                            [attr.aria-label]="diasNombres[d]"
+                            (click)="toggleDia(i, d)"
+                          >{{ d }}</button>
+                        }
+                      </div>
+                    </div>
+
+                    <label class="rb-instructions">
+                      <span class="rb-instructions__label">Instrucciones (opcional)</span>
+                      <textarea
+                        class="rb-instructions__input"
+                        rows="3"
+                        [value]="it.instruccionesPaciente ?? ''"
+                        placeholder="Notas o indicaciones específicas"
+                        (change)="updateText(i, 'instruccionesPaciente', $event)"
+                      ></textarea>
+                    </label>
+
+                    <div class="rb-ex__footer">
+                      <ui2-button
+                        variant="danger"
+                        size="sm"
+                        iconLeft="delete"
+                        (clicked)="removeEjercicio(it.ejercicio.id)"
+                      >Eliminar</ui2-button>
+                      <ui2-button
+                        variant="primary"
+                        size="sm"
+                        iconLeft="check"
+                        (clicked)="toggleEdicion(i)"
+                      >Listo</ui2-button>
+                    </div>
+                  </div>
+                }
+              </ui2-card>
+            </article>
+          }
+        </div>
+
+        <a routerLink="/ejercicios" class="rb-add-more">
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          <span>Añadir más ejercicios</span>
+        </a>
       }
-    </button>
-  </div>
+    </ui2-section>
+
+    <!-- CTA bottom -->
+    <div class="rb-cta-bar">
+      <ui2-button
+        variant="primary"
+        size="lg"
+        [iconLeft]="isEditMode() ? 'save' : 'bookmark_add'"
+        [fullWidth]="true"
+        [loading]="isSaving()"
+        [disabled]="!canSave() || isSaving()"
+        (clicked)="guardarPlantilla()"
+      >{{ isEditMode() ? 'Actualizar plantilla' : 'Guardar plantilla' }}</ui2-button>
+    </div>
+  }
 </div>
-}

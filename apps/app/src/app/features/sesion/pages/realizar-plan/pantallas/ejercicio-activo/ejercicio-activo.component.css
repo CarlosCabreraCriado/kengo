@@ -9,6 +9,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  background: var(--cream-50);
 }
 
 .ejercicio-activo-container {
@@ -53,11 +54,9 @@
   }
 
   .video-section :is(app-ejercicio-video-player) {
-    border-radius: 32px;
+    border-radius: 22px;
     overflow: hidden;
-    box-shadow:
-      0 25px 80px rgba(0, 0, 0, 0.18),
-      0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card-strong);
   }
 }
 

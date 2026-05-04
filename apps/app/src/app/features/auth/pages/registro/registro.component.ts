@@ -1,38 +1,47 @@
-import { Component, inject, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, ViewChild } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import {
-  StepperComponent,
-  StepComponent,
   passwordMatchValidator,
   emailRequired,
   passwordRequired,
   passwordRepeatRequired,
-  InputComponent,
-  ButtonComponent,
-  RadioGroupComponent,
-  type RadioOption,
 } from '../../../../shared';
+import {
+  Ui2CreamBgComponent,
+  Ui2CardComponent,
+  Ui2BigTitleComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+  Ui2RadioGroupComponent,
+  Ui2StepperComponent,
+  Ui2StepComponent,
+  type Ui2RadioOption,
+} from '../../../../shared/ui-v2';
 import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-models';
 
 @Component({
   standalone: true,
   selector: 'app-registro',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
     ReactiveFormsModule,
-    StepperComponent,
-    StepComponent,
-    InputComponent,
-    ButtonComponent,
-    RadioGroupComponent,
+    Ui2CreamBgComponent,
+    Ui2CardComponent,
+    Ui2BigTitleComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+    Ui2RadioGroupComponent,
+    Ui2StepperComponent,
+    Ui2StepComponent,
   ],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.css',
 })
 export class RegistroComponent {
-  @ViewChild('stepper') stepper!: StepperComponent;
+  @ViewChild('stepper') stepper!: Ui2StepperComponent;
 
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -42,7 +51,7 @@ export class RegistroComponent {
   error = signal<string | null>(null);
   isLoading = signal(false);
 
-  readonly tipoUsuarioOptions: RadioOption[] = [
+  readonly tipoUsuarioOptions: Ui2RadioOption[] = [
     {
       value: 'fisioterapeuta',
       label: 'Fisioterapeuta',
@@ -55,7 +64,6 @@ export class RegistroComponent {
     },
   ];
 
-  // Formularios:
   datosForm = this.fb.group({
     nombre: ['', Validators.required],
     apellidos: ['', Validators.required],
@@ -118,16 +126,14 @@ export class RegistroComponent {
         return;
       }
 
-      // Auto-login tras registro exitoso
       await this.authService.login(payload.email, payload.password);
       this.router.navigate(['/inicio']);
     } catch (err: unknown) {
-      // Manejar errores HTTP
       const httpError = err as { error?: { code?: RegistroErrorCode } };
       if (httpError.error?.code) {
         this.handleRegistroError(httpError.error.code);
       } else {
-        this.error.set('Error de conexion. Por favor, intenta de nuevo.');
+        this.error.set('Error de conexión. Por favor, intenta de nuevo.');
       }
     } finally {
       this.isLoading.set(false);
@@ -137,22 +143,21 @@ export class RegistroComponent {
   private handleRegistroError(code: RegistroErrorCode): void {
     switch (code) {
       case 'EMAIL_DUPLICADO':
-        this.error.set('Este email ya esta registrado. Intenta iniciar sesion o usa otro email.');
+        this.error.set('Este email ya está registrado. Intenta iniciar sesión o usa otro email.');
         break;
       case 'CLINICA_NO_ENCONTRADA':
-        this.error.set('El codigo de clinica no es valido. Verifica el codigo o dejalo en blanco.');
+        this.error.set('El código de clínica no es válido. Verifica el código o déjalo en blanco.');
         break;
       case 'VALIDATION_ERROR':
-        this.error.set('Los datos ingresados no son validos. Revisa el formulario.');
+        this.error.set('Los datos ingresados no son válidos. Revisa el formulario.');
         break;
       case 'SERVER_ERROR':
       default:
-        this.error.set('Error del servidor. Por favor, intenta mas tarde.');
+        this.error.set('Error del servidor. Por favor, intenta más tarde.');
         break;
     }
   }
 
-  // Mensajes de error por campo (devuelven string | undefined para ui-input)
   get nombreError(): string | undefined {
     const ctrl = this.datosForm.get('nombre');
     if (!ctrl || !ctrl.touched) return undefined;
@@ -171,14 +176,14 @@ export class RegistroComponent {
     const ctrl = this.datosForm.get('email');
     if (!ctrl || !ctrl.touched) return undefined;
     if (ctrl.hasError('required')) return 'El email es requerido';
-    if (ctrl.hasError('email')) return 'El formato del email no es valido';
+    if (ctrl.hasError('email')) return 'El formato del email no es válido';
     return undefined;
   }
 
   get passwordError(): string | undefined {
     const ctrl = this.passwordForm.get('password');
     if (!ctrl || !ctrl.touched) return undefined;
-    if (ctrl.hasError('required')) return 'La contrasena es requerida';
+    if (ctrl.hasError('required')) return 'La contraseña es requerida';
     if (ctrl.hasError('minlength')) return 'Debe tener al menos 8 caracteres';
     return undefined;
   }
@@ -186,8 +191,8 @@ export class RegistroComponent {
   get repetirError(): string | undefined {
     const ctrl = this.passwordForm.get('repetir');
     if (!ctrl || !ctrl.touched) return undefined;
-    if (ctrl.hasError('required')) return 'Repetir la contrasena es requerido';
-    if (!this.passwordsMatch) return 'Las contrasenas no coinciden';
+    if (ctrl.hasError('required')) return 'Repetir la contraseña es requerido';
+    if (!this.passwordsMatch) return 'Las contraseñas no coinciden';
     return undefined;
   }
 

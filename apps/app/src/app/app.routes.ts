@@ -92,4 +92,12 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/perfil/perfil.routes').then((m) => m.PERFIL_ROUTES),
   },
+
+  {
+    path: 'mensajes',
+    loadChildren: () =>
+      import('./features/mensajes/mensajes.routes').then(
+        (m) => m.MENSAJES_ROUTES,
+      ),
+  },
 ];

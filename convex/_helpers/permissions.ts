@@ -1,3 +1,4 @@
+import { ConvexError } from "convex/values";
 import { QueryCtx, MutationCtx } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 
@@ -53,4 +54,88 @@ export async function checkClinicPermission(
   }
 
   return membership;
+}
+
+/**
+ * Devuelve `true` si el `clinicBilling` está en un estado que permite operar.
+ * Estados aceptados:
+ *   - `trialing`, `active`
+ *   - `past_due` con `graceUntil` aún en el futuro
+ * Se trata `!billing` como permisivo: clínica recién creada (race con la
+ * action de trial start) o clínica pre-Stripe que aún no tiene registro.
+ */
+function billingPermiteOperar(billing: {
+  estadoLocal: string;
+  graceUntil?: number;
+} | null): boolean {
+  if (!billing) return true;
+  if (billing.estadoLocal === "trialing" || billing.estadoLocal === "active") {
+    return true;
+  }
+  if (
+    billing.estadoLocal === "past_due" &&
+    billing.graceUntil !== undefined &&
+    billing.graceUntil > Date.now()
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Lanza `ConvexError({ code: "SUBSCRIPTION_INACTIVE" })` si la suscripción de
+ * la clínica está suspendida (`unpaid`/`canceled`/`past_due` con gracia
+ * agotada). Usar en mutations que requieren clínica activa.
+ */
+export async function requireActiveSubscription(
+  ctx: QueryCtx | MutationCtx,
+  clinicId: Id<"clinics">,
+) {
+  const billing = await ctx.db
+    .query("clinicBilling")
+    .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+    .unique();
+
+  if (!billingPermiteOperar(billing)) {
+    throw new ConvexError({
+      code: "SUBSCRIPTION_INACTIVE",
+      message: "La suscripción de la clínica está inactiva.",
+    });
+  }
+}
+
+/**
+ * Variante para mutations sin `clinicId` explícito (planes, rutinas): permite
+ * operar si AL MENOS UNA clínica del usuario donde es fisio/admin tiene
+ * suscripción activa. Si no es miembro de ninguna clínica, deja pasar (caso
+ * marginal — usuarios huérfanos no llegan aquí porque el contenido necesita
+ * fisio/admin para crearse).
+ */
+export async function requireAnyActiveSubscriptionForUser(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+) {
+  const memberships = await ctx.db
+    .query("clinicMemberships")
+    .withIndex("by_userId_clinicId", (q) => q.eq("userId", userId))
+    .collect();
+
+  const facturables = memberships.filter(
+    (m) => m.puesto === "fisio" || m.puesto === "admin",
+  );
+  if (facturables.length === 0) return;
+
+  for (const m of facturables) {
+    const billing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", m.clinicId))
+      .unique();
+    if (billingPermiteOperar(billing)) return;
+  }
+
+  throw new ConvexError({
+    code: "SUBSCRIPTION_INACTIVE",
+    message:
+      "Ninguna de tus clínicas tiene una suscripción activa. Actualiza el método de pago para seguir trabajando.",
+  });
 }

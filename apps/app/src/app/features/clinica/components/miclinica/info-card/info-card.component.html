@@ -1,0 +1,17 @@
+<ui2-card [padding]="18">
+  <header class="mic__head">
+    <ui2-icon-badge [icon]="icon()" [color]="iconColor()" [size]="32" [radius]="9" />
+    <h3 class="mic__title">{{ title() }}</h3>
+  </header>
+
+  <div class="mic__body">
+    @for (f of fields(); track f.label) {
+      <div class="mic__field">
+        <span class="mic__label">{{ f.label }}</span>
+        <span class="mic__value" [class.mic__value--mono]="f.mono">
+          {{ f.value || '—' }}
+        </span>
+      </div>
+    }
+  </div>
+</ui2-card>

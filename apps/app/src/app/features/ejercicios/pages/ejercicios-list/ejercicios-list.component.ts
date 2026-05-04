@@ -1,26 +1,38 @@
 import {
+  ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   computed,
-  inject,
-  signal,
-  Signal,
-  OnInit,
   ElementRef,
   HostListener,
+  inject,
+  OnInit,
+  signal,
+  Signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { EjerciciosService } from '../../data-access/ejercicios.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { Ejercicio } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
-import { CatalogoTabsComponent } from '../../../../shared/ui/catalogo-tabs/catalogo-tabs.component';
 
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { useResponsive, EmptyStateComponent, BackButtonComponent, SearchBoxComponent } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
+import {
+  Ui2ButtonComponent,
+  Ui2EmptyStateComponent,
+  Ui2PillComponent,
+  Ui2SearchBoxComponent,
+  Ui2SectionComponent,
+  Ui2SegmentedComponent,
+  Ui2SegmentedOption,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
-// La navegación se muestra en >= 768px (cuando NO es móvil)
+type Vista = 'vineta' | 'lista';
 
 @Component({
   selector: 'app-ejercicios-list',
@@ -29,22 +41,42 @@ import { useResponsive, EmptyStateComponent, BackButtonComponent, SearchBoxCompo
     RouterLink,
     ReactiveFormsModule,
     SafeHtmlPipe,
-    CatalogoTabsComponent,
-    EmptyStateComponent,
-    BackButtonComponent,
-    SearchBoxComponent,
+    Ui2ButtonComponent,
+    Ui2EmptyStateComponent,
+    Ui2PillComponent,
+    Ui2SearchBoxComponent,
+    Ui2SectionComponent,
+    Ui2SegmentedComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './ejercicios-list.component.html',
   styleUrl: './ejercicios-list.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
-  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EjerciciosListComponent implements OnInit {
+export class EjerciciosListComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private elementRef = inject(ElementRef);
+  private router = inject(Router);
   public ejerciciosService = inject(EjerciciosService);
-  public vista = signal<'vineta' | 'lista'>('lista');
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'ejercicios-list';
+
+  /** Datos críticos: lista de ejercicios resuelta. */
+  readonly pageReady = computed(
+    () => !this.ejerciciosService.listaEjerciciosRes.isLoading(),
+  );
+
+  public vista = signal<Vista>('lista');
+
+  readonly vistaOptions: Ui2SegmentedOption[] = [
+    { id: 'vineta', label: 'Cuadrícula', icon: 'grid_view' },
+    { id: 'lista', label: 'Lista', icon: 'view_list' },
+  ];
+
+  readonly catalogoTabs: Ui2SegmentedOption[] = [
+    { id: 'ejercicios', label: 'Ejercicios' },
+    { id: 'rutinas', label: 'Rutinas' },
+  ];
 
   // Set para rastrear qué imágenes ya cargaron
   public imagenesLoaded = signal<Set<string>>(new Set());
@@ -71,7 +103,7 @@ export class EjerciciosListComponent implements OnInit {
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     const menuContainer = this.elementRef.nativeElement.querySelector(
-      '.categories-dropdown-container',
+      '.el-cat-dropdown',
     );
     if (menuContainer && !menuContainer.contains(target)) {
       this.menuAbierto.set(false);
@@ -86,11 +118,6 @@ export class EjerciciosListComponent implements OnInit {
     this.menuAbierto.set(false);
   }
 
-  filtrosAbiertos = signal(false);
-  toggleFiltros() {
-    this.filtrosAbiertos.update((v) => !v);
-  }
-
   public readonly ejercicios = computed<Ejercicio[]>(
     () => this.ejerciciosService.listaEjerciciosRes.value().data,
   );
@@ -98,6 +125,12 @@ export class EjerciciosListComponent implements OnInit {
   public categoriasSeleccionadas = computed(() => {
     return this.ejerciciosService.idsCategoriasSeleccionadas();
   });
+
+  public total = this.ejerciciosService.total;
+  public totalPages = this.ejerciciosService.totalPages;
+  public page = this.ejerciciosService.page;
+  public categorias = this.ejerciciosService.categoriasRes.value;
+  public hasActiveFilters = this.ejerciciosService.hasActiveFilters;
 
   // ---- Formulario de filtros ----
   formularioFiltros = this.fb.group({
@@ -108,7 +141,7 @@ export class EjerciciosListComponent implements OnInit {
   });
 
   constructor() {
-    // Busqueda con debounce (mejor UX)
+    // Búsqueda con debounce (mejor UX)
     this.formularioFiltros.controls.busqueda
       .valueChanges!.pipe(
         map((v) => (v ?? '').trim()),
@@ -127,12 +160,12 @@ export class EjerciciosListComponent implements OnInit {
         }
       });
 
-    // Tamano de pagina
+    // Tamaño de página
     this.formularioFiltros.controls.pageSize
       .valueChanges!.pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((v) => this.ejerciciosService.setPageSize(Number(v)));
 
-    // Categorias
+    // Categorías
     this.formularioFiltros.controls.categories
       .valueChanges!.pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((v) => {
@@ -145,6 +178,11 @@ export class EjerciciosListComponent implements OnInit {
 
     // Cargar favoritos del usuario
     this.ejerciciosService.cargarFavoritos();
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy() {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   getAssetUrl(id: number | string) {
@@ -159,6 +197,22 @@ export class EjerciciosListComponent implements OnInit {
     return this.ejerciciosService.listaEjerciciosRes.error();
   }
 
+  setVista(value: string) {
+    if (value === 'vineta' || value === 'lista') {
+      this.vista.set(value);
+    }
+  }
+
+  onCatalogoTabChange(value: string) {
+    if (value === 'rutinas') {
+      this.router.navigate(['/rutinas']);
+    }
+  }
+
+  onBuscar(term: string) {
+    this.formularioFiltros.controls.busqueda.setValue(term ?? '');
+  }
+
   // Opcional: helper usado en [selected]
   isCatSelected(
     id: string,
@@ -170,13 +224,9 @@ export class EjerciciosListComponent implements OnInit {
 
   onCategoriaChange(id: string, checked: boolean) {
     const current = this.formularioFiltros.controls.categories.value ?? [];
-    let updated: string[];
-
-    if (checked) {
-      updated = [...current, id];
-    } else {
-      updated = current.filter((c) => c !== id);
-    }
+    const updated = checked
+      ? [...current, id]
+      : current.filter((c) => c !== id);
 
     this.formularioFiltros.controls.categories.setValue(updated);
   }
@@ -187,9 +237,7 @@ export class EjerciciosListComponent implements OnInit {
 
   limpiarCategorias() {
     this.formularioFiltros.patchValue(
-      {
-        categories: [],
-      },
+      { categories: [] },
       { emitEvent: false },
     );
 
@@ -198,16 +246,13 @@ export class EjerciciosListComponent implements OnInit {
 
   borrarFiltros() {
     this.formularioFiltros.patchValue(
-      {
-        busqueda: '',
-        categories: [],
-      },
+      { busqueda: '', categories: [] },
       { emitEvent: true },
     );
     this.ejerciciosService.clearFilters();
   }
 
-  // Paginacion
+  // Paginación
   paginaAnterior() {
     this.ejerciciosService.goToPage(this.ejerciciosService.page() - 1);
   }

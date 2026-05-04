@@ -1,73 +1,67 @@
 @reference "tailwindcss";
 
 :host {
-  --primary: var(--kengo-primary);
-  --primary-dark: var(--kengo-primary-dark);
-
   display: contents;
 }
 
-/* === Card próxima serie === */
-.next-series-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 14px 28px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+/* === Trigger card próximo ejercicio === */
+.next-exercise-trigger {
+  display: block;
+  max-width: 320px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease;
+}
+
+.next-exercise-trigger:active {
+  transform: scale(0.98);
+}
+
+/* === Wrapper próxima serie === */
+.next-series-wrapper {
+  display: inline-block;
+  max-width: 280px;
+  width: 100%;
 }
 
 .next-label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  font-family: Galvji, sans-serif;
   font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--ink-500);
+  margin-bottom: 8px;
 }
 
 .icon-sm {
   font-size: 1rem;
 }
 
-.next-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* === Card próximo ejercicio === */
-.next-exercise-card {
+/* === Próxima serie === */
+.next-series-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 16px 24px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  max-width: 280px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  gap: 4px;
 }
 
-.next-exercise-card:active {
-  transform: scale(0.97);
+.next-value {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 1.2rem;
+  color: var(--kengo-primary);
+  letter-spacing: -0.2px;
 }
 
+/* === Próximo ejercicio === */
 .next-exercise-content {
   display: flex;
   align-items: center;
@@ -81,27 +75,13 @@
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #f4f4f5;
+  background: var(--cream-100);
 }
 
 .next-exercise-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.next-thumb-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f4f4f5, #e4e4e7);
-}
-
-.next-thumb-placeholder .material-symbols-outlined {
-  font-size: 1.25rem;
-  color: #a1a1aa;
 }
 
 .next-exercise-info {
@@ -112,16 +92,18 @@
 }
 
 .next-exercise-name {
+  font-family: Galvji, sans-serif;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
+  font-weight: 700;
+  color: var(--ink-900);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .next-exercise-details {
+  font-family: Galvji, sans-serif;
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--ink-500);
   margin-top: 2px;
 }

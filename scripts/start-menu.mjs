@@ -1,4 +1,4 @@
-import { select } from '@inquirer/prompts';
+import { select, Separator } from '@inquirer/prompts';
 import { spawn, execSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -98,6 +98,11 @@ function buildProyectos(ports) {
     { name: `Landing ${styleText('dim', `(Angular Landing :${ports.landingpage} → kengo-landingpage.localhost)`)}`, value: 'landingpage' },
     { name: `Backend ${styleText('dim', `(Node.js API   :${ports.api} → kengo-api.localhost)`)}`, value: 'backend' },
     { name: `App + Backend ${styleText('dim', `(Full Stack :${ports.app} + :${ports.api} → kengo.localhost + kengo-api.localhost)`)}`, value: 'fullstack' },
+    new Separator(styleText('dim', '  ── iOS ──')),
+    { name: `Build de aplicación (iOS) ${styleText('dim', '(build native + iconos + sync + Xcode)')}`, value: 'ios:build' },
+    { name: `Sincronizar y abrir Xcode (iOS) ${styleText('dim', '(sync + open, sin rebuild)')}`, value: 'ios:sync-open' },
+    { name: `Run en simulador iOS ${styleText('dim', '(cap run ios)')}`, value: 'ios:run' },
+    new Separator(styleText('dim', '  ── Configuración ──')),
     { name: styleText('dim', 'Cambiar rango de puertos'), value: 'change-ports' },
   ];
 }
@@ -155,6 +160,82 @@ const MODOS = [
   { name: `Produccion ${styleText('dim', '(build optimizado)')}`, value: 'production' },
 ];
 
+// ── Pipeline secuencial (iOS) ────────────────────────────────────────
+
+async function runSequential(steps) {
+  for (const step of steps) {
+    const { label, cmd, args, cwd, optional } = step;
+    const cwdHint = cwd ? styleText('dim', `  (${cwd})`) : '';
+    console.log(`\n${styleText('cyan', '▶')} ${styleText('bold', label)}`);
+    console.log(`  ${styleText('dim', `${cmd} ${args.join(' ')}`)}${cwdHint}\n`);
+
+    const exitCode = await new Promise((resolve) => {
+      const child = spawn(cmd, args, {
+        stdio: 'inherit',
+        shell: true,
+        cwd: cwd || undefined,
+        env: { ...process.env },
+      });
+      child.on('close', (code) => resolve(code ?? 0));
+      child.on('error', (err) => {
+        console.error(styleText('red', `Error: ${err.message}`));
+        resolve(1);
+      });
+    });
+
+    if (exitCode !== 0) {
+      if (optional) {
+        console.log(styleText('yellow', `\n  ⚠ Paso opcional falló (exit ${exitCode}). Continuando.`));
+        continue;
+      }
+      console.log(styleText('red', `\n  ✗ Paso falló (exit ${exitCode}). Pipeline abortado.\n`));
+      return exitCode;
+    }
+  }
+  console.log(styleText('green', '\n  ✓ Pipeline completado.\n'));
+  return 0;
+}
+
+const IOS_ICON_SOURCE = 'apps/app/assets/icon-only.png';
+
+async function runIosBuildCompleto() {
+  const hasIconSource = existsSync(IOS_ICON_SOURCE);
+  if (!hasIconSource) {
+    console.log(styleText('yellow', `\n  ⚠ No se encontró ${IOS_ICON_SOURCE}.`));
+    console.log(styleText('dim', '    Saltando regeneración de iconos. Ver docs/CAPACITOR_NATIVE_APP.md §6.6.'));
+  }
+
+  const steps = [
+    { label: 'Build native (Angular bundle)', cmd: 'npm', args: ['run', 'build:native'] },
+    ...(hasIconSource
+      ? [{
+          label: 'Regenerar iconos y splash',
+          cmd: 'npx',
+          args: ['capacitor-assets', 'generate'],
+          cwd: 'apps/app',
+          optional: true,
+        }]
+      : []),
+    { label: 'Sincronizar proyecto iOS', cmd: 'npx', args: ['cap', 'sync', 'ios'], cwd: 'apps/app' },
+    { label: 'Abrir proyecto en Xcode', cmd: 'npx', args: ['cap', 'open', 'ios'], cwd: 'apps/app' },
+  ];
+
+  return runSequential(steps);
+}
+
+async function runIosSyncOpen() {
+  return runSequential([
+    { label: 'Sincronizar proyecto iOS', cmd: 'npx', args: ['cap', 'sync', 'ios'], cwd: 'apps/app' },
+    { label: 'Abrir proyecto en Xcode', cmd: 'npx', args: ['cap', 'open', 'ios'], cwd: 'apps/app' },
+  ]);
+}
+
+async function runIosSimulator() {
+  return runSequential([
+    { label: 'Run en simulador iOS', cmd: 'npx', args: ['cap', 'run', 'ios'], cwd: 'apps/app' },
+  ]);
+}
+
 // ── Caddy ─────────────────────────────────────────────────────────────
 
 function checkCaddy() {
@@ -203,6 +284,21 @@ async function main() {
         ports = { ...ports, ...newPorts };
         const base = newPorts.app;
         console.log(styleText('green', `\n  ✓ Puertos actualizados: ${base}-${base + BLOCK_SIZE - 1}\n`));
+        continue;
+      }
+
+      if (proyecto === 'ios:build') {
+        await runIosBuildCompleto();
+        continue;
+      }
+
+      if (proyecto === 'ios:sync-open') {
+        await runIosSyncOpen();
+        continue;
+      }
+
+      if (proyecto === 'ios:run') {
+        await runIosSimulator();
         continue;
       }
 

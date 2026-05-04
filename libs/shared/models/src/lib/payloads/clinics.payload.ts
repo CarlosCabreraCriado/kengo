@@ -86,4 +86,6 @@ export interface GenerarCodigoResponse {
   codigo?: string;
   emailEnviado?: boolean;
   error?: string;
+  /** Código del error original (p. ej. `REQUIERE_CONTACTO_VENTAS`). */
+  errorCode?: string;
 }

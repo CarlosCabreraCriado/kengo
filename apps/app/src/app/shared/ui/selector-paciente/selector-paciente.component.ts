@@ -144,7 +144,7 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
       align-items: center;
       justify-content: center;
       border-radius: 0.75rem;
-      background: linear-gradient(135deg, rgba(231, 92, 62, 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
+      background: linear-gradient(135deg, rgba(var(--kengo-primary-rgb), 0.12) 0%, rgba(239, 192, 72, 0.08) 100%);
     }
 
     .header-icon .material-symbols-outlined {
@@ -211,7 +211,7 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
     .search-input:focus {
       outline: none;
       border-color: var(--kengo-primary);
-      box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.1);
+      box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.1);
     }
 
     .clear-btn {
@@ -255,7 +255,7 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
     .spinner {
       width: 2rem;
       height: 2rem;
-      border: 3px solid rgba(231, 92, 62, 0.2);
+      border: 3px solid rgba(var(--kengo-primary-rgb), 0.2);
       border-top-color: var(--kengo-primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -307,13 +307,13 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
     }
 
     .paciente-item:hover {
-      border-color: rgba(231, 92, 62, 0.3);
-      background: rgba(231, 92, 62, 0.04);
+      border-color: rgba(var(--kengo-primary-rgb), 0.3);
+      background: rgba(var(--kengo-primary-rgb), 0.04);
     }
 
     .paciente-item.selected {
       border-color: var(--kengo-primary);
-      background: rgba(231, 92, 62, 0.08);
+      background: rgba(var(--kengo-primary-rgb), 0.08);
     }
 
     .paciente-avatar {
@@ -409,12 +409,12 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
       background: linear-gradient(135deg, var(--kengo-primary) 0%, var(--kengo-primary-dark) 100%);
       border: none;
       color: white;
-      box-shadow: 0 4px 12px rgba(231, 92, 62, 0.35);
+      box-shadow: 0 4px 12px rgba(var(--kengo-primary-rgb), 0.35);
     }
 
     .btn-confirm:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(231, 92, 62, 0.45);
+      box-shadow: 0 6px 16px rgba(var(--kengo-primary-rgb), 0.45);
     }
 
     .btn-confirm:disabled {

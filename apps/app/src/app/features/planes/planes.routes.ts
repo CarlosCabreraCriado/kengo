@@ -1,26 +1,16 @@
 import { Routes } from '@angular/router';
-import { AuthGuard, FisioGuard } from '../../core';
+import { ActiveSubscriptionGuard, AuthGuard, FisioGuard } from '../../core';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 
 export const PLANES_ROUTES: Routes = [
-  // Vista mixta intencional: el componente discrimina por rol y muestra
-  // tabs distintas (fisio: planes-pacientes/rutinas/mis-planes; paciente:
-  // solo mis-planes). Por eso lleva sólo `AuthGuard` y no `FisioGuard`.
-  {
-    path: '',
-    loadComponent: () =>
-      import('./pages/planes-list/planes.component').then(
-        (m) => m.PlanesComponent,
-      ),
-    canActivate: [AuthGuard],
-  },
+  { path: '', redirectTo: '/inicio', pathMatch: 'full' },
   {
     path: 'nuevo',
     loadComponent: () =>
       import('./pages/plan-builder/plan-builder.component').then(
         (m) => m.PlanBuilderComponent,
       ),
-    canActivate: [AuthGuard, FisioGuard],
+    canActivate: [AuthGuard, FisioGuard, ActiveSubscriptionGuard],
   },
   {
     path: ':id/editar',
@@ -28,7 +18,7 @@ export const PLANES_ROUTES: Routes = [
       import('./pages/plan-builder/plan-builder.component').then(
         (m) => m.PlanBuilderComponent,
       ),
-    canActivate: [AuthGuard, FisioGuard],
+    canActivate: [AuthGuard, FisioGuard, ActiveSubscriptionGuard],
     canDeactivate: [unsavedChangesGuard],
   },
   {

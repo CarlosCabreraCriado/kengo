@@ -1,7 +1,9 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
+import { StatusBar } from '@capacitor/status-bar';
 import { rawAssetUrl } from '../utils/asset-url';
 
 import { ClinicasService } from '../../features/clinica/data-access/clinicas.service';
+import { PlatformService } from './platform.service';
 import type { Clinica } from '../../../types/global';
 interface ColorPalette {
   primary: string;
@@ -11,30 +13,18 @@ interface ColorPalette {
   primaryAlpha20: string;
   primaryAlpha30: string;
   primaryRgb: string;
+  shadowCtaCoral: string;
+  shadowPillCoral: string;
+  shadowToggleCoral: string;
   tertiary: string;
   tertiaryDark: string;
   tertiaryLight: string;
   tertiaryRgb: string;
-  // Background gradient colors
-  bgGradient1: string;
-  bgGradient2: string;
-  bgGradient3: string;
-  bgGradient4: string;
-  bgGradient5: string;
-  bgGradient6: string;
-  bgGradient7: string;
-  bgGradient8: string;
-  bgBubble: string;
   autofillBg: string;
-  // SVG wave background colors
-  svgWave1: string;
-  svgWave2: string;
-  svgWave3: string;
-  svgWave4: string;
 }
 
-interface ThemeCacheV1 {
-  v: 1;
+interface ThemeCacheV2 {
+  v: 2;
   updatedAt: string;
   expiresAt: string;
   idClinica: string | null;
@@ -63,17 +53,18 @@ export class ThemeService {
   private readonly DEFAULT_TERTIARY = '#efc048';
   private readonly DEFAULT_LOGO = 'assets/logo-kengo-horizontal.svg';
   private readonly DEFAULT_LOGO_ICON = 'assets/logo.svg';
-  private readonly CACHE_KEY = 'kengo:theme:v1';
+  private readonly CACHE_KEY = 'kengo:theme:v2';
   private readonly CACHE_TTL_DAYS = 30;
 
   private clinicasService = inject(ClinicasService);
+  private platform = inject(PlatformService);
 
   currentPrimary = signal<string>(this.DEFAULT_PRIMARY);
   currentTertiary = signal<string>(this.DEFAULT_TERTIARY);
   logoUrl = signal<string>(this.DEFAULT_LOGO);
   logoIconUrl = signal<string>(this.DEFAULT_LOGO_ICON);
 
-  private cache: ThemeCacheV1 | null = null;
+  private cache: ThemeCacheV2 | null = null;
 
   constructor() {
     // Intentar restaurar tema desde caché para evitar flash de colores
@@ -106,6 +97,18 @@ export class ThemeService {
       this.aplicarTemaClinica(clinica);
       this.actualizarLogo(clinica);
       this.guardarCache(clinica);
+    });
+
+    // Android: la status bar tiene background propio (no es translúcida como
+    // en iOS). Sincronizar su color con el primario activo para que la franja
+    // de sistema acompañe el tema de la clínica.
+    effect(() => {
+      const color = this.currentPrimary();
+      if (this.platform.isAndroid()) {
+        StatusBar.setBackgroundColor({ color }).catch(() => {
+          /* plugin no disponible en simulator/web */
+        });
+      }
     });
   }
 
@@ -149,12 +152,12 @@ export class ThemeService {
     this.logoIconUrl.set(this.DEFAULT_LOGO_ICON);
   }
 
-  private leerCache(): ThemeCacheV1 | null {
+  private leerCache(): ThemeCacheV2 | null {
     try {
       const raw = localStorage.getItem(this.CACHE_KEY);
       if (!raw) return null;
-      const data = JSON.parse(raw) as ThemeCacheV1;
-      if (data.v !== 1) return null;
+      const data = JSON.parse(raw) as ThemeCacheV2;
+      if (data.v !== 2) return null;
       if (new Date(data.expiresAt).getTime() < Date.now()) {
         localStorage.removeItem(this.CACHE_KEY);
         return null;
@@ -174,8 +177,8 @@ export class ThemeService {
     const logoUrl = logoFileId ? `${rawAssetUrl(logoFileId)}` : this.DEFAULT_LOGO;
     const logoIconUrl = logoFileId ? logoUrl : this.DEFAULT_LOGO_ICON;
 
-    const cache: ThemeCacheV1 = {
-      v: 1,
+    const cache: ThemeCacheV2 = {
+      v: 2,
       updatedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
       idClinica: clinica.id,
@@ -204,39 +207,25 @@ export class ThemeService {
     const tertiaryHSL = this.hexToHSL(tertiaryHex);
     const tertiaryRGB = this.hexToRgb(tertiaryHex);
 
-    // Base light color for gradient mixing (warm cream tone)
-    const lightBase1 = { r: 255, g: 214, b: 153 }; // #ffd699
-    const lightBase2 = { r: 255, g: 228, b: 184 }; // #ffe4b8
-    const lightBase3 = { r: 255, g: 237, b: 214 }; // #ffedd6
+    const rgba = (a: number) =>
+      `rgba(${primaryRGB.r}, ${primaryRGB.g}, ${primaryRGB.b}, ${a})`;
 
     return {
       primary: primaryHex,
       primaryDark: this.hslToHex(primaryHSL.h, primaryHSL.s, Math.max(0, primaryHSL.l - 15)),
       primaryLight: this.hslToHex(primaryHSL.h, primaryHSL.s, Math.min(100, primaryHSL.l + 15)),
-      primaryAlpha10: `rgba(${primaryRGB.r}, ${primaryRGB.g}, ${primaryRGB.b}, 0.1)`,
-      primaryAlpha20: `rgba(${primaryRGB.r}, ${primaryRGB.g}, ${primaryRGB.b}, 0.2)`,
-      primaryAlpha30: `rgba(${primaryRGB.r}, ${primaryRGB.g}, ${primaryRGB.b}, 0.3)`,
+      primaryAlpha10: rgba(0.1),
+      primaryAlpha20: rgba(0.2),
+      primaryAlpha30: rgba(0.3),
       primaryRgb: `${primaryRGB.r}, ${primaryRGB.g}, ${primaryRGB.b}`,
+      shadowCtaCoral: `0 12px 28px -6px ${rgba(0.5)}`,
+      shadowPillCoral: `0 4px 10px -2px ${rgba(0.4)}`,
+      shadowToggleCoral: `0 4px 10px -2px ${rgba(0.35)}`,
       tertiary: tertiaryHex,
       tertiaryDark: this.hslToHex(tertiaryHSL.h, tertiaryHSL.s, Math.max(0, tertiaryHSL.l - 15)),
       tertiaryLight: this.hslToHex(tertiaryHSL.h, tertiaryHSL.s, Math.min(100, tertiaryHSL.l + 15)),
       tertiaryRgb: `${tertiaryRGB.r}, ${tertiaryRGB.g}, ${tertiaryRGB.b}`,
-      // Background gradient colors - mixing primary with light bases
-      bgGradient1: this.mixColors(primaryRGB, lightBase1, 0.60),
-      bgGradient2: this.mixColors(primaryRGB, lightBase1, 0.50),
-      bgGradient3: this.mixColors(primaryRGB, lightBase1, 0.40),
-      bgGradient4: this.mixColors(primaryRGB, lightBase1, 0.30),
-      bgGradient5: this.mixColors(primaryRGB, lightBase2, 0.25),
-      bgGradient6: this.mixColors(primaryRGB, lightBase2, 0.20),
-      bgGradient7: this.mixColors(primaryRGB, lightBase3, 0.15),
-      bgGradient8: this.mixColors(primaryRGB, lightBase3, 0.10),
-      bgBubble: this.mixColors(primaryRGB, lightBase1, 0.45),
       autofillBg: this.mixColors(primaryRGB, { r: 255, g: 255, b: 255 }, 0.05),
-      // SVG wave colors - gradient from white to primary
-      svgWave1: '#ffffff',
-      svgWave2: this.mixColors(primaryRGB, { r: 255, g: 255, b: 255 }, 0.15),
-      svgWave3: this.mixColors(primaryRGB, { r: 255, g: 255, b: 255 }, 0.50),
-      svgWave4: this.hslToHex(primaryHSL.h, Math.min(100, primaryHSL.s + 10), Math.max(0, primaryHSL.l - 5)),
     };
   }
 
@@ -266,29 +255,18 @@ export class ThemeService {
     root.style.setProperty('--kengo-primary-rgb', palette.primaryRgb);
     root.style.setProperty('--kengo-shadow-primary', `0 4px 16px ${palette.primaryAlpha30}`);
 
+    // V2 shadow tokens derivadas del primario (consumidas por button, pill, toggle, ...)
+    root.style.setProperty('--shadow-cta-coral', palette.shadowCtaCoral);
+    root.style.setProperty('--shadow-pill-coral', palette.shadowPillCoral);
+    root.style.setProperty('--shadow-toggle-coral', palette.shadowToggleCoral);
+
     // Tertiary colors
     root.style.setProperty('--kengo-tertiary', palette.tertiary);
     root.style.setProperty('--kengo-tertiary-dark', palette.tertiaryDark);
     root.style.setProperty('--kengo-tertiary-light', palette.tertiaryLight);
     root.style.setProperty('--kengo-tertiary-rgb', palette.tertiaryRgb);
 
-    // Background gradient colors for animated background
-    root.style.setProperty('--kengo-bg-gradient-1', palette.bgGradient1);
-    root.style.setProperty('--kengo-bg-gradient-2', palette.bgGradient2);
-    root.style.setProperty('--kengo-bg-gradient-3', palette.bgGradient3);
-    root.style.setProperty('--kengo-bg-gradient-4', palette.bgGradient4);
-    root.style.setProperty('--kengo-bg-gradient-5', palette.bgGradient5);
-    root.style.setProperty('--kengo-bg-gradient-6', palette.bgGradient6);
-    root.style.setProperty('--kengo-bg-gradient-7', palette.bgGradient7);
-    root.style.setProperty('--kengo-bg-gradient-8', palette.bgGradient8);
-    root.style.setProperty('--kengo-bg-bubble', palette.bgBubble);
     root.style.setProperty('--kengo-autofill-bg', palette.autofillBg);
-
-    // SVG wave background colors
-    root.style.setProperty('--kengo-svg-wave-1', palette.svgWave1);
-    root.style.setProperty('--kengo-svg-wave-2', palette.svgWave2);
-    root.style.setProperty('--kengo-svg-wave-3', palette.svgWave3);
-    root.style.setProperty('--kengo-svg-wave-4', palette.svgWave4);
 
     // Actualizar theme-color del notch/status bar en móvil
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', palette.primary);

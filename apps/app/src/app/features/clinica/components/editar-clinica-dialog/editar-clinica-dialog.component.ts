@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Input,
@@ -16,6 +17,16 @@ import { ClinicaGestionService } from '../../data-access/clinica-gestion.service
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ImageUploadComponent } from '../../../../shared/ui/image-upload/image-upload.component';
 import { emailOptional } from '../../../../shared';
+import {
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+  Ui2SegmentedComponent,
+  type Ui2SegmentedOption,
+} from '../../../../shared/ui-v2';
 import type {
   Clinica,
   ClinicaImagen,
@@ -25,6 +36,8 @@ import type {
 const MAX_GALLERY_IMAGES = 5;
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_FORMATS = ['image/png', 'image/jpeg', 'image/webp'];
+
+type EditarClinicaTab = 'info' | 'gallery' | 'branding';
 
 /** Paleta de colores predefinidos (todos con buen contraste sobre blanco) */
 const COLOR_PRESETS = [
@@ -54,7 +67,17 @@ const COLOR_PRESETS = [
 @Component({
   standalone: true,
   selector: 'app-editar-clinica-dialog',
-  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
+    Ui2DialogActionsComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+    Ui2SegmentedComponent,
+  ],
   templateUrl: './editar-clinica-dialog.component.html',
   styleUrl: './editar-clinica-dialog.component.css',
 })
@@ -80,6 +103,14 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
 
   loading = signal(false);
   error = signal<string | null>(null);
+
+  // Tabs state
+  activeTab = signal<EditarClinicaTab>('info');
+  readonly tabOptions: Ui2SegmentedOption[] = [
+    { id: 'info', label: 'Información' },
+    { id: 'gallery', label: 'Galería' },
+    { id: 'branding', label: 'Branding' },
+  ];
 
   // Logo state
   logoFile = signal<File | null>(null);
@@ -254,10 +285,37 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     return `${assetUrl(fileId, { fit: 'cover', width: 200, height: 150 })}`;
   }
 
+  // === Tabs ===
+
+  setActiveTab(id: string) {
+    if (id === 'info' || id === 'gallery' || id === 'branding') {
+      this.activeTab.set(id);
+    }
+  }
+
+  /** Devuelve la primera tab que contenga errores de validación, o null si todo es válido. */
+  private firstInvalidTab(): EditarClinicaTab | null {
+    const infoControls = ['nombre', 'nif', 'telefono', 'email', 'direccion', 'postal'];
+    if (infoControls.some((name) => this.form.get(name)?.invalid)) {
+      return 'info';
+    }
+    if (this.form.get('colorPrimario')?.invalid) {
+      return 'branding';
+    }
+    return null;
+  }
+
   // === Submit ===
 
   async onSubmit() {
-    if (this.form.invalid || this.loading()) return;
+    if (this.loading()) return;
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      const target = this.firstInvalidTab();
+      if (target) this.activeTab.set(target);
+      return;
+    }
 
     this.loading.set(true);
     this.error.set(null);

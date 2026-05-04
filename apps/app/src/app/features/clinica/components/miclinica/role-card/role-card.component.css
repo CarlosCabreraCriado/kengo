@@ -1,0 +1,47 @@
+:host {
+  display: block;
+}
+
+.mrc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mrc__badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  box-shadow: var(--shadow-pill-coral);
+  flex-shrink: 0;
+}
+
+.mrc__badge .material-symbols-outlined {
+  font-size: 22px;
+  color: white;
+}
+
+.mrc__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mrc__overline {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--kengo-primary);
+}
+
+.mrc__name {
+  margin: 4px 0 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink-900);
+}

@@ -10,3 +10,4 @@ export * from './pages/sesion-detail/sesion-detail.component';
 
 // Components
 export * from './components/add-paciente/add-paciente.component';
+export * from './components/gestion-acceso-dialog/gestion-acceso-dialog.component';

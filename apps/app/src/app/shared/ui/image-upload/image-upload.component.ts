@@ -15,6 +15,8 @@ import {
   ImageCroppedEvent,
   ImageTransform,
 } from 'ngx-image-cropper';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { PlatformService } from '../../../core/services/platform.service';
 
 interface DialogData {
   url_perfil?: string | null;
@@ -37,6 +39,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
   @Output() imageCropped = new EventEmitter<File>();
 
   private dialogRef = inject(DialogRef);
+  private platform = inject(PlatformService);
   data = inject<DialogData>(DIALOG_DATA);
 
   public archivoPrecargado = signal(false);
@@ -175,9 +178,39 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Abrir selector de archivos */
-  openFilePicker() {
+  /** Abrir selector de archivos. En native usa @capacitor/camera (galería + cámara). */
+  async openFilePicker() {
+    if (this.platform.isNative()) {
+      await this.pickFromNative();
+      return;
+    }
     this.fileInput?.nativeElement?.click();
+  }
+
+  /** Captura/selecciona una imagen vía Capacitor Camera y la inyecta en el cropper. */
+  private async pickFromNative(): Promise<void> {
+    try {
+      const photo = await Camera.getPhoto({
+        source: CameraSource.Prompt,
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        promptLabelHeader: 'Cambiar foto',
+        promptLabelPhoto: 'Galería',
+        promptLabelPicture: 'Cámara',
+      });
+
+      if (!photo.dataUrl) return;
+
+      const file = await dataUrlToFile(photo.dataUrl, 'capture.jpg');
+      this.resetFuente();
+      this.imageFile = file;
+      this.imageChangedEvent = null;
+      this.imageURL = null;
+      this.pantallaCargarArchivo.set(false);
+    } catch {
+      // El usuario canceló o no concedió permisos; no notificar.
+    }
   }
 
   onFileSelected(e: Event) {
@@ -465,4 +498,10 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
       img.src = url;
     });
   }
+}
+
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type || 'image/jpeg' });
 }

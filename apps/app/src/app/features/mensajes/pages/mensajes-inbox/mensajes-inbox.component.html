@@ -1,0 +1,60 @@
+@if (mobile()) {
+  <div class="inbox inbox--mobile">
+    <ui2-big-title [overline]="heroOverline" [title]="heroTitle()"></ui2-big-title>
+    <div class="inbox__search inbox__search--mobile">
+      <ui2-search-box
+        placeholder="Buscar…"
+        (valueChange)="onSearchChange($event)"
+      ></ui2-search-box>
+    </div>
+
+    @if (conversaciones().length === 0) {
+      <ui2-empty-state
+        icon="chat"
+        title="Aún no hay mensajes"
+        message="Cuando hables con un paciente aparecerá aquí."
+      ></ui2-empty-state>
+    } @else {
+      <div class="inbox__list inbox__list--mobile">
+        @for (c of conversaciones(); track c.id) {
+          <app-chat-row
+            [conversation]="c"
+            [mobile]="true"
+            (rowSelect)="onSelect($event)"
+          ></app-chat-row>
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <div class="inbox">
+    <header class="inbox__header">
+      <ui2-section-label>CONVERSACIONES</ui2-section-label>
+      <span class="inbox__counter">{{ subtitle() }}</span>
+    </header>
+    <div class="inbox__search">
+      <ui2-search-box
+        placeholder="Buscar…"
+        (valueChange)="onSearchChange($event)"
+      ></ui2-search-box>
+    </div>
+
+    @if (conversaciones().length === 0) {
+      <ui2-empty-state
+        icon="chat"
+        title="Aún no hay mensajes"
+        message="Cuando hables con un paciente aparecerá aquí."
+      ></ui2-empty-state>
+    } @else {
+      <div class="inbox__list">
+        @for (c of conversaciones(); track c.id) {
+          <app-chat-row
+            [conversation]="c"
+            [active]="c.id === mensajes.activeConversationId()"
+            (rowSelect)="onSelect($event)"
+          ></app-chat-row>
+        }
+      </div>
+    }
+  </div>
+}

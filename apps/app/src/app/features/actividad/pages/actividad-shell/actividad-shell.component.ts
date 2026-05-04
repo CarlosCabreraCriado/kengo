@@ -1,35 +1,55 @@
-import { Component, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { useResponsive, BackButtonComponent } from '../../../../shared';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Event as RouterEvent } from '@angular/router';
+import { filter, map, startWith } from 'rxjs';
+import {
+  Ui2SectionComponent,
+  Ui2SegmentedComponent,
+  Ui2SegmentedOption,
+} from '../../../../shared/ui-v2';
 
-interface Tab {
-  path: string;
-  label: string;
-  icon: string;
-}
+const TABS: Ui2SegmentedOption[] = [
+  { id: 'hoy', label: 'Hoy' },
+  { id: 'calendario', label: 'Calendario' },
+  { id: 'estadisticas', label: 'Estadísticas' },
+];
 
 @Component({
   selector: 'app-actividad-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, BackButtonComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterOutlet, Ui2SegmentedComponent, Ui2SectionComponent],
   templateUrl: './actividad-shell.component.html',
   styleUrl: './actividad-shell.component.css',
   host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+    class: 'block w-full',
   },
 })
 export class ActividadShellComponent {
-  protected readonly router = inject(Router);
+  private readonly router = inject(Router);
 
-  isMovil = useResponsive().esMobile;
+  readonly tabs = TABS;
 
-  readonly tabs: Tab[] = [
-    { path: 'hoy', label: 'Hoy', icon: 'today' },
-    { path: 'calendario', label: 'Calendario', icon: 'calendar_month' },
-    { path: 'estadisticas', label: 'Estadísticas', icon: 'analytics' },
-  ];
+  /** URL actual reactiva al router. */
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((evt: RouterEvent): evt is NavigationEnd => evt instanceof NavigationEnd),
+      map((evt) => evt.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
 
-  volverInicio(): void {
-    this.router.navigate(['/inicio']);
+  /** Tab activo derivado del path actual. Default `hoy`. */
+  readonly activeTab = computed<string>(() => {
+    const url = this.currentUrl();
+    if (url.includes('/actividad-personal/calendario')) return 'calendario';
+    if (url.includes('/actividad-personal/estadisticas')) return 'estadisticas';
+    return 'hoy';
+  });
+
+  onTabChange(id: string): void {
+    void this.router.navigate(['/actividad-personal', id]);
   }
 }

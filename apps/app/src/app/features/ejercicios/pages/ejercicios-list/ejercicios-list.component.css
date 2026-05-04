@@ -1,242 +1,494 @@
-@reference "tailwindcss";
-
-/* ============================================
-   EJERCICIOS LIST - KENGO DESIGN SYSTEM
-   Premium App-Like Experience (Sin Angular Material)
-   ============================================ */
-
-/* === Variables locales === */
 :host {
-  /* Color variables now defined globally via ThemeService */
-  --kengo-glow: var(--kengo-primary-alpha-30);
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  display: block;
   width: 100%;
 }
 
-/* === Header con glassmorphism (solo móvil) === */
-.header-glass {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+.el-page {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+  padding-bottom: 24px;
 }
 
-@media (max-width: 767.98px) {
-  .header-glass {
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.85) 60%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-  }
-}
+/* ========================================================== */
+/*  Header                                                     */
+/* ========================================================== */
 
-/* === Búsqueda con glow effect === */
-.search-container:focus-within .search-glow {
-  opacity: 1;
-}
-
-.search-input:focus {
-  transform: scale(1.01);
-}
-
-/* === Iconos rellenos (Material Symbols) === */
-.relleno {
-  font-variation-settings:
-    "FILL" 1,
-    "wght" 400,
-    "GRAD" 0,
-    "opsz" 24;
-}
-
-/* === Dropdown de categorías === */
-.categories-dropdown {
-  animation: dropdownFadeIn 0.2s ease-out;
-}
-
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* === Custom checkbox styles === */
-.categories-dropdown label input[type="checkbox"]:checked + div {
-  border-color: var(--kengo-primary);
-  background-color: var(--kengo-primary);
-}
-
-.categories-dropdown label input[type="checkbox"]:checked + div span {
-  opacity: 1;
-}
-
-/* === Animación de entrada para cards === */
-.ejercicio-card {
-  animation: cardFadeIn 0.4s ease-out backwards;
-}
-
-@keyframes cardFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* === Skeleton shimmer effect === */
-.skeleton-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 100%
-  );
-  animation: shimmer 1.5s infinite;
-}
-
-/* === Image skeleton placeholder with spinner === */
-.image-skeleton {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+.el-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.image-skeleton::after {
-  content: "";
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(231, 92, 62, 0.15);
-  border-top-color: rgba(231, 92, 62, 0.5);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.el-header__title { display: flex; flex-direction: column; gap: 2px; }
+
+.el-header__h1 {
+  margin: 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.3px;
+  color: var(--kengo-primary);
+  text-transform: uppercase;
 }
 
-/* === Loading spinners === */
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2.5px solid rgba(231, 92, 62, 0.2);
-  border-top-color: var(--kengo-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.el-header__sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1;
 }
 
-.loading-spinner-small {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(231, 92, 62, 0.2);
-  border-top-color: var(--kengo-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.el-header__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.loading-spinner-small-white {
+/* Toggle global "solo favoritos" */
+.el-fav-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  border: 1px solid var(--ink-300);
+  background: var(--cream-50);
+  color: var(--ink-500);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.el-fav-toggle:hover { background: white; color: var(--ink-700); }
+
+.el-fav-toggle--on {
+  background: var(--kengo-primary);
+  border-color: var(--kengo-primary);
+  color: white;
+  box-shadow: 0 4px 10px -3px rgba(var(--kengo-primary-rgb), 0.4);
+}
+
+.el-fav-toggle--on:hover { background: var(--kengo-primary-dark); color: white; }
+
+.el-fav-toggle .material-symbols-outlined { font-size: 20px; }
+
+/* ========================================================== */
+/*  Controles (búsqueda + categorías)                          */
+/* ========================================================== */
+
+.el-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.el-controls__search {
+  flex: 1;
+  min-width: 220px;
+}
+
+.el-cat-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.el-cat-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--ink-300);
+  background: var(--cream-50);
+  color: var(--ink-700);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.el-cat-trigger:hover { background: white; }
+
+.el-cat-trigger--active {
+  border-color: var(--kengo-primary);
+  color: var(--kengo-primary);
+  background: rgba(var(--kengo-primary-rgb), 0.08);
+}
+
+.el-cat-trigger .material-symbols-outlined { font-size: 18px; }
+
+.el-cat-trigger__label { line-height: 1; }
+
+.el-cat-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  min-width: 240px;
+  max-height: 360px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card-strong);
+  overflow: hidden;
+  animation: el-menu-in 0.16s ease-out;
+}
+
+@keyframes el-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.el-cat-menu__list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.el-cat-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+  transition: background 0.12s;
+}
+
+.el-cat-option:hover { background: var(--cream-100); }
+
+.el-cat-option input[type='checkbox'] {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  accent-color: var(--kengo-primary);
+  flex-shrink: 0;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.el-cat-option__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* === Bounce sutil para badges === */
-.animate-bounce-subtle {
-  animation: bounceSoft 2s ease-in-out infinite;
-}
-
-@keyframes bounceSoft {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
-  }
-}
-
-/* === Custom scrollbar === */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(231, 92, 62, 0.3) transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(231, 92, 62, 0.3);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(231, 92, 62, 0.5);
-}
-
-/* === Hover scale utilities === */
-.active\:scale-98:active {
-  transform: scale(0.98);
-}
-
-/* === Responsive adjustments === */
-@media (max-width: 640px) {
-  .ejercicio-card {
-    animation-delay: 0ms !important;
-  }
-}
-
-/* === Safe area padding for mobile nav === */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  main {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 7rem);
-  }
-
-  @media (min-width: 1024px) {
-    main {
-      padding-bottom: 2rem;
-    }
-  }
-}
-
-/* === Prose overrides for descriptions === */
-:host ::ng-deep .line-clamp-2 p {
+.el-cat-menu__empty {
+  font-size: 12px;
+  color: var(--ink-500);
+  text-align: center;
+  padding: 16px;
   margin: 0;
 }
 
-:host ::ng-deep .line-clamp-2 * {
-  font-size: inherit;
-  line-height: inherit;
+.el-cat-menu__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--cream-50);
+}
+
+/* ========================================================== */
+/*  Estado de carga                                            */
+/* ========================================================== */
+
+.el-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+/* ========================================================== */
+/*  Vista vineta (cards verticales aspect 3/4)                 */
+/* ========================================================== */
+
+.el-grid-vineta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.el-card-vineta {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: 22px;
+  overflow: hidden;
+  text-decoration: none;
+  background: var(--cream-100);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.el-card-vineta:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-strong);
+}
+
+.el-card-vineta__media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.el-card-vineta__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.el-card-vineta__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  color: var(--ink-400);
+}
+
+.el-card-vineta__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+}
+
+.el-card-vineta__title {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: white;
+}
+
+.el-card-vineta__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.1px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.el-card-vineta__cat {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+/* ========================================================== */
+/*  Vista lista (cards horizontales)                           */
+/* ========================================================== */
+
+.el-grid-lista {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.el-card-lista {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 22px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
   color: inherit;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.el-card-lista:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-strong);
+}
+
+.el-card-lista__media {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--cream-100);
+}
+
+.el-card-lista__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.el-card-lista__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  color: var(--ink-400);
+}
+
+.el-card-lista__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.el-card-lista__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.el-card-lista__desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.el-card-lista__cat {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  line-height: 1;
+}
+
+/* ========================================================== */
+/*  Botón favorito (overlay vineta + inline lista)             */
+/* ========================================================== */
+
+.el-fav {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.el-fav:active { transform: scale(0.9); }
+.el-fav:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.el-fav .material-symbols-outlined { font-size: 24px; }
+
+.el-fav--overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.el-fav--overlay,
+.el-fav--inline { color: var(--ink-400); }
+
+.el-fav--overlay:hover,
+.el-fav--inline:hover { color: var(--ink-700); }
+
+.el-fav--on,
+.el-fav--on:hover { color: #facc15; }
+
+/* ========================================================== */
+/*  Paginación                                                 */
+/* ========================================================== */
+
+.el-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.el-pagination__info {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-500);
+  letter-spacing: 0.3px;
+}
+
+/* ========================================================== */
+/*  ≥ md: layout desktop                                       */
+/* ========================================================== */
+
+@media (min-width: 768px) {
+  .el-page {
+    padding: 16px 8px 32px;
+    gap: 8px;
+  }
+
+  .el-header__h1 { font-size: 32px; }
+
+  .el-grid-vineta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .el-grid-lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+/* ========================================================== */
+/*  ≥ lg: 4 columnas vineta, 3 columnas lista                  */
+/* ========================================================== */
+
+@media (min-width: 1024px) {
+  .el-page {
+    padding: 24px 16px 40px;
+  }
+
+  .el-grid-vineta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .el-grid-lista {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

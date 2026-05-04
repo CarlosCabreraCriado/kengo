@@ -1,36 +1,39 @@
-<section
-  class="absolute top-0 left-0 flex h-dvh w-screen items-center justify-center"
->
-  <div
-    class="flex w-80 flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-3 shadow-xl backdrop-blur-md backdrop-filter"
-  >
-    <div
-      class="baseline-end relative flex h-15 w-full items-end justify-center"
-    >
-      <img src="../../assets/logo.svg" class="relative h-[175%]" alt="logo" />
+<ui2-cream-bg></ui2-cream-bg>
+
+<section class="auth-shell">
+  <div class="auth-shell__panel">
+    <div class="auth-shell__brand">
+      <img src="../../assets/logo.svg" alt="Kengo" class="auth-shell__logo" />
     </div>
 
-    <div class="fuente-kengo mb-2 w-full text-center text-3xl">Kengo</div>
-    <div class="relative min-h-[60px] flex items-center justify-center">
-      @if (loading()) {
-        <div class="flex flex-col items-center gap-3">
-          <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary"></div>
-          <span class="text-sm text-gray-500">Verificando enlace...</span>
-        </div>
-      }
+    @if (loading()) {
+      <ui2-big-title
+        title="Verificando enlace"
+        overline="MAGIC LINK"
+        sub="Estamos validando tu acceso, un momento."
+      ></ui2-big-title>
 
-      @if (errorMessage()) {
-        <div class="flex flex-col items-center gap-3 text-center">
-          <span class="material-symbols-outlined text-4xl text-red-400">error</span>
-          <span class="text-sm text-red-600">{{ errorMessage() }}</span>
-          <a
-            routerLink="/login"
-            class="mt-2 text-sm font-medium text-primary hover:underline"
-          >
+      <ui2-card [padding]="22">
+        <div class="magic-state">
+          <ui2-spinner size="lg" color="primary"></ui2-spinner>
+        </div>
+      </ui2-card>
+    } @else if (errorMessage()) {
+      <ui2-big-title
+        title="Enlace no válido"
+        overline="MAGIC LINK"
+        [color]="'var(--danger)'"
+      ></ui2-big-title>
+
+      <ui2-card [padding]="22">
+        <div class="magic-state">
+          <span class="material-symbols-outlined magic-state__icon" aria-hidden="true">error</span>
+          <p class="magic-state__message">{{ errorMessage() }}</p>
+          <ui2-button variant="primary" iconLeft="arrow_back" (clicked)="volverAlLogin()">
             Volver al inicio
-          </a>
+          </ui2-button>
         </div>
-      }
-    </div>
+      </ui2-card>
+    }
   </div>
 </section>

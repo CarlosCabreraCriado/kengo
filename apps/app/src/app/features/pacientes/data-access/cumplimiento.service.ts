@@ -7,7 +7,6 @@ import type {
   CumplimientoDia,
   TipoCumplimiento,
   ResumenCumplimiento,
-  DiaSemana,
   PlanCompleto,
   RegistroEjercicio,
   RegistroEjercicioRecord,
@@ -18,8 +17,29 @@ import {
   EstadisticasPaciente,
   SesionAgrupada,
 } from './paciente-detail.types';
+import {
+  daysBetweenYMD,
+  getMadridDate,
+  getMadridDiaSemana,
+  offsetMadridDate,
+  ymdMadridFromInstant,
+} from '../../../shared/utils/madrid-date.util';
 
-const DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+export interface CumplimientoConTendencia {
+  actual: CumplimientoResponse;
+  anterior: CumplimientoResponse;
+  /**
+   * Delta absolutos vs período anterior del mismo tamaño. Signo crudo:
+   * los componentes (`ui2-trend`) deciden la semántica con `inverse`.
+   */
+  trend: {
+    /** Diferencia en puntos porcentuales (0–100). null si no hay datos previos. */
+    adherence: number | null;
+    /** Diferencia en escala /10. null si alguno de los dos períodos no tiene dolor registrado. */
+    pain: number | null;
+  };
+}
+import { formatDate } from '../../../shared/utils/format-date';
 
 // Estructura del doc del modelo nuevo `dailyPatientRollup` (camelCase desde Convex).
 type DailyRollup = {
@@ -64,9 +84,9 @@ export class CumplimientoService {
         return { dias: [], resumen: this.emptyResumen() };
       }
 
-      // Default: año en curso si no se pasa rango.
-      const hoy = new Date().toISOString().slice(0, 10);
-      const inicioAno = new Date().getFullYear() + '-01-01';
+      // Default: año en curso si no se pasa rango (calendario Europe/Madrid).
+      const hoy = getMadridDate();
+      const inicioAno = `${hoy.slice(0, 4)}-01-01`;
 
       const rollups = (await this.convex.query(
         api.rollups.queries.getDailyByPaciente,
@@ -91,22 +111,16 @@ export class CumplimientoService {
     planes: PlanCompleto[],
     registrosHoy: RegistroEjercicio[],
   ): CumplimientoDia | null {
-    const hoy = new Date();
-    const fechaHoy = hoy.toISOString().split('T')[0]!;
-    const diaHoy = DIAS_SEMANA[hoy.getDay()]!;
+    // Día de referencia: calendario Europe/Madrid (mismo huso que el backend).
+    const fechaHoy = getMadridDate();
+    const diaHoy = getMadridDiaSemana();
 
     const planesActivos = planes.filter((p) => {
       if (p.estado !== 'activo') return false;
-      if (p.fechaInicio) {
-        const inicio = new Date(p.fechaInicio);
-        inicio.setHours(0, 0, 0, 0);
-        if (inicio > hoy) return false;
-      }
-      if (p.fechaFin) {
-        const fin = new Date(p.fechaFin);
-        fin.setHours(23, 59, 59, 999);
-        if (fin < hoy) return false;
-      }
+      // `plan.fechaInicio`/`fechaFin` son strings YYYY-MM-DD Madrid;
+      // la comparación lexicográfica coincide con la comparación calendario.
+      if (p.fechaInicio && p.fechaInicio > fechaHoy) return false;
+      if (p.fechaFin && p.fechaFin < fechaHoy) return false;
       return true;
     });
 
@@ -175,6 +189,58 @@ export class CumplimientoService {
       dolorPromedio: dolorPromedio,
       planes: planesDetalle,
     };
+  }
+
+  /**
+   * Cumplimiento del rango actual + del rango anterior del mismo tamaño.
+   * Permite calcular tendencias (adherencia, dolor) sin tocar el backend.
+   */
+  async getCumplimientoConTendencia(
+    pacienteId: string,
+    desde: string,
+    hasta: string,
+  ): Promise<CumplimientoConTendencia> {
+    const dias = daysBetweenYMD(desde, hasta) + 1; // ambos inclusive
+    const offsetDesde = -dias;
+    const desdeAnterior = offsetMadridDate(offsetDesde, new Date(`${desde}T12:00:00Z`));
+    const hastaAnterior = offsetMadridDate(-1, new Date(`${desde}T12:00:00Z`));
+
+    const [actual, anterior] = await Promise.all([
+      this.getCumplimiento(pacienteId, desde, hasta),
+      this.getCumplimiento(pacienteId, desdeAnterior, hastaAnterior),
+    ]);
+
+    const adherenceActual = actual.resumen.adherenciaReal;
+    const adherenceAnterior = anterior.resumen.adherenciaReal;
+    const adherenceDelta =
+      anterior.resumen.diasProgramados > 0
+        ? adherenceActual - adherenceAnterior
+        : null;
+
+    const painActual = this.promedioDolor(actual.dias);
+    const painAnterior = this.promedioDolor(anterior.dias);
+    const painDelta =
+      painActual != null && painAnterior != null
+        ? Math.round((painActual - painAnterior) * 10) / 10
+        : null;
+
+    return {
+      actual,
+      anterior,
+      trend: { adherence: adherenceDelta, pain: painDelta },
+    };
+  }
+
+  private promedioDolor(dias: CumplimientoDia[]): number | null {
+    const valores = dias
+      .map((d) => d.dolorPromedio)
+      .filter((v): v is number => v != null);
+    if (valores.length === 0) return null;
+    return (
+      Math.round(
+        (valores.reduce((a, b) => a + b, 0) / valores.length) * 10,
+      ) / 10
+    );
   }
 
   // ========= Helpers =========
@@ -304,7 +370,7 @@ export class CumplimientoService {
 
       return {
         fecha: dia.fecha,
-        fechaFormateada: this.formatearFecha(dia.fecha),
+        fechaFormateada: formatDate(dia.fecha, 'long'),
         registros: regs,
         totalEjercicios: dia.ejerciciosCompletados,
         promedioDolorValue: promedioDolor,
@@ -372,10 +438,10 @@ export class CumplimientoService {
     );
     let diasDesdeUltimaSesion: number | null = null;
     if (ultimoDiaActividad) {
-      const ultima = new Date(ultimoDiaActividad.fecha);
-      const hoy = new Date();
-      diasDesdeUltimaSesion = Math.floor(
-        (hoy.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24),
+      // Diferencia de días calendario Madrid (estable frente a DST).
+      diasDesdeUltimaSesion = daysBetweenYMD(
+        ultimoDiaActividad.fecha,
+        getMadridDate(),
       );
     }
 
@@ -396,7 +462,10 @@ export class CumplimientoService {
   ): Map<string, RegistroEjercicioRecord[]> {
     const grupos = new Map<string, RegistroEjercicioRecord[]>();
     for (const reg of registros) {
-      const fecha = reg.fechaHora.split('T')[0];
+      // `reg.fechaHora` es un instante UTC (ISO con `Z`). El día calendario
+      // del paciente se calcula en Europe/Madrid para coincidir con el
+      // contrato de `dailyPatientRollup.fecha` y `sessions.fecha`.
+      const fecha = ymdMadridFromInstant(reg.fechaHora);
       if (!grupos.has(fecha)) {
         grupos.set(fecha, []);
       }
@@ -407,23 +476,17 @@ export class CumplimientoService {
 
   private calcularRachaCumplimiento(dias: CumplimientoDia[]): number {
     const sorted = [...dias].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    const hoy = new Date().toISOString().split('T')[0];
-
+    let fechaEsperada = getMadridDate();
     let racha = 0;
-    let fechaEsperada = new Date(hoy);
 
     for (const dia of sorted) {
       if (dia.tipo === 'descanso') continue;
 
-      const fechaDia = new Date(dia.fecha);
-      const diffDias = Math.floor(
-        (fechaEsperada.getTime() - fechaDia.getTime()) / (1000 * 60 * 60 * 24),
-      );
-
+      const diffDias = daysBetweenYMD(dia.fecha, fechaEsperada);
       if (diffDias <= 1) {
         if (dia.tipo === 'completado') {
           racha++;
-          fechaEsperada = fechaDia;
+          fechaEsperada = dia.fecha;
         } else {
           break;
         }
@@ -439,16 +502,13 @@ export class CumplimientoService {
     dias: CumplimientoDia[],
   ): { semana: string; porcentaje: number }[] {
     const resultado: { semana: string; porcentaje: number }[] = [];
-    const hoy = new Date();
 
     for (let i = 0; i < 4; i++) {
-      const finSemana = new Date(hoy);
-      finSemana.setDate(hoy.getDate() - i * 7);
-      const inicioSemana = new Date(finSemana);
-      inicioSemana.setDate(finSemana.getDate() - 6);
-
-      const inicioStr = inicioSemana.toISOString().split('T')[0];
-      const finStr = finSemana.toISOString().split('T')[0];
+      // Ventanas de 7 días contadas hacia atrás desde hoy en calendario
+      // Madrid (no en milisegundos: el cambio CET↔CEST haría una semana
+      // de 6 u 8 días).
+      const finStr = offsetMadridDate(-i * 7);
+      const inicioStr = offsetMadridDate(-i * 7 - 6);
 
       const diasSemana = dias.filter(
         (d) =>
@@ -467,21 +527,4 @@ export class CumplimientoService {
     return resultado.reverse();
   }
 
-  private formatearFecha(fecha: string): string {
-    const d = new Date(fecha);
-    const hoy = new Date();
-    const ayer = new Date(hoy);
-    ayer.setDate(ayer.getDate() - 1);
-
-    if (d.toDateString() === hoy.toDateString()) return 'Hoy';
-    const esAyer = d.toDateString() === ayer.toDateString();
-
-    const weekday = d.toLocaleDateString('es-ES', { weekday: 'short' });
-    const day = d.getDate();
-    const month = d.toLocaleDateString('es-ES', { month: 'long' });
-    const year =
-      d.getFullYear() !== hoy.getFullYear() ? ` ${d.getFullYear()}` : '';
-    const label = `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}${year}`;
-    return esAyer ? `${label} (Ayer)` : label;
-  }
 }

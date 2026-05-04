@@ -1,65 +1,101 @@
-<ui-dialog-container>
-  <ui-dialog-header
+<ui2-dialog-host>
+  <ui2-dialog-header
     [title]="isEdit() ? 'Editar paciente' : 'Nuevo paciente'"
+    [subtitle]="isEdit() ? 'Actualiza los datos y las clínicas asignadas.' : 'Rellena los datos del nuevo paciente.'"
     (closeClick)="close()"
-  ></ui-dialog-header>
+  ></ui2-dialog-header>
 
-  <ui-dialog-content>
-    <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="grid gap-4 md:grid-cols-2">
-        <ui-input
+  <ui2-dialog-content>
+    <form
+      class="add-paciente-form"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+    >
+      <div class="add-paciente-form__row">
+        <ui2-input
           label="Nombre"
           formControlName="first_name"
           [required]="true"
-        ></ui-input>
+          autocomplete="given-name"
+        ></ui2-input>
 
-        <ui-input
+        <ui2-input
           label="Apellidos"
           formControlName="last_name"
-        ></ui-input>
+          autocomplete="family-name"
+        ></ui2-input>
       </div>
 
-      <ui-input
+      <ui2-input
         label="Email"
         type="email"
         formControlName="email"
         [required]="true"
         [error]="emailError"
-      ></ui-input>
+        autocomplete="email"
+      ></ui2-input>
 
-      <ui-input
+      <ui2-input
         label="Teléfono"
         type="tel"
         formControlName="telefono"
-      ></ui-input>
+        autocomplete="tel"
+      ></ui2-input>
 
-      <ui-select
-        label="Clínicas"
-        formControlName="clinicas"
-        [multiple]="true"
-        [options]="clinicasOptions()"
-        [placeholder]="clinicasPlaceholder()"
-      ></ui-select>
+      <div class="add-paciente-form__clinicas">
+        <ui2-section-label>
+          Clínicas asignadas
+        </ui2-section-label>
+
+        @if (clinicasRes.isLoading()) {
+          <div class="add-paciente-form__clinicas-loading">
+            <ui2-spinner size="sm"></ui2-spinner>
+            <span>Cargando clínicas...</span>
+          </div>
+        } @else if (clinicasRes.value().length === 0) {
+          <p class="add-paciente-form__empty">
+            No hay clínicas disponibles para asignar.
+          </p>
+        } @else {
+          <div class="add-paciente-form__clinicas-list" role="group" aria-label="Clínicas asignadas">
+            @for (c of clinicasRes.value(); track c.id) {
+              <label class="add-paciente-form__clinica-row">
+                <ui2-checkbox
+                  [label]="c.nombre ?? 'Clínica ' + c.id"
+                  [ngModel]="isClinicSelected(c.id)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="toggleClinic(c.id, $event)"
+                ></ui2-checkbox>
+              </label>
+            }
+          </div>
+          @if (selectedCount() === 0) {
+            <p class="add-paciente-form__hint add-paciente-form__hint--danger">
+              Selecciona al menos una clínica.
+            </p>
+          }
+        }
+      </div>
 
       @if (loading()) {
-        <ui-progress-bar mode="indeterminate" class="mt-2"></ui-progress-bar>
+        <ui2-progress-bar mode="indeterminate"></ui2-progress-bar>
       }
 
       @if (error()) {
-        <p class="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error() }}</p>
+        <p class="add-paciente-form__error" role="alert">{{ error() }}</p>
       }
     </form>
-  </ui-dialog-content>
+  </ui2-dialog-content>
 
-  <ui-dialog-actions>
-    <ui-button variant="ghost" (clicked)="close()">Cancelar</ui-button>
-    <ui-button
+  <ui2-dialog-actions align="end">
+    <ui2-button variant="ghost" (clicked)="close()">Cancelar</ui2-button>
+    <ui2-button
       variant="primary"
-      [disabled]="form.invalid"
+      [disabled]="form.invalid || selectedCount() === 0"
       [loading]="loading()"
       (clicked)="onSubmit()"
     >
       {{ isEdit() ? 'Guardar' : 'Crear' }}
-    </ui-button>
-  </ui-dialog-actions>
-</ui-dialog-container>
+    </ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

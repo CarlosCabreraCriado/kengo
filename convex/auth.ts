@@ -56,7 +56,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
   triggers: {
     user: {
       onCreate: async (ctx, doc) => {
-        // Sincronizar usuario Better-Auth con tabla users de la app
+        // Sincronizar usuario Better-Auth con tabla users de la app.
         const nameParts = (doc.name || "").split(" ");
         const firstName = nameParts[0] || "";
         const lastName = nameParts.slice(1).join(" ") || "";
@@ -67,7 +67,29 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
           .unique();
 
         if (existing) {
-          // Usuario ya existe (ej: creado por seed) — vincular externalId
+          // Solo permitimos rebindear el externalId si la fila estaba en estado
+          // pre-registro (paciente creado por el fisio con `pending-{email}`,
+          // ver `users/mutations.ts:upsertPatientWithMembership`). Cualquier
+          // otra fila ya está enlazada a una cuenta BA real y NO debe
+          // rebindearse silenciosamente — sería account takeover.
+          const isPending =
+            typeof existing.externalId === "string" &&
+            existing.externalId.startsWith("pending-");
+
+          if (!isPending) {
+            console.error("[auth.onCreate] Rebind rechazado: email ya enlazado", {
+              email: doc.email,
+              currentExternalId: existing.externalId,
+              attemptedExternalId: doc._id,
+            });
+            throw new Error("EMAIL_ALREADY_LINKED");
+          }
+
+          console.info("[auth.onCreate] Rebind pending → BA user", {
+            email: doc.email,
+            from: existing.externalId,
+            to: doc._id,
+          });
           await ctx.db.patch(existing._id, {
             externalId: doc._id,
             emailVerified: doc.emailVerified,
@@ -90,7 +112,20 @@ export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
-    trustedOrigins: [siteUrl, "http://localhost:4200", "http://localhost:4210"],
+    trustedOrigins: [
+      siteUrl,
+      "http://localhost:4200",
+      "http://localhost:4210",
+      // App nativa Capacitor: origin definido en `apps/app/capacitor.config.ts`
+      // (`server.hostname` + `iosScheme/androidScheme: 'https'`).
+      "https://app.kengoapp.local",
+      // iOS WKWebView puede enviar el Origin con el esquema interno aunque la
+      // SPA cargue por https. Lo permitimos explícitamente.
+      "capacitor://app.kengoapp.local",
+      // Esquemas por defecto del WebView Capacitor cuando no se sobreescriben.
+      "capacitor://localhost",
+      "https://localhost",
+    ],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,

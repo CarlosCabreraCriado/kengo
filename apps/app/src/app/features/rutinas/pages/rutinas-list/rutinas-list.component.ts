@@ -1,59 +1,78 @@
-import { Component, inject, computed, signal, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, HostListener, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { Dialog } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
-import { ToastService } from '../../../../shared/ui/toast/toast.service';
-import { CatalogoTabsComponent } from '../../../../shared/ui/catalogo-tabs/catalogo-tabs.component';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
+import { useResponsive } from '../../../../shared';
 import {
-  useResponsive,
-  EmptyStateComponent,
-  BackButtonComponent,
-  VisibilityBadgeComponent,
-  SkeletonComponent,
-  SearchBoxComponent,
-} from '../../../../shared';
+  Ui2ButtonComponent,
+  Ui2EmptyStateComponent,
+  Ui2PillComponent,
+  Ui2SearchBoxComponent,
+  Ui2SectionComponent,
+  Ui2SegmentedComponent,
+  Ui2SegmentedOption,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 import { Rutina, EjercicioRutina, Usuario } from '../../../../../types/global';
+
+type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
+
+interface OpcionFiltro {
+  value: FiltroVisibilidad;
+  label: string;
+  icon: string;
+}
+
 @Component({
   selector: 'app-rutinas-list',
   standalone: true,
   imports: [
-    FormsModule,
-    CatalogoTabsComponent,
-    EmptyStateComponent,
-    BackButtonComponent,
-    VisibilityBadgeComponent,
-    SkeletonComponent,
-    SearchBoxComponent,
+    Ui2ButtonComponent,
+    Ui2EmptyStateComponent,
+    Ui2PillComponent,
+    Ui2SearchBoxComponent,
+    Ui2SectionComponent,
+    Ui2SegmentedComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './rutinas-list.component.html',
   styleUrl: './rutinas-list.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
-  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RutinasListComponent {
+export class RutinasListComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private toastService = inject(ToastService);
   private planBuilderService = inject(PlanBuilderService);
   private rutinaBuilderService = inject(RutinaBuilderService);
   private dialog = inject(Dialog);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'rutinas-list';
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
+
+  /** Datos críticos: lista de rutinas resuelta. */
+  readonly pageReady = computed(() => !this.rutinasService.isLoading());
 
   isMovil = useResponsive().esMobile;
 
   // Usuario
   usuario = computed(() => this.sessionService.usuario());
 
+  // Tabs catálogo Ejercicios/Rutinas
+  readonly catalogoTabs: Ui2SegmentedOption[] = [
+    { id: 'ejercicios', label: 'Ejercicios' },
+    { id: 'rutinas', label: 'Rutinas' },
+  ];
+
   // Rutinas
-  busquedaRutinas = '';
-  filtroVisibilidad: 'todas' | 'privadas' | 'clinica' = 'todas';
+  readonly filtroVisibilidad = signal<FiltroVisibilidad>('todas');
   rutinas = computed(() => this.rutinasService.rutinas());
   isLoadingRutinas = computed(() => this.rutinasService.isLoading());
 
@@ -63,35 +82,58 @@ export class RutinasListComponent {
   previewEjercicios = signal<EjercicioRutina[]>([]);
 
   // Menu state
-  openRutinaMenuId: string | null = null;
+  openRutinaMenuId = signal<string | null>(null);
   filtroMenuAbierto = signal(false);
 
-  // Opciones del filtro de visibilidad
-  opcionesFiltro = [
-    { value: 'todas' as const, label: 'Todas las rutinas', icon: 'view_list' },
-    { value: 'privadas' as const, label: 'Solo privadas', icon: 'lock' },
-    { value: 'clinica' as const, label: 'De mi clínica', icon: 'domain' },
+  // Opciones del filtro de visibilidad (dropdown V2)
+  readonly opcionesFiltro: OpcionFiltro[] = [
+    { value: 'todas',    label: 'Todas las rutinas', icon: 'view_list' },
+    { value: 'privadas', label: 'Solo privadas',     icon: 'lock' },
+    { value: 'clinica',  label: 'De mi clínica',     icon: 'domain' },
   ];
+
+  readonly hayFiltroActivo = computed(() => this.filtroVisibilidad() !== 'todas');
 
   constructor() {
     // Cargar rutinas al iniciar
     this.rutinasService.reload();
   }
 
-  @HostListener('document:click')
-  onDocumentClick() {
+  ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    // No cerrar si el click viene de un trigger o de dentro de un menú abierto
+    if (
+      target.closest('.rl-filter-menu, .rl-filter-trigger, .rl-action-menu, .rl-card__menu-btn')
+    ) {
+      return;
+    }
     this.filtroMenuAbierto.set(false);
-    this.openRutinaMenuId = null;
+    this.openRutinaMenuId.set(null);
+  }
+
+  // === Tabs ===
+  onCatalogoTabChange(value: string) {
+    if (value === 'ejercicios') {
+      this.router.navigate(['/ejercicios']);
+    }
   }
 
   // === Rutinas ===
   onBusquedaRutinasChange(value: string) {
-    this.busquedaRutinas = value;
     this.rutinasService.setBusqueda(value);
   }
 
-  onFiltroVisibilidadChange(value: 'todas' | 'privadas' | 'clinica') {
-    this.filtroVisibilidad = value;
+  onFiltroVisibilidadChange(value: FiltroVisibilidad) {
+    this.filtroVisibilidad.set(value);
     this.rutinasService.setFiltroVisibilidad(value);
   }
 
@@ -119,11 +161,6 @@ export class RutinasListComponent {
     const userId = this.usuario()?.id;
     const autorId = typeof rutina.autor === 'string' ? rutina.autor : rutina.autor?.id;
     return userId === autorId;
-  }
-
-  usarPlantilla(rutina: Rutina) {
-    this.toastService.show('Selecciona un paciente para usar esta rutina');
-    this.router.navigate(['/mis-pacientes']);
   }
 
   async duplicarRutina(rutina: Rutina) {
@@ -158,7 +195,7 @@ export class RutinasListComponent {
       this.toastService.show(
         nuevaVisibilidad === 'clinica'
           ? 'Rutina compartida con la clínica'
-          : 'Rutina ahora es privada'
+          : 'Rutina ahora es privada',
       );
     } else {
       this.toastService.show('Error al cambiar visibilidad', 'error');
@@ -170,7 +207,7 @@ export class RutinasListComponent {
   }
 
   toggleRutinaMenu(rutinaId: string) {
-    this.openRutinaMenuId = this.openRutinaMenuId === rutinaId ? null : rutinaId;
+    this.openRutinaMenuId.update((current) => (current === rutinaId ? null : rutinaId));
   }
 
   toggleFiltroMenu() {
@@ -182,8 +219,17 @@ export class RutinasListComponent {
   }
 
   limpiarFiltro() {
-    this.filtroVisibilidad = 'todas';
+    this.filtroVisibilidad.set('todas');
     this.rutinasService.setFiltroVisibilidad('todas');
+  }
+
+  // === Pill helpers para visibilidad ===
+  visibilidadLabel(v: 'privado' | 'clinica'): string {
+    return v === 'privado' ? 'Privada' : 'Clínica';
+  }
+
+  visibilidadIcon(v: 'privado' | 'clinica'): string {
+    return v === 'privado' ? 'lock' : 'domain';
   }
 
   // === Utilidades ===
@@ -203,27 +249,21 @@ export class RutinasListComponent {
 
   // === Asignar a Paciente ===
   async asignarAPaciente(rutina: Rutina) {
-    // 1. Abrir diálogo de selección de paciente
     const paciente = await this.seleccionarPaciente();
-    if (!paciente) return; // Usuario canceló
+    if (!paciente) return;
 
-    // 2. Establecer paciente en PlanBuilderService
     this.planBuilderService.paciente.set(paciente);
 
-    // 3. Guardar en localStorage para persistencia
     localStorage.setItem('carrito:last_paciente_id', paciente.id);
     const fisioId = this.planBuilderService.fisioId();
     if (fisioId) {
       localStorage.setItem('carrito:last_fisio_id', fisioId);
     }
 
-    // 4. Cargar ejercicios de la rutina en el carrito
     const success = await this.planBuilderService.loadFromRutina(rutina.id);
 
     if (success) {
-      // 5. Abrir el drawer del carrito
       this.planBuilderService.openDrawer();
-      // 6. Mostrar notificación de éxito
       this.toastService.show(`Rutina "${rutina.nombre}" cargada para ${paciente.first_name}`);
     } else {
       this.toastService.show('Error al cargar la rutina', 'error');

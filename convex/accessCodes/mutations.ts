@@ -1,9 +1,12 @@
 import { v, ConvexError } from "convex/values";
 import { mutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import {
   getAuthenticatedUser,
   checkClinicPermission,
+  requireActiveSubscription,
 } from "../_helpers/permissions";
+import { LIMITE_FISIOS_AUTOSERVICIO } from "../billing/_helpers";
 
 export const create = mutation({
   args: {
@@ -19,6 +22,28 @@ export const create = mutation({
       "fisio",
       "admin",
     ]);
+    await requireActiveSubscription(ctx, args.clinicId);
+
+    // Validación preventiva del límite autoservicio (+10 fisios). Aunque
+    // `consume` también la verifica, hacerlo aquí evita generar códigos que
+    // van a fallar al canjearse y permite mostrar al admin el camino de
+    // contacto comercial en el momento de la generación.
+    if (args.tipo === "fisioterapeuta") {
+      const memberships = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
+        .collect();
+      const fisiosActuales = memberships.filter(
+        (m) => m.puesto === "fisio" || m.puesto === "admin",
+      ).length;
+      if (fisiosActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
+        throw new ConvexError({
+          code: "REQUIERE_CONTACTO_VENTAS",
+          message:
+            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
+        });
+      }
+    }
 
     const codigo = generateRandomCode(8);
 
@@ -97,6 +122,25 @@ export const consume = mutation({
     const puesto: "fisio" | "paciente" =
       codeDoc.tipo === "fisioterapeuta" ? "fisio" : "paciente";
 
+    // Si el código es de fisio, validar que la clínica no supera el límite
+    // de plan autoservicio. La quantity facturada incluye fisio + admin.
+    if (puesto === "fisio") {
+      const memberships = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_clinicId", (q) => q.eq("clinicId", codeDoc.clinicId))
+        .collect();
+      const fisiosActuales = memberships.filter(
+        (m) => m.puesto === "fisio" || m.puesto === "admin",
+      ).length;
+      if (fisiosActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
+        throw new ConvexError({
+          code: "REQUIERE_CONTACTO_VENTAS",
+          message:
+            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
+        });
+      }
+    }
+
     await ctx.db.insert("clinicMemberships", {
       userId: user._id,
       clinicId: codeDoc.clinicId,
@@ -106,6 +150,15 @@ export const consume = mutation({
     await ctx.db.patch(codeDoc._id, {
       usosActuales: codeDoc.usosActuales + 1,
     });
+
+    // Si el nuevo miembro es fisio, sincronizar quantity con Stripe.
+    if (puesto === "fisio") {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.billing.internal.syncQuantityFromMemberships,
+        { clinicId: codeDoc.clinicId },
+      );
+    }
 
     const clinic = await ctx.db.get(codeDoc.clinicId);
 

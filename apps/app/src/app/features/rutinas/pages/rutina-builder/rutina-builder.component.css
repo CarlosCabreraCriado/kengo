@@ -1,21 +1,6 @@
 @reference "tailwindcss";
 
-/* ========================================
-   RUTINA BUILDER - Kengo Design System
-   Basado en plan-builder con color amber
-   ======================================== */
-
-/* === Variables CSS === */
 :host {
-  /* Color variables now defined globally via ThemeService */
-  --kengo-amber: #f59e0b;
-  --kengo-amber-dark: #d97706;
-  --kengo-glass: rgba(255, 255, 255, 0.65);
-  --kengo-glass-strong: rgba(255, 255, 255, 0.85);
-  --kengo-border: rgba(255, 255, 255, 0.25);
-  --kengo-border-strong: rgba(255, 255, 255, 0.4);
-  --kengo-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --kengo-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -24,297 +9,418 @@
   width: 100%;
 }
 
-/* === Tarjeta Kengo Premium === */
-.tarjeta-kengo {
-  background: var(--kengo-glass-strong);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid var(--kengo-border-strong);
-  box-shadow: var(--kengo-shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* === Input Compacto Premium === */
-.input-compact {
+.rb-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  height: 44px;
-  padding: 0 14px;
-  border: 1.5px solid #e4e4e7;
-  border-radius: 12px;
-  background: white;
-  font-size: 14px;
-  font-weight: 500;
-  color: #3f3f46;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 24px;
 }
 
-.input-compact:hover {
-  border-color: #d4d4d8;
-}
-
-.input-compact:focus {
-  outline: none;
-  border-color: var(--kengo-amber);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
-}
-
-.input-compact::placeholder {
-  color: #a1a1aa;
-  font-weight: 400;
-}
-
-textarea.input-compact {
-  height: auto;
-  padding: 12px 14px;
-  line-height: 1.5;
-  resize: none;
-}
-
-/* === Opciones de visibilidad === */
-.visibilidad-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 2px solid #e4e4e7;
-  background: white;
-  color: #71717a;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.visibilidad-option:hover {
-  border-color: var(--kengo-amber);
-  color: var(--kengo-amber);
-}
-
-.visibilidad-option--active {
-  border-color: var(--kengo-amber);
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
-  color: var(--kengo-amber-dark);
-}
-
-/* === Botones de días de la semana === */
-.dia-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid #e4e4e7;
-  background: white;
-  font-size: 12px;
-  font-weight: 600;
-  color: #71717a;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.dia-btn::before {
-  content: '';
-  position: absolute;
+.rb-loading {
+  position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, var(--kengo-amber), var(--kengo-amber-dark));
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  border-radius: inherit;
+  background: rgba(253, 248, 241, 0.7);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  z-index: 30;
 }
 
-.dia-btn:hover {
-  border-color: var(--kengo-amber);
-  color: var(--kengo-amber);
-  transform: scale(1.05);
+/* Header */
+.rb-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 20px 4px;
 }
 
-.dia-btn:active {
-  transform: scale(0.95);
+.rb-header__title {
+  flex: 1;
+  min-width: 0;
 }
 
-.dia-btn--activo {
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+/* Form */
+.rb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.dia-btn--activo::before {
-  opacity: 1;
+/* Lista de ejercicios */
+.rb-ex-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.dia-btn--activo span,
-.dia-btn--activo {
+.rb-ex-item {
   position: relative;
-  z-index: 1;
 }
 
-/* === Indicadores mini de días (vista compacta) === */
-.dia-mini {
+.rb-drag-placeholder {
+  height: 84px;
+  border: 2px dashed rgba(var(--kengo-primary-rgb), 0.35);
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+  border-radius: 22px;
+}
+
+.rb-ex-preview {
+  width: 320px;
+  max-width: 80vw;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.15));
+}
+
+.rb-ex-preview__row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #f4f4f5;
-  font-size: 9px;
-  font-weight: 700;
-  color: #a1a1aa;
-  transition: all 0.2s ease;
+  gap: 12px;
 }
 
-.dia-mini--activo {
-  background: linear-gradient(135deg, var(--kengo-amber), var(--kengo-amber-dark));
-  color: white;
-  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+/* Compact view */
+.rb-ex--compact {
+  display: grid;
+  grid-template-columns: 28px 56px 1fr auto;
+  gap: 12px;
+  align-items: center;
 }
 
-/* === Exercise Card en modo edición === */
-.exercise-card-editing {
-  border: 2px solid var(--kengo-amber);
-  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15);
-}
-
-/* === Drag Handle === */
-.drag-handle {
+.rb-drag-handle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 56px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-400);
   cursor: grab;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
+  padding: 0;
 }
 
-.drag-handle:hover {
-  opacity: 1;
-}
-
-.drag-handle:active {
+.rb-drag-handle:active {
   cursor: grabbing;
 }
 
-/* === CDK Drag & Drop === */
-.cdk-drag-preview {
-  z-index: 1000;
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-}
-
-.cdk-drag-placeholder {
-  opacity: 0;
-}
-
-.cdk-drag-animating {
-  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.cdk-drop-list-dragging .tarjeta-kengo:not(.cdk-drag-placeholder) {
-  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* === Progress Bar Indeterminate === */
-.progress-bar-indeterminate {
-  animation: progressIndeterminate 1.5s ease-in-out infinite;
-  background: linear-gradient(90deg, var(--kengo-amber), var(--kengo-tertiary), var(--kengo-amber));
-  background-size: 200% 100%;
-}
-
-/* === CTA Button fijo - Amber === */
-.cta-button-fixed {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  height: 52px;
-  padding: 0 2rem;
+.rb-ex__thumb {
+  width: 56px;
+  height: 56px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--kengo-amber), var(--kengo-amber-dark));
-  color: white;
-  font-weight: 700;
-  font-size: 15px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.45);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  background: var(--cream-100);
   overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
 
-.cta-button-fixed::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 100%);
-  opacity: 0;
-  transition: opacity 0.25s ease;
+.rb-ex__thumb--sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
 }
 
-.cta-button-fixed:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.55);
+.rb-ex__thumb--lg {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
 }
 
-.cta-button-fixed:hover:not(:disabled)::before {
-  opacity: 1;
+.rb-ex__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.cta-button-fixed:active:not(:disabled) {
-  transform: scale(0.98);
+.rb-ex__thumb .material-symbols-outlined {
+  color: var(--ink-400);
+  font-size: 22px;
 }
 
-.cta-button-fixed:disabled {
-  background: #d4d4d8;
-  box-shadow: none;
-  cursor: not-allowed;
+.rb-ex__thumb--lg .material-symbols-outlined {
+  font-size: 32px;
 }
 
-/* === Spinner animation === */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.rb-ex__body {
+  min-width: 0;
 }
 
-.animate-spin {
-  animation: spin 0.8s linear infinite;
+.rb-ex__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0 0 4px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* === Line clamp === */
-.line-clamp-2 {
+.rb-ex__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rb-ex__days {
+  display: flex;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.rb-day {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ink-400);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.rb-day--active {
+  background: var(--kengo-primary);
+  color: white;
+}
+
+/* Expanded view */
+.rb-ex--expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rb-ex__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rb-ex__head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.rb-ex--expanded .rb-ex__name {
+  font-size: 17px;
+  white-space: normal;
+}
+
+.rb-ex__desc {
+  font-size: 13px;
+  color: var(--ink-500);
+  line-height: 1.4;
+  margin-top: 4px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* === Animaciones === */
-@keyframes progressIndeterminate {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
+.rb-ex__desc :global(p) {
+  margin: 0;
+}
+
+/* Dosage */
+.rb-dosage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .rb-dosage-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.rb-dosage-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-/* === Staggered animation para ejercicios === */
-.exercise-item {
-  animation: fadeInUp 0.35s ease-out backwards;
+.rb-dosage-field__label {
+  font-family: Galvji, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-700);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.exercise-item:nth-child(1) { animation-delay: 0.05s; }
-.exercise-item:nth-child(2) { animation-delay: 0.1s; }
-.exercise-item:nth-child(3) { animation-delay: 0.15s; }
-.exercise-item:nth-child(4) { animation-delay: 0.2s; }
-.exercise-item:nth-child(5) { animation-delay: 0.25s; }
+.rb-dosage-input {
+  width: 100%;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-300);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: Galvji, sans-serif;
+  font-size: 14px;
+  color: var(--ink-900);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
 
+.rb-dosage-input:focus {
+  border-color: var(--kengo-primary);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
+  background: white;
+}
+
+/* Days block */
+.rb-days-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rb-days-block__label {
+  font-family: Galvji, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-700);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rb-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.rb-day-btn {
+  display: grid;
+  place-items: center;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid var(--ink-300);
+  background: var(--cream-50);
+  color: var(--ink-500);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rb-day-btn:hover {
+  background: var(--cream-100);
+  border-color: var(--ink-400);
+}
+
+.rb-day-btn--active {
+  background: var(--kengo-primary);
+  border-color: var(--kengo-primary);
+  color: white;
+  box-shadow: var(--shadow-pill-coral);
+}
+
+.rb-day-btn--active:hover {
+  background: var(--kengo-primary-dark);
+  border-color: var(--kengo-primary-dark);
+}
+
+/* Instructions */
+.rb-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rb-instructions__label {
+  font-family: Galvji, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-700);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rb-instructions__input {
+  width: 100%;
+  background: var(--cream-50);
+  border: 1px solid var(--ink-300);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-family: Galvji, sans-serif;
+  font-size: 14px;
+  color: var(--ink-900);
+  outline: none;
+  resize: vertical;
+  min-height: 72px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.rb-instructions__input:focus {
+  border-color: var(--kengo-primary);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
+  background: white;
+}
+
+.rb-ex__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Add more */
+.rb-add-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 2px dashed var(--ink-300);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ink-500);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.rb-add-more:hover {
+  border-color: var(--kengo-primary);
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+  color: var(--kengo-primary);
+}
+
+.rb-add-more .material-symbols-outlined {
+  font-size: 22px;
+}
+
+/* CTA */
+.rb-cta-bar {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 20px calc(env(safe-area-inset-bottom) + 16px);
+  background: linear-gradient(180deg, rgba(253, 248, 241, 0) 0%, rgba(253, 248, 241, 0.92) 30%, rgba(253, 248, 241, 1) 100%);
+  backdrop-filter: blur(6px);
+  z-index: 10;
+}
+
+/* CDK drag overrides */
+:host ::ng-deep .cdk-drag-preview {
+  box-shadow: none;
+  border-radius: 22px;
+}
+
+:host ::ng-deep .cdk-drag-placeholder {
+  opacity: 0;
+}
+
+:host ::ng-deep .cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+:host ::ng-deep .rb-ex-list.cdk-drop-list-dragging .rb-ex-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

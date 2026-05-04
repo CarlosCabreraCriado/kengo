@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   inject,
   signal,
@@ -10,15 +11,20 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { firstValueFrom } from 'rxjs';
 import QRCode from 'qrcode';
 
+import { ConfirmDialogComponent, DialogService } from '../../../../shared';
 import {
-  DialogContainerComponent,
-  DialogHeaderComponent,
-  DialogContentComponent,
-  DialogActionsComponent,
-  ConfirmDialogComponent,
-  DialogService,
-} from '../../../../shared';
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2PillComponent,
+  Ui2SpinnerComponent,
+  Ui2IconBadgeComponent,
+} from '../../../../shared/ui-v2';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { ClipboardService } from '../../../../core/services/clipboard.service';
 
 import type { Usuario } from '../../../../../types/global';
 
@@ -39,11 +45,17 @@ interface TokenInfo {
 @Component({
   selector: 'app-gestion-acceso-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DialogContainerComponent,
-    DialogHeaderComponent,
-    DialogContentComponent,
-    DialogActionsComponent,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
+    Ui2DialogActionsComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2PillComponent,
+    Ui2SpinnerComponent,
+    Ui2IconBadgeComponent,
   ],
   templateUrl: './gestion-acceso-dialog.component.html',
   styleUrl: './gestion-acceso-dialog.component.css',
@@ -54,6 +66,7 @@ export class GestionAccesoDialogComponent implements OnInit {
   private authService = inject(AuthService);
   private dialogRef = inject(DialogRef);
   private dialogService = inject(DialogService);
+  private clipboard = inject(ClipboardService);
   data = inject<DialogData>(DIALOG_DATA);
 
   // State
@@ -167,12 +180,11 @@ export class GestionAccesoDialogComponent implements OnInit {
     const token = this.tokenInfo();
     if (!token?.url) return;
 
-    try {
-      await navigator.clipboard.writeText(token.url);
+    const ok = await this.clipboard.write(token.url);
+    if (ok) {
       this.linkCopied.set(true);
       setTimeout(() => this.linkCopied.set(false), 2000);
-    } catch (err) {
-      console.error('Error copiando enlace:', err);
+    } else {
       this.error.set('Error al copiar el enlace');
     }
   }

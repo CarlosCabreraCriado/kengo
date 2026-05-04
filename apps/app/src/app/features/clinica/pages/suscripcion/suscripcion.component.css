@@ -1,0 +1,395 @@
+:host {
+  display: block;
+}
+
+/* ─────────────────────────  PLAN HERO  ─────────────────────────
+ * Hero del plan actual. Composición tipo "membership card":
+ * gradiente cream→coral, patrón de puntos como decoración firma,
+ * tipografía display para nombre y precio, hairline coral animada.
+ */
+
+.plan-hero {
+  position: relative;
+  border-radius: 22px;
+  padding: 22px 22px 20px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--kengo-primary) 14%, transparent) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      158deg,
+      #ffffff 0%,
+      #fff5ee 52%,
+      color-mix(in srgb, var(--kengo-primary) 9%, #fff5ee) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--kengo-primary) 18%, transparent);
+  box-shadow:
+    0 18px 40px -16px color-mix(in srgb, var(--kengo-primary) 32%, transparent),
+    0 4px 12px -4px rgba(0, 0, 0, 0.05);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: plan-rise 540ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes plan-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* dot pattern decorativo top-right (firma kengo) */
+.plan-hero__deco {
+  position: absolute;
+  top: 18px;
+  right: -10px;
+  width: 92px;
+  height: 56px;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--kengo-primary) 38%, transparent) 1.6px,
+    transparent 2px
+  );
+  background-size: 11px 11px;
+  background-position: 0 0;
+  transform: rotate(-12deg);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* halo coral suave detrás del precio */
+.plan-hero__halo {
+  position: absolute;
+  bottom: 38%;
+  left: -40px;
+  width: 220px;
+  height: 220px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--kengo-primary) 14%, transparent) 0%,
+    transparent 65%
+  );
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─────────────────────  TOP ROW  ───────────────────── */
+
+.plan-hero__top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.plan-hero__overline {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--kengo-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-hero__overline::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  background: var(--kengo-primary);
+  display: inline-block;
+}
+
+/* ─────────────────────  NAME & PRICE  ───────────────────── */
+
+.plan-hero__name-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.plan-hero__name {
+  margin: 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.6px;
+  line-height: 1;
+  color: var(--ink-900);
+}
+
+.plan-hero__price {
+  margin: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  color: var(--ink-900);
+  line-height: 1;
+}
+
+.plan-hero__currency {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink-700);
+  align-self: flex-start;
+  margin-top: 6px;
+  letter-spacing: -0.4px;
+}
+
+.plan-hero__amount {
+  font-size: 36px;
+  font-weight: 400;
+  letter-spacing: -1.4px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-hero__period {
+  font-family: Galvji, "Helvetica Neue", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-500);
+  letter-spacing: 0.1px;
+  margin-left: 2px;
+}
+
+/* ─────────────────────  CANCEL NOTE  ───────────────────── */
+
+.plan-hero__cancel-note {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 6px 11px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--warning);
+}
+
+.plan-hero__cancel-note .material-symbols-outlined {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* ─────────────────────  DIVIDER  ───────────────────── */
+
+.plan-hero__divider {
+  position: relative;
+  z-index: 1;
+  height: 1px;
+  margin: 22px 0 18px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--kengo-primary) 50%, transparent) 0%,
+    color-mix(in srgb, var(--kengo-primary) 25%, transparent) 14%,
+    var(--ink-100) 38%,
+    var(--ink-100) 100%
+  );
+  transform-origin: left center;
+  animation: hairline-stretch 720ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+@keyframes hairline-stretch {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* ─────────────────────  STATS  ───────────────────── */
+
+.plan-hero__stats {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.stat__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stat__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.stat__value {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  color: var(--ink-900);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stat__value em {
+  font-style: normal;
+  color: var(--ink-400);
+  font-size: 14px;
+  margin-left: 1px;
+}
+
+.stat__hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat__hint::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--warning);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+/* fila de próximo cargo: label izquierda + fecha con icono derecha */
+.stat--billing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in srgb, var(--ink-300) 55%, transparent);
+}
+
+.stat__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: Galvji, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1px;
+}
+
+.stat__date .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--kengo-primary);
+}
+
+/* ─────────────────────  EMPTY STATE  ───────────────────── */
+
+.plan-hero__empty {
+  position: relative;
+  z-index: 1;
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--ink-700);
+  line-height: 1.45;
+}
+
+/* ─────────────────────  LOCK STATE  ───────────────────── */
+
+.plan-hero__lock {
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-hero__lock .material-symbols-outlined {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.plan-hero--blocked {
+  border-color: rgba(239, 68, 68, 0.28);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(239, 68, 68, 0.10) 0%,
+      transparent 55%
+    ),
+    linear-gradient(158deg, #ffffff 0%, #fff5f3 100%);
+  box-shadow:
+    0 18px 40px -16px rgba(239, 68, 68, 0.20),
+    0 4px 12px -4px rgba(0, 0, 0, 0.05);
+}
+
+.plan-hero--blocked .plan-hero__overline {
+  color: var(--danger);
+}
+
+.plan-hero--blocked .plan-hero__overline::before {
+  background: var(--danger);
+}
+
+/* ─────────────────────  RESPONSIVE  ───────────────────── */
+
+@media (min-width: 640px) {
+  .plan-hero {
+    padding: 28px 28px 24px;
+  }
+  .plan-hero__name {
+    font-size: 38px;
+  }
+  .plan-hero__amount {
+    font-size: 42px;
+  }
+  .plan-hero__currency {
+    font-size: 20px;
+    margin-top: 7px;
+  }
+  .plan-hero__period {
+    font-size: 13px;
+  }
+  .plan-hero__divider {
+    margin: 26px 0 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-hero {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .plan-hero__divider {
+    animation: none;
+    transform: none;
+  }
+}

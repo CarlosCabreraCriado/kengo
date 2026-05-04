@@ -2,12 +2,12 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { PlanesService } from '../../planes/data-access/planes.service';
 import { SesionStateService } from '../../sesion/data-access/sesion-state.service';
+import { getMadridDiaSemana } from '../../../shared/utils/madrid-date.util';
 import {
   PlanCompleto,
   RegistroEjercicio,
   ActividadPlanDia,
   EjercicioPlanConEstado,
-  DiaSemana,
 } from '../../../../types/global';
 
 export type BadgeType = 'pending' | 'completed' | 'rest' | 'loading' | null;
@@ -23,14 +23,18 @@ export class ActividadHoyService {
   private planesService = inject(PlanesService);
   private registroService = inject(SesionStateService);
 
-  // Mapeo de días de la semana
-  private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-
   // Estado interno
   readonly cargando = signal<boolean>(false);
   readonly planesActivos = signal<PlanCompleto[]>([]);
   readonly registrosHoy = signal<RegistroEjercicio[]>([]);
   private datosCargados = signal<boolean>(false);
+  /**
+   * True tras la primera resolución (éxito o error) de los datos. A
+   * diferencia de `datosCargados` (que solo refleja éxito y bloquea
+   * recargas), esta signal libera el gate de `pageReady` aunque la query
+   * haya fallado, para que la UI no quede bloqueada en spinner.
+   */
+  readonly cargada = signal<boolean>(false);
 
   constructor() {
     // Effect que carga automáticamente cuando el usuario está disponible
@@ -44,8 +48,8 @@ export class ActividadHoyService {
     });
   }
 
-  // Computed: día actual
-  private readonly diaHoy = computed(() => this.DIAS_SEMANA[new Date().getDay()]);
+  // Computed: día actual en zona Europe/Madrid (mismo huso que el backend).
+  private readonly diaHoy = computed(() => getMadridDiaSemana());
 
   // Computed: actividad del día con estado de completado
   readonly actividadHoy = computed<ActividadPlanDia[]>(() => {
@@ -244,6 +248,7 @@ export class ActividadHoyService {
       console.error('Error al cargar actividad de hoy:', err);
     } finally {
       this.cargando.set(false);
+      this.cargada.set(true);
     }
   }
 

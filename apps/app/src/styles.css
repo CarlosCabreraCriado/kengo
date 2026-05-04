@@ -24,28 +24,65 @@
   --kengo-tertiary-light: #f5d06e;
   --kengo-tertiary-rgb: 239, 192, 72;
 
-  /* Background gradient colors - derived from primary for animated background */
-  /* These are default values; ThemeService will calculate and override them based on the primary color */
-  --kengo-bg-gradient-1: rgb(205, 135, 101);
-  --kengo-bg-gradient-2: rgb(218, 153, 108);
-  --kengo-bg-gradient-3: rgb(230, 171, 116);
-  --kengo-bg-gradient-4: rgb(243, 189, 123);
-  --kengo-bg-gradient-5: rgb(246, 202, 152);
-  --kengo-bg-gradient-6: rgb(248, 216, 166);
-  --kengo-bg-gradient-7: rgb(251, 228, 192);
-  --kengo-bg-gradient-8: rgb(253, 234, 199);
-
-  /* Bubble color for animated background spans */
-  --kengo-bg-bubble: rgb(224, 165, 112);
-
   /* Autofill background - very light tint of primary */
   --kengo-autofill-bg: rgb(254, 246, 244);
 
-  /* SVG wave background colors - derived from primary */
-  --kengo-svg-wave-1: #ffffff;
-  --kengo-svg-wave-2: rgb(253, 214, 179);
-  --kengo-svg-wave-3: rgb(247, 166, 94);
-  --kengo-svg-wave-4: rgb(241, 116, 3);
+  /* =========================================
+     V2 (cream wellness) — solo consumidos por componentes ui2-*
+     Coexisten con los tokens kengo-* legacy.
+     ========================================= */
+
+  /* Cream surface palette */
+  --cream-50: #fdf8f1;
+  --cream-100: #f7eedf;
+
+  /* Ink (neutral text) scale */
+  --ink-100: #f3f4f6;
+  --ink-300: #d1d5db;
+  --ink-400: #9ca3af;
+  --ink-500: #6b7280;
+  --ink-700: #374151;
+  --ink-900: #111827;
+
+  /* Semantic colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #6366f1;
+
+  /* Shadows estáticas (no dependen del color primario) */
+  --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.04);
+  --shadow-card-strong: 0 8px 20px rgba(0, 0, 0, 0.06);
+  --shadow-tab-bar: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+
+  /* Shadows derivadas del color primario — gobernadas por ThemeService.
+     Se redefinen dinámicamente en :root al cargar la app y al cambiar de
+     clínica. Aquí se mantienen los defaults coral para evitar flash en el
+     primer paint. */
+  --shadow-cta-coral: 0 12px 28px -6px rgba(231, 92, 62, 0.5);
+  --shadow-pill-coral: 0 4px 10px -2px rgba(231, 92, 62, 0.4);
+  --shadow-toggle-coral: 0 4px 10px -2px rgba(231, 92, 62, 0.35);
+
+  /* Safe-area insets (iOS notch / Dynamic Island, Android navigation bar).
+     En web son 0; en Capacitor con viewport-fit=cover toman valor real. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Altura del teclado virtual gestionada por `KeyboardService`. En web y en
+     simulador sin teclado activo se queda en 0. En nativo se actualiza con
+     cada `keyboardWillShow` / `keyboardWillHide`. La consume `.ui2-main-mobile`
+     y elementos flotantes (chat composer, CTAs) que necesiten "subir" sobre
+     el teclado. */
+  --keyboard-height: 0px;
+
+  /* Curva y duración de las transiciones del teclado virtual. Coinciden con
+     la animación nativa de UIKit (~250 ms con curva ease-out estándar de
+     Apple) para que el reajuste del padding y el slide del tab-bar entren
+     en sincronía con el movimiento del propio teclado. */
+  --kb-transition-duration: 260ms;
+  --kb-transition-easing: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* =========================================
@@ -350,11 +387,86 @@
   .focus\:ring-kengo-primary\/20:focus {
     --tw-ring-color: rgba(var(--kengo-primary-rgb), 0.2);
   }
+
+  /* =========================================
+     V2 utilities (cream wellness) — solo para ui2-*
+     ========================================= */
+
+  /* Cream */
+  .bg-cream-50  { background-color: var(--cream-50); }
+  .bg-cream-100 { background-color: var(--cream-100); }
+  .border-cream-100 { border-color: var(--cream-100); }
+
+  /* Ink */
+  .bg-ink-100   { background-color: var(--ink-100); }
+  .text-ink-300 { color: var(--ink-300); }
+  .text-ink-400 { color: var(--ink-400); }
+  .text-ink-500 { color: var(--ink-500); }
+  .text-ink-700 { color: var(--ink-700); }
+  .text-ink-900 { color: var(--ink-900); }
+  .border-ink-100 { border-color: var(--ink-100); }
+  .border-ink-300 { border-color: var(--ink-300); }
+
+  /* Semantic */
+  .bg-success { background-color: var(--success); }
+  .bg-warning { background-color: var(--warning); }
+  .bg-danger  { background-color: var(--danger); }
+  .bg-info    { background-color: var(--info); }
+  .text-success { color: var(--success); }
+  .text-warning { color: var(--warning); }
+  .text-danger  { color: var(--danger); }
+  .text-info    { color: var(--info); }
+
+  /* Shadows */
+  .shadow-card         { box-shadow: var(--shadow-card); }
+  .shadow-card-strong  { box-shadow: var(--shadow-card-strong); }
+  .shadow-cta-coral    { box-shadow: var(--shadow-cta-coral); }
+  .shadow-pill-coral   { box-shadow: var(--shadow-pill-coral); }
+  .shadow-toggle-coral { box-shadow: var(--shadow-toggle-coral); }
+  .shadow-tab-bar      { box-shadow: var(--shadow-tab-bar); }
+
+  /* Cream coral gradient (Card tinted) */
+  .bg-tinted-coral {
+    background: linear-gradient(135deg, #fff5ee, #ffffff);
+  }
+
+  /* Coral gradient utilities used by ui2-cta-bar / ui2-message-bubble (me) */
+  .bg-coral-gradient {
+    background: linear-gradient(135deg, var(--kengo-primary), var(--kengo-primary-dark));
+  }
+
+  /* Safe-area utilities (notch iOS, navigation bar Android).
+     Aplicar en headers fijos, tab bars, botones flotantes y CTA bars. */
+  .pt-safe { padding-top: var(--safe-top); }
+  .pb-safe { padding-bottom: var(--safe-bottom); }
+  .pl-safe { padding-left: var(--safe-left); }
+  .pr-safe { padding-right: var(--safe-right); }
+  .px-safe {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+  .py-safe {
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+  }
+  .mt-safe { margin-top: var(--safe-top); }
+  .mb-safe { margin-bottom: var(--safe-bottom); }
+  .h-safe-top { height: var(--safe-top); }
+  .h-safe-bottom { height: var(--safe-bottom); }
 }
 
 @font-face {
   font-family: kengoFont;
   src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+  font-display: swap;
+}
+
+/* Alias V2: misma fuente, nombre alineado con la guía de diseño */
+@font-face {
+  font-family: KengoDisplay;
+  src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+  font-weight: 700;
+  font-display: swap;
 }
 
 @font-face {
@@ -362,6 +474,7 @@
   src: url(./assets/fonts/galvji.ttf) format("truetype");
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -369,6 +482,7 @@
   src: url(./assets/fonts/galvji-bold.ttf) format("truetype");
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -376,6 +490,7 @@
   src: url(./assets/fonts/galvji-oblique.ttf) format("truetype");
   font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
 @font-face {
@@ -383,12 +498,86 @@
   src: url(./assets/fonts/galvji-bold-oblique.ttf) format("truetype");
   font-weight: 700;
   font-style: italic;
+  font-display: swap;
 }
 
 html,
 body {
-  height: 100%;
+  /* En iOS WKWebView con viewport-fit=cover, height: 100% en html se
+     calcula sobre el "initial containing block", que excluye la zona del
+     home indicator (safe-area-inset-bottom). Resultado: html no llegaba
+     al fondo del display y todo lo que se anclaba a 100% (incluido
+     position:fixed con inset:0) se quedaba corto. Usamos 100lvh (large
+     viewport height) que sí incluye safe-areas; fallback a 100vh para
+     navegadores antiguos.
+
+     Mantenemos `lvh` (no `dvh`) en `html/body` a propósito: con
+     `Keyboard.resize: native` la WKWebView ya redimensiona su frame al abrir
+     el teclado, y los shells internos usan `h-dvh` para reaccionar. Si
+     `html/body` también usaran `dvh`, habría doble redimensionado y el
+     fondo cream se contraería dejando una banda. */
+  height: 100vh;
+  height: 100lvh;
   overflow: hidden;
+  background-color: var(--cream-50);
+}
+
+/* =========================================
+   Shell móvil V2 con adaptación al teclado virtual
+   ========================================= */
+
+/* Reemplaza el `style="..."` inline que llevaba `<main>` en el shell móvil.
+   Centraliza padding (header + tab-bar + safe-area) y se anima al
+   abrir/cerrar el teclado. Antes evitábamos esta transición por miedo al
+   jitter del ping-pong (input perdiendo foco y reabriendo); con
+   `Keyboard.setScroll: disabled` y el cierre vía `blur` ese problema está
+   resuelto, así que la transición se restaura para una transición fluida. */
+.ui2-main-mobile {
+  padding-top: calc(56px + var(--safe-top));
+  padding-bottom: calc(110px + var(--safe-bottom));
+  transition: padding-bottom var(--kb-transition-duration)
+    var(--kb-transition-easing);
+}
+
+body.kb-visible .ui2-main-mobile {
+  /* Tab-bar oculta cuando el teclado está abierto: solo conservamos el
+     home indicator (safe-bottom) + un pequeño respiro para que el último
+     campo del formulario no quede pegado al borde del teclado. */
+  padding-bottom: calc(8px + var(--safe-bottom));
+}
+
+/* Tab-bar paciente: cuando el teclado está abierto la deslizamos fuera para
+   liberar espacio vertical y evitar el "doble suelo" visual (tab-bar +
+   teclado). Usa la misma curva/duración que el padding para que ambas
+   animaciones lleguen al final del recorrido a la vez. */
+ui2-patient-tab-bar {
+  transition:
+    transform var(--kb-transition-duration) var(--kb-transition-easing),
+    opacity var(--kb-transition-duration) var(--kb-transition-easing);
+}
+
+body.kb-visible ui2-patient-tab-bar {
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Ocultar barras de scroll en mobile (≤767px). En desktop se conserva la
+   visual nativa para no romper la usabilidad de listas largas. Cubrimos
+   webkit (iOS WebView, Safari, Chrome) + Firefox + IE/Edge legacy. */
+@media (max-width: 767px) {
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* IE 10+ / Edge legacy */
+  }
+  *::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;                /* Chrome / Safari / iOS WebView */
+  }
 }
 
 ::-webkit-scrollbar {
@@ -467,17 +656,6 @@ body {
   .pb-nav {
     padding-bottom: 1.5rem;
   }
-
-  /* Padding superior para compensar header de navegación fijo en desktop */
-  .pt-nav {
-    padding-top: 0;
-  }
-
-  @media (min-width: 768px) {
-    .pt-nav {
-      padding-top: 5.5rem; /* ~88px = header height + padding */
-    }
-  }
 }
 
 /* Progress bar indeterminate animation */
@@ -493,102 +671,6 @@ body {
 .progress-bar-indeterminate {
   animation: progress-indeterminate 1.5s ease-in-out infinite;
 }
-
-@keyframes move {
-  100% {
-    transform: translate3d(0, 0, 1px) rotate(360deg);
-  }
-}
-
-.kengoBackground {
-  position: fixed;
-  width: 100vw;
-  height: 100dvh;
-  top: 0;
-  left: 0;
-  overflow: hidden;
-
-  /* Dynamic gradient based on primary color */
-  background-image: linear-gradient(
-    to right top,
-    var(--kengo-bg-gradient-1),
-    var(--kengo-bg-gradient-2),
-    var(--kengo-bg-gradient-3),
-    var(--kengo-bg-gradient-4),
-    var(--kengo-bg-gradient-5),
-    var(--kengo-bg-gradient-6),
-    var(--kengo-bg-gradient-7),
-    var(--kengo-bg-gradient-8)
-  );
-}
-
-.kengoBackground span {
-  width: 70vmin;
-  height: 70vmin;
-  border-radius: 70vmin;
-  backface-visibility: hidden;
-  position: absolute;
-  animation: move;
-  animation-duration: 39;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-.kengoBackground span:nth-child(0) {
-  color: var(--kengo-bg-bubble);
-  top: 46%;
-  left: 7%;
-  animation-duration: 110s;
-  animation-delay: -58s;
-  transform-origin: -15vw -15vh;
-  box-shadow: -100vmin 0 13.499747275504223vmin currentColor;
-}
-.kengoBackground span:nth-child(1) {
-  color: var(--kengo-bg-bubble);
-  top: 31%;
-  left: 30%;
-  animation-duration: 15s;
-  animation-delay: -77s;
-  transform-origin: -8vw 6vh;
-  box-shadow: 100vmin 0 12.507264709743446vmin currentColor;
-}
-.kengoBackground span:nth-child(2) {
-  color: var(--kengo-bg-bubble);
-  top: 96%;
-  left: 63%;
-  animation-duration: 63s;
-  animation-delay: -24s;
-  transform-origin: 18vw -24vh;
-  box-shadow: 100vmin 0 13.242136647822383vmin currentColor;
-}
-.kengoBackground span:nth-child(3) {
-  color: var(--kengo-bg-bubble);
-  top: 19%;
-  left: 50%;
-  animation-duration: 108s;
-  animation-delay: -32s;
-  transform-origin: 19vw 14vh;
-  box-shadow: -100vmin 0 12.72707917166243vmin currentColor;
-}
-.kengoBackground span:nth-child(4) {
-  color: var(--kengo-bg-bubble);
-  top: 89%;
-  left: 69%;
-  animation-duration: 55s;
-  animation-delay: -15s;
-  transform-origin: -5vw 25vh;
-  box-shadow: -100vmin 0 12.927843565603542vmin currentColor;
-}
-.kengoBackground span:nth-child(5) {
-  color: var(--kengo-bg-bubble);
-  top: 17%;
-  left: 47%;
-  animation-duration: 111s;
-  animation-delay: -78s;
-  transform-origin: 18vw -2vh;
-  box-shadow: -100vmin 0 12.537243324389731vmin currentColor;
-}
-
 
 /* CDK Dialog Overlay Styles */
 .cdk-overlay-backdrop {

@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
+import { HapticsService } from '../../../../../../core/services/haptics.service';
 import { SesionProgressHeaderComponent } from '../../componentes/sesion-progress-header/sesion-progress-header.component';
 import { EjercicioVideoPlayerComponent } from '../../componentes/ejercicio-activo-piezas/ejercicio-video-player/ejercicio-video-player.component';
 import { EjercicioInfoPanelComponent } from '../../componentes/ejercicio-activo-piezas/ejercicio-info-panel/ejercicio-info-panel.component';
@@ -43,6 +44,7 @@ export class EjercicioActivoComponent {
   }>();
 
   private readonly registroService = inject(SesionStateService);
+  private readonly haptics = inject(HapticsService);
   private readonly videoPlayer = viewChild(EjercicioVideoPlayerComponent);
 
   readonly esDesktop = useResponsive().esDesktop;
@@ -99,9 +101,7 @@ export class EjercicioActivoComponent {
   }
 
   onTiempoAgotado(): void {
-    if ('vibrate' in navigator) {
-      navigator.vibrate([100, 50, 100]);
-    }
+    void this.haptics.timerEnd();
     this.completarSerie.emit();
   }
 }

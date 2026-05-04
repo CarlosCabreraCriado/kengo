@@ -4,8 +4,7 @@ import { DialogContainerComponent } from './dialog-container.component';
 import { DialogHeaderComponent } from './dialog-header.component';
 import { DialogContentComponent } from './dialog-content.component';
 import { DialogActionsComponent } from './dialog-actions.component';
-import { ButtonComponent } from '../button/button.component';
-import { ConfirmDialogData } from './dialog.service';
+import { ConfirmDialogData } from '../../services/dialog/dialog.service';
 
 @Component({
   selector: 'ui-confirm-dialog',
@@ -15,7 +14,6 @@ import { ConfirmDialogData } from './dialog.service';
     DialogHeaderComponent,
     DialogContentComponent,
     DialogActionsComponent,
-    ButtonComponent,
   ],
   template: `
     <ui-dialog-container>
@@ -26,12 +24,24 @@ import { ConfirmDialogData } from './dialog.service';
       </ui-dialog-content>
 
       <ui-dialog-actions>
-        <ui-button variant="ghost" (clicked)="onCancel()">
+        <button
+          type="button"
+          class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
+          (click)="onCancel()"
+        >
           {{ data.cancelText || 'Cancelar' }}
-        </ui-button>
-        <ui-button [variant]="data.confirmVariant || 'primary'" (clicked)="onConfirm()">
+        </button>
+        <button
+          type="button"
+          class="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+          [class.bg-kengo-primary]="(data.confirmVariant || 'primary') === 'primary'"
+          [class.hover:opacity-90]="(data.confirmVariant || 'primary') === 'primary'"
+          [class.bg-red-600]="data.confirmVariant === 'danger'"
+          [class.hover:bg-red-700]="data.confirmVariant === 'danger'"
+          (click)="onConfirm()"
+        >
           {{ data.confirmText || 'Confirmar' }}
-        </ui-button>
+        </button>
       </ui-dialog-actions>
     </ui-dialog-container>
   `,

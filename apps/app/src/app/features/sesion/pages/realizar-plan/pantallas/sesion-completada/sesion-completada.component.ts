@@ -11,118 +11,103 @@ import {
   fadeAnimation,
   slideUpAnimation,
 } from '../../realizar-plan.animations';
+import {
+  Ui2BigTitleComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2KpiCardComponent,
+  Ui2SectionLabelComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-sesion-completada',
   standalone: true,
-  imports: [],
+  imports: [
+    Ui2BigTitleComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2KpiCardComponent,
+    Ui2SectionLabelComponent,
+  ],
   animations: [celebrateAnimation, fadeAnimation, slideUpAnimation],
   template: `
-    <div class="flex flex-1 flex-col gap-4 overflow-hidden py-2">
+    <div class="sesion-completada-container">
       <!-- Celebración -->
-      <div
-        class="flex shrink-0 flex-col items-center gap-2.5 py-3 text-center"
-        @celebrate
-      >
-        <span class="material-symbols-outlined text-primary animate-bounce text-6xl">celebration</span>
-        <h1
-          class="m-0 bg-gradient-to-r from-kengo-primary to-kengo-tertiary bg-clip-text text-2xl font-extrabold text-transparent"
-        >
-          ¡Sesión completada!
-        </h1>
-        <p class="m-0 text-sm font-medium text-zinc-500">
-          Has terminado todos los ejercicios de hoy
-        </p>
+      <div class="celebracion" @celebrate>
+        <span class="material-symbols-outlined celebracion-icon" aria-hidden="true">celebration</span>
+        <ui2-big-title
+          title="¡Sesión completada!"
+          sub="Has terminado todos los ejercicios de hoy"
+        />
       </div>
 
       <!-- Estadísticas -->
-      <div class="grid shrink-0 grid-cols-2 gap-3" @slideUp>
-        <div class="tarjeta-kengo rounded-xl p-3.5">
-          <div class="flex items-center gap-3.5">
-            <span class="material-symbols-outlined text-primary text-2xl">timer</span>
-            <div class="flex flex-col gap-0.5">
-              <span
-                class="text-[0.6875rem] font-semibold tracking-wider text-zinc-500 uppercase"
-                >Tiempo total</span
-              >
-              <span class="text-lg font-bold text-zinc-800">{{
-                tiempoFormateado()
-              }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="tarjeta-kengo rounded-xl p-3.5">
-          <div class="flex items-center gap-3.5">
-            <span class="material-symbols-outlined text-emerald-500 text-2xl">check_circle</span>
-            <div class="flex flex-col gap-0.5">
-              <span
-                class="text-[0.6875rem] font-semibold tracking-wider text-zinc-500 uppercase"
-                >Ejercicios</span
-              >
-              <span class="text-lg font-bold text-zinc-800"
-                >{{ totalEjercicios() }}/{{ totalEjercicios() }}</span
-              >
-            </div>
-          </div>
-        </div>
+      <div class="kpis" @slideUp>
+        <ui2-kpi-card
+          icon="schedule"
+          label="Tiempo total"
+          [value]="tiempoFormateado()"
+        />
+        <ui2-kpi-card
+          icon="check_circle"
+          iconColor="var(--success)"
+          label="Ejercicios"
+          [value]="totalEjercicios() + '/' + totalEjercicios()"
+        />
       </div>
 
       <!-- Resumen de dolor por ejercicio -->
       @if (registros().length > 0) {
-        <div class="flex flex-1 flex-col gap-2.5 overflow-hidden" @fade>
-          <h3 class="m-0 shrink-0 pl-1 text-sm font-bold text-zinc-700">
-            Resumen de dolor
-          </h3>
-          <div class="flex flex-1 flex-col gap-2 overflow-y-auto">
+        <div class="resumen-dolor" @fade>
+          <ui2-section-label color="var(--ink-700)">Resumen de dolor</ui2-section-label>
+          <div class="resumen-list">
             @for (registro of registrosConNombre(); track registro.planItemId) {
-              <div
-                class="tarjeta-kengo flex shrink-0 items-center justify-between rounded-xl px-3.5 py-3"
-              >
-                <span
-                  class="mr-4 flex-1 truncate text-sm font-medium text-zinc-700"
-                  >{{ registro.nombre }}</span
-                >
-                <div class="flex shrink-0 items-center gap-2.5">
-                  <span
-                    class="text-sm font-bold"
-                    [style.color]="getDolorColor(registro.dolorEscala || 0)"
-                  >
-                    {{ registro.dolorEscala }}/10
-                  </span>
-                  <span
-                    class="material-symbols-outlined text-xl"
-                    [style.color]="getDolorColor(registro.dolorEscala || 0)"
-                  >
-                    {{ getDolorIcon(registro.dolorEscala || 0) }}
-                  </span>
+              <ui2-card [padding]="14">
+                <div class="resumen-row">
+                  <span class="resumen-nombre">{{ registro.nombre }}</span>
+                  <div class="resumen-valor">
+                    <span
+                      class="resumen-num"
+                      [style.color]="getDolorColor(registro.dolorEscala || 0)"
+                    >
+                      {{ registro.dolorEscala }}/10
+                    </span>
+                    <span
+                      class="material-symbols-outlined"
+                      [style.color]="getDolorColor(registro.dolorEscala || 0)"
+                      aria-hidden="true"
+                    >
+                      {{ getDolorIcon(registro.dolorEscala || 0) }}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </ui2-card>
             }
           </div>
         </div>
       }
 
       <!-- Mensaje motivacional -->
-      <div class="shrink-0" @fade>
-        <p
-          class="m-0 rounded-xl bg-white/50 px-4 py-3 text-center text-xs leading-relaxed text-zinc-500"
-        >
-          Tu fisioterapeuta verá tu progreso y podrá ajustar tu plan según tus
-          resultados.
-        </p>
+      <div class="motivacional" @fade>
+        <ui2-card [padding]="14">
+          <p class="motivacional-text">
+            Tu fisioterapeuta verá tu progreso y podrá ajustar tu plan según tus
+            resultados.
+          </p>
+        </ui2-card>
       </div>
 
       <!-- Botón volver -->
-      <div class="shrink-0 pt-2">
-        <button
-          type="button"
-          class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-amber-600 text-base font-bold text-white transition-opacity hover:opacity-90"
-          (click)="volverInicio.emit()"
+      <div class="cta">
+        <ui2-button
+          variant="primary"
+          size="lg"
+          iconLeft="home"
+          [fullWidth]="true"
+          (clicked)="volverInicio.emit()"
         >
-          <span class="material-symbols-outlined">home</span>
           Volver al inicio
-        </button>
+        </ui2-button>
       </div>
     </div>
   `,
@@ -133,6 +118,111 @@ import {
       flex: 1;
       min-height: 0;
       overflow: hidden;
+      background: var(--cream-50);
+    }
+
+    .sesion-completada-container {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 16px;
+      padding: 12px 20px 20px;
+      overflow-y: auto;
+    }
+
+    .celebracion {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+
+    .celebracion-icon {
+      font-size: 56px;
+      color: var(--kengo-primary);
+      animation: bounce 1.4s ease-in-out infinite;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .resumen-dolor {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .resumen-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .resumen-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .resumen-nombre {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-700);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .resumen-valor {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .resumen-num {
+      font-family: KengoDisplay, kengoFont, sans-serif;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .resumen-valor .material-symbols-outlined {
+      font-size: 22px;
+    }
+
+    .motivacional-text {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--ink-500);
+      text-align: center;
+    }
+
+    .cta {
+      flex-shrink: 0;
+      padding-top: 4px;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
     }
   `,
 })
@@ -181,7 +271,7 @@ export class SesionCompletadaComponent {
       9: '#dc2626',
       10: '#b91c1c',
     };
-    return colores[dolor] || '#6b7280';
+    return colores[dolor] || 'var(--ink-500)';
   }
 
   getDolorEmoji(dolor: number): string {

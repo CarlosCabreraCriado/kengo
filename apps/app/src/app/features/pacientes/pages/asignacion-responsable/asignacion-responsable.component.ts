@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
@@ -21,17 +22,41 @@ import {
   UUID,
   BulkAsignacionPayload,
 } from '../../../../../types/global';
-import { useResponsive, AvatarComponent, SearchBoxComponent } from '../../../../shared';
+import { useResponsive } from '../../../../shared';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
+
+import {
+  Ui2AvatarComponent,
+  Ui2SearchBoxComponent,
+  Ui2SelectComponent,
+  Ui2SpinnerComponent,
+  Ui2EmptyStateComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2SectionComponent,
+  Ui2SegmentedComponent,
+  Ui2SegmentedOption,
+  Ui2SelectOption,
+} from '../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-asignacion-responsable',
   standalone: true,
-  imports: [FormsModule, AvatarComponent, SearchBoxComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    FormsModule,
+    Ui2AvatarComponent,
+    Ui2SearchBoxComponent,
+    Ui2SelectComponent,
+    Ui2SpinnerComponent,
+    Ui2EmptyStateComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2SectionComponent,
+    Ui2SegmentedComponent,
+  ],
   templateUrl: './asignacion-responsable.component.html',
   styleUrl: './asignacion-responsable.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
-  },
 })
 export class AsignacionResponsableComponent {
   private router = inject(Router);
@@ -39,6 +64,7 @@ export class AsignacionResponsableComponent {
   private clinicasService = inject(ClinicasService);
   private asignacionesService = inject(AsignacionesService);
   private convex = inject(ConvexService);
+  private toast = inject(ToastService);
 
   constructor() {
     // Auto-seleccionar primera clínica admin cuando los datos estén disponibles
@@ -52,6 +78,17 @@ export class AsignacionResponsableComponent {
 
   isMovil = useResponsive().esMobile;
 
+  readonly pacientesTabs: Ui2SegmentedOption[] = [
+    { id: 'pacientes', label: 'Pacientes' },
+    { id: 'asignacion', label: 'Asignación' },
+  ];
+
+  onPacientesTabChange(value: string) {
+    if (value === 'pacientes') {
+      this.router.navigate(['/mis-pacientes']);
+    }
+  }
+
   // Clínicas donde el usuario es admin
   readonly clinicasAdmin = computed(() => {
     const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
@@ -64,11 +101,24 @@ export class AsignacionResponsableComponent {
 
   readonly clinicaSeleccionada = signal<string | null>(null);
 
+  // Opciones de clínicas para ui2-select
+  readonly clinicasOptions = computed<Ui2SelectOption[]>(() =>
+    this.clinicasAdmin().map((c) => ({ value: c.id, label: c.nombre })),
+  );
+
   // Fisios de la clínica seleccionada
   readonly fisiosClinica = computed(() => {
     const cid = this.clinicaSeleccionada();
     if (!cid) return [];
     return this.clinicasService.fisiosDeClinica(cid)();
+  });
+
+  readonly fisiosOptions = computed<Ui2SelectOption[]>(() => {
+    const items: Ui2SelectOption[] = [{ value: '', label: 'Sin asignar' }];
+    for (const f of this.fisiosClinica()) {
+      items.push({ value: f.id, label: this.fisioFullName(f) });
+    }
+    return items;
   });
 
   // Pacientes y asignaciones
@@ -102,16 +152,18 @@ export class AsignacionResponsableComponent {
   });
 
   readonly guardando = signal(false);
-  readonly mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   seleccionarClinica(id: string) {
     this.clinicaSeleccionada.set(id);
     this.cargarDatos(id);
   }
 
+  onClinicaChange(value: string | number) {
+    this.seleccionarClinica(String(value));
+  }
+
   private async cargarDatos(clinicaId: string) {
     this.isLoadingPacientes.set(true);
-    this.mensaje.set(null);
 
     try {
       // Cargar pacientes y asignaciones en paralelo
@@ -133,7 +185,7 @@ export class AsignacionResponsableComponent {
       this.asignacionesEditadas.set(new Map(asigMap));
     } catch (err) {
       console.error('Error cargando datos de asignación:', err);
-      this.mensaje.set({ tipo: 'error', texto: 'Error al cargar datos' });
+      this.toast.error('Error al cargar datos');
     } finally {
       this.isLoadingPacientes.set(false);
     }
@@ -149,10 +201,11 @@ export class AsignacionResponsableComponent {
     );
   }
 
-  cambiarAsignacion(pacienteId: UUID, fisioId: string) {
+  cambiarAsignacion(pacienteId: UUID, fisioId: string | number) {
+    const id = typeof fisioId === 'number' ? String(fisioId) : fisioId;
     this.asignacionesEditadas.update((m) => {
       const copy = new Map(m);
-      copy.set(pacienteId, fisioId || null);
+      copy.set(pacienteId, id || null);
       return copy;
     });
   }
@@ -173,7 +226,6 @@ export class AsignacionResponsableComponent {
     if (!clinicaId || this.cambiosPendientes() === 0) return;
 
     this.guardando.set(true);
-    this.mensaje.set(null);
 
     try {
       const orig = this.asignacionesOriginales();
@@ -196,40 +248,28 @@ export class AsignacionResponsableComponent {
       if (result.success) {
         // Actualizar originales para reflejar el nuevo estado
         this.asignacionesOriginales.set(new Map(edit));
-        this.mensaje.set({
-          tipo: 'success',
-          texto: `Cambios guardados: ${result.asignadas} asignada${result.asignadas !== 1 ? 's' : ''}${result.eliminadas > 0 ? `, ${result.eliminadas} eliminada${result.eliminadas !== 1 ? 's' : ''}` : ''}`,
-        });
-
-        setTimeout(() => this.mensaje.set(null), 4000);
+        const partes: string[] = [];
+        partes.push(`${result.asignadas} asignada${result.asignadas !== 1 ? 's' : ''}`);
+        if (result.eliminadas > 0) {
+          partes.push(`${result.eliminadas} eliminada${result.eliminadas !== 1 ? 's' : ''}`);
+        }
+        this.toast.success(`Cambios guardados: ${partes.join(', ')}`);
       }
     } catch (err: unknown) {
       console.error('Error guardando asignaciones:', err);
-      const errorMsg = (err as { error?: { error?: string } })?.error?.error || 'Error al guardar los cambios';
-      this.mensaje.set({ tipo: 'error', texto: errorMsg });
+      const errorMsg =
+        (err as { error?: { error?: string } })?.error?.error ||
+        'Error al guardar los cambios';
+      this.toast.error(errorMsg);
     } finally {
       this.guardando.set(false);
     }
-  }
-
-  volver() {
-    this.router.navigate(['/mis-pacientes']);
   }
 
   fullName(u: Usuario): string {
     const fn = (u.first_name || '').trim();
     const ln = (u.last_name || '').trim();
     return fn || ln ? `${fn} ${ln}`.trim() : u.email || u.id;
-  }
-
-  getInitials(u: Usuario): string {
-    const fn = (u.first_name || '').trim();
-    const ln = (u.last_name || '').trim();
-    if (fn && ln) return `${fn[0]}${ln[0]}`.toUpperCase();
-    if (fn) return fn.substring(0, 2).toUpperCase();
-    if (ln) return ln.substring(0, 2).toUpperCase();
-    if (u.email) return u.email.substring(0, 2).toUpperCase();
-    return '??';
   }
 
   avatarUrl(p: Usuario): string | null {

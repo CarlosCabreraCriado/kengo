@@ -37,6 +37,15 @@ nxcloud.env
 !.vscode/extensions.json
 .history/*
 
+# Capacitor — assets web sincronizados desde dist/ a las carpetas nativas.
+# Se regeneran con `npx cap sync` y no deben versionarse.
+apps/app/ios/App/App/public/
+apps/app/android/app/src/main/assets/public/
+# Capacitor — derived JSON config (regenerada cada sync)
+apps/app/ios/App/App/capacitor.config.json
+apps/app/android/app/src/main/assets/capacitor.config.json
+apps/app/android/app/src/main/assets/capacitor.plugins.json
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
@@ -59,5 +68,11 @@ Thumbs.db
 /screenshots/
 .env.e2e
 .env.local
+
+# Playwright MCP runtime artifacts (logs, screenshots, snapshots)
+.playwright-mcp/
+
+# Figma handoff (referencia local del rediseño cream wellness, no versionado)
+/diseño/
 
 .angular

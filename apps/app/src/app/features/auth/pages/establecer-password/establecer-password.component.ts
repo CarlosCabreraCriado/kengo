@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/services/auth.service';
@@ -7,19 +7,28 @@ import {
   passwordMatchValidator,
   passwordRequired,
   passwordRepeatRequired,
-  InputComponent,
-  ButtonComponent,
-  SpinnerComponent,
 } from '../../../../shared';
+import {
+  Ui2CreamBgComponent,
+  Ui2CardComponent,
+  Ui2BigTitleComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+  Ui2SpinnerComponent,
+} from '../../../../shared/ui-v2';
 
 @Component({
   standalone: true,
   selector: 'app-establecer-password',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    InputComponent,
-    ButtonComponent,
-    SpinnerComponent,
+    Ui2CreamBgComponent,
+    Ui2CardComponent,
+    Ui2BigTitleComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+    Ui2SpinnerComponent,
   ],
   templateUrl: './establecer-password.component.html',
   styleUrl: './establecer-password.component.css',
@@ -67,7 +76,6 @@ export class EstablecerPasswordComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Obtener email del state de navegación o del usuario cargado en sesión
     const nav = this.router.getCurrentNavigation();
     this.email = nav?.extras.state?.['email'] ?? '';
 
@@ -85,15 +93,12 @@ export class EstablecerPasswordComponent implements OnInit {
     const { password } = this.form.getRawValue();
 
     try {
-      // 1. Establecer contraseña
       await this.auth.establecerPassword(password!);
 
-      // 2. Auto-login con email + nueva contraseña
       if (this.email) {
         await this.auth.login(this.email, password!);
       }
 
-      // 3. Redirigir a inicio
       await this.router.navigateByUrl('/inicio');
     } catch {
       this.error.set('No se pudo establecer la contraseña. Inténtalo de nuevo.');

@@ -1,0 +1,146 @@
+<ui2-card [padding]="20">
+  <header class="mac__head" [class.mac__head--stacked]="expandable()">
+    <div class="mac__head-left">
+      <ui2-icon-badge icon="key" color="var(--ink-700)" [size]="36" [radius]="10" />
+      <div class="mac__head-text">
+        <span class="mac__overline">Códigos de acceso</span>
+        <h3 class="mac__title">INVITAR PACIENTES Y FISIOS</h3>
+      </div>
+    </div>
+
+    @if (!expandable() && puedeGenerar()) {
+      <ui2-button
+        variant="primary"
+        size="sm"
+        iconLeft="add"
+        (clicked)="generarCodigo.emit()"
+      >
+        Generar
+      </ui2-button>
+    }
+  </header>
+
+  @if (expandable() && puedeGenerar()) {
+    <div class="mac__head-cta">
+      <ui2-button
+        variant="primary"
+        size="sm"
+        iconLeft="add"
+        (clicked)="generarCodigo.emit()"
+      >
+        Generar código
+      </ui2-button>
+    </div>
+  }
+
+  @if (!expandable() || expanded()) {
+    @if (loading()) {
+      <div class="mac__empty">
+        <ui2-spinner size="sm" />
+        <p>Cargando códigos…</p>
+      </div>
+    } @else if (codigos().length === 0) {
+      <div class="mac__empty">
+        <span class="material-symbols-outlined" aria-hidden="true">vpn_key_off</span>
+        <p>No hay códigos activos</p>
+        @if (puedeGenerar()) {
+          <ui2-button
+            variant="secondary"
+            size="sm"
+            iconLeft="add"
+            (clicked)="generarCodigo.emit()"
+          >
+            Generar primer código
+          </ui2-button>
+        }
+      </div>
+    } @else {
+      <div class="mac__list">
+        @for (codigo of codigos(); track codigo.id) {
+          <article class="mac__row" [class.mac__row--inactive]="!codigo.activo">
+            <div class="mac__info">
+              <div class="mac__value">
+                <code class="mac__code">{{ codigo.codigo }}</code>
+                <button
+                  type="button"
+                  class="mac__copy"
+                  (click)="copiarCodigo.emit(codigo.codigo)"
+                  aria-label="Copiar código"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+                </button>
+              </div>
+              <div class="mac__meta">
+                @if (codigo.tipo === 'fisioterapeuta') {
+                  <ui2-pill variant="soft" icon="medical_services">Fisioterapeuta</ui2-pill>
+                } @else {
+                  <ui2-pill variant="neutral" icon="person">Paciente</ui2-pill>
+                }
+                @if (codigo.email) {
+                  <ui2-pill variant="success" icon="mail">Vinculado</ui2-pill>
+                }
+                @if (codigo.usosMaximos) {
+                  <span class="mac__uses">{{ codigo.usosActuales }}/{{ codigo.usosMaximos }} usos</span>
+                } @else {
+                  <span class="mac__uses">{{ codigo.usosActuales }} usos</span>
+                }
+                @if (codigo.fechaExpiracion) {
+                  <span class="mac__expiry">· Expira {{ codigo.fechaExpiracion | date:'dd MMM' }}</span>
+                }
+              </div>
+            </div>
+
+            @if (codigo.activo) {
+              <button
+                type="button"
+                class="mac__toggle mac__toggle--off"
+                (click)="desactivar.emit(codigo.id)"
+                aria-label="Desactivar código"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">block</span>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="mac__toggle mac__toggle--on"
+                (click)="reactivar.emit(codigo.id)"
+                aria-label="Reactivar código"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+              </button>
+            }
+          </article>
+        }
+      </div>
+    }
+  } @else {
+    <!-- Mobile colapsado: hint compacto con resumen -->
+    <p class="mac__preview-hint">
+      @if (codigos().length === 1) {
+        1 código disponible
+      } @else if (codigos().length > 0) {
+        {{ codigos().length }} códigos disponibles
+      } @else {
+        Sin códigos activos
+      }
+    </p>
+  }
+
+  @if (expandable()) {
+    <button
+      type="button"
+      class="mac__expander"
+      (click)="toggleExpand.emit()"
+      [attr.aria-expanded]="expanded()"
+    >
+      <span class="mac__expander-text">
+        {{ expanded() ? 'Ocultar códigos' : 'Ver los códigos' }}
+      </span>
+      <span
+        class="material-symbols-outlined mac__expander-icon"
+        [class.mac__expander-icon--rotated]="expanded()"
+        aria-hidden="true"
+      >expand_more</span>
+    </button>
+  }
+</ui2-card>

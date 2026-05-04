@@ -30,11 +30,18 @@ import type * as auth from "../auth.js";
 import type * as auth_actions from "../auth/actions.js";
 import type * as auth_mutations from "../auth/mutations.js";
 import type * as auth_queries from "../auth/queries.js";
+import type * as billing__helpers from "../billing/_helpers.js";
+import type * as billing_actions from "../billing/actions.js";
+import type * as billing_internal from "../billing/internal.js";
+import type * as billing_migrations from "../billing/migrations.js";
+import type * as billing_queries from "../billing/queries.js";
 import type * as clinicMemberships_mutations from "../clinicMemberships/mutations.js";
 import type * as clinicMemberships_queries from "../clinicMemberships/queries.js";
 import type * as clinics_mutations from "../clinics/mutations.js";
 import type * as clinics_queries from "../clinics/queries.js";
 import type * as compliance_internal from "../compliance/internal.js";
+import type * as conversations_mutations from "../conversations/mutations.js";
+import type * as conversations_queries from "../conversations/queries.js";
 import type * as crons from "../crons.js";
 import type * as dashboard_queries from "../dashboard/queries.js";
 import type * as email_actions from "../email/actions.js";
@@ -100,11 +107,18 @@ declare const fullApi: ApiFromModules<{
   "auth/actions": typeof auth_actions;
   "auth/mutations": typeof auth_mutations;
   "auth/queries": typeof auth_queries;
+  "billing/_helpers": typeof billing__helpers;
+  "billing/actions": typeof billing_actions;
+  "billing/internal": typeof billing_internal;
+  "billing/migrations": typeof billing_migrations;
+  "billing/queries": typeof billing_queries;
   "clinicMemberships/mutations": typeof clinicMemberships_mutations;
   "clinicMemberships/queries": typeof clinicMemberships_queries;
   "clinics/mutations": typeof clinics_mutations;
   "clinics/queries": typeof clinics_queries;
   "compliance/internal": typeof compliance_internal;
+  "conversations/mutations": typeof conversations_mutations;
+  "conversations/queries": typeof conversations_queries;
   crons: typeof crons;
   "dashboard/queries": typeof dashboard_queries;
   "email/actions": typeof email_actions;
@@ -170,4 +184,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
+  stripe: import("@convex-dev/stripe/_generated/component.js").ComponentApi<"stripe">;
 };

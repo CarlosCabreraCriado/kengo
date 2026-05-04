@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard, FisioGuard } from '../../core';
+import { ActiveSubscriptionGuard, AuthGuard, FisioGuard } from '../../core';
 import { rutinaUnsavedChangesGuard } from './guards/rutina-unsaved-changes.guard';
 
 export const RUTINAS_ROUTES: Routes = [
@@ -17,7 +17,7 @@ export const RUTINAS_ROUTES: Routes = [
       import('./pages/rutina-builder/rutina-builder.component').then(
         (m) => m.RutinaBuilderComponent,
       ),
-    canActivate: [AuthGuard, FisioGuard],
+    canActivate: [AuthGuard, FisioGuard, ActiveSubscriptionGuard],
   },
   {
     path: ':id/editar',
@@ -25,7 +25,7 @@ export const RUTINAS_ROUTES: Routes = [
       import('./pages/rutina-builder/rutina-builder.component').then(
         (m) => m.RutinaBuilderComponent,
       ),
-    canActivate: [AuthGuard, FisioGuard],
+    canActivate: [AuthGuard, FisioGuard, ActiveSubscriptionGuard],
     canDeactivate: [rutinaUnsavedChangesGuard],
   },
 ];

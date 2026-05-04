@@ -1,335 +1,271 @@
-<app-dashboard-header />
-
-<div class="dashboard-body">
-  <div class="body-inner">
-
-<!-- Greeting Card (mobile only) -->
-@if (isMovil()) {
-  <section class="greeting-card animate-in">
-    <div class="greeting-card-content">
-      <h2 class="titulo-kengo greeting-title">Hola, {{ userName() }}</h2>
-      <p class="greeting-message">¿Listo para tu entrenamiento?</p>
+<div class="ip-page">
+  <!-- ========================================================== -->
+  <!-- HERO mobile (compact)                                       -->
+  <!-- ========================================================== -->
+  <section
+    class="ip-hero ip-hero--mobile"
+    [class.ip-hero--sin-plan]="sinPlanesActivos()"
+  >
+    <div class="ip-hero__text">
+      <p class="ip-hero__overline">Hola {{ userName() }},</p>
+      <h1 class="ip-hero__title">{{ heroTitle() }}</h1>
+      <p class="ip-hero__sub" [innerHTML]="heroSub()"></p>
+      @if (sinPlanesActivos() && !cargandoFisio() && fisioAsignado()) {
+        <ui2-button
+          class="hidden! md:block! ip-hero__cta"
+          variant="primary"
+          size="md"
+          iconLeft="chat"
+          (clicked)="enviarMensajeAFisio()"
+        >
+          Enviar mensaje
+        </ui2-button>
+      }
     </div>
-    <div class="greeting-decoration" aria-hidden="true">
-      <img src="assets/bonsai.png" alt="" class="bonsai-small" />
-    </div>
-  </section>
-}
-
-<!-- Activity Hero Card -->
-<article
-  class="activity-hero animate-in"
-  [attr.data-state]="badgeType() || 'loading'"
-  style="--delay: 0.05s"
-  (click)="irAActividad()"
->
-  <div class="activity-bg">
-    <div class="activity-wave activity-wave-1"></div>
-    <div class="activity-wave activity-wave-2"></div>
-    <img src="assets/bonsai.png" alt="" class="bonsai-hero" aria-hidden="true" />
-  </div>
-
-  <div class="activity-badge" [attr.data-type]="badgeType()">
-    @switch (badgeType()) {
-      @case ('loading') {
-        <div class="badge-spinner"></div>
-      }
-      @case ('pending') {
-        <span class="badge-number">{{ badgeCount() }}</span>
-        <span class="badge-label">pendiente{{ badgeCount() !== 1 ? 's' : '' }}</span>
-      }
-      @case ('completed') {
-        <span class="material-symbols-outlined icon-filled">check_circle</span>
-      }
-      @case ('rest') {
-        <span class="material-symbols-outlined">self_improvement</span>
-      }
+    @if (!sinPlanesActivos() && !esDescanso()) {
+      <ui2-progress-ring
+        [size]="130"
+        [stroke]="14"
+        [value]="progresoRatio()"
+        trackColor="rgba(var(--kengo-primary-rgb), 0.1)"
+      >
+        <div class="ip-hero__ring-num">
+          {{ progreso().completados
+          }}<span class="ip-hero__ring-den">/{{ progreso().total }}</span>
+        </div>
+        <div class="ip-hero__ring-label">hoy</div>
+      </ui2-progress-ring>
     }
-  </div>
+  </section>
 
-  <div class="activity-content">
-    <div class="activity-info">
-      <h3 class="activity-title">Actividad personal</h3>
-      <p class="activity-subtitle">{{ subtitulo() }}</p>
-    </div>
-
-    <!-- Exercise Strip -->
-    @if (ejerciciosStrip().length > 0) {
-      <div class="exercise-strip">
-        @for (ej of ejerciciosStrip(); track ej.id) {
-          <div
-            class="exercise-dot"
-            [class.completado]="ej.completado"
-            [class.siguiente]="ej.esSiguiente"
-            [attr.title]="ej.nombre"
-          >
-            @if (ej.portadaUrl) {
-              <img [src]="ej.portadaUrl" [alt]="ej.nombre" class="dot-img" loading="lazy" />
-            } @else {
-              <span class="material-symbols-outlined dot-fallback">fitness_center</span>
-            }
-            @if (ej.completado) {
-              <div class="dot-check">
-                <span class="material-symbols-outlined icon-filled">check</span>
-              </div>
-            }
+  <!-- ========================================================== -->
+  <!-- HERO desktop (expanded block: ring + text + CTAs + stats)   -->
+  <!-- ========================================================== -->
+  <section
+    class="ip-hero-web"
+    [class.ip-hero-web--sin-plan]="sinPlanesActivos()"
+  >
+    @if (!sinPlanesActivos() && !esDescanso()) {
+      <div class="ip-hero-web__ring-col">
+        <ui2-progress-ring
+          [size]="170"
+          [stroke]="16"
+          [value]="progresoRatio()"
+          trackColor="rgba(var(--kengo-primary-rgb), 0.12)"
+        >
+          <div class="ip-hero-web__ring-num">
+            {{ progreso().completados
+            }}<span class="ip-hero-web__ring-den">/{{ progreso().total }}</span>
           </div>
-        }
+          <div class="ip-hero-web__ring-label">hoy</div>
+        </ui2-progress-ring>
       </div>
     }
 
-    @if (progreso(); as prog) {
-      @if (prog.total > 0) {
-        <div class="activity-progress">
-          <div class="progress-track">
-            <div
-              class="progress-fill"
-              [style.width.%]="(prog.completados / prog.total) * 100"
-            ></div>
-          </div>
-          <div class="progress-meta">
-            <span class="progress-text">
-              {{ prog.completados }}/{{ prog.total }} ejercicios
-            </span>
-            @if (tiempoRestanteMin(); as minutos) {
-              <span class="progress-time">
-                <span class="material-symbols-outlined">schedule</span>
-                ~{{ minutos }} min
-              </span>
-            }
-            @if (rachaService.rachaActual() > 0) {
-              <span class="streak-micro">🔥 {{ rachaService.rachaActual() }}</span>
-            }
-          </div>
-        </div>
+    <div class="ip-hero-web__main">
+      <span class="ip-hero-web__eyebrow">{{
+        sinPlanesActivos() ? 'Panel del paciente' : 'Tu sesión de hoy'
+      }}</span>
+      <h1 class="ip-hero-web__title">{{ heroTitle() }}</h1>
+      <p class="ip-hero-web__sub" [innerHTML]="heroSubDesktop()"></p>
 
-        <!-- Next exercise with thumbnail -->
-        @if (siguienteEjercicioDetalle(); as siguiente) {
-          <div class="next-exercise">
-            <div class="next-exercise-thumb">
-              @if (siguiente.portadaUrl) {
-                <img [src]="siguiente.portadaUrl" [alt]="siguiente.nombre" loading="lazy" />
-              } @else {
-                <span class="material-symbols-outlined">fitness_center</span>
-              }
-            </div>
-            <div class="next-exercise-info">
-              <span class="next-exercise-label">Siguiente</span>
-              <span class="next-exercise-name">{{ siguiente.nombre }}</span>
-            </div>
-            <span class="material-symbols-outlined icon-filled next-exercise-play">play_circle</span>
-          </div>
-        }
-
-        @if (prog.completados < prog.total) {
+      @if (hayActividadHoy() && !todoCompletado()) {
+        <div class="ip-hero-web__ctas">
           <button
             type="button"
-            class="activity-cta"
-            (click)="irAActividad(); $event.stopPropagation()"
+            class="ip-hero-web__cta-primary"
+            (click)="iniciarSesionHoy()"
           >
-            <span class="material-symbols-outlined icon-filled">play_arrow</span>
-            <span>{{ prog.completados > 0 ? 'Continuar' : 'Empezar' }} sesión</span>
+            <span class="material-symbols-outlined" aria-hidden="true">play_arrow</span>
+            <span>{{ progreso().completados > 0 ? 'Continuar sesión' : 'Empezar sesión' }}</span>
           </button>
-        } @else {
-          <div class="activity-completed">
-            <div class="completed-main">
-              <span class="material-symbols-outlined icon-filled">celebration</span>
-              <span>¡Buen trabajo hoy!</span>
-            </div>
-            <div class="completed-summary">
-              <span>{{ resumenCompletado().total }} ejercicios completados</span>
-              @if (resumenCompletado().rachaTexto) {
-                <span class="completed-streak">{{ resumenCompletado().rachaTexto }}</span>
-              }
-            </div>
-          </div>
-        }
+          <button
+            type="button"
+            class="ip-hero-web__cta-secondary"
+            (click)="irAActividad()"
+          >
+            Ver plan completo
+          </button>
+        </div>
       }
-    }
-  </div>
-</article>
 
-<!-- Mini-calendario semanal -->
-<section class="mini-calendar animate-in" style="--delay: 0.1s">
-  <h3 class="mini-calendar-title">Esta semana</h3>
-  <div class="calendar-pills">
-    @for (dia of rachaService.cumplimientoSemana(); track dia.fecha) {
-      <div class="calendar-pill" [attr.data-estado]="dia.estado" [class.es-hoy]="dia.esHoy">
-        <span class="pill-letra">{{ dia.letra }}</span>
-        <span class="pill-dot"></span>
-      </div>
-    }
-  </div>
-
-  <!-- Resumen y próxima sesión -->
-  <div class="calendar-summary">
-    @if (proximaSesion(); as proxima) {
-      <span class="calendar-chip">
-        <span class="material-symbols-outlined calendar-chip-icon">event</span>
-        Próxima: {{ proxima.letra }}
-      </span>
-    }
-    @if (resumenSemana().completados > 0) {
-      <span class="calendar-chip calendar-chip-success">
-        <span class="material-symbols-outlined calendar-chip-icon icon-filled">check_circle</span>
-        {{ resumenSemana().completados }} completado{{ resumenSemana().completados !== 1 ? 's' : '' }}
-      </span>
-    }
-  </div>
-
-  <!-- Leyenda -->
-  <div class="calendar-legend">
-    <div class="legend-item">
-      <span class="legend-dot legend-dot-completado"></span>
-      <span class="legend-label">Completado</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-dot legend-dot-parcial"></span>
-      <span class="legend-label">Parcial</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-dot legend-dot-fallido"></span>
-      <span class="legend-label">Pendiente</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-dot legend-dot-descanso"></span>
-      <span class="legend-label">Descanso</span>
-    </div>
-  </div>
-</section>
-
-<!-- Tu Plan Card -->
-@if (!actividadHoyService.cargando() && planPrincipal(); as plan) {
-  <section class="plan-card animate-in" style="--delay: 0.125s">
-    <div class="plan-header">
-      <span class="material-symbols-outlined plan-icon">assignment</span>
-      <div class="plan-info">
-        <span class="plan-title">{{ plan.titulo }}</span>
-        @if (plan.diasRestantes !== null) {
-          <span class="plan-remaining">
-            {{ plan.diasRestantes }} día{{ plan.diasRestantes !== 1 ? 's' : '' }} restante{{ plan.diasRestantes !== 1 ? 's' : '' }}
-          </span>
-        } @else {
-          <span class="plan-remaining">Plan sin fecha límite</span>
-        }
-      </div>
-    </div>
-    <div class="plan-stats">
-      <div class="plan-stat">
-        <span class="plan-stat-number">{{ plan.totalEjercicios }}</span>
-        <span class="plan-stat-label">ejercicios</span>
-      </div>
-      <div class="plan-stat">
-        <span class="plan-stat-number">{{ plan.ejerciciosHoy }}</span>
-        <span class="plan-stat-label">hoy</span>
-      </div>
-    </div>
-    @if (tienePlanesMultiples()) {
-      <span class="plan-extra">+{{ cantidadPlanesExtra() }} plan{{ cantidadPlanesExtra() !== 1 ? 'es' : '' }} más</span>
-    }
-  </section>
-}
-
-<!-- Racha Card -->
-@if (rachaService.rachaActual() > 0) {
-  <section class="streak-card animate-in" style="--delay: 0.15s">
-    <div class="streak-content">
-      <span class="streak-icon">🔥</span>
-      <div class="streak-info">
-        <span class="streak-number">{{ rachaService.rachaActual() }}</span>
-        <span class="streak-label">{{ rachaService.rachaActual() === 1 ? 'día consecutivo' : 'días consecutivos' }}</span>
-      </div>
-    </div>
-    <div class="streak-extra">
-      @if (mensajeMotivacional(); as mensaje) {
-        <span class="streak-motivation">{{ mensaje }}</span>
+      @if (sinPlanesActivos() && !cargandoFisio() && fisioAsignado()) {
+        <div class="ip-hero-web__ctas">
+          <ui2-button
+            variant="primary"
+            size="md"
+            iconLeft="chat"
+            (clicked)="enviarMensajeAFisio()"
+          >
+            Enviar mensaje
+          </ui2-button>
+        </div>
       }
-      @if (mostrarMejorRacha()) {
-        <span class="streak-best">Récord: {{ rachaService.mejorRacha() }} días</span>
-      }
+    </div>
+
+    <div class="ip-hero-web__stats">
+      <ui2-mini-stat
+        icon="local_fire_department"
+        label="Racha"
+        [value]="rachaActual() + ' días'"
+        color="#d9a832"
+      ></ui2-mini-stat>
+      <ui2-mini-stat
+        icon="trending_up"
+        label="Adherencia"
+        [value]="adherenciaTexto()"
+        color="#22c55e"
+      ></ui2-mini-stat>
+      <ui2-mini-stat
+        icon="favorite"
+        label="Dolor"
+        [value]="dolorActualTexto()"
+        [sub]="dolorSub()"
+        color="#22c55e"
+      ></ui2-mini-stat>
     </div>
   </section>
-}
 
-<!-- Tu Fisio Card -->
-@if (fisioAsignado()) {
-  <section class="fisio-card animate-in" style="--delay: 0.175s">
-    <div class="fisio-content">
-      <div class="fisio-avatar">
-        @if (fisioAvatarUrl()) {
-          <img [src]="fisioAvatarUrl()" alt="Avatar fisio" class="fisio-avatar-img" />
-        } @else {
-          <span class="material-symbols-outlined fisio-avatar-fallback">person</span>
-        }
-      </div>
-      <div class="fisio-info">
-        <span class="fisio-label">Tu fisioterapeuta</span>
-        <span class="fisio-name">{{ fisioNombreCompleto() }}</span>
-        @if (clinicaNombre()) {
-          <span class="fisio-clinica-name">{{ clinicaNombre() }}</span>
-        }
-      </div>
-      <div class="fisio-actions">
-        <button
-          type="button"
-          class="fisio-contact-btn"
-          (click)="onContactarFisio()"
-          aria-label="Contactar fisioterapeuta"
+  <!-- ========================================================== -->
+  <!-- CTA BAR mobile (hero desktop ya tiene sus propios CTAs)     -->
+  <!-- ========================================================== -->
+  @if (hayActividadHoy() && !todoCompletado()) {
+    <ui2-section [padding]="'4px 20px 14px'" class="ip-mobile-only">
+      <ui2-cta-bar
+        [title]="progreso().completados > 0 ? 'CONTINUAR' : 'COMENZAR'"
+        [subtitle]="progreso().completados + '/' + progreso().total + ' · ' + tiempoEstimadoHoy() + ' estimado'"
+        icon="play_arrow"
+        (clicked)="iniciarSesionHoy()"
+      ></ui2-cta-bar>
+    </ui2-section>
+  }
+
+  <!-- ========================================================== -->
+  <!-- CONTENIDO: 1-col (mobile) / 2-col (desktop)                 -->
+  <!-- ========================================================== -->
+  <div class="ip-grid">
+    <div class="ip-col-left">
+      <!-- Ejercicios — scroller en mobile -->
+      @if (ejerciciosHoy().length > 0) {
+        <ui2-horizontal-scroller
+          class="ip-mobile-only"
+          label="Ejercicios de hoy"
+          action="Ver todo →"
+          (actionClick)="irAActividad()"
         >
-          <span class="material-symbols-outlined">chat</span>
-        </button>
-        @if (mostrarTooltipContacto()) {
-          <span class="fisio-contact-tooltip">Mensajería disponible pronto</span>
-        }
-      </div>
+          @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
+            <ui2-exercise-card
+              [name]="ej.nombre"
+              [sets]="ej.sets"
+              [imageUrl]="ej.imageUrl"
+              [done]="ej.done"
+              [index]="i"
+              (cardClick)="irAActividad()"
+            ></ui2-exercise-card>
+          }
+        </ui2-horizontal-scroller>
+      }
+
+      <!-- Ejercicios — grid 3-col en desktop -->
+      @if (ejerciciosHoy().length > 0) {
+        <section class="ip-exercises-web ip-desktop-only">
+          <header class="ip-exercises-web__head">
+            <div>
+              <span class="ip-exercises-web__eyebrow">Ejercicios de hoy</span>
+              <h3 class="ip-exercises-web__title">
+                {{ ejerciciosHoy().length }} EJERCICIOS · ~{{ tiempoEstimadoHoy() }}
+              </h3>
+            </div>
+            <button
+              type="button"
+              class="ip-exercises-web__link"
+              (click)="irAActividad()"
+            >
+              Ver plan completo →
+            </button>
+          </header>
+          <div class="ip-exercises-web__grid">
+            @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
+              <ui2-exercise-card
+                class="ip-exercises-web__card"
+                [name]="ej.nombre"
+                [sets]="ej.sets"
+                [imageUrl]="ej.imageUrl"
+                [done]="ej.done"
+                [index]="i"
+                [fluid]="true"
+                (cardClick)="irAActividad()"
+              ></ui2-exercise-card>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Activity chart — datos reales vía EstadisticasService -->
+      <ui2-section [padding]="'6px 20px 10px'" class="ip-activity-chart-section">
+        <ui2-web-activity-chart
+          [data]="actividad10dias()"
+          [delta]="adherenciaDeltaTexto()"
+          [deltaColor]="adherenciaDeltaColor()"
+          [pillLabel]="periodoLabel()"
+        ></ui2-web-activity-chart>
+      </ui2-section>
     </div>
-  </section>
-}
 
-<!-- Quick Actions -->
-<section class="actions-section animate-in" style="--delay: 0.25s">
-  <h2 class="section-title">Accesos rápidos</h2>
-  <div class="actions-grid">
-    <article class="action-card" (click)="irAMiActividad()">
-      <div class="action-image">
-        <img src="assets/portadas/opcion-ejercicios.webp" alt="Mi actividad" loading="lazy" />
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Mi actividad</h3>
-        <p class="action-subtitle">Tu progreso diario</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
+    <div class="ip-col-right">
+      <!-- Mi fisio — card de presentación con CTA "Enviar mensaje" -->
+      @if (!cargandoFisio() && fisioAsignado()) {
+        <ui2-section class="ip-mi-fisio-section" [padding]="'6px 20px 10px'">
+          <ui2-card class="ip-mi-fisio-card" [padding]="18">
+            <div class="ip-mi-fisio">
+              <ui2-avatar
+                [name]="fisioNombreCompleto()"
+                [src]="fisioAvatarUrl()"
+                size="lg"
+                gradient="coral"
+                [border]="true"
+              ></ui2-avatar>
+              <div class="ip-mi-fisio__text">
+                <span class="ip-mi-fisio__overline">Tu fisio responsable</span>
+                <h3 class="ip-mi-fisio__name">{{ fisioNombreCompleto() }}</h3>
+              </div>
+            </div>
+            <ui2-button
+              class="ip-mi-fisio__cta"
+              variant="primary"
+              size="md"
+              iconLeft="chat"
+              [fullWidth]="true"
+              (clicked)="enviarMensajeAFisio()"
+            >
+              Enviar mensaje
+            </ui2-button>
+          </ui2-card>
+        </ui2-section>
+      }
 
-    <article class="action-card action-card-icon" (click)="irACalendario()">
-      <div class="action-icon-circle">
-        <span class="material-symbols-outlined">calendar_month</span>
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Calendario</h3>
-        <p class="action-subtitle">Historial semanal</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
+      <!-- Próxima sesión — siguiente día con entrenamiento programado -->
+      @if (proximaSesion(); as ps) {
+        <ui2-section [padding]="'6px 20px 10px'" class="ip-next-appointment-section">
+          <ui2-next-appointment
+            [data]="ps"
+            (planClick)="irAPlan()"
+          ></ui2-next-appointment>
+        </ui2-section>
+      }
 
-    <article class="action-card" (click)="irAClinica()">
-      <div class="action-image">
-        <img src="assets/portadas/opcion-clinica.webp" alt="Mi Clínica" loading="lazy" />
-      </div>
-      <div class="action-content">
-        <h3 class="titulo-kengo action-title">Mi Clínica</h3>
-        <p class="action-subtitle">{{ subtituloClinica() }}</p>
-      </div>
-      <div class="action-arrow">
-        <span class="material-symbols-outlined">arrow_forward</span>
-      </div>
-    </article>
-  </div>
-</section>
-
+      <!-- Clínica hero — card con imagen de fondo de la clínica -->
+      @if (clinicaActual(); as clinica) {
+        <ui2-section [padding]="'0 20px 14px'" class="ip-clinica-section">
+          <ui2-clinic-hero-card
+            [name]="clinica.nombre"
+            [imageUrl]="clinicaImagenUrl()"
+            [address]="clinica.direccion ?? null"
+            [phone]="clinica.telefono ?? null"
+            (cardClick)="irAClinica()"
+          ></ui2-clinic-hero-card>
+        </ui2-section>
+      }
+    </div>
   </div>
 </div>

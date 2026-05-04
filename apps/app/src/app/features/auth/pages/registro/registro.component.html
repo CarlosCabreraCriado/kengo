@@ -1,166 +1,169 @@
-<section
-  class="absolute top-0 left-0 flex h-dvh w-screen items-center justify-center px-2"
->
-  <div
-    class="flex w-full max-w-lg flex-col justify-center rounded-2xl border-white/20 bg-white/60 px-6 py-5 shadow-xl backdrop-blur-md backdrop-filter"
-  >
-    <div class="baseline-end relative flex h-15 w-full items-end justify-center">
-      <img src="../../assets/logo.svg" class="relative h-[175%]" alt="Kengo logo" />
+<ui2-cream-bg></ui2-cream-bg>
+
+<section class="auth-shell">
+  <div class="auth-shell__panel auth-shell__panel--wide">
+    <div class="auth-shell__brand">
+      <img src="../../assets/logo.svg" alt="Kengo" class="auth-shell__logo" />
     </div>
 
-    <div class="fuente-kengo mb-4 w-full text-center text-3xl">Registro</div>
+    <ui2-big-title
+      title="Crea tu cuenta"
+      overline="REGISTRO"
+      sub="Configura tu perfil en cuatro pasos."
+    ></ui2-big-title>
 
-    <!-- Error global -->
     @if (error()) {
-      <div class="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-        {{ error() }}
-      </div>
+      <p class="auth-form__error" role="alert">{{ error() }}</p>
     }
 
-    <ui-stepper #stepper [selectedIndex]="currentStep()" [linear]="true" (selectionChange)="onStepChange($event)">
-      <!-- Paso 1: Datos -->
-      <ui-step label="Datos">
-        <form [formGroup]="datosForm" class="flex flex-col gap-4 pt-4">
-          <ui-input
-            label="Nombre"
-            formControlName="nombre"
-            [required]="true"
-            [error]="nombreError"
-          ></ui-input>
+    <ui2-card [padding]="22">
+      <ui2-stepper
+        #stepper
+        [selectedIndex]="currentStep()"
+        [linear]="true"
+        (selectionChange)="onStepChange($event)"
+      >
+        <ui2-step label="Datos">
+          <form [formGroup]="datosForm" class="auth-form">
+            <ui2-input
+              label="Nombre"
+              placeholder="Tu nombre"
+              iconLeft="person"
+              autocomplete="given-name"
+              [required]="true"
+              formControlName="nombre"
+              [error]="nombreError ?? null"
+            ></ui2-input>
 
-          <ui-input
-            label="Apellidos"
-            formControlName="apellidos"
-            [required]="true"
-            [error]="apellidosError"
-          ></ui-input>
+            <ui2-input
+              label="Apellidos"
+              placeholder="Tus apellidos"
+              iconLeft="badge"
+              autocomplete="family-name"
+              [required]="true"
+              formControlName="apellidos"
+              [error]="apellidosError ?? null"
+            ></ui2-input>
 
-          <ui-input
-            label="Email"
-            type="email"
-            formControlName="email"
-            [required]="true"
-            [error]="emailError"
-          ></ui-input>
+            <ui2-input
+              label="Email"
+              type="email"
+              placeholder="tu@email.com"
+              iconLeft="mail"
+              autocomplete="email"
+              [required]="true"
+              formControlName="email"
+              [error]="emailError ?? null"
+            ></ui2-input>
 
-          <div class="mt-2 flex justify-end">
-            <ui-button
-              variant="primary"
-              iconRight="arrow_forward"
-              [disabled]="!datosForm.valid"
-              (clicked)="nextStep()"
-            >
-              Siguiente
-            </ui-button>
-          </div>
-        </form>
-      </ui-step>
+            <div class="auth-form__nav auth-form__nav--end">
+              <ui2-button
+                variant="primary"
+                iconRight="arrow_forward"
+                [disabled]="!datosForm.valid"
+                (clicked)="nextStep()"
+              >
+                Siguiente
+              </ui2-button>
+            </div>
+          </form>
+        </ui2-step>
 
-      <!-- Paso 2: Tipo de usuario -->
-      <ui-step label="Tipo">
-        <form [formGroup]="tipoUsuarioForm" class="flex flex-col gap-4 pt-4">
-          <ui-radio-group
-            label="Selecciona tu rol *"
-            formControlName="tipo"
-            [options]="tipoUsuarioOptions"
-          ></ui-radio-group>
+        <ui2-step label="Tipo">
+          <form [formGroup]="tipoUsuarioForm" class="auth-form">
+            <ui2-radio-group
+              label="Selecciona tu rol"
+              formControlName="tipo"
+              [options]="tipoUsuarioOptions"
+            ></ui2-radio-group>
 
-          <div class="mt-2 flex justify-between">
-            <ui-button
-              variant="ghost"
-              iconLeft="arrow_back"
-              (clicked)="previousStep()"
-            >
-              Anterior
-            </ui-button>
-            <ui-button
-              variant="primary"
-              iconRight="arrow_forward"
-              [disabled]="!tipoUsuarioForm.valid"
-              (clicked)="nextStep()"
-            >
-              Siguiente
-            </ui-button>
-          </div>
-        </form>
-      </ui-step>
+            <div class="auth-form__nav">
+              <ui2-button variant="ghost" iconLeft="arrow_back" (clicked)="previousStep()">
+                Anterior
+              </ui2-button>
+              <ui2-button
+                variant="primary"
+                iconRight="arrow_forward"
+                [disabled]="!tipoUsuarioForm.valid"
+                (clicked)="nextStep()"
+              >
+                Siguiente
+              </ui2-button>
+            </div>
+          </form>
+        </ui2-step>
 
-      <!-- Paso 3: Codigo clinica -->
-      <ui-step label="Codigo" [optional]="true">
-        <form [formGroup]="codigoClinicaForm" class="flex flex-col gap-4 pt-4">
-          <ui-input
-            label="Codigo de clinica (opcional)"
-            formControlName="codigo"
-            placeholder="Ingresa el codigo si te lo proporcionaron"
-            hint="Si tu fisioterapeuta te dio un codigo, ingresalo aqui"
-          ></ui-input>
+        <ui2-step label="Código" [optional]="true">
+          <form [formGroup]="codigoClinicaForm" class="auth-form">
+            <ui2-input
+              label="Código de clínica (opcional)"
+              placeholder="Ingresa el código si te lo proporcionaron"
+              iconLeft="qr_code_2"
+              hint="Si tu fisioterapeuta te dio un código, ingrésalo aquí."
+              formControlName="codigo"
+            ></ui2-input>
 
-          <div class="mt-2 flex justify-between">
-            <ui-button
-              variant="ghost"
-              iconLeft="arrow_back"
-              (clicked)="previousStep()"
-            >
-              Anterior
-            </ui-button>
-            <ui-button
-              variant="primary"
-              iconRight="arrow_forward"
-              (clicked)="nextStep()"
-            >
-              Siguiente
-            </ui-button>
-          </div>
-        </form>
-      </ui-step>
+            <div class="auth-form__nav">
+              <ui2-button variant="ghost" iconLeft="arrow_back" (clicked)="previousStep()">
+                Anterior
+              </ui2-button>
+              <ui2-button variant="primary" iconRight="arrow_forward" (clicked)="nextStep()">
+                Siguiente
+              </ui2-button>
+            </div>
+          </form>
+        </ui2-step>
 
-      <!-- Paso 4: Contrasena -->
-      <ui-step label="Seguridad">
-        <form [formGroup]="passwordForm" class="flex flex-col gap-4 pt-4">
-          <ui-input
-            label="Contrasena"
-            type="password"
-            formControlName="password"
-            [required]="true"
-            [error]="passwordError"
-          ></ui-input>
+        <ui2-step label="Seguridad">
+          <form [formGroup]="passwordForm" class="auth-form">
+            <ui2-input
+              label="Contraseña"
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              iconLeft="lock"
+              autocomplete="new-password"
+              [required]="true"
+              formControlName="password"
+              [error]="passwordError ?? null"
+            ></ui2-input>
 
-          <ui-input
-            label="Repetir contrasena"
-            type="password"
-            formControlName="repetir"
-            [required]="true"
-            [error]="repetirError"
-          ></ui-input>
+            <ui2-input
+              label="Repetir contraseña"
+              type="password"
+              placeholder="Repite tu contraseña"
+              iconLeft="lock"
+              autocomplete="new-password"
+              [required]="true"
+              formControlName="repetir"
+              [error]="repetirError ?? null"
+            ></ui2-input>
 
-          <div class="mt-2 flex justify-between">
-            <ui-button
-              variant="ghost"
-              iconLeft="arrow_back"
-              [disabled]="isLoading()"
-              (clicked)="previousStep()"
-            >
-              Anterior
-            </ui-button>
-            <ui-button
-              variant="primary"
-              [iconLeft]="isLoading() ? undefined : 'check'"
-              [disabled]="!passwordForm.valid || !passwordsMatch"
-              [loading]="isLoading()"
-              (clicked)="completarRegistro()"
-            >
-              {{ isLoading() ? 'Registrando...' : 'Finalizar' }}
-            </ui-button>
-          </div>
-        </form>
-      </ui-step>
-    </ui-stepper>
+            <div class="auth-form__nav">
+              <ui2-button
+                variant="ghost"
+                iconLeft="arrow_back"
+                [disabled]="isLoading()"
+                (clicked)="previousStep()"
+              >
+                Anterior
+              </ui2-button>
+              <ui2-button
+                variant="primary"
+                iconLeft="check"
+                [disabled]="!passwordForm.valid || !passwordsMatch"
+                [loading]="isLoading()"
+                (clicked)="completarRegistro()"
+              >
+                {{ isLoading() ? 'Registrando...' : 'Finalizar' }}
+              </ui2-button>
+            </div>
+          </form>
+        </ui2-step>
+      </ui2-stepper>
+    </ui2-card>
 
-    <a
-      class="mt-4 block text-center text-sm font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
-      routerLink="/login"
-    >
-      Ya tengo cuenta
+    <a routerLink="/login" class="auth-form__link auth-form__link--center">
+      ¿Ya tienes cuenta? <span>Inicia sesión</span>
     </a>
   </div>
 </section>

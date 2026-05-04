@@ -1,0 +1,44 @@
+<ui2-dialog-host>
+  <ui2-dialog-header
+    title="Contactar con ventas"
+    subtitle="Te ayudamos a configurar un plan para más de 10 fisioterapeutas"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    <form [formGroup]="form" (ngSubmit)="enviar()" class="flex flex-col gap-4">
+      <ui2-textarea
+        label="Mensaje"
+        formControlName="mensaje"
+        [rows]="5"
+        [required]="true"
+        [maxLength]="500"
+        [showCount]="true"
+        hint="Cuéntanos cuántos fisios necesitas, horarios, etc."
+        [error]="mensajeError()"
+      ></ui2-textarea>
+
+      <ui2-input
+        label="Teléfono (opcional)"
+        formControlName="telefono"
+        type="tel"
+        iconLeft="phone"
+        placeholder="+34 600 000 000"
+        autocomplete="tel"
+        hint="Si lo prefieres, te llamamos a este número."
+      ></ui2-input>
+    </form>
+  </ui2-dialog-content>
+
+  <ui2-dialog-actions align="end">
+    <ui2-button variant="secondary" (clicked)="cerrar()">Cancelar</ui2-button>
+    <ui2-button
+      variant="primary"
+      [disabled]="form.invalid"
+      [loading]="enviando()"
+      (clicked)="enviar()"
+    >
+      Enviar solicitud
+    </ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

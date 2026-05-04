@@ -1,0 +1,77 @@
+<div class="pricing-grid">
+  @for (view of views(); track view.nombre; let i = $index) {
+    <article
+      class="pricing-card"
+      [class.is-popular]="view.destacado"
+      [class.is-current]="esPlanActual(view)"
+      [style.--card-index]="i"
+    >
+      @if (view.destacado) {
+        <span class="pricing-card__deco" aria-hidden="true"></span>
+      }
+
+      <div class="pricing-card__badge-row">
+        @if (esPlanActual(view)) {
+          <ui2-pill variant="success" size="sm" icon="check">Plan actual</ui2-pill>
+        } @else if (mostrarBadgePopular(view)) {
+          <ui2-pill
+            variant="primary"
+            size="sm"
+            icon="auto_awesome"
+            class="pricing-card__pill-popular"
+          >Más popular</ui2-pill>
+        }
+      </div>
+
+      <header class="pricing-card__head">
+        <p class="pricing-card__overline">{{ view.overline }}</p>
+        <h3 class="pricing-card__name">{{ view.nombre }}</h3>
+      </header>
+
+      <div class="pricing-card__price">
+        <span class="pricing-card__currency">€</span>
+        <span class="pricing-card__amount">{{ view.precioMensualEur | number:'1.0-0' }}</span>
+        <span class="pricing-card__period">/mes</span>
+      </div>
+
+      <div class="pricing-card__hairline" aria-hidden="true"></div>
+
+      <ul class="pricing-card__features">
+        @for (feat of view.features; track feat) {
+          <li class="pricing-card__feature">
+            <span
+              class="material-symbols-outlined pricing-card__check"
+              aria-hidden="true"
+            >check</span>
+            <span>{{ feat }}</span>
+          </li>
+        }
+      </ul>
+    </article>
+  }
+</div>
+
+<aside class="pricing-banner">
+  <div class="pricing-banner__inner">
+    <ui2-icon-badge
+      icon="forum"
+      color="var(--kengo-primary)"
+      [size]="44"
+      [radius]="14"
+    ></ui2-icon-badge>
+    <div class="pricing-banner__text">
+      <p class="pricing-banner__title">¿Más de 10 fisioterapeutas?</p>
+      <p class="pricing-banner__subtitle">
+        Plan a medida con condiciones personalizadas.
+      </p>
+    </div>
+    <div class="pricing-banner__action">
+      <ui2-button
+        variant="ghost"
+        size="md"
+        iconRight="arrow_forward"
+        (clicked)="onContactarVentas()"
+      >Contactar con ventas</ui2-button>
+    </div>
+  </div>
+</aside>

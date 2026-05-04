@@ -1,135 +1,278 @@
-import { Component, ChangeDetectionStrategy, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
-import { ActividadHoyService, BadgeType } from '../../../../actividad/data-access/actividad-hoy.service';
-import { RachaPacienteService, DiaSemanaCalendario } from '../../../data-access/racha-paciente.service';
+import { PageLoaderService } from '../../../../../core/services/page-loader.service';
+import {
+  ActividadHoyService,
+  EjercicioUnificadoHoy,
+} from '../../../../actividad/data-access/actividad-hoy.service';
+import { EstadisticasService } from '../../../../actividad/data-access/estadisticas.service';
+import { NextSessionService } from '../../../../actividad/data-access/next-session.service';
+import { RachaPacienteService } from '../../../data-access/racha-paciente.service';
 import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
-import { useResponsive } from '../../../../../shared';
-import type { AsignacionResponsable, DiaSemana } from '../../../../../../types/global';
-import { assetUrl, rawAssetUrl } from '../../../../../core/utils/asset-url';
-import { DashboardHeaderComponent } from '../../../../../core/layout/components/dashboard-header/dashboard-header.component';
+import { MensajesService } from '../../../../mensajes/data-access/mensajes.service';
+import { SesionStateService } from '../../../../sesion/data-access/sesion-state.service';
+import type {
+  AsignacionResponsable,
+  Clinica,
+  ConfigSesionMultiPlan,
+  EjercicioSesionMultiPlan,
+} from '../../../../../../types/global';
+import { rawAssetUrl, thumbnailUrl } from '../../../../../core/utils/asset-url';
+import {
+  Ui2AvatarComponent,
+  Ui2ButtonComponent,
+  Ui2CardComponent,
+  Ui2ClinicHeroCardComponent,
+  Ui2CtaBarComponent,
+  Ui2ExerciseCardComponent,
+  Ui2HorizontalScrollerComponent,
+  Ui2MiniStatComponent,
+  Ui2NextAppointmentComponent,
+  Ui2ProgressRingComponent,
+  Ui2SectionComponent,
+  Ui2WebActivityChartComponent,
+} from '../../../../../shared/ui-v2';
 
-interface EjercicioStrip {
+interface ExerciseVm {
   id: string;
   nombre: string;
-  portadaUrl: string | null;
-  completado: boolean;
-  esSiguiente: boolean;
+  sets: string;
+  imageUrl: string | null;
+  done: boolean;
+}
+
+function formatSets(ej: EjercicioUnificadoHoy): string {
+  if (ej.duracionSeg && ej.duracionSeg > 0) {
+    return ej.duracionSeg >= 60
+      ? `${Math.round(ej.duracionSeg / 60)} min`
+      : `${ej.duracionSeg} seg`;
+  }
+  const series = ej.series ?? 3;
+  const reps = ej.repeticiones ?? 12;
+  return `${series}×${reps}`;
 }
 
 @Component({
   selector: 'app-inicio-paciente',
   standalone: true,
-  imports: [DashboardHeaderComponent],
+  imports: [
+    Ui2AvatarComponent,
+    Ui2ButtonComponent,
+    Ui2CardComponent,
+    Ui2ClinicHeroCardComponent,
+    Ui2CtaBarComponent,
+    Ui2ExerciseCardComponent,
+    Ui2HorizontalScrollerComponent,
+    Ui2MiniStatComponent,
+    Ui2NextAppointmentComponent,
+    Ui2ProgressRingComponent,
+    Ui2SectionComponent,
+    Ui2WebActivityChartComponent,
+  ],
   templateUrl: './inicio-paciente.component.html',
   styleUrl: './inicio-paciente.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InicioPacienteComponent {
+export class InicioPacienteComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private router = inject(Router);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
+  private mensajesService = inject(MensajesService);
+  private registroService = inject(SesionStateService);
   private destroyRef = inject(DestroyRef);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'inicio-paciente';
 
   actividadHoyService = inject(ActividadHoyService);
   rachaService = inject(RachaPacienteService);
+  private estadisticasService = inject(EstadisticasService);
+  private nextSessionService = inject(NextSessionService);
+
+  /** Datos críticos cargados: actividad del día (planes + registros). */
+  readonly pageReady = computed(() => this.actividadHoyService.cargada());
+
+  hayActividadHoy = this.actividadHoyService.hayActividadHoy;
+  todoCompletado = this.actividadHoyService.todoCompletado;
+  tiempoEstimadoHoy = this.actividadHoyService.tiempoEstimadoHoy;
+  sinPlanesActivos = this.actividadHoyService.sinPlanesActivos;
+  esDescanso = computed(() => this.actividadHoyService.badgeType() === 'rest');
 
   fisioAsignado = signal<AsignacionResponsable | null>(null);
   cargandoFisio = signal(true);
-  mostrarTooltipContacto = signal(false);
 
   private clinicaPaciente = computed(() => {
     const clinicas = this.sessionService.usuario()?.clinicas ?? [];
     return clinicas.find((c) => c.puesto === 'paciente')?.clinicId ?? null;
   });
 
+  // Clínica a mostrar en la card "Mi clínica" del paciente. Preferimos la
+  // clínica donde el usuario está registrado como paciente; si no existe
+  // (caso de un fisio que ha activado el modo paciente y solo tiene puesto
+  // 'fisio'/'admin'), caemos a la primera clínica disponible.
+  private clinicaActualId = computed(() => {
+    const pacienteId = this.clinicaPaciente();
+    if (pacienteId) return pacienteId;
+    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
+    return clinicas[0]?.clinicId ?? null;
+  });
+
+  // --- Hero ---
+  userName = computed(
+    () => this.sessionService.usuario()?.first_name ?? 'Hola',
+  );
+
+  progreso = computed(() => this.actividadHoyService.progresoTotal());
+
+  progresoRatio = computed(() => {
+    const p = this.progreso();
+    return p.total > 0 ? p.completados / p.total : 0;
+  });
+
+  rachaActual = computed(() => this.rachaService.rachaActual());
+
+  heroTitle = computed(() => {
+    const t = this.actividadHoyService.badgeType();
+    if (t === 'loading') return '';
+    if (this.sinPlanesActivos()) return 'SIN PLAN ACTIVO';
+    if (t === 'completed') return '¡BIEN HECHO!';
+    if (t === 'rest') return 'Hoy descansas';
+    return 'VAMOS ALLÁ';
+  });
+
+  heroSub = computed<string>(() => {
+    const t = this.actividadHoyService.badgeType();
+    if (t === 'loading') return 'Cargando…';
+    if (this.sinPlanesActivos()) {
+      return 'Aún no tienes ningún plan asignado.<br>Contacta con tu fisio para empezar.';
+    }
+    const racha = this.rachaActual();
+    if (t === 'completed') return '¡Disfruta del día!';
+    if (t === 'rest')
+      return 'Revisa tu plan para ver cuando toca la siguiente sesión.';
+    if (racha > 0) {
+      const dias = racha === 1 ? '1 día' : `${racha} días`;
+      return `Llevas <b>${dias}</b> de racha.<br>Sigue así.`;
+    }
+    return 'Empieza tu sesión de hoy.';
+  });
+
+  // --- Ejercicios de hoy ---
+  ejerciciosHoy = computed<ExerciseVm[]>(() => {
+    const ejercicios = this.actividadHoyService.ejerciciosUnificadosHoy();
+    return ejercicios.map((ej, i) => {
+      const portada = ej.ejercicio?.portada;
+      return {
+        id: ej.id ?? `${ej.planId}-${i}`,
+        nombre: ej.ejercicio?.nombre ?? 'Ejercicio',
+        sets: formatSets(ej),
+        imageUrl: portada ? thumbnailUrl(portada, 240, 160) : null,
+        done: ej.completadoHoy,
+      };
+    });
+  });
+
+  // --- Fisio ---
   fisioAvatarUrl = computed(() => {
     const avatar = this.fisioAsignado()?.avatarFisio;
-    return avatar ? `${rawAssetUrl(avatar)}` : null;
+    return avatar ? rawAssetUrl(avatar) : null;
   });
 
   fisioNombreCompleto = computed(() => {
     const fisio = this.fisioAsignado();
-    if (!fisio) return '';
-    return [fisio.nombreFisio, fisio.apellidoFisio].filter(Boolean).join(' ');
+    if (!fisio) return 'Tu fisio';
+    return (
+      [fisio.nombreFisio, fisio.apellidoFisio]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || 'Tu fisio'
+    );
   });
 
-  clinicaNombre = computed(() => {
+  // --- Clínica ---
+  clinicaActual = computed<Clinica | null>(() => {
     const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
-    const clinicaId = this.clinicaPaciente();
-    if (!clinicaId) return null;
-    return clinicas.find(c => c.id === clinicaId)?.nombre ?? null;
+    const id = this.clinicaActualId();
+    if (!id) return null;
+    return clinicas.find((c) => c.id === id) ?? null;
   });
 
-  // --- Calendario ---
-  proximaSesion = computed<DiaSemanaCalendario | null>(() => {
-    const semana = this.rachaService.cumplimientoSemana();
-    return semana.find(d => !d.esHoy && d.estado === 'programado') ?? null;
+  clinicaImagenUrl = computed<string | null>(() => {
+    const fileId = this.clinicaActual()?.imagenes?.[0]?.fileId;
+    return fileId ? rawAssetUrl(fileId) : null;
   });
 
-  resumenSemana = computed(() => {
-    const semana = this.rachaService.cumplimientoSemana();
-    return {
-      completados: semana.filter(d => d.estado === 'completado').length,
-      parciales: semana.filter(d => d.estado === 'parcial').length,
-      fallidos: semana.filter(d => d.estado === 'fallido').length,
-    };
+  // ============================================================
+  // Vista desktop: adherencia, dolor y actividad histórica leen del
+  // EstadisticasService (singleton root, mismo origen que /actividad-personal/estadisticas).
+  // ============================================================
+
+  readonly actividad10dias = this.estadisticasService.actividadSerie;
+  readonly periodoLabel = this.estadisticasService.periodoLabel;
+
+  readonly adherenciaDeltaTexto = computed<string | null>(
+    () => this.estadisticasService.adherenciaDelta()?.texto ?? null,
+  );
+
+  readonly adherenciaDeltaColor = computed<string>(() => {
+    const delta = this.estadisticasService.adherenciaDelta();
+    if (!delta) return 'var(--ink-500)';
+    if (delta.valor > 0) return 'var(--success)';
+    if (delta.valor < 0) return 'var(--danger)';
+    return 'var(--ink-500)';
   });
 
-  // --- Plan ---
-  private readonly DIAS_SEMANA_JS: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  readonly adherenciaTexto = computed<string>(() => {
+    const v = this.estadisticasService.adherencia();
+    return v == null ? '—' : `${v}%`;
+  });
 
-  planPrincipal = computed(() => {
-    const planes = this.actividadHoyService.planesActivos();
-    if (planes.length === 0) return null;
+  readonly dolorActualTexto = computed<string>(() => {
+    const v = this.estadisticasService.dolorActual();
+    return v == null ? '—' : `${v}/10`;
+  });
 
-    const plan = planes[0];
-    const hoy = new Date();
-    const diaHoy = this.DIAS_SEMANA_JS[hoy.getDay()];
+  readonly dolorSub = computed<string>(() => {
+    const actual = this.estadisticasService.dolorActual();
+    const inicial = this.estadisticasService.dolorInicial();
+    if (actual == null || inicial == null) return '';
+    if (inicial > actual) return `↓ desde ${inicial}`;
+    if (inicial < actual) return `↑ desde ${inicial}`;
+    return 'sin cambios';
+  });
 
-    let diasRestantes: number | null = null;
-    if (plan.fechaFin) {
-      const fin = new Date(plan.fechaFin);
-      diasRestantes = Math.max(0, Math.ceil((fin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)));
+  readonly proximaSesion = this.nextSessionService.nextSessionVm;
+
+  readonly heroSubDesktop = computed<string>(() => {
+    if (this.sinPlanesActivos()) {
+      return 'Aún no tienes ningún plan asignado. Contacta con tu fisio para empezar.';
     }
-
-    const ejerciciosHoy = plan.items.filter(item => {
-      if (!item.diasSemana || item.diasSemana.length === 0) return true;
-      return item.diasSemana.includes(diaHoy);
-    }).length;
-
-    return {
-      titulo: plan.titulo,
-      diasRestantes,
-      totalEjercicios: plan.items.length,
-      ejerciciosHoy,
-    };
+    const racha = this.rachaActual();
+    const total = this.progreso().total;
+    const completados = this.progreso().completados;
+    const restantes = total - completados;
+    if (this.todoCompletado())
+      return '¡Sesión de hoy completada! Disfruta del descanso.';
+    if (this.actividadHoyService.badgeType() === 'rest')
+      return 'Revisa tu plan para ver cuando toca la siguiente sesión.';
+    const rachaTxt = racha > 0 ? `Llevas <b>${racha} días de racha</b>. ` : '';
+    if (restantes > 0)
+      return `${rachaTxt}Solo te quedan ${restantes} ejercicios para terminar la sesión de hoy.`;
+    return 'Empieza tu sesión de hoy.';
   });
-
-  tienePlanesMultiples = computed(() => this.actividadHoyService.planesActivos().length > 1);
-  cantidadPlanesExtra = computed(() => this.actividadHoyService.planesActivos().length - 1);
-
-  // --- Racha ---
-  mensajeMotivacional = computed(() => {
-    const racha = this.rachaService.rachaActual();
-    if (racha >= 7) return '¡Increíble! Una semana entera';
-    if (racha >= 3) return '¡Sigue así, vas genial!';
-    if (racha >= 1) return '¡Buen inicio!';
-    if (this.actividadHoyService.todoCompletado()) return '¡Hoy puede ser el día 1!';
-    return null;
-  });
-
-  mostrarMejorRacha = computed(() => {
-    const mejor = this.rachaService.mejorRacha();
-    const actual = this.rachaService.rachaActual();
-    return mejor > actual && mejor > 0;
-  });
-
-  // --- Quick actions ---
-  subtituloClinica = computed(() => this.clinicaNombre() ?? 'Tu centro de salud');
 
   constructor() {
     effect(() => {
@@ -142,132 +285,113 @@ export class InicioPacienteComponent {
     effect(() => {
       const userId = this.sessionService.usuario()?.id;
       const clinicaId = this.clinicaPaciente();
-      if (userId && clinicaId) {
-        this.cargandoFisio.set(true);
-        this.asignacionesService
-          .getFisioResponsable(userId, clinicaId)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: (asignacion) => {
-              this.fisioAsignado.set(asignacion);
-              this.cargandoFisio.set(false);
-            },
-            error: () => {
-              this.fisioAsignado.set(null);
-              this.cargandoFisio.set(false);
-            },
-          });
+      if (!userId || !clinicaId) {
+        // Sin contexto de paciente (p. ej. fisio en modo paciente sin puesto
+        // 'paciente') no hay asignación que buscar. Liberamos el gate de carga
+        // para que la UI no quede bloqueada esperando indefinidamente.
+        this.fisioAsignado.set(null);
+        this.cargandoFisio.set(false);
+        return;
       }
+      this.cargandoFisio.set(true);
+      this.asignacionesService
+        .getFisioResponsable(userId, clinicaId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (asignacion) => {
+            this.fisioAsignado.set(asignacion);
+            this.cargandoFisio.set(false);
+          },
+          error: () => {
+            this.fisioAsignado.set(null);
+            this.cargandoFisio.set(false);
+          },
+        });
     });
   }
 
-  isMovil = useResponsive().esMobile;
+  ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+  }
 
-  userName = computed(() => this.sessionService.usuario()?.first_name ?? 'Usuario');
-
-  badgeType = computed<BadgeType>(() => this.actividadHoyService.badgeType());
-  badgeCount = computed(() => this.actividadHoyService.badgeCount());
-  subtitulo = computed(() => this.actividadHoyService.subtituloDinamico());
-  progreso = computed(() => this.actividadHoyService.progresoTotal());
-  siguienteEjercicio = computed(() => this.actividadHoyService.primerEjercicioPendiente());
-
-  ejerciciosStrip = computed<EjercicioStrip[]>(() => {
-    const actividad = this.actividadHoyService.actividadHoy();
-    let primerPendienteEncontrado = false;
-    const items: EjercicioStrip[] = [];
-
-    for (const planDia of actividad) {
-      for (const ej of planDia.ejerciciosHoy) {
-        const esSiguiente = !ej.completadoHoy && !primerPendienteEncontrado;
-        if (esSiguiente) primerPendienteEncontrado = true;
-
-        items.push({
-          id: ej.ejercicio?.id ?? ej.id ?? '',
-          nombre: ej.ejercicio?.nombre ?? 'Ejercicio',
-          portadaUrl: ej.ejercicio?.portada
-            ? `${assetUrl(ej.ejercicio.portada, { width: 80, height: 80, fit: 'cover', format: 'webp' })}`
-            : null,
-          completado: ej.completadoHoy,
-          esSiguiente,
-        });
-      }
-    }
-    return items;
-  });
-
-  tiempoRestanteMin = computed<number | null>(() => {
-    const actividad = this.actividadHoyService.actividadHoy();
-    let totalSeg = 0;
-    let hayPendientes = false;
-
-    for (const planDia of actividad) {
-      for (const ej of planDia.ejerciciosHoy) {
-        if (ej.completadoHoy) continue;
-        hayPendientes = true;
-
-        const series = ej.series ?? 1;
-        if (ej.duracionSeg) {
-          totalSeg += ej.duracionSeg * series;
-        } else {
-          const reps = ej.repeticiones ?? 10;
-          totalSeg += series * reps * 3;
-        }
-        if (series > 1) {
-          totalSeg += (ej.descansoSeg ?? 30) * (series - 1);
-        }
-      }
-    }
-
-    if (!hayPendientes) return null;
-    return Math.max(1, Math.ceil(totalSeg / 60));
-  });
-
-  siguienteEjercicioDetalle = computed<{ nombre: string; portadaUrl: string | null } | null>(() => {
-    const actividad = this.actividadHoyService.actividadHoy();
-    for (const planDia of actividad) {
-      const pendiente = planDia.ejerciciosHoy.find(e => !e.completadoHoy);
-      if (pendiente) {
-        return {
-          nombre: pendiente.ejercicio?.nombre ?? 'Ejercicio',
-          portadaUrl: pendiente.ejercicio?.portada
-            ? `${assetUrl(pendiente.ejercicio.portada, { width: 96, height: 96, fit: 'cover', format: 'webp' })}`
-            : null,
-        };
-      }
-    }
-    return null;
-  });
-
-  resumenCompletado = computed(() => {
-    const prog = this.actividadHoyService.progresoTotal();
-    const racha = this.rachaService.rachaActual();
-    let rachaTexto: string | null = null;
-    if (racha > 0) {
-      rachaTexto = `Racha de ${racha} ${racha === 1 ? 'día' : 'días'}`;
-    } else {
-      rachaTexto = 'Mañana empieza tu racha';
-    }
-    return { total: prog.total, rachaTexto };
-  });
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
+  }
 
   irAActividad(): void {
     this.router.navigate(['/actividad-personal']);
-  }
-
-  irAMiActividad(): void {
-    this.router.navigate(['/actividad-personal/hoy']);
   }
 
   irAClinica(): void {
     this.router.navigate(['/mi-clinica']);
   }
 
-  irACalendario(): void {
-    this.router.navigate(['/actividad-personal/calendario']);
+  async enviarMensajeAFisio(): Promise<void> {
+    const idFisio = this.fisioAsignado()?.idFisio;
+    if (!idFisio) return;
+
+    const existing = this.mensajesService
+      .conversations()
+      .find((c) => c.participantId === idFisio);
+    if (existing) {
+      this.router.navigate(['/mensajes', existing.id]);
+      return;
+    }
+
+    const conversationId =
+      await this.mensajesService.startConversationWithFisio();
+    if (conversationId) {
+      this.router.navigate(['/mensajes', conversationId]);
+    } else {
+      this.router.navigate(['/mensajes']);
+    }
   }
 
-  onContactarFisio(): void {
-    this.mostrarTooltipContacto.set(true);
-    setTimeout(() => this.mostrarTooltipContacto.set(false), 3000);
+  irAPlan(): void {
+    this.router.navigate(['/actividad-personal']);
+  }
+
+  iniciarSesionHoy(): void {
+    const actividades = this.actividadHoyService.actividadHoy();
+
+    const ejercicios: EjercicioSesionMultiPlan[] = [];
+    const planesInvolucrados: {
+      planId: string;
+      titulo: string;
+      cantidadEjercicios: number;
+    }[] = [];
+
+    for (const actividad of actividades) {
+      if (actividad.ejerciciosHoy.length === 0) continue;
+
+      planesInvolucrados.push({
+        planId: actividad.plan.id,
+        titulo: actividad.plan.titulo,
+        cantidadEjercicios: actividad.ejerciciosHoy.length,
+      });
+
+      for (const ej of actividad.ejerciciosHoy) {
+        ejercicios.push({
+          ...ej,
+          planId: actividad.plan.id,
+          planTitulo: actividad.plan.titulo,
+          planItemId: ej.id!,
+        });
+      }
+    }
+
+    if (ejercicios.length === 0) return;
+
+    const config: ConfigSesionMultiPlan = {
+      titulo: 'Tu actividad de hoy',
+      fecha: new Date(),
+      esFechaProgramada: true,
+      ejercicios,
+      planesInvolucrados,
+      skipResumen: true,
+    };
+
+    this.registroService.iniciarSesionMultiPlan(config);
+    this.router.navigate(['/mi-plan']);
   }
 }

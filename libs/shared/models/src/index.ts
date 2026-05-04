@@ -29,6 +29,7 @@ export * from './lib/domain/compliance';
 export * from './lib/domain/notifications';
 export * from './lib/domain/dashboard';
 export * from './lib/domain/assignments';
+export * from './lib/domain/billing';
 
 // DTOs para operaciones de crear/actualizar
 export * from './lib/payloads/plans.payload';

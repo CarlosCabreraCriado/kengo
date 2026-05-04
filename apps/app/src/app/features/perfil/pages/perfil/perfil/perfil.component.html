@@ -1,572 +1,453 @@
-<section class="profile-page">
-  <!-- Aurora Background -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-    <div class="aurora-wave aurora-wave-3"></div>
+<section class="perfil-page">
+  <!-- Cabecera -->
+  <div class="perfil-header">
+    <div class="perfil-header__title">
+      <ui2-big-title
+        overline="Tu cuenta"
+        title="Mi perfil"
+        sub="Gestiona tus datos y preferencias"
+      ></ui2-big-title>
+    </div>
   </div>
 
-  <!-- Header responsivo alineado con navegación -->
-  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
-    <div class="mx-auto max-w-2xl">
-
-      <!-- MÓVIL: Header con título y navegación -->
-      @if (isMobile()) {
-        <div class="flex items-center gap-3">
-          <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
-          <div>
-            <h1 class="titulo-kengo text-2xl text-kengo-primary">Mi Perfil</h1>
-            <p class="text-xs font-medium text-zinc-500">Gestiona tu cuenta</p>
-          </div>
-        </div>
-      }
-
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="profile-main">
-    <!-- Loading State -->
+  <main class="perfil-main">
     @if (!formularioInicializado()) {
-      <div class="state-card loading-state">
-        <div class="shimmer-effect"></div>
-        <div class="state-icon pulse">
-          <span class="material-symbols-outlined">person</span>
-        </div>
-        <p class="state-text">Cargando perfil...</p>
-      </div>
+      <ui2-section [padding]="'24px 20px'">
+        <ui2-card [padding]="32">
+          <div class="perfil-loading">
+            <ui2-spinner size="lg" color="primary" label="Cargando perfil…"></ui2-spinner>
+          </div>
+        </ui2-card>
+      </ui2-section>
     } @else {
-      <!-- Hero Card with Avatar -->
-      <article class="hero-card animate-in">
-        <div class="hero-visual">
-          <div class="hero-gradient"></div>
-          <div class="hero-pattern" aria-hidden="true"></div>
+      <!-- Hero card: avatar + identidad -->
+      <ui2-section [padding]="'4px 20px 12px'">
+        <ui2-card [padding]="18">
+          <div class="perfil-hero">
+            <button
+              type="button"
+              class="perfil-avatar-wrapper"
+              [disabled]="subiendoAvatar()"
+              (click)="cambiarFotoPerfil()"
+              aria-label="Cambiar foto de perfil"
+            >
+              <ui2-avatar
+                size="xl"
+                [name]="nombreCompleto()"
+                [src]="previewUrl() ?? url_perfil()"
+                gradient="coral"
+                [border]="true"
+              ></ui2-avatar>
 
-          <!-- Botón guardar en la esquina superior derecha -->
-          <button
-            type="button"
-            class="absolute top-3 right-3 flex items-center gap-1.5 rounded-full px-3 py-2
-                   transition-all duration-200 active:scale-95 z-10"
-            [class]="formularioCambiado()
-              ? 'bg-white text-kengo-primary shadow-lg hover:bg-white/90'
-              : 'bg-white/30 backdrop-blur-md text-white/70 cursor-default'"
-            [disabled]="!formularioCambiado() || formularioUsuario.invalid"
-            (click)="guardarCambios()"
-            aria-label="Guardar cambios"
-          >
-            <span class="material-symbols-outlined text-lg">{{ formularioCambiado() ? 'save' : 'check' }}</span>
-            <span class="text-xs font-semibold">{{ formularioCambiado() ? 'Guardar' : 'Guardado' }}</span>
-          </button>
-        </div>
-
-        <div class="hero-content">
-          <!-- Avatar -->
-          <button
-            type="button"
-            class="avatar-container"
-            (click)="cambiarFotoPerfil()"
-            [disabled]="subiendoAvatar()"
-            aria-label="Cambiar foto de perfil"
-          >
-            @if (previewUrl() ?? url_perfil()) {
-              <img
-                [src]="previewUrl() ?? url_perfil()!"
-                alt="Foto de perfil"
-                class="avatar-image"
-              />
-            } @else {
-              <div class="avatar-placeholder">
-                <span class="material-symbols-outlined icon-filled">person</span>
-              </div>
-            }
-
-            <!-- Camera overlay -->
-            <div class="avatar-overlay">
-              <span class="material-symbols-outlined">photo_camera</span>
-            </div>
-
-            <!-- Upload spinner -->
-            @if (subiendoAvatar()) {
-              <div class="avatar-loading">
-                <div class="avatar-spinner"></div>
-              </div>
-            }
-
-            <input
-              #fileInput
-              type="file"
-              accept="image/*"
-              class="hidden"
-              (change)="onArchivoSeleccionado($event)"
-            />
-          </button>
-
-          <!-- User Info -->
-          <div class="hero-info">
-            <h2 class="user-name">{{ usuario()?.first_name }} {{ usuario()?.last_name }}</h2>
-            <p class="user-email">{{ usuario()?.email }}</p>
-            @if (tieneCapacidadFisio()) {
-              <span class="role-badge">
-                <span class="material-symbols-outlined icon-filled">verified</span>
-                Fisioterapeuta
+              <span class="perfil-avatar__overlay" aria-hidden="true">
+                <span class="material-symbols-outlined">photo_camera</span>
               </span>
-            }
-          </div>
-        </div>
-      </article>
 
-      <!-- Email Verification Banner -->
-      @if (!emailVerified()) {
-        <section class="email-verification-banner animate-in" style="--delay: 0.05s">
-          <div class="banner-header" (click)="toggleVerificationPanel()">
-            <div class="banner-icon">
-              <span class="material-symbols-outlined">warning</span>
-            </div>
-            <div class="banner-content">
-              <h4 class="banner-title">Email no verificado</h4>
-              <p class="banner-subtitle">Verifica tu email para mayor seguridad</p>
-            </div>
-            <span class="material-symbols-outlined banner-arrow" [class.rotated]="showVerificationPanel()">
-              expand_more
-            </span>
-          </div>
-
-          @if (showVerificationPanel()) {
-            <div class="banner-panel">
-              <!-- Message feedback -->
-              @if (verificationMessage()) {
-                <div class="verification-message" [class.success]="verificationMessage()?.type === 'success'" [class.error]="verificationMessage()?.type === 'error'">
-                  <span class="material-symbols-outlined">
-                    {{ verificationMessage()?.type === 'success' ? 'check_circle' : 'error' }}
-                  </span>
-                  {{ verificationMessage()?.text }}
-                </div>
+              @if (subiendoAvatar()) {
+                <span class="perfil-avatar__loading" aria-hidden="true">
+                  <ui2-spinner size="md" color="white"></ui2-spinner>
+                </span>
               }
 
-              @if (!codeSent()) {
-                <!-- Step 1: Send code -->
-                <p class="panel-text">
-                  Te enviaremos un código de 6 dígitos a <strong>{{ usuario()?.email }}</strong>
-                </p>
-                <button
-                  type="button"
-                  class="verification-btn primary"
-                  [disabled]="sendingCode()"
-                  (click)="enviarCodigoVerificacion()"
-                >
-                  @if (sendingCode()) {
-                    <div class="btn-spinner"></div>
-                  } @else {
-                    <span class="material-symbols-outlined">send</span>
-                  }
-                  Enviar código
-                </button>
-              } @else {
-                <!-- Step 2: Enter code -->
-                <p class="panel-text">
-                  Introduce el código que hemos enviado a tu email
-                </p>
-                <div class="code-input-wrapper">
+              <input
+                #fileInput
+                type="file"
+                accept="image/*"
+                class="perfil-avatar__input"
+                (change)="onArchivoSeleccionado($event)"
+              />
+            </button>
+
+            <div class="perfil-hero__info">
+              <h2 class="perfil-hero__name">{{ usuario()?.first_name }} {{ usuario()?.last_name }}</h2>
+              <p class="perfil-hero__email">{{ usuario()?.email }}</p>
+              @if (tieneCapacidadFisio()) {
+                <ui2-pill variant="soft" icon="verified">Fisioterapeuta</ui2-pill>
+              }
+            </div>
+          </div>
+
+          @if (formularioCambiado()) {
+            <div class="perfil-hero__cta">
+              <ui2-button
+                variant="primary"
+                size="sm"
+                iconLeft="save"
+                [disabled]="formularioUsuario.invalid"
+                (clicked)="guardarCambios()"
+              >Guardar cambios</ui2-button>
+            </div>
+          }
+        </ui2-card>
+      </ui2-section>
+
+      <!-- Banner verificación email -->
+      @if (!emailVerified()) {
+        <ui2-section [padding]="'4px 20px 12px'">
+          <ui2-card variant="tinted" [padding]="0">
+            <button
+              type="button"
+              class="perfil-row-btn"
+              (click)="toggleVerificationPanel()"
+              [attr.aria-expanded]="showVerificationPanel()"
+            >
+              <ui2-icon-badge
+                icon="warning"
+                color="var(--warning)"
+                [size]="40"
+                [radius]="12"
+              ></ui2-icon-badge>
+              <div class="perfil-row-btn__text">
+                <h3 class="perfil-row-btn__title">Email no verificado</h3>
+                <p class="perfil-row-btn__sub">Verifica tu email para mayor seguridad</p>
+              </div>
+              <span
+                class="material-symbols-outlined perfil-row-btn__chevron"
+                [class.perfil-row-btn__chevron--open]="showVerificationPanel()"
+                aria-hidden="true"
+              >expand_more</span>
+            </button>
+
+            @if (showVerificationPanel()) {
+              <div class="perfil-verify-panel">
+                @if (verificationMessage(); as msg) {
+                  <div
+                    class="perfil-verify-msg"
+                    [class.perfil-verify-msg--success]="msg.type === 'success'"
+                    [class.perfil-verify-msg--error]="msg.type === 'error'"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">
+                      {{ msg.type === 'success' ? 'check_circle' : 'error' }}
+                    </span>
+                    {{ msg.text }}
+                  </div>
+                }
+
+                @if (!codeSent()) {
+                  <p class="perfil-verify__text">
+                    Te enviaremos un código de 6 dígitos a <strong>{{ usuario()?.email }}</strong>
+                  </p>
+                  <ui2-button
+                    variant="primary"
+                    iconLeft="send"
+                    [fullWidth]="true"
+                    [loading]="sendingCode()"
+                    (clicked)="enviarCodigoVerificacion()"
+                  >Enviar código</ui2-button>
+                } @else {
+                  <p class="perfil-verify__text">
+                    Introduce el código que hemos enviado a tu email
+                  </p>
                   <input
                     type="text"
                     inputmode="numeric"
                     maxlength="6"
                     placeholder="000000"
-                    class="code-input"
+                    class="perfil-verify__code"
                     [value]="verificationCode()"
                     (input)="onCodeInput($event)"
                   />
-                </div>
-                <div class="panel-actions">
-                  <button
-                    type="button"
-                    class="verification-btn secondary"
-                    [disabled]="sendingCode()"
-                    (click)="enviarCodigoVerificacion()"
-                  >
-                    @if (sendingCode()) {
-                      <div class="btn-spinner"></div>
-                    } @else {
-                      <span class="material-symbols-outlined">refresh</span>
-                    }
-                    Reenviar
-                  </button>
-                  <button
-                    type="button"
-                    class="verification-btn primary"
-                    [disabled]="verifyingCode() || verificationCode().length !== 6"
-                    (click)="verificarEmail()"
-                  >
-                    @if (verifyingCode()) {
-                      <div class="btn-spinner"></div>
-                    } @else {
-                      <span class="material-symbols-outlined">verified</span>
-                    }
-                    Verificar
-                  </button>
-                </div>
-              }
-            </div>
-          }
-        </section>
-      }
-
-      <!-- Quick Actions -->
-      <section class="quick-actions animate-in" style="--delay: 0.1s">
-        <button type="button" class="quick-action primary" (click)="scrollToSection('personal')">
-          <div class="action-icon">
-            <span class="material-symbols-outlined icon-filled">edit</span>
-          </div>
-          <span class="action-label">Editar</span>
-        </button>
-        <button type="button" class="quick-action secondary" (click)="scrollToSection('security')">
-          <div class="action-icon">
-            <span class="material-symbols-outlined">lock</span>
-          </div>
-          <span class="action-label">Seguridad</span>
-        </button>
-        <button type="button" class="quick-action tertiary" (click)="abrirPrivacyPolicy()">
-          <div class="action-icon">
-            <span class="material-symbols-outlined">policy</span>
-          </div>
-          <span class="action-label">Privacidad</span>
-        </button>
-        <button type="button" class="quick-action neutral" (click)="abrirTermsConditions()">
-          <div class="action-icon">
-            <span class="material-symbols-outlined">gavel</span>
-          </div>
-          <span class="action-label">Términos</span>
-        </button>
-      </section>
-
-      <!-- Personal Data Section -->
-      <section
-        #personalSection
-        class="data-section animate-in"
-        style="--delay: 0.15s"
-        [class.expanded]="personalExpanded()"
-      >
-        <header class="section-header" (click)="togglePersonal()">
-          <div class="section-title-group">
-            <div class="section-icon">
-              <span class="material-symbols-outlined icon-filled">person</span>
-            </div>
-            <div>
-              <h3 class="section-title">Datos Personales</h3>
-              <p class="section-subtitle">Información de tu cuenta</p>
-            </div>
-          </div>
-          <span class="material-symbols-outlined expand-icon" [class.rotated]="personalExpanded()">expand_more</span>
-        </header>
-
-        @if (personalExpanded()) {
-          <div class="section-content" [formGroup]="formularioUsuario">
-            <!-- Name fields in grid -->
-            <div class="form-grid">
-              <div class="form-field">
-                <label class="field-label">Nombre</label>
-                <div class="input-wrapper">
-                  <span class="material-symbols-outlined input-icon">badge</span>
-                  <input
-                    type="text"
-                    formControlName="first_name"
-                    class="field-input"
-                    placeholder="Tu nombre"
-                  />
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">Apellidos</label>
-                <div class="input-wrapper">
-                  <span class="material-symbols-outlined input-icon">badge</span>
-                  <input
-                    type="text"
-                    formControlName="last_name"
-                    class="field-input"
-                    placeholder="Tus apellidos"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Contact fields -->
-            <div class="form-grid">
-              <div class="form-field">
-                <label class="field-label">Teléfono</label>
-                <div class="input-wrapper">
-                  <span class="material-symbols-outlined input-icon">phone</span>
-                  <input
-                    type="tel"
-                    formControlName="telefono"
-                    class="field-input"
-                    placeholder="+34 600 000 000"
-                  />
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">Email</label>
-                <div class="input-wrapper locked">
-                  <span class="material-symbols-outlined input-icon">mail</span>
-                  <input
-                    type="email"
-                    formControlName="email"
-                    class="field-input"
-                    placeholder="tu@email.com"
-                  />
-                  <span class="material-symbols-outlined lock-icon">lock</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Address fields -->
-            <div class="form-field full-width">
-              <label class="field-label">Dirección</label>
-              <div class="input-wrapper">
-                <span class="material-symbols-outlined input-icon">location_on</span>
-                <input
-                  type="text"
-                  formControlName="direccion"
-                  class="field-input"
-                  placeholder="Tu dirección completa"
-                />
-              </div>
-            </div>
-
-            <div class="form-grid">
-              <div class="form-field">
-                <label class="field-label">Código Postal</label>
-                <div class="input-wrapper">
-                  <span class="material-symbols-outlined input-icon">pin_drop</span>
-                  <input
-                    type="text"
-                    formControlName="postal"
-                    class="field-input"
-                    placeholder="00000"
-                    maxlength="5"
-                  />
-                </div>
-              </div>
-
-              @if (tieneCapacidadFisio()) {
-                <div class="form-field">
-                  <label class="field-label">Nº Colegiado</label>
-                  <div class="input-wrapper">
-                    <span class="material-symbols-outlined input-icon">verified</span>
-                    <input
-                      type="text"
-                      formControlName="numero_colegiado"
-                      class="field-input"
-                      placeholder="Opcional"
-                    />
+                  <div class="perfil-verify__actions">
+                    <ui2-button
+                      variant="secondary"
+                      iconLeft="refresh"
+                      [fullWidth]="true"
+                      [loading]="sendingCode()"
+                      (clicked)="enviarCodigoVerificacion()"
+                    >Reenviar</ui2-button>
+                    <ui2-button
+                      variant="primary"
+                      iconLeft="verified"
+                      [fullWidth]="true"
+                      [loading]="verifyingCode()"
+                      [disabled]="verificationCode().length !== 6"
+                      (clicked)="verificarEmail()"
+                    >Verificar</ui2-button>
                   </div>
-                </div>
-              }
-            </div>
-
-            <!-- Save Button (visible on expanded) -->
-            @if (formularioCambiado()) {
-              <div class="section-actions">
-                <button
-                  type="button"
-                  class="save-button"
-                  [disabled]="formularioUsuario.invalid"
-                  (click)="guardarCambios()"
-                >
-                  <span class="material-symbols-outlined">save</span>
-                  Guardar cambios
-                </button>
+                }
               </div>
             }
-          </div>
-        }
-      </section>
+          </ui2-card>
+        </ui2-section>
+      }
 
-      <!-- Security Section -->
-      <section
-        #securitySection
-        class="data-section animate-in"
-        style="--delay: 0.2s"
-        [class.expanded]="securityExpanded()"
-      >
-        <header class="section-header" (click)="toggleSecurity()">
-          <div class="section-title-group">
-            <div class="section-icon security">
-              <span class="material-symbols-outlined">lock</span>
-            </div>
-            <div>
-              <h3 class="section-title">Seguridad</h3>
-              <p class="section-subtitle">Contraseña y acceso</p>
-            </div>
-          </div>
-          <span class="material-symbols-outlined expand-icon" [class.rotated]="securityExpanded()">expand_more</span>
-        </header>
+      <!-- Sección: Datos personales -->
+      <ui2-section [padding]="'4px 20px 12px'">
+        <div #personalSection>
+          <ui2-card [padding]="0">
+            <button
+              type="button"
+              class="perfil-row-btn"
+              (click)="togglePersonal()"
+              [attr.aria-expanded]="personalExpanded()"
+            >
+              <ui2-icon-badge
+                icon="person"
+                color="var(--kengo-primary)"
+                [size]="40"
+                [radius]="12"
+              ></ui2-icon-badge>
+              <div class="perfil-row-btn__text">
+                <h3 class="perfil-row-btn__title">Datos personales</h3>
+                <p class="perfil-row-btn__sub">Información de tu cuenta</p>
+              </div>
+              <span
+                class="material-symbols-outlined perfil-row-btn__chevron"
+                [class.perfil-row-btn__chevron--open]="personalExpanded()"
+                aria-hidden="true"
+              >expand_more</span>
+            </button>
 
-        @if (securityExpanded()) {
-          <div class="section-content" [formGroup]="formularioPassword">
-            <p class="section-hint">
-              <span class="material-symbols-outlined">info</span>
-              Cambia tu contraseña para mantener tu cuenta segura
-            </p>
+            @if (personalExpanded()) {
+              <div class="perfil-section-body" [formGroup]="formularioUsuario">
+                <div class="perfil-form-grid">
+                  <ui2-input
+                    label="Nombre"
+                    formControlName="first_name"
+                    placeholder="Tu nombre"
+                    iconLeft="badge"
+                  ></ui2-input>
+                  <ui2-input
+                    label="Apellidos"
+                    formControlName="last_name"
+                    placeholder="Tus apellidos"
+                    iconLeft="badge"
+                  ></ui2-input>
+                </div>
 
-            <!-- Current Password -->
-            <div class="form-field full-width">
-              <label class="field-label">Contraseña actual</label>
-              <div class="input-wrapper">
-                <span class="material-symbols-outlined input-icon">key</span>
-                <input
-                  [type]="hideCurrentPassword() ? 'password' : 'text'"
+                <div class="perfil-form-grid">
+                  <ui2-input
+                    label="Teléfono"
+                    type="tel"
+                    formControlName="telefono"
+                    placeholder="+34 600 000 000"
+                    iconLeft="phone"
+                  ></ui2-input>
+                  <ui2-input
+                    label="Email"
+                    type="email"
+                    formControlName="email"
+                    placeholder="tu@email.com"
+                    iconLeft="mail"
+                    iconRight="lock"
+                    hint="No editable"
+                  ></ui2-input>
+                </div>
+
+                <ui2-input
+                  label="Dirección"
+                  formControlName="direccion"
+                  placeholder="Tu dirección completa"
+                  iconLeft="location_on"
+                ></ui2-input>
+
+                <div class="perfil-form-grid">
+                  <ui2-input
+                    label="Código postal"
+                    formControlName="postal"
+                    placeholder="00000"
+                    iconLeft="pin_drop"
+                  ></ui2-input>
+                  @if (tieneCapacidadFisio()) {
+                    <ui2-input
+                      label="Nº Colegiado"
+                      formControlName="numero_colegiado"
+                      placeholder="Opcional"
+                      iconLeft="verified"
+                    ></ui2-input>
+                  }
+                </div>
+
+                @if (formularioCambiado()) {
+                  <div class="perfil-section-actions">
+                    <ui2-button
+                      variant="primary"
+                      iconLeft="save"
+                      [disabled]="formularioUsuario.invalid"
+                      (clicked)="guardarCambios()"
+                    >Guardar cambios</ui2-button>
+                  </div>
+                }
+              </div>
+            }
+          </ui2-card>
+        </div>
+      </ui2-section>
+
+      <!-- Sección: Seguridad -->
+      <ui2-section [padding]="'4px 20px 12px'">
+        <div #securitySection>
+          <ui2-card [padding]="0">
+            <button
+              type="button"
+              class="perfil-row-btn"
+              (click)="toggleSecurity()"
+              [attr.aria-expanded]="securityExpanded()"
+            >
+              <ui2-icon-badge
+                icon="lock"
+                color="var(--warning)"
+                [size]="40"
+                [radius]="12"
+              ></ui2-icon-badge>
+              <div class="perfil-row-btn__text">
+                <h3 class="perfil-row-btn__title">Seguridad</h3>
+                <p class="perfil-row-btn__sub">Contraseña y acceso</p>
+              </div>
+              <span
+                class="material-symbols-outlined perfil-row-btn__chevron"
+                [class.perfil-row-btn__chevron--open]="securityExpanded()"
+                aria-hidden="true"
+              >expand_more</span>
+            </button>
+
+            @if (securityExpanded()) {
+              <div class="perfil-section-body" [formGroup]="formularioPassword">
+                <p class="perfil-hint">
+                  <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                  Cambia tu contraseña para mantener tu cuenta segura
+                </p>
+
+                <ui2-input
+                  label="Contraseña actual"
+                  type="password"
                   formControlName="currentPassword"
-                  class="field-input"
                   placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  class="visibility-toggle"
-                  (click)="hideCurrentPassword.set(!hideCurrentPassword())"
-                >
-                  <span class="material-symbols-outlined">
-                    {{ hideCurrentPassword() ? 'visibility_off' : 'visibility' }}
-                  </span>
-                </button>
-              </div>
-            </div>
+                  iconLeft="key"
+                ></ui2-input>
 
-            <!-- New Password fields -->
-            <div class="form-grid">
-              <div class="form-field">
-                <label class="field-label">Nueva contraseña</label>
-                <div class="input-wrapper">
-                  <span class="material-symbols-outlined input-icon">lock</span>
-                  <input
-                    [type]="hideNewPassword() ? 'password' : 'text'"
+                <div class="perfil-form-grid">
+                  <ui2-input
+                    label="Nueva contraseña"
+                    type="password"
                     formControlName="newPassword"
-                    class="field-input"
                     placeholder="Mínimo 8 caracteres"
-                  />
-                  <button
-                    type="button"
-                    class="visibility-toggle"
-                    (click)="hideNewPassword.set(!hideNewPassword())"
-                  >
-                    <span class="material-symbols-outlined">
-                      {{ hideNewPassword() ? 'visibility_off' : 'visibility' }}
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">Confirmar</label>
-                <div class="input-wrapper">
-                  <span class="material-symbols-outlined input-icon">lock</span>
-                  <input
-                    [type]="hideConfirmPassword() ? 'password' : 'text'"
+                    iconLeft="lock"
+                  ></ui2-input>
+                  <ui2-input
+                    label="Confirmar"
+                    type="password"
                     formControlName="confirmPassword"
-                    class="field-input"
                     placeholder="Repetir contraseña"
-                  />
-                  <button
-                    type="button"
-                    class="visibility-toggle"
-                    (click)="hideConfirmPassword.set(!hideConfirmPassword())"
-                  >
-                    <span class="material-symbols-outlined">
-                      {{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}
-                    </span>
-                  </button>
+                    iconLeft="lock"
+                  ></ui2-input>
+                </div>
+
+                <div class="perfil-section-actions">
+                  <ui2-button
+                    variant="primary"
+                    iconLeft="lock_reset"
+                    [loading]="cambiandoPassword()"
+                    [disabled]="formularioPassword.invalid"
+                    (clicked)="cambiarPassword()"
+                  >Cambiar contraseña</ui2-button>
                 </div>
               </div>
-            </div>
+            }
+          </ui2-card>
+        </div>
+      </ui2-section>
 
-            <!-- Change Password Button -->
-            <div class="section-actions">
+      <!-- Sección: Legal -->
+      <ui2-section [padding]="'4px 20px 12px'">
+        <ui2-card [padding]="0">
+          <button
+            type="button"
+            class="perfil-row-btn"
+            (click)="toggleLegal()"
+            [attr.aria-expanded]="legalExpanded()"
+          >
+            <ui2-icon-badge
+              icon="description"
+              color="var(--ink-700)"
+              [size]="40"
+              [radius]="12"
+            ></ui2-icon-badge>
+            <div class="perfil-row-btn__text">
+              <h3 class="perfil-row-btn__title">Legal</h3>
+              <p class="perfil-row-btn__sub">Políticas y términos</p>
+            </div>
+            <span
+              class="material-symbols-outlined perfil-row-btn__chevron"
+              [class.perfil-row-btn__chevron--open]="legalExpanded()"
+              aria-hidden="true"
+            >expand_more</span>
+          </button>
+
+          @if (legalExpanded()) {
+            <div class="perfil-section-body perfil-section-body--list">
               <button
                 type="button"
-                class="save-button secondary"
-                [disabled]="formularioPassword.invalid || cambiandoPassword()"
-                (click)="cambiarPassword()"
+                class="perfil-list-item"
+                (click)="abrirPrivacyPolicy()"
               >
-                @if (cambiandoPassword()) {
-                  <div class="button-spinner"></div>
-                } @else {
-                  <span class="material-symbols-outlined">lock_reset</span>
-                }
-                Cambiar contraseña
-              </button>
-            </div>
-          </div>
-        }
-      </section>
-
-      <!-- Legal Section -->
-      <section class="data-section animate-in" style="--delay: 0.25s" [class.expanded]="legalExpanded()">
-        <header class="section-header" (click)="toggleLegal()">
-          <div class="section-title-group">
-            <div class="section-icon legal">
-              <span class="material-symbols-outlined">description</span>
-            </div>
-            <div>
-              <h3 class="section-title">Legal</h3>
-              <p class="section-subtitle">Políticas y términos</p>
-            </div>
-          </div>
-          <span class="material-symbols-outlined expand-icon" [class.rotated]="legalExpanded()">expand_more</span>
-        </header>
-
-        @if (legalExpanded()) {
-          <div class="section-content">
-            <div class="legal-cards">
-              <button type="button" class="legal-card" (click)="abrirPrivacyPolicy()">
-                <div class="legal-icon">
-                  <span class="material-symbols-outlined">policy</span>
+                <ui2-icon-badge
+                  icon="policy"
+                  color="var(--ink-700)"
+                  [size]="36"
+                  [radius]="10"
+                ></ui2-icon-badge>
+                <div class="perfil-list-item__text">
+                  <h4 class="perfil-list-item__title">Política de privacidad</h4>
+                  <p class="perfil-list-item__sub">Cómo protegemos tus datos</p>
                 </div>
-                <div class="legal-info">
-                  <h4 class="legal-title">Política de Privacidad</h4>
-                  <p class="legal-desc">Cómo protegemos tus datos</p>
-                </div>
-                <span class="material-symbols-outlined legal-arrow">chevron_right</span>
+                <span class="material-symbols-outlined perfil-list-item__arrow" aria-hidden="true">chevron_right</span>
               </button>
 
-              <button type="button" class="legal-card" (click)="abrirTermsConditions()">
-                <div class="legal-icon">
-                  <span class="material-symbols-outlined">gavel</span>
+              <button
+                type="button"
+                class="perfil-list-item"
+                (click)="abrirTermsConditions()"
+              >
+                <ui2-icon-badge
+                  icon="gavel"
+                  color="var(--ink-700)"
+                  [size]="36"
+                  [radius]="10"
+                ></ui2-icon-badge>
+                <div class="perfil-list-item__text">
+                  <h4 class="perfil-list-item__title">Términos y condiciones</h4>
+                  <p class="perfil-list-item__sub">Condiciones de uso del servicio</p>
                 </div>
-                <div class="legal-info">
-                  <h4 class="legal-title">Términos y Condiciones</h4>
-                  <p class="legal-desc">Condiciones de uso del servicio</p>
-                </div>
-                <span class="material-symbols-outlined legal-arrow">chevron_right</span>
+                <span class="material-symbols-outlined perfil-list-item__arrow" aria-hidden="true">chevron_right</span>
               </button>
             </div>
-          </div>
-        }
-      </section>
+          }
+        </ui2-card>
+      </ui2-section>
 
-      <!-- App Info Footer -->
-      <footer class="app-footer animate-in" style="--delay: 0.3s">
-        <div class="app-logo">
-          <span class="titulo-kengo">KENGO</span>
-        </div>
-        <p class="app-version">Versión 1.0.0</p>
-        <p class="app-copyright">© 2026 Kengo Health</p>
+      <!-- Footer -->
+      <footer class="perfil-footer">
+        <span class="perfil-footer__brand">KENGO</span>
+        <span class="perfil-footer__version">Versión 1.0.0</span>
+        <span class="perfil-footer__copy">© 2026 Kengo Health</span>
       </footer>
     }
   </main>
 
-  <!-- Privacy Policy Overlay -->
+  <!-- Privacy Policy overlay -->
   @if (showPrivacyPolicy()) {
-    <div class="overlay-panel" (click)="cerrarPrivacyPolicy()">
-      <div class="overlay-sheet" (click)="$event.stopPropagation()">
-        <header class="overlay-header">
-          <h2 class="overlay-title">Política de Privacidad</h2>
-          <button type="button" class="overlay-close" (click)="cerrarPrivacyPolicy()">
-            <span class="material-symbols-outlined">close</span>
+    <div
+      class="perfil-overlay"
+      role="dialog"
+      aria-modal="true"
+      (click)="cerrarPrivacyPolicy()"
+    >
+      <div class="perfil-overlay__sheet" (click)="$event.stopPropagation()">
+        <header class="perfil-overlay__header">
+          <h2 class="perfil-overlay__title">Política de privacidad</h2>
+          <button
+            type="button"
+            class="perfil-overlay__close"
+            (click)="cerrarPrivacyPolicy()"
+            aria-label="Cerrar"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </header>
-        <div class="overlay-content">
-          <section class="legal-section">
+
+        <div class="perfil-overlay__content">
+          <section class="perfil-legal">
             <h3>¿Quién es el responsable del tratamiento de sus datos?</h3>
             <p>
               IDENTIDAD: Kengo<br />
@@ -576,7 +457,7 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>¿Con qué finalidad tratamos sus datos personales?</h3>
             <p>
               Tratamos los datos que nos facilitan los usuarios que se registren en la
@@ -585,7 +466,7 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>¿Por cuánto tiempo conservaremos sus datos?</h3>
             <p>
               Los datos personales proporcionados se conservarán mientras no se solicite
@@ -593,7 +474,7 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>¿Cuál es la legitimación para el tratamiento de sus datos?</h3>
             <p>
               La base legal para el tratamiento de sus datos es la relación contractual
@@ -601,7 +482,7 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>¿A qué destinatarios se comunicarán sus datos?</h3>
             <p>
               No se cederán datos a terceros sin su previo consentimiento, salvo
@@ -609,7 +490,7 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>¿Cuáles son sus derechos cuando nos facilita sus datos?</h3>
             <p>
               Cualquier persona tiene derecho a obtener confirmación sobre si estamos
@@ -626,12 +507,12 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>¿Cómo hemos obtenido sus datos?</h3>
             <p>Los datos los hemos obtenido del propio interesado.</p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>Tipología de datos:</h3>
             <ul>
               <li>Datos identificativos (nombre completo, DNI)</li>
@@ -639,27 +520,37 @@
             </ul>
           </section>
         </div>
-        <footer class="overlay-footer">
-          <button type="button" class="overlay-btn primary" (click)="cerrarPrivacyPolicy()">
-            Entendido
-          </button>
+
+        <footer class="perfil-overlay__footer">
+          <ui2-button variant="primary" (clicked)="cerrarPrivacyPolicy()">Entendido</ui2-button>
         </footer>
       </div>
     </div>
   }
 
-  <!-- Terms & Conditions Overlay -->
+  <!-- Terms & Conditions overlay -->
   @if (showTermsConditions()) {
-    <div class="overlay-panel" (click)="cerrarTermsConditions()">
-      <div class="overlay-sheet" (click)="$event.stopPropagation()">
-        <header class="overlay-header">
-          <h2 class="overlay-title">Términos y Condiciones</h2>
-          <button type="button" class="overlay-close" (click)="cerrarTermsConditions()">
-            <span class="material-symbols-outlined">close</span>
+    <div
+      class="perfil-overlay"
+      role="dialog"
+      aria-modal="true"
+      (click)="cerrarTermsConditions()"
+    >
+      <div class="perfil-overlay__sheet" (click)="$event.stopPropagation()">
+        <header class="perfil-overlay__header">
+          <h2 class="perfil-overlay__title">Términos y condiciones</h2>
+          <button
+            type="button"
+            class="perfil-overlay__close"
+            (click)="cerrarTermsConditions()"
+            aria-label="Cerrar"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </header>
-        <div class="overlay-content">
-          <section class="legal-section">
+
+        <div class="perfil-overlay__content">
+          <section class="perfil-legal">
             <h3>Aviso Legal</h3>
             <p>
               En cumplimiento del artículo 10 de la Ley 34/2002, del 11 de julio, de
@@ -668,7 +559,7 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>Datos de la Organización</h3>
             <p><strong>Denominación social:</strong> KENGO</p>
             <p><strong>NIF:</strong> G-***********</p>
@@ -680,7 +571,7 @@
             </p>
           </section>
 
-          <section class="legal-section">
+          <section class="perfil-legal">
             <h3>Términos Legales y Condiciones Generales de Uso</h3>
             <p>
               Este sitio web ha sido creado por KENGO con carácter informativo y para uso
@@ -700,10 +591,9 @@
             </p>
           </section>
         </div>
-        <footer class="overlay-footer">
-          <button type="button" class="overlay-btn primary" (click)="cerrarTermsConditions()">
-            Entendido
-          </button>
+
+        <footer class="perfil-overlay__footer">
+          <ui2-button variant="primary" (clicked)="cerrarTermsConditions()">Entendido</ui2-button>
         </footer>
       </div>
     </div>

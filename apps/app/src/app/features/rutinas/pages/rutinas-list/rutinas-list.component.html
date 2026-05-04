@@ -1,381 +1,269 @@
-<section class="rutinas-page flex h-full w-full flex-col overflow-hidden">
-  <!-- Header sticky con glassmorphism -->
-  <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
-    <div class="mx-auto max-w-6xl">
-      @if (isMovil()) {
-        <!-- MÓVIL: Header con título y navegación -->
-        <div class="mb-4 flex items-center justify-between">
-          <!-- Back + Título -->
-          <div class="flex items-center gap-3">
-            <ui-back-button route="/inicio" ariaLabel="Volver al inicio"></ui-back-button>
-            <div>
-              <h1 class="titulo-kengo text-2xl text-kengo-primary">Galería</h1>
-              @if (rutinas().length > 0) {
-                <p class="text-xs font-medium text-zinc-500 tracking-wide">
-                  {{ rutinas().length }} {{ rutinas().length === 1 ? 'rutina' : 'rutinas' }}
-                </p>
+<div class="rl-page">
+  <!-- ========================================================== -->
+  <!-- Tabs Ejercicios / Rutinas (solo móvil)                      -->
+  <!-- ========================================================== -->
+  <div class="md:hidden">
+    <ui2-section [padding]="'4px 20px 8px'">
+      <ui2-segmented
+        [options]="catalogoTabs"
+        value="rutinas"
+        (valueChange)="onCatalogoTabChange($event)"
+      ></ui2-segmented>
+    </ui2-section>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- Header                                                       -->
+  <!-- ========================================================== -->
+  <ui2-section [padding]="'0 20px 12px'">
+    <header class="rl-header">
+      <div class="rl-header__title">
+        <h1 class="rl-header__h1">Rutinas</h1>
+        @if (rutinas().length > 0) {
+          <p class="rl-header__sub">
+            {{ rutinas().length }} {{ rutinas().length === 1 ? 'rutina' : 'rutinas' }}
+          </p>
+        }
+      </div>
+
+      <div class="rl-header__actions">
+        <ui2-button
+          variant="primary"
+          iconLeft="add"
+          size="sm"
+          (clicked)="crearRutina()"
+        >Crear rutina</ui2-button>
+      </div>
+    </header>
+  </ui2-section>
+
+  <!-- ========================================================== -->
+  <!-- Búsqueda + dropdown filtros visibilidad                     -->
+  <!-- ========================================================== -->
+  <ui2-section [padding]="'0 20px 12px'">
+    <div class="rl-controls">
+      <div class="rl-controls__search">
+        <ui2-search-box
+          placeholder="Buscar rutina…"
+          (valueChange)="onBusquedaRutinasChange($event)"
+        ></ui2-search-box>
+      </div>
+
+      <div class="rl-filter-dropdown">
+        <button
+          type="button"
+          class="rl-filter-trigger"
+          [class.rl-filter-trigger--active]="hayFiltroActivo()"
+          [attr.aria-expanded]="filtroMenuAbierto()"
+          (click)="toggleFiltroMenu()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+          <span class="rl-filter-trigger__label">Visibilidad</span>
+          @if (hayFiltroActivo()) {
+            <ui2-pill variant="primary" size="sm">1</ui2-pill>
+          }
+        </button>
+
+        @if (filtroMenuAbierto()) {
+          <div class="rl-filter-menu" role="menu">
+            <div class="rl-filter-menu__list">
+              @for (opcion of opcionesFiltro; track opcion.value) {
+                <label class="rl-filter-option" [class.rl-filter-option--selected]="filtroVisibilidad() === opcion.value">
+                  <input
+                    type="radio"
+                    name="rl-visibilidad"
+                    [value]="opcion.value"
+                    [checked]="filtroVisibilidad() === opcion.value"
+                    (change)="onFiltroVisibilidadChange(opcion.value)"
+                  />
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ opcion.icon }}</span>
+                  <span class="rl-filter-option__label">{{ opcion.label }}</span>
+                </label>
               }
             </div>
-          </div>
-
-          <!-- Action: Create -->
-          <button
-            type="button"
-            (click)="crearRutina()"
-            class="flex h-10 items-center justify-center gap-1.5 rounded-full
-                   bg-kengo-primary px-4 text-white font-medium text-sm
-                   shadow-md-kengo-primary/25
-                   transition-all duration-200
-                   hover:bg-kengo-primary-dark hover:shadow-lg-kengo-primary/30 active:scale-95"
-            aria-label="Crear rutina"
-          >
-            <span class="material-symbols-outlined text-xl">add</span>
-            <span>Crear rutina</span>
-          </button>
-        </div>
-      }
-
-      <!-- Toggle + Búsqueda + Filtros -->
-      <div class="flex items-center gap-2">
-        <!-- Tabs catálogo -->
-        <app-catalogo-tabs />
-
-        <!-- DESKTOP: Contador de rutinas -->
-        @if (!isMovil() && rutinas().length > 0) {
-          <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-md shrink-0">
-            <span class="text-sm font-bold text-kengo-primary">{{ rutinas().length }}</span>
-            <span class="text-xs text-zinc-500">{{ rutinas().length === 1 ? 'rutina' : 'rutinas' }}</span>
-          </div>
-        }
-
-        <!-- Buscador -->
-        <div class="flex-1">
-          <ui-search-box
-            placeholder="Buscar rutina..."
-            [ngModel]="busquedaRutinas"
-            (valueChange)="busquedaRutinas = $event; onBusquedaRutinasChange($event)"
-          ></ui-search-box>
-        </div>
-
-        <!-- Botón Filtros con dropdown -->
-        <div class="filter-dropdown-container relative">
-          <button
-            type="button"
-            (click)="toggleFiltroMenu(); $event.stopPropagation()"
-            class="filter-btn relative flex h-12 w-12 items-center justify-center
-                   rounded-2xl bg-white/70 backdrop-blur-xl
-                   border border-white/50 shadow-sm
-                   text-zinc-600 transition-all duration-200
-                   hover:bg-white/90 hover:shadow-md active:scale-95"
-            [class.ring-2]="filtroMenuAbierto()"
-            [class.ring-kengo-primary/30]="filtroMenuAbierto()"
-            aria-label="Filtrar rutinas"
-            [attr.aria-expanded]="filtroMenuAbierto()"
-          >
-            <span class="material-symbols-outlined text-xl">tune</span>
-            @if (filtroVisibilidad !== 'todas') {
-              <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center
-                           rounded-full bg-kengo-primary text-[10px] font-bold text-white
-                           shadow-lg-kengo-primary/40 animate-bounce-subtle">
-                1
-              </span>
-            }
-          </button>
-
-          <!-- Dropdown de filtros -->
-          @if (filtroMenuAbierto()) {
-            <div
-              class="filter-dropdown absolute right-0 top-full mt-2 z-50
-                     w-72 p-4 rounded-2xl
-                     bg-white/95 backdrop-blur-xl
-                     border border-white/50
-                     shadow-2xl shadow-black/20"
-              (click)="$event.stopPropagation()"
-            >
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-kengo-primary/10">
-                    <span class="material-symbols-outlined text-lg text-kengo-primary">filter_list</span>
-                  </div>
-                  <span class="text-base font-bold text-zinc-800">Visibilidad</span>
-                </div>
-                @if (filtroVisibilidad !== 'todas') {
-                  <span class="text-xs font-medium text-kengo-primary bg-kengo-primary/10 px-2 py-1 rounded-full">
-                    Filtro activo
-                  </span>
-                }
-              </div>
-
-              <div class="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent mb-3"></div>
-
-              <div class="space-y-1">
-                @for (opcion of opcionesFiltro; track opcion.value) {
-                  <label
-                    class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer
-                           transition-colors hover:bg-kengo-primary/5"
-                    [class.bg-kengo-primary/10]="filtroVisibilidad === opcion.value"
-                  >
-                    <div class="relative flex items-center justify-center">
-                      <input
-                        type="radio"
-                        name="visibilidad"
-                        [value]="opcion.value"
-                        [checked]="filtroVisibilidad === opcion.value"
-                        (change)="onFiltroVisibilidadChange(opcion.value)"
-                        class="peer sr-only"
-                      />
-                      <div class="h-5 w-5 rounded-full border-2 border-zinc-300
-                                  peer-checked:border-kengo-primary
-                                  transition-all duration-200
-                                  flex items-center justify-center">
-                        <div class="h-2.5 w-2.5 rounded-full bg-kengo-primary
-                                    scale-0 peer-checked:scale-100 transition-transform"></div>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="material-symbols-outlined text-lg text-zinc-500">{{ opcion.icon }}</span>
-                      <span class="text-sm font-medium text-zinc-700 select-none">{{ opcion.label }}</span>
-                    </div>
-                  </label>
-                }
-              </div>
-
-              <div class="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent my-3"></div>
-
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  (click)="limpiarFiltro()"
-                  class="flex-1 h-10 rounded-xl border border-zinc-200
-                         text-sm font-medium text-zinc-600
-                         transition-all hover:bg-zinc-50 active:scale-98"
-                >
-                  Limpiar
-                </button>
-                <button
-                  type="button"
-                  (click)="cerrarFiltroMenu()"
-                  class="flex-1 h-10 rounded-xl
-                         bg-gradient-kengo-primary-horizontal
-                         text-sm font-semibold text-white
-                         shadow-lg-kengo-primary/30
-                         transition-all hover:shadow-xl-kengo-primary/40
-                         active:scale-98"
-                >
-                  Aplicar
-                </button>
-              </div>
+            <div class="rl-filter-menu__footer">
+              <ui2-button variant="ghost" size="sm" (clicked)="limpiarFiltro()">Limpiar</ui2-button>
+              <ui2-button variant="primary" size="sm" (clicked)="cerrarFiltroMenu()">Aplicar</ui2-button>
             </div>
-          }
-        </div>
-
-        <!-- DESKTOP: Crear -->
-        @if (!isMovil()) {
-          <div class="flex items-center gap-2 ml-2 pl-2 border-l border-zinc-200/50">
-            <button
-              type="button"
-              class="inline-flex h-10 items-center justify-center gap-2 rounded-xl
-                     bg-kengo-primary px-4 text-sm font-semibold text-white
-                     shadow-md-kengo-primary/25
-                     transition-all duration-200
-                     hover:bg-kengo-primary-dark hover:shadow-lg-kengo-primary/30 active:scale-95"
-              (click)="crearRutina()"
-            >
-              <span class="material-symbols-outlined text-xl">add</span>
-              <span>Crear rutina</span>
-            </button>
           </div>
         }
       </div>
     </div>
-  </header>
+  </ui2-section>
 
-  <!-- Contenido principal con scroll -->
-  <main class="flex-1 overflow-y-auto px-4 pb-28 lg:pb-8">
-    <div class="mx-auto max-w-6xl">
-      @if (isLoadingRutinas()) {
-        <!-- Loading State -->
-        <ui-skeleton variant="progress"></ui-skeleton>
-      } @else if (rutinas().length === 0) {
-        <!-- Empty State -->
-        <ui-empty-state
-          icon="bookmarks"
-          title="No tienes rutinas guardadas"
-          message="Crea tu primera rutina de ejercicios para reutilizarla con tus pacientes"
-          actionLabel="Crear primera rutina"
-          (action)="crearRutina()"
-        ></ui-empty-state>
-      } @else {
-        <!-- Lista de rutinas -->
-        <div class="space-y-4">
-          @for (rutina of rutinas(); track rutina.id) {
-            <div class="tarjeta-kengo rutina-card rounded-2xl cursor-pointer"
-                 [class.expanded]="expandedRutinaId() === rutina.id"
-                 [class.menu-open]="openRutinaMenuId === rutina.id"
-                 (click)="togglePreview(rutina)">
-              <!-- Header rutina -->
-              <div class="flex items-start gap-4 p-5">
-                <!-- Icono -->
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
-                            bg-gradient-to-br from-kengo-tertiary/20 to-kengo-primary/10">
-                  <span class="material-symbols-outlined text-2xl text-kengo-tertiary">bookmark</span>
-                </div>
+  <!-- ========================================================== -->
+  <!-- Estados                                                      -->
+  <!-- ========================================================== -->
+  @if (isLoadingRutinas()) {
+    <div class="rl-state">
+      <ui2-spinner size="md" color="primary" label="Cargando rutinas…"></ui2-spinner>
+    </div>
+  } @else if (rutinas().length === 0) {
+    <ui2-empty-state
+      icon="bookmarks"
+      title="No tienes rutinas"
+      message="Crea tu primera rutina de ejercicios para reutilizarla con tus pacientes."
+      actionLabel="Crear primera rutina"
+      actionIcon="add"
+      (action)="crearRutina()"
+    ></ui2-empty-state>
+  } @else {
+    <!-- ======================================================== -->
+    <!-- Lista de rutinas con preview expandible                   -->
+    <!-- ======================================================== -->
+    <ui2-section [padding]="'0 20px 24px'">
+      <div class="rl-list">
+        @for (rutina of rutinas(); track rutina.id) {
+          <article
+            class="rl-card"
+            [class.rl-card--expanded]="expandedRutinaId() === rutina.id"
+            [class.rl-card--menu-open]="openRutinaMenuId() === rutina.id"
+          >
+            <div class="rl-card__row">
+              <button
+                type="button"
+                class="rl-card__head"
+                [attr.aria-expanded]="expandedRutinaId() === rutina.id"
+                (click)="togglePreview(rutina)"
+              >
+                <span class="rl-card__icon" aria-hidden="true">
+                  <span class="material-symbols-outlined">bookmark</span>
+                </span>
 
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                      <h3 class="font-bold text-zinc-800">{{ rutina.nombre }}</h3>
-                      @if (rutina.descripcion) {
-                        <p class="mt-1 line-clamp-2 text-sm text-zinc-600">
-                          {{ rutina.descripcion }}
-                        </p>
-                      }
-                      <!-- Badge visibilidad (móvil: debajo de descripción) -->
-                      <div class="mt-2 lg:hidden">
-                        <ui-visibility-badge [visibility]="rutina.visibilidad"></ui-visibility-badge>
-                      </div>
-                    </div>
-
-                    <!-- Badge visibilidad (desktop: en línea) -->
-                    <div class="hidden shrink-0 lg:inline-flex">
-                      <ui-visibility-badge [visibility]="rutina.visibilidad"></ui-visibility-badge>
-                    </div>
+                <div class="rl-card__info">
+                  <div class="rl-card__title">
+                    <h3 class="rl-card__name">{{ rutina.nombre }}</h3>
+                    <ui2-pill
+                      [variant]="rutina.visibilidad === 'privado' ? 'neutral' : 'soft'"
+                      [icon]="visibilidadIcon(rutina.visibilidad)"
+                      size="sm"
+                    >{{ visibilidadLabel(rutina.visibilidad) }}</ui2-pill>
                   </div>
-
-                  <!-- Metadata -->
-                  <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+                  @if (rutina.descripcion) {
+                    <p class="rl-card__desc">{{ rutina.descripcion }}</p>
+                  }
+                  <div class="rl-card__meta">
                     @if (rutina.dateCreated) {
-                      <span class="flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">schedule</span>
+                      <span class="rl-card__meta-item">
+                        <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
                         {{ formatDateLong(rutina.dateCreated) }}
                       </span>
                     }
                     @if (!isOwner(rutina)) {
-                      <span class="rounded-full bg-kengo-tertiary/10 px-2 py-0.5 text-kengo-tertiary font-medium">
-                        De otro fisio
-                      </span>
+                      <ui2-pill variant="custom" color="var(--ink-500)" size="sm">De otro fisio</ui2-pill>
                     }
                   </div>
                 </div>
+              </button>
 
-                <!-- Menu acciones rutina -->
-                <div class="relative shrink-0" (click)="$event.stopPropagation()">
-                  <button
-                    type="button"
-                    class="flex h-10 w-10 items-center justify-center rounded-xl
-                           text-zinc-500 transition-all hover:bg-zinc-100"
-                    (click)="toggleRutinaMenu(rutina.id)"
-                  >
-                    <span class="material-symbols-outlined">more_vert</span>
-                  </button>
-                  @if (openRutinaMenuId === rutina.id) {
-                    <div class="dropdown-menu right-0">
-                      <button
-                        type="button"
-                        class="dropdown-item"
-                        (click)="editarRutina(rutina); openRutinaMenuId = null"
-                      >
-                        <span class="material-symbols-outlined text-xl">edit</span>
-                        <span>Editar</span>
-                      </button>
-                      <button
-                        type="button"
-                        class="dropdown-item"
-                        (click)="duplicarRutina(rutina); openRutinaMenuId = null"
-                      >
-                        <span class="material-symbols-outlined text-xl">content_copy</span>
-                        <span>Duplicar</span>
-                      </button>
-                      @if (isOwner(rutina)) {
-                        <hr class="my-1.5 border-zinc-100" />
-                        <button
-                          type="button"
-                          class="dropdown-item"
-                          (click)="cambiarVisibilidadRutina(rutina); openRutinaMenuId = null"
-                        >
-                          <span class="material-symbols-outlined text-xl">
-                            {{ rutina.visibilidad === "privado" ? "domain" : "lock" }}
-                          </span>
-                          <span>
-                            {{ rutina.visibilidad === "privado" ? "Compartir con clínica" : "Hacer privada" }}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          class="dropdown-item danger"
-                          (click)="eliminarRutina(rutina); openRutinaMenuId = null"
-                        >
-                          <span class="material-symbols-outlined text-xl">delete</span>
-                          <span>Eliminar</span>
-                        </button>
-                      }
-                    </div>
-                  }
-                </div>
-              </div>
+              <div class="rl-card__actions">
+                <button
+                  type="button"
+                  class="rl-card__menu-btn"
+                  [attr.aria-expanded]="openRutinaMenuId() === rutina.id"
+                  aria-label="Más acciones"
+                  (click)="toggleRutinaMenu(rutina.id)"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+                </button>
 
-              <!-- Panel preview -->
-              @if (expandedRutinaId() === rutina.id) {
-                <div class="border-t border-zinc-100 bg-zinc-50/50 p-4">
-                  @if (loadingPreview()) {
-                    <div class="h-1.5 overflow-hidden rounded-full bg-zinc-200">
-                      <div class="progress-bar-indeterminate h-full w-1/3 rounded-full"></div>
-                    </div>
-                  } @else if (previewEjercicios().length > 0) {
-                    <div class="space-y-2.5">
-                      @for (ej of previewEjercicios(); track ej.id; let i = $index) {
-                        <div class="flex items-center gap-3 rounded-xl bg-white p-3
-                                    shadow-sm ring-1 ring-zinc-100">
-                          <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
-                            @if (ej.ejercicio.portada) {
-                              <img
-                                [src]="assetUrl(ej.ejercicio.portada)"
-                                class="h-full w-full object-cover"
-                              />
-                            } @else {
-                              <div class="flex h-full w-full items-center justify-center">
-                                <span class="material-symbols-outlined text-zinc-300">fitness_center</span>
-                              </div>
-                            }
-                          </div>
-                          <div class="min-w-0 flex-1">
-                            <p class="text-sm font-semibold text-zinc-800">
-                              {{ i + 1 }}. {{ ej.ejercicio.nombre }}
-                            </p>
-                            <p class="mt-0.5 text-xs text-zinc-500">
-                              {{ ej.series || 3 }} series x {{ ej.repeticiones || 12 }} reps
-                              @if (ej.descansoSeg) {
-                                <span class="text-zinc-400">· {{ ej.descansoSeg }}s descanso</span>
-                              }
-                            </p>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                    <!-- Botón asignar a paciente -->
+                @if (openRutinaMenuId() === rutina.id) {
+                  <div class="rl-action-menu" role="menu">
                     <button
                       type="button"
-                      class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl
-                             bg-kengo-primary px-4 py-3 text-sm font-semibold text-white
-                             shadow-md-kengo-primary/25
-                             transition-all duration-200
-                             hover:bg-kengo-primary-dark hover:shadow-lg-kengo-primary/30 active:scale-[0.98]"
-                      (click)="asignarAPaciente(rutina); $event.stopPropagation()"
+                      class="rl-action-option"
+                      role="menuitem"
+                      (click)="editarRutina(rutina); openRutinaMenuId.set(null)"
                     >
-                      <span class="material-symbols-outlined text-xl">assignment_ind</span>
-                      <span>Asignar a paciente</span>
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                      <span>Editar</span>
                     </button>
-                  } @else {
-                    <p class="py-4 text-center text-sm text-zinc-500">
-                      Esta rutina no tiene ejercicios
-                    </p>
-                  }
-                </div>
-              }
+                    <button
+                      type="button"
+                      class="rl-action-option"
+                      role="menuitem"
+                      (click)="duplicarRutina(rutina); openRutinaMenuId.set(null)"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+                      <span>Duplicar</span>
+                    </button>
+                    @if (isOwner(rutina)) {
+                      <hr class="rl-action-sep" />
+                      <button
+                        type="button"
+                        class="rl-action-option"
+                        role="menuitem"
+                        (click)="cambiarVisibilidadRutina(rutina); openRutinaMenuId.set(null)"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                          {{ rutina.visibilidad === 'privado' ? 'domain' : 'lock' }}
+                        </span>
+                        <span>
+                          {{ rutina.visibilidad === 'privado' ? 'Compartir con clínica' : 'Hacer privada' }}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        class="rl-action-option rl-action-option--danger"
+                        role="menuitem"
+                        (click)="eliminarRutina(rutina); openRutinaMenuId.set(null)"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                        <span>Eliminar</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
             </div>
-          }
-        </div>
-      }
-    </div>
-  </main>
-</section>
+
+            <!-- Preview de ejercicios (expandido) -->
+            @if (expandedRutinaId() === rutina.id) {
+              <div class="rl-card__preview">
+                @if (loadingPreview()) {
+                  <div class="rl-card__preview-loader">
+                    <ui2-spinner size="sm" color="primary"></ui2-spinner>
+                  </div>
+                } @else if (previewEjercicios().length > 0) {
+                  <ol class="rl-preview-list">
+                    @for (ej of previewEjercicios(); track ej.id; let i = $index) {
+                      <li class="rl-preview-item">
+                        <div class="rl-preview-item__media">
+                          @if (ej.ejercicio.portada) {
+                            <img [src]="assetUrl(ej.ejercicio.portada)" [alt]="ej.ejercicio.nombre" loading="lazy" />
+                          } @else {
+                            <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
+                          }
+                        </div>
+                        <div class="rl-preview-item__body">
+                          <p class="rl-preview-item__name">{{ i + 1 }}. {{ ej.ejercicio.nombre }}</p>
+                          <p class="rl-preview-item__meta">
+                            {{ ej.series || 3 }} × {{ ej.repeticiones || 12 }}
+                            @if (ej.descansoSeg) {
+                              <span class="rl-preview-item__sep">·</span>
+                              <span>{{ ej.descansoSeg }}s descanso</span>
+                            }
+                          </p>
+                        </div>
+                      </li>
+                    }
+                  </ol>
+                  <div class="rl-card__preview-cta">
+                    <ui2-button
+                      variant="primary"
+                      iconLeft="assignment_ind"
+                      [fullWidth]="true"
+                      (clicked)="asignarAPaciente(rutina)"
+                    >Asignar a paciente</ui2-button>
+                  </div>
+                } @else {
+                  <p class="rl-preview-empty">Esta rutina no tiene ejercicios.</p>
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </ui2-section>
+  }
+</div>

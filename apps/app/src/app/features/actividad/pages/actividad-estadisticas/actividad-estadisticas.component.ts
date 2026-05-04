@@ -1,353 +1,191 @@
 import {
+  ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
-  signal,
 } from '@angular/core';
-import { SessionService } from '../../../../core/auth/services/session.service';
-import { PlanesService } from '../../../planes/data-access/planes.service';
-import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
-import { ConvexService } from '../../../../core/convex/convex.service';
-import { api } from '../../../../../../../../convex/_generated/api';
-import { RegistroEjercicio, DiaSemana } from '../../../../../types/global';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
+import {
+  Ui2BigTitleComponent,
+  Ui2CardComponent,
+  Ui2CtaBarComponent,
+  Ui2EmptyStateComponent,
+  Ui2IconBadgeComponent,
+  Ui2KpiCardComponent,
+  Ui2SectionComponent,
+  Ui2SegmentedComponent,
+  Ui2SegmentedOption,
+  Ui2SpinnerComponent,
+  Ui2StatusDotComponent,
+  Ui2WebActivityChartComponent,
+} from '../../../../shared/ui-v2';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
+import { ShareService } from '../../../../core/services/share.service';
+import { ClipboardService } from '../../../../core/services/clipboard.service';
+import {
+  EstadisticasService,
+  type PuntoDolorVm,
+} from '../../data-access/estadisticas.service';
 
-interface DiaEstadistica {
-  diaSemana: string;
-  diaCorto: string;
-  fecha: Date;
-  ejerciciosCompletados: number;
-  tieneActividad: boolean;
+interface PuntoDolorPlot extends PuntoDolorVm {
+  x: number;
+  y: number;
 }
 
-interface EjercicioReciente {
-  nombre: string;
-  portada?: string;
-  fechaHora: Date;
-  tiempoRelativo: string;
-}
+const PERIODO_OPTIONS: Ui2SegmentedOption[] = [
+  { id: 'semana', label: 'Semana' },
+  { id: 'mes', label: 'Mes' },
+  { id: 'plan', label: 'Histórico' },
+];
 
 @Component({
   selector: 'app-actividad-estadisticas',
   standalone: true,
-  imports: [],
+  imports: [
+    Ui2BigTitleComponent,
+    Ui2CardComponent,
+    Ui2CtaBarComponent,
+    Ui2EmptyStateComponent,
+    Ui2IconBadgeComponent,
+    Ui2KpiCardComponent,
+    Ui2SectionComponent,
+    Ui2SegmentedComponent,
+    Ui2SpinnerComponent,
+    Ui2StatusDotComponent,
+    Ui2WebActivityChartComponent,
+  ],
   templateUrl: './actividad-estadisticas.component.html',
   styleUrl: './actividad-estadisticas.component.css',
-  host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full',
-  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ActividadEstadisticasComponent implements OnInit {
-  private sessionService = inject(SessionService);
-  private planesService = inject(PlanesService);
-  private actividadHoyService = inject(ActividadHoyService);
-  private convex = inject(ConvexService);
+export class ActividadEstadisticasComponent implements OnInit, OnDestroy {
+  private estadisticas = inject(EstadisticasService);
+  private toast = inject(ToastService);
+  private share = inject(ShareService);
+  private clipboard = inject(ClipboardService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'actividad-estadisticas';
 
-  private readonly DIAS_SEMANA: DiaSemana[] = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-  private readonly DIAS_CORTOS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-  private readonly NOMBRES_DIAS = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-  ];
+  /** Datos críticos: estadísticas resueltas (no cargando). */
+  readonly pageReady = computed(() => !this.estadisticas.cargando());
 
-  readonly cargando = signal<boolean>(false);
-  readonly error = signal<string | null>(null);
-  readonly registrosSemana = signal<RegistroEjercicio[]>([]);
-  readonly registrosMes = signal<RegistroEjercicio[]>([]);
+  readonly periodoOptions = PERIODO_OPTIONS;
+  readonly periodoActivo = this.estadisticas.periodo;
 
-  readonly usuarioId = computed(() => this.sessionService.usuario()?.id);
+  readonly cargando = this.estadisticas.cargando;
+  readonly hayDatos = this.estadisticas.hayDatos;
 
-  // Estadísticas semanales
-  readonly estadisticasSemana = computed<DiaEstadistica[]>(() => {
-    const registros = this.registrosSemana();
-    const hoy = new Date();
-    const diasSemana: DiaEstadistica[] = [];
+  readonly weeks = this.estadisticas.actividadSerie;
+  readonly pain = this.estadisticas.dolorSerie;
+  readonly history = this.estadisticas.historialReciente;
+  readonly subtituloHero = this.estadisticas.subtituloHero;
+  readonly periodoLabel = this.estadisticas.periodoLabel;
 
-    // Calcular el lunes de esta semana
-    const diaSemanaHoy = hoy.getDay();
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - (diaSemanaHoy === 0 ? 6 : diaSemanaHoy - 1));
-    lunes.setHours(0, 0, 0, 0);
+  readonly adherencia = this.estadisticas.adherencia;
+  readonly adherenciaDelta = this.estadisticas.adherenciaDelta;
+  readonly racha = this.estadisticas.rachaActual;
+  readonly mejorRacha = this.estadisticas.mejorRachaHistorica;
+  readonly dolorInicial = this.estadisticas.dolorInicial;
+  readonly dolorActual = this.estadisticas.dolorActual;
+  readonly dolorMedio = this.estadisticas.dolorMedio;
 
-    for (let i = 0; i < 7; i++) {
-      const fecha = new Date(lunes);
-      fecha.setDate(lunes.getDate() + i);
-
-      // Contar registros de este día
-      const registrosDia = registros.filter((r) => {
-        const fechaRegistro = new Date(r.fechaHora);
-        return (
-          fechaRegistro.getDate() === fecha.getDate() &&
-          fechaRegistro.getMonth() === fecha.getMonth() &&
-          fechaRegistro.getFullYear() === fecha.getFullYear()
-        );
-      });
-
-      diasSemana.push({
-        diaSemana: this.NOMBRES_DIAS[fecha.getDay()],
-        diaCorto: this.DIAS_CORTOS[fecha.getDay()],
-        fecha,
-        ejerciciosCompletados: registrosDia.length,
-        tieneActividad: registrosDia.length > 0,
-      });
-    }
-
-    return diasSemana;
+  readonly dolorMedioValue = computed<string | number>(() => {
+    const v = this.dolorMedio();
+    return v === null ? '—' : v;
   });
 
-  readonly totalEjerciciosSemana = computed(() =>
-    this.estadisticasSemana().reduce((acc, d) => acc + d.ejerciciosCompletados, 0)
+  readonly dolorMedioUnit = computed<string | null>(() =>
+    this.dolorMedio() === null ? null : '/10',
   );
 
-  readonly diasConActividadSemana = computed(() =>
-    this.estadisticasSemana().filter((d) => d.tieneActividad).length
-  );
-
-  readonly maxEjerciciosDia = computed(() =>
-    Math.max(...this.estadisticasSemana().map((d) => d.ejerciciosCompletados), 1)
-  );
-
-  // Racha actual
-  readonly rachaActual = computed(() => {
-    const estadisticas = this.estadisticasSemana();
-    let racha = 0;
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    // Buscar hacia atrás desde hoy
-    for (let i = estadisticas.length - 1; i >= 0; i--) {
-      const dia = estadisticas[i];
-      if (dia.fecha > hoy) continue;
-
-      if (dia.tieneActividad) {
-        racha++;
-      } else if (dia.fecha.getTime() < hoy.getTime()) {
-        break;
-      }
-    }
-
-    return racha;
+  readonly dolorMedioColor = computed<string>(() => {
+    const v = this.dolorMedio();
+    if (v === null) return 'var(--ink-400)';
+    if (v <= 3) return '#22c55e';
+    if (v <= 5) return 'var(--kengo-tertiary)';
+    return 'var(--danger)';
   });
 
-  // Progreso mensual
-  readonly progresoMensual = computed(() => {
-    const registros = this.registrosMes();
-    const hoy = new Date();
-    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const diasTranscurridos = Math.ceil(
-      (hoy.getTime() - primerDiaMes.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
-
-    // Contar días únicos con actividad
-    const diasUnicos = new Set<string>();
-    registros.forEach((r) => {
-      const fecha = new Date(r.fechaHora);
-      diasUnicos.add(`${fecha.getFullYear()}-${fecha.getMonth()}-${fecha.getDate()}`);
-    });
-
-    const diasConActividad = diasUnicos.size;
-    const porcentaje = diasTranscurridos > 0
-      ? Math.round((diasConActividad / diasTranscurridos) * 100)
-      : 0;
-
-    return {
-      diasConActividad,
-      diasTranscurridos,
-      porcentaje,
-      totalEjercicios: registros.length,
-    };
+  readonly adherenciaValue = computed<string | number>(() => {
+    const ad = this.adherencia();
+    return ad === null ? '—' : ad;
   });
 
-  // Ejercicios recientes
-  readonly ejerciciosRecientes = computed<EjercicioReciente[]>(() => {
-    const registros = this.registrosSemana();
-    const planes = this.actividadHoyService.planesActivos();
-
-    // Obtener los últimos 5 registros
-    const ultimos = registros
-      .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime())
-      .slice(0, 5);
-
-    return ultimos.map((registro) => {
-      // Buscar el nombre del ejercicio
-      let nombre = 'Ejercicio';
-      let portada: string | undefined;
-
-      for (const plan of planes) {
-        const item = plan.items.find((i) => i.id === registro.planItemId);
-        if (item) {
-          nombre = item.ejercicio.nombre;
-          portada = item.ejercicio.portada;
-          break;
-        }
-      }
-
-      const fechaHora = new Date(registro.fechaHora);
-      return {
-        nombre,
-        portada,
-        fechaHora,
-        tiempoRelativo: this.calcularTiempoRelativo(fechaHora),
-      };
-    });
-  });
-
-  readonly sinDatos = computed(
-    () => !this.cargando() &&
-         this.registrosSemana().length === 0 &&
-         this.registrosMes().length === 0
+  readonly adherenciaUnit = computed<string | null>(() =>
+    this.adherencia() === null ? null : '%',
   );
+
+  readonly mejorRachaTexto = computed<string | null>(() =>
+    this.mejorRacha() > 0 ? `Mejor racha: ${this.mejorRacha()} días` : null,
+  );
+
+  readonly painPlot = computed<PuntoDolorPlot[]>(() => {
+    const pts = this.pain();
+    if (pts.length === 0) return [];
+    const last = Math.max(pts.length - 1, 1);
+    return pts.map((p, i) => ({
+      ...p,
+      x: (i / last) * 280 + 10,
+      y: 80 - (p.v / 10) * 70,
+    }));
+  });
+
+  readonly painPolyline = computed(() =>
+    this.painPlot()
+      .map((p) => `${p.x},${p.y}`)
+      .join(' '),
+  );
+
+  readonly painArea = computed(() => `10,80 ${this.painPolyline()} 290,80`);
+
+  readonly tieneDolor = computed(() => this.painPlot().length >= 2);
+
+  readonly deltaTexto = computed(() => this.adherenciaDelta()?.texto ?? null);
+  readonly deltaColor = computed(() => {
+    const delta = this.adherenciaDelta();
+    if (!delta) return 'var(--ink-500)';
+    if (delta.valor > 0) return 'var(--success)';
+    if (delta.valor < 0) return 'var(--danger)';
+    return 'var(--ink-500)';
+  });
 
   ngOnInit(): void {
-    this.cargarDatos();
+    this.estadisticas.cargarSiNecesario();
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
   }
 
-  async cargarDatos(): Promise<void> {
-    const userId = this.usuarioId();
-    if (!userId) {
-      this.error.set('No se pudo identificar al usuario');
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
+  }
+
+  onPeriodoChange(id: string): void {
+    this.estadisticas.setPeriodo(id);
+  }
+
+  async onCompartir(): Promise<void> {
+    const texto = this.estadisticas.resumenCompartible();
+
+    if (this.share.isAvailable) {
+      const shared = await this.share.share({
+        title: 'Mi progreso en Kengo',
+        text: texto,
+      });
+      if (shared) return;
+    }
+
+    const copied = await this.clipboard.write(texto);
+    if (copied) {
+      this.toast.success('Resumen copiado al portapapeles');
       return;
     }
-
-    this.cargando.set(true);
-    this.error.set(null);
-
-    try {
-      await Promise.all([
-        this.actividadHoyService.cargarDatos(),
-        this.cargarRegistrosSemana(userId),
-        this.cargarRegistrosMes(userId),
-      ]);
-    } catch (err) {
-      console.error('Error al cargar estadísticas:', err);
-      this.error.set('Error al cargar las estadísticas. Intenta de nuevo.');
-    } finally {
-      this.cargando.set(false);
-    }
+    this.toast.warning('Tu dispositivo no permite compartir el resumen.');
   }
 
-  private async cargarRegistrosSemana(userId: string): Promise<void> {
-    const hoy = new Date();
-    const diaSemanaHoy = hoy.getDay();
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - (diaSemanaHoy === 0 ? 6 : diaSemanaHoy - 1));
-    lunes.setHours(0, 0, 0, 0);
-
-    const registros = await this.obtenerRegistrosDesde(userId, lunes);
-    this.registrosSemana.set(registros);
-  }
-
-  private async cargarRegistrosMes(userId: string): Promise<void> {
-    const hoy = new Date();
-    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-
-    const registros = await this.obtenerRegistrosDesde(userId, primerDiaMes);
-    this.registrosMes.set(registros);
-  }
-
-  private async obtenerRegistrosDesde(
-    pacienteId: string,
-    desde: Date
-  ): Promise<RegistroEjercicio[]> {
-    try {
-      // Lectura del modelo nuevo `exerciseExecutions` (Fase 3 rediseño records).
-      // El shape de retorno es similar al legacy (camelCase). El componente
-      // mantiene la transformación a `RegistroEjercicio` (snake_case).
-      const records = (await this.convex.query(
-        api.executions.queries.listByPacienteInRange,
-        {
-          pacienteId,
-          desde: desde.toISOString().split('T')[0],
-          soloCompletados: true,
-        },
-      )) as Array<{
-        _id: string;
-        planExerciseId: string;
-        pacienteId: string;
-        fechaHora: string;
-        completado: boolean;
-        repeticionesRealizadas?: number;
-        duracionRealSeg?: number;
-        dolorEscala?: number;
-        notaPaciente?: string;
-      }>;
-
-      // Ordenar desc por fechaHora (Convex devuelve sin orden garantizado).
-      const sorted = [...(records ?? [])].sort((a, b) =>
-        b.fechaHora.localeCompare(a.fechaHora),
-      );
-
-      return sorted.map((r) => this.transformRegistroConvex(r));
-    } catch (error) {
-      console.error('Error al obtener registros:', error);
-      return [];
-    }
-  }
-
-  private transformRegistroConvex(r: {
-    _id: string;
-    planExerciseId: string;
-    pacienteId: string;
-    fechaHora: string;
-    completado: boolean;
-    repeticionesRealizadas?: number;
-    duracionRealSeg?: number;
-    dolorEscala?: number;
-    notaPaciente?: string;
-  }): RegistroEjercicio {
-    return {
-      id: undefined,
-      planItemId: r.planExerciseId,
-      pacienteId: r.pacienteId,
-      fechaHora: r.fechaHora,
-      completado: r.completado,
-      repeticionesRealizadas: r.repeticionesRealizadas,
-      duracionRealSeg: r.duracionRealSeg,
-      dolorEscala: r.dolorEscala,
-      notaPaciente: r.notaPaciente,
-    };
-  }
-
-  private calcularTiempoRelativo(fecha: Date): string {
-    const ahora = new Date();
-    const diff = ahora.getTime() - fecha.getTime();
-    const minutos = Math.floor(diff / (1000 * 60));
-    const horas = Math.floor(diff / (1000 * 60 * 60));
-    const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (minutos < 60) {
-      return minutos <= 1 ? 'Hace un momento' : `Hace ${minutos} min`;
-    } else if (horas < 24) {
-      return horas === 1 ? 'Hace 1 hora' : `Hace ${horas} horas`;
-    } else if (dias === 1) {
-      return 'Ayer';
-    } else if (dias < 7) {
-      return `Hace ${dias} días`;
-    } else {
-      return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-    }
-  }
-
-  getAssetUrl(id?: string, width = 80, height = 80): string {
-    return this.planesService.getAssetUrl(id, width, height);
-  }
-
-  getBarHeight(ejercicios: number): number {
-    const max = this.maxEjerciciosDia();
-    return max > 0 ? (ejercicios / max) * 100 : 0;
-  }
-
-  esHoy(fecha: Date): boolean {
-    const hoy = new Date();
-    return (
-      fecha.getDate() === hoy.getDate() &&
-      fecha.getMonth() === hoy.getMonth() &&
-      fecha.getFullYear() === hoy.getFullYear()
-    );
+  painDotColor(v: number): string {
+    if (v <= 3) return 'var(--success)';
+    if (v <= 5) return 'var(--kengo-tertiary)';
+    return 'var(--danger)';
   }
 }

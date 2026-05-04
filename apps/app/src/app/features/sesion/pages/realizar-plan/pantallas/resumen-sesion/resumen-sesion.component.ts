@@ -11,12 +11,26 @@ import {
   EjercicioPlan,
   EjercicioSesionMultiPlan,
 } from '../../../../../../../types/global';
-import { BackButtonComponent, SectionHeaderComponent } from '../../../../../../shared';
+import {
+  Ui2BackButtonComponent,
+  Ui2CardComponent,
+  Ui2CtaBarComponent,
+  Ui2MiniStatComponent,
+  Ui2PillComponent,
+  Ui2SectionComponent,
+} from '../../../../../../shared/ui-v2';
 
 @Component({
   selector: 'app-resumen-sesion',
   standalone: true,
-  imports: [BackButtonComponent, SectionHeaderComponent],
+  imports: [
+    Ui2BackButtonComponent,
+    Ui2CardComponent,
+    Ui2CtaBarComponent,
+    Ui2MiniStatComponent,
+    Ui2PillComponent,
+    Ui2SectionComponent,
+  ],
   templateUrl: './resumen-sesion.component.html',
   styleUrl: './resumen-sesion.component.css',
   host: {

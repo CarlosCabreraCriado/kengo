@@ -435,4 +435,57 @@ export default defineSchema({
     intentos_fallidos: v.number(),
   }).index("by_userId", ["userId"]),
 
+  // === MENSAJERÍA (chat 1-1 fisio↔paciente dentro de una clínica) ===
+  conversations: defineTable({
+    pacienteId: v.id("users"),
+    fisioId: v.id("users"),
+    clinicId: v.id("clinics"),
+    lastMessageText: v.optional(v.string()),
+    lastMessageAt: v.optional(v.number()),
+    lastMessageSenderId: v.optional(v.id("users")),
+    pacienteUnreadCount: v.number(),
+    fisioUnreadCount: v.number(),
+  })
+    .index("by_pacienteId_lastMessageAt", ["pacienteId", "lastMessageAt"])
+    .index("by_fisioId_lastMessageAt", ["fisioId", "lastMessageAt"])
+    .index("by_paciente_fisio_clinic", [
+      "pacienteId",
+      "fisioId",
+      "clinicId",
+    ]),
+
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    senderId: v.id("users"),
+    text: v.string(),
+    readAt: v.optional(v.number()),
+  }).index("by_conversationId", ["conversationId"]),
+
+  // === BILLING / SUSCRIPCIONES STRIPE ===
+  // Cache local del estado de suscripción de cada clínica. El componente
+  // @convex-dev/stripe persiste customer/subscription/invoices en sus propias
+  // tablas; aquí guardamos campos custom (gracia local, banderas) y un espejo
+  // del estado para queries rápidas y gating sin race conditions.
+  clinicBilling: defineTable({
+    clinicId: v.id("clinics"),
+    estadoLocal: v.union(
+      v.literal("trialing"),
+      v.literal("active"),
+      v.literal("past_due"),
+      v.literal("canceled"),
+      v.literal("incomplete"),
+      v.literal("unpaid"),
+      v.literal("none"),
+    ),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    trialEnd: v.optional(v.number()),
+    currentPeriodEnd: v.optional(v.number()),
+    cancelAtPeriodEnd: v.optional(v.boolean()),
+    graceUntil: v.optional(v.number()),
+    cantidadFisios: v.optional(v.number()),
+    requiereContactoVentas: v.optional(v.boolean()),
+    actualizadoEn: v.number(),
+  }).index("by_clinicId", ["clinicId"]),
+
 });

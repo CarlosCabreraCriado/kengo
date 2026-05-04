@@ -11,6 +11,8 @@ export { AuthGuard } from './guards/auth.guard';
 export { FisioGuard } from './guards/fisio.guard';
 export { PacienteGuard } from './guards/paciente.guard';
 export { AdminGuard } from './guards/admin.guard';
+export { ClinicAdminGuard } from './guards/clinic-admin.guard';
+export { ActiveSubscriptionGuard } from './guards/active-subscription.guard';
 
 // Config
 export { CustomRouteReuseStrategy } from './config/route-reuse-strategy';
@@ -19,7 +21,6 @@ export { CustomRouteReuseStrategy } from './config/route-reuse-strategy';
 export { ConvexService, type ConvexQueryResult } from './convex/convex.service';
 export { provideConvex } from './convex/convex.provider';
 
-// Layout Components
-export { NavegacionComponent } from './layout/components/navegacion/navegacion.component';
-export { FooterComponent } from './layout/components/footer/footer.component';
-export { DashboardHeaderComponent } from './layout/components/dashboard-header/dashboard-header.component';
+// Billing
+export { SubscriptionService } from './billing/subscription.service';
+export { BillingBannerComponent } from './billing/billing-banner.component';

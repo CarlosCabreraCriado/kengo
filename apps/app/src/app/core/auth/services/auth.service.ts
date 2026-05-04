@@ -29,13 +29,8 @@ export class AuthService {
    * automático del token; no necesitamos timer propio.
    */
   async login(email: string, password: string): Promise<void> {
-    const usuario = this.sessionService.usuario();
-    const nombre = usuario
-      ? `${usuario.first_name} ${usuario.last_name}`.trim()
-      : undefined;
-
-    const ok = await this.betterAuth.signIn(email, password, nombre);
-    if (!ok) throw new Error('CREDENCIALES_INCORRECTAS');
+    const result = await this.betterAuth.signIn(email, password);
+    if (!result.ok) throw new Error('CREDENCIALES_INCORRECTAS');
 
     this.convex.setAuth(() => this.betterAuth.getConvexToken());
     this.isLoggedIn.set(true);
@@ -63,6 +58,7 @@ export class AuthService {
     this.routeReuseStrategy.clearCache();
     localStorage.removeItem('kengo:theme:v1');
     localStorage.removeItem('kengo:modo');
+    this.sessionService.limpiarCacheUsuario();
     if (!evitarRedirect) {
       this.router.navigate(['/login'], { state: { fromLogout: true } });
     }
@@ -101,10 +97,17 @@ export class AuthService {
    * Inicializa la app si hay sesión activa.
    */
   async iniciarApp(): Promise<void> {
-    this.restaurarConvexAuth();
-    const hasSession = await this.checkSession();
-    if (hasSession) {
-      await this.sessionService.cargarMiUsuario();
+    try {
+      // En native: rehidratar localStorage desde @capacitor/preferences si la
+      // WebView purgó el storage. No-op en web.
+      await this.betterAuth.restoreFromNative();
+      this.restaurarConvexAuth();
+      const hasSession = await this.checkSession();
+      if (hasSession) {
+        await this.sessionService.cargarMiUsuario();
+      }
+    } finally {
+      this.sessionService.marcarSesionInicializada();
     }
   }
 

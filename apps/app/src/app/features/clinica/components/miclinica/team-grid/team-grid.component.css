@@ -1,0 +1,183 @@
+:host {
+  display: block;
+}
+
+/* Header en desktop (no expandable): icon+texto a la izquierda y botón a la derecha */
+.mtg__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 1024px) {
+  .mtg__head {
+    margin-bottom: 16px;
+  }
+}
+
+/* En mobile (expandable=true) el header se queda con icon+texto a una sola línea
+   y el botón se mueve a una fila propia debajo. */
+.mtg__head--stacked {
+  margin-bottom: 12px;
+}
+
+.mtg__head-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mtg__head-text {
+  min-width: 0;
+}
+
+.mtg__overline {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.mtg__title {
+  margin: 4px 0 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--ink-900);
+}
+
+@media (min-width: 1024px) {
+  .mtg__title {
+    font-size: 22px;
+  }
+}
+
+/* Fila de CTA en mobile (expandable). Botón a ancho de su contenido pero alineado al inicio. */
+.mtg__head-cta {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.mtg__head-cta ui2-button {
+  flex: 1;
+}
+
+.mtg__head-cta ::ng-deep .ui2-btn {
+  width: 100%;
+}
+
+/* Empty state */
+.mtg__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 12px;
+  text-align: center;
+}
+
+.mtg__empty > .material-symbols-outlined {
+  font-size: 36px;
+  color: var(--ink-300);
+}
+
+.mtg__empty p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+/* Preview avatar-stack cuando colapsado en mobile */
+.mtg__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0 8px;
+}
+
+.mtg__avatar-stack {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mtg__avatar-stack-item {
+  display: inline-flex;
+  margin-left: calc(var(--stack-index, 0) * -10px);
+  z-index: calc(10 - var(--stack-index, 0));
+}
+
+.mtg__avatar-stack-item:first-child {
+  margin-left: 0;
+}
+
+.mtg__avatar-stack-more {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: var(--ink-700);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2.5px solid white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  margin-left: -10px;
+}
+
+/* Grid de fisioterapeutas */
+.mtg__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .mtg__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+/* Footer expansor (solo mobile expandable) */
+.mtg__expander {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: calc(100% + 40px);
+  margin: 14px -20px -20px;
+  padding: 12px 20px;
+  border: 0;
+  border-top: 1px solid var(--ink-100);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  border-radius: 0 0 22px 22px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mtg__expander:hover {
+  background: var(--cream-50);
+  color: var(--ink-700);
+}
+
+.mtg__expander-icon {
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+
+.mtg__expander-icon--rotated {
+  transform: rotate(180deg);
+}

@@ -6,6 +6,19 @@ import { api } from '../../../../../../../convex/_generated/api';
 import { rawAssetUrl } from '../../utils/asset-url';
 
 /**
+ * Estructura del cache local del usuario. Solo campos no sensibles que
+ * afecten al render del shell (nombre, avatar, clínicas, flags de rol).
+ * Datos derivados (admin, etc.) NO se cachean — se calculan al cargar.
+ */
+interface UsuarioCacheV1 {
+  v: 1;
+  ts: number;
+  usuario: Usuario;
+  rol: RolUsuario;
+  puedeAlternar: boolean;
+}
+
+/**
  * SessionService — gestiona el estado del usuario autenticado.
  * Tras la consolidación a Convex-only, esta clase consume exclusivamente
  * `api.users.queries.me`. La cookie/sesión la gestiona Better-Auth.
@@ -13,6 +26,8 @@ import { rawAssetUrl } from '../../utils/asset-url';
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   private readonly MODO_STORAGE_KEY = 'kengo:modo';
+  private readonly USER_CACHE_KEY = 'kengo:user-cache:v1';
+  private readonly USER_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
   private _rolUsuario = signal<RolUsuario>('fisio');
   public rolUsuario = this._rolUsuario;
@@ -23,11 +38,16 @@ export class SessionService {
   private _usuario = signal<Usuario | null>(null);
   private _loading = signal<boolean>(false);
   private _error = signal<string | null>(null);
+  // Gate del primer paint: false hasta que termina la primera resolución de
+  // sesión (con o sin usuario). Evita renderizar shells legacy/V2 con datos
+  // por defecto antes de saber el rol real.
+  private _sesionInicializada = signal<boolean>(false);
 
   public usuario = computed(() => this._usuario());
   public isLoggedIn = computed(() => this._usuario() !== null);
   public loading = computed(() => this._loading());
   public error = computed(() => this._error());
+  public sesionInicializada = computed(() => this._sesionInicializada());
   public nombreCompleto = computed(() => {
     const u = this._usuario();
     return u ? `${u.first_name} ${u.last_name}`.trim() : '';
@@ -64,6 +84,74 @@ export class SessionService {
 
   private convex = inject(ConvexService);
   private betterAuth = inject(BetterAuthService);
+
+  constructor() {
+    // Hidratación rápida desde localStorage para acelerar `sesionInicializada`
+    // en cold start con sesión válida. Solo aplica si:
+    //   1) Better-Auth indica que hay sesión guardada (cookie/token).
+    //   2) Existe un cache de usuario no expirado.
+    //   3) No estamos en el flujo /magic (consume token y reemplaza usuario).
+    // Tras hidratar, `cargarMiUsuario()` (invocado por AuthService.iniciarApp)
+    // refresca con el dato real de Convex sin desmontar el shell.
+    this.intentarHidratarDesdeCache();
+  }
+
+  private intentarHidratarDesdeCache(): void {
+    if (typeof window === 'undefined') return;
+    if (window.location?.pathname?.startsWith('/magic')) return;
+    if (!this.betterAuth.hasStoredSession()) {
+      this.limpiarCacheUsuario();
+      return;
+    }
+    const cached = this.leerCacheUsuario();
+    if (!cached) return;
+    this._usuario.set(cached.usuario);
+    this._rolUsuario.set(cached.rol);
+    this.puedeAlternarModo.set(cached.puedeAlternar);
+    this._sesionInicializada.set(true);
+  }
+
+  private leerCacheUsuario(): UsuarioCacheV1 | null {
+    try {
+      const raw = localStorage.getItem(this.USER_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as UsuarioCacheV1;
+      if (parsed?.v !== 1 || !parsed.usuario) return null;
+      if (Date.now() - parsed.ts > this.USER_CACHE_TTL_MS) {
+        localStorage.removeItem(this.USER_CACHE_KEY);
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  private guardarCacheUsuario(): void {
+    try {
+      const usuario = this._usuario();
+      if (!usuario) return;
+      const data: UsuarioCacheV1 = {
+        v: 1,
+        ts: Date.now(),
+        usuario,
+        rol: this._rolUsuario(),
+        puedeAlternar: this.puedeAlternarModo(),
+      };
+      localStorage.setItem(this.USER_CACHE_KEY, JSON.stringify(data));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Borra el cache local del usuario. Llamar al hacer logout. */
+  limpiarCacheUsuario(): void {
+    try {
+      localStorage.removeItem(this.USER_CACHE_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
 
   // Granulares por clínica (no son computeds porque parametrizan)
   esAdminEnClinica(clinicaId: string): boolean {
@@ -123,6 +211,10 @@ export class SessionService {
     this.cargarMiUsuario();
   }
 
+  marcarSesionInicializada(): void {
+    this._sesionInicializada.set(true);
+  }
+
   async refreshUsuario() {
     return this.cargarMiUsuario();
   }
@@ -135,6 +227,7 @@ export class SessionService {
     this._error.set(null);
     localStorage.removeItem('carrito:last_fisio_id');
     this.limpiarModoPersistido();
+    this.limpiarCacheUsuario();
   }
 
   async cargarMiUsuario(): Promise<void> {
@@ -143,12 +236,14 @@ export class SessionService {
     try {
       if (!this.betterAuth.hasStoredSession()) {
         this._usuario.set(null);
+        this.limpiarCacheUsuario();
         return;
       }
 
       const convexUser = await this.convex.query(api.users.queries.me, {});
       if (!convexUser) {
         this._usuario.set(null);
+        this.limpiarCacheUsuario();
         return;
       }
 
@@ -165,6 +260,7 @@ export class SessionService {
       this._error.set('No se pudo cargar el usuario');
       this._usuario.set(null);
       localStorage.removeItem('carrito:last_fisio_id');
+      this.limpiarCacheUsuario();
     } finally {
       const u = this._usuario();
       // Cualquier fisio puede alternar entre modos. Los pacientes puros no.
@@ -181,6 +277,10 @@ export class SessionService {
       }
 
       this._loading.set(false);
+      this._sesionInicializada.set(true);
+      // Persistir cache solo si la carga terminó con un usuario válido. En
+      // los caminos de error/null ya invocamos limpiarCacheUsuario() arriba.
+      if (this._usuario()) this.guardarCacheUsuario();
     }
   }
 

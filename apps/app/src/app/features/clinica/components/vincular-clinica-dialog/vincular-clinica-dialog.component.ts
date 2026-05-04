@@ -1,12 +1,29 @@
-import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { clinicaCode } from '../../../../shared';
+import {
+  Ui2DialogHostComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogContentComponent,
+  Ui2DialogActionsComponent,
+  Ui2InputComponent,
+  Ui2ButtonComponent,
+} from '../../../../shared/ui-v2';
 
 @Component({
   standalone: true,
   selector: 'app-vincular-clinica-dialog',
-  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
+    Ui2DialogActionsComponent,
+    Ui2InputComponent,
+    Ui2ButtonComponent,
+  ],
   templateUrl: './vincular-clinica-dialog.component.html',
   styleUrl: './vincular-clinica-dialog.component.css',
 })

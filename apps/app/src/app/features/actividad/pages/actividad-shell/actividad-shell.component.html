@@ -1,63 +1,15 @@
-<section class="activity-shell">
-  <!-- Aurora Background -->
-  <div class="aurora-bg" aria-hidden="true">
-    <div class="aurora-wave aurora-wave-1"></div>
-    <div class="aurora-wave aurora-wave-2"></div>
-    <div class="aurora-wave aurora-wave-3"></div>
+<section class="actividad-shell">
+  <div class="md:hidden">
+    <ui2-section [padding]="'12px 20px 8px'">
+      <ui2-segmented
+        [options]="tabs"
+        [value]="activeTab()"
+        (valueChange)="onTabChange($event)"
+      ></ui2-segmented>
+    </ui2-section>
   </div>
 
-  <!-- Header with Toggle Navigation -->
-  @if (isMovil()) {
-    <header class="header-glass sticky top-0 z-50 shrink-0 px-4 pt-3 pb-4">
-      <div class="mx-auto max-w-2xl">
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <ui-back-button ariaLabel="Volver al inicio" (clicked)="volverInicio()"></ui-back-button>
-            <h1 class="titulo-kengo text-2xl text-kengo-primary">Mi Actividad</h1>
-          </div>
-        </div>
-
-        <!-- Toggle Navigation -->
-        <nav class="toggle-nav" aria-label="Navegación de actividad">
-        @for (tab of tabs; track tab.path) {
-          <a
-            [routerLink]="tab.path"
-            routerLinkActive="active"
-            class="toggle-item"
-            [attr.aria-current]="router.isActive('/actividad-personal/' + tab.path, true) ? 'page' : null"
-          >
-            <span class="material-symbols-outlined toggle-icon">{{ tab.icon }}</span>
-            <span class="toggle-label">{{ tab.label }}</span>
-          </a>
-        }
-        </nav>
-      </div>
-    </header>
-  } @else {
-    <!-- Desktop Header -->
-    <header class="shell-header shell-header-desktop">
-      <div class="header-content-desktop">
-
-        <!-- Toggle Navigation Desktop -->
-        <nav class="toggle-nav toggle-nav-desktop" aria-label="Navegación de actividad">
-          @for (tab of tabs; track tab.path) {
-            <a
-              [routerLink]="tab.path"
-              routerLinkActive="active"
-              class="toggle-item"
-              [attr.aria-current]="router.isActive('/actividad-personal/' + tab.path, true) ? 'page' : null"
-            >
-              <span class="material-symbols-outlined toggle-icon">{{ tab.icon }}</span>
-              <span class="toggle-label">{{ tab.label }}</span>
-            </a>
-          }
-        </nav>
-      </div>
-    </header>
-  }
-
-  <!-- Router Outlet for Child Routes -->
-  <main class="shell-content">
+  <main class="actividad-shell__content">
     <router-outlet />
   </main>
 </section>

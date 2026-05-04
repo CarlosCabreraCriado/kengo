@@ -1,5 +1,7 @@
 @reference "tailwindcss";
 
+/* Video player V2: surface 22px sobre cream con sombra suave.
+   Conserva la lógica nativa de play/pause del componente para `playStateChange`. */
 :host {
   position: relative;
   display: block;
@@ -7,6 +9,14 @@
   height: 100%;
   cursor: pointer;
   overflow: hidden;
+  background: #1a1818;
+  box-shadow: var(--shadow-card-strong, var(--shadow-card));
+}
+
+@media (min-width: 640px) {
+  :host {
+    border-radius: 22px;
+  }
 }
 
 .media-element {
@@ -32,7 +42,7 @@
 .placeholder-icon-wrapper {
   width: 100px;
   height: 100px;
-  border-radius: 50%;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
@@ -42,7 +52,7 @@
 
 .placeholder-icon {
   font-size: 3rem;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .play-indicator-animated {
