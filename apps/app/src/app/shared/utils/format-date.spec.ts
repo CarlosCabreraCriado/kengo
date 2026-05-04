@@ -70,4 +70,12 @@ describe('formatDate', () => {
       expect(formatDate('2026-04-27', 'short')).toBe('27 abr');
     });
   });
+
+  describe('contrato YMD estricto', () => {
+    it('lanza RangeError ante un ISO instant: el contrato exige YYYY-MM-DD', () => {
+      expect(() =>
+        formatDate('2026-05-04T13:15:23.456Z', 'short'),
+      ).toThrowError(RangeError);
+    });
+  });
 });

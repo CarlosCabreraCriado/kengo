@@ -1,5 +1,6 @@
 import { TipoCumplimiento } from '../../../../types/global';
 import { formatDate } from '../../../shared/utils/format-date';
+import { ymdMadridFromInstant } from '../../../shared/utils/madrid-date.util';
 
 /** Color tailwind para una escala de dolor 0-10. */
 export function getDolorColor(dolor: number | null): string {
@@ -46,7 +47,10 @@ export function formatearFecha(fecha: string): string {
   return formatDate(fecha, 'long');
 }
 
-/** Formato corto en español ("27 abr"). Alias de `formatDate(fecha, 'short')`. */
-export function formatearFechaComentario(fecha: string): string {
-  return formatDate(fecha, 'short');
+/**
+ * Formato corto en español ("27 abr") de un instante ISO 8601 (con `Z`),
+ * interpretándolo como día calendario en Europe/Madrid.
+ */
+export function formatearFechaComentario(fechaIso: string): string {
+  return formatDate(ymdMadridFromInstant(fechaIso), 'short');
 }
