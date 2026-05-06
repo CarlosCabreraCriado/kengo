@@ -52,6 +52,7 @@ import type * as exercises_mutations from "../exercises/mutations.js";
 import type * as exercises_queries from "../exercises/queries.js";
 import type * as http from "../http.js";
 import type * as me_queries from "../me/queries.js";
+import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as pdf_actions from "../pdf/actions.js";
 import type * as pdf_internal from "../pdf/internal.js";
@@ -129,6 +130,7 @@ declare const fullApi: ApiFromModules<{
   "exercises/queries": typeof exercises_queries;
   http: typeof http;
   "me/queries": typeof me_queries;
+  "migrations/legacyUsers": typeof migrations_legacyUsers;
   "migrations/validation": typeof migrations_validation;
   "pdf/actions": typeof pdf_actions;
   "pdf/internal": typeof pdf_internal;
