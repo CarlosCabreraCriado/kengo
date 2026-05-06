@@ -62,6 +62,10 @@ export const listExercises = query({
       exercises = await ctx.db.query("exercises").collect();
     }
 
+    // Excluir archivados del catálogo. `getExerciseById` los sigue resolviendo
+    // para que sigan siendo visibles dentro de planes/rutinas existentes.
+    exercises = exercises.filter((e) => e.archivado !== true);
+
     return await enrichWithCategories(ctx, exercises);
   },
 });

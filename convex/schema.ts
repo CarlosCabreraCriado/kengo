@@ -66,6 +66,10 @@ export default defineSchema({
     .index("by_userId_clinicId", ["userId", "clinicId"]),
 
   // === EJERCICIOS (catálogo) ===
+  // Catálogo gestionado desde Directus (CMS). El cron `directus-catalog-sync`
+  // (04:00 UTC, ver `convex/sync/`) replica altas/cambios/bajas detectadas por
+  // `date_updated` en Directus. `directusId` enlaza con `ejercicios.id_ejercicio`
+  // y `archivado` permite ocultar del catálogo sin romper FKs en planes/rutinas.
   exercises: defineTable({
     nombreEjercicio: v.string(),
     descripcion: v.optional(v.string()),
@@ -73,18 +77,27 @@ export default defineSchema({
     repeticionesDefecto: v.optional(v.number()),
     video: v.optional(v.string()),
     portada: v.optional(v.string()),
-  }).searchIndex("search_nombre", { searchField: "nombreEjercicio" }),
+    directusId: v.optional(v.number()),
+    archivado: v.optional(v.boolean()),
+    directusUpdatedAt: v.optional(v.number()),
+  })
+    .searchIndex("search_nombre", { searchField: "nombreEjercicio" })
+    .index("by_directusId", ["directusId"]),
 
   categories: defineTable({
     nombreCategoria: v.string(),
-  }),
+    directusId: v.optional(v.number()),
+    directusUpdatedAt: v.optional(v.number()),
+  }).index("by_directusId", ["directusId"]),
 
   exerciseCategories: defineTable({
     exerciseId: v.id("exercises"),
     categoryId: v.id("categories"),
+    directusId: v.optional(v.number()),
   })
     .index("by_exerciseId", ["exerciseId"])
-    .index("by_categoryId", ["categoryId"]),
+    .index("by_categoryId", ["categoryId"])
+    .index("by_directusId", ["directusId"]),
 
   exerciseFavorites: defineTable({
     userId: v.id("users"),
@@ -488,4 +501,22 @@ export default defineSchema({
     actualizadoEn: v.number(),
   }).index("by_clinicId", ["clinicId"]),
 
+  // === ESTADO DE SINCRONIZACIÓN DIRECTUS ===
+  // Una fila por colección Directus sincronizada. `lastSyncedAt` es la cota
+  // superior (max date_updated visto) usada como filtro `_gt` en el siguiente
+  // pull. Se actualiza solo si la run termina ok.
+  directusSyncState: defineTable({
+    collection: v.union(
+      v.literal("ejercicios"),
+      v.literal("categorias"),
+      v.literal("ejercicios_categorias"),
+    ),
+    lastSyncedAt: v.number(),
+    lastRunAt: v.number(),
+    lastRunStatus: v.union(v.literal("ok"), v.literal("error")),
+    lastError: v.optional(v.string()),
+    itemsCreated: v.number(),
+    itemsUpdated: v.number(),
+    itemsArchived: v.number(),
+  }).index("by_collection", ["collection"]),
 });

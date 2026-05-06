@@ -58,4 +58,17 @@ crons.daily(
   {},
 );
 
+// Sync diario del catálogo de ejercicios desde Directus (CMS administrado por
+// admins). Pull incremental por `date_updated` sobre las colecciones
+// `ejercicios`, `categorias` y `ejercicios_categorias`. Detecta borrados
+// comparando el set de IDs vivos en Directus con los `directusId` en Convex.
+// Hora 04:00 UTC: tras `daily-maintenance` (03:00) y `billing-grace-expired`
+// (03:30), antes del horario laboral europeo.
+crons.daily(
+  "directus-catalog-sync",
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.sync.actions.syncFromDirectus,
+  {},
+);
+
 export default crons;
