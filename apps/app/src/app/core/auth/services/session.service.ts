@@ -53,6 +53,12 @@ export class SessionService {
     return u ? `${u.first_name} ${u.last_name}`.trim() : '';
   });
   public misclinicas = computed(() => this._usuario()?.clinicas ?? []);
+  // True cuando el usuario está autenticado pero todavía no pertenece a ninguna
+  // clínica. Se usa por el OnboardingGuard para enviar al flow de bienvenida.
+  public sinClinica = computed(() => {
+    const u = this._usuario();
+    return u !== null && (u.clinicas?.length ?? 0) === 0;
+  });
 
   // === MODO ACTIVO (dinámico, lo que el usuario ve/hace ahora) ===
   public enModoFisio = computed(() => this._rolUsuario() === 'fisio');

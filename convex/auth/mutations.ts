@@ -137,7 +137,6 @@ export const createMembershipFromCode = internalMutation({
   args: {
     userEmail: v.string(),
     codigoClinuca: v.string(),
-    tipo: v.union(v.literal("fisioterapeuta"), v.literal("paciente")),
   },
   handler: async (ctx, args) => {
     const normalizedEmail = args.userEmail.toLowerCase().trim();
@@ -177,9 +176,9 @@ export const createMembershipFromCode = internalMutation({
       return { clinicId: codeDoc.clinicId };
     }
 
-    // Determinar puesto literal
+    // El puesto se deriva del propio código de acceso (fuente de verdad)
     const puesto: "fisio" | "paciente" =
-      args.tipo === "fisioterapeuta" ? "fisio" : "paciente";
+      codeDoc.tipo === "fisioterapeuta" ? "fisio" : "paciente";
 
     // Crear membresía
     await ctx.db.insert("clinicMemberships", {

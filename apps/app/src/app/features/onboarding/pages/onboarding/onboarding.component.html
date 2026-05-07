@@ -1,0 +1,76 @@
+<section class="onb-shell">
+  <div class="onb-panel">
+    <div class="onb-brand">
+      <img src="../../assets/logo.svg" alt="Kengo" class="onb-logo" />
+    </div>
+
+    <ui2-big-title
+      [title]="'BIENVENIDO' + (nombre() ? ', ' + nombre().toUpperCase() : '')"
+      overline="EMPECEMOS"
+      sub="Cuéntanos qué tipo de cuenta vas a usar para configurar tu espacio."
+    ></ui2-big-title>
+
+    <div class="onb-segmented">
+      <ui2-segmented
+        [options]="opcionesModo"
+        [value]="modo()"
+        (valueChange)="onModoChange($event)"
+      ></ui2-segmented>
+    </div>
+
+    @if (modo() === 'fisio') {
+      <div class="onb-stack">
+        <ui2-cta-bar
+          variant="primary"
+          icon="add_business"
+          title="CREAR MI CLÍNICA"
+          subtitle="Voy a montar mi clínica y gestionar mi equipo."
+          (clicked)="abrirCrearClinica()"
+        ></ui2-cta-bar>
+
+        <ui2-cta-bar
+          variant="secondary"
+          icon="link"
+          title="TENGO UN CÓDIGO DE INVITACIÓN"
+          subtitle="Únete a una clínica existente con el código que te enviaron."
+          (clicked)="abrirVincular()"
+        ></ui2-cta-bar>
+      </div>
+    } @else {
+      <div class="onb-stack">
+        <ui2-cta-bar
+          variant="primary"
+          icon="qr_code_2"
+          title="TENGO UN CÓDIGO"
+          subtitle="Introduce el código que te envió tu fisioterapeuta."
+          (clicked)="abrirVincular()"
+        ></ui2-cta-bar>
+
+        <p class="onb-hint">
+          Si todavía no lo tienes, pídele a tu fisio que te invite a su clínica.
+          Te llegará un código o un enlace por email.
+        </p>
+      </div>
+    }
+
+    <div class="onb-footer">
+      <ui2-button variant="ghost" iconLeft="logout" (clicked)="cerrarSesion()">
+        Cerrar sesión
+      </ui2-button>
+    </div>
+  </div>
+</section>
+
+@if (mostrarCrearClinica()) {
+  <app-crear-clinica-dialog
+    (cerrar)="cerrarCrearClinica()"
+    (clinicaCreada)="onClinicaCreada()"
+  />
+}
+
+@if (mostrarVincular()) {
+  <app-vincular-clinica-dialog
+    (cerrar)="cerrarVincular()"
+    (vinculacionExitosa)="onVinculacionExitosa()"
+  />
+}

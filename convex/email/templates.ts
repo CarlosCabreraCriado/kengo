@@ -72,16 +72,7 @@ function codeBlock(codigo: string, label: string): string {
 
 // ─── TEMPLATES ───
 
-export function welcomeEmailTemplate(
-  nombre: string,
-  tipo: "fisioterapeuta" | "paciente",
-  appUrl: string,
-): string {
-  const rolText =
-    tipo === "fisioterapeuta"
-      ? "Como fisioterapeuta, ahora puedes gestionar tus pacientes, crear planes de tratamiento personalizados y hacer seguimiento de su progreso."
-      : "Como paciente, ahora puedes acceder a tus ejercicios asignados, registrar tu progreso y comunicarte con tu fisioterapeuta.";
-
+export function welcomeEmailTemplate(nombre: string, appUrl: string): string {
   const content = `
 <h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
   ¡Hola ${nombre}!
@@ -90,9 +81,9 @@ export function welcomeEmailTemplate(
   Bienvenido a <strong style="color: ${BRAND_COLOR};">Kengo</strong>. Tu cuenta ha sido creada exitosamente.
 </p>
 <p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-  ${rolText}
+  Entra en la plataforma para crear tu clínica, vincularte con un código de invitación o seguir el plan que tu fisioterapeuta te asigne.
 </p>
-${ctaButton(`${appUrl}/login`, "Iniciar sesion")}`;
+${ctaButton(`${appUrl}/login`, "Entrar a Kengo")}`;
 
   return baseLayout(
     content,

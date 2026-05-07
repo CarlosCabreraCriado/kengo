@@ -9,6 +9,11 @@ export interface TabItem {
   icon: string;
   route: string;
   matchPrefix: string | readonly string[];
+  /**
+   * Si es true, el item se renderiza como botón inerte (sin enlace). Útil
+   * cuando la navegación está bloqueada (ej. usuario sin clínica asociada).
+   */
+  disabled?: boolean;
 }
 
 const DEFAULT_TABS: TabItem[] = [
@@ -31,15 +36,27 @@ const DEFAULT_TABS: TabItem[] = [
     <nav class="ui2-tab-bar" aria-label="Navegación principal">
       <div class="ui2-tab-bar__bg" aria-hidden="true"></div>
       @for (it of tabs(); track it.id) {
-        <a
-          class="ui2-tab-bar__item"
-          [class.ui2-tab-bar__item--active]="activeId() === it.id"
-          [routerLink]="it.route"
-          [attr.aria-current]="activeId() === it.id ? 'page' : null"
-        >
-          <span class="material-symbols-outlined ui2-tab-bar__icon" aria-hidden="true">{{ it.icon }}</span>
-          <span class="ui2-tab-bar__label">{{ it.label }}</span>
-        </a>
+        @if (it.disabled) {
+          <button
+            type="button"
+            class="ui2-tab-bar__item ui2-tab-bar__item--disabled"
+            disabled
+            aria-disabled="true"
+          >
+            <span class="material-symbols-outlined ui2-tab-bar__icon" aria-hidden="true">{{ it.icon }}</span>
+            <span class="ui2-tab-bar__label">{{ it.label }}</span>
+          </button>
+        } @else {
+          <a
+            class="ui2-tab-bar__item"
+            [class.ui2-tab-bar__item--active]="activeId() === it.id"
+            [routerLink]="it.route"
+            [attr.aria-current]="activeId() === it.id ? 'page' : null"
+          >
+            <span class="material-symbols-outlined ui2-tab-bar__icon" aria-hidden="true">{{ it.icon }}</span>
+            <span class="ui2-tab-bar__label">{{ it.label }}</span>
+          </a>
+        }
       }
     </nav>
   `,
@@ -89,6 +106,13 @@ const DEFAULT_TABS: TabItem[] = [
       background: var(--kengo-primary);
       color: white;
       box-shadow: 0 6px 16px -4px rgba(var(--kengo-primary-rgb), 0.5);
+    }
+    .ui2-tab-bar__item--disabled {
+      background: transparent;
+      color: var(--ink-300);
+      cursor: not-allowed;
+      border: 0;
+      font: inherit;
     }
     .ui2-tab-bar__icon { font-size: 22px; }
     .ui2-tab-bar__label {

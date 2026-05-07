@@ -34,6 +34,14 @@ import {
   FISIO_SIDEBAR_GROUPS,
   FISIO_TAB_BAR_TABS,
 } from './features/dashboard/pages/inicio/inicio-fisio/inicio-fisio.nav';
+import {
+  PACIENTE_SIDEBAR_GROUPS,
+  PACIENTE_TAB_BAR_TABS,
+} from './features/dashboard/pages/inicio/inicio-paciente/inicio-paciente.nav';
+import type {
+  SidebarNavGroup,
+  TabItem,
+} from './shared/ui-v2';
 
 @Component({
   selector: 'app-root',
@@ -72,9 +80,51 @@ export class AppComponent implements OnInit {
 
   public mostrarNavegacion = false;
 
-  /** Configuración de navegación V2 del modo fisio (sidebar + tab-bar). */
-  public readonly fisioSidebarGroups = FISIO_SIDEBAR_GROUPS;
-  public readonly fisioTabBarTabs = FISIO_TAB_BAR_TABS;
+  /**
+   * Items "permitidos" cuando el usuario no tiene clínica: el resto de
+   * destinos quedan deshabilitados visualmente. El item con id "home" se
+   * recablea a `/onboarding` para llevar de vuelta al flujo de bienvenida.
+   */
+  private readonly ID_HOME = 'home';
+
+  /** Configuración fisio efectiva — bloquea el menú cuando no hay clínica. */
+  public readonly fisioSidebarGroups = computed<SidebarNavGroup[]>(() =>
+    this.aplicarBloqueoSidebar(FISIO_SIDEBAR_GROUPS),
+  );
+  public readonly fisioTabBarTabs = computed<TabItem[]>(() =>
+    this.aplicarBloqueoTabs(FISIO_TAB_BAR_TABS),
+  );
+
+  /** Configuración paciente efectiva — bloquea el menú cuando no hay clínica. */
+  public readonly pacienteSidebarGroups = computed<SidebarNavGroup[]>(() =>
+    this.aplicarBloqueoSidebar(PACIENTE_SIDEBAR_GROUPS),
+  );
+  public readonly pacienteTabBarTabs = computed<TabItem[]>(() =>
+    this.aplicarBloqueoTabs(PACIENTE_TAB_BAR_TABS),
+  );
+
+  private aplicarBloqueoSidebar(
+    groups: SidebarNavGroup[],
+  ): SidebarNavGroup[] {
+    if (!this.sessionService.sinClinica()) return groups;
+    return groups.map((g) => ({
+      ...g,
+      items: g.items.map((it) =>
+        it.id === this.ID_HOME
+          ? { ...it, label: 'Empezar', route: '/onboarding', matchPrefix: '/onboarding' }
+          : { ...it, route: null },
+      ),
+    }));
+  }
+
+  private aplicarBloqueoTabs(tabs: TabItem[]): TabItem[] {
+    if (!this.sessionService.sinClinica()) return tabs;
+    return tabs.map((t) =>
+      t.id === this.ID_HOME
+        ? { ...t, label: 'Empezar', route: '/onboarding', matchPrefix: '/onboarding' }
+        : { ...t, disabled: true },
+    );
+  }
 
   /** Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado). */
   public clinicaActual = computed(() => {

@@ -1,11 +1,17 @@
 import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
-import { AuthGuard, FisioGuard, PacienteGuard, SessionService } from '../../core';
+import {
+  AuthGuard,
+  FisioGuard,
+  OnboardingGuard,
+  PacienteGuard,
+  SessionService,
+} from '../../core';
 
 export const DASHBOARD_ROUTES: Routes = [
   {
     path: '',
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, OnboardingGuard],
     children: [
       {
         path: '',

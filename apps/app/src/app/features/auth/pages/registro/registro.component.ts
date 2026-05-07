@@ -14,10 +14,8 @@ import {
   Ui2BigTitleComponent,
   Ui2InputComponent,
   Ui2ButtonComponent,
-  Ui2RadioGroupComponent,
   Ui2StepperComponent,
   Ui2StepComponent,
-  type Ui2RadioOption,
 } from '../../../../shared/ui-v2';
 import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-models';
 
@@ -33,7 +31,6 @@ import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-mode
     Ui2BigTitleComponent,
     Ui2InputComponent,
     Ui2ButtonComponent,
-    Ui2RadioGroupComponent,
     Ui2StepperComponent,
     Ui2StepComponent,
   ],
@@ -51,27 +48,10 @@ export class RegistroComponent {
   error = signal<string | null>(null);
   isLoading = signal(false);
 
-  readonly tipoUsuarioOptions: Ui2RadioOption[] = [
-    {
-      value: 'fisioterapeuta',
-      label: 'Fisioterapeuta',
-      description: 'Gestiona pacientes y planes de tratamiento',
-    },
-    {
-      value: 'paciente',
-      label: 'Paciente',
-      description: 'Realiza ejercicios y sigue tu progreso',
-    },
-  ];
-
   datosForm = this.fb.group({
     nombre: ['', Validators.required],
     apellidos: ['', Validators.required],
     email: ['', emailRequired],
-  });
-
-  tipoUsuarioForm = this.fb.group({
-    tipo: ['', Validators.required],
   });
 
   codigoClinicaForm = this.fb.group({
@@ -115,7 +95,6 @@ export class RegistroComponent {
         last_name: this.datosForm.value.apellidos!.trim(),
         email: this.datosForm.value.email!.toLowerCase().trim(),
         password: this.passwordForm.value.password!,
-        tipo: this.tipoUsuarioForm.value.tipo as 'fisioterapeuta' | 'paciente',
         codigo_clinica: this.codigoClinicaForm.value.codigo?.trim() || undefined,
       };
 

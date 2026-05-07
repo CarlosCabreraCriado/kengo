@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
+import { AuthGuard, OnboardingGuard } from './core';
 
 /**
  * Convención de naming de rutas:
@@ -30,7 +31,16 @@ export const routes: Routes = [
   },
 
   {
+    path: 'onboarding',
+    loadChildren: () =>
+      import('./features/onboarding/onboarding.routes').then(
+        (m) => m.ONBOARDING_ROUTES,
+      ),
+  },
+
+  {
     path: 'ejercicios',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/ejercicios/ejercicios.routes').then(
         (m) => m.EJERCICIOS_ROUTES,
@@ -39,6 +49,7 @@ export const routes: Routes = [
 
   {
     path: 'rutinas',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/rutinas/rutinas.routes').then(
         (m) => m.RUTINAS_ROUTES,
@@ -53,6 +64,7 @@ export const routes: Routes = [
 
   {
     path: 'mis-pacientes',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/pacientes/pacientes.routes').then(
         (m) => m.PACIENTES_ROUTES,
@@ -61,6 +73,7 @@ export const routes: Routes = [
 
   {
     path: 'mi-clinica',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/clinica/clinica.routes').then(
         (m) => m.CLINICA_ROUTES,
@@ -69,12 +82,14 @@ export const routes: Routes = [
 
   {
     path: 'planes',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/planes/planes.routes').then((m) => m.PLANES_ROUTES),
   },
 
   {
     path: 'actividad-personal',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/actividad/actividad.routes').then(
         (m) => m.ACTIVIDAD_ROUTES,
@@ -83,18 +98,23 @@ export const routes: Routes = [
 
   {
     path: 'mi-plan',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/sesion/sesion.routes').then((m) => m.SESION_ROUTES),
   },
 
+  // /perfil queda exento del OnboardingGuard: el usuario sin clínica debe poder
+  // gestionar su perfil y cerrar sesión sin estar atrapado.
   {
     path: 'perfil',
+    canActivate: [AuthGuard],
     loadChildren: () =>
       import('./features/perfil/perfil.routes').then((m) => m.PERFIL_ROUTES),
   },
 
   {
     path: 'mensajes',
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/mensajes/mensajes.routes').then(
         (m) => m.MENSAJES_ROUTES,

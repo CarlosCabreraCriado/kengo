@@ -18,6 +18,7 @@
     <section class="relative z-10 flex h-dvh flex-row">
       <ui2-patient-sidebar
         class="z-200 h-full shrink-0"
+        [groups]="pacienteSidebarGroups()"
         [userName]="firstName()"
         [userSubtitle]="userSubtitle()"
         [avatarUrl]="avatarUrl()"
@@ -48,7 +49,7 @@
         <router-outlet></router-outlet>
         <ui2-page-loader-overlay></ui2-page-loader-overlay>
       </main>
-      <ui2-patient-tab-bar></ui2-patient-tab-bar>
+      <ui2-patient-tab-bar [tabs]="pacienteTabBarTabs()"></ui2-patient-tab-bar>
     </section>
   }
 }
@@ -70,7 +71,7 @@
       <ui2-patient-sidebar
         class="h-full shrink-0"
         brandTag="FISIOTERAPIA"
-        [groups]="fisioSidebarGroups"
+        [groups]="fisioSidebarGroups()"
         [userName]="firstName()"
         [userSubtitle]="userSubtitle()"
         [avatarUrl]="avatarUrl()"
@@ -105,7 +106,7 @@
         <router-outlet></router-outlet>
         <ui2-page-loader-overlay></ui2-page-loader-overlay>
       </main>
-      <ui2-patient-tab-bar [tabs]="fisioTabBarTabs"></ui2-patient-tab-bar>
+      <ui2-patient-tab-bar [tabs]="fisioTabBarTabs()"></ui2-patient-tab-bar>
     </section>
   }
 }

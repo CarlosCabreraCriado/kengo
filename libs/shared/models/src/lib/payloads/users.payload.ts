@@ -11,7 +11,6 @@ export interface CreateUsuarioPayload {
   last_name: string;
   email: string;
   password: string;
-  tipo: 'fisioterapeuta' | 'paciente';
   codigo_clinica?: string;
 }
 

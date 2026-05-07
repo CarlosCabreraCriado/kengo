@@ -53,6 +53,8 @@ import type * as exercises_mutations from "../exercises/mutations.js";
 import type * as exercises_queries from "../exercises/queries.js";
 import type * as http from "../http.js";
 import type * as me_queries from "../me/queries.js";
+import type * as migrations_deleteUserByEmail from "../migrations/deleteUserByEmail.js";
+import type * as migrations_deleteUserByEmailMutation from "../migrations/deleteUserByEmailMutation.js";
 import type * as migrations_disablePatientCodesWithoutEmail from "../migrations/disablePatientCodesWithoutEmail.js";
 import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
 import type * as migrations_validation from "../migrations/validation.js";
@@ -136,6 +138,8 @@ declare const fullApi: ApiFromModules<{
   "exercises/queries": typeof exercises_queries;
   http: typeof http;
   "me/queries": typeof me_queries;
+  "migrations/deleteUserByEmail": typeof migrations_deleteUserByEmail;
+  "migrations/deleteUserByEmailMutation": typeof migrations_deleteUserByEmailMutation;
   "migrations/disablePatientCodesWithoutEmail": typeof migrations_disablePatientCodesWithoutEmail;
   "migrations/legacyUsers": typeof migrations_legacyUsers;
   "migrations/validation": typeof migrations_validation;

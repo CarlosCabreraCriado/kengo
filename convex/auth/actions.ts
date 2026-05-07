@@ -45,7 +45,6 @@ export const register = action({
     last_name: v.string(),
     email: v.string(),
     password: v.string(),
-    tipo: v.union(v.literal("fisioterapeuta"), v.literal("paciente")),
     codigo_clinica: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -108,12 +107,11 @@ export const register = action({
       return { success: false, error: "Error al crear la cuenta", code: "SERVER_ERROR" };
     }
 
-    // Crear membresía de clínica si hay código
+    // Crear membresía de clínica si hay código (el puesto se deriva del propio código)
     if (codigoClinica) {
       await ctx.runMutation(internal.auth.mutations.createMembershipFromCode, {
         userEmail: email,
         codigoClinuca: codigoClinica,
-        tipo: args.tipo,
       });
     }
 
@@ -122,7 +120,7 @@ export const register = action({
     await ctx.scheduler.runAfter(0, internal.email.actions.sendEmail, {
       to: email,
       subject: `Bienvenido a Kengo, ${firstName}!`,
-      html: welcomeEmailTemplate(firstName, args.tipo, appUrl),
+      html: welcomeEmailTemplate(firstName, appUrl),
     });
 
     return {

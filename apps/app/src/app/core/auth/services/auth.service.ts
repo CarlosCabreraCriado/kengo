@@ -210,7 +210,6 @@ export class AuthService {
       last_name: payload.last_name.trim(),
       email: payload.email.toLowerCase().trim(),
       password: payload.password,
-      tipo: payload.tipo,
       codigo_clinica: payload.codigo_clinica?.trim(),
     });
     return result as RegistroResult;

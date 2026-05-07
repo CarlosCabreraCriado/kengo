@@ -13,6 +13,7 @@ export { PacienteGuard } from './guards/paciente.guard';
 export { AdminGuard } from './guards/admin.guard';
 export { ClinicAdminGuard } from './guards/clinic-admin.guard';
 export { ActiveSubscriptionGuard } from './guards/active-subscription.guard';
+export { OnboardingGuard } from './guards/onboarding.guard';
 
 // Config
 export { CustomRouteReuseStrategy } from './config/route-reuse-strategy';

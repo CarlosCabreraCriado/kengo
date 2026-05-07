@@ -9,7 +9,7 @@
     <ui2-big-title
       title="Crea tu cuenta"
       overline="REGISTRO"
-      sub="Configura tu perfil en cuatro pasos."
+      sub="Configura tu perfil en tres pasos."
     ></ui2-big-title>
 
     @if (error()) {
@@ -61,30 +61,6 @@
                 variant="primary"
                 iconRight="arrow_forward"
                 [disabled]="!datosForm.valid"
-                (clicked)="nextStep()"
-              >
-                Siguiente
-              </ui2-button>
-            </div>
-          </form>
-        </ui2-step>
-
-        <ui2-step label="Tipo">
-          <form [formGroup]="tipoUsuarioForm" class="auth-form">
-            <ui2-radio-group
-              label="Selecciona tu rol"
-              formControlName="tipo"
-              [options]="tipoUsuarioOptions"
-            ></ui2-radio-group>
-
-            <div class="auth-form__nav">
-              <ui2-button variant="ghost" iconLeft="arrow_back" (clicked)="previousStep()">
-                Anterior
-              </ui2-button>
-              <ui2-button
-                variant="primary"
-                iconRight="arrow_forward"
-                [disabled]="!tipoUsuarioForm.valid"
                 (clicked)="nextStep()"
               >
                 Siguiente
