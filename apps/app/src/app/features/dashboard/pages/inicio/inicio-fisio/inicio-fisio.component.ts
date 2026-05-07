@@ -90,7 +90,7 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
     if (e === 'cargando') return '';
     if (e === 'urgente') return 'PANEL DEL FISIO';
     if (e === 'pendiente') return 'VAMOS A POR HOY';
-    return 'TODO BAJO CONTROL 🌿';
+    return 'TODO BAJO CONTROL';
   });
 
   heroSub = computed<string>(() => {
