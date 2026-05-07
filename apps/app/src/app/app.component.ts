@@ -126,10 +126,13 @@ export class AppComponent implements OnInit {
     );
   }
 
-  /** Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado). */
-  public clinicaActual = computed(() => {
-    const clinicas = this.sessionService.misclinicas();
-    if (!clinicas || clinicas.length === 0) return 'Mi clínica';
+  /**
+   * Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado).
+   * Devuelve `null` cuando el usuario no pertenece a ninguna clínica para que
+   * la sidebar oculte la card de "Mi clínica" durante el onboarding.
+   */
+  public clinicaActual = computed<string | null>(() => {
+    if (this.sessionService.sinClinica()) return null;
     return 'Mi clínica';
   });
 

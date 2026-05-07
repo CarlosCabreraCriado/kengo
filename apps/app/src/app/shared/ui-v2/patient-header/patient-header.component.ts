@@ -27,7 +27,9 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
         <span class="ui2-patient-header__logo">
           <img src="assets/logo-k.svg" alt="Kengo" />
         </span>
-        <span class="ui2-patient-header__clinica">{{ clinica() }}</span>
+        @if (clinica()) {
+          <span class="ui2-patient-header__clinica">{{ clinica() }}</span>
+        }
       </div>
       <div class="ui2-patient-header__right">
         @if (modoFisio()) {
@@ -352,7 +354,7 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
   `],
 })
 export class Ui2PatientHeaderComponent {
-  readonly clinica = input<string>('Mi clínica');
+  readonly clinica = input<string | null>('Mi clínica');
   readonly userName = input<string>('Usuario');
   readonly avatarUrl = input<string | null>(null);
 
