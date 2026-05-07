@@ -111,12 +111,6 @@ import { Ui2SpinnerComponent } from '../spinner/spinner.component';
           </footer>
         }
       </div>
-
-      <div
-        class="ui2-notif-menu__backdrop"
-        aria-hidden="true"
-        (click)="emitClose()"
-      ></div>
     }
   `,
   styles: [`
@@ -330,12 +324,6 @@ import { Ui2SpinnerComponent } from '../spinner/spinner.component';
     }
     .ui2-notif-menu__see-all:hover { background: var(--cream-100); }
     .ui2-notif-menu__see-all .material-symbols-outlined { font-size: 16px; }
-
-    .ui2-notif-menu__backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 1099;
-    }
   `],
 })
 export class Ui2NotificacionesMenuComponent {

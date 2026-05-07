@@ -275,12 +275,6 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
               <span>Cerrar sesión</span>
             </button>
           </div>
-
-          <div
-            class="ui2-user-menu__backdrop"
-            aria-hidden="true"
-            (click)="cerrarMenu()"
-          ></div>
         }
       </div>
     </aside>
@@ -673,11 +667,6 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
       .ui2-user-menu__switch--on .ui2-user-menu__thumb {
         transform: translateX(16px);
       }
-      .ui2-user-menu__backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 99;
-      }
 
       /* ============================================================ */
       /*  Estado COLLAPSED — rail compacto 72px (solo iconos)          */
@@ -908,5 +897,15 @@ export class Ui2PatientSidebarComponent {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.menuOpen()) this.cerrarMenu();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.menuOpen()) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (!target.closest('.ui2-sidebar__user-wrap')) {
+      this.cerrarMenu();
+    }
   }
 }

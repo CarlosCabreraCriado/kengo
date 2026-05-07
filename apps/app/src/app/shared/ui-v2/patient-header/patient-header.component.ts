@@ -127,12 +127,6 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
                 <span>Cerrar sesión</span>
               </button>
             </div>
-
-            <div
-              class="ui2-user-menu__backdrop"
-              aria-hidden="true"
-              (click)="cerrarMenu()"
-            ></div>
           }
         </div>
       </div>
@@ -355,12 +349,6 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
     .ui2-user-menu__switch--on .ui2-user-menu__thumb {
       transform: translateX(16px);
     }
-
-    .ui2-user-menu__backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 1099;
-    }
   `],
 })
 export class Ui2PatientHeaderComponent {
@@ -443,5 +431,18 @@ export class Ui2PatientHeaderComponent {
   onEscape(): void {
     if (this.menuOpen()) this.cerrarMenu();
     if (this.notificacionesMenuOpen()) this.cerrarNotificacionesMenu();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.menuOpen() && !this.notificacionesMenuOpen()) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (this.menuOpen() && !target.closest('.ui2-patient-header__avatar-wrap')) {
+      this.cerrarMenu();
+    }
+    if (this.notificacionesMenuOpen() && !target.closest('.ui2-patient-header__bell-wrap')) {
+      this.cerrarNotificacionesMenu();
+    }
   }
 }

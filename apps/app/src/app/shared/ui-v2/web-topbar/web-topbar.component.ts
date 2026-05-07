@@ -124,7 +124,6 @@ const MONTHS = [
                 <span>Cerrar sesión</span>
               </button>
             </div>
-            <div class="ui2-user-menu__backdrop" aria-hidden="true" (click)="cerrarMenu()"></div>
           }
         </div>
       </div>
@@ -303,11 +302,6 @@ const MONTHS = [
       transition: transform 0.15s;
     }
     .ui2-user-menu__switch--on .ui2-user-menu__thumb { transform: translateX(16px); }
-    .ui2-user-menu__backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 1099;
-    }
   `],
 })
 export class Ui2WebTopbarComponent {
@@ -399,5 +393,18 @@ export class Ui2WebTopbarComponent {
   onEscape(): void {
     if (this.menuOpen()) this.cerrarMenu();
     if (this.notificacionesMenuOpen()) this.cerrarNotificacionesMenu();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.menuOpen() && !this.notificacionesMenuOpen()) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (this.menuOpen() && !target.closest('.ui2-topbar__avatar-wrap')) {
+      this.cerrarMenu();
+    }
+    if (this.notificacionesMenuOpen() && !target.closest('.ui2-topbar__bell-wrap')) {
+      this.cerrarNotificacionesMenu();
+    }
   }
 }
