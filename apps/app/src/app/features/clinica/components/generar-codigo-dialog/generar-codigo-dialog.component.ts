@@ -41,6 +41,12 @@ export class GenerarCodigoDialogComponent implements OnInit {
   @Input({ required: true }) clinicaId!: string;
   @Input() esAdmin = false;
   @Input() tipoInicial: TipoCodigoAcceso | null = null;
+  /**
+   * Si se proporciona, fija el tipo del código y oculta el selector. Útil
+   * cuando el dialog se invoca desde un contexto que ya determina el tipo
+   * (p.ej. /mi-clinica → siempre fisioterapeuta).
+   */
+  @Input() tipoFijo: TipoCodigoAcceso | null = null;
 
   @Output() cerrar = new EventEmitter<void>();
   @Output() codigoGenerado = new EventEmitter<string>();
@@ -104,8 +110,12 @@ export class GenerarCodigoDialogComponent implements OnInit {
   vincularEmail = computed(() => !!this.formValue().vincularEmail);
 
   ngOnInit() {
-    if (this.tipoInicial) {
-      this.form.patchValue({ tipo: this.tipoInicial });
+    const tipo = this.tipoFijo ?? this.tipoInicial;
+    if (tipo) {
+      this.form.patchValue({ tipo });
+    }
+    if (this.tipoFijo) {
+      this.form.controls.tipo.disable({ emitEvent: false });
     }
   }
 
@@ -124,7 +134,8 @@ export class GenerarCodigoDialogComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    const formValue = this.form.value;
+    // getRawValue incluye los controles `disabled` (caso `tipoFijo`).
+    const formValue = this.form.getRawValue();
     // Solo enviar email si vincularEmail está activo y hay un email válido
     const emailValue = formValue.vincularEmail && formValue.email?.trim()
       ? formValue.email.trim()

@@ -20,7 +20,6 @@ import { SubscriptionService } from '../../../../core/billing/subscription.servi
 
 // Types:
 import { Usuario, Clinica, ID, CodigoAcceso } from '../../../../../types/global';
-import type { TipoCodigoAcceso } from '@kengo/shared-models';
 import { useResponsive } from '../../../../shared';
 
 // Dialogs (rediseñados V2)
@@ -142,13 +141,10 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   mostrarModalGenerarCodigo = signal(false);
   mostrarModalEditar = signal(false);
 
-  // Códigos de acceso
+  // Códigos de acceso (solo fisio: la gestión de pacientes vive en /mis-pacientes)
   codigosClinica = signal<CodigoAcceso[]>([]);
   codigosLoading = signal(false);
   codigosExpanded = signal(false);
-
-  // Tipo inicial para el dialog de generar código
-  tipoInicialCodigo = signal<TipoCodigoAcceso | null>(null);
 
   // Permisos computados
   esAdmin = computed(() => {
@@ -229,13 +225,7 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     this.mostrarModalCrear.set(false);
   }
 
-  abrirGenerarCodigo() {
-    this.tipoInicialCodigo.set(null);
-    this.mostrarModalGenerarCodigo.set(true);
-  }
-
   abrirAnadirFisio() {
-    this.tipoInicialCodigo.set('fisioterapeuta');
     this.mostrarModalGenerarCodigo.set(true);
   }
 
@@ -313,15 +303,17 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
 
     this.codigosLoading.set(true);
     try {
-      this.clinicaGestionService.listarCodigos(clinica.id).subscribe({
-        next: (codigos) => {
-          this.codigosClinica.set(codigos);
-          this.codigosLoading.set(false);
-        },
-        error: () => {
-          this.codigosLoading.set(false);
-        },
-      });
+      this.clinicaGestionService
+        .listarCodigos(clinica.id, 'fisioterapeuta')
+        .subscribe({
+          next: (codigos) => {
+            this.codigosClinica.set(codigos);
+            this.codigosLoading.set(false);
+          },
+          error: () => {
+            this.codigosLoading.set(false);
+          },
+        });
     } catch {
       this.codigosLoading.set(false);
     }

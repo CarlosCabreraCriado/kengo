@@ -4,7 +4,7 @@
       <ui2-icon-badge icon="key" color="var(--ink-700)" [size]="36" [radius]="10" />
       <div class="mac__head-text">
         <span class="mac__overline">Códigos de acceso</span>
-        <h3 class="mac__title">INVITAR PACIENTES Y FISIOS</h3>
+        <h3 class="mac__title">INVITAR FISIOTERAPEUTAS</h3>
       </div>
     </div>
 
@@ -15,7 +15,7 @@
         iconLeft="add"
         (clicked)="generarCodigo.emit()"
       >
-        Generar
+        Invitar fisio
       </ui2-button>
     }
   </header>
@@ -28,7 +28,7 @@
         iconLeft="add"
         (clicked)="generarCodigo.emit()"
       >
-        Generar código
+        Invitar fisio
       </ui2-button>
     </div>
   }
@@ -42,7 +42,7 @@
     } @else if (codigos().length === 0) {
       <div class="mac__empty">
         <span class="material-symbols-outlined" aria-hidden="true">vpn_key_off</span>
-        <p>No hay códigos activos</p>
+        <p>No hay invitaciones activas</p>
         @if (puedeGenerar()) {
           <ui2-button
             variant="secondary"
@@ -50,7 +50,7 @@
             iconLeft="add"
             (clicked)="generarCodigo.emit()"
           >
-            Generar primer código
+            Invitar primer fisio
           </ui2-button>
         }
       </div>
@@ -117,11 +117,11 @@
     <!-- Mobile colapsado: hint compacto con resumen -->
     <p class="mac__preview-hint">
       @if (codigos().length === 1) {
-        1 código disponible
+        1 invitación disponible
       } @else if (codigos().length > 0) {
-        {{ codigos().length }} códigos disponibles
+        {{ codigos().length }} invitaciones disponibles
       } @else {
-        Sin códigos activos
+        Sin invitaciones activas
       }
     </p>
   }
@@ -134,7 +134,7 @@
       [attr.aria-expanded]="expanded()"
     >
       <span class="mac__expander-text">
-        {{ expanded() ? 'Ocultar códigos' : 'Ver los códigos' }}
+        {{ expanded() ? 'Ocultar invitaciones' : 'Ver las invitaciones' }}
       </span>
       <span
         class="material-symbols-outlined mac__expander-icon"

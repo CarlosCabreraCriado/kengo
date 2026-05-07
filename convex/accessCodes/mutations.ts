@@ -45,6 +45,22 @@ export const create = mutation({
       }
     }
 
+    // Los códigos de paciente son siempre invitaciones nominales: requieren
+    // email vinculado y se canjean una sola vez. La gestión de pacientes vive
+    // en /mis-pacientes, donde el modal exige email para ambos modos.
+    const emailNorm = args.email?.trim().toLowerCase() || undefined;
+    let usosMaximos = args.usosMaximos;
+    if (args.tipo === "paciente") {
+      if (!emailNorm) {
+        throw new ConvexError({
+          code: "EMAIL_OBLIGATORIO_PACIENTE",
+          message:
+            "Los códigos de paciente deben estar vinculados a un email.",
+        });
+      }
+      usosMaximos = 1;
+    }
+
     const codigo = generateRandomCode(8);
 
     const codeId = await ctx.db.insert("accessCodes", {
@@ -52,10 +68,10 @@ export const create = mutation({
       codigo,
       tipo: args.tipo,
       activo: true,
-      usosMaximos: args.usosMaximos,
+      usosMaximos,
       usosActuales: 0,
       fechaExpiracion: args.fechaExpiracion,
-      email: args.email,
+      email: emailNorm,
       creadoPor: user._id,
     });
 
@@ -150,6 +166,38 @@ export const consume = mutation({
     await ctx.db.patch(codeDoc._id, {
       usosActuales: codeDoc.usosActuales + 1,
     });
+
+    // Auto-asignar al fisio que generó el código como responsable del
+    // paciente recién canjeado. Solo si el creador sigue siendo miembro
+    // fisio/admin de la clínica; si no, se omite y el paciente queda sin
+    // responsable (visible desde /mis-pacientes/asignacion).
+    if (puesto === "paciente") {
+      const creadorMembership = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_userId_clinicId", (q) =>
+          q.eq("userId", codeDoc.creadoPor).eq("clinicId", codeDoc.clinicId),
+        )
+        .unique();
+      if (
+        creadorMembership &&
+        (creadorMembership.puesto === "fisio" ||
+          creadorMembership.puesto === "admin")
+      ) {
+        const existingAssignment = await ctx.db
+          .query("assignments")
+          .withIndex("by_pacienteId_clinicId", (q) =>
+            q.eq("pacienteId", user._id).eq("clinicId", codeDoc.clinicId),
+          )
+          .unique();
+        if (!existingAssignment) {
+          await ctx.db.insert("assignments", {
+            pacienteId: user._id,
+            fisioId: codeDoc.creadoPor,
+            clinicId: codeDoc.clinicId,
+          });
+        }
+      }
+    }
 
     // Si el nuevo miembro es fisio, sincronizar quantity con Stripe.
     if (puesto === "fisio") {

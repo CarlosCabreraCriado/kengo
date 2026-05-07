@@ -1,101 +1,161 @@
 <ui2-dialog-host>
   <ui2-dialog-header
-    [title]="isEdit() ? 'Editar paciente' : 'Nuevo paciente'"
-    [subtitle]="isEdit() ? 'Actualiza los datos y las clínicas asignadas.' : 'Rellena los datos del nuevo paciente.'"
-    (closeClick)="close()"
+    [title]="resultado() ? 'Paciente añadido' : (isEdit() ? 'Editar paciente' : 'Nuevo paciente')"
+    [subtitle]="resultado() ? null : (isEdit() ? 'Actualiza los datos y las clínicas asignadas.' : 'Rellena los datos del paciente.')"
+    (closeClick)="finalizar()"
   ></ui2-dialog-header>
 
   <ui2-dialog-content>
-    <form
-      class="add-paciente-form"
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-    >
-      <div class="add-paciente-form__row">
-        <ui2-input
-          label="Nombre"
-          formControlName="first_name"
-          [required]="true"
-          autocomplete="given-name"
-        ></ui2-input>
-
-        <ui2-input
-          label="Apellidos"
-          formControlName="last_name"
-          autocomplete="family-name"
-        ></ui2-input>
-      </div>
-
-      <ui2-input
-        label="Email"
-        type="email"
-        formControlName="email"
-        [required]="true"
-        [error]="emailError"
-        autocomplete="email"
-      ></ui2-input>
-
-      <ui2-input
-        label="Teléfono"
-        type="tel"
-        formControlName="telefono"
-        autocomplete="tel"
-      ></ui2-input>
-
-      <div class="add-paciente-form__clinicas">
-        <ui2-section-label>
-          Clínicas asignadas
-        </ui2-section-label>
-
-        @if (clinicasRes.isLoading()) {
-          <div class="add-paciente-form__clinicas-loading">
-            <ui2-spinner size="sm"></ui2-spinner>
-            <span>Cargando clínicas...</span>
-          </div>
-        } @else if (clinicasRes.value().length === 0) {
-          <p class="add-paciente-form__empty">
-            No hay clínicas disponibles para asignar.
-          </p>
-        } @else {
-          <div class="add-paciente-form__clinicas-list" role="group" aria-label="Clínicas asignadas">
-            @for (c of clinicasRes.value(); track c.id) {
-              <label class="add-paciente-form__clinica-row">
-                <ui2-checkbox
-                  [label]="c.nombre ?? 'Clínica ' + c.id"
-                  [ngModel]="isClinicSelected(c.id)"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="toggleClinic(c.id, $event)"
-                ></ui2-checkbox>
-              </label>
-            }
-          </div>
-          @if (selectedCount() === 0) {
-            <p class="add-paciente-form__hint add-paciente-form__hint--danger">
-              Selecciona al menos una clínica.
-            </p>
+    @if (resultado(); as r) {
+      <div class="add-paciente-result">
+        <p class="add-paciente-result__intro">
+          @if (r.emailEnviado) {
+            Hemos enviado al paciente un email con el enlace de acceso y el código.
+          } @else {
+            El paciente ha sido creado, pero no hemos podido enviar el email automático. Comparte tú mismo los siguientes datos.
           }
+        </p>
+
+        @if (r.magicLink) {
+          <div class="add-paciente-result__field">
+            <span class="add-paciente-result__label">Enlace de acceso directo</span>
+            <ui2-card [padding]="14">
+              <div class="add-paciente-result__value">
+                <code class="add-paciente-result__link">{{ r.magicLink }}</code>
+                <ui2-button
+                  variant="secondary"
+                  size="sm"
+                  iconLeft="content_copy"
+                  (clicked)="copiarMagicLink()"
+                >Copiar</ui2-button>
+              </div>
+            </ui2-card>
+          </div>
         }
+
+        @if (r.codigo) {
+          <div class="add-paciente-result__field">
+            <span class="add-paciente-result__label">Código de acceso</span>
+            <ui2-card [padding]="14">
+              <div class="add-paciente-result__value">
+                <code class="add-paciente-result__code">{{ r.codigo }}</code>
+                <ui2-button
+                  variant="secondary"
+                  size="sm"
+                  iconLeft="content_copy"
+                  (clicked)="copiarCodigo()"
+                >Copiar</ui2-button>
+              </div>
+            </ui2-card>
+          </div>
+        }
+
+        <p class="add-paciente-result__hint">
+          El enlace y el código caducan en 30 días. Solo puede usarlos quien tenga el email del paciente.
+        </p>
       </div>
+    } @else {
+      <form
+        class="add-paciente-form"
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+      >
+        <div class="add-paciente-form__row">
+          <ui2-input
+            label="Nombre"
+            formControlName="first_name"
+            [required]="true"
+            autocomplete="given-name"
+          ></ui2-input>
 
-      @if (loading()) {
-        <ui2-progress-bar mode="indeterminate"></ui2-progress-bar>
-      }
+          <ui2-input
+            label="Apellidos"
+            formControlName="last_name"
+            autocomplete="family-name"
+          ></ui2-input>
+        </div>
 
-      @if (error()) {
-        <p class="add-paciente-form__error" role="alert">{{ error() }}</p>
-      }
-    </form>
+        <ui2-input
+          label="Email"
+          type="email"
+          formControlName="email"
+          [required]="true"
+          [error]="emailError"
+          autocomplete="email"
+        ></ui2-input>
+
+        <ui2-input
+          label="Teléfono"
+          type="tel"
+          formControlName="telefono"
+          autocomplete="tel"
+        ></ui2-input>
+
+        <div class="add-paciente-form__clinicas">
+          <ui2-section-label>
+            Clínicas asignadas
+          </ui2-section-label>
+
+          @if (clinicasRes.isLoading()) {
+            <div class="add-paciente-form__clinicas-loading">
+              <ui2-spinner size="sm"></ui2-spinner>
+              <span>Cargando clínicas...</span>
+            </div>
+          } @else if (clinicasRes.value().length === 0) {
+            <p class="add-paciente-form__empty">
+              No hay clínicas disponibles para asignar.
+            </p>
+          } @else {
+            <div class="add-paciente-form__clinicas-list" role="group" aria-label="Clínicas asignadas">
+              @for (c of clinicasRes.value(); track c.id) {
+                <label class="add-paciente-form__clinica-row">
+                  <ui2-checkbox
+                    [label]="c.nombre ?? 'Clínica ' + c.id"
+                    [ngModel]="isClinicSelected(c.id)"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="toggleClinic(c.id, $event)"
+                  ></ui2-checkbox>
+                </label>
+              }
+            </div>
+            @if (selectedCount() === 0) {
+              <p class="add-paciente-form__hint add-paciente-form__hint--danger">
+                Selecciona al menos una clínica.
+              </p>
+            }
+          }
+        </div>
+
+        @if (!isEdit()) {
+          <p class="add-paciente-form__hint">
+            Le enviaremos un email con un enlace directo de acceso y un código alternativo (válidos 30 días).
+          </p>
+        }
+
+        @if (loading()) {
+          <ui2-progress-bar mode="indeterminate"></ui2-progress-bar>
+        }
+
+        @if (error()) {
+          <p class="add-paciente-form__error" role="alert">{{ error() }}</p>
+        }
+      </form>
+    }
   </ui2-dialog-content>
 
   <ui2-dialog-actions align="end">
-    <ui2-button variant="ghost" (clicked)="close()">Cancelar</ui2-button>
-    <ui2-button
-      variant="primary"
-      [disabled]="form.invalid || selectedCount() === 0"
-      [loading]="loading()"
-      (clicked)="onSubmit()"
-    >
-      {{ isEdit() ? 'Guardar' : 'Crear' }}
-    </ui2-button>
+    @if (resultado()) {
+      <ui2-button variant="primary" (clicked)="finalizar()">Hecho</ui2-button>
+    } @else {
+      <ui2-button variant="ghost" (clicked)="close()">Cancelar</ui2-button>
+      <ui2-button
+        variant="primary"
+        [disabled]="form.invalid || selectedCount() === 0"
+        [loading]="loading()"
+        (clicked)="onSubmit()"
+      >
+        {{ isEdit() ? 'Guardar' : 'Crear paciente' }}
+      </ui2-button>
+    }
   </ui2-dialog-actions>
 </ui2-dialog-host>

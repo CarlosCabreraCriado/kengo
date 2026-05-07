@@ -13,8 +13,11 @@ import {
   Ui2CheckboxComponent,
   Ui2SectionLabelComponent,
   Ui2SpinnerComponent,
+  Ui2CardComponent,
 } from '../../../../shared/ui-v2';
 import { emailRequired } from '../../../../shared';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
+import { ClipboardService } from '../../../../core/services/clipboard.service';
 
 import { Usuario } from '../../../../../types/global';
 import { ConvexService } from '../../../../core/convex/convex.service';
@@ -31,6 +34,13 @@ type ID = string | number;
 interface Clinica {
   id: ID;
   nombre?: string;
+}
+
+interface Resultado {
+  userId: string;
+  magicLink: string | null;
+  codigo: string | null;
+  emailEnviado: boolean;
 }
 
 @Component({
@@ -50,6 +60,7 @@ interface Clinica {
     Ui2CheckboxComponent,
     Ui2SectionLabelComponent,
     Ui2SpinnerComponent,
+    Ui2CardComponent,
   ],
   templateUrl: './add-paciente.component.html',
   styleUrl: './add-paciente.component.css',
@@ -60,6 +71,8 @@ export class AddPacienteDialogComponent {
   private data = inject<DialogData>(DIALOG_DATA);
   private convex = inject(ConvexService);
   private clinicasService = inject(ClinicasService);
+  private clipboard = inject(ClipboardService);
+  private toast = inject(ToastService);
 
   // Mapa: clinicId -> membershipId (Convex Id<"clinicMemberships">)
   private currentLinks = new Map<ID, string>();
@@ -67,6 +80,8 @@ export class AddPacienteDialogComponent {
   loading = signal(false);
   error = signal<string | null>(null);
   isEdit = computed(() => !!this.data.usuario);
+
+  resultado = signal<Resultado | null>(null);
 
   // Clínicas disponibles (filtradas por las del usuario actual). Reactivo via ClinicasService.
   readonly clinicasRes = {
@@ -118,7 +133,6 @@ export class AddPacienteDialogComponent {
   });
 
   constructor() {
-    // si es edición, cargar sus enlaces actuales (usuarios_clinicas) y preseleccionar
     if (this.isEdit()) {
       void this.loadUserClinics(this.data.usuario!.id);
     }
@@ -159,94 +173,132 @@ export class AddPacienteDialogComponent {
     const v = this.form.getRawValue();
 
     try {
-      if (!this.isEdit()) {
-        // ---- CREAR — usamos createPatient para la primera clínica.
-        // Si hay varias clínicas seleccionadas, añadimos las demás vía add().
-        const selectedClinics = [...this.selectedClinicIds()];
-        if (selectedClinics.length === 0) {
-          throw new Error('Debe seleccionar al menos una clínica.');
-        }
-
-        const primaryClinicId = String(selectedClinics[0]);
-
-        const result = await this.convex.action(api.users.actions.createPatient, {
-          firstName: v.first_name ?? '',
-          lastName: v.last_name ?? '',
-          email: v.email ?? '',
-          telefono: v.telefono || undefined,
-          password: this.genTempPassword(),
-          clinicId: primaryClinicId as Id<'clinics'>,
-          generateAccessToken: true,
-        });
-
-        if (!result.success) {
-          throw new Error(result.error || 'No se pudo crear el usuario.');
-        }
-
-        if (selectedClinics.length > 1) {
-          await Promise.all(
-            selectedClinics.slice(1).map(async (cid) => {
-              return this.convex.mutation(api.clinicMemberships.mutations.add, {
-                userId: result.userId as Id<'users'>,
-                clinicId: String(cid) as Id<'clinics'>,
-                puesto: 'paciente',
-              });
-            }),
-          );
-        }
-
-        this.close({ created: { id: result.userId } });
-      } else {
-        // ---- EDITAR
-        const userId = this.data.usuario!.id;
-
-        const targetIds = new Set<string>([...this.selectedClinicIds()]);
-        const currentIds = new Set<string>(
-          [...this.currentLinks.keys()].map(String),
-        );
-
-        const toAdd: string[] = [...targetIds].filter((x) => !currentIds.has(x));
-        const toRemove: ID[] = [...this.currentLinks.keys()].filter(
-          (x) => !targetIds.has(String(x)),
-        );
-
-        await this.convex.mutation(api.users.mutations.updatePatient, {
-          patientId: userId as Id<'users'>,
-          firstName: v.first_name ?? undefined,
-          lastName: v.last_name ?? undefined,
-          email: v.email ?? undefined,
-          telefono: v.telefono || undefined,
-        });
-
-        await Promise.all(
-          toAdd.map((cid) =>
-            this.convex.mutation(api.clinicMemberships.mutations.add, {
-              userId: userId as Id<'users'>,
-              clinicId: String(cid) as Id<'clinics'>,
-              puesto: 'paciente',
-            }),
-          ),
-        );
-
-        // 3) Eliminar membresías sobrantes
-        await Promise.all(
-          toRemove.map((cid) => {
-            const membershipId = this.currentLinks.get(cid);
-            return membershipId
-              ? this.convex.mutation(api.clinicMemberships.mutations.remove, {
-                  membershipId: membershipId as Id<'clinicMemberships'>,
-                })
-              : Promise.resolve();
-          }),
-        );
-
-        this.close({ updated: true });
+      if (this.isEdit()) {
+        await this.actualizarPaciente(v);
+        return;
       }
+
+      const selectedClinics = [...this.selectedClinicIds()];
+      if (selectedClinics.length === 0) {
+        throw new Error('Debe seleccionar al menos una clínica.');
+      }
+
+      await this.crearPaciente(v, selectedClinics);
     } catch (e: unknown) {
       console.error(e);
-      this.error.set('No se pudieron guardar los cambios.');
+      const msg = e instanceof Error ? e.message : 'No se pudieron guardar los cambios.';
+      this.error.set(msg);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private async crearPaciente(
+    v: ReturnType<typeof this.form.getRawValue>,
+    selectedClinics: string[],
+  ) {
+    const primaryClinicId = String(selectedClinics[0]);
+
+    const result = await this.convex.action(api.users.actions.createPatient, {
+      firstName: v.first_name ?? '',
+      lastName: v.last_name ?? '',
+      email: v.email ?? '',
+      telefono: v.telefono || undefined,
+      password: this.genTempPassword(),
+      clinicId: primaryClinicId as Id<'clinics'>,
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || 'No se pudo crear el usuario.');
+    }
+
+    if (selectedClinics.length > 1) {
+      await Promise.all(
+        selectedClinics.slice(1).map((cid) =>
+          this.convex.mutation(api.clinicMemberships.mutations.add, {
+            userId: result.userId as Id<'users'>,
+            clinicId: String(cid) as Id<'clinics'>,
+            puesto: 'paciente',
+          }),
+        ),
+      );
+    }
+
+    this.resultado.set({
+      userId: result.userId ?? '',
+      magicLink: result.accessToken?.url ?? null,
+      codigo: result.codigoAcceso ?? null,
+      emailEnviado: !!result.emailEnviado,
+    });
+  }
+
+  private async actualizarPaciente(
+    v: ReturnType<typeof this.form.getRawValue>,
+  ) {
+    const userId = this.data.usuario!.id;
+
+    const targetIds = new Set<string>([...this.selectedClinicIds()]);
+    const currentIds = new Set<string>(
+      [...this.currentLinks.keys()].map(String),
+    );
+
+    const toAdd: string[] = [...targetIds].filter((x) => !currentIds.has(x));
+    const toRemove: ID[] = [...this.currentLinks.keys()].filter(
+      (x) => !targetIds.has(String(x)),
+    );
+
+    await this.convex.mutation(api.users.mutations.updatePatient, {
+      patientId: userId as Id<'users'>,
+      firstName: v.first_name ?? undefined,
+      lastName: v.last_name ?? undefined,
+      email: v.email ?? undefined,
+      telefono: v.telefono || undefined,
+    });
+
+    await Promise.all(
+      toAdd.map((cid) =>
+        this.convex.mutation(api.clinicMemberships.mutations.add, {
+          userId: userId as Id<'users'>,
+          clinicId: String(cid) as Id<'clinics'>,
+          puesto: 'paciente',
+        }),
+      ),
+    );
+
+    await Promise.all(
+      toRemove.map((cid) => {
+        const membershipId = this.currentLinks.get(cid);
+        return membershipId
+          ? this.convex.mutation(api.clinicMemberships.mutations.remove, {
+              membershipId: membershipId as Id<'clinicMemberships'>,
+            })
+          : Promise.resolve();
+      }),
+    );
+
+    this.close({ updated: true });
+  }
+
+  copiarMagicLink() {
+    const url = this.resultado()?.magicLink;
+    if (!url) return;
+    void this.clipboard.write(url);
+    this.toast.success('Enlace copiado al portapapeles');
+  }
+
+  copiarCodigo() {
+    const codigo = this.resultado()?.codigo;
+    if (!codigo) return;
+    void this.clipboard.write(codigo);
+    this.toast.success('Código copiado al portapapeles');
+  }
+
+  finalizar() {
+    const r = this.resultado();
+    if (r) {
+      this.close({ created: { id: r.userId } });
+    } else {
+      this.close();
     }
   }
 

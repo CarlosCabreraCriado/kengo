@@ -193,10 +193,10 @@
               <app-mc-access-codes
                 [codigos]="codigosClinica()"
                 [loading]="codigosLoading()"
-                [puedeGenerar]="esFisioOAdmin()"
+                [puedeGenerar]="esAdmin()"
                 [expandable]="isMovil()"
                 [expanded]="codigosExpanded()"
-                (generarCodigo)="abrirGenerarCodigo()"
+                (generarCodigo)="abrirAnadirFisio()"
                 (copiarCodigo)="copiarCodigo($event)"
                 (desactivar)="desactivarCodigo($event)"
                 (reactivar)="reactivarCodigo($event)"
@@ -275,7 +275,7 @@
     <app-generar-codigo-dialog
       [clinicaId]="currentClinic()!.id"
       [esAdmin]="esAdmin()"
-      [tipoInicial]="tipoInicialCodigo()"
+      [tipoFijo]="'fisioterapeuta'"
       (cerrar)="cerrarGenerarCodigo()"
       (codigoGenerado)="onCodigoGenerado($event)"
       (requiereContactoVentas)="onRequiereContactoVentas()"

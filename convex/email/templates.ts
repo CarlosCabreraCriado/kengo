@@ -387,3 +387,46 @@ ${ctaButton(accessUrl, "Acceder a mis ejercicios")}
     "Este email fue enviado por Kengo.<br>Si no esperabas este enlace, puedes ignorar este mensaje.",
   );
 }
+
+export function patientInvitationTemplate(
+  nombre: string,
+  accessUrl: string,
+  codigo: string,
+  nombreFisio: string | null,
+  nombreClinica: string | null,
+): string {
+  const remitente = nombreFisio
+    ? nombreClinica
+      ? `<strong>${nombreFisio}</strong> de <strong>${nombreClinica}</strong>`
+      : `<strong>${nombreFisio}</strong>`
+    : nombreClinica
+      ? `tu fisioterapeuta de <strong>${nombreClinica}</strong>`
+      : "tu fisioterapeuta";
+
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  ¡Hola ${nombre}!
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  ${remitente} te ha invitado a <strong style="color: ${BRAND_COLOR};">Kengo</strong> para que sigas tus ejercicios y planes de tratamiento.
+</p>
+<p style="margin: 0 0 24px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  La forma más rápida es pulsar el botón. Entrarás directamente sin contraseña:
+</p>
+${ctaButton(accessUrl, "Acceder a mis ejercicios")}
+<p style="margin: 30px 0 12px 0; color: #4a4a4a; font-size: 15px; line-height: 1.6; text-align: center;">
+  ¿Prefieres registrarte tú mismo? Usa este código en la pantalla de registro:
+</p>
+${codeBlock(codigo, "Tu código de acceso:")}
+<p style="margin: 0 0 12px 0; color: ${BRAND_COLOR}; font-size: 14px; font-weight: 500; line-height: 1.6; text-align: center;">
+  El enlace y el código expiran en 30 días.
+</p>
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Solo este email puede usar el código. Si no esperabas esta invitación, puedes ignorar el mensaje.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Si no esperabas esta invitación, puedes ignorarla.",
+  );
+}

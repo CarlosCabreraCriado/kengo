@@ -10,6 +10,7 @@ import {
   paymentFailedTemplate,
   migrationAnnouncementTemplate,
   enterpriseInvitationTemplate,
+  patientInvitationTemplate,
 } from "./templates";
 
 export const sendEmail = internalAction({
@@ -237,6 +238,45 @@ export const sendEnterpriseInvitationEmail = internalAction({
       return false;
     }
     console.log(`[Email] Enterprise invitation enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendPatientInvitationEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombre: v.string(),
+    accessUrl: v.string(),
+    codigo: v.string(),
+    nombreFisio: v.optional(v.string()),
+    nombreClinica: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: "Tu invitación a Kengo",
+      html: patientInvitationTemplate(
+        args.nombre,
+        args.accessUrl,
+        args.codigo,
+        args.nombreFisio ?? null,
+        args.nombreClinica ?? null,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando invitación de paciente:", error);
+      return false;
+    }
+    console.log(`[Email] Invitación de paciente enviada a ${args.to}`);
     return true;
   },
 });

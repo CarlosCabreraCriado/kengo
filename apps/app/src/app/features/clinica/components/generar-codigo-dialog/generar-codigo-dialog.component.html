@@ -10,12 +10,14 @@
       @if (!codigoResult()) {
         <ui2-dialog-content>
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="gc-form">
-            <!-- Tipo de usuario -->
-            <ui2-radio-group
-              label="Tipo de usuario"
-              formControlName="tipo"
-              [options]="tipoOptions()"
-            ></ui2-radio-group>
+            <!-- Tipo de usuario (oculto si el tipo está fijado por el contexto) -->
+            @if (!tipoFijo) {
+              <ui2-radio-group
+                label="Tipo de usuario"
+                formControlName="tipo"
+                [options]="tipoOptions()"
+              ></ui2-radio-group>
+            }
 
             <!-- Invitar por email -->
             <div class="gc-email-card">

@@ -196,13 +196,20 @@ export class ClinicaGestionService {
   }
 
   /**
-   * Lista los códigos de acceso de una clínica
+   * Lista los códigos de acceso de una clínica.
+   * Si se pasa `tipo`, filtra por ese tipo en backend.
    */
-  listarCodigos(clinicaId: string): Observable<CodigoAcceso[]> {
+  listarCodigos(
+    clinicaId: string,
+    tipo?: TipoCodigoAcceso,
+  ): Observable<CodigoAcceso[]> {
     const convexId = clinicaId as Id<'clinics'>;
 
     return from(
-      this.convex.query(api.accessCodes.queries.listByClinic, { clinicId: convexId }),
+      this.convex.query(api.accessCodes.queries.listByClinic, {
+        clinicId: convexId,
+        tipo,
+      }),
     ).pipe(
       map((codes) =>
         (codes ?? []).map((c): CodigoAcceso => ({
