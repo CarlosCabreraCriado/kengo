@@ -87,9 +87,14 @@ export const register = action({
     const name = `${firstName} ${lastName}`.trim();
 
     try {
+      // Origin requerido por el plugin crossDomain de Better-Auth: las
+      // llamadas server-to-server desde Node no añaden Origin automáticamente.
       const res = await fetch(`${siteUrl}/api/auth/sign-up/email`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: getAppUrl(),
+        },
         body: JSON.stringify({ email, password, name }),
       });
 
