@@ -113,6 +113,12 @@ export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
+    // Necesario para que `auth.api.signInMagicLink` (y el plugin
+    // magic-link en general) construya correctamente la URL del verify.
+    // Sin esto, `ctx.context.baseURL` queda vacío cuando se invoca
+    // programáticamente desde un httpAction y `new URL('')` lanza
+    // "Invalid URL: ''".
+    baseURL: siteUrl,
     trustedOrigins: [
       appUrl,
       `https://www.${appUrl.replace(/^https?:\/\//, "")}`,
