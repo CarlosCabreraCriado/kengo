@@ -91,7 +91,11 @@
                 [radius]="22"
               ></ui2-icon-badge>
             </div>
-            <svg viewBox="0 0 300 90" class="ae-pain__svg" preserveAspectRatio="none">
+            <svg
+              #painSvg
+              [attr.viewBox]="painViewBox()"
+              class="ae-pain__svg"
+            >
               <defs>
                 <linearGradient id="painGrad" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0%" stop-color="var(--kengo-primary)" stop-opacity="0.3" />

@@ -1,10 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
+  signal,
+  viewChild,
 } from '@angular/core';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import {
@@ -121,13 +125,17 @@ export class ActividadEstadisticasComponent implements OnInit, OnDestroy {
     this.mejorRacha() > 0 ? `Mejor racha: ${this.mejorRacha()} días` : null,
   );
 
+  readonly painSvgRef = viewChild<ElementRef<SVGSVGElement>>('painSvg');
+  readonly chartWidth = signal(300);
+
   readonly painPlot = computed<PuntoDolorPlot[]>(() => {
     const pts = this.pain();
     if (pts.length === 0) return [];
     const last = Math.max(pts.length - 1, 1);
+    const usable = Math.max(this.chartWidth() - 20, 1);
     return pts.map((p, i) => ({
       ...p,
-      x: (i / last) * 280 + 10,
+      x: (i / last) * usable + 10,
       y: 80 - (p.v / 10) * 70,
     }));
   });
@@ -138,9 +146,26 @@ export class ActividadEstadisticasComponent implements OnInit, OnDestroy {
       .join(' '),
   );
 
-  readonly painArea = computed(() => `10,80 ${this.painPolyline()} 290,80`);
+  readonly painArea = computed(
+    () => `10,80 ${this.painPolyline()} ${this.chartWidth() - 10},80`,
+  );
+
+  readonly painViewBox = computed(() => `0 0 ${this.chartWidth()} 90`);
 
   readonly tieneDolor = computed(() => this.painPlot().length >= 2);
+
+  constructor() {
+    effect((onCleanup) => {
+      const el = this.painSvgRef()?.nativeElement;
+      if (!el || typeof ResizeObserver === 'undefined') return;
+      const ro = new ResizeObserver((entries) => {
+        const w = entries[0]?.contentRect.width;
+        if (w && w > 0) this.chartWidth.set(Math.round(w));
+      });
+      ro.observe(el);
+      onCleanup(() => ro.disconnect());
+    });
+  }
 
   readonly deltaTexto = computed(() => this.adherenciaDelta()?.texto ?? null);
   readonly deltaColor = computed(() => {
