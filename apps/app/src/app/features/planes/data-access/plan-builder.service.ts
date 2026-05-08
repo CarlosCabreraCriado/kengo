@@ -344,7 +344,7 @@ export class PlanBuilderService {
         return null;
       }
 
-      await this.convex.mutation(api.plans.mutations.create, {
+      const planId = await this.convex.mutation(api.plans.mutations.create, {
         titulo: payload.titulo,
         descripcion: payload.descripcion ?? '',
         pacienteId: pacienteConvexId as any,
@@ -364,7 +364,7 @@ export class PlanBuilderService {
         })),
       });
 
-      return null;
+      return planId as string;
     } catch (error) {
       console.error('Error al crear plan:', error);
       return null;
@@ -528,7 +528,7 @@ export class PlanBuilderService {
     try {
       const tomorrow = new Date(Date.now() + 864e5).toISOString().split('T')[0];
 
-      await this.convex.mutation(api.plans.mutations.version, {
+      const newPlanId = await this.convex.mutation(api.plans.mutations.version, {
         oldPlanId: oldPlanId as any,
         titulo: this.titulo() || 'Plan sin título',
         descripcion: this.descripcion() || '',
@@ -553,7 +553,7 @@ export class PlanBuilderService {
         p = this.paciente();
       if (f && p) this.removeFromStorage(f, p.id);
 
-      return null;
+      return newPlanId as string;
     } catch (error) {
       console.error('Error al versionar plan:', error);
       return null;
