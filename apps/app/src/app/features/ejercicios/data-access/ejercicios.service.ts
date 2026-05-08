@@ -11,6 +11,7 @@ import { rawAssetUrl, videoUrl } from '../../../core/utils/asset-url';
 import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { SessionService } from '../../../core/auth/services/session.service';
 import { mapId } from '../../../shared/utils/convex-mappers';
 import { createFilteredList } from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
@@ -25,6 +26,7 @@ export interface PaginaEjercicios {
 @Injectable({ providedIn: 'root' })
 export class EjerciciosService {
   private convex = inject(ConvexService);
+  private sessionService = inject(SessionService);
 
   // --- Filtros específicos del dominio (los signals base vienen del factory) ---
   readonly idsCategoriasSeleccionadas: WritableSignal<string[]> = signal([]);
@@ -38,7 +40,10 @@ export class EjerciciosService {
   // Suscripción a favoritos via Convex (devuelve Convex exercise IDs)
   private readonly favoritesQuery = this.convex.watchQuery(
     api.exercises.queries.listFavorites,
-    () => ({}),
+    () => {
+      if (!this.sessionService.usuario()?.id) return 'skip' as const;
+      return {};
+    },
   );
 
   constructor() {
@@ -52,7 +57,10 @@ export class EjerciciosService {
   // ========= Convex: Suscripción a categorías =========
   private readonly categoriesQuery = this.convex.watchQuery(
     api.exercises.queries.listCategories,
-    () => ({}),
+    () => {
+      if (!this.sessionService.usuario()?.id) return 'skip' as const;
+      return {};
+    },
   );
 
   readonly categoriasRes = {
@@ -74,7 +82,10 @@ export class EjerciciosService {
   // ========= Convex: Suscripción a TODOS los ejercicios =========
   private readonly allExercisesQuery = this.convex.watchQuery(
     api.exercises.queries.listExercises,
-    () => ({}),
+    () => {
+      if (!this.sessionService.usuario()?.id) return 'skip' as const;
+      return {};
+    },
   );
 
   private readonly allEjercicios = computed<Ejercicio[]>(() => {

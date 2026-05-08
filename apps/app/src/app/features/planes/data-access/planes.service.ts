@@ -34,6 +34,7 @@ export class PlanesService {
   private readonly plansQuery = this.convex.watchQuery(
     api.plans.queries.listByFisio,
     () => {
+      if (!this.sessionService.usuario()?.id) return 'skip' as const;
       const estado = this.filtroEstado();
       return {
         estado: estado === 'todos' ? undefined : (estado as any),

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../core/utils/asset-url';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { SessionService } from '../../../core/auth/services/session.service';
 import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
 import {
   createFilteredList,
@@ -29,12 +30,14 @@ type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
 @Injectable({ providedIn: 'root' })
 export class RutinasService {
   private convex = inject(ConvexService);
+  private sessionService = inject(SessionService);
 
   readonly filtroVisibilidad: WritableSignal<FiltroVisibilidad> = signal('todas');
 
   private readonly routinesQuery = this.convex.watchQuery(
     api.routines.queries.list,
     () => {
+      if (!this.sessionService.usuario()?.id) return 'skip' as const;
       const vis = this.filtroVisibilidad();
       const visibilidad =
         vis === 'privadas' ? ('privado' as const) :

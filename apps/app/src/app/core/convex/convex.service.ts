@@ -32,6 +32,13 @@ export class ConvexService {
 
   readonly isConnected = signal(false);
 
+  // Espejo reactivo del estado de auth en el cliente Convex. setAuth lo pone a
+  // true; clearAuth a false. watchQuery lo lee dentro de su effect para pausar
+  // automáticamente cualquier suscripción autenticada cuando el usuario hace
+  // logout, sin que cada servicio tenga que recordar añadir un guard manual.
+  private _isAuthenticated = signal(false);
+  readonly isAuthenticated = this._isAuthenticated.asReadonly();
+
   constructor() {
     this.client = new ConvexClient(environment.CONVEX_URL);
   }
@@ -41,6 +48,7 @@ export class ConvexService {
    */
   setAuth(tokenFn: () => Promise<string | null>): void {
     this.client.setAuth(tokenFn);
+    this._isAuthenticated.set(true);
   }
 
   /**
@@ -48,6 +56,7 @@ export class ConvexService {
    */
   clearAuth(): void {
     this.client.setAuth(async () => null);
+    this._isAuthenticated.set(false);
   }
 
   /**
@@ -55,23 +64,34 @@ export class ConvexService {
    * Se re-suscribe automáticamente cuando cambian las señales en argsFn.
    * Pasar 'skip' como retorno de argsFn para pausar la suscripción.
    *
+   * **Auth gate**: por defecto la suscripción se pausa automáticamente cuando
+   * `isAuthenticated()` es false (logout o sesión sin restaurar). Esto evita
+   * que cualquier query autenticada se dispare con token nulo y reciba un
+   * error "No autenticado" en consola. Cuando el usuario vuelve a iniciar
+   * sesión la suscripción se reactiva sin recarga. Pasar
+   * `{ requireAuth: false }` en options para queries explícitamente públicas.
+   *
    * Si se invoca fuera de un constructor o injection context,
    * pasar { injector } en options.
    */
   watchQuery<Query extends FunctionReference<'query'>>(
     query: Query,
     argsFn: () => FunctionArgs<Query> | 'skip',
-    options?: { injector?: Injector },
+    options?: { injector?: Injector; requireAuth?: boolean },
   ): ConvexQueryResult<FunctionReturnType<Query>> {
     const value: WritableSignal<FunctionReturnType<Query> | undefined> =
       signal(undefined);
     const isLoading = signal(true);
     const error = signal<Error | null>(null);
 
+    const requireAuth = options?.requireAuth !== false;
     let currentUnsubscribe: (() => void) | null = null;
 
     const effectRef = effect(
       () => {
+        // Lectura reactiva: cuando el estado de auth cambia el effect re-corre
+        // y desuscribe (logout) o re-suscribe (login) automáticamente.
+        const authed = requireAuth ? this._isAuthenticated() : true;
         const currentArgs = argsFn();
 
         untracked(() => {
@@ -79,7 +99,7 @@ export class ConvexService {
           currentUnsubscribe?.();
           currentUnsubscribe = null;
 
-          if (currentArgs === 'skip') {
+          if (!authed || currentArgs === 'skip') {
             isLoading.set(false);
             value.set(undefined);
             return;

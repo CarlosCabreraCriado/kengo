@@ -98,7 +98,10 @@ export class MensajesService {
 
   private readonly conversationsQuery = this.convex.watchQuery(
     api.conversations.queries.listMyConversations,
-    () => ({}),
+    () => {
+      if (!this.session.usuario()?.id) return 'skip' as const;
+      return {};
+    },
   );
 
   private readonly messagesQuery = this.convex.watchQuery(
