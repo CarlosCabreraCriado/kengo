@@ -87,9 +87,7 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
   heroTitle = computed(() => {
     const e = this.estadoSituacion();
     if (e === 'cargando') return '';
-    if (e === 'urgente') return 'PANEL DEL FISIO';
-    if (e === 'pendiente') return 'VAMOS A POR HOY';
-    return 'TODO BAJO CONTROL';
+    return 'PANEL DEL FISIO';
   });
 
   heroSub = computed<string>(() => {
