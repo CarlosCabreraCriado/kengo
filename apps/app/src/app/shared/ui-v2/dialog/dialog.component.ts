@@ -27,11 +27,11 @@ export type Ui2DialogActionsAlign = 'start' | 'center' | 'end' | 'between';
     </div>
   `,
   styles: [`
-    :host { display: block; }
+    :host { display: block; max-height: 100%; }
     .ui2-dialog {
       display: flex;
       flex-direction: column;
-      max-height: inherit;
+      max-height: calc(100dvh - 2rem);
       overflow: hidden;
       background: white;
       border-radius: 22px;
@@ -131,9 +131,15 @@ export class Ui2DialogHeaderComponent {
     </div>
   `,
   styles: [`
-    :host { display: block; flex: 1; min-height: 0; }
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
     .ui2-dialog-content {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
       padding: 20px;
       background: white;
