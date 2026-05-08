@@ -148,13 +148,14 @@
         </ui2-section>
       }
 
-      <!-- Activity chart — solo desktop (mock) -->
+      <!-- Activity chart — solo desktop -->
       <ui2-web-activity-chart
         class="if-desktop-only if-activity-chart"
         eyebrow="Actividad de la clínica"
-        title="Esta semana"
-        delta="↑ +8% vs semana anterior"
-        [data]="actividad10dias()"
+        title="Últimos 10 días"
+        [delta]="dashboardService.actividadDeltaText()"
+        [deltaColor]="dashboardService.actividadDeltaColor()"
+        [data]="dashboardService.actividadDiaria()"
       ></ui2-web-activity-chart>
     </div>
 

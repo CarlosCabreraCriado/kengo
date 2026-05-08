@@ -17,7 +17,6 @@ import {
   ymdMadridFromInstant,
 } from '../../../../../shared/utils/madrid-date.util';
 import {
-  Ui2ActivityDay,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2EmptyStateComponent,
@@ -219,20 +218,6 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
 
   /** Sesiones que el fisio espera/registra hoy. TODO: cablear con snapshots.sesionesHoy. */
   readonly sesionesHoyMock = signal<number>(0);
-
-  /** Actividad agregada de la clínica en los últimos 10 días. TODO: cablear endpoint real. */
-  readonly actividad10dias = signal<Ui2ActivityDay[]>([
-    { label: 'L', value: 0.7 },
-    { label: 'M', value: 0.85 },
-    { label: 'X', value: 0.6 },
-    { label: 'J', value: 0.9 },
-    { label: 'V', value: 0.95 },
-    { label: 'S', value: 0.3 },
-    { label: 'D', value: 0.2 },
-    { label: 'L', value: 0.8 },
-    { label: 'M', value: 0.75 },
-    { label: 'X', value: 0.5, today: true },
-  ]);
 
   ngOnInit(): void {
     this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);

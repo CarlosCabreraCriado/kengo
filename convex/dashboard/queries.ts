@@ -8,9 +8,18 @@
  * el rediseño).
  */
 
+import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { Id } from "../_generated/dataModel";
+import { Doc, Id } from "../_generated/dataModel";
 import { getAuthenticatedUser, tieneGestion } from "../_helpers/permissions";
+import { assertFisioInClinic } from "../_helpers/patientAccess";
+import {
+  DiaSemana,
+  getCurrentMadridDate,
+  getDiaSemana,
+  getMadridDateOffset,
+  rangeOfDates,
+} from "../_helpers/datetime";
 
 function fechaHoy(): string {
   return new Date().toISOString().split("T")[0];
@@ -99,5 +108,77 @@ export const planesPorVencer = query({
     }
     planesPorVencer.sort((a, b) => a.fechaFin.localeCompare(b.fechaFin));
     return planesPorVencer.slice(0, 10);
+  },
+});
+
+type ActividadDia = {
+  fecha: string;
+  label: DiaSemana;
+  sesiones: number;
+  today: boolean;
+};
+
+export type ActividadDiariaClinica = {
+  days: ActividadDia[];
+  deltaPct: number | null;
+  totalActual: number;
+  totalAnterior: number;
+};
+
+/**
+ * Sesiones reales (no sintéticas) por día en la clínica para los últimos 10
+ * días, junto al total de los 10 días previos para calcular un delta. La
+ * normalización 0-1 y el copy del delta se componen en el cliente.
+ */
+export const getActividadDiariaClinica = query({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, args): Promise<ActividadDiariaClinica> => {
+    const user = await getAuthenticatedUser(ctx);
+    await assertFisioInClinic(ctx, user._id, args.clinicId);
+
+    const hoy = getCurrentMadridDate();
+    const inicioActual = getMadridDateOffset(-9);
+    const finPrevia = getMadridDateOffset(-10);
+    const inicioPrevia = getMadridDateOffset(-19);
+
+    const sessions: Doc<"sessions">[] = await ctx.db
+      .query("sessions")
+      .withIndex("by_clinicId_fecha", (q) =>
+        q
+          .eq("clinicId", args.clinicId)
+          .gte("fecha", inicioPrevia)
+          .lte("fecha", hoy),
+      )
+      .collect();
+
+    const counts = new Map<string, number>();
+    for (const s of sessions) {
+      if (s.esSintetica === true) continue;
+      counts.set(s.fecha, (counts.get(s.fecha) ?? 0) + 1);
+    }
+
+    const days: ActividadDia[] = rangeOfDates(inicioActual, hoy).map(
+      (fecha) => ({
+        fecha,
+        label: getDiaSemana(fecha),
+        sesiones: counts.get(fecha) ?? 0,
+        today: fecha === hoy,
+      }),
+    );
+
+    let totalActual = 0;
+    for (const d of days) totalActual += d.sesiones;
+
+    let totalAnterior = 0;
+    for (const fecha of rangeOfDates(inicioPrevia, finPrevia)) {
+      totalAnterior += counts.get(fecha) ?? 0;
+    }
+
+    const deltaPct =
+      totalAnterior === 0
+        ? null
+        : Math.round(((totalActual - totalAnterior) / totalAnterior) * 100);
+
+    return { days, deltaPct, totalActual, totalAnterior };
   },
 });
