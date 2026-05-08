@@ -108,7 +108,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
 
     const res = await fetch(url, {
       mode: 'cors',
-      credentials: 'include',
+      credentials: 'omit',
     });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
