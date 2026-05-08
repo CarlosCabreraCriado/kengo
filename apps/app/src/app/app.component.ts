@@ -19,6 +19,7 @@ import {
 import { PlatformService } from './core/services/platform.service';
 import { KeyboardService } from './core/services/keyboard.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
+import { assetUrl } from './core/utils/asset-url';
 import { ToastService } from './shared/services/toast/toast.service';
 import { ClinicasService } from './features/clinica/data-access/clinicas.service';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
@@ -149,6 +150,18 @@ export class AppComponent implements OnInit {
   public clinicaBrandName = computed<string>(() => {
     const comercial = this.clinicasService.selectedClinica()?.nombreComercial?.trim();
     return comercial || 'KENGO';
+  });
+
+  /**
+   * URL de la primera foto de la galería de la clínica activa, lista para usar
+   * como fondo de la card "Mi clínica" en el sidenav desktop. Devuelve `null`
+   * cuando no hay clínica o no tiene imágenes — el sidebar cae al asset
+   * estático por defecto.
+   */
+  public clinicaImagenUrl = computed<string | null>(() => {
+    const fileId = this.clinicasService.selectedClinica()?.imagenes?.[0]?.fileId;
+    if (!fileId) return null;
+    return assetUrl(fileId, { width: 480, fit: 'cover' });
   });
 
   public userName = computed(() => this.sessionService.nombreCompleto() || 'Usuario');
