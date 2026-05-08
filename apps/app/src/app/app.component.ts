@@ -20,6 +20,7 @@ import { PlatformService } from './core/services/platform.service';
 import { KeyboardService } from './core/services/keyboard.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
 import { ToastService } from './shared/services/toast/toast.service';
+import { ClinicasService } from './features/clinica/data-access/clinicas.service';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
@@ -77,6 +78,7 @@ export class AppComponent implements OnInit {
   private toast = inject(ToastService);
   public sessionService = inject(SessionService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
+  private clinicasService = inject(ClinicasService);
 
   public mostrarNavegacion = false;
 
@@ -127,13 +129,26 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * Nombre de la clínica activa (fallback genérico hasta tener un servicio dedicado).
-   * Devuelve `null` cuando el usuario no pertenece a ninguna clínica para que
-   * la sidebar oculte la card de "Mi clínica" durante el onboarding.
+   * Etiqueta abreviada de la clínica activa para piezas de UI con espacio
+   * limitado (header móvil, mini-card del sidebar). Prefiere `nombreComercial`
+   * cuando está definido y cae al `nombre` completo. Devuelve `null` durante
+   * onboarding para que la sidebar oculte la card de "Mi clínica".
    */
   public clinicaActual = computed<string | null>(() => {
     if (this.sessionService.sinClinica()) return null;
-    return 'Mi clínica';
+    const clinica = this.clinicasService.selectedClinica();
+    if (!clinica) return 'Mi clínica';
+    return clinica.nombreComercial?.trim() || clinica.nombre || 'Mi clínica';
+  });
+
+  /**
+   * Texto principal del bloque de marca del sidebar desktop. Se sustituye por
+   * el `nombreComercial` de la clínica activa cuando está definido; en caso
+   * contrario se mantiene la marca corporativa "KENGO".
+   */
+  public clinicaBrandName = computed<string>(() => {
+    const comercial = this.clinicasService.selectedClinica()?.nombreComercial?.trim();
+    return comercial || 'KENGO';
   });
 
   public userName = computed(() => this.sessionService.nombreCompleto() || 'Usuario');

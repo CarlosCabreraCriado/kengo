@@ -24,13 +24,15 @@ import { ConfirmDialogData } from '../../services/dialog/dialog.service';
       </ui-dialog-content>
 
       <ui-dialog-actions>
-        <button
-          type="button"
-          class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
-          (click)="onCancel()"
-        >
-          {{ data.cancelText || 'Cancelar' }}
-        </button>
+        @if (!data.hideCancel) {
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
+            (click)="onCancel()"
+          >
+            {{ data.cancelText || 'Cancelar' }}
+          </button>
+        }
         <button
           type="button"
           class="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"

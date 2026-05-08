@@ -18,8 +18,10 @@ function assertHexColor(value: string | undefined, field: string) {
 export const create = mutation({
   args: {
     nombre: v.string(),
+    nombreComercial: v.optional(v.string()),
     telefono: v.optional(v.string()),
     email: v.optional(v.string()),
+    web: v.optional(v.string()),
     direccion: v.optional(v.string()),
     postal: v.optional(v.string()),
     nif: v.optional(v.string()),
@@ -33,8 +35,10 @@ export const create = mutation({
 
     const clinicId = await ctx.db.insert("clinics", {
       nombre: args.nombre,
+      nombreComercial: args.nombreComercial,
       telefono: args.telefono,
       email: args.email,
+      web: args.web,
       direccion: args.direccion,
       postal: args.postal,
       nif: args.nif,
@@ -66,8 +70,10 @@ export const update = mutation({
   args: {
     clinicId: v.id("clinics"),
     nombre: v.optional(v.string()),
+    nombreComercial: v.optional(v.union(v.string(), v.null())),
     telefono: v.optional(v.string()),
     email: v.optional(v.string()),
+    web: v.optional(v.union(v.string(), v.null())),
     direccion: v.optional(v.string()),
     postal: v.optional(v.string()),
     nif: v.optional(v.string()),

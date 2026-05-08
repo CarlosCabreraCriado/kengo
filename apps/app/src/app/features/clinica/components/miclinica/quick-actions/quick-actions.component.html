@@ -1,11 +1,29 @@
 <div class="mqa">
-  @if (phone(); as tel) {
-    <a [href]="'tel:' + tel" class="mqa__tile mqa__tile--primary" aria-label="Llamar">
+  @if (webUrl(); as url) {
+    <a
+      [href]="url"
+      target="_blank"
+      rel="noopener"
+      class="mqa__tile mqa__tile--primary"
+      aria-label="Visitar web"
+    >
       <span class="mqa__icon">
-        <span class="material-symbols-outlined" aria-hidden="true">call</span>
+        <span class="material-symbols-outlined" aria-hidden="true">public</span>
       </span>
-      <span class="mqa__label">Llamar</span>
+      <span class="mqa__label">Visitar web</span>
     </a>
+  } @else {
+    <button
+      type="button"
+      class="mqa__tile mqa__tile--primary"
+      (click)="onWebNoDisponible()"
+      aria-label="Visitar web"
+    >
+      <span class="mqa__icon">
+        <span class="material-symbols-outlined" aria-hidden="true">public</span>
+      </span>
+      <span class="mqa__label">Visitar web</span>
+    </button>
   }
 
   @if (email(); as mail) {

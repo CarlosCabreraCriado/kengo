@@ -19,6 +19,7 @@
       <ui2-patient-sidebar
         class="z-200 h-full shrink-0"
         [groups]="pacienteSidebarGroups()"
+        [brandName]="clinicaBrandName()"
         [userName]="firstName()"
         [userSubtitle]="userSubtitle()"
         [avatarUrl]="avatarUrl()"
@@ -72,6 +73,7 @@
         class="h-full shrink-0"
         brandTag="FISIOTERAPIA"
         [groups]="fisioSidebarGroups()"
+        [brandName]="clinicaBrandName()"
         [userName]="firstName()"
         [userSubtitle]="userSubtitle()"
         [avatarUrl]="avatarUrl()"

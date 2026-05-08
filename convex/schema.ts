@@ -34,8 +34,11 @@ export default defineSchema({
   // === CLÍNICAS ===
   clinics: defineTable({
     nombre: v.string(),
+    /** Nombre comercial abreviado (máx. 15 caracteres) usado en piezas de UI con espacio reducido. */
+    nombreComercial: v.optional(v.string()),
     telefono: v.optional(v.string()),
     email: v.optional(v.string()),
+    web: v.optional(v.string()),
     direccion: v.optional(v.string()),
     postal: v.optional(v.string()),
     nif: v.optional(v.string()),

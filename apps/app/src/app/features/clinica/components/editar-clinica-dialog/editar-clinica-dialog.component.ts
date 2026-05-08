@@ -93,8 +93,12 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
 
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
+    nombreComercial: ['', [Validators.maxLength(15)]],
     telefono: [''],
     email: ['', emailOptional],
+    web: ['', [
+      Validators.pattern(/^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/[^\s]*)?$/i),
+    ]],
     direccion: [''],
     postal: [''],
     nif: [''],
@@ -163,8 +167,10 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     if (this.clinica) {
       this.form.patchValue({
         nombre: this.clinica.nombre || '',
+        nombreComercial: this.clinica.nombreComercial || '',
         telefono: this.clinica.telefono || '',
         email: this.clinica.email || '',
+        web: this.clinica.web || '',
         direccion: this.clinica.direccion || '',
         postal: this.clinica.postal || '',
         nif: this.clinica.nif || '',
@@ -295,7 +301,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
 
   /** Devuelve la primera tab que contenga errores de validación, o null si todo es válido. */
   private firstInvalidTab(): EditarClinicaTab | null {
-    const infoControls = ['nombre', 'nif', 'telefono', 'email', 'direccion', 'postal'];
+    const infoControls = ['nombre', 'nombreComercial', 'nif', 'telefono', 'email', 'web', 'direccion', 'postal'];
     if (infoControls.some((name) => this.form.get(name)?.invalid)) {
       return 'info';
     }
@@ -355,8 +361,10 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       const formValue = this.form.value;
       const payload: UpdateClinicaPayload = {
         nombre: formValue.nombre?.trim() || undefined,
+        nombreComercial: formValue.nombreComercial?.trim() || null,
         telefono: formValue.telefono?.trim() || null,
         email: formValue.email?.trim() || null,
+        web: formValue.web?.trim() || null,
         direccion: formValue.direccion?.trim() || null,
         postal: formValue.postal?.trim() || null,
         nif: formValue.nif?.trim() || null,

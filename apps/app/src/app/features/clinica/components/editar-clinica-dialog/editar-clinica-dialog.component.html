@@ -48,6 +48,19 @@
                   ></ui2-input>
                 </div>
 
+                <ui2-input
+                  label="Nombre comercial"
+                  formControlName="nombreComercial"
+                  placeholder="Mi Clínica"
+                  iconLeft="badge"
+                  hint="Nombre abreviado (máx. 15 caracteres) que se mostrará en partes de la UI para identificar la clínica."
+                  [error]="
+                    form.get('nombreComercial')?.touched && form.get('nombreComercial')?.errors?.['maxlength']
+                      ? 'Máximo 15 caracteres'
+                      : null
+                  "
+                ></ui2-input>
+
                 <div class="ec-row">
                   <ui2-input
                     label="Teléfono"
@@ -76,6 +89,19 @@
                   formControlName="direccion"
                   placeholder="Calle Ejemplo 123, Ciudad"
                   iconLeft="location_on"
+                ></ui2-input>
+
+                <ui2-input
+                  label="Web"
+                  type="url"
+                  formControlName="web"
+                  placeholder="https://miclinica.com"
+                  iconLeft="public"
+                  [error]="
+                    form.get('web')?.touched && form.get('web')?.errors?.['pattern']
+                      ? 'Introduce una URL válida'
+                      : null
+                  "
                 ></ui2-input>
 
                 <ui2-input

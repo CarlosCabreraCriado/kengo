@@ -591,6 +591,7 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
       { label: 'NIF', value: c?.nif ?? null, mono: true },
       { label: 'Código postal', value: c?.postal ?? null },
       { label: 'Dirección', value: c?.direccion ?? null },
+      { label: 'Web', value: c?.web ?? null },
     ];
   });
 

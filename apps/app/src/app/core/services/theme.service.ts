@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { StatusBar } from '@capacitor/status-bar';
-import { rawAssetUrl } from '../utils/asset-url';
+import { assetUrl } from '../utils/asset-url';
 
 import { ClinicasService } from '../../features/clinica/data-access/clinicas.service';
 import { PlatformService } from './platform.service';
@@ -133,7 +133,7 @@ export class ThemeService {
    */
   private actualizarLogo(clinica: Clinica | null): void {
     if (clinica?.logo) {
-      const logoUrl = `${rawAssetUrl(clinica.logo)}`;
+      const logoUrl = assetUrl(clinica.logo, { width: 144, height: 144, fit: 'cover' });
       this.logoUrl.set(logoUrl);
       this.logoIconUrl.set(logoUrl);
       console.log('[ThemeService] Logo de clínica aplicado:', logoUrl);
@@ -174,7 +174,9 @@ export class ThemeService {
     const expiresAt = new Date(now.getTime() + this.CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
     const primary = clinica.colorPrimario || this.DEFAULT_PRIMARY;
     const logoFileId = clinica.logo || null;
-    const logoUrl = logoFileId ? `${rawAssetUrl(logoFileId)}` : this.DEFAULT_LOGO;
+    const logoUrl = logoFileId
+      ? assetUrl(logoFileId, { width: 144, height: 144, fit: 'cover' })
+      : this.DEFAULT_LOGO;
     const logoIconUrl = logoFileId ? logoUrl : this.DEFAULT_LOGO_ICON;
 
     const cache: ThemeCacheV2 = {

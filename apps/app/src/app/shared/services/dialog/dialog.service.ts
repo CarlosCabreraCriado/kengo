@@ -25,6 +25,8 @@ export interface ConfirmDialogData {
   confirmText?: string;
   cancelText?: string;
   confirmVariant?: 'primary' | 'danger';
+  /** Si es true, oculta el botón "Cancelar" — útil para diálogos informativos. */
+  hideCancel?: boolean;
 }
 
 @Injectable({

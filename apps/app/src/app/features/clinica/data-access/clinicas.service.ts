@@ -34,8 +34,10 @@ export class ClinicasService {
     return raw.map((c) => ({
       id: c._id,
       nombre: c.nombre,
+      nombreComercial: c.nombreComercial ?? null,
       telefono: c.telefono ?? null,
       email: c.email ?? null,
+      web: c.web ?? null,
       direccion: c.direccion ?? null,
       postal: c.postal ?? null,
       nif: c.nif ?? null,

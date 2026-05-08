@@ -5,6 +5,7 @@ import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { NotificacionesService } from '../../../core/services/notificaciones.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { MensajesService } from '../../../features/mensajes/data-access/mensajes.service';
 import type { RolUsuario } from '../../../../types/global';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
@@ -24,8 +25,15 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
   template: `
     <header class="ui2-patient-header">
       <div class="ui2-patient-header__brand">
-        <span class="ui2-patient-header__logo">
-          <img src="assets/logo-k.svg" alt="Kengo" />
+        <span
+          class="ui2-patient-header__logo"
+          [class.ui2-patient-header__logo--clinica]="esLogoClinica()"
+        >
+          <img
+            [src]="themeService.logoIconUrl()"
+            alt=""
+            (error)="onLogoError()"
+          />
         </span>
         @if (clinica()) {
           <span class="ui2-patient-header__clinica">{{ clinica() }}</span>
@@ -179,6 +187,15 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
       width: 22px;
       height: 22px;
       object-fit: contain;
+    }
+    .ui2-patient-header__logo--clinica {
+      overflow: hidden;
+    }
+    .ui2-patient-header__logo--clinica img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
     .ui2-patient-header__clinica {
       font-size: 13px;
@@ -361,6 +378,7 @@ export class Ui2PatientHeaderComponent {
   public readonly sessionService = inject(SessionService);
   public readonly notificacionesService = inject(NotificacionesService);
   public readonly mensajesService = inject(MensajesService);
+  public readonly themeService = inject(ThemeService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -382,6 +400,14 @@ export class Ui2PatientHeaderComponent {
   readonly isPerfilActive = computed(() =>
     (this.currentUrl() ?? '').startsWith('/perfil'),
   );
+
+  readonly esLogoClinica = computed(() =>
+    !this.themeService.logoIconUrl().startsWith('assets/'),
+  );
+
+  onLogoError(): void {
+    this.themeService.resetLogo();
+  }
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();

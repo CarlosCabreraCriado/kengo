@@ -19,8 +19,11 @@ export interface ClinicaImagen {
 export interface Clinica {
   id: string;
   nombre: string;
+  /** Nombre comercial abreviado (máx. 15 caracteres) para piezas de UI con espacio limitado. */
+  nombreComercial?: string | null;
   telefono?: string | null;
   email?: string | null;
+  web?: string | null;
   direccion?: string | null;
   postal?: string | null;
   nif?: string | null;
@@ -36,8 +39,10 @@ export interface Clinica {
 export interface ClinicaData {
   id: string;
   nombre: string;
+  nombreComercial: string | null;
   telefono: string | null;
   email: string | null;
+  web: string | null;
   direccion: string | null;
   postal: string | null;
   logo: string | null;

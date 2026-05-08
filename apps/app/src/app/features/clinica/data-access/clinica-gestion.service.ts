@@ -77,8 +77,10 @@ export class ClinicaGestionService {
         api.clinics.mutations.create,
         {
           nombre: payload.nombre,
+          nombreComercial: payload.nombreComercial,
           telefono: payload.telefono,
           email: payload.email,
+          web: payload.web,
           direccion: payload.direccion,
           postal: payload.postal,
           nif: payload.nif,
@@ -117,8 +119,13 @@ export class ClinicaGestionService {
         {
           clinicId: convexId,
           nombre: payload.nombre ?? undefined,
+          nombreComercial:
+            payload.nombreComercial === undefined
+              ? undefined
+              : payload.nombreComercial,
           telefono: payload.telefono ?? undefined,
           email: payload.email ?? undefined,
+          web: payload.web === undefined ? undefined : payload.web,
           direccion: payload.direccion ?? undefined,
           postal: payload.postal ?? undefined,
           nif: payload.nif ?? undefined,

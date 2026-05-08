@@ -13,6 +13,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import type { RolUsuario } from '../../../../types/global';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
 
@@ -119,11 +120,18 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         routerLink="/inicio"
         aria-label="Ir al inicio"
       >
-        <span class="ui2-sidebar__logo">
-          <img src="assets/logo-k.svg" alt="" />
+        <span
+          class="ui2-sidebar__logo"
+          [class.ui2-sidebar__logo--clinica]="esLogoClinica()"
+        >
+          <img
+            [src]="themeService.logoIconUrl()"
+            alt=""
+            (error)="onLogoError()"
+          />
         </span>
         <span class="ui2-sidebar__brand-text">
-          <span class="ui2-sidebar__brand-name">KENGO</span>
+          <span class="ui2-sidebar__brand-name">{{ brandName() }}</span>
           <span class="ui2-sidebar__brand-tag">{{ brandTag() }}</span>
         </span>
       </a>
@@ -365,6 +373,15 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         width: 22px;
         height: 22px;
         object-fit: contain;
+      }
+      .ui2-sidebar__logo--clinica {
+        overflow: hidden;
+      }
+      .ui2-sidebar__logo--clinica img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
       }
       .ui2-sidebar__brand-text {
         display: flex;
@@ -762,9 +779,11 @@ export class Ui2PatientSidebarComponent {
   readonly clinicaNombre = input<string | null>(null);
   readonly clinicaImagenUrl = input<string | null>(null);
   readonly groups = input<SidebarNavGroup[]>(DEFAULT_GROUPS);
+  readonly brandName = input<string>('KENGO');
   readonly brandTag = input<string>('RECUPERACIÓN');
 
   public readonly sessionService = inject(SessionService);
+  public readonly themeService = inject(ThemeService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -817,6 +836,14 @@ export class Ui2PatientSidebarComponent {
   readonly isPerfilActive = computed(() =>
     (this.currentUrl() ?? '').startsWith('/perfil'),
   );
+
+  readonly esLogoClinica = computed(() =>
+    !this.themeService.logoIconUrl().startsWith('assets/'),
+  );
+
+  onLogoError(): void {
+    this.themeService.resetLogo();
+  }
 
   constructor() {
     if (typeof window === 'undefined') return;

@@ -10,8 +10,10 @@ import { TipoCodigoAcceso } from '../domain/access-codes';
  */
 export interface CreateClinicaPayload {
   nombre: string;
+  nombreComercial?: string;
   telefono?: string;
   email?: string;
+  web?: string;
   direccion?: string;
   postal?: string;
   nif?: string;
@@ -23,8 +25,10 @@ export interface CreateClinicaPayload {
  */
 export interface UpdateClinicaPayload {
   nombre?: string;
+  nombreComercial?: string | null;
   telefono?: string | null;
   email?: string | null;
+  web?: string | null;
   direccion?: string | null;
   postal?: string | null;
   nif?: string | null;
