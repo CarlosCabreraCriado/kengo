@@ -8,7 +8,7 @@ import { CumplimientoService } from '../../../pacientes/data-access/cumplimiento
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
-import { DialogService, DialogoPdfComponent } from '../../../../../app/shared';
+import { DialogService, DialogoPdfComponent, ToastService } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
 import { getMadridDate } from '../../../../shared/utils/madrid-date.util';
 import {
@@ -57,6 +57,7 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
   private cumplimientoService = inject(CumplimientoService);
   public sessionService = inject(SessionService);
   private dialogService = inject(DialogService);
+  private toastService = inject(ToastService);
   private pageLoader = inject(PageLoaderService);
   private readonly PAGE_LOADER_KEY = 'plan-detail';
 
@@ -118,6 +119,10 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
   // ===== Adherencia / Dolor =====
   adherencia = signal<number | null>(null);
   dolorPromedio = signal<number | null>(null);
+
+  tieneActividad = computed(
+    () => this.adherencia() !== null || this.dolorPromedio() !== null,
+  );
 
   adherenciaLabel = computed(() => {
     const v = this.adherencia();
@@ -226,6 +231,35 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     if (p) {
       this.router.navigate(['/planes', p.id, 'editar']);
     }
+  }
+
+  async eliminarPlan(): Promise<void> {
+    const p = this.plan();
+    if (!p) return;
+
+    const conActividad = this.tieneActividad();
+    const confirmed = await this.dialogService.confirm({
+      title: 'Eliminar plan',
+      message: conActividad
+        ? `El plan "${p.titulo}" tiene registros del paciente, así que se conservará en el historial como cancelado y dejará de estar accesible.`
+        : `El plan "${p.titulo}" se eliminará permanentemente. Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar plan',
+      cancelText: 'Cancelar',
+      confirmVariant: 'danger',
+    });
+    if (!confirmed) return;
+
+    const result = await this.planesService.removePlan(p.id);
+    if (!result) {
+      this.toastService.error('Error al eliminar el plan');
+      return;
+    }
+    this.toastService.success(
+      result.softDeleted
+        ? 'Plan cancelado y conservado en el historial'
+        : 'Plan eliminado',
+    );
+    this.router.navigate(this.backRoute() as unknown[]);
   }
 
   formatDate(dateStr: string | null | undefined): string {

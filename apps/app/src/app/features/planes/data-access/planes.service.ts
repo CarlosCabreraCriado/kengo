@@ -164,19 +164,14 @@ export class PlanesService {
     }
   }
 
-  async deletePlan(id: string): Promise<boolean> {
-    return this.updateEstado(id, 'cancelado');
-  }
-
-  async deletePlanPermanente(id: string): Promise<boolean> {
+  async removePlan(id: string): Promise<{ softDeleted: boolean } | null> {
     try {
-      await this.convex.mutation(api.plans.mutations.remove, {
+      return await this.convex.mutation(api.plans.mutations.remove, {
         planId: id as any,
       });
-      return true;
     } catch (error) {
       console.error('Error al eliminar plan:', error);
-      return false;
+      return null;
     }
   }
 
