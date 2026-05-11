@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 import { DiaSemana } from '../../../../../types/global';
 import {
   daysBetweenYMD,
@@ -36,7 +36,13 @@ const MONTH_NAMES: readonly string[] = [
   template: `
     <div class="pmc">
       <div class="pmc__head">
+        <button type="button" class="pmc__nav" aria-label="Mes anterior" (click)="mesAnterior()">
+          <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+        </button>
         <span class="pmc__month">{{ monthLabel() }}</span>
+        <button type="button" class="pmc__nav" aria-label="Mes siguiente" (click)="mesSiguiente()">
+          <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+        </button>
       </div>
       <div class="pmc__dow" aria-hidden="true">
         @for (l of dowLabels; track l) {
@@ -72,14 +78,36 @@ const MONTH_NAMES: readonly string[] = [
     }
     .pmc__head {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
+      gap: 8px;
     }
     .pmc__month {
       font-family: KengoDisplay, kengoFont, sans-serif;
       font-size: 16px;
       letter-spacing: -0.2px;
       color: var(--ink-900);
+    }
+    .pmc__nav {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      border-radius: 8px;
+      color: var(--ink-500);
+      cursor: pointer;
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+    .pmc__nav:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--ink-900);
+    }
+    .pmc__nav .material-symbols-outlined {
+      font-size: 20px;
     }
     .pmc__dow {
       display: grid;
@@ -165,10 +193,27 @@ export class PlanMiniCalendarComponent {
 
   readonly dowLabels = DOW_LABELS;
 
-  /** YYYY-MM-DD que ancla el mes mostrado: inicio del plan, hoy o fin. */
-  private readonly anchorYmd = computed<string>(() => {
-    return this.fechaInicio() || getMadridDate() || this.fechaFin() || getMadridDate();
+  readonly mesActual = linkedSignal<Date>(() => {
+    const ymd = this.fechaInicio() || getMadridDate();
+    return ymdToDateForDisplay(ymd);
   });
+
+  private readonly anchorYmd = computed<string>(() => {
+    const d = this.mesActual();
+    return this.formatYmd(d.getUTCFullYear(), d.getUTCMonth(), 1);
+  });
+
+  mesAnterior(): void {
+    const f = new Date(this.mesActual());
+    f.setUTCMonth(f.getUTCMonth() - 1);
+    this.mesActual.set(f);
+  }
+
+  mesSiguiente(): void {
+    const f = new Date(this.mesActual());
+    f.setUTCMonth(f.getUTCMonth() + 1);
+    this.mesActual.set(f);
+  }
 
   readonly monthLabel = computed<string>(() => {
     const ymd = this.anchorYmd();
