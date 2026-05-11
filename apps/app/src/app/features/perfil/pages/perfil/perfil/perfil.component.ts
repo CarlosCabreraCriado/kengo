@@ -89,7 +89,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   // === OVERLAY PANELS ===
   public showPrivacyPolicy = signal(false);
-  public showTermsConditions = signal(false);
 
   // === EMAIL VERIFICATION ===
   public emailVerified = computed(() => this.sessionService.usuario()?.email_verified ?? false);
@@ -325,14 +324,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   cerrarPrivacyPolicy() {
     this.showPrivacyPolicy.set(false);
-  }
-
-  abrirTermsConditions() {
-    this.showTermsConditions.set(true);
-  }
-
-  cerrarTermsConditions() {
-    this.showTermsConditions.set(false);
   }
 
   // === MÉTODOS DE SECCIONES COLAPSABLES ===

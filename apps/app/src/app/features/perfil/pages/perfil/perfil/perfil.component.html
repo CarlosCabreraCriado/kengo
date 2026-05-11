@@ -399,24 +399,6 @@
                 </div>
                 <span class="material-symbols-outlined perfil-list-item__arrow" aria-hidden="true">chevron_right</span>
               </button>
-
-              <button
-                type="button"
-                class="perfil-list-item"
-                (click)="abrirTermsConditions()"
-              >
-                <ui2-icon-badge
-                  icon="gavel"
-                  color="var(--ink-700)"
-                  [size]="36"
-                  [radius]="10"
-                ></ui2-icon-badge>
-                <div class="perfil-list-item__text">
-                  <h4 class="perfil-list-item__title">Términos y condiciones</h4>
-                  <p class="perfil-list-item__sub">Condiciones de uso del servicio</p>
-                </div>
-                <span class="material-symbols-outlined perfil-list-item__arrow" aria-hidden="true">chevron_right</span>
-              </button>
             </div>
           }
         </ui2-card>
@@ -454,76 +436,601 @@
 
         <div class="perfil-overlay__content">
           <section class="perfil-legal">
-            <h3>¿Quién es el responsable del tratamiento de sus datos?</h3>
-            <p>
-              IDENTIDAD: Kengo<br />
-              CIF: G-********<br />
-              DIRECCIÓN POSTAL: 38002, Santa Cruz de Tenerife, España<br />
-              TELÉFONO: --- --- ---
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>¿Con qué finalidad tratamos sus datos personales?</h3>
-            <p>
-              Tratamos los datos que nos facilitan los usuarios que se registren en la
-              plataforma de Kengo para gestionar su cuenta, proporcionar los servicios
-              solicitados y mejorar la experiencia de usuario.
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>¿Por cuánto tiempo conservaremos sus datos?</h3>
-            <p>
-              Los datos personales proporcionados se conservarán mientras no se solicite
-              la supresión por parte del interesado, o por obligación legal.
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>¿Cuál es la legitimación para el tratamiento de sus datos?</h3>
-            <p>
-              La base legal para el tratamiento de sus datos es la relación contractual
-              y/o su consentimiento.
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>¿A qué destinatarios se comunicarán sus datos?</h3>
-            <p>
-              No se cederán datos a terceros sin su previo consentimiento, salvo
-              obligación legal o contractual.
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>¿Cuáles son sus derechos cuando nos facilita sus datos?</h3>
-            <p>
-              Cualquier persona tiene derecho a obtener confirmación sobre si estamos
-              tratando datos personales que les conciernan, o no. Las personas interesadas
-              tienen derecho a acceder a sus datos personales, así como a solicitar la
-              rectificación de los datos inexactos o, en su caso, solicitar su supresión
-              cuando, entre otros motivos, los datos ya no sean necesarios para los fines
-              que fueron recogidos.
-            </p>
-            <p>
-              En determinadas circunstancias, los interesados podrán solicitar la
-              limitación del tratamiento de sus datos, en cuyo caso únicamente los
-              conservaremos para el ejercicio o la defensa de reclamaciones.
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>¿Cómo hemos obtenido sus datos?</h3>
-            <p>Los datos los hemos obtenido del propio interesado.</p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>Tipología de datos:</h3>
+            <h3>1. Responsable del tratamiento</h3>
             <ul>
-              <li>Datos identificativos (nombre completo, DNI)</li>
-              <li>Datos de contacto (correo electrónico, dirección postal)</li>
+              <li><strong>Identidad:</strong> KENGO SC</li>
+              <li><strong>Dirección postal:</strong> Calle Quevedo 10 P02 A DCHA, 38005, Santa Cruz de Tenerife</li>
+              <li><strong>Teléfono:</strong> +34 634 90 97 56</li>
+              <li><strong>Correo electrónico:</strong> info@kengoapp.com</li>
             </ul>
+            <p>
+              KENGO SC (en adelante también “KENGO”), de conformidad con el
+              <strong>Reglamento (UE) 2016/679 (RGPD)</strong>, la
+              <strong>Ley Orgánica 3/2018 (LOPDGDD)</strong> y la Ley 34/2002 (LSSICE),
+              le informa de que tiene implementadas las medidas de seguridad necesarias,
+              de índole técnica y organizativas, para garantizar y proteger la
+              confidencialidad, integridad y disponibilidad de los datos introducidos.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>2. Desdoblamiento de roles (responsable y encargado)</h3>
+            <p>
+              Para una transparencia total, KENGO SC informa de que opera bajo dos
+              figuras legales distintas según el origen de los datos:
+            </p>
+            <ul>
+              <li>
+                <strong>A) KENGO como Responsable del Tratamiento:</strong> respecto a
+                los datos de los profesionales y clínicas (nuestros clientes). Tratamos
+                sus datos para gestionar la relación comercial, facturación y soporte.
+              </li>
+              <li>
+                <strong>B) KENGO como Encargado del Tratamiento:</strong> respecto a los
+                datos de los <strong>pacientes</strong> introducidos por las clínicas y
+                profesionales en la plataforma. La Clínica o Profesional es el
+                Responsable (quien decide sobre el tratamiento) y KENGO es el Encargado
+                (quien custodia los datos en la nube siguiendo sus instrucciones).
+                Garantizamos la total estanqueidad de los datos: cada clínica accede
+                exclusivamente a sus propios pacientes.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>3. Finalidad y legitimación del tratamiento</h3>
+            <p>Sus datos personales serán utilizados para:</p>
+            <ul>
+              <li>
+                Realizar las gestiones comerciales y administrativas necesarias con los
+                usuarios de la web.
+              </li>
+              <li>
+                Remitir las comunicaciones comerciales publicitarias por email, fax,
+                SMS, MMS, redes sociales o cualquier otro medio electrónico o físico,
+                en caso de que el Usuario haya consentido expresamente al envío de
+                comunicaciones comerciales por vía electrónica mediante la suscripción
+                de la NEWSLETTER.
+              </li>
+              <li>
+                Responder a las consultas y/o proporcionar informaciones requeridas
+                por el Usuario.
+              </li>
+              <li>
+                Realizar las prestaciones de servicios y/o productos contratados o
+                suscritos por el Usuario.
+              </li>
+              <li>
+                Utilizar sus datos para contactarle, tanto por vía electrónica como no
+                electrónica, para obtener su opinión sobre el servicio prestado.
+              </li>
+              <li>
+                Notificarle cambios, desarrollos importantes de la política de
+                privacidad, aviso legal o política de cookies.
+              </li>
+              <li>Se realizarán análisis de perfiles y de usabilidad.</li>
+              <li>
+                Los datos de clientes, pacientes y/o proveedores serán tratados, dentro
+                de la relación contractual que les vincula con el responsable, en
+                cumplimiento de las obligaciones administrativas, fiscales, contables
+                y laborables que sean necesarias en virtud de la legislación vigente.
+              </li>
+            </ul>
+            <p>
+              Cuando las imágenes y vídeos formen parte estructural del servicio
+              contratado, su tratamiento será necesario para la correcta prestación del
+              mismo. Los usos promocionales o publicitarios estarán, en su caso,
+              sujetos a un consentimiento específico y diferenciado.
+            </p>
+            <p>
+              Los datos personales, incluyendo imágenes y vídeos de personas físicas
+              captados con fines ilustrativos y demostrativos para ejercicios de
+              rehabilitación, se tratarán exclusivamente para la correcta prestación
+              del servicio contratado, siempre que medie consentimiento expreso e
+              informado. De acuerdo con la LSSICE, <strong>KENGO SC</strong> garantiza
+              una política de “cero SPAM”, enviando comunicaciones comerciales
+              únicamente si han sido solicitadas o autorizadas previamente.
+            </p>
+            <p>
+              El usuario tiene derecho a revocar su consentimiento en cualquier momento
+              mediante el envío de un correo electrónico a
+              <strong>appbykengo@gmail.com</strong> con el asunto “Baja”.
+            </p>
+            <p>
+              Asimismo, en cada comunicación recibida, se facilitará un medio sencillo
+              y gratuito para cancelar dicha suscripción. Se informa que la retirada
+              del consentimiento no afectará a la licitud del tratamiento previo a su
+              comunicación, y que no se utilizarán los datos para finalidades distintas
+              a las descritas salvo por obligación legal o requerimiento judicial.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>4. Legitimación del tratamiento</h3>
+            <p>La base legal que nos autoriza a tratar sus datos se fundamenta en:</p>
+            <ul>
+              <li>
+                <strong>El Consentimiento del Interesado:</strong> para las consultas
+                web, la suscripción a la newsletter y el tratamiento de imágenes o
+                vídeos de rehabilitación. Este consentimiento se solicita de forma
+                expresa mediante el marcado de las casillas correspondientes al
+                recoger los datos. La falta de aceptación de esta política o la no
+                facilitación de los datos obligatorios supondrá la imposibilidad de
+                registrarse o recibir los servicios del Prestador.
+              </li>
+              <li>
+                <strong>Ejecución de un Contrato:</strong> en el caso de las clínicas
+                y profesionales que contratan la plataforma, la legitimación principal
+                es la relación contractual y/o mercantil establecida. Esto nos permite
+                gestionar el servicio y cumplir con las obligaciones administrativas,
+                fiscales y contables necesarias en virtud de la legislación vigente.
+              </li>
+              <li>
+                <strong>Interés Legítimo:</strong> para la realización de análisis de
+                perfiles y usabilidad con el fin de mejorar la herramienta técnica y
+                garantizar la seguridad del sistema.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>5. Destinatarios</h3>
+            <p>
+              <strong>KENGO SC</strong> no llevará a cabo ninguna cesión, comunicación
+              o venta de sus datos personales a terceros, salvo en los siguientes
+              supuestos:
+            </p>
+            <ul>
+              <li>
+                <strong>Obligación Legal:</strong> cuando exista una necesidad
+                razonable para cumplir con un procedimiento judicial, requerimiento de
+                las Fuerzas y Cuerpos de Seguridad, u otra obligación legal vigente.
+              </li>
+              <li>
+                <strong>Consentimiento del Usuario:</strong> cuando el usuario haya
+                otorgado previamente su autorización expresa para una comunicación
+                específica.
+              </li>
+              <li>
+                <strong>Transferencias Internacionales:</strong> no se realizarán
+                transferencias de sus datos fuera del Espacio Económico Europeo sin su
+                consentimiento previo. No obstante, KENGO SC se reserva el derecho de
+                bloquear o cancelar cuentas en caso de indicios de comisión de
+                delitos, limitando la información facilitada a las autoridades a
+                aquella de la que disponga el prestador en dicho momento.
+              </li>
+              <li>
+                <strong>Servidores:</strong> la información que usted nos proporcione a
+                través de este sitio web será alojada en los servidores de
+                <strong>Railway Corp</strong>, contratados a la empresa
+                <strong>Nodus Development</strong> (en adelante, <strong>Nodus</strong>)
+                con NIF 79064519H y domicilio fiscal sito en Calle Arroyo Fontarrón 47,
+                Madrid, España. El tratamiento de los datos de dicha entidad se
+                encuentra regulado mediante un contrato de encargado del tratamiento
+                entre el prestador y dicha empresa. En ningún caso este encargado del
+                tratamiento subcontratará servicios que comporten algún tratamiento de
+                datos por terceros sin el previo consentimiento de los usuarios.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>6. Comunicación y conservación</h3>
+            <p>
+              Cualquier comunicación que el Usuario remita a <strong>KENGO SC</strong>
+              se integrará en nuestros sistemas de información con la máxima
+              confidencialidad. Al aceptar estas condiciones, el Usuario consiente las
+              siguientes acciones, pudiendo oponerse a ellas en cualquier momento:
+            </p>
+            <ul>
+              <li>
+                <strong>Comunicaciones Informativas y Promocionales:</strong> el envío
+                de información técnica, novedades del software, noticias, ofertas y
+                promociones sobre productos o servicios de <strong>KENGO SC</strong>
+                relacionados con la actividad de fisioterapia y gestión de clínicas
+                que motivó su interés inicial. Estas comunicaciones podrán realizarse
+                por cualquier medio habilitado (email, SMS o notificaciones push).
+              </li>
+              <li>
+                <strong>Gestión de Newsletter:</strong> en caso de suscripción
+                expresa, el envío de boletines electrónicos con contenido
+                especializado, actualizaciones y promociones exclusivas de la
+                plataforma.
+              </li>
+              <li>
+                <strong>Conservación Legal:</strong> la conservación de sus datos
+                personales y registros de actividad durante los plazos previstos en
+                las disposiciones legales aplicables (obligaciones fiscales,
+                mercantiles y de responsabilidad civil), garantizando su bloqueo
+                cuando ya no sean necesarios para la finalidad que motivó su recogida.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>7. Derechos de las personas interesadas</h3>
+            <p>
+              Como usuario e interesado, usted tiene control sobre sus datos y puede
+              solicitar el ejercicio de sus derechos ante <strong>KENGO SC</strong>.
+              Para ello, debe presentar un escrito a la dirección postal del
+              encabezamiento o enviar un correo electrónico a
+              <strong>appbykengo@gmail.com</strong>, indicando en el asunto:
+              “PROTECCIÓN DE DATOS, EJERCICIO DERECHOS”.
+            </p>
+            <p>Sus <strong>derechos</strong> son:</p>
+            <ul>
+              <li>
+                <strong>Acceso:</strong> conocer qué datos personales suyos estamos
+                tratando y obtener información sobre dicho tratamiento.
+              </li>
+              <li>
+                <strong>Rectificación:</strong> corregir errores y modificar aquellos
+                datos que resulten ser inexactos o estén incompletos.
+              </li>
+              <li>
+                <strong>Supresión (“Derecho al Olvido”):</strong> solicitar la
+                eliminación de sus datos cuando, entre otros motivos, ya no sean
+                necesarios para los fines que fueron recogidos.
+              </li>
+              <li>
+                <strong>Oposición:</strong> solicitar que no se lleve a cabo el
+                tratamiento de sus datos o se cese en el mismo en casos específicos.
+              </li>
+              <li>
+                <strong>Limitación del tratamiento:</strong> solicitar que marquemos
+                sus datos para limitar su uso en el futuro mientras se resuelven otras
+                solicitudes (como la rectificación).
+              </li>
+              <li>
+                <strong>Portabilidad:</strong> recibir sus datos en un formato
+                estructurado y de uso común para poder transmitirlos a otro
+                responsable sin impedimentos.
+              </li>
+              <li>
+                <strong>No ser objeto de decisiones automatizadas:</strong> derecho a
+                no ser objeto de una decisión basada únicamente en el tratamiento
+                automatizado, incluida la elaboración de perfiles, que produzca
+                efectos jurídicos sobre usted.
+              </li>
+            </ul>
+            <p>
+              <strong>Nota especial sobre pacientes:</strong> en cumplimiento de
+              nuestro rol como <strong>Encargado del Tratamiento</strong>, si un
+              paciente solicita el ejercicio de estos derechos directamente a
+              <strong>KENGO SC</strong>, informaremos a la
+              <strong>Clínica o Profesional Responsable</strong> para que gestione la
+              solicitud conforme a la normativa de autonomía del paciente y su
+              historial clínico.
+            </p>
+            <p>
+              <strong>Retirada del consentimiento:</strong> tiene derecho a retirar
+              cualquier consentimiento prestado en cualquier momento. Esta acción no
+              afectará a la licitud del tratamiento realizado antes de dicha retirada.
+              La retirada del consentimiento no implicará necesariamente la supresión
+              inmediata de contenidos audiovisuales integrados de forma estructural en
+              el servicio, pudiendo adoptarse medidas de limitación, anonimización o
+              sustitución progresiva cuando resulte técnicamente necesario.
+            </p>
+            <p>
+              <strong>Reclamación:</strong> si considera que sus derechos han sido
+              vulnerados, tiene derecho a presentar una reclamación ante la Agencia
+              Española de Protección de Datos en www.aepd.es.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>8. Conservación de sus datos</h3>
+            <p>
+              <strong>KENGO SC</strong> conservará sus datos personales únicamente
+              durante el tiempo necesario para las finalidades descritas en esta
+              política. Los criterios para determinar los plazos son:
+            </p>
+            <ul>
+              <li>
+                <strong>Vigencia de la relación:</strong> los datos se tratarán
+                mientras se mantenga la relación comercial o de prestación de
+                servicios con la clínica, el profesional o el usuario.
+              </li>
+              <li>
+                <strong>Solicitud de supresión:</strong> se conservarán hasta que el
+                interesado ejercite su derecho de supresión, oposición o limitación al
+                tratamiento.
+              </li>
+              <li>
+                <strong>Bloqueo legal:</strong> una vez finalizada la relación o
+                solicitada la supresión, <strong>KENGO SC</strong> mantendrá los datos
+                debidamente <strong>bloqueados</strong> (sin darles uso activo)
+                durante un plazo máximo de <strong>2 años</strong>. Este periodo
+                responde a la necesidad de estar a disposición de Jueces, Tribunales o
+                autoridades competentes, así como para la defensa ante posibles
+                reclamaciones derivadas del uso de la plataforma.
+              </li>
+              <li>
+                <strong>Decisiones automatizadas:</strong> se garantiza al usuario que
+                sus datos no serán objeto de decisiones basadas exclusivamente en
+                tratamientos automatizados que produzcan efectos jurídicos o le
+                afecten significativamente.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>9. Medios oficiales de comunicación</h3>
+            <p>
+              Para garantizar la seguridad y confidencialidad de la información,
+              <strong>KENGO SC</strong> establece como únicos canales oficiales para
+              la comunicación con clientes, profesionales y otros afectados los
+              siguientes:
+            </p>
+            <ul>
+              <li><strong>Teléfono corporativo:</strong> +34 634 90 97 56</li>
+              <li>
+                <strong>Correo electrónico corporativo:</strong> appbykengo@gmail.com
+              </li>
+            </ul>
+            <p>
+              Si el usuario decide remitir información personal o datos sensibles a
+              través de medios no indicados anteriormente, <strong>KENGO SC</strong>
+              quedará exenta de cualquier responsabilidad en relación con las medidas
+              de seguridad, privacidad o posibles brechas de datos que presente el
+              medio en cuestión. El uso de canales no oficiales se realizará bajo el
+              riesgo exclusivo del usuario.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Información adicional</h3>
+            <p><strong>Información que recabamos:</strong></p>
+            <p>
+              <strong>KENGO SC</strong> recaba diferentes categorías de datos
+              personales para la correcta prestación de sus servicios:
+            </p>
+            <ul>
+              <li>
+                <strong>Información facilitada directamente:</strong> datos
+                suministrados a través de formularios de contacto, registro en la
+                plataforma o suscripción a servicios (nombre, apellidos, email,
+                teléfono y datos profesionales).
+              </li>
+              <li>
+                <strong>Datos de navegación:</strong> información recogida mediante
+                “cookies” para mejorar la experiencia de usuario y analizar el
+                rendimiento de la web, conforme a nuestra Política de Cookies.
+              </li>
+              <li>
+                <strong>Datos de contratación y pago:</strong> al adquirir productos
+                o servicios en www.kengoapp.com, se solicitarán datos de contacto y
+                detalles de tarjeta de crédito o débito. Estos últimos se gestionan a
+                través de pasarelas de pago seguras que garantizan el cifrado de la
+                información.
+              </li>
+              <li>
+                <strong>Material multimedia (imágenes y vídeos):</strong> las
+                fotografías y vídeos alojados en la plataforma son propiedad de
+                <strong>KENGO SC</strong>. En el caso de imágenes de
+                <strong>menores</strong>, se garantiza que han sido obtenidas tras
+                recabar el consentimiento previo y expreso de sus padres, tutores o
+                representantes legales. En cualquier momento, estos podrán revocar
+                dicho permiso mediante escrito formal; en tal caso, la imagen será
+                retirada o pixelada para impedir la identificación del menor.
+              </li>
+            </ul>
+            <p>
+              <strong>Obligaciones del Usuario:</strong> la negativa a facilitar los
+              datos marcados como obligatorios imposibilitará la atención de su
+              solicitud o el acceso al servicio. El usuario garantiza que los datos
+              aportados son <strong>exactos, actuales y veraces</strong>. Le rogamos
+              que comunique cualquier modificación de forma inmediata para mantener su
+              información actualizada y libre de errores.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Redes sociales</h3>
+            <p>
+              El tratamiento de los datos de las personas que se hagan seguidoras de
+              las páginas oficiales de <strong>KENGO SC</strong> (y/o realicen
+              cualquier vínculo o acción de conexión a través de las redes sociales)
+              se regirá por este apartado, así como por las condiciones de uso,
+              políticas de privacidad y normativas de acceso de la red social
+              correspondiente que el usuario haya aceptado previamente.
+            </p>
+            <p>
+              <strong>Finalidades del tratamiento:</strong>
+              <strong>KENGO SC</strong> tratará sus datos para administrar
+              correctamente su presencia en la red social, informarle de actividades,
+              productos o servicios del prestador, así como para cualquier otra
+              finalidad que las normativas de las redes sociales permitan.
+            </p>
+            <p>
+              <strong>Normas de publicación y contenido:</strong> queda terminantemente
+              prohibida la publicación de contenidos que:
+            </p>
+            <ul>
+              <li>
+                Sean presuntamente ilícitos por la normativa nacional o internacional,
+                o contravengan los principios de la buena fe.
+              </li>
+              <li>
+                Atenten contra los derechos fundamentales, falten a la cortesía en la
+                red, molesten o generen opiniones negativas hacia la empresa o
+                terceros.
+              </li>
+              <li>
+                Contravengan los principios de legalidad, honradez, protección de la
+                dignidad humana, protección de menores y de la vida privada, así como
+                derechos de propiedad intelectual e industrial.
+              </li>
+            </ul>
+            <p>
+              <strong>Potestad de moderación:</strong> <strong>KENGO SC</strong> se
+              reserva el derecho de retirar, sin previo aviso, de sus redes sociales
+              aquellos contenidos que se consideren inapropiados o que incumplan las
+              normas anteriores.
+            </p>
+            <p>
+              <strong>Responsabilidad y seguridad:</strong> las comunicaciones
+              remitidas a través de redes sociales podrán ser incorporadas a un
+              archivo propiedad de <strong>KENGO SC</strong> para el envío de
+              información de su interés. No obstante, si el usuario remite información
+              personal a través de estos canales,
+              <strong>KENGO SC quedará exenta de responsabilidad</strong> respecto a
+              las medidas de seguridad de dicha red social. El usuario debe consultar
+              las políticas de privacidad de la plataforma externa para conocer el
+              nivel de protección de su información.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Medidas de seguridad y confidencialidad</h3>
+            <p>
+              <strong>KENGO SC</strong> garantiza que todos los datos personales
+              facilitados serán tratados con la máxima confidencialidad y bajo
+              estricto secreto profesional. Para asegurar la protección de la
+              información, hemos implementado las siguientes garantías:
+            </p>
+            <ul>
+              <li>
+                <strong>Medidas Técnicas y Organizativas:</strong> el Prestador ha
+                adoptado las medidas de seguridad necesarias para evitar la
+                alteración, pérdida, robo, tratamiento o acceso no autorizado de los
+                datos, teniendo en cuenta el estado de la tecnología, los costes de
+                aplicación y la naturaleza sensible de los datos de salud almacenados.
+              </li>
+              <li>
+                <strong>Integridad del Sistema:</strong> se garantiza que nuestros
+                sistemas, programas y equipos cumplen con los requisitos de integridad
+                y seguridad establecidos en la normativa vigente
+                (<strong>RGPD</strong> y <strong>LOPDGDD</strong>).
+              </li>
+              <li>
+                <strong>Protocolos de Acceso:</strong> el acceso a la información está
+                restringido exclusivamente a personal autorizado, asegurando que cada
+                profesional o clínica acceda únicamente a sus propios datos mediante
+                sistemas de autenticación segura.
+              </li>
+              <li>
+                <strong>Resiliencia:</strong> trabajamos con infraestructuras que
+                garantizan la disponibilidad y resiliencia permanentes de los sistemas
+                de tratamiento, permitiendo la restauración de los datos en caso de
+                incidente técnico de forma ágil.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Idioma</h3>
+            <p>
+              El idioma oficial y vinculante de esta Política de Privacidad es el
+              <strong>español</strong>. En consecuencia, ante cualquier discrepancia,
+              contradicción o duda de interpretación entre la versión en español y
+              cualquier otra versión traducida a otro idioma que pudiera facilitarse,
+              prevalecerá siempre y a todos los efectos la versión redactada en lengua
+              española.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Suscripción a la newsletter</h3>
+            <p>
+              En el caso de que el Usuario se suscriba a nuestro servicio de
+              Newsletter, le informamos de que los datos facilitados serán tratados
+              exclusivamente para gestionar el envío de noticias, actualizaciones,
+              promociones y contenidos de interés relacionados con
+              <strong>KENGO SC</strong>.
+            </p>
+            <ul>
+              <li>
+                <strong>Conservación:</strong> los datos se conservarán mientras se
+                mantenga vigente su suscripción y el Usuario no manifieste su
+                oposición o solicite la supresión de sus datos.
+              </li>
+              <li>
+                <strong>Seguridad y Supresión:</strong> una vez que el Usuario ejerza
+                su derecho de baja o la comunicación deje de ser necesaria para la
+                finalidad prevista, los datos serán suprimidos mediante medidas de
+                seguridad adecuadas que garanticen la seudonimización o la
+                destrucción total de los mismos para impedir su recuperación.
+              </li>
+              <li>
+                <strong>Cesiones:</strong> los datos de suscripción no se comunicarán
+                a terceros, salvo existencia de una obligación legal o necesidad
+                técnica de proveedores encargados del envío (plataformas de email
+                marketing) sujetos a la normativa europea de protección de datos.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Publicación de su testimonio</h3>
+            <p>
+              En el caso de que el Usuario decida voluntariamente publicar su opinión,
+              experiencia o sugerencia en nuestra página web o plataformas oficiales,
+              le informamos de lo siguiente:
+            </p>
+            <ul>
+              <li>
+                <strong>Finalidad:</strong> los datos facilitados (opinión y nombre)
+                serán tratados para dar visibilidad a las experiencias de uso de
+                nuestros productos y servicios, con el objetivo de orientar y ayudar a
+                otros usuarios de la comunidad.
+              </li>
+              <li>
+                <strong>Conservación:</strong> el testimonio y los datos asociados se
+                conservarán mientras el servicio de <strong>KENGO SC</strong> siga
+                activo o hasta que el Usuario solicite la retirada de su opinión.
+              </li>
+              <li>
+                <strong>Privacidad:</strong> con el fin de proteger la privacidad del
+                Usuario, el único dato personal que se hará público junto al
+                testimonio será su nombre (o nombre de pila), salvo que el Usuario
+                autorice expresamente la publicación de otros datos profesionales
+                (como el nombre de su clínica).
+              </li>
+              <li>
+                <strong>Supresión:</strong> una vez que el testimonio ya no sea
+                necesario para el fin previsto o el Usuario revoque su consentimiento,
+                los datos serán eliminados de la web con medidas de seguridad que
+                garanticen su destrucción total o anonimización irreversible.
+              </li>
+            </ul>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Cambios en la presente política de privacidad</h3>
+            <p>
+              <strong>KENGO SC</strong> se reserva el derecho a modificar o actualizar
+              la presente Política de Privacidad en cualquier momento, con el fin de
+              adaptarla a novedades legislativas, jurisprudenciales o a cambios en la
+              propia estructura y servicios de la plataforma.
+            </p>
+            <p>
+              En caso de que se realicen modificaciones sustanciales que afecten a los
+              derechos de los usuarios o al tratamiento de sus datos,
+              <strong>KENGO SC</strong> se compromete a informar de dichos cambios a
+              través de avisos en la propia página web, en la aplicación o mediante
+              comunicación directa por correo electrónico, antes de que las nuevas
+              condiciones entren en vigor. El uso continuado de los servicios tras la
+              publicación de los cambios implicará la aceptación de la nueva Política
+              de Privacidad.
+            </p>
+          </section>
+
+          <section class="perfil-legal">
+            <h3>Legislación y jurisprudencia</h3>
+            <p>
+              A todos los efectos, las relaciones entre <strong>KENGO SC</strong> y
+              los Usuarios de sus servicios telemáticos, presentes en esta plataforma
+              y sitio web, están sometidas a la legislación y jurisdicción española.
+            </p>
+            <p>
+              Para la resolución de cualquier conflicto, controversia o reclamación
+              derivada o relacionada con el uso de la plataforma, así como para la
+              interpretación de la presente Política de Privacidad, las partes se
+              someten expresamente, con renuncia a cualquier otro fuero que pudiera
+              corresponderles, a la competencia de los
+              <strong>Juzgados y Tribunales de Santa Cruz de Tenerife (España)</strong>.
+            </p>
           </section>
         </div>
 
@@ -534,74 +1041,4 @@
     </div>
   }
 
-  <!-- Terms & Conditions overlay -->
-  @if (showTermsConditions()) {
-    <div
-      class="perfil-overlay"
-      role="dialog"
-      aria-modal="true"
-      (click)="cerrarTermsConditions()"
-    >
-      <div class="perfil-overlay__sheet" (click)="$event.stopPropagation()">
-        <header class="perfil-overlay__header">
-          <h2 class="perfil-overlay__title">Términos y condiciones</h2>
-          <button
-            type="button"
-            class="perfil-overlay__close"
-            (click)="cerrarTermsConditions()"
-            aria-label="Cerrar"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">close</span>
-          </button>
-        </header>
-
-        <div class="perfil-overlay__content">
-          <section class="perfil-legal">
-            <h3>Aviso Legal</h3>
-            <p>
-              En cumplimiento del artículo 10 de la Ley 34/2002, del 11 de julio, de
-              servicios de la Sociedad de la Información y Comercio Electrónico (LSSICE),
-              Kengo, facilita a continuación sus datos de contacto e información general.
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>Datos de la Organización</h3>
-            <p><strong>Denominación social:</strong> KENGO</p>
-            <p><strong>NIF:</strong> G-***********</p>
-            <p><strong>Correo electrónico:</strong> info&#64;kengo.com</p>
-            <p><strong>Teléfono:</strong> +34 *** *** ***</p>
-            <p>
-              <strong>Datos registrales:</strong> Inscrita en el Registro de Fundaciones
-              de Competencia Estatal con el número ***.
-            </p>
-          </section>
-
-          <section class="perfil-legal">
-            <h3>Términos Legales y Condiciones Generales de Uso</h3>
-            <p>
-              Este sitio web ha sido creado por KENGO con carácter informativo y para uso
-              personal de los usuarios. A través de las Condiciones Generales de uso, se
-              pretende regular el acceso y uso de este sitio web, así como la relación
-              entre el sitio web y sus usuarios.
-            </p>
-            <p>
-              Accediendo a este sitio web se aceptan los siguientes términos y condiciones:
-              el acceso a este sitio web es responsabilidad exclusiva de los usuarios. El
-              simple acceso a este sitio web no supone entablar ningún tipo de relación
-              comercial entre KENGO y el usuario.
-            </p>
-            <p>
-              El acceso y la navegación en este sitio web supone aceptar y conocer las
-              advertencias legales, condiciones y términos de uso contenidas en ella.
-            </p>
-          </section>
-        </div>
-
-        <footer class="perfil-overlay__footer">
-          <ui2-button variant="primary" (clicked)="cerrarTermsConditions()">Entendido</ui2-button>
-        </footer>
-      </div>
-    </div>
-  }
 </section>
