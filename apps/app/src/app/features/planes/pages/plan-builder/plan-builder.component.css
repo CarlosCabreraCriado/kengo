@@ -365,13 +365,8 @@
 /* ===== Dosage grid ===== */
 .pb-dosage-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-}
-@media (min-width: 480px) {
-  .pb-dosage-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 .pb-dosage-field {
