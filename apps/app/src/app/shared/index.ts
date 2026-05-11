@@ -14,6 +14,7 @@ export {
   otpCode,
   clinicaCode,
   postalCode,
+  postalCodeOptional,
 } from './validators/common-validators';
 
 // Pipes

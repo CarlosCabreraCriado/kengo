@@ -206,12 +206,16 @@
                     formControlName="first_name"
                     placeholder="Tu nombre"
                     iconLeft="badge"
+                    [required]="true"
+                    [error]="errorPara('first_name')"
                   ></ui2-input>
                   <ui2-input
                     label="Apellidos"
                     formControlName="last_name"
                     placeholder="Tus apellidos"
                     iconLeft="badge"
+                    [required]="true"
+                    [error]="errorPara('last_name')"
                   ></ui2-input>
                 </div>
 
@@ -231,6 +235,7 @@
                     iconLeft="mail"
                     iconRight="lock"
                     hint="No editable"
+                    [required]="true"
                   ></ui2-input>
                 </div>
 
@@ -247,6 +252,7 @@
                     formControlName="postal"
                     placeholder="00000"
                     iconLeft="pin_drop"
+                    [error]="errorPara('postal')"
                   ></ui2-input>
                   @if (tieneCapacidadFisio()) {
                     <ui2-input

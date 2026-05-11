@@ -79,3 +79,12 @@ export const postalCode: ValidatorFn[] = [
   Validators.maxLength(5),
   Validators.pattern(/^\d{5}$/),
 ];
+
+/**
+ * Codigo postal espanol opcional: solo valida formato si hay valor.
+ */
+export const postalCodeOptional: ValidatorFn[] = [
+  Validators.minLength(5),
+  Validators.maxLength(5),
+  Validators.pattern(/^\d{5}$/),
+];

@@ -29,7 +29,7 @@ import {
   useResponsive,
   emailRequired,
   passwordRequired,
-  postalCode,
+  postalCodeOptional,
 } from '../../../../../shared';
 
 // V2 components
@@ -135,9 +135,9 @@ export class PerfilComponent implements OnInit, OnDestroy {
     first_name: ['', [Validators.required]],
     last_name: ['', [Validators.required]],
     email: [{ value: '', disabled: true }, emailRequired],
-    telefono: [{ value: '', disabled: false }, [Validators.required]],
-    postal: ['', postalCode],
-    direccion: ['', [Validators.required]],
+    telefono: [{ value: '', disabled: false }, []],
+    postal: ['', postalCodeOptional],
+    direccion: ['', []],
     numero_colegiado: [''],
   });
 
@@ -175,6 +175,21 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   cargarFormulario(usuario: Usuario) {
     this.formularioUsuario.patchValue(usuario, { emitEvent: false });
+  }
+
+  errorPara(campo: string): string | null {
+    const control = this.formularioUsuario.get(campo);
+    if (!control || control.disabled) return null;
+    if (!control.invalid) return null;
+    if (!control.dirty && !control.touched) return null;
+
+    const errors = control.errors;
+    if (!errors) return null;
+
+    if (errors['required']) return 'Este campo es obligatorio';
+    if (errors['email']) return 'Email inválido';
+    if (campo === 'postal') return 'Debe tener 5 dígitos';
+    return 'Valor inválido';
   }
 
   async guardarCambios() {
