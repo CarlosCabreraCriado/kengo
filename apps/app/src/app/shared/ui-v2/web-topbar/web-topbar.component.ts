@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, inject, signal, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, computed, inject, signal, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
@@ -333,15 +333,37 @@ export class Ui2WebTopbarComponent {
     (this.currentUrl() ?? '').startsWith('/perfil'),
   );
 
-  readonly eyebrow = computed(() => {
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly eyebrow = signal<string>(this.formatEyebrow(new Date()));
+
+  private readonly _clockTimer = (() => {
+    const tick = () => this.eyebrow.set(this.formatEyebrow(new Date()));
     const now = new Date();
+    const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    const timeoutId = setTimeout(() => {
+      tick();
+      intervalId = setInterval(tick, 60_000);
+    }, msToNextMinute);
+
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(timeoutId);
+      if (intervalId !== undefined) clearInterval(intervalId);
+    });
+
+    return null;
+  })();
+
+  private formatEyebrow(now: Date): string {
     const weekday = WEEKDAYS[now.getDay()];
     const day = now.getDate();
     const month = MONTHS[now.getMonth()];
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
     return `${weekday} ${day} de ${month} · ${hh}:${mm}`;
-  });
+  }
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
