@@ -154,6 +154,38 @@
               <p class="pd-desc">{{ p.descripcion }}</p>
             </ui2-card>
           }
+
+          @if (sessionService.puedeEditarRecursos()) {
+            <ui2-card [padding]="14">
+              <ui2-section-label>Estado del plan</ui2-section-label>
+              <div class="pd-estado">
+                <div class="pd-estado__current">
+                  <ui2-pill [variant]="estadoActualVariant()" size="sm">
+                    {{ estadoActualLabel() }}
+                  </ui2-pill>
+                </div>
+                <p class="pd-estado__desc">{{ estadoActualDescripcion() }}</p>
+                @if (transicionesDisponibles().length > 0) {
+                  <div class="pd-estado__actions">
+                    @for (destino of transicionesDisponibles(); track destino) {
+                      <ui2-button
+                        variant="ghost"
+                        size="sm"
+                        [fullWidth]="true"
+                        [disabled]="transicionDeshabilitada(destino)"
+                        (clicked)="cambiarEstado(destino)"
+                      >Marcar como {{ estadoLabel(destino) }}</ui2-button>
+                    }
+                  </div>
+                  @if (transicionDeshabilitada('activo') && transicionesDisponibles().includes('activo')) {
+                    <p class="pd-estado__hint">
+                      Para activar el plan necesita fecha de inicio y una fecha de fin no anterior a hoy.
+                    </p>
+                  }
+                }
+              </div>
+            </ui2-card>
+          }
         </aside>
 
         <!-- Lista de ejercicios -->

@@ -7,10 +7,21 @@ import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { CumplimientoService } from '../../../pacientes/data-access/cumplimiento.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
-import { PlanCompleto, Usuario, DiaSemana } from '../../../../../types/global';
+import {
+  EstadoPlan,
+  PlanCompleto,
+  Usuario,
+  DiaSemana,
+} from '../../../../../types/global';
 import { DialogService, DialogoPdfComponent, ToastService } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
 import { getMadridDate } from '../../../../shared/utils/madrid-date.util';
+import {
+  ESTADO_DESCRIPCION,
+  estadoLabelOf,
+  estadoVariantOf,
+  transicionesPermitidas,
+} from '../../data-access/plan-estado.constants';
 import {
   Ui2AvatarComponent,
   Ui2BackButtonComponent,
@@ -150,6 +161,28 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
 
   diasSemanaArray: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
+  // ===== Estado del plan =====
+  estadoActual = computed<EstadoPlan>(() => (this.plan()?.estado as EstadoPlan) ?? 'borrador');
+
+  estadoActualLabel = computed(() => estadoLabelOf(this.estadoActual()));
+  estadoActualVariant = computed(() => estadoVariantOf(this.estadoActual()));
+  estadoActualDescripcion = computed(() => ESTADO_DESCRIPCION[this.estadoActual()]);
+
+  /** True si las fechas del plan permiten que esté en estado "activo". */
+  puedeActivar = computed(() => {
+    const p = this.plan();
+    if (!p?.fechaInicio || !p?.fechaFin) return false;
+    return p.fechaFin >= getMadridDate();
+  });
+
+  transicionesDisponibles = computed<EstadoPlan[]>(() =>
+    transicionesPermitidas(this.estadoActual()),
+  );
+
+  estadoLabel(estado: EstadoPlan): string {
+    return estadoLabelOf(estado);
+  }
+
   ngOnInit() {
     this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
 
@@ -230,6 +263,63 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     const p = this.plan();
     if (p) {
       this.router.navigate(['/planes', p.id, 'editar']);
+    }
+  }
+
+  /**
+   * Indica si la transición a `destino` está deshabilitada por reglas
+   * de negocio (p.ej. activar requiere fechas válidas).
+   */
+  transicionDeshabilitada(destino: EstadoPlan): boolean {
+    if (destino === 'activo') return !this.puedeActivar();
+    return false;
+  }
+
+  async cambiarEstado(destino: EstadoPlan): Promise<void> {
+    const p = this.plan();
+    if (!p) return;
+    if (this.transicionDeshabilitada(destino)) {
+      this.toastService.error(
+        'El plan necesita fecha de inicio y una fecha de fin no anterior a hoy para activarse.',
+      );
+      return;
+    }
+
+    const destinoLabel = estadoLabelOf(destino).toLowerCase();
+    const isDanger = destino === 'cancelado';
+    const confirmed = await this.dialogService.confirm({
+      title: `Cambiar estado a ${estadoLabelOf(destino)}`,
+      message: this.mensajeConfirmacionCambioEstado(destino, p.titulo),
+      confirmText: isDanger ? 'Cancelar plan' : `Marcar como ${destinoLabel}`,
+      cancelText: 'Cancelar',
+      confirmVariant: isDanger ? 'danger' : 'primary',
+    });
+    if (!confirmed) return;
+
+    const success = await this.planesService.updateEstado(p.id, destino);
+    if (!success) {
+      this.toastService.error('No se pudo actualizar el estado del plan');
+      return;
+    }
+    this.plan.update((current) =>
+      current ? { ...current, estado: destino } : null,
+    );
+    this.toastService.success(`Plan actualizado a ${destinoLabel}`);
+  }
+
+  private mensajeConfirmacionCambioEstado(
+    destino: EstadoPlan,
+    titulo: string,
+  ): string {
+    switch (destino) {
+      case 'activo':
+        return `El plan "${titulo}" pasará a estado activo y el paciente podrá verlo.`;
+      case 'borrador':
+        return `El plan "${titulo}" volverá a borrador y dejará de ser visible para el paciente.`;
+      case 'completado':
+        return `El plan "${titulo}" se marcará como completado y se conservará en el historial.`;
+      case 'cancelado':
+        return `El plan "${titulo}" se cancelará y dejará de estar accesible para el paciente.`;
     }
   }
 

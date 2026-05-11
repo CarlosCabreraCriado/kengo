@@ -14,20 +14,10 @@ import {
   Ui2PillVariant,
   Ui2SpinnerComponent,
 } from '../../../../../../shared/ui-v2';
-
-const ESTADO_VARIANT: Record<string, Ui2PillVariant> = {
-  borrador: 'neutral',
-  activo: 'success',
-  completado: 'soft',
-  cancelado: 'danger',
-};
-
-const ESTADO_LABEL: Record<string, string> = {
-  borrador: 'Borrador',
-  activo: 'Activo',
-  completado: 'Completado',
-  cancelado: 'Cancelado',
-};
+import {
+  estadoLabelOf,
+  estadoVariantOf,
+} from '../../../../../planes/data-access/plan-estado.constants';
 
 @Component({
   selector: 'app-pd-plans-list',
@@ -171,11 +161,11 @@ export class PdPlansListComponent {
   });
 
   estadoVariant(estado: string | undefined): Ui2PillVariant {
-    return ESTADO_VARIANT[estado ?? ''] ?? 'neutral';
+    return estadoVariantOf(estado);
   }
 
   estadoLabel(estado: string | undefined): string {
-    return ESTADO_LABEL[estado ?? ''] ?? 'Plan';
+    return estadoLabelOf(estado);
   }
 
   formatRange(plan: Plan): string {

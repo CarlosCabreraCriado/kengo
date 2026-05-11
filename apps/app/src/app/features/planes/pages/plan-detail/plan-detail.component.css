@@ -170,6 +170,37 @@
   margin: 6px 0 0;
 }
 
+/* ===== Estado del plan ===== */
+.pd-estado {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+.pd-estado__current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pd-estado__desc {
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.5;
+  margin: 0;
+}
+.pd-estado__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+.pd-estado__hint {
+  font-size: 11px;
+  color: var(--ink-400);
+  line-height: 1.4;
+  margin: 2px 0 0;
+}
+
 /* ===== Lista ejercicios ===== */
 .pd-list {
   display: flex;
