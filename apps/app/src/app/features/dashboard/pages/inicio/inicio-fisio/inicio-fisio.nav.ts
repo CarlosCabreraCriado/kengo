@@ -24,7 +24,7 @@ export const FISIO_SIDEBAR_GROUPS: SidebarNavGroup[] = [
   {
     label: 'Recursos',
     items: [
-      { id: 'galeria', label: 'Galería',  icon: 'fitness_center', route: '/ejercicios', matchPrefix: '/ejercicios' },
+      { id: 'galeria', label: 'Ejercicios',  icon: 'fitness_center', route: '/ejercicios', matchPrefix: '/ejercicios' },
       { id: 'rutinas', label: 'Rutinas',  icon: 'list_alt',       route: '/rutinas',    matchPrefix: '/rutinas' },
     ],
   },
