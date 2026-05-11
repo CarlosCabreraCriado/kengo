@@ -5,10 +5,7 @@
 
 import { UsuarioRecord } from './users.record';
 
-/**
- * Estado del plan (incluye 'cancelado' para compatibilidad con frontend)
- * Nota: 'cancelado' existe en frontend pero NO está definido en BD
- */
+/** Estado del plan. Debe mantenerse alineado con el enum del schema en `convex/schema.ts`. */
 export type EstadoPlan = 'borrador' | 'activo' | 'completado' | 'cancelado';
 
 export interface RegistroEjercicioRecord {
