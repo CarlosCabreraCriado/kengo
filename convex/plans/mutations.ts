@@ -6,6 +6,7 @@ import {
 } from "../_helpers/permissions";
 import { getPlanIfOwned } from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
+import { getCurrentMadridDate } from "../_helpers/datetime";
 
 const ejercicioPlanArgs = v.object({
   exerciseId: v.id("exercises"),
@@ -80,10 +81,16 @@ export const create = mutation({
     const paciente = await ctx.db.get(args.pacienteId);
     if (!paciente) throw new Error("Paciente no encontrado");
 
+    const today = getCurrentMadridDate();
+    const estadoInicial: "activo" | "borrador" =
+      args.fechaInicio && args.fechaFin && args.fechaFin >= today
+        ? "activo"
+        : "borrador";
+
     const planId = await ctx.db.insert("plans", {
       titulo: args.titulo,
       descripcion: args.descripcion,
-      estado: "borrador",
+      estado: estadoInicial,
       fechaInicio: args.fechaInicio,
       fechaFin: args.fechaFin,
       pacienteId: args.pacienteId,
