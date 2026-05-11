@@ -92,7 +92,11 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
   private readonly PAGE_LOADER_KEY = 'actividad-hoy';
 
   /** Datos críticos: actividad de hoy resuelta. */
-  readonly pageReady = computed(() => this.actividadHoyService.cargada());
+  readonly pageReady = computed(
+    () =>
+      this.sessionService.usuario() != null &&
+      this.actividadHoyService.cargada(),
+  );
 
   isMovil = useResponsive().esMobile;
 
@@ -236,10 +240,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     try {
-      await Promise.all([
-        this.actividadHoyService.cargarDatos(),
-        this.cargarPlanesFuturos(userId),
-      ]);
+      await this.cargarPlanesFuturos(userId);
     } catch (err) {
       console.error('Error al cargar datos:', err);
       this.error.set('Error al cargar la actividad. Intenta de nuevo.');
@@ -268,7 +269,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
     return this.planesService.getAssetUrl(id, width, height);
   }
 
-  iniciarSesionHoy(): void {
+  async iniciarSesionHoy(): Promise<void> {
     const actividades = this.actividadHoy();
 
     const ejercicios: EjercicioSesionMultiPlan[] = [];
@@ -308,11 +309,11 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
       skipResumen: true,
     };
 
-    this.registroService.iniciarSesionMultiPlan(config);
+    await this.registroService.iniciarSesionMultiPlan(config);
     this.router.navigate(['/mi-plan']);
   }
 
-  iniciarSesionDia(dia: DiaProximoConEjercicios): void {
+  async iniciarSesionDia(dia: DiaProximoConEjercicios): Promise<void> {
     const ejercicios: EjercicioSesionMultiPlan[] = [];
     const planes = this.planesActivosYFuturos();
     // `dia.fecha` se construyó a 12:00 UTC con `ymdToDateForDisplay`, así que
@@ -353,7 +354,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
       skipResumen: true,
     };
 
-    this.registroService.iniciarSesionMultiPlan(config);
+    await this.registroService.iniciarSesionMultiPlan(config);
     this.router.navigate(['/mi-plan']);
   }
 

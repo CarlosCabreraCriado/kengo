@@ -17,6 +17,10 @@ import {
   getMadridDate,
   getMadridDiaSemana,
 } from '../../../shared/utils/madrid-date.util';
+import {
+  ConvexExecutionRecord,
+  mapConvexToRegistro,
+} from '../../../shared/utils/convex-mappers';
 
 import {
   PlanCompleto,
@@ -59,21 +63,6 @@ interface SesionRehidratable {
   fechaFin?: string;
   estado: 'en_curso' | 'completada' | 'completada_parcial';
   executions: ExecutionRehidratable[];
-}
-
-/** Forma plana de un execution devuelta por
- *  `executions.queries.listByPacienteAndDate`. */
-interface ConvexExecutionRecord {
-  _id: Id<'exerciseExecutions'>;
-  planExerciseId: string;
-  pacienteId: string;
-  fechaHora: string;
-  completado: boolean;
-  repeticionesRealizadas?: number;
-  duracionRealSeg?: number;
-  dolorEscala?: number;
-  esfuerzoEscala?: number;
-  notaPaciente?: string;
 }
 
 interface PendingExecution {
@@ -307,9 +296,13 @@ export class SesionStateService {
   }
 
   /**
-   * Iniciar una sesion con ejercicios de multiples planes
+   * Iniciar una sesion con ejercicios de multiples planes. Si existe una
+   * sesión Convex `en_curso` para hoy, rehidrata `registrosSesion`,
+   * `sesionActualId` y avanza al primer ejercicio no completado (matching
+   * por `EjercicioSesionMultiPlan.planItemId === execution.planExercise._id`).
+   * Aplica el hint de UI guardado si coincide con la sesión rehidratada.
    */
-  iniciarSesionMultiPlan(config: ConfigSesionMultiPlan): boolean {
+  async iniciarSesionMultiPlan(config: ConfigSesionMultiPlan): Promise<boolean> {
     try {
       this.resetearEstado();
 
@@ -317,11 +310,56 @@ export class SesionStateService {
       this.configSesion.set(config);
       this.ejerciciosMultiPlan.set(config.ejercicios);
 
-      this.ejercicioActualIndex.set(0);
-      this.serieActual.set(1);
-      this.estadoPantalla.set('resumen');
-      this.registrosSesion.set([]);
-      this.tiempoInicioSesion.set(null);
+      const session = await this.consultarSesionHoy();
+
+      if (!session || session.estado !== 'en_curso') {
+        // Sin sesión `en_curso`: arrancar limpio. Si hay una sesión
+        // `completada`/`completada_parcial`, `comenzarSesion` la reabrirá
+        // (openOrResume) cuando el usuario pulse "comenzar".
+        this.ejercicioActualIndex.set(0);
+        this.serieActual.set(1);
+        this.estadoPantalla.set('resumen');
+        this.registrosSesion.set([]);
+        this.tiempoInicioSesion.set(null);
+        this.sesionActualId.set(null);
+        this.persistencia.limpiar();
+        return true;
+      }
+
+      // Sesión en curso: rehidratar
+      this.sesionActualId.set(session._id);
+      this.tiempoInicioSesion.set(
+        session.fechaInicio ? new Date(session.fechaInicio) : null,
+      );
+      this.registrosSesion.set(
+        this.executionsToRegistros(session.executions ?? []),
+      );
+
+      const completedPlanExerciseIds = new Set(
+        (session.executions ?? [])
+          .filter((e) => e.completado)
+          .map((e) => e.planExercise?._id)
+          .filter((id): id is Id<'planExercises'> => !!id),
+      );
+      const firstUncompletedIdx = config.ejercicios.findIndex(
+        (ej) =>
+          !completedPlanExerciseIds.has(ej.planItemId as Id<'planExercises'>),
+      );
+      const fallbackIdx =
+        firstUncompletedIdx === -1
+          ? Math.max(0, config.ejercicios.length - 1)
+          : firstUncompletedIdx;
+
+      const hint = this.persistencia.restaurarHint(session._id);
+      if (hint) {
+        this.ejercicioActualIndex.set(hint.ejercicioIndex);
+        this.serieActual.set(hint.serieActual);
+        this.estadoPantalla.set(hint.estadoPantalla);
+      } else {
+        this.ejercicioActualIndex.set(fallbackIdx);
+        this.serieActual.set(1);
+        this.estadoPantalla.set('resumen');
+      }
 
       return true;
     } catch (error) {
@@ -722,7 +760,7 @@ export class SesionStateService {
       );
 
       const list = (raw as ConvexExecutionRecord[] | undefined) ?? [];
-      return list.map((r) => this.mapConvexToRegistro(r));
+      return list.map((r) => mapConvexToRegistro(r));
     } catch (error) {
       console.error('Error al obtener registros de hoy:', error);
       return [];
@@ -763,22 +801,6 @@ export class SesionStateService {
       esfuerzoEscala: e.esfuerzoEscala,
       notaPaciente: e.notaPaciente,
     }));
-  }
-
-  private mapConvexToRegistro(r: ConvexExecutionRecord): RegistroEjercicio {
-    return {
-      id: r._id,
-      executionId: r._id,
-      planItemId: r.planExerciseId,
-      pacienteId: r.pacienteId,
-      fechaHora: r.fechaHora,
-      completado: r.completado,
-      repeticionesRealizadas: r.repeticionesRealizadas,
-      duracionRealSeg: r.duracionRealSeg,
-      dolorEscala: r.dolorEscala,
-      esfuerzoEscala: r.esfuerzoEscala,
-      notaPaciente: r.notaPaciente,
-    };
   }
 
   private resolvePlanExerciseId(planItem: unknown): string {

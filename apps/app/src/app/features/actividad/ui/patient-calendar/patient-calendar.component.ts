@@ -243,10 +243,7 @@ export class PatientCalendarComponent implements OnInit {
     this.error.set(null);
 
     try {
-      await Promise.all([
-        this.actividadHoyService.cargarDatos(),
-        this.cargarPlanes(userId),
-      ]);
+      await this.cargarPlanes(userId);
     } catch (err) {
       console.error('Error al cargar datos:', err);
       this.error.set('Error al cargar el calendario. Intenta de nuevo.');
@@ -289,7 +286,7 @@ export class PatientCalendarComponent implements OnInit {
     return this.planesService.getAssetUrl(id, width, height);
   }
 
-  iniciarSesionDia(dia: DiaCalendario): void {
+  async iniciarSesionDia(dia: DiaCalendario): Promise<void> {
     if (dia.ejercicios.length === 0) return;
 
     const ejercicios: EjercicioSesionMultiPlan[] = [];
@@ -323,7 +320,7 @@ export class PatientCalendarComponent implements OnInit {
       skipResumen: true,
     };
 
-    this.registroService.iniciarSesionMultiPlan(config);
+    await this.registroService.iniciarSesionMultiPlan(config);
     this.router.navigate(['/mi-plan']);
   }
 

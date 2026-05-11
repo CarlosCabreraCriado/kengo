@@ -1,8 +1,17 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
-import { PlanesService } from '../../planes/data-access/planes.service';
-import { SesionStateService } from '../../sesion/data-access/sesion-state.service';
-import { getMadridDiaSemana } from '../../../shared/utils/madrid-date.util';
+import { ConvexService } from '../../../core/convex/convex.service';
+import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
+import {
+  ConvexExecutionRecord,
+  mapConvexToPlanCompleto,
+  mapConvexToRegistro,
+} from '../../../shared/utils/convex-mappers';
+import {
+  getMadridDate,
+  getMadridDiaSemana,
+} from '../../../shared/utils/madrid-date.util';
 import {
   PlanCompleto,
   RegistroEjercicio,
@@ -20,33 +29,57 @@ export type EjercicioUnificadoHoy = EjercicioPlanConEstado & {
 @Injectable({ providedIn: 'root' })
 export class ActividadHoyService {
   private sessionService = inject(SessionService);
-  private planesService = inject(PlanesService);
-  private registroService = inject(SesionStateService);
+  private convex = inject(ConvexService);
 
-  // Estado interno
-  readonly cargando = signal<boolean>(false);
-  readonly planesActivos = signal<PlanCompleto[]>([]);
-  readonly registrosHoy = signal<RegistroEjercicio[]>([]);
-  private datosCargados = signal<boolean>(false);
+  // ===== Suscripciones reactivas a Convex =====
+  // Las queries se re-evalúan automáticamente cuando cambia `usuario()` o
+  // cuando llegan inserts/updates en `plans`/`exerciseExecutions`.
+  private readonly planesSub = this.convex.watchQuery(
+    api.plans.queries.getActiveForPatientToday,
+    () => {
+      const u = this.sessionService.usuario();
+      if (!u?.id) return 'skip' as const;
+      return { pacienteId: (u.convexId ?? u.id) as Id<'users'> };
+    },
+  );
+
+  private readonly registrosSub = this.convex.watchQuery(
+    api.executions.queries.listByPacienteAndDate,
+    () => {
+      const u = this.sessionService.usuario();
+      if (!u?.id) return 'skip' as const;
+      return {
+        pacienteId: (u.convexId ?? u.id) as Id<'users'>,
+        fecha: getMadridDate(),
+      };
+    },
+  );
+
+  // ===== Estado expuesto =====
+  readonly planesActivos = computed<PlanCompleto[]>(() => {
+    const raw = this.planesSub.value();
+    if (!raw) return [];
+    return (raw as Parameters<typeof mapConvexToPlanCompleto>[0][]).map((p) =>
+      mapConvexToPlanCompleto(p),
+    );
+  });
+
+  readonly registrosHoy = computed<RegistroEjercicio[]>(() => {
+    const raw = this.registrosSub.value();
+    if (!raw) return [];
+    return (raw as ConvexExecutionRecord[]).map(mapConvexToRegistro);
+  });
+
+  readonly cargando = computed(
+    () => this.planesSub.isLoading() || this.registrosSub.isLoading(),
+  );
   /**
-   * True tras la primera resolución (éxito o error) de los datos. A
-   * diferencia de `datosCargados` (que solo refleja éxito y bloquea
-   * recargas), esta signal libera el gate de `pageReady` aunque la query
-   * haya fallado, para que la UI no quede bloqueada en spinner.
+   * Una vez ambas suscripciones han resuelto al menos un valor (o entrado en
+   * `'skip'` por falta de auth), liberamos el gate de `pageReady` para que
+   * la UI no quede bloqueada en spinner. Si la query falla, Convex setea
+   * `error` pero también `isLoading=false`, así que esto se libera igualmente.
    */
-  readonly cargada = signal<boolean>(false);
-
-  constructor() {
-    // Effect que carga automáticamente cuando el usuario está disponible
-    effect(() => {
-      const usuario = this.sessionService.usuario();
-
-      // Cargar automáticamente cuando el usuario esté disponible
-      if (usuario?.id && !this.datosCargados() && !this.cargando()) {
-        this.ejecutarCarga(usuario.id);
-      }
-    });
-  }
+  readonly cargada = computed(() => !this.cargando());
 
   // Computed: día actual en zona Europe/Madrid (mismo huso que el backend).
   private readonly diaHoy = computed(() => getMadridDiaSemana());
@@ -212,69 +245,4 @@ export class ActividadHoyService {
     }
     return null;
   });
-
-  // === MÉTODOS ===
-
-  /**
-   * Solicita la carga de datos de actividad del día.
-   * Normalmente no es necesario llamar a este método manualmente,
-   * ya que el effect carga automáticamente cuando el usuario está disponible.
-   */
-  async cargarDatos(): Promise<void> {
-    if (this.datosCargados() || this.cargando()) return;
-
-    const userId = this.sessionService.usuario()?.id;
-    if (userId) {
-      await this.ejecutarCarga(userId);
-    }
-  }
-
-  /**
-   * Ejecuta la carga real de datos
-   */
-  private async ejecutarCarga(userId: string): Promise<void> {
-    if (this.datosCargados() || this.cargando()) return;
-
-    this.cargando.set(true);
-    try {
-      const [planes, registros] = await Promise.all([
-        this.planesService.getPlanesActivosPaciente(userId),
-        this.registroService.obtenerRegistrosHoy(userId),
-      ]);
-      this.planesActivos.set(planes);
-      this.registrosHoy.set(registros);
-      this.datosCargados.set(true);
-    } catch (err) {
-      console.error('Error al cargar actividad de hoy:', err);
-    } finally {
-      this.cargando.set(false);
-      this.cargada.set(true);
-    }
-  }
-
-  /**
-   * Fuerza la recarga de datos
-   */
-  async recargar(): Promise<void> {
-    const userId = this.sessionService.usuario()?.id;
-    if (!userId) return;
-
-    this.datosCargados.set(false);
-    await this.ejecutarCarga(userId);
-  }
-
-  /**
-   * Actualiza los registros de hoy (útil después de completar un ejercicio)
-   */
-  async actualizarRegistros(): Promise<void> {
-    const userId = this.sessionService.usuario()?.id;
-    if (!userId) return;
-
-    try {
-      const registros = await this.registroService.obtenerRegistrosHoy(userId);
-      this.registrosHoy.set(registros);
-    } catch (err) {
-      console.error('Error al actualizar registros:', err);
-    }
-  }
 }

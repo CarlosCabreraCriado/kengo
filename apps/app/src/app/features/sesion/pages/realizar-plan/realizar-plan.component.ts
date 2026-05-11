@@ -279,8 +279,13 @@ export class RealizarPlanComponent implements OnInit, OnDestroy {
       this.registroService.modoMultiPlan() &&
       this.registroService.configSesion()
     ) {
-      // Si viene de actividad-personal con skipResumen, comenzar directamente
-      if (this.registroService.configSesion()?.skipResumen) {
+      // Saltar el resumen solo cuando partimos de cero. Si el estado fue
+      // rehidratado a `ejercicio`/`descanso` por un hint guardado, comenzarSesion
+      // resetearía la serie y perdería la posición.
+      if (
+        this.registroService.configSesion()?.skipResumen &&
+        this.registroService.estadoPantalla() === 'resumen'
+      ) {
         await this.onComenzar();
       }
       return;
@@ -324,11 +329,16 @@ export class RealizarPlanComponent implements OnInit, OnDestroy {
 
   async onEnviarFeedbackFinal(data: FeedbackFinalData): Promise<void> {
     await this.registroService.aplicarFeedbackFinal(data);
-    this.onVolverInicio();
+    await this.onVolverInicio();
   }
 
-  onVolverInicio(): void {
-    this.registroService.resetearEstado();
+  async onVolverInicio(): Promise<void> {
+    // `finalizarSesion` drena `pendingExecutions` (executions que fallaron por
+    // red), limpia el hint de localStorage y resetea el estado. Es superset
+    // del antiguo `resetearEstado()`. El `await` garantiza que cuando
+    // `/inicio/paciente` reciba el push reactivo de Convex, los pendientes
+    // ya estén persistidos.
+    await this.registroService.finalizarSesion();
     this.router.navigate(['/inicio']);
   }
 
@@ -336,9 +346,9 @@ export class RealizarPlanComponent implements OnInit, OnDestroy {
     this.mostrarConfirmacionSalida.set(true);
   }
 
-  confirmarSalida(): void {
+  async confirmarSalida(): Promise<void> {
     this.mostrarConfirmacionSalida.set(false);
-    this.onVolverInicio();
+    await this.onVolverInicio();
   }
 
   cancelarSalida(): void {

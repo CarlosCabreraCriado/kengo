@@ -8,17 +8,18 @@ import {
 import { assetUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
-import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
+import {
+  mapConvexBase,
+  mapConvexToPlanCompleto,
+  mapConvexToUsuarioBasico,
+} from '../../../shared/utils/convex-mappers';
 import { createFilteredList } from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import {
   Plan,
   PlanCompleto,
-  EjercicioPlan,
   EstadoPlan,
-  Usuario,
-  Ejercicio,
 } from '../../../../types/global';
 
 type FiltroEstado = 'todos' | EstadoPlan;
@@ -120,7 +121,7 @@ export class PlanesService {
         planId: id as any,
       });
       if (!raw) return null;
-      return this.mapConvexToPlanCompleto(raw);
+      return mapConvexToPlanCompleto(raw);
     } catch (error) {
       console.error('Error al obtener plan:', error);
       return null;
@@ -184,7 +185,7 @@ export class PlanesService {
         api.plans.queries.getActiveForPatientToday,
         { pacienteId },
       );
-      return ((raw as any[]) || []).map((p) => this.mapConvexToPlanCompleto(p));
+      return ((raw as any[]) || []).map((p) => mapConvexToPlanCompleto(p));
     } catch (error) {
       console.error('Error al obtener planes activos:', error);
       return [];
@@ -198,7 +199,7 @@ export class PlanesService {
       const raw = await this.convex.query(api.plans.queries.getActiveAndFuture, {
         pacienteId,
       });
-      return ((raw as any[]) || []).map((p) => this.mapConvexToPlanCompleto(p));
+      return ((raw as any[]) || []).map((p) => mapConvexToPlanCompleto(p));
     } catch (error) {
       console.error('Error al obtener planes activos y futuros:', error);
       return [];
@@ -224,78 +225,13 @@ export class PlanesService {
   private mapConvexToPlan(r: any): Plan {
     return {
       ...mapConvexBase(r),
-      paciente: this.mapConvexToUsuarioBasico(
-        r.pacienteId,
-        r.pacienteNombre,
-      ),
-      fisio: this.mapConvexToUsuarioBasico(r.fisioId, r.fisioNombre),
+      paciente: mapConvexToUsuarioBasico(r.pacienteId, r.pacienteNombre),
+      fisio: mapConvexToUsuarioBasico(r.fisioId, r.fisioNombre),
       titulo: r.titulo,
       descripcion: r.descripcion,
       estado: r.estado,
       fechaInicio: r.fechaInicio,
       fechaFin: r.fechaFin,
-    };
-  }
-
-  private mapConvexToPlanCompleto(r: any): PlanCompleto {
-    return {
-      ...mapConvexBase(r),
-      paciente: this.mapConvexToUsuarioBasico(
-        r.pacienteId,
-        r.pacienteNombre,
-      ),
-      fisio: this.mapConvexToUsuarioBasico(r.fisioId, r.fisioNombre),
-      titulo: r.titulo,
-      descripcion: r.descripcion,
-      estado: r.estado,
-      fechaInicio: r.fechaInicio,
-      fechaFin: r.fechaFin,
-      items: ((r.ejercicios || []) as any[])
-        .map((e) => this.mapConvexToEjercicioPlan(e))
-        .sort((a, b) => a.sort - b.sort),
-    };
-  }
-
-  private mapConvexToUsuarioBasico(
-    id: string,
-    nombre: string | undefined,
-  ): Usuario {
-    const parts = (nombre || '').split(' ');
-    return {
-      id,
-      first_name: parts[0] || '',
-      last_name: parts.slice(1).join(' ') || '',
-      email: '',
-      email_verified: false,
-      avatar: '',
-      detalle: null,
-      clinicas: [],
-      esFisio: false,
-      esPaciente: true,
-    };
-  }
-
-  private mapConvexToEjercicioPlan(e: any): EjercicioPlan {
-    return {
-      id: mapId(e),
-      sort: e.sort ?? 0,
-      planId: e.planId,
-      ejercicio: {
-        id: mapId(e.ejercicio) || (e.exerciseId ?? ''),
-        nombre: e.ejercicio?.nombreEjercicio ?? '',
-        descripcion: e.ejercicio?.descripcion ?? '',
-        video: e.ejercicio?.video ?? '',
-        portada: e.ejercicio?.portada ?? '',
-        categoria: [],
-      } as Ejercicio,
-      series: e.series,
-      repeticiones: e.repeticiones,
-      duracionSeg: e.duracionSeg,
-      descansoSeg: e.descansoSeg,
-      vecesDia: e.vecesDia,
-      diasSemana: e.diasSemana,
-      instruccionesPaciente: e.instruccionesPaciente,
-      notasFisio: e.notasFisio,
     };
   }
 

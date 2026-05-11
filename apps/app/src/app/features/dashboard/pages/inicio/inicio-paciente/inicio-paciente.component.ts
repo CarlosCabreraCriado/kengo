@@ -103,7 +103,11 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
   private nextSessionService = inject(NextSessionService);
 
   /** Datos críticos cargados: actividad del día (planes + registros). */
-  readonly pageReady = computed(() => this.actividadHoyService.cargada());
+  readonly pageReady = computed(
+    () =>
+      this.sessionService.usuario() != null &&
+      this.actividadHoyService.cargada(),
+  );
 
   hayActividadHoy = this.actividadHoyService.hayActividadHoy;
   todoCompletado = this.actividadHoyService.todoCompletado;
@@ -351,7 +355,7 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
     this.router.navigate(['/actividad-personal']);
   }
 
-  iniciarSesionHoy(): void {
+  async iniciarSesionHoy(): Promise<void> {
     const actividades = this.actividadHoyService.actividadHoy();
 
     const ejercicios: EjercicioSesionMultiPlan[] = [];
@@ -391,7 +395,9 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
       skipResumen: true,
     };
 
-    this.registroService.iniciarSesionMultiPlan(config);
+    // Esperamos a la rehidratación antes de navegar para que
+    // RealizarPlanComponent vea el `ejercicioActualIndex` correcto.
+    await this.registroService.iniciarSesionMultiPlan(config);
     this.router.navigate(['/mi-plan']);
   }
 }
