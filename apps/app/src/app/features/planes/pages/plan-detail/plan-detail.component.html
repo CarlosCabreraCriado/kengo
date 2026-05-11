@@ -202,9 +202,6 @@
                         @if (item.descansoSeg) {
                           <ui2-pill variant="soft" size="sm" icon="timer">{{ item.descansoSeg }}s</ui2-pill>
                         }
-                        @if (item.vecesDia && item.vecesDia > 1) {
-                          <ui2-pill variant="soft" size="sm" icon="schedule">{{ item.vecesDia }}×/día</ui2-pill>
-                        }
                       </div>
                       @if (item.diasSemana && item.diasSemana.length > 0) {
                         <app-plan-week-dots [dias]="item.diasSemana"></app-plan-week-dots>

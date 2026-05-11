@@ -81,7 +81,6 @@ export function mapConvexToEjercicioPlan(e: {
   repeticiones?: number;
   duracionSeg?: number;
   descansoSeg?: number;
-  vecesDia?: number;
   diasSemana?: DiaSemana[];
   instruccionesPaciente?: string;
   notasFisio?: string;
@@ -102,7 +101,6 @@ export function mapConvexToEjercicioPlan(e: {
     repeticiones: e.repeticiones,
     duracionSeg: e.duracionSeg,
     descansoSeg: e.descansoSeg,
-    vecesDia: e.vecesDia,
     diasSemana: e.diasSemana,
     instruccionesPaciente: e.instruccionesPaciente,
     notasFisio: e.notasFisio,

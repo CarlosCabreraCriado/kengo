@@ -142,8 +142,7 @@ export class CumplimientoService {
 
       for (const item of itemsHoy) {
         const regsItem = registrosHoy.filter((r) => r.planItemId === item.id || r.planItemId === (item as any)._convexId);
-        const vecesRequeridas = item.vecesDia ?? 1;
-        if (regsItem.length >= vecesRequeridas) {
+        if (regsItem.length >= 1) {
           completados++;
         }
       }

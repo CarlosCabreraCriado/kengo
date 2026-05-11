@@ -53,7 +53,6 @@ export interface EjercicioPlan {
   repeticiones?: number;
   duracionSeg?: number;
   descansoSeg?: number;
-  vecesDia?: number;
   diasSemana?: DiaSemana[];
 }
 
@@ -93,7 +92,6 @@ export interface EjercicioPlanData {
   repeticiones: number;
   duracionSeg: number | null;
   descansoSeg: number | null;
-  vecesDia: number;
   diasSemana: string | null;
   instruccionesPaciente: string | null;
   notasFisio: string | null;

@@ -47,7 +47,6 @@ export interface FeedbackEjercicio {
 export interface EjercicioPlanConEstado extends EjercicioPlan {
   completadoHoy: boolean;
   registroId?: string;
-  vecesCompletadasHoy?: number;
 }
 
 /**

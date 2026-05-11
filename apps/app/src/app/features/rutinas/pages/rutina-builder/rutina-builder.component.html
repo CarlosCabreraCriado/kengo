@@ -129,9 +129,6 @@
                         @if (it.descansoSeg) {
                           <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
                         }
-                        @if (it.vecesDia && it.vecesDia > 1) {
-                          <ui2-pill variant="soft" size="sm" icon="schedule">{{ it.vecesDia }}×/día</ui2-pill>
-                        }
                       </div>
                       <div class="rb-ex__days">
                         @for (d of dias; track d) {
@@ -202,16 +199,6 @@
                           class="rb-dosage-input"
                           [value]="it.descansoSeg ?? ''"
                           (change)="updateNumber(i, 'descansoSeg', $event)"
-                        />
-                      </label>
-                      <label class="rb-dosage-field">
-                        <span class="rb-dosage-field__label">Veces/día</span>
-                        <input
-                          type="number"
-                          min="1"
-                          class="rb-dosage-input"
-                          [value]="it.vecesDia ?? ''"
-                          (change)="updateNumber(i, 'vecesDia', $event)"
                         />
                       </label>
                     </div>

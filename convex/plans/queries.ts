@@ -359,10 +359,7 @@ export const getNextSessionForPatient = query({
           (a.fechaInicio ?? "").localeCompare(b.fechaInicio ?? ""),
         )[0];
 
-      const totalEjercicios = expected.reduce(
-        (acc, e) => acc + e.vecesDia,
-        0,
-      );
+      const totalEjercicios = expected.length;
 
       return {
         fecha,

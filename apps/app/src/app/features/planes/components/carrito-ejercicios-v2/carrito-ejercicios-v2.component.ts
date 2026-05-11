@@ -308,13 +308,11 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     series?: number;
     repeticiones?: number;
     duracionSeg?: number;
-    vecesDia?: number;
   }): string {
     const parts: string[] = [];
     parts.push(`${it.series ?? '—'} series`);
     parts.push(`${it.repeticiones ?? '—'} reps`);
     if (it.duracionSeg) parts.push(`${it.duracionSeg}s`);
-    if (it.vecesDia) parts.push(`${it.vecesDia}/día`);
     return parts.join(' · ');
   }
 }

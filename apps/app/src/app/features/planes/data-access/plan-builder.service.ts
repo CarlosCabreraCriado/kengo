@@ -248,7 +248,7 @@ export class PlanBuilderService {
     e: Ejercicio,
     options?: { series?: number; repeticiones?: number },
   ) {
-    this.itemsState.add(e, options);
+    this.itemsState.add(e, { ...options, descansoSeg: 20 });
   }
 
   removeEjercicio(ejercicioId: string) {
@@ -292,7 +292,6 @@ export class PlanBuilderService {
         repeticiones: i.repeticiones,
         duracionSeg: i.duracionSeg,
         descansoSeg: i.descansoSeg,
-        vecesDia: i.vecesDia,
         diasSemana: i.diasSemana,
         instruccionesPaciente: i.instruccionesPaciente,
         notasFisio: i.notasFisio,
@@ -330,7 +329,6 @@ export class PlanBuilderService {
       repeticiones?: number;
       duracionSeg?: number;
       descansoSeg?: number;
-      vecesDia?: number;
       diasSemana?: string[];
       instruccionesPaciente?: string;
       notasFisio?: string;
@@ -357,7 +355,6 @@ export class PlanBuilderService {
           repeticiones: item.repeticiones,
           duracionSeg: item.duracionSeg,
           descansoSeg: item.descansoSeg,
-          vecesDia: item.vecesDia,
           diasSemana: item.diasSemana as any,
           instruccionesPaciente: item.instruccionesPaciente,
           notasFisio: item.notasFisio,
@@ -387,7 +384,6 @@ export class PlanBuilderService {
         repeticiones: i.repeticiones,
         duracionSeg: i.duracionSeg,
         descansoSeg: i.descansoSeg,
-        vecesDia: i.vecesDia,
         diasSemana: i.diasSemana,
         instruccionesPaciente: i.instruccionesPaciente,
         notasFisio: i.notasFisio,
@@ -474,7 +470,6 @@ export class PlanBuilderService {
           repeticiones: item.repeticiones,
           duracionSeg: item.duracionSeg,
           descansoSeg: item.descansoSeg,
-          vecesDia: item.vecesDia,
           diasSemana: item.diasSemana as any,
           instruccionesPaciente: item.instruccionesPaciente,
           notasFisio: item.notasFisio,
@@ -541,7 +536,6 @@ export class PlanBuilderService {
           repeticiones: item.repeticiones,
           duracionSeg: item.duracionSeg,
           descansoSeg: item.descansoSeg,
-          vecesDia: item.vecesDia,
           diasSemana: item.diasSemana as any,
           instruccionesPaciente: item.instruccionesPaciente,
           notasFisio: item.notasFisio,
@@ -580,7 +574,6 @@ export class PlanBuilderService {
         repeticiones: e.repeticiones ?? 12,
         duracionSeg: e.duracionSeg,
         descansoSeg: e.descansoSeg ?? 45,
-        vecesDia: e.vecesDia ?? 1,
         diasSemana: e.diasSemana ?? ['L', 'X', 'V'],
         instruccionesPaciente: e.instruccionesPaciente,
         notasFisio: e.notasFisio,
@@ -623,7 +616,6 @@ export class PlanBuilderService {
         repeticiones: item.repeticiones,
         duracionSeg: item.duracionSeg,
         descansoSeg: item.descansoSeg,
-        vecesDia: item.vecesDia,
         diasSemana: item.diasSemana,
         instruccionesPaciente: item.instruccionesPaciente,
         notasFisio: item.notasFisio,

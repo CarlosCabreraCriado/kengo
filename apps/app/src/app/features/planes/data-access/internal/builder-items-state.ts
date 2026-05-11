@@ -19,7 +19,11 @@ export class BuilderItemsState {
 
   add(
     ejercicio: Ejercicio,
-    options?: { series?: number; repeticiones?: number },
+    options?: {
+      series?: number;
+      repeticiones?: number;
+      descansoSeg?: number;
+    },
   ): boolean {
     const exists = this.items().some(
       (i) => i.ejercicio.id === ejercicio.id,
@@ -30,6 +34,7 @@ export class BuilderItemsState {
       options?.series ?? ejercicio.seriesDefecto ?? 3;
     const repeticiones =
       options?.repeticiones ?? ejercicio.repeticionesDefecto ?? 12;
+    const descansoSeg = options?.descansoSeg ?? 45;
     const orden = this.items().length + 1;
 
     this.items.update((list) => [
@@ -40,8 +45,7 @@ export class BuilderItemsState {
         series,
         repeticiones,
         duracionSeg: undefined,
-        descansoSeg: 45,
-        vecesDia: 1,
+        descansoSeg,
         diasSemana: ['L', 'X', 'V'],
       },
     ]);

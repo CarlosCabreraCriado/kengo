@@ -128,7 +128,6 @@ Cada ejercicio en un plan tiene:
 | `repeticiones` | Repeticiones por serie | 12 |
 | `duracion_seg` | Duración si es temporizado | - |
 | `descanso_seg` | Tiempo de descanso | 45s |
-| `veces_dia` | Veces a realizar por día | 1 |
 | `dias_semana` | Días programados | L, X, V |
 | `instrucciones_paciente` | Notas para el paciente | - |
 | `notas_fisio` | Notas internas del fisio | - |
@@ -355,7 +354,7 @@ Datos gestionables:
 │                    ↓                                                 │
 │  4. Consulta registros del día                                      │
 │                    ↓                                                 │
-│  5. Calcula progreso (completados vs veces_dia)                     │
+│  5. Calcula progreso (1 ejecución = ejercicio completado)           │
 │                    ↓                                                 │
 │  6. Muestra dashboard con:                                          │
 │     - Badge de estado                                               │

@@ -206,9 +206,6 @@
                         @if (it.descansoSeg) {
                           <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
                         }
-                        @if (it.vecesDia && it.vecesDia > 1) {
-                          <ui2-pill variant="soft" size="sm" icon="schedule">{{ it.vecesDia }}×/día</ui2-pill>
-                        }
                       </div>
                       <app-plan-week-dots
                         class="pb-ex__weekdots-summary"
@@ -257,16 +254,6 @@
                           class="pb-dosage-input"
                           [value]="it.descansoSeg ?? ''"
                           (change)="updateNumber(i, 'descansoSeg', $event)"
-                        />
-                      </label>
-                      <label class="pb-dosage-field">
-                        <span class="pb-dosage-field__label">Veces/día</span>
-                        <input
-                          type="number"
-                          min="1"
-                          class="pb-dosage-input"
-                          [value]="it.vecesDia ?? ''"
-                          (change)="updateNumber(i, 'vecesDia', $event)"
                         />
                       </label>
                     </div>

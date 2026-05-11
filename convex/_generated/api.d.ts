@@ -57,6 +57,7 @@ import type * as migrations_deleteUserByEmail from "../migrations/deleteUserByEm
 import type * as migrations_deleteUserByEmailMutation from "../migrations/deleteUserByEmailMutation.js";
 import type * as migrations_disablePatientCodesWithoutEmail from "../migrations/disablePatientCodesWithoutEmail.js";
 import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
+import type * as migrations_removeVecesDiaField from "../migrations/removeVecesDiaField.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as pdf_actions from "../pdf/actions.js";
 import type * as pdf_internal from "../pdf/internal.js";
@@ -142,6 +143,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/deleteUserByEmailMutation": typeof migrations_deleteUserByEmailMutation;
   "migrations/disablePatientCodesWithoutEmail": typeof migrations_disablePatientCodesWithoutEmail;
   "migrations/legacyUsers": typeof migrations_legacyUsers;
+  "migrations/removeVecesDiaField": typeof migrations_removeVecesDiaField;
   "migrations/validation": typeof migrations_validation;
   "pdf/actions": typeof pdf_actions;
   "pdf/internal": typeof pdf_internal;

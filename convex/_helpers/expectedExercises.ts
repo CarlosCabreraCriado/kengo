@@ -51,14 +51,12 @@ export async function getActivePlansForPatientOnDate(
 export interface ExpectedExerciseItem {
   planExerciseId: Id<"planExercises">;
   planId: Id<"plans">;
-  vecesDia: number;
 }
 
 /**
  * Devuelve la lista expandida de ejercicios esperados para el paciente en
- * la fecha indicada (1 entrada por planExercise). Cada entrada lleva
- * `vecesDia` (default 1) que indica cuántas ejecuciones se cuentan como
- * "completar" ese ejercicio en el día.
+ * la fecha indicada (1 entrada por planExercise). Cada entrada cuenta
+ * como una unidad de "completar" en el día.
  */
 export async function getExpectedExercisesForPatientOnDate(
   ctx: DBCtx,
@@ -93,7 +91,6 @@ export async function getExpectedExercisesForPatientOnDate(
       out.push({
         planExerciseId: item._id,
         planId: plan._id,
-        vecesDia: item.vecesDia ?? 1,
       });
     }
   }
@@ -116,8 +113,8 @@ export async function getClinicIdForPatient(
 }
 
 /**
- * Suma totales esperados (cuenta cada (planExerciseId, vecesDia)) y los
- * agrupa por plan. Útil para `sessions.totalEsperados` y para
+ * Suma totales esperados (cuenta cada planExerciseId) y los agrupa por
+ * plan. Útil para `sessions.totalEsperados` y para
  * `dailyPatientRollup.planAggregates`.
  */
 export function sumExpectedByPlan(
@@ -126,11 +123,9 @@ export function sumExpectedByPlan(
   totalEsperados: number;
   porPlan: Map<Id<"plans">, number>;
 } {
-  let total = 0;
   const porPlan = new Map<Id<"plans">, number>();
   for (const it of items) {
-    total += it.vecesDia;
-    porPlan.set(it.planId, (porPlan.get(it.planId) ?? 0) + it.vecesDia);
+    porPlan.set(it.planId, (porPlan.get(it.planId) ?? 0) + 1);
   }
-  return { totalEsperados: total, porPlan };
+  return { totalEsperados: items.length, porPlan };
 }

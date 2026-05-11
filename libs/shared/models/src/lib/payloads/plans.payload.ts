@@ -30,7 +30,6 @@ export interface CreatePlanEjercicioPayload {
   repeticiones?: number;
   duracionSeg?: number;
   descansoSeg?: number;
-  vecesDia?: number;
   diasSemana?: DiaSemana[];
   instruccionesPaciente?: string;
   notasFisio?: string;
@@ -56,7 +55,6 @@ export interface UpdatePlanEjercicioPayload {
   repeticiones?: number;
   duracionSeg?: number;
   descansoSeg?: number;
-  vecesDia?: number;
   diasSemana?: DiaSemana[];
   instruccionesPaciente?: string;
   notasFisio?: string;

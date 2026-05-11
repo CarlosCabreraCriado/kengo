@@ -14,7 +14,6 @@ const ejercicioPlanArgs = v.object({
   repeticiones: v.optional(v.number()),
   duracionSeg: v.optional(v.number()),
   descansoSeg: v.optional(v.number()),
-  vecesDia: v.optional(v.number()),
   diasSemana: v.optional(v.array(diaSemana)),
   instruccionesPaciente: v.optional(v.string()),
   notasFisio: v.optional(v.string()),
@@ -30,7 +29,6 @@ async function insertPlanExercises(
     repeticiones?: number;
     duracionSeg?: number;
     descansoSeg?: number;
-    vecesDia?: number;
     diasSemana?: string[];
     instruccionesPaciente?: string;
     notasFisio?: string;
@@ -45,7 +43,6 @@ async function insertPlanExercises(
       repeticiones: ej.repeticiones,
       duracionSeg: ej.duracionSeg,
       descansoSeg: ej.descansoSeg,
-      vecesDia: ej.vecesDia,
       diasSemana: ej.diasSemana,
       instruccionesPaciente: ej.instruccionesPaciente,
       notasFisio: ej.notasFisio,

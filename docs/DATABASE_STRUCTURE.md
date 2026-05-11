@@ -144,7 +144,6 @@ Ejercicios que componen cada rutina con su configuracion especifica.
 | `repeticiones` | INT | Numero de repeticiones (default: 1) |
 | `duracion_seg` | INT | Duracion en segundos (para ejercicios de tiempo) |
 | `descanso_seg` | INT | Tiempo de descanso en segundos |
-| `veces_dia` | INT | Frecuencia diaria (default: 1) |
 | `dias_semana` | JSON | Dias de la semana asignados |
 | `instrucciones_paciente` | TEXT | Instrucciones para el paciente |
 | `notas_fisio` | TEXT | Notas privadas del fisioterapeuta |
@@ -197,7 +196,6 @@ Ejercicios asignados a cada plan con configuracion personalizada.
 | `repeticiones` | INT | Numero de repeticiones (default: 1) |
 | `duracion_seg` | INT | Duracion en segundos |
 | `descanso_seg` | INT | Tiempo de descanso en segundos |
-| `veces_dia` | INT | Frecuencia diaria (default: 1) |
 | `dias_semana` | JSON | Dias de la semana asignados |
 
 **Relaciones:**

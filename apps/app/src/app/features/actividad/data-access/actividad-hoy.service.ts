@@ -105,14 +105,11 @@ export class ActividadHoyService {
           const registrosEjercicio = registros.filter(
             (r) => r.planItemId === ej.id
           );
-          const vecesCompletadas = registrosEjercicio.length;
-          const vecesRequeridas = ej.vecesDia ?? 1;
 
           return {
             ...ej,
-            completadoHoy: vecesCompletadas >= vecesRequeridas,
+            completadoHoy: registrosEjercicio.length >= 1,
             registroId: registrosEjercicio[0]?.id,
-            vecesCompletadasHoy: vecesCompletadas,
           };
         }
       );

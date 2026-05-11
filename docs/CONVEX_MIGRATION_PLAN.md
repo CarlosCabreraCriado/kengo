@@ -577,10 +577,10 @@ Ya implementado en el archivo actual. Verificar que la lógica es correcta.
 2. Obtener día de la semana (L,M,X,J,V,S,D)
 3. Para cada plan activo/completado que incluya esa fecha:
    a. Filtrar ejercicios cuyo dias_semana incluya el día
-   b. Contar ejercicios_esperados (suma de veces_dia)
+   b. Contar ejercicios_esperados (1 por planExercise programado ese día)
    c. Para cada ejercicio:
       - Contar registros completados ese día
-      - Si completados >= veces_dia → ejercicio cumplido
+      - Si completados >= 1 → ejercicio cumplido
    d. Calcular dolor_promedio de todos los registros
    e. Determinar es_dia_descanso (0 ejercicios esperados)
 4. INSERT INTO cumplimiento_diario ON DUPLICATE KEY UPDATE
