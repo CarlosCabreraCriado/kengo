@@ -135,11 +135,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.isEditMode() ? 'Editar plan' : 'Configurar plan',
   );
 
-  pageOverline = computed(() => {
-    const total = this.totalItems();
-    return `${total} ejercicio${total === 1 ? '' : 's'} · ${this.getDuracionLabel()}`;
-  });
-
   backRoute = computed<unknown[]>(() => {
     const pacId = this.paciente()?.id;
     return pacId ? ['/mis-pacientes', pacId] : ['/mis-pacientes'];
@@ -563,13 +558,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   getTomorrowString(): string {
     return offsetMadridDate(1);
-  }
-
-  getDuracionLabel(): string {
-    const dias = this.duracionSeleccionada();
-    if (dias === 'custom') return 'Personalizada';
-    const preset = this.duracionPresets.find((p) => p.dias === dias);
-    return preset ? preset.label : `${dias} días`;
   }
 }
 
