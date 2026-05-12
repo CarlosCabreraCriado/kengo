@@ -252,6 +252,7 @@
 
 .pd-ex__index {
   display: none;
+  border-radius: 22px 0 0 22px;
 }
 
 @media (min-width: 1024px) {
@@ -262,7 +263,11 @@
     align-items: center;
     justify-content: center;
     align-self: stretch;
-    background: linear-gradient(180deg, rgba(var(--kengo-primary-rgb), 0.08), rgba(var(--kengo-primary-rgb), 0.02));
+    background: linear-gradient(
+      180deg,
+      rgba(var(--kengo-primary-rgb), 0.08),
+      rgba(var(--kengo-primary-rgb), 0.02)
+    );
     border-right: 1px solid rgba(var(--kengo-primary-rgb), 0.1);
     padding: 18px 0;
     gap: 6px;
