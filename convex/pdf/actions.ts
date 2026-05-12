@@ -1,6 +1,6 @@
 "use node";
 
-import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit/js/pdfkit.standalone";
 import QRCode from "qrcode";
 import { PassThrough } from "stream";
 import { v } from "convex/values";
@@ -118,9 +118,9 @@ function ensureExtension(rawKey: string, defaultExt = "webp"): string {
 
 async function fetchAsset(
   key: string,
-  params?: string,
+  transformOptions: Record<string, string | number> = {},
   extension = "webp",
-): Promise<Buffer | null> {
+): Promise<ArrayBuffer | null> {
   // ASSETS_URL apunta a Cloudflare R2 (assets.kengoapp.com) servido públicamente.
   // Las keys incluyen extensión (.webp para imágenes, .mp4 para vídeos).
   const assetsUrl = process.env["ASSETS_URL"];
@@ -128,20 +128,43 @@ async function fetchAsset(
 
   const base = assetsUrl.replace(/\/$/, "");
   const keyWithExt = ensureExtension(key, extension);
-  const url = `${base}/${keyWithExt}${params ?? ""}`;
+
+  // Cloudflare Image Transformations: /cdn-cgi/image/<options>/<source>.
+  // Forzamos format=png siempre porque pdfkit no soporta WebP/AVIF y no negocia
+  // formato vía Accept header.
+  const options: Record<string, string | number> = {
+    format: "png",
+    ...transformOptions,
+  };
+  const optionsPath = Object.entries(options)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(",");
+  const url = `${base}/cdn-cgi/image/${optionsPath}/${keyWithExt}`;
+
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
-    return Buffer.from(await res.arrayBuffer());
+    return await res.arrayBuffer();
   } catch {
     return null;
   }
 }
 
+// pdfkit.standalone empaqueta su propio polyfill de Buffer; los Buffer nativos
+// de Node no pasan su `Buffer.isBuffer` y caen al fallback `fs.readFileSync`,
+// que el shim virtual-fs no implementa. Pasamos siempre el ArrayBuffer
+// subyacente para que entre por la rama `src instanceof ArrayBuffer`.
+function toArrayBuffer(view: Buffer | Uint8Array): ArrayBuffer {
+  return view.buffer.slice(
+    view.byteOffset,
+    view.byteOffset + view.byteLength,
+  ) as ArrayBuffer;
+}
+
 function renderHeader(
   doc: PDFKit.PDFDocument,
   data: PlanPdfData,
-  logoBuffer: Buffer | null,
+  logoBuffer: ArrayBuffer | null,
   colorPrimario: string,
 ): void {
   const headerHeight = 80;
@@ -312,7 +335,7 @@ function renderEjercicioCard(
   doc: PDFKit.PDFDocument,
   ejercicio: EjercicioPdf,
   index: number,
-  imageBuffer: Buffer | null,
+  imageBuffer: ArrayBuffer | null,
   colorPrimario: string,
   colorSecundario: string,
 ): void {
@@ -457,7 +480,7 @@ async function renderQRSection(
 
   const qrX = MARGIN + 25;
   const qrY = boxY + 20;
-  doc.image(qrBuffer, qrX, qrY, { width: 120 });
+  doc.image(toArrayBuffer(qrBuffer), qrX, qrY, { width: 120 });
 
   const textX = qrX + 140;
 
@@ -555,10 +578,7 @@ async function buildPdfBuffer(data: PlanPdfData): Promise<Buffer> {
       : Promise.resolve(null),
     ...data.ejercicios.map((ej) =>
       ej.portada
-        ? fetchAsset(
-            ej.portada,
-            "?format=png&width=110&height=110&fit=cover",
-          )
+        ? fetchAsset(ej.portada, { width: 110, height: 110, fit: "cover" })
         : Promise.resolve(null),
     ),
   ]);
