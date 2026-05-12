@@ -15,7 +15,37 @@ export const getPlanDataForPdf = internalQuery({
 
     const plan = await ctx.db.get(args.planId);
     if (!plan) throw new Error("Plan no encontrado");
-    if (plan.fisioId !== requester._id) {
+
+    const [fisioMemberships, pacienteMemberships, requesterMemberships] =
+      await Promise.all([
+        ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_userId", (q) => q.eq("userId", plan.fisioId))
+          .collect(),
+        ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_userId", (q) => q.eq("userId", plan.pacienteId))
+          .collect(),
+        ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_userId", (q) => q.eq("userId", requester._id))
+          .collect(),
+      ]);
+
+    const clinicasDelPaciente = new Set(
+      pacienteMemberships.map((m) => m.clinicId),
+    );
+    const clinicasDelPlan = new Set(
+      fisioMemberships
+        .filter((m) => tieneGestion(m.puesto))
+        .map((m) => m.clinicId)
+        .filter((c) => clinicasDelPaciente.has(c)),
+    );
+
+    const autorizado = requesterMemberships.some(
+      (m) => tieneGestion(m.puesto) && clinicasDelPlan.has(m.clinicId),
+    );
+    if (!autorizado) {
       throw new Error("No autorizado para acceder a este plan");
     }
 
@@ -46,11 +76,10 @@ export const getPlanDataForPdf = internalQuery({
     if (!paciente) throw new Error("Paciente no encontrado");
     if (!fisio) throw new Error("Fisio no encontrado");
 
-    const memberships = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_userId", (q) => q.eq("userId", fisio._id))
-      .collect();
-    const membershipFisio = memberships.find((m) => tieneGestion(m.puesto));
+    const membershipFisio =
+      fisioMemberships.find(
+        (m) => tieneGestion(m.puesto) && clinicasDelPaciente.has(m.clinicId),
+      ) ?? fisioMemberships.find((m) => tieneGestion(m.puesto));
     if (!membershipFisio) throw new Error("Fisio sin clínica asignada");
 
     const clinica = await ctx.db.get(membershipFisio.clinicId);

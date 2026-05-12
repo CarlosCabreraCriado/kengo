@@ -385,7 +385,7 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
 
     const pac = this.paciente();
     const data: DialogoPdfData = {
-      planConvexId: (p as unknown as { _convexId: string })._convexId,
+      planConvexId: p.id,
       pacienteEmail: pac?.email ?? undefined,
       planTitulo: p.titulo,
     };
