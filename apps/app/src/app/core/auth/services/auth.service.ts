@@ -4,8 +4,15 @@ import { CustomRouteReuseStrategy } from '../../config/route-reuse-strategy';
 import { environment as env } from '../../../../environments/environment';
 import { SessionService } from './session.service';
 import { BetterAuthService } from './better-auth.service';
+import type { ConvexTokenResult } from './better-auth.service';
 import { ConvexService } from '../../convex/convex.service';
 import { PushNotificationService } from '../../services/push-notification.service';
+
+export type CheckSessionResult =
+  | 'ok'
+  | 'no-session'
+  | 'network-error'
+  | 'unauthorized';
 import type {
   CreateUsuarioPayload,
   RegistroResult,
@@ -34,7 +41,7 @@ export class AuthService {
     const result = await this.betterAuth.signIn(email, password);
     if (!result.ok) throw new Error('CREDENCIALES_INCORRECTAS');
 
-    this.convex.setAuth(() => this.betterAuth.getConvexToken());
+    await this.convex.setAuth(() => this.betterAuth.getConvexToken());
     this.isLoggedIn.set(true);
     await this.sessionService.cargarMiUsuario();
   }
@@ -77,20 +84,32 @@ export class AuthService {
    * Better-Auth gestiona el token; si la cookie sigue válida la query a `me`
    * devuelve el usuario y consideramos sesión activa.
    */
-  async checkSession(): Promise<boolean> {
+  async checkSession(): Promise<CheckSessionResult> {
     if (!this.betterAuth.hasStoredSession()) {
       this.isLoggedIn.set(false);
-      return false;
+      return 'no-session';
+    }
+
+    // Si el último intento de obtener token falló por red/5xx, propagamos
+    // ese estado sin tirar otra query (que también colgaría).
+    if (this.convex.tokenError()) {
+      this.isLoggedIn.set(false);
+      return 'network-error';
     }
 
     try {
       const user = await this.convex.query(api.users.queries.me, {});
-      const ok = !!user;
-      this.isLoggedIn.set(ok);
-      return ok;
-    } catch {
+      if (user) {
+        this.isLoggedIn.set(true);
+        return 'ok';
+      }
       this.isLoggedIn.set(false);
-      return false;
+      return 'no-session';
+    } catch {
+      // Si la query falla y el tokenError se rellenó durante el intento,
+      // es un problema de red. Si no, asumimos sesión inválida.
+      this.isLoggedIn.set(false);
+      return this.convex.tokenError() ? 'network-error' : 'unauthorized';
     }
   }
 
@@ -103,20 +122,79 @@ export class AuthService {
 
   /**
    * Inicializa la app si hay sesión activa.
+   *
+   * Si hay sesión guardada y la obtención del token Convex falla por red/5xx,
+   * marca `errorConexion` en `SessionService` para que se muestre la pantalla
+   * de reintento en vez de redirigir al login.
+   *
+   * Idempotente por boot: la primera llamada arranca el flujo, las siguientes
+   * (ej. AuthGuard tras AppComponent) se enganchan a la misma promesa. Tras
+   * completarse, llamadas posteriores son no-op para evitar reinicializaciones
+   * en cada navegación. Para forzar re-ejecución usar `reintentarConexion`.
    */
-  async iniciarApp(): Promise<void> {
+  private inicializacionEnCurso: Promise<void> | null = null;
+  private inicializacionCompletada = false;
+
+  iniciarApp(): Promise<void> {
+    if (this.inicializacionEnCurso) return this.inicializacionEnCurso;
+    if (this.inicializacionCompletada) return Promise.resolve();
+    this.inicializacionEnCurso = this.ejecutarIniciarApp().finally(() => {
+      this.inicializacionCompletada = true;
+      this.inicializacionEnCurso = null;
+    });
+    return this.inicializacionEnCurso;
+  }
+
+  private async ejecutarIniciarApp(): Promise<void> {
     try {
       // En native: rehidratar localStorage desde @capacitor/preferences si la
       // WebView purgó el storage. No-op en web.
       await this.betterAuth.restoreFromNative();
-      this.restaurarConvexAuth();
-      const hasSession = await this.checkSession();
-      if (hasSession) {
-        await this.sessionService.cargarMiUsuario();
+      this.sessionService.limpiarErrorConexion();
+
+      if (!this.betterAuth.hasStoredSession()) {
+        this.isLoggedIn.set(false);
+        return;
       }
+
+      const tokenResult = await this.restaurarConvexAuth();
+      if (!tokenResult.ok) {
+        if (
+          tokenResult.reason === 'timeout' ||
+          tokenResult.reason === 'network' ||
+          tokenResult.reason === 'server-error'
+        ) {
+          // Sesión sigue válida, pero servidor no responde. UI mostrará overlay.
+          this.sessionService.marcarErrorConexion();
+          return;
+        }
+        // unauthorized / no-session: sesión real inválida.
+        this.isLoggedIn.set(false);
+        return;
+      }
+
+      this.isLoggedIn.set(true);
+      await this.sessionService.cargarMiUsuario();
     } finally {
       this.sessionService.marcarSesionInicializada();
     }
+  }
+
+  /**
+   * Reintenta la inicialización tras un error de conexión. Usado por la
+   * pantalla de error de conexión. Fuerza re-ejecución aunque `iniciarApp`
+   * ya se hubiera completado.
+   */
+  async reintentarConexion(): Promise<void> {
+    if (this.inicializacionEnCurso) {
+      await this.inicializacionEnCurso;
+      return;
+    }
+    this.inicializacionEnCurso = this.ejecutarIniciarApp().finally(() => {
+      this.inicializacionCompletada = true;
+      this.inicializacionEnCurso = null;
+    });
+    await this.inicializacionEnCurso;
   }
 
   // =========================
@@ -183,7 +261,7 @@ export class AuthService {
     const ok = await this.betterAuth.verifyMagicLink(body.magicLinkToken);
     if (!ok) throw new Error('ERROR_VERIFICANDO_MAGIC_LINK');
 
-    this.convex.setAuth(() => this.betterAuth.getConvexToken());
+    await this.convex.setAuth(() => this.betterAuth.getConvexToken());
     this.isLoggedIn.set(true);
 
     return { tienePassword: false, email: body.email };
@@ -257,11 +335,14 @@ export class AuthService {
   // =========================
 
   /**
-   * Restaura la auth de Convex si hay sesión Better-Auth guardada en localStorage.
+   * Restaura la auth de Convex si hay sesión Better-Auth guardada en
+   * localStorage. Devuelve el resultado para que el caller pueda reaccionar a
+   * fallos de red (mostrar pantalla de reintento) o de sesión (limpiar).
    */
-  private restaurarConvexAuth(): void {
-    if (this.betterAuth.hasStoredSession()) {
-      this.convex.setAuth(() => this.betterAuth.getConvexToken());
+  private async restaurarConvexAuth(): Promise<ConvexTokenResult> {
+    if (!this.betterAuth.hasStoredSession()) {
+      return { ok: false, reason: 'no-session' };
     }
+    return this.convex.setAuth(() => this.betterAuth.getConvexToken());
   }
 }

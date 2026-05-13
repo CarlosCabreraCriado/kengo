@@ -44,8 +44,8 @@ export class LoginComponent implements OnInit {
       this.verificandoSesion.set(false);
       return;
     }
-    const hasSession = await this.auth.checkSession();
-    if (hasSession) {
+    const result = await this.auth.checkSession();
+    if (result === 'ok') {
       this.router.navigateByUrl('/inicio');
       return;
     }

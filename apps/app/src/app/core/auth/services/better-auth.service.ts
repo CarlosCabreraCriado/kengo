@@ -19,6 +19,30 @@ const LS_SESSION_KEY = 'better-auth_session_data';
 const PREFS_COOKIE_KEY = 'ba_cookie';
 const PREFS_SESSION_KEY = 'ba_session_data';
 
+// Si el endpoint /api/auth/convex/token tarda más de esto, se aborta y se
+// reporta como timeout para que el cliente muestre la pantalla de error en vez
+// de quedarse esperando 2 minutos al timeout del navegador.
+const CONVEX_TOKEN_TIMEOUT_MS = 8000;
+
+/**
+ * Resultado del intento de obtener un token Convex.
+ * - `ok: true`  → token válido.
+ * - `ok: false` → distinguimos sesión inválida real (`unauthorized`) de
+ *   problemas de red recuperables (`timeout`/`network`/`server-error`), porque
+ *   solo los primeros deben echar al usuario al login.
+ */
+export type ConvexTokenResult =
+  | { ok: true; token: string }
+  | {
+      ok: false;
+      reason:
+        | 'no-session'
+        | 'timeout'
+        | 'network'
+        | 'unauthorized'
+        | 'server-error';
+    };
+
 @Injectable({ providedIn: 'root' })
 export class BetterAuthService {
   private readonly platform = inject(PlatformService);
@@ -73,28 +97,51 @@ export class BetterAuthService {
   /**
    * Obtiene un token JWT de Convex llamando al endpoint /api/auth/convex/token.
    * El crossDomainClient envía la sesión via header Better-Auth-Cookie.
+   *
+   * Devuelve un resultado discriminado (ver `ConvexTokenResult`): los callers
+   * deben tratar `unauthorized` como sesión inválida (→ login) y
+   * `timeout`/`network`/`server-error` como problemas temporales (→ pantalla
+   * de reintento). El fetch tiene timeout duro de 8 s.
    */
-  async getConvexToken(): Promise<string | null> {
-    try {
-      const cookie = (this.authClient as any).getCookie?.();
-      if (!cookie) return null;
+  async getConvexToken(): Promise<ConvexTokenResult> {
+    const cookie = (this.authClient as any).getCookie?.();
+    if (!cookie) return { ok: false, reason: 'no-session' };
 
-      const res = await fetch(
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(),
+      CONVEX_TOKEN_TIMEOUT_MS,
+    );
+
+    let res: Response;
+    try {
+      res = await fetch(
         `${environment.CONVEX_SITE_URL}/api/auth/convex/token`,
         {
           method: 'GET',
-          headers: {
-            'Better-Auth-Cookie': cookie,
-          },
+          headers: { 'Better-Auth-Cookie': cookie },
+          signal: controller.signal,
         },
       );
+    } catch (err) {
+      const aborted = (err as { name?: string } | null)?.name === 'AbortError';
+      return { ok: false, reason: aborted ? 'timeout' : 'network' };
+    } finally {
+      clearTimeout(timer);
+    }
 
-      if (!res.ok) return null;
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, reason: 'unauthorized' };
+    }
+    if (!res.ok) return { ok: false, reason: 'server-error' };
 
+    try {
       const data = await res.json();
-      return data?.token ?? null;
+      const token = data?.token as string | undefined;
+      if (!token) return { ok: false, reason: 'server-error' };
+      return { ok: true, token };
     } catch {
-      return null;
+      return { ok: false, reason: 'server-error' };
     }
   }
 

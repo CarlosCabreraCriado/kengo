@@ -42,12 +42,18 @@ export class SessionService {
   // sesión (con o sin usuario). Evita renderizar shells legacy/V2 con datos
   // por defecto antes de saber el rol real.
   private _sesionInicializada = signal<boolean>(false);
+  // True cuando había sesión guardada pero no se pudo validar por un fallo
+  // recuperable (504/timeout/red). Se distingue de "no autenticado": en este
+  // caso NO debe redirigirse al login y debe mostrarse la pantalla de error
+  // de conexión con reintento manual.
+  private _errorConexion = signal<boolean>(false);
 
   public usuario = computed(() => this._usuario());
   public isLoggedIn = computed(() => this._usuario() !== null);
   public loading = computed(() => this._loading());
   public error = computed(() => this._error());
   public sesionInicializada = computed(() => this._sesionInicializada());
+  public errorConexion = computed(() => this._errorConexion());
   public nombreCompleto = computed(() => {
     const u = this._usuario();
     return u ? `${u.first_name} ${u.last_name}`.trim() : '';
@@ -219,6 +225,14 @@ export class SessionService {
 
   marcarSesionInicializada(): void {
     this._sesionInicializada.set(true);
+  }
+
+  marcarErrorConexion(): void {
+    this._errorConexion.set(true);
+  }
+
+  limpiarErrorConexion(): void {
+    this._errorConexion.set(false);
   }
 
   async refreshUsuario() {

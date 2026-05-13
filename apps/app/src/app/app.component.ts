@@ -16,6 +16,7 @@ import {
   SessionService,
   ThemeService,
 } from './core';
+import { ConnectionErrorComponent } from './core/components/connection-error/connection-error.component';
 import { PlatformService } from './core/services/platform.service';
 import { KeyboardService } from './core/services/keyboard.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
@@ -52,6 +53,7 @@ import type {
   imports: [
     RouterOutlet,
     BillingBannerComponent,
+    ConnectionErrorComponent,
     Ui2CarritoEjerciciosComponent,
     Ui2CreamBgComponent,
     Ui2OfflineBannerComponent,

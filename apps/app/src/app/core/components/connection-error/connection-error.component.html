@@ -1,0 +1,32 @@
+<div class="ce-overlay" role="alertdialog" aria-modal="true" aria-labelledby="ce-title">
+  <div class="ce-card">
+    <span class="material-symbols-outlined ce-icon" aria-hidden="true">cloud_off</span>
+    <h1 id="ce-title" class="ce-title">No podemos conectar</h1>
+    <p class="ce-subtitle">{{ detalle() }}</p>
+    <p class="ce-help">
+      Tu sesión sigue activa. Vuelve a intentarlo en unos segundos.
+    </p>
+
+    <div class="ce-actions">
+      <ui2-button
+        variant="primary"
+        size="lg"
+        iconLeft="refresh"
+        [loading]="reintentando()"
+        [fullWidth]="true"
+        (clicked)="reintentar()"
+      >
+        Reintentar
+      </ui2-button>
+      <ui2-button
+        variant="ghost"
+        size="md"
+        [fullWidth]="true"
+        [disabled]="reintentando()"
+        (clicked)="cerrarSesion()"
+      >
+        Cerrar sesión
+      </ui2-button>
+    </div>
+  </div>
+</div>

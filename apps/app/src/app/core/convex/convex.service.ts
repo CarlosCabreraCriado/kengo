@@ -17,12 +17,15 @@ import type {
   FunctionReturnType,
 } from 'convex/server';
 import { environment } from '../../../environments/environment';
+import type { ConvexTokenResult } from '../auth/services/better-auth.service';
 
 export interface ConvexQueryResult<T> {
   readonly value: Signal<T | undefined>;
   readonly isLoading: Signal<boolean>;
   readonly error: Signal<Error | null>;
 }
+
+export type ConvexTokenError = 'timeout' | 'network' | 'server-error';
 
 @Injectable({ providedIn: 'root' })
 export class ConvexService {
@@ -33,22 +36,49 @@ export class ConvexService {
   readonly isConnected = signal(false);
 
   // Espejo reactivo del estado de auth en el cliente Convex. setAuth lo pone a
-  // true; clearAuth a false. watchQuery lo lee dentro de su effect para pausar
-  // automáticamente cualquier suscripción autenticada cuando el usuario hace
-  // logout, sin que cada servicio tenga que recordar añadir un guard manual.
+  // true solo tras un token válido; clearAuth a false. watchQuery lo lee
+  // dentro de su effect para pausar automáticamente cualquier suscripción
+  // autenticada cuando el usuario hace logout o el token falla, sin que cada
+  // servicio tenga que recordar añadir un guard manual.
   private _isAuthenticated = signal(false);
   readonly isAuthenticated = this._isAuthenticated.asReadonly();
+
+  // Refleja el último error recuperable al obtener token (timeout/network/5xx).
+  // null cuando la auth está OK o cuando el fallo es por sesión real inválida.
+  private _tokenError = signal<ConvexTokenError | null>(null);
+  readonly tokenError = this._tokenError.asReadonly();
 
   constructor() {
     this.client = new ConvexClient(environment.CONVEX_URL);
   }
 
   /**
-   * Configura el token de autenticación (desde Clerk u otro provider).
+   * Configura el proveedor de token para Convex. Dispara una primera
+   * resolución para que `isAuthenticated`/`tokenError` reflejen el estado real
+   * antes de que las queries empiecen a engancharse. Devuelve el primer
+   * resultado para que el caller pueda reaccionar (ej. mostrar pantalla de
+   * error si fue 504).
    */
-  setAuth(tokenFn: () => Promise<string | null>): void {
-    this.client.setAuth(tokenFn);
-    this._isAuthenticated.set(true);
+  async setAuth(
+    tokenFn: () => Promise<ConvexTokenResult>,
+  ): Promise<ConvexTokenResult> {
+    const firstResult = await tokenFn();
+    this.applyAuthResult(firstResult);
+
+    // El primer resultado se cachea para que el cliente Convex no haga otro
+    // fetch redundante en cuanto se le pase el callback.
+    let firstConsumed = false;
+    this.client.setAuth(async () => {
+      if (!firstConsumed) {
+        firstConsumed = true;
+        return firstResult.ok ? firstResult.token : null;
+      }
+      const result = await tokenFn();
+      this.ngZone.run(() => this.applyAuthResult(result));
+      return result.ok ? result.token : null;
+    });
+
+    return firstResult;
   }
 
   /**
@@ -57,6 +87,25 @@ export class ConvexService {
   clearAuth(): void {
     this.client.setAuth(async () => null);
     this._isAuthenticated.set(false);
+    this._tokenError.set(null);
+  }
+
+  private applyAuthResult(result: ConvexTokenResult): void {
+    if (result.ok) {
+      this._isAuthenticated.set(true);
+      this._tokenError.set(null);
+      return;
+    }
+    this._isAuthenticated.set(false);
+    if (
+      result.reason === 'timeout' ||
+      result.reason === 'network' ||
+      result.reason === 'server-error'
+    ) {
+      this._tokenError.set(result.reason);
+    } else {
+      this._tokenError.set(null);
+    }
   }
 
   /**
