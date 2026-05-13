@@ -135,6 +135,23 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
       "https://localhost",
     ],
     database: authComponent.adapter(ctx),
+    // TTL de la sesión (cookie + fila en betterAuth_sessions). Los valores son
+    // explícitos en lugar de aceptar los defaults de Better-Auth para
+    // documentar nuestra elección y reducir la ventana de divergencia entre
+    // la cookie del cliente y el estado real en servidor:
+    //
+    // - `expiresIn` (7 días) es el TTL absoluto. Si el usuario no abre la app
+    //   en 7 días la sesión caduca. Pensado para fisios/pacientes con uso
+    //   semanal — bajarlo demasiado generaría logout cada lunes.
+    // - `updateAge` (4 horas) es el refresh "sliding": cada vez que el usuario
+    //   hace una request pasadas 4 h desde la última renovación, Better-Auth
+    //   extiende la cookie. Esto recorta la ventana zombie a un máximo de 4 h
+    //   (en vez de los 7 días que tarda la cookie en caducar por sí sola tras
+    //   una invalidación server-side) sin saturar el backend.
+    session: {
+      expiresIn: 60 * 60 * 24 * 7, // 7 días
+      updateAge: 60 * 60 * 4, // 4 horas
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,

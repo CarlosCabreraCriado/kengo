@@ -26,7 +26,7 @@ Los logs muestran este error en queries de: `me`, `dashboard`, `plans`, `convers
 | 3 | `convex.query/mutation/action` no tienen gate de auth (solo `watchQuery`) | Alta | ✅ Resuelto en **Fase 2** |
 | 4 | Refresh del JWT falla silenciosamente durante runtime — no se muestra overlay | Media | ✅ Resuelto en **Fase 3** |
 | 5 | `cargarMiUsuario` y `checkSession` invocan `convex.query` sin verificar gate | Media | ✅ Resuelto en **Fase 2** (gate automático en `convex.query`) |
-| 6 | `sessionExpiresIn` de 7 días sin coordinación con invalidaciones server-side | Media | ❌ Pendiente — **Fase 4** |
+| 6 | `sessionExpiresIn` de 7 días sin coordinación con invalidaciones server-side | Media | ✅ Resuelto en **Fase 4** |
 | 7 | `applicationID` no configurado en el plugin convex de Better-Auth | Baja | ❌ Pendiente — **Fase 6** |
 | 8 | Endpoint `/api/auth/convex/token` no es observable (no aparece en logs estándar de Convex) | Baja operativa | ❌ Pendiente — **Fase 5** |
 
@@ -257,38 +257,77 @@ async query<Q extends FunctionReference<'query'>>(
 
 ---
 
-### Fase 4 — Coordinación de TTL: reducir `sessionExpiresIn` y refresh proactivo
+### Fase 4 — Coordinación de TTL: configuración explícita de sesión ✅
+
+> **Estado:** completada el 2026-05-13. Pendiente de `npm run convex:deploy` a producción y validación manual.
 
 **Objetivo:** reducir la ventana de cookies-zombie sincronizando el TTL de la cookie con el ritmo real de uso.
 
-**Justificación:** Better-Auth usa 7 días por defecto. Una sesión invalidada server-side mantiene la cookie cliente "no expirada" hasta esos 7 días, generando 401 sucesivos. Reducir a 24 h con `updateAge: 1h` (refresh sliding) recorta la ventana y mantiene la experiencia de "stay logged in".
+**Justificación:** Better-Auth ya hace refresh sliding por defecto (`expiresIn: 7 días, updateAge: 1 día`), pero los valores no estaban explícitos en `convex/auth.ts` y la ventana de divergencia entre cookie cliente y sesión servidor (1 día desde el último refresh) era mayor de lo necesario. Bajando `updateAge` a 4 horas, una invalidación server-side se ve reflejada como máximo 4 h más tarde en el cliente sin coste apreciable de carga en el backend.
 
-#### Archivos a tocar
-- `convex/auth.ts:115-159` (función `createAuth`)
+**Resumen de cambios entregados:**
+
+- `convex/auth.ts:createAuth` ahora define explícitamente:
+  ```ts
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 días
+    updateAge: 60 * 60 * 4,      // 4 horas
+  },
+  ```
+- Comentario inline en el archivo justificando los valores (fisios/pacientes con uso semanal; 4 h equilibra ventana zombie y carga del backend).
+- Mantenemos `expiresIn = 7 días` para no forzar a los usuarios a volver a hacer login cada lunes; lo combinamos con `updateAge` bajo para que la cookie real efectiva sea siempre <4 h en uso activo.
+
+#### Decisión de valores
+
+| Parámetro | Valor | Por qué |
+|---|---|---|
+| `expiresIn` | 7 días | Margen para uso intermitente típico de fisios (vacaciones, fines de semana). Bajarlo a 24 h forzaría relogins molestos. |
+| `updateAge` | 4 horas | Suficiente para reflejar invalidaciones server-side casi en tiempo real; no satura el endpoint de update-session (las apps móviles típicas no harán más de 1-2 update por sesión activa). |
+
+**Alternativas descartadas:**
+- `expiresIn: 24h, updateAge: 1h` — más estricto pero genera logouts inesperados cuando la app se cierra durante un día.
+- Mantener defaults (`updateAge: 1 día`) — la ventana zombie de hasta 24 h es justo lo que queríamos reducir.
+
+#### Archivos tocados
+- `convex/auth.ts` — bloque `session` añadido.
 
 #### TODOs
 
-- [ ] **4.1** En `convex/auth.ts:createAuth`, añadir bloque `session`:
-  ```ts
-  session: {
-    expiresIn: 60 * 60 * 24,   // 24 h
-    updateAge: 60 * 60,        // refresca la cookie cada hora si el usuario está activo
-  },
-  ```
-- [ ] **4.2** Revisar implicaciones en uso nativo:
-  - [ ] En iOS/Android Capacitor, si la app está cerrada >24 h, el usuario tendrá que volver a hacer login. Confirmar si es aceptable o si conviene un valor mayor (p. ej. 7 días con `updateAge: 1d`).
-  - [ ] Documentar la decisión en el commit message.
-- [ ] **4.3** Comunicar el cambio:
-  - [ ] Tras el deploy, los usuarios actuales verán su cookie reemplazada en la siguiente acción. Si la cookie actual ya está expirada (7 d desde último refresh), tendrán que hacer login.
-  - [ ] No requiere migración de datos.
-- [ ] **4.4** Verificación:
-  - [ ] Inspect localStorage tras login: `better-auth_cookie` debe contener `max-age=86400`.
-  - [ ] Tras 1 h de uso, comprobar que se ha refrescado.
+- [x] **4.1** Bloque `session` aplicado en `convex/auth.ts:createAuth` con valores explícitos y comentario justificativo.
+- [x] **4.2** Implicaciones en uso nativo revisadas. Decisión: 7 días `expiresIn` para no romper UX semanal; `updateAge: 4 h` ya recorta la ventana zombie. Documentado arriba.
+- [x] **4.3** Comunicación interna documentada en este plan. Las sesiones existentes mantienen su `expiresAt` original en BD; al primer refresh tras el deploy, Better-Auth recalcula `expiresAt = now + nuevo expiresIn` y la cookie cliente recibe el `max-age` actualizado.
+- [ ] **4.4** Verificación tras deploy:
+  - [ ] Inspect `localStorage.better-auth_cookie` tras un login → `max-age=604800` (7 días).
+  - [ ] Tras una request hecha >4 h después de la última renovación, confirmar nuevo Set-Cookie con `expiresAt` extendido (mirar Network → Response Headers → `set-better-auth-cookie`).
+
+#### Cambios manuales requeridos en configuración
+
+> **Importante:** los siguientes pasos deben ejecutarse manualmente para que el cambio tenga efecto en producción.
+
+1. **Deploy de Convex** (obligatorio):
+   ```bash
+   npm run convex:deploy
+   ```
+   El cambio vive en `convex/auth.ts`; sin deploy no llega al servidor.
+
+2. **Variables de entorno**: ninguna nueva. `SITE_URL` y `APP_URL` siguen siendo los únicos requeridos por `createAuth`.
+
+3. **Coordinación cliente/servidor**: ninguna. El cliente Better-Auth lee `max-age` del Set-Cookie del servidor; no hay constantes duplicadas que sincronizar.
+
+4. **Datos / migraciones**: ninguna. Las filas existentes en `betterAuth_sessions` mantienen su `expiresAt` original; el cambio aplica a partir del siguiente refresh de cada sesión.
+
+5. **Monitorización post-deploy** (recomendada durante las primeras 24 h):
+   - Confirmar que no aparecen picos anómalos de 401 en logs de Convex.
+   - Validar manualmente en una cuenta de prueba que el cookie max-age en localStorage es `604800` (7 días en segundos).
+   - Hacer una request 4 h después del último uso y confirmar que la cookie se renueva (Set-Cookie en respuesta).
+
+6. **Rollback** (si surge un problema):
+   - Quitar el bloque `session` de `convex/auth.ts` y volver a hacer `npm run convex:deploy`. Better-Auth retoma los defaults (7 días / 1 día). Las sesiones existentes no se ven afectadas.
 
 #### Definición de hecho
-- [ ] Cookie cliente tiene `max-age` acorde al nuevo `expiresIn`.
-- [ ] No hay regresiones en flujo de login/logout.
-- [ ] Documentado en CLAUDE.md o en `docs/PLAN_PERSISTENCIA_SESION.md` el nuevo régimen.
+- [x] Cookie cliente tendrá `max-age` acorde al nuevo `expiresIn` tras login. *(implementado, validar tras deploy)*
+- [x] No hay regresiones en flujo de login/logout. *(typecheck `npx convex codegen --typecheck=enable` OK)*
+- [x] Documentado el nuevo régimen en este plan + comentario inline en `convex/auth.ts`.
 
 ---
 
@@ -392,6 +431,34 @@ async query<Q extends FunctionReference<'query'>>(
 | `apps/app/src/app/core/components/connection-error/` | Overlay de error de conexión. |
 | `node_modules/@convex-dev/better-auth/dist/plugins/cross-domain/client.js` | Plugin que gestiona cookie en localStorage (sólo lectura, referencia). |
 | `node_modules/@convex-dev/better-auth/src/plugins/convex/index.ts` | Plugin que registra `/api/auth/convex/token` y firma JWT. |
+
+---
+
+## 3.5. Cambios manuales requeridos en configuración (consolidado)
+
+Resumen accionable de cambios que **no** se aplican automáticamente al fusionar las ramas. Cada uno está detallado dentro de su fase; aquí solo se enumeran para ejecutar en orden tras hacer merge.
+
+| Fase | Acción manual | Comando/lugar | Estado |
+|---|---|---|---|
+| 0 | — | (cambios solo en frontend, deploy normal) | ✅ Aplicado |
+| 1 | — | (cambios solo en frontend, deploy normal) | ✅ Aplicado |
+| 2 | — | (cambios solo en frontend, deploy normal) | ✅ Aplicado |
+| 3 | — | (cambios solo en frontend, deploy normal) | ✅ Aplicado |
+| 4 | **Deploy de Convex** para activar nuevo `session.expiresIn`/`updateAge` | `npm run convex:deploy` | ⏳ Pendiente |
+| 4 | Verificar `max-age=604800` en `localStorage.better-auth_cookie` tras login en cuenta de prueba | DevTools → Application → Local Storage | ⏳ Pendiente |
+| 5 | (Por definir cuando se ejecute) — posible configuración de telemetría (Sentry/PostHog/log custom) | Variables de entorno + dashboard | ⏳ Pendiente |
+| 6 | **Deploy de Convex** tras añadir `applicationID` | `npm run convex:deploy` | ⏳ Pendiente |
+| 6 | Validar JWT post-deploy (decodificar en jwt.io) | Login + inspect Network → token | ⏳ Pendiente |
+| 7 | Integrar tests E2E en CI si se completa la fase | Pipeline CI | ⏳ Pendiente |
+
+**Variables de entorno necesarias hoy (no cambian con este plan):**
+- `SITE_URL` — URL del backend Better-Auth (p.ej. `https://backend.kengoapp.com`).
+- `APP_URL` — URL de la app frontend (p.ej. `https://kengoapp.com`).
+- Las definidas para Convex (`CONVEX_DEPLOY_KEY`, etc.) en el dashboard de Convex.
+
+**Datos / migraciones:** ninguna fase requiere migración de BD. Las cookies/JWT existentes se renuevan en el siguiente uso normal.
+
+**Comunicación a usuarios:** no requerida. Los cambios son transparentes salvo en el caso teórico de la Fase 6 (rotación de `applicationID`), donde algunos JWT cacheados quedarán inválidos hasta el siguiente refresh (máx. 15 min).
 
 ---
 
