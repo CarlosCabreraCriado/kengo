@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 import { createAuthClient } from 'better-auth/client';
 import { magicLinkClient } from 'better-auth/client/plugins';
@@ -23,6 +23,41 @@ const PREFS_SESSION_KEY = 'ba_session_data';
 // reporta como timeout para que el cliente muestre la pantalla de error en vez
 // de quedarse esperando 2 minutos al timeout del navegador.
 const CONVEX_TOKEN_TIMEOUT_MS = 8000;
+
+// Latencia a partir de la cual una llamada a `getConvexToken` se considera
+// sospechosa. No es un fallo (la llamada puede acabar bien), pero queremos
+// dejar rastro en logs para que el siguiente 504 sea detectable antes.
+const CONVEX_TOKEN_SLOW_THRESHOLD_MS = 3000;
+
+/**
+ * Métrica de una llamada a `getConvexToken`. Se emite por log estructurado
+ * (prefijo `[ConvexToken]`) y se expone como signal para que cualquier
+ * sistema de telemetría futuro (Sentry/PostHog/log custom) pueda engancharse
+ * sin modificar el servicio. Útil también para debugging desde DevTools:
+ *
+ *     window.__kengoTokenMetrics // → lista de los últimos N intentos
+ */
+export interface ConvexTokenAttempt {
+  /** ISO timestamp del inicio del fetch. */
+  startedAt: string;
+  /** Tiempo total entre fetch start y resolución (incluye parseo). */
+  latencyMs: number;
+  /** Status HTTP recibido. `null` si la request no llegó al servidor. */
+  httpStatus: number | null;
+  /** Reason del `ConvexTokenResult` (incluido `'ok'` cuando hubo éxito). */
+  reason:
+    | 'ok'
+    | 'no-session'
+    | 'timeout'
+    | 'network'
+    | 'unauthorized'
+    | 'server-error';
+}
+
+// Solo guardamos en memoria los últimos N intentos para evitar leak. Si en el
+// futuro se conecta telemetría externa, se exporta el array completo en cada
+// emisión y se reinicia.
+const TOKEN_METRICS_BUFFER_SIZE = 20;
 
 /**
  * Resultado del intento de obtener un token Convex.
@@ -51,6 +86,13 @@ export class BetterAuthService {
     baseURL: environment.CONVEX_SITE_URL,
     plugins: [crossDomainClient(), convexClient(), magicLinkClient()],
   });
+
+  // Buffer reactivo de las últimas llamadas a `getConvexToken`. Expuesto como
+  // signal para que la UI o devtools puedan inspeccionarlo. La telemetría
+  // externa (cuando se integre) puede leer este signal vía `effect` o leer
+  // `__kengoTokenMetrics` desde dev tools.
+  private readonly _tokenAttempts = signal<ConvexTokenAttempt[]>([]);
+  readonly tokenAttempts = this._tokenAttempts.asReadonly();
 
   /**
    * Inicia sesion en Better-Auth. Si las credenciales no son válidas, devuelve
@@ -127,10 +169,25 @@ export class BetterAuthService {
    * deben tratar `unauthorized` como sesión inválida (→ login) y
    * `timeout`/`network`/`server-error` como problemas temporales (→ pantalla
    * de reintento). El fetch tiene timeout duro de 8 s.
+   *
+   * Cada intento se registra como `ConvexTokenAttempt` (latencia, status,
+   * reason) — ver `recordTokenAttempt` para los detalles del logging y la
+   * exposición vía signal.
    */
   async getConvexToken(): Promise<ConvexTokenResult> {
+    const startedAt = new Date().toISOString();
+    const t0 = performance.now();
+
     const cookie = (this.authClient as any).getCookie?.();
-    if (!cookie) return { ok: false, reason: 'no-session' };
+    if (!cookie) {
+      this.recordTokenAttempt({
+        startedAt,
+        latencyMs: Math.round(performance.now() - t0),
+        httpStatus: null,
+        reason: 'no-session',
+      });
+      return { ok: false, reason: 'no-session' };
+    }
 
     const controller = new AbortController();
     const timer = setTimeout(
@@ -150,23 +207,108 @@ export class BetterAuthService {
       );
     } catch (err) {
       const aborted = (err as { name?: string } | null)?.name === 'AbortError';
-      return { ok: false, reason: aborted ? 'timeout' : 'network' };
+      const reason: ConvexTokenAttempt['reason'] = aborted
+        ? 'timeout'
+        : 'network';
+      this.recordTokenAttempt({
+        startedAt,
+        latencyMs: Math.round(performance.now() - t0),
+        httpStatus: null,
+        reason,
+      });
+      return { ok: false, reason };
     } finally {
       clearTimeout(timer);
     }
 
+    const latencyMs = Math.round(performance.now() - t0);
+
     if (res.status === 401 || res.status === 403) {
+      this.recordTokenAttempt({
+        startedAt,
+        latencyMs,
+        httpStatus: res.status,
+        reason: 'unauthorized',
+      });
       return { ok: false, reason: 'unauthorized' };
     }
-    if (!res.ok) return { ok: false, reason: 'server-error' };
+    if (!res.ok) {
+      this.recordTokenAttempt({
+        startedAt,
+        latencyMs,
+        httpStatus: res.status,
+        reason: 'server-error',
+      });
+      return { ok: false, reason: 'server-error' };
+    }
 
     try {
       const data = await res.json();
       const token = data?.token as string | undefined;
-      if (!token) return { ok: false, reason: 'server-error' };
+      if (!token) {
+        this.recordTokenAttempt({
+          startedAt,
+          latencyMs: Math.round(performance.now() - t0),
+          httpStatus: res.status,
+          reason: 'server-error',
+        });
+        return { ok: false, reason: 'server-error' };
+      }
+      this.recordTokenAttempt({
+        startedAt,
+        latencyMs: Math.round(performance.now() - t0),
+        httpStatus: res.status,
+        reason: 'ok',
+      });
       return { ok: true, token };
     } catch {
+      this.recordTokenAttempt({
+        startedAt,
+        latencyMs: Math.round(performance.now() - t0),
+        httpStatus: res.status,
+        reason: 'server-error',
+      });
       return { ok: false, reason: 'server-error' };
+    }
+  }
+
+  /**
+   * Registra una métrica de `getConvexToken` en el buffer y en consola.
+   *
+   * Niveles de log:
+   * - `reason === 'ok'` y `latencyMs <= SLOW_THRESHOLD` → silencio (caso normal).
+   * - `reason === 'ok'` con latencia alta → `console.warn` (sospechoso, anticipo de degradación).
+   * - `reason === 'no-session'` → silencio (caso esperado en cold start sin login).
+   * - Resto de reasons → `console.warn` con la métrica completa.
+   *
+   * Formato del log: `[ConvexToken] {...JSON}` para facilitar grep y parsing
+   * desde un SDK de telemetría futuro. El buffer expuesto vía `tokenAttempts`
+   * permite a la UI o devtools inspeccionar los últimos N intentos sin
+   * necesidad de SDK externo.
+   */
+  private recordTokenAttempt(attempt: ConvexTokenAttempt): void {
+    // Buffer rotativo (FIFO): añadimos al final, recortamos por el principio.
+    const next = [...this._tokenAttempts(), attempt];
+    if (next.length > TOKEN_METRICS_BUFFER_SIZE) {
+      next.splice(0, next.length - TOKEN_METRICS_BUFFER_SIZE);
+    }
+    this._tokenAttempts.set(next);
+
+    // Exponer en dev para inspección rápida (`window.__kengoTokenMetrics`).
+    // En producción no se monta para no añadir ruido al objeto window.
+    if (!environment.production && typeof window !== 'undefined') {
+      (window as unknown as { __kengoTokenMetrics?: ConvexTokenAttempt[] }).__kengoTokenMetrics =
+        next;
+    }
+
+    const isSlowOk =
+      attempt.reason === 'ok' &&
+      attempt.latencyMs > CONVEX_TOKEN_SLOW_THRESHOLD_MS;
+    const isFailure =
+      attempt.reason !== 'ok' && attempt.reason !== 'no-session';
+
+    if (isFailure || isSlowOk) {
+      console.warn('[ConvexToken]', JSON.stringify(attempt));
     }
   }
 

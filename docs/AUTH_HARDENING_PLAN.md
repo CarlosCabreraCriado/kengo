@@ -28,7 +28,7 @@ Los logs muestran este error en queries de: `me`, `dashboard`, `plans`, `convers
 | 5 | `cargarMiUsuario` y `checkSession` invocan `convex.query` sin verificar gate | Media | ✅ Resuelto en **Fase 2** (gate automático en `convex.query`) |
 | 6 | `sessionExpiresIn` de 7 días sin coordinación con invalidaciones server-side | Media | ✅ Resuelto en **Fase 4** |
 | 7 | `applicationID` no configurado en el plugin convex de Better-Auth | Baja | ❌ Pendiente — **Fase 6** |
-| 8 | Endpoint `/api/auth/convex/token` no es observable (no aparece en logs estándar de Convex) | Baja operativa | ❌ Pendiente — **Fase 5** |
+| 8 | Endpoint `/api/auth/convex/token` no es observable (no aparece en logs estándar de Convex) | Baja operativa | ✅ Resuelto en **Fase 5** (instrumentación cliente) |
 
 ### Lo que ya se entregó en `0991d90`
 
@@ -331,36 +331,61 @@ async query<Q extends FunctionReference<'query'>>(
 
 ---
 
-### Fase 5 — Observabilidad del endpoint `/api/auth/convex/token`
+### Fase 5 — Observabilidad del endpoint `/api/auth/convex/token` ✅
+
+> **Estado:** completada el 2026-05-13. La instrumentación queda lista; la integración con un SDK de telemetría externo (Sentry/PostHog/log custom) queda como tarea opcional posterior.
 
 **Objetivo:** poder detectar 504s, latencias anómalas y patrones de fallo antes de que un usuario lo reporte.
 
 **Justificación:** el endpoint es un `httpAction` del componente `@convex-dev/better-auth`, no una función pública de Convex, así que no aparece en la pestaña de funciones del dashboard. Hoy el único señal son los reports de usuarios.
 
-#### Archivos a tocar
+**Decisión sobre proveedor:** el proyecto no tiene SDK de telemetría instalado (auditado con `grep -E "sentry|posthog|datadog|logrocket|mixpanel|amplitude" apps/app/src package.json` — sin coincidencias). Añadir Sentry/PostHog implica decisiones de producto (proveedor, bundle size, GDPR/cookies) que exceden el scope de hardening de auth. En esta fase implementamos la **infraestructura de observabilidad sin imponer proveedor**:
+
+- Logs estructurados con prefijo `[ConvexToken]` y payload JSON → fáciles de capturar por cualquier SDK futuro o exportar manualmente desde DevTools.
+- Signal reactivo `tokenAttempts` expuesto desde `BetterAuthService` → la integración con un SDK futuro sería un `effect` que reenvíe cada nuevo `ConvexTokenAttempt`. Sin cambios en `getConvexToken` ni en sus callers.
+- En desarrollo (`!environment.production`) el buffer se publica en `window.__kengoTokenMetrics` para inspección rápida desde la consola del navegador.
+
+**Resumen de cambios entregados:**
+
+- Nuevo tipo `ConvexTokenAttempt { startedAt, latencyMs, httpStatus, reason }` exportado desde `better-auth.service.ts`.
+- Constante `CONVEX_TOKEN_SLOW_THRESHOLD_MS = 3000` para distinguir llamadas lentas.
+- `BetterAuthService._tokenAttempts` signal con buffer rotativo (últimos 20 intentos) y `tokenAttempts` readonly público.
+- `getConvexToken()` refactorizado: cada salida (success, no-session, timeout, network, unauthorized, server-error, JSON malformado) llama a `recordTokenAttempt` con la métrica completa antes de devolver.
+- Helper `recordTokenAttempt`:
+  - Logs `console.warn('[ConvexToken]', JSON)` cuando `reason !== 'ok'` (excepto `'no-session'`, que es esperado) **o** cuando `reason === 'ok'` pero `latencyMs > 3000` (caso "slow ok" — anticipo de degradación).
+  - Casos felices (`ok` rápido y `no-session`) no producen log para no spamear.
+  - En dev expone `window.__kengoTokenMetrics` para inspección.
+
+#### Archivos tocados
 - `apps/app/src/app/core/auth/services/better-auth.service.ts`
-- Opcional: integración con servicio de telemetría existente (revisar si hay Sentry, PostHog, etc.)
 
 #### TODOs
 
-- [ ] **5.1** Auditar qué telemetría existe en el proyecto:
-  - [ ] `grep -r "Sentry\|posthog\|datadog\|@sentry" apps/app/src` para detectar SDKs ya integrados.
-  - [ ] Si no hay nada, considerar añadir uno ligero (Sentry o un logger custom a backend).
-- [ ] **5.2** Instrumentar `getConvexToken()`:
-  - [ ] Medir tiempo desde fetch start hasta resolución.
-  - [ ] Registrar `{ latencyMs, status, reason }` en cada llamada.
-  - [ ] Si `latencyMs > 3000` o `reason !== 'ok'`, enviar a telemetría con nivel `warn`.
-- [ ] **5.3** Wrapping no intrusivo:
-  - [ ] No cambiar la firma de `getConvexToken`. Añadir el logging dentro.
-- [ ] **5.4** Dashboard / alertas:
-  - [ ] Crear alerta en la plataforma elegida: ≥3 fallos de `getConvexToken` en 1 min → notificación.
-  - [ ] Métricas exportables: p95 latencia, tasa de error.
-- [ ] **5.5** Documentar en `docs/AUTH_HARDENING_PLAN.md` (este archivo) los dashboards y dónde se ven.
+- [x] **5.1** Telemetría auditada: no hay SDK instalado. Decisión documentada: infraestructura lista para integrar uno en el futuro sin tocar `getConvexToken`.
+- [x] **5.2** `getConvexToken()` instrumentado con latencia (`performance.now()`), HTTP status, y reason. Logging condicional según gravedad.
+- [x] **5.3** Wrapping no intrusivo: la firma pública de `getConvexToken` no cambió. Toda la métrica vive dentro del método y en `recordTokenAttempt`.
+- [ ] **5.4** Dashboard / alertas externas — **pendiente de decisión de producto**:
+  - [ ] Decidir proveedor de telemetría (Sentry, PostHog, log custom contra un endpoint propio).
+  - [ ] Una vez elegido, añadir `effect` que escuche `betterAuthService.tokenAttempts` y reenvíe.
+  - [ ] Configurar alerta: ≥3 attempts con `reason !== 'ok' && reason !== 'no-session'` en 1 minuto → notificación.
+- [x] **5.5** Sección **Cómo inspeccionar** documentada abajo en este mismo bloque.
+
+#### Cómo inspeccionar la observabilidad hoy (sin SDK externo)
+
+1. **Consola del navegador (cualquier entorno):**
+   - Filtrar por `[ConvexToken]` para ver todos los intentos no-felices.
+   - Cada log incluye JSON con timestamp, latencia, status HTTP y reason.
+
+2. **DevTools (solo desarrollo):**
+   - En `localhost` o builds de desarrollo, `window.__kengoTokenMetrics` contiene el buffer de los últimos 20 intentos. Útil para reproducir un incidente paso a paso.
+
+3. **Desde código:**
+   - `inject(BetterAuthService).tokenAttempts()` devuelve el signal con el buffer rotativo. Se puede consumir desde cualquier componente o servicio (por ejemplo, una pantalla interna de soporte).
 
 #### Definición de hecho
-- [ ] Cada llamada a `/api/auth/convex/token` queda registrada con su latencia y status.
-- [ ] Alerta operativa configurada.
-- [ ] El siguiente 504 nos llega antes que el usuario.
+- [x] Cada llamada a `/api/auth/convex/token` queda registrada con su latencia y status. *(implementado)*
+- [ ] Alerta operativa configurada. *(pendiente de decidir proveedor — fuera del scope de auth-hardening)*
+- [ ] El siguiente 504 nos llega antes que el usuario. *(dependiente del punto anterior; mientras tanto, los `console.warn` quedan visibles para usuarios técnicos)*
 
 ---
 
@@ -446,7 +471,7 @@ Resumen accionable de cambios que **no** se aplican automáticamente al fusionar
 | 3 | — | (cambios solo en frontend, deploy normal) | ✅ Aplicado |
 | 4 | **Deploy de Convex** para activar nuevo `session.expiresIn`/`updateAge` | `npm run convex:deploy` | ⏳ Pendiente |
 | 4 | Verificar `max-age=604800` en `localStorage.better-auth_cookie` tras login en cuenta de prueba | DevTools → Application → Local Storage | ⏳ Pendiente |
-| 5 | (Por definir cuando se ejecute) — posible configuración de telemetría (Sentry/PostHog/log custom) | Variables de entorno + dashboard | ⏳ Pendiente |
+| 5 | (Opcional, no bloqueante) Integrar SDK de telemetría externo (Sentry/PostHog/log custom) leyendo `BetterAuthService.tokenAttempts` | Variables de entorno + dashboard + `effect` que reenvíe el signal | ⏳ Pendiente (decisión de producto) |
 | 6 | **Deploy de Convex** tras añadir `applicationID` | `npm run convex:deploy` | ⏳ Pendiente |
 | 6 | Validar JWT post-deploy (decodificar en jwt.io) | Login + inspect Network → token | ⏳ Pendiente |
 | 7 | Integrar tests E2E en CI si se completa la fase | Pipeline CI | ⏳ Pendiente |
