@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { RolUsuario, Usuario, Puesto } from '../../../../types/global';
-import { ConvexService } from '../../convex/convex.service';
+import { ConvexService, NotAuthenticatedError } from '../../convex/convex.service';
 import { BetterAuthService } from './better-auth.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { rawAssetUrl } from '../../utils/asset-url';
@@ -276,7 +276,16 @@ export class SessionService {
         localStorage.removeItem('carrito:last_fisio_id');
       }
     } catch (err: unknown) {
-      console.error('Error al cargar el usuario:', err);
+      // NotAuthenticatedError es esperado cuando el cliente aún no tiene
+      // token (arranque en curso, refresh en flight). No spamear console
+      // como error; el AuthGuard / overlay ya guían al usuario.
+      if (err instanceof NotAuthenticatedError) {
+        console.warn(
+          '[SessionService] cargarMiUsuario abortado: cliente sin auth',
+        );
+      } else {
+        console.error('Error al cargar el usuario:', err);
+      }
       this._error.set('No se pudo cargar el usuario');
       this._usuario.set(null);
       localStorage.removeItem('carrito:last_fisio_id');

@@ -27,11 +27,34 @@ export interface ConvexQueryResult<T> {
 
 export type ConvexTokenError = 'timeout' | 'network' | 'server-error';
 
+/**
+ * Error tipado lanzado por `query`/`mutation`/`action` cuando el cliente no
+ * está autenticado y la llamada lo requería. Los callers pueden distinguirlo
+ * de errores de servidor sin parsear strings.
+ *
+ *     try { await convex.query(...) }
+ *     catch (err) {
+ *       if (err instanceof NotAuthenticatedError) { ... }
+ *     }
+ */
+export class NotAuthenticatedError extends Error {
+  constructor(message = 'Cliente no autenticado para llamar a Convex') {
+    super(message);
+    this.name = 'NotAuthenticatedError';
+  }
+}
+
+// Timeout por defecto al esperar a que el cliente reciba token. Coincide con
+// el timeout de `getConvexToken` para que ambos caduquen juntos y el caller
+// reciba un único error.
+const WAIT_FOR_AUTH_DEFAULT_MS = 8000;
+
 @Injectable({ providedIn: 'root' })
 export class ConvexService {
   private client: ConvexClient;
   private ngZone = inject(NgZone);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
 
   readonly isConnected = signal(false);
 
@@ -186,32 +209,97 @@ export class ConvexService {
   }
 
   /**
+   * Espera a que `isAuthenticated()` pase a true. Resuelve `true` cuando llegue,
+   * o `false` si no llega antes de `timeoutMs`. Idempotente: si ya está
+   * autenticado, resuelve inmediatamente.
+   *
+   * Se usa como gate antes de `query`/`mutation`/`action` para evitar que
+   * llamadas autenticadas se disparen con token nulo durante un arranque en
+   * curso o un refresh en flight. Implementado con `effect` reactivo + timer
+   * para limpiarse correctamente en cualquier resolución.
+   */
+  async waitForAuth(timeoutMs: number = WAIT_FOR_AUTH_DEFAULT_MS): Promise<boolean> {
+    if (this._isAuthenticated()) return true;
+
+    return new Promise<boolean>((resolve) => {
+      let resolved = false;
+      let effectRef: { destroy: () => void } | null = null;
+
+      const timer = setTimeout(() => {
+        if (resolved) return;
+        resolved = true;
+        effectRef?.destroy();
+        resolve(false);
+      }, timeoutMs);
+
+      effectRef = effect(
+        () => {
+          if (!this._isAuthenticated()) return;
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timer);
+          // Destrucción diferida: si lo destruimos sincronamente dentro del
+          // primer run del propio effect, Angular se queja del ciclo.
+          queueMicrotask(() => effectRef?.destroy());
+          resolve(true);
+        },
+        { injector: this.injector },
+      );
+    });
+  }
+
+  /**
    * Ejecuta una mutation de Convex.
+   *
+   * Por defecto requiere autenticación y espera hasta `timeoutMs` (8 s) a que
+   * el cliente esté autenticado antes de disparar la llamada. Si tras el
+   * timeout sigue sin auth, lanza `NotAuthenticatedError`. Para mutations
+   * explícitamente públicas (registro, recuperación de password), pasar
+   * `{ requireAuth: false }`.
    */
   async mutation<Mutation extends FunctionReference<'mutation'>>(
     mutation: Mutation,
     args: FunctionArgs<Mutation>,
+    options?: { requireAuth?: boolean; timeoutMs?: number },
   ): Promise<FunctionReturnType<Mutation>> {
+    await this.ensureAuthForCall(options);
     return this.client.mutation(mutation, args);
   }
 
   /**
-   * Ejecuta una action de Convex (side-effects como email, PDF).
+   * Ejecuta una action de Convex (side-effects como email, PDF). Mismo gate
+   * que `mutation`. Para actions públicas (`auth.actions.register`,
+   * `auth.actions.requestPasswordReset`) pasar `{ requireAuth: false }`.
    */
   async action<Action extends FunctionReference<'action'>>(
     action: Action,
     args: FunctionArgs<Action>,
+    options?: { requireAuth?: boolean; timeoutMs?: number },
   ): Promise<FunctionReturnType<Action>> {
+    await this.ensureAuthForCall(options);
     return this.client.action(action, args);
   }
 
   /**
    * Query one-shot (sin suscripción, para datos que no necesitan tiempo real).
+   * Mismo gate que `mutation`/`action`.
    */
   async query<Query extends FunctionReference<'query'>>(
     query: Query,
     args: FunctionArgs<Query>,
+    options?: { requireAuth?: boolean; timeoutMs?: number },
   ): Promise<FunctionReturnType<Query>> {
+    await this.ensureAuthForCall(options);
     return this.client.query(query, args);
+  }
+
+  private async ensureAuthForCall(options?: {
+    requireAuth?: boolean;
+    timeoutMs?: number;
+  }): Promise<void> {
+    const requireAuth = options?.requireAuth !== false;
+    if (!requireAuth) return;
+    const ok = await this.waitForAuth(options?.timeoutMs);
+    if (!ok) throw new NotAuthenticatedError();
   }
 }

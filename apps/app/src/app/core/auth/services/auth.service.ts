@@ -305,13 +305,18 @@ export class AuthService {
   // =========================
 
   async register(payload: CreateUsuarioPayload): Promise<RegistroResult> {
-    const result = await this.convex.action(api.auth.actions.register, {
-      first_name: payload.first_name.trim(),
-      last_name: payload.last_name.trim(),
-      email: payload.email.toLowerCase().trim(),
-      password: payload.password,
-      codigo_clinica: payload.codigo_clinica?.trim(),
-    });
+    // Action pública: el usuario aún no tiene sesión.
+    const result = await this.convex.action(
+      api.auth.actions.register,
+      {
+        first_name: payload.first_name.trim(),
+        last_name: payload.last_name.trim(),
+        email: payload.email.toLowerCase().trim(),
+        password: payload.password,
+        codigo_clinica: payload.codigo_clinica?.trim(),
+      },
+      { requireAuth: false },
+    );
     return result as RegistroResult;
   }
 
@@ -322,9 +327,12 @@ export class AuthService {
   async solicitarRecuperacion(
     email: string,
   ): Promise<SolicitarRecuperacionResult> {
-    return await this.convex.action(api.auth.actions.requestPasswordReset, {
-      email: email.toLowerCase().trim(),
-    });
+    // Action pública: se invoca desde el formulario de recuperación sin sesión.
+    return await this.convex.action(
+      api.auth.actions.requestPasswordReset,
+      { email: email.toLowerCase().trim() },
+      { requireAuth: false },
+    );
   }
 
   async resetPassword(

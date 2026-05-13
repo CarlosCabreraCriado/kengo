@@ -23,9 +23,9 @@ Los logs muestran este error en queries de: `me`, `dashboard`, `plans`, `convers
 |---|---|---|---|
 | 1 | Race condition de auth en arranque (`setAuth` marcaba `_isAuthenticated=true` antes de tener token) | Alta | ✅ Resuelto en commit `0991d90` |
 | 2 | Cookies zombie en localStorage tras logout fallido o invalidación server-side | Alta | ✅ Resuelto en **Fase 1** |
-| 3 | `convex.query/mutation/action` no tienen gate de auth (solo `watchQuery`) | Alta | ❌ Pendiente — **Fase 2** |
+| 3 | `convex.query/mutation/action` no tienen gate de auth (solo `watchQuery`) | Alta | ✅ Resuelto en **Fase 2** |
 | 4 | Refresh del JWT falla silenciosamente durante runtime — no se muestra overlay | Media | ❌ Pendiente — **Fase 3** |
-| 5 | `cargarMiUsuario` y `checkSession` invocan `convex.query` sin verificar gate | Media | ❌ Pendiente — incluido en **Fase 2** |
+| 5 | `cargarMiUsuario` y `checkSession` invocan `convex.query` sin verificar gate | Media | ✅ Resuelto en **Fase 2** (gate automático en `convex.query`) |
 | 6 | `sessionExpiresIn` de 7 días sin coordinación con invalidaciones server-side | Media | ❌ Pendiente — **Fase 4** |
 | 7 | `applicationID` no configurado en el plugin convex de Better-Auth | Baja | ❌ Pendiente — **Fase 6** |
 | 8 | Endpoint `/api/auth/convex/token` no es observable (no aparece en logs estándar de Convex) | Baja operativa | ❌ Pendiente — **Fase 5** |
@@ -124,11 +124,24 @@ async signOut(): Promise<void> {
 
 ---
 
-### Fase 2 — Gate de auth en `convex.query/mutation/action`
+### Fase 2 — Gate de auth en `convex.query/mutation/action` ✅
+
+> **Estado:** completada el 2026-05-13. Pendiente de validación manual del flujo de login/registro sin sesión previa.
 
 **Objetivo:** que ninguna llamada autenticada a Convex se ejecute con token nulo. Cuando el cliente no tenga token, las llamadas deben esperar (con timeout) o rechazarse limpiamente con un error tipado en lugar de llegar al servidor y reventar.
 
 **Justificación:** hoy `watchQuery` ya tiene gate (`requireAuth`), pero `query/mutation/action` no. Esto es lo que genera la mayoría del spam de "No autenticado" en logs: cualquier servicio que llame `convex.query(...)` sin importar el estado de auth manda la request.
+
+**Resumen de cambios entregados:**
+
+- `NotAuthenticatedError` exportada desde `convex.service.ts` para que los callers la distingan de errores de servidor sin parsear strings.
+- `ConvexService.waitForAuth(timeoutMs = 8000)` — espera reactiva con `effect` + timer; resuelve `true` cuando `isAuthenticated()` pasa a `true`, `false` si no llega antes del timeout. Idempotente y se limpia correctamente en cualquier resolución.
+- `ConvexService.query/mutation/action` aceptan `options?: { requireAuth?: boolean; timeoutMs?: number }`. Por defecto `requireAuth: true`. Si el gate falla → `throw NotAuthenticatedError`.
+- Helper interno `ensureAuthForCall(options)` centraliza la lógica para que los 3 métodos compartan el mismo gate.
+- Llamadas explícitamente públicas marcadas con `requireAuth: false`:
+  - `AuthService.register` → `api.auth.actions.register`
+  - `AuthService.solicitarRecuperacion` → `api.auth.actions.requestPasswordReset`
+- `SessionService.cargarMiUsuario` captura `NotAuthenticatedError` con un `console.warn` (en vez de `console.error`) para no spamear la consola con errores esperados cuando el cliente no tiene token aún.
 
 #### Archivos a tocar
 - `apps/app/src/app/core/convex/convex.service.ts` (principal)
@@ -139,37 +152,22 @@ async signOut(): Promise<void> {
 
 #### TODOs
 
-- [ ] **2.1** Crear clase de error en `convex.service.ts`:
-  ```ts
-  export class NotAuthenticatedError extends Error {
-    constructor(message = 'Cliente no autenticado para llamar a Convex') {
-      super(message);
-      this.name = 'NotAuthenticatedError';
-    }
-  }
-  ```
-- [ ] **2.2** Añadir método interno `waitForAuth(timeoutMs = 8000): Promise<boolean>`:
-  - [ ] Si `_isAuthenticated()` ya es true → devuelve `true` inmediatamente.
-  - [ ] Si false: crea un `effect` (con `Injector`) que escucha cambios; resuelve con `true` cuando pase a true, o con `false` tras `timeoutMs`.
-  - [ ] Limpia el effect y el timer en cualquier caso.
-  - [ ] Considerar reusar `inject(Injector)` o pasar uno desde el constructor.
-- [ ] **2.3** Modificar firmas:
-  - [ ] `query<Q>(query, args, options?: { requireAuth?: boolean })` — default `requireAuth: true`.
-  - [ ] `mutation<M>(mutation, args, options?: { requireAuth?: boolean })` — default `true`.
-  - [ ] `action<A>(action, args, options?: { requireAuth?: boolean })` — default `true`.
-  - [ ] Si `requireAuth` y `!await waitForAuth()` → `throw new NotAuthenticatedError()`.
-- [ ] **2.4** Identificar llamadas públicas (no autenticadas) y marcarlas `requireAuth: false`:
-  - [ ] `consumirTokenAcceso` (la action de auth puede llamar a `api.auth.actions.register`, etc.) — auditar.
-  - [ ] `register`, `requestPasswordReset` (acciones públicas en `auth.actions`).
-- [ ] **2.5** En los callers de servicios, capturar `NotAuthenticatedError`:
-  - [ ] `session.service.ts:cargarMiUsuario` — si captura el error, no mostrar toast, solo log de warning y dejar al guard manejar.
-  - [ ] `auth.service.ts:checkSession` — devolver `'unauthorized'` si se captura.
-  - [ ] Servicios de feature — auditar caso por caso. Lo más probable: dejar que el error suba y `errorConexion` se muestre.
-- [ ] **2.6** **Importante:** evitar regresiones en flujos públicos (login form, recuperación de password). Verificar que `register`/`requestPasswordReset` siguen funcionando.
-- [ ] **2.7** Test manuales:
-  - [ ] Con sesión válida → todas las queries pasan, sin spam.
-  - [ ] Sin sesión + intento de query → `NotAuthenticatedError` capturado por el caller, no llega al servidor.
-  - [ ] Login form sin sesión previa → funciona (porque usa `requireAuth: false` en las actions de registro/login).
+- [x] **2.1** `NotAuthenticatedError` exportada desde `convex.service.ts`.
+- [x] **2.2** `waitForAuth(timeoutMs = 8000)` implementado con `effect` + `setTimeout`, `Injector` capturado en constructor del servicio. Se destruye con `queueMicrotask` para evitar el ciclo de "destrucción dentro del primer run del effect".
+- [x] **2.3** `query/mutation/action` aceptan `options.requireAuth` y `options.timeoutMs`. Default `requireAuth: true`. Si gate falla → `NotAuthenticatedError` via helper privado `ensureAuthForCall`.
+- [x] **2.4** Llamadas públicas marcadas con `requireAuth: false`:
+  - [x] `AuthService.register` → `api.auth.actions.register`.
+  - [x] `AuthService.solicitarRecuperacion` → `api.auth.actions.requestPasswordReset`.
+  - [x] Auditado el resto de callers del service-tree: `login` y `consumirTokenAcceso` no usan `convex.action/query/mutation` (van por fetch directo a Better-Auth), por lo que no requieren cambio. `establecerPassword`, `resetPassword` y `verifyMagicLink` también van por fetch directo.
+- [x] **2.5** Callers ajustados:
+  - [x] `SessionService.cargarMiUsuario`: captura `NotAuthenticatedError` y degrada a `console.warn` en vez de `console.error`. Mantiene la limpieza del usuario y deja al `AuthGuard` decidir el redirect.
+  - [x] `AuthService.checkSession`: ya estaba protegido — el catch genérico actual mapea correctamente a `'network-error'` o `'unauthorized'` según `tokenError()`. No requiere cambio explícito.
+  - [ ] Servicios de feature (planes, pacientes, etc.): no se han ajustado individualmente; el comportamiento por defecto del componente al recibir `NotAuthenticatedError` será mostrar el toast genérico de error. Aceptable mientras la Fase 3 no añada UI de runtime. Auditar tras Fase 3 si genera UX confusa.
+- [x] **2.6** Verificado por inspección que `register` y `requestPasswordReset` no requieren auth previa (formulario de registro/recovery sin sesión). El cliente de login sigue usando `BetterAuthService.signIn` (fetch directo), por lo que no toca `convex.action`.
+- [ ] **2.7** Tests manuales pendientes de ejecutar en navegador real:
+  - [ ] Con sesión válida → todas las queries pasan, sin spam de "No autenticado" en logs de Convex.
+  - [ ] Sin sesión + intento de query autenticada → `NotAuthenticatedError` en cliente, sin request al servidor.
+  - [ ] Login form sin sesión previa → registro y recuperación funcionan.
 
 #### Snippet de referencia
 
@@ -215,10 +213,10 @@ async query<Q extends FunctionReference<'query'>>(
 ```
 
 #### Definición de hecho
-- [ ] Logs de Convex no muestran "No autenticado" durante un flujo normal de uso.
-- [ ] Login sin sesión previa funciona sin tocar `convex.query` autenticada.
-- [ ] Tests E2E (si existen) o smoke test manual pasa.
-- [ ] `npx nx build app` limpio.
+- [ ] Logs de Convex no muestran "No autenticado" durante un flujo normal de uso. *(implementado, validar en producción tras deploy)*
+- [x] Login sin sesión previa funciona sin tocar `convex.query` autenticada. *(verificado por inspección de callers)*
+- [ ] Tests E2E (si existen) o smoke test manual pasa. *(pendiente — ver Fase 7)*
+- [x] `npx nx build app` limpio. `npx nx lint app` no introduce errores nuevos en archivos tocados.
 
 ---
 
