@@ -11,8 +11,37 @@ import { betterAuth, type BetterAuthOptions } from "better-auth";
 import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
 
-const siteUrl = process.env["SITE_URL"]!;
+// Better-Auth necesita una baseURL absoluta para construir URLs en flujos
+// async (magic-link, reset password, etc.) cuando se invoca desde un
+// httpAction sin Request context. Si SITE_URL falta, queremos fallar
+// limpio en el bootstrap del deployment en vez de manifestarlo más tarde
+// con `new URL('')` lanzando "Invalid URL".
+const siteUrl = process.env["SITE_URL"];
+if (!siteUrl) {
+  throw new Error(
+    "[auth] SITE_URL no está definido. Configurarlo con `npx convex env set SITE_URL <url>` antes de desplegar.",
+  );
+}
 const appUrl = process.env["APP_URL"] ?? "https://kengoapp.com";
+
+// NOTA sobre la firma del JWT de Convex:
+//
+// - El JWT lo firma el plugin `@convex-dev/better-auth/plugins:convex` con:
+//     issuer    = process.env.CONVEX_SITE_URL  (env var inyectada por Convex)
+//     audience  = "convex"                     (literal en el plugin)
+//     expiresIn = 15 minutos                   (default del plugin)
+//     applicationID = "convex"                 (literal hardcoded; el plugin
+//                                               filtra providers por este id)
+// - La validación la hace Convex usando `auth.config.ts` (provider devuelto
+//   por `getAuthConfigProvider()`), que también lee CONVEX_SITE_URL como
+//   issuer. Por construcción ambas piezas leen la misma env var del runtime
+//   de Convex, así que no puede haber mismatch — no es necesario configurar
+//   un `applicationID` propio (de hecho, el plugin lo exige hardcoded a
+//   "convex" y lanza error si no encuentra un provider con ese id).
+// - SITE_URL (esta variable) y CONVEX_SITE_URL son distintas: SITE_URL es
+//   nuestro dominio público (backend.kengoapp.com), CONVEX_SITE_URL es la
+//   URL del HTTP router que Convex provisiona automáticamente. Si tenemos
+//   un custom domain apuntando al HTTP router los valores coinciden.
 
 /**
  * Map para capturar tokens de reset generados por Better-Auth.

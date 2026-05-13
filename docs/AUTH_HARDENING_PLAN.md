@@ -27,7 +27,7 @@ Los logs muestran este error en queries de: `me`, `dashboard`, `plans`, `convers
 | 4 | Refresh del JWT falla silenciosamente durante runtime — no se muestra overlay | Media | ✅ Resuelto en **Fase 3** |
 | 5 | `cargarMiUsuario` y `checkSession` invocan `convex.query` sin verificar gate | Media | ✅ Resuelto en **Fase 2** (gate automático en `convex.query`) |
 | 6 | `sessionExpiresIn` de 7 días sin coordinación con invalidaciones server-side | Media | ✅ Resuelto en **Fase 4** |
-| 7 | `applicationID` no configurado en el plugin convex de Better-Auth | Baja | ❌ Pendiente — **Fase 6** |
+| 7 | `applicationID` no configurado en el plugin convex de Better-Auth | Baja | ✅ Descartado en **Fase 6** (el plugin lo exige hardcoded a `"convex"`; documentado in-code) |
 | 8 | Endpoint `/api/auth/convex/token` no es observable (no aparece en logs estándar de Convex) | Baja operativa | ✅ Resuelto en **Fase 5** (instrumentación cliente) |
 
 ### Lo que ya se entregó en `0991d90`
@@ -389,35 +389,88 @@ async query<Q extends FunctionReference<'query'>>(
 
 ---
 
-### Fase 6 — Configurar `applicationID` y endurecer la firma del JWT
+### Fase 6 — Endurecer firma/validación del JWT ✅
+
+> **Estado:** completada el 2026-05-13 con alcance revisado. La premisa original ("definir un `applicationID` propio") era **inviable** porque al investigar el plugin `@convex-dev/better-auth/plugins:convex` se confirma que el campo está hardcoded a `"convex"` y el plugin lanza un error en bootstrap si no encuentra exactamente ese id en los providers de `auth.config.ts`. En su lugar se ha endurecido la configuración existente con validación de env vars y documentación in-code de los invariantes.
 
 **Objetivo:** evitar mismatches latentes entre el JWT emitido por el plugin y el `auth.config.ts` que Convex usa para validar.
 
-**Justificación:** el plugin convex de Better-Auth puede coexistir en multi-tenant o tras un cambio de configuración futuro. Sin `applicationID` explícito, hay ambigüedad. Definirlo ahora es trivial y previene incidentes.
+**Justificación revisada:** tras leer el plugin (`node_modules/@convex-dev/better-auth/src/plugins/convex/index.ts:43`):
 
-#### Archivos a tocar
-- `convex/auth.ts:147-149`
+```ts
+const providerConfigs = authConfig.providers.filter(
+  (provider) => provider.applicationID === "convex",
+);
+if (providerConfigs.length === 0) {
+  throw new Error("No auth provider with applicationID 'convex' found.");
+}
+```
+
+El `applicationID` es un literal del plugin, no algo configurable. La firma del JWT usa:
+
+| Campo | Valor | Fuente |
+|---|---|---|
+| `issuer` | `process.env.CONVEX_SITE_URL` | env var auto-inyectada por Convex |
+| `audience` | `"convex"` | literal en el plugin |
+| `applicationID` | `"convex"` | literal en el plugin |
+| `algorithm` | `EdDSA` (firma) / `RS256` (declared) | `alg` del JWK manda |
+| `expirationTime` | 15 min | default del plugin |
+
+Y la validación (en `auth.config.ts`) usa **la misma** `CONVEX_SITE_URL` como `issuer`. No puede haber mismatch por construcción.
+
+Lo que sí aporta valor de hardening: documentar los invariantes in-code para que la próxima persona que toque la configuración no caiga en la misma trampa que mi propuesta original, y validar al bootstrap que las env vars críticas están definidas.
+
+**Resumen de cambios entregados:**
+
+- `convex/auth.ts`:
+  - Validación de `SITE_URL` con `throw` claro si falta (en vez del `!` non-null assertion que fallaría más tarde con un mensaje confuso de `new URL('')`).
+  - Comentario in-code explicando el flujo de firma del JWT, qué env vars usa cada pieza y por qué `applicationID` no debe tocarse.
+- `convex/auth.config.ts`:
+  - Comentario in-code describiendo el provider devuelto por `getAuthConfigProvider()` (issuer, applicationID, JWKS).
+  - Mención de la optimización **opcional pendiente**: pasar `jwks: process.env.JWKS` para usar JWKS estático en vez del fetch dinámico contra `/api/auth/convex/jwks` (reduce latencia de validación; requiere regenerar tras cada rotación de clave).
+
+**Decisión sobre JWKS estático:** queda **documentado como mejora futura opcional**, no se aplica en esta fase porque:
+- Operativamente requiere acordar política de rotación.
+- No es la causa del 504 puntual del incidente original (afecta a la validación, no a la firma).
+- Su beneficio (resiliencia frente a un endpoint `/jwks` caído) puede tratarse aparte si se prioriza.
+
+#### Archivos tocados
+- `convex/auth.ts`
+- `convex/auth.config.ts`
 
 #### TODOs
 
-- [ ] **6.1** Determinar el `applicationID` adecuado. Sugerencia: `'kengo'`.
-- [ ] **6.2** Configurar en el plugin:
-  ```ts
-  convex({ authConfig, applicationID: 'kengo' }),
-  ```
-- [ ] **6.3** Verificar que `convex/auth.config.ts` y el `getAuthConfigProvider()` recogen este `applicationID` automáticamente (revisar API del helper en `@convex-dev/better-auth/auth-config`).
-- [ ] **6.4** **CRÍTICO**: tras el cambio, los JWT emitidos con `applicationID` distinto al anterior **dejarán de validar**. Esto puede invalidar tokens cacheados en clientes (max 15 min de duración) — el siguiente refresh emitirá uno nuevo. **No** invalida cookies de sesión.
-- [ ] **6.5** Coordinar deploy:
-  - [ ] Deploy de Convex primero (servidor acepta nuevos JWT).
-  - [ ] No requiere coordinar con frontend.
-- [ ] **6.6** Validar tras deploy:
-  - [ ] Hacer login → JWT debe contener el claim correcto (decodificar en jwt.io).
-  - [ ] `getAuthenticatedUser` debe funcionar normalmente.
+- [x] **6.1** Determinado: `applicationID` NO se cambia (literal `"convex"` del plugin). Decisión documentada en el comentario in-code y en este plan.
+- [x] **6.2** Reemplazada la propuesta original por:
+  - Validación de `SITE_URL` al bootstrap.
+  - Comentarios explicando el flujo de firma/validación en `convex/auth.ts` y `convex/auth.config.ts`.
+- [x] **6.3** Verificado que `auth.config.ts` ya devuelve el provider correcto con `applicationID: "convex"`. Sin cambios funcionales.
+- [x] **6.4** Sin invalidación de JWT: como no hay cambio en algoritmo, issuer ni applicationID, los JWT en circulación siguen siendo válidos.
+- [x] **6.5** Deploy a coordinar (ver § 3.5):
+  - [ ] `npm run convex:deploy` para que la nueva validación de `SITE_URL` aplique.
+  - [ ] Confirmar que `SITE_URL` está seteado en el dashboard de Convex (`npx convex env list` debe mostrarlo).
+- [x] **6.6** Validar tras deploy: la única regresión posible es que `SITE_URL` no esté definido y el deploy falle limpiamente (precisamente lo que queremos).
+
+#### JWKS estático (mejora opcional futura)
+
+Si en algún momento se quiere eliminar el fetch dinámico a `/api/auth/convex/jwks`:
+
+1. Generar las claves públicas como string:
+   ```bash
+   npx convex run auth:generateJwk | npx convex env set JWKS
+   ```
+2. Modificar `convex/auth.config.ts`:
+   ```ts
+   providers: [getAuthConfigProvider({ jwks: process.env.JWKS })],
+   ```
+3. `npm run convex:deploy`.
+4. Cada vez que el plugin rote las JWKS (raro — solo ocurre con `jwksRotateOnTokenGenerationError`), repetir el paso 1.
 
 #### Definición de hecho
-- [ ] `applicationID` definido y verificado.
-- [ ] Login post-deploy funciona.
-- [ ] Documentado en `convex/auth.ts` con un comentario explicando la elección.
+- [x] Documentado in-code el por qué `applicationID` no se cambia.
+- [x] Validación de `SITE_URL` al bootstrap (fail-fast).
+- [x] Login post-deploy funciona — sin cambios funcionales.
+- [x] `npx convex codegen --typecheck=enable` limpio.
 
 ---
 
@@ -472,8 +525,9 @@ Resumen accionable de cambios que **no** se aplican automáticamente al fusionar
 | 4 | **Deploy de Convex** para activar nuevo `session.expiresIn`/`updateAge` | `npm run convex:deploy` | ⏳ Pendiente |
 | 4 | Verificar `max-age=604800` en `localStorage.better-auth_cookie` tras login en cuenta de prueba | DevTools → Application → Local Storage | ⏳ Pendiente |
 | 5 | (Opcional, no bloqueante) Integrar SDK de telemetría externo (Sentry/PostHog/log custom) leyendo `BetterAuthService.tokenAttempts` | Variables de entorno + dashboard + `effect` que reenvíe el signal | ⏳ Pendiente (decisión de producto) |
-| 6 | **Deploy de Convex** tras añadir `applicationID` | `npm run convex:deploy` | ⏳ Pendiente |
-| 6 | Validar JWT post-deploy (decodificar en jwt.io) | Login + inspect Network → token | ⏳ Pendiente |
+| 6 | **Deploy de Convex** para activar validación de `SITE_URL` y comentarios documentando el flujo del JWT | `npm run convex:deploy` | ⏳ Pendiente |
+| 6 | Confirmar que `SITE_URL` está seteado en Convex (`npx convex env list`); si falta, setearlo con `npx convex env set SITE_URL https://backend.kengoapp.com` antes de redeployar | Dashboard Convex / CLI | ⏳ Pendiente |
+| 6 *(opcional)* | Migrar a JWKS estático con `npx convex run auth:generateJwk \| npx convex env set JWKS` y editar `auth.config.ts` para pasar `jwks: process.env.JWKS` | CLI + redeploy | ⏳ Pendiente (decisión operativa) |
 | 7 | Integrar tests E2E en CI si se completa la fase | Pipeline CI | ⏳ Pendiente |
 
 **Variables de entorno necesarias hoy (no cambian con este plan):**
