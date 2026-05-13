@@ -506,7 +506,7 @@ Resumen accionable de cambios que **no** se aplican automáticamente al fusionar
 | 2026-05-13 | Fase 2 | `5e0d690` | Gate de auth en query/mutation/action vía waitForAuth + NotAuthenticatedError. register y requestPasswordReset marcados requireAuth:false. Validación de spam de logs en producción tras deploy. |
 | 2026-05-13 | Fase 3 | `a7a115a` | refreshTokenWithRetry + resetTokenError + computed mostrarErrorConexion que reacciona al fallo runtime. |
 | 2026-05-13 | Fase 4 | `e5441df` | session.expiresIn=7d, updateAge=4h explícitos en convex/auth.ts. Requiere `npm run convex:deploy` para activar. |
-| | Fase 5 | | |
+| 2026-05-13 | Fase 5 | `84b9b36` | Instrumentación cliente de getConvexToken (signal tokenAttempts + logs estructurados). SDK externo pendiente de decisión. |
 | | Fase 6 | | |
 | | Fase 7 | | |
 
