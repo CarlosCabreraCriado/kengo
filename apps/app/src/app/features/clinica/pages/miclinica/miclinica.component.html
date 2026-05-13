@@ -189,21 +189,6 @@
               (anadirFisio)="abrirAnadirFisio()"
               (toggleExpand)="toggleTeamExpanded()"
             ></app-mc-team-grid>
-
-            @if (esFisioOAdmin()) {
-              <app-mc-access-codes
-                [codigos]="codigosClinica()"
-                [loading]="codigosLoading()"
-                [puedeGenerar]="esAdmin()"
-                [expandable]="isMovil()"
-                [expanded]="codigosExpanded()"
-                (generarCodigo)="abrirAnadirFisio()"
-                (copiarCodigo)="copiarCodigo($event)"
-                (desactivar)="desactivarCodigo($event)"
-                (reactivar)="reactivarCodigo($event)"
-                (toggleExpand)="toggleCodigosExpanded()"
-              ></app-mc-access-codes>
-            }
           </div>
 
           <!-- Columna derecha -->

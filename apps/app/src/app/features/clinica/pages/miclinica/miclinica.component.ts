@@ -4,7 +4,6 @@ import {
   OnDestroy,
   OnInit,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -19,7 +18,7 @@ import { ClinicaGestionService } from '../../data-access/clinica-gestion.service
 import { SubscriptionService } from '../../../../core/billing/subscription.service';
 
 // Types:
-import { Usuario, Clinica, ID, CodigoAcceso } from '../../../../../types/global';
+import { Usuario, Clinica, ID } from '../../../../../types/global';
 import { useResponsive } from '../../../../shared';
 
 // Dialogs (rediseñados V2)
@@ -30,7 +29,6 @@ import { EditarClinicaDialogComponent } from '../../components/editar-clinica-di
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
-import { ClipboardService } from '../../../../core/services/clipboard.service';
 
 // V2 catalog
 import {
@@ -49,7 +47,6 @@ import {
   MiClinicaHeroComponent,
   MiClinicaQuickActionsComponent,
   MiClinicaTeamGridComponent,
-  MiClinicaAccessCodesComponent,
   MiClinicaRoleCardComponent,
   MiClinicaInfoCardComponent,
   MiClinicaInfoField,
@@ -76,7 +73,6 @@ import {
     MiClinicaHeroComponent,
     MiClinicaQuickActionsComponent,
     MiClinicaTeamGridComponent,
-    MiClinicaAccessCodesComponent,
     MiClinicaRoleCardComponent,
     MiClinicaInfoCardComponent,
     MiClinicaSubscriptionCardComponent,
@@ -96,7 +92,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   protected subscriptionService = inject(SubscriptionService);
   private dialogService = inject(DialogService);
   private toastService = inject(ToastService);
-  private clipboard = inject(ClipboardService);
   private pageLoader = inject(PageLoaderService);
   private readonly PAGE_LOADER_KEY = 'miclinica';
 
@@ -112,17 +107,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   }
 
   isMovil = useResponsive().esMobile;
-
-  constructor() {
-    // Auto-cargar códigos al entrar / cambiar de clínica si el usuario tiene permisos.
-    // Mantiene paridad mobile/desktop sin depender del toggle expandible.
-    effect(() => {
-      const c = this.currentClinic();
-      if (c && this.esFisioOAdmin()) {
-        this.cargarCodigos();
-      }
-    });
-  }
 
   public usuario = computed(
     () => this.sessionService.usuario() as Usuario | null,
@@ -140,11 +124,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   mostrarModalCrear = signal(false);
   mostrarModalGenerarCodigo = signal(false);
   mostrarModalEditar = signal(false);
-
-  // Códigos de acceso (solo fisio: la gestión de pacientes vive en /mis-pacientes)
-  codigosClinica = signal<CodigoAcceso[]>([]);
-  codigosLoading = signal(false);
-  codigosExpanded = signal(false);
 
   // Permisos computados
   esAdmin = computed(() => {
@@ -170,13 +149,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     const sub = this.subscriptionService.suscripcion();
     if (!sub) return false;
     return sub.fisiosActuales >= 10;
-  });
-
-  esFisioOAdmin = computed(() => {
-    const clinica = this.currentClinic();
-    if (!clinica) return false;
-    if (!this.sessionService.enModoFisio()) return false;
-    return this.clinicaGestionService.puedeGestionarCodigos(clinica.id);
   });
 
   // Rol del usuario en la clínica actual
@@ -259,7 +231,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   onCodigoGenerado(codigo: string) {
     this.cerrarGenerarCodigo();
     this.showSnackbar(`Código generado: ${codigo}`);
-    this.cargarCodigos();
   }
 
   /**
@@ -287,63 +258,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
       },
       maxWidth: '480px',
     });
-  }
-
-  // ===== Códigos de Acceso =====
-  toggleCodigosExpanded() {
-    this.codigosExpanded.update((v) => !v);
-    if (this.codigosExpanded() && this.codigosClinica().length === 0) {
-      this.cargarCodigos();
-    }
-  }
-
-  async cargarCodigos() {
-    const clinica = this.currentClinic();
-    if (!clinica) return;
-
-    this.codigosLoading.set(true);
-    try {
-      this.clinicaGestionService
-        .listarCodigos(clinica.id, 'fisioterapeuta')
-        .subscribe({
-          next: (codigos) => {
-            this.codigosClinica.set(codigos);
-            this.codigosLoading.set(false);
-          },
-          error: () => {
-            this.codigosLoading.set(false);
-          },
-        });
-    } catch {
-      this.codigosLoading.set(false);
-    }
-  }
-
-  async desactivarCodigo(codigoId: string) {
-    const clinica = this.currentClinic();
-    if (!clinica) return;
-
-    const result = await this.clinicaGestionService.desactivarCodigo(codigoId, clinica.id);
-    if (result.success) {
-      this.showSnackbar('Código desactivado');
-      this.cargarCodigos();
-    }
-  }
-
-  async reactivarCodigo(codigoId: string) {
-    const clinica = this.currentClinic();
-    if (!clinica) return;
-
-    const result = await this.clinicaGestionService.reactivarCodigo(codigoId, clinica.id);
-    if (result.success) {
-      this.showSnackbar('Código reactivado');
-      this.cargarCodigos();
-    }
-  }
-
-  copiarCodigo(codigo: string) {
-    void this.clipboard.write(codigo);
-    this.showSnackbar('Código copiado al portapapeles');
   }
 
   // IDs de clínicas normalizados
