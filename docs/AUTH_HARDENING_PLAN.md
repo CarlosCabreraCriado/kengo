@@ -480,7 +480,7 @@ Resumen accionable de cambios que **no** se aplican automáticamente al fusionar
 | 2026-05-13 | Fase 1 | `24103d2` | purgeStoredSession + manejo de sesión zombie en logout e iniciarApp. Validación manual en navegador pendiente. |
 | 2026-05-13 | Fase 2 | `5e0d690` | Gate de auth en query/mutation/action vía waitForAuth + NotAuthenticatedError. register y requestPasswordReset marcados requireAuth:false. Validación de spam de logs en producción tras deploy. |
 | 2026-05-13 | Fase 3 | `a7a115a` | refreshTokenWithRetry + resetTokenError + computed mostrarErrorConexion que reacciona al fallo runtime. |
-| | Fase 4 | | |
+| 2026-05-13 | Fase 4 | `e5441df` | session.expiresIn=7d, updateAge=4h explícitos en convex/auth.ts. Requiere `npm run convex:deploy` para activar. |
 | | Fase 5 | | |
 | | Fase 6 | | |
 | | Fase 7 | | |
