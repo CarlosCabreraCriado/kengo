@@ -406,7 +406,7 @@ async query<Q extends FunctionReference<'query'>>(
 |---|---|---|---|
 | 2026-05-13 | Fase 0 (mitigación urgente) | `0991d90` | Resuelto race condition de arranque, timeout en getConvexToken, overlay de error. |
 | 2026-05-13 | Fase 1 | `24103d2` | purgeStoredSession + manejo de sesión zombie en logout e iniciarApp. Validación manual en navegador pendiente. |
-| | Fase 2 | | |
+| 2026-05-13 | Fase 2 | `5e0d690` | Gate de auth en query/mutation/action vía waitForAuth + NotAuthenticatedError. register y requestPasswordReset marcados requireAuth:false. Validación de spam de logs en producción tras deploy. |
 | | Fase 3 | | |
 | | Fase 4 | | |
 | | Fase 5 | | |
