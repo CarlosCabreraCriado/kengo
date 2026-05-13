@@ -24,8 +24,14 @@ async function getPacienteNombre(
 
 /**
  * Inserta una alerta tipo "comentario" cuando el paciente registra una nota
- * en una ejecución. Idempotente: si ya existe alerta para esa
- * `exerciseExecutionId`, no duplica.
+ * (por ejercicio o como observación general de fin de sesión).
+ *
+ * Idempotencia en dos modos:
+ *  - Si llega con `exerciseExecutionId` → busca por esa ejecución concreta.
+ *  - Si llega solo con `sessionId` (comentario general de sesión) → busca por
+ *    `(pacienteId, sessionId, tipo=comentario, exerciseExecutionId=undefined)`.
+ *    Si ya existe, actualiza `texto`, refresca `fechaGeneracion` y vuelve a
+ *    marcar `pendiente` para que el fisio vea la versión más reciente.
  */
 export const createCommentAlert = internalMutation({
   args: {
@@ -40,7 +46,6 @@ export const createCommentAlert = internalMutation({
     const clinicId = await getClinicIdForPatient(ctx, args.pacienteId);
     if (!clinicId) return null;
 
-    // Idempotencia: si ya existe alerta para esta ejecución, no duplicamos.
     if (args.exerciseExecutionId) {
       const existing = await ctx.db
         .query("physioAlerts")
@@ -52,6 +57,28 @@ export const createCommentAlert = internalMutation({
         )
         .first();
       if (existing) return existing._id;
+    } else if (args.sessionId) {
+      const existing = await ctx.db
+        .query("physioAlerts")
+        .withIndex("by_pacienteId_estado", (q) =>
+          q.eq("pacienteId", args.pacienteId),
+        )
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("sessionId"), args.sessionId),
+            q.eq(q.field("tipo"), "comentario"),
+            q.eq(q.field("exerciseExecutionId"), undefined),
+          ),
+        )
+        .first();
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          texto: args.texto,
+          estado: "pendiente",
+          fechaGeneracion: new Date().toISOString(),
+        });
+        return existing._id;
+      }
     }
 
     const pacienteNombre = await getPacienteNombre(ctx, args.pacienteId);

@@ -84,7 +84,12 @@ import {
                 </p>
               }
               <div class="cmt-card__footer">
-                @if (c.tituloPlan || c.nombre) {
+                @if (c.registroId === null) {
+                  <span class="cmt-card__context cmt-card__context--session">
+                    <span class="material-symbols-outlined" aria-hidden="true">event_available</span>
+                    Comentario de fin de sesión
+                  </span>
+                } @else if (c.tituloPlan || c.nombre) {
                   <span class="cmt-card__context">{{ c.tituloPlan || c.nombre }}</span>
                 }
                 @if (!c.revisada) {
@@ -198,6 +203,15 @@ import {
         font-size: 11px;
         color: var(--ink-500);
         font-weight: 600;
+      }
+      .cmt-card__context--session {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--kengo-primary);
+      }
+      .cmt-card__context--session .material-symbols-outlined {
+        font-size: 13px;
       }
       .cmt-card__read {
         margin-left: auto;

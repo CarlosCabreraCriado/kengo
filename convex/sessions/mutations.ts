@@ -13,6 +13,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { getCurrentMadridDate } from "../_helpers/datetime";
 import { closeImpl, openOrResumeImpl } from "./internal";
@@ -66,6 +67,17 @@ export const complete = mutation({
 
     const session = await ctx.db.get(args.sessionId);
     if (!session) return;
+
+    // Materializa la observación general como alerta `comentario` para el
+    // fisio (la idempotencia por sessionId la gestiona `createCommentAlert`).
+    if (args.observacionesGenerales?.trim()) {
+      await ctx.runMutation(internal.alerts.internal.createCommentAlert, {
+        pacienteId: session.pacienteId,
+        sessionId: args.sessionId,
+        exerciseExecutionId: undefined,
+        texto: args.observacionesGenerales,
+      });
+    }
 
     // Solo cerramos si está abierta. Si ya se cerró por completitud o cron
     // nocturno, la mutation es idempotente (no hace nada).
