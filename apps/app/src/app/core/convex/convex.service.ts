@@ -89,14 +89,16 @@ export class ConvexService {
     this.applyAuthResult(firstResult);
 
     // El primer resultado se cachea para que el cliente Convex no haga otro
-    // fetch redundante en cuanto se le pase el callback.
+    // fetch redundante en cuanto se le pase el callback. En llamadas
+    // posteriores (refresh del JWT cuando caduca), reintentamos con backoff
+    // para tragar fallos cortos de red antes de propagar tokenError al UI.
     let firstConsumed = false;
     this.client.setAuth(async () => {
       if (!firstConsumed) {
         firstConsumed = true;
         return firstResult.ok ? firstResult.token : null;
       }
-      const result = await tokenFn();
+      const result = await this.refreshTokenWithRetry(tokenFn);
       this.ngZone.run(() => this.applyAuthResult(result));
       return result.ok ? result.token : null;
     });
@@ -111,6 +113,42 @@ export class ConvexService {
     this.client.setAuth(async () => null);
     this._isAuthenticated.set(false);
     this._tokenError.set(null);
+  }
+
+  /**
+   * Resetea el error de token. Lo usa el flujo de "Reintentar" antes de
+   * disparar de nuevo `setAuth`, para que el overlay desaparezca aunque la
+   * resolución se demore o falle de nuevo (el UI vuelve a poder reaccionar
+   * limpio).
+   */
+  resetTokenError(): void {
+    this._tokenError.set(null);
+  }
+
+  private async refreshTokenWithRetry(
+    tokenFn: () => Promise<ConvexTokenResult>,
+  ): Promise<ConvexTokenResult> {
+    // Reintentos con backoff: 0 ms (primer intento), 500 ms, 1500 ms. Solo
+    // se reintentan fallos recuperables (timeout/network/server-error). Si la
+    // sesión es realmente inválida (unauthorized/no-session) salimos
+    // inmediatamente para no enmascarar el problema real.
+    const delays = [0, 500, 1500];
+    let lastResult: ConvexTokenResult = { ok: false, reason: 'network' };
+    for (const delay of delays) {
+      if (delay > 0) {
+        await new Promise<void>((res) => setTimeout(res, delay));
+      }
+      const result = await tokenFn();
+      if (result.ok) return result;
+      if (
+        result.reason === 'unauthorized' ||
+        result.reason === 'no-session'
+      ) {
+        return result;
+      }
+      lastResult = result;
+    }
+    return lastResult;
   }
 
   private applyAuthResult(result: ConvexTokenResult): void {

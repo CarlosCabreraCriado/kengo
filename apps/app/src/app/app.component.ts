@@ -21,6 +21,7 @@ import { PlatformService } from './core/services/platform.service';
 import { KeyboardService } from './core/services/keyboard.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
 import { PushNotificationService } from './core/services/push-notification.service';
+import { ConvexService } from './core/convex/convex.service';
 import { assetUrl } from './core/utils/asset-url';
 import { ToastService } from './shared/services/toast/toast.service';
 import { ClinicasService } from './features/clinica/data-access/clinicas.service';
@@ -82,10 +83,21 @@ export class AppComponent implements OnInit {
   private pushNotifications = inject(PushNotificationService);
   private toast = inject(ToastService);
   public sessionService = inject(SessionService);
+  public convexService = inject(ConvexService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
   private clinicasService = inject(ClinicasService);
 
   public mostrarNavegacion = false;
+
+  /**
+   * El overlay de error de conexión se muestra tanto cuando `iniciarApp` no
+   * pudo restaurar la sesión (`errorConexion`) como cuando el refresh del
+   * JWT en runtime falla (`convex.tokenError`). El template lee este
+   * computed para no tener que recordar ambas fuentes en cada `@if`.
+   */
+  public readonly mostrarErrorConexion = computed(
+    () => this.sessionService.errorConexion() || !!this.convexService.tokenError(),
+  );
 
   /**
    * Items "permitidos" cuando el usuario no tiene clínica: el resto de

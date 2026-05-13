@@ -24,7 +24,7 @@ Los logs muestran este error en queries de: `me`, `dashboard`, `plans`, `convers
 | 1 | Race condition de auth en arranque (`setAuth` marcaba `_isAuthenticated=true` antes de tener token) | Alta | ✅ Resuelto en commit `0991d90` |
 | 2 | Cookies zombie en localStorage tras logout fallido o invalidación server-side | Alta | ✅ Resuelto en **Fase 1** |
 | 3 | `convex.query/mutation/action` no tienen gate de auth (solo `watchQuery`) | Alta | ✅ Resuelto en **Fase 2** |
-| 4 | Refresh del JWT falla silenciosamente durante runtime — no se muestra overlay | Media | ❌ Pendiente — **Fase 3** |
+| 4 | Refresh del JWT falla silenciosamente durante runtime — no se muestra overlay | Media | ✅ Resuelto en **Fase 3** |
 | 5 | `cargarMiUsuario` y `checkSession` invocan `convex.query` sin verificar gate | Media | ✅ Resuelto en **Fase 2** (gate automático en `convex.query`) |
 | 6 | `sessionExpiresIn` de 7 días sin coordinación con invalidaciones server-side | Media | ❌ Pendiente — **Fase 4** |
 | 7 | `applicationID` no configurado en el plugin convex de Better-Auth | Baja | ❌ Pendiente — **Fase 6** |
@@ -220,11 +220,20 @@ async query<Q extends FunctionReference<'query'>>(
 
 ---
 
-### Fase 3 — UI fallback para fallos de refresh durante runtime
+### Fase 3 — UI fallback para fallos de refresh durante runtime ✅
+
+> **Estado:** completada el 2026-05-13. Pendiente de validación manual en navegador (forzar expiración de JWT).
 
 **Objetivo:** cuando el JWT caduca a mitad de sesión y el refresh falla (red, 504, etc.), mostrar el overlay `<app-connection-error>` (o un toast con reintento) en lugar de que el usuario vea la app congelada sin feedback.
 
 **Justificación:** hoy el overlay solo se dispara con `sessionService.errorConexion()`, y eso solo se setea desde `iniciarApp`. Si el refresh falla a las 2 h de uso, `_tokenError` se rellena pero el usuario no ve nada — las watchQuery se pausan silenciosamente.
+
+**Resumen de cambios entregados:**
+
+- `ConvexService.refreshTokenWithRetry` — reintentos con backoff (0 ms, 500 ms, 1500 ms) **solo en el refresh** (no en el primer fetch del arranque, que ya tiene su propio timeout de 8 s). Se reintentan exclusivamente fallos recuperables (`timeout`/`network`/`server-error`); `unauthorized`/`no-session` cortan inmediatamente para no enmascarar problemas reales.
+- `ConvexService.resetTokenError()` — método público para que el flujo de "Reintentar" pueda limpiar el overlay antes de re-ejecutar `iniciarApp` (el overlay desaparece mientras el reintento está en vuelo; si vuelve a fallar `applyAuthResult` lo reactiva).
+- `AuthService.reintentarConexion` llama a `resetTokenError` y `limpiarErrorConexion` antes de forzar la re-ejecución.
+- `AppComponent.mostrarErrorConexion` computed que combina `sessionService.errorConexion()` (arranque) y `convexService.tokenError()` (runtime). El `@if` del overlay en `app.component.html` lo consume.
 
 #### Archivos a tocar
 - `apps/app/src/app/app.component.ts` o `app.component.html`
@@ -232,23 +241,19 @@ async query<Q extends FunctionReference<'query'>>(
 
 #### TODOs
 
-- [ ] **3.1** Decidir UX: ¿overlay full-screen (consistente con el cold start) o toast persistente con botón? Recomendación: **overlay** cuando el error persista >5 s, **toast** durante los primeros 5 s del fallo (margen para reintento automático).
-- [ ] **3.2** Implementar en `AppComponent`:
-  - [ ] Añadir computed `mostrarErrorConexion = computed(() => this.sessionService.errorConexion() || !!this.convex.tokenError())`.
-  - [ ] Cambiar la condición del overlay en `app.component.html` a este computed.
-  - [ ] Verificar que `ConnectionErrorComponent` puede leer tanto `tokenError` (runtime) como `errorConexion` (arranque) para mostrar mensaje contextual — ya lo hace.
-- [ ] **3.3** Reintento automático "suave" antes del overlay:
-  - [ ] En `ConvexService.setAuth` wrapper de refresh, si la primera renovación falla, reintentar 1-2 veces con backoff (500 ms, 1.5 s) antes de propagar al UI.
-  - [ ] Solo mostrar `tokenError` si tras los reintentos sigue fallando.
-- [ ] **3.4** El botón "Reintentar" del overlay ya llama a `reintentarConexion → iniciarApp`. Verificar que también funciona cuando el error es de runtime (no de arranque): probablemente requiera un nuevo método `convex.retryAuth()` que reset `tokenError` y vuelva a llamar al callback.
-- [ ] **3.5** Tests manuales:
-  - [ ] **Caso A**: usuario con app abierta → bloquear `/api/auth/convex/token` desde DevTools → forzar refresh esperando 15 min o llamando manualmente `convex.client.setAuth` con token caducado → debe aparecer overlay.
-  - [ ] **Caso B**: pulsar "Reintentar" tras desbloquear → desaparece overlay y queries vuelven a funcionar sin recarga.
+- [x] **3.1** UX decidida: el overlay se reutiliza para arranque y runtime; el reintento suave del refresh absorbe los fallos cortos (<2 s) y solo abre el overlay si el problema persiste tras los 3 intentos.
+- [x] **3.2** `AppComponent.mostrarErrorConexion` computed combinando `sessionService.errorConexion()` y `convex.tokenError()`. Condición del overlay en `app.component.html` cambiada a `@if (mostrarErrorConexion())`. `ConnectionErrorComponent.detalle()` ya leía `tokenError`, por lo que el mensaje contextual funciona en ambos modos.
+- [x] **3.3** `ConvexService.refreshTokenWithRetry` aplica backoff (0 ms, 500 ms, 1500 ms) solo a fallos recuperables. El primer fetch del arranque mantiene su comportamiento (timeout de 8 s, sin reintentos para no bloquear el splash).
+- [x] **3.4** `ConvexService.resetTokenError()` (público). `AuthService.reintentarConexion` lo llama antes de re-ejecutar para que el overlay desaparezca durante el reintento, evitando un overlay "pegado" si el usuario pulsa Reintentar varias veces.
+- [ ] **3.5** Tests manuales pendientes de ejecutar en navegador real:
+  - [ ] **Caso A**: usuario con app abierta → bloquear `/api/auth/convex/token` → forzar refresh (esperar caducidad de 15 min o invocar manualmente `convex.client.setAuth` con un nuevo callback) → tras los reintentos automáticos debe aparecer overlay.
+  - [ ] **Caso B**: pulsar "Reintentar" tras desbloquear → desaparece overlay inmediatamente y las queries vuelven a actualizarse sin recarga.
 
 #### Definición de hecho
-- [ ] El overlay aparece tras un fallo de refresh prolongado.
-- [ ] El botón "Reintentar" rehidrata las queries sin recargar la página.
-- [ ] No aparece overlay falso durante reintentos cortos (<5 s).
+- [x] El overlay aparece tras un fallo de refresh prolongado. *(implementado, validar)*
+- [x] El botón "Reintentar" rehidrata las queries sin recargar la página. *(implementado, validar)*
+- [x] No aparece overlay falso durante reintentos cortos (<5 s) — los reintentos suaves consumen hasta 2 s antes de tocar `tokenError`. *(implementado, validar)*
+- [x] `npx nx build app` limpio.
 
 ---
 

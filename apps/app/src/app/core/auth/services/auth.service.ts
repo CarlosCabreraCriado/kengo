@@ -198,8 +198,14 @@ export class AuthService {
    * Reintenta la inicialización tras un error de conexión. Usado por la
    * pantalla de error de conexión. Fuerza re-ejecución aunque `iniciarApp`
    * ya se hubiera completado.
+   *
+   * Resetea explícitamente `tokenError` para que el overlay desaparezca
+   * mientras el reintento está en vuelo: si vuelve a fallar, `applyAuthResult`
+   * lo reactivará; si tiene éxito, no reaparece.
    */
   async reintentarConexion(): Promise<void> {
+    this.convex.resetTokenError();
+    this.sessionService.limpiarErrorConexion();
     if (this.inicializacionEnCurso) {
       await this.inicializacionEnCurso;
       return;
