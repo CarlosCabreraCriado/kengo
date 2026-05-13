@@ -48,9 +48,22 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Icono y color para las notificaciones push (FCM). Sin estas
+             meta-data, Android pinta un cuadrado blanco en la status bar. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/colorPrimary" />
     </application>
 
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+ requiere permiso runtime para mostrar notificaciones.
+         El plugin @capacitor-firebase/messaging lo solicita vía
+         FirebaseMessaging.requestPermissions(). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

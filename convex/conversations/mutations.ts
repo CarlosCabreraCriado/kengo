@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import {
   getAuthenticatedUser,
@@ -161,6 +162,18 @@ export const sendMessage = mutation({
       fisioUnreadCount: receiverIsPaciente
         ? conv.fisioUnreadCount
         : conv.fisioUnreadCount + 1,
+    });
+
+    const receiverId = receiverIsPaciente ? conv.pacienteId : conv.fisioId;
+    const senderName = `${me.firstName} ${me.lastName}`.trim();
+    await ctx.scheduler.runAfter(0, internal.push.actions.sendPushToUser, {
+      userId: receiverId,
+      title: senderName || "Nuevo mensaje",
+      body: trimmed.slice(0, 140),
+      data: {
+        type: "chat_message",
+        conversationId: args.conversationId,
+      },
     });
 
     return messageId;

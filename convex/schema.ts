@@ -31,6 +31,23 @@ export default defineSchema({
       searchField: "searchableText",
     }),
 
+  // === PUSH TOKENS (FCM) ===
+  // Un registro por (usuario, dispositivo). El cliente Capacitor obtiene un
+  // FCM token unificado iOS/Android vía @capacitor-firebase/messaging y lo
+  // upserta aquí en cada arranque y cada vez que FCM rota el token.
+  // `deviceId` proviene de `Device.getId()` y es estable por instalación.
+  pushTokens: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    platform: v.union(v.literal("ios"), v.literal("android")),
+    deviceId: v.string(),
+    updatedAt: v.number(),
+    lastSeenAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_deviceId", ["userId", "deviceId"])
+    .index("by_token", ["token"]),
+
   // === CLÍNICAS ===
   clinics: defineTable({
     nombre: v.string(),

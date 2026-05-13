@@ -71,4 +71,15 @@ crons.daily(
   {},
 );
 
+// Recordatorio diario push para pacientes con plan activo que aún no han
+// completado la sesión del día. Hora fija 17:00 UTC:
+//   Península invierno (CET): 18:00 / verano (CEST): 19:00
+//   Canarias  invierno (WET): 17:00 / verano (WEST): 18:00
+crons.daily(
+  "daily-patient-reminder",
+  { hourUTC: 17, minuteUTC: 0 },
+  internal.push.crons.sendDailyPatientReminders,
+  {},
+);
+
 export default crons;

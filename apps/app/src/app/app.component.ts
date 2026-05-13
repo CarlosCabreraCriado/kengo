@@ -19,6 +19,7 @@ import {
 import { PlatformService } from './core/services/platform.service';
 import { KeyboardService } from './core/services/keyboard.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
+import { PushNotificationService } from './core/services/push-notification.service';
 import { assetUrl } from './core/utils/asset-url';
 import { ToastService } from './shared/services/toast/toast.service';
 import { ClinicasService } from './features/clinica/data-access/clinicas.service';
@@ -76,6 +77,7 @@ export class AppComponent implements OnInit {
   // `--keyboard-height` al DOM). No se usa directamente desde el template.
   private keyboard = inject(KeyboardService);
   private externalBrowser = inject(ExternalBrowserService);
+  private pushNotifications = inject(PushNotificationService);
   private toast = inject(ToastService);
   public sessionService = inject(SessionService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
@@ -200,6 +202,25 @@ export class AppComponent implements OnInit {
 
     if (this.platform.isNative()) {
       this.configurarPlataformaNativa();
+
+      // Inicializa push notifications una vez tengamos sesión válida con
+      // usuario cargado. El servicio es idempotente; si el usuario hace
+      // logout y vuelve a entrar, `teardown` y luego `init` se encargan
+      // de re-registrar el token.
+      let pushIniciado = false;
+      effect(() => {
+        if (pushIniciado) return;
+        if (
+          this.sessionService.sesionInicializada() &&
+          this.sessionService.isLoggedIn() &&
+          this.sessionService.usuario()
+        ) {
+          pushIniciado = true;
+          this.pushNotifications.init().catch((err) => {
+            console.error('[Push] init falló desde AppComponent:', err);
+          });
+        }
+      });
 
       // Ocultar splash cuando la sesión esté inicializada (evita flash blanco
       // del WebView mientras Better-Auth restaura y Convex carga el usuario).

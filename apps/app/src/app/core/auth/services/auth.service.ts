@@ -5,6 +5,7 @@ import { environment as env } from '../../../../environments/environment';
 import { SessionService } from './session.service';
 import { BetterAuthService } from './better-auth.service';
 import { ConvexService } from '../../convex/convex.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 import type {
   CreateUsuarioPayload,
   RegistroResult,
@@ -20,6 +21,7 @@ export class AuthService {
   private routeReuseStrategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
   private betterAuth = inject(BetterAuthService);
   private convex = inject(ConvexService);
+  private pushNotifications = inject(PushNotificationService);
 
   // Estado reactivo - solo indica si hay sesión activa
   readonly isLoggedIn = signal<boolean>(false);
@@ -39,8 +41,14 @@ export class AuthService {
 
   /**
    * Cierra sesión: limpia Better-Auth + Convex + estado local.
+   *
+   * El push token se borra ANTES de invalidar el auth de Convex para que la
+   * mutation `unregisterPushToken` se autentique correctamente; si falla
+   * (offline, etc.) se ignora — el token se limpiará en el siguiente envío
+   * cuando FCM responda UNREGISTERED.
    */
   async logout(evitarRedirect?: boolean): Promise<void> {
+    await this.pushNotifications.teardown();
     try {
       await this.betterAuth.signOut();
     } catch {
