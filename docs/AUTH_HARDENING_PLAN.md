@@ -407,7 +407,7 @@ async query<Q extends FunctionReference<'query'>>(
 | Fecha | Fase | Commit | Notas |
 |---|---|---|---|
 | 2026-05-13 | Fase 0 (mitigación urgente) | `0991d90` | Resuelto race condition de arranque, timeout en getConvexToken, overlay de error. |
-| | Fase 1 | | |
+| 2026-05-13 | Fase 1 | `24103d2` | purgeStoredSession + manejo de sesión zombie en logout e iniciarApp. Validación manual en navegador pendiente. |
 | | Fase 2 | | |
 | | Fase 3 | | |
 | | Fase 4 | | |
