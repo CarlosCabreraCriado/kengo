@@ -84,12 +84,37 @@ export class BetterAuthService {
 
   /**
    * Cierra sesion en Better-Auth.
+   *
+   * Tras esto se garantiza que tanto `localStorage` (cookie cross-domain +
+   * session_data) como el backup nativo en `@capacitor/preferences` quedan
+   * limpios, incluso si el `signOut` del cliente falla por red. Esto evita
+   * estado zombie donde `hasStoredSession()` devuelve true pero el servidor
+   * ya no reconoce la sesión.
    */
   async signOut(): Promise<void> {
     try {
       await this.authClient.signOut();
     } catch {
       // Ignorar errores de signOut
+    }
+    await this.purgeStoredSession();
+  }
+
+  /**
+   * Borra toda la información local de la sesión Better-Auth (cookie cross-
+   * domain y session_data, en localStorage y en el backup nativo). Idempotente
+   * y silencioso. Llamar siempre que detectemos sesión inválida — el plugin
+   * solo limpia localStorage si la request de `/sign-out` llega a su `init`;
+   * en logout offline o en invalidación server-side ese path no se ejecuta.
+   */
+  async purgeStoredSession(): Promise<void> {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(LS_COOKIE_KEY);
+        localStorage.removeItem(LS_SESSION_KEY);
+      }
+    } catch {
+      /* ignore */
     }
     await this.clearNativeBackup();
   }

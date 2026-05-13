@@ -61,6 +61,10 @@ export class AuthService {
     } catch {
       // ignorar
     }
+    // Garantizar la purga aunque signOut haya fallado (offline, 5xx). Sin
+    // esto las cookies podían quedar en localStorage y el siguiente arranque
+    // entraría en bucle de 401.
+    await this.betterAuth.purgeStoredSession();
     this.convex.clearAuth();
     this.limpiarEstadoLocal(evitarRedirect);
   }
@@ -168,7 +172,17 @@ export class AuthService {
           this.sessionService.marcarErrorConexion();
           return;
         }
-        // unauthorized / no-session: sesión real inválida.
+        // unauthorized / no-session: la cookie en localStorage existía pero
+        // el servidor la ha rechazado. Es un estado zombie — purgamos el
+        // rastro local para que el siguiente arranque vea hasStoredSession=
+        // false y no entre en bucle de 401. No redirigimos desde aquí; el
+        // AuthGuard se encargará al activar una ruta protegida.
+        console.warn(
+          '[AuthService] Sesión inválida en servidor — purgando estado local',
+        );
+        await this.betterAuth.purgeStoredSession();
+        this.convex.clearAuth();
+        this.sessionService.limpiar();
         this.isLoggedIn.set(false);
         return;
       }
