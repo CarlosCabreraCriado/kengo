@@ -561,7 +561,7 @@ Resumen accionable de cambios que **no** se aplican automáticamente al fusionar
 | 2026-05-13 | Fase 3 | `a7a115a` | refreshTokenWithRetry + resetTokenError + computed mostrarErrorConexion que reacciona al fallo runtime. |
 | 2026-05-13 | Fase 4 | `e5441df` | session.expiresIn=7d, updateAge=4h explícitos en convex/auth.ts. Requiere `npm run convex:deploy` para activar. |
 | 2026-05-13 | Fase 5 | `84b9b36` | Instrumentación cliente de getConvexToken (signal tokenAttempts + logs estructurados). SDK externo pendiente de decisión. |
-| | Fase 6 | | |
+| 2026-05-13 | Fase 6 | `faac911` | Alcance revisado: applicationID es literal hardcoded del plugin. Se valida SITE_URL al bootstrap y se documentan invariantes del JWT in-code. JWKS estático queda como mejora futura opcional. |
 | | Fase 7 | | |
 
 ---
