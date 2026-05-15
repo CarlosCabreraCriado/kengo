@@ -379,6 +379,44 @@ ${ctaButton(accessUrl, "Acceder a mis ejercicios")}
   );
 }
 
+export function therapistInvitationTemplate(
+  nombreColega: string | null,
+  nombreClinica: string,
+  registroUrl: string,
+  codigo: string,
+): string {
+  const remitente = nombreColega
+    ? `<strong>${nombreColega}</strong> de <strong>${nombreClinica}</strong>`
+    : `<strong>${nombreClinica}</strong>`;
+
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  ¡Hola!
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  ${remitente} te ha invitado a unirte como fisioterapeuta en <strong style="color: ${BRAND_COLOR};">Kengo</strong>.
+</p>
+<p style="margin: 0 0 24px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Crea tu cuenta con un solo paso: el código de invitación se aplicará automáticamente.
+</p>
+${ctaButton(registroUrl, "Crear mi cuenta")}
+<p style="margin: 30px 0 12px 0; color: #4a4a4a; font-size: 15px; line-height: 1.6; text-align: center;">
+  ¿Ya tienes cuenta en Kengo? Inicia sesión y canjea este código desde <em>"Tengo un código de invitación"</em>:
+</p>
+${codeBlock(codigo, "Tu código de invitación:")}
+<p style="margin: 0 0 12px 0; color: ${BRAND_COLOR}; font-size: 14px; font-weight: 500; line-height: 1.6; text-align: center;">
+  El código expira en 30 días.
+</p>
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Solo este email puede usar el código. Si no esperabas esta invitación, puedes ignorar el mensaje.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Si no esperabas esta invitación, puedes ignorarla.",
+  );
+}
+
 export function patientInvitationTemplate(
   nombre: string,
   accessUrl: string,

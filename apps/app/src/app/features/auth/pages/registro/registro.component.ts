@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal, ViewChild } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import {
@@ -42,6 +42,7 @@ export class RegistroComponent {
 
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
   currentStep = signal(0);
@@ -54,8 +55,15 @@ export class RegistroComponent {
     email: ['', emailRequired],
   });
 
+  // Permite pre-rellenar el código al llegar desde un email de invitación
+  // tipo `/auth/registro?codigo=XXXXXXXX`. Normalizamos a uppercase para
+  // alinear con el formato canónico que valida el backend.
   codigoClinicaForm = this.fb.group({
-    codigo: [''],
+    codigo: [
+      (this.route.snapshot.queryParamMap.get('codigo') ?? '')
+        .trim()
+        .toUpperCase(),
+    ],
   });
 
   passwordForm = this.fb.group({

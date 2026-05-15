@@ -8,12 +8,17 @@ import {
 } from "../_helpers/permissions";
 import { LIMITE_FISIOS_AUTOSERVICIO } from "../billing/_helpers";
 
+// Todos los códigos generados por la app son invitaciones nominales de un
+// único uso con caducidad fija de 30 días. La regla vive aquí (no en cada
+// caller) para que cualquier cliente que invoque `create` herede el mismo
+// comportamiento sin posibilidad de override.
+const USOS_MAXIMOS = 1;
+const DIAS_EXPIRACION = 30;
+
 export const create = mutation({
   args: {
     clinicId: v.id("clinics"),
     tipo: v.union(v.literal("fisioterapeuta"), v.literal("paciente")),
-    usosMaximos: v.optional(v.number()),
-    fechaExpiracion: v.optional(v.string()),
     email: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -45,32 +50,30 @@ export const create = mutation({
       }
     }
 
-    // Los códigos de paciente son siempre invitaciones nominales: requieren
-    // email vinculado y se canjean una sola vez. La gestión de pacientes vive
-    // en /mis-pacientes, donde el modal exige email para ambos modos.
+    // Los códigos son invitaciones nominales: requieren email vinculado
+    // tanto para pacientes como para fisios.
     const emailNorm = args.email?.trim().toLowerCase() || undefined;
-    let usosMaximos = args.usosMaximos;
-    if (args.tipo === "paciente") {
-      if (!emailNorm) {
-        throw new ConvexError({
-          code: "EMAIL_OBLIGATORIO_PACIENTE",
-          message:
-            "Los códigos de paciente deben estar vinculados a un email.",
-        });
-      }
-      usosMaximos = 1;
+    if (args.tipo === "paciente" && !emailNorm) {
+      throw new ConvexError({
+        code: "EMAIL_OBLIGATORIO_PACIENTE",
+        message:
+          "Los códigos de paciente deben estar vinculados a un email.",
+      });
     }
 
     const codigo = generateRandomCode(8);
+    const fechaExpiracion = new Date(
+      Date.now() + DIAS_EXPIRACION * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
     const codeId = await ctx.db.insert("accessCodes", {
       clinicId: args.clinicId,
       codigo,
       tipo: args.tipo,
       activo: true,
-      usosMaximos,
+      usosMaximos: USOS_MAXIMOS,
       usosActuales: 0,
-      fechaExpiracion: args.fechaExpiracion,
+      fechaExpiracion,
       email: emailNorm,
       creadoPor: user._id,
     });

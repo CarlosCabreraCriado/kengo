@@ -4,7 +4,6 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { ClipboardService } from '../../../../core/services/clipboard.service';
-import { emailOptional } from '../../../../shared';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
 
 export interface GenerarCodigoDialogData {
@@ -32,7 +31,6 @@ import {
   Ui2DialogActionsComponent,
   Ui2InputComponent,
   Ui2ButtonComponent,
-  Ui2ToggleComponent,
   Ui2RadioGroupComponent,
   Ui2PillComponent,
   type Ui2RadioOption,
@@ -50,7 +48,6 @@ import {
     Ui2DialogActionsComponent,
     Ui2InputComponent,
     Ui2ButtonComponent,
-    Ui2ToggleComponent,
     Ui2RadioGroupComponent,
     Ui2PillComponent,
   ],
@@ -72,26 +69,15 @@ export class GenerarCodigoDialogComponent implements OnInit {
 
   form = this.fb.group({
     tipo: ['paciente' as TipoCodigoAcceso, [Validators.required]],
-    vincularEmail: [true],
-    email: ['', emailOptional],
-    usosMaximos: [1 as number | null],
-    diasExpiracion: [null as number | null],
+    email: ['', [Validators.required, Validators.email]],
   });
 
-  // Convertir valueChanges a signal para reactividad
-  private formValue = toSignal(this.form.valueChanges, { initialValue: this.form.value });
-
-  // Validación: si vincularEmail está activo, email es obligatorio
-  emailValido = computed(() => {
-    const value = this.formValue();
-    if (!value.vincularEmail) return true;
-    const email = value.email?.trim() || '';
-    // Verificar que hay email y que es válido (formato básico)
-    return email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // Status del form como signal para que computed reaccione a cambios de validez.
+  private formStatus = toSignal(this.form.statusChanges, {
+    initialValue: this.form.status,
   });
 
-  // El formulario es válido si pasa validaciones base Y la validación de email
-  formValido = computed(() => this.form.valid && this.emailValido());
+  formValido = computed(() => this.formStatus() === 'VALID');
 
   // Opciones radio reactivas según permisos
   tipoOptions = computed<Ui2RadioOption[]>(() => {
@@ -112,12 +98,6 @@ export class GenerarCodigoDialogComponent implements OnInit {
     return opts;
   });
 
-  // Opciones avanzadas expandibles
-  showAdvanced = signal(false);
-
-  // Sección email expandida — calculado a partir del valor
-  vincularEmail = computed(() => !!this.formValue().vincularEmail);
-
   ngOnInit() {
     const tipo = this.tipoFijo ?? this.tipoInicial;
     if (tipo) {
@@ -133,10 +113,6 @@ export class GenerarCodigoDialogComponent implements OnInit {
   codigoResult = signal<string | null>(null);
   emailEnviado = signal(false);
 
-  toggleAdvanced() {
-    this.showAdvanced.update((v) => !v);
-  }
-
   async onSubmit() {
     if (!this.formValido() || this.loading()) return;
 
@@ -145,19 +121,12 @@ export class GenerarCodigoDialogComponent implements OnInit {
 
     // getRawValue incluye los controles `disabled` (caso `tipoFijo`).
     const formValue = this.form.getRawValue();
-    // Solo enviar email si vincularEmail está activo y hay un email válido
-    const emailValue = formValue.vincularEmail && formValue.email?.trim()
-      ? formValue.email.trim()
-      : null;
+    const emailValue = formValue.email?.trim() ?? '';
 
     const result = await this.clinicaGestionService.generarCodigo(
       this.clinicaId,
       formValue.tipo as TipoCodigoAcceso,
-      {
-        usosMaximos: formValue.usosMaximos || null,
-        diasExpiracion: formValue.diasExpiracion || null,
-        email: emailValue,
-      }
+      { email: emailValue },
     );
 
     this.loading.set(false);

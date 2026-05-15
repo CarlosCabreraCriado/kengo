@@ -156,12 +156,13 @@ export class ClinicaGestionService {
   }
 
   /**
-   * Genera un nuevo código de acceso para una clínica
+   * Genera un nuevo código de acceso para una clínica. Los defaults
+   * (1 uso, 30 días) los aplica `accessCodes.mutations.create`.
    */
   async generarCodigo(
     clinicaId: string,
     tipo: TipoCodigoAcceso,
-    opciones?: { usosMaximos?: number | null; diasExpiracion?: number | null; email?: string | null },
+    opciones?: { email?: string | null },
   ): Promise<GenerarCodigoResponse> {
     this.loading.set(true);
     this.error.set(null);
@@ -169,21 +170,11 @@ export class ClinicaGestionService {
     try {
       const convexId = clinicaId as Id<'clinics'>;
 
-      // Calcular fecha de expiracion si se proporcionan dias
-      let fechaExpiracion: string | undefined;
-      if (opciones?.diasExpiracion) {
-        const fecha = new Date();
-        fecha.setDate(fecha.getDate() + opciones.diasExpiracion);
-        fechaExpiracion = fecha.toISOString();
-      }
-
-      const result = await this.convex.mutation(
-        api.accessCodes.mutations.create,
+      const result = await this.convex.action(
+        api.accessCodes.actions.createAndInvite,
         {
           clinicId: convexId,
           tipo,
-          usosMaximos: opciones?.usosMaximos ?? undefined,
-          fechaExpiracion,
           email: opciones?.email ?? undefined,
         },
       );
@@ -191,6 +182,7 @@ export class ClinicaGestionService {
       return {
         success: true,
         codigo: result.codigo,
+        emailEnviado: result.emailEnviado,
       };
     } catch (err: any) {
       const errorMsg = err?.data?.message || err?.message || 'Error al generar código';

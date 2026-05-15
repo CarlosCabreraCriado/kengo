@@ -17,83 +17,31 @@
           ></ui2-radio-group>
         }
 
-        <!-- Invitar por email -->
+        <!-- Email del invitado -->
         <div class="gc-email-card">
           <div class="gc-email-header">
-            <div class="gc-email-info">
-              <span class="material-symbols-outlined gc-email-icon" aria-hidden="true">mail</span>
-              <div class="gc-email-text">
-                <span class="gc-email-title">Invitar por email</span>
-                <span class="gc-email-desc">Se enviará notificación automática</span>
-              </div>
+            <span class="material-symbols-outlined gc-email-icon" aria-hidden="true">mail</span>
+            <div class="gc-email-text">
+              <span class="gc-email-title">Email del invitado</span>
+              <span class="gc-email-desc">Solo este email podrá canjear el código</span>
             </div>
-            <ui2-toggle
-              formControlName="vincularEmail"
-              ariaLabel="Invitar por email"
-            ></ui2-toggle>
           </div>
 
-          @if (vincularEmail()) {
-            <div class="gc-email-input">
-              <ui2-input
-                type="email"
-                formControlName="email"
-                placeholder="ejemplo@email.com"
-                iconLeft="alternate_email"
-                [error]="
-                  !emailValido() && form.value.email === ''
-                    ? 'Email requerido para enviar invitación'
-                    : !emailValido()
-                    ? 'Introduce un email válido'
-                    : null
-                "
-                [hint]="emailValido() ? 'Solo este email podrá usar el código' : null"
-              ></ui2-input>
-            </div>
-          } @else {
-            <p class="gc-email-disabled">
-              <span class="material-symbols-outlined" aria-hidden="true">info</span>
-              Cualquier persona con el código podrá usarlo
-            </p>
-          }
-        </div>
-
-        <!-- Opciones avanzadas -->
-        <div class="gc-advanced">
-          <button
-            type="button"
-            class="gc-advanced-toggle"
-            (click)="toggleAdvanced()"
-            [attr.aria-expanded]="showAdvanced()"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">tune</span>
-            <span>Opciones avanzadas</span>
-            <span
-              class="material-symbols-outlined gc-advanced-chevron"
-              [class.gc-advanced-chevron--open]="showAdvanced()"
-              aria-hidden="true"
-            >expand_more</span>
-          </button>
-
-          @if (showAdvanced()) {
-            <div class="gc-advanced-body">
-              <ui2-input
-                label="Límite de usos"
-                type="number"
-                formControlName="usosMaximos"
-                placeholder="Sin límite"
-                hint="Número máximo de personas que pueden usar este código"
-              ></ui2-input>
-
-              <ui2-input
-                label="Días hasta expiración"
-                type="number"
-                formControlName="diasExpiracion"
-                placeholder="Sin expiración"
-                hint="Después de estos días el código dejará de funcionar"
-              ></ui2-input>
-            </div>
-          }
+          <div class="gc-email-input">
+            <ui2-input
+              type="email"
+              formControlName="email"
+              placeholder="ejemplo@email.com"
+              iconLeft="alternate_email"
+              [error]="
+                form.controls.email.touched && form.controls.email.errors?.['required']
+                  ? 'Email requerido'
+                  : form.controls.email.touched && form.controls.email.errors?.['email']
+                  ? 'Introduce un email válido'
+                  : null
+              "
+            ></ui2-input>
+          </div>
         </div>
 
         @if (error()) {
@@ -131,6 +79,11 @@
           <ui2-pill variant="success" icon="mail">
             Notificación enviada a {{ form.value.email }}
           </ui2-pill>
+        } @else {
+          <p class="gc-email-warning" role="status">
+            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+            No se pudo enviar el email de invitación. Copia el código y compártelo manualmente.
+          </p>
         }
 
         <div class="gc-code-display">
@@ -146,17 +99,7 @@
         </div>
 
         <p class="gc-code-hint">
-          @if (form.value.email?.trim()) {
-            Este código está vinculado a <strong>{{ form.value.email }}</strong> y solo podrá ser usado con ese email.
-          } @else {
-            Comparte este código con
-            @if (form.value.tipo === 'fisioterapeuta') {
-              el fisioterapeuta
-            } @else {
-              el paciente
-            }
-            para que pueda unirse a tu clínica.
-          }
+          Este código está vinculado a <strong>{{ form.value.email }}</strong> y solo podrá ser usado con ese email.
         </p>
       </div>
     </ui2-dialog-content>

@@ -11,6 +11,7 @@ import {
   migrationAnnouncementTemplate,
   enterpriseInvitationTemplate,
   patientInvitationTemplate,
+  therapistInvitationTemplate,
 } from "./templates";
 
 export const sendEmail = internalAction({
@@ -238,6 +239,43 @@ export const sendEnterpriseInvitationEmail = internalAction({
       return false;
     }
     console.log(`[Email] Enterprise invitation enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendTherapistInvitationEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreColega: v.optional(v.string()),
+    nombreClinica: v.string(),
+    registroUrl: v.string(),
+    codigo: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `Te han invitado a unirte a ${args.nombreClinica} en Kengo`,
+      html: therapistInvitationTemplate(
+        args.nombreColega ?? null,
+        args.nombreClinica,
+        args.registroUrl,
+        args.codigo,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando invitación de fisio:", error);
+      return false;
+    }
+    console.log(`[Email] Invitación de fisio enviada a ${args.to}`);
     return true;
   },
 });

@@ -16,6 +16,7 @@ import type * as _helpers_patientAccess from "../_helpers/patientAccess.js";
 import type * as _helpers_permissions from "../_helpers/permissions.js";
 import type * as _helpers_rollupComputation from "../_helpers/rollupComputation.js";
 import type * as _helpers_validators from "../_helpers/validators.js";
+import type * as accessCodes_actions from "../accessCodes/actions.js";
 import type * as accessCodes_mutations from "../accessCodes/mutations.js";
 import type * as accessCodes_queries from "../accessCodes/queries.js";
 import type * as accessTokens_actions from "../accessTokens/actions.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/permissions": typeof _helpers_permissions;
   "_helpers/rollupComputation": typeof _helpers_rollupComputation;
   "_helpers/validators": typeof _helpers_validators;
+  "accessCodes/actions": typeof accessCodes_actions;
   "accessCodes/mutations": typeof accessCodes_mutations;
   "accessCodes/queries": typeof accessCodes_queries;
   "accessTokens/actions": typeof accessTokens_actions;

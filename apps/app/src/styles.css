@@ -769,6 +769,14 @@ body {
   }
 }
 
+/* Override puntual: el formulario de "generar código de acceso" sólo tiene
+   un input visible (email) y un toggle de opciones avanzadas colapsado.
+   Reducir el ancho del pane evita que el diálogo se vea desproporcionado
+   en pantallas anchas. */
+.ui-dialog-panel--standard:has(app-generar-codigo-dialog) {
+  max-width: 440px;
+}
+
 .selector-paciente-dialog {
   width: 100%;
   max-width: 500px;

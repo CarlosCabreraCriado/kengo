@@ -20,16 +20,7 @@
 .gc-email-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.gc-email-info {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  flex: 1;
-  min-width: 0;
 }
 
 .gc-email-icon {
@@ -60,72 +51,24 @@
   padding: 0;
 }
 
-.gc-email-disabled {
+/* Aviso suave si el email no salió (p. ej. RESEND_API_KEY no configurada) */
+.gc-email-warning {
   display: flex;
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 12px;
-  color: var(--ink-500);
-}
-
-.gc-email-disabled .material-symbols-outlined {
-  font-size: 16px;
-  color: var(--ink-400);
-}
-
-/* Advanced */
-.gc-advanced {
-  border-radius: 14px;
-  background: var(--cream-50);
-  border: 1px solid var(--ink-100);
-  overflow: hidden;
-}
-
-.gc-advanced-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-family: Galvji, sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-700);
-  transition: background 0.15s;
-}
-
-.gc-advanced-toggle:hover {
+  padding: 8px 12px;
+  border-radius: 9999px;
   background: var(--cream-100);
-}
-
-.gc-advanced-toggle .material-symbols-outlined {
-  font-size: 18px;
-  color: var(--ink-500);
-}
-
-.gc-advanced-toggle > span:nth-child(2) {
-  flex: 1;
+  color: var(--ink-700);
+  font-size: 12px;
+  line-height: 1.35;
   text-align: left;
 }
 
-.gc-advanced-chevron {
-  transition: transform 0.2s;
-}
-
-.gc-advanced-chevron--open {
-  transform: rotate(180deg);
-}
-
-.gc-advanced-body {
-  padding: 12px 14px 14px;
-  border-top: 1px solid var(--ink-100);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.gc-email-warning .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--ink-500);
 }
 
 /* Error */

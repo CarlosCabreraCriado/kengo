@@ -137,11 +137,10 @@ export const createPatient = action({
     );
     const accessToken = { id: "", url: tokenResult.url };
 
-    // Código de acceso nominal (1 uso, 30 días, vinculado al email del
-    // paciente) — alternativa al magic link si el paciente prefiere
-    // registrarse manualmente o pierde el enlace.
-    const expiracion = new Date();
-    expiracion.setDate(expiracion.getDate() + 30);
+    // Código de acceso nominal vinculado al email del paciente — alternativa
+    // al magic link si el paciente prefiere registrarse manualmente o pierde
+    // el enlace. Los defaults (1 uso, 30 días) los aplica el handler de
+    // `accessCodes.mutations.create`.
     let codigoAcceso: string | undefined;
     try {
       const codigoResult = await ctx.runMutation(
@@ -150,7 +149,6 @@ export const createPatient = action({
           clinicId: args.clinicId,
           tipo: "paciente",
           email,
-          fechaExpiracion: expiracion.toISOString(),
         },
       );
       codigoAcceso = codigoResult.codigo;
