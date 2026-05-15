@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
 import {
-  Ui2ButtonComponent,
-  Ui2DialogActionsComponent,
   Ui2DialogContentComponent,
   Ui2DialogHeaderComponent,
   Ui2DialogHostComponent,
@@ -13,11 +11,9 @@ import {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    Ui2ButtonComponent,
     Ui2DialogHostComponent,
     Ui2DialogHeaderComponent,
     Ui2DialogContentComponent,
-    Ui2DialogActionsComponent,
   ],
   templateUrl: './privacy-policy.component.html',
   styleUrl: './privacy-policy.component.css',

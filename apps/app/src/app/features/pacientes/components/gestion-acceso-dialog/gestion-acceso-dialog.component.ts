@@ -8,10 +8,9 @@ import {
   ViewChild,
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { firstValueFrom } from 'rxjs';
 import QRCode from 'qrcode';
 
-import { ConfirmDialogComponent, DialogService } from '../../../../shared';
+import { DialogService } from '../../../../shared';
 import {
   Ui2DialogHostComponent,
   Ui2DialogHeaderComponent,
@@ -190,19 +189,14 @@ export class GestionAccesoDialogComponent implements OnInit {
   }
 
   async regenerarToken() {
-    const dialogRef = this.dialogService.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Regenerar token',
-        message: 'El token actual dejará de funcionar y se generará uno nuevo. El paciente necesitará el nuevo enlace o QR para acceder.',
-        confirmText: 'Regenerar',
-        cancelText: 'Cancelar',
-        variant: 'warning',
-      },
+    const confirmado = await this.dialogService.confirm({
+      title: 'Regenerar token',
+      message: 'El token actual dejará de funcionar y se generará uno nuevo. El paciente necesitará el nuevo enlace o QR para acceder.',
+      confirmText: 'Regenerar',
+      cancelText: 'Cancelar',
     });
 
-    const result = await firstValueFrom(dialogRef.closed);
-
-    if (result) {
+    if (confirmado) {
       await this.ejecutarRegeneracion();
     }
   }

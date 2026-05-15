@@ -35,7 +35,7 @@ import { Ui2SpinnerComponent } from '../spinner/spinner.component';
       position: absolute;
       inset: 0;
       pointer-events: none;
-      z-index: 50;
+      z-index: var(--z-loader);
     }
     .ui2-page-loader-overlay {
       position: absolute;

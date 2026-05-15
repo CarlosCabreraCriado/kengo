@@ -242,37 +242,5 @@
     <div class="mc-snackbar">{{ snackbarMessage() }}</div>
   }
 
-  <!-- Dialogs -->
-  @if (mostrarModalVincular()) {
-    <app-vincular-clinica-dialog
-      (cerrar)="cerrarVincularClinica()"
-      (vinculacionExitosa)="onVinculacionExitosa()"
-    />
-  }
-
-  @if (mostrarModalCrear()) {
-    <app-crear-clinica-dialog
-      (cerrar)="cerrarCrearClinica()"
-      (clinicaCreada)="onClinicaCreada()"
-    />
-  }
-
-  @if (mostrarModalGenerarCodigo() && currentClinic()) {
-    <app-generar-codigo-dialog
-      [clinicaId]="currentClinic()!.id"
-      [esAdmin]="esAdmin()"
-      [tipoFijo]="'fisioterapeuta'"
-      (cerrar)="cerrarGenerarCodigo()"
-      (codigoGenerado)="onCodigoGenerado($event)"
-      (requiereContactoVentas)="onRequiereContactoVentas()"
-    />
-  }
-
-  @if (mostrarModalEditar() && currentClinic()) {
-    <app-editar-clinica-dialog
-      [clinica]="currentClinic()!"
-      (cerrar)="cerrarEditarClinica()"
-      (clinicaActualizada)="onClinicaActualizada()"
-    />
-  }
+  <!-- Dialogs ahora se abren vía DialogService (no inline) -->
 </section>

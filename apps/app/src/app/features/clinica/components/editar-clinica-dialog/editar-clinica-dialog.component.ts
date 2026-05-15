@@ -1,9 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Input,
-  Output,
   inject,
   signal,
   computed,
@@ -12,7 +9,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Dialog } from '@angular/cdk/dialog';
+import { Dialog, DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ImageUploadComponent } from '../../../../shared/ui/image-upload/image-upload.component';
@@ -82,9 +79,8 @@ const COLOR_PRESETS = [
   styleUrl: './editar-clinica-dialog.component.css',
 })
 export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
-  @Input({ required: true }) clinica!: Clinica;
-  @Output() cerrar = new EventEmitter<void>();
-  @Output() clinicaActualizada = new EventEmitter<void>();
+  readonly clinica = inject<Clinica>(DIALOG_DATA);
+  private readonly dialogRef = inject(DialogRef<boolean>);
 
   private fb = inject(FormBuilder);
   private dialog = inject(Dialog);
@@ -398,7 +394,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       if (result.success) {
         // Refresh clinic data
         this.clinicasService.misClinicasRes.reload();
-        this.clinicaActualizada.emit();
+        this.dialogRef.close(true);
       } else {
         this.error.set(result.error || 'Error al actualizar la clínica');
       }
@@ -411,10 +407,8 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     }
   }
 
-  onOverlayClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('dialog-overlay')) {
-      this.cerrar.emit();
-    }
+  cerrar() {
+    this.dialogRef.close(false);
   }
 
   // === Color Methods ===

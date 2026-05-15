@@ -66,7 +66,7 @@ const DEFAULT_TABS: TabItem[] = [
       bottom: max(16px, env(safe-area-inset-bottom));
       left: 16px;
       right: 16px;
-      z-index: 30;
+      z-index: var(--z-floating);
       max-width: 720px;
       margin: 0 auto;
     }

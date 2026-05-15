@@ -1,174 +1,170 @@
-<div class="dialog-overlay" (click)="onOverlayClick($event)">
-  <div class="dialog-shell">
-    <ui2-dialog-host>
-      <ui2-dialog-header
-        [title]="codigoResult() ? 'Código generado' : 'Generar código de acceso'"
-        [subtitle]="codigoResult() ? null : 'Crea un código para invitar usuarios'"
-        (closeClick)="terminar()"
-      ></ui2-dialog-header>
+<ui2-dialog-host>
+  <ui2-dialog-header
+    [title]="codigoResult() ? 'Código generado' : 'Generar código de acceso'"
+    [subtitle]="codigoResult() ? null : 'Crea un código para invitar usuarios'"
+    (closeClick)="terminar()"
+  ></ui2-dialog-header>
 
-      @if (!codigoResult()) {
-        <ui2-dialog-content>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="gc-form">
-            <!-- Tipo de usuario (oculto si el tipo está fijado por el contexto) -->
-            @if (!tipoFijo) {
-              <ui2-radio-group
-                label="Tipo de usuario"
-                formControlName="tipo"
-                [options]="tipoOptions()"
-              ></ui2-radio-group>
-            }
+  @if (!codigoResult()) {
+    <ui2-dialog-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="gc-form">
+        <!-- Tipo de usuario (oculto si el tipo está fijado por el contexto) -->
+        @if (!tipoFijo) {
+          <ui2-radio-group
+            label="Tipo de usuario"
+            formControlName="tipo"
+            [options]="tipoOptions()"
+          ></ui2-radio-group>
+        }
 
-            <!-- Invitar por email -->
-            <div class="gc-email-card">
-              <div class="gc-email-header">
-                <div class="gc-email-info">
-                  <span class="material-symbols-outlined gc-email-icon" aria-hidden="true">mail</span>
-                  <div class="gc-email-text">
-                    <span class="gc-email-title">Invitar por email</span>
-                    <span class="gc-email-desc">Se enviará notificación automática</span>
-                  </div>
-                </div>
-                <ui2-toggle
-                  formControlName="vincularEmail"
-                  ariaLabel="Invitar por email"
-                ></ui2-toggle>
+        <!-- Invitar por email -->
+        <div class="gc-email-card">
+          <div class="gc-email-header">
+            <div class="gc-email-info">
+              <span class="material-symbols-outlined gc-email-icon" aria-hidden="true">mail</span>
+              <div class="gc-email-text">
+                <span class="gc-email-title">Invitar por email</span>
+                <span class="gc-email-desc">Se enviará notificación automática</span>
               </div>
-
-              @if (vincularEmail()) {
-                <div class="gc-email-input">
-                  <ui2-input
-                    type="email"
-                    formControlName="email"
-                    placeholder="ejemplo@email.com"
-                    iconLeft="alternate_email"
-                    [error]="
-                      !emailValido() && form.value.email === ''
-                        ? 'Email requerido para enviar invitación'
-                        : !emailValido()
-                        ? 'Introduce un email válido'
-                        : null
-                    "
-                    [hint]="emailValido() ? 'Solo este email podrá usar el código' : null"
-                  ></ui2-input>
-                </div>
-              } @else {
-                <p class="gc-email-disabled">
-                  <span class="material-symbols-outlined" aria-hidden="true">info</span>
-                  Cualquier persona con el código podrá usarlo
-                </p>
-              }
             </div>
-
-            <!-- Opciones avanzadas -->
-            <div class="gc-advanced">
-              <button
-                type="button"
-                class="gc-advanced-toggle"
-                (click)="toggleAdvanced()"
-                [attr.aria-expanded]="showAdvanced()"
-              >
-                <span class="material-symbols-outlined" aria-hidden="true">tune</span>
-                <span>Opciones avanzadas</span>
-                <span
-                  class="material-symbols-outlined gc-advanced-chevron"
-                  [class.gc-advanced-chevron--open]="showAdvanced()"
-                  aria-hidden="true"
-                >expand_more</span>
-              </button>
-
-              @if (showAdvanced()) {
-                <div class="gc-advanced-body">
-                  <ui2-input
-                    label="Límite de usos"
-                    type="number"
-                    formControlName="usosMaximos"
-                    placeholder="Sin límite"
-                    hint="Número máximo de personas que pueden usar este código"
-                  ></ui2-input>
-
-                  <ui2-input
-                    label="Días hasta expiración"
-                    type="number"
-                    formControlName="diasExpiracion"
-                    placeholder="Sin expiración"
-                    hint="Después de estos días el código dejará de funcionar"
-                  ></ui2-input>
-                </div>
-              }
-            </div>
-
-            @if (error()) {
-              <div class="gc-error" role="alert">
-                <span class="material-symbols-outlined" aria-hidden="true">error</span>
-                {{ error() }}
-              </div>
-            }
-          </form>
-        </ui2-dialog-content>
-
-        <ui2-dialog-actions align="end">
-          <ui2-button variant="secondary" (clicked)="cerrar.emit()">Cancelar</ui2-button>
-          <ui2-button
-            variant="primary"
-            iconLeft="key"
-            [disabled]="!formValido()"
-            [loading]="loading()"
-            (clicked)="onSubmit()"
-          >
-            Generar código
-          </ui2-button>
-        </ui2-dialog-actions>
-      } @else {
-        <!-- Resultado: código generado -->
-        <ui2-dialog-content>
-          <div class="gc-success">
-            <div class="gc-success-icon">
-              <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
-            </div>
-
-            <p class="gc-success-text">Código generado exitosamente</p>
-
-            @if (emailEnviado()) {
-              <ui2-pill variant="success" icon="mail">
-                Notificación enviada a {{ form.value.email }}
-              </ui2-pill>
-            }
-
-            <div class="gc-code-display">
-              <span class="gc-code-value">{{ codigoResult() }}</span>
-              <ui2-button
-                variant="secondary"
-                size="sm"
-                iconLeft="content_copy"
-                (clicked)="copiarCodigo()"
-              >
-                Copiar
-              </ui2-button>
-            </div>
-
-            <p class="gc-code-hint">
-              @if (form.value.email?.trim()) {
-                Este código está vinculado a <strong>{{ form.value.email }}</strong> y solo podrá ser usado con ese email.
-              } @else {
-                Comparte este código con
-                @if (form.value.tipo === 'fisioterapeuta') {
-                  el fisioterapeuta
-                } @else {
-                  el paciente
-                }
-                para que pueda unirse a tu clínica.
-              }
-            </p>
+            <ui2-toggle
+              formControlName="vincularEmail"
+              ariaLabel="Invitar por email"
+            ></ui2-toggle>
           </div>
-        </ui2-dialog-content>
 
-        <ui2-dialog-actions align="end">
-          <ui2-button variant="primary" [fullWidth]="true" (clicked)="terminar()">
-            Aceptar
+          @if (vincularEmail()) {
+            <div class="gc-email-input">
+              <ui2-input
+                type="email"
+                formControlName="email"
+                placeholder="ejemplo@email.com"
+                iconLeft="alternate_email"
+                [error]="
+                  !emailValido() && form.value.email === ''
+                    ? 'Email requerido para enviar invitación'
+                    : !emailValido()
+                    ? 'Introduce un email válido'
+                    : null
+                "
+                [hint]="emailValido() ? 'Solo este email podrá usar el código' : null"
+              ></ui2-input>
+            </div>
+          } @else {
+            <p class="gc-email-disabled">
+              <span class="material-symbols-outlined" aria-hidden="true">info</span>
+              Cualquier persona con el código podrá usarlo
+            </p>
+          }
+        </div>
+
+        <!-- Opciones avanzadas -->
+        <div class="gc-advanced">
+          <button
+            type="button"
+            class="gc-advanced-toggle"
+            (click)="toggleAdvanced()"
+            [attr.aria-expanded]="showAdvanced()"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+            <span>Opciones avanzadas</span>
+            <span
+              class="material-symbols-outlined gc-advanced-chevron"
+              [class.gc-advanced-chevron--open]="showAdvanced()"
+              aria-hidden="true"
+            >expand_more</span>
+          </button>
+
+          @if (showAdvanced()) {
+            <div class="gc-advanced-body">
+              <ui2-input
+                label="Límite de usos"
+                type="number"
+                formControlName="usosMaximos"
+                placeholder="Sin límite"
+                hint="Número máximo de personas que pueden usar este código"
+              ></ui2-input>
+
+              <ui2-input
+                label="Días hasta expiración"
+                type="number"
+                formControlName="diasExpiracion"
+                placeholder="Sin expiración"
+                hint="Después de estos días el código dejará de funcionar"
+              ></ui2-input>
+            </div>
+          }
+        </div>
+
+        @if (error()) {
+          <div class="gc-error" role="alert">
+            <span class="material-symbols-outlined" aria-hidden="true">error</span>
+            {{ error() }}
+          </div>
+        }
+      </form>
+    </ui2-dialog-content>
+
+    <ui2-dialog-actions align="end">
+      <ui2-button variant="secondary" (clicked)="cerrar()">Cancelar</ui2-button>
+      <ui2-button
+        variant="primary"
+        iconLeft="key"
+        [disabled]="!formValido()"
+        [loading]="loading()"
+        (clicked)="onSubmit()"
+      >
+        Generar código
+      </ui2-button>
+    </ui2-dialog-actions>
+  } @else {
+    <!-- Resultado: código generado -->
+    <ui2-dialog-content>
+      <div class="gc-success">
+        <div class="gc-success-icon">
+          <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        </div>
+
+        <p class="gc-success-text">Código generado exitosamente</p>
+
+        @if (emailEnviado()) {
+          <ui2-pill variant="success" icon="mail">
+            Notificación enviada a {{ form.value.email }}
+          </ui2-pill>
+        }
+
+        <div class="gc-code-display">
+          <span class="gc-code-value">{{ codigoResult() }}</span>
+          <ui2-button
+            variant="secondary"
+            size="sm"
+            iconLeft="content_copy"
+            (clicked)="copiarCodigo()"
+          >
+            Copiar
           </ui2-button>
-        </ui2-dialog-actions>
-      }
-    </ui2-dialog-host>
-  </div>
-</div>
+        </div>
+
+        <p class="gc-code-hint">
+          @if (form.value.email?.trim()) {
+            Este código está vinculado a <strong>{{ form.value.email }}</strong> y solo podrá ser usado con ese email.
+          } @else {
+            Comparte este código con
+            @if (form.value.tipo === 'fisioterapeuta') {
+              el fisioterapeuta
+            } @else {
+              el paciente
+            }
+            para que pueda unirse a tu clínica.
+          }
+        </p>
+      </div>
+    </ui2-dialog-content>
+
+    <ui2-dialog-actions align="end">
+      <ui2-button variant="primary" [fullWidth]="true" (clicked)="terminar()">
+        Aceptar
+      </ui2-button>
+    </ui2-dialog-actions>
+  }
+</ui2-dialog-host>

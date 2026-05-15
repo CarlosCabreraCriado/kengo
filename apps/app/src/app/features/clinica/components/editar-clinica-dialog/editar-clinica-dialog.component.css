@@ -1,28 +1,5 @@
 @reference "tailwindcss";
 
-/* Overlay backdrop. */
-.dialog-overlay {
-  @apply fixed inset-0 z-[100] flex items-center justify-center p-5 overflow-y-auto;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  animation: ec-fade-in 0.2s ease-out;
-}
-
-.dialog-shell {
-  @apply w-full max-w-3xl my-6;
-  animation: ec-slide-up 0.25s ease-out;
-}
-
-@keyframes ec-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes ec-slide-up {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 .ec-tabs {
   margin-bottom: 16px;
 }

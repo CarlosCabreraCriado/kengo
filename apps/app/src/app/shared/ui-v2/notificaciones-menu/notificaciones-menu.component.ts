@@ -120,7 +120,7 @@ import { Ui2SpinnerComponent } from '../spinner/spinner.component';
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      z-index: 1100;
+      z-index: var(--z-menu);
       width: 360px;
       max-width: calc(100vw - 32px);
       max-height: 70vh;

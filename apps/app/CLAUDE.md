@@ -55,11 +55,30 @@ Reglas específicas para la app Angular 20. El CLAUDE.md raíz cubre el monorepo
 | Selector de fecha/hora | `<ui2-datepicker mode="date\|datetime\|time">` (con `formControlName`) |
 | Stepper/wizard | `<ui2-stepper [selectedIndex]>` + `<ui2-step label>` |
 | Progress bar lineal | `<ui2-progress-bar [value]>` (variantes `sm`/`md`, colores semánticos) |
-| Surface de diálogo (estructura interna del componente abierto) | `<ui2-dialog-host>` + `<ui2-dialog-header>` + `<ui2-dialog-content>` + `<ui2-dialog-actions>` |
+| Surface de diálogo (estructura interna del componente abierto) | `<ui2-dialog-host [variant]>` + `<ui2-dialog-header>` + `<ui2-dialog-content>` + (opcional) `<ui2-dialog-actions>` |
 | Toasts/snackbars | `ToastService.success/error/info/warning(...)` (compartido) |
-| Modales/diálogos (apertura) | `DialogService.open(...)` (compartido) — el contenido del componente abre con `<ui2-dialog-host>` |
+| Modales/diálogos (apertura) | `DialogService.openForm / openInformative / openSheet / openFullscreen / confirm` (compartido) |
 
 Importa desde `apps/app/src/app/shared/ui-v2`.
+
+### Sistema de diálogos: variantes y reglas
+
+Todos los diálogos se abren con `DialogService` (CDK Overlay por debajo). Elige el **shortcut** según el caso de uso — eso aplica `panelClass` con los presets de tamaño y posicionamiento. Dentro del componente, declara la variant igualmente en `<ui2-dialog-host>` para que la superficie (radius, padding, anclaje móvil) coincida.
+
+| Variant | Caso de uso | Shortcut | Header X | Actions |
+|---|---|---|---|---|
+| `standard` | Formularios, crear/editar entidad | `openForm()` | sí | sí |
+| `informative` | Legal, ayuda, FAQ | `openInformative()` | sí | **no** (cierre solo por X o backdrop) |
+| `compact` | Confirmación sí/no | `confirm()` | no | sí (los botones cierran) |
+| `sheet` | Bottom-sheet móvil + modal desktop | `openSheet()` | sí | sí |
+| `fullscreen` | Image crop, vídeo, cámara | `openFullscreen()` | sí | opcional |
+
+Reglas obligatorias:
+- **No usar overlays inline** con `<div class="dialog-overlay">` ni `@if (mostrar)`. Siempre `DialogService.openX(Component, { data })`.
+- **No definir `panelClass` manualmente** — el shortcut aplica `ui-dialog-panel--{variant}` y sus presets.
+- **Diálogos informativos no llevan `<ui2-dialog-actions>`** — el cierre vive en la X del header. No añadas botones tipo "Entendido"/"OK" cuando no aportan acción real.
+- **Para confirmaciones usa `DialogService.confirm({ title, message, ... })`** que devuelve `Promise<boolean>`. No abras `Ui2ConfirmDialogComponent` directamente.
+- **El componente abierto recibe props vía `DIALOG_DATA`** y cierra con `inject(DialogRef).close(result)`. No uses `@Output` para comunicarse con el padre.
 
 #### Componentes legacy especializados (sin equivalente V2)
 
@@ -90,6 +109,7 @@ Crea uno cuando un patrón visual aparece **3 o más veces** en features distint
 - **Gradientes**: `bg-coral-gradient` (CTA bar / mensaje propio), `bg-tinted-coral` (Card destacada).
 - **Tipografía**: `KengoDisplay` para titulares e impactos (KPI, hero, CTA bar). `Galvji` (body por defecto) para todo lo demás.
 - **Escala de radios V2** (CSS directa, no Tailwind): `14px` (button, chip pequeño), `18px` (chat bubble), `22px` (Card por defecto, dialog), `9999px` (pill, toggle, tab bar pill). Padding lateral de página: `20px` (`px-5`).
+- **Z-index**: nunca hardcodear valores. Usar las variables `--z-*` definidas en `styles.css` (`--z-base`, `--z-content`, `--z-sticky`, `--z-floating`, `--z-loader`, `--z-header`, `--z-banner`, `--z-drawer`, `--z-sidebar`, `--z-sidebar-toggle`, `--z-modal`, `--z-menu`, `--z-toast`, `--z-critical`). Para diálogos modales preferir siempre `DialogService.open(...)` — CDK Overlay asigna z-index automáticamente sobre el shell. No construir overlays inline con z-index propio salvo que sea estrictamente necesario; en ese caso, usar `var(--z-modal)` y documentar el motivo.
 
 ### Mapping `PatientIcon` → Material Symbol (para componentes V2)
 

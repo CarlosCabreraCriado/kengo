@@ -1,51 +1,47 @@
-<div class="dialog-overlay" (click)="onOverlayClick($event)">
-  <div class="dialog-shell">
-    <ui2-dialog-host>
-      <ui2-dialog-header
-        title="Vincularme a una clínica"
-        subtitle="Introduce el código de acceso que te han proporcionado"
-        (closeClick)="cerrar.emit()"
-      ></ui2-dialog-header>
+<ui2-dialog-host>
+  <ui2-dialog-header
+    title="Vincularme a una clínica"
+    subtitle="Introduce el código de acceso que te han proporcionado"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
 
-      <ui2-dialog-content>
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="vc-form">
-          <div class="vc-input-wrap">
-            <ui2-input
-              label="Código de acceso"
-              formControlName="codigo"
-              placeholder="XXXXXXXX"
-              autocomplete="off"
-              iconLeft="key"
-              [error]="
-                form.get('codigo')?.touched && form.get('codigo')?.errors?.['required']
-                  ? 'El código es requerido'
-                  : form.get('codigo')?.touched && form.get('codigo')?.errors?.['minlength']
-                  ? 'El código debe tener 8 caracteres'
-                  : null
-              "
-            ></ui2-input>
-          </div>
+  <ui2-dialog-content>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="vc-form">
+      <div class="vc-input-wrap">
+        <ui2-input
+          label="Código de acceso"
+          formControlName="codigo"
+          placeholder="XXXXXXXX"
+          autocomplete="off"
+          iconLeft="key"
+          [error]="
+            form.get('codigo')?.touched && form.get('codigo')?.errors?.['required']
+              ? 'El código es requerido'
+              : form.get('codigo')?.touched && form.get('codigo')?.errors?.['minlength']
+              ? 'El código debe tener 8 caracteres'
+              : null
+          "
+        ></ui2-input>
+      </div>
 
-          @if (error()) {
-            <div class="vc-error" role="alert">
-              <span class="material-symbols-outlined" aria-hidden="true">error</span>
-              {{ error() }}
-            </div>
-          }
-        </form>
-      </ui2-dialog-content>
+      @if (error()) {
+        <div class="vc-error" role="alert">
+          <span class="material-symbols-outlined" aria-hidden="true">error</span>
+          {{ error() }}
+        </div>
+      }
+    </form>
+  </ui2-dialog-content>
 
-      <ui2-dialog-actions align="end">
-        <ui2-button variant="secondary" (clicked)="cerrar.emit()">Cancelar</ui2-button>
-        <ui2-button
-          variant="primary"
-          [disabled]="form.invalid"
-          [loading]="loading()"
-          (clicked)="onSubmit()"
-        >
-          Vincularme
-        </ui2-button>
-      </ui2-dialog-actions>
-    </ui2-dialog-host>
-  </div>
-</div>
+  <ui2-dialog-actions align="end">
+    <ui2-button variant="secondary" (clicked)="cerrar()">Cancelar</ui2-button>
+    <ui2-button
+      variant="primary"
+      [disabled]="form.invalid"
+      [loading]="loading()"
+      (clicked)="onSubmit()"
+    >
+      Vincularme
+    </ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

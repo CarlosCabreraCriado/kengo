@@ -83,6 +83,31 @@
      en sincronía con el movimiento del propio teclado. */
   --kb-transition-duration: 260ms;
   --kb-transition-easing: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* =========================================
+     Escala de z-index — único punto de verdad
+     -----------------------------------------
+     Capas ordenadas de fondo a primer plano. Subir un valor implica revisar
+     todo lo que tenga el siguiente nivel. CDK Overlay asigna automáticamente
+     z-index >= 1000 a sus paneles, así que cualquier diálogo abierto con
+     DialogService queda por encima del shell completo sin necesidad de tokens.
+     Para overlays inline (NO recomendado: preferir DialogService), usar
+     --z-modal o superior según corresponda.
+     ========================================= */
+  --z-base: 0;             /* fondo (ui2-cream-bg) */
+  --z-content: 10;         /* contenido normal del shell, section wrappers */
+  --z-sticky: 20;          /* headers/footers sticky internos de página */
+  --z-floating: 30;        /* tab-bar móvil, controles flotantes locales */
+  --z-loader: 50;          /* page-loader-overlay, loaders sticky */
+  --z-header: 60;          /* top bar (mobile y desktop) */
+  --z-banner: 70;          /* offline-banner, billing-banner sobre header */
+  --z-drawer: 90;          /* drawers, carrito ejercicios, timeline */
+  --z-sidebar: 200;        /* sidebar desktop (:host) */
+  --z-sidebar-toggle: 250; /* botón toggle del sidebar — por encima del header */
+  --z-modal: 1000;         /* CDK Dialog default — referencia, no asignar a mano */
+  --z-menu: 1100;          /* dropdowns (user menu, notificaciones) sobre modales */
+  --z-toast: 1300;         /* toasts/snackbars */
+  --z-critical: 9999;      /* connection-error: emergencia, tapa todo */
 }
 
 /* =========================================
@@ -672,7 +697,14 @@ body {
   animation: progress-indeterminate 1.5s ease-in-out infinite;
 }
 
-/* CDK Dialog Overlay Styles */
+/* =========================================
+   CDK Dialog Overlay Styles
+   -----------------------------------------
+   La superficie visual del diálogo (background, border-radius, box-shadow)
+   vive en `Ui2DialogHostComponent` (shared/ui-v2/dialog). Aquí solo se
+   define el comportamiento del pane CDK y los presets de tamaño por
+   variant, aplicados vía panelClass desde DialogService.
+   ========================================= */
 .cdk-overlay-backdrop {
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
@@ -688,11 +720,53 @@ body {
   max-width: 100vw;
 }
 
+/* Panel base — solo provee overflow hidden para clip de descendientes con
+   border-radius. Sin background ni shadow propios. */
 .ui-dialog-panel {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   overflow: hidden;
+}
+
+/* Presets de tamaño por variant. Aplicados desde DialogService.openX().
+   La altura efectiva la controla `.ui2-dialog--{variant}` en el host del
+   componente para que el `ui2-dialog-content` pueda activar su overflow
+   interno. Aquí solo se define la anchura del pane (y el caso especial
+   fullscreen, que ocupa todo el viewport). */
+.ui-dialog-panel--standard {
+  width: 100%;
+  max-width: 500px;
+}
+.ui-dialog-panel--informative {
+  width: 100%;
+  max-width: 640px;
+}
+.ui-dialog-panel--compact {
+  width: 100%;
+  max-width: 420px;
+}
+.ui-dialog-panel--sheet {
+  width: 100%;
+  max-width: 500px;
+}
+.ui-dialog-panel--fullscreen {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  padding: 0;
+}
+
+/* Variant sheet: en móvil ancla al borde inferior con border-radius solo
+   arriba (lo aplica el propio host vía .ui2-dialog--sheet). El padding del
+   pane se elimina para que el sheet quede pegado al borde inferior. */
+@media (max-width: 767px) {
+  .ui-dialog-panel--sheet {
+    max-width: 100vw;
+    align-self: flex-end;
+    padding: 0;
+  }
+  .cdk-global-overlay-wrapper:has(.ui-dialog-panel--sheet) {
+    align-items: flex-end;
+  }
 }
 
 .selector-paciente-dialog {

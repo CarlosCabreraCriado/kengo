@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { clinicaCode } from '../../../../shared';
@@ -28,9 +29,7 @@ import {
   styleUrl: './vincular-clinica-dialog.component.css',
 })
 export class VincularClinicaDialogComponent {
-  @Output() cerrar = new EventEmitter<void>();
-  @Output() vinculacionExitosa = new EventEmitter<void>();
-
+  private readonly dialogRef = inject(DialogRef<boolean>);
   private fb = inject(FormBuilder);
   private clinicaGestionService = inject(ClinicaGestionService);
 
@@ -53,16 +52,14 @@ export class VincularClinicaDialogComponent {
     this.loading.set(false);
 
     if (result.success) {
-      this.vinculacionExitosa.emit();
+      this.dialogRef.close(true);
     } else {
       this.error.set(result.error || 'Error al vincular');
     }
   }
 
-  onOverlayClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('dialog-overlay')) {
-      this.cerrar.emit();
-    }
+  cerrar() {
+    this.dialogRef.close(false);
   }
 
   formatCodigo(event: Event) {

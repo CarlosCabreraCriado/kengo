@@ -3,7 +3,7 @@ import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { firstValueFrom } from 'rxjs';
 
-import { ConfirmDialogComponent } from '../../ui/dialog/confirm-dialog.component';
+import type { Ui2DialogVariant } from '../../ui-v2';
 
 export interface DialogOptions<D = unknown> {
   data?: D;
@@ -29,23 +29,53 @@ export interface ConfirmDialogData {
   hideCancel?: boolean;
 }
 
+/**
+ * Defaults por variant. Solo `hasBackdrop` se aplica como override real
+ * (fullscreen omite el backdrop por defecto). Las dimensiones (`width`,
+ * `maxWidth`, `maxHeight`) NO se pasan al CDK porque CDK las aplica como
+ * inline styles sobre el `.cdk-overlay-pane`, lo que tiene mayor especificidad
+ * que la `panelClass` CSS y provoca clipping del contenido. La altura/anchura
+ * se gestiona enteramente vía `.ui-dialog-panel--{variant}` (anchura) y
+ * `.ui2-dialog--{variant}` (altura) en CSS.
+ */
+const VARIANT_DEFAULTS: Record<
+  Ui2DialogVariant,
+  Pick<DialogOptions, 'hasBackdrop'>
+> = {
+  standard:    {},
+  informative: {},
+  compact:     {},
+  sheet:       {},
+  fullscreen:  { hasBackdrop: false },
+};
+
 @Injectable({
   providedIn: 'root'
 })
 export class DialogService {
   private dialog = inject(Dialog);
 
+  /**
+   * Apertura genérica. Preferir los shortcuts tipados (`openInformative`,
+   * `openForm`, `openSheet`, `openFullscreen`, `confirm`) para garantizar
+   * coherencia visual entre diálogos del mismo tipo.
+   */
   open<T, D = unknown, R = unknown>(
     component: ComponentType<T>,
     options: DialogOptions<D> = {}
   ): DialogRef<R, T> {
+    // Importante: NO aplicar defaults para width/maxWidth/maxHeight aquí. CDK
+    // los pone como inline style en .cdk-overlay-pane y eso gana sobre el CSS
+    // de la panelClass, causando que el contenido se salga del pane. Si el
+    // caller los pasa explícitamente, se respetan; si no, la dimensión la
+    // controla el CSS (panelClass + ui2-dialog--{variant}).
     return this.dialog.open<R, D, T>(component, {
       data: options.data,
-      width: options.width ?? '100%',
-      maxWidth: options.maxWidth ?? '500px',
+      width: options.width,
+      maxWidth: options.maxWidth,
       minWidth: options.minWidth,
       height: options.height,
-      maxHeight: options.maxHeight ?? '90vh',
+      maxHeight: options.maxHeight,
       panelClass: this.buildPanelClasses(options.panelClass),
       hasBackdrop: options.hasBackdrop ?? true,
       backdropClass: options.backdropClass ?? 'cdk-overlay-dark-backdrop',
@@ -54,14 +84,46 @@ export class DialogService {
     });
   }
 
+  /** Diálogo informativo (legal, ayuda). Cierre solo por X del header o backdrop. */
+  openInformative<T, D = unknown>(
+    component: ComponentType<T>,
+    options: DialogOptions<D> = {},
+  ): DialogRef<void, T> {
+    return this.openWithVariant<T, D, void>(component, 'informative', options);
+  }
+
+  /** Diálogo de formulario (crear/editar entidad). */
+  openForm<T, D = unknown, R = unknown>(
+    component: ComponentType<T>,
+    options: DialogOptions<D> = {},
+  ): DialogRef<R, T> {
+    return this.openWithVariant<T, D, R>(component, 'standard', options);
+  }
+
+  /** Diálogo tipo bottom-sheet en móvil; modal centrado en desktop. */
+  openSheet<T, D = unknown, R = unknown>(
+    component: ComponentType<T>,
+    options: DialogOptions<D> = {},
+  ): DialogRef<R, T> {
+    return this.openWithVariant<T, D, R>(component, 'sheet', options);
+  }
+
+  /** Diálogo fullscreen (image crop, vídeo, cámara). Sin backdrop por defecto. */
+  openFullscreen<T, D = unknown, R = unknown>(
+    component: ComponentType<T>,
+    options: DialogOptions<D> = {},
+  ): DialogRef<R, T> {
+    return this.openWithVariant<T, D, R>(component, 'fullscreen', options);
+  }
+
   openTemplate<D = unknown, R = unknown>(
     template: TemplateRef<unknown>,
     options: DialogOptions<D> = {}
   ): DialogRef<R> {
     return this.dialog.open<R, D>(template, {
       data: options.data,
-      width: options.width ?? '100%',
-      maxWidth: options.maxWidth ?? '500px',
+      width: options.width,
+      maxWidth: options.maxWidth,
       hasBackdrop: options.hasBackdrop ?? true,
       backdropClass: options.backdropClass ?? 'cdk-overlay-dark-backdrop',
       disableClose: options.disableClose ?? false,
@@ -78,12 +140,40 @@ export class DialogService {
    * Resuelve a `true` si el usuario confirma, `false` si cancela o cierra.
    */
   async confirm(data: ConfirmDialogData): Promise<boolean> {
-    const ref = this.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
-      ConfirmDialogComponent,
+    // Import dinámico para evitar ciclo con el barrel de ui-v2 y para que el
+    // bundle del service no arrastre el componente.
+    const { Ui2ConfirmDialogComponent } = await import(
+      '../../ui-v2/confirm-dialog/confirm-dialog.component'
+    );
+    const ref = this.openWithVariant<InstanceType<typeof Ui2ConfirmDialogComponent>, ConfirmDialogData, boolean>(
+      Ui2ConfirmDialogComponent,
+      'compact',
       { data },
     );
     const result = await firstValueFrom(ref.closed);
     return result === true;
+  }
+
+  private openWithVariant<T, D, R>(
+    component: ComponentType<T>,
+    variant: Ui2DialogVariant,
+    options: DialogOptions<D>,
+  ): DialogRef<R, T> {
+    const defaults = VARIANT_DEFAULTS[variant];
+    return this.open<T, D, R>(component, {
+      ...options,
+      hasBackdrop: options.hasBackdrop ?? defaults.hasBackdrop ?? true,
+      panelClass: this.mergePanelClass(`ui-dialog-panel--${variant}`, options.panelClass),
+    });
+  }
+
+  private mergePanelClass(
+    variantClass: string,
+    custom: string | string[] | undefined,
+  ): string | string[] {
+    if (!custom) return variantClass;
+    const list = Array.isArray(custom) ? custom : [custom];
+    return [variantClass, ...list];
   }
 
   private buildPanelClasses(customClasses?: string | string[]): string[] {

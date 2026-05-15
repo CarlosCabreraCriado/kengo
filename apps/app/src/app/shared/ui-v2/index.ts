@@ -66,7 +66,7 @@ export {
   Ui2DialogContentComponent,
   Ui2DialogActionsComponent,
 } from './dialog/dialog.component';
-export type { Ui2DialogActionsAlign } from './dialog/dialog.component';
+export type { Ui2DialogActionsAlign, Ui2DialogVariant } from './dialog/dialog.component';
 
 // --- Stepper ---
 export { Ui2StepperComponent, Ui2StepComponent } from './stepper/stepper.component';

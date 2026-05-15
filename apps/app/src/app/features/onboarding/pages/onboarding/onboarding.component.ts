@@ -15,8 +15,9 @@ import {
   Ui2ButtonComponent,
   type Ui2SegmentedOption,
 } from '../../../../shared/ui-v2';
-import { CrearClinicaDialogComponent } from '../../../clinica/components/crear-clinica-dialog/crear-clinica-dialog.component';
-import { VincularClinicaDialogComponent } from '../../../clinica/components/vincular-clinica-dialog/vincular-clinica-dialog.component';
+import { DialogService } from '../../../../shared/services/dialog/dialog.service';
+import type { CrearClinicaDialogComponent } from '../../../clinica/components/crear-clinica-dialog/crear-clinica-dialog.component';
+import type { VincularClinicaDialogComponent } from '../../../clinica/components/vincular-clinica-dialog/vincular-clinica-dialog.component';
 
 type ModoOnboarding = 'fisio' | 'paciente';
 
@@ -29,8 +30,6 @@ type ModoOnboarding = 'fisio' | 'paciente';
     Ui2CtaBarComponent,
     Ui2SegmentedComponent,
     Ui2ButtonComponent,
-    CrearClinicaDialogComponent,
-    VincularClinicaDialogComponent,
   ],
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css',
@@ -39,10 +38,9 @@ export class OnboardingComponent {
   private sessionService = inject(SessionService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private dialogService = inject(DialogService);
 
   protected readonly modo = signal<ModoOnboarding>('fisio');
-  protected readonly mostrarCrearClinica = signal(false);
-  protected readonly mostrarVincular = signal(false);
 
   protected readonly nombre = computed(
     () => this.sessionService.usuario()?.first_name ?? '',
@@ -59,30 +57,34 @@ export class OnboardingComponent {
     }
   }
 
-  protected abrirCrearClinica(): void {
-    this.mostrarCrearClinica.set(true);
-  }
-  protected cerrarCrearClinica(): void {
-    this.mostrarCrearClinica.set(false);
-  }
-
-  protected abrirVincular(): void {
-    this.mostrarVincular.set(true);
-  }
-  protected cerrarVincular(): void {
-    this.mostrarVincular.set(false);
-  }
-
-  protected async onClinicaCreada(): Promise<void> {
-    this.cerrarCrearClinica();
-    await this.sessionService.refreshUsuario();
-    this.router.navigate(['/inicio']);
+  protected async abrirCrearClinica(): Promise<void> {
+    const { CrearClinicaDialogComponent } = await import(
+      '../../../clinica/components/crear-clinica-dialog/crear-clinica-dialog.component'
+    );
+    const ref = this.dialogService.openForm<CrearClinicaDialogComponent, undefined, boolean>(
+      CrearClinicaDialogComponent,
+    );
+    ref.closed.subscribe(async success => {
+      if (success) {
+        await this.sessionService.refreshUsuario();
+        this.router.navigate(['/inicio']);
+      }
+    });
   }
 
-  protected async onVinculacionExitosa(): Promise<void> {
-    this.cerrarVincular();
-    await this.sessionService.refreshUsuario();
-    this.router.navigate(['/inicio']);
+  protected async abrirVincular(): Promise<void> {
+    const { VincularClinicaDialogComponent } = await import(
+      '../../../clinica/components/vincular-clinica-dialog/vincular-clinica-dialog.component'
+    );
+    const ref = this.dialogService.openForm<VincularClinicaDialogComponent, undefined, boolean>(
+      VincularClinicaDialogComponent,
+    );
+    ref.closed.subscribe(async success => {
+      if (success) {
+        await this.sessionService.refreshUsuario();
+        this.router.navigate(['/inicio']);
+      }
+    });
   }
 
   protected async cerrarSesion(): Promise<void> {

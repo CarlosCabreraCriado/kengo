@@ -61,16 +61,3 @@
   </div>
 </section>
 
-@if (mostrarCrearClinica()) {
-  <app-crear-clinica-dialog
-    (cerrar)="cerrarCrearClinica()"
-    (clinicaCreada)="onClinicaCreada()"
-  />
-}
-
-@if (mostrarVincular()) {
-  <app-vincular-clinica-dialog
-    (cerrar)="cerrarVincular()"
-    (vinculacionExitosa)="onVinculacionExitosa()"
-  />
-}

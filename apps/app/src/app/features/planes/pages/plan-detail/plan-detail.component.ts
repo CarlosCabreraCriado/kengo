@@ -13,7 +13,7 @@ import {
   Usuario,
   DiaSemana,
 } from '../../../../../types/global';
-import { DialogService, DialogoPdfComponent, ToastService } from '../../../../../app/shared';
+import { DialogService, ToastService } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
 import { getMadridDate } from '../../../../shared/utils/madrid-date.util';
 import {
@@ -379,7 +379,7 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     return `${assetUrl(id, { width: 100, height: 100, fit: 'cover', format: 'webp' })}`;
   }
 
-  abrirOpcionesPdf() {
+  async abrirOpcionesPdf() {
     const p = this.plan();
     if (!p) return;
 
@@ -390,9 +390,12 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
       planTitulo: p.titulo,
     };
 
-    this.dialogService.open<DialogoPdfComponent, DialogoPdfData>(
+    const { DialogoPdfComponent } = await import(
+      '../../../../../app/shared/ui/dialogo-pdf/dialogo-pdf.component'
+    );
+    this.dialogService.openForm<InstanceType<typeof DialogoPdfComponent>, DialogoPdfData>(
       DialogoPdfComponent,
-      { data }
+      { data },
     );
   }
 }

@@ -9,12 +9,11 @@ import {
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { firstValueFrom, map } from 'rxjs';
+import { map } from 'rxjs';
 
 import { SubscriptionService } from '../../../../core/billing/subscription.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
-import { ConfirmDialogComponent } from '../../../../shared';
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { PricingCardsComponent } from '../../components/pricing-cards/pricing-cards.component';
 import {
@@ -258,22 +257,14 @@ export class SuscripcionComponent {
   protected async cancelarSuscripcion(): Promise<void> {
     const id = this.clinicId();
     if (!id) return;
-    const ref = this.dialogService.open<
-      ConfirmDialogComponent,
-      unknown,
-      boolean
-    >(ConfirmDialogComponent, {
-      data: {
-        title: 'Cancelar suscripción',
-        message:
-          'La suscripción se cancelará al final del período actual. Mantendrás el acceso hasta entonces y podrás reactivarla cuando quieras.',
-        confirmText: 'Cancelar suscripción',
-        cancelText: 'Mantener',
-        confirmVariant: 'danger',
-      },
-      maxWidth: '440px',
+    const confirmado = await this.dialogService.confirm({
+      title: 'Cancelar suscripción',
+      message:
+        'La suscripción se cancelará al final del período actual. Mantendrás el acceso hasta entonces y podrás reactivarla cuando quieras.',
+      confirmText: 'Cancelar suscripción',
+      cancelText: 'Mantener',
+      confirmVariant: 'danger',
     });
-    const confirmado = await firstValueFrom(ref.closed);
     if (!confirmado) return;
     await this.subs.cancelar(id);
   }

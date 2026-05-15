@@ -30,7 +30,7 @@ import { NetworkService } from '../../../core/services/network.service';
         top: 0;
         left: 0;
         right: 0;
-        z-index: 70;
+        z-index: var(--z-banner);
         display: block;
         pointer-events: none;
       }

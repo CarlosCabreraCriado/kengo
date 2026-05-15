@@ -130,7 +130,7 @@ const MONTHS = [
     </header>
   `,
   styles: [`
-    :host { display: block; position: relative; z-index: 60; }
+    :host { display: block; position: relative; z-index: var(--z-header); }
     .ui2-topbar {
       display: flex;
       align-items: center;
@@ -232,7 +232,7 @@ const MONTHS = [
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      z-index: 1100;
+      z-index: var(--z-menu);
       min-width: 220px;
       display: flex;
       flex-direction: column;

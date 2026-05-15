@@ -21,11 +21,16 @@ import { SubscriptionService } from '../../../../core/billing/subscription.servi
 import { Usuario, Clinica, ID } from '../../../../../types/global';
 import { useResponsive } from '../../../../shared';
 
-// Dialogs (rediseñados V2)
-import { VincularClinicaDialogComponent } from '../../components/vincular-clinica-dialog/vincular-clinica-dialog.component';
-import { CrearClinicaDialogComponent } from '../../components/crear-clinica-dialog/crear-clinica-dialog.component';
-import { GenerarCodigoDialogComponent } from '../../components/generar-codigo-dialog/generar-codigo-dialog.component';
-import { EditarClinicaDialogComponent } from '../../components/editar-clinica-dialog/editar-clinica-dialog.component';
+// Dialogs (rediseñados V2). Tipos importados estáticamente; los componentes
+// se cargan vía import() dinámico en sus métodos abrir*.
+import type { VincularClinicaDialogComponent } from '../../components/vincular-clinica-dialog/vincular-clinica-dialog.component';
+import type { CrearClinicaDialogComponent } from '../../components/crear-clinica-dialog/crear-clinica-dialog.component';
+import type {
+  GenerarCodigoDialogComponent,
+  GenerarCodigoDialogData,
+  GenerarCodigoDialogResult,
+} from '../../components/generar-codigo-dialog/generar-codigo-dialog.component';
+import type { EditarClinicaDialogComponent } from '../../components/editar-clinica-dialog/editar-clinica-dialog.component';
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
@@ -59,10 +64,6 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    VincularClinicaDialogComponent,
-    CrearClinicaDialogComponent,
-    GenerarCodigoDialogComponent,
-    EditarClinicaDialogComponent,
     Ui2SectionComponent,
     Ui2ButtonComponent,
     Ui2CtaBarComponent,
@@ -120,10 +121,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   teamExpanded = signal(false);
 
   // Dialog states
-  mostrarModalVincular = signal(false);
-  mostrarModalCrear = signal(false);
-  mostrarModalGenerarCodigo = signal(false);
-  mostrarModalEditar = signal(false);
 
   // Permisos computados
   esAdmin = computed(() => {
@@ -181,69 +178,72 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   }
 
   // ===== Dialog Methods =====
-  abrirVincularClinica() {
-    this.mostrarModalVincular.set(true);
-  }
-
-  cerrarVincularClinica() {
-    this.mostrarModalVincular.set(false);
-  }
-
-  abrirCrearClinica() {
-    this.mostrarModalCrear.set(true);
-  }
-
-  cerrarCrearClinica() {
-    this.mostrarModalCrear.set(false);
-  }
-
-  abrirAnadirFisio() {
-    this.mostrarModalGenerarCodigo.set(true);
-  }
-
-  cerrarGenerarCodigo() {
-    this.mostrarModalGenerarCodigo.set(false);
-  }
-
-  abrirEditarClinica() {
-    this.mostrarModalEditar.set(true);
-  }
-
-  cerrarEditarClinica() {
-    this.mostrarModalEditar.set(false);
-  }
-
-  onClinicaActualizada() {
-    this.cerrarEditarClinica();
-    this.showSnackbar('Clínica actualizada exitosamente');
-  }
-
-  onVinculacionExitosa() {
-    this.cerrarVincularClinica();
-    this.showSnackbar('Te has vinculado a la clínica exitosamente');
-  }
-
-  onClinicaCreada() {
-    this.cerrarCrearClinica();
-    this.showSnackbar('Clínica creada exitosamente');
-  }
-
-  onCodigoGenerado(codigo: string) {
-    this.cerrarGenerarCodigo();
-    this.showSnackbar(`Código generado: ${codigo}`);
-  }
-
-  /**
-   * El admin intentó generar un código de fisio que llevaría a la clínica
-   * por encima del plan autoservicio (>10 fisios). Cerramos el dialog actual
-   * y abrimos el formulario de contacto comercial con el contexto adecuado.
-   */
-  onRequiereContactoVentas() {
-    this.cerrarGenerarCodigo();
-    this.toastService.warning(
-      'Has alcanzado el plan máximo (10 fisios). Contacta con ventas para un plan a medida.',
+  async abrirVincularClinica() {
+    const { VincularClinicaDialogComponent } = await import(
+      '../../components/vincular-clinica-dialog/vincular-clinica-dialog.component'
     );
-    this.abrirDialogContactarVentas();
+    const ref = this.dialogService.openForm<VincularClinicaDialogComponent, undefined, boolean>(
+      VincularClinicaDialogComponent,
+    );
+    ref.closed.subscribe(success => {
+      if (success) this.showSnackbar('Te has vinculado a la clínica exitosamente');
+    });
+  }
+
+  async abrirCrearClinica() {
+    const { CrearClinicaDialogComponent } = await import(
+      '../../components/crear-clinica-dialog/crear-clinica-dialog.component'
+    );
+    const ref = this.dialogService.openForm<CrearClinicaDialogComponent, undefined, boolean>(
+      CrearClinicaDialogComponent,
+    );
+    ref.closed.subscribe(success => {
+      if (success) this.showSnackbar('Clínica creada exitosamente');
+    });
+  }
+
+  async abrirAnadirFisio() {
+    const clinica = this.currentClinic();
+    if (!clinica) return;
+    const { GenerarCodigoDialogComponent } = await import(
+      '../../components/generar-codigo-dialog/generar-codigo-dialog.component'
+    );
+    const ref = this.dialogService.openForm<
+      GenerarCodigoDialogComponent,
+      GenerarCodigoDialogData,
+      GenerarCodigoDialogResult
+    >(GenerarCodigoDialogComponent, {
+      data: {
+        clinicaId: clinica.id,
+        esAdmin: this.esAdmin(),
+        tipoFijo: 'fisioterapeuta',
+      },
+    });
+    ref.closed.subscribe(result => {
+      if (result?.codigo) {
+        this.showSnackbar(`Código generado: ${result.codigo}`);
+      } else if (result?.requiereContactoVentas) {
+        this.toastService.warning(
+          'Has alcanzado el plan máximo (10 fisios). Contacta con ventas para un plan a medida.',
+        );
+        this.abrirDialogContactarVentas();
+      }
+    });
+  }
+
+  async abrirEditarClinica() {
+    const clinica = this.currentClinic();
+    if (!clinica) return;
+    const { EditarClinicaDialogComponent } = await import(
+      '../../components/editar-clinica-dialog/editar-clinica-dialog.component'
+    );
+    const ref = this.dialogService.openForm<EditarClinicaDialogComponent, Clinica, boolean>(
+      EditarClinicaDialogComponent,
+      { data: clinica, maxWidth: '720px' },
+    );
+    ref.closed.subscribe(success => {
+      if (success) this.showSnackbar('Clínica actualizada exitosamente');
+    });
   }
 
   /** Abre el formulario de contacto comercial. Reutilizable desde el aviso de límite. */

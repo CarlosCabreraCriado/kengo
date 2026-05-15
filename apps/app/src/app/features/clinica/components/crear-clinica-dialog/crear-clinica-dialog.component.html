@@ -1,112 +1,108 @@
-<div class="dialog-overlay" (click)="onOverlayClick($event)">
-  <div class="dialog-shell">
-    <ui2-dialog-host>
-      <ui2-dialog-header
-        title="Crear nueva clínica"
-        subtitle="Completa los datos de tu clínica"
-        (closeClick)="cerrar.emit()"
-      ></ui2-dialog-header>
+<ui2-dialog-host>
+  <ui2-dialog-header
+    title="Crear nueva clínica"
+    subtitle="Completa los datos de tu clínica"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
 
-      <ui2-dialog-content>
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="cc-form">
-          <ui2-input
-            label="Nombre de la clínica"
-            formControlName="nombre"
-            placeholder="Clínica Ejemplo"
-            [required]="true"
-            iconLeft="apartment"
-            [error]="
-              form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']
-                ? 'El nombre es requerido'
-                : null
-            "
-          ></ui2-input>
+  <ui2-dialog-content>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="cc-form">
+      <ui2-input
+        label="Nombre de la clínica"
+        formControlName="nombre"
+        placeholder="Clínica Ejemplo"
+        [required]="true"
+        iconLeft="apartment"
+        [error]="
+          form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']
+            ? 'El nombre es requerido'
+            : null
+        "
+      ></ui2-input>
 
-          <div class="cc-row">
-            <ui2-input
-              label="Teléfono"
-              type="tel"
-              formControlName="telefono"
-              placeholder="612 345 678"
-              iconLeft="phone"
-            ></ui2-input>
+      <div class="cc-row">
+        <ui2-input
+          label="Teléfono"
+          type="tel"
+          formControlName="telefono"
+          placeholder="612 345 678"
+          iconLeft="phone"
+        ></ui2-input>
 
-            <ui2-input
-              label="Email"
-              type="email"
-              formControlName="email"
-              placeholder="clinica@ejemplo.com"
-              iconLeft="mail"
-              [error]="
-                form.get('email')?.touched && form.get('email')?.errors?.['email']
-                  ? 'Email no válido'
-                  : null
-              "
-            ></ui2-input>
-          </div>
+        <ui2-input
+          label="Email"
+          type="email"
+          formControlName="email"
+          placeholder="clinica@ejemplo.com"
+          iconLeft="mail"
+          [error]="
+            form.get('email')?.touched && form.get('email')?.errors?.['email']
+              ? 'Email no válido'
+              : null
+          "
+        ></ui2-input>
+      </div>
 
-          <ui2-input
-            label="Dirección"
-            formControlName="direccion"
-            placeholder="Calle Ejemplo 123, Ciudad"
-            iconLeft="location_on"
-          ></ui2-input>
+      <ui2-input
+        label="Dirección"
+        formControlName="direccion"
+        placeholder="Calle Ejemplo 123, Ciudad"
+        iconLeft="location_on"
+      ></ui2-input>
 
-          <div class="cc-row">
-            <ui2-input
-              label="Código postal"
-              formControlName="postal"
-              placeholder="28001"
-            ></ui2-input>
+      <div class="cc-row">
+        <ui2-input
+          label="Código postal"
+          formControlName="postal"
+          placeholder="28001"
+        ></ui2-input>
 
-            <ui2-input
-              label="NIF/CIF"
-              formControlName="nif"
-              placeholder="B12345678"
-            ></ui2-input>
-          </div>
+        <ui2-input
+          label="NIF/CIF"
+          formControlName="nif"
+          placeholder="B12345678"
+        ></ui2-input>
+      </div>
 
-          <div class="cc-color-group">
-            <span class="cc-color-label">Color corporativo</span>
-            <div class="cc-color-presets">
-              @for (color of colorPresets; track color) {
-                <button
-                  type="button"
-                  class="cc-color-preset"
-                  [class.cc-color-preset--active]="form.value.colorPrimario === color"
-                  [style.background-color]="color"
-                  [title]="color"
-                  (click)="selectColor(color)"
-                >
-                  @if (form.value.colorPrimario === color) {
-                    <span class="material-symbols-outlined cc-color-check" aria-hidden="true">check</span>
-                  }
-                </button>
+      <div class="cc-color-group">
+        <span class="cc-color-label">Color corporativo</span>
+        <div class="cc-color-presets">
+          @for (color of colorPresets; track color) {
+            <button
+              type="button"
+              class="cc-color-preset"
+              [class.cc-color-preset--active]="form.value.colorPrimario === color"
+              [style.background-color]="color"
+              [title]="color"
+              (click)="selectColor(color)"
+            >
+              @if (form.value.colorPrimario === color) {
+                <span class="material-symbols-outlined cc-color-check" aria-hidden="true">check</span>
               }
-            </div>
-          </div>
-
-          @if (error()) {
-            <div class="cc-error" role="alert">
-              <span class="material-symbols-outlined" aria-hidden="true">error</span>
-              {{ error() }}
-            </div>
+            </button>
           }
-        </form>
-      </ui2-dialog-content>
+        </div>
+      </div>
 
-      <ui2-dialog-actions align="end">
-        <ui2-button variant="secondary" (clicked)="cerrar.emit()">Cancelar</ui2-button>
-        <ui2-button
-          variant="primary"
-          [disabled]="form.invalid"
-          [loading]="loading()"
-          iconLeft="add_business"
-          (clicked)="onSubmit()"
-        >
-          Crear clínica
-        </ui2-button>
-      </ui2-dialog-actions>
-    </ui2-dialog-host>
-  </div>
-</div>
+      @if (error()) {
+        <div class="cc-error" role="alert">
+          <span class="material-symbols-outlined" aria-hidden="true">error</span>
+          {{ error() }}
+        </div>
+      }
+    </form>
+  </ui2-dialog-content>
+
+  <ui2-dialog-actions align="end">
+    <ui2-button variant="secondary" (clicked)="cerrar()">Cancelar</ui2-button>
+    <ui2-button
+      variant="primary"
+      [disabled]="form.invalid"
+      [loading]="loading()"
+      iconLeft="add_business"
+      (clicked)="onSubmit()"
+    >
+      Crear clínica
+    </ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

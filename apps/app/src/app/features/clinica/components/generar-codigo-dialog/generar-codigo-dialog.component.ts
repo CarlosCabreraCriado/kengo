@@ -1,10 +1,30 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { ClipboardService } from '../../../../core/services/clipboard.service';
 import { emailOptional } from '../../../../shared';
 import type { TipoCodigoAcceso } from '@kengo/shared-models';
+
+export interface GenerarCodigoDialogData {
+  clinicaId: string;
+  esAdmin?: boolean;
+  tipoInicial?: TipoCodigoAcceso | null;
+  /**
+   * Si se proporciona, fija el tipo del código y oculta el selector. Útil
+   * cuando el dialog se invoca desde un contexto que ya determina el tipo
+   * (p.ej. /mi-clinica → siempre fisioterapeuta).
+   */
+  tipoFijo?: TipoCodigoAcceso | null;
+}
+
+export interface GenerarCodigoDialogResult {
+  /** Código generado, si la operación terminó con éxito. */
+  codigo?: string;
+  /** Cierre por "requiere contacto comercial". El padre debe abrir el dialog de ventas. */
+  requiereContactoVentas?: boolean;
+}
 import {
   Ui2DialogHostComponent,
   Ui2DialogHeaderComponent,
@@ -38,24 +58,13 @@ import {
   styleUrl: './generar-codigo-dialog.component.css',
 })
 export class GenerarCodigoDialogComponent implements OnInit {
-  @Input({ required: true }) clinicaId!: string;
-  @Input() esAdmin = false;
-  @Input() tipoInicial: TipoCodigoAcceso | null = null;
-  /**
-   * Si se proporciona, fija el tipo del código y oculta el selector. Útil
-   * cuando el dialog se invoca desde un contexto que ya determina el tipo
-   * (p.ej. /mi-clinica → siempre fisioterapeuta).
-   */
-  @Input() tipoFijo: TipoCodigoAcceso | null = null;
+  private readonly dialogRef = inject(DialogRef<GenerarCodigoDialogResult>);
+  private readonly data = inject<GenerarCodigoDialogData>(DIALOG_DATA);
 
-  @Output() cerrar = new EventEmitter<void>();
-  @Output() codigoGenerado = new EventEmitter<string>();
-  /**
-   * Se emite cuando la mutation falla con `REQUIERE_CONTACTO_VENTAS` (la
-   * clínica supera el límite del plan autoservicio). El padre debe cerrar
-   * este diálogo y abrir el formulario de contacto comercial.
-   */
-  @Output() requiereContactoVentas = new EventEmitter<void>();
+  readonly clinicaId = this.data.clinicaId;
+  readonly esAdmin = this.data.esAdmin ?? false;
+  readonly tipoInicial: TipoCodigoAcceso | null = this.data.tipoInicial ?? null;
+  readonly tipoFijo: TipoCodigoAcceso | null = this.data.tipoFijo ?? null;
 
   private fb = inject(FormBuilder);
   private clinicaGestionService = inject(ClinicaGestionService);
@@ -160,7 +169,7 @@ export class GenerarCodigoDialogComponent implements OnInit {
     }
 
     if (result.errorCode === 'REQUIERE_CONTACTO_VENTAS') {
-      this.requiereContactoVentas.emit();
+      this.dialogRef.close({ requiereContactoVentas: true });
       return;
     }
 
@@ -176,16 +185,10 @@ export class GenerarCodigoDialogComponent implements OnInit {
 
   terminar() {
     const codigo = this.codigoResult();
-    if (codigo) {
-      this.codigoGenerado.emit(codigo);
-    } else {
-      this.cerrar.emit();
-    }
+    this.dialogRef.close(codigo ? { codigo } : {});
   }
 
-  onOverlayClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('dialog-overlay')) {
-      this.terminar();
-    }
+  cerrar() {
+    this.dialogRef.close({});
   }
 }

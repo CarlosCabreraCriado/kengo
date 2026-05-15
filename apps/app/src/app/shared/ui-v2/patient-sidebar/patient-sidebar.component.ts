@@ -293,7 +293,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         display: block;
         height: 100%;
         position: relative;
-        z-index: 200;
+        z-index: var(--z-sidebar);
       }
       .ui2-sidebar {
         position: relative;
@@ -332,7 +332,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         display: grid;
         place-items: center;
         cursor: pointer;
-        z-index: 11;
+        z-index: var(--z-sidebar-toggle);
         color: var(--ink-700);
         padding: 0;
         transition:
@@ -589,7 +589,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         bottom: calc(100% + 8px);
         left: 0;
         right: 0;
-        z-index: 100;
+        z-index: var(--z-menu);
         display: flex;
         flex-direction: column;
         overflow: hidden;

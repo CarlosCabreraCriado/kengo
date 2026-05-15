@@ -19,6 +19,7 @@ import { SessionService } from '../../../../../core/auth/services/session.servic
 import { EmailVerificationService } from '../../../../../core/auth/services/email-verification.service';
 import { ConvexService } from '../../../../../core/convex/convex.service';
 import { StorageService } from '../../../../../core/services/storage.service';
+import { DialogService } from '../../../../../shared/services/dialog';
 
 // Types
 import { Usuario } from '../../../../../../types/global';
@@ -73,6 +74,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
   private pageLoader = inject(PageLoaderService);
+  private dialogService = inject(DialogService);
   private readonly PAGE_LOADER_KEY = 'perfil';
 
   /** Datos críticos: usuario disponible. */
@@ -86,9 +88,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
   public personalExpanded = signal(true);
   public securityExpanded = signal(false);
   public legalExpanded = signal(false);
-
-  // === OVERLAY PANELS ===
-  public showPrivacyPolicy = signal(false);
 
   // === EMAIL VERIFICATION ===
   public emailVerified = computed(() => this.sessionService.usuario()?.email_verified ?? false);
@@ -318,12 +317,11 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   // === MÉTODOS DE LEGAL ===
 
-  abrirPrivacyPolicy() {
-    this.showPrivacyPolicy.set(true);
-  }
-
-  cerrarPrivacyPolicy() {
-    this.showPrivacyPolicy.set(false);
+  async abrirPrivacyPolicy() {
+    const { PrivacyPolicyComponent } = await import(
+      './privacy-policy/privacy-policy.component'
+    );
+    this.dialogService.openInformative(PrivacyPolicyComponent);
   }
 
   // === MÉTODOS DE SECCIONES COLAPSABLES ===

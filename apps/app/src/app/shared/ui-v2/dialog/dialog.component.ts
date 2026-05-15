@@ -3,11 +3,23 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 export type Ui2DialogActionsAlign = 'start' | 'center' | 'end' | 'between';
 
 /**
+ * Variantes de superficie según el caso de uso.
+ * Combinar siempre con el shortcut equivalente de DialogService
+ * (openInformative, openForm, openSheet, openFullscreen, confirm).
+ */
+export type Ui2DialogVariant =
+  | 'standard'      // Formularios y default
+  | 'informative'   // Contenido legal/ayuda — sin actions, cierre por X
+  | 'compact'       // Confirmaciones cortas
+  | 'sheet'         // Bottom-sheet en móvil, modal centrado en desktop
+  | 'fullscreen';   // Image crop, vídeo, cámara
+
+/**
  * Surface contenedora de un diálogo V2.
- * Se usa dentro de un componente abierto vía `DialogService.open(...)`.
+ * Se usa dentro de un componente abierto vía `DialogService.openX(...)`.
  *
  * ```html
- * <ui2-dialog-host>
+ * <ui2-dialog-host variant="standard">
  *   <ui2-dialog-header title="Título" subtitle="Sub" (closeClick)="dialogRef.close()" />
  *   <ui2-dialog-content>...</ui2-dialog-content>
  *   <ui2-dialog-actions>
@@ -22,7 +34,7 @@ export type Ui2DialogActionsAlign = 'start' | 'center' | 'end' | 'between';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="ui2-dialog">
+    <div [class]="rootClass()">
       <ng-content></ng-content>
     </div>
   `,
@@ -31,16 +43,47 @@ export type Ui2DialogActionsAlign = 'start' | 'center' | 'end' | 'between';
     .ui2-dialog {
       display: flex;
       flex-direction: column;
-      max-height: calc(100dvh - 2rem);
       overflow: hidden;
       background: white;
-      border-radius: 22px;
       box-shadow: var(--shadow-card-strong);
       border: 1px solid rgba(0, 0, 0, 0.04);
     }
+    /* El max-height define el espacio en el que el ui2-dialog-content puede
+       activar overflow-y: auto. Es la única fuente de verdad para la altura
+       (el .cdk-overlay-pane solo controla la anchura vía panelClass). El
+       padding del pane (1rem) se descuenta del viewport. */
+    .ui2-dialog--standard,
+    .ui2-dialog--informative,
+    .ui2-dialog--sheet {
+      border-radius: 22px;
+      max-height: calc(100dvh - 2rem);
+    }
+    .ui2-dialog--compact {
+      border-radius: 18px;
+      border: none;
+      max-height: calc(100dvh - 2rem);
+    }
+    .ui2-dialog--fullscreen {
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+      max-height: 100dvh;
+    }
+    @media (max-width: 767px) {
+      .ui2-dialog--sheet {
+        border-radius: 22px 22px 0 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        max-height: 92vh;
+      }
+    }
   `],
 })
-export class Ui2DialogHostComponent {}
+export class Ui2DialogHostComponent {
+  readonly variant = input<Ui2DialogVariant>('standard');
+  readonly rootClass = computed(() => `ui2-dialog ui2-dialog--${this.variant()}`);
+}
 
 @Component({
   selector: 'ui2-dialog-header',

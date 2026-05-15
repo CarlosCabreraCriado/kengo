@@ -39,4 +39,3 @@ export { DialogoPdfComponent, type DialogoPdfData } from './ui/dialogo-pdf/dialo
 export { SelectorPacienteComponent } from './ui/selector-paciente/selector-paciente.component';
 export { VideoEjercicioComponent } from './ui/video-ejercicio/video-ejercicio.component';
 export { PreviewEjercicioDialogComponent, type PreviewEjercicioData } from './ui/preview-ejercicio/preview-ejercicio-dialog.component';
-export { ConfirmDialogComponent } from './ui/dialog';

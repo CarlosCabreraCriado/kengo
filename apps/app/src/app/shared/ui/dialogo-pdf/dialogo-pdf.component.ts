@@ -1,9 +1,11 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 
-import { DialogContainerComponent } from '../dialog/dialog-container.component';
-import { DialogHeaderComponent } from '../dialog/dialog-header.component';
-import { DialogContentComponent } from '../dialog/dialog-content.component';
+import {
+  Ui2DialogContentComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogHostComponent,
+} from '../../ui-v2';
 import { ToastService } from '../../services/toast';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { ExternalBrowserService } from '../../../core/services/external-browser.service';
@@ -17,10 +19,11 @@ export interface DialogoPdfData {
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DialogContainerComponent,
-    DialogHeaderComponent,
-    DialogContentComponent,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
   ],
   selector: 'app-dialogo-pdf',
   templateUrl: './dialogo-pdf.component.html',

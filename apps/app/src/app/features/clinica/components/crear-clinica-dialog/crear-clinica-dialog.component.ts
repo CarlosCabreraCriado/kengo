@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { emailOptional } from '../../../../shared';
@@ -53,9 +54,7 @@ const COLOR_PRESETS = [
   styleUrl: './crear-clinica-dialog.component.css',
 })
 export class CrearClinicaDialogComponent {
-  @Output() cerrar = new EventEmitter<void>();
-  @Output() clinicaCreada = new EventEmitter<void>();
-
+  private readonly dialogRef = inject(DialogRef<boolean>);
   private fb = inject(FormBuilder);
   private clinicaGestionService = inject(ClinicaGestionService);
 
@@ -98,15 +97,13 @@ export class CrearClinicaDialogComponent {
     this.loading.set(false);
 
     if (result.success) {
-      this.clinicaCreada.emit();
+      this.dialogRef.close(true);
     } else {
       this.error.set(result.error || 'Error al crear la clínica');
     }
   }
 
-  onOverlayClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('dialog-overlay')) {
-      this.cerrar.emit();
-    }
+  cerrar() {
+    this.dialogRef.close(false);
   }
 }

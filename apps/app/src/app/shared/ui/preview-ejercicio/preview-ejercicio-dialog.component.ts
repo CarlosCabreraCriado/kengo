@@ -1,8 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DialogContainerComponent } from '../dialog/dialog-container.component';
-import { DialogHeaderComponent } from '../dialog/dialog-header.component';
-import { DialogContentComponent } from '../dialog/dialog-content.component';
+import {
+  Ui2DialogContentComponent,
+  Ui2DialogHeaderComponent,
+  Ui2DialogHostComponent,
+} from '../../ui-v2';
 import { VideoEjercicioComponent } from '../video-ejercicio/video-ejercicio.component';
 import { EjercicioPlan } from '../../../../types/global';
 
@@ -18,15 +20,16 @@ export interface PreviewEjercicioData {
 @Component({
   selector: 'app-preview-ejercicio-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DialogContainerComponent,
-    DialogHeaderComponent,
-    DialogContentComponent,
+    Ui2DialogHostComponent,
+    Ui2DialogHeaderComponent,
+    Ui2DialogContentComponent,
     VideoEjercicioComponent,
   ],
   template: `
-    <ui-dialog-container>
-      <ui-dialog-header
+    <ui2-dialog-host variant="standard">
+      <ui2-dialog-header
         [title]="data.ejercicio.ejercicio.nombre"
         [subtitle]="
           'Ejercicio ' + (data.index + 1) + ' de ' + data.totalEjercicios
@@ -34,7 +37,7 @@ export interface PreviewEjercicioData {
         (closeClick)="dialogRef.close()"
       />
 
-      <ui-dialog-content [noPadding]="true">
+      <ui2-dialog-content [noPadding]="true">
         <!-- Video -->
         <app-video-ejercicio
           [videoUrl]="data.videoUrl"
@@ -119,8 +122,8 @@ export interface PreviewEjercicioData {
             }
           </div>
         </div>
-      </ui-dialog-content>
-    </ui-dialog-container>
+      </ui2-dialog-content>
+    </ui2-dialog-host>
   `,
   styles: `
     .detail-chip {

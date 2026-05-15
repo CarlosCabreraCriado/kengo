@@ -17,7 +17,7 @@
     <!-- Desktop shell: sidebar fija + topbar + main scrollable -->
     <section class="relative z-10 flex h-dvh flex-row">
       <ui2-patient-sidebar
-        class="z-200 h-full shrink-0"
+        class="h-full shrink-0"
         [groups]="pacienteSidebarGroups()"
         [brandName]="clinicaBrandName()"
         [userName]="firstName()"
@@ -26,7 +26,7 @@
         [clinicaNombre]="clinicaActual()"
         [clinicaImagenUrl]="clinicaImagenUrl()"
       ></ui2-patient-sidebar>
-      <div class="z-100 flex min-w-0 flex-1 flex-col">
+      <div class="flex min-w-0 flex-1 flex-col">
         <ui2-web-topbar
           [userName]="firstName()"
           [avatarUrl]="avatarUrl()"

@@ -148,7 +148,7 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
       top: 0;
       left: 0;
       right: 0;
-      z-index: 60;
+      z-index: var(--z-header);
       display: block;
       pointer-events: none;
       padding-top: env(safe-area-inset-top, 0px);
@@ -273,7 +273,7 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      z-index: 1100;
+      z-index: var(--z-menu);
       min-width: 220px;
       display: flex;
       flex-direction: column;
