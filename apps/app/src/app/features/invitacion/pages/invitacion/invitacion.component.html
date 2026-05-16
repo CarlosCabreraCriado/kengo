@@ -1,0 +1,107 @@
+<ui2-cream-bg></ui2-cream-bg>
+
+<section class="inv-shell">
+  <div class="inv-shell__panel">
+    @switch (estado()) {
+      @case ('verificando') {
+        <div class="inv-shell__loader">
+          <ui2-spinner size="lg" label="Procesando invitación..."></ui2-spinner>
+        </div>
+      }
+
+      @case ('invalido') {
+        <ui2-big-title
+          title="Enlace de invitación no válido"
+          overline="KENGO"
+          sub="El enlace que has abierto no contiene la información necesaria. Pide a quien te invitó que te reenvíe el correo."
+        ></ui2-big-title>
+        <ui2-card [padding]="22">
+          <div class="inv-actions">
+            <ui2-button
+              variant="primary"
+              size="lg"
+              [fullWidth]="true"
+              (clicked)="irAlLogin()"
+            >
+              Ir al inicio
+            </ui2-button>
+          </div>
+        </ui2-card>
+      }
+
+      @case ('sin_match') {
+        <ui2-big-title
+          title="Cuenta distinta"
+          overline="KENGO"
+          [sub]="
+            'Estás conectado como ' +
+            emailSesion() +
+            ', pero esta invitación es para ' +
+            emailInvitacion() +
+            '. Cierra sesión y vuelve a abrir el enlace para continuar.'
+          "
+        ></ui2-big-title>
+        <ui2-card [padding]="22">
+          <div class="inv-actions">
+            <ui2-button
+              variant="primary"
+              size="lg"
+              [fullWidth]="true"
+              (clicked)="cambiarCuenta()"
+            >
+              Cerrar sesión y aceptar invitación
+            </ui2-button>
+            <ui2-button
+              variant="secondary"
+              size="lg"
+              [fullWidth]="true"
+              (clicked)="irAlInicio()"
+            >
+              Ir a mi cuenta
+            </ui2-button>
+          </div>
+        </ui2-card>
+      }
+
+      @case ('ya_vinculado') {
+        <ui2-big-title
+          title="Ya perteneces a esta clínica"
+          overline="KENGO"
+          sub="No hace falta aplicar este código: ya formas parte de la clínica que te invitó."
+        ></ui2-big-title>
+        <ui2-card [padding]="22">
+          <div class="inv-actions">
+            <ui2-button
+              variant="primary"
+              size="lg"
+              [fullWidth]="true"
+              (clicked)="irAlInicio()"
+            >
+              Ir a mi cuenta
+            </ui2-button>
+          </div>
+        </ui2-card>
+      }
+
+      @case ('error') {
+        <ui2-big-title
+          title="No hemos podido aplicar la invitación"
+          overline="KENGO"
+          [sub]="errorMensaje() ?? 'Vuelve a intentarlo o pide una nueva invitación al administrador de la clínica.'"
+        ></ui2-big-title>
+        <ui2-card [padding]="22">
+          <div class="inv-actions">
+            <ui2-button
+              variant="primary"
+              size="lg"
+              [fullWidth]="true"
+              (clicked)="irAlInicio()"
+            >
+              Ir a mi cuenta
+            </ui2-button>
+          </div>
+        </ui2-card>
+      }
+    }
+  </div>
+</section>

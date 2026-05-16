@@ -135,7 +135,57 @@ export const consume = mutation({
       .unique();
 
     if (existingMembership) {
-      throw new ConvexError({ code: "YA_VINCULADO", message: "Ya estás vinculado a esta clínica" });
+      // Caso especial: el usuario ya pertenece a la clínica como paciente y
+      // recibe una invitación como fisio. En lugar de rechazar, promovemos
+      // la membresía existente (mismo `_id`, sin crear duplicados). Cualquier
+      // otra colisión (fisio→fisio, admin→fisio, paciente→paciente, etc.)
+      // sigue siendo YA_VINCULADO porque no hay nada que promover.
+      const esPromocion =
+        existingMembership.puesto === "paciente" &&
+        codeDoc.tipo === "fisioterapeuta";
+
+      if (!esPromocion) {
+        throw new ConvexError({
+          code: "YA_VINCULADO",
+          message: "Ya estás vinculado a esta clínica",
+        });
+      }
+
+      // Replicar las mismas garantías que la rama "alta nueva": al promover
+      // a fisio la quantity facturable sube en +1, así que aplicamos el
+      // límite de autoservicio y disparamos el sync con Stripe.
+      const memberships = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_clinicId", (q) => q.eq("clinicId", codeDoc.clinicId))
+        .collect();
+      const fisiosActuales = memberships.filter(
+        (m) => m.puesto === "fisio" || m.puesto === "admin",
+      ).length;
+      if (fisiosActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
+        throw new ConvexError({
+          code: "REQUIERE_CONTACTO_VENTAS",
+          message:
+            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
+        });
+      }
+
+      await ctx.db.patch(existingMembership._id, { puesto: "fisio" });
+      await ctx.db.patch(codeDoc._id, {
+        usosActuales: codeDoc.usosActuales + 1,
+      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.billing.internal.syncQuantityFromMemberships,
+        { clinicId: codeDoc.clinicId },
+      );
+
+      const clinic = await ctx.db.get(codeDoc.clinicId);
+      return {
+        clinicId: codeDoc.clinicId,
+        nombreClinica: clinic?.nombre ?? "",
+        tipo: codeDoc.tipo,
+        promovido: true,
+      };
     }
 
     const puesto: "fisio" | "paciente" =
@@ -217,6 +267,7 @@ export const consume = mutation({
       clinicId: codeDoc.clinicId,
       nombreClinica: clinic?.nombre ?? "",
       tipo: codeDoc.tipo,
+      promovido: false,
     };
   },
 });

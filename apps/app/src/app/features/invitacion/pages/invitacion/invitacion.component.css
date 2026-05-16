@@ -1,0 +1,29 @@
+.inv-shell {
+  position: relative;
+  z-index: var(--z-content);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 20px;
+}
+
+.inv-shell__panel {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inv-shell__loader {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.inv-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

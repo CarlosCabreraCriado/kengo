@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -34,22 +34,46 @@ export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   loading = signal(false);
   error = signal<string | null>(null);
   verificandoSesion = signal(true);
 
+  /**
+   * Destino post-login. Por defecto `/inicio`, pero respeta `?next=` si llega
+   * por query param (p. ej. flujo `/invitacion`). Solo aceptamos rutas
+   * internas (`/...`) para evitar open redirect: descartamos URLs absolutas
+   * o que empiecen por `//`.
+   */
+  private resolveNext(): string {
+    const raw = this.route.snapshot.queryParamMap.get('next');
+    if (raw && raw.startsWith('/') && !raw.startsWith('//')) {
+      return raw;
+    }
+    return '/inicio';
+  }
+
   async ngOnInit(): Promise<void> {
     if (history.state?.fromLogout) {
       this.verificandoSesion.set(false);
+      this.prefillEmail();
       return;
     }
     const result = await this.auth.checkSession();
     if (result === 'ok') {
-      this.router.navigateByUrl('/inicio');
+      this.router.navigateByUrl(this.resolveNext());
       return;
     }
     this.verificandoSesion.set(false);
+    this.prefillEmail();
+  }
+
+  private prefillEmail(): void {
+    const email = this.route.snapshot.queryParamMap.get('email');
+    if (email) {
+      this.loginForm.patchValue({ email: email.trim().toLowerCase() });
+    }
   }
 
   public loginForm = this.fb.group({
@@ -88,7 +112,7 @@ export class LoginComponent implements OnInit {
 
     try {
       await this.auth.login(email!, password!);
-      await this.router.navigateByUrl('/inicio');
+      await this.router.navigateByUrl(this.resolveNext());
     } catch {
       this.error.set('No se pudo iniciar sesión. Verifica tus credenciales.');
     } finally {

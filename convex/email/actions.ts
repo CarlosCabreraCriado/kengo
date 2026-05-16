@@ -248,7 +248,7 @@ export const sendTherapistInvitationEmail = internalAction({
     to: v.string(),
     nombreColega: v.optional(v.string()),
     nombreClinica: v.string(),
-    registroUrl: v.string(),
+    invitacionUrl: v.string(),
     codigo: v.string(),
   },
   handler: async (_ctx, args) => {
@@ -266,7 +266,7 @@ export const sendTherapistInvitationEmail = internalAction({
       html: therapistInvitationTemplate(
         args.nombreColega ?? null,
         args.nombreClinica,
-        args.registroUrl,
+        args.invitacionUrl,
         args.codigo,
       ),
     });

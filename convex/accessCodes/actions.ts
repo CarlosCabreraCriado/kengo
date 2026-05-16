@@ -52,7 +52,9 @@ export const createAndInvite = action({
 
         const appUrl =
           (process.env["APP_URL"] as string) || "https://kengoapp.com";
-        const registroUrl = `${appUrl}/auth/registro?codigo=${codigo}`;
+        const invitacionUrl =
+          `${appUrl}/invitacion?codigo=${codigo}` +
+          `&email=${encodeURIComponent(args.email)}`;
 
         emailEnviado = await ctx.runAction(
           internal.email.actions.sendTherapistInvitationEmail,
@@ -60,7 +62,7 @@ export const createAndInvite = action({
             to: args.email,
             nombreColega: nombreColega || undefined,
             nombreClinica,
-            registroUrl,
+            invitacionUrl,
             codigo,
           },
         );

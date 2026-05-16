@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalQuery } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -12,6 +12,27 @@ export const emailExists = internalQuery({
       .withIndex("by_email", (q) => q.eq("email", normalized))
       .unique();
     return !!user;
+  },
+});
+
+/**
+ * Versión pública de `emailExists` usada por el flujo de invitación
+ * (`/invitacion`). Devuelve únicamente un booleano para que el frontend
+ * decida si redirigir al login o al registro, sin exponer ningún dato
+ * del usuario. Sigue siendo enumeración por email; aceptable en este
+ * contexto porque el llamante ya conoce el email (lo recibió en la URL
+ * de invitación dirigida).
+ */
+export const userExistsByEmail = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const normalized = args.email.toLowerCase().trim();
+    if (!normalized) return { exists: false };
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", normalized))
+      .unique();
+    return { exists: !!user };
   },
 });
 

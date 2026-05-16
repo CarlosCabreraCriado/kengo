@@ -59,6 +59,8 @@ export interface VincularClinicaResponse {
   clinicaId?: string;
   nombreClinica?: string;
   tipo?: TipoCodigoAcceso;
+  /** `true` si el canje promovió una membresía de paciente a fisio. */
+  promovido?: boolean;
   error?: string;
 }
 

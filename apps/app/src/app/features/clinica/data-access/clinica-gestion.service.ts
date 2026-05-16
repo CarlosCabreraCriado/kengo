@@ -55,6 +55,7 @@ export class ClinicaGestionService {
         clinicaId: result.clinicId,
         nombreClinica: result.nombreClinica,
         tipo: result.tipo,
+        promovido: result.promovido === true,
       };
     } catch (err: any) {
       const errorMsg = err?.data?.message || err?.message || 'Error al vincular con la clínica';

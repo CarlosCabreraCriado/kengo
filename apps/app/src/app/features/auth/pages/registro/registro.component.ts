@@ -52,12 +52,17 @@ export class RegistroComponent {
   datosForm = this.fb.group({
     nombre: ['', Validators.required],
     apellidos: ['', Validators.required],
-    email: ['', emailRequired],
+    email: [
+      (this.route.snapshot.queryParamMap.get('email') ?? '')
+        .trim()
+        .toLowerCase(),
+      emailRequired,
+    ],
   });
 
-  // Permite pre-rellenar el código al llegar desde un email de invitación
-  // tipo `/auth/registro?codigo=XXXXXXXX`. Normalizamos a uppercase para
-  // alinear con el formato canónico que valida el backend.
+  // Permite pre-rellenar el código y el email al llegar desde el flujo
+  // `/invitacion?codigo=...&email=...`. Normalizamos a uppercase el código
+  // para alinear con el formato canónico que valida el backend.
   codigoClinicaForm = this.fb.group({
     codigo: [
       (this.route.snapshot.queryParamMap.get('codigo') ?? '')

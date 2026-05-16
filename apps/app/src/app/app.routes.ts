@@ -38,6 +38,16 @@ export const routes: Routes = [
       ),
   },
 
+  // Pasarela de invitación: decide canje, login o registro según el estado
+  // del usuario. Sin AuthGuard (el propio componente orquesta).
+  {
+    path: 'invitacion',
+    loadComponent: () =>
+      import('./features/invitacion/pages/invitacion/invitacion.component').then(
+        (m) => m.InvitacionComponent,
+      ),
+  },
+
   {
     path: 'ejercicios',
     canActivate: [AuthGuard, OnboardingGuard],
