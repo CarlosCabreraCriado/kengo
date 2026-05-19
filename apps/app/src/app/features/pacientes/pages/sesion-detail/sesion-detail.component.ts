@@ -3,7 +3,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { useResponsive } from '../../../../shared';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
-import type { DiaSemana } from '../../../../../types/global';
+import { SessionService } from '../../../../core/auth/services/session.service';
+import type { DiaSemana, Usuario } from '../../../../../types/global';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { api } from '../../../../../../../../convex/_generated/api';
@@ -12,6 +13,7 @@ import {
   ymdToDateForDisplay,
 } from '../../../../shared/utils/madrid-date.util';
 import {
+  Ui2AvatarComponent,
   Ui2BackButtonComponent,
   Ui2CardComponent,
   Ui2EmptyStateComponent,
@@ -80,6 +82,7 @@ interface PlanAgendadoDetalle {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DecimalPipe,
+    Ui2AvatarComponent,
     Ui2BackButtonComponent,
     Ui2CardComponent,
     Ui2EmptyStateComponent,
@@ -100,6 +103,7 @@ export class SesionDetailComponent implements OnInit {
   private router = inject(Router);
   private cumplimientoService = inject(CumplimientoService);
   private convex = inject(ConvexService);
+  private sessionService = inject(SessionService);
 
   isMovil = useResponsive().esMobile;
 
@@ -107,6 +111,7 @@ export class SesionDetailComponent implements OnInit {
   readonly grupos = signal<GrupoPlan[]>([]);
   readonly fecha = signal<string>('');
   readonly pacienteId = signal<string>('');
+  readonly paciente = signal<Usuario | null>(null);
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
   readonly planesAgendados = signal<PlanAgendadoDetalle[]>([]);
@@ -138,6 +143,36 @@ export class SesionDetailComponent implements OnInit {
     this.planesAgendados().reduce((sum, p) => sum + p.esperados, 0),
   );
 
+  readonly pacienteNombre = computed<string>(() => {
+    const p = this.paciente();
+    if (!p) return '';
+    const fn = (p.first_name || '').trim();
+    const ln = (p.last_name || '').trim();
+    return fn || ln ? `${fn} ${ln}`.trim() : p.email || '';
+  });
+
+  readonly pacienteAvatarUrl = computed<string | null>(() => {
+    const p = this.paciente();
+    if (!p?.avatar) return null;
+    return assetUrl(p.avatar, { fit: 'cover', width: 128, height: 128, quality: 80 });
+  });
+
+  readonly hayEstado = computed(
+    () => this.totalEjercicios() > 0 || this.esFallido(),
+  );
+
+  readonly estadoIcon = computed(() =>
+    this.esFallido() ? 'cancel' : 'check_circle',
+  );
+
+  readonly estadoLabel = computed(() =>
+    this.esFallido() ? 'Sin actividad' : 'Completada',
+  );
+
+  readonly estadoColor = computed(() =>
+    this.esFallido() ? 'var(--danger)' : 'var(--success)',
+  );
+
   ngOnInit() {
     const id = this.route.snapshot.params['id'];
     const fecha = this.route.snapshot.params['fecha'];
@@ -149,7 +184,21 @@ export class SesionDetailComponent implements OnInit {
 
     this.pacienteId.set(id);
     this.fecha.set(fecha);
+    this.cargarPaciente();
     this.cargarRegistros();
+  }
+
+  private async cargarPaciente() {
+    try {
+      const data = await this.convex.query(api.users.queries.getById, {
+        userId: this.pacienteId() as never,
+      });
+      if (data) {
+        this.paciente.set(this.sessionService.transformarUsuarioConvex(data));
+      }
+    } catch (err) {
+      console.error('Error cargando paciente:', err);
+    }
   }
 
   private async cargarRegistros() {

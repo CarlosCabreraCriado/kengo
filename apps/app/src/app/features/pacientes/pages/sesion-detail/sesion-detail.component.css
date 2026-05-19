@@ -18,35 +18,6 @@
 }
 
 /* ============================================
-   MOBILE TOPBAR (sticky, glassmorphism cream)
-   ============================================ */
-.sesion-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  background: rgba(250, 247, 242, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--ink-100);
-}
-.sesion-topbar__title {
-  flex: 1;
-  margin: 0;
-  font-family: KengoDisplay, Galvji, sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--ink-900);
-}
-.sesion-topbar__spacer {
-  width: 40px;
-  height: 40px;
-}
-
-/* ============================================
    MAIN
    ============================================ */
 .sesion-main {
@@ -68,11 +39,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.sesion-back-row {
-  display: flex;
-  margin-bottom: 4px;
 }
 
 /* ============================================
@@ -109,7 +75,15 @@
   margin: 0;
   line-height: 1;
 }
+.sesion-hero__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
 .sesion-hero__title {
+  flex: 1;
+  min-width: 0;
   font-family: KengoDisplay, kengoFont, sans-serif;
   font-size: 26px;
   line-height: 1.05;
@@ -132,12 +106,77 @@
 }
 
 /* ============================================
+   PACIENTE CARD
+   ============================================ */
+.paciente-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+.paciente-card__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.paciente-card__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-500);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  line-height: 1.2;
+}
+.paciente-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.paciente-card__email {
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================
    KPIs
    ============================================ */
 .sesion-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
+}
+
+.estado-kpi {
+  display: flex;
+  flex-direction: column;
+}
+.estado-kpi__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.estado-kpi__label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.estado-kpi__value {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.4px;
+  margin-top: 10px;
 }
 
 /* ============================================

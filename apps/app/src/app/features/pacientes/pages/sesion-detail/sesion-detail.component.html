@@ -1,13 +1,4 @@
 <section class="sesion-page">
-  <!-- Mobile topbar -->
-  @if (isMovil()) {
-    <header class="sesion-topbar">
-      <ui2-back-button (clicked)="volver()" ariaLabel="Volver al paciente" />
-      <h1 class="sesion-topbar__title">Detalle de sesión</h1>
-      <span class="sesion-topbar__spacer" aria-hidden="true"></span>
-    </header>
-  }
-
   <main class="sesion-main" [class.sesion-main--desktop]="!isMovil()">
     <!-- Loading -->
     @if (isLoading()) {
@@ -32,17 +23,13 @@
     <!-- Content -->
     @if (!isLoading() && !error()) {
       <div class="sesion-content">
-        <!-- Desktop back button -->
-        @if (!isMovil()) {
-          <div class="sesion-back-row">
-            <ui2-back-button (clicked)="volver()" ariaLabel="Volver al paciente" />
-          </div>
-        }
-
-        <!-- Hero: fecha + estado -->
+        <!-- Hero: back + fecha + estado -->
         <header class="sesion-hero">
           <p class="sesion-hero__overline">Sesión del paciente</p>
-          <h2 class="sesion-hero__title">{{ formatearFechaLarga(fecha()) }}</h2>
+          <div class="sesion-hero__heading">
+            <ui2-back-button (clicked)="volver()" ariaLabel="Volver al paciente" />
+            <h2 class="sesion-hero__title">{{ formatearFechaLarga(fecha()) }}</h2>
+          </div>
           <div class="sesion-hero__pills">
             @if (esFallido()) {
               <ui2-pill variant="danger" icon="cancel">Sin actividad</ui2-pill>
@@ -62,29 +49,64 @@
           </div>
         </header>
 
+        <!-- Paciente -->
+        @if (paciente()) {
+          <ui2-card>
+            <div class="paciente-card">
+              <ui2-avatar
+                size="md"
+                gradient="coral"
+                [name]="pacienteNombre()"
+                [src]="pacienteAvatarUrl()"
+              />
+              <div class="paciente-card__info">
+                <span class="paciente-card__label">Paciente</span>
+                <span class="paciente-card__name">{{ pacienteNombre() }}</span>
+                @if (paciente()?.email) {
+                  <span class="paciente-card__email">{{ paciente()?.email }}</span>
+                }
+              </div>
+            </div>
+          </ui2-card>
+        }
+
         <!-- KPIs -->
-        @if (!esFallido() && totalEjercicios() > 0) {
+        @if (hayEstado()) {
           <div class="sesion-kpis">
-            <ui2-kpi-card
-              icon="fitness_center"
-              label="Ejercicios"
-              [value]="totalEjercicios()"
-            />
-            @if (promedioDolor() !== null) {
+            <ui2-card>
+              <div class="estado-kpi">
+                <div class="estado-kpi__head">
+                  <ui2-icon-badge [icon]="estadoIcon()" [color]="estadoColor()" [size]="32" />
+                  <span class="estado-kpi__label">Estado</span>
+                </div>
+                <div class="estado-kpi__value" [style.color]="estadoColor()">
+                  {{ estadoLabel() }}
+                </div>
+              </div>
+            </ui2-card>
+
+            @if (!esFallido() && totalEjercicios() > 0) {
               <ui2-kpi-card
-                icon="mood_bad"
-                label="Dolor medio"
-                [value]="(promedioDolor() | number:'1.0-1') ?? '—'"
-                unit="/10"
-                [iconColor]="getDolorColor(promedioDolor())"
+                icon="fitness_center"
+                label="Ejercicios"
+                [value]="totalEjercicios()"
               />
-            }
-            @if (totalComentarios() > 0) {
-              <ui2-kpi-card
-                icon="chat_bubble"
-                label="Comentarios"
-                [value]="totalComentarios()"
-              />
+              @if (promedioDolor() !== null) {
+                <ui2-kpi-card
+                  icon="mood_bad"
+                  label="Dolor medio"
+                  [value]="(promedioDolor() | number:'1.0-1') ?? '—'"
+                  unit="/10"
+                  [iconColor]="getDolorColor(promedioDolor())"
+                />
+              }
+              @if (totalComentarios() > 0) {
+                <ui2-kpi-card
+                  icon="chat_bubble"
+                  label="Comentarios"
+                  [value]="totalComentarios()"
+                />
+              }
             }
           </div>
         }
