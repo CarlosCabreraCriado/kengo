@@ -4,6 +4,7 @@ import {
   Output,
   EventEmitter,
   signal,
+  input,
   ViewChild,
   ElementRef,
   AfterViewInit,
@@ -22,7 +23,9 @@ import {
       @if (videoUrl) {
         <video
           #videoElement
-          class="h-full w-full object-cover"
+          class="h-full w-full"
+          [class.object-cover]="fit() === 'cover'"
+          [class.object-contain]="fit() === 'contain'"
           [src]="videoUrl"
           [poster]="posterUrl"
           loop
@@ -32,7 +35,9 @@ import {
         ></video>
       } @else if (posterUrl) {
         <img
-          class="h-full w-full object-cover"
+          class="h-full w-full"
+          [class.object-cover]="fit() === 'cover'"
+          [class.object-contain]="fit() === 'contain'"
           [src]="posterUrl"
           alt="Imagen del ejercicio"
         />
@@ -79,7 +84,7 @@ import {
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 100;
+      z-index: var(--z-modal);
       border-radius: 0;
       aspect-ratio: auto;
     }
@@ -99,6 +104,7 @@ export class VideoEjercicioComponent implements AfterViewInit {
   @Input() videoUrl: string | null = null;
   @Input() posterUrl: string | null = null;
   @Input() autoplay = true;
+  readonly fit = input<'cover' | 'contain'>('cover');
 
   @Output() expandirChange = new EventEmitter<boolean>();
 

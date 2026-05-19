@@ -42,12 +42,15 @@
     <div class="ed-layout">
       <!-- Columna media -->
       <div class="ed-media">
-        <ui2-card [padding]="0" [radius]="22">
-          <app-video-ejercicio
-            [videoUrl]="ej.video ? getVideoUrl(ej.video) : null"
-            [posterUrl]="ej.portada ? getAssetUrl(ej.portada) : null"
-          ></app-video-ejercicio>
-        </ui2-card>
+        <div class="ed-media__player">
+          <ui2-card [padding]="0" [radius]="22">
+            <app-video-ejercicio
+              fit="contain"
+              [videoUrl]="ej.video ? getVideoUrl(ej.video) : null"
+              [posterUrl]="ej.portada ? getAssetUrl(ej.portada) : null"
+            ></app-video-ejercicio>
+          </ui2-card>
+        </div>
 
         <!-- Tags / categorías -->
         @if (categoriasNombres().length > 0) {
@@ -55,6 +58,23 @@
             @for (tag of categoriasNombres(); track tag) {
               <ui2-pill variant="soft" size="md" icon="local_offer">{{ tag }}</ui2-pill>
             }
+          </div>
+        }
+
+        <!-- ====================================== -->
+        <!-- Acciones                                -->
+        <!-- ====================================== -->
+        @if (sessionService.puedeEditarRecursos()) {
+          <div class="ed-actions">
+            <ui2-button
+              variant="primary"
+              size="lg"
+              [iconLeft]="isRutinaMode() ? 'bookmark_add' : 'person_add'"
+              [fullWidth]="true"
+              (clicked)="asignarEjercicio()"
+            >
+              {{ isRutinaMode() ? 'Añadir a plantilla' : 'Asignar a paciente' }}
+            </ui2-button>
           </div>
         }
       </div>
@@ -155,23 +175,6 @@
               [innerHTML]="ej.descripcion | safeHtml"
             ></div>
           </ui2-card>
-        }
-
-        <!-- ====================================== -->
-        <!-- Acciones                                -->
-        <!-- ====================================== -->
-        @if (sessionService.puedeEditarRecursos()) {
-          <div class="ed-actions">
-            <ui2-button
-              variant="primary"
-              size="lg"
-              [iconLeft]="isRutinaMode() ? 'bookmark_add' : 'person_add'"
-              [fullWidth]="true"
-              (clicked)="asignarEjercicio()"
-            >
-              {{ isRutinaMode() ? 'Añadir a plantilla' : 'Asignar a paciente' }}
-            </ui2-button>
-          </div>
         }
       </div>
     </div>
