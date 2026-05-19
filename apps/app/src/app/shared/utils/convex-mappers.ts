@@ -45,13 +45,14 @@ export function mapConvexBase(
 export function mapConvexToUsuarioBasico(
   id: string,
   nombre: string | undefined,
+  email = '',
 ): Usuario {
   const parts = (nombre || '').split(' ');
   return {
     id,
     first_name: parts[0] || '',
     last_name: parts.slice(1).join(' ') || '',
-    email: '',
+    email,
     email_verified: false,
     avatar: '',
     detalle: null,
@@ -115,6 +116,7 @@ export function mapConvexToPlanCompleto(r: {
   _creationTime?: number;
   pacienteId: string;
   pacienteNombre?: string;
+  pacienteEmail?: string;
   fisioId: string;
   fisioNombre?: string;
   titulo: string;
@@ -126,7 +128,7 @@ export function mapConvexToPlanCompleto(r: {
 }): PlanCompleto {
   return {
     ...mapConvexBase(r),
-    paciente: mapConvexToUsuarioBasico(r.pacienteId, r.pacienteNombre),
+    paciente: mapConvexToUsuarioBasico(r.pacienteId, r.pacienteNombre, r.pacienteEmail),
     fisio: mapConvexToUsuarioBasico(r.fisioId, r.fisioNombre),
     titulo: r.titulo,
     descripcion: r.descripcion,

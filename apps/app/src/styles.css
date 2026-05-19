@@ -777,6 +777,13 @@ body {
   max-width: 440px;
 }
 
+/* Override puntual: el diálogo de opciones de PDF muestra tres acciones
+   cortas (descargar/imprimir/enviar); con 500px queda muy disperso en
+   desktop. */
+.ui-dialog-panel--standard:has(app-dialogo-pdf) {
+  max-width: 440px;
+}
+
 .selector-paciente-dialog {
   width: 100%;
   max-width: 500px;

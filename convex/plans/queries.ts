@@ -85,6 +85,7 @@ async function enrichPlans(ctx: any, plans: any[]) {
       ...plan,
       ejercicios,
       pacienteNombre: fullName(usersMap.get(plan.pacienteId)),
+      pacienteEmail: usersMap.get(plan.pacienteId)?.email ?? "",
       fisioNombre: fullName(usersMap.get(plan.fisioId)),
     };
   });
