@@ -42,7 +42,9 @@ export const recordRun = internalMutation({
       v.literal("categorias"),
       v.literal("ejercicios_categorias"),
     ),
-    lastSyncedAt: v.number(),
+    // Optional: en runs con error, los callers omiten este campo para
+    // **preservar** el `lastSyncedAt` previo y reintentar desde el mismo punto.
+    lastSyncedAt: v.optional(v.number()),
     lastRunAt: v.number(),
     lastRunStatus: v.union(v.literal("ok"), v.literal("error")),
     lastError: v.optional(v.string()),
@@ -56,18 +58,28 @@ export const recordRun = internalMutation({
       .withIndex("by_collection", (q) => q.eq("collection", args.collection))
       .unique();
 
+    const base = {
+      lastRunAt: args.lastRunAt,
+      lastRunStatus: args.lastRunStatus,
+      lastError: args.lastError,
+      itemsCreated: args.itemsCreated,
+      itemsUpdated: args.itemsUpdated,
+      itemsArchived: args.itemsArchived,
+    };
+
     if (existing) {
       await ctx.db.patch(existing._id, {
-        lastSyncedAt: args.lastSyncedAt,
-        lastRunAt: args.lastRunAt,
-        lastRunStatus: args.lastRunStatus,
-        lastError: args.lastError,
-        itemsCreated: args.itemsCreated,
-        itemsUpdated: args.itemsUpdated,
-        itemsArchived: args.itemsArchived,
+        ...base,
+        ...(args.lastSyncedAt !== undefined
+          ? { lastSyncedAt: args.lastSyncedAt }
+          : {}),
       });
     } else {
-      await ctx.db.insert("directusSyncState", args);
+      await ctx.db.insert("directusSyncState", {
+        collection: args.collection,
+        lastSyncedAt: args.lastSyncedAt ?? 0,
+        ...base,
+      });
     }
   },
 });
@@ -253,6 +265,10 @@ export const upsertExerciseCategories = internalMutation({
         created++;
       }
 
+      // Solo avanzamos `maxTs` con filas efectivamente upserteadas. Si la fila
+      // fue skipped por padre ausente, el `continue` ya nos llevó al siguiente
+      // item y este timestamp queda fuera de `lastSyncedAt`, garantizando
+      // reintento en el próximo cron.
       if (item.directusUpdatedAt > maxTs) maxTs = item.directusUpdatedAt;
     }
 

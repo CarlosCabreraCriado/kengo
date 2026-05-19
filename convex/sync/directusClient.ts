@@ -10,6 +10,7 @@
 export type DirectusCategoria = {
   id_categoria: number;
   nombre_categoria: string | null;
+  date_created: string | null;
   date_updated: string | null;
 };
 
@@ -21,6 +22,7 @@ export type DirectusEjercicio = {
   repeticiones_defecto: string | number | null;
   video: string | null;
   portada: string | null;
+  date_created: string | null;
   date_updated: string | null;
 };
 
@@ -28,6 +30,7 @@ export type DirectusEjercicioCategoria = {
   id: number;
   ejercicios_id_ejercicio: number | null;
   categorias_id_categoria: number | null;
+  date_created: string | null;
   date_updated: string | null;
 };
 
@@ -67,13 +70,24 @@ function buildQuery(fields: string[], extra: Record<string, string> = {}): strin
 
 function sinceFilter(sinceMs: number): Record<string, string> {
   if (sinceMs <= 0) return {};
-  return { "filter[date_updated][_gt]": new Date(sinceMs).toISOString() };
+  const iso = new Date(sinceMs).toISOString();
+  // `_or` para capturar filas con `date_updated` NULL (típicas de M2M creadas
+  // vía UI Directus): el predicado se cumple por `date_created`.
+  return {
+    "filter[_or][0][date_updated][_gt]": iso,
+    "filter[_or][1][date_created][_gt]": iso,
+  };
 }
 
 export async function fetchCategoriasUpdatedSince(
   sinceMs: number,
 ): Promise<DirectusCategoria[]> {
-  const fields = ["id_categoria", "nombre_categoria", "date_updated"];
+  const fields = [
+    "id_categoria",
+    "nombre_categoria",
+    "date_created",
+    "date_updated",
+  ];
   return directusGet<DirectusCategoria>(
     `/items/categorias?${buildQuery(fields, sinceFilter(sinceMs))}`,
   );
@@ -90,6 +104,7 @@ export async function fetchEjerciciosUpdatedSince(
     "repeticiones_defecto",
     "video",
     "portada",
+    "date_created",
     "date_updated",
   ];
   return directusGet<DirectusEjercicio>(
@@ -104,6 +119,7 @@ export async function fetchEjerciciosCategoriasUpdatedSince(
     "id",
     "ejercicios_id_ejercicio",
     "categorias_id_categoria",
+    "date_created",
     "date_updated",
   ];
   return directusGet<DirectusEjercicioCategoria>(
@@ -139,4 +155,14 @@ export function isoToMs(iso: string | null | undefined): number {
   if (!iso) return 0;
   const t = Date.parse(iso);
   return Number.isFinite(t) ? t : 0;
+}
+
+/** Timestamp efectivo de una fila Directus: `max(date_updated, date_created)`.
+ *  Necesario porque las filas creadas vía UI (típicamente M2M) nacen con
+ *  `date_updated = NULL`; sin este fallback el sync incremental las ignoraba. */
+export function effectiveUpdatedMs(row: {
+  date_updated: string | null;
+  date_created: string | null;
+}): number {
+  return Math.max(isoToMs(row.date_updated), isoToMs(row.date_created));
 }

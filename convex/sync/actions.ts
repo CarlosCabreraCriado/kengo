@@ -21,12 +21,12 @@
 import { internalAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import {
+  effectiveUpdatedMs,
   fetchAliveEjercicioCategoriaIds,
   fetchAliveEjercicioIds,
   fetchCategoriasUpdatedSince,
   fetchEjerciciosCategoriasUpdatedSince,
   fetchEjerciciosUpdatedSince,
-  isoToMs,
   toNumberOrUndefined,
 } from "./directusClient";
 
@@ -53,7 +53,7 @@ export const syncFromDirectus = internalAction({
         .map((c) => ({
           directusId: c.id_categoria,
           nombreCategoria: c.nombre_categoria!.trim(),
-          directusUpdatedAt: isoToMs(c.date_updated),
+          directusUpdatedAt: effectiveUpdatedMs(c),
         }));
 
       const res = await ctx.runMutation(internal.sync.internal.upsertCategories, {
@@ -80,7 +80,6 @@ export const syncFromDirectus = internalAction({
       console.error("[sync/categorias] error", err);
       await ctx.runMutation(internal.sync.internal.recordRun, {
         collection: "categorias",
-        lastSyncedAt: 0,
         lastRunAt: runAt,
         lastRunStatus: "error",
         lastError: msg.slice(0, 500),
@@ -107,7 +106,7 @@ export const syncFromDirectus = internalAction({
           repeticionesDefecto: toNumberOrUndefined(e.repeticiones_defecto),
           video: e.video ?? undefined,
           portada: e.portada ?? undefined,
-          directusUpdatedAt: isoToMs(e.date_updated),
+          directusUpdatedAt: effectiveUpdatedMs(e),
         }));
 
       const res = await ctx.runMutation(internal.sync.internal.upsertExercises, {
@@ -147,7 +146,6 @@ export const syncFromDirectus = internalAction({
       console.error("[sync/ejercicios] error", err);
       await ctx.runMutation(internal.sync.internal.recordRun, {
         collection: "ejercicios",
-        lastSyncedAt: 0,
         lastRunAt: runAt,
         lastRunStatus: "error",
         lastError: msg.slice(0, 500),
@@ -173,7 +171,7 @@ export const syncFromDirectus = internalAction({
           directusId: r.id,
           directusEjercicioId: r.ejercicios_id_ejercicio!,
           directusCategoriaId: r.categorias_id_categoria!,
-          directusUpdatedAt: isoToMs(r.date_updated),
+          directusUpdatedAt: effectiveUpdatedMs(r),
         }));
 
       const res = await ctx.runMutation(
@@ -215,7 +213,6 @@ export const syncFromDirectus = internalAction({
       console.error("[sync/relaciones] error", err);
       await ctx.runMutation(internal.sync.internal.recordRun, {
         collection: "ejercicios_categorias",
-        lastSyncedAt: 0,
         lastRunAt: runAt,
         lastRunStatus: "error",
         lastError: msg.slice(0, 500),
