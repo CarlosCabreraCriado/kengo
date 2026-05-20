@@ -55,18 +55,23 @@ export class LoginComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    if (history.state?.fromLogout) {
-      this.verificandoSesion.set(false);
+    try {
+      if (history.state?.fromLogout) {
+        this.prefillEmail();
+        return;
+      }
+      const result = await this.auth.checkSession();
+      if (result === 'ok') {
+        this.router.navigateByUrl(this.resolveNext());
+        return;
+      }
       this.prefillEmail();
-      return;
+    } finally {
+      // Garantiza salir del estado "verificando" en cualquier rama, incluso si
+      // la navegación tras checkSession='ok' se cancela. Sin esto, el componente
+      // puede quedar con el spinner visible hasta un reload manual.
+      this.verificandoSesion.set(false);
     }
-    const result = await this.auth.checkSession();
-    if (result === 'ok') {
-      this.router.navigateByUrl(this.resolveNext());
-      return;
-    }
-    this.verificandoSesion.set(false);
-    this.prefillEmail();
   }
 
   private prefillEmail(): void {

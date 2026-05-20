@@ -55,18 +55,32 @@ export class AuthService {
    * cuando FCM responda UNREGISTERED.
    */
   async logout(evitarRedirect?: boolean): Promise<void> {
-    await this.pushNotifications.teardown();
+    // Envolvemos cada paso en try/catch y todo el bloque en try/finally para
+    // garantizar que clearAuth() + limpiarEstadoLocal() (que dispara el navigate
+    // a /login) se ejecuten SIEMPRE, aunque cualquier paso previo rechace.
     try {
-      await this.betterAuth.signOut();
-    } catch {
-      // ignorar
+      try {
+        await this.pushNotifications.teardown();
+      } catch (err) {
+        console.warn('[Logout] teardown push falló:', err);
+      }
+      try {
+        await this.betterAuth.signOut();
+      } catch {
+        // ignorar
+      }
+      // Garantizar la purga aunque signOut haya fallado (offline, 5xx). Sin
+      // esto las cookies podían quedar en localStorage y el siguiente arranque
+      // entraría en bucle de 401.
+      try {
+        await this.betterAuth.purgeStoredSession();
+      } catch (err) {
+        console.warn('[Logout] purgeStoredSession falló:', err);
+      }
+    } finally {
+      this.convex.clearAuth();
+      this.limpiarEstadoLocal(evitarRedirect);
     }
-    // Garantizar la purga aunque signOut haya fallado (offline, 5xx). Sin
-    // esto las cookies podían quedar en localStorage y el siguiente arranque
-    // entraría en bucle de 401.
-    await this.betterAuth.purgeStoredSession();
-    this.convex.clearAuth();
-    this.limpiarEstadoLocal(evitarRedirect);
   }
 
   /**
