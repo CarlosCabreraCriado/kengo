@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { esPaciente, getAuthenticatedUser } from "../_helpers/permissions";
+import { resolveAndAssertPacienteId } from "../_helpers/patientAccess";
+import { assertCanAccessPlan } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
 import {
   getCurrentMadridDate,
@@ -9,14 +11,6 @@ import {
   getMadridDateOffset,
 } from "../_helpers/datetime";
 import { getExpectedExercisesForPatientOnDate } from "../_helpers/expectedExercises";
-
-function resolvePacienteId(
-  pacienteId: string | undefined,
-  fallbackUserId: Id<"users">,
-): Id<"users"> {
-  if (!pacienteId) return fallbackUserId;
-  return pacienteId as Id<"users">;
-}
 
 function fullName(user: any): string {
   if (!user) return "";
@@ -231,7 +225,11 @@ export const listByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = resolvePacienteId(args.pacienteId, user._id);
+    const targetId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
 
     let plans;
     if (args.estado) {
@@ -257,8 +255,8 @@ export const listByPaciente = query({
 export const getById = query({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
-    const plan = await ctx.db.get(args.planId);
-    if (!plan) return null;
+    const user = await getAuthenticatedUser(ctx);
+    const plan = await assertCanAccessPlan(ctx, user._id, args.planId);
     return enrichPlan(ctx, plan);
   },
 });
@@ -271,7 +269,11 @@ export const getActiveForPatientToday = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = resolvePacienteId(args.pacienteId, user._id);
+    const targetId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
     const today = getCurrentMadridDate();
 
     const activePlans = await ctx.db
@@ -299,7 +301,11 @@ export const getActiveAndFuture = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = resolvePacienteId(args.pacienteId, user._id);
+    const targetId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
     const today = getCurrentMadridDate();
 
     const activePlans = await ctx.db
@@ -338,7 +344,11 @@ export const getNextSessionForPatient = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = resolvePacienteId(args.pacienteId, user._id);
+    const targetId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
     const lookahead = args.maxDaysLookahead ?? 30;
 
     for (let offset = 1; offset <= lookahead; offset++) {

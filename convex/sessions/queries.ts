@@ -1,19 +1,24 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import { resolvePacienteId } from "../_helpers/patientAccess";
+import { resolveAndAssertPacienteId } from "../_helpers/patientAccess";
+import { assertCanAccessSession } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
 
 export const getById = query({
   args: { sessionId: v.id("sessions") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.sessionId);
+    const user = await getAuthenticatedUser(ctx);
+    return await assertCanAccessSession(ctx, user._id, args.sessionId);
   },
 });
 
 export const listByPaciente = query({
   args: { pacienteId: v.id("users") },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await resolveAndAssertPacienteId(ctx, args.pacienteId, user._id);
+
     return await ctx.db
       .query("sessions")
       .withIndex("by_pacienteId", (q) => q.eq("pacienteId", args.pacienteId))
@@ -33,7 +38,11 @@ export const listRecentByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
     const limit = args.limit ?? 5;
 
     const sessions = await ctx.db
@@ -84,7 +93,11 @@ export const getByPacienteAndDateWithExecutions = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
 
     const sessions = await ctx.db
       .query("sessions")

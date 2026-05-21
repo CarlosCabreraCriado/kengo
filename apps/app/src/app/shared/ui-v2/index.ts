@@ -108,3 +108,4 @@ export type { SidebarNavGroup, SidebarNavItem } from './patient-sidebar/patient-
 export { Ui2WebTopbarComponent } from './web-topbar/web-topbar.component';
 export { Ui2NotificacionesMenuComponent } from './notificaciones-menu/notificaciones-menu.component';
 export { Ui2OfflineBannerComponent } from './offline-banner/offline-banner.component';
+export { Ui2ClinicaSwitchMenuComponent } from './clinica-switch-menu/clinica-switch-menu.component';

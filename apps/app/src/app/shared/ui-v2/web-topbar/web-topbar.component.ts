@@ -4,11 +4,14 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { NotificacionesService } from '../../../core/services/notificaciones.service';
 import { MensajesService } from '../../../features/mensajes/data-access/mensajes.service';
-import type { RolUsuario } from '../../../../types/global';
+import type { Clinica, RolUsuario } from '../../../../types/global';
+import { ToastService } from '../../services/toast/toast.service';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
 import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificaciones-menu.component';
+import { Ui2ClinicaSwitchMenuComponent } from '../clinica-switch-menu/clinica-switch-menu.component';
 
 const WEEKDAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const MONTHS = [
@@ -23,7 +26,7 @@ const MONTHS = [
 @Component({
   selector: 'ui2-web-topbar',
   standalone: true,
-  imports: [Ui2AvatarComponent, Ui2NotificacionesMenuComponent],
+  imports: [Ui2AvatarComponent, Ui2NotificacionesMenuComponent, Ui2ClinicaSwitchMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="ui2-topbar">
@@ -98,6 +101,10 @@ const MONTHS = [
                 <span>Mi perfil</span>
               </button>
 
+              <ui2-clinica-switch-menu
+                (clinicaCambiada)="onClinicaCambiada($event)"
+              ></ui2-clinica-switch-menu>
+
               @if (sessionService.puedeAlternarModo()) {
                 <button
                   type="button"
@@ -107,7 +114,7 @@ const MONTHS = [
                   (click)="onToggleModo($event)"
                 >
                   <span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>
-                  <span class="ui2-user-menu__label">Modo fisio</span>
+                  <span class="ui2-user-menu__label">{{ modoFisio() ? 'Modo fisio' : 'Modo paciente' }}</span>
                   <span class="ui2-user-menu__switch" [class.ui2-user-menu__switch--on]="modoFisio()" aria-hidden="true">
                     <span class="ui2-user-menu__thumb"></span>
                   </span>
@@ -311,7 +318,9 @@ export class Ui2WebTopbarComponent {
   public readonly sessionService = inject(SessionService);
   public readonly notificacionesService = inject(NotificacionesService);
   public readonly mensajesService = inject(MensajesService);
+  public readonly themeService = inject(ThemeService);
   private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   readonly menuOpen = signal(false);
@@ -401,11 +410,27 @@ export class Ui2WebTopbarComponent {
     await this.authService.logout();
   }
 
+  onClinicaCambiada(clinica: Clinica): void {
+    this.themeService.aplicarTemaClinica(clinica);
+    const puesto = this.sessionService
+      .misclinicas()
+      .find((c) => c.clinicId === clinica.id)?.puesto;
+    const etiquetaPuesto =
+      puesto === 'admin'
+        ? 'Administrador'
+        : puesto === 'fisio'
+          ? 'Fisioterapeuta'
+          : 'Paciente';
+    this.toast.success(`Estás en ${clinica.nombre} (${etiquetaPuesto})`);
+    this.menuOpen.set(false);
+    this.router.navigateByUrl('/inicio');
+  }
+
   onToggleModo(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
     if (!this.sessionService.puedeAlternarModo()) return;
-    const nuevo: RolUsuario = this.modoPaciente() ? 'fisio' : 'paciente';
+    const nuevo: RolUsuario = this.modoFisio() ? 'paciente' : 'fisio';
     this.sessionService.setRolUsuario(nuevo);
     this.menuOpen.set(false);
     this.router.navigateByUrl('/inicio');

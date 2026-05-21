@@ -30,16 +30,25 @@ export const openOrResume = internalMutation({
   args: {
     pacienteId: v.id("users"),
     fecha: v.string(),
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args): Promise<Id<"sessions">> => {
-    return await openOrResumeImpl(ctx, args.pacienteId, args.fecha);
+    return await openOrResumeImpl(ctx, args.pacienteId, args.fecha, args.clinicId);
   },
 });
 
+/**
+ * Si `clinicId` se proporciona, la sesión se atribuye estrictamente a esa
+ * clínica y los `expectedExercises` se filtran a planes de esa clínica
+ * (aislamiento multiclinica). Si se omite, recae en la primera clínica del
+ * paciente (comportamiento legacy, mantenido para compatibilidad mientras
+ * el frontend pasa a enviarlo siempre).
+ */
 export async function openOrResumeImpl(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
   fecha: string,
+  clinicIdArg?: Id<"clinics">,
 ): Promise<Id<"sessions">> {
   const existing = await ctx.db
     .query("sessions")
@@ -60,22 +69,26 @@ export async function openOrResumeImpl(
     return existing._id;
   }
 
-  // No existe → crear nueva sesión.
+  const clinicId =
+    clinicIdArg ?? (await getClinicIdForPatient(ctx, pacienteId));
+  if (!clinicId) {
+    throw new Error(
+      `openOrResume: paciente ${pacienteId} no tiene clinicId (sin membership)`,
+    );
+  }
+
+  // No existe → crear nueva sesión. Los ejercicios esperados se restringen
+  // a los planes de la clínica activa.
   const diaSemana = getDiaSemana(fecha);
   const expectedItems = await getExpectedExercisesForPatientOnDate(
     ctx,
     pacienteId,
     fecha,
     diaSemana,
+    clinicId,
   );
   const { totalEsperados } = sumExpectedByPlan(expectedItems);
   const planIds = Array.from(new Set(expectedItems.map((e) => e.planId)));
-  const clinicId = await getClinicIdForPatient(ctx, pacienteId);
-  if (!clinicId) {
-    throw new Error(
-      `openOrResume: paciente ${pacienteId} no tiene clinicId (sin membership)`,
-    );
-  }
 
   const sessionId = await ctx.db.insert("sessions", {
     pacienteId,

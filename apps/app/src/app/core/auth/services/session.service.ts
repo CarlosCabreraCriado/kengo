@@ -1,21 +1,31 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { RolUsuario, Usuario, Puesto } from '../../../../types/global';
 import { ConvexService, NotAuthenticatedError } from '../../convex/convex.service';
 import { BetterAuthService } from './better-auth.service';
+import { ClinicaActivaService } from './clinica-activa.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { rawAssetUrl } from '../../utils/asset-url';
 
 /**
  * Estructura del cache local del usuario. Solo campos no sensibles que
- * afecten al render del shell (nombre, avatar, clínicas, flags de rol).
- * Datos derivados (admin, etc.) NO se cachean — se calculan al cargar.
+ * afecten al render del shell (nombre, avatar, clínicas). El modo
+ * fisio/paciente NO se cachea aquí (vive aparte en `localStorage:kengo:modo`).
  */
 interface UsuarioCacheV1 {
   v: 1;
   ts: number;
   usuario: Usuario;
-  rol: RolUsuario;
-  puedeAlternar: boolean;
+}
+
+const MODO_STORAGE_KEY = 'kengo:modo';
+
+function leerModoPersistido(): RolUsuario | null {
+  try {
+    const v = localStorage.getItem(MODO_STORAGE_KEY);
+    return v === 'fisio' || v === 'paciente' ? v : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -25,15 +35,51 @@ interface UsuarioCacheV1 {
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
-  private readonly MODO_STORAGE_KEY = 'kengo:modo';
   private readonly USER_CACHE_KEY = 'kengo:user-cache:v1';
   private readonly USER_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
-  private _rolUsuario = signal<RolUsuario>('fisio');
-  public rolUsuario = this._rolUsuario;
-  // True cuando el usuario puede alternar entre modo fisio y modo paciente.
-  // Solo los fisios pueden hacerlo; los pacientes están restringidos a su modo.
-  public puedeAlternarModo = signal(false);
+  private clinicaActiva = inject(ClinicaActivaService);
+
+  /**
+   * Preferencia local del usuario sobre el modo activo. Está acotada por
+   * `puedeAlternarModo`: si el puesto en la clínica activa no permite
+   * `'fisio'`, un `effect` la fuerza a `'paciente'`. La preferencia se
+   * persiste en `localStorage:kengo:modo` para sobrevivir reloads.
+   */
+  private _rolUsuario = signal<RolUsuario>(
+    typeof window !== 'undefined' ? leerModoPersistido() ?? 'fisio' : 'fisio',
+  );
+  public rolUsuario = computed<RolUsuario>(() => this._rolUsuario());
+
+  /**
+   * `true` cuando el puesto del usuario en la clínica activa permite operar
+   * como fisio (puesto `fisio` o `admin`). Cuando es `false`, el toggle de
+   * modo se oculta en la UI y `_rolUsuario` queda fijado en `'paciente'`.
+   */
+  public puedeAlternarModo = computed(() => {
+    const id = this.clinicaActiva.selectedClinicaId();
+    const clinicas = this._usuario()?.clinicas ?? [];
+    if (!id) return clinicas.some((c) => c.puesto === 'fisio' || c.puesto === 'admin');
+    const m = clinicas.find((c) => c.clinicId === id);
+    return m?.puesto === 'fisio' || m?.puesto === 'admin';
+  });
+
+  /**
+   * Effect que mantiene `_rolUsuario` consistente con `puedeAlternarModo`:
+   * cuando el puesto activo no permite fisio, fuerza la preferencia a
+   * `'paciente'`. Se ejecuta al cargar el usuario, al cambiar de clínica
+   * activa o al actualizar membresías.
+   */
+  private readonly sincronizadorModo = effect(() => {
+    if (!this.puedeAlternarModo() && this._rolUsuario() !== 'paciente') {
+      this._rolUsuario.set('paciente');
+      try {
+        localStorage.removeItem(MODO_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+  });
 
   private _usuario = signal<Usuario | null>(null);
   private _loading = signal<boolean>(false);
@@ -67,8 +113,8 @@ export class SessionService {
   });
 
   // === MODO ACTIVO (dinámico, lo que el usuario ve/hace ahora) ===
-  public enModoFisio = computed(() => this._rolUsuario() === 'fisio');
-  public enModoPaciente = computed(() => this._rolUsuario() === 'paciente');
+  public enModoFisio = computed(() => this.rolUsuario() === 'fisio');
+  public enModoPaciente = computed(() => this.rolUsuario() === 'paciente');
 
   // === CAPACIDAD (estático, derivado del usuario) ===
   public tieneCapacidadFisio = computed(
@@ -118,8 +164,6 @@ export class SessionService {
     const cached = this.leerCacheUsuario();
     if (!cached) return;
     this._usuario.set(cached.usuario);
-    this._rolUsuario.set(cached.rol);
-    this.puedeAlternarModo.set(cached.puedeAlternar);
     this._sesionInicializada.set(true);
   }
 
@@ -147,8 +191,6 @@ export class SessionService {
         v: 1,
         ts: Date.now(),
         usuario,
-        rol: this._rolUsuario(),
-        puedeAlternar: this.puedeAlternarModo(),
       };
       localStorage.setItem(this.USER_CACHE_KEY, JSON.stringify(data));
     } catch {
@@ -178,13 +220,19 @@ export class SessionService {
     );
   }
 
+  /**
+   * Establece el modo activo como preferencia local del usuario. Si la
+   * clínica activa no permite `'fisio'`, las llamadas con `rol = 'fisio'`
+   * se ignoran (defensivo). La preferencia se persiste en
+   * `localStorage:kengo:modo`.
+   */
   setRolUsuario(rol: RolUsuario) {
+    if (rol === 'fisio' && !this.puedeAlternarModo()) return;
     this._rolUsuario.set(rol);
-    // Solo persistimos preferencia si el usuario puede alternar (fisios).
-    // Para pacientes puros la preferencia es siempre 'paciente' y no debe
-    // persistirse para no quedar inconsistente si en el futuro adquieren rol fisio.
-    if (this.puedeAlternarModo()) {
-      this.guardarModoPersistido(rol);
+    try {
+      localStorage.setItem(MODO_STORAGE_KEY, rol);
+    } catch {
+      /* ignore */
     }
   }
 
@@ -192,31 +240,6 @@ export class SessionService {
     const next: RolUsuario =
       this._rolUsuario() === 'fisio' ? 'paciente' : 'fisio';
     this.setRolUsuario(next);
-  }
-
-  private leerModoPersistido(): RolUsuario | null {
-    try {
-      const v = localStorage.getItem(this.MODO_STORAGE_KEY);
-      return v === 'fisio' || v === 'paciente' ? v : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private guardarModoPersistido(rol: RolUsuario): void {
-    try {
-      localStorage.setItem(this.MODO_STORAGE_KEY, rol);
-    } catch {
-      /* ignore */
-    }
-  }
-
-  private limpiarModoPersistido(): void {
-    try {
-      localStorage.removeItem(this.MODO_STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
   }
 
   inicializarApp() {
@@ -246,7 +269,7 @@ export class SessionService {
     this._usuario.set(null);
     this._error.set(null);
     localStorage.removeItem('carrito:last_fisio_id');
-    this.limpiarModoPersistido();
+    this.clinicaActiva.clear();
     this.limpiarCacheUsuario();
   }
 
@@ -291,20 +314,6 @@ export class SessionService {
       localStorage.removeItem('carrito:last_fisio_id');
       this.limpiarCacheUsuario();
     } finally {
-      const u = this._usuario();
-      // Cualquier fisio puede alternar entre modos. Los pacientes puros no.
-      const puedeAlternar = !!u?.esFisio;
-      this.puedeAlternarModo.set(puedeAlternar);
-
-      if (puedeAlternar) {
-        const persistido = this.leerModoPersistido();
-        this._rolUsuario.set(persistido ?? 'fisio');
-        if (!persistido) this.guardarModoPersistido('fisio');
-      } else {
-        this._rolUsuario.set('paciente');
-        this.limpiarModoPersistido();
-      }
-
       this._loading.set(false);
       this._sesionInicializada.set(true);
       // Persistir cache solo si la carga terminó con un usuario válido. En

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
-import { AuthGuard, OnboardingGuard } from './core';
+import { AuthGuard, ClinicaActivaGuard, OnboardingGuard } from './core';
 
 /**
  * Convención de naming de rutas:
@@ -38,6 +38,18 @@ export const routes: Routes = [
       ),
   },
 
+  // Pantalla intermedia para usuarios con varias clínicas sin contexto activo
+  // todavía. La protege AuthGuard + OnboardingGuard pero NO ClinicaActivaGuard
+  // (sería un loop).
+  {
+    path: 'seleccionar-clinica',
+    canActivate: [AuthGuard, OnboardingGuard],
+    loadComponent: () =>
+      import(
+        './features/clinica/pages/seleccionar-clinica/seleccionar-clinica.component'
+      ).then((m) => m.SeleccionarClinicaComponent),
+  },
+
   // Pasarela de invitación: decide canje, login o registro según el estado
   // del usuario. Sin AuthGuard (el propio componente orquesta).
   {
@@ -50,7 +62,7 @@ export const routes: Routes = [
 
   {
     path: 'ejercicios',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/ejercicios/ejercicios.routes').then(
         (m) => m.EJERCICIOS_ROUTES,
@@ -59,7 +71,7 @@ export const routes: Routes = [
 
   {
     path: 'rutinas',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/rutinas/rutinas.routes').then(
         (m) => m.RUTINAS_ROUTES,
@@ -74,7 +86,7 @@ export const routes: Routes = [
 
   {
     path: 'mis-pacientes',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/pacientes/pacientes.routes').then(
         (m) => m.PACIENTES_ROUTES,
@@ -83,7 +95,7 @@ export const routes: Routes = [
 
   {
     path: 'mi-clinica',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/clinica/clinica.routes').then(
         (m) => m.CLINICA_ROUTES,
@@ -92,14 +104,14 @@ export const routes: Routes = [
 
   {
     path: 'planes',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/planes/planes.routes').then((m) => m.PLANES_ROUTES),
   },
 
   {
     path: 'actividad-personal',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/actividad/actividad.routes').then(
         (m) => m.ACTIVIDAD_ROUTES,
@@ -108,7 +120,7 @@ export const routes: Routes = [
 
   {
     path: 'mi-plan',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/sesion/sesion.routes').then((m) => m.SESION_ROUTES),
   },
@@ -124,7 +136,7 @@ export const routes: Routes = [
 
   {
     path: 'mensajes',
-    canActivate: [AuthGuard, OnboardingGuard],
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/mensajes/mensajes.routes').then(
         (m) => m.MENSAJES_ROUTES,

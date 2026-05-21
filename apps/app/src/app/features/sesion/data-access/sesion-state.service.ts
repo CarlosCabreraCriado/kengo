@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { assetUrl, videoUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { PlanesService } from '../../planes/data-access/planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
@@ -74,6 +75,7 @@ interface PendingExecution {
 export class SesionStateService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private planesService = inject(PlanesService);
   private persistencia = inject(SesionPersistenceService);
   private temporizador = inject(SesionTemporizadorService);
@@ -686,9 +688,13 @@ export class SesionStateService {
    */
   private async crearSesionRemota(fechaInicio: Date): Promise<string | null> {
     try {
+      const clinicaActivaId = this.clinicaActiva.selectedClinicaId();
       const sessionId = await this.convex.mutation(
         api.sessions.mutations.create,
-        { fechaInicio: fechaInicio.toISOString() },
+        {
+          fechaInicio: fechaInicio.toISOString(),
+          clinicId: (clinicaActivaId ?? undefined) as never,
+        },
       );
 
       if (sessionId) {

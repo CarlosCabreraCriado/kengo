@@ -1,5 +1,6 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../convex/_generated/dataModel';
@@ -43,28 +44,19 @@ type ClinicSnapshot = {
 export class DashboardFisioService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
-  // Resolver clinicIds gestionados por el fisio actual.
-  private readonly clinicIdsSub = this.convex.watchQuery(
-    api.me.queries.myManagedClinics,
-    () => {
-      const usuario = this.sessionService.usuario();
-      if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
-      return {};
-    },
-  );
-
-  // Snapshot de métricas de la primera clínica gestionada (caso típico: 1
-  // clínica por fisio). Si gestiona varias, mostramos las métricas de la
-  // primera y dejamos pendiente para una iteración futura el agregado.
+  // Snapshot de métricas de la clínica activa (un solo contexto en cada
+  // momento). El `ClinicaActivaGuard` garantiza que al entrar al dashboard
+  // hay un id válido.
   private readonly snapshotSub = this.convex.watchQuery(
     api.snapshots.queries.getClinicMetrics,
     () => {
       const usuario = this.sessionService.usuario();
       if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
-      const ids = this.clinicIdsSub.value();
-      if (!ids || ids.length === 0) return 'skip' as const;
-      return { clinicId: ids[0] as any, ventana: '30d' as const };
+      const id = this.clinicaActiva.selectedClinicaId();
+      if (!id) return 'skip' as const;
+      return { clinicId: id as any, ventana: '30d' as const };
     },
   );
 
@@ -78,17 +70,16 @@ export class DashboardFisioService {
     },
   );
 
-  // Actividad real (sesiones por día) de los últimos 10 días para la gráfica
-  // del panel del fisio. Misma estrategia multi-clínica que `snapshotSub`:
-  // de momento usamos `clinicIds[0]` y dejamos el agregado para más adelante.
+  // Actividad real (sesiones por día) de la clínica activa para la gráfica
+  // del panel del fisio.
   private readonly actividadSub = this.convex.watchQuery(
     api.dashboard.queries.getActividadDiariaClinica,
     () => {
       const usuario = this.sessionService.usuario();
       if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
-      const ids = this.clinicIdsSub.value();
-      if (!ids || ids.length === 0) return 'skip' as const;
-      return { clinicId: ids[0] as Id<'clinics'> };
+      const id = this.clinicaActiva.selectedClinicaId();
+      if (!id) return 'skip' as const;
+      return { clinicId: id as Id<'clinics'> };
     },
   );
 
@@ -97,11 +88,13 @@ export class DashboardFisioService {
   );
 
   /**
-   * Datos críticos del dashboard listos: la lista de clínicas gestionadas
-   * por el fisio se ha resuelto. Las métricas/planes secundarios pueden
-   * llegar más tarde y se renderizan con skeleton.
+   * Datos críticos del dashboard listos: hay clínica activa resuelta. Las
+   * métricas/planes secundarios pueden llegar más tarde y se renderizan con
+   * skeleton.
    */
-  readonly cargada = computed(() => !this.clinicIdsSub.isLoading());
+  readonly cargada = computed(
+    () => this.clinicaActiva.selectedClinicaId() !== null,
+  );
 
   readonly resumen = computed<ResumenFisioDashboard | null>(() => {
     const snap = this.snapshotSub.value() as ClinicSnapshot | null;

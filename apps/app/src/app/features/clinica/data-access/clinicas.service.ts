@@ -1,12 +1,15 @@
-import { Injectable, signal, inject, computed, effect } from '@angular/core';
+import { Injectable, inject, computed, effect, signal } from '@angular/core';
 
 import { ConvexService } from '../../../core/convex/convex.service';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { api } from '../../../../../../../convex/_generated/api';
 
 import {
   Usuario,
   Clinica,
+  Puesto,
+  RolUsuario,
 } from '../../../../types/global';
 
 type FisiosPorClinica = Record<string, Usuario[]>;
@@ -15,8 +18,15 @@ type FisiosPorClinica = Record<string, Usuario[]>;
 export class ClinicasService {
   private sessionService = inject(SessionService);
   private convex = inject(ConvexService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
-  selectedClinicaId = signal<string | null>(null);
+  // Reexposición del signal (compatibilidad con consumidores existentes).
+  // La verdad vive en `ClinicaActivaService`.
+  readonly selectedClinicaId = this.clinicaActiva.selectedClinicaId;
+
+  setSelectedClinicaId(id: string | null): void {
+    this.clinicaActiva.set(id);
+  }
 
   // ========= Convex: Suscripcion reactiva a mis clinicas =========
   private readonly misClinicasQuery = this.convex.watchQuery(
@@ -124,10 +134,57 @@ export class ClinicasService {
   readonly selectedClinica = computed<Clinica | null>(() => {
     const clinicas = this.misClinicas();
     const id = this.selectedClinicaId();
-
     if (!clinicas || clinicas.length === 0) return null;
-    if (!id) return clinicas[0] ?? null;
+    if (!id) return null;
+    return clinicas.find((c) => c.id === id) ?? null;
+  });
 
-    return clinicas.find((c) => c.id === id) ?? clinicas[0] ?? null;
+  /**
+   * Puesto del usuario autenticado en la clínica activa.
+   * `null` si no hay clínica activa o no se ha cargado todavía.
+   */
+  readonly puestoEnClinicaActiva = computed<Puesto | null>(() => {
+    const id = this.selectedClinicaId();
+    if (!id) return null;
+    const c = this.sessionService
+      .misclinicas()
+      .find((m) => m.clinicId === id);
+    return (c?.puesto as Puesto | null) ?? null;
+  });
+
+  /**
+   * Modo derivado de la clínica activa:
+   *   - puesto fisio o admin → 'fisio'
+   *   - puesto paciente → 'paciente'
+   *   - sin clínica activa o puesto desconocido → 'paciente' por defecto
+   *     (el sistema redirige a /seleccionar-clinica antes de operar).
+   */
+  readonly modoActual = computed<RolUsuario>(() => {
+    const puesto = this.puestoEnClinicaActiva();
+    if (puesto === 'fisio' || puesto === 'admin') return 'fisio';
+    return 'paciente';
+  });
+
+  // Sincroniza el id activo con las membresías reales:
+  //   - autoseleccion cuando hay exactamente una clínica.
+  //   - limpieza cuando el id persistido ya no aparece (p.ej. tras salir de
+  //     la clínica desde otro dispositivo).
+  private readonly sincronizadorClinicaActiva = effect(() => {
+    const ids = this.idsClinicasCargadas();
+    if (ids.length === 0) {
+      // Aún no se ha cargado o no tiene clínicas: no tocar el id persistido
+      // hasta confirmar (puede ser un estado transitorio antes de la query).
+      return;
+    }
+    const actual = this.selectedClinicaId();
+    if (ids.length === 1) {
+      if (actual !== ids[0]) {
+        this.setSelectedClinicaId(ids[0]!);
+      }
+      return;
+    }
+    if (actual && !ids.includes(actual)) {
+      this.setSelectedClinicaId(null);
+    }
   });
 }

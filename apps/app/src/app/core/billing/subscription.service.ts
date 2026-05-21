@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, type Signal } from '@angular/core';
 import { ConvexService } from '../convex/convex.service';
 import { SessionService } from '../auth/services/session.service';
+import { ClinicaActivaService } from '../auth/services/clinica-activa.service';
 import { ExternalBrowserService } from '../services/external-browser.service';
 import { PlatformService } from '../services/platform.service';
 import { ToastService } from '../../shared/services/toast/toast.service';
@@ -10,15 +11,18 @@ import type { ClinicSubscription } from '@kengo/shared-models';
 const DIA_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Estado reactivo de la suscripción de la clínica activa del admin.
+ * Estado reactivo de la suscripción de la clínica activa.
  *
- * Resuelve la "clínica activa" como la primera donde el usuario tiene puesto
- * `admin`. Multi-clínica admin (selector) queda como mejora futura.
+ * Resuelve la suscripción de la **clínica activa** (`ClinicaActivaService`)
+ * cuando el usuario tiene puesto `admin` en ella. Si el puesto activo no es
+ * admin (paciente o fisio), no expone billing porque solo el admin puede
+ * gestionarlo.
  */
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
   private readonly convex = inject(ConvexService);
   private readonly session = inject(SessionService);
+  private readonly clinicaActiva = inject(ClinicaActivaService);
   private readonly toast = inject(ToastService);
   private readonly externalBrowser = inject(ExternalBrowserService);
   private readonly platform = inject(PlatformService);
@@ -27,10 +31,16 @@ export class SubscriptionService {
     return this.platform.isNative() ? 'native' : 'web';
   }
 
-  /** ID de la clínica donde el usuario es admin (primera coincidencia). */
+  /**
+   * ID de la clínica activa cuando el usuario es admin en ella. `null` en
+   * cualquier otro caso (sin clínica activa, o admin en otra clínica que
+   * no es la activa actualmente).
+   */
   public readonly clinicIdAdmin = computed<string | null>(() => {
-    const clinicas = this.session.misclinicas();
-    return clinicas.find((c) => c.puesto === 'admin')?.clinicId ?? null;
+    const id = this.clinicaActiva.selectedClinicaId();
+    if (!id) return null;
+    const m = this.session.misclinicas().find((c) => c.clinicId === id);
+    return m?.puesto === 'admin' ? id : null;
   });
 
   private readonly query = this.convex.watchQuery(

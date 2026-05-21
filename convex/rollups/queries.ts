@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import { resolvePacienteId } from "../_helpers/patientAccess";
+import { resolveAndAssertPacienteId } from "../_helpers/patientAccess";
 
 /**
  * Devuelve los rollups diarios de un paciente entre dos fechas (inclusivas).
@@ -15,7 +15,11 @@ export const getDailyByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
 
     return await ctx.db
       .query("dailyPatientRollup")
@@ -41,7 +45,11 @@ export const getWeeklyByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
 
     return await ctx.db
       .query("weeklyPatientRollup")
@@ -67,7 +75,11 @@ export const getMonthlyByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
 
     return await ctx.db
       .query("monthlyPatientRollup")

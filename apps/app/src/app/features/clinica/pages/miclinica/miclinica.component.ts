@@ -13,6 +13,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { ClinicasService } from '../../data-access/clinicas.service';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
 import { SubscriptionService } from '../../../../core/billing/subscription.service';
@@ -88,6 +89,7 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   public clinicasService = inject(ClinicasService);
   public clinicaGestionService = inject(ClinicaGestionService);
   protected subscriptionService = inject(SubscriptionService);
@@ -273,18 +275,25 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
 
   clinicasRes = computed(() => this.clinicasService.misClinicasRes.value());
 
-  // Computed para la clínica actual
+  // Computed para la clínica actual: siempre refleja la clínica activa
+  // global (`ClinicaActivaService`). El `ClinicaActivaGuard` garantiza que
+  // hay una válida al entrar a la página.
   currentClinic = computed<Clinica | null>(() => {
     const clinicas = this.clinicasRes();
+    const activeId = this.clinicaActiva.selectedClinicaId();
     if (!clinicas || clinicas.length === 0) return null;
-    return clinicas[this.selectedClinicIndex()] ?? null;
+    return clinicas.find((c) => c.id === activeId) ?? null;
   });
 
   selectClinic(index: number) {
-    this.selectedClinicIndex.set(index);
+    // Cambiar de clínica desde aquí actualiza el contexto global (mismo
+    // selector que el `ClinicaSwitcher`). El índice se conserva solo para
+    // recargar el formulario de edición coherente con la clínica elegida.
     const clinica = this.clinicasRes()[index];
     if (clinica) {
+      this.selectedClinicIndex.set(index);
       this.selectedClinicId.set(clinica.id);
+      this.clinicaActiva.set(clinica.id);
       this.cargarFormulario(index);
     }
     this.showClinicPicker.set(false);

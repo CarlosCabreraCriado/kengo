@@ -22,6 +22,7 @@ import { AddPacienteDialogComponent } from '../../components/add-paciente/add-pa
 
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { MetricasPacientesService } from '../../data-access/metricas-pacientes.service';
@@ -75,6 +76,7 @@ interface OrdenOption {
 })
 export class PacientesListComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private dialogService = inject(DialogService);
   private router = inject(Router);
   public planBuilderService = inject(PlanBuilderService);
@@ -111,9 +113,14 @@ export class PacientesListComponent implements OnInit, OnDestroy {
 
   isMovil = useResponsive().esMobile;
 
-  public idsClinicas = computed(() => {
+  // Operamos siempre sobre la clínica activa. La lista de pacientes se filtra
+  // a esa clínica y los `assignments`/métricas también. Se mantiene el helper
+  // como array de un único id para conservar compatibilidad con las queries
+  // Convex que aceptan `clinicIds: Id<"clinics">[]`.
+  public idsClinicas = computed<string[] | null>(() => {
     if (this.sessionService.usuario() == null) return null;
-    return this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) || [];
+    const id = this.clinicaActiva.selectedClinicaId();
+    return id ? [id] : [];
   });
 
   // Asignaciones de fisio responsable

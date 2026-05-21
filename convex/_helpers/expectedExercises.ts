@@ -25,11 +25,18 @@ function isPlanVigente(plan: Doc<"plans">, target: string): boolean {
  * Devuelve los planes (`activo` o `completado`) vigentes para el paciente en
  * la fecha indicada. Un plan completado puede seguir teniendo registros de
  * actividad si la fecha cae dentro de su intervalo de vigencia.
+ *
+ * Si se pasa `clinicId`, filtra los planes a los de esa clínica (criterio
+ * de aislamiento multiclinica). Para preservar compatibilidad con planes
+ * legacy sin `clinicId`, esos siguen entrando aunque se filtre — se asume
+ * que ya están autorizados por el caller. Una vez completado el backfill
+ * (D3 del plan) el caller puede confiar en el filtro estricto.
  */
 export async function getActivePlansForPatientOnDate(
   ctx: DBCtx,
   pacienteId: Id<"users">,
   target: string,
+  clinicId?: Id<"clinics">,
 ): Promise<Doc<"plans">[]> {
   const [activos, completados] = await Promise.all([
     ctx.db
@@ -45,7 +52,13 @@ export async function getActivePlansForPatientOnDate(
       )
       .collect(),
   ]);
-  return [...activos, ...completados].filter((p) => isPlanVigente(p, target));
+  const vigentes = [...activos, ...completados].filter((p) =>
+    isPlanVigente(p, target),
+  );
+  if (!clinicId) return vigentes;
+  return vigentes.filter(
+    (p) => p.clinicId === undefined || p.clinicId === clinicId,
+  );
 }
 
 export interface ExpectedExerciseItem {
@@ -63,8 +76,14 @@ export async function getExpectedExercisesForPatientOnDate(
   pacienteId: Id<"users">,
   target: string,
   diaSemana: DiaSemana,
+  clinicId?: Id<"clinics">,
 ): Promise<ExpectedExerciseItem[]> {
-  const planes = await getActivePlansForPatientOnDate(ctx, pacienteId, target);
+  const planes = await getActivePlansForPatientOnDate(
+    ctx,
+    pacienteId,
+    target,
+    clinicId,
+  );
   if (planes.length === 0) return [];
 
   const allItems = await Promise.all(

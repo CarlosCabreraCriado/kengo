@@ -26,6 +26,9 @@ export const listMyConversations = query({
 
     const dedup = new Map<Id<"conversations">, (typeof asPaciente)[number]>();
     for (const c of [...asPaciente, ...asFisio]) {
+      // Las conversaciones archivadas por cascada al salir de una clínica
+      // no se listan; se preservan en BD para historial.
+      if (c.archivedAt !== undefined) continue;
       dedup.set(c._id, c);
     }
     const all = Array.from(dedup.values());

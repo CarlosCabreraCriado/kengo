@@ -1,10 +1,15 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { getAuthenticatedUser, PUESTOS_GESTION } from "../_helpers/permissions";
+import { assertCanAccessClinic } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
 
 export const listByClinic = query({
   args: { clinicId: v.id("clinics") },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await assertCanAccessClinic(ctx, user._id, args.clinicId, PUESTOS_GESTION);
+
     const assignments = await ctx.db
       .query("assignments")
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
@@ -30,6 +35,9 @@ export const getFisioResponsable = query({
     clinicId: v.id("clinics"),
   },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await assertCanAccessClinic(ctx, user._id, args.clinicId);
+
     const assignment = await ctx.db
       .query("assignments")
       .withIndex("by_pacienteId_clinicId", (q) =>

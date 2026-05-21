@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import { resolvePacienteId } from "../_helpers/patientAccess";
+import { resolveAndAssertPacienteId } from "../_helpers/patientAccess";
 import { getCurrentMadridDate } from "../_helpers/datetime";
 
 /**
@@ -16,7 +16,11 @@ export const listByPacienteAndDate = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
 
     return await ctx.db
       .query("exerciseExecutions")
@@ -43,7 +47,11 @@ export const listByPacienteInRange = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
     const hasta = args.hasta ?? getCurrentMadridDate();
 
     if (args.paginationOpts) {
@@ -94,7 +102,11 @@ export const listByPacienteAndDateExpanded = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolvePacienteId(ctx, args.pacienteId, user._id);
+    const targetUserId = await resolveAndAssertPacienteId(
+      ctx,
+      args.pacienteId,
+      user._id,
+    );
 
     const executions = await ctx.db
       .query("exerciseExecutions")

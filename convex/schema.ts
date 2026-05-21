@@ -127,6 +127,10 @@ export default defineSchema({
     .index("by_userId_exerciseId", ["userId", "exerciseId"]),
 
   // === PLANES DE TRATAMIENTO ===
+  // `clinicId` es obligatorio tras el backfill (ver migrations/
+  // backfillPlanClinicId*.ts). Todo plan creado a partir de aquí pertenece
+  // estrictamente a una clínica; las queries y mutations validan acceso
+  // contra esa clínica.
   plans: defineTable({
     titulo: v.string(),
     descripcion: v.optional(v.string()),
@@ -140,6 +144,7 @@ export default defineSchema({
     fechaFin: v.optional(v.string()),
     pacienteId: v.id("users"),
     fisioId: v.id("users"),
+    clinicId: v.id("clinics"),
     planAnterior: v.optional(v.id("plans")),
     version: v.number(),
   })
@@ -147,7 +152,9 @@ export default defineSchema({
     .index("by_pacienteId", ["pacienteId"])
     .index("by_estado", ["estado"])
     .index("by_fisioId_estado", ["fisioId", "estado"])
-    .index("by_pacienteId_estado", ["pacienteId", "estado"]),
+    .index("by_pacienteId_estado", ["pacienteId", "estado"])
+    .index("by_clinicId_estado", ["clinicId", "estado"])
+    .index("by_clinicId_fisioId_estado", ["clinicId", "fisioId", "estado"]),
 
   planExercises: defineTable({
     planId: v.id("plans"),
@@ -220,8 +227,12 @@ export default defineSchema({
     .index("by_planExerciseId_fecha", ["planExerciseId", "fecha"]),
 
   // === ROLLUPS DIARIOS POR PACIENTE (rediseño — sustituye a `dailyCompliance`) ===
+  // `clinicId` opcional durante el periodo de migración; al recalcularse cada
+  // rollup pasa a llevar la clínica de los ejercicios contabilizados. Los
+  // rollups antiguos quedan sin `clinicId` hasta su próxima regeneración.
   dailyPatientRollup: defineTable({
     pacienteId: v.id("users"),
+    clinicId: v.optional(v.id("clinics")),
     fecha: v.string(), // YYYY-MM-DD
     planAggregates: v.array(
       v.object({
@@ -244,7 +255,9 @@ export default defineSchema({
     ),
     sessionIds: v.array(v.id("sessions")),
     actualizadoEn: v.number(),
-  }).index("by_pacienteId_fecha", ["pacienteId", "fecha"]),
+  })
+    .index("by_pacienteId_fecha", ["pacienteId", "fecha"])
+    .index("by_clinicId_fecha", ["clinicId", "fecha"]),
 
   // === ROLLUPS SEMANALES POR PACIENTE ===
   weeklyPatientRollup: defineTable({
@@ -383,14 +396,23 @@ export default defineSchema({
     .index("by_pacienteId_estado", ["pacienteId", "estado"]),
 
   // === RUTINAS ===
+  // Reglas:
+  //   - `visibilidad === "privado"` → `clinicId` debe ser `undefined`
+  //     (rutina personal del autor).
+  //   - `visibilidad === "clinica"` → `clinicId` es obligatorio, pero
+  //     se declara opcional mientras dura el backfill (ver
+  //     `convex/migrations/backfillRoutineClinicId.ts`). Las mutations son
+  //     las que aplican la regla a partir del deploy de la migración.
   routines: defineTable({
     nombre: v.string(),
     descripcion: v.optional(v.string()),
     autorId: v.id("users"),
     visibilidad: v.union(v.literal("privado"), v.literal("clinica")),
+    clinicId: v.optional(v.id("clinics")),
   })
     .index("by_autorId", ["autorId"])
     .index("by_visibilidad", ["visibilidad"])
+    .index("by_clinicId", ["clinicId"])
     .searchIndex("search_nombre", { searchField: "nombre" }),
 
   routineExercises: defineTable({
@@ -467,6 +489,11 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   // === MENSAJERÍA (chat 1-1 fisio↔paciente dentro de una clínica) ===
+  // `archivedAt` se rellena cuando uno de los dos participantes pierde la
+  // membresía de la clínica (cascada en `clinicMemberships.remove`). Las
+  // conversaciones archivadas dejan de aparecer en `listMyConversations`
+  // pero no se borran para preservar el historial accesible si se
+  // restaurara la membresía.
   conversations: defineTable({
     pacienteId: v.id("users"),
     fisioId: v.id("users"),
@@ -476,6 +503,7 @@ export default defineSchema({
     lastMessageSenderId: v.optional(v.id("users")),
     pacienteUnreadCount: v.number(),
     fisioUnreadCount: v.number(),
+    archivedAt: v.optional(v.number()),
   })
     .index("by_pacienteId_lastMessageAt", ["pacienteId", "lastMessageAt"])
     .index("by_fisioId_lastMessageAt", ["fisioId", "lastMessageAt"])

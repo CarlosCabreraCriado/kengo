@@ -7,9 +7,11 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { NotificacionesService } from '../../../core/services/notificaciones.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { MensajesService } from '../../../features/mensajes/data-access/mensajes.service';
-import type { RolUsuario } from '../../../../types/global';
+import type { Clinica, RolUsuario } from '../../../../types/global';
+import { ToastService } from '../../services/toast/toast.service';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
 import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificaciones-menu.component';
+import { Ui2ClinicaSwitchMenuComponent } from '../clinica-switch-menu/clinica-switch-menu.component';
 
 /**
  * Patient header V2 — top fixed: logo K + nombre clínica + bell (con badge opcional) + avatar inicial.
@@ -20,7 +22,7 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
 @Component({
   selector: 'ui2-patient-header',
   standalone: true,
-  imports: [Ui2AvatarComponent, Ui2NotificacionesMenuComponent],
+  imports: [Ui2AvatarComponent, Ui2NotificacionesMenuComponent, Ui2ClinicaSwitchMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="ui2-patient-header">
@@ -35,9 +37,6 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
             (error)="onLogoError()"
           />
         </span>
-        @if (clinica()) {
-          <span class="ui2-patient-header__clinica">{{ clinica() }}</span>
-        }
       </div>
       <div class="ui2-patient-header__right">
         @if (modoFisio()) {
@@ -109,6 +108,10 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
                 <span>Mi perfil</span>
               </button>
 
+              <ui2-clinica-switch-menu
+                (clinicaCambiada)="onClinicaCambiada($event)"
+              ></ui2-clinica-switch-menu>
+
               @if (sessionService.puedeAlternarModo()) {
                 <button
                   type="button"
@@ -120,7 +123,7 @@ import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificac
                   (keydown.enter)="onToggleModo($event)"
                 >
                   <span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>
-                  <span class="ui2-user-menu__label">Modo fisio</span>
+                  <span class="ui2-user-menu__label">{{ modoFisio() ? 'Modo fisio' : 'Modo paciente' }}</span>
                   <span class="ui2-user-menu__switch" [class.ui2-user-menu__switch--on]="modoFisio()" aria-hidden="true">
                     <span class="ui2-user-menu__thumb"></span>
                   </span>
@@ -380,6 +383,7 @@ export class Ui2PatientHeaderComponent {
   public readonly mensajesService = inject(MensajesService);
   public readonly themeService = inject(ThemeService);
   private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   readonly menuOpen = signal(false);
@@ -445,11 +449,27 @@ export class Ui2PatientHeaderComponent {
     await this.authService.logout();
   }
 
+  onClinicaCambiada(clinica: Clinica): void {
+    this.themeService.aplicarTemaClinica(clinica);
+    const puesto = this.sessionService
+      .misclinicas()
+      .find((c) => c.clinicId === clinica.id)?.puesto;
+    const etiquetaPuesto =
+      puesto === 'admin'
+        ? 'Administrador'
+        : puesto === 'fisio'
+          ? 'Fisioterapeuta'
+          : 'Paciente';
+    this.toast.success(`Estás en ${clinica.nombre} (${etiquetaPuesto})`);
+    this.menuOpen.set(false);
+    this.router.navigateByUrl('/inicio');
+  }
+
   onToggleModo(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
     if (!this.sessionService.puedeAlternarModo()) return;
-    const nuevo: RolUsuario = this.modoPaciente() ? 'fisio' : 'paciente';
+    const nuevo: RolUsuario = this.modoFisio() ? 'paciente' : 'fisio';
     this.sessionService.setRolUsuario(nuevo);
     this.menuOpen.set(false);
     this.router.navigateByUrl('/inicio');

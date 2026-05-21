@@ -2,6 +2,7 @@
 export { AuthService } from './auth/services/auth.service';
 export { SessionService } from './auth/services/session.service';
 export { BetterAuthService } from './auth/services/better-auth.service';
+export { ClinicaActivaService } from './auth/services/clinica-activa.service';
 
 // Services
 export { ThemeService } from './services/theme.service';
@@ -14,6 +15,7 @@ export { AdminGuard } from './guards/admin.guard';
 export { ClinicAdminGuard } from './guards/clinic-admin.guard';
 export { ActiveSubscriptionGuard } from './guards/active-subscription.guard';
 export { OnboardingGuard } from './guards/onboarding.guard';
+export { ClinicaActivaGuard } from './guards/clinica-activa.guard';
 
 // Config
 export { CustomRouteReuseStrategy } from './config/route-reuse-strategy';

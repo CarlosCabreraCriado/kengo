@@ -2,9 +2,13 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import {
   getAuthenticatedUser,
-  requireAnyActiveSubscriptionForUser,
+  PUESTOS_GESTION,
+  requireActiveSubscription,
 } from "../_helpers/permissions";
-import { getPlanIfOwned } from "../_helpers/authorization";
+import {
+  assertCanAccessClinic,
+  getPlanIfOwned,
+} from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
 import { getCurrentMadridDate } from "../_helpers/datetime";
 
@@ -71,13 +75,30 @@ export const create = mutation({
     titulo: v.string(),
     descripcion: v.optional(v.string()),
     pacienteId: v.id("users"),
+    clinicId: v.id("clinics"),
     fechaInicio: v.optional(v.string()),
     fechaFin: v.optional(v.string()),
     ejercicios: v.array(ejercicioPlanArgs),
   },
   handler: async (ctx, args) => {
     const fisio = await getAuthenticatedUser(ctx);
-    await requireAnyActiveSubscriptionForUser(ctx, fisio._id);
+
+    await assertCanAccessClinic(ctx, fisio._id, args.clinicId, PUESTOS_GESTION);
+
+    const pacienteMembership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", args.pacienteId).eq("clinicId", args.clinicId),
+      )
+      .unique();
+    if (!pacienteMembership || pacienteMembership.puesto !== "paciente") {
+      throw new Error(
+        "El paciente no pertenece a la clínica indicada como paciente.",
+      );
+    }
+
+    await requireActiveSubscription(ctx, args.clinicId);
+
     const paciente = await ctx.db.get(args.pacienteId);
     if (!paciente) throw new Error("Paciente no encontrado");
 
@@ -95,6 +116,7 @@ export const create = mutation({
       fechaFin: args.fechaFin,
       pacienteId: args.pacienteId,
       fisioId: fisio._id,
+      clinicId: args.clinicId,
       version: 1,
     });
 
@@ -116,11 +138,11 @@ export const updateEstado = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthenticatedUser(ctx);
-    await requireAnyActiveSubscriptionForUser(ctx, user._id);
+    await getAuthenticatedUser(ctx);
+    const plan = await ctx.db.get(args.planId);
+    if (!plan) throw new Error("Plan no encontrado");
+    await requireActiveSubscription(ctx, plan.clinicId);
     if (args.estado === "activo") {
-      const plan = await ctx.db.get(args.planId);
-      if (!plan) throw new Error("Plan no encontrado");
       if (!plan.fechaInicio || !plan.fechaFin) {
         throw new Error(
           "Un plan activo requiere fechaInicio y fechaFin definidas.",
@@ -167,9 +189,9 @@ export const update = mutation({
     ejercicios: v.optional(v.array(ejercicioPlanArgs)),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthenticatedUser(ctx);
-    await requireAnyActiveSubscriptionForUser(ctx, user._id);
-    await getPlanIfOwned(ctx, args.planId);
+    await getAuthenticatedUser(ctx);
+    const plan = await getPlanIfOwned(ctx, args.planId);
+    await requireActiveSubscription(ctx, plan.clinicId);
 
     if (args.ejercicios) {
       if (await planHasActivity(ctx, args.planId)) {
@@ -239,6 +261,7 @@ export const version = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     const oldPlan = await getPlanIfOwned(ctx, args.oldPlanId, user._id);
+    await requireActiveSubscription(ctx, oldPlan.clinicId);
 
     const today = new Date().toISOString().split("T")[0]!;
 
@@ -248,7 +271,7 @@ export const version = mutation({
       fechaFin: oldPlan.fechaFin ?? today,
     });
 
-    // Create new plan
+    // Create new plan — hereda la clínica del anterior.
     const newPlanId = await ctx.db.insert("plans", {
       titulo: args.titulo,
       descripcion: args.descripcion,
@@ -257,6 +280,7 @@ export const version = mutation({
       fechaFin: args.fechaFin,
       pacienteId: oldPlan.pacienteId,
       fisioId: user._id,
+      clinicId: oldPlan.clinicId,
       version: (oldPlan.version ?? 1) + 1,
       planAnterior: args.oldPlanId,
     });

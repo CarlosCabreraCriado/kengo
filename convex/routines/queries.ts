@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
+import { assertCanAccessRoutine } from "../_helpers/authorization";
 
 /**
  * Helper: enriquece los ejercicios de una rutina con datos completos del ejercicio y sus categorías.
@@ -145,8 +146,8 @@ async function getClinicRoutines(
 export const getById = query({
   args: { routineId: v.id("routines") },
   handler: async (ctx, args) => {
-    const routine = await ctx.db.get(args.routineId);
-    if (!routine) throw new Error("Rutina no encontrada");
+    const user = await getAuthenticatedUser(ctx);
+    const routine = await assertCanAccessRoutine(ctx, user._id, args.routineId);
 
     const exercises = await ctx.db
       .query("routineExercises")

@@ -9,6 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { ClinicaGestionService } from '../../../clinica/data-access/clinica-gestion.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
@@ -59,6 +60,7 @@ export class InvitacionComponent implements OnInit {
   private router = inject(Router);
   private auth = inject(AuthService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private convex = inject(ConvexService);
   private clinicaGestionService = inject(ClinicaGestionService);
   private toastService = inject(ToastService);
@@ -138,6 +140,12 @@ export class InvitacionComponent implements OnInit {
     );
 
     if (result.success) {
+      // Cambia el contexto activo a la clínica recién canjeada para que la
+      // siguiente navegación opere ya dentro de ella. Sin esto, un usuario
+      // que ya tenía otra clínica activa seguiría viéndola tras canjear.
+      if (result.clinicaId) {
+        this.clinicaActiva.set(result.clinicaId);
+      }
       const mensaje = result.promovido
         ? result.nombreClinica
           ? `Ahora eres fisioterapeuta en ${result.nombreClinica}`

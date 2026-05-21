@@ -1,9 +1,15 @@
 import { QueryCtx, MutationCtx } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { tieneGestion } from "./permissions";
+import { assertCanAccessPaciente } from "./authorization";
 
 type AnyCtx = QueryCtx | MutationCtx;
 
+/**
+ * @deprecated Usa `resolveAndAssertPacienteId`. Esta función no valida
+ * acceso y se mantiene solo para compatibilidad temporal. Su firma se
+ * elimina cuando ningún caller la use.
+ */
 export async function resolvePacienteId(
   _ctx: AnyCtx,
   pacienteId: string | undefined,
@@ -11,6 +17,25 @@ export async function resolvePacienteId(
 ): Promise<Id<"users">> {
   if (!pacienteId) return fallbackUserId;
   return pacienteId as Id<"users">;
+}
+
+/**
+ * Resuelve el `pacienteId` a operar (el del argumento si llega, o el del
+ * usuario autenticado como fallback) **y valida el acceso**: solo se devuelve
+ * el id si el `userId` puede acceder a los datos clínicos de ese paciente
+ * según `assertCanAccessPaciente`.
+ *
+ * Esto sustituye al patrón anterior `resolvePacienteId(...) as Id<"users">`
+ * que permitía a cualquier autenticado consultar datos ajenos por IDOR.
+ */
+export async function resolveAndAssertPacienteId(
+  ctx: AnyCtx,
+  pacienteId: string | undefined,
+  userId: Id<"users">,
+): Promise<Id<"users">> {
+  const target = (pacienteId ?? userId) as Id<"users">;
+  await assertCanAccessPaciente(ctx, userId, target);
+  return target;
 }
 
 /**

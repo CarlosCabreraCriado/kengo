@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { AsignacionesService } from '../../pacientes/data-access/asignaciones.service';
 import { RutinasService } from '../../rutinas/data-access/rutinas.service';
 import { PlanesService } from './planes.service';
@@ -48,6 +49,7 @@ const DEFAULT_TTL_DAYS = 7;
 export class PlanBuilderService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private asignacionesService = inject(AsignacionesService);
   private rutinasService = inject(RutinasService);
   private planesService = inject(PlanesService);
@@ -298,12 +300,12 @@ export class PlanBuilderService {
       })),
     });
 
-    // Auto-asignar fisio responsable si el paciente no tiene uno
+    // Auto-asignar fisio responsable si el paciente no tiene uno, contra la
+    // clínica activa (única fuente de contexto multiclinica).
     const f = this.fisioId();
     const p = this.paciente();
     if (planId && f && p) {
-      const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-      const clinicaId = clinicas[0]?.clinicId;
+      const clinicaId = this.clinicaActiva.selectedClinicaId();
       if (clinicaId) {
         this.asignacionesService.autoAsignar(p.id, f, String(clinicaId));
       }
@@ -342,10 +344,17 @@ export class PlanBuilderService {
         return null;
       }
 
+      const clinicaActivaId = this.clinicaActiva.selectedClinicaId();
+      if (!clinicaActivaId) {
+        throw new Error(
+          'No hay clínica activa. Selecciona una clínica antes de crear el plan.',
+        );
+      }
       const planId = await this.convex.mutation(api.plans.mutations.create, {
         titulo: payload.titulo,
         descripcion: payload.descripcion ?? '',
         pacienteId: pacienteConvexId as any,
+        clinicId: clinicaActivaId as any,
         fechaInicio: payload.fechaInicio ?? undefined,
         fechaFin: payload.fechaFin ?? undefined,
         ejercicios: payload.items.map((item) => ({

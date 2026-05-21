@@ -15,6 +15,7 @@ import { mutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthenticatedUser } from "../_helpers/permissions";
+import { assertCanAccessClinic } from "../_helpers/authorization";
 import { getCurrentMadridDate } from "../_helpers/datetime";
 import { closeImpl, openOrResumeImpl } from "./internal";
 
@@ -30,14 +31,21 @@ import { closeImpl, openOrResumeImpl } from "./internal";
 export const create = mutation({
   args: {
     fechaInicio: v.optional(v.string()),
+    // `clinicId` opcional durante el rollout. Cuando el frontend envía la
+    // clínica activa del paciente, la sesión queda atada a ella y solo
+    // contabiliza ejercicios de planes de esa clínica.
+    clinicId: v.optional(v.id("clinics")),
     observacionesGenerales: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<"sessions">> => {
     const user = await getAuthenticatedUser(ctx);
+    if (args.clinicId) {
+      await assertCanAccessClinic(ctx, user._id, args.clinicId, ["paciente"]);
+    }
     const fecha = args.fechaInicio
       ? args.fechaInicio.slice(0, 10)
       : getCurrentMadridDate();
-    return await openOrResumeImpl(ctx, user._id, fecha);
+    return await openOrResumeImpl(ctx, user._id, fecha, args.clinicId);
   },
 });
 
