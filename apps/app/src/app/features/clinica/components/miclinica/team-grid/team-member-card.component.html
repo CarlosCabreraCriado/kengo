@@ -1,4 +1,9 @@
-<article class="mtm">
+<button
+  type="button"
+  class="mtm"
+  (click)="abrir.emit()"
+  [attr.aria-label]="'Ver detalle de ' + fullName()"
+>
   <ui2-avatar
     size="md"
     [gradient]="gradient()"
@@ -9,31 +14,5 @@
   <div class="mtm__info">
     <h4 class="mtm__name">{{ fullName() }}</h4>
     <p class="mtm__role">{{ rol() }}</p>
-    @if (fisio().numero_colegiado) {
-      <span class="mtm__pill">
-        <ui2-pill variant="soft" icon="verified">Col. {{ fisio().numero_colegiado }}</ui2-pill>
-      </span>
-    }
   </div>
-
-  <div class="mtm__actions">
-    @if (fisio().telefono) {
-      <a
-        [href]="'tel:' + fisio().telefono"
-        class="mtm__action"
-        aria-label="Llamar"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">phone</span>
-      </a>
-    }
-    @if (fisio().email) {
-      <a
-        [href]="'mailto:' + fisio().email"
-        class="mtm__action"
-        aria-label="Email"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">mail</span>
-      </a>
-    }
-  </div>
-</article>
+</button>

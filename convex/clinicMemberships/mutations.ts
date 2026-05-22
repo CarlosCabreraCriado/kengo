@@ -1,7 +1,9 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation, MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { Doc, Id } from "../_generated/dataModel";
 import {
+  checkClinicPermission,
   getAuthenticatedUser,
   requireActiveSubscription,
 } from "../_helpers/permissions";
@@ -13,6 +15,42 @@ const PUESTOS_FACTURABLES: ReadonlyArray<"fisio" | "admin"> = [
 
 function esFacturable(puesto: "fisio" | "paciente" | "admin"): boolean {
   return (PUESTOS_FACTURABLES as ReadonlyArray<string>).includes(puesto);
+}
+
+/**
+ * Cascada cuando se elimina una membresía de `fisio` o `admin`:
+ *   - Borra `assignments` donde figuraba como responsable.
+ *   - Archiva conversaciones del fisio/admin en esa clínica.
+ *   - Los planes que había creado se mantienen (los pacientes los necesitan).
+ *
+ * Asume que la membresía ya ha sido eliminada por el caller.
+ */
+async function cascadeRemoveStaff(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  clinicId: Id<"clinics">,
+): Promise<void> {
+  const ahora = Date.now();
+
+  const assignments = await ctx.db
+    .query("assignments")
+    .withIndex("by_fisioId_clinicId", (q) =>
+      q.eq("fisioId", userId).eq("clinicId", clinicId),
+    )
+    .collect();
+  for (const a of assignments) await ctx.db.delete(a._id);
+
+  const conversacionesFisio = await ctx.db
+    .query("conversations")
+    .withIndex("by_fisioId_lastMessageAt", (q) =>
+      q.eq("fisioId", userId),
+    )
+    .collect();
+  for (const c of conversacionesFisio) {
+    if (c.clinicId === clinicId && c.archivedAt === undefined) {
+      await ctx.db.patch(c._id, { archivedAt: ahora });
+    }
+  }
 }
 
 /**
@@ -150,26 +188,7 @@ export const remove = mutation({
       }
     } else {
       // fisio | admin
-      const assignments = await ctx.db
-        .query("assignments")
-        .withIndex("by_fisioId_clinicId", (q) =>
-          q.eq("fisioId", userId).eq("clinicId", clinicId),
-        )
-        .collect();
-      for (const a of assignments) await ctx.db.delete(a._id);
-
-      // Archiva las conversaciones del fisio atribuidas a esta clínica.
-      const conversacionesFisio = await ctx.db
-        .query("conversations")
-        .withIndex("by_fisioId_lastMessageAt", (q) =>
-          q.eq("fisioId", userId),
-        )
-        .collect();
-      for (const c of conversacionesFisio) {
-        if (c.clinicId === clinicId && c.archivedAt === undefined) {
-          await ctx.db.patch(c._id, { archivedAt: ahora });
-        }
-      }
+      await cascadeRemoveStaff(ctx, userId, clinicId);
     }
 
     if (eraFacturable) {
@@ -179,6 +198,62 @@ export const remove = mutation({
         { clinicId },
       );
     }
+
+    return { ok: true };
+  },
+});
+
+/**
+ * Expulsa a un fisio de una clínica.
+ *
+ * Restricciones:
+ *   - Solo un `admin` de la clínica puede invocarla.
+ *   - El target debe tener puesto `fisio` (no se permite expulsar a otros
+ *     `admin` ni a `paciente` — los pacientes se gestionan con `remove`).
+ *   - No se puede expulsar a uno mismo (un admin que quiera salir debe
+ *     usar otra acción explícita).
+ *
+ * La cascada es la misma que en `remove` para el caso `fisio` (delete
+ * assignments + archive conversations + sync de Stripe).
+ */
+export const expelMember = mutation({
+  args: {
+    clinicId: v.id("clinics"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const actor = await getAuthenticatedUser(ctx);
+    await checkClinicPermission(ctx, actor._id, args.clinicId, ["admin"]);
+
+    if (actor._id === args.userId) {
+      throw new Error("No puedes expulsarte a ti mismo");
+    }
+
+    const membership: Doc<"clinicMemberships"> | null = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", args.userId).eq("clinicId", args.clinicId),
+      )
+      .unique();
+
+    if (!membership) {
+      throw new Error("El usuario no pertenece a esta clínica");
+    }
+
+    if (membership.puesto !== "fisio") {
+      throw new Error(
+        "Solo se puede expulsar a fisioterapeutas (no pacientes ni administradores)",
+      );
+    }
+
+    await ctx.db.delete(membership._id);
+    await cascadeRemoveStaff(ctx, args.userId, args.clinicId);
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.billing.internal.syncQuantityFromMemberships,
+      { clinicId: args.clinicId },
+    );
 
     return { ok: true };
   },

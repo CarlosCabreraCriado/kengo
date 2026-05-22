@@ -1,0 +1,101 @@
+<ui2-dialog-host variant="sheet">
+  <ui2-dialog-header
+    title="Detalle del miembro"
+    subtitle="Información del fisioterapeuta"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    @if (miembro(); as m) {
+      <section class="md-profile">
+        <ui2-avatar
+          size="xl"
+          [gradient]="avatarGradient()"
+          [name]="fullName()"
+          [src]="avatarSrc()"
+          [border]="true"
+        ></ui2-avatar>
+
+        <h3 class="md-name">{{ fullName() }}</h3>
+
+        <ui2-pill
+          [variant]="esAdminTarget() ? 'primary' : 'soft'"
+          [icon]="rolIcon()"
+        >
+          {{ rolLabel() }}
+        </ui2-pill>
+      </section>
+
+      @if (m.email || m.telefono) {
+        <section class="md-section">
+          <h4 class="md-section-title">Contacto</h4>
+          <ul class="md-list">
+            @if (m.email) {
+              <li class="md-row">
+                <span class="md-row-icon material-symbols-outlined" aria-hidden="true">mail</span>
+                <div class="md-row-text">
+                  <span class="md-row-label">Email</span>
+                  <a class="md-row-value md-link" [href]="'mailto:' + m.email">{{ m.email }}</a>
+                </div>
+              </li>
+            }
+            @if (m.telefono) {
+              <li class="md-row">
+                <span class="md-row-icon material-symbols-outlined" aria-hidden="true">phone</span>
+                <div class="md-row-text">
+                  <span class="md-row-label">Teléfono</span>
+                  <a class="md-row-value md-link" [href]="'tel:' + m.telefono">{{ m.telefono }}</a>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (m.numero_colegiado) {
+        <section class="md-section">
+          <h4 class="md-section-title">Datos profesionales</h4>
+          <ul class="md-list">
+            <li class="md-row">
+              <span class="md-row-icon material-symbols-outlined" aria-hidden="true">verified</span>
+              <div class="md-row-text">
+                <span class="md-row-label">Número de colegiado</span>
+                <span class="md-row-value">{{ m.numero_colegiado }}</span>
+              </div>
+            </li>
+          </ul>
+        </section>
+      }
+
+      @if (puedeDesvincular()) {
+        <section class="md-danger">
+          <h4 class="md-danger-title">Zona peligrosa</h4>
+          <div class="md-danger-row">
+            <div class="md-danger-text">
+              <span class="md-danger-label">Desvincular de la clínica</span>
+              <p class="md-danger-desc">
+                Retira el acceso del fisioterapeuta. Perderá pacientes y conversaciones. Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="md-danger-btn"
+              (click)="onDesvincular()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">person_remove</span>
+              <span>Desvincular</span>
+            </button>
+          </div>
+        </section>
+      }
+    } @else {
+      <div class="md-empty">
+        <p>Este miembro ya no pertenece a la clínica.</p>
+      </div>
+    }
+  </ui2-dialog-content>
+
+  <ui2-dialog-actions>
+    <ui2-button variant="secondary" (clicked)="cerrar()">Cerrar</ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

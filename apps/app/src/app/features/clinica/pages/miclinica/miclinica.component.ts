@@ -522,16 +522,27 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   esAdminFisioFn = (fisioId: string): boolean => {
     const clinica = this.currentClinic();
     if (!clinica) return false;
-    const usuario = this.sessionService.usuario();
-    if (!usuario) return false;
-    // Si el fisio coincide con el usuario actual, podemos usar el computed esAdmin().
-    if (usuario.id === fisioId) return this.esAdmin();
-    // Para otros fisios necesitaríamos el listado de miembros con su puesto.
-    // Como ese dato no está disponible aquí, devolvemos false (la pill seguirá mostrando "Fisioterapeuta").
-    return false;
+    const miembro = this.fisios(clinica.id).find((f) => f.id === fisioId);
+    return miembro?.puesto === 'admin';
   };
 
   /** Resolver de URL de avatar para el componente team-grid. */
   resolverAvatarFisio = (avatar: string | null | undefined): string | null =>
     this.fisioAvatarUrl(avatar);
+
+  /**
+   * Abre el detalle de un miembro del equipo en bottom-sheet (móvil) /
+   * modal (desktop). El propio diálogo decide si mostrar la acción de
+   * desvincular según el puesto del actor y del target.
+   */
+  async abrirDetalleMiembro(miembro: Usuario): Promise<void> {
+    const clinica = this.currentClinic();
+    if (!clinica) return;
+    const { MiembroDetailDialogComponent } = await import(
+      '../../components/miembro-detail-dialog/miembro-detail-dialog.component'
+    );
+    this.dialogService.openSheet(MiembroDetailDialogComponent, {
+      data: { clinicaId: clinica.id, fisioId: miembro.id },
+    });
+  }
 }

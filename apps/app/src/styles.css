@@ -739,9 +739,9 @@ body {
   width: 100%;
   max-width: 640px;
 }
-.ui-dialog-panel--compact {
+.cdk-overlay-pane.ui-dialog-panel--compact {
   width: 100%;
-  max-width: 420px;
+  max-width: 380px;
 }
 .ui-dialog-panel--sheet {
   width: 100%;
@@ -782,6 +782,17 @@ body {
    desktop. */
 .ui-dialog-panel--standard:has(app-dialogo-pdf) {
   max-width: 440px;
+}
+
+/* Override puntual: el detalle de miembro del equipo es un perfil vertical
+   compacto (avatar + nombre + 1-2 filas de contacto). 500px queda muy
+   disperso en desktop; 420px lo deja proporcionado. La regla móvil
+   (`max-width: 100vw` + `align-self: flex-end`) sigue ganando por especificidad
+   en pantallas <768px porque se aplica con el mismo selector base. */
+@media (min-width: 768px) {
+  .ui-dialog-panel--sheet:has(app-miembro-detail-dialog) {
+    max-width: 420px;
+  }
 }
 
 .selector-paciente-dialog {

@@ -4,6 +4,7 @@ import { ConvexService } from '../../../core/convex/convex.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import type { Id } from '../../../../../../../convex/_generated/dataModel';
 
 import {
   Usuario,
@@ -12,7 +13,11 @@ import {
   RolUsuario,
 } from '../../../../types/global';
 
-type FisiosPorClinica = Record<string, Usuario[]>;
+export interface MiembroEquipo extends Usuario {
+  puesto: Puesto;
+}
+
+type FisiosPorClinica = Record<string, MiembroEquipo[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ClinicasService {
@@ -91,32 +96,7 @@ export class ClinicasService {
 
     for (const clinic of clinicas) {
       try {
-        const members = await this.convex.query(
-          api.clinics.queries.getMembers,
-          { clinicId: clinic._id },
-        );
-
-        const fisios: Usuario[] = (members ?? [])
-          .filter(
-            (m) => m.puesto === 'fisio' || m.puesto === 'admin',
-          )
-          .map((m) => ({
-            id: m._id,
-            convexId: m._id,
-            first_name: m.firstName ?? '',
-            last_name: m.lastName ?? '',
-            email: m.email ?? '',
-            email_verified: m.emailVerified ?? false,
-            avatar: m.avatar ? String(m.avatar) : '',
-            avatar_url: undefined,
-            telefono: m.telefono || undefined,
-            numero_colegiado: m.numeroColegiado || undefined,
-            detalle: null,
-            clinicas: [],
-            esFisio: true,
-            esPaciente: false,
-          }));
-
+        const fisios = await this.fetchMiembrosClinica(clinic._id);
         result[clinic._id] = fisios;
       } catch (err) {
         console.warn(`Error cargando miembros de clinica ${clinic.nombre}:`, err);
@@ -126,8 +106,53 @@ export class ClinicasService {
     this.fisiosCache.set(result);
   }
 
+  /**
+   * Recarga los miembros (fisio | admin) de una sola clínica y actualiza
+   * el cache. Usado tras mutaciones puntuales (p.ej. expulsar fisio).
+   */
+  async recargarFisiosClinica(clinicId: string): Promise<void> {
+    const clinicas = this.misClinicasQuery.value();
+    const clinic = clinicas?.find((c) => c._id === clinicId);
+    if (!clinic) return;
+    try {
+      const fisios = await this.fetchMiembrosClinica(clinic._id);
+      this.fisiosCache.update((prev) => ({ ...prev, [clinicId]: fisios }));
+    } catch (err) {
+      console.warn(`Error recargando miembros de clinica ${clinic.nombre}:`, err);
+    }
+  }
+
+  private async fetchMiembrosClinica(
+    clinicId: Id<'clinics'>,
+  ): Promise<MiembroEquipo[]> {
+    const members = await this.convex.query(
+      api.clinics.queries.getMembers,
+      { clinicId },
+    );
+
+    return (members ?? [])
+      .filter((m) => m.puesto === 'fisio' || m.puesto === 'admin')
+      .map((m) => ({
+        id: m._id,
+        convexId: m._id,
+        first_name: m.firstName ?? '',
+        last_name: m.lastName ?? '',
+        email: m.email ?? '',
+        email_verified: m.emailVerified ?? false,
+        avatar: m.avatar ? String(m.avatar) : '',
+        avatar_url: undefined,
+        telefono: m.telefono || undefined,
+        numero_colegiado: m.numeroColegiado || undefined,
+        detalle: null,
+        clinicas: [],
+        esFisio: true,
+        esPaciente: false,
+        puesto: m.puesto as Puesto,
+      }));
+  }
+
   fisiosDeClinica = (idClinica: string) =>
-    computed<Usuario[]>(() => {
+    computed<MiembroEquipo[]>(() => {
       return this.fisiosCache()[idClinica] ?? [];
     });
 

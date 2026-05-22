@@ -75,6 +75,7 @@
           [index]="i"
           [avatarUrl]="resolveAvatar(f.avatar)"
           [esAdmin]="esAdminFisio(f.id)"
+          (abrir)="verMiembro.emit(f)"
         />
       }
     </div>

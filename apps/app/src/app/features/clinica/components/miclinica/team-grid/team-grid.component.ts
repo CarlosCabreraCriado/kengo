@@ -33,6 +33,7 @@ export class MiClinicaTeamGridComponent {
   readonly esAdminFn = input<(fisioId: string) => boolean>(() => false);
 
   readonly anadirFisio = output<void>();
+  readonly verMiembro = output<Usuario>();
   readonly toggleExpand = output<void>();
 
   resolveAvatar(avatar: string | null | undefined): string | null {
