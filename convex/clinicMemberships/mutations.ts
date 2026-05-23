@@ -3,6 +3,7 @@ import { mutation, MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
 import {
+  assertNotOwnerWithoutTransfer,
   checkClinicPermission,
   getAuthenticatedUser,
   requireActiveSubscription,
@@ -86,6 +87,14 @@ export const add = mutation({
     if (existing) {
       puestoAnterior = existing.puesto;
       if (existing.puesto !== args.puesto) {
+        // Si el cambio degrada a un admin (a fisio/paciente) y ese admin es
+        // el propietario, bloquear: debe transferir la propiedad antes.
+        if (
+          existing.puesto === "admin" &&
+          args.puesto !== "admin"
+        ) {
+          await assertNotOwnerWithoutTransfer(ctx, args.clinicId, args.userId);
+        }
         await ctx.db.patch(existing._id, { puesto: args.puesto });
       }
       resultId = existing._id;
@@ -141,6 +150,13 @@ export const remove = mutation({
     const clinicId = membership.clinicId;
     const userId = membership.userId;
     const puesto = membership.puesto;
+
+    // Si el miembro saliente es el propietario, exigir transferencia previa.
+    // La validación es independiente del estado de billing: el owner debe
+    // ceder la responsabilidad SIEMPRE antes de abandonar la clínica.
+    if (puesto === "admin") {
+      await assertNotOwnerWithoutTransfer(ctx, clinicId, userId);
+    }
 
     await ctx.db.delete(args.membershipId);
 

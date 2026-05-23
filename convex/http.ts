@@ -23,16 +23,70 @@ authComponent.registerRoutes(http, createAuth, { cors: true });
 registerStripeRoutes(http, components.stripe, {
   webhookPath: "/stripe/webhook",
   onEvent: async (ctx, event) => {
+    // Resolución de `clinicId` para el evento (cuando aplica). Se usa tanto
+    // para los tipos `customer.subscription.*` (lectura directa de
+    // `metadata.orgId`) como para los `invoice.*` (resolución vía componente
+    // a partir de `subscription`).
+    const resolveClinicId = async (): Promise<Id<"clinics"> | undefined> => {
+      switch (event.type) {
+        case "customer.subscription.created":
+        case "customer.subscription.updated":
+        case "customer.subscription.deleted":
+        case "customer.subscription.trial_will_end":
+        case "checkout.session.completed": {
+          const orgId = (event.data.object as { metadata?: Record<string, string> })
+            .metadata?.["orgId"];
+          return orgId ? (orgId as Id<"clinics">) : undefined;
+        }
+        case "invoice.paid":
+        case "invoice.payment_failed": {
+          const invoice = event.data.object as {
+            subscription?: string;
+          };
+          if (!invoice.subscription) return undefined;
+          const sub = await ctx.runQuery(
+            components.stripe.public.getSubscription,
+            { stripeSubscriptionId: invoice.subscription },
+          );
+          return sub?.orgId ? (sub.orgId as Id<"clinics">) : undefined;
+        }
+        default:
+          return undefined;
+      }
+    };
+
+    const eventCreatedMs = event.created * 1000;
+    const clinicId = await resolveClinicId();
+
+    // Dedup global por `event.id`. Si ya procesamos este evento (caso típico:
+    // Stripe reentrega por timeout), abortamos sin ejecutar efectos
+    // colaterales. El componente Stripe ya hace upserts idempotentes en sus
+    // tablas internas, pero nuestro `onEvent` no estaría protegido sin esto.
+    const { skip } = await ctx.runMutation(
+      internal.billing.internal.recordWebhookEvent,
+      {
+        eventId: event.id,
+        eventType: event.type,
+        createdMs: eventCreatedMs,
+        clinicId,
+      },
+    );
+    if (skip) {
+      console.log(
+        `[stripe webhook] evento duplicado ${event.id} (${event.type}) — ignorado`,
+      );
+      return;
+    }
+
     try {
       switch (event.type) {
         case "customer.subscription.created":
         case "customer.subscription.updated": {
+          if (!clinicId) return;
           const sub = event.data.object;
-          const orgId = sub.metadata?.["orgId"];
-          if (!orgId) return;
           const item = sub.items.data[0];
           await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
-            clinicId: orgId as Id<"clinics">,
+            clinicId,
             status: sub.status,
             trialEnd: sub.trial_end ? sub.trial_end * 1000 : undefined,
             currentPeriodEnd: item?.current_period_end
@@ -40,60 +94,60 @@ registerStripeRoutes(http, components.stripe, {
               : undefined,
             cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
             quantity: item?.quantity,
+            eventCreatedMs,
           });
           break;
         }
         case "customer.subscription.deleted": {
-          const sub = event.data.object;
-          const orgId = sub.metadata?.["orgId"];
-          if (!orgId) return;
+          if (!clinicId) return;
           await ctx.runMutation(internal.billing.internal.markCanceled, {
-            clinicId: orgId as Id<"clinics">,
+            clinicId,
           });
+          // Email de cancelación al propietario (referencia: Bloque G del
+          // plan production-ready). El destinatario es determinista gracias
+          // a `clinics.ownerUserId`.
+          await ctx.scheduler.runAfter(
+            0,
+            internal.billing.actions.notifySubscriptionCanceled,
+            { clinicId },
+          );
           break;
         }
         case "customer.subscription.trial_will_end": {
-          const sub = event.data.object;
-          const orgId = sub.metadata?.["orgId"];
-          if (!orgId) return;
+          if (!clinicId) return;
           await ctx.runMutation(
             internal.billing.internal.enqueueTrialEndingNotification,
-            { clinicId: orgId as Id<"clinics"> },
+            { clinicId },
           );
           break;
         }
         case "invoice.paid": {
-          const invoice = event.data.object;
-          const subId =
-            (invoice as unknown as { subscription?: string }).subscription;
-          if (!subId) return;
-          const sub = await ctx.runQuery(
-            components.stripe.public.getSubscription,
-            { stripeSubscriptionId: subId },
-          );
-          const orgId = sub?.orgId;
-          if (!orgId) return;
+          if (!clinicId) return;
           await ctx.runMutation(
             internal.billing.internal.markActiveAfterPayment,
-            { clinicId: orgId as Id<"clinics"> },
+            { clinicId },
           );
           break;
         }
         case "invoice.payment_failed": {
-          const invoice = event.data.object;
-          const subId =
-            (invoice as unknown as { subscription?: string }).subscription;
-          if (!subId) return;
-          const sub = await ctx.runQuery(
-            components.stripe.public.getSubscription,
-            { stripeSubscriptionId: subId },
-          );
-          const orgId = sub?.orgId;
-          if (!orgId) return;
+          if (!clinicId) return;
           const days = Number(process.env["STRIPE_GRACE_PERIOD_DAYS"] ?? 7);
           await ctx.runMutation(
             internal.billing.internal.markPastDueWithGrace,
-            { clinicId: orgId as Id<"clinics">, gracePeriodDays: days },
+            { clinicId, gracePeriodDays: days },
+          );
+          break;
+        }
+        case "checkout.session.completed": {
+          if (!clinicId) return;
+          // Welcome email tras el primer checkout. La idempotencia vive en
+          // `notifyCheckoutCompleted` vía `clinicBilling.welcomeEmailSentAt`,
+          // así que reactivaciones (cancel → checkout de nuevo) no
+          // disparan un segundo email.
+          await ctx.scheduler.runAfter(
+            0,
+            internal.billing.actions.notifyCheckoutCompleted,
+            { clinicId },
           );
           break;
         }

@@ -77,13 +77,25 @@ export class SubscriptionService {
     );
   });
 
-  public readonly tieneAccesoActivo = computed(() => {
-    const sub = this.suscripcion();
-    if (!sub) return true;
-    if (sub.estado === 'trialing' || sub.estado === 'active') return true;
-    if (sub.estado === 'past_due' && this.enPeriodoGracia()) return true;
-    return false;
-  });
+  /**
+   * `true` si el usuario autenticado es el propietario de la clínica activa.
+   * Solo el owner puede ejecutar acciones de billing (Checkout, Portal,
+   * cancelar, reactivar, ver facturas). Los demás admins ven la pantalla
+   * en modo read-only.
+   */
+  public readonly esOwnerDeClinicaActiva = computed<boolean>(
+    () => this.suscripcion()?.esOwner === true,
+  );
+
+  /** Nombre del owner (para el mensaje "El responsable es {nombre}"). */
+  public readonly ownerNombre = computed<string | null>(
+    () => this.suscripcion()?.ownerNombre ?? null,
+  );
+
+  /** Nombre de la clínica activa, leído del payload de billing. */
+  public readonly clinicaNombre = computed<string>(
+    () => this.suscripcion()?.clinicaNombre ?? '',
+  );
 
   public readonly bloqueada = computed(() => {
     const sub = this.suscripcion();

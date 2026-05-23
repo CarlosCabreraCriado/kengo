@@ -1,8 +1,10 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import {
   getAuthenticatedUser,
+  requireActiveSubscription,
   requireAnyActiveSubscriptionForUser,
+  checkClinicPermission,
 } from "../_helpers/permissions";
 import { getRoutineIfOwned } from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
@@ -24,17 +26,44 @@ export const create = mutation({
     nombre: v.string(),
     descripcion: v.optional(v.string()),
     visibilidad: v.union(v.literal("privado"), v.literal("clinica")),
+    /**
+     * Clínica destino. Obligatoria cuando `visibilidad === "clinica"` para
+     * validar la suscripción contra esa clínica concreta (aislamiento
+     * estricto, Bloque E del plan production-ready). Opcional cuando la
+     * rutina es privada del autor.
+     */
+    clinicId: v.optional(v.id("clinics")),
     ejercicios: v.array(ejercicioRutinaValidator),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    await requireAnyActiveSubscriptionForUser(ctx, user._id);
+
+    // Aislamiento por clínica destino: una rutina de clínica solo se puede
+    // crear contra una clínica activa donde el autor sea fisio/admin. Una
+    // rutina privada del autor solo necesita "alguna clínica activa".
+    if (args.visibilidad === "clinica") {
+      if (!args.clinicId) {
+        throw new ConvexError({
+          code: "CLINIC_ID_REQUIRED",
+          message:
+            "Para crear una rutina de clínica debes indicar la clínica destino.",
+        });
+      }
+      await checkClinicPermission(ctx, user._id, args.clinicId, [
+        "fisio",
+        "admin",
+      ]);
+      await requireActiveSubscription(ctx, args.clinicId);
+    } else {
+      await requireAnyActiveSubscriptionForUser(ctx, user._id);
+    }
 
     const routineId = await ctx.db.insert("routines", {
       nombre: args.nombre,
       descripcion: args.descripcion,
       autorId: user._id,
       visibilidad: args.visibilidad,
+      clinicId: args.visibilidad === "clinica" ? args.clinicId : undefined,
     });
 
     for (const ejercicio of args.ejercicios) {
@@ -86,8 +115,16 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    await requireAnyActiveSubscriptionForUser(ctx, user._id);
-    await getRoutineIfOwned(ctx, args.routineId);
+    const routine = await getRoutineIfOwned(ctx, args.routineId);
+
+    // Aislamiento: validamos suscripción contra la clínica destino de la
+    // rutina. Si la rutina es privada, basta con que el autor tenga alguna
+    // clínica activa donde sea fisio/admin.
+    if (routine.clinicId) {
+      await requireActiveSubscription(ctx, routine.clinicId);
+    } else {
+      await requireAnyActiveSubscriptionForUser(ctx, user._id);
+    }
 
     // Patch metadata
     const patch: Record<string, unknown> = {};
@@ -137,9 +174,15 @@ export const duplicate = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    await requireAnyActiveSubscriptionForUser(ctx, user._id);
     const routine = await ctx.db.get(args.routineId);
     if (!routine) throw new Error("Rutina no encontrada");
+
+    // Aislamiento: aunque la rutina origen pertenezca a una clínica, la
+    // copia se crea como "privado" del autor, así que basta con que el
+    // autor tenga alguna clínica activa (no exigimos validar contra la
+    // clínica de la rutina origen para no bloquear el caso "duplicar una
+    // rutina de otra clínica donde solo soy admin").
+    await requireAnyActiveSubscriptionForUser(ctx, user._id);
 
     const exercises = await ctx.db
       .query("routineExercises")

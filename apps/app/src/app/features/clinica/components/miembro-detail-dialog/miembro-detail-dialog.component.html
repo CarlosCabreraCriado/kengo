@@ -18,12 +18,19 @@
 
         <h3 class="md-name">{{ fullName() }}</h3>
 
-        <ui2-pill
-          [variant]="esAdminTarget() ? 'primary' : 'soft'"
-          [icon]="rolIcon()"
-        >
-          {{ rolLabel() }}
-        </ui2-pill>
+        <div class="md-pills">
+          <ui2-pill
+            [variant]="esAdminTarget() ? 'primary' : 'soft'"
+            [icon]="rolIcon()"
+          >
+            {{ rolLabel() }}
+          </ui2-pill>
+          @if (esOwnerTarget()) {
+            <ui2-pill variant="success" icon="workspace_premium">
+              Propietario
+            </ui2-pill>
+          }
+        </div>
       </section>
 
       @if (m.email || m.telefono) {
@@ -74,7 +81,7 @@
             <div class="md-permiso-text">
               <span class="md-permiso-label">Promocionar a administrador</span>
               <p class="md-permiso-desc">
-                Podrá gestionar miembros, suscripción e información de la clínica.
+                Podrá gestionar miembros e información de la clínica.
               </p>
             </div>
             <ui2-button
@@ -85,6 +92,31 @@
               (clicked)="onPromocionar()"
             >
               Promocionar
+            </ui2-button>
+          </div>
+        </section>
+      }
+
+      @if (puedeTransferirPropiedad()) {
+        <section class="md-section">
+          <h4 class="md-section-title">Propiedad de la clínica</h4>
+          <div class="md-permiso-row">
+            <div class="md-permiso-text">
+              <span class="md-permiso-label">Transferir propiedad</span>
+              <p class="md-permiso-desc">
+                Pasará a ser el responsable de la suscripción: emails de
+                billing, método de pago y cancelación. Tú mantendrás tu rol
+                de administrador.
+              </p>
+            </div>
+            <ui2-button
+              variant="primary"
+              size="sm"
+              iconLeft="workspace_premium"
+              [loading]="transfiriendo()"
+              (clicked)="onTransferirPropiedad()"
+            >
+              Transferir
             </ui2-button>
           </div>
         </section>

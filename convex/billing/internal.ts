@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import {
   internalMutation,
   internalQuery,
@@ -124,8 +124,13 @@ export const syncQuantityFromMemberships = internalMutation({
 
 /**
  * Devuelve la información que las actions de Stripe necesitan para crear
- * customer/subscription o leer estado actual: clínica, owner admin (email/name)
+ * customer/subscription o leer estado actual: clínica, owner (email/name)
  * y el `clinicBilling` cacheado si existe.
+ *
+ * **Owner determinista**: lee `clinic.ownerUserId` (Bloque J). El campo
+ * es no-opcional en schema, así que siempre hay exactamente un owner; los
+ * emails de billing y el customer Stripe siempre se atribuyen al mismo
+ * destinatario sin depender del orden interno de Convex.
  */
 export const getBillingContext = internalQuery({
   args: { clinicId: v.id("clinics") },
@@ -142,16 +147,13 @@ export const getBillingContext = internalQuery({
       (m) => m.puesto === "fisio" || m.puesto === "admin",
     ).length;
 
-    const adminMembership = memberships.find((m) => m.puesto === "admin");
     let owner: { email: string; name: string } | null = null;
-    if (adminMembership) {
-      const ownerUser = await ctx.db.get(adminMembership.userId);
-      if (ownerUser) {
-        owner = {
-          email: ownerUser.email,
-          name: `${ownerUser.firstName} ${ownerUser.lastName}`.trim(),
-        };
-      }
+    const ownerUser = await ctx.db.get(clinic.ownerUserId);
+    if (ownerUser) {
+      owner = {
+        email: ownerUser.email,
+        name: `${ownerUser.firstName} ${ownerUser.lastName}`.trim(),
+      };
     }
 
     const billing = await ctx.db
@@ -210,6 +212,11 @@ function mapStripeStatusToEstadoLocal(
 /**
  * Aplica los cambios de una `customer.subscription.created`/`updated` al
  * `clinicBilling`. Recibe los campos extraídos del evento ya tipados.
+ *
+ * **Ordering por timestamp**: si la fila `clinicBilling` existente ya fue
+ * actualizada con un evento más reciente (`lastStripeEventMs >= eventCreatedMs`),
+ * el evento se descarta como "stale". Esto cubre el caso de webhooks que
+ * llegan fuera de orden (Stripe no garantiza ordering estricto).
  */
 export const applySubscriptionEvent = internalMutation({
   args: {
@@ -219,12 +226,27 @@ export const applySubscriptionEvent = internalMutation({
     currentPeriodEnd: v.optional(v.number()),
     cancelAtPeriodEnd: v.optional(v.boolean()),
     quantity: v.optional(v.number()),
+    /** Timestamp del evento Stripe (`event.created * 1000`). */
+    eventCreatedMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("clinicBilling")
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
       .unique();
+
+    // Ordering: si el evento es más antiguo que el último aplicado, ignorar.
+    if (
+      existing &&
+      args.eventCreatedMs !== undefined &&
+      existing.lastStripeEventMs !== undefined &&
+      existing.lastStripeEventMs >= args.eventCreatedMs
+    ) {
+      console.log(
+        `[billing] applySubscriptionEvent stale (clinic=${args.clinicId}, eventMs=${args.eventCreatedMs}, lastMs=${existing.lastStripeEventMs}) — ignorado`,
+      );
+      return existing._id;
+    }
 
     const patch: Record<string, unknown> = {
       estadoLocal: mapStripeStatusToEstadoLocal(args.status),
@@ -236,6 +258,9 @@ export const applySubscriptionEvent = internalMutation({
       patch["currentPeriodEnd"] = args.currentPeriodEnd;
     }
     if (args.quantity !== undefined) patch["cantidadFisios"] = args.quantity;
+    if (args.eventCreatedMs !== undefined) {
+      patch["lastStripeEventMs"] = args.eventCreatedMs;
+    }
 
     // Si la subscription vuelve a active/trialing tras un past_due, limpiar
     // el periodo de gracia que pudimos haber calculado nosotros.
@@ -256,8 +281,70 @@ export const applySubscriptionEvent = internalMutation({
       currentPeriodEnd: args.currentPeriodEnd,
       cancelAtPeriodEnd: args.cancelAtPeriodEnd ?? false,
       cantidadFisios: args.quantity,
+      lastStripeEventMs: args.eventCreatedMs,
       actualizadoEn: Date.now(),
     });
+  },
+});
+
+/**
+ * Registra un evento Stripe procesado en `stripeWebhookEvents` para
+ * garantizar idempotencia del `onEvent` handler. Devuelve `{ skip: true }`
+ * si el `eventId` ya estaba registrado: el caller debe abortar el
+ * procesamiento sin re-aplicar efectos colaterales.
+ *
+ * El componente `@convex-dev/stripe` ya hace upserts idempotentes en sus
+ * tablas internas, pero NO protege nuestro código en `onEvent` (emails,
+ * mutaciones a clinicBilling, scheduled actions). Esta tabla cubre ese
+ * gap.
+ */
+/**
+ * Marca el envío del email de bienvenida tras el primer checkout exitoso.
+ * Idempotencia para que reactivaciones (cancel → reactivar) no disparen
+ * un segundo welcome.
+ */
+export const markWelcomeEmailSent = internalMutation({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, { clinicId }) => {
+    const existing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+    if (!existing) return;
+    if (existing.welcomeEmailSentAt) return;
+    await ctx.db.patch(existing._id, {
+      welcomeEmailSentAt: Date.now(),
+      actualizadoEn: Date.now(),
+    });
+  },
+});
+
+export const recordWebhookEvent = internalMutation({
+  args: {
+    eventId: v.string(),
+    eventType: v.string(),
+    createdMs: v.number(),
+    clinicId: v.optional(v.id("clinics")),
+  },
+  handler: async (ctx, args): Promise<{ skip: boolean }> => {
+    const existing = await ctx.db
+      .query("stripeWebhookEvents")
+      .withIndex("by_eventId", (q) => q.eq("eventId", args.eventId))
+      .unique();
+
+    if (existing) {
+      return { skip: true };
+    }
+
+    await ctx.db.insert("stripeWebhookEvents", {
+      eventId: args.eventId,
+      eventType: args.eventType,
+      createdMs: args.createdMs,
+      clinicId: args.clinicId,
+      processedAt: Date.now(),
+    });
+
+    return { skip: false };
   },
 });
 
@@ -421,6 +508,10 @@ export const setGraceUntilForTesting = internalMutation({
  * Verifica que el usuario identificado por `externalId` (subject de la auth
  * identity) es admin de la clínica. Lanza error si no lo es. Útil desde
  * actions: `ctx.runQuery(internal.billing.internal.assertAdminOnClinicByExternalId, ...)`.
+ *
+ * **Nota**: las actions de billing (Checkout, Portal, cancelación...) deben
+ * usar `assertOwnerOnClinicByExternalId` en su lugar (Bloque J). Este helper
+ * permanece por si alguna mutación de gestión interna lo necesita.
  */
 export const assertAdminOnClinicByExternalId = internalQuery({
   args: { externalId: v.string(), clinicId: v.id("clinics") },
@@ -439,6 +530,36 @@ export const assertAdminOnClinicByExternalId = internalQuery({
       .unique();
     if (!membership || membership.puesto !== "admin") {
       throw new Error("No eres administrador de esta clínica");
+    }
+    return user._id;
+  },
+});
+
+/**
+ * Verifica que el usuario identificado por `externalId` es el **propietario**
+ * (`clinics.ownerUserId`) de la clínica. Lanza `ConvexError({ code:
+ * "OWNER_REQUIRED" })` si no lo es. Usar desde actions de billing:
+ * `ctx.runQuery(internal.billing.internal.assertOwnerOnClinicByExternalId, ...)`.
+ *
+ * Devuelve el `userId` para que el caller pueda continuar sin volver a buscarlo.
+ */
+export const assertOwnerOnClinicByExternalId = internalQuery({
+  args: { externalId: v.string(), clinicId: v.id("clinics") },
+  handler: async (ctx, { externalId, clinicId }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_externalId", (q) => q.eq("externalId", externalId))
+      .unique();
+    if (!user) throw new Error("Usuario no encontrado");
+
+    const clinic = await ctx.db.get(clinicId);
+    if (!clinic) throw new Error("Clínica no encontrada");
+
+    if (clinic.ownerUserId !== user._id) {
+      throw new ConvexError({
+        code: "OWNER_REQUIRED",
+        message: "Solo el propietario de la clínica puede realizar esta acción.",
+      });
     }
     return user._id;
   },

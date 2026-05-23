@@ -110,6 +110,17 @@ export class SuscripcionComponent {
   protected readonly cancelaAlFinDelPeriodo = this.subs.cancelaAlFinDelPeriodo;
   protected readonly bloqueada = this.subs.bloqueada;
 
+  /**
+   * Solo el propietario puede ejecutar acciones de billing. Para los
+   * demás admins la pantalla queda en modo lectura: ven el estado, las
+   * facturas históricas y el plan, pero todos los CTAs (Activar, Cancelar,
+   * Gestionar pago, Reactivar) están ocultos. En su lugar ven una nota
+   * indicando quién es el responsable. (Bloque H / decisión #18.)
+   */
+  protected readonly esOwner = this.subs.esOwnerDeClinicaActiva;
+  protected readonly ownerNombre = this.subs.ownerNombre;
+  protected readonly clinicaNombre = this.subs.clinicaNombre;
+
   protected readonly planActual = computed<PlanInfo | null>(
     () => this.suscripcion()?.plan ?? null,
   );
@@ -212,7 +223,16 @@ export class SuscripcionComponent {
     if (!id) return;
     const estado = this.suscripcion()?.estado ?? 'none';
 
-    if (estado === 'none' || estado === 'trialing' || estado === 'incomplete') {
+    // `canceled` (cancelación definitiva, no programada): reusa el customer
+    // Stripe existente y abre Checkout sin nuevo trial (Bloque D del plan).
+    // No usamos `abrirPortal` porque el Portal no permite re-suscribirse
+    // desde cero a un customer cuya subscription terminó.
+    if (
+      estado === 'none' ||
+      estado === 'trialing' ||
+      estado === 'incomplete' ||
+      estado === 'canceled'
+    ) {
       await this.subs.iniciarCheckout(id);
       return;
     }
@@ -227,6 +247,7 @@ export class SuscripcionComponent {
     const estado = this.suscripcion()?.estado ?? 'none';
     if (estado === 'none' || estado === 'incomplete')
       return 'Activar suscripción';
+    if (estado === 'canceled') return 'Reactivar suscripción';
     if (estado === 'trialing') return 'Añadir método de pago';
     if (this.cancelaAlFinDelPeriodo()) return 'Reactivar suscripción';
     if (estado === 'past_due' || estado === 'unpaid')
@@ -237,7 +258,8 @@ export class SuscripcionComponent {
   protected iconoAccionPrincipal(): string {
     const estado = this.suscripcion()?.estado ?? 'none';
     if (estado === 'past_due' || estado === 'unpaid') return 'credit_card';
-    if (this.cancelaAlFinDelPeriodo()) return 'restart_alt';
+    if (estado === 'canceled' || this.cancelaAlFinDelPeriodo())
+      return 'restart_alt';
     if (estado === 'active') return 'settings';
     return 'arrow_forward';
   }

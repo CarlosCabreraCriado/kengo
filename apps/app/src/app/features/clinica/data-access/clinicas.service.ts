@@ -15,6 +15,12 @@ import {
 
 export interface MiembroEquipo extends Usuario {
   puesto: Puesto;
+  /**
+   * `true` cuando este miembro es el propietario de la clínica
+   * (`clinics.ownerUserId`). El owner es el único que puede gestionar
+   * la suscripción Stripe; el resto de admins son co-gestores funcionales.
+   */
+  isOwner: boolean;
 }
 
 type FisiosPorClinica = Record<string, MiembroEquipo[]>;
@@ -148,6 +154,7 @@ export class ClinicasService {
         esFisio: true,
         esPaciente: false,
         puesto: m.puesto as Puesto,
+        isOwner: m.isOwner === true,
       }));
   }
 

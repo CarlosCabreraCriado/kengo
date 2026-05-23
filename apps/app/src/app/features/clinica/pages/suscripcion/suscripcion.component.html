@@ -1,8 +1,29 @@
 <div class="px-5 pt-6 pb-12 max-w-3xl mx-auto flex flex-col gap-5">
   <header class="flex items-center gap-3">
     <ui2-back-button [route]="['/mi-clinica']" ariaLabel="Volver a mi clínica"></ui2-back-button>
-    <h1 class="text-2xl font-display text-ink-900 leading-none">Suscripción</h1>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-2xl font-display text-ink-900 leading-none">Suscripción</h1>
+      @if (clinicaNombre()) {
+        <p class="text-sm text-ink-500 mt-1 truncate">{{ clinicaNombre() }}</p>
+      }
+    </div>
   </header>
+
+  @if (!esOwner() && ownerNombre() && suscripcion()) {
+    <ui2-card class="block" [padding]="16">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-ink-500" aria-hidden="true">workspace_premium</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-ink-900">El responsable de la suscripción es {{ ownerNombre() }}</p>
+          <p class="text-sm text-ink-500 mt-1">
+            Solo el propietario de {{ clinicaNombre() }} puede activar, modificar
+            o cancelar la suscripción. Puedes consultar el estado y las facturas
+            aquí, pero las acciones de pago las gestiona {{ ownerNombre() }}.
+          </p>
+        </div>
+      </div>
+    </ui2-card>
+  }
 
   @if (llegadaPorBloqueo() && bloqueada()) {
     <ui2-card
@@ -18,19 +39,28 @@
           style="font-size: 28px; line-height: 1;"
         >lock</span>
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-danger">Suscripción suspendida</p>
-          <p class="text-sm text-ink-700 mt-1">
-            Para volver a usar la aplicación necesitas actualizar el método de pago.
-            Tus pacientes pueden seguir realizando sus rutinas con normalidad.
+          <p class="font-semibold text-danger">
+            La suscripción de {{ clinicaNombre() || 'esta clínica' }} está suspendida
           </p>
-          <div class="mt-3">
-            <ui2-button
-              variant="primary"
-              size="md"
-              iconLeft="credit_card"
-              (clicked)="accionPrincipal()"
-            >Actualizar método de pago</ui2-button>
-          </div>
+          <p class="text-sm text-ink-700 mt-1">
+            @if (esOwner()) {
+              Para volver a usar la aplicación necesitas actualizar el método de pago.
+              Tus pacientes pueden seguir realizando sus rutinas con normalidad.
+            } @else {
+              Avisa a {{ ownerNombre() }} para que actualice el método de pago.
+              Tus pacientes pueden seguir realizando sus rutinas con normalidad.
+            }
+          </p>
+          @if (esOwner()) {
+            <div class="mt-3">
+              <ui2-button
+                variant="primary"
+                size="md"
+                iconLeft="credit_card"
+                (clicked)="accionPrincipal()"
+              >Actualizar método de pago</ui2-button>
+            </div>
+          }
         </div>
       </div>
     </ui2-card>
@@ -144,8 +174,8 @@
       }
     </section>
 
-    <!-- Acción principal -->
-    @if (!requiereContactoVentas()) {
+    <!-- Acción principal — solo visible al propietario (Bloque H/J) -->
+    @if (esOwner() && !requiereContactoVentas()) {
       <ui2-button
         variant="primary"
         size="lg"
@@ -167,8 +197,8 @@
       }
     }
 
-    <!-- Caso +10 fisios -->
-    @if (requiereContactoVentas()) {
+    <!-- Caso +10 fisios — solo el propietario puede contactar con ventas -->
+    @if (esOwner() && requiereContactoVentas()) {
       <ui2-empty-state
         icon="forum"
         title="Plan a medida"
@@ -229,19 +259,21 @@
                 }
               </ui2-list-row>
             }
-            <div class="border-t border-black/5">
-              <ui2-list-row
-                icon="open_in_new"
-                iconColor="var(--ink-500)"
-                title="Ver todas las facturas"
-                subtitle="Abre el portal de Stripe"
-                [isFirst]="false"
-                [rowClickable]="true"
-                (rowClick)="accionPrincipal()"
-              >
-                <span class="material-symbols-outlined text-ink-400" aria-hidden="true">arrow_forward</span>
-              </ui2-list-row>
-            </div>
+            @if (esOwner()) {
+              <div class="border-t border-black/5">
+                <ui2-list-row
+                  icon="open_in_new"
+                  iconColor="var(--ink-500)"
+                  title="Ver todas las facturas"
+                  subtitle="Abre el portal de Stripe"
+                  [isFirst]="false"
+                  [rowClickable]="true"
+                  (rowClick)="accionPrincipal()"
+                >
+                  <span class="material-symbols-outlined text-ink-400" aria-hidden="true">arrow_forward</span>
+                </ui2-list-row>
+              </div>
+            }
           }
         </ui2-card>
       </section>

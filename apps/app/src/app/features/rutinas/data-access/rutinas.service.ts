@@ -9,6 +9,7 @@ import {
 import { assetUrl } from '../../../core/utils/asset-url';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
 import {
   createFilteredList,
@@ -31,6 +32,7 @@ type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
 export class RutinasService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
   readonly filtroVisibilidad: WritableSignal<FiltroVisibilidad> = signal('todas');
 
@@ -129,10 +131,27 @@ export class RutinasService {
         notasFisio: item.notasFisio,
       }));
 
+      const visibilidad = payload.visibilidad as 'privado' | 'clinica';
+      // Aislamiento por clínica (Bloque E): si la rutina es "de clínica",
+      // enviamos `clinicId` de la clínica activa; el backend valida que
+      // esa clínica tenga suscripción activa antes de aceptar la creación.
+      const clinicId =
+        visibilidad === 'clinica'
+          ? this.clinicaActiva.selectedClinicaId()
+          : null;
+
+      if (visibilidad === 'clinica' && !clinicId) {
+        console.error(
+          'Error al crear rutina: visibilidad "clinica" sin clínica activa seleccionada',
+        );
+        return null;
+      }
+
       const id = await this.convex.mutation(api.routines.mutations.create, {
         nombre: payload.nombre,
         descripcion: payload.descripcion,
-        visibilidad: payload.visibilidad as 'privado' | 'clinica',
+        visibilidad,
+        clinicId: (clinicId ?? undefined) as never,
         ejercicios,
       });
 

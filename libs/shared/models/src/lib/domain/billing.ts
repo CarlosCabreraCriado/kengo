@@ -21,6 +21,8 @@ export interface PlanInfo {
 
 export interface ClinicSubscription {
   clinicId: string;
+  /** Nombre legible de la clínica activa, para mostrarlo en headers/banners. */
+  clinicaNombre: string;
   estado: SubscriptionEstado;
   trialEnd?: number;
   currentPeriodEnd?: number;
@@ -31,6 +33,16 @@ export interface ClinicSubscription {
   plan: PlanInfo | null;
   planes: PlanInfo[];
   requiereContactoVentas: boolean;
+  /**
+   * `userId` del propietario único de la clínica (Bloque J). Solo este
+   * usuario puede gestionar la suscripción Stripe. Garantizado por el
+   * schema: toda clínica tiene exactamente un owner.
+   */
+  ownerUserId: string;
+  /** Nombre legible del propietario (para mensajes "El responsable es X"). */
+  ownerNombre: string | null;
+  /** `true` si el usuario autenticado es el propietario. */
+  esOwner: boolean;
 }
 
 export const PLANES: PlanInfo[] = [

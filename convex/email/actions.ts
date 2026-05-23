@@ -8,6 +8,8 @@ import {
   contactFormTemplate,
   trialEndingTemplate,
   paymentFailedTemplate,
+  welcomeAfterCheckoutTemplate,
+  subscriptionCanceledTemplate,
   migrationAnnouncementTemplate,
   enterpriseInvitationTemplate,
   patientInvitationTemplate,
@@ -116,7 +118,7 @@ export const sendTrialEndingEmail = internalAction({
     const { error } = await resend.emails.send({
       from: "Kengo <noreply@kengoapp.com>",
       to: args.to,
-      subject: `Tu trial de Kengo termina pronto - ${args.clinicaNombre}`,
+      subject: `[Kengo · ${args.clinicaNombre}] Tu periodo de prueba termina pronto`,
       html: trialEndingTemplate(
         args.nombreAdmin,
         args.clinicaNombre,
@@ -152,7 +154,7 @@ export const sendPaymentFailedEmail = internalAction({
     const { error } = await resend.emails.send({
       from: "Kengo <noreply@kengoapp.com>",
       to: args.to,
-      subject: `Hay un problema con el pago - ${args.clinicaNombre}`,
+      subject: `[Kengo · ${args.clinicaNombre}] Hay un problema con el pago`,
       html: paymentFailedTemplate(
         args.nombreAdmin,
         args.clinicaNombre,
@@ -165,6 +167,76 @@ export const sendPaymentFailedEmail = internalAction({
       return false;
     }
     console.log(`[Email] Payment-failed enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendWelcomeAfterCheckoutEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreAdmin: v.string(),
+    clinicaNombre: v.string(),
+    portalUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `[Kengo · ${args.clinicaNombre}] Tu suscripción está activa`,
+      html: welcomeAfterCheckoutTemplate(
+        args.nombreAdmin,
+        args.clinicaNombre,
+        args.portalUrl,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando welcome-after-checkout:", error);
+      return false;
+    }
+    console.log(`[Email] welcome-after-checkout enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendSubscriptionCanceledEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreAdmin: v.string(),
+    clinicaNombre: v.string(),
+    reactivateUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `[Kengo · ${args.clinicaNombre}] Suscripción cancelada`,
+      html: subscriptionCanceledTemplate(
+        args.nombreAdmin,
+        args.clinicaNombre,
+        args.reactivateUrl,
+      ),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando subscription-canceled:", error);
+      return false;
+    }
+    console.log(`[Email] subscription-canceled enviado a ${args.to}`);
     return true;
   },
 });

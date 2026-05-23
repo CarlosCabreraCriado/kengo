@@ -53,6 +53,9 @@ export const getMembers = query({
     const user = await getAuthenticatedUser(ctx);
     await assertCanAccessClinic(ctx, user._id, args.clinicId);
 
+    const clinic = await ctx.db.get(args.clinicId);
+    const ownerUserId = clinic?.ownerUserId;
+
     const memberships = await ctx.db
       .query("clinicMemberships")
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
@@ -66,7 +69,12 @@ export const getMembers = query({
     return memberships
       .map((m, i) => {
         const user = users[i];
-        return user ? { ...user, puesto: m.puesto } : null;
+        if (!user) return null;
+        return {
+          ...user,
+          puesto: m.puesto,
+          isOwner: ownerUserId !== undefined && user._id === ownerUserId,
+        };
       })
       .filter((m): m is NonNullable<typeof m> => m !== null);
   },

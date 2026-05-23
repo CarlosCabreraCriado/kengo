@@ -34,6 +34,107 @@ export async function getAuthenticatedUser(ctx: QueryCtx | MutationCtx) {
 }
 
 /**
+ * Devuelve `true` si `userId` es el propietario (owner) de la clínica.
+ * El owner es el único usuario que puede gestionar la suscripción Stripe.
+ * Si la clínica todavía no tiene `ownerUserId` (caso transitorio durante la
+ * migración del Bloque J), devuelve `false`.
+ */
+export async function esOwner(
+  ctx: QueryCtx | MutationCtx,
+  clinicId: Id<"clinics">,
+  userId: Id<"users">,
+): Promise<boolean> {
+  const clinic = await ctx.db.get(clinicId);
+  if (!clinic) return false;
+  return clinic.ownerUserId === userId;
+}
+
+/**
+ * Lanza `ConvexError({ code: "OWNER_REQUIRED" })` si `userId` no es el
+ * propietario de la clínica. Usar en mutations/actions de billing que solo
+ * el owner puede ejecutar.
+ */
+export async function assertOwnerOnClinic(
+  ctx: QueryCtx | MutationCtx,
+  clinicId: Id<"clinics">,
+  userId: Id<"users">,
+): Promise<void> {
+  if (!(await esOwner(ctx, clinicId, userId))) {
+    throw new ConvexError({
+      code: "OWNER_REQUIRED",
+      message: "Solo el propietario de la clínica puede realizar esta acción.",
+    });
+  }
+}
+
+/**
+ * Variante para actions: resuelve `userId` desde el `externalId` (subject
+ * de la auth identity) y luego valida que es owner. Paralela a
+ * `assertAdminOnClinicByExternalId` en `convex/billing/internal.ts`.
+ *
+ * Devuelve el `userId` del owner para que el caller pueda continuar sin
+ * volver a buscarlo.
+ */
+export async function assertOwnerOnClinicByExternalId(
+  ctx: QueryCtx | MutationCtx,
+  externalId: string,
+  clinicId: Id<"clinics">,
+): Promise<Id<"users">> {
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_externalId", (q) => q.eq("externalId", externalId))
+    .unique();
+  if (!user) throw new Error("Usuario no encontrado");
+  await assertOwnerOnClinic(ctx, clinicId, user._id);
+  return user._id;
+}
+
+/**
+ * Valida la invariante "el owner siempre es admin de la clínica". Usar en
+ * `transferOwnership` antes de aplicar el patch.
+ */
+export async function assertOwnerIsAdmin(
+  ctx: QueryCtx | MutationCtx,
+  clinicId: Id<"clinics">,
+  candidateUserId: Id<"users">,
+): Promise<void> {
+  const membership = await ctx.db
+    .query("clinicMemberships")
+    .withIndex("by_userId_clinicId", (q) =>
+      q.eq("userId", candidateUserId).eq("clinicId", clinicId),
+    )
+    .unique();
+  if (!membership || membership.puesto !== "admin") {
+    throw new ConvexError({
+      code: "OWNER_MUST_BE_ADMIN",
+      message:
+        "El nuevo propietario debe ser administrador de la clínica. Promociónalo a administrador antes de transferir la propiedad.",
+    });
+  }
+}
+
+/**
+ * Lanza `ConvexError({ code: "OWNER_MUST_TRANSFER_FIRST" })` si el usuario
+ * que pretende abandonar la clínica (`userIdSaliente`) es el propietario.
+ * Validación independiente del estado de billing: el owner debe transferir
+ * SIEMPRE antes de salir, incluso si la suscripción está cancelada, porque
+ * la clínica podría reactivarse y necesita un responsable.
+ */
+export async function assertNotOwnerWithoutTransfer(
+  ctx: QueryCtx | MutationCtx,
+  clinicId: Id<"clinics">,
+  userIdSaliente: Id<"users">,
+): Promise<void> {
+  if (await esOwner(ctx, clinicId, userIdSaliente)) {
+    throw new ConvexError({
+      code: "OWNER_MUST_TRANSFER_FIRST",
+      message:
+        "Eres el propietario de la clínica. Transfiere la propiedad a otro administrador antes de salir.",
+    });
+  }
+}
+
+/**
  * Verifica que el usuario tiene un puesto específico en una clínica.
  */
 export async function checkClinicPermission(

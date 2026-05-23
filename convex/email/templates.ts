@@ -242,6 +242,58 @@ ${ctaButton(portalUrl, "Activar suscripción")}
   );
 }
 
+export function welcomeAfterCheckoutTemplate(
+  nombreAdmin: string,
+  clinicaNombre: string,
+  portalUrl: string,
+): string {
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Bienvenido a Kengo
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${nombreAdmin}, la suscripción de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong> ya está activa. Recibirás cada mes la factura en este mismo correo.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Desde el portal de cliente puedes cambiar el método de pago, descargar facturas y cancelar la suscripción cuando lo necesites.
+</p>
+${ctaButton(portalUrl, "Gestionar suscripción")}
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Eres el propietario de la clínica en Kengo: solo tú puedes modificar la suscripción.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres el propietario de la clínica.",
+  );
+}
+
+export function subscriptionCanceledTemplate(
+  nombreAdmin: string,
+  clinicaNombre: string,
+  reactivateUrl: string,
+): string {
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Tu suscripción se ha cancelado
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${nombreAdmin}, hemos confirmado la cancelación de la suscripción de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong>.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Los datos de la clínica se conservan: tus pacientes siguen accediendo a sus rutinas y tú puedes reactivar la suscripción cuando quieras, sin perder nada.
+</p>
+${ctaButton(reactivateUrl, "Reactivar suscripción")}
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Si esto fue un error o tienes dudas, contesta a este correo y te ayudamos.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres el propietario de la clínica.",
+  );
+}
+
 export function paymentFailedTemplate(
   nombreAdmin: string,
   clinicaNombre: string,

@@ -22,6 +22,9 @@ export const getMyClinicSubscription = query({
     const user = await getAuthenticatedUser(ctx);
     await checkClinicPermission(ctx, user._id, args.clinicId, ["admin"]);
 
+    const clinic = await ctx.db.get(args.clinicId);
+    if (!clinic) throw new Error("Clínica no encontrada");
+
     const memberships = await ctx.db
       .query("clinicMemberships")
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
@@ -39,9 +42,20 @@ export const getMyClinicSubscription = query({
     const plan = planParaFisios(fisiosActuales);
     const necesitaVentas = requiereContactoVentas(fisiosActuales);
 
+    // Owner determinista (Bloque J): solo el propietario puede actuar sobre
+    // la suscripción. Devolvemos `ownerUserId`, su nombre y un flag para
+    // que la UI ponga la pantalla en read-only para admins no-owner.
+    const ownerUserId = clinic.ownerUserId;
+    const ownerUser = await ctx.db.get(ownerUserId);
+    const ownerNombre = ownerUser
+      ? `${ownerUser.firstName} ${ownerUser.lastName}`.trim()
+      : null;
+    const esOwner = ownerUserId === user._id;
+
     if (!billing) {
       return {
         clinicId: args.clinicId,
+        clinicaNombre: clinic.nombre,
         estado: "none" as const,
         trialEnd: undefined,
         currentPeriodEnd: undefined,
@@ -52,11 +66,15 @@ export const getMyClinicSubscription = query({
         plan,
         planes: PLANES,
         requiereContactoVentas: necesitaVentas,
+        ownerUserId,
+        ownerNombre,
+        esOwner,
       };
     }
 
     return {
       clinicId: args.clinicId,
+      clinicaNombre: clinic.nombre,
       estado: billing.estadoLocal,
       trialEnd: billing.trialEnd,
       currentPeriodEnd: billing.currentPeriodEnd,
@@ -68,6 +86,9 @@ export const getMyClinicSubscription = query({
       planes: PLANES,
       requiereContactoVentas:
         necesitaVentas || billing.requiereContactoVentas === true,
+      ownerUserId,
+      ownerNombre,
+      esOwner,
     };
   },
 });

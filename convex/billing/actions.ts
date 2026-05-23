@@ -125,6 +125,12 @@ export const startTrialForClinic = internalAction({
       trial_settings: {
         end_behavior: { missing_payment_method: "create_invoice" },
       },
+      // Stripe Tax: calcula IVA automáticamente al emitir facturas. Si el
+      // admin no completó Checkout (donde se recoge NIF/CIF + address), la
+      // primera factura post-trial saldrá sin tax — el correo
+      // `trial_will_end` debe insistir en completar datos antes del final
+      // del trial.
+      automatic_tax: { enabled: true },
     });
 
     const trialEnd = subscription.trial_end
@@ -168,7 +174,7 @@ export const createCheckoutSession = action({
   ): Promise<{ url: string }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
-      internal.billing.internal.assertAdminOnClinicByExternalId,
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
       { externalId, clinicId },
     );
 
@@ -197,15 +203,41 @@ export const createCheckoutSession = action({
       ? `${appUrl}/billing-return.html?status=cancel`
       : `${appUrl}/mi-clinica/suscripcion?cancel=1`;
 
-    const session = await stripeApi.createCheckoutSession(ctx, {
-      priceId: getEnv("STRIPE_PRICE_ID"),
-      customerId,
+    // Llamada directa a Stripe (no usamos `stripeApi.createCheckoutSession`)
+    // para poder configurar Stripe Tax + recogida obligatoria de NIF/CIF +
+    // forzar el cobro de un método de pago nuevo en reactivaciones.
+    // El componente `@convex-dev/stripe` no expone estos campos.
+    //
+    // Cumplimiento fiscal España (B2B):
+    //   - `automatic_tax`: Stripe calcula el IVA según jurisdicción.
+    //   - `tax_id_collection.required: 'if_supported'`: pide NIF/CIF al
+    //     comprador. Stripe lo guarda en el customer y lo incluye en la
+    //     factura.
+    //   - `customer_update`: tras Checkout, Stripe actualiza
+    //     name/address/tax_id en el customer existente. Sin esto, los
+    //     datos quedarían sueltos en la session.
+    //   - `payment_method_collection: 'always'`: tras una cancelación,
+    //     evita que Stripe reutilice un método caducado al reactivar.
+    const stripe = getStripeClient();
+    const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      successUrl,
-      cancelUrl,
-      quantity: Math.max(1, data.cantidadFisios),
+      customer: customerId,
+      line_items: [
+        {
+          price: getEnv("STRIPE_PRICE_ID"),
+          quantity: Math.max(1, data.cantidadFisios),
+        },
+      ],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      payment_method_collection: "always",
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true, required: "if_supported" },
+      customer_update: { name: "auto", address: "auto" },
       metadata: { orgId: clinicId },
-      subscriptionMetadata: { orgId: clinicId },
+      subscription_data: {
+        metadata: { orgId: clinicId },
+      },
     });
 
     if (!session.url) throw new Error("Stripe no devolvió URL de checkout");
@@ -228,7 +260,7 @@ export const createCustomerPortalSession = action({
   ): Promise<{ url: string }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
-      internal.billing.internal.assertAdminOnClinicByExternalId,
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
       { externalId, clinicId },
     );
 
@@ -269,7 +301,7 @@ export const cancelSubscription = action({
   ): Promise<{ ok: true }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
-      internal.billing.internal.assertAdminOnClinicByExternalId,
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
       { externalId, clinicId },
     );
 
@@ -303,7 +335,7 @@ export const reactivateSubscription = action({
   handler: async (ctx, { clinicId }): Promise<{ ok: true }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
-      internal.billing.internal.assertAdminOnClinicByExternalId,
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
       { externalId, clinicId },
     );
 
@@ -387,6 +419,66 @@ export const notifyPaymentFailed = internalAction({
 });
 
 /**
+ * Envía un email de bienvenida al propietario tras completar el primer
+ * checkout exitoso (`checkout.session.completed`). Idempotente vía
+ * `clinicBilling.welcomeEmailSentAt`: si una clínica reactiva tras una
+ * cancelación previa, no se reenvía la bienvenida.
+ */
+export const notifyCheckoutCompleted = internalAction({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, { clinicId }): Promise<void> => {
+    const billing = await ctx.runQuery(
+      internal.billing.queries.getClinicBillingStatusInternal,
+      { clinicId },
+    );
+    if (billing?.welcomeEmailSentAt) return; // ya enviado, ignorar.
+
+    const data = await ctx.runQuery(
+      internal.billing.internal.getBillingContext,
+      { clinicId },
+    );
+    if (!data.owner) return;
+
+    const appUrl = getAppUrlOrFallback();
+    await ctx.runAction(internal.email.actions.sendWelcomeAfterCheckoutEmail, {
+      to: data.owner.email,
+      nombreAdmin: data.owner.name,
+      clinicaNombre: data.clinic.nombre,
+      portalUrl: `${appUrl}/mi-clinica/suscripcion`,
+    });
+
+    await ctx.runMutation(internal.billing.internal.markWelcomeEmailSent, {
+      clinicId,
+    });
+  },
+});
+
+/**
+ * Envía un email de confirmación cuando la suscripción se cancela
+ * definitivamente (`customer.subscription.deleted`). No tiene flag de
+ * idempotencia porque, si hay reentrega del webhook, el dedup global
+ * (`stripeWebhookEvents`) lo cubre.
+ */
+export const notifySubscriptionCanceled = internalAction({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, { clinicId }): Promise<void> => {
+    const data = await ctx.runQuery(
+      internal.billing.internal.getBillingContext,
+      { clinicId },
+    );
+    if (!data.owner) return;
+
+    const appUrl = getAppUrlOrFallback();
+    await ctx.runAction(internal.email.actions.sendSubscriptionCanceledEmail, {
+      to: data.owner.email,
+      nombreAdmin: data.owner.name,
+      clinicaNombre: data.clinic.nombre,
+      reactivateUrl: `${appUrl}/mi-clinica/suscripcion`,
+    });
+  },
+});
+
+/**
  * Solicitud del admin de una clínica para contactar con ventas (caso +10
  * fisioterapeutas, fuera del autoservicio). Envía un email al equipo de
  * contacto vía Resend con los datos de la clínica y del solicitante.
@@ -403,7 +495,7 @@ export const contactarVentas = action({
   ): Promise<{ ok: true }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
-      internal.billing.internal.assertAdminOnClinicByExternalId,
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
       { externalId, clinicId },
     );
 
@@ -474,7 +566,7 @@ export const listInvoicesForClinic = action({
   }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
-      internal.billing.internal.assertAdminOnClinicByExternalId,
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
       { externalId, clinicId },
     );
 

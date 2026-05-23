@@ -1,7 +1,10 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { ConvexError } from "convex/values";
+import { internalMutation, mutation } from "../_generated/server";
 import { internal } from "../_generated/api";
 import {
+  assertOwnerIsAdmin,
+  assertOwnerOnClinic,
   getAuthenticatedUser,
   checkClinicPermission,
 } from "../_helpers/permissions";
@@ -45,6 +48,10 @@ export const create = mutation({
       colorPrimario: args.colorPrimario,
       colorSecundario: args.colorSecundario,
       createdBy: user._id,
+      // El creador queda automáticamente como propietario (único responsable
+      // del billing). Mantiene la invariante "siempre hay exactamente un
+      // owner por clínica" desde la creación, sin pasar por backfill.
+      ownerUserId: user._id,
     });
 
     await ctx.db.insert("clinicMemberships", {
@@ -144,5 +151,121 @@ export const update = mutation({
     }
 
     return { orphanedKeys };
+  },
+});
+
+/**
+ * Transfiere la propiedad (responsabilidad de billing) de la clínica a otro
+ * miembro. Solo invocable por el propietario actual y solo a un miembro con
+ * `puesto = "admin"`. Si el destinatario no es admin todavía, debe ser
+ * promocionado primero (no podemos hacerlo aquí porque el flujo de
+ * promoción puede tener sus propias reglas).
+ *
+ * El cambio queda registrado en `clinicOwnershipAudit` con `via: "self"`
+ * para trazabilidad.
+ *
+ * Errores:
+ *   - `OWNER_REQUIRED`: el caller no es el owner actual.
+ *   - `OWNER_MUST_BE_ADMIN`: `toUserId` no es admin de la clínica.
+ *   - `OWNER_TRANSFER_NOOP`: `toUserId` ya es el owner.
+ */
+export const transferOwnership = mutation({
+  args: {
+    clinicId: v.id("clinics"),
+    toUserId: v.id("users"),
+  },
+  handler: async (
+    ctx,
+    { clinicId, toUserId },
+  ): Promise<{
+    ok: true;
+    previousOwnerId: import("../_generated/dataModel").Id<"users">;
+    newOwnerId: import("../_generated/dataModel").Id<"users">;
+  }> => {
+    const me = await getAuthenticatedUser(ctx);
+    await assertOwnerOnClinic(ctx, clinicId, me._id);
+
+    if (toUserId === me._id) {
+      throw new ConvexError({
+        code: "OWNER_TRANSFER_NOOP",
+        message: "Ya eres el propietario de la clínica.",
+      });
+    }
+
+    await assertOwnerIsAdmin(ctx, clinicId, toUserId);
+
+    await ctx.db.patch(clinicId, { ownerUserId: toUserId });
+
+    await ctx.db.insert("clinicOwnershipAudit", {
+      clinicId,
+      fromUserId: me._id,
+      toUserId,
+      via: "self",
+      createdAt: Date.now(),
+    });
+
+    // Los emails de notificación (al antiguo y al nuevo owner) se enviarán
+    // desde el Bloque G del plan production-ready, cuando estén disponibles
+    // las templates correspondientes.
+
+    return { ok: true, previousOwnerId: me._id, newOwnerId: toUserId };
+  },
+});
+
+/**
+ * Variante de soporte para casos extremos: el propietario desaparece sin
+ * transferir y un miembro de la clínica solicita reclamar la propiedad.
+ * Solo invocable desde el Convex Dashboard tras verificación externa por
+ * parte del equipo de Kengo (email corporativo, llamada, documentación).
+ *
+ * Requiere `reason` y `executedByAdminEmail` para trazabilidad legal.
+ */
+export const forceTransferOwnership = internalMutation({
+  args: {
+    clinicId: v.id("clinics"),
+    toUserId: v.id("users"),
+    reason: v.string(),
+    executedByAdminEmail: v.string(),
+  },
+  handler: async (
+    ctx,
+    { clinicId, toUserId, reason, executedByAdminEmail },
+  ) => {
+    const clinic = await ctx.db.get(clinicId);
+    if (!clinic) throw new Error("Clínica no encontrada");
+
+    // No exigimos que `toUserId` sea admin previamente — soporte puede estar
+    // resolviendo un caso de owner desaparecido y haber promocionado a otro
+    // miembro justo antes. Pero registramos su `puesto` actual en el audit
+    // para que quede claro qué membership tenía.
+    const membership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", toUserId).eq("clinicId", clinicId),
+      )
+      .unique();
+    if (!membership) {
+      throw new Error(
+        "El nuevo propietario debe ser miembro de la clínica antes de la transferencia forzada.",
+      );
+    }
+
+    await ctx.db.patch(clinicId, { ownerUserId: toUserId });
+
+    await ctx.db.insert("clinicOwnershipAudit", {
+      clinicId,
+      fromUserId: clinic.ownerUserId,
+      toUserId,
+      via: "support",
+      reason,
+      executedByAdminEmail,
+      createdAt: Date.now(),
+    });
+
+    console.log(
+      `[forceTransferOwnership] clinic=${clinicId} from=${clinic.ownerUserId ?? "<none>"} to=${toUserId} by=${executedByAdminEmail} reason="${reason}"`,
+    );
+
+    return { ok: true };
   },
 });

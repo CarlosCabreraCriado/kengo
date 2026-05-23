@@ -64,7 +64,23 @@ export default defineSchema({
     colorPrimario: v.optional(v.string()),
     colorSecundario: v.optional(v.string()),
     createdBy: v.id("users"),
-  }),
+    // Propietario único responsable del billing de esta clínica. Solo este
+    // usuario puede iniciar Checkout, abrir Customer Portal, cancelar,
+    // reactivar o ver facturas. El resto de admins gestiona equipo, pacientes
+    // y configuración pero NO actúa sobre la suscripción.
+    //
+    // Invariantes (blindadas por schema y por `assertOwnerIsAdmin` /
+    // `assertNotOwnerWithoutTransfer`):
+    //   - El `userId` referenciado tiene `puesto = "admin"` en esta clínica.
+    //   - Toda clínica tiene exactamente un owner — no se permite estado
+    //     huérfano. Si el owner sale, debe transferir antes (`transferOwnership`).
+    //   - Las clínicas nuevas reciben `ownerUserId = createdBy` en `clinics.create`.
+    //
+    // Histórico: el campo fue introducido como opcional para permitir el
+    // backfill (`migrations/backfillClinicOwner`). Tras la migración y
+    // resolución manual de clínicas sin admins, se promovió a no-opcional.
+    ownerUserId: v.id("users"),
+  }).index("by_ownerUserId", ["ownerUserId"]),
 
   clinicFiles: defineTable({
     clinicId: v.id("clinics"),
@@ -544,8 +560,52 @@ export default defineSchema({
     graceUntil: v.optional(v.number()),
     cantidadFisios: v.optional(v.number()),
     requiereContactoVentas: v.optional(v.boolean()),
+    // Timestamp del último evento Stripe aplicado (en ms). Sirve para descartar
+    // eventos que llegan fuera de orden — si recibimos uno con `event.created`
+    // anterior a éste, lo ignoramos.
+    lastStripeEventMs: v.optional(v.number()),
+    // Timestamp del envío del email de bienvenida tras el primer checkout.
+    // Garantiza idempotencia: si la clínica reactiva tras un cancel, no se
+    // reenvía la bienvenida.
+    welcomeEmailSentAt: v.optional(v.number()),
     actualizadoEn: v.number(),
   }).index("by_clinicId", ["clinicId"]),
+
+  // Bitácora de transferencias de propiedad de clínica. Cada fila registra
+  // un cambio de `clinics.ownerUserId`, ya sea por el flujo normal
+  // (`transferOwnership`) o por intervención de soporte
+  // (`forceTransferOwnership`). Sirve como trazabilidad legal y para
+  // investigar disputas entre socios de una clínica.
+  clinicOwnershipAudit: defineTable({
+    clinicId: v.id("clinics"),
+    fromUserId: v.optional(v.id("users")),
+    toUserId: v.id("users"),
+    /** `"self"` cuando lo hace el owner; `"support"` cuando lo fuerza Kengo. */
+    via: v.union(v.literal("self"), v.literal("support")),
+    /** Motivo libre (obligatorio en `support`). */
+    reason: v.optional(v.string()),
+    /** Email del operador de soporte que ejecutó la acción (solo `support`). */
+    executedByAdminEmail: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_clinicId", ["clinicId"])
+    .index("by_toUserId", ["toUserId"]),
+
+  // Bitácora de eventos Stripe procesados. Garantiza idempotencia del
+  // `onEvent` handler en `convex/http.ts`: aunque Stripe reentregue un
+  // webhook (por timeout/retry), nuestro código de efectos colaterales
+  // (emails, mutaciones a clinicBilling) solo se ejecuta una vez por
+  // `event.id`.
+  stripeWebhookEvents: defineTable({
+    eventId: v.string(),
+    eventType: v.string(),
+    // `event.created` de Stripe en milisegundos.
+    createdMs: v.number(),
+    clinicId: v.optional(v.id("clinics")),
+    processedAt: v.number(),
+  })
+    .index("by_eventId", ["eventId"])
+    .index("by_clinicId_createdMs", ["clinicId", "createdMs"]),
 
   // === ESTADO DE SINCRONIZACIÓN DIRECTUS ===
   // Una fila por colección Directus sincronizada. `lastSyncedAt` es la cota

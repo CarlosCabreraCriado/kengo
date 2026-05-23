@@ -141,7 +141,15 @@ export const sendMessage = mutation({
       throw new Error("No tienes acceso a esta conversación");
     }
 
-    await requireActiveSubscription(ctx, conv.clinicId);
+    // Aislamiento de billing en chat (Bloque F): si la clínica está
+    // suspendida, los fisios/admin pierden la capacidad de enviar
+    // mensajes (deben reactivar el pago), pero los pacientes siguen
+    // pudiendo escribir y leer con normalidad. La regla viene de la
+    // decisión #17 del plan production-ready: el paciente no controla
+    // el billing de la clínica, no debe sufrir su impago.
+    if (me._id !== conv.pacienteId) {
+      await requireActiveSubscription(ctx, conv.clinicId);
+    }
 
     const messageId = await ctx.db.insert("messages", {
       conversationId: args.conversationId,

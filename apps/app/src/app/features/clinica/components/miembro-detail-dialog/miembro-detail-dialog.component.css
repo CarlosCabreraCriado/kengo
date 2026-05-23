@@ -15,6 +15,13 @@
   text-align: center;
 }
 
+.md-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
 .md-section {
   margin-top: 16px;
 }
