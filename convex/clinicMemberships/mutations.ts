@@ -258,3 +258,56 @@ export const expelMember = mutation({
     return { ok: true };
   },
 });
+
+/**
+ * Promociona un fisioterapeuta a administrador de la clínica.
+ *
+ * Restricciones:
+ *   - Solo un `admin` de la clínica puede invocarla.
+ *   - El target debe tener puesto `fisio` (no se promociona a pacientes ni a
+ *     quien ya es admin).
+ *   - No se puede promocionar a uno mismo.
+ *   - La clínica debe tener suscripción activa (ambos puestos son
+ *     facturables; bloqueamos reorganización del equipo si Stripe está en
+ *     fallo).
+ *
+ * Sin cascadas: la membresía persiste, los assignments y conversaciones
+ * siguen ligados al mismo userId. Sin sync de Stripe: fisio y admin
+ * comparten bucket facturable.
+ */
+export const promoteToAdmin = mutation({
+  args: {
+    clinicId: v.id("clinics"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const actor = await getAuthenticatedUser(ctx);
+    await checkClinicPermission(ctx, actor._id, args.clinicId, ["admin"]);
+
+    if (actor._id === args.userId) {
+      throw new Error("No puedes promocionarte a ti mismo");
+    }
+
+    await requireActiveSubscription(ctx, args.clinicId);
+
+    const membership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", args.userId).eq("clinicId", args.clinicId),
+      )
+      .unique();
+
+    if (!membership) {
+      throw new Error("El usuario no pertenece a esta clínica");
+    }
+
+    if (membership.puesto !== "fisio") {
+      throw new Error(
+        "Solo se puede promocionar a fisioterapeutas (no pacientes ni administradores)",
+      );
+    }
+
+    await ctx.db.patch(membership._id, { puesto: "admin" });
+    return { ok: true };
+  },
+});

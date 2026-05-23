@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 
@@ -104,6 +105,14 @@ export class MiembroDetailDialogComponent {
     return this.miembro()?.puesto === 'fisio';
   });
 
+  readonly puedePromocionar = computed<boolean>(() => {
+    if (!this.esAdminActor()) return false;
+    if (this.esActor()) return false;
+    return this.miembro()?.puesto === 'fisio';
+  });
+
+  readonly promocionando = signal(false);
+
   readonly avatarSrc = computed<string | null>(() => {
     const avatar = this.miembro()?.avatar;
     if (!avatar) return null;
@@ -145,7 +154,40 @@ export class MiembroDetailDialogComponent {
       await this.clinicasService.recargarFisiosClinica(this.clinicaId);
       this.dialogRef.close();
     } catch (err: unknown) {
-      this.toastService.error(this.extraerMensajeError(err));
+      this.toastService.error(
+        this.extraerMensajeError(err, 'No se pudo desvincular al fisioterapeuta'),
+      );
+    }
+  }
+
+  async onPromocionar(): Promise<void> {
+    const m = this.miembro();
+    if (!m || !this.puedePromocionar() || this.promocionando()) return;
+
+    const nombre = this.fullName() || 'el fisioterapeuta';
+    const confirmed = await this.dialogService.confirm({
+      title: 'Promocionar a administrador',
+      message: `${nombre} podrá gestionar la clínica: invitar y desvincular fisios, cambiar la información de la clínica y administrar la suscripción. Esta acción se puede revertir contactando con soporte.`,
+      confirmText: 'Promocionar',
+      cancelText: 'Cancelar',
+      confirmVariant: 'primary',
+    });
+    if (!confirmed) return;
+
+    this.promocionando.set(true);
+    try {
+      await this.convex.mutation(api.clinicMemberships.mutations.promoteToAdmin, {
+        clinicId: this.clinicaId as Id<'clinics'>,
+        userId: this.fisioId as Id<'users'>,
+      });
+      this.toastService.success('Fisioterapeuta promocionado a administrador');
+      await this.clinicasService.recargarFisiosClinica(this.clinicaId);
+    } catch (err: unknown) {
+      this.toastService.error(
+        this.extraerMensajeError(err, 'No se pudo promocionar al fisioterapeuta'),
+      );
+    } finally {
+      this.promocionando.set(false);
     }
   }
 
@@ -153,13 +195,11 @@ export class MiembroDetailDialogComponent {
     this.dialogRef.close();
   }
 
-  private extraerMensajeError(err: unknown): string {
+  private extraerMensajeError(err: unknown, fallback: string): string {
     if (err && typeof err === 'object') {
       const e = err as { data?: { message?: string }; message?: string };
-      return (
-        e.data?.message ?? e.message ?? 'No se pudo desvincular al fisioterapeuta'
-      );
+      return e.data?.message ?? e.message ?? fallback;
     }
-    return 'No se pudo desvincular al fisioterapeuta';
+    return fallback;
   }
 }

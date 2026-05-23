@@ -94,6 +94,35 @@
   color: var(--ink-500);
 }
 
+.md-permiso-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--cream-50, #fbf8f5);
+  border: 1px solid var(--ink-100, rgba(0, 0, 0, 0.06));
+}
+
+.md-permiso-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.md-permiso-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.md-permiso-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-500);
+}
+
 .md-danger {
   margin-top: 24px;
   padding: 14px;

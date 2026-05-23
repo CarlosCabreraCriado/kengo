@@ -67,6 +67,29 @@
         </section>
       }
 
+      @if (puedePromocionar()) {
+        <section class="md-section">
+          <h4 class="md-section-title">Permisos</h4>
+          <div class="md-permiso-row">
+            <div class="md-permiso-text">
+              <span class="md-permiso-label">Promocionar a administrador</span>
+              <p class="md-permiso-desc">
+                Podrá gestionar miembros, suscripción e información de la clínica.
+              </p>
+            </div>
+            <ui2-button
+              variant="secondary"
+              size="sm"
+              iconLeft="admin_panel_settings"
+              [loading]="promocionando()"
+              (clicked)="onPromocionar()"
+            >
+              Promocionar
+            </ui2-button>
+          </div>
+        </section>
+      }
+
       @if (puedeDesvincular()) {
         <section class="md-danger">
           <h4 class="md-danger-title">Zona peligrosa</h4>
