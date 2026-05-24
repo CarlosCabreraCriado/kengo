@@ -307,13 +307,17 @@ export class AppComponent implements OnInit {
       });
     });
 
-    // Toda la app vive sobre cream-50 (fondo claro), así que la status bar
-    // debe llevar contenido oscuro (Style.Dark = iconos negros) para que se
-    // lea sobre el fondo. La config estática en capacitor.config aplica lo
-    // mismo desde cold start; esta llamada lo refuerza al arrancar Angular.
-    StatusBar.setStyle({ style: Style.Dark }).catch(() => {
-      /* simulator/web fallback */
-    });
+    // Status bar en iOS: la app vive sobre cream-50 (fondo claro). En el
+    // plugin de Capacitor, Style.Light = "Dark text for light backgrounds"
+    // → iconos NEGROS (el nombre describe la apariencia clara de la barra,
+    // no el color del texto). Solo se aplica en iOS: en Android la status
+    // bar tiene fondo coral opaco (gestionado por ThemeService) y conviene
+    // dejar el comportamiento por defecto (iconos blancos sobre coral).
+    if (this.platform.isIOS()) {
+      StatusBar.setStyle({ style: Style.Light }).catch(() => {
+        /* simulator/web fallback */
+      });
+    }
 
     this.configurarTeclado();
   }

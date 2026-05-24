@@ -48,12 +48,6 @@ const config: CapacitorConfig = {
       // recibe el callback `notificationReceived`.
       presentationOptions: ['alert', 'badge', 'sound'],
     },
-    StatusBar: {
-      // Toda la app vive sobre cream-50: iconos negros desde el primer frame
-      // (evita flicker en cold start antes de que Angular llame a setStyle).
-      style: 'DARK',
-      overlaysWebView: true,
-    },
   },
 };
 
