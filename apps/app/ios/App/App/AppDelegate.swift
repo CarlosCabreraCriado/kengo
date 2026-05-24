@@ -53,6 +53,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    // MARK: - Orientation lock (@capacitor/screen-orientation)
+    // El plugin actualiza `supportedInterfaceOrientations` del bridge VC al
+    // llamar a `lock()`/`unlock()`. Devolvemos esa máscara para que UIKit
+    // respete el lock también en VCs presentados encima (p. ej. Browser).
+    func application(_ application: UIApplication,
+                     supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        if let rootVC = window?.rootViewController as? CAPBridgeViewController {
+            return UIInterfaceOrientationMask(rawValue: rootVC.supportedInterfaceOrientations.rawValue)
+        }
+        return .all
+    }
+
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         // Called when the app was launched with a url. Feel free to add additional processing here,
         // but if you want the App API to support tracking app url opens, make sure to keep this call

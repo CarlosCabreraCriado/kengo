@@ -18,6 +18,7 @@ import {
 } from './core';
 import { ConnectionErrorComponent } from './core/components/connection-error/connection-error.component';
 import { PlatformService } from './core/services/platform.service';
+import { OrientationLockService } from './core/services/orientation-lock.service';
 import { KeyboardService } from './core/services/keyboard.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
 import { PushNotificationService } from './core/services/push-notification.service';
@@ -75,6 +76,7 @@ export class AppComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private ngZone = inject(NgZone);
   private platform = inject(PlatformService);
+  private orientationLock = inject(OrientationLockService);
   // KeyboardService es referenciado para forzar la creación del servicio en
   // el bootstrap (registra listeners de Capacitor y propaga
   // `--keyboard-height` al DOM). No se usa directamente desde el template.
@@ -272,6 +274,12 @@ export class AppComponent implements OnInit {
    * bar. Solo se invoca en iOS/Android.
    */
   private configurarPlataformaNativa(): void {
+    // Lock de orientación a portrait cuando la dimensión corta del dispositivo
+    // está por debajo del breakpoint `md:` (UI móvil). Tablets quedan libres.
+    // Lo antes posible para que iOS no muestre un primer frame en landscape
+    // si la app se abrió con el dispositivo girado.
+    void this.orientationLock.aplicar();
+
     // Deep links: `kengo://magic?t=...`, `https://kengoapp.com/...`,
     // `kengo://billing/return?status=...`. Los listeners de Capacitor corren
     // fuera de NgZone — hay que entrar para que el Router dispare CD.
