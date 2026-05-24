@@ -1,5 +1,4 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../core/utils/asset-url';
 
@@ -12,7 +11,7 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
 @Component({
   selector: 'app-selector-paciente',
   standalone: true,
-  imports: [FormsModule],
+  imports: [],
   template: `
     <div class="selector-dialog">
       <!-- Header -->
@@ -32,11 +31,12 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
         <input
           type="text"
           class="search-input"
-          [(ngModel)]="busqueda"
+          [value]="busqueda()"
+          (input)="busqueda.set($any($event.target).value)"
           placeholder="Buscar por nombre o email..."
         />
-        @if (busqueda) {
-          <button type="button" class="clear-btn" (click)="busqueda = ''">
+        @if (busqueda()) {
+          <button type="button" class="clear-btn" (click)="busqueda.set('')">
             <span class="material-symbols-outlined">close</span>
           </button>
         }
@@ -432,7 +432,7 @@ export class SelectorPacienteComponent implements OnInit {
   private sessionService = inject(SessionService);
   private convex = inject(ConvexService);
 
-  busqueda = '';
+  busqueda = signal('');
 
   isLoading = signal(false);
   pacientes = signal<Usuario[]>([]);
@@ -444,7 +444,7 @@ export class SelectorPacienteComponent implements OnInit {
   });
 
   pacientesFiltrados = computed(() => {
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
     if (!q) return this.pacientes();
     return this.pacientes().filter(
       (p) =>
