@@ -354,6 +354,69 @@
         </div>
       </ui2-section>
 
+      <!-- Sección: Notificaciones -->
+      <ui2-section [padding]="'4px 20px 12px'">
+        <ui2-card [padding]="0">
+          <button
+            type="button"
+            class="perfil-row-btn"
+            (click)="toggleNotificaciones()"
+            [attr.aria-expanded]="notificacionesExpanded()"
+          >
+            <ui2-icon-badge
+              icon="notifications"
+              color="var(--kengo-primary)"
+              [size]="40"
+              [radius]="12"
+            ></ui2-icon-badge>
+            <div class="perfil-row-btn__text">
+              <h3 class="perfil-row-btn__title">Notificaciones</h3>
+              <p class="perfil-row-btn__sub">Qué quieres recibir en este dispositivo</p>
+            </div>
+            <span
+              class="material-symbols-outlined perfil-row-btn__chevron"
+              [class.perfil-row-btn__chevron--open]="notificacionesExpanded()"
+              aria-hidden="true"
+            >expand_more</span>
+          </button>
+
+          @if (notificacionesExpanded()) {
+            <div class="perfil-section-body perfil-section-body--list">
+              @if (notifPrefsLoading()) {
+                <div class="perfil-loading">
+                  <ui2-spinner size="md" color="primary" label="Cargando preferencias…"></ui2-spinner>
+                </div>
+              } @else {
+                <ui2-toggle-row
+                  icon="chat"
+                  title="Mensajes"
+                  subtitle="Avisos cuando recibas un mensaje"
+                  [checked]="notifPrefs()?.chat ?? true"
+                  [isFirst]="true"
+                  (valueChange)="setNotifPref('chat', $event)"
+                ></ui2-toggle-row>
+                <ui2-toggle-row
+                  icon="schedule"
+                  title="Recordatorio diario"
+                  subtitle="Aviso para hacer tu plan de hoy"
+                  [checked]="notifPrefs()?.dailyReminder ?? true"
+                  [isFirst]="false"
+                  (valueChange)="setNotifPref('dailyReminder', $event)"
+                ></ui2-toggle-row>
+                <ui2-toggle-row
+                  icon="assignment"
+                  title="Nuevo plan"
+                  subtitle="Avisos cuando tu fisio te asigne un plan"
+                  [checked]="notifPrefs()?.newPlan ?? true"
+                  [isFirst]="false"
+                  (valueChange)="setNotifPref('newPlan', $event)"
+                ></ui2-toggle-row>
+              }
+            </div>
+          }
+        </ui2-card>
+      </ui2-section>
+
       <!-- Sección: Legal -->
       <ui2-section [padding]="'4px 20px 12px'">
         <ui2-card [padding]="0">

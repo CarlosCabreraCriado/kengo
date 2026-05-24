@@ -32,6 +32,12 @@ function parseServiceAccount(): ServiceAccount | null {
   }
 }
 
+const NOTIFICATION_KEY = v.union(
+  v.literal("chat"),
+  v.literal("dailyReminder"),
+  v.literal("newPlan"),
+);
+
 /**
  * Envía una push notification a todos los dispositivos del usuario indicado.
  *
@@ -45,6 +51,13 @@ function parseServiceAccount(): ServiceAccount | null {
  *
  * Si `FCM_SERVICE_ACCOUNT` no está configurada, devuelve false (no rompe el
  * flujo de la mutation que lo encoló).
+ *
+ * Args opcionales:
+ *  - `notificationKey`: si se proporciona, lee las prefs del receptor y aborta
+ *    (devuelve `false`) cuando esa clave está en `false`. Si se omite, siempre
+ *    se envía (caso reservado a notificaciones críticas o tests).
+ *  - `badge`: número que aparece como contador de la app en iOS. Android lo
+ *    ignora. Pasar `0` para limpiar el badge.
  */
 export const sendPushToUser = internalAction({
   args: {
@@ -52,6 +65,8 @@ export const sendPushToUser = internalAction({
     title: v.string(),
     body: v.string(),
     data: v.optional(v.record(v.string(), v.string())),
+    notificationKey: v.optional(NOTIFICATION_KEY),
+    badge: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const sa = parseServiceAccount();
@@ -60,6 +75,16 @@ export const sendPushToUser = internalAction({
         "[Push] FCM_SERVICE_ACCOUNT no configurada, omitiendo envío",
       );
       return false;
+    }
+
+    if (args.notificationKey) {
+      const prefs = await ctx.runQuery(
+        internal.notificationPreferences.queries.getPreferencesForUser,
+        { userId: args.userId },
+      );
+      if (!prefs[args.notificationKey]) {
+        return false;
+      }
     }
 
     const tokens = await ctx.runQuery(internal.push.queries.getTokensForUser, {
@@ -86,6 +111,11 @@ export const sendPushToUser = internalAction({
       "Content-Type": "application/json",
     };
 
+    const apnsBlock =
+      args.badge !== undefined
+        ? { apns: { payload: { aps: { badge: args.badge } } } }
+        : {};
+
     await Promise.all(
       tokens.map(async (t: Doc<"pushTokens">) => {
         const payload = {
@@ -93,6 +123,7 @@ export const sendPushToUser = internalAction({
             token: t.token,
             notification: { title: args.title, body: args.body },
             ...(args.data ? { data: args.data } : {}),
+            ...apnsBlock,
           },
         };
 

@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CAPACITOR_DEBUG</key>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Kengo</string>
+	<string>Kengo</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -20,10 +20,31 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.kengoapp.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kengo</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Kengo necesita la cámara para que puedas hacer fotos para tu perfil y para imágenes de ejercicios.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Kengo guarda fotos editadas en tu galería cuando lo solicitas explícitamente.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kengo necesita acceso a tu galería para seleccionar fotos para tu perfil y para imágenes de ejercicios.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -47,22 +68,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Kengo necesita la cámara para que puedas hacer fotos para tu perfil y para imágenes de ejercicios.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Kengo necesita acceso a tu galería para seleccionar fotos para tu perfil y para imágenes de ejercicios.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Kengo guarda fotos editadas en tu galería cuando lo solicitas explícitamente.</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.kengoapp.app</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>kengo</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>

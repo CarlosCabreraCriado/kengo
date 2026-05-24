@@ -38,6 +38,7 @@ export const sendDailyPatientReminders = internalAction({
           title: REMINDER_TITLE,
           body: REMINDER_BODY,
           data: { type: "daily_reminder" },
+          notificationKey: "dailyReminder",
         },
       );
     }

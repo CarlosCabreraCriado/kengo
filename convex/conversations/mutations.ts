@@ -174,6 +174,7 @@ export const sendMessage = mutation({
 
     const receiverId = receiverIsPaciente ? conv.pacienteId : conv.fisioId;
     const senderName = `${me.firstName} ${me.lastName}`.trim();
+    const badge = await computeUnreadBadgeForUser(ctx, receiverId);
     await ctx.scheduler.runAfter(0, internal.push.actions.sendPushToUser, {
       userId: receiverId,
       title: senderName || "Nuevo mensaje",
@@ -182,11 +183,47 @@ export const sendMessage = mutation({
         type: "chat_message",
         conversationId: args.conversationId,
       },
+      notificationKey: "chat",
+      badge,
     });
 
     return messageId;
   },
 });
+
+// Suma todos los mensajes no leídos del usuario en sus conversaciones no
+// archivadas. Usado como `badge` iOS en la push de chat para que el icono
+// muestre el total acumulado, no el de la conversación concreta.
+async function computeUnreadBadgeForUser(
+  ctx: any,
+  userId: Id<"users">,
+): Promise<number> {
+  const [asPaciente, asFisio] = await Promise.all([
+    ctx.db
+      .query("conversations")
+      .withIndex("by_pacienteId_lastMessageAt", (q: any) =>
+        q.eq("pacienteId", userId),
+      )
+      .collect(),
+    ctx.db
+      .query("conversations")
+      .withIndex("by_fisioId_lastMessageAt", (q: any) =>
+        q.eq("fisioId", userId),
+      )
+      .collect(),
+  ]);
+
+  let total = 0;
+  for (const c of asPaciente) {
+    if (c.archivedAt !== undefined) continue;
+    total += c.pacienteUnreadCount;
+  }
+  for (const c of asFisio) {
+    if (c.archivedAt !== undefined) continue;
+    total += c.fisioUnreadCount;
+  }
+  return total;
+}
 
 export const markAsRead = mutation({
   args: { conversationId: v.id("conversations") },

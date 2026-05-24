@@ -279,3 +279,44 @@ Si no aparece: revisa los logs de la app (Xcode console o `adb logcat`) buscando
 
 **Env vars Convex:**
 - `FCM_SERVICE_ACCOUNT` — JSON del service account, minificado en una línea
+
+---
+
+## Iteraciones posteriores
+
+Esta sección recoge funcionalidades añadidas tras el setup inicial. **Ninguna requiere pasos manuales adicionales** — solo desplegar Convex y reconstruir la app.
+
+### Notificación "Nuevo plan asignado"
+
+Cuando un fisio crea un plan que arranca en estado `activo`, lo activa desde `borrador`, o publica una nueva versión (`plans.version`), el paciente recibe una push con `data.type = "new_plan"`. El tap navega a `/mi-plan` (la pantalla del plan activo del paciente).
+
+- Backend: helper `schedulePushNuevoPlan` en `convex/plans/mutations.ts` enganchado en `create`, `updateEstado` (transición a `activo`) y `version`.
+- Cliente: case `"new_plan"` en `navigateForNotification` de `push-notification.service.ts`.
+
+### Preferencias de notificación por tipo
+
+Cada usuario puede silenciar tipos concretos desde **Perfil → Notificaciones** (3 toggles: mensajes / recordatorio diario / nuevo plan). Los defaults son todo `true` cuando no existe registro previo, así que un usuario que nunca abra la sección recibe todo.
+
+- Tabla: `notificationPreferences` (`convex/schema.ts`) con un registro por usuario.
+- Módulo: `convex/notificationPreferences/queries.ts` (incluye `getMyPreferences` para la UI y `getPreferencesForUser` internal para el filtro server-side) y `mutations.ts` (`updateMyPreferences`).
+- Filtro en envío: `convex/push/actions.ts:sendPushToUser` admite `notificationKey` opcional; si la pref está en `false` no envía y devuelve `false`. Los tokens válidos NO se borran (es opt-out, no stale).
+- Callers que pasan la clave: chat (`notificationKey: "chat"`), recordatorio diario (`"dailyReminder"`), nuevo plan (`"newPlan"`).
+
+### Badge iOS (contador de mensajes no leídos)
+
+El icono de Kengo en iOS muestra el total de mensajes no leídos del usuario en todas sus conversaciones no archivadas. Android ignora el badge.
+
+- Backend: `sendPushToUser` admite `badge?: number` y lo añade en `apns.payload.aps.badge`. `convex/conversations/mutations.ts:sendMessage` calcula el total tras patchear los unread counts (helper `computeUnreadBadgeForUser`).
+- Cliente: `PushNotificationService.clearBadge()` invoca `FirebaseMessaging.removeAllDeliveredNotifications()` para limpiar el centro de notificaciones al abrir el inbox o un thread.
+- **Limitación conocida**: `@capacitor-firebase/messaging` v8 no expone API para setear el badge desde el cliente, por lo que el icono se mantiene con el último valor que envió el server hasta la siguiente push de chat (que siempre recalcula el total correcto). Para que el badge baje a 0 en cuanto el usuario lee, instalar `@capacitor/badge` y llamarlo desde `clearBadge()`, o disparar un silent push desde `markAsRead`. No abordado en esta iteración.
+
+### Despliegue de la iteración
+
+Después de hacer pull de estos cambios:
+
+```bash
+npm run convex:deploy       # propaga schema, queries/mutations/actions nuevas
+cd apps/app && npm run cap:sync
+```
+
+Si el build iOS o Android falla tras añadir las preferencias y nadie ha tocado los archivos nativos, normalmente basta con un clean build folder (Xcode) o `./gradlew clean` (Android Studio) — el cambio es solo TypeScript + Convex.

@@ -8,6 +8,7 @@ import {
 import { ChatRowComponent } from '../../components/chat-row/chat-row.component';
 import { MensajesService } from '../../data-access/mensajes.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
+import { PushNotificationService } from '../../../../core/services/push-notification.service';
 
 @Component({
   selector: 'app-mensajes-inbox',
@@ -26,6 +27,7 @@ import { PageLoaderService } from '../../../../core/services/page-loader.service
 export class MensajesInboxComponent implements OnInit, OnDestroy {
   protected mensajes = inject(MensajesService);
   private pageLoader = inject(PageLoaderService);
+  private push = inject(PushNotificationService);
   private readonly PAGE_LOADER_KEY = 'mensajes-inbox';
 
   readonly mobile = input<boolean>(false);
@@ -36,6 +38,7 @@ export class MensajesInboxComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+    void this.push.clearBadge();
   }
 
   ngOnDestroy(): void {

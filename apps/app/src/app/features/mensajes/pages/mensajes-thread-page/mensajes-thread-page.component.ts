@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../../core';
 import { useResponsive } from '../../../../shared/composables/use-responsive';
@@ -6,6 +6,7 @@ import { ChatComposerComponent } from '../../components/chat-composer/chat-compo
 import { ChatHeaderComponent } from '../../components/chat-header/chat-header.component';
 import { ChatThreadComponent } from '../../components/chat-thread/chat-thread.component';
 import { MensajesService } from '../../data-access/mensajes.service';
+import { PushNotificationService } from '../../../../core/services/push-notification.service';
 
 @Component({
   selector: 'app-mensajes-thread-page',
@@ -15,10 +16,15 @@ import { MensajesService } from '../../data-access/mensajes.service';
   templateUrl: './mensajes-thread-page.component.html',
   styleUrl: './mensajes-thread-page.component.css',
 })
-export class MensajesThreadPageComponent {
+export class MensajesThreadPageComponent implements OnInit {
   protected mensajes = inject(MensajesService);
   protected session = inject(SessionService);
   private router = inject(Router);
+  private push = inject(PushNotificationService);
+
+  ngOnInit(): void {
+    void this.push.clearBadge();
+  }
 
   private readonly responsive = useResponsive();
   protected readonly esDesktop = this.responsive.esDesktop;

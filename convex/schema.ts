@@ -48,6 +48,19 @@ export default defineSchema({
     .index("by_userId_deviceId", ["userId", "deviceId"])
     .index("by_token", ["token"]),
 
+  // === PREFERENCIAS DE NOTIFICACIÓN ===
+  // Un registro por usuario; si no existe se asumen defaults (todo true).
+  // Cada clave corresponde a una `notificationKey` aceptada por
+  // `push.actions.sendPushToUser` — al añadir un nuevo tipo de push hay que
+  // sumar también la clave aquí y un toggle en la UI de perfil.
+  notificationPreferences: defineTable({
+    userId: v.id("users"),
+    chat: v.boolean(),
+    dailyReminder: v.boolean(),
+    newPlan: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
   // === CLÍNICAS ===
   clinics: defineTable({
     nombre: v.string(),

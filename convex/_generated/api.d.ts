@@ -68,6 +68,8 @@ import type * as migrations_inspectPendingPlans from "../migrations/inspectPendi
 import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
 import type * as migrations_patchPlanClinicId from "../migrations/patchPlanClinicId.js";
 import type * as migrations_validation from "../migrations/validation.js";
+import type * as notificationPreferences_mutations from "../notificationPreferences/mutations.js";
+import type * as notificationPreferences_queries from "../notificationPreferences/queries.js";
 import type * as pdf_actions from "../pdf/actions.js";
 import type * as pdf_internal from "../pdf/internal.js";
 import type * as plans_internal from "../plans/internal.js";
@@ -167,6 +169,8 @@ declare const fullApi: ApiFromModules<{
   "migrations/legacyUsers": typeof migrations_legacyUsers;
   "migrations/patchPlanClinicId": typeof migrations_patchPlanClinicId;
   "migrations/validation": typeof migrations_validation;
+  "notificationPreferences/mutations": typeof notificationPreferences_mutations;
+  "notificationPreferences/queries": typeof notificationPreferences_queries;
   "pdf/actions": typeof pdf_actions;
   "pdf/internal": typeof pdf_internal;
   "plans/internal": typeof plans_internal;

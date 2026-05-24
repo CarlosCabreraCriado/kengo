@@ -44,6 +44,7 @@ import {
   Ui2PillComponent,
   Ui2SectionComponent,
   Ui2SpinnerComponent,
+  Ui2ToggleRowComponent,
 } from '../../../../../shared/ui-v2';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
 
@@ -62,6 +63,7 @@ import { PageLoaderService } from '../../../../../core/services/page-loader.serv
     Ui2PillComponent,
     Ui2SectionComponent,
     Ui2SpinnerComponent,
+    Ui2ToggleRowComponent,
   ],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css',
@@ -87,7 +89,16 @@ export class PerfilComponent implements OnInit, OnDestroy {
   // === SECTION TOGGLE STATES ===
   public personalExpanded = signal(true);
   public securityExpanded = signal(false);
+  public notificacionesExpanded = signal(false);
   public legalExpanded = signal(false);
+
+  // === PREFERENCIAS DE NOTIFICACIÓN ===
+  private readonly notifPrefsQuery = this.convex.watchQuery(
+    api.notificationPreferences.queries.getMyPreferences,
+    () => ({}),
+  );
+  public readonly notifPrefs = this.notifPrefsQuery.value;
+  public readonly notifPrefsLoading = this.notifPrefsQuery.isLoading;
 
   // === EMAIL VERIFICATION ===
   public emailVerified = computed(() => this.sessionService.usuario()?.email_verified ?? false);
@@ -334,8 +345,26 @@ export class PerfilComponent implements OnInit, OnDestroy {
     this.securityExpanded.update((v) => !v);
   }
 
+  toggleNotificaciones() {
+    this.notificacionesExpanded.update((v) => !v);
+  }
+
   toggleLegal() {
     this.legalExpanded.update((v) => !v);
+  }
+
+  async setNotifPref(
+    key: 'chat' | 'dailyReminder' | 'newPlan',
+    value: boolean,
+  ) {
+    try {
+      await this.convex.mutation(
+        api.notificationPreferences.mutations.updateMyPreferences,
+        { [key]: value },
+      );
+    } catch (err) {
+      console.error('No se pudo actualizar la preferencia de notificación', err);
+    }
   }
 
   scrollToSection(section: 'personal' | 'security') {

@@ -172,5 +172,29 @@ export class PushNotificationService {
       this.router.navigate(['/']);
       return;
     }
+    if (type === 'new_plan') {
+      this.router.navigate(['/mi-plan']);
+      return;
+    }
+  }
+
+  /**
+   * Limpia las notificaciones entregadas del centro de notificaciones del
+   * sistema. Llamar al abrir lista o detalle de conversaciones.
+   *
+   * Nota sobre el badge iOS: el plugin `@capacitor-firebase/messaging` v8 no
+   * expone API para setear el badge count desde el cliente. El icono se
+   * mantiene con el último valor enviado por el server hasta la siguiente
+   * push, que siempre recalcula el total real de mensajes no leídos. Para
+   * actualización inmediata haría falta integrar `@capacitor/badge` o un
+   * silent push desde `markAsRead`; se deja como mejora futura.
+   */
+  async clearBadge(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) return;
+    try {
+      await FirebaseMessaging.removeAllDeliveredNotifications();
+    } catch (err) {
+      console.warn('[Push] clearBadge falló (se ignora):', err);
+    }
   }
 }

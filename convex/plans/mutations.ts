@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { internal } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 import {
   getAuthenticatedUser,
   PUESTOS_GESTION,
@@ -11,6 +13,28 @@ import {
 } from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
 import { getCurrentMadridDate } from "../_helpers/datetime";
+
+// Encola una push al paciente avisando de que tiene un plan nuevo o
+// recién activado. Llamar SOLO cuando el plan pase a `estado === "activo"`
+// (visible para el paciente). Idempotencia: el cliente decide su deep-link
+// vía `data.type = "new_plan"`.
+async function schedulePushNuevoPlan(
+  ctx: any,
+  pacienteId: Id<"users">,
+  planId: Id<"plans">,
+  titulo: string,
+): Promise<void> {
+  await ctx.scheduler.runAfter(0, internal.push.actions.sendPushToUser, {
+    userId: pacienteId,
+    title: "Nuevo plan disponible",
+    body: titulo.trim() || "Tu fisio te ha asignado un nuevo plan",
+    data: {
+      type: "new_plan",
+      planId,
+    },
+    notificationKey: "newPlan",
+  });
+}
 
 const ejercicioPlanArgs = v.object({
   exerciseId: v.id("exercises"),
@@ -121,6 +145,11 @@ export const create = mutation({
     });
 
     await insertPlanExercises(ctx, planId, args.ejercicios);
+
+    if (estadoInicial === "activo") {
+      await schedulePushNuevoPlan(ctx, args.pacienteId, planId, args.titulo);
+    }
+
     return planId;
   },
 });
@@ -149,7 +178,17 @@ export const updateEstado = mutation({
         );
       }
     }
+    const estadoAnterior = plan.estado;
     await ctx.db.patch(args.planId, { estado: args.estado });
+
+    if (args.estado === "activo" && estadoAnterior !== "activo") {
+      await schedulePushNuevoPlan(
+        ctx,
+        plan.pacienteId,
+        args.planId,
+        plan.titulo,
+      );
+    }
   },
 });
 
@@ -286,6 +325,14 @@ export const version = mutation({
     });
 
     await insertPlanExercises(ctx, newPlanId, args.ejercicios);
+
+    await schedulePushNuevoPlan(
+      ctx,
+      oldPlan.pacienteId,
+      newPlanId,
+      args.titulo,
+    );
+
     return newPlanId;
   },
 });
