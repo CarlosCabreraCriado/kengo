@@ -34,7 +34,6 @@ import { GestionAccesoDialogComponent } from '../../components/gestion-acceso-di
 
 // UI v2
 import {
-  Ui2BackButtonComponent,
   Ui2CollapsibleComponent,
   Ui2EmptyStateComponent,
   Ui2SpinnerComponent,
@@ -89,7 +88,6 @@ interface DialogClosedResult {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    Ui2BackButtonComponent,
     Ui2CollapsibleComponent,
     Ui2EmptyStateComponent,
     Ui2SpinnerComponent,
@@ -105,21 +103,6 @@ interface DialogClosedResult {
   ],
   template: `
     <section class="pd2-page" [class.pd2-page--mobile]="isMovil()">
-      @if (isMovil()) {
-        <header class="pd2-topbar">
-          <ui2-back-button (clicked)="volver()" ariaLabel="Volver a pacientes" />
-          <h1 class="pd2-topbar__title">Paciente</h1>
-          <button
-            type="button"
-            class="pd2-topbar__action"
-            aria-label="Gestionar acceso"
-            (click)="gestionarAcceso()"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">key</span>
-          </button>
-        </header>
-      }
-
       <main class="pd2-main" [class.pd2-main--mobile]="isMovil()">
         @if (isLoadingPaciente()) {
           <div class="pd2-state">
@@ -284,62 +267,15 @@ interface DialogClosedResult {
   styles: [
     `
       :host {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
+        display: block;
         width: 100%;
-        overflow: hidden;
       }
       .pd2-page {
         display: flex;
         flex-direction: column;
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
-      }
-      .pd2-topbar {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 20px;
-        background: rgba(250, 247, 242, 0.85);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-      }
-      .pd2-topbar__title {
-        flex: 1;
-        font-family: KengoDisplay, kengoFont, sans-serif;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        color: var(--ink-900);
-        margin: 0;
-        text-align: center;
-      }
-      .pd2-topbar__action {
-        width: 36px;
-        height: 36px;
-        border-radius: 12px;
-        border: 1px solid var(--ink-100);
-        background: white;
-        cursor: pointer;
-        display: grid;
-        place-items: center;
-      }
-      .pd2-topbar__action:hover { background: var(--cream-50); }
-      .pd2-topbar__action .material-symbols-outlined {
-        font-size: 20px;
-        color: var(--ink-700);
       }
 
       .pd2-main {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
         padding: 28px 32px;
         display: flex;
         flex-direction: column;
@@ -349,7 +285,7 @@ interface DialogClosedResult {
         margin: 0 auto;
       }
       .pd2-main--mobile {
-        padding: 16px 16px 32px;
+        padding: 8px 16px 16px;
         gap: 12px;
       }
 

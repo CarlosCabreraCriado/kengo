@@ -40,6 +40,18 @@ export interface PdHeroMeta {
           <ui2-back-button (clicked)="volver.emit()" ariaLabel="Volver a pacientes" />
           <span class="pd-hero__crumb">Mis pacientes</span>
         </div>
+      } @else {
+        <div class="pd-hero__nav">
+          <ui2-back-button (clicked)="volver.emit()" ariaLabel="Volver a pacientes" />
+          <button
+            type="button"
+            class="pd-hero__nav-action"
+            aria-label="Gestionar acceso"
+            (click)="gestionarAcceso.emit()"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">key</span>
+          </button>
+        </div>
       }
 
       <div class="pd-hero__top">
@@ -176,6 +188,33 @@ export interface PdHeroMeta {
         align-items: center;
         gap: 6px;
         margin-bottom: 14px;
+      }
+      .pd-hero__nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .pd-hero__nav-action {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.6);
+        color: var(--ink-700);
+        backdrop-filter: blur(12px) saturate(180%);
+        -webkit-backdrop-filter: blur(12px) saturate(180%);
+        box-shadow: var(--shadow-card);
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+      }
+      .pd-hero__nav-action:hover { background: rgba(255, 255, 255, 0.85); }
+      .pd-hero__nav-action:active { transform: translateY(1px); }
+      .pd-hero__nav-action .material-symbols-outlined {
+        font-size: 22px;
+        color: var(--ink-700);
       }
       .pd-hero__crumb {
         font-size: 12px;
