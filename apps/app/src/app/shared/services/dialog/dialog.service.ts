@@ -105,7 +105,53 @@ export class DialogService {
     component: ComponentType<T>,
     options: DialogOptions<D> = {},
   ): DialogRef<R, T> {
-    return this.openWithVariant<T, D, R>(component, 'sheet', options);
+    const ref = this.openWithVariant<T, D, R>(component, 'sheet', options);
+    this.installSheetExitAnimation(ref);
+    return ref;
+  }
+
+  /**
+   * Intercepta `close()` para reproducir un slide-down en móvil antes de
+   * detach. CDK Dialog no soporta animaciones de salida nativas, así que
+   * añadimos una clase al pane y al backdrop, esperamos a `animationend`
+   * (con un safety net por timeout) y solo entonces llamamos al close real.
+   * Cubre cierres por backdrop, ESC y `dialogRef.close()` programático.
+   */
+  private installSheetExitAnimation<R, T>(ref: DialogRef<R, T>): void {
+    const overlayRef = ref.overlayRef;
+    const pane = overlayRef?.overlayElement as HTMLElement | undefined;
+    if (!pane) return;
+
+    const originalClose = ref.close.bind(ref);
+    let closing = false;
+
+    ref.close = (
+      result?: R,
+      closeOptions?: Parameters<typeof originalClose>[1],
+    ): void => {
+      if (closing) return;
+
+      const isMobile =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(max-width: 767px)').matches;
+      if (!isMobile) {
+        originalClose(result, closeOptions);
+        return;
+      }
+
+      closing = true;
+      pane.classList.add('ui-dialog-panel--sheet-closing');
+      overlayRef?.backdropElement?.classList.add('ui-dialog-backdrop--closing');
+
+      let done = false;
+      const finish = (): void => {
+        if (done) return;
+        done = true;
+        originalClose(result, closeOptions);
+      };
+      pane.addEventListener('animationend', finish, { once: true });
+      setTimeout(finish, 400);
+    };
   }
 
   /** Diálogo fullscreen (image crop, vídeo, cámara). Sin backdrop por defecto. */
