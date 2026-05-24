@@ -23,6 +23,9 @@
   width: 340px;
   max-width: 92vw;
   height: 100dvh;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-right: var(--safe-right);
   background: var(--cream-50);
   border-left: 1px solid var(--ink-100);
   box-shadow: var(--shadow-card-strong);

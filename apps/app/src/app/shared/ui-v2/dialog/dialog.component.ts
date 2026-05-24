@@ -56,12 +56,12 @@ export type Ui2DialogVariant =
     .ui2-dialog--informative,
     .ui2-dialog--sheet {
       border-radius: 22px;
-      max-height: calc(100dvh - 2rem);
+      max-height: calc(100dvh - 2rem - var(--safe-top) - var(--safe-bottom));
     }
     .ui2-dialog--compact {
       border-radius: 18px;
       border: none;
-      max-height: calc(100dvh - 2rem);
+      max-height: calc(100dvh - 2rem - var(--safe-top) - var(--safe-bottom));
     }
     .ui2-dialog--fullscreen {
       border-radius: 0;
@@ -75,7 +75,7 @@ export type Ui2DialogVariant =
         border-left: none;
         border-right: none;
         border-bottom: none;
-        max-height: 92vh;
+        max-height: calc(92vh - var(--safe-top));
       }
     }
   `],
