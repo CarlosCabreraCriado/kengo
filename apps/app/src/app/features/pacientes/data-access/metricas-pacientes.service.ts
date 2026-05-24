@@ -4,7 +4,7 @@ import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { MetricasPacientesBulk } from '../../../../types/global';
 
-type SnapshotDoc = {
+interface SnapshotDoc {
   _id: string;
   pacienteId: string;
   clinicId: string;
@@ -16,7 +16,7 @@ type SnapshotDoc = {
   inactividadDias: number;
   rachaActual: number;
   riskScore: number;
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class MetricasPacientesService {

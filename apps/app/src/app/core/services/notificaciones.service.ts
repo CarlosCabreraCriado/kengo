@@ -6,7 +6,7 @@ import { ConvexService } from '../convex/convex.service';
 import { api } from '../../../../../../convex/_generated/api';
 import type { NotificacionApp } from '../../../types/global';
 
-type AlertDoc = {
+interface AlertDoc {
   _id: string;
   tipo:
     | 'comentario'
@@ -22,7 +22,7 @@ type AlertDoc = {
   adherenciaPct?: number;
   fechaGeneracion: string;
   estado: 'pendiente' | 'revisada' | 'descartada';
-};
+}
 
 function tituloFromAlert(a: AlertDoc): string {
   switch (a.tipo) {

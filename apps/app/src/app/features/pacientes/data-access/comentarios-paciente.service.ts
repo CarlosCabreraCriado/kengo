@@ -3,7 +3,7 @@ import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { ComentariosPacienteResponse } from '../../../../types/global';
 
-type AlertDoc = {
+interface AlertDoc {
   _id: string;
   _creationTime: number;
   tipo: 'comentario' | 'dolor_alto' | 'inactividad' | 'adherencia_baja' | 'tendencia_negativa';
@@ -16,7 +16,7 @@ type AlertDoc = {
   fechaGeneracion: string;
   fechaRevision?: string;
   estado: 'pendiente' | 'revisada' | 'descartada';
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class ComentariosPacienteService {

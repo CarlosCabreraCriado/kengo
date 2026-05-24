@@ -29,7 +29,7 @@ interface ActividadDiariaClinica {
   totalAnterior: number;
 }
 
-type ClinicSnapshot = {
+interface ClinicSnapshot {
   _id: string;
   clinicId: string;
   ventana: '7d' | '30d';
@@ -38,7 +38,7 @@ type ClinicSnapshot = {
   dolorMedio?: number;
   sesionesUltimos7d: number;
   alertasPendientes: number;
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class DashboardFisioService {

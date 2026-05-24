@@ -42,15 +42,15 @@ export interface CumplimientoConTendencia {
 import { formatDate } from '../../../shared/utils/format-date';
 
 // Estructura del doc del modelo nuevo `dailyPatientRollup` (camelCase desde Convex).
-type DailyRollup = {
+interface DailyRollup {
   pacienteId: string;
   fecha: string;
-  planAggregates: Array<{
+  planAggregates: {
     planId: string;
     esperados: number;
     completados: number;
     dolorMedio?: number;
-  }>;
+  }[];
   totalEsperados: number;
   totalCompletados: number;
   dolorPromedio?: number;
@@ -61,7 +61,7 @@ type DailyRollup = {
     | 'fallido'
     | 'descanso'
     | 'sin_plan';
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class CumplimientoService {
