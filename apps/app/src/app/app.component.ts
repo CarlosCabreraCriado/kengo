@@ -307,16 +307,13 @@ export class AppComponent implements OnInit {
       });
     });
 
-    // Status bar dinámica por ruta. Style.Light = contenido claro → texto
-    // oscuro; Style.Dark = contenido oscuro → texto claro; Style.Default sigue
-    // al sistema (que en la app nativa Kengo significa fondo coral con texto
-    // claro). Se aplica al cargar y en cada NavigationEnd.
-    this.aplicarStatusBarPorRuta(this.router.url);
-    this.router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe((e) => {
-        this.aplicarStatusBarPorRuta(e.urlAfterRedirects || e.url);
-      });
+    // Toda la app vive sobre cream-50 (fondo claro), así que la status bar
+    // debe llevar contenido oscuro (Style.Dark = iconos negros) para que se
+    // lea sobre el fondo. La config estática en capacitor.config aplica lo
+    // mismo desde cold start; esta llamada lo refuerza al arrancar Angular.
+    StatusBar.setStyle({ style: Style.Dark }).catch(() => {
+      /* simulator/web fallback */
+    });
 
     this.configurarTeclado();
   }
@@ -404,37 +401,6 @@ export class AppComponent implements OnInit {
         capture: true,
       } as EventListenerOptions);
     });
-  }
-
-  /**
-   * Resuelve el estilo de status bar adecuado para la ruta y lo aplica.
-   * Solo tiene efecto en plataforma nativa.
-   */
-  private aplicarStatusBarPorRuta(url: string): void {
-    const style = this.resolverStatusBarStyle(url);
-    StatusBar.setStyle({ style }).catch(() => {
-      /* simulator/web fallback */
-    });
-  }
-
-  private resolverStatusBarStyle(url: string): Style {
-    // Auth y onboarding: fondo claro → texto oscuro.
-    if (
-      url.startsWith('/login') ||
-      url.startsWith('/registro') ||
-      url.startsWith('/magic') ||
-      url.startsWith('/establecer-password') ||
-      url.startsWith('/recuperar-password') ||
-      url.startsWith('/reset-password')
-    ) {
-      return Style.Light;
-    }
-    // Sesión activa fullscreen sobre cream-50 (oscuro relativo): texto claro.
-    if (url.startsWith('/mi-plan') || url.startsWith('/realizar-plan')) {
-      return Style.Dark;
-    }
-    // App principal sobre coral / cream: texto claro.
-    return Style.Default;
   }
 
   private observarRutas() {
