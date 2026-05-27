@@ -328,12 +328,12 @@ export default defineSchema({
     .index("by_stale", ["stale"]),
 
   // === SNAPSHOTS POR PACIENTE (para tabla de pacientes / dashboard) ===
-  // Ventanas decididas para esta iteración: 7d y 30d (sin 365d).
+  // Ventanas: 7d, 15d (usada por listado y detalle de pacientes) y 30d.
   patientMetricsSnapshot: defineTable({
     pacienteId: v.id("users"),
     clinicId: v.id("clinics"),
     fisioId: v.id("users"),
-    ventana: v.union(v.literal("7d"), v.literal("30d")),
+    ventana: v.union(v.literal("7d"), v.literal("15d"), v.literal("30d")),
     adherencia: v.number(),
     dolorPromedio: v.optional(v.number()),
     ultimaActividad: v.optional(v.string()), // YYYY-MM-DD
@@ -357,7 +357,7 @@ export default defineSchema({
   // === SNAPSHOTS POR CLÍNICA (sustituye a `clinicMetrics`) ===
   clinicMetricsSnapshot: defineTable({
     clinicId: v.id("clinics"),
-    ventana: v.union(v.literal("7d"), v.literal("30d")),
+    ventana: v.union(v.literal("7d"), v.literal("15d"), v.literal("30d")),
     pacientesActivos: v.number(),
     adherenciaPromedio: v.number(),
     dolorMedio: v.optional(v.number()),

@@ -2,8 +2,13 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { assertFisioInClinic } from "../_helpers/patientAccess";
+import { assertCanAccessPaciente } from "../_helpers/authorization";
 
-const ventana = v.union(v.literal("7d"), v.literal("30d"));
+const ventana = v.union(
+  v.literal("7d"),
+  v.literal("15d"),
+  v.literal("30d"),
+);
 
 /**
  * Devuelve los snapshots de pacientes de una clínica para una ventana
@@ -50,6 +55,30 @@ export const getPatientMetrics = query({
     }
 
     return snapshots;
+  },
+});
+
+/**
+ * Devuelve el snapshot de métricas de UN paciente para una ventana concreta.
+ * Lo consume el detalle de paciente (`/mis-pacientes/:id`) para alimentar el
+ * KPI de dolor con la misma fuente que el listado, garantizando que ambos
+ * valores coincidan.
+ */
+export const getPatientMetricsByPaciente = query({
+  args: {
+    pacienteId: v.id("users"),
+    ventana,
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await assertCanAccessPaciente(ctx, user._id, args.pacienteId);
+
+    return await ctx.db
+      .query("patientMetricsSnapshot")
+      .withIndex("by_pacienteId_ventana", (q) =>
+        q.eq("pacienteId", args.pacienteId).eq("ventana", args.ventana),
+      )
+      .unique();
   },
 });
 

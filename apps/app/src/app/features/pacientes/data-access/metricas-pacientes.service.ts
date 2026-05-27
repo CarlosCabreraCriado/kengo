@@ -4,12 +4,14 @@ import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { MetricasPacientesBulk } from '../../../../types/global';
 
+type VentanaSnapshot = '7d' | '15d' | '30d';
+
 interface SnapshotDoc {
   _id: string;
   pacienteId: string;
   clinicId: string;
   fisioId: string;
-  ventana: '7d' | '30d';
+  ventana: VentanaSnapshot;
   adherencia: number;
   dolorPromedio?: number;
   ultimaActividad?: string;
@@ -24,14 +26,18 @@ export class MetricasPacientesService {
 
   /**
    * Obtiene el bulk de métricas indexadas por `pacienteId` (Convex Id).
-   * Lee `patientMetricsSnapshot` (ventana 30d por defecto) de todas las
+   * Lee `patientMetricsSnapshot` (ventana 15d por defecto) de todas las
    * clínicas gestionadas por el usuario actual.
    */
-  getMetricasBulk(ventana: '7d' | '30d' = '30d'): Observable<MetricasPacientesBulk> {
+  getMetricasBulk(
+    ventana: VentanaSnapshot = '15d',
+  ): Observable<MetricasPacientesBulk> {
     return from(this.fetchBulk(ventana));
   }
 
-  private async fetchBulk(ventana: '7d' | '30d'): Promise<MetricasPacientesBulk> {
+  private async fetchBulk(
+    ventana: VentanaSnapshot,
+  ): Promise<MetricasPacientesBulk> {
     const clinicIds = (await this.convex.query(
       api.me.queries.myManagedClinics,
       {},

@@ -5,12 +5,18 @@ import { esPaciente } from "../_helpers/permissions";
 import { getMadridDateOffset, anioMes } from "../_helpers/datetime";
 import { computeRiskScore, computeRachaActual } from "../_helpers/rollupComputation";
 
-type Ventana = "7d" | "30d";
-const VENTANAS: Ventana[] = ["7d", "30d"];
-const ventanaValidator = v.union(v.literal("7d"), v.literal("30d"));
+type Ventana = "7d" | "15d" | "30d";
+const VENTANAS: Ventana[] = ["7d", "15d", "30d"];
+const ventanaValidator = v.union(
+  v.literal("7d"),
+  v.literal("15d"),
+  v.literal("30d"),
+);
 
 function ventanaDays(ventana: Ventana): number {
-  return ventana === "7d" ? 7 : 30;
+  if (ventana === "7d") return 7;
+  if (ventana === "15d") return 15;
+  return 30;
 }
 
 /**
@@ -49,13 +55,11 @@ async function recomputePatientForWindow(
     )
     .collect();
 
-  // Métricas básicas: adherencia (días completados / días con plan no descanso),
-  // dolor promedio, racha actual.
+  // Métricas básicas derivadas del rollup diario: adherencia, racha,
+  // última actividad.
   let diasCompletados = 0;
   let diasParciales = 0;
   let diasConPlanNoDescanso = 0;
-  let dolorSum = 0;
-  let dolorCount = 0;
   let ultimaActividad: string | undefined;
   const dailyByFecha = new Map<string, Doc<"dailyPatientRollup">>();
 
@@ -78,10 +82,37 @@ async function recomputePatientForWindow(
       if (!ultimaActividad || d.fecha > ultimaActividad)
         ultimaActividad = d.fecha;
     }
-    if (d.dolorPromedio !== undefined) {
-      dolorSum += d.dolorPromedio;
-      dolorCount += 1;
-    }
+  }
+
+  // Dolor: promedio de promedios POR SESIÓN sobre exerciseExecutions
+  // completadas en la ventana. Misma fórmula que el detalle de paciente
+  // (ver apps/app/src/.../cumplimiento.service.ts:buildEstadisticas).
+  const executions = await ctx.db
+    .query("exerciseExecutions")
+    .withIndex("by_pacienteId_fecha", (q) =>
+      q.eq("pacienteId", pacienteId).gte("fecha", desde).lte("fecha", hasta),
+    )
+    .collect();
+
+  const dolorPorSesion = new Map<
+    Id<"sessions">,
+    { sum: number; count: number }
+  >();
+  for (const ex of executions) {
+    if (!ex.completado) continue;
+    if (ex.dolorEscala === undefined) continue;
+    const acc = dolorPorSesion.get(ex.sessionId) ?? { sum: 0, count: 0 };
+    acc.sum += ex.dolorEscala;
+    acc.count += 1;
+    dolorPorSesion.set(ex.sessionId, acc);
+  }
+
+  let sumPromediosSesion = 0;
+  let nSesionesConDolor = 0;
+  for (const { sum, count } of dolorPorSesion.values()) {
+    if (count === 0) continue;
+    sumPromediosSesion += sum / count;
+    nSesionesConDolor += 1;
   }
 
   const adherencia =
@@ -92,7 +123,9 @@ async function recomputePatientForWindow(
         )
       : 0;
   const dolorPromedio =
-    dolorCount > 0 ? Math.round((dolorSum / dolorCount) * 100) / 100 : undefined;
+    nSesionesConDolor > 0
+      ? Math.round((sumPromediosSesion / nSesionesConDolor) * 100) / 100
+      : undefined;
 
   const inactividadDias = ultimaActividad
     ? Math.max(

@@ -414,6 +414,11 @@ export class CumplimientoService {
   /**
    * Calcula estadísticas globales del paciente para el rango de días
    * cargado.
+   *
+   * Nota: `promedioDolorGeneral` se usa como fallback del KPI Dolor cuando
+   * el snapshot de Convex no está disponible. La fórmula (promedio de
+   * promedios por sesión, solo completadas) debe mantenerse equivalente a
+   * la del snapshot — ver `convex/snapshots/internal.ts:recomputePatientForWindow`.
    */
   buildEstadisticas(
     dias: CumplimientoDia[],

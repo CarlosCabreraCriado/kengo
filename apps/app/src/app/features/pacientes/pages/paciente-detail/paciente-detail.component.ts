@@ -344,6 +344,9 @@ export class PacienteDetailComponent implements OnInit {
   readonly planes = signal<Plan[]>([]);
   readonly sesiones = signal<SesionAgrupada[]>([]);
   readonly estadisticas = signal<EstadisticasPaciente | null>(null);
+  // Dolor del snapshot 15d: misma fuente que el listado /mis-pacientes,
+  // tiene prioridad sobre el cálculo en cliente para que ambos KPIs coincidan.
+  readonly dolorSnapshot = signal<number | null>(null);
   readonly trend = signal<{ adherence: number | null; pain: number | null }>({
     adherence: null,
     pain: null,
@@ -433,6 +436,11 @@ export class PacienteDetailComponent implements OnInit {
     const stats = this.estadisticas();
     const t = this.trend();
     if (!stats) return [];
+    // El valor del KPI Dolor proviene del snapshot 15d cuando está disponible
+    // (misma fuente que el listado). Como fallback usamos el cálculo en
+    // cliente — debería coincidir, ver buildEstadisticas en CumplimientoService.
+    const dolorValor =
+      this.dolorSnapshot() ?? stats.promedioDolorGeneral;
     return [
       {
         label: 'Adherencia',
@@ -449,10 +457,10 @@ export class PacienteDetailComponent implements OnInit {
       },
       {
         label: 'Dolor',
-        value: stats.promedioDolorGeneral != null ? stats.promedioDolorGeneral.toFixed(1) : '–',
-        unit: stats.promedioDolorGeneral != null ? '/10' : '',
-        ringValue: stats.promedioDolorGeneral != null ? stats.promedioDolorGeneral / 10 : 0,
-        ringColor: this.painRingColor(stats.promedioDolorGeneral),
+        value: dolorValor != null ? dolorValor.toFixed(1) : '–',
+        unit: dolorValor != null ? '/10' : '',
+        ringValue: dolorValor != null ? dolorValor / 10 : 0,
+        ringColor: this.painRingColor(dolorValor),
         trend: t.pain,
         trendInverse: true,
         trendDecimals: 1,
@@ -476,8 +484,22 @@ export class PacienteDetailComponent implements OnInit {
     this.cargarPaciente(pacienteId);
     this.cargarPlanes(pacienteId);
     this.cargarCumplimiento(pacienteId);
+    this.cargarSnapshotDolor(pacienteId);
     this.cargarComentarios(pacienteId);
     this.cargarFisioResponsable(pacienteId);
+  }
+
+  private async cargarSnapshotDolor(pacienteId: string): Promise<void> {
+    try {
+      const snap = (await this.convex.query(
+        api.snapshots.queries.getPatientMetricsByPaciente,
+        { pacienteId: pacienteId as never, ventana: '15d' },
+      )) as { dolorPromedio?: number } | null;
+      this.dolorSnapshot.set(snap?.dolorPromedio ?? null);
+    } catch (err) {
+      console.error('Error cargando snapshot de dolor:', err);
+      this.dolorSnapshot.set(null);
+    }
   }
 
   // === Carga de datos ===
