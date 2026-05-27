@@ -29,7 +29,6 @@ import { ClinicasService } from './features/clinica/data-access/clinicas.service
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
 import {
   Ui2CreamBgComponent,
-  Ui2OfflineBannerComponent,
   Ui2PageLoaderOverlayComponent,
   Ui2PatientHeaderComponent,
   Ui2PatientSidebarComponent,
@@ -58,7 +57,6 @@ import type {
     ConnectionErrorComponent,
     Ui2CarritoEjerciciosComponent,
     Ui2CreamBgComponent,
-    Ui2OfflineBannerComponent,
     Ui2PageLoaderOverlayComponent,
     Ui2PatientHeaderComponent,
     Ui2PatientSidebarComponent,

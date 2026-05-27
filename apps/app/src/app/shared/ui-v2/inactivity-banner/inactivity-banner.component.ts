@@ -42,7 +42,6 @@ const VARIANTS: Record<Ui2InactivityBannerVariant, VariantSpec> = {
 
 /**
  * Banner inline V2 — alerta dentro del flujo de la página (no fixed-top).
- * Para alertas globales de conexión usar `ui2-offline-banner` en su lugar.
  */
 @Component({
   selector: 'ui2-inactivity-banner',
