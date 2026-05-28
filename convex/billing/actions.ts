@@ -155,6 +155,66 @@ export const startTrialForClinic = internalAction({
 });
 
 /**
+ * Extiende (o inicia) el trial de una clínica concreta. Reutilizable como
+ * herramienta de soporte; invocable desde el Convex Dashboard.
+ *
+ * - Sin `stripeSubscriptionId`: delega en `startTrialForClinic` con
+ *   `trialDays = dias`. Crea customer + subscription Stripe y persiste
+ *   `clinicBilling`.
+ * - Con `stripeSubscriptionId`: actualiza `trial_end` en Stripe; el webhook
+ *   `customer.subscription.updated` propaga el cambio a `clinicBilling`. Como
+ *   cinturón de seguridad por si el webhook tarda, también hace upsert local.
+ */
+export const extendTrialForClinic = internalAction({
+  args: {
+    clinicId: v.id("clinics"),
+    dias: v.number(),
+  },
+  handler: async (
+    ctx,
+    { clinicId, dias },
+  ): Promise<
+    | { caso: "iniciado"; alreadyExists: true }
+    | { caso: "iniciado"; trialEnd: number | undefined }
+    | { caso: "extendido"; trialEnd: number }
+  > => {
+    if (dias < 1 || dias > 365) {
+      throw new Error("dias debe estar entre 1 y 365");
+    }
+
+    const data = await ctx.runQuery(
+      internal.billing.internal.getBillingContext,
+      { clinicId },
+    );
+
+    if (!data.billing?.stripeSubscriptionId) {
+      const result = await ctx.runAction(
+        internal.billing.actions.startTrialForClinic,
+        { clinicId, trialDays: dias },
+      );
+      return { caso: "iniciado", ...result } as const;
+    }
+
+    const trialEndMs = Date.now() + dias * 24 * 60 * 60 * 1000;
+    const trialEndSec = Math.floor(trialEndMs / 1000);
+
+    const stripe = getStripeClient();
+    await stripe.subscriptions.update(data.billing.stripeSubscriptionId, {
+      trial_end: trialEndSec,
+      proration_behavior: "none",
+    });
+
+    await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
+      clinicId,
+      estadoLocal: "trialing",
+      trialEnd: trialEndMs,
+    });
+
+    return { caso: "extendido", trialEnd: trialEndMs } as const;
+  },
+});
+
+/**
  * Crea una sesión de Stripe Checkout para que el admin añada método de pago
  * y active la suscripción tras el trial. Devuelve `{ url }`.
  */
