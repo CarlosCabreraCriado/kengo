@@ -86,7 +86,7 @@
           [userName]="firstName()"
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
-        <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
+        <app-billing-banner></app-billing-banner>
         <main class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
           <router-outlet></router-outlet>
           <ui2-page-loader-overlay></ui2-page-loader-overlay>
@@ -106,7 +106,7 @@
       <main
         class="ui2-main-mobile relative flex min-h-0 flex-1 flex-col overflow-y-auto"
       >
-        <app-billing-banner class="block px-5 pt-3"></app-billing-banner>
+        <app-billing-banner></app-billing-banner>
         <router-outlet></router-outlet>
         <ui2-page-loader-overlay></ui2-page-loader-overlay>
       </main>

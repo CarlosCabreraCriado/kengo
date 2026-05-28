@@ -54,7 +54,7 @@ const RUTAS_OCULTAR = ['/mi-clinica/suscripcion'];
   template: `
     @if (visible(); as vm) {
       <div
-        class="billing-banner"
+        class="billing-banner px-5 pt-3"
         [style.--banner-bg]="styles()[vm.variant].bg"
         [style.--banner-fg]="styles()[vm.variant].fg"
         [style.--banner-border]="styles()[vm.variant].border"
