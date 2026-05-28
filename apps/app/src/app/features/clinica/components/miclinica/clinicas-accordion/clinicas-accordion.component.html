@@ -1,0 +1,80 @@
+<ui2-card [padding]="0">
+  <button
+    type="button"
+    class="mca__head"
+    (click)="toggleExpand.emit()"
+    [attr.aria-expanded]="expanded()"
+  >
+    <div class="mca__head-left">
+      <ui2-icon-badge
+        icon="domain"
+        color="var(--kengo-primary)"
+        [size]="36"
+        [radius]="10"
+      />
+      <div class="mca__head-text">
+        <span class="mca__overline">Multiclínica</span>
+        <h3 class="mca__title">GESTIONAR MIS CLÍNICAS</h3>
+      </div>
+    </div>
+    <span
+      class="material-symbols-outlined mca__head-chevron"
+      [class.mca__head-chevron--rotated]="expanded()"
+      aria-hidden="true"
+    >expand_more</span>
+  </button>
+
+  @if (expanded()) {
+    <div class="mca__body">
+      <div
+        class="mca__list"
+        role="radiogroup"
+        aria-label="Selecciona la clínica activa"
+      >
+        @for (c of clinicas(); track c.id) {
+          <button
+            type="button"
+            class="mca__option"
+            [class.mca__option--active]="c.id === activeClinicId()"
+            role="radio"
+            [attr.aria-checked]="c.id === activeClinicId()"
+            (click)="onSelect(c.id)"
+          >
+            <ui2-avatar
+              size="sm"
+              gradient="coral"
+              [name]="c.nombre || 'Clínica'"
+              [src]="resolveLogo(c.logo)"
+            ></ui2-avatar>
+            <span class="mca__option-text">
+              <span class="mca__option-name">{{ c.nombre || 'Clínica' }}</span>
+              @if (puestoLabel(puestoFn()(c.id)); as label) {
+                @if (label) {
+                  <span class="mca__option-meta">{{ label }}</span>
+                }
+              }
+            </span>
+            @if (c.id === activeClinicId()) {
+              <span
+                class="material-symbols-outlined mca__option-check"
+                aria-hidden="true"
+              >check_circle</span>
+            }
+          </button>
+        }
+      </div>
+
+      <div class="mca__cta">
+        <ui2-button
+          variant="secondary"
+          size="md"
+          iconLeft="add"
+          [fullWidth]="true"
+          (clicked)="abrirVincularOCrear.emit()"
+        >
+          Vincularme o crear nueva clínica
+        </ui2-button>
+      </div>
+    </div>
+  }
+</ui2-card>

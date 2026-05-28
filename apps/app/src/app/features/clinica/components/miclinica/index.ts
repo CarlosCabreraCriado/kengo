@@ -11,3 +11,4 @@ export { MiClinicaRoleCardComponent } from './role-card/role-card.component';
 export { MiClinicaInfoCardComponent } from './info-card/info-card.component';
 export type { MiClinicaInfoField } from './info-card/info-card.component';
 export { MiClinicaSubscriptionCardComponent } from './subscription-card/subscription-card.component';
+export { MiClinicaClinicasAccordionComponent } from './clinicas-accordion/clinicas-accordion.component';

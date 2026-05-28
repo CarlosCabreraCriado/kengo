@@ -42,7 +42,6 @@ import {
   Ui2ButtonComponent,
   Ui2CtaBarComponent,
   Ui2EmptyStateComponent,
-  Ui2AvatarComponent,
   Ui2CardComponent,
   Ui2SpinnerComponent,
   Ui2PillVariant,
@@ -57,6 +56,7 @@ import {
   MiClinicaInfoCardComponent,
   MiClinicaInfoField,
   MiClinicaSubscriptionCardComponent,
+  MiClinicaClinicasAccordionComponent,
 } from '../../components/miclinica';
 
 @Component({
@@ -69,7 +69,6 @@ import {
     Ui2ButtonComponent,
     Ui2CtaBarComponent,
     Ui2EmptyStateComponent,
-    Ui2AvatarComponent,
     Ui2CardComponent,
     Ui2SpinnerComponent,
     MiClinicaHeroComponent,
@@ -78,6 +77,7 @@ import {
     MiClinicaRoleCardComponent,
     MiClinicaInfoCardComponent,
     MiClinicaSubscriptionCardComponent,
+    MiClinicaClinicasAccordionComponent,
   ],
   templateUrl: './miclinica.component.html',
   styleUrl: './miclinica.component.css',
@@ -119,8 +119,8 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   public fisios = (id: ID) => this.clinicasService.fisiosDeClinica(id)();
 
   // UI State
-  showClinicPicker = signal(false);
   teamExpanded = signal(false);
+  clinicasAccordionExpanded = signal(false);
 
   // Dialog states
 
@@ -171,12 +171,29 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     this.teamExpanded.update((v) => !v);
   }
 
-  toggleClinicPicker() {
-    this.showClinicPicker.update((v) => !v);
+  toggleClinicasAccordion() {
+    this.clinicasAccordionExpanded.update((v) => !v);
   }
 
-  closeClinicPicker() {
-    this.showClinicPicker.set(false);
+  /** Devuelve el puesto del usuario en una clínica dada. */
+  puestoEnClinicaFn = (clinicId: string): string | null => {
+    return (
+      this.sessionService.misclinicas().find((m) => m.clinicId === clinicId)
+        ?.puesto ?? null
+    );
+  };
+
+  /** Resolver de URL del logo de una clínica para el componente accordion. */
+  resolverLogoClinica = (logoId: string | null | undefined): string | null =>
+    logoId ? this.assetUrl(logoId) : null;
+
+  /**
+   * Stub del CTA "Vincularme o crear nueva clínica". El diálogo selector se
+   * implementará en una próxima sesión — aquí solo se cablea el click.
+   */
+  onAbrirVincularOCrear(): void {
+    // TODO: implementar SeleccionarOpcionClinicaDialogComponent
+    console.log('[TODO] Abrir diálogo selector vincular/crear clínica');
   }
 
   // ===== Dialog Methods =====
@@ -269,10 +286,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     return uc.map((x) => x.clinicId);
   });
 
-  // Selector de clínica activa
-  selectedClinicId = signal<ID | null>(null);
-  selectedClinicIndex = signal<number>(0);
-
   clinicasRes = computed(() => this.clinicasService.misClinicasRes.value());
 
   // Computed para la clínica actual: siempre refleja la clínica activa
@@ -285,19 +298,17 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     return clinicas.find((c) => c.id === activeId) ?? null;
   });
 
-  selectClinic(index: number) {
-    // Cambiar de clínica desde aquí actualiza el contexto global (mismo
-    // selector que el `ClinicaSwitcher`). El índice se conserva solo para
-    // recargar el formulario de edición coherente con la clínica elegida.
-    const clinica = this.clinicasRes()[index];
-    if (clinica) {
-      this.selectedClinicIndex.set(index);
-      this.selectedClinicId.set(clinica.id);
-      this.clinicaActiva.set(clinica.id);
-      this.cargarFormulario(index);
-    }
-    this.showClinicPicker.set(false);
+  /**
+   * Cambia la clínica activa al hacer click en una opción del accordion.
+   * Actualiza el contexto global (`ClinicaActivaService`) y recarga el
+   * formulario de edición para mantenerlo coherente con la nueva clínica.
+   */
+  onSeleccionarClinica(clinicId: string): void {
+    this.clinicaActiva.set(clinicId);
+    this.clinicasAccordionExpanded.set(false);
     this.teamExpanded.set(false);
+    const idx = this.clinicasRes().findIndex((c) => c.id === clinicId);
+    if (idx >= 0) this.cargarFormulario(idx);
   }
 
   // ===== 3) Form & estado =====
@@ -347,14 +358,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
       },
       { emitEvent: false },
     );
-  }
-
-  onClinicChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    const indexClinica = parseInt(select.value, 10);
-    this.selectedClinicIndex.set(indexClinica);
-    this.cargarFormulario(indexClinica);
-    this.selectedClinicId.set(this.clinicasRes()[indexClinica].id);
   }
 
   // ==== Handlers de inputs file ====

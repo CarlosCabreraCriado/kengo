@@ -3,61 +3,6 @@
   <span class="mc-blur mc-blur--2" aria-hidden="true"></span>
 
   <main class="mc-main">
-    <!-- Switcher de clínica (solo cuando hay >1) -->
-    @if (clinicasRes() && clinicasRes().length > 1) {
-      <ui2-section padding="16px 20px 8px">
-        <div class="mc-switcher-row">
-          <div class="mc-switcher-wrap">
-            <ui2-button
-              variant="secondary"
-              size="sm"
-              iconLeft="domain"
-              iconRight="expand_more"
-              (clicked)="toggleClinicPicker()"
-            >
-              {{ clinicasRes()[selectedClinicIndex()]?.nombre || 'Cambiar clínica' }}
-            </ui2-button>
-
-            @if (showClinicPicker()) {
-              <button
-                type="button"
-                class="mc-picker-overlay"
-                aria-label="Cerrar selector de clínica"
-                (click)="closeClinicPicker()"
-              ></button>
-              <div class="mc-picker">
-                @for (c of clinicasRes(); track c.id; let i = $index) {
-                  <button
-                    type="button"
-                    class="mc-picker-option"
-                    [class.mc-picker-option--active]="i === selectedClinicIndex()"
-                    (click)="selectClinic(i)"
-                  >
-                    <ui2-avatar
-                      size="sm"
-                      gradient="coral"
-                      [name]="c.nombre || 'Clínica'"
-                      [src]="c.logo ? assetUrl(c.logo) : null"
-                    ></ui2-avatar>
-                    <span class="mc-picker-text">
-                      <span class="mc-picker-name">{{ c.nombre || 'Clínica ' + c.id }}</span>
-                      <span class="mc-picker-location">{{ c.direccion || 'Sin dirección' }}</span>
-                    </span>
-                    @if (i === selectedClinicIndex()) {
-                      <span
-                        class="material-symbols-outlined mc-picker-check"
-                        aria-hidden="true"
-                      >check_circle</span>
-                    }
-                  </button>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      </ui2-section>
-    }
-
     <!-- Loading state -->
     @if (!clinicasRes()) {
       <ui2-section>
@@ -236,6 +181,20 @@
             }
           </div>
         </div>
+      </ui2-section>
+
+      <!-- Card "Gestionar Mis Clínicas" al final de la página -->
+      <ui2-section padding="0 20px 16px">
+        <app-mc-clinicas-accordion
+          [clinicas]="clinicasRes()"
+          [activeClinicId]="c.id"
+          [puestoFn]="puestoEnClinicaFn"
+          [logoUrlFn]="resolverLogoClinica"
+          [expanded]="clinicasAccordionExpanded()"
+          (toggleExpand)="toggleClinicasAccordion()"
+          (clinicaSeleccionada)="onSeleccionarClinica($event)"
+          (abrirVincularOCrear)="onAbrirVincularOCrear()"
+        ></app-mc-clinicas-accordion>
       </ui2-section>
     }
   </main>

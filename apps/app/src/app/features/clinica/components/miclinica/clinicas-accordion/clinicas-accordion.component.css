@@ -1,0 +1,153 @@
+:host {
+  display: block;
+}
+
+.mca__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 20px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 22px;
+  transition: background 0.15s;
+}
+
+.mca__head:hover {
+  background: var(--cream-50);
+}
+
+.mca__head:focus-visible {
+  outline: 2px solid var(--kengo-primary);
+  outline-offset: -2px;
+}
+
+.mca__head-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mca__head-text {
+  min-width: 0;
+}
+
+.mca__overline {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.mca__title {
+  margin: 4px 0 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--ink-900);
+}
+
+@media (min-width: 1024px) {
+  .mca__title {
+    font-size: 20px;
+  }
+}
+
+.mca__head-chevron {
+  font-size: 24px;
+  color: var(--ink-500);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.mca__head-chevron--rotated {
+  transform: rotate(180deg);
+}
+
+.mca__body {
+  padding: 4px 14px 16px;
+  border-top: 1px solid var(--ink-100);
+}
+
+.mca__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0 12px;
+}
+
+.mca__option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.mca__option:hover {
+  background: var(--cream-50);
+}
+
+.mca__option:focus-visible {
+  outline: 2px solid var(--kengo-primary);
+  outline-offset: 2px;
+}
+
+.mca__option--active {
+  background: rgba(var(--kengo-primary-rgb), 0.08);
+}
+
+.mca__option-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.mca__option-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mca__option--active .mca__option-name {
+  color: var(--kengo-primary);
+}
+
+.mca__option-meta {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mca__option-check {
+  font-size: 20px;
+  color: var(--kengo-primary);
+  flex-shrink: 0;
+}
+
+.mca__cta {
+  padding-top: 4px;
+}
