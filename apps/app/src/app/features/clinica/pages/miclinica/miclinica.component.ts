@@ -32,6 +32,7 @@ import type {
   GenerarCodigoDialogResult,
 } from '../../components/generar-codigo-dialog/generar-codigo-dialog.component';
 import type { EditarClinicaDialogComponent } from '../../components/editar-clinica-dialog/editar-clinica-dialog.component';
+import type { SeleccionarOpcionClinicaDialogComponent } from '../../components/seleccionar-opcion-clinica-dialog/seleccionar-opcion-clinica-dialog.component';
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
@@ -188,12 +189,35 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     logoId ? this.assetUrl(logoId) : null;
 
   /**
-   * Stub del CTA "Vincularme o crear nueva clínica". El diálogo selector se
-   * implementará en una próxima sesión — aquí solo se cablea el click.
+   * Abre el selector "Vincularme o crear nueva clínica" como bottom-sheet. La
+   * opción "Crear nueva clínica" muestra antes un disclaimer porque convierte
+   * al usuario en admin de la nueva clínica, aunque su puesto previo fuera
+   * paciente. Ambas ramas delegan en los métodos `abrir*` ya existentes.
    */
-  onAbrirVincularOCrear(): void {
-    // TODO: implementar SeleccionarOpcionClinicaDialogComponent
-    console.log('[TODO] Abrir diálogo selector vincular/crear clínica');
+  async onAbrirVincularOCrear(): Promise<void> {
+    const { SeleccionarOpcionClinicaDialogComponent } = await import(
+      '../../components/seleccionar-opcion-clinica-dialog/seleccionar-opcion-clinica-dialog.component'
+    );
+    const ref = this.dialogService.openSheet<
+      SeleccionarOpcionClinicaDialogComponent,
+      undefined,
+      'link' | 'create' | null
+    >(SeleccionarOpcionClinicaDialogComponent);
+
+    ref.closed.subscribe(async (opcion) => {
+      if (opcion === 'link') {
+        this.abrirVincularClinica();
+      } else if (opcion === 'create') {
+        const confirmado = await this.dialogService.confirm({
+          title: 'Crear nueva clínica',
+          message:
+            'Esta opción es para fisioterapeutas que quieran montar su propia clínica y gestionar a sus pacientes. Al continuar te convertirás en administrador de la nueva clínica.',
+          confirmText: 'Continuar',
+          cancelText: 'Cancelar',
+        });
+        if (confirmado) this.abrirCrearClinica();
+      }
+    });
   }
 
   // ===== Dialog Methods =====

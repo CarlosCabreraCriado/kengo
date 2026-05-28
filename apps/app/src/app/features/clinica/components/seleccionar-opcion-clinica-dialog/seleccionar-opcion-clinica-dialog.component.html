@@ -1,0 +1,27 @@
+<ui2-dialog-host variant="sheet">
+  <ui2-dialog-header
+    title="Añadir clínica"
+    subtitle="Elige cómo quieres añadir una clínica a tu cuenta"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    <div class="soc-options">
+      <ui2-cta-bar
+        variant="primary"
+        icon="link"
+        title="TENGO UN CÓDIGO"
+        subtitle="Vincúlate a una clínica existente con el código que te enviaron."
+        (clicked)="seleccionar('link')"
+      ></ui2-cta-bar>
+
+      <ui2-cta-bar
+        variant="secondary"
+        icon="add_business"
+        title="CREAR NUEVA CLÍNICA"
+        subtitle="Monta tu propia clínica y gestiona a tus pacientes."
+        (clicked)="seleccionar('create')"
+      ></ui2-cta-bar>
+    </div>
+  </ui2-dialog-content>
+</ui2-dialog-host>

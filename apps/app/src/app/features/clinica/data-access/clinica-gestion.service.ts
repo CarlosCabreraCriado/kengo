@@ -52,6 +52,12 @@ export class ClinicaGestionService {
       // Recargar datos del usuario para reflejar la nueva clínica
       await this.sessionService.refreshUsuario();
 
+      // Activamos la clínica recién vinculada para que la UI (cabecera,
+      // accordion, modo fisio/paciente) refleje el nuevo contexto sin pasos
+      // intermedios. El modo deriva del puesto en esta clínica, así que no
+      // forzamos `setRolUsuario` — el tipo del código ya determinó el puesto.
+      this.clinicaActiva.set(result.clinicId);
+
       return {
         success: true,
         clinicaId: result.clinicId,
