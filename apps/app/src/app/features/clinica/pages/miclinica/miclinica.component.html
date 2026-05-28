@@ -145,13 +145,14 @@
               <div class="mc-only-mobile">
                 <app-mc-subscription-card
                   [plan]="suscripcionPlanNombre()"
-                  [planLimite]="suscripcionPlanLimite()"
                   [pillVariant]="suscripcionPillVariant()"
                   [pillTexto]="suscripcionPillTexto()"
                   [mostrarWarning]="mostrarWarningSuscripcion()"
                   [warningMensaje]="mensajeWarningSuscripcion()"
                   [ctaLabel]="suscripcionCtaLabel()"
                   [renovacion]="suscripcionRenovacion()"
+                  [enTrial]="subscriptionService.enTrial()"
+                  [diasRestantesTrial]="subscriptionService.diasRestantesTrial()"
                   (irASuscripcion)="irASuscripcion()"
                 ></app-mc-subscription-card>
               </div>
@@ -221,13 +222,14 @@
               <div class="mc-only-desktop">
                 <app-mc-subscription-card
                   [plan]="suscripcionPlanNombre()"
-                  [planLimite]="suscripcionPlanLimite()"
                   [pillVariant]="suscripcionPillVariant()"
                   [pillTexto]="suscripcionPillTexto()"
                   [mostrarWarning]="mostrarWarningSuscripcion()"
                   [warningMensaje]="mensajeWarningSuscripcion()"
                   [ctaLabel]="suscripcionCtaLabel()"
                   [renovacion]="suscripcionRenovacion()"
+                  [enTrial]="subscriptionService.enTrial()"
+                  [diasRestantesTrial]="subscriptionService.diasRestantesTrial()"
                   (irASuscripcion)="irASuscripcion()"
                 ></app-mc-subscription-card>
               </div>

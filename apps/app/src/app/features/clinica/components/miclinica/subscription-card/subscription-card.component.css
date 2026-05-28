@@ -25,8 +25,6 @@
 .msc__plan {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .msc__plan-name {
@@ -41,12 +39,6 @@
   .msc__plan-name {
     font-size: 38px;
   }
-}
-
-.msc__plan-sub {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink-500);
 }
 
 .msc__warning {
@@ -96,4 +88,8 @@
 .msc__footer-value {
   font-weight: 700;
   color: var(--ink-700);
+}
+
+.msc__footer--warning .msc__footer-value {
+  color: var(--warning);
 }

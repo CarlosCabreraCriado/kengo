@@ -7,7 +7,6 @@
 
     <div class="msc__plan">
       <span class="msc__plan-name">{{ plan() }}</span>
-      <span class="msc__plan-sub">· {{ planLimite() }}</span>
     </div>
 
     @if (mostrarWarning()) {
@@ -29,9 +28,14 @@
       </ui2-button>
     </div>
 
-    <div class="msc__footer">
-      <span class="msc__footer-label">Renovación</span>
-      <span class="msc__footer-value">{{ renovacion() }}</span>
+    <div class="msc__footer" [class.msc__footer--warning]="trialUrgente()">
+      @if (enTrial()) {
+        <span class="msc__footer-label">Prueba termina</span>
+        <span class="msc__footer-value">{{ trialDiasTexto() }}</span>
+      } @else {
+        <span class="msc__footer-label">Renovación</span>
+        <span class="msc__footer-value">{{ renovacion() }}</span>
+      }
     </div>
   </div>
 </ui2-card>

@@ -456,13 +456,6 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     return sub?.plan?.nombre?.toUpperCase() ?? 'FREE';
   });
 
-  /** Línea descriptiva del plan: "hasta N fisios" o copy free por defecto. */
-  protected readonly suscripcionPlanLimite = computed<string>(() => {
-    const sub = this.subscriptionService.suscripcion();
-    if (!sub?.plan) return 'hasta 3 fisios';
-    return `hasta ${sub.plan.rangoFisiosMax} fisios`;
-  });
-
   /**
    * `true` si conviene mostrar el banner amarillo dentro de la subscription card.
    * Lo activan: el plan está bloqueado por impago o el equipo supera el plan free.
