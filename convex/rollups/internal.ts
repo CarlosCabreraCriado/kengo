@@ -17,7 +17,6 @@ import {
   startOfMonth,
 } from "../_helpers/datetime";
 import {
-  computeAdherencia,
   computeEstadoDia,
   computeRachaMaxima,
   EstadoDia,
@@ -378,13 +377,15 @@ async function aggregateDailies(
     }
   }
 
+  // Adherencia estricta C/(C+P+F)·100 (misma fórmula que `snapshots/internal.ts`
+  // y `cumplimiento.service.ts`). Sin denominador devolvemos 0 para mantener
+  // `adherencia: number` y no romper el cálculo de `tendenciaAdherencia`.
   const diasConPlanNoDescanso =
     diasCompletados + diasParciales + diasFallidos;
-  const adherencia = computeAdherencia(
-    diasCompletados,
-    diasParciales,
-    diasConPlanNoDescanso,
-  );
+  const adherencia =
+    diasConPlanNoDescanso > 0
+      ? Math.round((diasCompletados / diasConPlanNoDescanso) * 100)
+      : 0;
 
   // Sesiones del rango (count): index by_pacienteId_fecha.
   const sesiones = await ctx.db
