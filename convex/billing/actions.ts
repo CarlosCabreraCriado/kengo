@@ -113,6 +113,17 @@ export const startTrialForClinic = internalAction({
       customerId = created.customerId;
     }
 
+    // Stripe Tax exige una country en el customer para aceptar la creación de
+    // la subscription con `automatic_tax: enabled`. Si no la tiene (cliente
+    // recién creado o pre-Checkout), fijamos ES como baseline. Checkout la
+    // sobrescribirá luego con la dirección real vía `customer_update: address`.
+    const stripeCustomer = await stripe.customers.retrieve(customerId);
+    if (!("deleted" in stripeCustomer) && !stripeCustomer.address?.country) {
+      await stripe.customers.update(customerId, {
+        address: { country: "ES" },
+      });
+    }
+
     const quantity = Math.max(1, data.cantidadFisios);
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
