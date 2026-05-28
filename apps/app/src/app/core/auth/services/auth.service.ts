@@ -50,6 +50,10 @@ export class AuthService {
     // logout para evitar que el componente saliente quede como zombie.
     this.routeReuseStrategy.setCachingEnabled(true);
     await this.sessionService.cargarMiUsuario();
+    // Tras login fresco: si el puesto en la clínica activa permite alternar
+    // (fisio/admin), forzamos modo fisio ignorando la preferencia persistida.
+    // `setRolUsuario` se autoignora si el puesto solo permite paciente.
+    this.sessionService.setRolUsuario('fisio');
   }
 
   /**
