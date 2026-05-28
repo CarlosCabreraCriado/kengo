@@ -12,6 +12,7 @@ import { ToastService } from '../../services/toast/toast.service';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
 import { Ui2NotificacionesMenuComponent } from '../notificaciones-menu/notificaciones-menu.component';
 import { Ui2ClinicaSwitchMenuComponent } from '../clinica-switch-menu/clinica-switch-menu.component';
+import { Ui2ModoPacienteWarningComponent } from '../modo-paciente-warning/modo-paciente-warning.component';
 
 const WEEKDAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const MONTHS = [
@@ -26,7 +27,12 @@ const MONTHS = [
 @Component({
   selector: 'ui2-web-topbar',
   standalone: true,
-  imports: [Ui2AvatarComponent, Ui2NotificacionesMenuComponent, Ui2ClinicaSwitchMenuComponent],
+  imports: [
+    Ui2AvatarComponent,
+    Ui2NotificacionesMenuComponent,
+    Ui2ClinicaSwitchMenuComponent,
+    Ui2ModoPacienteWarningComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="ui2-topbar">
@@ -36,6 +42,7 @@ const MONTHS = [
       </div>
 
       <div class="ui2-topbar__right">
+        <ui2-modo-paciente-warning />
         @if (modoFisio()) {
           <button
             type="button"
