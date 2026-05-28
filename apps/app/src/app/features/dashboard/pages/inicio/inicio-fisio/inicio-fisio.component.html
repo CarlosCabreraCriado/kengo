@@ -186,14 +186,18 @@
 
       <!-- Empty state: sin pacientes -->
       @if (!dashboardService.cargando() && dashboardService.pacientesActivos() === 0) {
-        <ui2-empty-state
-          icon="group_add"
-          title="Aún no tienes pacientes"
-          message="Empieza añadiendo tu primer paciente desde Mi Clínica."
-          actionLabel="Ir a Mi Clínica"
-          actionIcon="apartment"
-          (action)="irAClinica()"
-        ></ui2-empty-state>
+        <ui2-section [padding]="'0 20px 14px'">
+          <ui2-card [padding]="8">
+            <ui2-empty-state
+              icon="group_add"
+              title="Aún no tienes pacientes"
+              message="Empieza añadiendo tu primer paciente desde Mis Pacientes."
+              actionLabel="Ir a Mis Pacientes"
+              actionIcon="group"
+              (action)="irAPacientes()"
+            ></ui2-empty-state>
+          </ui2-card>
+        </ui2-section>
       }
 
       <!-- Clínica -->

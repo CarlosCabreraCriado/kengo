@@ -17,6 +17,7 @@ import {
   ymdMadridFromInstant,
 } from '../../../../../shared/utils/madrid-date.util';
 import {
+  Ui2CardComponent,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2EmptyStateComponent,
@@ -32,6 +33,7 @@ import {
   selector: 'app-inicio-fisio',
   standalone: true,
   imports: [
+    Ui2CardComponent,
     Ui2ClinicHeroCardComponent,
     Ui2CtaBarComponent,
     Ui2EmptyStateComponent,
