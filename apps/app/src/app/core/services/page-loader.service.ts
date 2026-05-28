@@ -88,6 +88,17 @@ export class PageLoaderService {
   }
 
   /**
+   * Vacía el registry completo y libera `forced`. Red de seguridad para flows
+   * destructivos (logout): si un componente quedó registrado por una vía no
+   * estándar (cache de RouteReuseStrategy, effects con ciclo de vida raro),
+   * esto garantiza que el overlay no quede colgado tras logout.
+   */
+  clearRegistry(): void {
+    this.registry.set(new Map());
+    this.releaseForce();
+  }
+
+  /**
    * Fuerza mostrar el overlay durante `ms` (por defecto 250). Útil si una
    * acción imperativa (logout, refresh manual) quiere cubrir la UI sin
    * pasar por el ciclo de navegación.

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { SessionService } from '../../../../core/auth/services/session.service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { emailRequired } from '../../../../shared';
@@ -33,6 +34,7 @@ import {
 export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
+  private session = inject(SessionService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -56,7 +58,11 @@ export class LoginComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      if (history.state?.fromLogout) {
+      // Short-circuit: si venimos de un logout reciente o SessionService ya
+      // sabe que no hay usuario, no relanzamos checkSession (que tirará una
+      // query autenticada y esperará 8 s a waitForAuth con el cliente recién
+      // limpiado). Vamos directos al formulario.
+      if (history.state?.fromLogout || !this.session.isLoggedIn()) {
         this.prefillEmail();
         return;
       }

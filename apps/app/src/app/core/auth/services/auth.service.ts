@@ -7,6 +7,8 @@ import { BetterAuthService } from './better-auth.service';
 import type { ConvexTokenResult } from './better-auth.service';
 import { ConvexService } from '../../convex/convex.service';
 import { PushNotificationService } from '../../services/push-notification.service';
+import { PageLoaderService } from '../../services/page-loader.service';
+import { withTimeout } from '../../utils/with-timeout';
 
 export type CheckSessionResult =
   | 'ok'
@@ -29,6 +31,7 @@ export class AuthService {
   private betterAuth = inject(BetterAuthService);
   private convex = inject(ConvexService);
   private pushNotifications = inject(PushNotificationService);
+  private pageLoader = inject(PageLoaderService);
 
   // Estado reactivo - solo indica si hay sesión activa
   readonly isLoggedIn = signal<boolean>(false);
@@ -43,52 +46,77 @@ export class AuthService {
 
     await this.convex.setAuth(() => this.betterAuth.getConvexToken());
     this.isLoggedIn.set(true);
+    // Reactivar el caché de rutas tras un login exitoso. Se desactiva en
+    // logout para evitar que el componente saliente quede como zombie.
+    this.routeReuseStrategy.setCachingEnabled(true);
     await this.sessionService.cargarMiUsuario();
   }
 
   /**
-   * Cierra sesión: limpia Better-Auth + Convex + estado local.
+   * Cierra sesión local-first: limpia el estado local y navega a `/login`
+   * inmediatamente. La limpieza server-side (revocar push token, invalidar
+   * cookie Better-Auth) se dispara en background con timeouts cortos.
    *
-   * El push token se borra ANTES de invalidar el auth de Convex para que la
-   * mutation `unregisterPushToken` se autentique correctamente; si falla
-   * (offline, etc.) se ignora — el token se limpiará en el siguiente envío
+   * Razón: el try/catch del flujo anterior solo capturaba rechazos, no
+   * promesas colgadas. `pushNotifications.teardown` (mutation Convex sin
+   * timeout efectivo) y `betterAuth.authClient.signOut()` (fetch sin
+   * AbortController) podían colgarse indefinidamente con la red degradada y
+   * bloquear `limpiarEstadoLocal()` → el usuario nunca llegaba a `/login`.
+   *
+   * Si la mutation `unregisterPushToken` no llega al servidor por estar la
+   * sesión ya limpiada, el token se desregistrará en el siguiente envío
    * cuando FCM responda UNREGISTERED.
    */
   async logout(evitarRedirect?: boolean): Promise<void> {
-    // Envolvemos cada paso en try/catch y todo el bloque en try/finally para
-    // garantizar que clearAuth() + limpiarEstadoLocal() (que dispara el navigate
-    // a /login) se ejecuten SIEMPRE, aunque cualquier paso previo rechace.
+    // 1. Disparar cleanup server-side en background. Las mutations Convex
+    //    aún pueden llegar al servidor con el token actual antes de que el
+    //    paso 2 invalide la auth local. Cada paso tiene timeout corto.
+    void this.cleanupServidorBackground();
+
+    // 2. Limpieza local + navegación inmediatas (<100 ms).
+    this.convex.clearAuth();
+    this.limpiarEstadoLocal(evitarRedirect);
+  }
+
+  private async cleanupServidorBackground(): Promise<void> {
     try {
-      try {
-        await this.pushNotifications.teardown();
-      } catch (err) {
-        console.warn('[Logout] teardown push falló:', err);
-      }
-      try {
-        await this.betterAuth.signOut();
-      } catch {
-        // ignorar
-      }
-      // Garantizar la purga aunque signOut haya fallado (offline, 5xx). Sin
-      // esto las cookies podían quedar en localStorage y el siguiente arranque
-      // entraría en bucle de 401.
-      try {
-        await this.betterAuth.purgeStoredSession();
-      } catch (err) {
-        console.warn('[Logout] purgeStoredSession falló:', err);
-      }
-    } finally {
-      this.convex.clearAuth();
-      this.limpiarEstadoLocal(evitarRedirect);
+      await withTimeout(this.pushNotifications.teardown(), 2000);
+    } catch (err) {
+      console.warn('[Logout] teardown push (background):', err);
+    }
+    try {
+      await withTimeout(this.betterAuth.signOut(), 2000);
+    } catch (err) {
+      console.warn('[Logout] betterAuth.signOut (background):', err);
+    }
+    // purgeStoredSession ya se invoca dentro de signOut. Si signOut hizo
+    // timeout antes de purgar, lo intentamos aquí explícitamente — es
+    // localStorage + Preferences, no puede colgarse.
+    try {
+      await this.betterAuth.purgeStoredSession();
+    } catch (err) {
+      console.warn('[Logout] purgeStoredSession (background):', err);
     }
   }
 
   /**
    * Limpia el estado local (signals + cache de rutas + storage no esencial).
+   *
+   * Importante: desactiva el RouteReuseStrategy ANTES de navegar a /login.
+   * Si dejáramos el caching activo, el componente saliente (p. ej. /inicio)
+   * entraría al cache durante la navegación → su ngOnDestroy no se ejecuta →
+   * sus registros en PageLoaderService quedarían colgados como zombies y el
+   * overlay global se quedaría visible permanentemente sobre /login.
    */
   limpiarEstadoLocal(evitarRedirect?: boolean): void {
     this.isLoggedIn.set(false);
+    this.routeReuseStrategy.setCachingEnabled(false);
     this.routeReuseStrategy.clearCache();
+    // Defensa en profundidad: si algún componente quedó registrado por una vía
+    // no estándar (effects raros, cache de RouteReuseStrategy aún no purgado,
+    // edge cases que no anticipemos), garantizamos que el overlay no se queda
+    // colgado tras logout.
+    this.pageLoader.clearRegistry();
     localStorage.removeItem('kengo:theme:v1');
     localStorage.removeItem('kengo:modo');
     this.sessionService.limpiar();
@@ -202,6 +230,9 @@ export class AuthService {
       }
 
       this.isLoggedIn.set(true);
+      // Reactivar caché de rutas al restaurar sesión válida (cubre el caso
+      // de reload tras logout o cold start con sesión persistida).
+      this.routeReuseStrategy.setCachingEnabled(true);
       await this.sessionService.cargarMiUsuario();
     } finally {
       this.sessionService.marcarSesionInicializada();
@@ -297,6 +328,7 @@ export class AuthService {
 
     await this.convex.setAuth(() => this.betterAuth.getConvexToken());
     this.isLoggedIn.set(true);
+    this.routeReuseStrategy.setCachingEnabled(true);
 
     return { tienePassword: false, email: body.email };
   }

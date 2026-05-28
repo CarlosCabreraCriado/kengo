@@ -93,9 +93,14 @@ export class PushNotificationService {
 
     try {
       const deviceId = await this.getDeviceId();
-      await this.convex.mutation(api.push.mutations.unregisterPushToken, {
-        deviceId,
-      });
+      // timeoutMs corto: el flujo de logout corre esta mutation en background
+      // tras llamar a `convex.clearAuth()`. Si waitForAuth no resuelve en 1 s
+      // tras el clearAuth, abandonamos en vez de esperar los 8 s por defecto.
+      await this.convex.mutation(
+        api.push.mutations.unregisterPushToken,
+        { deviceId },
+        { timeoutMs: 1000 },
+      );
     } catch (err) {
       console.warn('[Push] unregister falló (se ignora):', err);
     }

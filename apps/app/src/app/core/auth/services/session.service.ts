@@ -264,10 +264,17 @@ export class SessionService {
 
   /**
    * Limpia el usuario actual del estado (sin tocar la sesión Better-Auth).
+   *
+   * Importante: NO se resetea `_sesionInicializada`. Si lo pusiéramos a false
+   * aquí, el AppComponent re-renderizaría el splash gate (`@if
+   * (!sesionInicializada)`) durante la transición a `/login` y produciría un
+   * flash visual. La página de login no depende de este flag para renderizar.
    */
   limpiar(): void {
     this._usuario.set(null);
     this._error.set(null);
+    this._loading.set(false);
+    this._errorConexion.set(false);
     localStorage.removeItem('carrito:last_fisio_id');
     this.clinicaActiva.clear();
     this.limpiarCacheUsuario();

@@ -8,6 +8,7 @@ import {
 } from '@convex-dev/better-auth/client/plugins';
 import { environment } from '../../../../environments/environment';
 import { PlatformService } from '../../services/platform.service';
+import { withTimeout } from '../../utils/with-timeout';
 
 // Claves internas del plugin `crossDomainClient` (ver
 // node_modules/@convex-dev/better-auth/src/plugins/cross-domain/client.ts).
@@ -135,9 +136,13 @@ export class BetterAuthService {
    */
   async signOut(): Promise<void> {
     try {
-      await this.authClient.signOut();
+      // authClient.signOut() hace un fetch interno sin AbortController; en
+      // red degradada puede tardar minutos. Cortamos a 2.5 s — la purga local
+      // posterior basta para invalidar la sesión desde el punto de vista del
+      // cliente.
+      await withTimeout(this.authClient.signOut(), 2500);
     } catch {
-      // Ignorar errores de signOut
+      // Ignorar errores y timeouts de signOut
     }
     await this.purgeStoredSession();
   }

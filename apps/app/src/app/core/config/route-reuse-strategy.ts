@@ -36,6 +36,13 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
     'mi-clinica',
   ]);
 
+  // Permite desactivar el caché desde fuera (p. ej. durante logout). Cuando es
+  // false, shouldDetach devuelve false para todas las rutas → el componente
+  // saliente se destruye normalmente y su ngOnDestroy se ejecuta. Sin esto,
+  // el componente activo en logout se "detach" y sus registros en servicios
+  // singleton (PageLoaderService) quedan colgados como zombies.
+  private cachingEnabled = true;
+
   constructor() {
     // Escuchar el evento scroll para guardar la posición continuamente
     if (typeof window !== 'undefined') {
@@ -68,9 +75,19 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
    * Determina si esta ruta debe ser cacheada al salir
    */
   shouldDetach(route: ActivatedRouteSnapshot): boolean {
+    if (!this.cachingEnabled) return false;
     if (!this.hasComponent(route)) return false;
     const key = this.getRouteKey(route);
     return this.routesToCache.has(key);
+  }
+
+  /**
+   * Activa/desactiva el caché de rutas. Llamado por AuthService:
+   * - false en logout (antes de navegar a /login)
+   * - true cuando hay sesión válida (login, consumirToken, iniciarApp con éxito)
+   */
+  setCachingEnabled(enabled: boolean): void {
+    this.cachingEnabled = enabled;
   }
 
   /**
@@ -141,9 +158,27 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
   }
 
   /**
-   * Método para limpiar el caché manualmente si es necesario
+   * Método para limpiar el caché manualmente si es necesario.
+   *
+   * Destruye explícitamente el ComponentRef de cada handle cacheado para que
+   * sus ngOnDestroy se ejecuten (importante: PageLoaderService.unregister,
+   * cleanup de signals/effects). Sin esto, los componentes detached quedaban
+   * vivos en memoria y sus registros singleton colgados.
+   *
+   * `DetachedRouteHandle` es opaque a nivel tipo, pero Angular Router lo
+   * implementa internamente como `{ componentRef, route, contexts }`.
    */
   clearCache(): void {
+    for (const cached of this.cache.values()) {
+      const internal = cached.handle as unknown as {
+        componentRef?: { destroy(): void };
+      };
+      try {
+        internal.componentRef?.destroy();
+      } catch (err) {
+        console.warn('[RouteReuseStrategy] destroy falló:', err);
+      }
+    }
     this.cache.clear();
     this.scrollPositions.clear();
   }
