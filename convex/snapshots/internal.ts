@@ -2,8 +2,13 @@ import { v } from "convex/values";
 import { internalMutation, MutationCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { esPaciente } from "../_helpers/permissions";
-import { getMadridDateOffset, anioMes } from "../_helpers/datetime";
+import {
+  getMadridDateOffset,
+  anioMes,
+  getCurrentMadridDate,
+} from "../_helpers/datetime";
 import { computeRiskScore, computeRachaActual } from "../_helpers/rollupComputation";
+import { pacienteTienePlanEnCurso } from "../_helpers/planStatus";
 
 type Ventana = "7d" | "15d" | "30d";
 const VENTANAS: Ventana[] = ["7d", "15d", "30d"];
@@ -115,13 +120,14 @@ async function recomputePatientForWindow(
     nSesionesConDolor += 1;
   }
 
+  // Adherencia estricta: % de días con plan que se completaron al 100%.
+  // Misma fórmula que el detalle (`cumplimiento.service.ts:buildCumplimientoResponse`).
+  // Si la ventana no tiene días con plan (todo descanso/sin_plan), se deja
+  // `undefined` para excluir al paciente del agregado de la clínica.
   const adherencia =
     diasConPlanNoDescanso > 0
-      ? Math.round(
-          ((diasCompletados + 0.5 * diasParciales) / diasConPlanNoDescanso) *
-            100,
-        )
-      : 0;
+      ? Math.round((diasCompletados / diasConPlanNoDescanso) * 100)
+      : undefined;
   const dolorPromedio =
     nSesionesConDolor > 0
       ? Math.round((sumPromediosSesion / nSesionesConDolor) * 100) / 100
@@ -153,9 +159,11 @@ async function recomputePatientForWindow(
     .unique();
   const tendenciaAdherencia = monthlyActual?.tendenciaAdherencia;
 
+  // Para riskScore tratamos "sin adherencia medible" como 0%: el paciente
+  // no ha tenido días con plan y su riesgo lo determina `inactividadDias`.
   const riskScore = computeRiskScore({
     inactividadDias,
-    adherencia,
+    adherencia: adherencia ?? 0,
     tendenciaAdherencia,
   });
 
@@ -234,17 +242,35 @@ async function recomputeClinicForWindow(
   clinicId: Id<"clinics">,
   ventana: Ventana,
 ): Promise<void> {
-  // Pacientes activos de la clínica.
+  // Pacientes con membership en la clínica.
   const memberships = await ctx.db
     .query("clinicMemberships")
     .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
     .collect();
-  const pacienteIds = memberships
-    .filter((m) => esPaciente(m.puesto))
-    .map((m) => m.userId);
+  const pacienteIds = Array.from(
+    new Set(
+      memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
+    ),
+  );
+
+  // pacientesActivos: pacientes con al menos un plan EN CURSO (estado activo
+  // y fechas Madrid vigentes). Misma definición que el filtro "Activos · N"
+  // del listado y que `plans.queries.listEnCursoPacientesInClinics`, vía el
+  // helper compartido `pacienteTienePlanEnCurso`.
+  const hoyMadrid = getCurrentMadridDate();
+  const enCursoFlags = await Promise.all(
+    pacienteIds.map((pid) => pacienteTienePlanEnCurso(ctx, pid, hoyMadrid)),
+  );
+  const pacientesActivos = enCursoFlags.filter(Boolean).length;
+  const enCurso = new Set<Id<"users">>(
+    pacienteIds.filter((_, i) => enCursoFlags[i]),
+  );
 
   // Snapshots por paciente para esa ventana.
-  const snapshots: Doc<"patientMetricsSnapshot">[] = [];
+  const snapshots: Array<{
+    pacienteId: Id<"users">;
+    doc: Doc<"patientMetricsSnapshot">;
+  }> = [];
   for (const pid of pacienteIds) {
     const snap = await ctx.db
       .query("patientMetricsSnapshot")
@@ -252,25 +278,31 @@ async function recomputeClinicForWindow(
         q.eq("pacienteId", pid).eq("ventana", ventana),
       )
       .unique();
-    if (snap) snapshots.push(snap);
+    if (snap) snapshots.push({ pacienteId: pid, doc: snap });
   }
 
-  let pacientesActivos = 0;
+  // Adherencia: promedio de pacientes con plan EN CURSO HOY y con adherencia
+  // medible (no `undefined`). Coincide con la fórmula estricta del detalle.
   let adhSum = 0;
   let adhCount = 0;
-  let dolorSum = 0;
-  let dolorCount = 0;
-  for (const s of snapshots) {
-    pacientesActivos += 1;
+  for (const { pacienteId: pid, doc: s } of snapshots) {
+    if (!enCurso.has(pid)) continue;
+    if (s.adherencia === undefined) continue;
     adhSum += s.adherencia;
     adhCount += 1;
+  }
+  const adherenciaPromedio =
+    adhCount > 0 ? Math.round(adhSum / adhCount) : 0;
+
+  // Dolor: agregado sobre todos los snapshots con dolorPromedio definido.
+  let dolorSum = 0;
+  let dolorCount = 0;
+  for (const { doc: s } of snapshots) {
     if (s.dolorPromedio !== undefined) {
       dolorSum += s.dolorPromedio;
       dolorCount += 1;
     }
   }
-  const adherenciaPromedio =
-    adhCount > 0 ? Math.round(adhSum / adhCount) : 0;
   const dolorMedio =
     dolorCount > 0 ? Math.round((dolorSum / dolorCount) * 100) / 100 : undefined;
 

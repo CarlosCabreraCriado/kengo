@@ -30,7 +30,8 @@ export interface CumplimientoResponse {
 
 /** Métricas resumen de un paciente (endpoint bulk) */
 export interface MetricasPaciente {
-  adherencia: number;
+  // `null` cuando la ventana no tiene días con plan (todo descanso/sin_plan).
+  adherencia: number | null;
   dolorPromedio: number | null;
 }
 

@@ -36,22 +36,6 @@ export function computeEstadoDia(
 }
 
 /**
- * Calcula la adherencia (%) sobre días con plan activo.
- *
- * Definición: (diasCompletados + 0.5*diasParciales) / diasConPlanNoDescanso
- * Devuelve 0 si no hay días con plan no-descanso.
- */
-export function computeAdherencia(
-  diasCompletados: number,
-  diasParciales: number,
-  diasConPlanNoDescanso: number,
-): number {
-  if (diasConPlanNoDescanso <= 0) return 0;
-  const score = diasCompletados + 0.5 * diasParciales;
-  return Math.round((score / diasConPlanNoDescanso) * 100);
-}
-
-/**
  * Calcula la racha máxima de días "completado" consecutivos en una serie.
  * Los estados "descanso" no rompen la racha (se saltan, no suman ni cortan).
  * Otros estados ("parcial", "fallido", "sin_plan") sí cortan.

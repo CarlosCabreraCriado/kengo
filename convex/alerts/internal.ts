@@ -253,7 +253,11 @@ export const runDailyAlertRules = internalMutation({
       }
 
       // === Regla 2: adherencia_baja ===
-      if (snap7d && snap7d.adherencia < AS4_ADHERENCIA_PCT_WARN) {
+      if (
+        snap7d &&
+        snap7d.adherencia !== undefined &&
+        snap7d.adherencia < AS4_ADHERENCIA_PCT_WARN
+      ) {
         if (!(await hayPendiente(ctx, pacienteId, "adherencia_baja"))) {
           const pacienteNombre = await getPacienteNombre(ctx, pacienteId);
           await ctx.db.insert("physioAlerts", {

@@ -50,7 +50,9 @@ export const getPatientMetrics = query({
         )
         .collect();
       snapshots = all
-        .sort((a, b) => a.adherencia - b.adherencia)
+        .sort(
+          (a, b) => (a.adherencia ?? 101) - (b.adherencia ?? 101),
+        )
         .slice(0, limit);
     }
 

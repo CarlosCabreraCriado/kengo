@@ -7,7 +7,6 @@
 
 import { strict as assert } from "node:assert";
 import {
-  computeAdherencia,
   computeAggregatesFromExecutions,
   computeEstadoDia,
   computeRachaActual,
@@ -49,23 +48,6 @@ test("computeEstadoDia: 0 < completados < esperados → parcial", () => {
 
 test("computeEstadoDia: completados=0, esperados>0 → fallido", () => {
   assert.equal(computeEstadoDia(5, 0, true), "fallido");
-});
-
-// computeAdherencia
-test("computeAdherencia: 0 días con plan → 0", () => {
-  assert.equal(computeAdherencia(0, 0, 0), 0);
-});
-
-test("computeAdherencia: 5/5 completados → 100", () => {
-  assert.equal(computeAdherencia(5, 0, 5), 100);
-});
-
-test("computeAdherencia: 3 completados + 2 parciales / 5 → (3 + 1) / 5 = 80", () => {
-  assert.equal(computeAdherencia(3, 2, 5), 80);
-});
-
-test("computeAdherencia: 0/5 → 0", () => {
-  assert.equal(computeAdherencia(0, 0, 5), 0);
 });
 
 // computeRachaMaxima

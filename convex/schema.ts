@@ -334,7 +334,10 @@ export default defineSchema({
     clinicId: v.id("clinics"),
     fisioId: v.id("users"),
     ventana: v.union(v.literal("7d"), v.literal("15d"), v.literal("30d")),
-    adherencia: v.number(),
+    // Opcional: si en la ventana no hay días con plan (todos descanso/sin_plan)
+    // no hay denominador, así que el snapshot deja el campo `undefined` y los
+    // agregados de clínica lo excluyen.
+    adherencia: v.optional(v.number()),
     dolorPromedio: v.optional(v.number()),
     ultimaActividad: v.optional(v.string()), // YYYY-MM-DD
     inactividadDias: v.number(),

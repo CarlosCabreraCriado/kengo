@@ -32,7 +32,7 @@ interface ActividadDiariaClinica {
 interface ClinicSnapshot {
   _id: string;
   clinicId: string;
-  ventana: '7d' | '30d';
+  ventana: '7d' | '15d' | '30d';
   pacientesActivos: number;
   adherenciaPromedio: number;
   dolorMedio?: number;
@@ -56,7 +56,7 @@ export class DashboardFisioService {
       if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
       const id = this.clinicaActiva.selectedClinicaId();
       if (!id) return 'skip' as const;
-      return { clinicId: id as any, ventana: '30d' as const };
+      return { clinicId: id as any, ventana: '15d' as const };
     },
   );
 

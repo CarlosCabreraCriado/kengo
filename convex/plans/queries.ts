@@ -11,6 +11,7 @@ import {
   getMadridDateOffset,
 } from "../_helpers/datetime";
 import { getExpectedExercisesForPatientOnDate } from "../_helpers/expectedExercises";
+import { isPlanEnCurso } from "../_helpers/planStatus";
 
 function fullName(user: any): string {
   if (!user) return "";
@@ -161,11 +162,7 @@ export const listEnCursoPacientesInClinics = query({
             q.eq("pacienteId", pid).eq("estado", "activo"),
           )
           .collect();
-        const enCurso = plans.some((p) => {
-          if (p.fechaInicio && p.fechaInicio > today) return false;
-          if (p.fechaFin && p.fechaFin < today) return false;
-          return true;
-        });
+        const enCurso = plans.some((p) => isPlanEnCurso(p, today));
         return enCurso ? pid : null;
       }),
     );

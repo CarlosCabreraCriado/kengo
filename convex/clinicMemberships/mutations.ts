@@ -215,6 +215,17 @@ export const remove = mutation({
       );
     }
 
+    if (puesto === "paciente") {
+      // Sus planes activos/borrador acaban de pasar a "cancelado": refrescar
+      // el snapshot agregado de la clínica para que pacientesActivos quede
+      // alineado con el listado sin esperar al cron diario.
+      await ctx.scheduler.runAfter(
+        0,
+        internal.snapshots.internal.recomputeClinic,
+        { clinicId },
+      );
+    }
+
     return { ok: true };
   },
 });

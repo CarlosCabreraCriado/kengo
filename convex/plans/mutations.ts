@@ -36,6 +36,20 @@ async function schedulePushNuevoPlan(
   });
 }
 
+// Refresca el snapshot agregado de la clínica tras un cambio en planes:
+// el conteo `pacientesActivos` depende de la combinación estado+fechas, así
+// que cualquier mutación de plan que toque esos campos debe encolar este
+// recompute para que el KPI del dashboard del fisio quede sincronizado con
+// el listado de pacientes sin esperar al cron diario.
+async function scheduleRecomputeClinic(
+  ctx: any,
+  clinicId: Id<"clinics">,
+): Promise<void> {
+  await ctx.scheduler.runAfter(0, internal.snapshots.internal.recomputeClinic, {
+    clinicId,
+  });
+}
+
 const ejercicioPlanArgs = v.object({
   exerciseId: v.id("exercises"),
   sort: v.number(),
@@ -148,6 +162,7 @@ export const create = mutation({
 
     if (estadoInicial === "activo") {
       await schedulePushNuevoPlan(ctx, args.pacienteId, planId, args.titulo);
+      await scheduleRecomputeClinic(ctx, args.clinicId);
     }
 
     return planId;
@@ -188,6 +203,9 @@ export const updateEstado = mutation({
         args.planId,
         plan.titulo,
       );
+    }
+    if (estadoAnterior !== args.estado) {
+      await scheduleRecomputeClinic(ctx, plan.clinicId);
     }
   },
 });
@@ -255,6 +273,10 @@ export const update = mutation({
       await insertPlanExercises(ctx, args.planId, args.ejercicios);
     }
 
+    if (args.fechaInicio !== undefined || args.fechaFin !== undefined) {
+      await scheduleRecomputeClinic(ctx, plan.clinicId);
+    }
+
     return args.planId;
   },
 });
@@ -266,7 +288,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
-    await getPlanIfOwned(ctx, args.planId);
+    const plan = await getPlanIfOwned(ctx, args.planId);
 
     const exercises = await ctx.db
       .query("planExercises")
@@ -275,6 +297,7 @@ export const remove = mutation({
 
     if (await planHasActivity(ctx, args.planId, exercises)) {
       await ctx.db.patch(args.planId, { estado: "cancelado" });
+      await scheduleRecomputeClinic(ctx, plan.clinicId);
       return { softDeleted: true };
     }
 
@@ -282,6 +305,7 @@ export const remove = mutation({
       await ctx.db.delete(ex._id);
     }
     await ctx.db.delete(args.planId);
+    await scheduleRecomputeClinic(ctx, plan.clinicId);
     return { softDeleted: false };
   },
 });
@@ -332,6 +356,7 @@ export const version = mutation({
       newPlanId,
       args.titulo,
     );
+    await scheduleRecomputeClinic(ctx, oldPlan.clinicId);
 
     return newPlanId;
   },

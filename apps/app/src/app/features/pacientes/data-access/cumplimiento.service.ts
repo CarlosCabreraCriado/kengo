@@ -298,6 +298,9 @@ export class CumplimientoService {
       };
     });
 
+    // Adherencia estricta = % de días con plan completados al 100% (sin
+    // ponderar parciales). Misma fórmula canónica que usa el snapshot:
+    // ver `convex/snapshots/internal.ts:recomputePatientForWindow`.
     const adherenciaReal =
       diasProgramados > 0
         ? Math.round((diasCompletados / diasProgramados) * 100)

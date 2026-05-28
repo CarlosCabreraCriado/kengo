@@ -12,7 +12,7 @@ interface SnapshotDoc {
   clinicId: string;
   fisioId: string;
   ventana: VentanaSnapshot;
-  adherencia: number;
+  adherencia?: number;
   dolorPromedio?: number;
   ultimaActividad?: string;
   inactividadDias: number;
@@ -62,7 +62,7 @@ export class MetricasPacientesService {
     const out: MetricasPacientesBulk = {};
     for (const s of all) {
       out[s.pacienteId] = {
-        adherencia: s.adherencia,
+        adherencia: s.adherencia ?? null,
         dolorPromedio: s.dolorPromedio ?? null,
       };
     }
