@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, from, map } from 'rxjs';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { StorageService, UploadPrefix } from '../../../core/services/storage.service';
 import { ClinicasService } from './clinicas.service';
@@ -26,6 +27,7 @@ export interface UploadFileResult {
 @Injectable({ providedIn: 'root' })
 export class ClinicaGestionService {
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private convex = inject(ConvexService);
   private storage = inject(StorageService);
   private clinicasService = inject(ClinicasService);
@@ -74,7 +76,7 @@ export class ClinicaGestionService {
     this.error.set(null);
 
     try {
-      await this.convex.mutation(
+      const clinicId = await this.convex.mutation(
         api.clinics.mutations.create,
         {
           nombre: payload.nombre,
@@ -91,6 +93,14 @@ export class ClinicaGestionService {
 
       // Recargar datos del usuario para reflejar la nueva clínica
       await this.sessionService.refreshUsuario();
+
+      // El creador queda como admin de la nueva clínica: la marcamos como
+      // activa y entramos en modo fisio. El orden importa: primero la activa
+      // (para que `puedeAlternarModo` reconozca el puesto admin) y luego el
+      // rol, porque `setRolUsuario('fisio')` ignora la llamada si la clínica
+      // activa no permite alternar.
+      this.clinicaActiva.set(clinicId);
+      this.sessionService.setRolUsuario('fisio');
 
       return { success: true };
     } catch (err: any) {
