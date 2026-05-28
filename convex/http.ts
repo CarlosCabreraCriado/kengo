@@ -140,10 +140,30 @@ registerStripeRoutes(http, components.stripe, {
         }
         case "checkout.session.completed": {
           if (!clinicId) return;
-          // Welcome email tras el primer checkout. La idempotencia vive en
-          // `notifyCheckoutCompleted` vía `clinicBilling.welcomeEmailSentAt`,
-          // así que reactivaciones (cancel → checkout de nuevo) no
-          // disparan un segundo email.
+          const session = event.data.object;
+          // Bifurcación según el modo de la session:
+          //   - `setup`: el customer acaba de añadir su método de pago para
+          //     terminar el trial. `finalizeSetupCheckout` adjunta el PM a la
+          //     sub existente y pone `trial_end: 'now'` → Stripe cobra y la
+          //     sub pasa a `active` vía webhooks posteriores.
+          //   - `subscription`: el customer reactiva tras un `canceled`. Stripe
+          //     ha creado una nueva subscription S2; `finalizeSubscriptionCheckout`
+          //     persiste su ID en `clinicBilling.stripeSubscriptionId` para que
+          //     futuras acciones operen contra S2 y no contra la S1 huérfana.
+          // En ambos casos, además, encolamos el welcome email (idempotente).
+          if (session.mode === "setup") {
+            await ctx.scheduler.runAfter(
+              0,
+              internal.billing.actions.finalizeSetupCheckout,
+              { clinicId, sessionId: session.id },
+            );
+          } else if (session.mode === "subscription") {
+            await ctx.scheduler.runAfter(
+              0,
+              internal.billing.actions.finalizeSubscriptionCheckout,
+              { clinicId, sessionId: session.id },
+            );
+          }
           await ctx.scheduler.runAfter(
             0,
             internal.billing.actions.notifyCheckoutCompleted,

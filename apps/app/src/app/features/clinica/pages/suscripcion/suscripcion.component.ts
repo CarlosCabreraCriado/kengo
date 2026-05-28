@@ -227,17 +227,26 @@ export class SuscripcionComponent {
     // Stripe existente y abre Checkout sin nuevo trial (Bloque D del plan).
     // No usamos `abrirPortal` porque el Portal no permite re-suscribirse
     // desde cero a un customer cuya subscription terminó.
-    if (
-      estado === 'none' ||
-      estado === 'trialing' ||
-      estado === 'incomplete' ||
-      estado === 'canceled'
-    ) {
+    if (estado === 'canceled') {
       await this.subs.iniciarCheckout(id);
       return;
     }
+    // Sub viva con cancelación programada (`active` o `trialing` con
+    // `cancel_at_period_end: true`): la acción esperada es deshacer la
+    // cancelación, no abrir Checkout/Portal. Este check va ANTES del de
+    // `trialing` porque si no, una sub en trial con cancelación programada
+    // caería en la rama de "Añadir método de pago" y abriría un Checkout
+    // nuevo en lugar de reactivar la existente.
     if (this.cancelaAlFinDelPeriodo()) {
       await this.subs.reactivar(id);
+      return;
+    }
+    if (
+      estado === 'none' ||
+      estado === 'trialing' ||
+      estado === 'incomplete'
+    ) {
+      await this.subs.iniciarCheckout(id);
       return;
     }
     await this.subs.abrirPortal(id);
@@ -245,11 +254,11 @@ export class SuscripcionComponent {
 
   protected etiquetaAccionPrincipal(): string {
     const estado = this.suscripcion()?.estado ?? 'none';
+    if (estado === 'canceled') return 'Reactivar suscripción';
+    if (this.cancelaAlFinDelPeriodo()) return 'Reactivar suscripción';
     if (estado === 'none' || estado === 'incomplete')
       return 'Activar suscripción';
-    if (estado === 'canceled') return 'Reactivar suscripción';
     if (estado === 'trialing') return 'Añadir método de pago';
-    if (this.cancelaAlFinDelPeriodo()) return 'Reactivar suscripción';
     if (estado === 'past_due' || estado === 'unpaid')
       return 'Actualizar método de pago';
     return 'Gestionar pago';

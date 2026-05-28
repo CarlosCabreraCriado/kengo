@@ -13,20 +13,21 @@
 
 ## Estado del documento
 
-| Sección | Cobertura |
-|---------|-----------|
-| 1. Pre-requisitos y setup | Cuentas, claves, herramientas |
-| 2. Configuración Stripe Dashboard (test) | Tax, wallets, Portal, webhooks |
-| 3. Validaciones por bloque | 10 bloques (A–J) del plan |
-| 4. Escenarios multi-clínica | Owner único de N clínicas |
-| 5. Validación fiscal España | NIF/CIF, Stripe Tax, facturas |
-| 6. Robustez de webhooks | Idempotencia + ordering + dedup |
-| 7. Pruebas de regresión | El sistema previo sigue funcionando |
-| 8. Criterios de aceptación final | Antes de pasar a live |
-| 9. Switch a producción | Pasos para promover a live mode |
-| 10. Rollback | Cómo revertir si algo va mal en live |
+| Sección                                  | Cobertura                            |
+| ---------------------------------------- | ------------------------------------ |
+| 1. Pre-requisitos y setup                | Cuentas, claves, herramientas        |
+| 2. Configuración Stripe Dashboard (test) | Tax, wallets, Portal, webhooks       |
+| 3. Validaciones por bloque               | 10 bloques (A–J) del plan            |
+| 4. Escenarios multi-clínica              | Owner único de N clínicas            |
+| 5. Validación fiscal España              | NIF/CIF, Stripe Tax, facturas        |
+| 6. Robustez de webhooks                  | Idempotencia + ordering + dedup      |
+| 7. Pruebas de regresión                  | El sistema previo sigue funcionando  |
+| 8. Criterios de aceptación final         | Antes de pasar a live                |
+| 9. Switch a producción                   | Pasos para promover a live mode      |
+| 10. Rollback                             | Cómo revertir si algo va mal en live |
 
 **Leyenda**:
+
 - `[ ]` Pendiente
 - `[~]` Bloqueado o no aplica en este entorno
 - `[x]` Aprobado
@@ -51,15 +52,15 @@
 
 ### 1.2 Variables de entorno (Convex deployment test)
 
-| Variable | Valor de test | Notas |
-|---|---|---|
-| `STRIPE_SECRET_KEY` | `sk_test_...` | Secret de la cuenta test |
-| `STRIPE_WEBHOOK_SECRET` | `whsec_...` (de `stripe listen`) | Temporal, durante la sesión |
-| `STRIPE_PRICE_ID` | `price_...` (tiered) | Price con tramos 1→65€, 2-4→170€, 5-10→280€ |
-| `STRIPE_TRIAL_DAYS` | `14` | Trial estándar |
-| `STRIPE_GRACE_PERIOD_DAYS` | `7` | Gracia tras `payment_failed` |
-| `KENGO_APP_URL` | `http://localhost:4200` | Sin slash final |
-| `RESEND_API_KEY` | (opcional) | Para emails reales |
+| Variable                   | Valor de test                    | Notas                                       |
+| -------------------------- | -------------------------------- | ------------------------------------------- |
+| `STRIPE_SECRET_KEY`        | `sk_test_...`                    | Secret de la cuenta test                    |
+| `STRIPE_WEBHOOK_SECRET`    | `whsec_...` (de `stripe listen`) | Temporal, durante la sesión                 |
+| `STRIPE_PRICE_ID`          | `price_...` (tiered)             | Price con tramos 1→65€, 2-4→170€, 5-10→280€ |
+| `STRIPE_TRIAL_DAYS`        | `14`                             | Trial estándar                              |
+| `STRIPE_GRACE_PERIOD_DAYS` | `7`                              | Gracia tras `payment_failed`                |
+| `KENGO_APP_URL`            | `http://localhost:4200`          | Sin slash final                             |
+| `RESEND_API_KEY`           | (opcional)                       | Para emails reales                          |
 
 - [ ] Confirmar las 7 variables presentes con `npx convex env list`
 
@@ -78,7 +79,7 @@ stripe listen \
 
 Crear con antelación (en `npm start` test):
 
-- [ ] **Owner A** — `owner-a@test.kengo` (será propietario de Clínica A)
+- [x] **Owner A** — `owner-a@test.kengo` (será propietario de Clínica A)
 - [ ] **Admin A2** — `admin-a2@test.kengo` (co-admin no-owner de Clínica A)
 - [ ] **Fisio A3** — `fisio-a3@test.kengo`
 - [ ] **Owner B** — `owner-b@test.kengo` (mismo usuario que Owner A podría hacerlo, para test multi-clínica)
@@ -135,28 +136,35 @@ Crear con antelación (en `npm start` test):
 
 #### 3.1.1 Dedup por `event.id`
 
-- [ ] Disparar un evento real (`stripe trigger customer.subscription.updated`).
-- [ ] En el Stripe Dashboard → Developers → Events → seleccionar el evento → **Resend webhook**.
-- [ ] Verificar:
-  - [ ] **1 sola fila** nueva en `stripeWebhookEvents` con ese `eventId`.
-  - [ ] Log de Convex muestra `[stripe webhook] evento duplicado <id> — ignorado` en la segunda entrega.
-  - [ ] `clinicBilling.actualizadoEn` cambia solo una vez (no dos).
-  - [ ] Si el evento tenía efectos de email, **solo se envía un email** (Resend Dashboard).
+- [x] Disparar un evento real (`stripe subscriptions update <sub_id> --metadata test_dedup=1` sobre la sub de Clínica A).
+- [x] En el Stripe Dashboard → Developers → Events → seleccionar el evento → **Resend webhook**.
+- [x] Verificar:
+  - [x] **1 sola fila** nueva en `stripeWebhookEvents` con ese `eventId`.
+  - [x] Log de Convex muestra `[stripe webhook] evento duplicado <id> — ignorado` en la segunda entrega.
+  - [x] `clinicBilling.actualizadoEn` cambia solo una vez (no dos).
+  - [~] Si el evento tenía efectos de email, **solo se envía un email** (Resend Dashboard). _(N/A para `subscription.updated`; se valida en Bloque G con `payment_failed`)_
 
 #### 3.1.2 Ordering por timestamp
 
-- [ ] Disparar dos eventos consecutivos `customer.subscription.updated` con cambios distintos.
-- [ ] Provocar reentrega del primero (el más antiguo) tras el segundo (resend desde Dashboard).
-- [ ] Verificar:
-  - [ ] Log de Convex muestra `applySubscriptionEvent stale (... eventMs=X, lastMs=Y) — ignorado`.
-  - [ ] `clinicBilling` mantiene los valores del segundo evento (el más reciente), no se sobrescribe con los del primero.
+> **Nota metodológica**: el dedup por `event.id` (validado en 3.1.1) corta
+> los _resend_ del Dashboard antes de llegar a la comprobación de ordering.
+> Para ejercitar la rama "stale" hay que invocar `applySubscriptionEvent`
+> directamente desde el Convex Dashboard con un `eventCreatedMs` inferior al
+> `lastStripeEventMs` ya almacenado.
+
+- [x] Provocar al menos un `customer.subscription.updated` real para sembrar `lastStripeEventMs` en `clinicBilling`.
+- [x] Desde Convex Dashboard → Functions → `billing/internal:applySubscriptionEvent`, invocar con `eventCreatedMs` < `lastStripeEventMs` existente.
+- [x] Verificar:
+  - [x] Log de Convex muestra `[billing] applySubscriptionEvent stale (clinic=..., eventMs=X, lastMs=Y) — ignorado`.
+  - [x] `clinicBilling` mantiene los valores previos (no se aplica patch): `actualizadoEn`, `lastStripeEventMs`, `estadoLocal` sin cambios.
 
 #### 3.1.3 Resolución de `clinicId`
 
-- [ ] Disparar `invoice.payment_failed` (genera un customer artificial pero permite probar la lógica).
-- [ ] Verificar:
-  - [ ] Si el evento NO tiene `metadata.orgId` válido → ignorado sin error, pero **sí se registra en `stripeWebhookEvents`** (dedup activo).
-  - [ ] Si lo tiene → `clinicBilling.estadoLocal = "past_due"`.
+- [x] Disparar `invoice.payment_failed` (`stripe trigger invoice.payment_failed`) — genera un customer artificial pero permite probar la lógica de "ignorar sin error".
+- [x] Verificar:
+  - [x] Si el evento NO tiene `metadata.orgId` válido → ignorado sin error, pero **sí se registra en `stripeWebhookEvents`** (dedup activo).
+  - [x] Si lo tiene → `clinicBilling.estadoLocal = "past_due"` (probado invocando `billing/internal:markPastDueWithGrace` directamente, ya que no podemos forzar un cobro fallido real sobre una sub en `trialing` sin payment method).
+  - [x] Estado restaurado a `trialing` tras la prueba.
 
 ---
 
@@ -164,53 +172,53 @@ Crear con antelación (en `npm start` test):
 
 #### 3.2.1 Creación de clínica nueva asigna owner automáticamente
 
-- [ ] Como **Owner A** crear Clínica A en `/mi-clinica`.
-- [ ] Verificar en Convex Dashboard:
-  - [ ] `clinics` tiene la fila nueva con `ownerUserId = OwnerA._id`
-  - [ ] `clinicMemberships` tiene `{ userId: OwnerA, puesto: "admin" }` para esa clínica
-  - [ ] `clinicBilling.estadoLocal = "trialing"` (tras ~1s, cuando el scheduler ejecuta `startTrialForClinic`)
-  - [ ] Stripe Dashboard → customer con `metadata.orgId = <clinicId>`
+- [x] Como **Owner A** crear Clínica A en `/mi-clinica`.
+- [x] Verificar en Convex Dashboard:
+  - [x] `clinics` tiene la fila nueva con `ownerUserId = OwnerA._id`
+  - [x] `clinicMemberships` tiene `{ userId: OwnerA, puesto: "admin" }` para esa clínica
+  - [x] `clinicBilling.estadoLocal = "trialing"` (tras ~1s, cuando el scheduler ejecuta `startTrialForClinic`)
+  - [x] Stripe Dashboard → customer con `metadata.orgId = <clinicId>`
 
 #### 3.2.2 Transferencia de propiedad
 
-- [ ] Como Owner A, promocionar a Admin A2 a `admin` desde `/mi-clinica` → dialog del miembro → "Promocionar a administrador"
-- [ ] Abrir el dialog de Admin A2 → debe aparecer:
-  - [ ] Badge "Propietario" **NO** visible (todavía es Owner A)
-  - [ ] Botón **"Transferir propiedad"** visible (solo el owner lo ve)
-- [ ] Click "Transferir propiedad" → confirmar
-- [ ] Verificar:
-  - [ ] `clinics.ownerUserId` ahora apunta a Admin A2 (Convex Dashboard)
-  - [ ] Nueva fila en `clinicOwnershipAudit` con `via: "self"`, `fromUserId: OwnerA`, `toUserId: AdminA2`
-  - [ ] Toast "Propiedad transferida correctamente"
-  - [ ] Tras refrescar, Owner A ve el dialog de Admin A2 con badge "Propietario", botón de transferencia **ya no aparece** (Owner A ya no es owner)
+- [x] Como Owner A, promocionar a Admin A2 a `admin` desde `/mi-clinica` → dialog del miembro → "Promocionar a administrador"
+- [x] Abrir el dialog de Admin A2 → debe aparecer:
+  - [x] Badge "Propietario" **NO** visible (todavía es Owner A)
+  - [x] Botón **"Transferir propiedad"** visible (solo el owner lo ve)
+- [x] Click "Transferir propiedad" → confirmar
+- [x] Verificar:
+  - [x] `clinics.ownerUserId` ahora apunta a Admin A2 (Convex Dashboard)
+  - [x] Nueva fila en `clinicOwnershipAudit` con `via: "self"`, `fromUserId: OwnerA`, `toUserId: AdminA2`
+  - [x] Toast "Propiedad transferida correctamente"
+  - [x] Tras refrescar, Owner A ve el dialog de Admin A2 con badge "Propietario", botón de transferencia **ya no aparece** (Owner A ya no es owner)
 
 #### 3.2.3 Owner intenta salir de la clínica sin transferir
 
-- [ ] Como Admin A2 (ya owner), intentar salir de la clínica (botón "Desvincular" no debería aparecer ya que `puedeDesvincular()` filtra `esOwnerTarget`).
-- [ ] **Negative test**: invocar directamente desde DevTools la mutation `clinicMemberships.remove` con el membership del owner → debe devolver código `OWNER_MUST_TRANSFER_FIRST`.
+- [x] Como Admin A2 (ya owner), intentar salir de la clínica (botón "Desvincular" no debería aparecer ya que `puedeDesvincular()` filtra `esOwnerTarget`).
+- [~] **Negative test**: invocar directamente desde DevTools la mutation `clinicMemberships.remove` con el membership del owner → debe devolver código `OWNER_MUST_TRANSFER_FIRST`. _(diferido a Bloque B, que prueba el mismo guard)_
 
 #### 3.2.4 Admin no-owner intenta gestionar billing
 
 Como Owner A (después de transferir a Admin A2, A ya no es owner):
 
-- [ ] Entrar a `/mi-clinica/suscripcion`.
-- [ ] Verificar:
-  - [ ] **Banner informativo** "El responsable de la suscripción es {AdminA2}" visible
-  - [ ] **CTA principal oculto** (no aparece "Activar suscripción", "Gestionar pago", etc.)
-  - [ ] **Botón cancelar suscripción oculto**
-  - [ ] **Fila "Ver todas las facturas" oculta**
-  - [ ] Estado de la suscripción (badge, fecha de renovación, plan actual) **sí visible** (modo read-only)
-- [ ] **Negative test backend**: invocar directamente `api.billing.actions.createCheckoutSession` desde DevTools → debe devolver código `OWNER_REQUIRED`.
+- [x] Entrar a `/mi-clinica/suscripcion`.
+- [x] Verificar:
+  - [x] **Banner informativo** "El responsable de la suscripción es {AdminA2}" visible
+  - [x] **CTA principal oculto** (no aparece "Activar suscripción", "Gestionar pago", etc.)
+  - [x] **Botón cancelar suscripción oculto**
+  - [x] **Fila "Ver todas las facturas" oculta**
+  - [x] Estado de la suscripción (badge, fecha de renovación, plan actual) **sí visible** (modo read-only)
+- [x] **Negative test backend**: invocar directamente `api.billing.actions.createCheckoutSession` desde DevTools → debe devolver código `OWNER_REQUIRED`.
 
 #### 3.2.5 Transferir a un fisio (no admin) → rechazo
 
-- [ ] Como Admin A2 (owner), intentar transferir propiedad al Fisio A3.
-- [ ] El selector del dialog **no debería listarlo** (solo lista admins).
-- [ ] **Negative test**: invocar `api.clinics.mutations.transferOwnership` con `toUserId: FisioA3._id` directamente → devuelve `OWNER_MUST_BE_ADMIN`.
+- [x] Como Admin A2 (owner), intentar transferir propiedad al Fisio A3.
+- [x] El selector del dialog **no debería listarlo** (solo lista admins) — al abrir el dialog de A3, el botón "Transferir propiedad" no aparece (requiere `puesto === 'admin'`).
+- [~] **Negative test**: invocar `api.clinics.mutations.transferOwnership` con `toUserId: FisioA3._id` directamente → devuelve `OWNER_MUST_BE_ADMIN`. _(omitido: UI guard suficiente y mutation requiere auth de usuario)_
 
 #### 3.2.6 Transferencia forzada por soporte
 
-- [ ] Desde Convex Dashboard → Functions → `clinics/mutations:forceTransferOwnership`:
+- [x] Desde Convex Dashboard → Functions → `clinics/mutations:forceTransferOwnership`:
   ```json
   {
     "clinicId": "<clinicId>",
@@ -219,19 +227,22 @@ Como Owner A (después de transferir a Admin A2, A ya no es owner):
     "executedByAdminEmail": "soporte@kengoapp.com"
   }
   ```
-- [ ] Verificar:
-  - [ ] `clinics.ownerUserId` cambia
-  - [ ] Nueva fila en `clinicOwnershipAudit` con `via: "support"`, `reason`, `executedByAdminEmail`
+- [x] Verificar:
+  - [x] `clinics.ownerUserId` cambia
+  - [x] Nueva fila en `clinicOwnershipAudit` con `via: "support"`, `reason`, `executedByAdminEmail`
 
 ---
 
 ### 3.3 Bloque B — Bloqueo del owner sin transferir
 
-- [ ] Como Admin A2 (owner), intentar degradar su propio puesto a fisio (vía API/DevTools, no hay UI).
-  - **Esperado**: error porque `add` con `puesto = "fisio"` sobre owner llama `assertNotOwnerWithoutTransfer` → `OWNER_MUST_TRANSFER_FIRST`.
-- [ ] Como Admin A2 (owner), intentar invocar `clinicMemberships.remove` con su propio membershipId.
-  - **Esperado**: `OWNER_MUST_TRANSFER_FIRST`.
-- [ ] Repetir tras transferir a otro admin: ahora sí puede salir.
+> **Modo de verificación**: auditoría de código (no hay UI que ejercite estas
+> rutas y el Convex Dashboard no permite simular identidad de usuario para
+> probar el guard end-to-end con bajo coste).
+
+- [x] **Guard 1 — `clinicMemberships.add`** (degradación admin → fisio sobre el owner): `convex/clinicMemberships/mutations.ts:88-96` invoca `assertNotOwnerWithoutTransfer` cuando un admin baja de puesto y resulta ser el owner.
+- [x] **Guard 2 — `clinicMemberships.remove`**: `convex/clinicMemberships/mutations.ts:156-158` invoca `assertNotOwnerWithoutTransfer` para admins.
+- [x] **Helper `assertNotOwnerWithoutTransfer`** (`convex/_helpers/permissions.ts:123-130`) compara `clinic.ownerUserId === userId` y lanza `ConvexError({ code: "OWNER_MUST_TRANSFER_FIRST" })`.
+- [x] Tras transferir a otro admin: los mismos guards dejan de disparar (el owner pasa a serlo otro), por lo que las rutas se desbloquean.
 
 ---
 
@@ -239,18 +250,18 @@ Como Owner A (después de transferir a Admin A2, A ya no es owner):
 
 #### 3.4.1 Checkout con tarjeta + NIF
 
-- [ ] Como Owner A, click "Activar suscripción" (o "Añadir método de pago" si trial).
-- [ ] En Stripe Checkout, verificar campos:
-  - [ ] **Tax ID** (NIF/CIF) presente y obligatorio (`required: "if_supported"`)
-  - [ ] **Address** se solicita y se guarda en el customer
-  - [ ] **Apple Pay** visible si estás en Safari iOS o macOS con tarjeta configurada
-  - [ ] **Google Pay** visible si estás en Chrome con cuenta Google activa
-- [ ] Completar con `4242 4242 4242 4242`, NIF español válido (p. ej. `B12345678` o un NIF personal de prueba), dirección España.
-- [ ] Tras el redirect:
-  - [ ] `clinicBilling.estadoLocal = "active"`
-  - [ ] Customer en Stripe tiene `name`, `address`, `tax_id` poblados
-  - [ ] Email de bienvenida llega con subject `[Kengo · Clínica A] Tu suscripción está activa`
-  - [ ] `clinicBilling.welcomeEmailSentAt` queda poblado
+- [x] Como Owner A, click "Activar suscripción" (o "Añadir método de pago" si trial).
+- [x] En Stripe Checkout, verificar campos:
+  - [x] **Tax ID** (NIF/CIF) presente y obligatorio (`required: "if_supported"`) — Stripe muestra "IVA de ES" por defecto, hay que seleccionar "ES NIF" manualmente (incidencia registrada, no bloqueante).
+  - [x] **Address** se solicita y se guarda en el customer (tras fix `billing_address_collection: "required"`).
+  - [~] **Apple Pay** visible si estás en Safari iOS o macOS con tarjeta configurada
+  - [~] **Google Pay** visible si estás en Chrome con cuenta Google activa
+- [x] Completar con `4242 4242 4242 4242`, NIF español válido, dirección España.
+- [x] Tras el redirect:
+  - [x] `clinicBilling.estadoLocal = "active"`
+  - [x] Customer en Stripe tiene `name`, `address`, `tax_id` poblados
+  - [x] Email de bienvenida llega con subject `[Kengo · Clínica A] Tu suscripción está activa`
+  - [x] `clinicBilling.welcomeEmailSentAt` queda poblado
 
 #### 3.4.2 Stripe Tax aplicado en factura
 
@@ -410,6 +421,7 @@ Para cada email, comprobar **subject** + **cuerpo menciona `clinicaNombre`** + *
 ## 4. Escenarios multi-clínica (un owner gestiona N clínicas)
 
 Setup:
+
 - Owner X es **owner de Clínica X** (`active`)
 - Owner X también es **admin (no-owner) de Clínica Y** (donde Owner Y es propietario)
 - Owner X es **owner de Clínica Z** (`unpaid`)
@@ -608,23 +620,39 @@ stripe events resend evt_XXXXX
 
 ### Convex Dashboard — Funciones útiles
 
-| Función | Args | Propósito |
-|---|---|---|
-| `migrations/backfillClinicOwner:run` | `{ "apply": false }` o `true` | Asignar `ownerUserId` |
-| `migrations/deleteClinicCascade:inspect` | `{ "clinicId": "..." }` | Contar contenido de una clínica |
-| `migrations/deleteClinicCascade:run` | `{ "clinicId", "confirmName", "apply": false }` | Borrar clínica en cascada |
-| `migrations/backfillRoutineClinicId:run` | `{}` | Asignar `clinicId` a rutinas históricas |
-| `billing/internal:setGraceUntilForTesting` | `{ "clinicId", "daysFromNow": -1 }` | Forzar gracia agotada |
-| `billing/internal:checkGracePeriodsExpired` | `{}` | Disparar cron de gracia manualmente |
-| `clinics/mutations:forceTransferOwnership` | `{ "clinicId", "toUserId", "reason", "executedByAdminEmail" }` | Transferir propiedad por soporte |
+| Función                                     | Args                                                           | Propósito                               |
+| ------------------------------------------- | -------------------------------------------------------------- | --------------------------------------- |
+| `migrations/backfillClinicOwner:run`        | `{ "apply": false }` o `true`                                  | Asignar `ownerUserId`                   |
+| `migrations/deleteClinicCascade:inspect`    | `{ "clinicId": "..." }`                                        | Contar contenido de una clínica         |
+| `migrations/deleteClinicCascade:run`        | `{ "clinicId", "confirmName", "apply": false }`                | Borrar clínica en cascada               |
+| `migrations/backfillRoutineClinicId:run`    | `{}`                                                           | Asignar `clinicId` a rutinas históricas |
+| `billing/internal:setGraceUntilForTesting`  | `{ "clinicId", "daysFromNow": -1 }`                            | Forzar gracia agotada                   |
+| `billing/internal:checkGracePeriodsExpired` | `{}`                                                           | Disparar cron de gracia manualmente     |
+| `clinics/mutations:forceTransferOwnership`  | `{ "clinicId", "toUserId", "reason", "executedByAdminEmail" }` | Transferir propiedad por soporte        |
 
 ### Tarjetas de prueba Stripe (test mode)
 
-| Número | Comportamiento |
-|---|---|
-| `4242 4242 4242 4242` | Success |
+| Número                | Comportamiento                                                |
+| --------------------- | ------------------------------------------------------------- |
+| `4242 4242 4242 4242` | Success                                                       |
 | `4000 0000 0000 0341` | Pago aprueba pero declina al cobrar (genera `payment_failed`) |
-| `4000 0000 0000 9995` | Insufficient funds |
-| `4000 0025 0000 3155` | Requiere 3DS authentication |
+| `4000 0000 0000 9995` | Insufficient funds                                            |
+| `4000 0025 0000 3155` | Requiere 3DS authentication                                   |
 
 Más en https://stripe.com/docs/testing
+
+---
+
+## Errores detectados durante el testing
+
+> Sección viva. Cada vez que durante una verificación se observe un
+> comportamiento distinto al esperado, anotarlo aquí con: fecha, sección
+> del test, descripción, severidad y estado.
+
+| Fecha | Sección | Descripción | Severidad | Estado |
+| ----- | ------- | ----------- | --------- | ------ |
+| 2026-05-28 | 3.4.1 | Selector de Tax ID en Stripe Checkout muestra "IVA de ES" (`eu_vat`) como opción por defecto en lugar de "ES NIF" (`es_cif`) para clientes con `country=ES`. **No es configurable** vía API de Checkout (confirmado en docs oficiales). El usuario debe seleccionar manualmente "ES NIF" del desplegable. El dato se guarda correctamente y la factura sale bien. | Baja (UX) | Aceptado |
+| 2026-05-28 | 3.4.1 | Stripe Checkout **NO pide la dirección fiscal completa** (street/CP/ciudad). Causa: `billing_address_collection` no está especificado, así que Stripe usa `"auto"` que con `automatic_tax: true` solo recoge los campos mínimos para calcular impuestos. Como nuestro `customer` ya viene con `address.country=ES` (baseline fijado en `startTrialForClinic` por commit 640f6e8), Stripe Tax considera que ya tiene suficiente y no pide el resto. **Esto incumple los requisitos de facturación B2B en España** (la factura debe llevar domicilio fiscal completo del cliente). Fix aplicado: añadido `billing_address_collection: "required"` en `convex/billing/actions.ts:createCheckoutSession` (commit pendiente). Validado: tras redeploy el Checkout pide street/CP/ciudad y la factura los muestra. | Alta (legal/factura) | Resuelto |
+| 2026-05-28 | 3.4.1 | Checkout y factura muestran `"Producto × Cantidad N"` con la cantidad cruda de fisios (p.ej. "× 3" para una clínica en tramo 2-4 fisios). El **importe es correcto** (170€ flat del tramo), pero el cliente puede pensar que paga "3 unidades de algo" en vez de "el plan 2-4 fisios". Stripe no permite ocultar el campo `quantity` en subscription items. Fix aplicado (opción C): `convex/billing/actions.ts` ahora sincroniza `customer.invoice_settings.custom_fields = [{ name: "Plan", value: "Tramo 2-4 Fisios" }]` en `startTrialForClinic`, `createCheckoutSession` y `updateStripeQuantity`. La factura siguiente lleva ese campo en cabecera. Aplica solo a facturas futuras (no retroactivo). Pendiente: A+B (renombrar Product / añadir descripción) cuando el cliente lo prefiera. | Media (UX factura) | Fix aplicado, pendiente validación |
+| 2026-05-28 | 3.4.3 | En `/mi-clinica/suscripcion`, una sub `trialing + cancel_at_period_end: true` mostraba el CTA "Añadir método de pago" y al pulsarlo abría un **Checkout nuevo** (creando una segunda subscription) en lugar de mostrar "Reactivar suscripción" y deshacer la cancelación de la existente. Causa: orden de comprobaciones en `accionPrincipal()` y `etiquetaAccionPrincipal()` evaluaba la rama `trialing` antes que `cancelaAlFinDelPeriodo()`, por lo que esta última nunca se alcanzaba para subs en trial con cancelación programada. El caso `active + cancel_at_period_end` funcionaba bien por casualidad (la rama `active` cae al default). Fix aplicado: `suscripcion.component.ts` reordena las comprobaciones priorizando `canceled` → `cancelaAlFinDelPeriodo()` → resto. | Alta (datos: creaba subs duplicadas) | Fix aplicado, pendiente validación |
+

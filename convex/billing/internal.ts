@@ -319,6 +319,32 @@ export const markWelcomeEmailSent = internalMutation({
   },
 });
 
+/**
+ * Reasigna el `stripeSubscriptionId` local de una clínica. Usado tras un
+ * Checkout en `mode: 'subscription'` (caso reactivar tras `canceled`) para
+ * apuntar a la nueva subscription creada por Stripe, y por el self-heal de
+ * `cancelSubscription`/`reactivateSubscription` cuando detecta que la sub
+ * local está obsoleta. Idempotente: si el valor coincide, no escribe.
+ */
+export const upsertStripeSubscriptionId = internalMutation({
+  args: {
+    clinicId: v.id("clinics"),
+    stripeSubscriptionId: v.string(),
+  },
+  handler: async (ctx, { clinicId, stripeSubscriptionId }) => {
+    const existing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+    if (!existing) return;
+    if (existing.stripeSubscriptionId === stripeSubscriptionId) return;
+    await ctx.db.patch(existing._id, {
+      stripeSubscriptionId,
+      actualizadoEn: Date.now(),
+    });
+  },
+});
+
 export const recordWebhookEvent = internalMutation({
   args: {
     eventId: v.string(),

@@ -4,9 +4,44 @@ import { v } from "convex/values";
 import Stripe from "stripe";
 import { StripeSubscriptions } from "@convex-dev/stripe";
 import { internal, components } from "../_generated/api";
-import { internalAction, action } from "../_generated/server";
+import { internalAction, action, type ActionCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { planParaFisios } from "./_helpers";
 
 const stripeApi = new StripeSubscriptions(components.stripe);
+
+/**
+ * Sincroniza el `invoice_settings.custom_fields` del customer con la etiqueta
+ * de tramo según el número de fisios. Stripe muestra estos campos en la
+ * cabecera de la factura, aclarando al cliente qué plan está pagando — esto
+ * es importante porque nuestro Price tiered usa `quantity = N fisios`, lo
+ * que en factura se muestra como `"Producto × N"` y puede confundir.
+ *
+ * Si `cantidadFisios` está fuera de los tramos autoservicio (0 o >10),
+ * limpiamos el field para no exponer un texto desactualizado o incorrecto.
+ */
+async function syncStripeCustomerTierLabel(
+  stripe: Stripe,
+  customerId: string,
+  cantidadFisios: number,
+): Promise<void> {
+  const tier = planParaFisios(cantidadFisios);
+  const custom_fields = tier
+    ? [{ name: "Plan", value: `Tramo ${tier.nombre}` }]
+    : [];
+  try {
+    await stripe.customers.update(customerId, {
+      invoice_settings: { custom_fields },
+    });
+  } catch (err) {
+    // No bloqueante: si la sincronización falla, la factura saldrá sin la
+    // etiqueta pero el importe seguirá siendo correcto. Lo logueamos para
+    // que sea visible.
+    console.warn(
+      `[billing] syncStripeCustomerTierLabel falló para customer=${customerId}: ${(err as Error).message}`,
+    );
+  }
+}
 
 function getStripeClient(): Stripe {
   const key = process.env["STRIPE_SECRET_KEY"];
@@ -71,6 +106,57 @@ async function requireExternalId(ctx: {
 }
 
 /**
+ * Self-heal del `stripeSubscriptionId` local. Si la sub apuntada en
+ * `clinicBilling` está `canceled` o `incomplete_expired` (caso típico de
+ * clínicas creadas antes del fix de `finalizeSubscriptionCheckout`, cuando
+ * Checkout `mode: 'subscription'` creaba una S2 nueva pero el ID se quedaba
+ * apuntando a la S1 huérfana), busca la sub viva más reciente del customer y
+ * la persiste localmente. Devuelve el subId resuelto que el caller debe usar.
+ *
+ * Si no existe ninguna sub viva, devuelve el `localSubId` original para que
+ * el caller pueda decidir lanzar un error semántico ("sin suscripción").
+ */
+async function resolveActiveSubscriptionId(
+  ctx: ActionCtx,
+  stripe: Stripe,
+  clinicId: Id<"clinics">,
+  localSubId: string,
+  customerId: string,
+): Promise<string> {
+  const sub = await stripe.subscriptions
+    .retrieve(localSubId)
+    .catch(() => null);
+
+  const isDead =
+    !sub ||
+    sub.status === "canceled" ||
+    sub.status === "incomplete_expired";
+  if (!isDead) return localSubId;
+
+  const subs = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 10,
+  });
+  const alive = subs.data
+    .filter(
+      (s) =>
+        s.status !== "canceled" && s.status !== "incomplete_expired",
+    )
+    .sort((a, b) => b.created - a.created)[0];
+  if (!alive) return localSubId;
+
+  await ctx.runMutation(
+    internal.billing.internal.upsertStripeSubscriptionId,
+    { clinicId, stripeSubscriptionId: alive.id },
+  );
+  console.log(
+    `[billing] resolveActiveSubscriptionId clinic=${clinicId} local=${localSubId} → resolved=${alive.id}`,
+  );
+  return alive.id;
+}
+
+/**
  * Crea customer en Stripe + suscripción con trial sin tarjeta. Idempotente:
  * si la clínica ya tiene `stripeSubscriptionId`, no recrea.
  *
@@ -125,6 +211,7 @@ export const startTrialForClinic = internalAction({
     }
 
     const quantity = Math.max(1, data.cantidadFisios);
+    await syncStripeCustomerTierLabel(stripe, customerId, quantity);
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId, quantity }],
@@ -274,42 +361,83 @@ export const createCheckoutSession = action({
       ? `${appUrl}/billing-return.html?status=cancel`
       : `${appUrl}/mi-clinica/suscripcion?cancel=1`;
 
-    // Llamada directa a Stripe (no usamos `stripeApi.createCheckoutSession`)
-    // para poder configurar Stripe Tax + recogida obligatoria de NIF/CIF +
-    // forzar el cobro de un método de pago nuevo en reactivaciones.
-    // El componente `@convex-dev/stripe` no expone estos campos.
+    // Bifurcación por estado:
+    //   - `trialing`: la sub S1 ya existe y solo necesitamos recoger el
+    //     método de pago. Usamos `mode: 'setup'` y, en el webhook
+    //     `checkout.session.completed`, adjuntamos el PaymentMethod a S1 y
+    //     ponemos `trial_end: 'now'` para terminar el trial → Stripe cobra
+    //     y la sub pasa a `active`. Una única sub durante toda la vida.
+    //   - `canceled | none | incomplete`: necesitamos crear una nueva sub
+    //     (Stripe no permite revivir una sub `canceled`). `mode:
+    //     'subscription'` crea S2 sin trial (el `STRIPE_PRICE_ID` no tiene
+    //     `trial_period_days` configurado a nivel de Price). El webhook
+    //     persiste el `stripeSubscriptionId` nuevo en `clinicBilling`.
     //
-    // Cumplimiento fiscal España (B2B):
-    //   - `automatic_tax`: Stripe calcula el IVA según jurisdicción.
+    // Cumplimiento fiscal España (B2B), común a ambos modos:
     //   - `tax_id_collection.required: 'if_supported'`: pide NIF/CIF al
     //     comprador. Stripe lo guarda en el customer y lo incluye en la
     //     factura.
+    //   - `billing_address_collection: 'required'`: dirección fiscal
+    //     completa (calle/CP/ciudad), obligatoria en factura B2B España.
     //   - `customer_update`: tras Checkout, Stripe actualiza
-    //     name/address/tax_id en el customer existente. Sin esto, los
-    //     datos quedarían sueltos en la session.
-    //   - `payment_method_collection: 'always'`: tras una cancelación,
-    //     evita que Stripe reutilice un método caducado al reactivar.
+    //     name/address/tax_id en el customer existente.
+    //   - `payment_method_collection: 'always'` (solo subscription): tras
+    //     una cancelación, evita que Stripe reutilice un método caducado.
+    //   - `automatic_tax` (solo subscription): aplica al invoice del nuevo
+    //     sub. En `trialing` el `automatic_tax` ya está activo en S1 desde
+    //     `startTrialForClinic`, así que la factura post-trial llevará IVA.
     const stripe = getStripeClient();
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      line_items: [
-        {
-          price: getEnv("STRIPE_PRICE_ID"),
-          quantity: Math.max(1, data.cantidadFisios),
-        },
-      ],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      payment_method_collection: "always",
-      automatic_tax: { enabled: true },
-      tax_id_collection: { enabled: true, required: "if_supported" },
-      customer_update: { name: "auto", address: "auto" },
-      metadata: { orgId: clinicId },
-      subscription_data: {
-        metadata: { orgId: clinicId },
-      },
-    });
+
+    // Sincroniza la etiqueta del tramo en el customer antes de abrir Checkout
+    // para que aparezca en la factura siguiente.
+    await syncStripeCustomerTierLabel(
+      stripe,
+      customerId,
+      Math.max(1, data.cantidadFisios),
+    );
+
+    const estado = data.billing?.estadoLocal ?? "none";
+    const useSetupMode = estado === "trialing";
+
+    const session = useSetupMode
+      ? await stripe.checkout.sessions.create({
+          mode: "setup",
+          customer: customerId,
+          payment_method_types: ["card"],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          billing_address_collection: "required",
+          tax_id_collection: { enabled: true, required: "if_supported" },
+          customer_update: { name: "auto", address: "auto" },
+          setup_intent_data: {
+            metadata: {
+              orgId: clinicId,
+              action: "attach_pm_end_trial",
+            },
+          },
+          metadata: { orgId: clinicId },
+        })
+      : await stripe.checkout.sessions.create({
+          mode: "subscription",
+          customer: customerId,
+          line_items: [
+            {
+              price: getEnv("STRIPE_PRICE_ID"),
+              quantity: Math.max(1, data.cantidadFisios),
+            },
+          ],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          payment_method_collection: "always",
+          billing_address_collection: "required",
+          automatic_tax: { enabled: true },
+          tax_id_collection: { enabled: true, required: "if_supported" },
+          customer_update: { name: "auto", address: "auto" },
+          metadata: { orgId: clinicId },
+          subscription_data: {
+            metadata: { orgId: clinicId },
+          },
+        });
 
     if (!session.url) throw new Error("Stripe no devolvió URL de checkout");
     return { url: session.url };
@@ -380,8 +508,18 @@ export const cancelSubscription = action({
       internal.billing.internal.getBillingContext,
       { clinicId },
     );
-    const subId = data.billing?.stripeSubscriptionId;
-    if (!subId) throw new Error("La clínica no tiene suscripción");
+    const localSubId = data.billing?.stripeSubscriptionId;
+    const customerId = data.billing?.stripeCustomerId;
+    if (!localSubId || !customerId) {
+      throw new Error("La clínica no tiene suscripción");
+    }
+    const subId = await resolveActiveSubscriptionId(
+      ctx,
+      getStripeClient(),
+      clinicId,
+      localSubId,
+      customerId,
+    );
 
     await stripeApi.cancelSubscription(ctx, {
       stripeSubscriptionId: subId,
@@ -414,8 +552,18 @@ export const reactivateSubscription = action({
       internal.billing.internal.getBillingContext,
       { clinicId },
     );
-    const subId = data.billing?.stripeSubscriptionId;
-    if (!subId) throw new Error("La clínica no tiene suscripción");
+    const localSubId = data.billing?.stripeSubscriptionId;
+    const customerId = data.billing?.stripeCustomerId;
+    if (!localSubId || !customerId) {
+      throw new Error("La clínica no tiene suscripción");
+    }
+    const subId = await resolveActiveSubscriptionId(
+      ctx,
+      getStripeClient(),
+      clinicId,
+      localSubId,
+      customerId,
+    );
 
     await stripeApi.reactivateSubscription(ctx, {
       stripeSubscriptionId: subId,
@@ -495,6 +643,112 @@ export const notifyPaymentFailed = internalAction({
  * `clinicBilling.welcomeEmailSentAt`: si una clínica reactiva tras una
  * cancelación previa, no se reenvía la bienvenida.
  */
+/**
+ * Llamada desde el webhook `checkout.session.completed` cuando la session
+ * estaba en `mode: 'setup'` (caso "primer pago durante trial"). Recupera el
+ * SetupIntent, adjunta el PaymentMethod al customer como default, lo asigna
+ * a la subscription existente (S1) y termina el trial con `trial_end:
+ * 'now'`. Stripe entonces emite `customer.subscription.updated` (status →
+ * `active`) e `invoice.paid`, que actualizan el `clinicBilling` por el flujo
+ * normal de webhooks.
+ *
+ * Idempotente: si el customer ya tiene el mismo default_payment_method y la
+ * sub ya está en `active`, las llamadas a Stripe son no-ops.
+ */
+export const finalizeSetupCheckout = internalAction({
+  args: {
+    clinicId: v.id("clinics"),
+    sessionId: v.string(),
+  },
+  handler: async (ctx, { clinicId, sessionId }): Promise<void> => {
+    const data = await ctx.runQuery(
+      internal.billing.internal.getBillingContext,
+      { clinicId },
+    );
+    const customerId = data.billing?.stripeCustomerId;
+    const subId = data.billing?.stripeSubscriptionId;
+    if (!customerId || !subId) {
+      console.warn(
+        `[billing] finalizeSetupCheckout sin customerId/subId locales clinic=${clinicId}; abortando.`,
+      );
+      return;
+    }
+
+    const stripe = getStripeClient();
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const setupIntentId =
+      typeof session.setup_intent === "string"
+        ? session.setup_intent
+        : session.setup_intent?.id;
+    if (!setupIntentId) {
+      console.warn(
+        `[billing] finalizeSetupCheckout session=${sessionId} sin setup_intent; abortando.`,
+      );
+      return;
+    }
+
+    const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+    const pmId =
+      typeof setupIntent.payment_method === "string"
+        ? setupIntent.payment_method
+        : setupIntent.payment_method?.id;
+    if (!pmId) {
+      console.warn(
+        `[billing] finalizeSetupCheckout setupIntent=${setupIntentId} sin payment_method; abortando.`,
+      );
+      return;
+    }
+
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: pmId },
+    });
+
+    // `trial_end: 'now'` termina el trial inmediatamente y dispara la
+    // facturación del periodo. Stripe acepta tanto el literal "now" como un
+    // timestamp en segundos; usamos timestamp para evitar fricción con
+    // versiones del SDK que tipan trial_end como number.
+    await stripe.subscriptions.update(subId, {
+      default_payment_method: pmId,
+      trial_end: Math.floor(Date.now() / 1000),
+      proration_behavior: "none",
+    });
+  },
+});
+
+/**
+ * Llamada desde el webhook `checkout.session.completed` cuando la session
+ * estaba en `mode: 'subscription'` (caso "reactivar tras canceled"). Stripe
+ * acaba de crear una nueva subscription S2; aquí persistimos su ID en
+ * `clinicBilling.stripeSubscriptionId` para que las acciones posteriores
+ * (`cancelSubscription`, `reactivateSubscription`, etc.) operen contra S2 y
+ * no contra la S1 huérfana. Esto corrige un bug arquitectónico
+ * pre-existente.
+ */
+export const finalizeSubscriptionCheckout = internalAction({
+  args: {
+    clinicId: v.id("clinics"),
+    sessionId: v.string(),
+  },
+  handler: async (ctx, { clinicId, sessionId }): Promise<void> => {
+    const stripe = getStripeClient();
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const newSubId =
+      typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription?.id;
+    if (!newSubId) {
+      console.warn(
+        `[billing] finalizeSubscriptionCheckout session=${sessionId} sin subscription; abortando.`,
+      );
+      return;
+    }
+    await ctx.runMutation(
+      internal.billing.internal.upsertStripeSubscriptionId,
+      { clinicId, stripeSubscriptionId: newSubId },
+    );
+  },
+});
+
 export const notifyCheckoutCompleted = internalAction({
   args: { clinicId: v.id("clinics") },
   handler: async (ctx, { clinicId }): Promise<void> => {
@@ -703,9 +957,59 @@ export const updateStripeQuantity = internalAction({
       quantity,
     });
 
+    const customerId = data.billing?.stripeCustomerId;
+    if (customerId) {
+      await syncStripeCustomerTierLabel(
+        getStripeClient(),
+        customerId,
+        quantity,
+      );
+    }
+
     await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
       clinicId,
       cantidadFisios: quantity,
     });
+  },
+});
+
+/**
+ * Backfill manual desde Convex Dashboard. Para una clínica concreta, busca
+ * en Stripe la sub viva más reciente del customer y la persiste en
+ * `clinicBilling.stripeSubscriptionId`. Idempotente. Útil para saneos
+ * masivos de clínicas creadas antes del fix de `finalizeSubscriptionCheckout`
+ * que pueden tener el `stripeSubscriptionId` apuntando a una S1 huérfana.
+ *
+ * Args: `{ "clinicId": "<id>" }`.
+ */
+export const recoverClinicSubscriptionId = internalAction({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, { clinicId }): Promise<{ ok: true; subId: string | null }> => {
+    const data = await ctx.runQuery(
+      internal.billing.internal.getBillingContext,
+      { clinicId },
+    );
+    const customerId = data.billing?.stripeCustomerId;
+    if (!customerId) return { ok: true, subId: null } as const;
+
+    const stripe = getStripeClient();
+    const subs = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 10,
+    });
+    const alive = subs.data
+      .filter(
+        (s) =>
+          s.status !== "canceled" && s.status !== "incomplete_expired",
+      )
+      .sort((a, b) => b.created - a.created)[0];
+    if (!alive) return { ok: true, subId: null } as const;
+
+    await ctx.runMutation(
+      internal.billing.internal.upsertStripeSubscriptionId,
+      { clinicId, stripeSubscriptionId: alive.id },
+    );
+    return { ok: true, subId: alive.id } as const;
   },
 });
