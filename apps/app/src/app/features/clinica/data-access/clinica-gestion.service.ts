@@ -94,6 +94,8 @@ export class ClinicaGestionService {
           postal: payload.postal,
           nif: payload.nif,
           colorPrimario: payload.colorPrimario,
+          logo: payload.logo,
+          addImageKeys: payload.addImageKeys,
         },
       );
 

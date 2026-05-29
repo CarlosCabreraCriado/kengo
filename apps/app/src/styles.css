@@ -819,6 +819,14 @@ body {
   max-width: 440px;
 }
 
+/* Override puntual: el wizard de crear clínica tiene un stepper horizontal
+   de 5 pasos + branding grid; con 500px del default standard el stepper
+   apretaba. 540px da margen al header sin que el diálogo se sienta vacío
+   en pasos con poco contenido (bienvenida, info básica). */
+.ui-dialog-panel--standard:has(app-crear-clinica-dialog) {
+  max-width: 540px;
+}
+
 /* Override puntual: el diálogo de opciones de PDF muestra tres acciones
    cortas (descargar/imprimir/enviar); con 500px queda muy disperso en
    desktop. */

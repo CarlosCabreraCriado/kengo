@@ -18,6 +18,10 @@ export interface CreateClinicaPayload {
   postal?: string;
   nif?: string;
   colorPrimario?: string;
+  /** R2 key del logo (`logos/<uuid>.<ext>`) ya subida, a vincular en la creación */
+  logo?: string;
+  /** R2 keys ya subidas (`clinic-files/<uuid>.<ext>`) a vincular como galería */
+  addImageKeys?: string[];
 }
 
 /**

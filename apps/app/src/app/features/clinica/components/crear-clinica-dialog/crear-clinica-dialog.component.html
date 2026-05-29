@@ -1,88 +1,358 @@
 <ui2-dialog-host>
   <ui2-dialog-header
     title="Crear nueva clínica"
-    subtitle="Completa los datos de tu clínica"
+    subtitle="Configura tu clínica en pocos pasos"
     (closeClick)="cerrar()"
   ></ui2-dialog-header>
 
   <ui2-dialog-content>
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="cc-form">
-      <ui2-input
-        label="Nombre de la clínica"
-        formControlName="nombre"
-        placeholder="Clínica Ejemplo"
-        [required]="true"
-        iconLeft="apartment"
-        [error]="
-          form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']
-            ? 'El nombre es requerido'
-            : null
-        "
-      ></ui2-input>
+    <div
+      class="cc-wizard"
+      [style.--kengo-primary]="form.value.colorPrimario || '#e75c3e'"
+    >
+      <ui2-stepper
+        [selectedIndex]="currentStep()"
+        [linear]="true"
+        (selectedIndexChange)="onStepperIndexChange($event)"
+      >
+        <!-- Paso 1: Bienvenida -->
+        <ui2-step label="Bienvenida">
+          <div class="cc-welcome">
+            <div class="cc-welcome__hero">
+              <div class="cc-welcome__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">add_business</span>
+              </div>
+              <h2 class="cc-welcome__title">Tu clínica en Kengo</h2>
+              <p class="cc-welcome__sub">
+                Estás a un paso de poner en marcha tu espacio. Te lo contamos antes de empezar.
+              </p>
+            </div>
 
-      <div class="cc-row">
-        <ui2-input
-          label="Teléfono"
-          type="tel"
-          formControlName="telefono"
-          placeholder="612 345 678"
-          iconLeft="phone"
-        ></ui2-input>
+            <ui2-card variant="tinted" [padding]="18">
+              <div class="cc-trial">
+                <div class="cc-trial__icon" aria-hidden="true">
+                  <span class="material-symbols-outlined">workspace_premium</span>
+                </div>
+                <div class="cc-trial__body">
+                  <p class="cc-trial__badge">{{ trialDays }} días de prueba gratis</p>
+                  <p class="cc-trial__copy">
+                    Al crear tu clínica activarás automáticamente un periodo de prueba de
+                    <strong>{{ trialDays }} días</strong> con acceso a
+                    <strong>todas las funcionalidades</strong> de Kengo, sin coste alguno.
+                  </p>
+                </div>
+              </div>
+            </ui2-card>
 
-        <ui2-input
-          label="Email"
-          type="email"
-          formControlName="email"
-          placeholder="clinica@ejemplo.com"
-          iconLeft="mail"
-          [error]="
-            form.get('email')?.touched && form.get('email')?.errors?.['email']
-              ? 'Email no válido'
-              : null
-          "
-        ></ui2-input>
-      </div>
+            <ul class="cc-welcome__list">
+              <li>
+                <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                <span>No introducirás datos de pago para empezar.</span>
+              </li>
+              <li>
+                <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                <span>Configurarás logo, color e imágenes de tu clínica.</span>
+              </li>
+              <li>
+                <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                <span>Podrás invitar a otros fisios y pacientes en cualquier momento.</span>
+              </li>
+            </ul>
+          </div>
+        </ui2-step>
 
-      <ui2-input
-        label="Dirección"
-        formControlName="direccion"
-        placeholder="Calle Ejemplo 123, Ciudad"
-        iconLeft="location_on"
-      ></ui2-input>
+        <!-- Paso 2: Información básica -->
+        <ui2-step label="Información">
+          <form [formGroup]="form" class="cc-form">
+            <ui2-section-label>Datos de la clínica</ui2-section-label>
 
-      <div class="cc-row">
-        <ui2-input
-          label="Código postal"
-          formControlName="postal"
-          placeholder="28001"
-        ></ui2-input>
+            <ui2-input
+              label="Nombre de la clínica"
+              formControlName="nombre"
+              placeholder="Clínica Ejemplo"
+              [required]="true"
+              iconLeft="apartment"
+              [error]="
+                form.get('nombre')?.touched && form.get('nombre')?.errors?.['required']
+                  ? 'El nombre es requerido'
+                  : form.get('nombre')?.touched && form.get('nombre')?.errors?.['minlength']
+                    ? 'Mínimo 2 caracteres'
+                    : null
+              "
+            ></ui2-input>
 
-        <ui2-input
-          label="NIF/CIF"
-          formControlName="nif"
-          placeholder="B12345678"
-        ></ui2-input>
-      </div>
+            <ui2-input
+              label="Nombre comercial"
+              formControlName="nombreComercial"
+              placeholder="Mi Clínica"
+              iconLeft="badge"
+              hint="Nombre abreviado (máx. 15 caracteres) que se mostrará en partes de la UI."
+              [error]="
+                form.get('nombreComercial')?.touched && form.get('nombreComercial')?.errors?.['maxlength']
+                  ? 'Máximo 15 caracteres'
+                  : null
+              "
+            ></ui2-input>
 
-      <div class="cc-color-group">
-        <span class="cc-color-label">Color corporativo</span>
-        <div class="cc-color-presets">
-          @for (color of colorPresets; track color) {
-            <button
-              type="button"
-              class="cc-color-preset"
-              [class.cc-color-preset--active]="form.value.colorPrimario === color"
-              [style.background-color]="color"
-              [title]="color"
-              (click)="selectColor(color)"
-            >
-              @if (form.value.colorPrimario === color) {
-                <span class="material-symbols-outlined cc-color-check" aria-hidden="true">check</span>
-              }
-            </button>
-          }
-        </div>
-      </div>
+            <ui2-input
+              label="NIF / CIF"
+              formControlName="nif"
+              placeholder="B12345678"
+              iconLeft="receipt_long"
+            ></ui2-input>
+          </form>
+        </ui2-step>
+
+        <!-- Paso 3: Contacto -->
+        <ui2-step label="Contacto">
+          <form [formGroup]="form" class="cc-form">
+            <ui2-section-label>Cómo contactar contigo</ui2-section-label>
+
+            <div class="cc-row">
+              <ui2-input
+                label="Teléfono"
+                type="tel"
+                formControlName="telefono"
+                placeholder="612 345 678"
+                iconLeft="phone"
+              ></ui2-input>
+              <ui2-input
+                label="Email"
+                type="email"
+                formControlName="email"
+                placeholder="clinica@ejemplo.com"
+                iconLeft="mail"
+                [error]="
+                  form.get('email')?.touched && form.get('email')?.errors?.['email']
+                    ? 'Email no válido'
+                    : null
+                "
+              ></ui2-input>
+            </div>
+
+            <ui2-input
+              label="Web"
+              type="url"
+              formControlName="web"
+              placeholder="https://miclinica.com"
+              iconLeft="public"
+              [error]="
+                form.get('web')?.touched && form.get('web')?.errors?.['pattern']
+                  ? 'Introduce una URL válida'
+                  : null
+              "
+            ></ui2-input>
+
+            <ui2-input
+              label="Dirección"
+              formControlName="direccion"
+              placeholder="Calle Ejemplo 123, Ciudad"
+              iconLeft="location_on"
+            ></ui2-input>
+
+            <ui2-input
+              label="Código postal"
+              formControlName="postal"
+              placeholder="28001"
+            ></ui2-input>
+          </form>
+        </ui2-step>
+
+        <!-- Paso 4: Branding -->
+        <ui2-step label="Branding">
+          <form [formGroup]="form" class="cc-form">
+            <div class="cc-branding-grid">
+              <div class="cc-section">
+                <ui2-section-label>Logo de la clínica</ui2-section-label>
+                <div class="cc-logo-wrap">
+                  @if (logoPreviewUrl()) {
+                    <div class="cc-logo">
+                      <img [src]="logoPreviewUrl()" alt="Logo de la clínica" class="cc-logo-img" />
+                      <div class="cc-logo-actions">
+                        <button
+                          type="button"
+                          class="cc-logo-btn"
+                          (click)="openLogoUploader()"
+                          title="Cambiar logo"
+                          aria-label="Cambiar logo"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="cc-logo-btn cc-logo-btn--danger"
+                          (click)="clearLogo()"
+                          title="Eliminar logo"
+                          aria-label="Eliminar logo"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <button type="button" class="cc-logo-upload" (click)="openLogoUploader()">
+                      <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+                      <span>Añadir logo</span>
+                    </button>
+                  }
+                </div>
+                <p class="cc-hint">PNG transparente recomendado. Se subirá solo al crear la clínica.</p>
+              </div>
+
+              <div class="cc-section">
+                <ui2-section-label>Color corporativo</ui2-section-label>
+                <div class="cc-color-presets">
+                  @for (color of colorPresets; track color) {
+                    <button
+                      type="button"
+                      class="cc-color-preset"
+                      [class.cc-color-preset--active]="form.value.colorPrimario === color"
+                      [style.background-color]="color"
+                      [title]="color"
+                      [attr.aria-label]="'Seleccionar color ' + color"
+                      (click)="selectColor(color)"
+                    >
+                      @if (form.value.colorPrimario === color) {
+                        <span class="material-symbols-outlined cc-color-check" aria-hidden="true">check</span>
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="cc-color-preview">
+              <span class="cc-color-preview-label">Vista previa</span>
+              <div class="cc-color-preview-items">
+                <span
+                  class="cc-preview-button"
+                  [style.background]="
+                    'linear-gradient(135deg, ' + form.value.colorPrimario + ', ' + getDarkerColor(form.value.colorPrimario) + ')'
+                  "
+                >Botón</span>
+                <span
+                  class="cc-preview-badge"
+                  [style.background-color]="form.value.colorPrimario + '20'"
+                  [style.color]="form.value.colorPrimario || '#e75c3e'"
+                >Badge</span>
+                <span class="cc-preview-icon" [style.color]="form.value.colorPrimario || '#e75c3e'">
+                  <span class="material-symbols-outlined" aria-hidden="true">favorite</span>
+                </span>
+              </div>
+            </div>
+          </form>
+        </ui2-step>
+
+        <!-- Paso 5: Galería + Resumen -->
+        <ui2-step label="Resumen">
+          <div class="cc-form">
+            <div class="cc-section">
+              <div class="cc-gallery-header">
+                <ui2-section-label>Galería (opcional)</ui2-section-label>
+                <span class="cc-gallery-count">{{ newImageFiles().length }} / 5</span>
+              </div>
+              <div class="cc-gallery-grid">
+                @for (file of newImageFiles(); track $index) {
+                  <div class="cc-gallery-item cc-gallery-item--new">
+                    <img [src]="getNewImagePreviewUrl(file)" alt="Imagen seleccionada" class="cc-gallery-img" />
+                    <button
+                      type="button"
+                      class="cc-gallery-delete"
+                      (click)="removeNewImage($index)"
+                      title="Quitar imagen"
+                      aria-label="Quitar imagen"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                    </button>
+                  </div>
+                }
+
+                @if (canAddMoreImages()) {
+                  <label class="cc-gallery-add">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      multiple
+                      class="cc-gallery-input"
+                      (change)="onGalleryImagesSelected($event)"
+                    />
+                    <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+                    <span class="cc-gallery-add-text">Añadir</span>
+                  </label>
+                }
+              </div>
+              <p class="cc-hint">Máximo 5 imágenes. Formatos: PNG, JPG, WebP (máx. 5 MB cada una).</p>
+            </div>
+
+            <div class="cc-section">
+              <ui2-section-label>Resumen</ui2-section-label>
+              <ui2-card [padding]="16">
+                <ul class="cc-summary">
+                  <li>
+                    <span class="cc-summary__key">Nombre</span>
+                    <span class="cc-summary__val">{{ form.value.nombre || '—' }}</span>
+                  </li>
+                  @if (form.value.nombreComercial) {
+                    <li>
+                      <span class="cc-summary__key">Nombre comercial</span>
+                      <span class="cc-summary__val">{{ form.value.nombreComercial }}</span>
+                    </li>
+                  }
+                  @if (form.value.nif) {
+                    <li>
+                      <span class="cc-summary__key">NIF / CIF</span>
+                      <span class="cc-summary__val">{{ form.value.nif }}</span>
+                    </li>
+                  }
+                  @if (hasContacto()) {
+                    <li>
+                      <span class="cc-summary__key">Contacto</span>
+                      <span class="cc-summary__val cc-summary__val--multi">
+                        @if (form.value.telefono) { <span>{{ form.value.telefono }}</span> }
+                        @if (form.value.email) { <span>{{ form.value.email }}</span> }
+                        @if (form.value.web) { <span>{{ form.value.web }}</span> }
+                        @if (form.value.direccion) {
+                          <span>
+                            {{ form.value.direccion }}@if (form.value.postal) { , {{ form.value.postal }} }
+                          </span>
+                        } @else if (form.value.postal) {
+                          <span>CP {{ form.value.postal }}</span>
+                        }
+                      </span>
+                    </li>
+                  }
+                  <li>
+                    <span class="cc-summary__key">Logo</span>
+                    <span class="cc-summary__val">{{ logoFile() ? 'Sí' : 'Sin logo' }}</span>
+                  </li>
+                  <li>
+                    <span class="cc-summary__key">Color</span>
+                    <span class="cc-summary__val cc-summary__color">
+                      <span
+                        class="cc-summary__dot"
+                        [style.background-color]="form.value.colorPrimario || '#e75c3e'"
+                      ></span>
+                      <span>{{ form.value.colorPrimario }}</span>
+                    </span>
+                  </li>
+                  <li>
+                    <span class="cc-summary__key">Galería</span>
+                    <span class="cc-summary__val">
+                      {{ newImageFiles().length }}
+                      {{ newImageFiles().length === 1 ? 'imagen' : 'imágenes' }}
+                    </span>
+                  </li>
+                </ul>
+              </ui2-card>
+              <p class="cc-final-note">
+                <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+                Al pulsar <strong>Crear clínica</strong> activarás tu periodo de prueba de
+                {{ trialDays }} días y entrarás en modo fisio.
+              </p>
+            </div>
+          </div>
+        </ui2-step>
+      </ui2-stepper>
 
       @if (error()) {
         <div class="cc-error" role="alert">
@@ -90,19 +360,40 @@
           {{ error() }}
         </div>
       }
-    </form>
+    </div>
   </ui2-dialog-content>
 
   <ui2-dialog-actions align="end">
-    <ui2-button variant="secondary" (clicked)="cerrar()">Cancelar</ui2-button>
-    <ui2-button
-      variant="primary"
-      [disabled]="form.invalid"
-      [loading]="loading()"
-      iconLeft="add_business"
-      (clicked)="onSubmit()"
-    >
-      Crear clínica
-    </ui2-button>
+    @if (isFirstStep()) {
+      <ui2-button variant="secondary" (clicked)="cerrar()">Cancelar</ui2-button>
+      <ui2-button variant="primary" iconRight="arrow_forward" (clicked)="goNext()">
+        Empezar
+      </ui2-button>
+    } @else if (isLastStep()) {
+      <ui2-button variant="secondary" iconLeft="arrow_back" (clicked)="goBack()">
+        Atrás
+      </ui2-button>
+      <ui2-button
+        variant="primary"
+        iconLeft="add_business"
+        [loading]="loading()"
+        [disabled]="form.invalid"
+        (clicked)="onSubmit()"
+      >
+        Crear clínica
+      </ui2-button>
+    } @else {
+      <ui2-button variant="secondary" iconLeft="arrow_back" (clicked)="goBack()">
+        Atrás
+      </ui2-button>
+      <ui2-button
+        variant="primary"
+        iconRight="arrow_forward"
+        [disabled]="!isStepValid(currentStep())"
+        (clicked)="goNext()"
+      >
+        Siguiente
+      </ui2-button>
+    }
   </ui2-dialog-actions>
 </ui2-dialog-host>

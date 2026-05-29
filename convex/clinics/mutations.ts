@@ -30,11 +30,19 @@ export const create = mutation({
     nif: v.optional(v.string()),
     colorPrimario: v.optional(v.string()),
     colorSecundario: v.optional(v.string()),
+    // R2 key (`logos/<uuid>.<ext>`) ya subida, a vincular como logo de la clínica.
+    logo: v.optional(v.string()),
+    // Keys de R2 ya subidas (prefix `clinic-files/`) a vincular como galería.
+    addImageKeys: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     assertHexColor(args.colorPrimario, "colorPrimario");
     assertHexColor(args.colorSecundario, "colorSecundario");
+
+    if (args.logo !== undefined && !args.logo.startsWith("logos/")) {
+      throw new Error("Key de logo inválida");
+    }
 
     const clinicId = await ctx.db.insert("clinics", {
       nombre: args.nombre,
@@ -47,6 +55,7 @@ export const create = mutation({
       nif: args.nif,
       colorPrimario: args.colorPrimario,
       colorSecundario: args.colorSecundario,
+      logo: args.logo,
       createdBy: user._id,
       // El creador queda automáticamente como propietario (único responsable
       // del billing). Mantiene la invariante "siempre hay exactamente un
@@ -59,6 +68,18 @@ export const create = mutation({
       clinicId,
       puesto: "admin",
     });
+
+    if (args.addImageKeys && args.addImageKeys.length > 0) {
+      for (const key of args.addImageKeys) {
+        if (!key.startsWith("clinic-files/")) {
+          throw new Error("Key de imagen inválida");
+        }
+        await ctx.db.insert("clinicFiles", {
+          clinicId,
+          fileId: key,
+        });
+      }
+    }
 
     // Encolar creación del customer + suscripción con trial en Stripe.
     // Si falla no afecta a la creación de la clínica (se podrá reintentar
