@@ -14,9 +14,12 @@ const DIA_MS = 24 * 60 * 60 * 1000;
  * Estado reactivo de la suscripción de la clínica activa.
  *
  * Resuelve la suscripción de la **clínica activa** (`ClinicaActivaService`)
- * cuando el usuario tiene puesto `admin` en ella. Si el puesto activo no es
- * admin (paciente o fisio), no expone billing porque solo el admin puede
- * gestionarlo.
+ * para cualquier miembro facturable (`fisio` o `admin`). Esto permite que los
+ * fisios no-admin también vean el estado de bloqueo en la UI: la regla
+ * multiclínica dice que la clínica activa manda, así que cualquiera que
+ * trabaje en ella necesita conocer su estado. Las acciones que mutan billing
+ * (Checkout, Portal, cancel/reactivar) siguen restringidas al owner — el
+ * payload incluye `esOwner` para esa decisión.
  */
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
@@ -32,21 +35,40 @@ export class SubscriptionService {
   }
 
   /**
-   * ID de la clínica activa cuando el usuario es admin en ella. `null` en
-   * cualquier otro caso (sin clínica activa, o admin en otra clínica que
-   * no es la activa actualmente).
+   * ID de la clínica activa cuando el usuario es miembro facturable
+   * (`fisio` o `admin`). `null` en cualquier otro caso (sin clínica activa,
+   * o solo paciente en ella).
    */
-  public readonly clinicIdAdmin = computed<string | null>(() => {
+  public readonly clinicIdActiva = computed<string | null>(() => {
     const id = this.clinicaActiva.selectedClinicaId();
     if (!id) return null;
     const m = this.session.misclinicas().find((c) => c.clinicId === id);
-    return m?.puesto === 'admin' ? id : null;
+    return m?.puesto === 'admin' || m?.puesto === 'fisio' ? id : null;
+  });
+
+  /**
+   * `true` cuando el usuario es admin en la clínica activa. Úsalo en las CTAs
+   * que mutan billing/team (Stripe Checkout, Portal, transferOwnership).
+   */
+  public readonly esAdminEnClinicaActiva = computed<boolean>(() => {
+    const id = this.clinicaActiva.selectedClinicaId();
+    if (!id) return false;
+    const m = this.session.misclinicas().find((c) => c.clinicId === id);
+    return m?.puesto === 'admin';
+  });
+
+  /**
+   * @deprecated Usa `clinicIdActiva` (fisio/admin) o `esAdminEnClinicaActiva`
+   * según el caso. Se mantiene como alias hasta migrar todos los callers.
+   */
+  public readonly clinicIdAdmin = computed<string | null>(() => {
+    return this.esAdminEnClinicaActiva() ? this.clinicIdActiva() : null;
   });
 
   private readonly query = this.convex.watchQuery(
     api.billing.queries.getMyClinicSubscription,
     () => {
-      const id = this.clinicIdAdmin();
+      const id = this.clinicIdActiva();
       return id ? { clinicId: id as never } : 'skip';
     },
   );

@@ -55,7 +55,8 @@
         <button
           type="button"
           class="option-card"
-          [disabled]="accionEnProgreso()"
+          [disabled]="accionEnProgreso() || bloqueoEnvio()"
+          [attr.title]="bloqueoEnvio() ? 'Tu suscripción no está activa' : null"
           (click)="mostrarFormEmail()"
         >
           <div class="option-icon">
@@ -63,10 +64,18 @@
           </div>
           <div class="option-text">
             <h4>Enviar por correo</h4>
-            <p>Enviar PDF al paciente por email</p>
+            <p>
+              @if (bloqueoEnvio()) {
+                Suscripción inactiva
+              } @else {
+                Enviar PDF al paciente por email
+              }
+            </p>
           </div>
           <div class="option-action">
-            <span class="material-symbols-outlined">chevron_right</span>
+            <span class="material-symbols-outlined">
+              @if (bloqueoEnvio()) { lock } @else { chevron_right }
+            </span>
           </div>
         </button>
       }

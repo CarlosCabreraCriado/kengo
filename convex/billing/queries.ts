@@ -20,7 +20,14 @@ export const getMyClinicSubscription = query({
   args: { clinicId: v.id("clinics") },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    await checkClinicPermission(ctx, user._id, args.clinicId, ["admin"]);
+    // Cualquier miembro facturable (fisio/admin) puede leer el estado de la
+    // clínica activa: lo necesita para que el frontend muestre el bloqueo o el
+    // banner de trial al fisio aunque no sea admin. El payload no expone
+    // datos sensibles; las acciones de Stripe se gatean aparte por owner.
+    await checkClinicPermission(ctx, user._id, args.clinicId, [
+      "fisio",
+      "admin",
+    ]);
 
     const clinic = await ctx.db.get(args.clinicId);
     if (!clinic) throw new Error("Clínica no encontrada");

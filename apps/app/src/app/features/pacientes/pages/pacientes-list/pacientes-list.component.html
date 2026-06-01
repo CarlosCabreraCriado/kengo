@@ -42,6 +42,8 @@
             variant="primary"
             iconLeft="person_add"
             size="sm"
+            [disabled]="bloqueoEscritura()"
+            [attr.title]="bloqueoEscritura() ? 'Tu suscripción no está activa' : null"
             (clicked)="openAddPaciente()"
           >Añadir</ui2-button>
         }
@@ -275,6 +277,8 @@
       type="button"
       class="pl-fab"
       aria-label="Añadir paciente"
+      [disabled]="bloqueoEscritura()"
+      [attr.title]="bloqueoEscritura() ? 'Tu suscripción no está activa' : null"
       (click)="openAddPaciente()"
     >
       <span class="material-symbols-outlined" aria-hidden="true">person_add</span>

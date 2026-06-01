@@ -18,6 +18,7 @@ import type {
 } from 'convex/server';
 import { environment } from '../../../environments/environment';
 import type { ConvexTokenResult } from '../auth/services/better-auth.service';
+import { SubscriptionGateService } from '../billing/subscription-gate.service';
 
 export interface ConvexQueryResult<T> {
   readonly value: Signal<T | undefined>;
@@ -301,7 +302,12 @@ export class ConvexService {
     options?: { requireAuth?: boolean; timeoutMs?: number },
   ): Promise<FunctionReturnType<Mutation>> {
     await this.ensureAuthForCall(options);
-    return this.client.mutation(mutation, args);
+    try {
+      return await this.client.mutation(mutation, args);
+    } catch (err) {
+      this.maybeHandleSubscriptionGate(err);
+      throw err;
+    }
   }
 
   /**
@@ -315,7 +321,12 @@ export class ConvexService {
     options?: { requireAuth?: boolean; timeoutMs?: number },
   ): Promise<FunctionReturnType<Action>> {
     await this.ensureAuthForCall(options);
-    return this.client.action(action, args);
+    try {
+      return await this.client.action(action, args);
+    } catch (err) {
+      this.maybeHandleSubscriptionGate(err);
+      throw err;
+    }
   }
 
   /**
@@ -339,5 +350,17 @@ export class ConvexService {
     if (!requireAuth) return;
     const ok = await this.waitForAuth(options?.timeoutMs);
     if (!ok) throw new NotAuthenticatedError();
+  }
+
+  // Resolución lazy del gate para evitar referencias circulares en arranque y
+  // permitir que el service sea opcional en tests/setups sin Router/Dialog.
+  private maybeHandleSubscriptionGate(err: unknown): void {
+    try {
+      const gate = this.injector.get(SubscriptionGateService);
+      gate.handle(err);
+    } catch {
+      // Si el inyector no resuelve el gate (entorno de tests, arranque),
+      // ignoramos silenciosamente — el caller seguirá viendo el throw.
+    }
   }
 }

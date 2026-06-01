@@ -23,6 +23,7 @@ import {
   Ui2IconBadgeComponent,
 } from '../../../../shared/ui-v2';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { ClipboardService } from '../../../../core/services/clipboard.service';
 
 import type { Usuario } from '../../../../../types/global';
@@ -63,6 +64,7 @@ export class GestionAccesoDialogComponent implements OnInit {
   @ViewChild('qrCanvas', { static: false }) qrCanvas!: ElementRef<HTMLCanvasElement>;
 
   private authService = inject(AuthService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private dialogRef = inject(DialogRef);
   private dialogService = inject(DialogService);
   private clipboard = inject(ClipboardService);
@@ -121,8 +123,10 @@ export class GestionAccesoDialogComponent implements OnInit {
 
   private async crearNuevoToken(): Promise<void> {
     try {
+      const clinicId = this.clinicaActiva.selectedClinicaId() ?? undefined;
       const response = await this.authService.crearTokenAcceso(
         this.paciente.id,
+        clinicId ? { clinicId } : undefined,
       );
 
       this.tokenInfo.set({
@@ -164,7 +168,10 @@ export class GestionAccesoDialogComponent implements OnInit {
     this.emailSent.set(false);
 
     try {
-      await this.authService.enviarTokenPorEmail(this.paciente.id);
+      await this.authService.enviarTokenPorEmail(
+        this.paciente.id,
+        this.clinicaActiva.selectedClinicaId() ?? undefined,
+      );
       this.emailSent.set(true);
       setTimeout(() => this.emailSent.set(false), 3000);
     } catch (err: any) {

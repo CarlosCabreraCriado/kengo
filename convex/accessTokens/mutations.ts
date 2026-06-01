@@ -1,6 +1,11 @@
 import { v } from "convex/values";
 import { mutation, internalMutation } from "../_generated/server";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import {
+  checkClinicPermission,
+  getAuthenticatedUser,
+  requireActiveSubscription,
+  requireAnyActiveSubscriptionForUser,
+} from "../_helpers/permissions";
 
 function buildUrl(token: string): string {
   const appUrl = (process.env["APP_URL"] as string) || "https://kengoapp.com";
@@ -18,9 +23,24 @@ export const create = mutation({
     userId: v.id("users"),
     usosMaximos: v.optional(v.number()),
     diasExpiracion: v.optional(v.number()),
+    /**
+     * Clínica activa del fisio. Cuando se proporciona, valida estrictamente
+     * contra esa clínica (regla multiclínica: la activa manda). Sin ella,
+     * fallback a "any" para compatibilidad transitoria.
+     */
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args) => {
     const requester = await getAuthenticatedUser(ctx);
+    if (args.clinicId) {
+      await checkClinicPermission(ctx, requester._id, args.clinicId, [
+        "fisio",
+        "admin",
+      ]);
+      await requireActiveSubscription(ctx, args.clinicId);
+    } else {
+      await requireAnyActiveSubscriptionForUser(ctx, requester._id);
+    }
     const targetId = args.userId;
 
     const token = randomToken();

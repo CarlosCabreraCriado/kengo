@@ -23,6 +23,7 @@ import { AddPacienteDialogComponent } from '../../components/add-paciente/add-pa
 // Servicios:
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
+import { SubscriptionService } from '../../../../core/billing/subscription.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { MetricasPacientesService } from '../../data-access/metricas-pacientes.service';
@@ -77,6 +78,7 @@ interface OrdenOption {
 export class PacientesListComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private subs = inject(SubscriptionService);
   private dialogService = inject(DialogService);
   private router = inject(Router);
   public planBuilderService = inject(PlanBuilderService);
@@ -128,6 +130,14 @@ export class PacientesListComponent implements OnInit, OnDestroy {
 
   // Es admin en alguna clínica (delegado en SessionService)
   readonly esAdmin = this.sessionService.esAdmin;
+
+  /**
+   * Bloqueo de operaciones de escritura del fisio cuando la suscripción de su
+   * clínica activa está suspendida. Pacientes no se ven afectados.
+   */
+  readonly bloqueoEscritura = computed(
+    () => this.sessionService.enModoFisio() && this.subs.bloqueada(),
+  );
 
   private readonly busqueda = signal('');
   readonly filtroActividad = signal<FiltroActividad>(this.leerFiltroGuardado());

@@ -10,7 +10,8 @@
         <app-chat-thread [items]="items()"></app-chat-thread>
       </div>
       <app-chat-composer
-        [placeholder]="placeholder()"
+        [placeholder]="composerPlaceholder()"
+        [disabled]="bloqueoComposer()"
         (send)="onSend($event)"
       ></app-chat-composer>
     </section>

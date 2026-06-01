@@ -59,6 +59,13 @@ export const createPatient = action({
       return { success: false, error: "Email no válido", code: "DATOS_INVALIDOS" };
     }
 
+    // Bloquea la creación si la clínica no tiene suscripción operativa.
+    // Lanza ConvexError({ code: "SUBSCRIPTION_INACTIVE" }) — el frontend lo
+    // captura globalmente en SubscriptionGateService.
+    await ctx.runQuery(internal.billing.internal.assertActiveSubscription, {
+      clinicId: args.clinicId,
+    });
+
     // Comprobar si existe en Better-Auth ya
     const exists = await ctx.runQuery(internal.auth.queries.emailExists, { email });
 

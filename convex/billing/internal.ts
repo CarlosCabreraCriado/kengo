@@ -561,6 +561,117 @@ export const assertAdminOnClinicByExternalId = internalQuery({
   },
 });
 
+function assertBillingPermiteOperar(billing: {
+  estadoLocal: string;
+  graceUntil?: number;
+} | null): void {
+  if (!billing) return;
+  if (billing.estadoLocal === "trialing" || billing.estadoLocal === "active") {
+    return;
+  }
+  if (
+    billing.estadoLocal === "past_due" &&
+    billing.graceUntil !== undefined &&
+    billing.graceUntil > Date.now()
+  ) {
+    return;
+  }
+  throw new ConvexError({
+    code: "SUBSCRIPTION_INACTIVE",
+    message: "La suscripción de la clínica está inactiva.",
+  });
+}
+
+/**
+ * Verifica que la clínica tiene una suscripción en estado operativo (trialing,
+ * active, o past_due con gracia vigente). Lanza `ConvexError({ code:
+ * "SUBSCRIPTION_INACTIVE" })` si no. Usar desde actions cuando se vaya a
+ * iniciar una operación de escritura:
+ * `ctx.runQuery(internal.billing.internal.assertActiveSubscription, { clinicId })`.
+ */
+export const assertActiveSubscription = internalQuery({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, { clinicId }) => {
+    const billing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+    assertBillingPermiteOperar(billing);
+  },
+});
+
+/**
+ * Verifica que el usuario identificado por `externalId` (fisio/admin) es
+ * miembro de **al menos una** clínica con suscripción operativa. Lanza
+ * `ConvexError({ code: "SUBSCRIPTION_INACTIVE" })` en caso contrario. Si el
+ * usuario no es miembro de ninguna clínica facturable, deja pasar.
+ */
+export const assertAnyActiveSubscriptionByExternalId = internalQuery({
+  args: { externalId: v.string() },
+  handler: async (ctx, { externalId }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_externalId", (q) => q.eq("externalId", externalId))
+      .unique();
+    if (!user) throw new Error("Usuario no encontrado");
+
+    const memberships = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const facturables = memberships.filter(
+      (m) => m.puesto === "fisio" || m.puesto === "admin",
+    );
+    if (facturables.length === 0) return;
+
+    for (const m of facturables) {
+      const billing = await ctx.db
+        .query("clinicBilling")
+        .withIndex("by_clinicId", (q) => q.eq("clinicId", m.clinicId))
+        .unique();
+      if (!billing) return;
+      if (
+        billing.estadoLocal === "trialing" ||
+        billing.estadoLocal === "active"
+      ) {
+        return;
+      }
+      if (
+        billing.estadoLocal === "past_due" &&
+        billing.graceUntil !== undefined &&
+        billing.graceUntil > Date.now()
+      ) {
+        return;
+      }
+    }
+
+    throw new ConvexError({
+      code: "SUBSCRIPTION_INACTIVE",
+      message:
+        "Ninguna de tus clínicas tiene una suscripción activa. Actualiza el método de pago para seguir trabajando.",
+    });
+  },
+});
+
+/**
+ * Variante de `assertActiveSubscription` que resuelve el `clinicId` a partir
+ * de un `planId`. Usar desde actions que parten de un plan (envío de PDF,
+ * magic link asociado a un plan).
+ */
+export const assertActiveSubscriptionByPlanId = internalQuery({
+  args: { planId: v.id("plans") },
+  handler: async (ctx, { planId }) => {
+    const plan = await ctx.db.get(planId);
+    if (!plan) throw new Error("Plan no encontrado");
+    const billing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", plan.clinicId))
+      .unique();
+    assertBillingPermiteOperar(billing);
+  },
+});
+
 /**
  * Verifica que el usuario identificado por `externalId` es el **propietario**
  * (`clinics.ownerUserId`) de la clínica. Lanza `ConvexError({ code:

@@ -58,7 +58,8 @@
       <ui2-button
         variant="primary"
         iconLeft="key"
-        [disabled]="!formValido()"
+        [disabled]="!formValido() || bloqueoEscritura()"
+        [attr.title]="bloqueoEscritura() ? 'Tu suscripción no está activa' : null"
         [loading]="loading()"
         (clicked)="onSubmit()"
       >

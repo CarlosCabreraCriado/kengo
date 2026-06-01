@@ -26,4 +26,5 @@ export { provideConvex } from './convex/convex.provider';
 
 // Billing
 export { SubscriptionService } from './billing/subscription.service';
+export { SubscriptionGateService } from './billing/subscription-gate.service';
 export { BillingBannerComponent } from './billing/billing-banner.component';

@@ -13,10 +13,33 @@ function buildUrl(token: string): string {
 }
 
 export const sendByEmail = action({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string(),
+    /**
+     * Clínica activa del fisio. Cuando se proporciona, valida estrictamente
+     * contra esa clínica (regla multiclínica: la activa manda). Sin ella,
+     * fallback al chequeo "any" para compatibilidad transitoria.
+     */
+    clinicId: v.optional(v.id("clinics")),
+  },
   handler: async (ctx, args): Promise<{ ok: boolean; emailEnviado: boolean }> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("No autenticado");
+
+    // Bloquea el envío del magic link según la regla multiclínica: si el
+    // frontend pasa la clínica activa, validamos esa específicamente; en su
+    // defecto, exigimos que el fisio tenga al menos una clínica operativa.
+    if (args.clinicId) {
+      await ctx.runQuery(
+        internal.billing.internal.assertActiveSubscription,
+        { clinicId: args.clinicId },
+      );
+    } else {
+      await ctx.runQuery(
+        internal.billing.internal.assertAnyActiveSubscriptionByExternalId,
+        { externalId: identity.subject },
+      );
+    }
 
     const requester = await ctx.runQuery(internal.users.internal.getRequesterByExternalId, {
       externalId: identity.subject,

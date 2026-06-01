@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { SessionService } from '../../../../core';
+import { SessionService, SubscriptionService } from '../../../../core';
 import { useResponsive } from '../../../../shared/composables/use-responsive';
 import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
 import { ChatHeaderComponent } from '../../components/chat-header/chat-header.component';
@@ -19,8 +19,22 @@ import { PushNotificationService } from '../../../../core/services/push-notifica
 export class MensajesThreadPageComponent implements OnInit {
   protected mensajes = inject(MensajesService);
   protected session = inject(SessionService);
+  private subs = inject(SubscriptionService);
   private router = inject(Router);
   private push = inject(PushNotificationService);
+
+  /**
+   * Bloquea el composer cuando el usuario en modo fisio no tiene suscripción
+   * activa. Los pacientes pueden enviar mensajes siempre.
+   */
+  protected readonly bloqueoComposer = computed(
+    () => this.session.enModoFisio() && this.subs.bloqueada(),
+  );
+
+  protected readonly composerPlaceholder = computed(() => {
+    if (this.bloqueoComposer()) return 'Tu suscripción no está activa';
+    return this.placeholder();
+  });
 
   ngOnInit(): void {
     void this.push.clearBadge();

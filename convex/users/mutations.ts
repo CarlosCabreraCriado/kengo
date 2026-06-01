@@ -1,7 +1,12 @@
 import { v } from "convex/values";
 import { mutation, internalMutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import {
+  checkClinicPermission,
+  getAuthenticatedUser,
+  requireActiveSubscription,
+  requireAnyActiveSubscriptionForUser,
+} from "../_helpers/permissions";
 
 function buildSearchableText(
   firstName?: string | null,
@@ -205,6 +210,12 @@ export const updatePatient = mutation({
     lastName: v.optional(v.string()),
     email: v.optional(v.string()),
     telefono: v.optional(v.string()),
+    /**
+     * Clínica activa del fisio en el frontend. Cuando se proporciona se
+     * valida estrictamente contra esa clínica (regla multiclínica: la activa
+     * manda). Si no se pasa, fallback al chequeo "any" — deuda transitoria.
+     */
+    clinicId: v.optional(v.id("clinics")),
     clinicMemberships: v.optional(
       v.array(
         v.object({
@@ -219,7 +230,16 @@ export const updatePatient = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const fisio = await getAuthenticatedUser(ctx);
+    if (args.clinicId) {
+      await checkClinicPermission(ctx, fisio._id, args.clinicId, [
+        "fisio",
+        "admin",
+      ]);
+      await requireActiveSubscription(ctx, args.clinicId);
+    } else {
+      await requireAnyActiveSubscriptionForUser(ctx, fisio._id);
+    }
     const patientId: Id<"users"> = args.patientId;
 
     // Patch de datos básicos

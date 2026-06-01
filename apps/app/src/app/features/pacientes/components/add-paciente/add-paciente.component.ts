@@ -21,6 +21,7 @@ import { ClipboardService } from '../../../../core/services/clipboard.service';
 
 import { Usuario } from '../../../../../types/global';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../../convex/_generated/dataModel';
@@ -70,6 +71,7 @@ export class AddPacienteDialogComponent {
   protected dialogRef = inject(DialogRef<{ created?: unknown; updated?: boolean }>);
   private data = inject<DialogData>(DIALOG_DATA);
   private convex = inject(ConvexService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private clinicasService = inject(ClinicasService);
   private clipboard = inject(ClipboardService);
   private toast = inject(ToastService);
@@ -247,12 +249,16 @@ export class AddPacienteDialogComponent {
       (x) => !targetIds.has(String(x)),
     );
 
+    const clinicIdActiva = this.clinicaActiva.selectedClinicaId();
     await this.convex.mutation(api.users.mutations.updatePatient, {
       patientId: userId as Id<'users'>,
       firstName: v.first_name ?? undefined,
       lastName: v.last_name ?? undefined,
       email: v.email ?? undefined,
       telefono: v.telefono || undefined,
+      // La clínica activa permite al backend aplicar la regla multiclínica:
+      // bloqueo si esa concretamente está suspendida, aunque otras no.
+      clinicId: clinicIdActiva ? (clinicIdActiva as Id<'clinics'>) : undefined,
     });
 
     await Promise.all(

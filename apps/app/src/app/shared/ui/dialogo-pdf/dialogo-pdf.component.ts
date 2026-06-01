@@ -9,6 +9,8 @@ import {
 import { ToastService } from '../../services/toast';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { ExternalBrowserService } from '../../../core/services/external-browser.service';
+import { SessionService } from '../../../core/auth/services/session.service';
+import { SubscriptionService } from '../../../core/billing/subscription.service';
 import { api } from '../../../../../../../convex/_generated/api';
 
 export interface DialogoPdfData {
@@ -34,6 +36,8 @@ export class DialogoPdfComponent {
   private dialogRef = inject(DialogRef);
   private toast = inject(ToastService);
   private externalBrowser = inject(ExternalBrowserService);
+  private session = inject(SessionService);
+  private subs = inject(SubscriptionService);
   data = inject<DialogoPdfData>(DIALOG_DATA);
 
   descargando = signal(false);
@@ -45,6 +49,15 @@ export class DialogoPdfComponent {
 
   accionEnProgreso = computed(
     () => this.descargando() || this.imprimiendo() || this.enviando()
+  );
+
+  /**
+   * El envío por email es una operación de comunicación con el paciente: se
+   * bloquea si el fisio no tiene suscripción activa. Descarga e impresión
+   * locales siguen disponibles.
+   */
+  bloqueoEnvio = computed(
+    () => this.session.enModoFisio() && this.subs.bloqueada(),
   );
 
   private async generar(): Promise<{ url: string | null; filename: string } | null> {

@@ -3,6 +3,7 @@ import { mutation } from "../_generated/server";
 import {
   getAuthenticatedUser,
   checkClinicPermission,
+  requireActiveSubscription,
 } from "../_helpers/permissions";
 
 export const bulkAssign = mutation({
@@ -21,6 +22,7 @@ export const bulkAssign = mutation({
       "fisio",
       "admin",
     ]);
+    await requireActiveSubscription(ctx, args.clinicId);
 
     // Remove existing assignments for this clinic
     const existing = await ctx.db
@@ -50,6 +52,13 @@ export const assign = mutation({
     clinicId: v.id("clinics"),
   },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await checkClinicPermission(ctx, user._id, args.clinicId, [
+      "fisio",
+      "admin",
+    ]);
+    await requireActiveSubscription(ctx, args.clinicId);
+
     // Check if assignment already exists
     const existing = await ctx.db
       .query("assignments")

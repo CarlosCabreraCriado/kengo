@@ -725,6 +725,11 @@ export const generateAndSendPlanPdf = action({
     email: v.string(),
   },
   handler: async (ctx, args): Promise<{ ok: boolean; url: string | null }> => {
+    // Bloquea el envío si la suscripción de la clínica del plan no está activa.
+    await ctx.runQuery(
+      internal.billing.internal.assertActiveSubscriptionByPlanId,
+      { planId: args.planId },
+    );
     const result = await generatePlanPdfInternal(ctx, args.planId);
 
     const sent: boolean = await ctx.runAction(

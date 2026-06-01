@@ -289,6 +289,7 @@ export const remove = mutation({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
     const plan = await getPlanIfOwned(ctx, args.planId);
+    await requireActiveSubscription(ctx, plan.clinicId);
 
     const exercises = await ctx.db
       .query("planExercises")

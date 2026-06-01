@@ -272,12 +272,21 @@ export class AuthService {
 
   async crearTokenAcceso(
     userId: string,
-    opciones?: { usosMaximos?: number; diasExpiracion?: number },
+    opciones?: {
+      usosMaximos?: number;
+      diasExpiracion?: number;
+      /**
+       * Clínica activa del fisio. El backend la usa para validar suscripción
+       * estrictamente contra esa clínica (regla multiclínica: la activa manda).
+       */
+      clinicId?: string;
+    },
   ): Promise<{ id: string; url: string }> {
     return await this.convex.mutation(api.accessTokens.mutations.create, {
       userId: userId as never,
       usosMaximos: opciones?.usosMaximos,
       diasExpiracion: opciones?.diasExpiracion,
+      clinicId: opciones?.clinicId as never,
     });
   }
 
@@ -293,9 +302,17 @@ export class AuthService {
     });
   }
 
-  async enviarTokenPorEmail(userId: string): Promise<void> {
+  async enviarTokenPorEmail(
+    userId: string,
+    /**
+     * Clínica activa del fisio. El backend la usa para validar suscripción
+     * estrictamente contra esa clínica (regla multiclínica).
+     */
+    clinicId?: string,
+  ): Promise<void> {
     await this.convex.action(api.accessTokens.actions.sendByEmail, {
       userId,
+      clinicId: clinicId as never,
     });
   }
 
