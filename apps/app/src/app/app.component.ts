@@ -204,6 +204,7 @@ export class AppComponent implements OnInit {
     '/establecer-password',
     '/recuperar-password',
     '/reset-password',
+    '/seleccionar-clinica',
   ];
 
   constructor() {

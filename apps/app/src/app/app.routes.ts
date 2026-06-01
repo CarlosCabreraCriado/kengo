@@ -24,6 +24,7 @@ export const routes: Routes = [
 
   {
     path: 'inicio',
+    canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
     loadChildren: () =>
       import('./features/dashboard/dashboard.routes').then(
         (m) => m.DASHBOARD_ROUTES,

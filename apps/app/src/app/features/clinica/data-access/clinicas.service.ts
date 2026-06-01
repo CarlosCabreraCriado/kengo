@@ -201,6 +201,8 @@ export class ClinicasService {
   //   - autoseleccion cuando hay exactamente una clínica.
   //   - limpieza cuando el id persistido ya no aparece (p.ej. tras salir de
   //     la clínica desde otro dispositivo).
+  //   - heurística "rol profesional único": si hay >1 clínicas pero el
+  //     usuario solo es fisio/admin en una, se autoselecciona esa.
   private readonly sincronizadorClinicaActiva = effect(() => {
     const ids = this.idsClinicasCargadas();
     if (ids.length === 0) {
@@ -209,14 +211,28 @@ export class ClinicasService {
       return;
     }
     const actual = this.selectedClinicaId();
+
     if (ids.length === 1) {
       if (actual !== ids[0]) {
         this.setSelectedClinicaId(ids[0]!);
       }
       return;
     }
+
+    if (actual && ids.includes(actual)) return;
+
     if (actual && !ids.includes(actual)) {
       this.setSelectedClinicaId(null);
+    }
+
+    const profesionales = this.sessionService
+      .misclinicas()
+      .filter((m) => m.puesto === 'fisio' || m.puesto === 'admin');
+    if (profesionales.length === 1) {
+      const candidato = profesionales[0]!.clinicId;
+      if (ids.includes(candidato)) {
+        this.setSelectedClinicaId(candidato);
+      }
     }
   });
 }
