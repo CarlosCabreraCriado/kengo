@@ -18,6 +18,7 @@ import {
 import { emailRequired } from '../../../../shared';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { ClipboardService } from '../../../../core/services/clipboard.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 
 import { Usuario } from '../../../../../types/global';
 import { ConvexService } from '../../../../core/convex/convex.service';
@@ -75,6 +76,7 @@ export class AddPacienteDialogComponent {
   private clinicasService = inject(ClinicasService);
   private clipboard = inject(ClipboardService);
   private toast = inject(ToastService);
+  private logger = inject(LoggerService);
 
   // Mapa: clinicId -> membershipId (Convex Id<"clinicMemberships">)
   private currentLinks = new Map<ID, string>();
@@ -162,7 +164,7 @@ export class AddPacienteDialogComponent {
 
       this.selectedClinicIds.set(new Set(ids));
     } catch (e) {
-      console.warn('No se pudieron cargar las clínicas del usuario:', e);
+      this.logger.warn('No se pudieron cargar las clínicas del usuario:', e);
     }
   }
 
@@ -187,7 +189,7 @@ export class AddPacienteDialogComponent {
 
       await this.crearPaciente(v, selectedClinics);
     } catch (e: unknown) {
-      console.error(e);
+      this.logger.error(e);
       const msg = e instanceof Error ? e.message : 'No se pudieron guardar los cambios.';
       this.error.set(msg);
     } finally {

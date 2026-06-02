@@ -9,6 +9,7 @@ import { assetUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import {
   mapConvexBase,
   mapConvexToPlanCompleto,
@@ -31,6 +32,7 @@ export class PlanesService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private logger = inject(LoggerService);
 
   readonly filtroEstado: WritableSignal<FiltroEstado> = signal('todos');
   readonly filtroPaciente: WritableSignal<string | null> = signal(null);
@@ -126,7 +128,7 @@ export class PlanesService {
       if (!raw) return null;
       return mapConvexToPlanCompleto(raw);
     } catch (error) {
-      console.error('Error al obtener plan:', error);
+      this.logger.error('Error al obtener plan:', error);
       return null;
     }
   }
@@ -139,7 +141,7 @@ export class PlanesService {
       });
       return true;
     } catch (error) {
-      console.error('Error al actualizar estado:', error);
+      this.logger.error('Error al actualizar estado:', error);
       return false;
     }
   }
@@ -164,7 +166,7 @@ export class PlanesService {
       });
       return true;
     } catch (error) {
-      console.error('Error al actualizar plan:', error);
+      this.logger.error('Error al actualizar plan:', error);
       return false;
     }
   }
@@ -175,7 +177,7 @@ export class PlanesService {
         planId: id as any,
       });
     } catch (error) {
-      console.error('Error al eliminar plan:', error);
+      this.logger.error('Error al eliminar plan:', error);
       return null;
     }
   }
@@ -190,7 +192,7 @@ export class PlanesService {
       );
       return ((raw as any[]) || []).map((p) => mapConvexToPlanCompleto(p));
     } catch (error) {
-      console.error('Error al obtener planes activos:', error);
+      this.logger.error('Error al obtener planes activos:', error);
       return [];
     }
   }
@@ -205,7 +207,7 @@ export class PlanesService {
       });
       return ((raw as any[]) || []).map((p) => mapConvexToPlanCompleto(p));
     } catch (error) {
-      console.error('Error al obtener planes activos y futuros:', error);
+      this.logger.error('Error al obtener planes activos y futuros:', error);
       return [];
     }
   }
@@ -220,7 +222,7 @@ export class PlanesService {
         .filter((p) => p.estado !== 'cancelado' && p.estado !== 'modificado')
         .map((p) => this.mapConvexToPlan(p));
     } catch (error) {
-      console.error('Error al obtener planes del paciente:', error);
+      this.logger.error('Error al obtener planes del paciente:', error);
       return [];
     }
   }

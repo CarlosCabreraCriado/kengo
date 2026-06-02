@@ -1,13 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import { Observable, firstValueFrom, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { AsignacionResponsable, BulkAsignacionPayload, BulkAsignacionResponse } from '../../../../types/global';
 
 @Injectable({ providedIn: 'root' })
 export class AsignacionesService {
   private convex = inject(ConvexService);
+  private logger = inject(LoggerService);
 
   listarAsignaciones(clinicaId: string): Observable<AsignacionResponsable[]> {
     return from(
@@ -81,13 +83,18 @@ export class AsignacionesService {
 
   /**
    * Auto-asigna un fisio como responsable de un paciente si no tiene uno.
+   *
+   * Operación one-shot. Como `AsignacionesService` es singleton, usamos
+   * `firstValueFrom` (en lugar de `.subscribe`) para que la suscripción
+   * se cierre sola al primer valor. Los callers actuales son fire-and-forget.
    */
-  autoAsignar(pacienteId: string, fisioId: string, clinicaId: string): void {
-    this.getFisioResponsable(pacienteId, clinicaId).subscribe((asignacion) => {
-      if (!asignacion) {
-        this.assignImpl(pacienteId, fisioId, clinicaId);
-      }
-    });
+  async autoAsignar(pacienteId: string, fisioId: string, clinicaId: string): Promise<void> {
+    const asignacion = await firstValueFrom(
+      this.getFisioResponsable(pacienteId, clinicaId),
+    );
+    if (!asignacion) {
+      await this.assignImpl(pacienteId, fisioId, clinicaId);
+    }
   }
 
   private async assignImpl(
@@ -102,7 +109,7 @@ export class AsignacionesService {
         clinicId: clinicaId as any,
       });
     } catch (err) {
-      console.warn('[AutoAsignacion] Error auto-asignando:', err);
+      this.logger.warn('[AutoAsignacion] Error auto-asignando:', err);
     }
   }
 }

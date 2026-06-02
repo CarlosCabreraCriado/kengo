@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   computed,
@@ -8,6 +9,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { assetUrl } from '../../../../core/utils/asset-url';
@@ -88,6 +90,7 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   private clinicasService = inject(ClinicasService);
   private convex = inject(ConvexService);
   private pageLoader = inject(PageLoaderService);
+  private destroyRef = inject(DestroyRef);
   private readonly PAGE_LOADER_KEY = 'pacientes-list';
 
   /**
@@ -291,16 +294,18 @@ export class PacientesListComponent implements OnInit, OnDestroy {
       data: { idsClinicas: this.idsClinicas() },
     });
 
-    dialogRef.closed.subscribe((r: unknown) => {
-      const result = r as
-        | { created?: { id: string }; updated?: boolean }
-        | undefined;
-      if (result?.created) {
-        this.router.navigate(['/mis-pacientes', result.created.id]);
-      } else if (result?.updated) {
-        this.pacientesRes.reload();
-      }
-    });
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((r: unknown) => {
+        const result = r as
+          | { created?: { id: string }; updated?: boolean }
+          | undefined;
+        if (result?.created) {
+          this.router.navigate(['/mis-pacientes', result.created.id]);
+        } else if (result?.updated) {
+          this.pacientesRes.reload();
+        }
+      });
   }
 
   openEditarPaciente(p: Usuario) {
@@ -309,10 +314,12 @@ export class PacientesListComponent implements OnInit, OnDestroy {
       data: { idsClinicas: this.idsClinicas(), usuario: p },
     });
 
-    dialogRef.closed.subscribe((r: unknown) => {
-      const result = r as { updated?: boolean } | undefined;
-      if (result?.updated) this.pacientesRes.reload();
-    });
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((r: unknown) => {
+        const result = r as { updated?: boolean } | undefined;
+        if (result?.updated) this.pacientesRes.reload();
+      });
   }
 
   setVista(value: string) {
@@ -349,16 +356,19 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   private cargarAsignaciones() {
     const cid = this.idsClinicas();
     if (!cid || cid.length === 0) return;
-    this.asignacionesService.listarAsignaciones(String(cid[0])).subscribe({
-      next: (asignaciones) => {
-        const m = new Map<string, AsignacionResponsable>();
-        for (const a of asignaciones) {
-          m.set(a.idPaciente, a);
-        }
-        this.asignacionesMap.set(m);
-      },
-      error: () => undefined,
-    });
+    this.asignacionesService
+      .listarAsignaciones(String(cid[0]))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (asignaciones) => {
+          const m = new Map<string, AsignacionResponsable>();
+          for (const a of asignaciones) {
+            m.set(a.idPaciente, a);
+          }
+          this.asignacionesMap.set(m);
+        },
+        error: () => undefined,
+      });
   }
 
   getFisioResponsableNombre(pacienteId: string): string | null {
@@ -451,9 +461,12 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   }
 
   private cargarMetricas() {
-    this.metricasService.getMetricasBulk().subscribe({
-      next: (metricas) => this.metricasMap.set(metricas),
-      error: () => undefined,
-    });
+    this.metricasService
+      .getMetricasBulk()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (metricas) => this.metricasMap.set(metricas),
+        error: () => undefined,
+      });
   }
 }

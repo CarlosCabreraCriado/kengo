@@ -21,6 +21,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe, useResponsive } from '../../../../shared';
 import {
@@ -74,6 +75,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   private dialog = inject(Dialog);
   private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
+  private logger = inject(LoggerService);
   svc = inject(RutinaBuilderService);
 
   isDesktop = useResponsive().esDesktop;
@@ -274,7 +276,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
         }
       }
     } catch (error) {
-      console.error('Error guardando plantilla:', error);
+      this.logger.error('Error guardando plantilla:', error);
       this.toastService.show('Error al guardar', 'error');
     } finally {
       this.isSaving.set(false);

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../core/utils/asset-url';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { mapConvexBase, mapId } from '../../../shared/utils/convex-mappers';
@@ -33,6 +34,7 @@ export class RutinasService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private logger = inject(LoggerService);
 
   readonly filtroVisibilidad: WritableSignal<FiltroVisibilidad> = signal('todas');
 
@@ -112,7 +114,7 @@ export class RutinasService {
       if (!raw) return null;
       return this.mapConvexToRutinaCompleta(raw);
     } catch (error) {
-      console.error('Error al obtener rutina:', error);
+      this.logger.error('Error al obtener rutina:', error);
       return null;
     }
   }
@@ -141,7 +143,7 @@ export class RutinasService {
           : null;
 
       if (visibilidad === 'clinica' && !clinicId) {
-        console.error(
+        this.logger.error(
           'Error al crear rutina: visibilidad "clinica" sin clínica activa seleccionada',
         );
         return null;
@@ -157,7 +159,7 @@ export class RutinasService {
 
       return (id as string) ?? null;
     } catch (error) {
-      console.error('Error al crear rutina:', error);
+      this.logger.error('Error al crear rutina:', error);
       return null;
     }
   }
@@ -179,7 +181,7 @@ export class RutinasService {
       });
       return true;
     } catch (error) {
-      console.error('Error al actualizar rutina:', error);
+      this.logger.error('Error al actualizar rutina:', error);
       return false;
     }
   }
@@ -210,7 +212,7 @@ export class RutinasService {
       });
       return true;
     } catch (error) {
-      console.error('Error al actualizar rutina completa:', error);
+      this.logger.error('Error al actualizar rutina completa:', error);
       return false;
     }
   }
@@ -222,7 +224,7 @@ export class RutinasService {
       });
       return true;
     } catch (error) {
-      console.error('Error al eliminar rutina:', error);
+      this.logger.error('Error al eliminar rutina:', error);
       return false;
     }
   }
@@ -235,7 +237,7 @@ export class RutinasService {
       });
       return (newId as string) ?? null;
     } catch (error) {
-      console.error('Error al duplicar rutina:', error);
+      this.logger.error('Error al duplicar rutina:', error);
       return null;
     }
   }

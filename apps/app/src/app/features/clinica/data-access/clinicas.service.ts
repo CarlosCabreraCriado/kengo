@@ -3,6 +3,7 @@ import { Injectable, inject, computed, effect, signal } from '@angular/core';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../convex/_generated/dataModel';
 
@@ -30,6 +31,7 @@ export class ClinicasService {
   private sessionService = inject(SessionService);
   private convex = inject(ConvexService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private logger = inject(LoggerService);
 
   // Reexposición del signal (compatibilidad con consumidores existentes).
   // La verdad vive en `ClinicaActivaService`.
@@ -105,7 +107,7 @@ export class ClinicasService {
         const fisios = await this.fetchMiembrosClinica(clinic._id);
         result[clinic._id] = fisios;
       } catch (err) {
-        console.warn(`Error cargando miembros de clinica ${clinic.nombre}:`, err);
+        this.logger.warn(`Error cargando miembros de clinica ${clinic.nombre}:`, err);
       }
     }
 
@@ -124,7 +126,7 @@ export class ClinicasService {
       const fisios = await this.fetchMiembrosClinica(clinic._id);
       this.fisiosCache.update((prev) => ({ ...prev, [clinicId]: fisios }));
     } catch (err) {
-      console.warn(`Error recargando miembros de clinica ${clinic.nombre}:`, err);
+      this.logger.warn(`Error recargando miembros de clinica ${clinic.nombre}:`, err);
     }
   }
 

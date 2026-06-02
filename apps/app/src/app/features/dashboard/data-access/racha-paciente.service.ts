@@ -3,6 +3,7 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { CumplimientoService } from '../../pacientes/data-access/cumplimiento.service';
 import { ActividadHoyService } from '../../actividad/data-access/actividad-hoy.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import type { CumplimientoDia, DiaSemana } from '../../../../types/global';
 import {
   daysBetweenYMD,
@@ -26,6 +27,7 @@ export class RachaPacienteService {
   private clinicaActiva = inject(ClinicaActivaService);
   private cumplimientoService = inject(CumplimientoService);
   private actividadHoyService = inject(ActividadHoyService);
+  private logger = inject(LoggerService);
 
   readonly cargando = signal<boolean>(false);
   readonly rachaActual = signal<number>(0);
@@ -184,7 +186,7 @@ export class RachaPacienteService {
       this.rachaActual.set(this.calcularRacha(resp.dias));
       this.datosCargados.set(true);
     } catch (err) {
-      console.error('Error al cargar racha:', err);
+      this.logger.error('Error al cargar racha:', err);
     } finally {
       this.cargando.set(false);
     }

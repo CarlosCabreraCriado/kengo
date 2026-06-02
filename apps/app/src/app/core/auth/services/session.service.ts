@@ -3,6 +3,7 @@ import { RolUsuario, Usuario, Puesto } from '../../../../types/global';
 import { ConvexService, NotAuthenticatedError } from '../../convex/convex.service';
 import { BetterAuthService } from './better-auth.service';
 import { ClinicaActivaService } from './clinica-activa.service';
+import { LoggerService } from '../../services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { rawAssetUrl } from '../../utils/asset-url';
 
@@ -142,6 +143,7 @@ export class SessionService {
 
   private convex = inject(ConvexService);
   private betterAuth = inject(BetterAuthService);
+  private logger = inject(LoggerService);
 
   constructor() {
     // Hidratación rápida desde localStorage para acelerar `sesionInicializada`
@@ -310,11 +312,11 @@ export class SessionService {
       // token (arranque en curso, refresh en flight). No spamear console
       // como error; el AuthGuard / overlay ya guían al usuario.
       if (err instanceof NotAuthenticatedError) {
-        console.warn(
+        this.logger.warn(
           '[SessionService] cargarMiUsuario abortado: cliente sin auth',
         );
       } else {
-        console.error('Error al cargar el usuario:', err);
+        this.logger.error('Error al cargar el usuario:', err);
       }
       this._error.set('No se pudo cargar el usuario');
       this._usuario.set(null);

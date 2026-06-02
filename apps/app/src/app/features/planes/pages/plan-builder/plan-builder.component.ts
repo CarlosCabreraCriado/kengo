@@ -23,6 +23,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
@@ -89,6 +90,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private destroyRef = inject(DestroyRef);
   private pageLoader = inject(PageLoaderService);
+  private logger = inject(LoggerService);
   private readonly PAGE_LOADER_KEY = 'plan-builder';
   svc = inject(PlanBuilderService);
 
@@ -429,7 +431,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
         this.toastService.show('Error al guardar el plan', 'error');
       }
     } catch (error) {
-      console.error('Error guardando plan:', error);
+      this.logger.error('Error guardando plan:', error);
       this.toastService.show('Error al guardar', 'error');
     } finally {
       this.isSaving.set(false);
@@ -446,26 +448,28 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       data: { nombreSugerido: this.form.value.titulo || '' },
     });
 
-    dialogRef.closed.subscribe(async (result: unknown) => {
-      const r = result as { nombre: string; descripcion: string; visibilidad: 'privado' | 'clinica' } | undefined;
-      if (r) {
-        this.isSaving.set(true);
-        try {
-          const rutinaId = await this.svc.saveAsRutina(
-            r.nombre,
-            r.descripcion,
-            r.visibilidad,
-          );
-          if (rutinaId) {
-            this.toastService.show('Rutina guardada');
-          } else {
-            this.toastService.show('Error al guardar la rutina', 'error');
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result: unknown) => {
+        const r = result as { nombre: string; descripcion: string; visibilidad: 'privado' | 'clinica' } | undefined;
+        if (r) {
+          this.isSaving.set(true);
+          try {
+            const rutinaId = await this.svc.saveAsRutina(
+              r.nombre,
+              r.descripcion,
+              r.visibilidad,
+            );
+            if (rutinaId) {
+              this.toastService.show('Rutina guardada');
+            } else {
+              this.toastService.show('Error al guardar la rutina', 'error');
+            }
+          } finally {
+            this.isSaving.set(false);
           }
-        } finally {
-          this.isSaving.set(false);
         }
-      }
-    });
+      });
   }
 
   async cargarPlantilla() {
@@ -478,25 +482,27 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       maxHeight: '80vh',
     });
 
-    dialogRef.closed.subscribe(async (rutinaId: unknown) => {
-      const id = rutinaId as string | undefined;
-      if (id) {
-        this.isLoading.set(true);
-        try {
-          const success = await this.svc.loadFromRutina(id);
-          if (success) {
-            this.toastService.show('Rutina cargada');
-            if (!this.form.value.titulo && this.svc.titulo()) {
-              this.form.patchValue({ titulo: this.svc.titulo() });
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (rutinaId: unknown) => {
+        const id = rutinaId as string | undefined;
+        if (id) {
+          this.isLoading.set(true);
+          try {
+            const success = await this.svc.loadFromRutina(id);
+            if (success) {
+              this.toastService.show('Rutina cargada');
+              if (!this.form.value.titulo && this.svc.titulo()) {
+                this.form.patchValue({ titulo: this.svc.titulo() });
+              }
+            } else {
+              this.toastService.show('Error al cargar la rutina', 'error');
             }
-          } else {
-            this.toastService.show('Error al cargar la rutina', 'error');
+          } finally {
+            this.isLoading.set(false);
           }
-        } finally {
-          this.isLoading.set(false);
         }
-      }
-    });
+      });
   }
 
   irAGaleria() {

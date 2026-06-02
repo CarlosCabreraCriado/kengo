@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   inject,
   OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { useResponsive } from '../../../../shared';
@@ -25,6 +27,7 @@ import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { MensajesService } from '../../../mensajes/data-access/mensajes.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 import {
   getMadridDate,
@@ -340,6 +343,8 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private convex = inject(ConvexService);
   private pageLoader = inject(PageLoaderService);
+  private logger = inject(LoggerService);
+  private destroyRef = inject(DestroyRef);
   private readonly PAGE_LOADER_KEY = 'paciente-detail';
 
   /**
@@ -516,7 +521,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
       )) as { dolorPromedio?: number } | null;
       this.dolorSnapshot.set(snap?.dolorPromedio ?? null);
     } catch (err) {
-      console.error('Error cargando snapshot de dolor:', err);
+      this.logger.error('Error cargando snapshot de dolor:', err);
       this.dolorSnapshot.set(null);
     }
   }
@@ -537,7 +542,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
         this.router.navigate(['/mis-pacientes']);
       }
     } catch (err) {
-      console.error('Error cargando paciente:', err);
+      this.logger.error('Error cargando paciente:', err);
       this.error.set('Error al cargar el paciente');
     } finally {
       this.isLoadingPaciente.set(false);
@@ -561,7 +566,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
       });
       this.planes.set(corregidos);
     } catch (err) {
-      console.error('Error cargando planes:', err);
+      this.logger.error('Error cargando planes:', err);
     } finally {
       this.isLoadingPlanes.set(false);
     }
@@ -607,7 +612,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
         this.cumplimientoService.buildEstadisticas(dias, sesionesAg, actual.resumen),
       );
     } catch (err) {
-      console.error('Error cargando cumplimiento:', err);
+      this.logger.error('Error cargando cumplimiento:', err);
     } finally {
       this.isLoadingSesiones.set(false);
       this.isLoadingEstadisticas.set(false);
@@ -647,7 +652,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
       this.comentarios.set(response.comentarios);
       this.comentariosPendientes.set(response.pendientes);
     } catch (err) {
-      console.error('Error cargando comentarios:', err);
+      this.logger.error('Error cargando comentarios:', err);
     } finally {
       this.isLoadingComentarios.set(false);
     }
@@ -658,6 +663,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     if (!clinicas.length) return;
     this.asignacionesService
       .getFisioResponsable(pacienteId, String(clinicas[0]))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (asignacion) => {
           if (asignacion) {
@@ -687,7 +693,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     try {
       await this.comentariosService.marcarRevisada(comentario.id);
     } catch (err) {
-      console.error('Error marcando comentario:', err);
+      this.logger.error('Error marcando comentario:', err);
       this.comentarios.update((list) =>
         list.map((c) =>
           c.id === comentario.id
@@ -715,7 +721,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     try {
       await this.comentariosService.marcarTodasRevisadas(pacienteId);
     } catch (err) {
-      console.error('Error marcando todos:', err);
+      this.logger.error('Error marcando todos:', err);
       this.comentarios.set(prevComentarios);
       this.comentariosPendientes.set(prevPendientes);
     }
@@ -756,7 +762,8 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
         maxWidth: '520px',
         data: { clinicIds: this.idsClinicas(), usuario: p },
       })
-      .closed.subscribe((r: unknown) => {
+      .closed.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((r: unknown) => {
         if ((r as DialogClosedResult | undefined)?.updated) {
           this.cargarPaciente(p.id);
         }

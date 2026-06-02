@@ -2,6 +2,7 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../../convex/_generated/dataModel';
 import {
@@ -87,6 +88,7 @@ export class EstadisticasService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private logger = inject(LoggerService);
 
   readonly cargando = signal<boolean>(false);
   readonly error = signal<string | null>(null);
@@ -375,7 +377,7 @@ export class EstadisticasService {
       this.historialRaw.set(historial as SesionReciente[]);
       this.datosCargados.set(true);
     } catch (err) {
-      console.error('Error al cargar estadísticas:', err);
+      this.logger.error('Error al cargar estadísticas:', err);
       this.error.set('No se pudieron cargar las estadísticas.');
     } finally {
       this.cargando.set(false);

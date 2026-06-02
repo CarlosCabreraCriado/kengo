@@ -17,6 +17,7 @@ import {
 } from 'ngx-image-cropper';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { PlatformService } from '../../../core/services/platform.service';
+import { LoggerService } from '../../../core/services/logger.service';
 
 interface DialogData {
   url_perfil?: string | null;
@@ -40,6 +41,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
 
   private dialogRef = inject(DialogRef);
   private platform = inject(PlatformService);
+  private logger = inject(LoggerService);
   data = inject<DialogData>(DIALOG_DATA);
 
   public archivoPrecargado = signal(false);
@@ -89,7 +91,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
         this.loadError.set(
           'No se pudo precargar el avatar (403). Selecciona una imagen.',
         );
-        console.error(e);
+        this.logger.error(e);
         // Si falla la precarga, mostrar pantalla de carga
         this.pantallaCargarArchivo.set(true);
       }
@@ -261,7 +263,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
     const dt = ev.dataTransfer;
     if (!dt) return;
 
-    console.warn('Drop:', dt);
+    this.logger.warn('Drop:', dt);
     // 1) Caso habitual: arrastran un archivo del SO
     if (dt.files && dt.files.length) {
       const file = dt.files[0];
@@ -270,7 +272,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
       this.imageChangedEvent = null;
       this.imageURL = null;
       this.pantallaCargarArchivo.set(false);
-      console.error('File arrastrado:', file);
+      this.logger.error('File arrastrado:', file);
       return;
     }
 
@@ -289,7 +291,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
         });
 
         if (!this.esImagenValida(file)) {
-          console.error('Imagen no valida', file);
+          this.logger.error('Imagen no valida', file);
           return;
         }
 
@@ -298,7 +300,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
         this.imageURL = null;
         this.pantallaCargarArchivo.set(false);
       } catch (e) {
-        console.warn('No se pudo cargar la imagen arrastrada por URL:', e);
+        this.logger.warn('No se pudo cargar la imagen arrastrada por URL:', e);
         this.loadError.set(
           'No se pudo cargar la imagen arrastrada (CORS). Guarda la imagen y arrástrala desde tu equipo.',
         );
@@ -446,7 +448,7 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
 
       this.dialogRef.close({ file });
     } catch (e) {
-      console.error(e);
+      this.logger.error(e);
       this.loadError.set('No se pudo generar el recorte.');
     }
   }

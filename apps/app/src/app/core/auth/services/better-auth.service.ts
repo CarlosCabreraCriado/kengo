@@ -8,6 +8,7 @@ import {
 } from '@convex-dev/better-auth/client/plugins';
 import { environment } from '../../../../environments/environment';
 import { PlatformService } from '../../services/platform.service';
+import { LoggerService } from '../../services/logger.service';
 import { withTimeout } from '../../utils/with-timeout';
 
 // Claves internas del plugin `crossDomainClient` (ver
@@ -82,6 +83,7 @@ export type ConvexTokenResult =
 @Injectable({ providedIn: 'root' })
 export class BetterAuthService {
   private readonly platform = inject(PlatformService);
+  private readonly logger = inject(LoggerService);
 
   private authClient = createAuthClient({
     baseURL: environment.CONVEX_SITE_URL,
@@ -120,7 +122,7 @@ export class BetterAuthService {
       await this.backupToNative();
       return { ok: true };
     } catch (err) {
-      console.warn('Better-Auth signIn failed:', err);
+      this.logger.warn('Better-Auth signIn failed:', err);
       return { ok: false, code: 'NETWORK_ERROR' };
     }
   }
@@ -282,9 +284,9 @@ export class BetterAuthService {
    *
    * Niveles de log:
    * - `reason === 'ok'` y `latencyMs <= SLOW_THRESHOLD` → silencio (caso normal).
-   * - `reason === 'ok'` con latencia alta → `console.warn` (sospechoso, anticipo de degradación).
+   * - `reason === 'ok'` con latencia alta → `logger.warn` (sospechoso, anticipo de degradación).
    * - `reason === 'no-session'` → silencio (caso esperado en cold start sin login).
-   * - Resto de reasons → `console.warn` con la métrica completa.
+   * - Resto de reasons → `logger.warn` con la métrica completa.
    *
    * Formato del log: `[ConvexToken] {...JSON}` para facilitar grep y parsing
    * desde un SDK de telemetría futuro. El buffer expuesto vía `tokenAttempts`
@@ -313,7 +315,7 @@ export class BetterAuthService {
       attempt.reason !== 'ok' && attempt.reason !== 'no-session';
 
     if (isFailure || isSlowOk) {
-      console.warn('[ConvexToken]', JSON.stringify(attempt));
+      this.logger.warn('[ConvexToken]', JSON.stringify(attempt));
     }
   }
 
@@ -329,13 +331,13 @@ export class BetterAuthService {
         { query: { token } },
       );
       if (res?.error) {
-        console.warn('Better-Auth magicLink verify error:', res.error);
+        this.logger.warn('Better-Auth magicLink verify error:', res.error);
         return false;
       }
       await this.backupToNative();
       return true;
     } catch (err) {
-      console.warn('Better-Auth magicLink verify failed:', err);
+      this.logger.warn('Better-Auth magicLink verify failed:', err);
       return false;
     }
   }
@@ -370,7 +372,7 @@ export class BetterAuthService {
         if (value) localStorage.setItem(LS_SESSION_KEY, value);
       }
     } catch (err) {
-      console.warn('[BetterAuth] restoreFromNative failed:', err);
+      this.logger.warn('[BetterAuth] restoreFromNative failed:', err);
     }
   }
 
@@ -386,7 +388,7 @@ export class BetterAuthService {
       const session = localStorage.getItem(LS_SESSION_KEY);
       if (session) await Preferences.set({ key: PREFS_SESSION_KEY, value: session });
     } catch (err) {
-      console.warn('[BetterAuth] backupToNative failed:', err);
+      this.logger.warn('[BetterAuth] backupToNative failed:', err);
     }
   }
 

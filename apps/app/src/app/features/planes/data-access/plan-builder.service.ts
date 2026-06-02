@@ -15,6 +15,7 @@ import { AsignacionesService } from '../../pacientes/data-access/asignaciones.se
 import { RutinasService } from '../../rutinas/data-access/rutinas.service';
 import { PlanesService } from './planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import {
   Usuario,
@@ -55,6 +56,7 @@ export class PlanBuilderService {
   private planesService = inject(PlanesService);
   private router = inject(Router);
   private injector = inject(Injector);
+  private logger = inject(LoggerService);
 
   private readonly itemsState = new BuilderItemsState();
 
@@ -340,7 +342,7 @@ export class PlanBuilderService {
     try {
       const pacienteConvexId = this.resolvePatientConvexId(payload.paciente as string);
       if (!pacienteConvexId) {
-        console.error('No se pudo resolver el Convex ID del paciente');
+        this.logger.error('No se pudo resolver el Convex ID del paciente');
         return null;
       }
 
@@ -372,7 +374,7 @@ export class PlanBuilderService {
 
       return planId as string;
     } catch (error) {
-      console.error('Error al crear plan:', error);
+      this.logger.error('Error al crear plan:', error);
       return null;
     }
   }
@@ -456,7 +458,7 @@ export class PlanBuilderService {
 
       return true;
     } catch (error) {
-      console.error('Error al cargar plan para editar:', error);
+      this.logger.error('Error al cargar plan para editar:', error);
       return false;
     }
   }
@@ -497,7 +499,7 @@ export class PlanBuilderService {
 
       return id;
     } catch (error) {
-      console.error('Error al actualizar plan:', error);
+      this.logger.error('Error al actualizar plan:', error);
       return null;
     }
   }
@@ -519,7 +521,7 @@ export class PlanBuilderService {
       this.hasActivity.set(hasData);
       return hasData;
     } catch (error) {
-      console.error('Error al verificar actividad del plan:', error);
+      this.logger.error('Error al verificar actividad del plan:', error);
       this.hasActivity.set(false);
       return false;
     }
@@ -563,7 +565,7 @@ export class PlanBuilderService {
 
       return newPlanId as string;
     } catch (error) {
-      console.error('Error al versionar plan:', error);
+      this.logger.error('Error al versionar plan:', error);
       return null;
     }
   }
@@ -602,7 +604,7 @@ export class PlanBuilderService {
 
       return true;
     } catch (error) {
-      console.error('Error al cargar rutina:', error);
+      this.logger.error('Error al cargar rutina:', error);
       return false;
     }
   }

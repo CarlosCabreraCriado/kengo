@@ -1,11 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnDestroy,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
@@ -65,6 +67,7 @@ export class CrearClinicaDialogComponent implements OnDestroy {
   private dialog = inject(Dialog);
   private clinicaGestionService = inject(ClinicaGestionService);
   private toast = inject(ToastService);
+  private destroyRef = inject(DestroyRef);
 
   readonly colorPresets = COLOR_PRESETS;
   readonly trialDays = TRIAL_DAYS;
@@ -201,11 +204,13 @@ export class CrearClinicaDialogComponent implements OnDestroy {
       panelClass: 'ui-dialog-panel',
     });
 
-    ref.closed.subscribe((result) => {
-      if (result?.file) {
-        this.logoFile.set(result.file);
-      }
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result?.file) {
+          this.logoFile.set(result.file);
+        }
+      });
   }
 
   clearLogo() {

@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { SesionHintUI } from '../../../../types/global';
+import { LoggerService } from '../../../core/services/logger.service';
 
 /**
  * Persistencia ligera de la posición de UI dentro de la sesión activa.
@@ -17,6 +18,7 @@ import { SesionHintUI } from '../../../../types/global';
  */
 @Injectable({ providedIn: 'root' })
 export class SesionPersistenceService {
+  private readonly logger = inject(LoggerService);
   private readonly STORAGE_KEY = 'kengo:sesion_activa:v2';
   private readonly LEGACY_STORAGE_KEY = 'kengo:sesion_activa:v1';
   private readonly TTL_HORAS = 4;
@@ -29,7 +31,7 @@ export class SesionPersistenceService {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(hint));
     } catch (error) {
-      console.error('Error al guardar hint de sesión:', error);
+      this.logger.error('Error al guardar hint de sesión:', error);
     }
   }
 
@@ -54,7 +56,7 @@ export class SesionPersistenceService {
       }
       return hint;
     } catch (error) {
-      console.error('Error al restaurar hint de sesión:', error);
+      this.logger.error('Error al restaurar hint de sesión:', error);
       this.limpiar();
       return null;
     }
@@ -64,7 +66,7 @@ export class SesionPersistenceService {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
     } catch (error) {
-      console.error('Error al limpiar hint de sesión:', error);
+      this.logger.error('Error al limpiar hint de sesión:', error);
     }
   }
 
@@ -77,7 +79,7 @@ export class SesionPersistenceService {
     try {
       if (localStorage.getItem(this.LEGACY_STORAGE_KEY)) {
         localStorage.removeItem(this.LEGACY_STORAGE_KEY);
-        console.warn(
+        this.logger.warn(
           '[SesionPersistenceService] borrador legacy v1 descartado tras migración a v2',
         );
       }

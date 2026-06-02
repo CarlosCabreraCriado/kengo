@@ -1,9 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
 import { SessionService } from '../auth/services/session.service';
 import { ClinicaActivaService } from '../auth/services/clinica-activa.service';
 import { ConvexService } from '../convex/convex.service';
+import { LoggerService } from './logger.service';
 import { api } from '../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../convex/_generated/dataModel';
 import type { NotificacionApp } from '../../../types/global';
@@ -50,10 +49,10 @@ function tituloFromAlert(a: AlertDoc): string {
 
 @Injectable({ providedIn: 'root' })
 export class NotificacionesService {
-  private router = inject(Router);
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private logger = inject(LoggerService);
 
   // Lectura del modelo nuevo `physioAlerts` (Fase 3 rediseño records).
   // El watcher de alerts.listForCurrentFisio devuelve un PaginationResult.
@@ -107,18 +106,6 @@ export class NotificacionesService {
   readonly cargando = this.suscripcion.isLoading;
   readonly hayPendientes = computed(() => this.pendientes() > 0);
 
-  constructor() {
-    this.router.events
-      .pipe(filter((e) => e instanceof NavigationEnd))
-      .subscribe(() => {
-        // La suscripción Convex es reactiva; no hay recarga manual.
-      });
-  }
-
-  async recargar(): Promise<void> {
-    // La suscripción se actualiza sola; método preservado por compatibilidad.
-  }
-
   async marcarRevisada(n: NotificacionApp): Promise<void> {
     if (n.leida) return;
 
@@ -128,7 +115,7 @@ export class NotificacionesService {
         alertId: n.id as any,
       });
     } catch (err) {
-      console.error('Error al marcar notificación como revisada:', err);
+      this.logger.error('Error al marcar notificación como revisada:', err);
       this.overrides.update((o) => ({ ...o, [n.id]: false }));
     }
   }
@@ -145,7 +132,7 @@ export class NotificacionesService {
     try {
       await this.convex.mutation(api.alerts.mutations.markAllAsRead, {});
     } catch (err) {
-      console.error('Error al marcar todas como revisadas:', err);
+      this.logger.error('Error al marcar todas como revisadas:', err);
       this.overrides.update((o) => {
         const next = { ...o };
         for (const id of prevIds) next[id] = false;

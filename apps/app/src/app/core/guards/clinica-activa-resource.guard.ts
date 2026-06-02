@@ -5,6 +5,7 @@ import { SessionService } from '../auth/services/session.service';
 import { ClinicaActivaService } from '../auth/services/clinica-activa.service';
 import { ClinicaActivaPendingService } from '../auth/services/clinica-activa-pending.service';
 import { PageLoaderService } from '../services/page-loader.service';
+import { LoggerService } from '../services/logger.service';
 import { ToastService } from '../../shared/services/toast/toast.service';
 import { api } from '../../../../../../convex/_generated/api';
 
@@ -50,6 +51,7 @@ export function clinicaActivaResourceGuard(
     const pending = inject(ClinicaActivaPendingService);
     const pageLoader = inject(PageLoaderService);
     const toast = inject(ToastService);
+    const logger = inject(LoggerService);
 
     const resourceId = route.paramMap.get('id');
     if (!resourceId) return true;
@@ -77,7 +79,7 @@ export function clinicaActivaResourceGuard(
         },
       );
     } catch (err) {
-      console.error(
+      logger.error(
         '[ClinicaActivaResourceGuard] No se pudo resolver el recurso:',
         err,
       );

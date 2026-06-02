@@ -8,6 +8,7 @@ import type { ConvexTokenResult } from './better-auth.service';
 import { ConvexService } from '../../convex/convex.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { PageLoaderService } from '../../services/page-loader.service';
+import { LoggerService } from '../../services/logger.service';
 import { withTimeout } from '../../utils/with-timeout';
 
 export type CheckSessionResult =
@@ -32,6 +33,7 @@ export class AuthService {
   private convex = inject(ConvexService);
   private pushNotifications = inject(PushNotificationService);
   private pageLoader = inject(PageLoaderService);
+  private logger = inject(LoggerService);
 
   // Estado reactivo - solo indica si hay sesión activa
   readonly isLoggedIn = signal<boolean>(false);
@@ -86,12 +88,12 @@ export class AuthService {
     try {
       await withTimeout(this.pushNotifications.teardown(), 2000);
     } catch (err) {
-      console.warn('[Logout] teardown push (background):', err);
+      this.logger.warn('[Logout] teardown push (background):', err);
     }
     try {
       await withTimeout(this.betterAuth.signOut(), 2000);
     } catch (err) {
-      console.warn('[Logout] betterAuth.signOut (background):', err);
+      this.logger.warn('[Logout] betterAuth.signOut (background):', err);
     }
     // purgeStoredSession ya se invoca dentro de signOut. Si signOut hizo
     // timeout antes de purgar, lo intentamos aquí explícitamente — es
@@ -99,7 +101,7 @@ export class AuthService {
     try {
       await this.betterAuth.purgeStoredSession();
     } catch (err) {
-      console.warn('[Logout] purgeStoredSession (background):', err);
+      this.logger.warn('[Logout] purgeStoredSession (background):', err);
     }
   }
 
@@ -223,7 +225,7 @@ export class AuthService {
         // rastro local para que el siguiente arranque vea hasStoredSession=
         // false y no entre en bucle de 401. No redirigimos desde aquí; el
         // AuthGuard se encargará al activar una ruta protegida.
-        console.warn(
+        this.logger.warn(
           '[AuthService] Sesión inválida en servidor — purgando estado local',
         );
         await this.betterAuth.purgeStoredSession();

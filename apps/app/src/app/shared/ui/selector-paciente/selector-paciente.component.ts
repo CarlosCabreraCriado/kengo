@@ -4,6 +4,7 @@ import { assetUrl } from '../../../core/utils/asset-url';
 
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { Usuario } from '../../../../types/global';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../convex/_generated/dataModel';
@@ -431,6 +432,7 @@ export class SelectorPacienteComponent implements OnInit {
   private dialogRef = inject(DialogRef<Usuario>);
   private sessionService = inject(SessionService);
   private convex = inject(ConvexService);
+  private logger = inject(LoggerService);
 
   busqueda = signal('');
 
@@ -476,7 +478,7 @@ export class SelectorPacienteComponent implements OnInit {
 
       this.pacientes.set(usuarios);
     } catch (error) {
-      console.error('Error cargando pacientes:', error);
+      this.logger.error('Error cargando pacientes:', error);
     } finally {
       this.isLoading.set(false);
     }

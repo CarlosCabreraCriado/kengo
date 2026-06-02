@@ -8,6 +8,7 @@ import {
 } from '@capacitor-firebase/messaging';
 import { ConvexService } from '../convex/convex.service';
 import { PlatformService } from './platform.service';
+import { LoggerService } from './logger.service';
 import { api } from '../../../../../../convex/_generated/api';
 
 type PermissionState = 'unknown' | 'granted' | 'denied' | 'prompt';
@@ -35,6 +36,7 @@ export class PushNotificationService {
   private convex = inject(ConvexService);
   private platform = inject(PlatformService);
   private router = inject(Router);
+  private logger = inject(LoggerService);
 
   private _permissionState = signal<PermissionState>('unknown');
   private _token = signal<string | null>(null);
@@ -75,7 +77,7 @@ export class PushNotificationService {
       this.registerListeners();
       this._initialized.set(true);
     } catch (err) {
-      console.error('[Push] init falló:', err);
+      this.logger.error('[Push] init falló:', err);
       this._initialized.set(true);
     }
   }
@@ -102,7 +104,7 @@ export class PushNotificationService {
         { timeoutMs: 1000 },
       );
     } catch (err) {
-      console.warn('[Push] unregister falló (se ignora):', err);
+      this.logger.warn('[Push] unregister falló (se ignora):', err);
     }
 
     try {
@@ -146,7 +148,7 @@ export class PushNotificationService {
         const deviceId = await this.getDeviceId();
         await this.registerToken(token, deviceId);
       } catch (err) {
-        console.error('[Push] tokenReceived re-register falló:', err);
+        this.logger.error('[Push] tokenReceived re-register falló:', err);
       }
     });
 
@@ -199,7 +201,7 @@ export class PushNotificationService {
     try {
       await FirebaseMessaging.removeAllDeliveredNotifications();
     } catch (err) {
-      console.warn('[Push] clearBadge falló (se ignora):', err);
+      this.logger.warn('[Push] clearBadge falló (se ignora):', err);
     }
   }
 }

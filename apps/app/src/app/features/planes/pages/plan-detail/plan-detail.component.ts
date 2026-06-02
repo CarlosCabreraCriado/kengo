@@ -8,6 +8,7 @@ import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { CumplimientoService } from '../../../pacientes/data-access/cumplimiento.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import {
   EstadoPlan,
   PlanCompleto,
@@ -72,6 +73,7 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
   private dialogService = inject(DialogService);
   private toastService = inject(ToastService);
   private pageLoader = inject(PageLoaderService);
+  private logger = inject(LoggerService);
   private readonly PAGE_LOADER_KEY = 'plan-detail';
 
   plan = signal<PlanCompleto | null>(null);
@@ -255,7 +257,7 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
         this.dolorPromedio.set(Math.round(avg * 10) / 10);
       }
     } catch (err) {
-      console.warn('[plan-detail] error cargando métricas del paciente', err);
+      this.logger.warn('[plan-detail] error cargando métricas del paciente', err);
     }
   }
 

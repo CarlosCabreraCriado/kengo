@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { PlatformService } from './platform.service';
+import { LoggerService } from './logger.service';
 
 /**
  * Bloqueo condicional de orientación en plataforma nativa.
@@ -17,6 +18,7 @@ import { PlatformService } from './platform.service';
 @Injectable({ providedIn: 'root' })
 export class OrientationLockService {
   private platform = inject(PlatformService);
+  private logger = inject(LoggerService);
 
   private static readonly MOBILE_BREAKPOINT_PX = 768;
 
@@ -25,11 +27,11 @@ export class OrientationLockService {
   async aplicar(): Promise<void> {
     if (this.aplicado) return;
     if (!this.platform.isNative()) {
-      console.log('[OrientationLock] skip: no es plataforma nativa');
+      this.logger.log('[OrientationLock] skip: no es plataforma nativa');
       return;
     }
     if (typeof window === 'undefined' || !window.screen) {
-      console.warn('[OrientationLock] skip: window.screen no disponible');
+      this.logger.warn('[OrientationLock] skip: window.screen no disponible');
       return;
     }
 
@@ -39,7 +41,7 @@ export class OrientationLockService {
     await new Promise<void>((r) => setTimeout(r, 0));
 
     const shortestSide = Math.min(window.screen.width, window.screen.height);
-    console.log(
+    this.logger.log(
       `[OrientationLock] screen=${window.screen.width}x${window.screen.height} ` +
         `shortest=${shortestSide} umbral=${OrientationLockService.MOBILE_BREAKPOINT_PX}`,
     );
@@ -47,15 +49,15 @@ export class OrientationLockService {
 
     try {
       if (shortestSide < OrientationLockService.MOBILE_BREAKPOINT_PX) {
-        console.log('[OrientationLock] → lock portrait');
+        this.logger.log('[OrientationLock] → lock portrait');
         await ScreenOrientation.lock({ orientation: 'portrait' });
-        console.log('[OrientationLock] lock OK');
+        this.logger.log('[OrientationLock] lock OK');
       } else {
-        console.log('[OrientationLock] → unlock (dispositivo tipo tablet)');
+        this.logger.log('[OrientationLock] → unlock (dispositivo tipo tablet)');
         await ScreenOrientation.unlock();
       }
     } catch (err) {
-      console.error('[OrientationLock] error al aplicar la política:', err);
+      this.logger.error('[OrientationLock] error al aplicar la política:', err);
     }
   }
 }

@@ -7,6 +7,7 @@ import {
   effect,
 } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { RutinasService } from './rutinas.service';
 import {
   Ejercicio,
@@ -42,6 +43,7 @@ export class RutinaBuilderService {
   private sessionService = inject(SessionService);
   private rutinasService = inject(RutinasService);
   private injector = inject(Injector);
+  private logger = inject(LoggerService);
 
   private readonly itemsState = new BuilderItemsState();
 
@@ -290,7 +292,7 @@ export class RutinaBuilderService {
       }
       return true;
     } catch (error) {
-      console.error('Error al cargar rutina:', error);
+      this.logger.error('Error al cargar rutina:', error);
       return false;
     }
   }

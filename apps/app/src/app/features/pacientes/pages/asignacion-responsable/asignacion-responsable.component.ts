@@ -15,6 +15,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 
 import {
@@ -65,6 +66,7 @@ export class AsignacionResponsableComponent {
   private asignacionesService = inject(AsignacionesService);
   private convex = inject(ConvexService);
   private toast = inject(ToastService);
+  private logger = inject(LoggerService);
 
   constructor() {
     // Auto-seleccionar primera clínica admin cuando los datos estén disponibles
@@ -184,7 +186,7 @@ export class AsignacionResponsableComponent {
       this.asignacionesOriginales.set(new Map(asigMap));
       this.asignacionesEditadas.set(new Map(asigMap));
     } catch (err) {
-      console.error('Error cargando datos de asignación:', err);
+      this.logger.error('Error cargando datos de asignación:', err);
       this.toast.error('Error al cargar datos');
     } finally {
       this.isLoadingPacientes.set(false);
@@ -256,7 +258,7 @@ export class AsignacionResponsableComponent {
         this.toast.success(`Cambios guardados: ${partes.join(', ')}`);
       }
     } catch (err: unknown) {
-      console.error('Error guardando asignaciones:', err);
+      this.logger.error('Error guardando asignaciones:', err);
       const errorMsg =
         (err as { error?: { error?: string } })?.error?.error ||
         'Error al guardar los cambios';

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../../convex/_generated/dataModel';
 import type {
@@ -68,6 +69,7 @@ interface DailyRollup {
 export class CumplimientoService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private logger = inject(LoggerService);
 
   /**
    * Obtiene cumplimiento histórico desde Convex (modelo nuevo
@@ -105,7 +107,7 @@ export class CumplimientoService {
 
       return this.buildCumplimientoResponse(rollups);
     } catch (error) {
-      console.error('Error al obtener cumplimiento:', error);
+      this.logger.error('Error al obtener cumplimiento:', error);
       return { dias: [], resumen: this.emptyResumen() };
     }
   }

@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ContentChildren,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -18,6 +19,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export type Ui2StepperOrientation = 'horizontal' | 'vertical';
 
@@ -312,16 +314,19 @@ export class Ui2StepperComponent
   private readonly zone = inject(NgZone);
   private resizeObserver?: ResizeObserver;
   private readonly scrollHandler = () => this.updateScrollHints();
+  private readonly destroyRef = inject(DestroyRef);
 
   ngAfterContentInit(): void {
     this.steps = this.stepsQuery.toArray();
     this.refreshSteps();
-    this.stepsQuery.changes.subscribe(() => {
-      this.steps = this.stepsQuery.toArray();
-      this.refreshSteps();
-      // Tras añadir/quitar pasos el ancho del header cambia.
-      this.scheduleHintUpdate();
-    });
+    this.stepsQuery.changes
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.steps = this.stepsQuery.toArray();
+        this.refreshSteps();
+        // Tras añadir/quitar pasos el ancho del header cambia.
+        this.scheduleHintUpdate();
+      });
   }
 
   ngAfterViewInit(): void {

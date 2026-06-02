@@ -11,6 +11,7 @@ import {
   ViewChild,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { assetUrl } from '../../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
@@ -47,6 +48,7 @@ import {
   Ui2ToggleRowComponent,
 } from '../../../../../shared/ui-v2';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
+import { LoggerService } from '../../../../../core/services/logger.service';
 
 @Component({
   selector: 'app-perfil',
@@ -77,6 +79,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
   private pageLoader = inject(PageLoaderService);
   private dialogService = inject(DialogService);
+  private logger = inject(LoggerService);
   private readonly PAGE_LOADER_KEY = 'perfil';
 
   /** Datos críticos: usuario disponible. */
@@ -169,9 +172,11 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
-    this.formularioUsuario.valueChanges.subscribe(() => {
-      this.formularioCambiado.set(true);
-    });
+    this.formularioUsuario.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.formularioCambiado.set(true);
+      });
   }
 
   ngOnDestroy() {
@@ -225,7 +230,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
       await this.sessionService.refreshUsuario();
       this.formularioCambiado.set(false);
     } catch (err) {
-      console.error('Error guardando perfil:', err);
+      this.logger.error('Error guardando perfil:', err);
     }
   }
 
@@ -280,7 +285,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
       await this.sessionService.refreshUsuario();
     } catch (e) {
-      console.error(e);
+      this.logger.error(e);
       alert('No se pudo actualizar la foto de perfil.');
     } finally {
       this.subiendoAvatar.set(false);
@@ -363,7 +368,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
         { [key]: value },
       );
     } catch (err) {
-      console.error('No se pudo actualizar la preferencia de notificación', err);
+      this.logger.error('No se pudo actualizar la preferencia de notificación', err);
     }
   }
 

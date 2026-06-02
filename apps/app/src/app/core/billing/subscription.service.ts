@@ -4,6 +4,7 @@ import { SessionService } from '../auth/services/session.service';
 import { ClinicaActivaService } from '../auth/services/clinica-activa.service';
 import { ExternalBrowserService } from '../services/external-browser.service';
 import { PlatformService } from '../services/platform.service';
+import { LoggerService } from '../services/logger.service';
 import { ToastService } from '../../shared/services/toast/toast.service';
 import { api } from '../../../../../../convex/_generated/api';
 import type { ClinicSubscription } from '@kengo/shared-models';
@@ -29,6 +30,7 @@ export class SubscriptionService {
   private readonly toast = inject(ToastService);
   private readonly externalBrowser = inject(ExternalBrowserService);
   private readonly platform = inject(PlatformService);
+  private readonly logger = inject(LoggerService);
 
   private get returnTo(): 'native' | 'web' {
     return this.platform.isNative() ? 'native' : 'web';
@@ -140,7 +142,7 @@ export class SubscriptionService {
       );
       await this.externalBrowser.redirect(url);
     } catch (err) {
-      console.error('[SubscriptionService] checkout', err);
+      this.logger.error('[SubscriptionService] checkout', err);
       this.toast.error('No se pudo iniciar el proceso de pago');
     }
   }
@@ -154,7 +156,7 @@ export class SubscriptionService {
       );
       await this.externalBrowser.redirect(url);
     } catch (err) {
-      console.error('[SubscriptionService] portal', err);
+      this.logger.error('[SubscriptionService] portal', err);
       this.toast.error('No se pudo abrir el portal de gestión');
     }
   }
@@ -168,7 +170,7 @@ export class SubscriptionService {
       });
       this.toast.success('La suscripción se cancelará al final del período');
     } catch (err) {
-      console.error('[SubscriptionService] cancelar', err);
+      this.logger.error('[SubscriptionService] cancelar', err);
       this.toast.error('No se pudo cancelar la suscripción');
     }
   }
@@ -181,7 +183,7 @@ export class SubscriptionService {
       });
       this.toast.success('Suscripción reactivada');
     } catch (err) {
-      console.error('[SubscriptionService] reactivar', err);
+      this.logger.error('[SubscriptionService] reactivar', err);
       this.toast.error('No se pudo reactivar la suscripción');
     }
   }
@@ -201,7 +203,7 @@ export class SubscriptionService {
       this.toast.success('Hemos enviado tu solicitud al equipo de ventas');
       return true;
     } catch (err) {
-      console.error('[SubscriptionService] contactarVentas', err);
+      this.logger.error('[SubscriptionService] contactarVentas', err);
       this.toast.error('No se pudo enviar la solicitud');
       return false;
     }

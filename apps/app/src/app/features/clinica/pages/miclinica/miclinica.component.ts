@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -97,6 +99,7 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   private dialogService = inject(DialogService);
   private toastService = inject(ToastService);
   private pageLoader = inject(PageLoaderService);
+  private destroyRef = inject(DestroyRef);
   private readonly PAGE_LOADER_KEY = 'miclinica';
 
   /** Datos críticos: lista de clínicas resuelta. */
@@ -204,20 +207,22 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
       'link' | 'create' | null
     >(SeleccionarOpcionClinicaDialogComponent);
 
-    ref.closed.subscribe(async (opcion) => {
-      if (opcion === 'link') {
-        this.abrirVincularClinica();
-      } else if (opcion === 'create') {
-        const confirmado = await this.dialogService.confirm({
-          title: 'Crear nueva clínica',
-          message:
-            'Esta opción es para fisioterapeutas que quieran montar su propia clínica y gestionar a sus pacientes. Al continuar te convertirás en administrador de la nueva clínica.',
-          confirmText: 'Continuar',
-          cancelText: 'Cancelar',
-        });
-        if (confirmado) this.abrirCrearClinica();
-      }
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (opcion) => {
+        if (opcion === 'link') {
+          this.abrirVincularClinica();
+        } else if (opcion === 'create') {
+          const confirmado = await this.dialogService.confirm({
+            title: 'Crear nueva clínica',
+            message:
+              'Esta opción es para fisioterapeutas que quieran montar su propia clínica y gestionar a sus pacientes. Al continuar te convertirás en administrador de la nueva clínica.',
+            confirmText: 'Continuar',
+            cancelText: 'Cancelar',
+          });
+          if (confirmado) this.abrirCrearClinica();
+        }
+      });
   }
 
   // ===== Dialog Methods =====
@@ -228,9 +233,11 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     const ref = this.dialogService.openForm<VincularClinicaDialogComponent, undefined, boolean>(
       VincularClinicaDialogComponent,
     );
-    ref.closed.subscribe(success => {
-      if (success) this.showSnackbar('Te has vinculado a la clínica exitosamente');
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(success => {
+        if (success) this.showSnackbar('Te has vinculado a la clínica exitosamente');
+      });
   }
 
   async abrirCrearClinica() {
@@ -240,9 +247,11 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     const ref = this.dialogService.openForm<CrearClinicaDialogComponent, undefined, boolean>(
       CrearClinicaDialogComponent,
     );
-    ref.closed.subscribe(success => {
-      if (success) this.showSnackbar('Clínica creada exitosamente');
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(success => {
+        if (success) this.showSnackbar('Clínica creada exitosamente');
+      });
   }
 
   async abrirAnadirFisio() {
@@ -262,16 +271,18 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
         tipoFijo: 'fisioterapeuta',
       },
     });
-    ref.closed.subscribe(result => {
-      if (result?.codigo) {
-        this.showSnackbar(`Código generado: ${result.codigo}`);
-      } else if (result?.requiereContactoVentas) {
-        this.toastService.warning(
-          'Has alcanzado el plan máximo (10 fisios). Contacta con ventas para un plan a medida.',
-        );
-        this.abrirDialogContactarVentas();
-      }
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        if (result?.codigo) {
+          this.showSnackbar(`Código generado: ${result.codigo}`);
+        } else if (result?.requiereContactoVentas) {
+          this.toastService.warning(
+            'Has alcanzado el plan máximo (10 fisios). Contacta con ventas para un plan a medida.',
+          );
+          this.abrirDialogContactarVentas();
+        }
+      });
   }
 
   async abrirEditarClinica() {
@@ -284,9 +295,11 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
       EditarClinicaDialogComponent,
       { data: clinica, maxWidth: '720px' },
     );
-    ref.closed.subscribe(success => {
-      if (success) this.showSnackbar('Clínica actualizada exitosamente');
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(success => {
+        if (success) this.showSnackbar('Clínica actualizada exitosamente');
+      });
   }
 
   /** Abre el formulario de contacto comercial. Reutilizable desde el aviso de límite. */

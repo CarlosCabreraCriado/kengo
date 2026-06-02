@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   RouteReuseStrategy,
   ActivatedRouteSnapshot,
   DetachedRouteHandle,
 } from '@angular/router';
+import { LoggerService } from '../services/logger.service';
 
 interface CachedRoute {
   handle: DetachedRouteHandle;
@@ -18,6 +19,8 @@ interface CachedRoute {
  */
 @Injectable({ providedIn: 'root' })
 export class CustomRouteReuseStrategy implements RouteReuseStrategy {
+  private logger = inject(LoggerService);
+
   // Almacén de rutas cacheadas con su posición de scroll
   private cache = new Map<string, CachedRoute>();
 
@@ -176,7 +179,7 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
       try {
         internal.componentRef?.destroy();
       } catch (err) {
-        console.warn('[RouteReuseStrategy] destroy falló:', err);
+        this.logger.warn('[RouteReuseStrategy] destroy falló:', err);
       }
     }
     this.cache.clear();

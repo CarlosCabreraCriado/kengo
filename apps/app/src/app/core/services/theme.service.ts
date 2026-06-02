@@ -4,6 +4,7 @@ import { assetUrl } from '../utils/asset-url';
 
 import { ClinicasService } from '../../features/clinica/data-access/clinicas.service';
 import { PlatformService } from './platform.service';
+import { LoggerService } from './logger.service';
 import type { Clinica } from '../../../types/global';
 interface ColorPalette {
   primary: string;
@@ -58,6 +59,7 @@ export class ThemeService {
 
   private clinicasService = inject(ClinicasService);
   private platform = inject(PlatformService);
+  private logger = inject(LoggerService);
 
   currentPrimary = signal<string>(this.DEFAULT_PRIMARY);
   currentTertiary = signal<string>(this.DEFAULT_TERTIARY);
@@ -125,7 +127,7 @@ export class ThemeService {
     const palette = this.calcularPaleta(primary, tertiary);
     this.inyectarCSSVariables(palette);
 
-    console.log('[ThemeService] Tema aplicado:', { primary, tertiary });
+    this.logger.log('[ThemeService] Tema aplicado:', { primary, tertiary });
   }
 
   /**
@@ -136,11 +138,11 @@ export class ThemeService {
       const logoUrl = assetUrl(clinica.logo, { width: 144, height: 144, fit: 'cover' });
       this.logoUrl.set(logoUrl);
       this.logoIconUrl.set(logoUrl);
-      console.log('[ThemeService] Logo de clínica aplicado:', logoUrl);
+      this.logger.log('[ThemeService] Logo de clínica aplicado:', logoUrl);
     } else {
       this.logoUrl.set(this.DEFAULT_LOGO);
       this.logoIconUrl.set(this.DEFAULT_LOGO_ICON);
-      console.log('[ThemeService] Logo por defecto aplicado');
+      this.logger.log('[ThemeService] Logo por defecto aplicado');
     }
   }
 

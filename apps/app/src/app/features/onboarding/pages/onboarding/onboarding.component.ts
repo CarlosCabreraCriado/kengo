@@ -1,10 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { AuthService } from '../../../../core/auth/services/auth.service';
@@ -39,6 +41,7 @@ export class OnboardingComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private dialogService = inject(DialogService);
+  private destroyRef = inject(DestroyRef);
 
   protected readonly modo = signal<ModoOnboarding>('fisio');
 
@@ -64,12 +67,14 @@ export class OnboardingComponent {
     const ref = this.dialogService.openForm<CrearClinicaDialogComponent, undefined, boolean>(
       CrearClinicaDialogComponent,
     );
-    ref.closed.subscribe(async success => {
-      if (success) {
-        await this.sessionService.refreshUsuario();
-        this.router.navigate(['/inicio']);
-      }
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async success => {
+        if (success) {
+          await this.sessionService.refreshUsuario();
+          this.router.navigate(['/inicio']);
+        }
+      });
   }
 
   protected async abrirVincular(): Promise<void> {
@@ -79,12 +84,14 @@ export class OnboardingComponent {
     const ref = this.dialogService.openForm<VincularClinicaDialogComponent, undefined, boolean>(
       VincularClinicaDialogComponent,
     );
-    ref.closed.subscribe(async success => {
-      if (success) {
-        await this.sessionService.refreshUsuario();
-        this.router.navigate(['/inicio']);
-      }
-    });
+    ref.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async success => {
+        if (success) {
+          await this.sessionService.refreshUsuario();
+          this.router.navigate(['/inicio']);
+        }
+      });
   }
 
   protected async cerrarSesion(): Promise<void> {

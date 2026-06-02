@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -19,6 +20,7 @@ import { PlanBuilderService } from '../../../planes/data-access/plan-builder.ser
 import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builder.service';
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { VideoEjercicioComponent } from '../../../../shared/ui/video-ejercicio/video-ejercicio.component';
@@ -59,6 +61,8 @@ export class EjercicioDetailComponent {
   private rutinaBuilderService = inject(RutinaBuilderService);
   public sessionService = inject(SessionService);
   private dialog = inject(Dialog);
+  private destroyRef = inject(DestroyRef);
+  private logger = inject(LoggerService);
 
   // Estado del ejercicio
   id = signal<string | null>(null);
@@ -140,18 +144,21 @@ export class EjercicioDetailComponent {
 
     // Si no esta en cache, pide al servidor
     this.loading.set(true);
-    this.ejerciciosService.getEjercicioById$(id).subscribe({
-      next: (ex: Ejercicio) => {
-        this.ejercicio.set(ex);
-        this.inicializarPresets();
-        this.loading.set(false);
-      },
-      error: (err: Error) => {
-        console.error(err);
-        this.error.set('No se pudo cargar el ejercicio.');
-        this.loading.set(false);
-      },
-    });
+    this.ejerciciosService
+      .getEjercicioById$(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (ex: Ejercicio) => {
+          this.ejercicio.set(ex);
+          this.inicializarPresets();
+          this.loading.set(false);
+        },
+        error: (err: Error) => {
+          this.logger.error(err);
+          this.error.set('No se pudo cargar el ejercicio.');
+          this.loading.set(false);
+        },
+      });
   }
 
   // Inicializar con valores por defecto del ejercicio
@@ -251,9 +258,11 @@ export class EjercicioDetailComponent {
     });
 
     return new Promise((resolve) => {
-      dialogRef.closed.subscribe((paciente) => {
-        resolve(paciente || null);
-      });
+      dialogRef.closed
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((paciente) => {
+          resolve(paciente || null);
+        });
     });
   }
 

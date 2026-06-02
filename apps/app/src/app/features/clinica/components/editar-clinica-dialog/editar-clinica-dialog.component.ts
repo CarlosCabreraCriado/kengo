@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   signal,
   computed,
   OnInit,
   OnDestroy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgOptimizedImage } from '@angular/common';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -88,6 +90,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
   private dialog = inject(Dialog);
   private clinicaGestionService = inject(ClinicaGestionService);
   private clinicasService = inject(ClinicasService);
+  private destroyRef = inject(DestroyRef);
 
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
@@ -206,12 +209,14 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
       panelClass: 'ui-dialog-panel',
     });
 
-    dialogRef.closed.subscribe((result) => {
-      if (result?.file) {
-        this.logoFile.set(result.file);
-        this.removeLogo.set(false);
-      }
-    });
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result?.file) {
+          this.logoFile.set(result.file);
+          this.removeLogo.set(false);
+        }
+      });
   }
 
   clearLogo() {

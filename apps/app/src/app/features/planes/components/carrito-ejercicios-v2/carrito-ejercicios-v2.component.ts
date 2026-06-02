@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   EffectRef,
   Injector,
   OnDestroy,
@@ -10,6 +11,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Dialog } from '@angular/cdk/dialog';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
@@ -50,6 +52,7 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   private readonly toastService = inject(ToastService);
   private readonly injector = inject(Injector);
   private readonly dialog = inject(Dialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly svc = inject(PlanBuilderService);
   readonly rutinaSvc = inject(RutinaBuilderService);
@@ -112,7 +115,10 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
 
     this.checkRouteForTab(this.router.url);
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((event) => {
         this.checkRouteForTab((event as NavigationEnd).urlAfterRedirects);
       });
@@ -178,19 +184,21 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       panelClass: 'selector-paciente-dialog',
     });
 
-    dialogRef.closed.subscribe((paciente) => {
-      if (paciente) {
-        this.svc.paciente.set(paciente);
-        localStorage.setItem('carrito:last_paciente_id', paciente.id);
-        const fisioId = this.svc.fisioId();
-        if (fisioId) {
-          localStorage.setItem('carrito:last_fisio_id', fisioId);
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((paciente) => {
+        if (paciente) {
+          this.svc.paciente.set(paciente);
+          localStorage.setItem('carrito:last_paciente_id', paciente.id);
+          const fisioId = this.svc.fisioId();
+          if (fisioId) {
+            localStorage.setItem('carrito:last_fisio_id', fisioId);
+          }
+          this.toastService.show(
+            `Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`,
+          );
         }
-        this.toastService.show(
-          `Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`,
-        );
-      }
-    });
+      });
   }
 
   irAEjercicios(): void {
@@ -238,18 +246,20 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       panelClass: 'selector-rutina-dialog',
     });
 
-    dialogRef.closed.subscribe(async (rutinaId) => {
-      if (rutinaId) {
-        const success = this.rutinaSvc.isActive()
-          ? await this.rutinaSvc.loadFromRutina(rutinaId)
-          : await this.svc.loadFromRutina(rutinaId);
-        if (success) {
-          this.toastService.show('Rutina cargada correctamente');
-        } else {
-          this.toastService.show('Error al cargar la rutina', 'error');
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (rutinaId) => {
+        if (rutinaId) {
+          const success = this.rutinaSvc.isActive()
+            ? await this.rutinaSvc.loadFromRutina(rutinaId)
+            : await this.svc.loadFromRutina(rutinaId);
+          if (success) {
+            this.toastService.show('Rutina cargada correctamente');
+          } else {
+            this.toastService.show('Error al cargar la rutina', 'error');
+          }
         }
-      }
-    });
+      });
   }
 
   salirModoRutina(): void {
@@ -281,24 +291,26 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       data: { nombreSugerido: '' },
     });
 
-    dialogRef.closed.subscribe(async (result) => {
-      const data = result as
-        | { nombre: string; descripcion: string; visibilidad: 'privado' | 'clinica' }
-        | undefined;
-      if (data) {
-        const rutinaId = this.rutinaSvc.isActive()
-          ? await this.rutinaSvc.save(data.nombre, data.descripcion, data.visibilidad)
-          : await this.svc.saveAsRutina(data.nombre, data.descripcion, data.visibilidad);
+    dialogRef.closed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result) => {
+        const data = result as
+          | { nombre: string; descripcion: string; visibilidad: 'privado' | 'clinica' }
+          | undefined;
+        if (data) {
+          const rutinaId = this.rutinaSvc.isActive()
+            ? await this.rutinaSvc.save(data.nombre, data.descripcion, data.visibilidad)
+            : await this.svc.saveAsRutina(data.nombre, data.descripcion, data.visibilidad);
 
-        if (rutinaId) {
-          this.toastService.show('Rutina guardada');
-          if (this.rutinaSvc.isActive()) this.rutinaSvc.exit();
-          this.router.navigate(['/rutinas']);
-        } else {
-          this.toastService.show('Error al guardar rutina', 'error');
+          if (rutinaId) {
+            this.toastService.show('Rutina guardada');
+            if (this.rutinaSvc.isActive()) this.rutinaSvc.exit();
+            this.router.navigate(['/rutinas']);
+          } else {
+            this.toastService.show('Error al guardar rutina', 'error');
+          }
         }
-      }
-    });
+      });
   }
 
   thumbUrl(id: string | null | undefined, w = 160, h = 90): string {

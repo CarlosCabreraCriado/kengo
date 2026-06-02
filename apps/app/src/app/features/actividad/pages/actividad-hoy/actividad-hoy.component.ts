@@ -14,6 +14,7 @@ import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 
 import {
   PlanCompleto,
@@ -92,6 +93,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private dialogService = inject(DialogService);
   private pageLoader = inject(PageLoaderService);
+  private logger = inject(LoggerService);
   private readonly PAGE_LOADER_KEY = 'actividad-hoy';
 
   /** Datos críticos: actividad de hoy resuelta. */
@@ -246,7 +248,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
     try {
       await this.cargarPlanesFuturos(userId);
     } catch (err) {
-      console.error('Error al cargar datos:', err);
+      this.logger.error('Error al cargar datos:', err);
       this.error.set('Error al cargar la actividad. Intenta de nuevo.');
     }
   }

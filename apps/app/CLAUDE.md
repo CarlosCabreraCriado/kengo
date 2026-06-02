@@ -11,6 +11,8 @@ Reglas específicas para la app Angular 20. El CLAUDE.md raíz cubre el monorepo
 - **`@if / @for / @switch`** (control flow). No usar `*ngIf`, `*ngFor`, `*ngSwitch`.
 - **Reactive Forms** (`FormBuilder`, `FormGroup`). No template-driven forms para formularios serios.
 - **`NgOptimizedImage` (`<img [ngSrc]>`)** para toda imagen servida desde Cloudflare R2 (URL construida con `assetUrl()`). Requiere `width`/`height` explícitos; pasar `[loaderParams]="{ fit: 'cover', quality: 80 }"` para que el loader (`core/utils/image-loader.ts`) reescriba los query params según device pixel ratio. Marcar `priority` solo en el LCP candidate de la pantalla; el resto va con `loading="lazy"`. SVGs locales y blobs de preview (cropper, file inputs) mantienen `<img src>`.
+- **Suscripciones manuales** en componentes: cualquier `.subscribe(...)` debe encadenar `.pipe(takeUntilDestroyed(this.destroyRef))`. Para servicios singleton (`providedIn: 'root'`), preferir `firstValueFrom(...)` en operaciones one-shot — `takeUntilDestroyed` no aplica cuando el servicio no se destruye. Guardrail: `npm run check:subscribe` (parte de `npm run check:perf`).
+- **Logging**: usar siempre `LoggerService` (`core/services/logger.service.ts`) — nunca `console.*` directo en código de aplicación. El wrapper guarda los logs tras `isDevMode()` para que sean no-op en producción. Excepción única: `apps/app/src/main.ts` (bootstrap pre-DI). Guardrail: `npm run check:console`.
 
 ## UI: catálogo V2 + componentes legacy especializados
 

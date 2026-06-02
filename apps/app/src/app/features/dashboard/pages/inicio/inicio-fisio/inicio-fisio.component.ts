@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
 import { DashboardFisioService } from '../../../data-access/dashboard-fisio.service';
@@ -56,6 +57,7 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
   private planBuilderService = inject(PlanBuilderService);
   private rutinaBuilderService = inject(RutinaBuilderService);
   private pageLoader = inject(PageLoaderService);
+  private destroyRef = inject(DestroyRef);
   private readonly PAGE_LOADER_KEY = 'inicio-fisio';
 
   dashboardService = inject(DashboardFisioService);
@@ -266,7 +268,9 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
     });
 
     return new Promise((resolve) => {
-      dialogRef.closed.subscribe((paciente) => resolve(paciente ?? null));
+      dialogRef.closed
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((paciente) => resolve(paciente ?? null));
     });
   }
 

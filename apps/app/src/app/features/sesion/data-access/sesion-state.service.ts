@@ -10,6 +10,7 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { PlanesService } from '../../planes/data-access/planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../../convex/_generated/dataModel';
 import { SesionPersistenceService } from './sesion-persistence.service';
@@ -79,6 +80,7 @@ export class SesionStateService {
   private planesService = inject(PlanesService);
   private persistencia = inject(SesionPersistenceService);
   private temporizador = inject(SesionTemporizadorService);
+  private logger = inject(LoggerService);
 
   // Cola en memoria para reintentar inserts de executions que fallaron
   // por red. Se drena en `aplicarFeedbackFinal` y `finalizarSesion`.
@@ -206,7 +208,7 @@ export class SesionStateService {
 
       return planCompleto;
     } catch (error) {
-      console.error('Error al cargar plan del paciente:', error);
+      this.logger.error('Error al cargar plan del paciente:', error);
       return null;
     }
   }
@@ -296,7 +298,7 @@ export class SesionStateService {
 
       return true;
     } catch (error) {
-      console.error('Error al iniciar sesión:', error);
+      this.logger.error('Error al iniciar sesión:', error);
       return false;
     }
   }
@@ -369,7 +371,7 @@ export class SesionStateService {
 
       return true;
     } catch (error) {
-      console.error('Error al iniciar sesion multi-plan:', error);
+      this.logger.error('Error al iniciar sesion multi-plan:', error);
       return false;
     }
   }
@@ -481,7 +483,7 @@ export class SesionStateService {
     try {
       planExerciseId = this.resolvePlanExerciseId(planItemId) as Id<'planExercises'>;
     } catch (error) {
-      console.error('No se pudo resolver planExerciseId:', error);
+      this.logger.error('No se pudo resolver planExerciseId:', error);
       return;
     }
 
@@ -516,7 +518,7 @@ export class SesionStateService {
 
       this.registrosSesion.update((regs) => [...regs, registro]);
     } catch (error) {
-      console.error('Error al registrar execution; encolando para retry:', error);
+      this.logger.error('Error al registrar execution; encolando para retry:', error);
       this.pendingExecutions.push({ payload, registroBase });
     }
   }
@@ -573,7 +575,7 @@ export class SesionStateService {
           { entradas },
         );
       } catch (error) {
-        console.error('Error al aplicar feedback batch:', error);
+        this.logger.error('Error al aplicar feedback batch:', error);
       }
     }
 
@@ -603,7 +605,7 @@ export class SesionStateService {
         };
         this.registrosSesion.update((regs) => [...regs, registro]);
       } catch (error) {
-        console.error('Reintento de execution falló; permanece en cola:', error);
+        this.logger.error('Reintento de execution falló; permanece en cola:', error);
         remaining.push(pending);
       }
     }
@@ -644,7 +646,7 @@ export class SesionStateService {
       this.resetearEstado();
       return true;
     } catch (error) {
-      console.error('Error al finalizar sesión:', error);
+      this.logger.error('Error al finalizar sesión:', error);
       return false;
     }
   }
@@ -706,7 +708,7 @@ export class SesionStateService {
       }
       return sessionId as string;
     } catch (error) {
-      console.error('Error al crear sesión:', error);
+      this.logger.error('Error al crear sesión:', error);
       return null;
     }
   }
@@ -729,7 +731,7 @@ export class SesionStateService {
       const list = sessions as SesionRehidratable[] | undefined;
       return list?.[0] ?? null;
     } catch (error) {
-      console.error('Error al consultar sesión de hoy:', error);
+      this.logger.error('Error al consultar sesión de hoy:', error);
       return null;
     }
   }
@@ -751,7 +753,7 @@ export class SesionStateService {
       });
       return true;
     } catch (error) {
-      console.error('Error al finalizar sesión:', error);
+      this.logger.error('Error al finalizar sesión:', error);
       return false;
     }
   }
@@ -776,7 +778,7 @@ export class SesionStateService {
       const list = (raw as ConvexExecutionRecord[] | undefined) ?? [];
       return list.map((r) => mapConvexToRegistro(r));
     } catch (error) {
-      console.error('Error al obtener registros de hoy:', error);
+      this.logger.error('Error al obtener registros de hoy:', error);
       return [];
     }
   }

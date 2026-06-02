@@ -13,6 +13,7 @@ import { map } from 'rxjs';
 
 import { SubscriptionService } from '../../../../core/billing/subscription.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { PricingCardsComponent } from '../../components/pricing-cards/pricing-cards.component';
@@ -93,6 +94,7 @@ export class SuscripcionComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly convex = inject(ConvexService);
   private readonly dialogService = inject(DialogService);
+  private readonly logger = inject(LoggerService);
   protected readonly subs = inject(SubscriptionService);
 
   protected readonly suscripcion = this.subs.suscripcion;
@@ -206,7 +208,7 @@ export class SuscripcionComponent {
       this.facturas.set(result.invoices as InvoiceItem[]);
       this.facturasError.set(result.error ?? null);
     } catch (err) {
-      console.error('[SuscripcionComponent] cargarFacturas', err);
+      this.logger.error('[SuscripcionComponent] cargarFacturas', err);
       this.facturasError.set('No se pudieron cargar las facturas');
       this.facturas.set([]);
     } finally {

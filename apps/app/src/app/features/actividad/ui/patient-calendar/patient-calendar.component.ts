@@ -14,6 +14,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 
 import {
   PlanCompleto,
@@ -85,6 +86,7 @@ export class PatientCalendarComponent implements OnInit {
   private registroService = inject(SesionStateService);
   private actividadHoyService = inject(ActividadHoyService);
   private router = inject(Router);
+  private logger = inject(LoggerService);
 
   private readonly NOMBRES_DIAS_CORTOS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   private readonly NOMBRES_DIAS = [
@@ -247,7 +249,7 @@ export class PatientCalendarComponent implements OnInit {
     try {
       await this.cargarPlanes(userId);
     } catch (err) {
-      console.error('Error al cargar datos:', err);
+      this.logger.error('Error al cargar datos:', err);
       this.error.set('Error al cargar el calendario. Intenta de nuevo.');
     }
   }

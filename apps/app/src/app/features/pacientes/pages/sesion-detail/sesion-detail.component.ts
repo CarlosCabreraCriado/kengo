@@ -17,6 +17,7 @@ import { PageLoaderService } from '../../../../core/services/page-loader.service
 import type { DiaSemana, Usuario } from '../../../../../types/global';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 import {
   diaSemanaFromYMD,
@@ -117,6 +118,7 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
   private pageLoader = inject(PageLoaderService);
+  private logger = inject(LoggerService);
   private readonly PAGE_LOADER_KEY = 'sesion-detail';
 
   isMovil = useResponsive().esMobile;
@@ -220,7 +222,7 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
         this.paciente.set(this.sessionService.transformarUsuarioConvex(data));
       }
     } catch (err) {
-      console.error('Error cargando paciente:', err);
+      this.logger.error('Error cargando paciente:', err);
     }
   }
 
@@ -292,7 +294,7 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
         await this.cargarPlanesAgendados();
       }
     } catch (err) {
-      console.error('Error cargando registros de sesión:', err);
+      this.logger.error('Error cargando registros de sesión:', err);
       this.error.set('Error al cargar los detalles de la sesión');
     } finally {
       this.isLoading.set(false);

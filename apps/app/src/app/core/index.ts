@@ -7,6 +7,7 @@ export { ClinicaActivaPendingService } from './auth/services/clinica-activa-pend
 
 // Services
 export { ThemeService } from './services/theme.service';
+export { LoggerService } from './services/logger.service';
 
 // Guards
 export { AuthGuard } from './guards/auth.guard';

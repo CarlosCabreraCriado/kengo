@@ -2,6 +2,7 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../../convex/_generated/dataModel';
 import type { Ui2AppointmentVm } from '../../../shared/ui-v2';
@@ -35,6 +36,7 @@ export class NextSessionService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private logger = inject(LoggerService);
 
   readonly cargando = signal<boolean>(false);
   readonly error = signal<string | null>(null);
@@ -101,7 +103,7 @@ export class NextSessionService {
       this.rawNext.set(r as NextSessionPayload | null);
       this.datosCargados.set(true);
     } catch (e) {
-      console.error('Error al cargar próxima sesión:', e);
+      this.logger.error('Error al cargar próxima sesión:', e);
       this.error.set('No se pudo cargar la próxima sesión.');
     } finally {
       this.cargando.set(false);

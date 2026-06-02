@@ -12,6 +12,7 @@ import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { mapId } from '../../../shared/utils/convex-mappers';
 import { createFilteredList } from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
@@ -27,6 +28,7 @@ export interface PaginaEjercicios {
 export class EjerciciosService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private logger = inject(LoggerService);
 
   // --- Filtros específicos del dominio (los signals base vienen del factory) ---
   readonly idsCategoriasSeleccionadas: WritableSignal<string[]> = signal([]);
@@ -261,7 +263,7 @@ export class EjerciciosService {
         exerciseId: idEjercicio as any,
       });
     } catch (error) {
-      console.error('Error toggling favorito:', error);
+      this.logger.error('Error toggling favorito:', error);
       const revertSet = new Set(this.idsFavoritos());
       if (esFavorito) {
         revertSet.add(idEjercicio);

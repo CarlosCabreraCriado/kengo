@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, HostListener, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
@@ -55,6 +56,7 @@ export class RutinasListComponent implements OnInit, OnDestroy {
   private rutinaBuilderService = inject(RutinaBuilderService);
   private dialog = inject(Dialog);
   private pageLoader = inject(PageLoaderService);
+  private destroyRef = inject(DestroyRef);
   private readonly PAGE_LOADER_KEY = 'rutinas-list';
   rutinasService = inject(RutinasService);
   sessionService = inject(SessionService);
@@ -284,9 +286,11 @@ export class RutinasListComponent implements OnInit, OnDestroy {
     });
 
     return new Promise((resolve) => {
-      dialogRef.closed.subscribe((paciente) => {
-        resolve(paciente || null);
-      });
+      dialogRef.closed
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((paciente) => {
+          resolve(paciente || null);
+        });
     });
   }
 

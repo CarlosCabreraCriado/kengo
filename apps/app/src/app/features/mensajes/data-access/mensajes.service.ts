@@ -1,6 +1,7 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ClinicaActivaService, SessionService } from '../../../core';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../convex/_generated/dataModel';
 import type { Ui2AvatarGradient } from '../../../shared/ui-v2';
@@ -93,6 +94,7 @@ export class MensajesService {
   private session = inject(SessionService);
   private convex = inject(ConvexService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private logger = inject(LoggerService);
 
   private readonly _activeConversationId = signal<string | null>(null);
   private readonly _searchTerm = signal<string>('');
@@ -117,7 +119,7 @@ export class MensajesService {
       if (lastId === conv.id) return;
       untracked(() => this._lastReadConversationId.set(conv.id));
       this.markAsRead(conv.id).catch((err) =>
-        console.error('Error al marcar como leído:', err),
+        this.logger.error('Error al marcar como leído:', err),
       );
     });
   }
@@ -228,7 +230,7 @@ export class MensajesService {
         text: trimmed,
       });
     } catch (err) {
-      console.error('Error al enviar mensaje:', err);
+      this.logger.error('Error al enviar mensaje:', err);
       throw err;
     }
   }
@@ -249,7 +251,7 @@ export class MensajesService {
       );
       return id ? (id as unknown as string) : null;
     } catch (err) {
-      console.error('Error al iniciar conversación con fisio:', err);
+      this.logger.error('Error al iniciar conversación con fisio:', err);
       return null;
     }
   }
@@ -277,7 +279,7 @@ export class MensajesService {
       );
       return id ? (id as unknown as string) : null;
     } catch (err) {
-      console.error('Error al iniciar conversación con paciente:', err);
+      this.logger.error('Error al iniciar conversación con paciente:', err);
       return null;
     }
   }

@@ -6,6 +6,7 @@ import {
   NavigationEnd,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { App as CapacitorApp } from '@capacitor/app';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -13,6 +14,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import {
   AuthService,
   BillingBannerComponent,
+  LoggerService,
   SessionService,
   ThemeService,
 } from './core';
@@ -86,6 +88,7 @@ export class AppComponent implements OnInit {
   public convexService = inject(ConvexService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
   private clinicasService = inject(ClinicasService);
+  private logger = inject(LoggerService);
 
   public mostrarNavegacion = false;
 
@@ -232,7 +235,7 @@ export class AppComponent implements OnInit {
         ) {
           pushIniciado = true;
           this.pushNotifications.init().catch((err) => {
-            console.error('[Push] init falló desde AppComponent:', err);
+            this.logger.error('[Push] init falló desde AppComponent:', err);
           });
         }
       });
@@ -309,7 +312,7 @@ export class AppComponent implements OnInit {
 
           this.router.navigateByUrl(path);
         } catch (err) {
-          console.warn('[appUrlOpen] URL inválida:', event.url, err);
+          this.logger.warn('[appUrlOpen] URL inválida:', event.url, err);
         }
       });
     });
@@ -425,6 +428,7 @@ export class AppComponent implements OnInit {
           (event) =>
             event instanceof NavigationEnd || event instanceof NavigationCancel,
         ),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((event) => {
         if (event instanceof NavigationEnd) {

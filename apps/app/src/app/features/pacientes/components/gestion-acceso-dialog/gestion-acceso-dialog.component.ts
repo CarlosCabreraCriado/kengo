@@ -25,6 +25,7 @@ import {
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { ClipboardService } from '../../../../core/services/clipboard.service';
+import { LoggerService } from '../../../../core/services/logger.service';
 
 import type { Usuario } from '../../../../../types/global';
 
@@ -68,6 +69,7 @@ export class GestionAccesoDialogComponent implements OnInit {
   private dialogRef = inject(DialogRef);
   private dialogService = inject(DialogService);
   private clipboard = inject(ClipboardService);
+  private logger = inject(LoggerService);
   data = inject<DialogData>(DIALOG_DATA);
 
   // State
@@ -114,7 +116,7 @@ export class GestionAccesoDialogComponent implements OnInit {
         await this.crearNuevoToken();
       }
     } catch (err) {
-      console.error('Error cargando token:', err);
+      this.logger.error('Error cargando token:', err);
       this.error.set('Error al cargar información de acceso');
     } finally {
       this.isLoadingToken.set(false);
@@ -141,7 +143,7 @@ export class GestionAccesoDialogComponent implements OnInit {
 
       setTimeout(() => this.generarQR(response.url), 100);
     } catch (err) {
-      console.error('Error creando token:', err);
+      this.logger.error('Error creando token:', err);
       throw err;
     }
   }
@@ -156,7 +158,7 @@ export class GestionAccesoDialogComponent implements OnInit {
         margin: 2,
       });
     } catch (err) {
-      console.error('Error generando QR:', err);
+      this.logger.error('Error generando QR:', err);
     }
   }
 
@@ -175,7 +177,7 @@ export class GestionAccesoDialogComponent implements OnInit {
       this.emailSent.set(true);
       setTimeout(() => this.emailSent.set(false), 3000);
     } catch (err: any) {
-      console.error('Error enviando email:', err);
+      this.logger.error('Error enviando email:', err);
       this.error.set(err?.message || 'Error al enviar el email');
     } finally {
       this.isSendingEmail.set(false);
@@ -223,7 +225,7 @@ export class GestionAccesoDialogComponent implements OnInit {
 
       await this.crearNuevoToken();
     } catch (err: any) {
-      console.error('Error regenerando token:', err);
+      this.logger.error('Error regenerando token:', err);
       this.error.set(err?.message || 'Error al regenerar el token');
     } finally {
       this.isRegenerating.set(false);
