@@ -8,6 +8,7 @@ export interface MiClinicaInfoField {
   label: string;
   value: string | null;
   mono?: boolean;
+  icon?: string;
 }
 
 @Component({

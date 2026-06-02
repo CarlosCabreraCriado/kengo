@@ -518,24 +518,19 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     return 'Gestionar suscripción';
   });
 
-  /** Campos de la InfoCard "Contacto" (rediseño desktop). */
-  protected readonly camposContacto = computed<MiClinicaInfoField[]>(() => {
+  /** Campos unificados de la card "Información de la clínica". */
+  protected readonly camposClinicaInfo = computed<MiClinicaInfoField[]>(() => {
     const c = this.currentClinic();
+    const direccion = c?.direccion?.trim() || null;
+    const postal = c?.postal?.trim() || null;
+    const direccionCompleta = [direccion, postal].filter(Boolean).join(', ') || null;
     return [
-      { label: 'Teléfono', value: c?.telefono ?? null },
-      { label: 'Email', value: c?.email ?? null },
-    ];
-  });
-
-  /** Campos de la InfoCard "Datos fiscales" (rediseño desktop). */
-  protected readonly camposFiscales = computed<MiClinicaInfoField[]>(() => {
-    const c = this.currentClinic();
-    return [
-      { label: 'NIF', value: c?.nif ?? null, mono: true },
-      { label: 'Código postal', value: c?.postal ?? null },
-      { label: 'Dirección', value: c?.direccion ?? null },
-      { label: 'Web', value: c?.web ?? null },
-    ];
+      { label: 'Teléfono', value: c?.telefono ?? null, icon: 'phone' },
+      { label: 'Email', value: c?.email ?? null, icon: 'mail' },
+      { label: 'Web', value: c?.web ?? null, icon: 'language' },
+      { label: 'Dirección', value: direccionCompleta, icon: 'location_on' },
+      { label: 'NIF', value: c?.nif ?? null, mono: true, icon: 'badge' },
+    ].filter(f => f.value && f.value.trim() !== '');
   });
 
   /** Devuelve si un fisio concreto es admin de la clínica activa (para etiqueta de rol). */

@@ -19,32 +19,32 @@
 .mic__body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
-.mic__field {
+.mic__row {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
-.mic__label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+.mic__row-icon {
+  flex-shrink: 0;
+  font-size: 18px;
   color: var(--ink-500);
+  line-height: 1;
 }
 
-.mic__value {
+.mic__row-value {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink-900);
   word-break: break-word;
+  min-width: 0;
 }
 
-.mic__value--mono {
+.mic__row-value--mono {
   font-family: ui-monospace, "SF Mono", monospace;
   letter-spacing: 0.3px;
 }

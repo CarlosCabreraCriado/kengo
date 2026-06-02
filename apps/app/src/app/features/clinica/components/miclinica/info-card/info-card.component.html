@@ -6,9 +6,13 @@
 
   <div class="mic__body">
     @for (f of fields(); track f.label) {
-      <div class="mic__field">
-        <span class="mic__label">{{ f.label }}</span>
-        <span class="mic__value" [class.mic__value--mono]="f.mono">
+      <div class="mic__row" [attr.aria-label]="f.label">
+        @if (f.icon) {
+          <span class="material-symbols-outlined mic__row-icon" aria-hidden="true">
+            {{ f.icon }}
+          </span>
+        }
+        <span class="mic__row-value" [class.mic__row-value--mono]="f.mono">
           {{ f.value || '—' }}
         </span>
       </div>
