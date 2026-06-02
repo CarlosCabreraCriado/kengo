@@ -47,6 +47,13 @@ export interface EjercicioPlan {
   dateCreated?: string;
   dateUpdated?: string;
   planId?: string;
+  /**
+   * Id estable del item dentro del plan, usado por `@for ... track` en plantillas
+   * de sesión. En multi-plan equivale al `planExercise._id`; en single-plan se
+   * deriva del `id` del item al construir `SesionStateService.ejerciciosList`.
+   * `EjercicioSesionMultiPlan` lo redefine como requerido.
+   */
+  planItemId?: string;
   ejercicio: Ejercicio;
   instruccionesPaciente?: string;
   notasFisio?: string;

@@ -118,7 +118,11 @@ export class SesionStateService {
     if (this.modoMultiPlan()) {
       return this.ejerciciosMultiPlan();
     }
-    return this.planActivo()?.items ?? [];
+    const items = this.planActivo()?.items ?? [];
+    return items.map((item) => ({
+      ...item,
+      planItemId: item.planItemId ?? item.id ?? String(item.sort),
+    }));
   });
 
   readonly ejercicioActual = computed<EjercicioPlan | null>(() => {
