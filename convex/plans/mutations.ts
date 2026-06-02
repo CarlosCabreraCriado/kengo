@@ -215,28 +215,12 @@ export const updateEstado = mutation({
   },
 });
 
-async function planHasActivity(
-  ctx: any,
-  planId: any,
-  exercises?: Array<{ _id: any }>,
-): Promise<boolean> {
-  const items =
-    exercises ??
-    (await ctx.db
-      .query("planExercises")
-      .withIndex("by_planId", (q: any) => q.eq("planId", planId))
-      .collect());
-
-  for (const ex of items) {
-    const hasExecution = await ctx.db
-      .query("exerciseExecutions")
-      .withIndex("by_planExerciseId", (q: any) =>
-        q.eq("planExerciseId", ex._id),
-      )
-      .first();
-    if (hasExecution) return true;
-  }
-  return false;
+async function planHasActivity(ctx: any, planId: any): Promise<boolean> {
+  const anyExecution = await ctx.db
+    .query("exerciseExecutions")
+    .withIndex("by_planId", (q: any) => q.eq("planId", planId))
+    .first();
+  return anyExecution !== null;
 }
 
 // ─── UPDATE (metadata siempre; ejercicios solo si no hay actividad) ───
@@ -311,7 +295,7 @@ export const remove = mutation({
       .withIndex("by_planId", (q) => q.eq("planId", args.planId))
       .collect();
 
-    if (await planHasActivity(ctx, args.planId, exercises)) {
+    if (await planHasActivity(ctx, args.planId)) {
       await ctx.db.patch(args.planId, { estado: "cancelado" });
       await scheduleRecomputeClinic(ctx, plan.clinicId);
       return { softDeleted: true };

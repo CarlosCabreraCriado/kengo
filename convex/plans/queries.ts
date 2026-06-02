@@ -417,19 +417,11 @@ export const checkPlanHasActivity = query({
     const user = await getAuthenticatedUser(ctx);
     await assertCanAccessPlan(ctx, user._id, args.planId);
 
-    const exercises = await ctx.db
-      .query("planExercises")
+    const anyExecution = await ctx.db
+      .query("exerciseExecutions")
       .withIndex("by_planId", (q) => q.eq("planId", args.planId))
-      .collect();
+      .first();
 
-    for (const ex of exercises) {
-      const execution = await ctx.db
-        .query("exerciseExecutions")
-        .withIndex("by_planExerciseId", (q) => q.eq("planExerciseId", ex._id))
-        .first();
-      if (execution) return true;
-    }
-
-    return false;
+    return anyExecution !== null;
   },
 });

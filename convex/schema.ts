@@ -254,6 +254,7 @@ export default defineSchema({
     .index("by_sessionId", ["sessionId"])
     .index("by_pacienteId_fecha", ["pacienteId", "fecha"])
     .index("by_planExerciseId", ["planExerciseId"])
+    .index("by_planId", ["planId"])
     .index("by_clinicId_fecha", ["clinicId", "fecha"])
     .index("by_planExerciseId_fecha", ["planExerciseId", "fecha"]),
 
