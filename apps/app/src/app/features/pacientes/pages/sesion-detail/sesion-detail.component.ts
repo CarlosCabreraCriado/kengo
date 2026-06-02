@@ -1,9 +1,19 @@
-import { Component, ChangeDetectionStrategy, computed, inject, signal, OnInit } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  computed,
+  inject,
+  signal,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { useResponsive } from '../../../../shared';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import type { DiaSemana, Usuario } from '../../../../../types/global';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
@@ -98,12 +108,15 @@ interface PlanAgendadoDetalle {
     class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
   },
 })
-export class SesionDetailComponent implements OnInit {
+export class SesionDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cumplimientoService = inject(CumplimientoService);
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'sesion-detail';
 
   isMovil = useResponsive().esMobile;
 
@@ -116,6 +129,9 @@ export class SesionDetailComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly planesAgendados = signal<PlanAgendadoDetalle[]>([]);
   readonly esFallido = signal(false);
+
+  /** Datos críticos del primer paint: registros cargados (success o vacío). */
+  readonly pageReady = computed(() => !this.isLoading());
 
   // Computed
   readonly totalEjercicios = computed(() =>
@@ -174,6 +190,8 @@ export class SesionDetailComponent implements OnInit {
   );
 
   ngOnInit() {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+
     const id = this.route.snapshot.params['id'];
     const fecha = this.route.snapshot.params['fecha'];
 
@@ -186,6 +204,10 @@ export class SesionDetailComponent implements OnInit {
     this.fecha.set(fecha);
     this.cargarPaciente();
     this.cargarRegistros();
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   private async cargarPaciente() {
@@ -209,12 +231,14 @@ export class SesionDetailComponent implements OnInit {
       // Modelo nuevo: 1 documento por sesión clínica con sus ejecuciones
       // (`exerciseExecutions`) ya agrupadas y expandidas. Un día tiene 1 sesión
       // habitualmente (BN1), pero la query devuelve array por compatibilidad.
+      const clinicId = this.clinicaActiva.selectedClinicaId();
       const sesiones = (await this.convex.query(
         api.sessions.queries.getByPacienteAndDateWithExecutions,
         {
           pacienteId: this.pacienteId(),
           fecha: this.fecha(),
           soloCompletados: true,
+          ...(clinicId ? { clinicId: clinicId as never } : {}),
         },
       )) ?? [];
 

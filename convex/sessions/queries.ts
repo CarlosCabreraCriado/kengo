@@ -1,10 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import {
-  resolveAndAssertPacienteAndClinic,
-  resolveAndAssertPacienteId,
-} from "../_helpers/patientAccess";
+import { resolveAndAssertPacienteAndClinic } from "../_helpers/patientAccess";
 import { assertCanAccessSession } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
 
@@ -17,15 +14,28 @@ export const getById = query({
 });
 
 export const listByPaciente = query({
-  args: { pacienteId: v.id("users") },
+  args: {
+    pacienteId: v.id("users"),
+    clinicId: v.optional(v.id("clinics")),
+  },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    await resolveAndAssertPacienteId(ctx, args.pacienteId, user._id);
+    const { pacienteId: targetId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
 
-    return await ctx.db
+    const sessions = await ctx.db
       .query("sessions")
-      .withIndex("by_pacienteId", (q) => q.eq("pacienteId", args.pacienteId))
+      .withIndex("by_pacienteId", (q) => q.eq("pacienteId", targetId))
       .collect();
+
+    return targetClinicId
+      ? sessions.filter((s) => s.clinicId === targetClinicId)
+      : sessions;
   },
 });
 
@@ -101,23 +111,29 @@ export const listRecentByPaciente = query({
 export const getByPacienteAndDateWithExecutions = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
     fecha: v.string(),
     soloCompletados: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetUserId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
 
-    const sessions = await ctx.db
+    const rawSessions = await ctx.db
       .query("sessions")
       .withIndex("by_pacienteId_fecha", (q) =>
         q.eq("pacienteId", targetUserId).eq("fecha", args.fecha),
       )
       .collect();
+    const sessions = targetClinicId
+      ? rawSessions.filter((s) => s.clinicId === targetClinicId)
+      : rawSessions;
 
     const allExecutions = await Promise.all(
       sessions.map((s) =>

@@ -2,10 +2,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { esPaciente, getAuthenticatedUser } from "../_helpers/permissions";
-import {
-  resolveAndAssertPacienteAndClinic,
-  resolveAndAssertPacienteId,
-} from "../_helpers/patientAccess";
+import { resolveAndAssertPacienteAndClinic } from "../_helpers/patientAccess";
 import { assertCanAccessPlan } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
 import {
@@ -220,6 +217,7 @@ export const listByFisio = query({
 export const listByPaciente = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
     estado: v.optional(
       v.union(
         v.literal("borrador"),
@@ -232,11 +230,13 @@ export const listByPaciente = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
 
     let plans;
     if (args.estado) {
@@ -254,6 +254,9 @@ export const listByPaciente = query({
       plans = all.filter(
         (p) => p.estado !== "cancelado" && p.estado !== "modificado",
       );
+    }
+    if (targetClinicId) {
+      plans = plans.filter((p) => p.clinicId === targetClinicId);
     }
     return await attachUserNames(ctx, plans);
   },
@@ -311,14 +314,17 @@ export const getActiveForPatientToday = query({
 export const getActiveAndFuture = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
     const today = getCurrentMadridDate();
 
     const activePlans = await ctx.db
@@ -330,6 +336,7 @@ export const getActiveAndFuture = query({
 
     const filtered = activePlans.filter((p) => {
       if (p.fechaFin && p.fechaFin < today) return false;
+      if (targetClinicId && p.clinicId !== targetClinicId) return false;
       return true;
     });
 
@@ -344,6 +351,8 @@ export const listExercisesByPlanId = query({
     planId: v.id("plans"),
   },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await assertCanAccessPlan(ctx, user._id, args.planId);
     return await loadPlanExercises(ctx, args.planId);
   },
 });
@@ -405,6 +414,9 @@ export const getNextSessionForPatient = query({
 export const checkPlanHasActivity = query({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    await assertCanAccessPlan(ctx, user._id, args.planId);
+
     const exercises = await ctx.db
       .query("planExercises")
       .withIndex("by_planId", (q) => q.eq("planId", args.planId))

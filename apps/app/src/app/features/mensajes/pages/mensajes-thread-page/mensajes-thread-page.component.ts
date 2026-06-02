@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { ClinicaActivaService, SessionService, SubscriptionService } from '../../../../core';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { useResponsive } from '../../../../shared/composables/use-responsive';
 import { ChatClinicBlockComponent } from '../../components/chat-clinic-block/chat-clinic-block.component';
 import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
@@ -24,7 +32,7 @@ import { ToastService } from '../../../../shared/services/toast/toast.service';
   templateUrl: './mensajes-thread-page.component.html',
   styleUrl: './mensajes-thread-page.component.css',
 })
-export class MensajesThreadPageComponent implements OnInit {
+export class MensajesThreadPageComponent implements OnInit, OnDestroy {
   protected mensajes = inject(MensajesService);
   protected session = inject(SessionService);
   private subs = inject(SubscriptionService);
@@ -33,6 +41,13 @@ export class MensajesThreadPageComponent implements OnInit {
   private clinicaActiva = inject(ClinicaActivaService);
   private clinicasService = inject(ClinicasService);
   private toast = inject(ToastService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'mensajes-thread';
+
+  /** Lista la página cuando la query de conversaciones del servicio ha
+   *  resuelto (con éxito o vacío). El servicio expone `isLoading` derivado
+   *  del watchQuery de `listMyConversations`. */
+  readonly pageReady = computed(() => !this.mensajes.isLoading());
 
   /**
    * Bloquea el composer cuando el usuario en modo fisio no tiene suscripción
@@ -48,7 +63,12 @@ export class MensajesThreadPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
     void this.push.clearBadge();
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   private readonly responsive = useResponsive();

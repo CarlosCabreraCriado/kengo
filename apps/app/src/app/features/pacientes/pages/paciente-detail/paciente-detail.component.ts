@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -13,6 +14,7 @@ import { useResponsive } from '../../../../shared';
 // Servicios (mismos que paciente-detail actual)
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
@@ -322,7 +324,7 @@ interface DialogClosedResult {
     `,
   ],
 })
-export class PacienteDetailComponent implements OnInit {
+export class PacienteDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dialogService = inject(DialogService);
@@ -337,6 +339,15 @@ export class PacienteDetailComponent implements OnInit {
   private mensajesService = inject(MensajesService);
   private toast = inject(ToastService);
   private convex = inject(ConvexService);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'paciente-detail';
+
+  /**
+   * Datos críticos del primer paint: paciente cargado. El resto de cargas
+   * (planes, comentarios, snapshots) se hacen en paralelo y muestran su
+   * propio estado dentro de la página.
+   */
+  readonly pageReady = computed(() => !this.isLoadingPaciente());
 
   private readonly responsive = useResponsive();
   readonly isMovil = this.responsive.esMobile;
@@ -478,6 +489,8 @@ export class PacienteDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+
     const pacienteId = this.route.snapshot.params['id'];
     if (!pacienteId) {
       this.router.navigate(['/mis-pacientes']);
@@ -489,6 +502,10 @@ export class PacienteDetailComponent implements OnInit {
     this.cargarSnapshotDolor(pacienteId);
     this.cargarComentarios(pacienteId);
     this.cargarFisioResponsable(pacienteId);
+  }
+
+  ngOnDestroy(): void {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
   private async cargarSnapshotDolor(pacienteId: string): Promise<void> {

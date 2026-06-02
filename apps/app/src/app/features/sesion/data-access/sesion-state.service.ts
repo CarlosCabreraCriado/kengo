@@ -714,9 +714,13 @@ export class SesionStateService {
   private async consultarSesionHoy(): Promise<SesionRehidratable | null> {
     try {
       const fecha = getMadridDate();
+      const clinicId = this.clinicaActiva.selectedClinicaId();
       const sessions = await this.convex.query(
         api.sessions.queries.getByPacienteAndDateWithExecutions,
-        { fecha },
+        {
+          fecha,
+          ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
+        },
       );
       const list = sessions as SesionRehidratable[] | undefined;
       return list?.[0] ?? null;

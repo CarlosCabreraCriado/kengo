@@ -6,6 +6,7 @@ import {
   esPaciente,
   tieneGestion,
 } from "../_helpers/permissions";
+import { assertCanAccessPaciente } from "../_helpers/authorization";
 
 export const me = query({
   args: {},
@@ -64,6 +65,12 @@ export const me = query({
 export const getById = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    const requester = await getAuthenticatedUser(ctx);
+    if (requester._id !== args.userId) {
+      // Solo se permite consultar datos de otro usuario cuando existe una
+      // relación clínica-profesional vigente (fisio/admin sobre un paciente).
+      await assertCanAccessPaciente(ctx, requester._id, args.userId);
+    }
     return await ctx.db.get(args.userId);
   },
 });

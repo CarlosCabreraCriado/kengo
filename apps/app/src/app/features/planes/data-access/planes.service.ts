@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { assetUrl } from '../../../core/utils/asset-url';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import {
   mapConvexBase,
@@ -15,6 +16,7 @@ import {
 } from '../../../shared/utils/convex-mappers';
 import { createFilteredList } from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
 
 import {
   Plan,
@@ -28,6 +30,7 @@ type FiltroEstado = 'todos' | EstadoPlan;
 export class PlanesService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
   readonly filtroEstado: WritableSignal<FiltroEstado> = signal('todos');
   readonly filtroPaciente: WritableSignal<string | null> = signal(null);
@@ -183,7 +186,7 @@ export class PlanesService {
     try {
       const raw = await this.convex.query(
         api.plans.queries.getActiveForPatientToday,
-        { pacienteId },
+        { pacienteId, clinicId: this.activeClinicArg() },
       );
       return ((raw as any[]) || []).map((p) => mapConvexToPlanCompleto(p));
     } catch (error) {
@@ -198,6 +201,7 @@ export class PlanesService {
     try {
       const raw = await this.convex.query(api.plans.queries.getActiveAndFuture, {
         pacienteId,
+        clinicId: this.activeClinicArg(),
       });
       return ((raw as any[]) || []).map((p) => mapConvexToPlanCompleto(p));
     } catch (error) {
@@ -210,6 +214,7 @@ export class PlanesService {
     try {
       const raw = await this.convex.query(api.plans.queries.listByPaciente, {
         pacienteId,
+        clinicId: this.activeClinicArg(),
       });
       return ((raw as any[]) || [])
         .filter((p) => p.estado !== 'cancelado' && p.estado !== 'modificado')
@@ -218,6 +223,13 @@ export class PlanesService {
       console.error('Error al obtener planes del paciente:', error);
       return [];
     }
+  }
+
+  /** Lee el id de la clínica activa como argumento Convex (undefined si no
+   * hay), para filtrar listados al contexto multiclínica vigente. */
+  private activeClinicArg(): Id<'clinics'> | undefined {
+    const id = this.clinicaActiva.selectedClinicaId();
+    return id ? (id as Id<'clinics'>) : undefined;
   }
 
   // ========= Mappers Convex → Domain =========

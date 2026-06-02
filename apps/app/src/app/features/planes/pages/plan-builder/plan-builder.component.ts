@@ -21,6 +21,7 @@ import { Dialog } from '@angular/cdk/dialog';
 
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
@@ -85,7 +86,14 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private sessionService = inject(SessionService);
   private destroyRef = inject(DestroyRef);
+  private pageLoader = inject(PageLoaderService);
+  private readonly PAGE_LOADER_KEY = 'plan-builder';
   svc = inject(PlanBuilderService);
+
+  /** Datos críticos: plan cargado (modo edición) o paciente confirmado
+   *  (modo creación). En ambos casos la señal `isLoading` se enciende
+   *  durante `loadPlanForEdit` y baja al terminar. */
+  readonly pageReady = computed(() => !this.isLoading());
 
   dias: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   diasNombres: Record<DiaSemana, string> = {
@@ -201,6 +209,8 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
+    this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
+
     const planId = this.route.snapshot.params['id'];
     const pacienteId = this.route.snapshot.queryParams['paciente'];
 
@@ -233,6 +243,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.pageLoader.unregister(this.PAGE_LOADER_KEY);
     this.svc.closeDrawer();
   }
 

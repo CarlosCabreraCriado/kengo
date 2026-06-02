@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '../../core';
+import { AuthGuard, clinicaActivaResourceGuard } from '../../core';
 
 export const MENSAJES_ROUTES: Routes = [
   {
@@ -12,6 +12,7 @@ export const MENSAJES_ROUTES: Routes = [
     children: [
       {
         path: ':id',
+        canActivate: [clinicaActivaResourceGuard('conversacion')],
         loadComponent: () =>
           import('./pages/mensajes-thread-page/mensajes-thread-page.component').then(
             (m) => m.MensajesThreadPageComponent,

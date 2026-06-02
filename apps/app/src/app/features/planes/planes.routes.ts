@@ -1,5 +1,10 @@
 import { Routes } from '@angular/router';
-import { ActiveSubscriptionGuard, AuthGuard, FisioGuard } from '../../core';
+import {
+  ActiveSubscriptionGuard,
+  AuthGuard,
+  FisioGuard,
+  clinicaActivaResourceGuard,
+} from '../../core';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
 import { planEditableGuard } from './guards/plan-editable.guard';
 
@@ -23,6 +28,7 @@ export const PLANES_ROUTES: Routes = [
       AuthGuard,
       FisioGuard,
       ActiveSubscriptionGuard,
+      clinicaActivaResourceGuard('plan'),
       planEditableGuard,
     ],
     canDeactivate: [unsavedChangesGuard],
@@ -33,6 +39,6 @@ export const PLANES_ROUTES: Routes = [
       import('./pages/plan-detail/plan-detail.component').then(
         (m) => m.PlanDetailComponent,
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, clinicaActivaResourceGuard('plan')],
   },
 ];
