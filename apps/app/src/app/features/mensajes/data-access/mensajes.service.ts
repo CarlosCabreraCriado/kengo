@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ClinicaActivaService, SessionService } from '../../../core';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
@@ -97,22 +97,25 @@ export class MensajesService {
   private readonly _activeConversationId = signal<string | null>(null);
   private readonly _searchTerm = signal<string>('');
   private readonly _autoStartAttempted = signal<boolean>(false);
+  /** Idempotencia del effect de `markAsRead`: el id de la última conversación
+   *  marcada como leída. `untracked` evita añadirlo como dependencia del effect. */
+  private readonly _lastReadConversationId = signal<string | null>(null);
 
   constructor() {
     // Marca como leída la conversación activa de forma reactiva: si está
     // bloqueada por clínica activa distinta, no se dispara; al cambiar a la
     // clínica correcta (desde el switcher o el CTA), `isActiveClinic` pasa a
     // true y el effect ejecuta automáticamente markAsRead.
-    let lastMarkedId: string | null = null;
     effect(() => {
       const conv = this.activeConversation();
       if (!conv) {
-        lastMarkedId = null;
+        untracked(() => this._lastReadConversationId.set(null));
         return;
       }
       if (!conv.isActiveClinic) return;
-      if (lastMarkedId === conv.id) return;
-      lastMarkedId = conv.id;
+      const lastId = untracked(() => this._lastReadConversationId());
+      if (lastId === conv.id) return;
+      untracked(() => this._lastReadConversationId.set(conv.id));
       this.markAsRead(conv.id).catch((err) =>
         console.error('Error al marcar como leído:', err),
       );

@@ -44,7 +44,8 @@
         </div>
         <div class="thread-page__composer">
           <app-chat-composer
-            [placeholder]="placeholder()"
+            [placeholder]="composerPlaceholder()"
+            [disabled]="bloqueoComposer()"
             (send)="onSend($event)"
           ></app-chat-composer>
         </div>
