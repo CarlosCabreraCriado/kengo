@@ -2,7 +2,10 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { esPaciente, getAuthenticatedUser } from "../_helpers/permissions";
-import { resolveAndAssertPacienteId } from "../_helpers/patientAccess";
+import {
+  resolveAndAssertPacienteAndClinic,
+  resolveAndAssertPacienteId,
+} from "../_helpers/patientAccess";
 import { assertCanAccessPlan } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
 import {
@@ -10,7 +13,10 @@ import {
   getDiaSemana,
   getMadridDateOffset,
 } from "../_helpers/datetime";
-import { getExpectedExercisesForPatientOnDate } from "../_helpers/expectedExercises";
+import {
+  getActivePlansForPatientOnDate,
+  getExpectedExercisesForPatientOnDate,
+} from "../_helpers/expectedExercises";
 import { isPlanEnCurso } from "../_helpers/planStatus";
 
 function fullName(user: any): string {
@@ -263,14 +269,17 @@ export const getById = query({
 export const getActiveForPatientToday = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
     const today = getCurrentMadridDate();
 
     const activePlans = await ctx.db
@@ -283,6 +292,7 @@ export const getActiveForPatientToday = query({
     const filtered = activePlans.filter((p) => {
       if (p.fechaInicio && p.fechaInicio > today) return false;
       if (p.fechaFin && p.fechaFin < today) return false;
+      if (targetClinicId && p.clinicId !== targetClinicId) return false;
       return true;
     });
 
@@ -337,15 +347,18 @@ export const listExercisesByPlanId = query({
 export const getNextSessionForPatient = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
     maxDaysLookahead: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
     const lookahead = args.maxDaysLookahead ?? 30;
 
     for (let offset = 1; offset <= lookahead; offset++) {
@@ -356,6 +369,7 @@ export const getNextSessionForPatient = query({
         targetId,
         fecha,
         diaSemana,
+        targetClinicId,
       );
       if (expected.length === 0) continue;
 

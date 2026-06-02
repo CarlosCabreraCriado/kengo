@@ -142,17 +142,46 @@ export const listByPaciente = query({
 });
 
 /**
- * Lista alertas pendientes de TODAS las clínicas en las que el fisio actual
- * tiene rol de gestión. Útil cuando el frontend no quiere preocuparse de la
- * clínica concreta.
+ * Lista alertas pendientes de las clínicas que gestiona el fisio actual.
+ *
+ * Si `clinicId` se proporciona, restringe el resultado a esa clínica (tras
+ * validar que el fisio es miembro con rol de gestión). Sin `clinicId`, el
+ * comportamiento legado: union de todas las clínicas gestionadas.
  */
 export const listForCurrentFisio = query({
   args: {
     paginationOpts: paginationOptsValidator,
     severidad: v.optional(severidad),
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
+
+    // Caso aislado por clínica activa: validamos pertenencia y delegamos a
+    // la consulta indexada por clínica.
+    if (args.clinicId) {
+      await assertFisioInClinic(ctx, user._id, args.clinicId);
+      if (args.severidad) {
+        return await ctx.db
+          .query("physioAlerts")
+          .withIndex("by_clinicId_estado_severidad", (q) =>
+            q
+              .eq("clinicId", args.clinicId!)
+              .eq("estado", "pendiente")
+              .eq("severidad", args.severidad!),
+          )
+          .order("desc")
+          .paginate(args.paginationOpts);
+      }
+      return await ctx.db
+        .query("physioAlerts")
+        .withIndex("by_clinicId_estado", (q) =>
+          q.eq("clinicId", args.clinicId!).eq("estado", "pendiente"),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+
     const clinicIds = await getManagedClinicIds(ctx, user._id);
 
     if (clinicIds.length === 0) {

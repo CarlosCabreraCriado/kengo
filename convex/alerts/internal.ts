@@ -277,10 +277,15 @@ export const runDailyAlertRules = internalMutation({
       }
 
       // === Regla 3: tendencia_negativa ===
+      // El monthly rollup está particionado por (paciente, clínica, mes).
+      // La alerta es por clínica, así que leemos el rollup de la misma clínica.
       const monthly: Doc<"monthlyPatientRollup"> | null = await ctx.db
         .query("monthlyPatientRollup")
-        .withIndex("by_pacienteId_anioMes", (q) =>
-          q.eq("pacienteId", pacienteId).eq("anioMes", mesActual),
+        .withIndex("by_pacienteId_clinicId_anioMes", (q) =>
+          q
+            .eq("pacienteId", pacienteId)
+            .eq("clinicId", clinicId)
+            .eq("anioMes", mesActual),
         )
         .unique();
       const tendencia = monthly?.tendenciaAdherencia;

@@ -256,12 +256,11 @@ export default defineSchema({
     .index("by_planExerciseId_fecha", ["planExerciseId", "fecha"]),
 
   // === ROLLUPS DIARIOS POR PACIENTE (rediseño — sustituye a `dailyCompliance`) ===
-  // `clinicId` opcional durante el periodo de migración; al recalcularse cada
-  // rollup pasa a llevar la clínica de los ejercicios contabilizados. Los
-  // rollups antiguos quedan sin `clinicId` hasta su próxima regeneración.
+  // Particionados por clínica: un doc por (pacienteId, clinicId, fecha).
+  // `clinicId` obligatorio desde la sub-fase 3c (tras backfill confirmado).
   dailyPatientRollup: defineTable({
     pacienteId: v.id("users"),
-    clinicId: v.optional(v.id("clinics")),
+    clinicId: v.id("clinics"),
     fecha: v.string(), // YYYY-MM-DD
     planAggregates: v.array(
       v.object({
@@ -286,11 +285,14 @@ export default defineSchema({
     actualizadoEn: v.number(),
   })
     .index("by_pacienteId_fecha", ["pacienteId", "fecha"])
+    .index("by_pacienteId_clinicId_fecha", ["pacienteId", "clinicId", "fecha"])
     .index("by_clinicId_fecha", ["clinicId", "fecha"]),
 
   // === ROLLUPS SEMANALES POR PACIENTE ===
+  // Particionados por clínica. `clinicId` obligatorio desde la sub-fase 3c.
   weeklyPatientRollup: defineTable({
     pacienteId: v.id("users"),
+    clinicId: v.id("clinics"),
     anioSemana: v.string(), // ISO 8601: "2026-W17"
     diasCompletados: v.number(),
     diasParciales: v.number(),
@@ -305,11 +307,18 @@ export default defineSchema({
     stale: v.boolean(),
   })
     .index("by_pacienteId_anioSemana", ["pacienteId", "anioSemana"])
+    .index("by_pacienteId_clinicId_anioSemana", [
+      "pacienteId",
+      "clinicId",
+      "anioSemana",
+    ])
     .index("by_stale", ["stale"]),
 
   // === ROLLUPS MENSUALES POR PACIENTE ===
+  // Particionados por clínica. `clinicId` obligatorio desde la sub-fase 3c.
   monthlyPatientRollup: defineTable({
     pacienteId: v.id("users"),
+    clinicId: v.id("clinics"),
     anioMes: v.string(), // "2026-04"
     diasCompletados: v.number(),
     diasParciales: v.number(),
@@ -325,6 +334,11 @@ export default defineSchema({
     stale: v.boolean(),
   })
     .index("by_pacienteId_anioMes", ["pacienteId", "anioMes"])
+    .index("by_pacienteId_clinicId_anioMes", [
+      "pacienteId",
+      "clinicId",
+      "anioMes",
+    ])
     .index("by_stale", ["stale"]),
 
   // === SNAPSHOTS POR PACIENTE (para tabla de pacientes / dashboard) ===

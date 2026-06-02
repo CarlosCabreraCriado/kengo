@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
 import type {
   CumplimientoResponse,
   CumplimientoDia,
@@ -72,11 +73,15 @@ export class CumplimientoService {
    * Obtiene cumplimiento histórico desde Convex (modelo nuevo
    * `dailyPatientRollup` — 1 doc por (paciente, fecha) con planAggregates
    * embebido).
+   *
+   * `clinicId` opcional: si llega, filtra estrictamente los rollups por
+   * esa clínica (aislamiento multiclínica).
    */
   async getCumplimiento(
     pacienteId: string,
     desde?: string,
     hasta?: string,
+    clinicId?: string | null,
   ): Promise<CumplimientoResponse> {
     try {
       const convexUserId = this.resolveUserConvexId(pacienteId);
@@ -94,6 +99,7 @@ export class CumplimientoService {
           pacienteId: convexUserId,
           desde: desde ?? inicioAno,
           hasta: hasta ?? hoy,
+          ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
         },
       )) as DailyRollup[];
 
@@ -198,6 +204,7 @@ export class CumplimientoService {
     pacienteId: string,
     desde: string,
     hasta: string,
+    clinicId?: string | null,
   ): Promise<CumplimientoConTendencia> {
     const dias = daysBetweenYMD(desde, hasta) + 1; // ambos inclusive
     const offsetDesde = -dias;
@@ -205,8 +212,8 @@ export class CumplimientoService {
     const hastaAnterior = offsetMadridDate(-1, new Date(`${desde}T12:00:00Z`));
 
     const [actual, anterior] = await Promise.all([
-      this.getCumplimiento(pacienteId, desde, hasta),
-      this.getCumplimiento(pacienteId, desdeAnterior, hastaAnterior),
+      this.getCumplimiento(pacienteId, desde, hasta, clinicId),
+      this.getCumplimiento(pacienteId, desdeAnterior, hastaAnterior, clinicId),
     ]);
 
     const adherenceActual = actual.resumen.adherenciaReal;

@@ -44,17 +44,15 @@ export async function recomputeDayAndPropagateImpl(
   pacienteId: Id<"users">,
   fecha: string,
 ): Promise<void> {
-  // 1. Sesiones del día.
+  // 1. Sesiones del día (todas las clínicas).
   const sessions = await ctx.db
     .query("sessions")
     .withIndex("by_pacienteId_fecha", (q) =>
       q.eq("pacienteId", pacienteId).eq("fecha", fecha),
     )
     .collect();
-  const sessionIds = sessions.map((s) => s._id);
 
-  // 2. Ejecuciones del día (más eficiente leer por (paciente, fecha) que
-  //    iterar por sesión: el índice by_pacienteId_fecha cubre el rango).
+  // 2. Ejecuciones del día (todas las clínicas).
   const executions = await ctx.db
     .query("exerciseExecutions")
     .withIndex("by_pacienteId_fecha", (q) =>
@@ -62,19 +60,94 @@ export async function recomputeDayAndPropagateImpl(
     )
     .collect();
 
-  // 3. Esperados desde planes activos.
+  // 3. Planes vigentes del paciente para esa fecha.
   const planes = await getActivePlansForPatientOnDate(ctx, pacienteId, fecha);
+
+  // 4. Agrupar planes por clínica. Solo consideramos planes con `clinicId`
+  //    asignado (los legados sin clinicId quedan fuera del rollup
+  //    particionado — su recompute lo aborda el backfill 3b).
+  const planesByClinic = new Map<Id<"clinics">, typeof planes>();
+  for (const p of planes) {
+    if (!p.clinicId) continue;
+    const arr = planesByClinic.get(p.clinicId) ?? [];
+    arr.push(p);
+    planesByClinic.set(p.clinicId, arr);
+  }
+
+  // 5. Conjunto de clínicas con actividad ese día: la unión de las clínicas
+  //    con sesión, ejecución o plan vigente.
+  const clinicIdsConActividad = new Set<Id<"clinics">>();
+  for (const s of sessions) clinicIdsConActividad.add(s.clinicId);
+  for (const e of executions) clinicIdsConActividad.add(e.clinicId);
+  for (const cId of planesByClinic.keys()) clinicIdsConActividad.add(cId);
+
+  // 6. Para cada clínica con actividad, computar y upsertar su daily.
   const diaSemana = getDiaSemana(fecha);
+  for (const clinicId of clinicIdsConActividad) {
+    await upsertDailyForClinic(ctx, {
+      pacienteId,
+      clinicId,
+      fecha,
+      diaSemana,
+      sessions: sessions.filter((s) => s.clinicId === clinicId),
+      executions: executions.filter((e) => e.clinicId === clinicId),
+      planes: planesByClinic.get(clinicId) ?? [],
+    });
+  }
+
+  // 7. Borrar dailies particionados que ya no tienen actividad (p.ej. tras
+  //    cancelar el plan que justificaba el daily de esa clínica).
+  const existingDailies = await ctx.db
+    .query("dailyPatientRollup")
+    .withIndex("by_pacienteId_fecha", (q) =>
+      q.eq("pacienteId", pacienteId).eq("fecha", fecha),
+    )
+    .collect();
+  for (const d of existingDailies) {
+    if (!d.clinicId) continue; // legado: lo gestiona el backfill 3b
+    if (!clinicIdsConActividad.has(d.clinicId)) {
+      await ctx.db.delete(d._id);
+    }
+  }
+
+  // 8. Marcar stale weekly + monthly por clínica afectada.
+  const anioSemana = anioSemanaISO(fecha);
+  const anioMesStr = anioMes(fecha);
+  for (const clinicId of clinicIdsConActividad) {
+    await markWeeklyStale(ctx, pacienteId, clinicId, anioSemana);
+    await markMonthlyStale(ctx, pacienteId, clinicId, anioMesStr);
+  }
+}
+
+interface UpsertDailyInput {
+  pacienteId: Id<"users">;
+  clinicId: Id<"clinics">;
+  fecha: string;
+  diaSemana: ReturnType<typeof getDiaSemana>;
+  sessions: Doc<"sessions">[];
+  executions: Doc<"exerciseExecutions">[];
+  planes: Doc<"plans">[];
+}
+
+async function upsertDailyForClinic(
+  ctx: MutationCtx,
+  input: UpsertDailyInput,
+): Promise<void> {
+  const { pacienteId, clinicId, fecha, diaSemana, sessions, executions, planes } =
+    input;
+
+  // Ejercicios esperados restringidos a los planes de esta clínica.
   const expected = await getExpectedExercisesForPatientOnDate(
     ctx,
     pacienteId,
     fecha,
     diaSemana,
+    clinicId,
   );
   const { totalEsperados, porPlan: esperadosPorPlan } =
     sumExpectedByPlan(expected);
 
-  // 4. Completados por plan + dolor por plan.
+  // Completados + dolor + esfuerzo agregados sobre las ejecuciones de esta clínica.
   const completadosPorPlan = new Map<Id<"plans">, number>();
   const doloresPorPlan = new Map<Id<"plans">, number[]>();
   let totalCompletados = 0;
@@ -122,20 +195,24 @@ export async function recomputeDayAndPropagateImpl(
     totalCompletados,
     planes.length > 0,
   );
-  const dolorPromedio = dolorCount > 0 ? round2(dolorSum / dolorCount) : undefined;
+  const dolorPromedio =
+    dolorCount > 0 ? round2(dolorSum / dolorCount) : undefined;
   const esfuerzoPromedio =
     esfuerzoCount > 0 ? round2(esfuerzoSum / esfuerzoCount) : undefined;
 
-  // 5. Upsert dailyPatientRollup.
   const existing = await ctx.db
     .query("dailyPatientRollup")
-    .withIndex("by_pacienteId_fecha", (q) =>
-      q.eq("pacienteId", pacienteId).eq("fecha", fecha),
+    .withIndex("by_pacienteId_clinicId_fecha", (q) =>
+      q
+        .eq("pacienteId", pacienteId)
+        .eq("clinicId", clinicId)
+        .eq("fecha", fecha),
     )
     .unique();
 
   const payload = {
     pacienteId,
+    clinicId,
     fecha,
     planAggregates,
     totalEsperados,
@@ -143,7 +220,7 @@ export async function recomputeDayAndPropagateImpl(
     dolorPromedio,
     esfuerzoPromedio,
     estadoDia,
-    sessionIds,
+    sessionIds: sessions.map((s) => s._id),
     actualizadoEn: Date.now(),
   };
 
@@ -152,21 +229,21 @@ export async function recomputeDayAndPropagateImpl(
   } else {
     await ctx.db.insert("dailyPatientRollup", payload);
   }
-
-  // 6. Marcar stale weekly + monthly correspondientes.
-  await markWeeklyStale(ctx, pacienteId, anioSemanaISO(fecha));
-  await markMonthlyStale(ctx, pacienteId, anioMes(fecha));
 }
 
 async function markWeeklyStale(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
   anioSemana: string,
 ): Promise<void> {
   const existing = await ctx.db
     .query("weeklyPatientRollup")
-    .withIndex("by_pacienteId_anioSemana", (q) =>
-      q.eq("pacienteId", pacienteId).eq("anioSemana", anioSemana),
+    .withIndex("by_pacienteId_clinicId_anioSemana", (q) =>
+      q
+        .eq("pacienteId", pacienteId)
+        .eq("clinicId", clinicId)
+        .eq("anioSemana", anioSemana),
     )
     .unique();
   if (existing) {
@@ -176,6 +253,7 @@ async function markWeeklyStale(
   // Crear placeholder con stale=true para que el cron lo recompute.
   await ctx.db.insert("weeklyPatientRollup", {
     pacienteId,
+    clinicId,
     anioSemana,
     diasCompletados: 0,
     diasParciales: 0,
@@ -192,12 +270,16 @@ async function markWeeklyStale(
 async function markMonthlyStale(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
   anioMesStr: string,
 ): Promise<void> {
   const existing = await ctx.db
     .query("monthlyPatientRollup")
-    .withIndex("by_pacienteId_anioMes", (q) =>
-      q.eq("pacienteId", pacienteId).eq("anioMes", anioMesStr),
+    .withIndex("by_pacienteId_clinicId_anioMes", (q) =>
+      q
+        .eq("pacienteId", pacienteId)
+        .eq("clinicId", clinicId)
+        .eq("anioMes", anioMesStr),
     )
     .unique();
   if (existing) {
@@ -206,6 +288,7 @@ async function markMonthlyStale(
   }
   await ctx.db.insert("monthlyPatientRollup", {
     pacienteId,
+    clinicId,
     anioMes: anioMesStr,
     diasCompletados: 0,
     diasParciales: 0,
@@ -246,17 +329,22 @@ async function recomputeWeeklyImpl(
 ): Promise<void> {
   const desde = startOfISOWeek(rollup.anioSemana);
   const hasta = endOfISOWeek(rollup.anioSemana);
-  const dailies = await ctx.db
-    .query("dailyPatientRollup")
-    .withIndex("by_pacienteId_fecha", (q) =>
-      q
-        .eq("pacienteId", rollup.pacienteId)
-        .gte("fecha", desde)
-        .lte("fecha", hasta),
-    )
-    .collect();
+  const dailies = await loadDailiesInRange(
+    ctx,
+    rollup.pacienteId,
+    rollup.clinicId,
+    desde,
+    hasta,
+  );
 
-  const stats = await aggregateDailies(ctx, rollup.pacienteId, dailies, desde, hasta);
+  const stats = await aggregateDailies(
+    ctx,
+    rollup.pacienteId,
+    rollup.clinicId,
+    dailies,
+    desde,
+    hasta,
+  );
   await ctx.db.patch(rollup._id, {
     ...stats,
     actualizadoEn: Date.now(),
@@ -290,24 +378,32 @@ async function recomputeMonthlyImpl(
 ): Promise<void> {
   const desde = startOfMonth(rollup.anioMes);
   const hasta = endOfMonth(rollup.anioMes);
-  const dailies = await ctx.db
-    .query("dailyPatientRollup")
-    .withIndex("by_pacienteId_fecha", (q) =>
-      q
-        .eq("pacienteId", rollup.pacienteId)
-        .gte("fecha", desde)
-        .lte("fecha", hasta),
-    )
-    .collect();
+  const dailies = await loadDailiesInRange(
+    ctx,
+    rollup.pacienteId,
+    rollup.clinicId,
+    desde,
+    hasta,
+  );
 
-  const stats = await aggregateDailies(ctx, rollup.pacienteId, dailies, desde, hasta);
+  const stats = await aggregateDailies(
+    ctx,
+    rollup.pacienteId,
+    rollup.clinicId,
+    dailies,
+    desde,
+    hasta,
+  );
 
-  // Tendencia vs mes anterior.
+  // Tendencia vs mes anterior de la misma clínica.
   const prevAnioMes = previousAnioMes(rollup.anioMes);
   const prev = await ctx.db
     .query("monthlyPatientRollup")
-    .withIndex("by_pacienteId_anioMes", (q) =>
-      q.eq("pacienteId", rollup.pacienteId).eq("anioMes", prevAnioMes),
+    .withIndex("by_pacienteId_clinicId_anioMes", (q) =>
+      q
+        .eq("pacienteId", rollup.pacienteId)
+        .eq("clinicId", rollup.clinicId)
+        .eq("anioMes", prevAnioMes),
     )
     .unique();
   const tendenciaAdherencia = prev
@@ -320,6 +416,29 @@ async function recomputeMonthlyImpl(
     actualizadoEn: Date.now(),
     stale: false,
   });
+}
+
+/**
+ * Lee los dailies particionados de un paciente en una clínica para un rango
+ * de fechas.
+ */
+async function loadDailiesInRange(
+  ctx: MutationCtx,
+  pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
+  desde: string,
+  hasta: string,
+): Promise<Doc<"dailyPatientRollup">[]> {
+  return await ctx.db
+    .query("dailyPatientRollup")
+    .withIndex("by_pacienteId_clinicId_fecha", (q) =>
+      q
+        .eq("pacienteId", pacienteId)
+        .eq("clinicId", clinicId)
+        .gte("fecha", desde)
+        .lte("fecha", hasta),
+    )
+    .collect();
 }
 
 interface AggregatedRange {
@@ -337,6 +456,7 @@ interface AggregatedRange {
 async function aggregateDailies(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
   dailies: Doc<"dailyPatientRollup">[],
   desde: string,
   hasta: string,
@@ -387,13 +507,14 @@ async function aggregateDailies(
       ? Math.round((diasCompletados / diasConPlanNoDescanso) * 100)
       : 0;
 
-  // Sesiones del rango (count): index by_pacienteId_fecha.
-  const sesiones = await ctx.db
+  // Sesiones del rango (count) filtradas por clínica.
+  const sesionesRaw = await ctx.db
     .query("sessions")
     .withIndex("by_pacienteId_fecha", (q) =>
       q.eq("pacienteId", pacienteId).gte("fecha", desde).lte("fecha", hasta),
     )
     .collect();
+  const sesiones = sesionesRaw.filter((s) => s.clinicId === clinicId);
   const sesionesCount = sesiones.filter(
     (s) =>
       s.estado === "completada" ||

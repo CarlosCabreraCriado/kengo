@@ -26,10 +26,12 @@ function ventanaDays(ventana: Ventana): number {
 
 /**
  * Recompute idempotente de `patientMetricsSnapshot` para un paciente y todas
- * las ventanas indicadas (default: 7d y 30d).
+ * las ventanas indicadas (default: 7d, 15d, 30d).
  *
- * Lectura: dailyPatientRollup (últimos N días) + monthlyPatientRollup (para
- * tendencia).
+ * Tras la partición por clínica (fase 3a), el snapshot pasa a ser
+ * `(pacienteId, clinicId, ventana)`: si el paciente está en varias clínicas
+ * con planes, se generan N snapshots por ventana. Se itera sobre las clínicas
+ * donde el paciente tiene rol `paciente` y al menos un plan activo.
  */
 export const recomputePatient = internalMutation({
   args: {
@@ -38,15 +40,43 @@ export const recomputePatient = internalMutation({
   },
   handler: async (ctx, args): Promise<void> => {
     const ventanas = args.ventanas ?? VENTANAS;
-    for (const ventana of ventanas) {
-      await recomputePatientForWindow(ctx, args.pacienteId, ventana);
+    const clinicIds = await getPacienteClinicIdsWithActivePlans(
+      ctx,
+      args.pacienteId,
+    );
+    for (const clinicId of clinicIds) {
+      for (const ventana of ventanas) {
+        await recomputePatientForWindow(ctx, args.pacienteId, clinicId, ventana);
+      }
     }
   },
 });
 
+/**
+ * Devuelve las clínicas donde el paciente tiene al menos un plan activo
+ * (vigente). Es el conjunto que justifica un snapshot por clínica.
+ */
+async function getPacienteClinicIdsWithActivePlans(
+  ctx: MutationCtx,
+  pacienteId: Id<"users">,
+): Promise<Id<"clinics">[]> {
+  const planesActivos = await ctx.db
+    .query("plans")
+    .withIndex("by_pacienteId_estado", (q) =>
+      q.eq("pacienteId", pacienteId).eq("estado", "activo"),
+    )
+    .collect();
+  const set = new Set<Id<"clinics">>();
+  for (const p of planesActivos) {
+    if (p.clinicId) set.add(p.clinicId);
+  }
+  return [...set];
+}
+
 async function recomputePatientForWindow(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
   ventana: Ventana,
 ): Promise<void> {
   const dias = ventanaDays(ventana);
@@ -55,8 +85,12 @@ async function recomputePatientForWindow(
 
   const dailies = await ctx.db
     .query("dailyPatientRollup")
-    .withIndex("by_pacienteId_fecha", (q) =>
-      q.eq("pacienteId", pacienteId).gte("fecha", desde).lte("fecha", hasta),
+    .withIndex("by_pacienteId_clinicId_fecha", (q) =>
+      q
+        .eq("pacienteId", pacienteId)
+        .eq("clinicId", clinicId)
+        .gte("fecha", desde)
+        .lte("fecha", hasta),
     )
     .collect();
 
@@ -90,14 +124,15 @@ async function recomputePatientForWindow(
   }
 
   // Dolor: promedio de promedios POR SESIÓN sobre exerciseExecutions
-  // completadas en la ventana. Misma fórmula que el detalle de paciente
-  // (ver apps/app/src/.../cumplimiento.service.ts:buildEstadisticas).
-  const executions = await ctx.db
+  // completadas de esta clínica en la ventana. Misma fórmula que el detalle
+  // de paciente (ver apps/app/src/.../cumplimiento.service.ts:buildEstadisticas).
+  const executionsRaw = await ctx.db
     .query("exerciseExecutions")
     .withIndex("by_pacienteId_fecha", (q) =>
       q.eq("pacienteId", pacienteId).gte("fecha", desde).lte("fecha", hasta),
     )
     .collect();
+  const executions = executionsRaw.filter((e) => e.clinicId === clinicId);
 
   const dolorPorSesion = new Map<
     Id<"sessions">,
@@ -149,12 +184,15 @@ async function recomputePatientForWindow(
     fechas.map((f) => dailyByFecha.get(f)?.estadoDia ?? "sin_plan"),
   );
 
-  // Tendencia (solo afecta a riskScore): mes actual vs anterior.
+  // Tendencia (solo afecta a riskScore): mes actual vs anterior, de esta clínica.
   const mesActual = anioMes(hasta);
   const monthlyActual = await ctx.db
     .query("monthlyPatientRollup")
-    .withIndex("by_pacienteId_anioMes", (q) =>
-      q.eq("pacienteId", pacienteId).eq("anioMes", mesActual),
+    .withIndex("by_pacienteId_clinicId_anioMes", (q) =>
+      q
+        .eq("pacienteId", pacienteId)
+        .eq("clinicId", clinicId)
+        .eq("anioMes", mesActual),
     )
     .unique();
   const tendenciaAdherencia = monthlyActual?.tendenciaAdherencia;
@@ -167,41 +205,42 @@ async function recomputePatientForWindow(
     tendenciaAdherencia,
   });
 
-  // Resolver clinicId y fisioId del paciente (primer membership / primer plan).
-  const membership = await ctx.db
-    .query("clinicMemberships")
-    .withIndex("by_userId", (q) => q.eq("userId", pacienteId))
-    .first();
-  if (!membership) return; // paciente sin clínica → no snapshoteable
-
-  const planActivo = await ctx.db
+  // Resolver fisioId desde un plan de esta clínica (activo o, en su defecto,
+  // cualquiera). Buscamos primero el plan activo de la clínica.
+  const planesActivosClinica = await ctx.db
     .query("plans")
     .withIndex("by_pacienteId_estado", (q) =>
       q.eq("pacienteId", pacienteId).eq("estado", "activo"),
     )
-    .first();
-  // Si no hay plan activo, dejamos el snapshot existente o creamos con
-  // fisioId del primer plan completado para que aparezca en listas.
-  const fisioId =
-    planActivo?.fisioId ??
-    (
-      await ctx.db
-        .query("plans")
-        .withIndex("by_pacienteId", (q) => q.eq("pacienteId", pacienteId))
-        .first()
-    )?.fisioId;
-  if (!fisioId) return; // paciente sin fisio asignado → no snapshoteable
+    .collect();
+  const planActivoClinica = planesActivosClinica.find(
+    (p) => p.clinicId === clinicId,
+  );
+  let fisioId = planActivoClinica?.fisioId;
+  if (!fisioId) {
+    const planesPaciente = await ctx.db
+      .query("plans")
+      .withIndex("by_pacienteId", (q) => q.eq("pacienteId", pacienteId))
+      .collect();
+    fisioId = planesPaciente.find((p) => p.clinicId === clinicId)?.fisioId;
+  }
+  if (!fisioId) return; // sin fisio en esta clínica → no snapshoteable
 
+  // El snapshot existente puede haber sido escrito por la versión antigua
+  // (sin distinguir clínica). Si el snapshot de esta `(paciente, ventana)`
+  // tiene un `clinicId` distinto, lo dejamos en paz y creamos uno nuevo
+  // (el backfill normalizará el modelo).
   const existing = await ctx.db
     .query("patientMetricsSnapshot")
     .withIndex("by_pacienteId_ventana", (q) =>
       q.eq("pacienteId", pacienteId).eq("ventana", ventana),
     )
-    .unique();
+    .filter((q) => q.eq(q.field("clinicId"), clinicId))
+    .first();
 
   const payload = {
     pacienteId,
-    clinicId: membership.clinicId,
+    clinicId,
     fisioId,
     ventana,
     adherencia,
@@ -354,7 +393,7 @@ async function recomputeClinicForWindow(
 
 /**
  * Recompute completo de todos los pacientes con plan activo. Invocado por
- * `daily-maintenance`.
+ * `daily-maintenance`. Genera un snapshot por (paciente, clínica, ventana).
  */
 export const recomputeAllPatients = internalMutation({
   args: {},
@@ -363,15 +402,19 @@ export const recomputeAllPatients = internalMutation({
       .query("plans")
       .withIndex("by_estado", (q) => q.eq("estado", "activo"))
       .collect();
-    const pacienteIds = Array.from(
-      new Set(planesActivos.map((p) => p.pacienteId)),
-    );
-    for (const pid of pacienteIds) {
+    // Pares (paciente, clínica) únicos: cada uno justifica un snapshot.
+    const pares = new Set<string>();
+    for (const p of planesActivos) {
+      if (!p.clinicId) continue;
+      pares.add(`${p.pacienteId}|${p.clinicId}`);
+    }
+    for (const key of pares) {
+      const [pid, cid] = key.split("|") as [Id<"users">, Id<"clinics">];
       for (const ventana of VENTANAS) {
-        await recomputePatientForWindow(ctx, pid, ventana);
+        await recomputePatientForWindow(ctx, pid, cid, ventana);
       }
     }
-    return { procesados: pacienteIds.length };
+    return { procesados: pares.size };
   },
 });
 

@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { CumplimientoService } from '../../pacientes/data-access/cumplimiento.service';
 import { ActividadHoyService } from '../../actividad/data-access/actividad-hoy.service';
 import type { CumplimientoDia, DiaSemana } from '../../../../types/global';
@@ -22,6 +23,7 @@ const LETRAS_SEMANA: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 @Injectable({ providedIn: 'root' })
 export class RachaPacienteService {
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private cumplimientoService = inject(CumplimientoService);
   private actividadHoyService = inject(ActividadHoyService);
 
@@ -29,6 +31,8 @@ export class RachaPacienteService {
   readonly rachaActual = signal<number>(0);
   private diasCumplimiento = signal<CumplimientoDia[]>([]);
   private datosCargados = signal<boolean>(false);
+  /** Clave (userId|clinicId) usada para forzar recarga al cambiar de contexto. */
+  private lastLoadKey: string | null = null;
 
   /** Mejor racha en los últimos 14 días (calculada sobre datos ya cargados) */
   readonly mejorRacha = computed<number>(() => {
@@ -133,27 +137,34 @@ export class RachaPacienteService {
     effect(() => {
       const usuario = this.sessionService.usuario();
       const enModoPaciente = this.sessionService.enModoPaciente();
+      const clinicId = this.clinicaActiva.selectedClinicaId();
 
-      if (
-        usuario?.id &&
-        enModoPaciente &&
-        !this.datosCargados() &&
-        !this.cargando()
-      ) {
-        this.cargar(usuario.id);
-      }
+      if (!usuario?.id || !enModoPaciente) return;
+
+      const currentKey = `${usuario.id}|${clinicId ?? ''}`;
+      if (this.lastLoadKey === currentKey && this.datosCargados()) return;
+      if (this.cargando()) return;
+
+      this.lastLoadKey = currentKey;
+      this.cargar(usuario.id, clinicId);
     });
   }
 
   /** Permite forzar la carga desde fuera (ej: fisio viendo vista paciente) */
-  cargarSiNecesario(userId: string): void {
-    if (!this.datosCargados() && !this.cargando()) {
-      this.cargar(userId);
-    }
+  cargarSiNecesario(userId: string, clinicId?: string | null): void {
+    const resolvedClinicId = clinicId ?? this.clinicaActiva.selectedClinicaId();
+    const currentKey = `${userId}|${resolvedClinicId ?? ''}`;
+    if (this.lastLoadKey === currentKey && this.datosCargados()) return;
+    if (this.cargando()) return;
+    this.lastLoadKey = currentKey;
+    this.cargar(userId, resolvedClinicId);
   }
 
-  private async cargar(userId: string): Promise<void> {
-    if (this.datosCargados() || this.cargando()) return;
+  private async cargar(
+    userId: string,
+    clinicId: string | null,
+  ): Promise<void> {
+    if (this.cargando()) return;
 
     this.cargando.set(true);
     try {
@@ -166,6 +177,7 @@ export class RachaPacienteService {
         userId,
         desdeStr,
         hastaStr,
+        clinicId,
       );
 
       this.diasCumplimiento.set(resp.dias);

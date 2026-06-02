@@ -8,7 +8,7 @@ import { ClinicasService } from '../../../../clinica/data-access/clinicas.servic
 import { PlanBuilderService } from '../../../../planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from '../../../../rutinas/data-access/rutina-builder.service';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
-import type { Clinica, NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
+import type { NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
 import { rawAssetUrl, assetUrl } from '../../../../../core/utils/asset-url';
 import {
   daysBetweenYMD,
@@ -201,11 +201,7 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
   }
 
   // --- Clínica ---
-  clinicaActual = computed<Clinica | null>(() => {
-    const clinicas = this.clinicasService.misClinicasRes.value() ?? [];
-    if (clinicas.length === 0) return null;
-    return clinicas[0];
-  });
+  clinicaActual = this.clinicasService.selectedClinica;
 
   clinicaImagenUrl = computed<string | null>(() => {
     const fileId = this.clinicaActual()?.imagenes?.[0]?.fileId;

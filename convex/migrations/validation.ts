@@ -57,6 +57,13 @@ export const summary = internalQuery({
     const rollupsStaleW = weeklyPatientRollup.filter((w) => w.stale).length;
     const rollupsStaleM = monthlyPatientRollup.filter((m) => m.stale).length;
 
+    // Conteos de rollups legados sin `clinicId`. Útil para monitorizar el
+    // progreso del backfill 3b. Cuando los tres sean 0 se puede promover el
+    // schema a estricto (sub-fase 3c).
+    const dailySinClinicId = dailyPatientRollup.filter((d) => !d.clinicId).length;
+    const weeklySinClinicId = weeklyPatientRollup.filter((w) => !w.clinicId).length;
+    const monthlySinClinicId = monthlyPatientRollup.filter((m) => !m.clinicId).length;
+
     return {
       sessions: {
         total: sessionsAll.length,
@@ -77,6 +84,11 @@ export const summary = internalQuery({
       stale: {
         weekly: rollupsStaleW,
         monthly: rollupsStaleM,
+      },
+      rollupsSinClinicId: {
+        daily: dailySinClinicId,
+        weekly: weeklySinClinicId,
+        monthly: monthlySinClinicId,
       },
     };
   },

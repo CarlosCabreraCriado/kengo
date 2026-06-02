@@ -2,8 +2,10 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SessionService } from '../auth/services/session.service';
+import { ClinicaActivaService } from '../auth/services/clinica-activa.service';
 import { ConvexService } from '../convex/convex.service';
 import { api } from '../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../convex/_generated/dataModel';
 import type { NotificacionApp } from '../../../types/global';
 
 interface AlertDoc {
@@ -51,9 +53,12 @@ export class NotificacionesService {
   private router = inject(Router);
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
   // Lectura del modelo nuevo `physioAlerts` (Fase 3 rediseño records).
   // El watcher de alerts.listForCurrentFisio devuelve un PaginationResult.
+  // Reactivo a `selectedClinicaId`: si hay clínica activa, filtra a esa
+  // clínica concreta; si no, agrega todas las gestionadas por el fisio.
   private readonly suscripcion = this.convex.watchQuery(
     api.alerts.queries.listForCurrentFisio,
     () => {
@@ -61,7 +66,11 @@ export class NotificacionesService {
       if (!usuario?.id || !this.sessionService.puedeRecibirNotificaciones()) {
         return 'skip' as const;
       }
-      return { paginationOpts: { numItems: 50, cursor: null } };
+      const clinicId = this.clinicaActiva.selectedClinicaId();
+      return {
+        paginationOpts: { numItems: 50, cursor: null },
+        ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
+      };
     },
   );
 

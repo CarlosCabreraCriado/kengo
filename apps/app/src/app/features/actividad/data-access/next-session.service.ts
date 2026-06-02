@@ -1,7 +1,9 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
 import type { Ui2AppointmentVm } from '../../../shared/ui-v2';
 
 type DiaSemana = 'L' | 'M' | 'X' | 'J' | 'V' | 'S' | 'D';
@@ -32,12 +34,15 @@ const MONTH_LABEL = [
 export class NextSessionService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
   readonly cargando = signal<boolean>(false);
   readonly error = signal<string | null>(null);
 
   private rawNext = signal<NextSessionPayload | null>(null);
   private datosCargados = signal<boolean>(false);
+  /** Clave (userId|clinicId) usada para detectar cuándo recargar. */
+  private lastLoadKey: string | null = null;
 
   readonly nextSessionVm = computed<Ui2AppointmentVm | null>(() => {
     const r = this.rawNext();
@@ -59,23 +64,26 @@ export class NextSessionService {
     effect(() => {
       const usuario = this.sessionService.usuario();
       const enPaciente = this.sessionService.enModoPaciente();
-      if (
-        usuario?.id &&
-        enPaciente &&
-        !this.datosCargados() &&
-        !this.cargando()
-      ) {
-        void this.cargar();
-      }
+      const clinicId = this.clinicaActiva.selectedClinicaId();
+      if (!usuario?.id || !enPaciente) return;
+
+      // Clave única (paciente, clínica). Si cambia, fuerza recarga.
+      const currentKey = `${usuario.id}|${clinicId ?? ''}`;
+      if (this.lastLoadKey === currentKey && this.datosCargados()) return;
+      if (this.cargando()) return;
+
+      this.lastLoadKey = currentKey;
+      void this.cargar(clinicId);
     });
   }
 
   recargar(): void {
+    this.lastLoadKey = null;
     this.datosCargados.set(false);
-    void this.cargar();
+    void this.cargar(this.clinicaActiva.selectedClinicaId());
   }
 
-  private async cargar(): Promise<void> {
+  private async cargar(clinicId: string | null): Promise<void> {
     if (this.cargando()) return;
     const convexId = this.sessionService.usuario()?.convexId;
     if (!convexId) return;
@@ -85,7 +93,10 @@ export class NextSessionService {
     try {
       const r = await this.convex.query(
         api.plans.queries.getNextSessionForPatient,
-        { pacienteId: convexId },
+        {
+          pacienteId: convexId,
+          ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
+        },
       );
       this.rawNext.set(r as NextSessionPayload | null);
       this.datosCargados.set(true);

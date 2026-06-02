@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import { resolveAndAssertPacienteId } from "../_helpers/patientAccess";
+import {
+  resolveAndAssertPacienteAndClinic,
+  resolveAndAssertPacienteId,
+} from "../_helpers/patientAccess";
 import { assertCanAccessSession } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
 
@@ -34,24 +37,34 @@ export const listByPaciente = query({
 export const listRecentByPaciente = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetUserId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
     const limit = args.limit ?? 5;
 
-    const sessions = await ctx.db
+    // Cuando filtramos por clínica, sobre-leemos para tener margen tras el
+    // filtro en memoria (el índice no incluye `clinicId`). Para pacientes con
+    // planes mayoritariamente en una sola clínica el coste es despreciable.
+    const fetchSize = targetClinicId ? Math.max(limit * 5, 25) : limit;
+    const rawSessions = await ctx.db
       .query("sessions")
       .withIndex("by_pacienteId_fecha", (q) =>
         q.eq("pacienteId", targetUserId),
       )
       .order("desc")
-      .take(limit);
+      .take(fetchSize);
+    const sessions = targetClinicId
+      ? rawSessions.filter((s) => s.clinicId === targetClinicId).slice(0, limit)
+      : rawSessions;
 
     const planIds = sessions
       .map((s) => s.planIds?.[0])

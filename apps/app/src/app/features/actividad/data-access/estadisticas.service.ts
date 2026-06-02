@@ -1,7 +1,9 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
 import {
   diaSemanaFromYMD,
   getMadridDate,
@@ -84,6 +86,7 @@ const MESES_CORTO = [
 export class EstadisticasService {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
   readonly cargando = signal<boolean>(false);
   readonly error = signal<string | null>(null);
@@ -95,6 +98,8 @@ export class EstadisticasService {
   private monthlyHistorico = signal<MonthlyRollup[]>([]);
   private planActivo = signal<PlanActivo | null>(null);
   private historialRaw = signal<SesionReciente[]>([]);
+  /** Clave (usuario|clínica) usada para forzar recarga al cambiar de contexto. */
+  private lastLoadKey: string | null = null;
 
   readonly hayDatos = computed(
     () =>
@@ -280,6 +285,7 @@ export class EstadisticasService {
   }
 
   recargar(): void {
+    this.lastLoadKey = null;
     this.datosCargados.set(false);
     this.cargarSiNecesario();
   }
@@ -288,14 +294,15 @@ export class EstadisticasService {
     effect(() => {
       const usuario = this.sessionService.usuario();
       const enModoPaciente = this.sessionService.enModoPaciente();
-      if (
-        usuario?.id &&
-        enModoPaciente &&
-        !this.datosCargados() &&
-        !this.cargando()
-      ) {
-        void this.cargar();
-      }
+      const clinicId = this.clinicaActiva.selectedClinicaId();
+      if (!usuario?.id || !enModoPaciente) return;
+
+      const currentKey = `${usuario.id}|${clinicId ?? ''}`;
+      if (this.lastLoadKey === currentKey && this.datosCargados()) return;
+      if (this.cargando()) return;
+
+      this.lastLoadKey = currentKey;
+      void this.cargar();
     });
   }
 
@@ -304,6 +311,10 @@ export class EstadisticasService {
 
     const convexId = this.resolveUserConvexId();
     if (!convexId) return;
+    const clinicId = this.clinicaActiva.selectedClinicaId();
+    const clinicArg = clinicId
+      ? { clinicId: clinicId as Id<'clinics'> }
+      : {};
 
     this.cargando.set(true);
     this.error.set(null);
@@ -323,23 +334,28 @@ export class EstadisticasService {
           pacienteId: convexId,
           desde: desde30YMD,
           hasta: hoyYMD,
+          ...clinicArg,
         }),
         this.convex.query(api.rollups.queries.getWeeklyByPaciente, {
           pacienteId: convexId,
           desdeAnioSemana,
           hastaAnioSemana,
+          ...clinicArg,
         }),
         this.convex.query(api.rollups.queries.getMonthlyByPaciente, {
           pacienteId: convexId,
           desdeAnioMes,
           hastaAnioMes,
+          ...clinicArg,
         }),
         this.convex.query(api.plans.queries.getActiveForPatientToday, {
           pacienteId: convexId,
+          ...clinicArg,
         }),
         this.convex.query(api.sessions.queries.listRecentByPaciente, {
           pacienteId: convexId,
           limit: 5,
+          ...clinicArg,
         }),
       ]);
 

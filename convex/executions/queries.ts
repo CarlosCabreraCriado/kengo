@@ -2,32 +2,44 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { query } from "../_generated/server";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import { resolveAndAssertPacienteId } from "../_helpers/patientAccess";
+import {
+  resolveAndAssertPacienteAndClinic,
+  resolveAndAssertPacienteId,
+} from "../_helpers/patientAccess";
 import { getCurrentMadridDate } from "../_helpers/datetime";
 
 /**
  * Lista las ejecuciones de un paciente en una fecha (YYYY-MM-DD).
  * Sustituye al equivalente legacy `records.queries.listByPacienteAndDate`.
+ *
+ * Aislamiento por clínica: si se pasa `clinicId`, sólo devuelve ejecuciones de
+ * esa clínica. Sin `clinicId` mantiene el comportamiento legado (agregado).
  */
 export const listByPacienteAndDate = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
     fecha: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetUserId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
 
-    return await ctx.db
+    const executions = await ctx.db
       .query("exerciseExecutions")
       .withIndex("by_pacienteId_fecha", (q) =>
         q.eq("pacienteId", targetUserId).eq("fecha", args.fecha),
       )
       .collect();
+
+    if (!targetClinicId) return executions;
+    return executions.filter((e) => e.clinicId === targetClinicId);
   },
 });
 
@@ -97,16 +109,19 @@ export const listByPacienteInRange = query({
 export const listByPacienteAndDateExpanded = query({
   args: {
     pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
     fecha: v.string(),
     soloCompletados: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const targetUserId = await resolveAndAssertPacienteId(
-      ctx,
-      args.pacienteId,
-      user._id,
-    );
+    const { pacienteId: targetUserId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
 
     const executions = await ctx.db
       .query("exerciseExecutions")
@@ -115,9 +130,12 @@ export const listByPacienteAndDateExpanded = query({
       )
       .collect();
 
-    const filtered = args.soloCompletados
-      ? executions.filter((e) => e.completado)
+    const byClinic = targetClinicId
+      ? executions.filter((e) => e.clinicId === targetClinicId)
       : executions;
+    const filtered = args.soloCompletados
+      ? byClinic.filter((e) => e.completado)
+      : byClinic;
 
     return await Promise.all(
       filtered.map(async (e) => {

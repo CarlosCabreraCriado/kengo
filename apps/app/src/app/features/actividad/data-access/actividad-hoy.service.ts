@@ -1,5 +1,6 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../../convex/_generated/dataModel';
@@ -29,17 +30,23 @@ export type EjercicioUnificadoHoy = EjercicioPlanConEstado & {
 @Injectable({ providedIn: 'root' })
 export class ActividadHoyService {
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private convex = inject(ConvexService);
 
   // ===== Suscripciones reactivas a Convex =====
-  // Las queries se re-evalúan automáticamente cuando cambia `usuario()` o
-  // cuando llegan inserts/updates en `plans`/`exerciseExecutions`.
+  // Las queries se re-evalúan automáticamente cuando cambia `usuario()`,
+  // `selectedClinicaId()`, o cuando llegan inserts/updates en
+  // `plans`/`exerciseExecutions`.
   private readonly planesSub = this.convex.watchQuery(
     api.plans.queries.getActiveForPatientToday,
     () => {
       const u = this.sessionService.usuario();
       if (!u?.id) return 'skip' as const;
-      return { pacienteId: (u.convexId ?? u.id) as Id<'users'> };
+      const clinicId = this.clinicaActiva.selectedClinicaId();
+      return {
+        pacienteId: (u.convexId ?? u.id) as Id<'users'>,
+        ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
+      };
     },
   );
 
@@ -48,9 +55,11 @@ export class ActividadHoyService {
     () => {
       const u = this.sessionService.usuario();
       if (!u?.id) return 'skip' as const;
+      const clinicId = this.clinicaActiva.selectedClinicaId();
       return {
         pacienteId: (u.convexId ?? u.id) as Id<'users'>,
         fecha: getMadridDate(),
+        ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
       };
     },
   );

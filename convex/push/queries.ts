@@ -18,9 +18,14 @@ export const getTokensForUser = internalQuery({
 
 /**
  * Candidatos para el recordatorio diario: pacienteIds únicos que tienen al
- * menos un plan activo y cuyo `dailyPatientRollup` del día actual NO esté ya
- * marcado como `completado` o `descanso`. Se filtra también por pacientes
- * con al menos un push token registrado para no programar envíos vacíos.
+ * menos un plan activo y cuyos `dailyPatientRollup` del día actual no estén
+ * todos completos.
+ *
+ * Tras la partición por clínica (fase 3a), un paciente puede tener N rollups
+ * el mismo día (uno por clínica con actividad). Política decidida con el
+ * usuario: 1 push por paciente — se envía si CUALQUIER rollup no está
+ * "completado" o "descanso". Si TODOS sus rollups del día están en uno de
+ * esos estados (o el paciente no tiene rollup), no se manda push.
  */
 export const getReminderCandidates = internalQuery({
   args: { today: v.string() },
@@ -36,17 +41,19 @@ export const getReminderCandidates = internalQuery({
 
     const candidatos: Id<"users">[] = [];
     for (const pacienteId of uniquePacienteIds) {
-      const rollup = await ctx.db
+      const rollups = await ctx.db
         .query("dailyPatientRollup")
         .withIndex("by_pacienteId_fecha", (q) =>
           q.eq("pacienteId", pacienteId).eq("fecha", today),
         )
-        .unique();
+        .collect();
 
+      // Si tiene rollups y TODOS son completado/descanso, no necesita push.
       if (
-        rollup &&
-        (rollup.estadoDia === "completado" ||
-          rollup.estadoDia === "descanso")
+        rollups.length > 0 &&
+        rollups.every(
+          (r) => r.estadoDia === "completado" || r.estadoDia === "descanso",
+        )
       ) {
         continue;
       }

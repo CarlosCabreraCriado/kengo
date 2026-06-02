@@ -12,6 +12,7 @@ import {
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../../../core/auth/services/clinica-activa.service';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
 import {
   ActividadHoyService,
@@ -88,6 +89,7 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
 })
 export class InicioPacienteComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private router = inject(Router);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
@@ -119,8 +121,12 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
   cargandoFisio = signal(true);
 
   private clinicaPaciente = computed(() => {
-    const clinicas = this.sessionService.usuario()?.clinicas ?? [];
-    return clinicas.find((c) => c.puesto === 'paciente')?.clinicId ?? null;
+    const activeId = this.clinicaActiva.selectedClinicaId();
+    if (!activeId) return null;
+    const membresia = this.sessionService
+      .usuario()
+      ?.clinicas?.find((c) => c.clinicId === activeId);
+    return membresia?.puesto === 'paciente' ? membresia.clinicId : null;
   });
 
   // Clínica a mostrar en la card "Mi clínica" del paciente. Preferimos la
