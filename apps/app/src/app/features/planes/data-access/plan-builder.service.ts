@@ -421,6 +421,11 @@ export class PlanBuilderService {
       const plan = await this.planesService.getPlanById(planId);
       if (!plan) return false;
 
+      // Un plan 'modificado' es una versión histórica inmutable: no debe
+      // abrirse en el builder. El guard de ruta y el redirect del detalle
+      // ya cubren la entrada habitual; este check es defensa en profundidad.
+      if (plan.estado === 'modificado') return false;
+
       // Cargar paciente
       if (plan.paciente && typeof plan.paciente === 'object') {
         this.paciente.set(plan.paciente as Usuario);

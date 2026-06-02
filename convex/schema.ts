@@ -167,6 +167,7 @@ export default defineSchema({
       v.literal("borrador"),
       v.literal("activo"),
       v.literal("completado"),
+      v.literal("modificado"),
       v.literal("cancelado"),
     ),
     fechaInicio: v.optional(v.string()),
@@ -175,6 +176,7 @@ export default defineSchema({
     fisioId: v.id("users"),
     clinicId: v.id("clinics"),
     planAnterior: v.optional(v.id("plans")),
+    planSucesor: v.optional(v.id("plans")),
     version: v.number(),
   })
     .index("by_fisioId", ["fisioId"])

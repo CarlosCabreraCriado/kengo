@@ -185,6 +185,11 @@ export const updateEstado = mutation({
     await getAuthenticatedUser(ctx);
     const plan = await ctx.db.get(args.planId);
     if (!plan) throw new Error("Plan no encontrado");
+    if (plan.estado === "modificado") {
+      throw new Error(
+        "Este plan es una versión histórica y no se puede modificar.",
+      );
+    }
     await requireActiveSubscription(ctx, plan.clinicId);
     if (args.estado === "activo") {
       if (!plan.fechaInicio || !plan.fechaFin) {
@@ -248,6 +253,11 @@ export const update = mutation({
   handler: async (ctx, args) => {
     await getAuthenticatedUser(ctx);
     const plan = await getPlanIfOwned(ctx, args.planId);
+    if (plan.estado === "modificado") {
+      throw new Error(
+        "Este plan es una versión histórica y no se puede editar.",
+      );
+    }
     await requireActiveSubscription(ctx, plan.clinicId);
 
     if (args.ejercicios) {
@@ -289,6 +299,11 @@ export const remove = mutation({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
     const plan = await getPlanIfOwned(ctx, args.planId);
+    if (plan.estado === "modificado") {
+      throw new Error(
+        "Este plan es una versión histórica y no se puede eliminar.",
+      );
+    }
     await requireActiveSubscription(ctx, plan.clinicId);
 
     const exercises = await ctx.db
@@ -329,9 +344,10 @@ export const version = mutation({
 
     const today = new Date().toISOString().split("T")[0]!;
 
-    // Archive old plan
+    // Marcar el plan anterior como "modificado": indica que fue reemplazado
+    // por una nueva versión (no que se completó naturalmente).
     await ctx.db.patch(args.oldPlanId, {
-      estado: "completado" as const,
+      estado: "modificado" as const,
       fechaFin: oldPlan.fechaFin ?? today,
     });
 
@@ -348,6 +364,9 @@ export const version = mutation({
       version: (oldPlan.version ?? 1) + 1,
       planAnterior: args.oldPlanId,
     });
+
+    // Cierra el enlace bidireccional: el plan modificado apunta a su sucesor.
+    await ctx.db.patch(args.oldPlanId, { planSucesor: newPlanId });
 
     await insertPlanExercises(ctx, newPlanId, args.ejercicios);
 

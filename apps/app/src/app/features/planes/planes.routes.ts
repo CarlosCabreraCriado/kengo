@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { ActiveSubscriptionGuard, AuthGuard, FisioGuard } from '../../core';
 import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
+import { planEditableGuard } from './guards/plan-editable.guard';
 
 export const PLANES_ROUTES: Routes = [
   { path: '', redirectTo: '/inicio', pathMatch: 'full' },
@@ -18,7 +19,12 @@ export const PLANES_ROUTES: Routes = [
       import('./pages/plan-builder/plan-builder.component').then(
         (m) => m.PlanBuilderComponent,
       ),
-    canActivate: [AuthGuard, FisioGuard, ActiveSubscriptionGuard],
+    canActivate: [
+      AuthGuard,
+      FisioGuard,
+      ActiveSubscriptionGuard,
+      planEditableGuard,
+    ],
     canDeactivate: [unsavedChangesGuard],
   },
   {

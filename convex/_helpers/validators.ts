@@ -14,6 +14,7 @@ export const estadoPlan = v.union(
   v.literal("borrador"),
   v.literal("activo"),
   v.literal("completado"),
+  v.literal("modificado"),
   v.literal("cancelado"),
 );
 

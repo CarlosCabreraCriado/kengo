@@ -5,6 +5,7 @@ export const ESTADO_VARIANT: Record<EstadoPlan, Ui2PillVariant> = {
   borrador: 'neutral',
   activo: 'success',
   completado: 'soft',
+  modificado: 'neutral',
   cancelado: 'danger',
 };
 
@@ -12,6 +13,7 @@ export const ESTADO_LABEL: Record<EstadoPlan, string> = {
   borrador: 'Borrador',
   activo: 'Activo',
   completado: 'Completado',
+  modificado: 'Modificado',
   cancelado: 'Cancelado',
 };
 
@@ -19,6 +21,8 @@ export const ESTADO_DESCRIPCION: Record<EstadoPlan, string> = {
   borrador: 'El paciente todavía no puede verlo. Actívalo cuando esté listo.',
   activo: 'El paciente puede ver y ejecutar los ejercicios.',
   completado: 'El plan terminó. Se conserva en el historial.',
+  modificado:
+    'Esta versión fue reemplazada por una más reciente. Se conserva en el historial.',
   cancelado: 'El plan fue cancelado. Se conserva en el historial.',
 };
 
@@ -44,5 +48,7 @@ export function transicionesPermitidas(actual: EstadoPlan): EstadoPlan[] {
       return ['activo', 'borrador'];
     case 'cancelado':
       return ['activo', 'borrador'];
+    case 'modificado':
+      return [];
   }
 }

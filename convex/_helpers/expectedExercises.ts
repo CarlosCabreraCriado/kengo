@@ -22,9 +22,12 @@ function isPlanVigente(plan: Doc<"plans">, target: string): boolean {
 }
 
 /**
- * Devuelve los planes (`activo` o `completado`) vigentes para el paciente en
- * la fecha indicada. Un plan completado puede seguir teniendo registros de
- * actividad si la fecha cae dentro de su intervalo de vigencia.
+ * Devuelve los planes (`activo`, `completado` o `modificado`) vigentes para
+ * el paciente en la fecha indicada. Un plan completado o modificado puede
+ * seguir teniendo registros de actividad si la fecha cae dentro de su
+ * intervalo de vigencia: `modificado` indica que el plan fue reemplazado
+ * por una nueva versión, pero las sesiones históricas siguen vinculadas a
+ * él.
  *
  * Si se pasa `clinicId`, filtra los planes a los de esa clínica (criterio
  * de aislamiento multiclinica). Para preservar compatibilidad con planes
@@ -38,7 +41,7 @@ export async function getActivePlansForPatientOnDate(
   target: string,
   clinicId?: Id<"clinics">,
 ): Promise<Doc<"plans">[]> {
-  const [activos, completados] = await Promise.all([
+  const [activos, completados, modificados] = await Promise.all([
     ctx.db
       .query("plans")
       .withIndex("by_pacienteId_estado", (q) =>
@@ -51,8 +54,14 @@ export async function getActivePlansForPatientOnDate(
         q.eq("pacienteId", pacienteId).eq("estado", "completado"),
       )
       .collect(),
+    ctx.db
+      .query("plans")
+      .withIndex("by_pacienteId_estado", (q) =>
+        q.eq("pacienteId", pacienteId).eq("estado", "modificado"),
+      )
+      .collect(),
   ]);
-  const vigentes = [...activos, ...completados].filter((p) =>
+  const vigentes = [...activos, ...completados, ...modificados].filter((p) =>
     isPlanVigente(p, target),
   );
   if (!clinicId) return vigentes;

@@ -6,7 +6,12 @@
 import { UsuarioRecord } from './users.record';
 
 /** Estado del plan. Debe mantenerse alineado con el enum del schema en `convex/schema.ts`. */
-export type EstadoPlan = 'borrador' | 'activo' | 'completado' | 'cancelado';
+export type EstadoPlan =
+  | 'borrador'
+  | 'activo'
+  | 'completado'
+  | 'modificado'
+  | 'cancelado';
 
 export interface RegistroEjercicioRecord {
   id: string;

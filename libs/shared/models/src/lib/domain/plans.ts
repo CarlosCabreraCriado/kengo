@@ -19,12 +19,13 @@ export interface Plan {
   fisio: UUID | Usuario;
   titulo: string;
   descripcion?: string;
-  estado: 'borrador' | 'activo' | 'completado' | 'cancelado';
+  estado: 'borrador' | 'activo' | 'completado' | 'modificado' | 'cancelado';
   fechaInicio?: string | null;
   fechaFin?: string | null;
   dateCreated?: string;
   dateUpdated?: string;
   planAnterior?: string | null;
+  planSucesor?: string | null;
   version?: number;
 }
 

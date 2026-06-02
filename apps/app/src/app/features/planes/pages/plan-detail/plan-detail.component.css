@@ -67,6 +67,9 @@
   color: var(--ink-500);
   line-height: 1.4;
 }
+.pd-success__cta {
+  margin-top: 12px;
+}
 
 /* ===== KPI strip ===== */
 .pd-kpis {

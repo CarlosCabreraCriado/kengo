@@ -71,6 +71,7 @@ import type * as migrations_deleteUserByEmailMutation from "../migrations/delete
 import type * as migrations_disablePatientCodesWithoutEmail from "../migrations/disablePatientCodesWithoutEmail.js";
 import type * as migrations_inspectPendingPlans from "../migrations/inspectPendingPlans.js";
 import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
+import type * as migrations_markVersionedAsModificado from "../migrations/markVersionedAsModificado.js";
 import type * as migrations_patchPlanClinicId from "../migrations/patchPlanClinicId.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as notificationPreferences_mutations from "../notificationPreferences/mutations.js";
@@ -177,6 +178,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/disablePatientCodesWithoutEmail": typeof migrations_disablePatientCodesWithoutEmail;
   "migrations/inspectPendingPlans": typeof migrations_inspectPendingPlans;
   "migrations/legacyUsers": typeof migrations_legacyUsers;
+  "migrations/markVersionedAsModificado": typeof migrations_markVersionedAsModificado;
   "migrations/patchPlanClinicId": typeof migrations_patchPlanClinicId;
   "migrations/validation": typeof migrations_validation;
   "notificationPreferences/mutations": typeof notificationPreferences_mutations;

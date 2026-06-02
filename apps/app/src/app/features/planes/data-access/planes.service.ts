@@ -212,7 +212,7 @@ export class PlanesService {
         pacienteId,
       });
       return ((raw as any[]) || [])
-        .filter((p) => p.estado !== 'cancelado')
+        .filter((p) => p.estado !== 'cancelado' && p.estado !== 'modificado')
         .map((p) => this.mapConvexToPlan(p));
     } catch (error) {
       console.error('Error al obtener planes del paciente:', error);
@@ -232,6 +232,9 @@ export class PlanesService {
       estado: r.estado,
       fechaInicio: r.fechaInicio,
       fechaFin: r.fechaFin,
+      planAnterior: r.planAnterior ?? null,
+      planSucesor: r.planSucesor ?? null,
+      version: r.version,
     };
   }
 

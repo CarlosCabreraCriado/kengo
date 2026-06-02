@@ -186,6 +186,7 @@ export const listByFisio = query({
         v.literal("borrador"),
         v.literal("activo"),
         v.literal("completado"),
+        v.literal("modificado"),
         v.literal("cancelado"),
       ),
     ),
@@ -206,7 +207,9 @@ export const listByFisio = query({
         .query("plans")
         .withIndex("by_fisioId", (q) => q.eq("fisioId", user._id))
         .collect();
-      plans = all.filter((p) => p.estado !== "cancelado");
+      plans = all.filter(
+        (p) => p.estado !== "cancelado" && p.estado !== "modificado",
+      );
     }
     return await attachUserNames(ctx, plans);
   },
@@ -222,6 +225,7 @@ export const listByPaciente = query({
         v.literal("borrador"),
         v.literal("activo"),
         v.literal("completado"),
+        v.literal("modificado"),
         v.literal("cancelado"),
       ),
     ),
@@ -247,7 +251,9 @@ export const listByPaciente = query({
         .query("plans")
         .withIndex("by_pacienteId", (q) => q.eq("pacienteId", targetId))
         .collect();
-      plans = all.filter((p) => p.estado !== "cancelado");
+      plans = all.filter(
+        (p) => p.estado !== "cancelado" && p.estado !== "modificado",
+      );
     }
     return await attachUserNames(ctx, plans);
   },

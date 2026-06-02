@@ -17,7 +17,7 @@
           size="sm"
           (clicked)="abrirOpcionesPdf()"
         >PDF</ui2-button>
-        @if (sessionService.puedeEditarRecursos()) {
+        @if (sessionService.puedeEditarRecursos() && !esModificado()) {
           <ui2-button
             variant="primary"
             iconLeft="edit"
@@ -37,6 +37,37 @@
 
   @if (!isLoading()) {
     @if (plan(); as p) {
+      <!-- Versión histórica: plan reemplazado por una nueva versión -->
+      @if (esModificado()) {
+        <section class="pd-block">
+          <ui2-card variant="tinted" [padding]="14">
+            <div class="pd-success">
+              <ui2-icon-badge
+                icon="history"
+                [size]="48"
+                [radius]="16"
+              ></ui2-icon-badge>
+              <div class="pd-success__text">
+                <h2 class="pd-success__title">Versión histórica</h2>
+                <p class="pd-success__sub">
+                  Este plan fue reemplazado por una versión más reciente. Se conserva para mantener la trazabilidad de las sesiones realizadas.
+                </p>
+                @if (planSucesorId()) {
+                  <div class="pd-success__cta">
+                    <ui2-button
+                      variant="primary"
+                      iconLeft="arrow_forward"
+                      size="sm"
+                      (clicked)="irAVersionActual()"
+                    >Ver versión actual</ui2-button>
+                  </div>
+                }
+              </div>
+            </div>
+          </ui2-card>
+        </section>
+      }
+
       <!-- Success hero (created/updated) -->
       @if (showSuccessHero()) {
         <section class="pd-block">
@@ -155,7 +186,7 @@
             </ui2-card>
           }
 
-          @if (sessionService.puedeEditarRecursos()) {
+          @if (sessionService.puedeEditarRecursos() && !esModificado()) {
             <ui2-card [padding]="14">
               <ui2-section-label>Estado del plan</ui2-section-label>
               <div class="pd-estado">

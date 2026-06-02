@@ -168,6 +168,15 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
   estadoActualVariant = computed(() => estadoVariantOf(this.estadoActual()));
   estadoActualDescripcion = computed(() => ESTADO_DESCRIPCION[this.estadoActual()]);
 
+  /**
+   * True cuando el plan es una versión histórica (fue reemplazado por otra
+   * versión más reciente). En este estado el plan es inmutable: no se
+   * muestran acciones de edición/eliminación ni transiciones de estado.
+   */
+  esModificado = computed(() => this.estadoActual() === 'modificado');
+
+  planSucesorId = computed<string | null>(() => this.plan()?.planSucesor ?? null);
+
   /** True si las fechas del plan permiten que esté en estado "activo". */
   puedeActivar = computed(() => {
     const p = this.plan();
@@ -261,9 +270,13 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
 
   editarPlan() {
     const p = this.plan();
-    if (p) {
-      this.router.navigate(['/planes', p.id, 'editar']);
-    }
+    if (!p || this.esModificado()) return;
+    this.router.navigate(['/planes', p.id, 'editar']);
+  }
+
+  irAVersionActual() {
+    const sucesor = this.planSucesorId();
+    if (sucesor) this.router.navigate(['/planes', sucesor]);
   }
 
   /**
@@ -320,6 +333,8 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
         return `El plan "${titulo}" se marcará como completado y se conservará en el historial.`;
       case 'cancelado':
         return `El plan "${titulo}" se cancelará y dejará de estar accesible para el paciente.`;
+      case 'modificado':
+        return '';
     }
   }
 
