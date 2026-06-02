@@ -14,7 +14,7 @@
  *  - Reglas diarias de alertas (Fase 4).
  */
 
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../_helpers/mutationWithTriggers";
 import { internal } from "../_generated/api";
 import { expireOverduePlansImpl } from "../plans/internal";
 

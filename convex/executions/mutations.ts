@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation, MutationCtx } from "../_generated/server";
+import { MutationCtx } from "../_generated/server";
+import { mutation } from "../_helpers/mutationWithTriggers";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";

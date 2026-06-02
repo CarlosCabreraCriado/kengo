@@ -1,4 +1,5 @@
-import { internalMutation, MutationCtx } from "../_generated/server";
+import { MutationCtx } from "../_generated/server";
+import { internalMutation } from "../_helpers/mutationWithTriggers";
 
 export async function expireOverduePlansImpl(ctx: MutationCtx): Promise<number> {
   const today = new Date().toISOString().split("T")[0];

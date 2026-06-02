@@ -11,7 +11,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation } from "../_helpers/mutationWithTriggers";
 import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthenticatedUser } from "../_helpers/permissions";
