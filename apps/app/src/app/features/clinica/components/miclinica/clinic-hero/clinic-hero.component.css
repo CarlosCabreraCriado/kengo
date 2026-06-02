@@ -47,11 +47,33 @@
   right: 20px;
 }
 
+.mch--with-action .mch__top {
+  right: 110px;
+}
+
 @media (min-width: 1024px) {
   .mch__top {
     top: 24px;
     left: 28px;
     right: 28px;
+  }
+
+  .mch--with-action .mch__top {
+    right: 130px;
+  }
+}
+
+.mch__action {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 1;
+}
+
+@media (min-width: 1024px) {
+  .mch__action {
+    top: 20px;
+    right: 24px;
   }
 }
 

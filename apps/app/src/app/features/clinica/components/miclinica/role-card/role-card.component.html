@@ -8,16 +8,5 @@
       <span class="mrc__overline">Tu rol en la clínica</span>
       <h3 class="mrc__name">{{ rolNombre() | uppercase }}</h3>
     </div>
-
-    @if (puedeEditar()) {
-      <ui2-button
-        variant="secondary"
-        size="sm"
-        iconLeft="edit"
-        (clicked)="editarClinica.emit()"
-      >
-        Editar
-      </ui2-button>
-    }
   </div>
 </ui2-card>

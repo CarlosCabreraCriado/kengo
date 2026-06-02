@@ -74,6 +74,8 @@
               [imageUrl]="firstImageId(c) ? assetUrl(firstImageId(c)!) : null"
               [address]="c.direccion || null"
               [phone]="c.telefono || null"
+              [puedeEditar]="puedeEditarClinica()"
+              (editarClinica)="abrirEditarClinica()"
             ></app-mc-clinic-hero>
 
             <app-mc-quick-actions
@@ -144,8 +146,6 @@
               <app-mc-role-card
                 [rolNombre]="rol.nombre"
                 [rolIcono]="rol.icono"
-                [puedeEditar]="puedeEditarClinica()"
-                (editarClinica)="abrirEditarClinica()"
               ></app-mc-role-card>
             }
 

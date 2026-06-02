@@ -1,6 +1,19 @@
-<div class="mch">
+<div class="mch" [class.mch--with-action]="puedeEditar()">
   <div class="mch__bg" [style.background-image]="bgUrl()"></div>
   <div class="mch__overlay"></div>
+
+  @if (puedeEditar()) {
+    <div class="mch__action">
+      <ui2-button
+        variant="secondary"
+        size="sm"
+        iconLeft="edit"
+        (clicked)="editarClinica.emit()"
+      >
+        Editar
+      </ui2-button>
+    </div>
+  }
 
   <div class="mch__top">
     <p class="mch__overline">Mi clínica</p>
