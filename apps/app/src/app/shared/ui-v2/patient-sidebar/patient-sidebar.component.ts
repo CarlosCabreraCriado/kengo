@@ -193,18 +193,46 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
       <div class="ui2-sidebar__spacer"></div>
 
       @if (clinicaNombre() && !collapsed()) {
-        <a
-          class="ui2-sidebar__clinic"
-          routerLink="/mi-clinica"
-          aria-label="Ir a mi clínica"
-          [style.background-image]="clinicBackground()"
-        >
-          <span class="ui2-sidebar__clinic-overlay" aria-hidden="true"></span>
-          <span class="ui2-sidebar__clinic-text">
-            <span class="ui2-sidebar__clinic-eyebrow">Mi clínica</span>
-            <span class="ui2-sidebar__clinic-name">{{ clinicaNombre() }}</span>
-          </span>
-        </a>
+        <div class="ui2-sidebar__clinic-wrap">
+          <a
+            class="ui2-sidebar__clinic"
+            routerLink="/mi-clinica"
+            aria-label="Ir a mi clínica"
+            [style.background-image]="clinicBackground()"
+          >
+            <span class="ui2-sidebar__clinic-overlay" aria-hidden="true"></span>
+            <span class="ui2-sidebar__clinic-text">
+              <span class="ui2-sidebar__clinic-eyebrow">Mi clínica</span>
+              <span class="ui2-sidebar__clinic-name">{{
+                clinicaNombre()
+              }}</span>
+            </span>
+          </a>
+
+          @if (esMulticlinica()) {
+            <button
+              type="button"
+              class="ui2-sidebar__clinic-switch-badge"
+              [attr.aria-expanded]="clinicMenuOpen()"
+              aria-haspopup="menu"
+              aria-label="Cambiar de clínica"
+              (click)="toggleClinicMenu($event)"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true"
+                >swap_horiz</span
+              >
+              <span>Cambiar</span>
+            </button>
+          }
+
+          @if (clinicMenuOpen()) {
+            <div class="ui2-clinic-menu" role="menu">
+              <ui2-clinica-switch-menu
+                (clinicaCambiada)="onClinicaCambiada($event)"
+              ></ui2-clinica-switch-menu>
+            </div>
+          }
+        </div>
       }
 
       <div class="ui2-sidebar__user-wrap">
@@ -538,6 +566,64 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         text-transform: uppercase;
       }
 
+      .ui2-sidebar__clinic-wrap {
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      .ui2-sidebar__clinic-switch-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px 4px 6px;
+        border: 0;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: var(--ink-900);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: var(--shadow-card);
+        transition:
+          background 0.12s,
+          transform 0.12s;
+      }
+      .ui2-sidebar__clinic-switch-badge:hover {
+        background: white;
+        transform: scale(1.04);
+      }
+      .ui2-sidebar__clinic-switch-badge .material-symbols-outlined {
+        font-size: 12px;
+        color: var(--kengo-primary);
+      }
+
+      .ui2-clinic-menu {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        z-index: var(--z-menu);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow:
+          var(--shadow-card-strong),
+          0 10px 40px rgba(0, 0, 0, 0.12);
+        animation: ui2-sidebar-menu-in 0.18s ease-out;
+      }
+
       .ui2-sidebar__user-wrap {
         position: relative;
         flex-shrink: 0;
@@ -795,6 +881,10 @@ export class Ui2PatientSidebarComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly menuOpen = signal(false);
+  readonly clinicMenuOpen = signal(false);
+  readonly esMulticlinica = computed(
+    () => this.sessionService.misclinicas().length > 1,
+  );
   readonly modoPaciente = this.sessionService.enModoPaciente;
   readonly modoFisio = computed(() => !this.modoPaciente());
 
@@ -899,11 +989,23 @@ export class Ui2PatientSidebarComponent {
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
+    if (this.clinicMenuOpen()) this.clinicMenuOpen.set(false);
     this.menuOpen.update((v) => !v);
   }
 
   cerrarMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  toggleClinicMenu(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.menuOpen()) this.menuOpen.set(false);
+    this.clinicMenuOpen.update((v) => !v);
+  }
+
+  cerrarClinicMenu(): void {
+    this.clinicMenuOpen.set(false);
   }
 
   irAPerfil(): void {
@@ -929,6 +1031,7 @@ export class Ui2PatientSidebarComponent {
           : 'Paciente';
     this.toast.success(`Estás en ${clinica.nombre} (${etiquetaPuesto})`);
     this.menuOpen.set(false);
+    this.clinicMenuOpen.set(false);
     this.router.navigateByUrl('/inicio');
   }
 
@@ -945,15 +1048,21 @@ export class Ui2PatientSidebarComponent {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.menuOpen()) this.cerrarMenu();
+    if (this.clinicMenuOpen()) this.cerrarClinicMenu();
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.menuOpen()) return;
     const target = event.target as HTMLElement | null;
     if (!target) return;
-    if (!target.closest('.ui2-sidebar__user-wrap')) {
+    if (this.menuOpen() && !target.closest('.ui2-sidebar__user-wrap')) {
       this.cerrarMenu();
+    }
+    if (
+      this.clinicMenuOpen() &&
+      !target.closest('.ui2-sidebar__clinic-wrap')
+    ) {
+      this.cerrarClinicMenu();
     }
   }
 }
