@@ -184,18 +184,29 @@
         </ui2-section>
       }
 
-      <!-- Empty state: sin pacientes -->
+      <!-- Empty state: distingue "sin pacientes" vs "sin pacientes activos" -->
       @if (!dashboardService.cargando() && dashboardService.pacientesActivos() === 0) {
         <ui2-section [padding]="'0 20px 14px'">
           <ui2-card [padding]="8">
-            <ui2-empty-state
-              icon="group_add"
-              title="Aún no tienes pacientes"
-              message="Empieza añadiendo tu primer paciente desde Mis Pacientes."
-              actionLabel="Ir a Mis Pacientes"
-              actionIcon="group"
-              (action)="irAPacientes()"
-            ></ui2-empty-state>
+            @if (dashboardService.pacientesTotal() === 0) {
+              <ui2-empty-state
+                icon="group_add"
+                title="Aún no tienes pacientes"
+                message="Empieza añadiendo tu primer paciente desde Mis Pacientes."
+                actionLabel="Ir a Mis Pacientes"
+                actionIcon="group"
+                (action)="irAPacientes()"
+              ></ui2-empty-state>
+            } @else {
+              <ui2-empty-state
+                icon="event_busy"
+                title="Sin pacientes activos"
+                message="Tienes pacientes registrados pero ninguno con plan en curso. Crea o reactiva un plan para empezar."
+                actionLabel="Crear plan"
+                actionIcon="add_circle"
+                (action)="irACrearPlan()"
+              ></ui2-empty-state>
+            }
           </ui2-card>
         </ui2-section>
       }

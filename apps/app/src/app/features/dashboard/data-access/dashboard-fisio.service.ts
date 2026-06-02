@@ -70,6 +70,20 @@ export class DashboardFisioService {
     },
   );
 
+  // Total de pacientes registrados en la clínica (independiente de si tienen
+  // plan en curso). Sirve para distinguir el empty-state "sin pacientes" vs
+  // "sin pacientes activos" en el dashboard del fisio.
+  private readonly totalPacientesSub = this.convex.watchQuery(
+    api.users.queries.listPatientsByClinic,
+    () => {
+      const usuario = this.sessionService.usuario();
+      if (!usuario?.id || !this.sessionService.enModoFisio()) return 'skip' as const;
+      const id = this.clinicaActiva.selectedClinicaId();
+      if (!id) return 'skip' as const;
+      return { clinicId: id as Id<'clinics'>, limit: 1 };
+    },
+  );
+
   // Actividad real (sesiones por día) de la clínica activa para la gráfica
   // del panel del fisio.
   private readonly actividadSub = this.convex.watchQuery(
@@ -84,7 +98,10 @@ export class DashboardFisioService {
   );
 
   readonly cargando = computed(
-    () => this.snapshotSub.isLoading() || this.planesSub.isLoading(),
+    () =>
+      this.snapshotSub.isLoading() ||
+      this.planesSub.isLoading() ||
+      this.totalPacientesSub.isLoading(),
   );
 
   /**
@@ -110,6 +127,10 @@ export class DashboardFisioService {
   readonly pacientesActivos = computed(() => this.resumen()?.pacientesActivos ?? 0);
   readonly adherenciaPromedio = computed(() => this.resumen()?.adherenciaPromedio ?? 0);
   readonly planesProximosAExpirar = computed(() => this.resumen()?.planesPorVencer ?? []);
+  readonly pacientesTotal = computed(() => {
+    const value = this.totalPacientesSub.value() as { total: number } | null;
+    return value?.total ?? 0;
+  });
 
   // --- Actividad de la clínica (gráfica web) ---
   readonly actividadCargando = computed(() => this.actividadSub.isLoading());
