@@ -21,6 +21,8 @@ Kengo está construido con un buen punto de partida en términos de performance:
 
 Las grietas no están en la arquitectura, sino en **assets sin optimizar**, **queries Convex con patrones N+1** y **detalles de renderizado** (sin `track`, sin virtual scroll, sin `@defer`).
 
+> **Palanca transversal añadida 2026-06-03** — Tras esta auditoría se evaluó `@convex-dev/aggregate` (ver **Bloque H** y plan de desarrollo en `~/.claude/plans/quiero-realizar-una-investigaci-n-sunny-muffin.md`). Cubre simultáneamente F6, F7, F8, parte de F3 y parte de F4, y permite eliminar `patientMetricsSnapshot` / `clinicMetricsSnapshot` reemplazando el pipeline actual de recompute on-write + cron por agregaciones transaccionales O(log n) particionadas por clínica/paciente. Las fichas afectadas llevan nota cruzada hacia el Bloque H.
+
 ### Top 5 hallazgos críticos
 
 | # | Hallazgo | Por qué duele |
@@ -50,8 +52,12 @@ Las grietas no están en la arquitectura, sino en **assets sin optimizar**, **qu
 **Oleada 3 — Fondo (proyecto, retorno medio-bajo, riesgo medio-alto)**
 - C1: definir e introducir `PreloadingStrategy` custom (precargar features marcadas, respetando datos móviles).
 - E2, E4: query Convex de "bootstrap" para `paciente-detail` y `/inicio` que devuelva todo lo necesario en 1 ida y vuelta.
-- F7, F8: revisar el patrón de recompute inmediato de snapshots tras cada `execution`; evaluar mover a "marcar stale + recompute en cron diario".
+- ~~F7, F8: revisar el patrón de recompute inmediato de snapshots tras cada `execution`; evaluar mover a "marcar stale + recompute en cron diario".~~ Sustituido por la Oleada 4 (Bloque H) — el aggregate elimina el recompute en sí, no sólo lo difiere.
 - F9: deduplicación de `watchQuery` con la misma firma.
+
+**Oleada 4 — Aggregate (rediseño del pipeline de métricas, 3-4 semanas)**
+- **H0-H9** (Bloque H): introducir `@convex-dev/aggregate` con namespaces por clínica/paciente, migrar `getPatientMetrics` (orden por adherencia), `getActividadDiariaClinica`, `recomputePatient`/`recomputeClinic`, `exerciseUsageRollup` y eventualmente eliminar `patientMetricsSnapshot` / `clinicMetricsSnapshot`. Habilita además "ejercicio más usado" y "top pacientes por adherencia" (H7, H8) como features nuevas casi gratis.
+- Plan ejecutable: ver `~/.claude/plans/quiero-realizar-una-investigaci-n-sunny-muffin.md`.
 
 ---
 
@@ -224,6 +230,16 @@ Total de chunks lazy: **86** (incluyendo 71 pequeños sin nombre asignado).
 | **G1** | Service Worker con `lazy + prefetch` en assets | Caché | Baja | Bajo | Bajo | — |
 | **G2** | Sin TTL/caché aplicativo encima de Convex | Caché | Baja | Bajo | — | — |
 | **G3** | `CustomRouteReuseStrategy` sin política documentada de invalidación | Caché | Baja | Bajo | Medio | S |
+| **H0** | Infraestructura `@convex-dev/aggregate` + `@convex-dev/migrations` (registro en `convex.config.ts`, definiciones en `convex/aggregates/`) | Aggregate | Prerequisito | — | Bajo | S |
+| **H1** | `getPatientMetrics` ordenado por adherencia hace `.collect()` + sort en memoria (`snapshots/queries.ts:46-56`) | Aggregate | Crítica | Alto | Bajo | S |
+| **H2** | Conteo `pacientesActivos` por clínica escanea memberships y filtra `isPlanEnCurso` per-row | Aggregate | Alta | Alto | Bajo | S |
+| **H3** | `getActividadDiariaClinica` hace `.collect()` de 20 días para contar sesiones por fecha (`dashboard/queries.ts:144-152`) | Aggregate | Media | Medio | Bajo | S |
+| **H4** | `exerciseUsageRollup` mantenido vía `recomputeExerciseUsage` (`snapshots/internal.ts:441-545`) — sustituible por aggregate | Aggregate | Media | Medio | Medio | M |
+| **H5** | `recomputePatientForWindow` recalcula adherencia/dolor por ventana iterando rollups | Aggregate | Alta | Alto | Medio | M |
+| **H6** | `recomputeClinicForWindow` recorre snapshots para `adherenciaPromedio`/`dolorMedio`/`sesionesUltimos7d` | Aggregate | Alta | Alto | Medio | M |
+| **H7** | Gap: no existe "ejercicio más usado por clínica esta semana" (habilitado por H4) | Aggregate | — (feature) | Medio | Bajo | S |
+| **H8** | Gap: no existe "top pacientes por adherencia" (habilitado por H1) | Aggregate | — (feature) | Medio | Bajo | S |
+| **H9** | Eliminar tablas legacy `patientMetricsSnapshot` / `clinicMetricsSnapshot`; conservar `patientDerivedMetrics` mínimo para `riskScore`/`rachaActual` | Aggregate | Media | Medio | Medio | M |
 
 > **Severidad y prioridad sugerida**: Crítica → Alta → Media → Baja. Dentro de cada nivel, ordenar por **Impacto/Esfuerzo**.
 
@@ -572,6 +588,8 @@ No tiene `preload="none"` ni `preload="metadata"`. El navegador descarga automá
 
 **Criterios de aceptación**: 0 invocaciones de método en `@for` sobre listas de >50 items.
 
+> **Nota 2026-06-03 (cross-ref H1)**: el sort cliente de `pacientes-list.component.ts:207-227` (por adherencia/dolor) se elimina cuando H1 esté en producción — `metricasMap()` se alimentará de un endpoint que ya devuelve los pacientes ordenados del aggregate. La precomputación en `computed()` propuesta arriba sigue siendo válida para `getAdherencia`/`getDolorPromedio` que no afectan al orden.
+
 ---
 
 #### **D4 · Sin virtualización en listas grandes** ![Alta](https://img.shields.io/badge/Alta-orange) ![Alto](https://img.shields.io/badge/Alto-orange) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
@@ -636,6 +654,8 @@ for (const clinicId of clinicIds) {
 - O al menos paralelizar las queries en cliente con `Promise.all` si el cambio de servidor es demasiado.
 
 **Criterios de aceptación**: tiempo de aparición de métricas en `/mis-pacientes` con 3 clínicas se reduce ~3x (de 3x latencia a 1x latencia).
+
+> **Nota 2026-06-03 (cross-ref H1)**: la solución definitiva preferida pasa por **H1**, no por crear un nuevo endpoint `getPatientMetricsForClinics`. Con el aggregate, el orden por adherencia se vuelve O(log n + k) sin recalcular desde el snapshot, y la paralelización por clínica se reduce a iterar namespaces — el cuello de botella desaparece en origen. El endpoint actual queda como wrapper trivial sobre `patientsByClinicAdherencia.paginate(...)` por cada `clinicId`.
 
 ---
 
@@ -756,7 +776,13 @@ async function enrichWithCategories(ctx, exercises) {
 
 ---
 
-#### **F2 · N+1 en `plans.checkPlanHasActivity`** ![Alta](https://img.shields.io/badge/Alta-orange) ![Alto](https://img.shields.io/badge/Alto-orange) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+#### **F2 · N+1 en `plans.checkPlanHasActivity`** ✅ Resuelto (commit `663ae64`) `S`
+
+> **Nota 2026-06-03 (cross-ref Bloque H)**: con el aggregate `executionsByPlan` (no incluido en el plan H actual por bajo ROI inmediato), un `count()` por plan se vuelve también O(log n) gratis si en el futuro alguna pantalla quiere mostrar "número de ejecuciones por plan" sin pagar por el cálculo.
+
+<details><summary>Texto original</summary>
+
+![Alta](https://img.shields.io/badge/Alta-orange) ![Alto](https://img.shields.io/badge/Alto-orange) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
 
 **Ubicación**: `convex/plans/queries.ts:414-435`.
 
@@ -786,6 +812,8 @@ return false;
 
 **Criterios de aceptación**: 1 sola query Convex en `checkPlanHasActivity` independientemente del tamaño del plan.
 
+</details>
+
 ---
 
 #### **F3 · Triple N+1 en `dashboard.planesPorVencer`** ![Alta](https://img.shields.io/badge/Alta-orange) ![Alto](https://img.shields.io/badge/Alto-orange) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
@@ -800,6 +828,8 @@ return false;
 - Reducir a 3 queries: memberships, planes-con-índice-por-fisioId-y-estado, batch get de pacientes.
 
 **Criterios de aceptación**: número de queries Convex en `planesPorVencer` ≤ 4, independientemente del número de clínicas/fisios.
+
+> **Nota 2026-06-03 (cross-ref Bloque H)**: aggregate no resuelve el join paciente↔plan (sigue requiriendo `batchGetMap` para hidratar nombres), pero sí absorbe los conteos de planes activos por fisio/clínica y la ordenación por `fechaFin`. Si se crea el aggregate `plansByFisioActive` (namespace = `fisioId`, sortKey = `fechaFin`), la sección "top 10 planes por vencer ordenados por fechaFin" pasa a `paginate({ namespace: fisioId, bounds: { lower: hoy, upper: hoy+7d } })` O(log n + 10), eliminando 2 de los 3 niveles del N+1.
 
 ---
 
@@ -836,6 +866,8 @@ const exercises = await batchGetMap(ctx, "exercises", exerciseIds);
 
 #### **F6 · `plans.listEnCursoPacientesInClinics`: query por pacienteId** ![Media](https://img.shields.io/badge/Media-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Bajo](https://img.shields.io/badge/Bajo-green) `M`
 
+> **Nota 2026-06-03 (cross-ref H2)**: la propuesta original (query con `or` clause sobre `by_pacienteId_estado`) queda **obsoleta** — Convex no soporta `or` con índices y la paginación manual es frágil. La solución acordada es `plansByClinicActive.count({ namespace: clinicId })` con backing aggregate filtrado en el trigger a `estado === "activo"` (ver H2 + plan de desarrollo, Fase 2 PR H6). Conteo O(log n) sin escanear memberships ni evaluar `isPlanEnCurso` per-row.
+
 **Ubicación**: `convex/plans/queries.ts:160-174`.
 
 **Detalle**: `Promise.all` de N queries (1 por paciente). Para una clínica con 100 pacientes = 100 queries paralelas.
@@ -855,6 +887,8 @@ Solo si la tabla `plans` no es enorme. Si lo es, usar batched query con `or` cla
 
 #### **F7 · Recompute inmediato de snapshots tras cada `execution`** ![Media](https://img.shields.io/badge/Media-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
 
+> **Nota 2026-06-03 (cross-ref H5 + Fase 2 del plan)**: la propuesta de "marcar stale + cron compactor" queda **sustituida** por triggers del aggregate. El `scheduler.runAfter(0, recomputePatient, …)` desaparece por completo: cada `executions.insert` actualiza el aggregate en **la misma transacción** (no hay job diferido) y la UI lee los nuevos valores de inmediato vía `watchQuery`. El cron diario sigue existiendo, pero sólo para `riskScore` / `rachaActual` (heurísticas que no son agregaciones puras).
+
 **Ubicación**: `convex/executions/mutations.ts` — `scheduler.runAfter(0, snapshots.recomputePatient, ...)` para 3 ventanas (7d, 15d, 30d).
 
 **Detalle**: cada ejecución dispara 3 recomputes inmediatos por paciente + 3 por clínica. En horas pico (varios pacientes ejecutando a la vez), el scheduler acumula cola.
@@ -868,6 +902,8 @@ Solo si la tabla `plans` no es enorme. Si lo es, usar batched query con `or` cla
 ---
 
 #### **F8 · Crons `recomputeAllPatients` y `recomputeAllClinics`** ![Media](https://img.shields.io/badge/Media-yellow) ![Bajo](https://img.shields.io/badge/Bajo-blue) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
+
+> **Nota 2026-06-03 (cross-ref H5/H6 + Fase 2 del plan)**: tras la Fase 2, estos crons se reducen a recalcular **sólo `riskScore`** (heurística que combina adherencia + inactividad + tendencia y no es agregación pura). `adherencia`, `dolorPromedio`, `pacientesActivos`, `adherenciaPromedio`, `dolorMedio` y `sesionesUltimos7d` pasan a leerse del aggregate sin escanear tablas. Estimación de reducción de bandwidth del cron `daily-maintenance`: ≥60%.
 
 **Ubicación**: `convex/snapshots/internal.ts:398-435`.
 
@@ -904,6 +940,245 @@ Solo si la tabla `plans` no es enorme. Si lo es, usar batched query con `or` cla
 
 #### **G3 · `CustomRouteReuseStrategy` sin política documentada**
 - `apps/app/src/app/core/config/route-reuse-strategy.ts`: cachea componentes al navegar. Bien para UX, pero conviene documentar qué rutas reusa y cuándo invalida — sino terminamos manteniendo estado stale por accidente.
+
+---
+
+### Bloque H — Aggregate component (`@convex-dev/aggregate`)
+
+**Fecha de adición**: 2026-06-03 · **Estado**: evaluado, plan aprobado, sin código aún.
+
+**Propósito del bloque**: documentar la introducción de `@convex-dev/aggregate` como palanca transversal que reemplaza el pipeline actual de snapshots/rollups (mantenido a base de `scheduler.runAfter` por execution + cron `daily-maintenance` con loops dobles) por **B-trees particionados por namespace** con escrituras O(log n) atómicas en la misma transacción que la mutation origen, y lecturas O(log n) para `count`, `sum`, `min`, `max`, `at`, `indexOf`, `paginate`, `random`.
+
+**Aggregate vs snapshots actuales** (resumen):
+
+| Aspecto | Snapshots (hoy) | Aggregate (Bloque H) |
+|---------|----------------|---------------------|
+| Frescura | ~1 s (scheduler runAfter 0) + cron diario | Transaccional (misma mutation) |
+| Escritura | O(N) por recompute completo de ventana | O(log n) por insert |
+| Lectura ordenada | `.collect()` + sort en memoria O(n log n) si no hay índice exacto | `.at(rank)` / `.paginate()` O(log n + k) |
+| Conteo por ventana | Escan de 20 días con `.collect()` (F4, H3) | `.count({ bounds })` O(log n) |
+| Atomicidad cross-table | Sin garantía (snapshots derivados) | Sí (trigger en misma transacción) |
+| Coste de mantenimiento | Pipeline complejo de recompute (cron + on-write) | 1 línea por trigger por aggregate |
+| Coste storage | Tabla `snapshot` denormalizada por ventana × paciente × clínica | Árboles internos (~O(n log n) nodos por aggregate) |
+| Coste mutations | 3 recomputes per execution + cron diario | 1 update O(log n) por aggregate registrado |
+
+**Riesgos generales del bloque** (detalle en cada ficha y en el plan):
+- **Contención** por sortKey monotónico (`fecha`, `_creationTime`) — mitigado con namespacing por `clinicId` / `pacienteId`. En Kengo el peor caso (`executionsByClinic`) son ~1-2 escrituras/seg pico, dentro de tolerancia.
+- **Cambio semántico de `dolorPromedio`** (avg de avgs por sesión → avg simple sobre executions). Aceptado en plan; pendiente validar diferencia <10% en cierre de Fase 2.
+- **Eliminación irreversible** de `patientMetricsSnapshot` / `clinicMetricsSnapshot` en H9 — requiere 2 semanas de monitoring tras Fase 2 y dump previo (`npx convex export`).
+
+**Estrategia transversal**: reemplazo directo por endpoint (sin doble escritura prolongada), validación shadow-read en dev/staging antes de cada PR, backfill paginado con `@convex-dev/migrations` (idempotente `insertIfDoesNotExist`).
+
+**Plan ejecutable**: `~/.claude/plans/quiero-realizar-una-investigaci-n-sunny-muffin.md` (5 fases, 12 PRs, 3-4 semanas).
+
+---
+
+#### **H0 · Infraestructura del componente** ![Prerequisito](https://img.shields.io/badge/Prerequisito-lightgrey) ![—](https://img.shields.io/badge/—-lightgrey) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+
+**Ubicación**: `convex/package.json`, `convex/convex.config.ts`, `convex/aggregates/` (nuevo), `convex/_helpers/aggregateTriggers.ts` (nuevo).
+
+**Detalle**: añadir `@convex-dev/aggregate` y `@convex-dev/migrations` a `convex/package.json`, registrar cada aggregate con un `name` propio en `convex.config.ts` (cada `app.use(aggregate, { name })` instancia un B-tree separado; sin esto los aggregates compartirían un único namespace y se pisarían) y crear el directorio `convex/aggregates/` con un archivo `TableAggregate` o `DirectAggregate` por cada uno: `executionsByPaciente`, `executionsByClinic`, `executionsByExercise`, `executionsByPacienteDolor`, `sessionsByClinic`, `plansByClinicActive`, `patientsByClinicAdherencia`, `patientsByClinicRiskScore`, `patientsByClinicDolor`.
+
+**Propuesta**: ver Fase 0 del plan. Triggers vía `convex-helpers` para que cada `insert/update/delete` en la tabla origen actualice los aggregates relevantes en la misma transacción (si falla el `aggregate.insert`, la mutation revierte — invariante preservado).
+
+**Criterios de aceptación**: `npx nx run convex:dev` arranca sin errores; un `.count()` sobre cualquier namespace de cualquier aggregate devuelve `0`; `convex/aggregates/README.md` documenta las decisiones de namespace/sortKey y las mitigaciones de contención (subir `maxNodeSize`, sortKey tuple `[fecha, _id]`, particionar namespace `clinicId` por día).
+
+**Dependencias**: ninguna. Pre-requisito de H1-H9.
+
+---
+
+#### **H1 · `getPatientMetrics` ordenado por adherencia** ![Crítica](https://img.shields.io/badge/Crítica-red) ![Alto](https://img.shields.io/badge/Alto-orange) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+
+**Ubicación**: `convex/snapshots/queries.ts:46-56`.
+
+**Detalle**: la rama `ordenarPor === "adherencia"` carga `.collect()` todos los snapshots de la clínica+ventana y los ordena en memoria con `.sort((a,b) => (a.adherencia ?? 101) - (b.adherencia ?? 101))` antes de hacer `.slice(0, limit)`. Con 200-1000 pacientes por clínica es O(n log n) cliente Convex pagado en cada lectura reactiva.
+
+**Propuesta**: aggregate `patientsByClinicAdherencia` (`DirectAggregate`, namespace = `[clinicId, ventana]`, sortKey = `adherencia` number, id = `pacienteId`). Se alimenta desde `recomputePatient` (no por trigger sobre tabla, ya que `adherencia` es derivada). La query reescrita:
+```ts
+const top = await patientsByClinicAdherencia.paginate(ctx, {
+  namespace: [args.clinicId, args.ventana],
+  cursor: null,
+  pageSize: limit,
+});
+const pacienteIds = top.page.map(item => item.id);
+return await batchGetMap(ctx, "patientMetricsSnapshot", pacienteIds);
+```
+Hasta H9 el `batchGetMap` sigue leyendo del snapshot legacy; tras H9 se sustituye por `batchGetMap("patientDerivedMetrics", ...)`.
+
+**Criterios de aceptación**:
+- `.collect()` desaparece de `snapshots/queries.ts:46-56`.
+- Shadow read sobre dataset seed compara orden devuelto vs versión legacy y verifica igualdad de `pacienteId` sequence.
+- Latencia p95 < 50 ms (vs baseline actual a medir).
+
+**Dependencias**: H0.
+
+---
+
+#### **H2 · Conteo `pacientesActivos` por clínica** ![Alta](https://img.shields.io/badge/Alta-orange) ![Alto](https://img.shields.io/badge/Alto-orange) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+
+**Ubicación**: `convex/snapshots/internal.ts:recomputeClinicForWindow` (cálculo de `pacientesActivos`) y `convex/plans/queries.ts:listEnCursoPacientesInClinics` (uso desde frontend).
+
+**Detalle**: hoy se escanean memberships de la clínica y se evalúa `pacienteTienePlanEnCurso(pacienteId, today)` per-row → O(P × log n) donde P = pacientes de la clínica.
+
+**Propuesta**: aggregate `plansByClinicActive` (`TableAggregate` sobre `plans`, namespace = `clinicId`, sortKey = `fechaFin`). El trigger filtra: sólo inserta si `estado === "activo"` Y `isPlanEnCurso(plan, today)`. Como `isPlanEnCurso` depende de la fecha actual, se complementa con un cron diario al amanecer Madrid que reevalúa el set (~1 escritura/plan/día que cambia de estado). El conteo de pacientes activos por clínica pasa a:
+```ts
+const pacientesActivos = await plansByClinicActive.count(ctx, { namespace: clinicId });
+```
+O(log n) sin tocar tabla `plans`.
+
+**Criterios de aceptación**:
+- `pacientesActivos` en `clinicMetricsSnapshot` (o su sucesor) coincide con el valor previo en un dataset de validación.
+- `listEnCursoPacientesInClinics` se simplifica a `Promise.all(clinicIds.map(cid => plansByClinicActive.paginate(...)))`.
+
+**Dependencias**: H0.
+
+---
+
+#### **H3 · `getActividadDiariaClinica` sin scan de 20 días** ![Media](https://img.shields.io/badge/Media-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+
+**Ubicación**: `convex/dashboard/queries.ts:144-152`.
+
+**Detalle**: la query carga `.collect()` de todas las sesiones de los últimos 20 días de la clínica, las filtra (`esSintetica === true` se descarta) y construye `Map<fecha, count>` para contar sesiones por día. En clínicas activas con muchas sesiones esto se vuelve costoso.
+
+**Propuesta**: aggregate `sessionsByClinic` (`TableAggregate` sobre `sessions`, namespace = `clinicId`, sortKey = `fecha` YYYY-MM-DD, `sumValue: doc => doc.esSintetica === true ? 0 : 1` — el sumValue 0/1 permite descartar sintéticas a nivel de aggregate sin tocar el query). La query reescrita:
+```ts
+const counts = await Promise.all(
+  rangeOfDates(inicioPrevia, hoy).map(fecha =>
+    sessionsByClinic.count(ctx, {
+      namespace: args.clinicId,
+      bounds: { lower: { key: fecha, inclusive: true }, upper: { key: fecha, inclusive: true } },
+    }).then(c => [fecha, c] as const)
+  )
+);
+```
+O(20 × log n) en lugar de O(N) donde N = sesiones en 20 días.
+
+**Criterios de aceptación**:
+- `.collect()` desaparece de `dashboard/queries.ts:144-152`.
+- `days[]`, `totalActual`, `totalAnterior` coinciden con la versión previa en staging.
+
+**Dependencias**: H0.
+
+---
+
+#### **H4 · `exerciseUsageRollup` reemplazado por aggregate** ![Media](https://img.shields.io/badge/Media-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
+
+**Ubicación**: `convex/snapshots/internal.ts:441-545` (`recomputeExerciseUsage`) y tabla `exerciseUsageRollup` en `convex/schema.ts:391-404`.
+
+**Detalle**: el cron `recomputeExerciseUsage` escanea todas las executions del mes para cada clínica y agrupa por `exerciseId` para mantener un rollup `{vecesCompletado, vecesParcial, dolorMedio, pacientesUnicos}`. Es trabajo redundante respecto a lo que el aggregate hace gratis.
+
+**Propuesta**: aggregate `executionsByExercise` (`TableAggregate` sobre `exerciseExecutions`, namespace = `[clinicId, exerciseId]`, sortKey = `fecha`, sumValue 1). Counts por ejercicio se obtienen con `.count({ namespace: [cid, exId], bounds: { lower: { key: anioMesInicio } } })`. La tabla `exerciseUsageRollup` y el cron se eliminan. **Caveat**: `pacientesUnicos` y `dolorMedio` requieren aggregates adicionales (`executionsByExerciseDolor` y, para unique patients, una estructura derivada — opción simple: mantener `pacientesUnicos` en un Set computado sólo cuando se necesite).
+
+**Criterios de aceptación**:
+- Tabla `exerciseUsageRollup` borrada del schema.
+- Función `recomputeExerciseUsage` borrada.
+- Habilita H7 sin trabajo adicional.
+
+**Dependencias**: H0.
+
+---
+
+#### **H5 · `recomputePatientForWindow` adherencia/dolor desde aggregate** ![Alta](https://img.shields.io/badge/Alta-orange) ![Alto](https://img.shields.io/badge/Alto-orange) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
+
+**Ubicación**: `convex/snapshots/internal.ts:recomputePatientForWindow` (~140 líneas, cierra ficha F7 y parte de F8).
+
+**Detalle**: la función calcula `adherencia` y `dolorPromedio` recorriendo dailies de la ventana y agrupando ejecuciones por sesión ("promedio de promedios por sesión"). Trigger: cada execution + cron diario por 3 ventanas (7d/15d/30d) × pacientes activos.
+
+**Propuesta**: aggregates `executionsByPaciente` (sumValue = `estado === "completado" ? 1 : 0`) y `executionsByPacienteDolor` (sumValue = `dolorEscala ?? 0`, sólo cuando `dolorEscala != null && estado === "completado"`). El recompute pasa a:
+```ts
+for (const ventana of ventanas) {
+  const bounds = { lower: { key: windowStart(ventana), inclusive: true } };
+  const sumCompletados = await executionsByPaciente.sum(ctx, { namespace: pacienteId, bounds });
+  const totalExecs = await executionsByPaciente.count(ctx, { namespace: pacienteId, bounds });
+  const adherencia = totalExecs > 0 ? sumCompletados / totalExecs : null;
+  const sumDolor = await executionsByPacienteDolor.sum(ctx, { namespace: pacienteId, bounds });
+  const countDolor = await executionsByPacienteDolor.count(ctx, { namespace: pacienteId, bounds });
+  const dolorPromedio = countDolor > 0 ? sumDolor / countDolor : null;
+  // rachaActual, ultimaActividad, riskScore: lógica custom (se queda en TS)
+}
+```
+La función pasa de ~140 líneas a ~50.
+
+**Caveat semántico**: `dolorPromedio` cambia de "promedio de promedios por sesión" a "promedio simple sobre ejecuciones con dolor reportado". Más robusto estadísticamente pero distinto. Validar con dato real que la diferencia es <10% en pacientes promedio antes de cerrar. Si fuese inaceptable, mantener cálculo legacy sólo para `dolorPromedio` y todo lo demás vía aggregate.
+
+**Criterios de aceptación**:
+- `recomputePatientForWindow` reducido a <60 líneas.
+- Adherencia coincide bit a bit con la versión legacy en dataset de validación.
+- Dolor promedio diff <10% documentado y aceptado.
+
+**Dependencias**: H0.
+
+---
+
+#### **H6 · `recomputeClinicForWindow` agregados desde aggregate** ![Alta](https://img.shields.io/badge/Alta-orange) ![Alto](https://img.shields.io/badge/Alto-orange) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
+
+**Ubicación**: `convex/snapshots/internal.ts:recomputeClinicForWindow`.
+
+**Detalle**: calcula `adherenciaPromedio` (promedio de adherencia de snapshots de pacientes), `dolorMedio` (idem dolor), `sesionesUltimos7d` (count de sessions) y `pacientesActivos`. Recorre snapshots de todos los pacientes de la clínica.
+
+**Propuesta**:
+- `adherenciaPromedio` = `patientsByClinicAdherencia.sum / count` con `bounds` de la ventana.
+- `dolorMedio` = aggregate análogo `patientsByClinicDolor`.
+- `sesionesUltimos7d` = `sessionsByClinic.count({ namespace: clinicId, bounds: { lower: hace7d } })`.
+- `pacientesActivos` = ver H2.
+- `alertasPendientes` se mantiene query directa (volumen bajo, no candidato).
+
+**Criterios de aceptación**:
+- Todos los campos de `clinicMetricsSnapshot` (excepto `riskScore`-derivados) leen del aggregate.
+- Tiempo de ejecución de `recomputeAllClinics` cae al menos 50%.
+
+**Dependencias**: H0, H2.
+
+---
+
+#### **H7 · Nueva feature: "Ejercicio más usado por clínica esta semana"** ![—](https://img.shields.io/badge/Feature-blue) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+
+**Ubicación**: nuevo query `convex/exercises/queries.ts:getTopExercisesByClinic` + nueva card en dashboard del fisio.
+
+**Detalle**: actualmente no existe ninguna pantalla que muestre "ejercicio más prescrito/realizado" en una ventana temporal — el catálogo no tiene métrica de uso visible para el fisio. Cerrado el gap "top ejercicios" identificado en exploración frontend.
+
+**Propuesta**: usando `executionsByExercise` (introducido en H4), iterar `exerciseIds` candidatos (o usar `.paginate` agrupando por namespace tuple `[clinicId, exerciseId]`) y devolver top-N por count en la ventana. UI: card opcional en `/inicio/fisio`.
+
+**Criterios de aceptación**: card visible para el fisio cuando hay ≥3 ejercicios con uso en los últimos 7 días.
+
+**Dependencias**: H0, H4.
+
+---
+
+#### **H8 · Nueva feature: "Top pacientes por adherencia"** ![—](https://img.shields.io/badge/Feature-blue) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+
+**Ubicación**: nuevo query `convex/snapshots/queries.ts:getTopPatientsByAdherencia` + UI opcional.
+
+**Detalle**: la app no tiene leaderboard ni ranking visible de pacientes por adherencia (gap identificado en exploración frontend).
+
+**Propuesta**: `patientsByClinicAdherencia.paginate({ namespace: [clinicId, ventana] })` ordenado descendente. UI detrás de flag para evaluar engagement.
+
+**Criterios de aceptación**: query devuelve top-N en <50 ms; UI muestra los 5-10 mejores con sus avatares.
+
+**Dependencias**: H0, H1.
+
+---
+
+#### **H9 · Eliminación de tablas snapshot legacy** ![Media](https://img.shields.io/badge/Media-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
+
+**Ubicación**: `convex/schema.ts:349-388` (definiciones de `patientMetricsSnapshot` y `clinicMetricsSnapshot`) + todos los consumers en `convex/` y `apps/app/src/`.
+
+**Detalle**: una vez H1, H5, H6 estén en producción y validados durante ≥2 semanas, las tablas legacy ya no aportan valor. Sólo queda `riskScore`/`rachaActual`/`inactividadDias`/`ultimaActividad` como campos derivados que no son agregaciones puras.
+
+**Propuesta**:
+- Crear tabla mínima `patientDerivedMetrics` con `{ pacienteId, clinicId, ventana, riskScore, rachaActual, inactividadDias, ultimaActividad, actualizadoEn }` e índice `by_clinicId_ventana_riskScore`.
+- Migración paginada `@convex-dev/migrations` que copia campos derivados desde `patientMetricsSnapshot` a `patientDerivedMetrics`.
+- Borrar `patientMetricsSnapshot` y `clinicMetricsSnapshot` del schema.
+- Actualizar `metricas-pacientes.service.ts` y `dashboard-fisio.service.ts` para leer aggregate + `patientDerivedMetrics`.
+
+**Pre-requisito hard**: `grep -rn "patientMetricsSnapshot\|clinicMetricsSnapshot" convex/ apps/app/src/` debe devolver sólo la propia migración antes de mergear.
+
+**Criterios de aceptación**:
+- Tablas legacy eliminadas.
+- `convex export` dump previo guardado durante 90 días.
+- Bandwidth de storage Convex baja medible (~30-50% según volumen actual).
+
+**Dependencias**: H1, H5, H6 en producción ≥2 semanas.
 
 ---
 
