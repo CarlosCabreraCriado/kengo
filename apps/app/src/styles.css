@@ -482,21 +482,21 @@
 
 @font-face {
   font-family: kengoFont;
-  src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+  src: url(./assets/fonts/SocialGothic-Bold.woff2) format("woff2");
   font-display: swap;
 }
 
 /* Alias V2: misma fuente, nombre alineado con la guía de diseño */
 @font-face {
   font-family: KengoDisplay;
-  src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+  src: url(./assets/fonts/SocialGothic-Bold.woff2) format("woff2");
   font-weight: 700;
   font-display: swap;
 }
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji.ttf) format("truetype");
+  src: url(./assets/fonts/galvji.woff2) format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -504,7 +504,7 @@
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji-bold.ttf) format("truetype");
+  src: url(./assets/fonts/galvji-bold.woff2) format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -512,7 +512,7 @@
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji-oblique.ttf) format("truetype");
+  src: url(./assets/fonts/galvji-oblique.woff2) format("woff2");
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -520,7 +520,7 @@
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji-bold-oblique.ttf) format("truetype");
+  src: url(./assets/fonts/galvji-bold-oblique.woff2) format("woff2");
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -626,7 +626,16 @@ body {
   font-family: Galvji, "Helvetica Neue", sans-serif;
 }
 
-/* Material Symbols icon styles */
+/* Material Symbols icon styles — subset auto-hosteado en /assets/fonts/
+   (regenerar tras añadir un icono nuevo; ver apps/app/CLAUDE.md) */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./assets/fonts/material-symbols-subset.woff2) format('woff2');
+}
+
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;
