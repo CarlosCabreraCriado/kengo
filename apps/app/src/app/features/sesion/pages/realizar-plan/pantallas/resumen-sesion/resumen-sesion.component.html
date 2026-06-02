@@ -71,9 +71,12 @@
               <div class="exercise-thumb">
                 @if (item.ejercicio.portada) {
                   <img
-                    [src]="getImageUrl(item.ejercicio.portada)"
-                    [alt]="item.ejercicio.nombre"
+                    [ngSrc]="getImageUrl(item.ejercicio.portada)"
+                    width="56"
+                    height="56"
                     loading="lazy"
+                    [loaderParams]="{ fit: 'cover', quality: 80 }"
+                    [alt]="item.ejercicio.nombre"
                   />
                 } @else {
                   <div class="thumb-placeholder">

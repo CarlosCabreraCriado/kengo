@@ -6,6 +6,7 @@ import {
   computed,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import {
   EjercicioPlan,
@@ -24,6 +25,7 @@ import {
   selector: 'app-resumen-sesion',
   standalone: true,
   imports: [
+    NgOptimizedImage,
     Ui2BackButtonComponent,
     Ui2CardComponent,
     Ui2CtaBarComponent,

@@ -10,6 +10,7 @@ Reglas específicas para la app Angular 20. El CLAUDE.md raíz cubre el monorepo
 - **`input()` / `output()`** functions (Angular 17+) para nuevas APIs en lugar de `@Input/@Output` decorators cuando sea posible.
 - **`@if / @for / @switch`** (control flow). No usar `*ngIf`, `*ngFor`, `*ngSwitch`.
 - **Reactive Forms** (`FormBuilder`, `FormGroup`). No template-driven forms para formularios serios.
+- **`NgOptimizedImage` (`<img [ngSrc]>`)** para toda imagen servida desde Cloudflare R2 (URL construida con `assetUrl()`). Requiere `width`/`height` explícitos; pasar `[loaderParams]="{ fit: 'cover', quality: 80 }"` para que el loader (`core/utils/image-loader.ts`) reescriba los query params según device pixel ratio. Marcar `priority` solo en el LCP candidate de la pantalla; el resto va con `loading="lazy"`. SVGs locales y blobs de preview (cropper, file inputs) mantienen `<img src>`.
 
 ## UI: catálogo V2 + componentes legacy especializados
 
@@ -123,6 +124,25 @@ phone  → phone             heart  → favorite           bell  → notificatio
 user   → person            settings → settings         dot   → fiber_manual_record
 pain   → mood_bad          building → apartment        location → public
 ```
+
+**Subset auto-hosteado**: el WOFF2 vive en `apps/app/src/assets/fonts/material-symbols-subset.woff2` (~10 kB con la lista actual de iconos). Al añadir un icono nuevo, regenerar el subset:
+
+```bash
+# 1. Compilar lista de iconos usados en el código
+grep -rPo 'class="[^"]*material-symbols-outlined[^"]*"[^>]*>\s*[a-z_]+\s*<' apps/app/src/ --include='*.html' --include='*.ts' 2>/dev/null | grep -oE '>\s*[a-z_]+\s*<' | tr -d '<>' | tr -d ' ' | sort -u > /tmp/icons.txt
+grep -rEho "icon:\s*'[a-z_]+'" apps/app/src/ --include='*.ts' 2>/dev/null | grep -oE "'[a-z_]+'" | tr -d "'" | sort -u >> /tmp/icons.txt
+# (añadir manualmente cualquier icono dinámico — p.ej. star/star_outline en favoritos)
+sort -u /tmp/icons.txt -o /tmp/icons.txt
+
+# 2. Descargar el TTF subset desde Google y convertirlo a WOFF2
+ICONS=$(tr '\n' ',' < /tmp/icons.txt | sed 's/,$//')
+FONT_URL=$(curl -s -A 'Mozilla/5.0' "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=${ICONS}" | grep -oE "https://[^)]+")
+curl -s -A 'Mozilla/5.0' -o /tmp/ms.ttf "$FONT_URL"
+woff2_compress /tmp/ms.ttf
+mv /tmp/ms.woff2 apps/app/src/assets/fonts/material-symbols-subset.woff2
+```
+
+Requiere `brew install woff2` una vez.
 
 ## Estilos: clases Tailwind antes que CSS por componente
 

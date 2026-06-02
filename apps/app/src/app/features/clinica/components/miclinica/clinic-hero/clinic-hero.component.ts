@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { Ui2ButtonComponent } from '../../../../../shared/ui-v2';
 
 const FALLBACK_IMAGE = 'assets/portadas/clinica.webp';
@@ -7,7 +8,7 @@ const FALLBACK_IMAGE = 'assets/portadas/clinica.webp';
   selector: 'app-mc-clinic-hero',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Ui2ButtonComponent],
+  imports: [Ui2ButtonComponent, NgOptimizedImage],
   templateUrl: './clinic-hero.component.html',
   styleUrl: './clinic-hero.component.css',
 })
@@ -20,5 +21,5 @@ export class MiClinicaHeroComponent {
 
   readonly editarClinica = output<void>();
 
-  readonly bgUrl = computed(() => `url('${this.imageUrl() ?? FALLBACK_IMAGE}')`);
+  readonly bgSrc = computed(() => this.imageUrl() ?? FALLBACK_IMAGE);
 }

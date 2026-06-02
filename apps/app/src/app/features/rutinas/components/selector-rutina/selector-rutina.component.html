@@ -71,7 +71,11 @@
                 <div class="sr-preview__thumb">
                   @if (ej.ejercicio.portada) {
                     <img
-                      [src]="thumbUrl(ej.ejercicio.portada)"
+                      [ngSrc]="thumbUrl(ej.ejercicio.portada)"
+                      width="48"
+                      height="48"
+                      loading="lazy"
+                      [loaderParams]="{ fit: 'cover', quality: 80 }"
                       [alt]="ej.ejercicio.nombre"
                     />
                   } @else {

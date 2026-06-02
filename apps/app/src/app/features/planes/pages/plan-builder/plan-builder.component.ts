@@ -18,6 +18,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { Dialog } from '@angular/cdk/dialog';
+import { NgOptimizedImage } from '@angular/common';
 
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -56,6 +57,7 @@ import { PlanWeekDotsComponent } from '../../components/plan-week-dots/plan-week
     ReactiveFormsModule,
     FormsModule,
     DragDropModule,
+    NgOptimizedImage,
     SafeHtmlPipe,
     Ui2AvatarComponent,
     Ui2BackButtonComponent,

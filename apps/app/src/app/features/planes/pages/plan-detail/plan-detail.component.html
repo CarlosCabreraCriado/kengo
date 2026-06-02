@@ -248,9 +248,12 @@
                     <div class="pd-ex__thumb">
                       @if (item.ejercicio.portada) {
                         <img
-                          [src]="assetUrl(item.ejercicio.portada, 160, 160)"
-                          [alt]="item.ejercicio.nombre"
+                          [ngSrc]="assetUrl(item.ejercicio.portada, 160, 160)"
+                          width="160"
+                          height="160"
                           loading="lazy"
+                          [loaderParams]="{ fit: 'cover', quality: 80 }"
+                          [alt]="item.ejercicio.nombre"
                         />
                       } @else {
                         <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>

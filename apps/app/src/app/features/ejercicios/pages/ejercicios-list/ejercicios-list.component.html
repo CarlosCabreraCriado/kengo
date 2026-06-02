@@ -155,9 +155,12 @@
               <div class="el-card-vineta__media">
                 @if (e.portada) {
                   <img
-                    [src]="getAssetUrl(e.portada)"
-                    [alt]="e.nombre"
+                    [ngSrc]="getAssetUrl(e.portada)"
+                    width="200"
+                    height="200"
                     loading="lazy"
+                    [loaderParams]="{ fit: 'cover', quality: 80 }"
+                    [alt]="e.nombre"
                     (load)="onImageLoad(e.id)"
                   />
                 } @else {
@@ -199,9 +202,12 @@
               <div class="el-card-lista__media">
                 @if (e.portada) {
                   <img
-                    [src]="getAssetUrl(e.portada)"
-                    [alt]="e.nombre"
+                    [ngSrc]="getAssetUrl(e.portada)"
+                    width="96"
+                    height="96"
                     loading="lazy"
+                    [loaderParams]="{ fit: 'cover', quality: 80 }"
+                    [alt]="e.nombre"
                     (load)="onImageLoad(e.id)"
                   />
                 } @else {

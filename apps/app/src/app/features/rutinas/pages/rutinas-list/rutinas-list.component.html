@@ -230,7 +230,14 @@
                       <li class="rl-preview-item">
                         <div class="rl-preview-item__media">
                           @if (ej.ejercicio.portada) {
-                            <img [src]="assetUrl(ej.ejercicio.portada)" [alt]="ej.ejercicio.nombre" loading="lazy" />
+                            <img
+                              [ngSrc]="assetUrl(ej.ejercicio.portada)"
+                              width="48"
+                              height="48"
+                              loading="lazy"
+                              [loaderParams]="{ fit: 'cover', quality: 80 }"
+                              [alt]="ej.ejercicio.nombre"
+                            />
                           } @else {
                             <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
                           }

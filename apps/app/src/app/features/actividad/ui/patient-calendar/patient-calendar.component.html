@@ -120,9 +120,12 @@
                       <div class="cal-detail__thumb">
                         @if (ejercicio.portada) {
                           <img
-                            [src]="getAssetUrl(ejercicio.portada)"
-                            [alt]="ejercicio.nombre"
+                            [ngSrc]="getAssetUrl(ejercicio.portada)"
+                            width="40"
+                            height="40"
                             loading="lazy"
+                            [loaderParams]="{ fit: 'cover', quality: 80 }"
+                            [alt]="ejercicio.nombre"
                           />
                         } @else {
                           <ui2-icon-badge icon="fitness_center" [size]="40" [radius]="10"></ui2-icon-badge>

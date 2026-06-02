@@ -14,11 +14,14 @@
       </div>
       <div class="next-exercise-content">
         <div class="next-exercise-thumb">
-          @if (proximoPortadaUrl()) {
+          @if (proximoPortadaUrl(); as portadaSrc) {
             <img
-              [src]="proximoPortadaUrl()"
-              [alt]="proximo.ejercicio.nombre"
+              [ngSrc]="portadaSrc"
+              width="48"
+              height="48"
               loading="lazy"
+              [loaderParams]="{ fit: 'cover', quality: 80 }"
+              [alt]="proximo.ejercicio.nombre"
             />
           } @else {
             <ui2-icon-badge

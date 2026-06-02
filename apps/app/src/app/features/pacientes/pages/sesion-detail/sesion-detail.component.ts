@@ -8,7 +8,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgOptimizedImage } from '@angular/common';
 import { useResponsive } from '../../../../shared';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -92,6 +92,7 @@ interface PlanAgendadoDetalle {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DecimalPipe,
+    NgOptimizedImage,
     Ui2AvatarComponent,
     Ui2BackButtonComponent,
     Ui2CardComponent,

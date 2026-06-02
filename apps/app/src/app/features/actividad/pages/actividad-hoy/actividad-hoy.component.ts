@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { videoUrl } from '../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
@@ -66,6 +67,7 @@ interface DiaProximoConEjercicios {
   selector: 'app-actividad-hoy',
   standalone: true,
   imports: [
+    NgOptimizedImage,
     Ui2BigTitleComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,

@@ -1,5 +1,6 @@
 import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
@@ -41,6 +42,7 @@ import { PlanMiniCalendarComponent } from '../../components/plan-mini-calendar/p
   selector: 'app-plan-detail',
   standalone: true,
   imports: [
+    NgOptimizedImage,
     Ui2AvatarComponent,
     Ui2BackButtonComponent,
     Ui2BigTitleComponent,

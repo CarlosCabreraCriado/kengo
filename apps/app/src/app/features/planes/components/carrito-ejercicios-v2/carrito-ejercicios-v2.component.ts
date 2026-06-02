@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
 import { NavigationEnd, Router } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 import { filter } from 'rxjs/operators';
 
 import {
@@ -33,6 +34,7 @@ import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builde
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgOptimizedImage,
     Ui2AvatarComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,

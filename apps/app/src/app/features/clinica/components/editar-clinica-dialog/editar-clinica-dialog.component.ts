@@ -7,6 +7,7 @@ import {
   OnInit,
   OnDestroy,
 } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Dialog, DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
@@ -67,6 +68,7 @@ const COLOR_PRESETS = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    NgOptimizedImage,
     Ui2DialogHostComponent,
     Ui2DialogHeaderComponent,
     Ui2DialogContentComponent,

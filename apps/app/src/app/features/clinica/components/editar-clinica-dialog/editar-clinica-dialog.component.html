@@ -125,7 +125,15 @@
                     class="ec-gallery-item"
                     [class.ec-gallery-item--marked]="isImageMarkedForDeletion(img.id)"
                   >
-                    <img [src]="getExistingImageUrl(img.fileId)" alt="Imagen de clínica" class="ec-gallery-img" />
+                    <img
+                      [ngSrc]="getExistingImageUrl(img.fileId)"
+                      width="200"
+                      height="150"
+                      loading="lazy"
+                      [loaderParams]="{ fit: 'cover', quality: 80 }"
+                      alt="Imagen de clínica"
+                      class="ec-gallery-img"
+                    />
                     @if (isImageMarkedForDeletion(img.id)) {
                       <div class="ec-gallery-overlay">
                         <span class="material-symbols-outlined" aria-hidden="true">delete</span>

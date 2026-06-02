@@ -9,9 +9,13 @@
     loop
     playsinline
   ></video>
-} @else if (posterUrl()) {
+} @else if (posterUrl(); as poster) {
   <img
-    [src]="posterUrl()"
+    [ngSrc]="poster"
+    width="1280"
+    height="720"
+    priority
+    [loaderParams]="{ fit: 'cover', quality: 80 }"
     [alt]="nombreEjercicio()"
     class="media-element"
   />

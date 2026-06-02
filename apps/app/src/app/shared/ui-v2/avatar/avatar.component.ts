@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 
 export type Ui2AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type Ui2AvatarGradient =
@@ -29,6 +30,7 @@ const GRADIENTS: Record<Ui2AvatarGradient, string> = {
 @Component({
   selector: 'ui2-avatar',
   standalone: true,
+  imports: [NgOptimizedImage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span class="ui2-avatar" [style.width.px]="px()" [style.height.px]="px()">
@@ -40,7 +42,15 @@ const GRADIENTS: Record<Ui2AvatarGradient, string> = {
         [class.ui2-avatar__inner--active]="active()"
       >
         @if (src()) {
-          <img [src]="src()!" [alt]="name()" class="ui2-avatar__img" />
+          <img
+            [ngSrc]="src()!"
+            [width]="px()"
+            [height]="px()"
+            [priority]="priority()"
+            [loaderParams]="{ fit: 'cover', quality: 80 }"
+            [alt]="name()"
+            class="ui2-avatar__img"
+          />
         } @else {
           {{ initial() }}
         }
@@ -109,6 +119,7 @@ export class Ui2AvatarComponent {
   readonly border = input<boolean>(false);
   readonly online = input<boolean>(false);
   readonly active = input<boolean>(false);
+  readonly priority = input<boolean>(false);
 
   readonly px = computed(() => SIZE_PX[this.size()]);
   readonly dotPx = computed(() => Math.round(this.px() * 0.28));

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, HostListener, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
@@ -34,6 +35,7 @@ interface OpcionFiltro {
   selector: 'app-rutinas-list',
   standalone: true,
   imports: [
+    NgOptimizedImage,
     Ui2ButtonComponent,
     Ui2EmptyStateComponent,
     Ui2PillComponent,

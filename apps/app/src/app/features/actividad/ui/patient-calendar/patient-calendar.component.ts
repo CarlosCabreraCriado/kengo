@@ -9,6 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
@@ -65,6 +66,7 @@ interface DiaCalendario {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgOptimizedImage,
     Ui2BigTitleComponent,
     Ui2CardComponent,
     Ui2CtaBarComponent,

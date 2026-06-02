@@ -72,7 +72,14 @@
           <div class="ui2-cart__item">
             <div class="ui2-cart__thumb">
               @if (it.ejercicio.portada) {
-                <img [src]="thumbUrl(it.ejercicio.portada)" alt="" />
+                <img
+                  [ngSrc]="thumbUrl(it.ejercicio.portada)"
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  [loaderParams]="{ fit: 'cover', quality: 80 }"
+                  alt=""
+                />
               } @else {
                 <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
               }
@@ -182,9 +189,12 @@
         <span class="ui2-cart__tab-icon">
           <span class="material-symbols-outlined" aria-hidden="true">bookmark_add</span>
         </span>
-      } @else if (perfilUrl()) {
+      } @else if (perfilUrl(); as avatarSrc) {
         <img
-          [src]="perfilUrl()"
+          [ngSrc]="avatarSrc"
+          width="32"
+          height="32"
+          [loaderParams]="{ fit: 'cover', quality: 80 }"
           alt=""
           class="ui2-cart__tab-avatar"
         />

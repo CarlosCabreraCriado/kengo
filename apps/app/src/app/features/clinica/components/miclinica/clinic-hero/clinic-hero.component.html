@@ -1,5 +1,13 @@
 <div class="mch" [class.mch--with-action]="puedeEditar()">
-  <div class="mch__bg" [style.background-image]="bgUrl()"></div>
+  <img
+    class="mch__bg"
+    [ngSrc]="bgSrc()"
+    width="1280"
+    height="720"
+    priority
+    [loaderParams]="{ fit: 'cover', quality: 80 }"
+    alt=""
+  />
   <div class="mch__overlay"></div>
 
   @if (puedeEditar()) {

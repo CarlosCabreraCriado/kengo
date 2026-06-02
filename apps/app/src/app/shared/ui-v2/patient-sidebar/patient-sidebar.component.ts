@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { SessionService } from '../../../core/auth/services/session.service';
@@ -99,7 +100,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
 @Component({
   selector: 'ui2-patient-sidebar',
   standalone: true,
-  imports: [RouterLink, Ui2AvatarComponent, Ui2ClinicaSwitchMenuComponent],
+  imports: [RouterLink, NgOptimizedImage, Ui2AvatarComponent, Ui2ClinicaSwitchMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <aside class="ui2-sidebar" [class.ui2-sidebar--collapsed]="collapsed()">
@@ -198,8 +199,15 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
             class="ui2-sidebar__clinic"
             routerLink="/mi-clinica"
             aria-label="Ir a mi clínica"
-            [style.background-image]="clinicBackground()"
           >
+            <img
+              class="ui2-sidebar__clinic-bg"
+              [ngSrc]="clinicBackgroundSrc()"
+              width="280"
+              height="110"
+              [loaderParams]="{ fit: 'cover', quality: 80 }"
+              alt=""
+            />
             <span class="ui2-sidebar__clinic-overlay" aria-hidden="true"></span>
             <span class="ui2-sidebar__clinic-text">
               <span class="ui2-sidebar__clinic-eyebrow">Mi clínica</span>
@@ -532,9 +540,15 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
         overflow: hidden;
         text-decoration: none;
         background-color: var(--ink-700);
-        background-size: cover;
-        background-position: center;
         flex-shrink: 0;
+      }
+      .ui2-sidebar__clinic-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
       }
       .ui2-sidebar__clinic-overlay {
         position: absolute;
@@ -900,10 +914,9 @@ export class Ui2PatientSidebarComponent {
   readonly collapsed = signal<boolean>(this.computeInitialCollapsed());
   private hasUserPreference = this.readStoredPreference() !== null;
 
-  readonly clinicBackground = computed(() => {
-    const url = this.clinicaImagenUrl();
-    return url ? `url('${url}')` : `url('assets/portadas/clinica.webp')`;
-  });
+  readonly clinicBackgroundSrc = computed(
+    () => this.clinicaImagenUrl() ?? 'assets/portadas/clinica.webp',
+  );
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(

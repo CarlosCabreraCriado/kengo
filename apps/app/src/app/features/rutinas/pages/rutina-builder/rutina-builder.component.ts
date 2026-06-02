@@ -7,7 +7,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { Location } from '@angular/common';
+import { Location, NgOptimizedImage } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   FormBuilder,
@@ -45,6 +45,7 @@ import {
     ReactiveFormsModule,
     FormsModule,
     DragDropModule,
+    NgOptimizedImage,
     RouterLink,
     SafeHtmlPipe,
     Ui2BackButtonComponent,

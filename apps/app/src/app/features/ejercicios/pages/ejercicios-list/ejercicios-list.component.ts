@@ -11,6 +11,7 @@ import {
   Signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { NgOptimizedImage } from '@angular/common';
 
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
@@ -40,6 +41,7 @@ type Vista = 'vineta' | 'lista';
   imports: [
     RouterLink,
     ReactiveFormsModule,
+    NgOptimizedImage,
     SafeHtmlPipe,
     Ui2ButtonComponent,
     Ui2EmptyStateComponent,

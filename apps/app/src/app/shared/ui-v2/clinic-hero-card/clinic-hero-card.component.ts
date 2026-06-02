@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 
 const FALLBACK_IMAGE = 'assets/portadas/clinica.webp';
 
@@ -9,10 +10,19 @@ const FALLBACK_IMAGE = 'assets/portadas/clinica.webp';
 @Component({
   selector: 'ui2-clinic-hero-card',
   standalone: true,
+  imports: [NgOptimizedImage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button type="button" class="ui2-clinic" (click)="cardClick.emit($event)">
-      <span class="ui2-clinic__bg" [style.background-image]="bgUrl()"></span>
+      <img
+        class="ui2-clinic__bg"
+        [ngSrc]="bgSrc()"
+        width="800"
+        height="320"
+        priority
+        [loaderParams]="{ fit: 'cover', quality: 80 }"
+        alt=""
+      />
       <span class="ui2-clinic__overlay"></span>
       <span class="ui2-clinic__content">
         <span class="ui2-clinic__top">
@@ -63,9 +73,10 @@ const FALLBACK_IMAGE = 'assets/portadas/clinica.webp';
     .ui2-clinic__bg {
       position: absolute;
       inset: 0;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
     }
     .ui2-clinic__overlay {
       position: absolute;
@@ -128,5 +139,5 @@ export class Ui2ClinicHeroCardComponent {
 
   readonly cardClick = output<MouseEvent>();
 
-  readonly bgUrl = computed(() => `url('${this.imageUrl() ?? FALLBACK_IMAGE}')`);
+  readonly bgSrc = computed(() => this.imageUrl() ?? FALLBACK_IMAGE);
 }

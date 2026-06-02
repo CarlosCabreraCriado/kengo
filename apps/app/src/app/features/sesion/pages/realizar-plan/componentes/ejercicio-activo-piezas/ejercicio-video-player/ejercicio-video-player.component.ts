@@ -8,10 +8,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 
 @Component({
   selector: 'app-ejercicio-video-player',
   standalone: true,
+  imports: [NgOptimizedImage],
   templateUrl: './ejercicio-video-player.component.html',
   styleUrl: './ejercicio-video-player.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

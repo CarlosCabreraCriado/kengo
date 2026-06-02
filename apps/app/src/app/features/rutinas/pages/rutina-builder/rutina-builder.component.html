@@ -87,7 +87,14 @@
                   <div class="rb-ex-preview__row">
                     <div class="rb-ex__thumb rb-ex__thumb--sm">
                       @if (it.ejercicio.portada) {
-                        <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
+                        <img
+                          [ngSrc]="assetUrl(it.ejercicio.portada, 96, 96)"
+                          width="96"
+                          height="96"
+                          loading="lazy"
+                          [loaderParams]="{ fit: 'cover', quality: 80 }"
+                          [alt]="it.ejercicio.nombre"
+                        />
                       } @else {
                         <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
                       }
@@ -114,7 +121,14 @@
 
                     <div class="rb-ex__thumb">
                       @if (it.ejercicio.portada) {
-                        <img [src]="assetUrl(it.ejercicio.portada, 96, 96)" [alt]="it.ejercicio.nombre" />
+                        <img
+                          [ngSrc]="assetUrl(it.ejercicio.portada, 96, 96)"
+                          width="96"
+                          height="96"
+                          loading="lazy"
+                          [loaderParams]="{ fit: 'cover', quality: 80 }"
+                          [alt]="it.ejercicio.nombre"
+                        />
                       } @else {
                         <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
                       }
@@ -154,7 +168,14 @@
                     <div class="rb-ex__head">
                       <div class="rb-ex__thumb rb-ex__thumb--lg">
                         @if (it.ejercicio.portada) {
-                          <img [src]="assetUrl(it.ejercicio.portada, 160, 160)" [alt]="it.ejercicio.nombre" />
+                          <img
+                            [ngSrc]="assetUrl(it.ejercicio.portada, 160, 160)"
+                            width="160"
+                            height="160"
+                            loading="lazy"
+                            [loaderParams]="{ fit: 'cover', quality: 80 }"
+                            [alt]="it.ejercicio.nombre"
+                          />
                         } @else {
                           <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
                         }

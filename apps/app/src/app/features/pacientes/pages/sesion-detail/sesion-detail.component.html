@@ -147,12 +147,15 @@
                   @for (ej of plan.ejercicios; track ej.id) {
                     <article class="ejercicio-row ejercicio-row--failed">
                       <div class="ejercicio-row__thumb">
-                        @if (assetUrl(ej.portada)) {
+                        @if (assetUrl(ej.portada); as portadaSrc) {
                           <img
-                            [src]="assetUrl(ej.portada)"
+                            [ngSrc]="portadaSrc"
+                            width="64"
+                            height="64"
+                            loading="lazy"
+                            [loaderParams]="{ fit: 'cover', quality: 80 }"
                             [alt]="ej.nombre"
                             class="ejercicio-row__img"
-                            loading="lazy"
                           />
                         } @else {
                           <ui2-icon-badge
@@ -228,12 +231,15 @@
                 <article class="ejercicio-row">
                   <!-- Thumbnail -->
                   <div class="ejercicio-row__thumb">
-                    @if (assetUrl(reg.planItemId.ejercicio.portada)) {
+                    @if (assetUrl(reg.planItemId.ejercicio.portada); as portadaSrc) {
                       <img
-                        [src]="assetUrl(reg.planItemId.ejercicio.portada)"
+                        [ngSrc]="portadaSrc"
+                        width="64"
+                        height="64"
+                        loading="lazy"
+                        [loaderParams]="{ fit: 'cover', quality: 80 }"
                         [alt]="reg.planItemId.ejercicio.nombre"
                         class="ejercicio-row__img"
-                        loading="lazy"
                       />
                     } @else {
                       <ui2-icon-badge

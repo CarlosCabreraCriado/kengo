@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
+import { NgOptimizedImage } from '@angular/common';
 
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { RutinasService } from '../../data-access/rutinas.service';
@@ -34,6 +35,7 @@ type FiltroRutina = 'todas' | 'privadas' | 'clinica';
   standalone: true,
   imports: [
     FormsModule,
+    NgOptimizedImage,
     Ui2DialogHostComponent,
     Ui2DialogHeaderComponent,
     Ui2DialogContentComponent,
