@@ -83,12 +83,12 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .el-controls__search {
   flex: 1;
-  min-width: 220px;
+  min-width: 0;
 }
 
 .el-cat-dropdown {
@@ -123,6 +123,10 @@
 .el-cat-trigger .material-symbols-outlined { font-size: 18px; }
 
 .el-cat-trigger__label { line-height: 1; }
+
+@media (max-width: 767px) {
+  .el-cat-trigger__label { display: none; }
+}
 
 .el-cat-menu {
   position: absolute;

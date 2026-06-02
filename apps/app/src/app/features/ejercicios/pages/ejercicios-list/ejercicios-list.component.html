@@ -65,6 +65,7 @@
           [class.el-cat-trigger--active]="categoriasSeleccionadas().length > 0"
           (click)="$event.stopPropagation(); toggleMenu()"
           [attr.aria-expanded]="menuAbierto()"
+          aria-label="Categorías"
         >
           <span class="material-symbols-outlined" aria-hidden="true">tune</span>
           <span class="el-cat-trigger__label">Categorías</span>
