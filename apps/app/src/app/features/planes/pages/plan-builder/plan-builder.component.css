@@ -219,6 +219,10 @@
   gap: 10px;
 }
 
+.pb-ex-defer-placeholder {
+  min-height: 280px;
+}
+
 /* ===== Exercise item (collapsed/expanded responsive pattern) ===== */
 .pb-ex-item {
   position: relative;

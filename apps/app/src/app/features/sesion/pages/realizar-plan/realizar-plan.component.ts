@@ -57,37 +57,51 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
             <app-resumen-sesion (comenzar)="onComenzar()" />
           }
           @case ('ejercicio') {
-            <app-ejercicio-activo
-              (completarSerie)="onCompletarSerie()"
-              (pausar)="onPausar()"
-              (salir)="onIntentarSalir()"
-              (abrirTimeline)="timelineAbierto.set(true)"
-              (previewEjercicio)="onPreviewEjercicio($event)"
-            />
+            @defer (when estadoPantalla() === 'ejercicio'; prefetch on idle) {
+              <app-ejercicio-activo
+                (completarSerie)="onCompletarSerie()"
+                (pausar)="onPausar()"
+                (salir)="onIntentarSalir()"
+                (abrirTimeline)="timelineAbierto.set(true)"
+                (previewEjercicio)="onPreviewEjercicio($event)"
+              />
+            } @placeholder {
+              <div class="rp-defer-placeholder"></div>
+            }
           }
           @case ('descanso') {
-            <app-descanso
-              (saltar)="onSaltarDescanso()"
-              (tiempoAgotado)="onDescansoTerminado()"
-              (agregarTiempo)="onAgregarTiempo($event)"
-              (salir)="onIntentarSalir()"
-              (abrirTimeline)="timelineAbierto.set(true)"
-              (previewEjercicio)="onPreviewEjercicio($event)"
-            />
+            @defer (when estadoPantalla() === 'descanso'; prefetch on idle) {
+              <app-descanso
+                (saltar)="onSaltarDescanso()"
+                (tiempoAgotado)="onDescansoTerminado()"
+                (agregarTiempo)="onAgregarTiempo($event)"
+                (salir)="onIntentarSalir()"
+                (abrirTimeline)="timelineAbierto.set(true)"
+                (previewEjercicio)="onPreviewEjercicio($event)"
+              />
+            } @placeholder {
+              <div class="rp-defer-placeholder"></div>
+            }
           }
           @case ('feedback-final') {
-            <app-feedback-final
-              (enviarFeedback)="onEnviarFeedbackFinal($event)"
-            />
+            @defer (when estadoPantalla() === 'feedback-final'; prefetch on idle) {
+              <app-feedback-final
+                (enviarFeedback)="onEnviarFeedbackFinal($event)"
+              />
+            } @placeholder {
+              <div class="rp-defer-placeholder"></div>
+            }
           }
         }
       </main>
 
-      <app-timeline-sesion
-        [isOpen]="timelineAbierto()"
-        (closed)="timelineAbierto.set(false)"
-        (previewEjercicio)="onPreviewEjercicio($event)"
-      />
+      @defer (when timelineAbierto(); prefetch on idle) {
+        <app-timeline-sesion
+          [isOpen]="timelineAbierto()"
+          (closed)="timelineAbierto.set(false)"
+          (previewEjercicio)="onPreviewEjercicio($event)"
+        />
+      }
 
       @if (error()) {
         <div class="rp-overlay rp-overlay--error" @fade>
@@ -148,6 +162,11 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
       min-height: 0;
       flex-direction: column;
       overflow: hidden;
+    }
+    .rp-defer-placeholder {
+      flex: 1;
+      min-height: 100%;
+      width: 100%;
     }
     .rp-overlay {
       position: fixed;

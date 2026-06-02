@@ -149,23 +149,31 @@ interface DialogClosedResult {
           @if (!isMovil()) {
             <div class="pd2-grid">
               <div class="pd2-col pd2-col--main">
-                <app-pd-weekly-bars-card
-                  [weeks]="estadisticas()?.adherenciaSemanal ?? []"
-                  [rangoLabel]="rangoLabel"
-                />
-                <app-pd-activity-timeline
-                  [sesiones]="sesionesVisibles()"
-                  [notificacionesPorRegistro]="notificacionesPorRegistro()"
-                  [fechaExpandida]="sesionExpandida()"
-                  [totalSesiones]="sesiones().length"
-                  [rangoLabel]="rangoLabel"
-                  [diasProgramados]="diasProgramados()"
-                  [diasSinActividad]="diasSinActividad()"
-                  [isLoading]="isLoadingSesiones()"
-                  (verSesion)="verSesion($event)"
-                  (toggleComentarios)="toggleComentarios($event)"
-                  (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
-                />
+                @defer (on viewport; prefetch on idle) {
+                  <app-pd-weekly-bars-card
+                    [weeks]="estadisticas()?.adherenciaSemanal ?? []"
+                    [rangoLabel]="rangoLabel"
+                  />
+                } @placeholder {
+                  <div class="pd2-defer pd2-defer--card"></div>
+                }
+                @defer (on viewport; prefetch on idle) {
+                  <app-pd-activity-timeline
+                    [sesiones]="sesionesVisibles()"
+                    [notificacionesPorRegistro]="notificacionesPorRegistro()"
+                    [fechaExpandida]="sesionExpandida()"
+                    [totalSesiones]="sesiones().length"
+                    [rangoLabel]="rangoLabel"
+                    [diasProgramados]="diasProgramados()"
+                    [diasSinActividad]="diasSinActividad()"
+                    [isLoading]="isLoadingSesiones()"
+                    (verSesion)="verSesion($event)"
+                    (toggleComentarios)="toggleComentarios($event)"
+                    (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
+                  />
+                } @placeholder {
+                  <div class="pd2-defer pd2-defer--timeline"></div>
+                }
               </div>
               <aside class="pd2-col pd2-col--side">
                 <app-pd-active-plan-card
@@ -173,20 +181,28 @@ interface DialogClosedResult {
                   (verPlan)="verPlan($event)"
                   (crearPlan)="crearPlan()"
                 />
-                <app-pd-plans-list
-                  [planes]="planes()"
-                  [isLoading]="isLoadingPlanes()"
-                  (verPlan)="verPlan($event)"
-                  (crearPlan)="crearPlan()"
-                />
-                <app-pd-comments
-                  [comentarios]="comentarios()"
-                  [comentariosPendientes]="comentariosPendientes()"
-                  [isLoading]="isLoadingComentarios()"
-                  (irASesion)="irASesionComentario($event)"
-                  (marcarRevisado)="marcarComentarioRevisado($event)"
-                  (marcarTodosRevisados)="marcarTodosRevisados()"
-                />
+                @defer (on viewport; prefetch on idle) {
+                  <app-pd-plans-list
+                    [planes]="planes()"
+                    [isLoading]="isLoadingPlanes()"
+                    (verPlan)="verPlan($event)"
+                    (crearPlan)="crearPlan()"
+                  />
+                } @placeholder {
+                  <div class="pd2-defer pd2-defer--card"></div>
+                }
+                @defer (on viewport; prefetch on idle) {
+                  <app-pd-comments
+                    [comentarios]="comentarios()"
+                    [comentariosPendientes]="comentariosPendientes()"
+                    [isLoading]="isLoadingComentarios()"
+                    (irASesion)="irASesionComentario($event)"
+                    (marcarRevisado)="marcarComentarioRevisado($event)"
+                    (marcarTodosRevisados)="marcarTodosRevisados()"
+                  />
+                } @placeholder {
+                  <div class="pd2-defer pd2-defer--card"></div>
+                }
               </aside>
             </div>
           } @else {
@@ -200,69 +216,96 @@ interface DialogClosedResult {
             </ui2-collapsible>
 
             <ui2-collapsible title="Adherencia semanal" [defaultOpen]="true">
-              <app-pd-weekly-bars-card
-                [weeks]="estadisticas()?.adherenciaSemanal ?? []"
-                [rangoLabel]="rangoLabel"
-                [bare]="true"
-              />
+              @defer (on viewport; prefetch on idle) {
+                <app-pd-weekly-bars-card
+                  [weeks]="estadisticas()?.adherenciaSemanal ?? []"
+                  [rangoLabel]="rangoLabel"
+                  [bare]="true"
+                />
+              } @placeholder {
+                <div class="pd2-defer pd2-defer--card"></div>
+              }
             </ui2-collapsible>
 
             <ui2-collapsible
               title="Actividad"
               [count]="sesiones().length"
               [defaultOpen]="false"
+              (openChange)="onCollapsibleOpen('actividad', $event)"
             >
-              <app-pd-activity-timeline
-                [sesiones]="sesionesVisibles()"
-                [notificacionesPorRegistro]="notificacionesPorRegistro()"
-                [fechaExpandida]="sesionExpandida()"
-                [totalSesiones]="sesiones().length"
-                [rangoLabel]="rangoLabel"
-                [diasProgramados]="diasProgramados()"
-                [diasSinActividad]="diasSinActividad()"
-                [isLoading]="isLoadingSesiones()"
-                [bare]="true"
-                (verSesion)="verSesion($event)"
-                (toggleComentarios)="toggleComentarios($event)"
-                (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
-              />
+              @defer (when collapsibleOpen().actividad; prefetch on viewport) {
+                <app-pd-activity-timeline
+                  [sesiones]="sesionesVisibles()"
+                  [notificacionesPorRegistro]="notificacionesPorRegistro()"
+                  [fechaExpandida]="sesionExpandida()"
+                  [totalSesiones]="sesiones().length"
+                  [rangoLabel]="rangoLabel"
+                  [diasProgramados]="diasProgramados()"
+                  [diasSinActividad]="diasSinActividad()"
+                  [isLoading]="isLoadingSesiones()"
+                  [bare]="true"
+                  (verSesion)="verSesion($event)"
+                  (toggleComentarios)="toggleComentarios($event)"
+                  (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
+                />
+              } @placeholder {
+                <div class="pd2-defer pd2-defer--list"></div>
+              }
             </ui2-collapsible>
 
             <ui2-collapsible
               title="Planes asignados"
               [count]="planes().length"
               [defaultOpen]="false"
+              (openChange)="onCollapsibleOpen('planes', $event)"
             >
-              <app-pd-plans-list
-                [planes]="planes()"
-                [isLoading]="isLoadingPlanes()"
-                [bare]="true"
-                (verPlan)="verPlan($event)"
-                (crearPlan)="crearPlan()"
-              />
+              @defer (when collapsibleOpen().planes; prefetch on viewport) {
+                <app-pd-plans-list
+                  [planes]="planes()"
+                  [isLoading]="isLoadingPlanes()"
+                  [bare]="true"
+                  (verPlan)="verPlan($event)"
+                  (crearPlan)="crearPlan()"
+                />
+              } @placeholder {
+                <div class="pd2-defer pd2-defer--list"></div>
+              }
             </ui2-collapsible>
 
             <ui2-collapsible
               title="Comentarios"
               [count]="comentariosPendientes() || null"
               [defaultOpen]="false"
+              (openChange)="onCollapsibleOpen('comentarios', $event)"
             >
-              <app-pd-comments
-                [comentarios]="comentarios()"
-                [comentariosPendientes]="comentariosPendientes()"
-                [isLoading]="isLoadingComentarios()"
-                [bare]="true"
-                (irASesion)="irASesionComentario($event)"
-                (marcarRevisado)="marcarComentarioRevisado($event)"
-                (marcarTodosRevisados)="marcarTodosRevisados()"
-              />
+              @defer (when collapsibleOpen().comentarios; prefetch on viewport) {
+                <app-pd-comments
+                  [comentarios]="comentarios()"
+                  [comentariosPendientes]="comentariosPendientes()"
+                  [isLoading]="isLoadingComentarios()"
+                  [bare]="true"
+                  (irASesion)="irASesionComentario($event)"
+                  (marcarRevisado)="marcarComentarioRevisado($event)"
+                  (marcarTodosRevisados)="marcarTodosRevisados()"
+                />
+              } @placeholder {
+                <div class="pd2-defer pd2-defer--list"></div>
+              }
             </ui2-collapsible>
 
-            <ui2-collapsible title="Datos del paciente" [defaultOpen]="false">
-              <app-pd-paciente-data
-                [paciente]="paciente()"
-                [meta]="dataMeta()"
-              />
+            <ui2-collapsible
+              title="Datos del paciente"
+              [defaultOpen]="false"
+              (openChange)="onCollapsibleOpen('datos', $event)"
+            >
+              @defer (when collapsibleOpen().datos; prefetch on viewport) {
+                <app-pd-paciente-data
+                  [paciente]="paciente()"
+                  [meta]="dataMeta()"
+                />
+              } @placeholder {
+                <div class="pd2-defer pd2-defer--list"></div>
+              }
             </ui2-collapsible>
           }
         }
@@ -322,6 +365,19 @@ interface DialogClosedResult {
         position: sticky;
         top: 16px;
         align-self: flex-start;
+      }
+      .pd2-defer {
+        background: transparent;
+        width: 100%;
+      }
+      .pd2-defer--card {
+        min-height: 220px;
+      }
+      .pd2-defer--timeline {
+        min-height: 480px;
+      }
+      .pd2-defer--list {
+        min-height: 120px;
       }
     `,
   ],
@@ -384,6 +440,22 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
   readonly sesionExpandida = signal<string | null>(null);
 
   readonly rangoLabel = `${RANGO_DIAS} días`;
+
+  // Tracking de collapsibles móviles para @defer (sticky: una vez abierto, permanece cargado).
+  readonly collapsibleOpen = signal({
+    actividad: false,
+    planes: false,
+    comentarios: false,
+    datos: false,
+  });
+
+  onCollapsibleOpen(
+    key: 'actividad' | 'planes' | 'comentarios' | 'datos',
+    isOpen: boolean,
+  ): void {
+    if (!isOpen) return;
+    this.collapsibleOpen.update((s) => ({ ...s, [key]: true }));
+  }
 
   // Computeds
   readonly idsClinicas = computed(

@@ -133,16 +133,7 @@
         }
       </header>
 
-      @if (items().length === 0) {
-        <ui2-empty-state
-          icon="fitness_center"
-          title="Sin ejercicios todavía"
-          message="Añade ejercicios del catálogo para construir el plan."
-          actionLabel="Agregar ejercicios"
-          actionIcon="add"
-          (action)="irAGaleria()"
-        ></ui2-empty-state>
-      } @else {
+      @defer (when items().length > 0; prefetch on idle) {
         <div
           class="pb-ex-list"
           cdkDropList
@@ -334,6 +325,19 @@
           <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
           <span>Añadir ejercicio desde la galería</span>
         </button>
+      } @placeholder {
+        @if (items().length === 0) {
+          <ui2-empty-state
+            icon="fitness_center"
+            title="Sin ejercicios todavía"
+            message="Añade ejercicios del catálogo para construir el plan."
+            actionLabel="Agregar ejercicios"
+            actionIcon="add"
+            (action)="irAGaleria()"
+          ></ui2-empty-state>
+        } @else {
+          <div class="pb-ex-defer-placeholder"></div>
+        }
       }
     </section>
   </form>

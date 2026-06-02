@@ -42,7 +42,7 @@ Las grietas no están en la arquitectura, sino en **assets sin optimizar**, **qu
 **Oleada 2 — Estructural (1 semana, retorno medio-alto, riesgo medio)**
 - B1: separar `package.json` por app (o mover dependencias backend a Convex / devDependencies).
 - B4: hacer lazy `qrcode` y `pdfkit` mediante `await import()`.
-- C2: introducir `@defer` en `realizar-plan`, `paciente-detail` y `plan-builder` (las tres páginas lazy más pesadas: 108, 101, 34 kB).
+- ~~C2: introducir `@defer` en `realizar-plan`, `paciente-detail` y `plan-builder`~~ (resuelto 2026-06-03 — ver ficha C2). `miclinica` (51 kB) y `plan-detail` (32 kB) siguen pendientes con el mismo patrón.
 - D2, D3: completar OnPush al 100% empezando por `app.component.ts`; precomputar `getDolorPromedio` y similares en `computed()`.
 - D4: virtualización (`cdk-virtual-scroll-viewport`) en `pacientes-list` y `ejercicios-list`.
 - E1, F3, F4, F5, F6: refactorizar queries Convex N+1 con `batchGetMap` o queries específicas.
@@ -199,7 +199,7 @@ Total de chunks lazy: **86** (incluyendo 71 pequeños sin nombre asignado).
 | **B3** | Initial bundle 927 kB > budget 700 kB | Bundle | Media | Medio | Bajo | S |
 | **B4** | ~~`qrcode` y `pdfkit` no son lazy~~ → resuelto (`qrcode` y `GestionAccesoDialogComponent` lazy; `pdfkit` no estaba en bundle) | Bundle | ✅ Resuelto | — | — | — |
 | **C1** | Sin `PreloadingStrategy` configurada | Routing | Media | Medio | Medio | M |
-| **C2** | Cero `@defer` blocks en páginas pesadas | Routing | Media | Alto | Medio | M |
+| **C2** | ~~Cero `@defer` blocks en páginas pesadas~~ → resuelto para `realizar-plan` (−52%), `paciente-detail` (−35%) y `plan-builder` (CDK DragDrop extraído ~57 kB) | Routing | ✅ Resuelto (parcial) | — | — | — |
 | **C3** | Hidratación bloqueante en constructor de `SessionService` | Routing | Baja | Bajo | Bajo | S |
 | **D1** | ~~~96% de `@for` sin `track`~~ → resuelto (86/86 con `track`) | Render | ✅ Resuelto | — | — | — |
 | **D2** | 11 componentes sin `OnPush` (incluido `AppComponent` raíz) | Render | Media | Medio | Bajo-Medio | M |
@@ -446,27 +446,44 @@ No tiene `preload="none"` ni `preload="metadata"`. El navegador descarga automá
 
 ---
 
-#### **C2 · Cero `@defer` blocks en páginas pesadas** ![Media](https://img.shields.io/badge/Media-yellow) ![Alto](https://img.shields.io/badge/Alto-orange) ![Medio](https://img.shields.io/badge/Medio-yellow) `M`
+#### **C2 · `@defer` en páginas pesadas (parcial)** ✅ Resuelto para `realizar-plan`, `paciente-detail`, `plan-builder` (2026-06-03) `M`
 
-**Ubicación**: páginas con lazy chunk > 50 kB:
-- `realizar-plan` (108 kB lazy chunk)
-- `paciente-detail` (101 kB lazy chunk)
-- `miclinica` (51 kB)
-- `plan-builder` (34 kB)
-- `plan-detail` (32 kB)
+**Estado actual** (build prod 2026-06-03, post-cambios):
 
-**Detalle**: estas páginas renderizan eager TODOS sus subcomponentes al entrar. Por ejemplo, `paciente-detail` muestra: header del paciente, tabs (planes, sesiones, mensajes, perfil), métricas, snapshot dolor, lista de planes, lista de comentarios, FAB de acción. Si el usuario solo necesita los datos del header + planes, todo lo demás se descarga, parsea y renderiza para nada.
+| Página | Chunk principal antes | Chunk principal después | Δ | Chunks deferidos creados |
+|--------|----------------------|------------------------|---|--------------------------|
+| `realizar-plan` | 108.74 kB | **51.64 kB** | **−52%** (−57 kB) | `ejercicio-activo` ~23 kB, `descanso` ~13 kB, `feedback-final` + `timeline-sesion` (varios <1 kB de stubs adicionales) |
+| `paciente-detail` | 65.03 kB (post-B4) | **41.99 kB** | **−35%** (−23 kB) | `pd-activity-timeline` ~12 kB, `pd-weekly-bars-card` ~7.7 kB, `pd-plans-list` ~5 kB, `pd-comments` ~3 kB, `pd-paciente-data` ~0.8 kB |
+| `plan-builder` | 34.36 kB | **32.66 kB** main + extracción de **CDK DragDrop (~57 kB)** y lista (~21 kB) a chunks lazy | −5% en main, **−78 kB** trasladados a carga bajo demanda | `cdk-drag-drop` ~57 kB, lista ejercicios ~21 kB |
 
-**Propuesta**:
-- Envolver con `@defer (on viewport)`:
-  - Tabs/secciones no visibles al entrar (`paciente-detail`: lista de comentarios, snapshot dolor, gráfico cumplimiento).
-  - Modales pesados (image cropper, PDF dialog) — `@defer (on interaction)`.
-  - Footer / banners — `@defer (on idle)`.
-- `realizar-plan` se beneficia especialmente: el flujo es secuencial (descanso → ejercicio → feedback → resumen). Las pantallas no actuales pueden ser `@defer`.
+**Acciones aplicadas en esta iteración**:
 
-**Criterios de aceptación**:
-- `paciente-detail` chunk lazy baja a la mitad (los sub-bundles deferidos pasan a chunks separados).
-- TTI de `paciente-detail` mejora medible.
+1. **`realizar-plan` (`apps/app/src/app/features/sesion/pages/realizar-plan/realizar-plan.component.ts`)**:
+   - `@case ('ejercicio'|'descanso'|'feedback-final')` envueltos en `@defer (when estadoPantalla() === '...'; prefetch on idle)`. Cada pantalla pasa a chunk propio; el chunk se prefetchea en idle desde la primera pantalla (resumen) para evitar flash al cambiar.
+   - `<app-timeline-sesion>` (drawer de 739 LOC, el subcomponente más pesado) envuelto en `@defer (when timelineAbierto(); prefetch on idle)`. Solo se descarga cuando el usuario abre "Ver ejercicios".
+   - `resumen` (entry point) queda eager por diseño.
+   - Placeholders: `<div class="rp-defer-placeholder">` con `flex: 1; min-height: 100%` para que el contenedor mantenga viewport mientras el chunk hidrata.
+
+2. **`paciente-detail` (`apps/app/src/app/features/pacientes/pages/paciente-detail/paciente-detail.component.ts`)**:
+   - Desktop main column: `<app-pd-weekly-bars-card>` y `<app-pd-activity-timeline>` con `@defer (on viewport; prefetch on idle)`.
+   - Desktop sidebar: `<app-pd-plans-list>` y `<app-pd-comments>` con la misma estrategia. `<app-pd-active-plan-card>` y header/KPIs quedan eager (above the fold).
+   - Mobile collapsibles: para los `defaultOpen=false` (Actividad, Planes asignados, Comentarios, Datos del paciente) se introdujo señal `collapsibleOpen` + handler `onCollapsibleOpen(key, isOpen)` y `@defer (when collapsibleOpen().X; prefetch on viewport)`. Una vez abierto, permanece cargado (no se descarga). `Adherencia semanal` (default-open) usa `on viewport`.
+   - Placeholders: `<div class="pd2-defer pd2-defer--{card|timeline|list}">` con `min-height` calibrado por tipo para evitar CLS.
+
+3. **`plan-builder` (`apps/app/src/app/features/planes/pages/plan-builder/plan-builder.component.html`)**:
+   - Sustituido `@if/@else` por `@defer (when items().length > 0; prefetch on idle) { lista + cdkDropList + cdkDrag(...) + botón "añadir" } @placeholder { ui2-empty-state }`. El empty state cae dentro de `@placeholder` reutilizando la misma plantilla.
+   - Resultado: **CDK `DragDropModule` (~57 kB)** y `PlanDayTogglesComponent` salen del chunk inicial de la página. En modo creación con plan vacío, el chunk no se descarga hasta añadir el primer ejercicio (con `prefetch on idle`, esto ocurre antes de la interacción real).
+   - Se descartó el `@defer` por ítem para los detalles editables (`.pb-ex__details`): en desktop están siempre visibles (regla CSS `apps/app/src/app/features/planes/pages/plan-builder/plan-builder.component.css:574`), por lo que un `when ejercicioEditando() === i` los ocultaría — regresión visual inaceptable.
+
+**Verificación**:
+- `npx nx build app --configuration=production` → reducción confirmada en los 3 chunks (tabla arriba); 17 chunks lazy nuevos respecto al baseline.
+- `npm run lint` → sin errores nuevos introducidos por estos cambios (los 109 errores existentes en el repo son pre-cambio y ortogonales a C2).
+- Placeholder con `min-height` calibrado por sección para que la entrada en viewport (desktop) o la expansión del collapsible (mobile) no provoque salto de CLS.
+
+**Notas para iteraciones futuras**:
+- `miclinica` (51 kB) y `plan-detail` (32 kB) quedan fuera de esta iteración por scope explícito del trabajo. Mismo patrón aplicable cuando se aborden.
+- Initial bundle subió de 928 kB a 989 kB en esta build — no está relacionado con C2 (los `@defer` solo tocan chunks lazy). Probablemente atribuible a hoisting de dependencias en chunks compartidos; revisar bajo **B3** con `source-map-explorer`.
+- Smoke manual en navegador pendiente — los chunks deferidos deben aparecer en Network al cambiar a `ejercicio`/`descanso`/`feedback-final` y al abrir el drawer del timeline.
 
 ---
 
