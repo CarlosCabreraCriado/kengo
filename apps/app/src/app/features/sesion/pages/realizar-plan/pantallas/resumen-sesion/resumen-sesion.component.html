@@ -59,7 +59,7 @@
       }
 
       <div class="exercises-list">
-        @for (item of ejercicios(); track $index; let i = $index) {
+        @for (item of ejercicios(); track item.planItemId; let i = $index) {
           <ui2-card [padding]="12" class="exercise-card">
             <div class="exercise-row">
               <!-- Order Number -->

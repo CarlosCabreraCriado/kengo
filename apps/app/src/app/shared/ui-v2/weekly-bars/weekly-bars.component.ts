@@ -15,6 +15,7 @@ export interface Ui2WeeklyBar {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="ui2-wb" role="img" [attr.aria-label]="ariaLabel()">
+      <!-- $index estable: barras semanales con orden fijo por día -->
       @for (bar of data(); track $index) {
         <div class="ui2-wb__col">
           <span class="ui2-wb__value" [class.ui2-wb__value--muted]="bar.value === 0">

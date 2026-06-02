@@ -154,6 +154,7 @@
                   </div>
                 }
 
+                <!-- $index estable: File[] sin id natural, orden coincide con el de subida -->
                 @for (file of newImageFiles(); track $index) {
                   <div class="ec-gallery-item ec-gallery-item--new">
                     <img [src]="getNewImagePreviewUrl(file)" alt="Nueva imagen" class="ec-gallery-img" />

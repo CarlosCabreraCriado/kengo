@@ -46,6 +46,7 @@ import {
 } from '../../../../shared/ui-v2';
 
 interface EjercicioProximo {
+  planItemId: string;
   nombre: string;
   portada?: string;
   series: number;
@@ -191,6 +192,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
 
           for (const ej of ejerciciosDia) {
             ejerciciosDelDia.push({
+              planItemId: ej.id!,
               nombre: ej.ejercicio.nombre,
               portada: ej.ejercicio.portada,
               series: ej.series ?? 3,

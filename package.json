@@ -24,6 +24,7 @@
     "cap:run:android": "cd apps/app && npx cap run android",
     "test": "nx test app",
     "lint": "nx lint app",
+    "check:track-index": "bash apps/app/scripts/check-track-index.sh",
     "start:landingpage": "nx serve landingpage",
     "build:landingpage": "nx build landingpage",
     "lint:landingpage": "nx lint landingpage",

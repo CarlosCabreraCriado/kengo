@@ -252,6 +252,7 @@
                 <span class="cc-gallery-count">{{ newImageFiles().length }} / 5</span>
               </div>
               <div class="cc-gallery-grid">
+                <!-- $index estable: File[] sin id natural, orden coincide con el de subida -->
                 @for (file of newImageFiles(); track $index) {
                   <div class="cc-gallery-item cc-gallery-item--new">
                     <img [src]="getNewImagePreviewUrl(file)" alt="Imagen seleccionada" class="cc-gallery-img" />

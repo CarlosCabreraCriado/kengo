@@ -115,7 +115,7 @@
                 </div>
               } @else {
                 <ul class="cal-detail__list">
-                  @for (ejercicio of sel.ejercicios; track $index) {
+                  @for (ejercicio of sel.ejercicios; track ejercicio.planItemId) {
                     <li class="cal-detail__item">
                       <div class="cal-detail__thumb">
                         @if (ejercicio.portada) {

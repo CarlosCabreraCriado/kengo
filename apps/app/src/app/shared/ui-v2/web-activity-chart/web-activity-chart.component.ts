@@ -41,6 +41,7 @@ export interface Ui2ActivityDay {
       </header>
 
       <div class="ui2-wac__chart" role="img" [attr.aria-label]="title()">
+        <!-- $index estable: chart con orden fijo por posición -->
         @for (d of data(); track $index) {
           <div class="ui2-wac__bar-col">
             <div

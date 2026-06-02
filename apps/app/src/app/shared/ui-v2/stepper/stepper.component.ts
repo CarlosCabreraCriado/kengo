@@ -82,6 +82,7 @@ export class Ui2StepComponent {
           class="ui2-stepper__header"
           [class.ui2-stepper__header--vertical]="orientation === 'vertical'"
         >
+          <!-- $index estable: proyección de <ng-content>, el orden es la propia identidad del step -->
           @for (step of steps; track $index; let i = $index; let isLast = $last) {
             <button
               type="button"

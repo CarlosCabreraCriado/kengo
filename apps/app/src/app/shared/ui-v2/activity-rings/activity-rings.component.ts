@@ -25,6 +25,7 @@ interface RingData {
         [attr.viewBox]="viewBox()"
         class="ui2-rings__svg"
       >
+        <!-- $index estable: 3 anillos fijos, sin reordenado -->
         @for (ring of rings(); track $index) {
           <g>
             <circle

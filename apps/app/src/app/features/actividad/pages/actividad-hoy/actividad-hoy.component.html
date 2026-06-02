@@ -113,7 +113,7 @@
             @if (esDiaExpandido(dia.fecha)) {
               <div class="ah-day-content">
                 <ul class="ah-day-list">
-                  @for (ejercicio of dia.ejercicios; track $index) {
+                  @for (ejercicio of dia.ejercicios; track ejercicio.planItemId) {
                     <li class="ah-day-list__item">
                       <span class="ah-day-list__thumb">
                         @if (ejercicio.portada) {
