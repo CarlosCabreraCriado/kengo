@@ -401,7 +401,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       }
 
       if (planId) {
-        if (this.isEditMode() && !wasVersioned) {
+        if (this.isEditMode()) {
           this.svc.markAsSaved();
         }
         const mensaje = wasVersioned
