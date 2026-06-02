@@ -1,5 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { SessionService } from '../../../core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { ClinicaActivaService, SessionService } from '../../../core';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../convex/_generated/dataModel';
@@ -61,6 +61,7 @@ interface RawConversation {
   _id: string;
   _creationTime: number;
   clinicId: string;
+  clinicName: string | null;
   otherUserId: string;
   otherFirstName: string;
   otherLastName: string;
@@ -91,10 +92,32 @@ interface RawMessage {
 export class MensajesService {
   private session = inject(SessionService);
   private convex = inject(ConvexService);
+  private clinicaActiva = inject(ClinicaActivaService);
 
   private readonly _activeConversationId = signal<string | null>(null);
   private readonly _searchTerm = signal<string>('');
   private readonly _autoStartAttempted = signal<boolean>(false);
+
+  constructor() {
+    // Marca como leída la conversación activa de forma reactiva: si está
+    // bloqueada por clínica activa distinta, no se dispara; al cambiar a la
+    // clínica correcta (desde el switcher o el CTA), `isActiveClinic` pasa a
+    // true y el effect ejecuta automáticamente markAsRead.
+    let lastMarkedId: string | null = null;
+    effect(() => {
+      const conv = this.activeConversation();
+      if (!conv) {
+        lastMarkedId = null;
+        return;
+      }
+      if (!conv.isActiveClinic) return;
+      if (lastMarkedId === conv.id) return;
+      lastMarkedId = conv.id;
+      this.markAsRead(conv.id).catch((err) =>
+        console.error('Error al marcar como leído:', err),
+      );
+    });
+  }
 
   private readonly conversationsQuery = this.convex.watchQuery(
     api.conversations.queries.listMyConversations,
@@ -120,7 +143,8 @@ export class MensajesService {
   readonly conversations = computed<Conversation[]>(() => {
     const raw = (this.conversationsQuery.value() ?? []) as RawConversation[];
     const me = this.meId();
-    return raw.map((r) => this.mapConversation(r, me));
+    const activeClinicId = this.clinicaActiva.selectedClinicaId();
+    return raw.map((r) => this.mapConversation(r, me, activeClinicId));
   });
 
   readonly activeConversationId = this._activeConversationId.asReadonly();
@@ -131,6 +155,17 @@ export class MensajesService {
     const id = this._activeConversationId();
     if (!id) return null;
     return this.conversations().find((c) => c.id === id) ?? null;
+  });
+
+  /**
+   * `true` cuando la conversación activa pertenece a una clínica distinta
+   * a la activa: el detalle debe mostrar la vista de bloqueo, no el thread.
+   * Solo aplica si hay una conversación activa cargada; mientras se carga
+   * (`activeConversation()` undefined), no se considera bloqueada.
+   */
+  readonly isActiveConversationBlocked = computed<boolean>(() => {
+    const conv = this.activeConversation();
+    return !!conv && conv.isActiveClinic === false;
   });
 
   readonly filteredConversations = computed<Conversation[]>(() => {
@@ -167,11 +202,8 @@ export class MensajesService {
 
   selectConversation(id: string | null): void {
     this._activeConversationId.set(id);
-    if (id) {
-      this.markAsRead(id).catch((err) =>
-        console.error('Error al marcar como leído:', err),
-      );
-    }
+    // El marcado como leído lo gestiona un effect en el constructor que
+    // respeta el bloqueo por clínica activa.
   }
 
   setSearchTerm(term: string): void {
@@ -205,10 +237,12 @@ export class MensajesService {
   }
 
   async startConversationWithFisio(): Promise<string | null> {
+    const clinicId = this.clinicaActiva.selectedClinicaId();
+    if (!clinicId) return null;
     try {
       const id = await this.convex.mutation(
         api.conversations.mutations.startConversationWithFisio,
-        {},
+        { clinicId: clinicId as Id<'clinics'> },
       );
       return id ? (id as unknown as string) : null;
     } catch (err) {
@@ -219,6 +253,10 @@ export class MensajesService {
 
   markAutoStartAttempted(): void {
     this._autoStartAttempted.set(true);
+  }
+
+  resetAutoStartAttempted(): void {
+    this._autoStartAttempted.set(false);
   }
 
   async startConversationWithPatient(
@@ -268,7 +306,11 @@ export class MensajesService {
     }).format(date);
   }
 
-  private mapConversation(raw: RawConversation, meId: string): Conversation {
+  private mapConversation(
+    raw: RawConversation,
+    meId: string,
+    activeClinicId: string | null,
+  ): Conversation {
     const fullName = `${raw.otherFirstName} ${raw.otherLastName}`.trim();
     const timestamp = raw.lastMessageAt
       ? new Date(raw.lastMessageAt).toISOString()
@@ -282,6 +324,9 @@ export class MensajesService {
       participantGradient: gradientFor(raw.otherUserId),
       participantOnline: false,
       participantLastSeen: undefined,
+      clinicId: raw.clinicId,
+      clinicName: raw.clinicName,
+      isActiveClinic: raw.clinicId === activeClinicId,
       lastMessage: {
         text: raw.lastMessageText ?? '',
         timestamp,

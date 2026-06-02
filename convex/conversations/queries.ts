@@ -42,12 +42,17 @@ export const listMyConversations = query({
     const otherIds = all.map((c) =>
       c.pacienteId === me._id ? c.fisioId : c.pacienteId,
     );
-    const usersMap = await batchGetMap<"users">(ctx, otherIds);
+    const clinicIds = all.map((c) => c.clinicId);
+    const [usersMap, clinicsMap] = await Promise.all([
+      batchGetMap<"users">(ctx, otherIds),
+      batchGetMap<"clinics">(ctx, clinicIds),
+    ]);
 
     return all.map((c) => {
       const iAmPaciente = c.pacienteId === me._id;
       const otherId = iAmPaciente ? c.fisioId : c.pacienteId;
       const other = usersMap.get(otherId);
+      const clinic = clinicsMap.get(c.clinicId);
       const myUnreadCount = iAmPaciente
         ? c.pacienteUnreadCount
         : c.fisioUnreadCount;
@@ -56,6 +61,7 @@ export const listMyConversations = query({
         _id: c._id,
         _creationTime: c._creationTime,
         clinicId: c.clinicId,
+        clinicName: clinic?.nombreComercial ?? clinic?.nombre ?? null,
         otherUserId: otherId,
         otherFirstName: other?.firstName ?? "",
         otherLastName: other?.lastName ?? "",

@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import { Ui2AvatarComponent } from '../../../../shared/ui-v2';
+import { Ui2AvatarComponent, Ui2PillComponent } from '../../../../shared/ui-v2';
 import { MensajesService } from '../../data-access/mensajes.service';
 import type { Conversation } from '../../data-access/models/conversation.model';
 
 @Component({
   selector: 'app-chat-row',
   standalone: true,
-  imports: [Ui2AvatarComponent],
+  imports: [Ui2AvatarComponent, Ui2PillComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button
@@ -15,6 +15,7 @@ import type { Conversation } from '../../data-access/models/conversation.model';
       [class.row--active]="active()"
       [class.row--mobile]="mobile()"
       [class.row--mobile-card]="mobile() && hasUnread()"
+      [class.row--attenuated]="attenuated()"
       (click)="rowSelect.emit(conversation().id)"
     >
       <ui2-avatar
@@ -29,6 +30,11 @@ import type { Conversation } from '../../data-access/models/conversation.model';
           <span class="row__name" [class.row__name--unread]="hasUnread()">{{ conversation().participantName }}</span>
           <span class="row__time" [class.row__time--unread]="hasUnread()">{{ relativeTime() }}</span>
         </div>
+        @if (attenuated() && conversation().clinicName) {
+          <div class="row__clinic">
+            <ui2-pill variant="neutral" size="sm">{{ conversation().clinicName }}</ui2-pill>
+          </div>
+        }
         <div class="row__bottom">
           <span class="row__preview" [class.row__preview--unread]="hasUnread()">{{ previewText() }}</span>
           @if (hasUnread()) {
@@ -67,6 +73,12 @@ import type { Conversation } from '../../data-access/models/conversation.model';
       background: white;
       border-color: rgba(0, 0, 0, 0.04);
       box-shadow: var(--shadow-card);
+    }
+    .row--attenuated { filter: grayscale(0.85); opacity: 0.55; }
+    .row--attenuated:hover { opacity: 0.72; }
+
+    .row__clinic {
+      margin-top: 2px;
     }
 
     .row__body {
@@ -155,6 +167,7 @@ export class ChatRowComponent {
   readonly rowSelect = output<string>();
 
   readonly hasUnread = computed(() => this.conversation().unreadCount > 0);
+  readonly attenuated = computed(() => !this.conversation().isActiveClinic);
 
   readonly relativeTime = computed(() =>
     this.mensajes.formatRelativeDay(this.conversation().lastMessage.timestamp),

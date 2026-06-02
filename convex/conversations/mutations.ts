@@ -84,18 +84,29 @@ export const startConversationWithPatient = mutation({
 });
 
 export const startConversationWithFisio = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    clinicId: v.optional(v.id("clinics")),
+  },
+  handler: async (ctx, args) => {
     const paciente = await getAuthenticatedUser(ctx);
 
-    const assignments = await ctx.db
-      .query("assignments")
-      .filter((q) => q.eq(q.field("pacienteId"), paciente._id))
-      .collect();
-
-    if (assignments.length === 0) return null;
-
-    const assignment = assignments[0];
+    let assignment;
+    if (args.clinicId) {
+      assignment = await ctx.db
+        .query("assignments")
+        .withIndex("by_pacienteId_clinicId", (q) =>
+          q.eq("pacienteId", paciente._id).eq("clinicId", args.clinicId!),
+        )
+        .first();
+      if (!assignment) return null;
+    } else {
+      const assignments = await ctx.db
+        .query("assignments")
+        .filter((q) => q.eq(q.field("pacienteId"), paciente._id))
+        .collect();
+      if (assignments.length === 0) return null;
+      assignment = assignments[0];
+    }
 
     const existing = await findExistingConversation(
       ctx,

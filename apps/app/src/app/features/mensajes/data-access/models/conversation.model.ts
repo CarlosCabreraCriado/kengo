@@ -15,6 +15,9 @@ export interface Conversation {
   participantGradient: Ui2AvatarGradient;
   participantOnline: boolean;
   participantLastSeen?: string;
+  clinicId: string;
+  clinicName: string | null;
+  isActiveClinic: boolean;
   lastMessage: {
     text: string;
     timestamp: string;

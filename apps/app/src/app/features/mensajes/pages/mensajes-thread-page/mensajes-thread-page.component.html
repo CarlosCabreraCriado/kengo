@@ -6,14 +6,21 @@
         [mostrarStats]="mostrarStats()"
         [participantRole]="participantRole()"
       ></app-chat-header>
-      <div class="thread-page__body">
-        <app-chat-thread [items]="items()"></app-chat-thread>
-      </div>
-      <app-chat-composer
-        [placeholder]="composerPlaceholder()"
-        [disabled]="bloqueoComposer()"
-        (send)="onSend($event)"
-      ></app-chat-composer>
+      @if (bloqueadoPorClinica()) {
+        <app-chat-clinic-block
+          [clinicName]="conv.clinicName"
+          (switchClinic)="onSwitchToClinic()"
+        ></app-chat-clinic-block>
+      } @else {
+        <div class="thread-page__body">
+          <app-chat-thread [items]="items()"></app-chat-thread>
+        </div>
+        <app-chat-composer
+          [placeholder]="composerPlaceholder()"
+          [disabled]="bloqueoComposer()"
+          (send)="onSend($event)"
+        ></app-chat-composer>
+      }
     </section>
   } @else {
     <section class="thread-page thread-page--mobile">
@@ -26,15 +33,22 @@
           (back)="onBack()"
         ></app-chat-header>
       </div>
-      <div class="thread-page__thread" [class.thread-page__thread--with-subbar]="mostrarStats() && !!conv.patientStats">
-        <app-chat-thread [items]="items()" [mobile]="true"></app-chat-thread>
-      </div>
-      <div class="thread-page__composer">
-        <app-chat-composer
-          [placeholder]="placeholder()"
-          (send)="onSend($event)"
-        ></app-chat-composer>
-      </div>
+      @if (bloqueadoPorClinica()) {
+        <app-chat-clinic-block
+          [clinicName]="conv.clinicName"
+          (switchClinic)="onSwitchToClinic()"
+        ></app-chat-clinic-block>
+      } @else {
+        <div class="thread-page__thread" [class.thread-page__thread--with-subbar]="mostrarStats() && !!conv.patientStats">
+          <app-chat-thread [items]="items()" [mobile]="true"></app-chat-thread>
+        </div>
+        <div class="thread-page__composer">
+          <app-chat-composer
+            [placeholder]="placeholder()"
+            (send)="onSend($event)"
+          ></app-chat-composer>
+        </div>
+      }
     </section>
   }
 }

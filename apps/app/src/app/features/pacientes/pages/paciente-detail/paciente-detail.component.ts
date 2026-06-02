@@ -12,6 +12,7 @@ import { useResponsive } from '../../../../shared';
 
 // Servicios (mismos que paciente-detail actual)
 import { SessionService } from '../../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
@@ -332,6 +333,7 @@ export class PacienteDetailComponent implements OnInit {
   private comentariosService = inject(ComentariosPacienteService);
   private asignacionesService = inject(AsignacionesService);
   private clinicasService = inject(ClinicasService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private mensajesService = inject(MensajesService);
   private toast = inject(ToastService);
   private convex = inject(ConvexService);
@@ -763,10 +765,15 @@ export class PacienteDetailComponent implements OnInit {
   async onEnviarMensaje(): Promise<void> {
     const p = this.paciente();
     if (!p?.id || this.enviandoMensaje()) return;
+    const clinicId = this.clinicaActiva.selectedClinicaId();
+    if (!clinicId) {
+      this.toast.error('Selecciona una clínica activa para enviar mensajes.');
+      return;
+    }
     this.enviandoMensaje.set(true);
     try {
       const conversationId =
-        await this.mensajesService.startConversationWithPatient(p.id);
+        await this.mensajesService.startConversationWithPatient(p.id, clinicId);
       if (conversationId) {
         this.router.navigate(['/mensajes', conversationId]);
       } else {
