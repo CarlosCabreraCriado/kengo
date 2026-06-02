@@ -36,7 +36,6 @@ import {
 
 // Diálogos
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
-import { GestionAccesoDialogComponent } from '../../components/gestion-acceso-dialog/gestion-acceso-dialog.component';
 
 // UI v2
 import {
@@ -770,9 +769,12 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  gestionarAcceso(): void {
+  async gestionarAcceso(): Promise<void> {
     const p = this.paciente();
     if (!p) return;
+    const { GestionAccesoDialogComponent } = await import(
+      '../../components/gestion-acceso-dialog/gestion-acceso-dialog.component'
+    );
     this.dialogService.open(GestionAccesoDialogComponent, {
       data: { paciente: p },
       maxWidth: '400px',

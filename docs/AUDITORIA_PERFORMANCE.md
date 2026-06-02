@@ -197,7 +197,7 @@ Total de chunks lazy: **86** (incluyendo 71 pequeños sin nombre asignado).
 | **B1** | Dependencias de backend en el `package.json` raíz | Bundle | Media | Medio | Medio | M |
 | **B2** | Tailwind sin `content` explícito (default v4) | Bundle | Baja | Medio | Bajo | S |
 | **B3** | Initial bundle 927 kB > budget 700 kB | Bundle | Media | Medio | Bajo | S |
-| **B4** | `qrcode` y `pdfkit` no son lazy | Bundle | Baja | Medio | Bajo | S |
+| **B4** | ~~`qrcode` y `pdfkit` no son lazy~~ → resuelto (`qrcode` y `GestionAccesoDialogComponent` lazy; `pdfkit` no estaba en bundle) | Bundle | ✅ Resuelto | — | — | — |
 | **C1** | Sin `PreloadingStrategy` configurada | Routing | Media | Medio | Medio | M |
 | **C2** | Cero `@defer` blocks en páginas pesadas | Routing | Media | Alto | Medio | M |
 | **C3** | Hidratación bloqueante en constructor de `SessionService` | Routing | Baja | Bajo | Bajo | S |
@@ -407,17 +407,22 @@ No tiene `preload="none"` ni `preload="metadata"`. El navegador descarga automá
 
 ---
 
-#### **B4 · `qrcode` y `pdfkit` no son lazy** ![Baja](https://img.shields.io/badge/Baja-blue) ![Medio](https://img.shields.io/badge/Medio-yellow) ![Bajo](https://img.shields.io/badge/Bajo-green) `S`
+#### **B4 · `qrcode` lazy + limpieza de `pdfkit` huérfano** ✅ Resuelto (2026-06-02) `S`
 
-**Ubicación**:
-- `qrcode`: importado estático en `apps/app/src/app/features/.../gestion-acceso-dialog.component.ts` (según el agente Explore; verificar con grep).
-- `pdfkit`: declaraciones en `apps/app/src/types/pdfkit-standalone.d.ts`.
+**Estado actual**: `qrcode` se carga bajo demanda dentro del componente que lo usa; `pdfkit` nunca llegó a estar en el bundle del frontend.
 
-**Detalle**: estas librerías solo se usan al pulsar "compartir QR" o "exportar PDF" — flujos puntuales que el 95% de los usuarios no ejecutará en una sesión.
+**Acciones aplicadas en esta iteración**:
+- `gestion-acceso-dialog.component.ts:151` — `generarQR()` ahora hace `const { default: QRCode } = await import('qrcode')` en lugar del import estático del módulo. `qrcode` queda en su propio chunk lazy.
+- `paciente-detail.component.ts:773` — `gestionarAcceso()` migrado a `async` y carga `GestionAccesoDialogComponent` con `await import(...)`, siguiendo el patrón ya usado por `DialogoPdfComponent` (`plan-detail.component.ts:412`), los diálogos de `miclinica.component.ts`, etc. Tras esto, ni el dialog ni `qrcode` viajan dentro del chunk lazy de `paciente-detail`.
+- `apps/app/src/types/pdfkit-standalone.d.ts` — se intentó eliminar pero **es necesario**. Aunque ningún `.ts` del frontend importa `pdfkit`, `tsconfig.app.json` type-checkea transitivamente la cadena de tipos que llega desde `convex/_generated/api` hasta `convex/pdf/actions.ts:3 (import PDFDocument from "pdfkit/js/pdfkit.standalone")`. Sin el `.d.ts` el build de producción falla con `TS7016: Could not find a declaration file for module 'pdfkit/js/pdfkit.standalone'`. El archivo se mantiene; el equivalente local de Convex sigue en `convex/pdf/pdfkit-standalone.d.ts`. La auditoría original interpretó este `.d.ts` como bundle leak, pero es solo soporte de tipos: la generación de PDFs es 100 % server-side y `app-dialogo-pdf` solo invoca `api.pdf.actions.generatePlanPdf` y descarga el blob — no hay runtime de `pdfkit` en el bundle del navegador.
 
-**Propuesta**: convertirlos en `await import('qrcode')` dentro de la función que los necesita. Angular los moverá a un chunk lazy.
+**Verificación**:
+- Build de producción: `qrcode` aparece como chunk lazy separado; el chunk de `paciente-detail` baja al sacar tanto `qrcode` como el código del dialog.
+- Smoke test: abrir paciente → "Gestionar acceso" → el QR se renderiza igual; en la primera apertura se observa el fetch del chunk `qrcode-*.js` en network.
 
-**Criterios de aceptación**: `qrcode` y `pdfkit` aparecen como lazy chunks separados en el build output, no en initial.
+**Notas para iteraciones futuras**:
+- `qrcode` sigue en `dependencies` raíz y en `allowedCommonJsDependencies` (`project.json:45,73`). Moverlo a un `package.json` por app es alcance de **B1**, no de este item.
+- Si en el futuro se introduce generación de PDFs en cliente (no recomendado), aplicar el mismo patrón `await import('pdfkit/js/pdfkit.standalone')` y restaurar el `.d.ts` puntualmente.
 
 ---
 

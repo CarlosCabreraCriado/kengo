@@ -8,7 +8,6 @@ import {
   ViewChild,
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import QRCode from 'qrcode';
 
 import { DialogService } from '../../../../shared';
 import {
@@ -152,6 +151,7 @@ export class GestionAccesoDialogComponent implements OnInit {
     if (!url || !this.qrCanvas?.nativeElement) return;
 
     try {
+      const { default: QRCode } = await import('qrcode');
       await QRCode.toCanvas(this.qrCanvas.nativeElement, url, {
         errorCorrectionLevel: 'M',
         width: 200,
