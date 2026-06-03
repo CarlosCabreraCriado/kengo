@@ -14,7 +14,6 @@ import {
 import { computeRiskScore, computeRachaActual } from "../_helpers/rollupComputation";
 import { pacienteTienePlanEnCurso } from "../_helpers/planStatus";
 import { syncPatientAggregateValue } from "../_helpers/syncPatientAggregateValue";
-import { executionsByPaciente } from "../aggregates/executionsByPaciente";
 import { executionsByPacienteDolor } from "../aggregates/executionsByPacienteDolor";
 import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
 import { patientsByClinicRiskScore } from "../aggregates/patientsByClinicRiskScore";
@@ -107,37 +106,51 @@ async function recomputePatientForWindow(
     )
     .collect();
 
-  // Iteramos dailies sólo para `ultimaActividad` y `dailyByFecha` (rachaActual).
-  // Adherencia y dolorPromedio se leen del aggregate.
+  // Iteramos dailies una sola vez: derivamos ultimaActividad, dailyByFecha
+  // (para rachaActual) y los conteos canónicos de adherencia.
+  //
+  // Adherencia: misma fórmula que `cumplimiento.service.ts:buildCumplimientoResponse`
+  // y que `aggregateDailies` en `rollups/internal.ts`:
+  //   diasProgramados = completado + parcial + fallido
+  //   adherencia = round(diasCompletados / diasProgramados * 100)
+  // El cálculo previo leía `executionsByPaciente.sum/count`, que solo cuenta
+  // ejecuciones reales y tiende a 100% cuando el paciente abre la app
+  // esporádicamente pero completa todo lo que abre — divergiendo del detalle.
   let ultimaActividad: string | undefined;
   const dailyByFecha = new Map<string, Doc<"dailyPatientRollup">>();
+  let diasProgramados = 0;
+  let diasCompletados = 0;
+
   for (const d of dailies) {
     dailyByFecha.set(d.fecha, d);
     if (d.totalCompletados > 0) {
-      if (!ultimaActividad || d.fecha > ultimaActividad)
+      if (!ultimaActividad || d.fecha > ultimaActividad) {
         ultimaActividad = d.fecha;
+      }
+    }
+    if (
+      d.estadoDia === "completado" ||
+      d.estadoDia === "parcial" ||
+      d.estadoDia === "fallido"
+    ) {
+      diasProgramados += 1;
+      if (d.estadoDia === "completado") diasCompletados += 1;
     }
   }
 
-  // Adherencia (sum/count) y dolorPromedio leídos directamente del aggregate
-  // particionado por (paciente, clínica). PR H5: sustituye el cálculo previo
-  // que iteraba dailies + executions con fórmulas distintas.
+  const adherencia =
+    diasProgramados > 0
+      ? Math.round((diasCompletados / diasProgramados) * 100)
+      : undefined;
+
+  // Dolor sigue leyéndose del aggregate por ejecución: el KPI de dolor del
+  // detalle consume el mismo snapshot (no recalcula), así que no hay
+  // discrepancia visible que arreglar aquí.
   const aggNamespace: [Id<"users">, Id<"clinics">] = [pacienteId, clinicId];
   const aggBounds = {
     lower: { key: desde, inclusive: true },
     upper: { key: hasta, inclusive: true },
   } as const;
-  const adhCount = await executionsByPaciente.count(ctx, {
-    namespace: aggNamespace,
-    bounds: aggBounds,
-  });
-  const adhSum = await executionsByPaciente.sum(ctx, {
-    namespace: aggNamespace,
-    bounds: aggBounds,
-  });
-  const adherencia =
-    adhCount > 0 ? Math.round((adhSum / adhCount) * 100) : undefined;
-
   const dolorCount = await executionsByPacienteDolor.count(ctx, {
     namespace: aggNamespace,
     bounds: aggBounds,
@@ -313,7 +326,9 @@ async function recomputeClinicForWindow(
   // `patientsByClinicAdherencia` vía sum()/count(). Tras H6c los aggregates
   // solo contienen pacientes con plan activo en la clínica, por lo que
   // sum/count representa correctamente la "salud actual" sin necesidad de
-  // iterar snapshots ni filtrar por enCurso.
+  // iterar snapshots ni filtrar por enCurso. Los valores almacenados en el
+  // aggregate vienen ahora de `dailyPatientRollup` (diasCompletados /
+  // diasProgramados); ver `recomputePatientForWindow`.
   const adherenciaPromedio = await loadAdherenciaPromedio(
     ctx,
     clinicId,
