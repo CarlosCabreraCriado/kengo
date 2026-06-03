@@ -63,16 +63,17 @@ export class NextSessionService {
   });
 
   constructor() {
+    // Una sola tentativa automática por (usuario|clínica). Si falla, esperar
+    // a `recargar()` explícito — evita bucles cuando `cargar()` lanza y
+    // `cargando.set(false)` re-dispararía el effect.
     effect(() => {
       const usuario = this.sessionService.usuario();
       const enPaciente = this.sessionService.enModoPaciente();
       const clinicId = this.clinicaActiva.selectedClinicaId();
       if (!usuario?.id || !enPaciente) return;
 
-      // Clave única (paciente, clínica). Si cambia, fuerza recarga.
       const currentKey = `${usuario.id}|${clinicId ?? ''}`;
-      if (this.lastLoadKey === currentKey && this.datosCargados()) return;
-      if (this.cargando()) return;
+      if (this.lastLoadKey === currentKey) return;
 
       this.lastLoadKey = currentKey;
       void this.cargar(clinicId);
@@ -103,7 +104,12 @@ export class NextSessionService {
       this.rawNext.set(r as NextSessionPayload | null);
       this.datosCargados.set(true);
     } catch (e) {
-      this.logger.error('Error al cargar próxima sesión:', e);
+      const msg = e instanceof Error ? e.message : String(e);
+      this.logger.error(
+        '[NextSessionService] Error al cargar próxima sesión:',
+        msg,
+        e,
+      );
       this.error.set('No se pudo cargar la próxima sesión.');
     } finally {
       this.cargando.set(false);

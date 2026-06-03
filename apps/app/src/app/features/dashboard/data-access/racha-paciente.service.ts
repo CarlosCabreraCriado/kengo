@@ -136,6 +136,9 @@ export class RachaPacienteService {
   });
 
   constructor() {
+    // Una sola tentativa automática por (usuario|clínica). Si falla, esperar
+    // a `recargar()` explícito — evita bucles cuando `cargar()` lanza y
+    // `cargando.set(false)` re-dispararía el effect.
     effect(() => {
       const usuario = this.sessionService.usuario();
       const enModoPaciente = this.sessionService.enModoPaciente();
@@ -144,8 +147,7 @@ export class RachaPacienteService {
       if (!usuario?.id || !enModoPaciente) return;
 
       const currentKey = `${usuario.id}|${clinicId ?? ''}`;
-      if (this.lastLoadKey === currentKey && this.datosCargados()) return;
-      if (this.cargando()) return;
+      if (this.lastLoadKey === currentKey) return;
 
       this.lastLoadKey = currentKey;
       this.cargar(usuario.id, clinicId);
@@ -156,8 +158,7 @@ export class RachaPacienteService {
   cargarSiNecesario(userId: string, clinicId?: string | null): void {
     const resolvedClinicId = clinicId ?? this.clinicaActiva.selectedClinicaId();
     const currentKey = `${userId}|${resolvedClinicId ?? ''}`;
-    if (this.lastLoadKey === currentKey && this.datosCargados()) return;
-    if (this.cargando()) return;
+    if (this.lastLoadKey === currentKey) return;
     this.lastLoadKey = currentKey;
     this.cargar(userId, resolvedClinicId);
   }
@@ -186,7 +187,12 @@ export class RachaPacienteService {
       this.rachaActual.set(this.calcularRacha(resp.dias));
       this.datosCargados.set(true);
     } catch (err) {
-      this.logger.error('Error al cargar racha:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        '[RachaPacienteService] Error al cargar racha:',
+        msg,
+        err,
+      );
     } finally {
       this.cargando.set(false);
     }

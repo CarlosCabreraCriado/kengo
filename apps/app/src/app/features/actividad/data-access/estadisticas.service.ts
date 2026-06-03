@@ -283,6 +283,10 @@ export class EstadisticasService {
     if (this.datosCargados() || this.cargando()) return;
     const usuario = this.sessionService.usuario();
     if (!usuario?.id) return;
+    const clinicId = this.clinicaActiva.selectedClinicaId();
+    const currentKey = `${usuario.id}|${clinicId ?? ''}`;
+    if (this.lastLoadKey === currentKey) return;
+    this.lastLoadKey = currentKey;
     void this.cargar();
   }
 
@@ -293,6 +297,9 @@ export class EstadisticasService {
   }
 
   constructor() {
+    // Una sola tentativa automática por (usuario|clínica). Si falla, esperar
+    // a `recargar()` explícito — evita bucles cuando una query del Promise.all
+    // de `cargar()` lanza y `cargando.set(false)` re-dispararía el effect.
     effect(() => {
       const usuario = this.sessionService.usuario();
       const enModoPaciente = this.sessionService.enModoPaciente();
@@ -300,8 +307,7 @@ export class EstadisticasService {
       if (!usuario?.id || !enModoPaciente) return;
 
       const currentKey = `${usuario.id}|${clinicId ?? ''}`;
-      if (this.lastLoadKey === currentKey && this.datosCargados()) return;
-      if (this.cargando()) return;
+      if (this.lastLoadKey === currentKey) return;
 
       this.lastLoadKey = currentKey;
       void this.cargar();
@@ -377,7 +383,12 @@ export class EstadisticasService {
       this.historialRaw.set(historial as SesionReciente[]);
       this.datosCargados.set(true);
     } catch (err) {
-      this.logger.error('Error al cargar estadísticas:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        '[EstadisticasService] Error al cargar estadísticas:',
+        msg,
+        err,
+      );
       this.error.set('No se pudieron cargar las estadísticas.');
     } finally {
       this.cargando.set(false);
