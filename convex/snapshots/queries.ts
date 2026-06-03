@@ -105,22 +105,36 @@ async function loadByAdherenciaAggregate(
  * Lo consume el detalle de paciente (`/mis-pacientes/:id`) para alimentar el
  * KPI de dolor con la misma fuente que el listado, garantizando que ambos
  * valores coincidan.
+ *
+ * Tras la fase 3a el snapshot está particionado por
+ * `(pacienteId, clinicId, ventana)`. El argumento `clinicId` es opcional
+ * por compatibilidad con callers antiguos: si se pasa, devuelve
+ * exactamente el snapshot de esa clínica; si no, devuelve el primero que
+ * encuentre (puede ser cualquiera de las clínicas del paciente). El TODO
+ * de propagar `clinicId` desde Angular queda como deuda separada.
  */
 export const getPatientMetricsByPaciente = query({
   args: {
     pacienteId: v.id("users"),
     ventana,
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     await assertCanAccessPaciente(ctx, user._id, args.pacienteId);
 
-    return await ctx.db
+    const base = ctx.db
       .query("patientMetricsSnapshot")
       .withIndex("by_pacienteId_ventana", (q) =>
         q.eq("pacienteId", args.pacienteId).eq("ventana", args.ventana),
-      )
-      .unique();
+      );
+    if (args.clinicId !== undefined) {
+      const clinicId = args.clinicId;
+      return await base
+        .filter((q) => q.eq(q.field("clinicId"), clinicId))
+        .first();
+    }
+    return await base.first();
   },
 });
 

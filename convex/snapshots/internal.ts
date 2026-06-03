@@ -359,7 +359,11 @@ async function recomputeClinicForWindow(
     pacienteIds.filter((_, i) => enCursoFlags[i]),
   );
 
-  // Snapshots por paciente para esa ventana.
+  // Snapshots por paciente para esa ventana. Tras la fase 3a el snapshot
+  // está particionado por (pacienteId, clinicId, ventana) pero el único
+  // índice disponible es `by_pacienteId_ventana` → filtramos por clinicId y
+  // usamos .first() (no .unique()) para no fallar con pacientes
+  // multi-clínica. Mismo patrón que `_deletePatientSnapshotsForClinic`.
   const snapshots: Array<{
     pacienteId: Id<"users">;
     doc: Doc<"patientMetricsSnapshot">;
@@ -370,7 +374,8 @@ async function recomputeClinicForWindow(
       .withIndex("by_pacienteId_ventana", (q) =>
         q.eq("pacienteId", pid).eq("ventana", ventana),
       )
-      .unique();
+      .filter((q) => q.eq(q.field("clinicId"), clinicId))
+      .first();
     if (snap) snapshots.push({ pacienteId: pid, doc: snap });
   }
 
