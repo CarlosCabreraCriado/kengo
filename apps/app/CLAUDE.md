@@ -127,24 +127,15 @@ user   → person            settings → settings         dot   → fiber_manua
 pain   → mood_bad          building → apartment        location → public
 ```
 
-**Subset auto-hosteado**: el WOFF2 vive en `apps/app/src/assets/fonts/material-symbols-subset.woff2` (~10 kB con la lista actual de iconos). Al añadir un icono nuevo, regenerar el subset:
+**Subset auto-hosteado**: el WOFF2 vive en `apps/app/src/assets/fonts/material-symbols-subset.woff2`. Al añadir un icono nuevo, regenerar el subset:
 
 ```bash
-# 1. Compilar lista de iconos usados en el código
-grep -rPo 'class="[^"]*material-symbols-outlined[^"]*"[^>]*>\s*[a-z_]+\s*<' apps/app/src/ --include='*.html' --include='*.ts' 2>/dev/null | grep -oE '>\s*[a-z_]+\s*<' | tr -d '<>' | tr -d ' ' | sort -u > /tmp/icons.txt
-grep -rEho "icon:\s*'[a-z_]+'" apps/app/src/ --include='*.ts' 2>/dev/null | grep -oE "'[a-z_]+'" | tr -d "'" | sort -u >> /tmp/icons.txt
-# (añadir manualmente cualquier icono dinámico — p.ej. star/star_outline en favoritos)
-sort -u /tmp/icons.txt -o /tmp/icons.txt
-
-# 2. Descargar el TTF subset desde Google y convertirlo a WOFF2
-ICONS=$(tr '\n' ',' < /tmp/icons.txt | sed 's/,$//')
-FONT_URL=$(curl -s -A 'Mozilla/5.0' "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=${ICONS}" | grep -oE "https://[^)]+")
-curl -s -A 'Mozilla/5.0' -o /tmp/ms.ttf "$FONT_URL"
-woff2_compress /tmp/ms.ttf
-mv /tmp/ms.woff2 apps/app/src/assets/fonts/material-symbols-subset.woff2
+npm run icons:regenerate
 ```
 
-Requiere `brew install woff2` una vez.
+El script (`scripts/regenerate-icon-font.mjs`) escanea `apps/app/src/` en busca de iconos en ligaduras directas (`<span class="material-symbols-outlined">name</span>`), atributos de componentes UI2 (`iconLeft="…"`, `[icon]="'…'"`, `trailingIcon="…"`) y mapas de iconos en TS. Los iconos verdaderamente dinámicos que el escáner no puede inferir se listan en `scripts/icon-allowlist.txt` (snake_case, un nombre por línea). El snapshot de la última generación queda en `scripts/.icon-snapshot.txt` para que el diff sea reproducible.
+
+Requiere `brew install woff2` una vez (provee `woff2_compress`).
 
 ## Estilos: clases Tailwind antes que CSS por componente
 

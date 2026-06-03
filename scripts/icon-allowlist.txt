@@ -1,0 +1,56 @@
+# Allowlist manual de Material Symbols que el escáner podría no inferir.
+# Un nombre por línea, snake_case (igual que el ligature de Material Symbols).
+# Comentarios con `#`. Mantén la lista corta — añade un icono aquí sólo cuando
+# `npm run icons:regenerate` lo siga marcando como ausente tras un cambio real.
+
+# Iconos dinámicos referenciados desde lógica condicional (if/return)
+# documentados en exploración 2026-06-03:
+task_alt
+bedtime
+change_circle
+remove_circle
+heart_broken
+person_off
+cancel
+check_circle
+warning
+schedule
+event_available
+monitor_heart
+local_fire_department
+trending_up
+trending_down
+admin_panel_settings
+medical_services
+domain
+lock
+hourglass_empty
+block
+error
+info
+sentiment_satisfied
+sentiment_neutral
+sentiment_stressed
+sentiment_very_satisfied
+sentiment_very_dissatisfied
+sentiment_dissatisfied
+
+# Iconos del PATIENT_ICON_MAP (shared/ui-v2/icons/icon-map.ts)
+fiber_manual_record
+mood_bad
+trending_up
+play_arrow
+location_on
+favorite
+notifications
+person
+settings
+schedule
+arrow_forward
+apartment
+public
+chat
+
+# Variantes de favoritos / estrella
+star
+star_outline

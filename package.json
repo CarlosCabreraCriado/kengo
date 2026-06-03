@@ -6,6 +6,7 @@
   },
   "scripts": {
     "ports": "node scripts/dev-ports.mjs",
+    "icons:regenerate": "node scripts/regenerate-icon-font.mjs",
     "ng": "ng",
     "start": "node scripts/start-menu.mjs",
     "convex:dev": "npx convex dev",
