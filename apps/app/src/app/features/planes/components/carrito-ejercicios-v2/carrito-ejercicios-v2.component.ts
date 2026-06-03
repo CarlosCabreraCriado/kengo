@@ -29,6 +29,7 @@ import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { Usuario } from '../../../../../types/global';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
+import { CarritoPointers } from '../../data-access/internal/carrito-pointers';
 import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builder.service';
 
 @Component({
@@ -126,17 +127,15 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     this.rutinaSvc.tryRestore();
 
     if (!this.rutinaSvc.isActive()) {
-      const lastPacienteId = localStorage.getItem('carrito:last_paciente_id');
-      const lastFisioId = localStorage.getItem('carrito:last_fisio_id');
+      const punteros = CarritoPointers.read();
       const currentFisioId = this.svc.fisioId();
       // Solo restauramos si el carrito persistido pertenece al fisio
       // actualmente autenticado. Si no, purgamos los punteros para no
       // exponer el paciente del usuario anterior tras logout/login.
-      if (lastFisioId && currentFisioId && lastFisioId === currentFisioId && lastPacienteId) {
-        this.svc.tryRestoreFor(lastPacienteId, lastFisioId);
-      } else if (lastPacienteId || lastFisioId) {
-        localStorage.removeItem('carrito:last_paciente_id');
-        localStorage.removeItem('carrito:last_fisio_id');
+      if (punteros && currentFisioId && punteros.fisioId === currentFisioId) {
+        this.svc.tryRestoreFor(punteros.pacienteId, punteros.fisioId);
+      } else if (punteros) {
+        CarritoPointers.clear();
       }
     }
   }
@@ -174,8 +173,7 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
   }
 
   eliminarAsignacion(): void {
-    localStorage.removeItem('carrito:last_paciente_id');
-    localStorage.removeItem('carrito:last_fisio_id');
+    CarritoPointers.clear();
     this.svc.resetAll();
     this.toastService.show('Asignación eliminada');
   }
@@ -196,11 +194,11 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
       .subscribe((paciente) => {
         if (paciente) {
           this.svc.paciente.set(paciente);
-          localStorage.setItem('carrito:last_paciente_id', paciente.id);
           const fisioId = this.svc.fisioId();
-          if (fisioId) {
-            localStorage.setItem('carrito:last_fisio_id', fisioId);
-          }
+          CarritoPointers.set({
+            pacienteId: paciente.id,
+            ...(fisioId ? { fisioId } : {}),
+          });
           this.toastService.show(
             `Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`,
           );

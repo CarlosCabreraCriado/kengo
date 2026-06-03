@@ -30,6 +30,7 @@ import {
   BuilderPersistence,
   PersistedEnvelope,
 } from './internal/builder-persistence';
+import { CarritoPointers } from './internal/carrito-pointers';
 
 interface PersistedStateV1 extends PersistedEnvelope {
   v: 1;
@@ -45,7 +46,7 @@ interface PersistedStateV1 extends PersistedEnvelope {
 
 const PLAN_STORAGE_PREFIX = 'kengo:plan_builder:v1:';
 const SCHEMA_VERSION = 1;
-const DEFAULT_TTL_DAYS = 7;
+const DEFAULT_TTL_DAYS = 1;
 
 @Injectable({ providedIn: 'root' })
 export class PlanBuilderService implements SessionResettable {
@@ -155,11 +156,6 @@ export class PlanBuilderService implements SessionResettable {
   }
 
   private scheduleSave(ms: number) {
-    // Sin items, no hay nada útil que persistir. Evita guardar borradores
-    // vacíos cuando consumidores como `ejercicio-detail` llaman
-    // `paciente.set(p)` antes de añadir ningún ejercicio.
-    if (this.items().length === 0) return;
-
     clearTimeout(this.saveTimer);
     this.saveTimer = setTimeout(() => this.saveToStorage(), ms);
   }
@@ -186,6 +182,18 @@ export class PlanBuilderService implements SessionResettable {
   }
 
   private saveToStorage() {
+    const p = this.paciente();
+    const f = this.fisioId();
+    if (!p || !f) return;
+
+    // Si el carrito quedó vacío, purgar el borrador en lugar de persistir
+    // un snapshot vacío. Sin esto, un ejercicio eliminado "reaparece" en
+    // el próximo restore porque el último estado no-vacío sigue en storage.
+    if (this.items().length === 0) {
+      this.removeFromStorage(f, p.id);
+      return;
+    }
+
     const snap = this.makePersisted();
     if (!snap || !snap.paciente?.id) return;
     this.planPersistence.save(snap, {
@@ -258,7 +266,7 @@ export class PlanBuilderService implements SessionResettable {
     } else {
       this.paciente.set(p);
       this.tryRestoreFor(p.id);
-      localStorage.setItem('carrito:last_paciente_id', p.id);
+      CarritoPointers.set({ pacienteId: p.id });
     }
   }
 
@@ -284,6 +292,13 @@ export class PlanBuilderService implements SessionResettable {
   }
 
   clear() {
+    // Cancelar cualquier escritura pendiente: si no, un timer programado
+    // antes del clear podría volver a persistir estado obsoleto.
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+
     // Limpiar Storage:
     const f = this.fisioId(),
       p = this.paciente();
@@ -669,6 +684,10 @@ export class PlanBuilderService implements SessionResettable {
    * Reset completo del estado (para nuevo plan)
    */
   resetForNewPlan() {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
     this.planId.set(null);
     this.itemsState.clear();
     this.titulo.set('');

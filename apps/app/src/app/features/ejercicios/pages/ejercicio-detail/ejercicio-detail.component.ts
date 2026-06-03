@@ -17,6 +17,7 @@ import { map } from 'rxjs/operators';
 import { Ejercicio, Usuario, Categoria } from '../../../../../types/global';
 
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
+import { CarritoPointers } from '../../../planes/data-access/internal/carrito-pointers';
 import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builder.service';
 import { EjerciciosService } from '../../data-access/ejercicios.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -235,11 +236,11 @@ export class EjercicioDetailComponent {
 
       // Establecer el paciente seleccionado
       this.planBuilderService.paciente.set(paciente);
-      localStorage.setItem('carrito:last_paciente_id', paciente.id);
       const fisioId = this.planBuilderService.fisioId();
-      if (fisioId) {
-        localStorage.setItem('carrito:last_fisio_id', fisioId);
-      }
+      CarritoPointers.set({
+        pacienteId: paciente.id,
+        ...(fisioId ? { fisioId } : {}),
+      });
     }
 
     // Anadir el ejercicio al carrito

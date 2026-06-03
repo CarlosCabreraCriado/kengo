@@ -10,6 +10,7 @@ import { PageLoaderService } from '../../../../core/services/page-loader.service
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
+import { CarritoPointers } from '../../../planes/data-access/internal/carrito-pointers';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { useResponsive } from '../../../../shared';
 import {
@@ -258,11 +259,11 @@ export class RutinasListComponent implements OnInit, OnDestroy {
 
     this.planBuilderService.paciente.set(paciente);
 
-    localStorage.setItem('carrito:last_paciente_id', paciente.id);
     const fisioId = this.planBuilderService.fisioId();
-    if (fisioId) {
-      localStorage.setItem('carrito:last_fisio_id', fisioId);
-    }
+    CarritoPointers.set({
+      pacienteId: paciente.id,
+      ...(fisioId ? { fisioId } : {}),
+    });
 
     const success = await this.planBuilderService.loadFromRutina(rutina.id);
 

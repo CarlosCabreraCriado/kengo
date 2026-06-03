@@ -14,6 +14,7 @@ import { SESSION_RESETTABLES } from '../session-resettable';
 import { LoggerService } from '../../services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { rawAssetUrl } from '../../utils/asset-url';
+import { CarritoPointers } from '../../../features/planes/data-access/internal/carrito-pointers';
 
 /**
  * Estructura del cache local del usuario. Solo campos no sensibles que
@@ -307,9 +308,8 @@ export class SessionService {
    * no tienen dueño en `SESSION_RESETTABLES`.
    */
   private purgarStorageDeSesion(): void {
+    CarritoPointers.clear();
     const keys = [
-      'carrito:last_fisio_id',
-      'carrito:last_paciente_id',
       'kengo:sesion_activa:v2',
       'kengo:mis-pacientes:filtro',
       'kengo:sidebar-collapsed',
@@ -364,9 +364,9 @@ export class SessionService {
       this._usuario.set(usuario);
 
       if (usuario.esFisio) {
-        localStorage.setItem('carrito:last_fisio_id', usuario.id);
+        CarritoPointers.set({ fisioId: usuario.id });
       } else {
-        localStorage.removeItem('carrito:last_fisio_id');
+        CarritoPointers.set({ fisioId: null });
       }
     } catch (err: unknown) {
       // NotAuthenticatedError es esperado cuando el cliente aún no tiene
@@ -381,7 +381,7 @@ export class SessionService {
       }
       this._error.set('No se pudo cargar el usuario');
       this._usuario.set(null);
-      localStorage.removeItem('carrito:last_fisio_id');
+      CarritoPointers.set({ fisioId: null });
       this.limpiarCacheUsuario();
     } finally {
       this._loading.set(false);

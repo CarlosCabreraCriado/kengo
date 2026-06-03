@@ -30,7 +30,7 @@ interface PersistedRutinaStateV1 extends PersistedEnvelope {
 
 const RUTINA_STORAGE_PREFIX = 'kengo:rutina_builder:v1:';
 const SCHEMA_VERSION = 1;
-const DEFAULT_TTL_DAYS = 7;
+const DEFAULT_TTL_DAYS = 1;
 
 /**
  * Builder dedicado a rutinas (plantillas de ejercicios reutilizables).

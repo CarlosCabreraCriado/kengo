@@ -7,6 +7,7 @@ import { NotificacionesService } from '../../../../../core/services/notificacion
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
 import { PlanBuilderService } from '../../../../planes/data-access/plan-builder.service';
+import { CarritoPointers } from '../../../../planes/data-access/internal/carrito-pointers';
 import { RutinaBuilderService } from '../../../../rutinas/data-access/rutina-builder.service';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
 import type { NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
@@ -248,11 +249,11 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
     if (!paciente) return;
 
     this.planBuilderService.paciente.set(paciente);
-    localStorage.setItem('carrito:last_paciente_id', paciente.id);
     const fisioId = this.planBuilderService.fisioId();
-    if (fisioId) {
-      localStorage.setItem('carrito:last_fisio_id', fisioId);
-    }
+    CarritoPointers.set({
+      pacienteId: paciente.id,
+      ...(fisioId ? { fisioId } : {}),
+    });
     this.planBuilderService.openDrawer();
   }
 

@@ -64,7 +64,11 @@ export class BuilderPersistence<
     try {
       const json = JSON.parse(raw) as TState;
       if (json.v !== this.opts.schemaVersion) return null;
-      if (json.expiresAt && Date.now() > Date.parse(json.expiresAt)) {
+      // TTL contra `updatedAt`: que cambios futuros del TTL apliquen
+      // retroactivamente a entradas ya persistidas.
+      const updatedAt = Date.parse(json.updatedAt);
+      const maxAgeMs = this.opts.ttlDays * 864e5;
+      if (Number.isFinite(updatedAt) && Date.now() - updatedAt > maxAgeMs) {
         localStorage.removeItem(key);
         return null;
       }
