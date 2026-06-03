@@ -635,6 +635,41 @@ async function loadSesionesUltimos7d(
   });
 }
 
+// === H6b — helpers temporales para shadow read ===
+// Eliminar (junto a `compareH6b` al final del archivo) tras validar el delta
+// en dev. `_aggregate` queda renombrado a `loadAdherenciaPromedio` al
+// promover el cambio (mismo patrón que H6 hizo con `loadDolorMedio`).
+
+async function loadAdherenciaPromedio_aggregate(
+  ctx: QueryCtx,
+  clinicId: Id<"clinics">,
+  ventana: Ventana,
+): Promise<number> {
+  const ns: [Id<"clinics">, Ventana] = [clinicId, ventana];
+  const count = await patientsByClinicAdherencia.count(ctx, { namespace: ns });
+  if (count === 0) return 0;
+  const sum = await patientsByClinicAdherencia.sum(ctx, { namespace: ns });
+  return Math.round(sum / count);
+}
+
+function loadAdherenciaPromedio_legacy(
+  snapshots: Array<{
+    pacienteId: Id<"users">;
+    doc: Doc<"patientMetricsSnapshot">;
+  }>,
+  enCurso: Set<Id<"users">>,
+): number {
+  let adhSum = 0;
+  let adhCount = 0;
+  for (const { pacienteId: pid, doc: s } of snapshots) {
+    if (!enCurso.has(pid)) continue;
+    if (s.adherencia === undefined) continue;
+    adhSum += s.adherencia;
+    adhCount += 1;
+  }
+  return adhCount > 0 ? Math.round(adhSum / adhCount) : 0;
+}
+
 /**
  * Purga los `patientMetricsSnapshot` de un paciente en una clínica concreta
  * (las 3 ventanas) junto con sus entradas en los DirectAggregates
@@ -777,5 +812,77 @@ export const deletePatientSnapshotsForClinic = internalMutation({
   },
   handler: (ctx, { pacienteId, clinicId }) =>
     _deletePatientSnapshotsForClinic(ctx, pacienteId, clinicId),
+});
+
+/**
+ * H6b — shadow read. Compara `adherenciaPromedio` calculado con la fórmula
+ * legacy (snapshots filtrados por pacientes con plan EN CURSO HOY) vs la
+ * fórmula propuesta (sum/count directo del aggregate
+ * `patientsByClinicAdherencia`). Ejecutar sobre todas las clínicas con
+ * pacientes × 3 ventanas en dev y validar que el delta no rompe los tiers
+ * de UI antes de promover el cambio (commit 2). Eliminar junto a los
+ * helpers `_legacy`/`_aggregate` tras validar.
+ *
+ * `counts` ayuda a entender la fuente del delta: si
+ * `aggregateEntries > pacientesEnCurso`, hay pacientes con snapshot
+ * reciente pero sin plan activo HOY.
+ */
+export const compareH6b = internalQuery({
+  args: { clinicId: v.id("clinics"), ventana: ventanaValidator },
+  handler: async (ctx, { clinicId, ventana }) => {
+    const memberships = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .collect();
+    const pacienteIds = Array.from(
+      new Set(
+        memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
+      ),
+    );
+
+    const hoyMadrid = getCurrentMadridDate();
+    const enCursoFlags = await Promise.all(
+      pacienteIds.map((pid) => pacienteTienePlanEnCurso(ctx, pid, hoyMadrid)),
+    );
+    const enCurso = new Set<Id<"users">>(
+      pacienteIds.filter((_, i) => enCursoFlags[i]),
+    );
+
+    const snapshots: Array<{
+      pacienteId: Id<"users">;
+      doc: Doc<"patientMetricsSnapshot">;
+    }> = [];
+    for (const pid of pacienteIds) {
+      const snap = await ctx.db
+        .query("patientMetricsSnapshot")
+        .withIndex("by_pacienteId_ventana", (q) =>
+          q.eq("pacienteId", pid).eq("ventana", ventana),
+        )
+        .unique();
+      if (snap) snapshots.push({ pacienteId: pid, doc: snap });
+    }
+
+    const legacy = loadAdherenciaPromedio_legacy(snapshots, enCurso);
+    const aggregate = await loadAdherenciaPromedio_aggregate(
+      ctx,
+      clinicId,
+      ventana,
+    );
+    const aggregateEntries = await patientsByClinicAdherencia.count(ctx, {
+      namespace: [clinicId, ventana],
+    });
+
+    return {
+      match: legacy === aggregate,
+      delta: aggregate - legacy,
+      adherencia: { legacy, aggregate },
+      counts: {
+        pacientesMembresia: pacienteIds.length,
+        pacientesEnCurso: enCurso.size,
+        snapshotsEncontrados: snapshots.length,
+        aggregateEntries,
+      },
+    };
+  },
 });
 
