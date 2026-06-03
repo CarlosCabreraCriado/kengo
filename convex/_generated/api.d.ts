@@ -29,6 +29,7 @@ import type * as aggregates_executionsByExercise from "../aggregates/executionsB
 import type * as aggregates_executionsByPaciente from "../aggregates/executionsByPaciente.js";
 import type * as aggregates_executionsByPacienteDolor from "../aggregates/executionsByPacienteDolor.js";
 import type * as aggregates_patientsByClinicAdherencia from "../aggregates/patientsByClinicAdherencia.js";
+import type * as aggregates_patientsByClinicDolor from "../aggregates/patientsByClinicDolor.js";
 import type * as aggregates_patientsByClinicRiskScore from "../aggregates/patientsByClinicRiskScore.js";
 import type * as aggregates_plansByClinicActive from "../aggregates/plansByClinicActive.js";
 import type * as aggregates_sessionsByClinic from "../aggregates/sessionsByClinic.js";
@@ -70,6 +71,7 @@ import type * as migrations_backfillDailyByClinic from "../migrations/backfillDa
 import type * as migrations_backfillExecutionsByPaciente from "../migrations/backfillExecutionsByPaciente.js";
 import type * as migrations_backfillMonthlyByClinic from "../migrations/backfillMonthlyByClinic.js";
 import type * as migrations_backfillPatientDirectAggregates from "../migrations/backfillPatientDirectAggregates.js";
+import type * as migrations_backfillPatientsByClinicDolor from "../migrations/backfillPatientsByClinicDolor.js";
 import type * as migrations_backfillPlanClinicId from "../migrations/backfillPlanClinicId.js";
 import type * as migrations_backfillPlanClinicIdFallback from "../migrations/backfillPlanClinicIdFallback.js";
 import type * as migrations_backfillPlanClinicIdFromFisio from "../migrations/backfillPlanClinicIdFromFisio.js";
@@ -150,6 +152,7 @@ declare const fullApi: ApiFromModules<{
   "aggregates/executionsByPaciente": typeof aggregates_executionsByPaciente;
   "aggregates/executionsByPacienteDolor": typeof aggregates_executionsByPacienteDolor;
   "aggregates/patientsByClinicAdherencia": typeof aggregates_patientsByClinicAdherencia;
+  "aggregates/patientsByClinicDolor": typeof aggregates_patientsByClinicDolor;
   "aggregates/patientsByClinicRiskScore": typeof aggregates_patientsByClinicRiskScore;
   "aggregates/plansByClinicActive": typeof aggregates_plansByClinicActive;
   "aggregates/sessionsByClinic": typeof aggregates_sessionsByClinic;
@@ -191,6 +194,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillExecutionsByPaciente": typeof migrations_backfillExecutionsByPaciente;
   "migrations/backfillMonthlyByClinic": typeof migrations_backfillMonthlyByClinic;
   "migrations/backfillPatientDirectAggregates": typeof migrations_backfillPatientDirectAggregates;
+  "migrations/backfillPatientsByClinicDolor": typeof migrations_backfillPatientsByClinicDolor;
   "migrations/backfillPlanClinicId": typeof migrations_backfillPlanClinicId;
   "migrations/backfillPlanClinicIdFallback": typeof migrations_backfillPlanClinicIdFallback;
   "migrations/backfillPlanClinicIdFromFisio": typeof migrations_backfillPlanClinicIdFromFisio;
@@ -281,5 +285,6 @@ export declare const components: {
   plansByClinicActive: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"plansByClinicActive">;
   patientsByClinicAdherencia: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"patientsByClinicAdherencia">;
   patientsByClinicRiskScore: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"patientsByClinicRiskScore">;
+  patientsByClinicDolor: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"patientsByClinicDolor">;
   migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
 };

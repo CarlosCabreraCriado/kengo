@@ -1,5 +1,10 @@
 import { v } from "convex/values";
-import { internalMutation, MutationCtx } from "../_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  MutationCtx,
+  QueryCtx,
+} from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { esPaciente } from "../_helpers/permissions";
 import {
@@ -13,6 +18,8 @@ import { executionsByPaciente } from "../aggregates/executionsByPaciente";
 import { executionsByPacienteDolor } from "../aggregates/executionsByPacienteDolor";
 import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
 import { patientsByClinicRiskScore } from "../aggregates/patientsByClinicRiskScore";
+import { patientsByClinicDolor } from "../aggregates/patientsByClinicDolor";
+import { sessionsByClinic } from "../aggregates/sessionsByClinic";
 
 type Ventana = "7d" | "15d" | "30d";
 const VENTANAS: Ventana[] = ["7d", "15d", "30d"];
@@ -269,6 +276,30 @@ async function recomputePatientForWindow(
       id: pacienteId,
     });
   }
+
+  // patientsByClinicDolor (PR H6): sum/count desde recomputeClinic. Necesita
+  // `sumValue: dolorPromedio` para que sum() devuelva suma de dolores.
+  const oldDolor = existing?.dolorPromedio;
+  if (oldDolor != null && dolorPromedio != null && oldDolor !== dolorPromedio) {
+    await patientsByClinicDolor.replace(
+      ctx,
+      { namespace: dirNS, key: oldDolor, id: pacienteId },
+      { namespace: dirNS, key: dolorPromedio, sumValue: dolorPromedio },
+    );
+  } else if (oldDolor == null && dolorPromedio != null) {
+    await patientsByClinicDolor.insert(ctx, {
+      namespace: dirNS,
+      key: dolorPromedio,
+      id: pacienteId,
+      sumValue: dolorPromedio,
+    });
+  } else if (oldDolor != null && dolorPromedio == null) {
+    await patientsByClinicDolor.delete(ctx, {
+      namespace: dirNS,
+      key: oldDolor,
+      id: pacienteId,
+    });
+  }
 }
 
 /**
@@ -345,28 +376,23 @@ async function recomputeClinicForWindow(
   const adherenciaPromedio =
     adhCount > 0 ? Math.round(adhSum / adhCount) : 0;
 
-  // Dolor: agregado sobre todos los snapshots con dolorPromedio definido.
-  let dolorSum = 0;
-  let dolorCount = 0;
-  for (const { doc: s } of snapshots) {
-    if (s.dolorPromedio !== undefined) {
-      dolorSum += s.dolorPromedio;
-      dolorCount += 1;
-    }
-  }
-  const dolorMedio =
-    dolorCount > 0 ? Math.round((dolorSum / dolorCount) * 100) / 100 : undefined;
+  // Dolor (PR H6): se lee del DirectAggregate `patientsByClinicDolor`, que se
+  // mantiene en sync desde `recomputePatientForWindow`. Sustituye la iteración
+  // previa sobre snapshots.
+  const dolorMedio = await loadDolorMedio_aggregate(ctx, clinicId, ventana);
 
-  // Sesiones últimos 7 días en la clínica.
+  // Sesiones últimos 7 días en la clínica (PR H6): se leen del aggregate
+  // `sessionsByClinic`. Su `sumValue = esSintetica ? 0 : 1`, por lo que sum()
+  // cuenta sólo sesiones reales — el legacy contaba TODO en el rango
+  // (incluidas sintéticas). Cambio semántico aceptado.
   const desde7 = getMadridDateOffset(-6);
   const hasta = getMadridDateOffset(0);
-  const sesiones7 = await ctx.db
-    .query("sessions")
-    .withIndex("by_clinicId_fecha", (q) =>
-      q.eq("clinicId", clinicId).gte("fecha", desde7).lte("fecha", hasta),
-    )
-    .collect();
-  const sesionesUltimos7d = sesiones7.length;
+  const sesionesUltimos7d = await loadSesionesUltimos7d_aggregate(
+    ctx,
+    clinicId,
+    desde7,
+    hasta,
+  );
 
   // Alertas pendientes.
   const alertasPendientes = (
@@ -563,3 +589,120 @@ function diffDays(desdeYMD: string, hastaYMD: string): number {
   const b = Date.UTC(y2, m2 - 1, d2);
   return Math.round((b - a) / 86400000);
 }
+
+// === H6 — helpers temporales para shadow read ===
+// Eliminar (junto a `compareClinicMetricsH6` abajo) tras validar paridad en
+// dev (`match: true`). El aggregate helper queda integrado en
+// `recomputeClinicForWindow`.
+
+async function loadDolorMedio_aggregate(
+  ctx: QueryCtx,
+  clinicId: Id<"clinics">,
+  ventana: Ventana,
+): Promise<number | undefined> {
+  const ns: [Id<"clinics">, Ventana] = [clinicId, ventana];
+  const count = await patientsByClinicDolor.count(ctx, { namespace: ns });
+  const sum = await patientsByClinicDolor.sum(ctx, { namespace: ns });
+  return count > 0 ? Math.round((sum / count) * 100) / 100 : undefined;
+}
+
+function loadDolorMedio_legacy(
+  snapshots: Doc<"patientMetricsSnapshot">[],
+): number | undefined {
+  let sum = 0;
+  let count = 0;
+  for (const s of snapshots) {
+    if (s.dolorPromedio !== undefined) {
+      sum += s.dolorPromedio;
+      count += 1;
+    }
+  }
+  return count > 0 ? Math.round((sum / count) * 100) / 100 : undefined;
+}
+
+async function loadSesionesUltimos7d_aggregate(
+  ctx: QueryCtx,
+  clinicId: Id<"clinics">,
+  desde7: string,
+  hasta: string,
+): Promise<number> {
+  return await sessionsByClinic.sum(ctx, {
+    namespace: clinicId,
+    bounds: {
+      lower: { key: desde7, inclusive: true },
+      upper: { key: hasta, inclusive: true },
+    },
+  });
+}
+
+async function loadSesionesUltimos7d_legacy(
+  ctx: QueryCtx,
+  clinicId: Id<"clinics">,
+  desde7: string,
+  hasta: string,
+): Promise<number> {
+  const sesiones = await ctx.db
+    .query("sessions")
+    .withIndex("by_clinicId_fecha", (q) =>
+      q.eq("clinicId", clinicId).gte("fecha", desde7).lte("fecha", hasta),
+    )
+    .collect();
+  return sesiones.length;
+}
+
+/**
+ * H6 — shadow read. Compara dolorMedio y sesionesUltimos7d legacy vs
+ * aggregate para una (clínica, ventana). Ejecutar manualmente en dev sobre
+ * N clínicas y eliminar (junto a los helpers `_legacy`/`_aggregate`) tras
+ * confirmar `match: true`. Discrepancia esperable en `sesiones`: el legacy
+ * cuenta sintéticas, el aggregate no.
+ */
+export const compareClinicMetricsH6 = internalQuery({
+  args: { clinicId: v.id("clinics"), ventana: ventanaValidator },
+  handler: async (ctx, { clinicId, ventana }) => {
+    const desde7 = getMadridDateOffset(-6);
+    const hasta = getMadridDateOffset(0);
+
+    const memberships = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .collect();
+    const pacienteIds = Array.from(
+      new Set(
+        memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
+      ),
+    );
+    const snapshots: Doc<"patientMetricsSnapshot">[] = [];
+    for (const pid of pacienteIds) {
+      const snap = await ctx.db
+        .query("patientMetricsSnapshot")
+        .withIndex("by_pacienteId_ventana", (q) =>
+          q.eq("pacienteId", pid).eq("ventana", ventana),
+        )
+        .unique();
+      if (snap) snapshots.push(snap);
+    }
+
+    const dolorLeg = loadDolorMedio_legacy(snapshots);
+    const dolorAgg = await loadDolorMedio_aggregate(ctx, clinicId, ventana);
+    const sesLeg = await loadSesionesUltimos7d_legacy(
+      ctx,
+      clinicId,
+      desde7,
+      hasta,
+    );
+    const sesAgg = await loadSesionesUltimos7d_aggregate(
+      ctx,
+      clinicId,
+      desde7,
+      hasta,
+    );
+
+    return {
+      match: dolorLeg === dolorAgg && sesLeg === sesAgg,
+      dolor: { legacy: dolorLeg, aggregate: dolorAgg },
+      sesiones: { legacy: sesLeg, aggregate: sesAgg },
+      sampleSize: snapshots.length,
+    };
+  },
+});
