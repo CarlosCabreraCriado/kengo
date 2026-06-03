@@ -8,23 +8,24 @@ import { DataModel, Id } from "../_generated/dataModel";
  * filtro `completado === true && dolorEscala != null`, aplicado en el trigger
  * (ver `triggers.ts`).
  *
+ * - `namespace = [pacienteId, clinicId]` igual que `executionsByPaciente` —
+ *   dolor promedio se reporta per-clinic para mantener aislamiento multiclínica.
  * - `sumValue = dolorEscala` (no `?? 0`): el filtro garantiza que dolorEscala
  *   no es null al insertar; si fuera null se filtró antes.
  * - `count()` aquí = "ejecuciones con dolor reportado" (no "total ejecuciones").
  *
- * NOTA SEMÁNTICA — PR H5 (Fase 2):
- * El cálculo actual de `dolorPromedio` (en `recomputePatient`) es "promedio de
- * promedios por sesión". Esta nueva fuente cambia a "promedio simple sobre
- * ejecuciones con dolor reportado". Es semánticamente distinto pero más
- * robusto estadísticamente. Validar con dato real antes de cerrar PR H5.
+ * NOTA SEMÁNTICA — PR H5:
+ * El cálculo legacy de `dolorPromedio` (en `recomputePatient`) era "promedio de
+ * promedios por sesión". Esta fuente cambia a "promedio simple sobre
+ * ejecuciones con dolor reportado". Más robusto estadísticamente.
  */
 export const executionsByPacienteDolor = new TableAggregate<{
-  Namespace: Id<"users">;
+  Namespace: [Id<"users">, Id<"clinics">];
   Key: string;
   DataModel: DataModel;
   TableName: "exerciseExecutions";
 }>(components.executionsByPacienteDolor, {
-  namespace: (doc) => doc.pacienteId,
+  namespace: (doc) => [doc.pacienteId, doc.clinicId],
   sortKey: (doc) => doc.fecha,
   sumValue: (doc) => doc.dolorEscala ?? 0,
 });

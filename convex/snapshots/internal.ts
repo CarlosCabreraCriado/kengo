@@ -9,6 +9,10 @@ import {
 } from "../_helpers/datetime";
 import { computeRiskScore, computeRachaActual } from "../_helpers/rollupComputation";
 import { pacienteTienePlanEnCurso } from "../_helpers/planStatus";
+import { executionsByPaciente } from "../aggregates/executionsByPaciente";
+import { executionsByPacienteDolor } from "../aggregates/executionsByPacienteDolor";
+import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
+import { patientsByClinicRiskScore } from "../aggregates/patientsByClinicRiskScore";
 
 type Ventana = "7d" | "15d" | "30d";
 const VENTANAS: Ventana[] = ["7d", "15d", "30d"];
@@ -94,79 +98,47 @@ async function recomputePatientForWindow(
     )
     .collect();
 
-  // Métricas básicas derivadas del rollup diario: adherencia, racha,
-  // última actividad.
-  let diasCompletados = 0;
-  let diasParciales = 0;
-  let diasConPlanNoDescanso = 0;
+  // Iteramos dailies sólo para `ultimaActividad` y `dailyByFecha` (rachaActual).
+  // Adherencia y dolorPromedio se leen del aggregate.
   let ultimaActividad: string | undefined;
   const dailyByFecha = new Map<string, Doc<"dailyPatientRollup">>();
-
   for (const d of dailies) {
     dailyByFecha.set(d.fecha, d);
-    if (d.estadoDia === "completado") {
-      diasCompletados += 1;
-      diasConPlanNoDescanso += 1;
-    } else if (d.estadoDia === "parcial") {
-      diasParciales += 1;
-      diasConPlanNoDescanso += 1;
-      if (d.totalCompletados > 0) {
-        if (!ultimaActividad || d.fecha > ultimaActividad)
-          ultimaActividad = d.fecha;
-      }
-    } else if (d.estadoDia === "fallido") {
-      diasConPlanNoDescanso += 1;
-    }
     if (d.totalCompletados > 0) {
       if (!ultimaActividad || d.fecha > ultimaActividad)
         ultimaActividad = d.fecha;
     }
   }
 
-  // Dolor: promedio de promedios POR SESIÓN sobre exerciseExecutions
-  // completadas de esta clínica en la ventana. Misma fórmula que el detalle
-  // de paciente (ver apps/app/src/.../cumplimiento.service.ts:buildEstadisticas).
-  const executionsRaw = await ctx.db
-    .query("exerciseExecutions")
-    .withIndex("by_pacienteId_fecha", (q) =>
-      q.eq("pacienteId", pacienteId).gte("fecha", desde).lte("fecha", hasta),
-    )
-    .collect();
-  const executions = executionsRaw.filter((e) => e.clinicId === clinicId);
-
-  const dolorPorSesion = new Map<
-    Id<"sessions">,
-    { sum: number; count: number }
-  >();
-  for (const ex of executions) {
-    if (!ex.completado) continue;
-    if (ex.dolorEscala === undefined) continue;
-    const acc = dolorPorSesion.get(ex.sessionId) ?? { sum: 0, count: 0 };
-    acc.sum += ex.dolorEscala;
-    acc.count += 1;
-    dolorPorSesion.set(ex.sessionId, acc);
-  }
-
-  let sumPromediosSesion = 0;
-  let nSesionesConDolor = 0;
-  for (const { sum, count } of dolorPorSesion.values()) {
-    if (count === 0) continue;
-    sumPromediosSesion += sum / count;
-    nSesionesConDolor += 1;
-  }
-
-  // Adherencia estricta: % de días con plan que se completaron al 100%.
-  // Misma fórmula que el detalle (`cumplimiento.service.ts:buildCumplimientoResponse`).
-  // Si la ventana no tiene días con plan (todo descanso/sin_plan), se deja
-  // `undefined` para excluir al paciente del agregado de la clínica.
+  // Adherencia (sum/count) y dolorPromedio leídos directamente del aggregate
+  // particionado por (paciente, clínica). PR H5: sustituye el cálculo previo
+  // que iteraba dailies + executions con fórmulas distintas.
+  const aggNamespace: [Id<"users">, Id<"clinics">] = [pacienteId, clinicId];
+  const aggBounds = {
+    lower: { key: desde, inclusive: true },
+    upper: { key: hasta, inclusive: true },
+  } as const;
+  const adhCount = await executionsByPaciente.count(ctx, {
+    namespace: aggNamespace,
+    bounds: aggBounds,
+  });
+  const adhSum = await executionsByPaciente.sum(ctx, {
+    namespace: aggNamespace,
+    bounds: aggBounds,
+  });
   const adherencia =
-    diasConPlanNoDescanso > 0
-      ? Math.round((diasCompletados / diasConPlanNoDescanso) * 100)
-      : undefined;
+    adhCount > 0 ? Math.round((adhSum / adhCount) * 100) : undefined;
+
+  const dolorCount = await executionsByPacienteDolor.count(ctx, {
+    namespace: aggNamespace,
+    bounds: aggBounds,
+  });
+  const dolorSum = await executionsByPacienteDolor.sum(ctx, {
+    namespace: aggNamespace,
+    bounds: aggBounds,
+  });
   const dolorPromedio =
-    nSesionesConDolor > 0
-      ? Math.round((sumPromediosSesion / nSesionesConDolor) * 100) / 100
-      : undefined;
+    dolorCount > 0 ? Math.round((dolorSum / dolorCount) * 100) / 100 : undefined;
 
   const inactividadDias = ultimaActividad
     ? Math.max(
@@ -256,6 +228,46 @@ async function recomputePatientForWindow(
     await ctx.db.patch(existing._id, payload);
   } else {
     await ctx.db.insert("patientMetricsSnapshot", payload);
+  }
+
+  // Mantener DirectAggregates sincronizados con los valores del snapshot.
+  // patientsByClinicAdherencia ordena por adherencia (asc) y se lee desde
+  // getPatientMetrics (PR H1, pendiente). patientsByClinicRiskScore análogo.
+  const dirNS: [Id<"clinics">, Ventana] = [clinicId, ventana];
+  const oldAdh = existing?.adherencia;
+  if (oldAdh != null && adherencia != null && oldAdh !== adherencia) {
+    await patientsByClinicAdherencia.replace(
+      ctx,
+      { namespace: dirNS, key: oldAdh, id: pacienteId },
+      { namespace: dirNS, key: adherencia },
+    );
+  } else if (oldAdh == null && adherencia != null) {
+    await patientsByClinicAdherencia.insert(ctx, {
+      namespace: dirNS,
+      key: adherencia,
+      id: pacienteId,
+    });
+  } else if (oldAdh != null && adherencia == null) {
+    await patientsByClinicAdherencia.delete(ctx, {
+      namespace: dirNS,
+      key: oldAdh,
+      id: pacienteId,
+    });
+  }
+
+  const oldRisk = existing?.riskScore;
+  if (oldRisk != null && oldRisk !== riskScore) {
+    await patientsByClinicRiskScore.replace(
+      ctx,
+      { namespace: dirNS, key: oldRisk, id: pacienteId },
+      { namespace: dirNS, key: riskScore },
+    );
+  } else if (oldRisk == null) {
+    await patientsByClinicRiskScore.insert(ctx, {
+      namespace: dirNS,
+      key: riskScore,
+      id: pacienteId,
+    });
   }
 }
 

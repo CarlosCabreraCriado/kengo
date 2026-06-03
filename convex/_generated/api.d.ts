@@ -67,7 +67,9 @@ import type * as http from "../http.js";
 import type * as me_queries from "../me/queries.js";
 import type * as migrations_backfillClinicOwner from "../migrations/backfillClinicOwner.js";
 import type * as migrations_backfillDailyByClinic from "../migrations/backfillDailyByClinic.js";
+import type * as migrations_backfillExecutionsByPaciente from "../migrations/backfillExecutionsByPaciente.js";
 import type * as migrations_backfillMonthlyByClinic from "../migrations/backfillMonthlyByClinic.js";
+import type * as migrations_backfillPatientDirectAggregates from "../migrations/backfillPatientDirectAggregates.js";
 import type * as migrations_backfillPlanClinicId from "../migrations/backfillPlanClinicId.js";
 import type * as migrations_backfillPlanClinicIdFallback from "../migrations/backfillPlanClinicIdFallback.js";
 import type * as migrations_backfillPlanClinicIdFromFisio from "../migrations/backfillPlanClinicIdFromFisio.js";
@@ -75,6 +77,7 @@ import type * as migrations_backfillPlanClinicIdFromPatient from "../migrations/
 import type * as migrations_backfillRollupsByClinic from "../migrations/backfillRollupsByClinic.js";
 import type * as migrations_backfillRoutineClinicId from "../migrations/backfillRoutineClinicId.js";
 import type * as migrations_backfillWeeklyByClinic from "../migrations/backfillWeeklyByClinic.js";
+import type * as migrations_clearExecutionAggregates from "../migrations/clearExecutionAggregates.js";
 import type * as migrations_deleteClinicCascade from "../migrations/deleteClinicCascade.js";
 import type * as migrations_deleteUserByEmail from "../migrations/deleteUserByEmail.js";
 import type * as migrations_deleteUserByEmailMutation from "../migrations/deleteUserByEmailMutation.js";
@@ -184,7 +187,9 @@ declare const fullApi: ApiFromModules<{
   "me/queries": typeof me_queries;
   "migrations/backfillClinicOwner": typeof migrations_backfillClinicOwner;
   "migrations/backfillDailyByClinic": typeof migrations_backfillDailyByClinic;
+  "migrations/backfillExecutionsByPaciente": typeof migrations_backfillExecutionsByPaciente;
   "migrations/backfillMonthlyByClinic": typeof migrations_backfillMonthlyByClinic;
+  "migrations/backfillPatientDirectAggregates": typeof migrations_backfillPatientDirectAggregates;
   "migrations/backfillPlanClinicId": typeof migrations_backfillPlanClinicId;
   "migrations/backfillPlanClinicIdFallback": typeof migrations_backfillPlanClinicIdFallback;
   "migrations/backfillPlanClinicIdFromFisio": typeof migrations_backfillPlanClinicIdFromFisio;
@@ -192,6 +197,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillRollupsByClinic": typeof migrations_backfillRollupsByClinic;
   "migrations/backfillRoutineClinicId": typeof migrations_backfillRoutineClinicId;
   "migrations/backfillWeeklyByClinic": typeof migrations_backfillWeeklyByClinic;
+  "migrations/clearExecutionAggregates": typeof migrations_clearExecutionAggregates;
   "migrations/deleteClinicCascade": typeof migrations_deleteClinicCascade;
   "migrations/deleteUserByEmail": typeof migrations_deleteUserByEmail;
   "migrations/deleteUserByEmailMutation": typeof migrations_deleteUserByEmailMutation;

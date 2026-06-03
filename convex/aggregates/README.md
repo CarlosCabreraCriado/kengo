@@ -17,14 +17,20 @@ El namespace aísla árboles B independientes, lo cual:
 
 | Aggregate | Namespace | sortKey | Filtro (en trigger) |
 |-----------|-----------|---------|---------------------|
-| `executionsByPaciente` | `pacienteId` | `fecha` (YYYY-MM-DD) | ninguno |
+| `executionsByPaciente` | `[pacienteId, clinicId]` | `fecha` (YYYY-MM-DD) | ninguno |
 | `executionsByClinic` | `clinicId` | `fecha` | ninguno |
 | `executionsByExercise` | `[clinicId, exerciseId]` | `fecha` | ninguno (deferido a PR H4) |
-| `executionsByPacienteDolor` | `pacienteId` | `fecha` | `completado && dolorEscala != null` |
+| `executionsByPacienteDolor` | `[pacienteId, clinicId]` | `fecha` | `completado && dolorEscala != null` |
 | `sessionsByClinic` | `clinicId` | `fecha` | ninguno (sumValue descarta sintéticas) |
 | `plansByClinicActive` | `clinicId` | `fechaFin ?? "9999-12-31"` | `estado === "activo"` |
 | `patientsByClinicAdherencia` | `[clinicId, ventana]` | `adherencia` (number) | DirectAggregate, sin trigger |
 | `patientsByClinicRiskScore` | `[clinicId, ventana]` | `riskScore` (number) | DirectAggregate, sin trigger |
+
+Nota: `executionsByPaciente` y `executionsByPacienteDolor` usan namespace tupla
+`[pacienteId, clinicId]` (no solo `pacienteId`) para preservar el aislamiento
+multiclínica: un paciente con planes en 2 clínicas mantiene 2 árboles
+independientes y la adherencia/dolor per-clinic se lee directamente del
+namespace correcto.
 
 ## Contención por sortKey temporal
 
@@ -117,7 +123,7 @@ Antes de cambiar el query consumer de un aggregate, ejecutar un script
 |----|--------|
 | H1 (Fase 1) | Backfill + reescribir `getPatientMetrics` rama adherencia |
 | H3 (Fase 1) | Backfill + reescribir `getActividadDiariaClinica` |
-| H5 (Fase 2) | Reescribir `recomputePatient` + iniciar escritura a `patientsByClinicAdherencia` |
+| ~~H5 (Fase 2)~~ | ✅ Hecho: `recomputePatient` lee adherencia/dolor de aggregates y escribe a `patientsByClinic{Adherencia,RiskScore}`. Re-namespacing de executions a `[pacienteId, clinicId]` y backfills en `migrations/backfillExecutionsByPaciente.ts` + `migrations/backfillPatientDirectAggregates.ts`. |
 | H6 (Fase 2) | Reescribir `recomputeClinic` |
 | H4 (Fase 2) | Añadir trigger custom para `executionsByExercise` (join con `planExercises`) |
 | F7-close (Fase 2) | Eliminar `scheduler.runAfter` post-execution |
