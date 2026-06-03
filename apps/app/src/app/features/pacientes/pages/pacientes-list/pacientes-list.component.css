@@ -12,6 +12,61 @@
 }
 
 /* ========================================================== */
+/*  Auto-asignarme — card destacada del propio fisio          */
+/* ========================================================== */
+
+.pl-self-card {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  /* Equipara el espacio bajo la card al que hay sobre ella (entre el toggle
+   * "Pacientes/Asignación" y la card): 8px bottom del segmented + 12px top
+   * de la card = 20px. Como el header solo aporta 4px top, sumamos 16px
+   * aquí para igualar el aire. */
+  margin-bottom: 16px;
+}
+
+.pl-self-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(var(--kengo-primary-rgb), 0.1);
+}
+
+.pl-self-card:focus-visible {
+  outline: 2px solid var(--kengo-primary);
+  outline-offset: 2px;
+}
+
+.pl-self-card__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pl-self-card__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.pl-self-card__title {
+  margin: 0;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--ink-900);
+}
+
+.pl-self-card__subtitle {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--ink-500);
+}
+
+.pl-self-card__arrow {
+  color: var(--kengo-primary);
+  font-size: 22px;
+}
+
+/* ========================================================== */
 /*  Header                                                     */
 /* ========================================================== */
 

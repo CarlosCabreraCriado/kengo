@@ -36,6 +36,7 @@ import { Usuario, AsignacionResponsable, MetricasPacientesBulk } from '../../../
 import {
   Ui2AvatarComponent,
   Ui2ButtonComponent,
+  Ui2CardComponent,
   Ui2EmptyStateComponent,
   Ui2ListRowComponent,
   Ui2PillComponent,
@@ -65,6 +66,7 @@ interface OrdenOption {
     DecimalPipe,
     Ui2AvatarComponent,
     Ui2ButtonComponent,
+    Ui2CardComponent,
     Ui2EmptyStateComponent,
     Ui2ListRowComponent,
     Ui2PillComponent,
@@ -133,6 +135,17 @@ export class PacientesListComponent implements OnInit, OnDestroy {
 
   // Es admin en alguna clínica (delegado en SessionService)
   readonly esAdmin = this.sessionService.esAdmin;
+
+  // Datos del usuario actual para la card "Auto-asignarme" — el fisio puede
+  // abrir su propia ficha clínica como si fuera un paciente más.
+  readonly me = this.sessionService.usuario;
+  readonly miNombre = this.sessionService.nombreCompleto;
+  readonly miAvatarUrl = computed<string | null>(() => {
+    const a = this.sessionService.usuario()?.avatar;
+    return a
+      ? assetUrl(a, { fit: 'cover', width: 96, height: 96, quality: 80 })
+      : null;
+  });
 
   /**
    * Bloqueo de operaciones de escritura del fisio cuando la suscripción de su
@@ -286,6 +299,17 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   seleccionarPaciente(p: Usuario) {
     this.planBuilderService.prepareForPaciente(p);
     this.planBuilderService.navigateAndOpenDrawer();
+  }
+
+  /**
+   * Abre la ficha clínica del propio fisio como un paciente más. Backend
+   * acepta el acceso porque la membresía fisio/admin lleva
+   * `tambienEsPaciente: true`. No cambia el rol activo.
+   */
+  verMeComoPaciente(): void {
+    const u = this.sessionService.usuario();
+    if (!u) return;
+    this.router.navigate(['/mis-pacientes', u.id]);
   }
 
   openAddPaciente() {

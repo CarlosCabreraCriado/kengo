@@ -15,6 +15,39 @@
   }
 
   <!-- ========================================================== -->
+  <!-- Auto-asignarme: atajo a la propia ficha clínica del fisio   -->
+  <!-- ========================================================== -->
+  @if (me(); as usuario) {
+    <ui2-section [padding]="'12px 20px 0'">
+      <ui2-card
+        variant="tinted"
+        class="pl-self-card"
+        (click)="verMeComoPaciente()"
+        (keydown.enter)="verMeComoPaciente()"
+        (keydown.space)="verMeComoPaciente()"
+        role="button"
+        tabindex="0"
+        attr.aria-label="Auto-asignarme: ver mi propia ficha como paciente"
+      >
+        <div class="pl-self-card__row">
+          <ui2-avatar
+            [name]="miNombre()"
+            [src]="miAvatarUrl()"
+            size="lg"
+            gradient="coral"
+            [border]="true"
+          ></ui2-avatar>
+          <div class="pl-self-card__copy">
+            <p class="pl-self-card__title">Auto-asignarme</p>
+            <p class="pl-self-card__subtitle">Verme como mi propio paciente</p>
+          </div>
+          <span class="material-symbols-outlined pl-self-card__arrow" aria-hidden="true">arrow_forward</span>
+        </div>
+      </ui2-card>
+    </ui2-section>
+  }
+
+  <!-- ========================================================== -->
   <!-- Header                                                       -->
   <!-- ========================================================== -->
   <ui2-section [padding]="'4px 20px 14px'">
