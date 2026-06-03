@@ -355,42 +355,17 @@ async function recomputeClinicForWindow(
     pacienteIds.map((pid) => pacienteTienePlanEnCurso(ctx, pid, hoyMadrid)),
   );
   const pacientesActivos = enCursoFlags.filter(Boolean).length;
-  const enCurso = new Set<Id<"users">>(
-    pacienteIds.filter((_, i) => enCursoFlags[i]),
+
+  // Adherencia (PR H6b): se lee del DirectAggregate
+  // `patientsByClinicAdherencia` vía sum()/count(). Tras H6c los aggregates
+  // solo contienen pacientes con plan activo en la clínica, por lo que
+  // sum/count representa correctamente la "salud actual" sin necesidad de
+  // iterar snapshots ni filtrar por enCurso.
+  const adherenciaPromedio = await loadAdherenciaPromedio(
+    ctx,
+    clinicId,
+    ventana,
   );
-
-  // Snapshots por paciente para esa ventana. Tras la fase 3a el snapshot
-  // está particionado por (pacienteId, clinicId, ventana) pero el único
-  // índice disponible es `by_pacienteId_ventana` → filtramos por clinicId y
-  // usamos .first() (no .unique()) para no fallar con pacientes
-  // multi-clínica. Mismo patrón que `_deletePatientSnapshotsForClinic`.
-  const snapshots: Array<{
-    pacienteId: Id<"users">;
-    doc: Doc<"patientMetricsSnapshot">;
-  }> = [];
-  for (const pid of pacienteIds) {
-    const snap = await ctx.db
-      .query("patientMetricsSnapshot")
-      .withIndex("by_pacienteId_ventana", (q) =>
-        q.eq("pacienteId", pid).eq("ventana", ventana),
-      )
-      .filter((q) => q.eq(q.field("clinicId"), clinicId))
-      .first();
-    if (snap) snapshots.push({ pacienteId: pid, doc: snap });
-  }
-
-  // Adherencia: promedio de pacientes con plan EN CURSO HOY y con adherencia
-  // medible (no `undefined`). Coincide con la fórmula estricta del detalle.
-  let adhSum = 0;
-  let adhCount = 0;
-  for (const { pacienteId: pid, doc: s } of snapshots) {
-    if (!enCurso.has(pid)) continue;
-    if (s.adherencia === undefined) continue;
-    adhSum += s.adherencia;
-    adhCount += 1;
-  }
-  const adherenciaPromedio =
-    adhCount > 0 ? Math.round(adhSum / adhCount) : 0;
 
   // Dolor (PR H6): se lee del DirectAggregate `patientsByClinicDolor`, que se
   // mantiene en sync desde `recomputePatientForWindow`. Sustituye la iteración
@@ -650,12 +625,7 @@ async function loadSesionesUltimos7d(
   });
 }
 
-// === H6b — helpers temporales para shadow read ===
-// Eliminar (junto a `compareH6b` al final del archivo) tras validar el delta
-// en dev. `_aggregate` queda renombrado a `loadAdherenciaPromedio` al
-// promover el cambio (mismo patrón que H6 hizo con `loadDolorMedio`).
-
-async function loadAdherenciaPromedio_aggregate(
+async function loadAdherenciaPromedio(
   ctx: QueryCtx,
   clinicId: Id<"clinics">,
   ventana: Ventana,
@@ -665,24 +635,6 @@ async function loadAdherenciaPromedio_aggregate(
   if (count === 0) return 0;
   const sum = await patientsByClinicAdherencia.sum(ctx, { namespace: ns });
   return Math.round(sum / count);
-}
-
-function loadAdherenciaPromedio_legacy(
-  snapshots: Array<{
-    pacienteId: Id<"users">;
-    doc: Doc<"patientMetricsSnapshot">;
-  }>,
-  enCurso: Set<Id<"users">>,
-): number {
-  let adhSum = 0;
-  let adhCount = 0;
-  for (const { pacienteId: pid, doc: s } of snapshots) {
-    if (!enCurso.has(pid)) continue;
-    if (s.adherencia === undefined) continue;
-    adhSum += s.adherencia;
-    adhCount += 1;
-  }
-  return adhCount > 0 ? Math.round(adhSum / adhCount) : 0;
 }
 
 /**
@@ -902,184 +854,4 @@ export const deletePatientSnapshotsForClinic = internalMutation({
     _deletePatientSnapshotsForClinic(ctx, pacienteId, clinicId),
 });
 
-/**
- * H6b — utilidad shadow para listar las clínicas con datos de adherencia.
- * Devuelve los `clinicId` distintos presentes en `patientsByClinicAdherencia`
- * (cualquier ventana). Pensado para iterar el sweep `compareH6b` desde
- * `npx convex run` sin tener que descubrir IDs a mano. Eliminar junto al
- * resto de helpers `_legacy`/`_aggregate` y `compareH6b` tras validar.
- */
-export const listH6bClinics = internalQuery({
-  args: {},
-  handler: async (ctx): Promise<Id<"clinics">[]> => {
-    const set = new Set<Id<"clinics">>();
-    for await (const [clinicId] of patientsByClinicAdherencia.iterNamespaces(
-      ctx,
-    )) {
-      set.add(clinicId);
-    }
-    return [...set];
-  },
-});
-
-/**
- * H6b — utilidad shadow para inspeccionar la divergencia entre legacy y
- * aggregate en una (clínica, ventana). Devuelve, para cada paciente con
- * adherencia medible en el snapshot, su `pacienteId`, `email`, adherencia,
- * planes existentes (estado + fechas + clinicId) y si está enCurso HOY.
- * Pensado para entender qué pacientes hacen caer el aggregate vs legacy
- * (commit 0834b4c). Eliminar junto al resto de helpers tras decidir.
- */
-export const inspectH6bClinic = internalQuery({
-  args: { clinicId: v.id("clinics"), ventana: ventanaValidator },
-  handler: async (ctx, { clinicId, ventana }) => {
-    const memberships = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
-      .collect();
-    const pacienteIds = Array.from(
-      new Set(
-        memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
-      ),
-    );
-
-    const hoyMadrid = getCurrentMadridDate();
-    const filas: Array<{
-      pacienteId: Id<"users">;
-      email: string | null;
-      adherencia: number | undefined;
-      snapshotActualizadoEn: number;
-      enCurso: boolean;
-      planes: Array<{
-        estado: string;
-        fechaInicio: string | undefined;
-        fechaFin: string | undefined;
-        clinicId: Id<"clinics"> | undefined;
-        mismaClinica: boolean;
-      }>;
-    }> = [];
-
-    for (const pid of pacienteIds) {
-      const snap = await ctx.db
-        .query("patientMetricsSnapshot")
-        .withIndex("by_pacienteId_ventana", (q) =>
-          q.eq("pacienteId", pid).eq("ventana", ventana),
-        )
-        .filter((q) => q.eq(q.field("clinicId"), clinicId))
-        .first();
-      if (!snap || snap.adherencia == null) continue;
-
-      const user = await ctx.db.get(pid);
-      const enCurso = await pacienteTienePlanEnCurso(ctx, pid, hoyMadrid);
-
-      const planes = await ctx.db
-        .query("plans")
-        .withIndex("by_pacienteId", (q) => q.eq("pacienteId", pid))
-        .collect();
-
-      filas.push({
-        pacienteId: pid,
-        email: user && "email" in user ? (user.email as string) ?? null : null,
-        adherencia: snap.adherencia,
-        snapshotActualizadoEn: snap.actualizadoEn,
-        enCurso,
-        planes: planes.map((p) => ({
-          estado: p.estado,
-          fechaInicio: p.fechaInicio,
-          fechaFin: p.fechaFin,
-          clinicId: p.clinicId,
-          mismaClinica: p.clinicId === clinicId,
-        })),
-      });
-    }
-
-    return {
-      total: filas.length,
-      enCurso: filas.filter((f) => f.enCurso).length,
-      noEnCurso: filas.filter((f) => !f.enCurso).length,
-      filas: filas.sort((a, b) =>
-        Number(a.enCurso) - Number(b.enCurso) || (a.adherencia ?? 0) - (b.adherencia ?? 0),
-      ),
-    };
-  },
-});
-
-/**
- * H6b — shadow read. Compara `adherenciaPromedio` calculado con la fórmula
- * legacy (snapshots filtrados por pacientes con plan EN CURSO HOY) vs la
- * fórmula propuesta (sum/count directo del aggregate
- * `patientsByClinicAdherencia`). Ejecutar sobre todas las clínicas con
- * pacientes × 3 ventanas en dev y validar que el delta no rompe los tiers
- * de UI antes de promover el cambio (commit 2). Eliminar junto a los
- * helpers `_legacy`/`_aggregate` tras validar.
- *
- * `counts` ayuda a entender la fuente del delta: si
- * `aggregateEntries > pacientesEnCurso`, hay pacientes con snapshot
- * reciente pero sin plan activo HOY.
- */
-export const compareH6b = internalQuery({
-  args: { clinicId: v.id("clinics"), ventana: ventanaValidator },
-  handler: async (ctx, { clinicId, ventana }) => {
-    const memberships = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
-      .collect();
-    const pacienteIds = Array.from(
-      new Set(
-        memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
-      ),
-    );
-
-    const hoyMadrid = getCurrentMadridDate();
-    const enCursoFlags = await Promise.all(
-      pacienteIds.map((pid) => pacienteTienePlanEnCurso(ctx, pid, hoyMadrid)),
-    );
-    const enCurso = new Set<Id<"users">>(
-      pacienteIds.filter((_, i) => enCursoFlags[i]),
-    );
-
-    // Nota: `patientMetricsSnapshot` está particionado por
-    // `(pacienteId, clinicId, ventana)` tras la fase 3a, pero el único
-    // índice disponible es `by_pacienteId_ventana`. Hay que filtrar por
-    // `clinicId` y usar `.first()` (no `.unique()`) para no fallar cuando
-    // el paciente está en varias clínicas. Mismo patrón que
-    // `_deletePatientSnapshotsForClinic`.
-    const snapshots: Array<{
-      pacienteId: Id<"users">;
-      doc: Doc<"patientMetricsSnapshot">;
-    }> = [];
-    for (const pid of pacienteIds) {
-      const snap = await ctx.db
-        .query("patientMetricsSnapshot")
-        .withIndex("by_pacienteId_ventana", (q) =>
-          q.eq("pacienteId", pid).eq("ventana", ventana),
-        )
-        .filter((q) => q.eq(q.field("clinicId"), clinicId))
-        .first();
-      if (snap) snapshots.push({ pacienteId: pid, doc: snap });
-    }
-
-    const legacy = loadAdherenciaPromedio_legacy(snapshots, enCurso);
-    const aggregate = await loadAdherenciaPromedio_aggregate(
-      ctx,
-      clinicId,
-      ventana,
-    );
-    const aggregateEntries = await patientsByClinicAdherencia.count(ctx, {
-      namespace: [clinicId, ventana],
-    });
-
-    return {
-      match: legacy === aggregate,
-      delta: aggregate - legacy,
-      adherencia: { legacy, aggregate },
-      counts: {
-        pacientesMembresia: pacienteIds.length,
-        pacientesEnCurso: enCurso.size,
-        snapshotsEncontrados: snapshots.length,
-        aggregateEntries,
-      },
-    };
-  },
-});
 
