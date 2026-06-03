@@ -13,6 +13,7 @@ import {
 } from "../_helpers/datetime";
 import { computeRiskScore, computeRachaActual } from "../_helpers/rollupComputation";
 import { pacienteTienePlanEnCurso } from "../_helpers/planStatus";
+import { syncPatientAggregateValue } from "../_helpers/syncPatientAggregateValue";
 import { executionsByPaciente } from "../aggregates/executionsByPaciente";
 import { executionsByPacienteDolor } from "../aggregates/executionsByPacienteDolor";
 import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
@@ -239,79 +240,44 @@ async function recomputePatientForWindow(
   }
 
   // Mantener DirectAggregates sincronizados con los valores del snapshot.
-  // patientsByClinicAdherencia ordena por adherencia (asc) y se lee desde
-  // getPatientMetrics (orden adherencia) y recomputeClinic.adherenciaPromedio
-  // (sum/count, PR H6b). Para que sum() devuelva la suma de adherencias hay
-  // que pasar `sumValue: adherencia` explícito en insert/replace — por
-  // defecto DirectAggregate asume sumValue=0.
-  // Sync tolerante (H6c): usamos las variantes *IfExists / *OrInsert para
-  // que purgas externas (p.ej. la cascada de plan completado/cancelado en
-  // `_syncPatientActiveStateInClinic`) no rompan el siguiente recompute.
-  // Si la entry no existía cuando se esperaba, `replaceOrInsert` la inserta;
-  // `deleteIfExists` es no-op. El comportamiento en condiciones normales es
-  // idéntico al sync original.
+  // Sync 100% idempotente: usamos `insertIfDoesNotExist` también cuando el
+  // valor no cambia, para reconciliar el aggregate si fue purgado
+  // externamente por `_syncPatientActiveStateInClinic` (cascada plan
+  // completado/cancelado/expirado). El sync anterior hacía no-op cuando
+  // `oldValue === newValue`, permitiendo drift permanente: si entre dos
+  // recomputes el paciente quedó transitoriamente inactivo y la cascada
+  // purgó las entries, al volver activo con la misma adherencia el aggregate
+  // seguía vacío (ver AUDITORIA_AGGREGATES_CONVEX.md Bug 3).
   const dirNS: [Id<"clinics">, Ventana] = [clinicId, ventana];
-  const oldAdh = existing?.adherencia;
-  if (oldAdh != null && adherencia != null && oldAdh !== adherencia) {
-    await patientsByClinicAdherencia.replaceOrInsert(
-      ctx,
-      { namespace: dirNS, key: oldAdh, id: pacienteId },
-      { namespace: dirNS, key: adherencia, sumValue: adherencia },
-    );
-  } else if (oldAdh == null && adherencia != null) {
-    await patientsByClinicAdherencia.insertIfDoesNotExist(ctx, {
-      namespace: dirNS,
-      key: adherencia,
-      id: pacienteId,
-      sumValue: adherencia,
-    });
-  } else if (oldAdh != null && adherencia == null) {
-    await patientsByClinicAdherencia.deleteIfExists(ctx, {
-      namespace: dirNS,
-      key: oldAdh,
-      id: pacienteId,
-    });
-  }
-
-  const oldRisk = existing?.riskScore;
-  if (oldRisk != null && oldRisk !== riskScore) {
-    await patientsByClinicRiskScore.replaceOrInsert(
-      ctx,
-      { namespace: dirNS, key: oldRisk, id: pacienteId },
-      { namespace: dirNS, key: riskScore },
-    );
-  } else if (oldRisk == null) {
-    await patientsByClinicRiskScore.insertIfDoesNotExist(ctx, {
-      namespace: dirNS,
-      key: riskScore,
-      id: pacienteId,
-    });
-  }
-
-  // patientsByClinicDolor (PR H6): sum/count desde recomputeClinic. Necesita
-  // `sumValue: dolorPromedio` para que sum() devuelva suma de dolores.
-  const oldDolor = existing?.dolorPromedio;
-  if (oldDolor != null && dolorPromedio != null && oldDolor !== dolorPromedio) {
-    await patientsByClinicDolor.replaceOrInsert(
-      ctx,
-      { namespace: dirNS, key: oldDolor, id: pacienteId },
-      { namespace: dirNS, key: dolorPromedio, sumValue: dolorPromedio },
-    );
-  } else if (oldDolor == null && dolorPromedio != null) {
-    await patientsByClinicDolor.insertIfDoesNotExist(ctx, {
-      namespace: dirNS,
-      key: dolorPromedio,
-      id: pacienteId,
-      sumValue: dolorPromedio,
-    });
-  } else if (oldDolor != null && dolorPromedio == null) {
-    await patientsByClinicDolor.deleteIfExists(ctx, {
-      namespace: dirNS,
-      key: oldDolor,
-      id: pacienteId,
-    });
-  }
+  await syncPatientAggregateValue(
+    ctx,
+    patientsByClinicAdherencia,
+    dirNS,
+    pacienteId,
+    existing?.adherencia,
+    adherencia,
+    true,
+  );
+  await syncPatientAggregateValue(
+    ctx,
+    patientsByClinicRiskScore,
+    dirNS,
+    pacienteId,
+    existing?.riskScore,
+    riskScore,
+    false,
+  );
+  await syncPatientAggregateValue(
+    ctx,
+    patientsByClinicDolor,
+    dirNS,
+    pacienteId,
+    existing?.dolorPromedio,
+    dolorPromedio,
+    true,
+  );
 }
+
 
 /**
  * Recompute idempotente de `clinicMetricsSnapshot` para una clínica y todas

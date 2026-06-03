@@ -187,7 +187,27 @@ export async function closeImpl(
   if (!session) return;
   if (session.fecha === undefined) return; // sesión legacy sin fecha → no aplica
 
-  const totalEsperados = session.totalEsperados ?? 0;
+  // Si la sesión se abrió antes de que los `planExercises` estuvieran
+  // disponibles, `totalEsperados` quedó en 0 y caería siempre en
+  // `completada_parcial`. Recalcular aquí garantiza que el estado refleje el
+  // plan vigente al cierre (ver AUDITORIA_AGGREGATES_CONVEX.md Bug P2).
+  let totalEsperados = session.totalEsperados ?? 0;
+  let totalEsperadosResolved = false;
+  if (totalEsperados === 0 && session.clinicId) {
+    const diaSemana = getDiaSemana(session.fecha);
+    const expected = await getExpectedExercisesForPatientOnDate(
+      ctx,
+      session.pacienteId,
+      session.fecha,
+      diaSemana,
+      session.clinicId,
+    );
+    const recomputed = sumExpectedByPlan(expected).totalEsperados;
+    if (recomputed > 0) {
+      totalEsperados = recomputed;
+      totalEsperadosResolved = true;
+    }
+  }
   const totalCompletados = session.totalCompletados ?? 0;
   const estado: "completada" | "completada_parcial" =
     totalEsperados > 0 && totalCompletados >= totalEsperados
@@ -198,6 +218,7 @@ export async function closeImpl(
     estado,
     motivoCierre,
     fechaFin: new Date().toISOString(),
+    ...(totalEsperadosResolved ? { totalEsperados } : {}),
   });
 
   // Trigger rollups (recompute day + mark stale weekly/monthly).

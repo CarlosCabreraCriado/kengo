@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, MutationCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
 import {
   getActivePlansForPatientOnDate,
@@ -11,7 +12,9 @@ import {
   anioSemanaISO,
   endOfISOWeek,
   endOfMonth,
+  getCurrentMadridDate,
   getDiaSemana,
+  getMadridDateOffset,
   rangeOfDates,
   startOfISOWeek,
   startOfMonth,
@@ -21,6 +24,8 @@ import {
   computeRachaMaxima,
   EstadoDia,
 } from "../_helpers/rollupComputation";
+import { resolveCanonicalPlanId } from "../_helpers/planVersioning";
+import { patientsWithActivePlanByClinic } from "../aggregates/patientsWithActivePlanByClinic";
 
 /**
  * Recompute determinista del rollup diario de un (paciente, fecha) desde
@@ -147,7 +152,14 @@ async function upsertDailyForClinic(
   const { totalEsperados, porPlan: esperadosPorPlan } =
     sumExpectedByPlan(expected);
 
-  // Completados + dolor + esfuerzo agregados sobre las ejecuciones de esta clínica.
+  // Completados + dolor + esfuerzo agregados sobre las ejecuciones de esta
+  // clínica. Las executions guardan el `planId` con el que se crearon, pero
+  // si después el plan se versiona (estado="modificado" + planSucesor), los
+  // `planExercises` esperados pasan al sucesor y `esperadosPorPlan` los
+  // contabiliza bajo el id nuevo. Para que `planAggregates` cuadre, las
+  // executions del plan antiguo se atribuyen al id canónico (ver Bug 1 en
+  // AUDITORIA_AGGREGATES_CONVEX.md).
+  const canonicalPlanCache = new Map<Id<"plans">, Id<"plans">>();
   const completadosPorPlan = new Map<Id<"plans">, number>();
   const doloresPorPlan = new Map<Id<"plans">, number[]>();
   let totalCompletados = 0;
@@ -156,19 +168,24 @@ async function upsertDailyForClinic(
   let esfuerzoSum = 0;
   let esfuerzoCount = 0;
   for (const ex of executions) {
+    const canonicalPlanId = await resolveCanonicalPlanId(
+      ctx,
+      ex.planId,
+      canonicalPlanCache,
+    );
     if (ex.completado) {
       totalCompletados += 1;
       completadosPorPlan.set(
-        ex.planId,
-        (completadosPorPlan.get(ex.planId) ?? 0) + 1,
+        canonicalPlanId,
+        (completadosPorPlan.get(canonicalPlanId) ?? 0) + 1,
       );
     }
     if (ex.dolorEscala !== undefined) {
       dolorSum += ex.dolorEscala;
       dolorCount += 1;
-      const arr = doloresPorPlan.get(ex.planId) ?? [];
+      const arr = doloresPorPlan.get(canonicalPlanId) ?? [];
       arr.push(ex.dolorEscala);
-      doloresPorPlan.set(ex.planId, arr);
+      doloresPorPlan.set(canonicalPlanId, arr);
     }
     if (ex.esfuerzoEscala !== undefined) {
       esfuerzoSum += ex.esfuerzoEscala;
@@ -543,4 +560,116 @@ function previousAnioMes(anioMesStr: string): string {
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Materialización de rollups "fallidos" para pacientes activos
+// (Bug 2 — AUDITORIA_AGGREGATES_CONVEX.md)
+// ─────────────────────────────────────────────────────────────────────────
+
+const MATERIALIZE_PATIENT_BATCH = 50;
+
+/**
+ * Para cada paciente activo en cada clínica, si no existe `dailyPatientRollup`
+ * de ayer (Madrid), invoca `recomputeDayAndPropagateImpl`. `computeEstadoDia`
+ * generará `fallido`/`descanso`/`sin_plan` según corresponda al plan vigente,
+ * asegurando que los días sin sesión cuenten en la adherencia y aparezcan en
+ * el timeline.
+ *
+ * Sin esto, los rollups solo se crean cuando el paciente abre la app: las
+ * métricas resultantes (adherencia, racha) ignoran los días "no abiertos" y
+ * por tanto inflan la adherencia real.
+ *
+ * Batchea pacientes con `ctx.scheduler.runAfter(0, ...)` cada
+ * `MATERIALIZE_PATIENT_BATCH` para no exceder límites de transacción.
+ * Invocado por el cron `daily-materialize-missing-rollups` a las 02:30 UTC,
+ * entre `nightly-session-close` y `daily-maintenance`.
+ */
+export const materializeMissingDailyRollupsForYesterday = internalMutation({
+  args: {
+    fecha: v.optional(v.string()),
+    cursorClinic: v.optional(v.id("clinics")),
+    skipPatients: v.optional(v.number()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    materializados: number;
+    procesados: number;
+    completado: boolean;
+  }> => {
+    const fecha = args.fecha ?? getMadridDateOffset(-1);
+    const skip = args.skipPatients ?? 0;
+
+    const paresOrdenados = await listActivePatientPairsAfter(
+      ctx,
+      args.cursorClinic,
+    );
+    const pares = paresOrdenados.slice(skip);
+
+    let materializados = 0;
+    let procesados = 0;
+    for (const { pacienteId, clinicId } of pares) {
+      if (procesados >= MATERIALIZE_PATIENT_BATCH) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.rollups.internal.materializeMissingDailyRollupsForYesterday,
+          {
+            fecha,
+            cursorClinic: clinicId,
+            skipPatients: skip + procesados,
+          },
+        );
+        return { materializados, procesados, completado: false };
+      }
+      procesados += 1;
+
+      const existing = await ctx.db
+        .query("dailyPatientRollup")
+        .withIndex("by_pacienteId_clinicId_fecha", (q) =>
+          q
+            .eq("pacienteId", pacienteId)
+            .eq("clinicId", clinicId)
+            .eq("fecha", fecha),
+        )
+        .unique();
+      if (existing) continue;
+
+      await recomputeDayAndPropagateImpl(ctx, pacienteId, fecha);
+      materializados += 1;
+    }
+
+    console.log(
+      `[materialize-missing-rollups] fecha=${fecha} procesados=${procesados} materializados=${materializados} completado=true`,
+    );
+    return { materializados, procesados, completado: true };
+  },
+});
+
+/**
+ * Devuelve la lista ordenada de pares `(pacienteId, clinicId)` con plan en
+ * curso, leída del aggregate `patientsWithActivePlanByClinic`. La ordenación
+ * `(clinicId, pacienteId)` es estable para que el batching por cursor
+ * `cursorClinic` + `skipPatients` no salte ni repita pares entre llamadas
+ * encadenadas.
+ */
+async function listActivePatientPairsAfter(
+  ctx: MutationCtx,
+  cursorClinic: Id<"clinics"> | undefined,
+): Promise<Array<{ pacienteId: Id<"users">; clinicId: Id<"clinics"> }>> {
+  const pares: Array<{ pacienteId: Id<"users">; clinicId: Id<"clinics"> }> = [];
+  for await (const clinicId of patientsWithActivePlanByClinic.iterNamespaces(
+    ctx,
+  )) {
+    if (cursorClinic && clinicId < cursorClinic) continue;
+    const { page } = await patientsWithActivePlanByClinic.paginate(ctx, {
+      namespace: clinicId,
+      pageSize: 1000,
+    });
+    for (const entry of page) {
+      pares.push({ pacienteId: entry.id, clinicId });
+    }
+  }
+  return pares;
 }

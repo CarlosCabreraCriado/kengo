@@ -47,6 +47,21 @@ crons.daily(
   {},
 );
 
+// Materialización de rollups "fallidos" para pacientes activos: crea
+// `dailyPatientRollup` para cada paciente con plan en curso cuyo día de
+// ayer no quedó registrado (no abrió la app). Sin esto, la adherencia y
+// la racha calculadas ignoran los días "no abiertos" e inflan las métricas
+// reales (ver AUDITORIA_AGGREGATES_CONVEX.md Bug 2).
+// Se ejecuta a las 02:30 UTC, entre `nightly-session-close` (02:00) y
+// `daily-maintenance` (03:00), para que `recomputeAllPatients` vea ya los
+// rollups materializados.
+crons.daily(
+  "daily-materialize-missing-rollups",
+  { hourUTC: 2, minuteUTC: 30 },
+  internal.rollups.internal.materializeMissingDailyRollupsForYesterday,
+  {},
+);
+
 // Periodos de gracia agotados: marca `unpaid` las clínicas en `past_due` cuyo
 // `graceUntil` ya expiró. Hora 03:30 UTC, después del `daily-maintenance` para
 // no solapar y dejar que cualquier `invoice.paid` del día anterior se procese
