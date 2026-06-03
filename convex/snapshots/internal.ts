@@ -457,6 +457,47 @@ export const recomputeAllPatients = internalMutation({
 });
 
 /**
+ * Sweep diario que reevalúa `patientsWithActivePlanByClinic` para todos
+ * los pares `(pacienteId, clinicId)` con plan en estado "activo".
+ * Necesario porque `isPlanEnCurso` depende de la fecha actual (un plan
+ * con `fechaInicio` futura entra "en curso" al amanecer; uno con
+ * `fechaFin` vencida sale). Las mutations de `plans` sincronizan el
+ * aggregate cuando cambia `estado`/`fechas`, pero no pueden anticiparse
+ * al cambio de día.
+ *
+ * Idempotente: el helper hace `insertIfDoesNotExist` / `deleteIfExists`.
+ * Pares con varios planes activos se procesan una sola vez (Set por
+ * `pacienteId|clinicId`).
+ *
+ * Invocado por `compliance.dailyMaintenance` después de
+ * `expireOverduePlansImpl` (que ya sincronizó los planes que vencen
+ * hoy) y antes de `recomputeAllClinics` (que leerá el aggregate fresco).
+ */
+export const syncActivePatientsAllClinics = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<{ procesados: number }> => {
+    const paresVistos = new Set<string>();
+    let procesados = 0;
+    for await (const clinicId of plansByClinicActive.iterNamespaces(ctx)) {
+      const plans = await ctx.db
+        .query("plans")
+        .withIndex("by_clinicId_estado", (q) =>
+          q.eq("clinicId", clinicId).eq("estado", "activo"),
+        )
+        .collect();
+      for (const p of plans) {
+        const key = `${p.pacienteId}|${clinicId}`;
+        if (paresVistos.has(key)) continue;
+        paresVistos.add(key);
+        await _syncPatientActiveStateInClinic(ctx, p.pacienteId, clinicId);
+        procesados += 1;
+      }
+    }
+    return { procesados };
+  },
+});
+
+/**
  * Recompute de todas las clínicas con planes activos. Invocado por
  * `daily-maintenance`.
  *

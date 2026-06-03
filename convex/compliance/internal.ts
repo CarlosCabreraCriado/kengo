@@ -20,6 +20,7 @@ import { expireOverduePlansImpl } from "../plans/internal";
 
 interface DailyMaintenanceResult {
   expired: number;
+  activeSync: number;
   weekly: number;
   monthly: number;
   patientsSnap: number;
@@ -32,6 +33,17 @@ export const dailyMaintenance = internalMutation({
   args: {},
   handler: async (ctx): Promise<DailyMaintenanceResult> => {
     const expired = await expireOverduePlansImpl(ctx);
+
+    // Sweep que reevalúa `patientsWithActivePlanByClinic` con `isPlanEnCurso`
+    // según la fecha actual: cubre planes con `fechaInicio` futura que entran
+    // en curso al amanecer (las mutations de `plans` no pueden anticiparse al
+    // cambio de día). Debe ir DESPUÉS de `expireOverduePlansImpl` (que ya
+    // procesó las salidas por `fechaFin`) y ANTES de `recomputeAllClinics`
+    // (que leerá el aggregate fresco para `pacientesActivos`).
+    const activeSyncRes = await ctx.runMutation(
+      internal.snapshots.internal.syncActivePatientsAllClinics,
+      {},
+    );
 
     // El cron `nightly-session-close` (02:00 UTC) ya cerró las sesiones del
     // día anterior. Aquí procesamos sus consecuencias.
@@ -61,10 +73,11 @@ export const dailyMaintenance = internalMutation({
     );
 
     console.log(
-      `[maintenance] expirados=${expired} weekly=${weeklyRes.procesados} monthly=${monthlyRes.procesados} patientsSnap=${patientsRes.procesados} clinicsSnap=${clinicsSnapRes.procesados} usage=${usageRes.procesados} alertas=${alertasRes.generadas}`,
+      `[maintenance] expirados=${expired} activeSync=${activeSyncRes.procesados} weekly=${weeklyRes.procesados} monthly=${monthlyRes.procesados} patientsSnap=${patientsRes.procesados} clinicsSnap=${clinicsSnapRes.procesados} usage=${usageRes.procesados} alertas=${alertasRes.generadas}`,
     );
     return {
       expired,
+      activeSync: activeSyncRes.procesados,
       weekly: weeklyRes.procesados,
       monthly: monthlyRes.procesados,
       patientsSnap: patientsRes.procesados,
