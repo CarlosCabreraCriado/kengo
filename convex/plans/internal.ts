@@ -1,5 +1,6 @@
 import { MutationCtx } from "../_generated/server";
 import { internalMutation } from "../_helpers/mutationWithTriggers";
+import { _purgeAggregatesForInactivePatient } from "../snapshots/internal";
 
 export async function expireOverduePlansImpl(ctx: MutationCtx): Promise<number> {
   const today = new Date().toISOString().split("T")[0];
@@ -13,6 +14,13 @@ export async function expireOverduePlansImpl(ctx: MutationCtx): Promise<number> 
   for (const plan of activePlans) {
     if (plan.fechaFin && plan.fechaFin < today) {
       await ctx.db.patch(plan._id, { estado: "completado" });
+      if (plan.clinicId) {
+        await _purgeAggregatesForInactivePatient(
+          ctx,
+          plan.pacienteId,
+          plan.clinicId,
+        );
+      }
       updated++;
     }
   }

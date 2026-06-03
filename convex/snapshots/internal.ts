@@ -816,6 +816,79 @@ async function _deleteAllPatientSnapshotsForClinic(
 export { _deleteAllPatientSnapshotsForClinic };
 
 /**
+ * H6c — purga las entries de `(pacienteId, clinicId)` en los 3
+ * DirectAggregates (`patientsByClinic{Adherencia,RiskScore,Dolor}`) × 3
+ * ventanas si tras un cambio de estado en `plans` el paciente NO tiene
+ * ningún plan `activo` en esa clínica. NO toca el documento
+ * `patientMetricsSnapshot` — el histórico sigue accesible vía
+ * `getPatientMetricsByPaciente`.
+ *
+ * Idempotente y seguro de llamar siempre tras cualquier patch de
+ * `plans.estado`. Usa `deleteIfExists` para tolerar entries inexistentes.
+ *
+ * Se invoca desde `plans.updateEstado`, `plans.remove`, `plans.version`
+ * y `expireOverduePlansImpl`. La cascada de
+ * `clinicMemberships.remove` usa `_deletePatientSnapshotsForClinic`
+ * (purga documento + aggregates) porque el paciente sale de la clínica
+ * completamente; aquí solo el plan se inactiva.
+ */
+async function _purgeAggregatesForInactivePatient(
+  ctx: MutationCtx,
+  pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
+): Promise<{ purgadas: number }> {
+  const planesActivos = await ctx.db
+    .query("plans")
+    .withIndex("by_pacienteId_estado", (q) =>
+      q.eq("pacienteId", pacienteId).eq("estado", "activo"),
+    )
+    .collect();
+  const tieneActivoEnClinica = planesActivos.some(
+    (p) => p.clinicId === clinicId,
+  );
+  if (tieneActivoEnClinica) return { purgadas: 0 };
+
+  let purgadas = 0;
+  for (const ventana of VENTANAS) {
+    const snap = await ctx.db
+      .query("patientMetricsSnapshot")
+      .withIndex("by_pacienteId_ventana", (q) =>
+        q.eq("pacienteId", pacienteId).eq("ventana", ventana),
+      )
+      .filter((q) => q.eq(q.field("clinicId"), clinicId))
+      .first();
+    if (!snap) continue;
+    const dirNS: [Id<"clinics">, Ventana] = [clinicId, ventana];
+
+    if (snap.adherencia != null) {
+      await patientsByClinicAdherencia.deleteIfExists(ctx, {
+        namespace: dirNS,
+        key: snap.adherencia,
+        id: pacienteId,
+      });
+      purgadas += 1;
+    }
+    await patientsByClinicRiskScore.deleteIfExists(ctx, {
+      namespace: dirNS,
+      key: snap.riskScore,
+      id: pacienteId,
+    });
+    purgadas += 1;
+    if (snap.dolorPromedio != null) {
+      await patientsByClinicDolor.deleteIfExists(ctx, {
+        namespace: dirNS,
+        key: snap.dolorPromedio,
+        id: pacienteId,
+      });
+      purgadas += 1;
+    }
+  }
+  return { purgadas };
+}
+
+export { _purgeAggregatesForInactivePatient };
+
+/**
  * Wrapper invocable vía `npx convex run` para purgar manualmente los
  * snapshots huérfanos detectados en dev/prod. Reutiliza el mismo helper que
  * la cascada de `clinicMemberships.remove`.

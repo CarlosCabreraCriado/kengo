@@ -13,6 +13,7 @@ import {
 } from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
 import { getCurrentMadridDate } from "../_helpers/datetime";
+import { _purgeAggregatesForInactivePatient } from "../snapshots/internal";
 
 // Encola una push al paciente avisando de que tiene un plan nuevo o
 // recién activado. Llamar SOLO cuando el plan pase a `estado === "activo"`
@@ -210,6 +211,11 @@ export const updateEstado = mutation({
       );
     }
     if (estadoAnterior !== args.estado) {
+      await _purgeAggregatesForInactivePatient(
+        ctx,
+        plan.pacienteId,
+        plan.clinicId,
+      );
       await scheduleRecomputeClinic(ctx, plan.clinicId);
     }
   },
@@ -297,6 +303,11 @@ export const remove = mutation({
 
     if (await planHasActivity(ctx, args.planId)) {
       await ctx.db.patch(args.planId, { estado: "cancelado" });
+      await _purgeAggregatesForInactivePatient(
+        ctx,
+        plan.pacienteId,
+        plan.clinicId,
+      );
       await scheduleRecomputeClinic(ctx, plan.clinicId);
       return { softDeleted: true };
     }
@@ -305,6 +316,11 @@ export const remove = mutation({
       await ctx.db.delete(ex._id);
     }
     await ctx.db.delete(args.planId);
+    await _purgeAggregatesForInactivePatient(
+      ctx,
+      plan.pacienteId,
+      plan.clinicId,
+    );
     await scheduleRecomputeClinic(ctx, plan.clinicId);
     return { softDeleted: false };
   },
@@ -359,6 +375,14 @@ export const version = mutation({
       oldPlan.pacienteId,
       newPlanId,
       args.titulo,
+    );
+    // Aunque version() siempre crea un plan activo nuevo (no-op esperado),
+    // se invoca por consistencia con el resto de mutations que tocan
+    // plans.estado. El check interno devuelve purgadas: 0.
+    await _purgeAggregatesForInactivePatient(
+      ctx,
+      oldPlan.pacienteId,
+      oldPlan.clinicId,
     );
     await scheduleRecomputeClinic(ctx, oldPlan.clinicId);
 
