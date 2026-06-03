@@ -19,6 +19,7 @@ import { executionsByPacienteDolor } from "../aggregates/executionsByPacienteDol
 import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
 import { patientsByClinicRiskScore } from "../aggregates/patientsByClinicRiskScore";
 import { patientsByClinicDolor } from "../aggregates/patientsByClinicDolor";
+import { patientsWithActivePlanByClinic } from "../aggregates/patientsWithActivePlanByClinic";
 import { plansByClinicActive } from "../aggregates/plansByClinicActive";
 import { sessionsByClinic } from "../aggregates/sessionsByClinic";
 
@@ -768,37 +769,59 @@ async function _deleteAllPatientSnapshotsForClinic(
 export { _deleteAllPatientSnapshotsForClinic };
 
 /**
- * H6c — purga las entries de `(pacienteId, clinicId)` en los 3
- * DirectAggregates (`patientsByClinic{Adherencia,RiskScore,Dolor}`) × 3
- * ventanas si tras un cambio de estado en `plans` el paciente NO tiene
- * ningún plan `activo` en esa clínica. NO toca el documento
- * `patientMetricsSnapshot` — el histórico sigue accesible vía
- * `getPatientMetricsByPaciente`.
+ * F7-close — sincroniza el estado "tiene plan en curso" de un paciente en
+ * una clínica con el aggregate `patientsWithActivePlanByClinic`, y purga
+ * los aggregates por ventana (`patientsByClinic{Adherencia,RiskScore,Dolor}`)
+ * cuando el paciente queda sin plan en curso.
+ *
+ * Comportamiento:
+ *   - Si el paciente tiene al menos un plan en curso hoy (estado activo +
+ *     fechas Madrid vigentes) → `insertIfDoesNotExist` en el aggregate
+ *     Active y NO toca los 3 aggregates por ventana (sus entries se
+ *     mantienen vivas mientras el paciente está activo).
+ *   - Si NO tiene ningún plan en curso → `deleteIfExists` en el aggregate
+ *     Active + purga las entries por ventana de los 3 aggregates legacy
+ *     (idempotente). NO borra el documento `patientMetricsSnapshot` — el
+ *     histórico sigue accesible vía `getPatientMetricsByPaciente`.
  *
  * Idempotente y seguro de llamar siempre tras cualquier patch de
- * `plans.estado`. Usa `deleteIfExists` para tolerar entries inexistentes.
+ * `plans.estado` o `plans.fechaInicio/fechaFin`. Sustituye a
+ * `_purgeAggregatesForInactivePatient` (que solo cubría el sentido
+ * "inactivar"); el nuevo helper también cubre la inserción al reactivar
+ * un paciente, eliminando la necesidad de recomputos sincrónicos del
+ * snapshot de clínica desde mutations de planes.
  *
- * Se invoca desde `plans.updateEstado`, `plans.remove`, `plans.version`
- * y `expireOverduePlansImpl`. La cascada de
- * `clinicMemberships.remove` usa `_deletePatientSnapshotsForClinic`
- * (purga documento + aggregates) porque el paciente sale de la clínica
- * completamente; aquí solo el plan se inactiva.
+ * Se invoca desde `plans.{create,updateEstado,update,remove,version}` y
+ * desde `expireOverduePlansImpl`. La cascada de `clinicMemberships.remove`
+ * sigue usando `_deletePatientSnapshotsForClinic` (purga documento +
+ * aggregates) porque el paciente sale de la clínica completamente.
  */
-async function _purgeAggregatesForInactivePatient(
+async function _syncPatientActiveStateInClinic(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
   clinicId: Id<"clinics">,
-): Promise<{ purgadas: number }> {
-  const planesActivos = await ctx.db
-    .query("plans")
-    .withIndex("by_pacienteId_estado", (q) =>
-      q.eq("pacienteId", pacienteId).eq("estado", "activo"),
-    )
-    .collect();
-  const tieneActivoEnClinica = planesActivos.some(
-    (p) => p.clinicId === clinicId,
+): Promise<{ inserted: boolean; purgadas: number }> {
+  const hoyMadrid = getCurrentMadridDate();
+  const tieneEnCurso = await pacienteTienePlanEnCurso(
+    ctx,
+    pacienteId,
+    hoyMadrid,
   );
-  if (tieneActivoEnClinica) return { purgadas: 0 };
+
+  if (tieneEnCurso) {
+    await patientsWithActivePlanByClinic.insertIfDoesNotExist(ctx, {
+      namespace: clinicId,
+      key: null,
+      id: pacienteId,
+    });
+    return { inserted: true, purgadas: 0 };
+  }
+
+  await patientsWithActivePlanByClinic.deleteIfExists(ctx, {
+    namespace: clinicId,
+    key: null,
+    id: pacienteId,
+  });
 
   let purgadas = 0;
   for (const ventana of VENTANAS) {
@@ -835,10 +858,14 @@ async function _purgeAggregatesForInactivePatient(
       purgadas += 1;
     }
   }
-  return { purgadas };
+  return { inserted: false, purgadas };
 }
 
-export { _purgeAggregatesForInactivePatient };
+export { _syncPatientActiveStateInClinic };
+// Alias temporal para no romper imports existentes mientras se renombra
+// el sitio de llamada en `plans/mutations.ts` y `plans/internal.ts`
+// (commit 2 de F7-close). Eliminar tras renombrar todos los callers.
+export { _syncPatientActiveStateInClinic as _purgeAggregatesForInactivePatient };
 
 /**
  * Wrapper invocable vía `npx convex run` para purgar manualmente los

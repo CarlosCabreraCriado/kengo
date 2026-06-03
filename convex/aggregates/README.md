@@ -25,6 +25,8 @@ El namespace aísla árboles B independientes, lo cual:
 | `plansByClinicActive` | `clinicId` | `fechaFin ?? "9999-12-31"` | `estado === "activo"` |
 | `patientsByClinicAdherencia` | `[clinicId, ventana]` | `adherencia` (number) | DirectAggregate, sin trigger |
 | `patientsByClinicRiskScore` | `[clinicId, ventana]` | `riskScore` (number) | DirectAggregate, sin trigger |
+| `patientsByClinicDolor` | `[clinicId, ventana]` | `dolorPromedio` (number) | DirectAggregate, sin trigger |
+| `patientsWithActivePlanByClinic` | `clinicId` | `null` | DirectAggregate, sin trigger (sync manual desde mutations de `plans` + sweep diario) |
 
 Nota: `executionsByPaciente` y `executionsByPacienteDolor` usan namespace tupla
 `[pacienteId, clinicId]` (no solo `pacienteId`) para preservar el aislamiento
@@ -50,6 +52,8 @@ Cálculo para Kengo:
   clínica). Sin contención.
 - **`plansByClinicActive`** — escrituras esporádicas (al crear/activar
   planes). Sin contención.
+- **`patientsWithActivePlanByClinic`** — escrituras esporádicas (al cambiar
+  `plans.estado`/`fechas`). Sin contención.
 
 ### Mitigaciones si una clínica de alto volumen contiende en producción
 

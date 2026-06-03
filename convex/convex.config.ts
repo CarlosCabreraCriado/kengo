@@ -20,6 +20,7 @@ app.use(aggregate, { name: "plansByClinicActive" });
 app.use(aggregate, { name: "patientsByClinicAdherencia" });
 app.use(aggregate, { name: "patientsByClinicRiskScore" });
 app.use(aggregate, { name: "patientsByClinicDolor" });
+app.use(aggregate, { name: "patientsWithActivePlanByClinic" });
 
 app.use(migrations);
 

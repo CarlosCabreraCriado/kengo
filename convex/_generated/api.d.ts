@@ -31,6 +31,7 @@ import type * as aggregates_executionsByPacienteDolor from "../aggregates/execut
 import type * as aggregates_patientsByClinicAdherencia from "../aggregates/patientsByClinicAdherencia.js";
 import type * as aggregates_patientsByClinicDolor from "../aggregates/patientsByClinicDolor.js";
 import type * as aggregates_patientsByClinicRiskScore from "../aggregates/patientsByClinicRiskScore.js";
+import type * as aggregates_patientsWithActivePlanByClinic from "../aggregates/patientsWithActivePlanByClinic.js";
 import type * as aggregates_plansByClinicActive from "../aggregates/plansByClinicActive.js";
 import type * as aggregates_sessionsByClinic from "../aggregates/sessionsByClinic.js";
 import type * as aggregates_triggers from "../aggregates/triggers.js";
@@ -92,6 +93,7 @@ import type * as migrations_inspectPendingPlans from "../migrations/inspectPendi
 import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
 import type * as migrations_markVersionedAsModificado from "../migrations/markVersionedAsModificado.js";
 import type * as migrations_patchPlanClinicId from "../migrations/patchPlanClinicId.js";
+import type * as migrations_purgeAggregatesForInactivePatients from "../migrations/purgeAggregatesForInactivePatients.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as notificationPreferences_mutations from "../notificationPreferences/mutations.js";
 import type * as notificationPreferences_queries from "../notificationPreferences/queries.js";
@@ -157,6 +159,7 @@ declare const fullApi: ApiFromModules<{
   "aggregates/patientsByClinicAdherencia": typeof aggregates_patientsByClinicAdherencia;
   "aggregates/patientsByClinicDolor": typeof aggregates_patientsByClinicDolor;
   "aggregates/patientsByClinicRiskScore": typeof aggregates_patientsByClinicRiskScore;
+  "aggregates/patientsWithActivePlanByClinic": typeof aggregates_patientsWithActivePlanByClinic;
   "aggregates/plansByClinicActive": typeof aggregates_plansByClinicActive;
   "aggregates/sessionsByClinic": typeof aggregates_sessionsByClinic;
   "aggregates/triggers": typeof aggregates_triggers;
@@ -218,6 +221,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/legacyUsers": typeof migrations_legacyUsers;
   "migrations/markVersionedAsModificado": typeof migrations_markVersionedAsModificado;
   "migrations/patchPlanClinicId": typeof migrations_patchPlanClinicId;
+  "migrations/purgeAggregatesForInactivePatients": typeof migrations_purgeAggregatesForInactivePatients;
   "migrations/validation": typeof migrations_validation;
   "notificationPreferences/mutations": typeof notificationPreferences_mutations;
   "notificationPreferences/queries": typeof notificationPreferences_queries;
@@ -292,5 +296,6 @@ export declare const components: {
   patientsByClinicAdherencia: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"patientsByClinicAdherencia">;
   patientsByClinicRiskScore: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"patientsByClinicRiskScore">;
   patientsByClinicDolor: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"patientsByClinicDolor">;
+  patientsWithActivePlanByClinic: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"patientsWithActivePlanByClinic">;
   migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
 };
