@@ -78,3 +78,8 @@ Thumbs.db
 /diseño/
 
 .angular
+
+# Convex CLI: artefacto que aparece si se ejecuta `npx convex codegen|deploy`
+# desde dentro de convex/. El convex.json del root anclá la "functions dir";
+# este ignore es una red de seguridad por si reaparece.
+convex/convex/

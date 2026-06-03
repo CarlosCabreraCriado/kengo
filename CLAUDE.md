@@ -28,6 +28,10 @@ kengo/
 - **Directus CMS**: Primary data source
 - **Custom API**: Secondary endpoint at `API_URL` (localhost:4201 in dev, system.kengoapp.com in prod)
 
+## Convex CLI
+
+Ejecutar `npx convex codegen|deploy|dev` **siempre desde la raíz del proyecto** o vía `npm run convex:*`. El `convex.json` del root anclá la "functions dir" a `convex/`; evitar `cd convex && npx convex ...` para no disparar el bug del CLI que crea un `convex/convex/` anidado.
+
 ## Database
 
 For detailed information about the database structure (tables, columns, relationships, constraints), please refer to the file `docs/DATABASE_SCHEMA.ddl`.
