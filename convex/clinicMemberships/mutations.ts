@@ -9,6 +9,7 @@ import {
   getAuthenticatedUser,
   requireActiveSubscription,
 } from "../_helpers/permissions";
+import { _deletePatientSnapshotsForClinic } from "../snapshots/internal";
 
 const PUESTOS_FACTURABLES: ReadonlyArray<"fisio" | "admin"> = [
   "fisio",
@@ -203,6 +204,13 @@ export const remove = mutation({
           await ctx.db.patch(c._id, { archivedAt: ahora });
         }
       }
+
+      // Purga los `patientMetricsSnapshot` del paciente para esta clínica
+      // (las 3 ventanas) y sus entradas en los DirectAggregates
+      // `patientsByClinic{Adherencia,RiskScore,Dolor}`. Sin esto, los
+      // snapshots quedan huérfanos y contaminan los aggregates leídos por
+      // `recomputeClinic` (dolorMedio).
+      await _deletePatientSnapshotsForClinic(ctx, userId, clinicId);
     } else {
       // fisio | admin
       await cascadeRemoveStaff(ctx, userId, clinicId);

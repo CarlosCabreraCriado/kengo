@@ -23,7 +23,7 @@ import { plansByClinicActive } from "../aggregates/plansByClinicActive";
 import { sessionsByClinic } from "../aggregates/sessionsByClinic";
 
 type Ventana = "7d" | "15d" | "30d";
-const VENTANAS: Ventana[] = ["7d", "15d", "30d"];
+export const VENTANAS: Ventana[] = ["7d", "15d", "30d"];
 const ventanaValidator = v.union(
   v.literal("7d"),
   v.literal("15d"),
@@ -634,4 +634,88 @@ async function loadSesionesUltimos7d(
     },
   });
 }
+
+/**
+ * Purga los `patientMetricsSnapshot` de un paciente en una clínica concreta
+ * (las 3 ventanas) junto con sus entradas en los DirectAggregates
+ * particionados por `(clinicId, ventana)`:
+ *   - `patientsByClinicAdherencia`
+ *   - `patientsByClinicRiskScore`
+ *   - `patientsByClinicDolor`
+ *
+ * Pensado para invocarse desde la cascada de `clinicMemberships.remove`
+ * cuando un paciente sale de una clínica: sin esta purga, los snapshots
+ * y aggregates quedan huérfanos y desvían el `dolorMedio`/adherencia que
+ * lee `recomputeClinicForWindow`.
+ *
+ * Usa el mismo patrón de mutación de aggregates que
+ * `recomputePatientForWindow`: las métricas opcionales (`adherencia`,
+ * `dolorPromedio`) solo se eliminan del aggregate si están definidas en
+ * el snapshot; `riskScore` siempre está (es obligatorio en schema).
+ */
+async function _deletePatientSnapshotsForClinic(
+  ctx: MutationCtx,
+  pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
+): Promise<{ deletedSnapshots: number; ventanasProcesadas: Ventana[] }> {
+  const ventanasProcesadas: Ventana[] = [];
+  let deletedSnapshots = 0;
+
+  for (const ventana of VENTANAS) {
+    const snap = await ctx.db
+      .query("patientMetricsSnapshot")
+      .withIndex("by_pacienteId_ventana", (q) =>
+        q.eq("pacienteId", pacienteId).eq("ventana", ventana),
+      )
+      .filter((q) => q.eq(q.field("clinicId"), clinicId))
+      .first();
+    if (!snap) continue;
+
+    const dirNS: [Id<"clinics">, Ventana] = [clinicId, ventana];
+
+    if (snap.adherencia != null) {
+      await patientsByClinicAdherencia.delete(ctx, {
+        namespace: dirNS,
+        key: snap.adherencia,
+        id: pacienteId,
+      });
+    }
+
+    await patientsByClinicRiskScore.delete(ctx, {
+      namespace: dirNS,
+      key: snap.riskScore,
+      id: pacienteId,
+    });
+
+    if (snap.dolorPromedio != null) {
+      await patientsByClinicDolor.delete(ctx, {
+        namespace: dirNS,
+        key: snap.dolorPromedio,
+        id: pacienteId,
+      });
+    }
+
+    await ctx.db.delete(snap._id);
+    deletedSnapshots += 1;
+    ventanasProcesadas.push(ventana);
+  }
+
+  return { deletedSnapshots, ventanasProcesadas };
+}
+
+export { _deletePatientSnapshotsForClinic };
+
+/**
+ * Wrapper invocable vía `npx convex run` para purgar manualmente los
+ * snapshots huérfanos detectados en dev/prod. Reutiliza el mismo helper que
+ * la cascada de `clinicMemberships.remove`.
+ */
+export const deletePatientSnapshotsForClinic = internalMutation({
+  args: {
+    pacienteId: v.id("users"),
+    clinicId: v.id("clinics"),
+  },
+  handler: (ctx, { pacienteId, clinicId }) =>
+    _deletePatientSnapshotsForClinic(ctx, pacienteId, clinicId),
+});
 
