@@ -240,20 +240,24 @@ async function recomputePatientForWindow(
 
   // Mantener DirectAggregates sincronizados con los valores del snapshot.
   // patientsByClinicAdherencia ordena por adherencia (asc) y se lee desde
-  // getPatientMetrics (PR H1, pendiente). patientsByClinicRiskScore análogo.
+  // getPatientMetrics (orden adherencia) y recomputeClinic.adherenciaPromedio
+  // (sum/count, PR H6b). Para que sum() devuelva la suma de adherencias hay
+  // que pasar `sumValue: adherencia` explícito en insert/replace — por
+  // defecto DirectAggregate asume sumValue=0.
   const dirNS: [Id<"clinics">, Ventana] = [clinicId, ventana];
   const oldAdh = existing?.adherencia;
   if (oldAdh != null && adherencia != null && oldAdh !== adherencia) {
     await patientsByClinicAdherencia.replace(
       ctx,
       { namespace: dirNS, key: oldAdh, id: pacienteId },
-      { namespace: dirNS, key: adherencia },
+      { namespace: dirNS, key: adherencia, sumValue: adherencia },
     );
   } else if (oldAdh == null && adherencia != null) {
     await patientsByClinicAdherencia.insert(ctx, {
       namespace: dirNS,
       key: adherencia,
       id: pacienteId,
+      sumValue: adherencia,
     });
   } else if (oldAdh != null && adherencia == null) {
     await patientsByClinicAdherencia.delete(ctx, {
