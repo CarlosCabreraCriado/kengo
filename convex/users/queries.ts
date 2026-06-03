@@ -78,6 +78,12 @@ export const getById = query({
 /**
  * Lista pacientes (puesto="paciente") de una o varias clínicas. Deduplica
  * por userId cuando un paciente pertenece a múltiples clínicas del fisio.
+ *
+ * Por defecto excluye a los fisios/admins que actúan como sus propios
+ * pacientes (`tambienEsPaciente === true`): no se contabilizan ni aparecen
+ * en el listado clínico habitual. Pasar `includeFisiosAsPatient: true` para
+ * incluirlos — cada entrada llevará `esEquipo: true` para que el frontend
+ * pueda marcarlos con badge.
  */
 export const listPatientsByClinic = query({
   args: {
@@ -86,6 +92,7 @@ export const listPatientsByClinic = query({
     search: v.optional(v.string()),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
+    includeFisiosAsPatient: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await getAuthenticatedUser(ctx);
@@ -105,12 +112,17 @@ export const listPatientsByClinic = query({
       ),
     );
 
-    const allowedUserIds = new Set<Id<"users">>(
-      allMemberships
-        .flat()
-        .filter((m) => esPaciente(m.puesto))
-        .map((m) => m.userId),
-    );
+    const includeFisios = args.includeFisiosAsPatient === true;
+    const equipoUserIds = new Set<Id<"users">>();
+    const allowedUserIds = new Set<Id<"users">>();
+    for (const m of allMemberships.flat()) {
+      if (esPaciente(m.puesto)) {
+        allowedUserIds.add(m.userId);
+      } else if (includeFisios && m.tambienEsPaciente === true) {
+        allowedUserIds.add(m.userId);
+        equipoUserIds.add(m.userId);
+      }
+    }
 
     let filtered: Array<{
       _id: Id<"users">;
@@ -142,7 +154,9 @@ export const listPatientsByClinic = query({
     const total = filtered.length;
     const offset = args.offset ?? 0;
     const limit = args.limit ?? filtered.length;
-    const results = filtered.slice(offset, offset + limit);
+    const results = filtered
+      .slice(offset, offset + limit)
+      .map((u) => ({ ...u, esEquipo: equipoUserIds.has(u._id) }));
 
     return { results, total };
   },

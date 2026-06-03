@@ -67,6 +67,7 @@ export const create = mutation({
       userId: user._id,
       clinicId,
       puesto: "admin",
+      tambienEsPaciente: true,
     });
 
     if (args.addImageKeys && args.addImageKeys.length > 0) {

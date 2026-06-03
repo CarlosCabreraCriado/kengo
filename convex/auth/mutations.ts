@@ -180,11 +180,12 @@ export const createMembershipFromCode = internalMutation({
     const puesto: "fisio" | "paciente" =
       codeDoc.tipo === "fisioterapeuta" ? "fisio" : "paciente";
 
-    // Crear membresía
+    // Crear membresía. Los fisios actúan también como sus propios pacientes.
     await ctx.db.insert("clinicMemberships", {
       userId: user._id,
       clinicId: codeDoc.clinicId,
       puesto,
+      tambienEsPaciente: puesto === "fisio" ? true : undefined,
     });
 
     // Incrementar usos del código

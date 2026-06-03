@@ -1,9 +1,21 @@
 import { QueryCtx, MutationCtx } from "../_generated/server";
-import { Id } from "../_generated/dataModel";
+import { Doc, Id } from "../_generated/dataModel";
 import { tieneGestion } from "./permissions";
 import { assertCanAccessClinic, assertCanAccessPaciente } from "./authorization";
 
 type AnyCtx = QueryCtx | MutationCtx;
+
+/**
+ * `true` si la membresía indica que el usuario actúa como paciente en la
+ * clínica: o bien su puesto principal es `paciente`, o bien tiene
+ * `tambienEsPaciente` activado (típicamente fisios/admins que pueden ser
+ * sus propios pacientes en la clínica donde trabajan).
+ */
+export function membershipEsPaciente(
+  m: Doc<"clinicMemberships"> | null,
+): boolean {
+  return !!m && (m.puesto === "paciente" || m.tambienEsPaciente === true);
+}
 
 /**
  * @deprecated Usa `resolveAndAssertPacienteId`. Esta función no valida
@@ -72,7 +84,7 @@ export async function resolveAndAssertPacienteAndClinic(
       q.eq("userId", targetPaciente).eq("clinicId", targetClinic),
     )
     .unique();
-  if (!pacienteEnClinica || pacienteEnClinica.puesto !== "paciente") {
+  if (!membershipEsPaciente(pacienteEnClinica)) {
     throw new Error("El paciente no pertenece a esta clínica");
   }
   return { pacienteId: targetPaciente, clinicId: targetClinic };

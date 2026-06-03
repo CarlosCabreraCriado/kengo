@@ -169,7 +169,10 @@ export const consume = mutation({
         });
       }
 
-      await ctx.db.patch(existingMembership._id, { puesto: "fisio" });
+      await ctx.db.patch(existingMembership._id, {
+        puesto: "fisio",
+        tambienEsPaciente: true,
+      });
       await ctx.db.patch(codeDoc._id, {
         usosActuales: codeDoc.usosActuales + 1,
       });
@@ -214,6 +217,7 @@ export const consume = mutation({
       userId: user._id,
       clinicId: codeDoc.clinicId,
       puesto,
+      tambienEsPaciente: puesto === "fisio" ? true : undefined,
     });
 
     await ctx.db.patch(codeDoc._id, {

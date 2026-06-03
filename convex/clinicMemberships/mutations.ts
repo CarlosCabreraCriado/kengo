@@ -57,6 +57,68 @@ async function cascadeRemoveStaff(
 }
 
 /**
+ * Cascada cuando se elimina la condición de paciente del usuario en la
+ * clínica (puesto principal `paciente`, o fisio/admin con
+ * `tambienEsPaciente: true` que sale completamente):
+ *   - Borra `assignments(pacienteId, clinicId)`.
+ *   - Cancela los planes activos/borrador del usuario atribuidos a esa
+ *     clínica donde figure como paciente. Los planes no se borran para
+ *     preservar el historial.
+ *   - Archiva conversaciones donde el usuario figuraba como paciente.
+ *   - Purga sus `patientMetricsSnapshot` y entradas en los DirectAggregates
+ *     `patientsByClinic{Adherencia,RiskScore,Dolor}`.
+ *
+ * Asume que la membresía ya ha sido eliminada por el caller.
+ */
+async function cascadeRemovePatient(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  clinicId: Id<"clinics">,
+): Promise<void> {
+  const ahora = Date.now();
+
+  const assignments = await ctx.db
+    .query("assignments")
+    .withIndex("by_pacienteId_clinicId", (q) =>
+      q.eq("pacienteId", userId).eq("clinicId", clinicId),
+    )
+    .collect();
+  for (const a of assignments) await ctx.db.delete(a._id);
+
+  const planesActivos = await ctx.db
+    .query("plans")
+    .withIndex("by_pacienteId_estado", (q) =>
+      q.eq("pacienteId", userId).eq("estado", "activo"),
+    )
+    .collect();
+  const planesBorrador = await ctx.db
+    .query("plans")
+    .withIndex("by_pacienteId_estado", (q) =>
+      q.eq("pacienteId", userId).eq("estado", "borrador"),
+    )
+    .collect();
+  for (const p of [...planesActivos, ...planesBorrador]) {
+    if (p.clinicId === clinicId) {
+      await ctx.db.patch(p._id, { estado: "cancelado" });
+    }
+  }
+
+  const conversacionesPaciente = await ctx.db
+    .query("conversations")
+    .withIndex("by_pacienteId_lastMessageAt", (q) =>
+      q.eq("pacienteId", userId),
+    )
+    .collect();
+  for (const c of conversacionesPaciente) {
+    if (c.clinicId === clinicId && c.archivedAt === undefined) {
+      await ctx.db.patch(c._id, { archivedAt: ahora });
+    }
+  }
+
+  await _deletePatientSnapshotsForClinic(ctx, userId, clinicId);
+}
+
+/**
  * Añade una membresía usuario-clínica.
  */
 export const add = mutation({
@@ -84,6 +146,12 @@ export const add = mutation({
       )
       .unique();
 
+    // Los fisios/admins de una clínica actúan automáticamente también como
+    // sus propios pacientes: pueden ver el modo paciente, autoasignarse
+    // planes y ejercicios. Para puesto `paciente` el flag es redundante.
+    const tambienEsPaciente =
+      args.puesto === "fisio" || args.puesto === "admin" ? true : undefined;
+
     let puestoAnterior: "fisio" | "paciente" | "admin" | null = null;
     let resultId;
     if (existing) {
@@ -97,7 +165,17 @@ export const add = mutation({
         ) {
           await assertNotOwnerWithoutTransfer(ctx, args.clinicId, args.userId);
         }
-        await ctx.db.patch(existing._id, { puesto: args.puesto });
+        await ctx.db.patch(existing._id, {
+          puesto: args.puesto,
+          tambienEsPaciente,
+        });
+      } else if (
+        tambienEsPaciente === true &&
+        existing.tambienEsPaciente !== true
+      ) {
+        // Mismo puesto, pero el flag puede no estar seteado (membresía
+        // pre-backfill). Lo dejamos consistente.
+        await ctx.db.patch(existing._id, { tambienEsPaciente: true });
       }
       resultId = existing._id;
     } else {
@@ -105,6 +183,7 @@ export const add = mutation({
         userId: args.userId,
         clinicId: args.clinicId,
         puesto: args.puesto,
+        tambienEsPaciente,
       });
     }
 
@@ -152,6 +231,7 @@ export const remove = mutation({
     const clinicId = membership.clinicId;
     const userId = membership.userId;
     const puesto = membership.puesto;
+    const eraTambienPaciente = membership.tambienEsPaciente === true;
 
     // Si el miembro saliente es el propietario, exigir transferencia previa.
     // La validación es independiente del estado de billing: el owner debe
@@ -162,57 +242,16 @@ export const remove = mutation({
 
     await ctx.db.delete(args.membershipId);
 
-    const ahora = Date.now();
+    // El usuario actúa como paciente en la clínica si su puesto principal
+    // era `paciente`, o si era fisio/admin con `tambienEsPaciente: true`
+    // (autoasignación de planes). Al salir, en ambos casos hay que cancelar
+    // los planes propios y limpiar sus snapshots.
+    const eraPaciente = puesto === "paciente" || eraTambienPaciente;
 
-    if (puesto === "paciente") {
-      const assignments = await ctx.db
-        .query("assignments")
-        .withIndex("by_pacienteId_clinicId", (q) =>
-          q.eq("pacienteId", userId).eq("clinicId", clinicId),
-        )
-        .collect();
-      for (const a of assignments) await ctx.db.delete(a._id);
-
-      const planesActivos = await ctx.db
-        .query("plans")
-        .withIndex("by_pacienteId_estado", (q) =>
-          q.eq("pacienteId", userId).eq("estado", "activo"),
-        )
-        .collect();
-      const planesBorrador = await ctx.db
-        .query("plans")
-        .withIndex("by_pacienteId_estado", (q) =>
-          q.eq("pacienteId", userId).eq("estado", "borrador"),
-        )
-        .collect();
-      for (const p of [...planesActivos, ...planesBorrador]) {
-        if (p.clinicId === clinicId) {
-          await ctx.db.patch(p._id, { estado: "cancelado" });
-        }
-      }
-
-      // Archiva las conversaciones del paciente atribuidas a esta clínica.
-      // No se borran para preservar el historial.
-      const conversacionesPaciente = await ctx.db
-        .query("conversations")
-        .withIndex("by_pacienteId_lastMessageAt", (q) =>
-          q.eq("pacienteId", userId),
-        )
-        .collect();
-      for (const c of conversacionesPaciente) {
-        if (c.clinicId === clinicId && c.archivedAt === undefined) {
-          await ctx.db.patch(c._id, { archivedAt: ahora });
-        }
-      }
-
-      // Purga los `patientMetricsSnapshot` del paciente para esta clínica
-      // (las 3 ventanas) y sus entradas en los DirectAggregates
-      // `patientsByClinic{Adherencia,RiskScore,Dolor}`. Sin esto, los
-      // snapshots quedan huérfanos y contaminan los aggregates leídos por
-      // `recomputeClinic` (dolorMedio).
-      await _deletePatientSnapshotsForClinic(ctx, userId, clinicId);
-    } else {
-      // fisio | admin
+    if (eraPaciente) {
+      await cascadeRemovePatient(ctx, userId, clinicId);
+    }
+    if (puesto !== "paciente") {
       await cascadeRemoveStaff(ctx, userId, clinicId);
     }
 
@@ -224,7 +263,7 @@ export const remove = mutation({
       );
     }
 
-    if (puesto === "paciente") {
+    if (eraPaciente) {
       // Sus planes activos/borrador acaban de pasar a "cancelado": refrescar
       // el snapshot agregado de la clínica para que pacientesActivos quede
       // alineado con el listado sin esperar al cron diario.

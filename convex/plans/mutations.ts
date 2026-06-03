@@ -11,6 +11,7 @@ import {
   assertCanAccessClinic,
   getPlanIfOwned,
 } from "../_helpers/authorization";
+import { membershipEsPaciente } from "../_helpers/patientAccess";
 import { diaSemana } from "../_helpers/validators";
 import { getCurrentMadridDate } from "../_helpers/datetime";
 import { _syncPatientActiveStateInClinic } from "../snapshots/internal";
@@ -116,7 +117,7 @@ export const create = mutation({
         q.eq("userId", args.pacienteId).eq("clinicId", args.clinicId),
       )
       .unique();
-    if (!pacienteMembership || pacienteMembership.puesto !== "paciente") {
+    if (!membershipEsPaciente(pacienteMembership)) {
       throw new Error(
         "El paciente no pertenece a la clínica indicada como paciente.",
       );

@@ -153,7 +153,11 @@ export async function assertCanAccessPaciente(
         q.eq("userId", pacienteId).eq("clinicId", clinicId),
       )
       .unique();
-    if (pacienteEnClinica && pacienteEnClinica.puesto === "paciente") {
+    if (
+      pacienteEnClinica &&
+      (pacienteEnClinica.puesto === "paciente" ||
+        pacienteEnClinica.tambienEsPaciente === true)
+    ) {
       return;
     }
   }

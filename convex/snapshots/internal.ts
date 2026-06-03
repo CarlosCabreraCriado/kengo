@@ -820,12 +820,32 @@ async function _syncPatientActiveStateInClinic(
   );
 
   if (tieneEnCurso) {
-    await patientsWithActivePlanByClinic.insertIfDoesNotExist(ctx, {
+    // No contabilizamos a los fisios/admins que actúan como sus propios
+    // pacientes (`tambienEsPaciente`): aparecen en el listado opcional
+    // "incluir equipo" pero no entran en métricas de pacientes activos
+    // ni en la facturación derivada del aggregate.
+    const membership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", pacienteId).eq("clinicId", clinicId),
+      )
+      .unique();
+    if (membership?.puesto === "paciente") {
+      await patientsWithActivePlanByClinic.insertIfDoesNotExist(ctx, {
+        namespace: clinicId,
+        key: null,
+        id: pacienteId,
+      });
+      return { inserted: true, purgadas: 0 };
+    }
+    // Si el "paciente" es realmente un fisio/admin con plan autoasignado,
+    // garantizamos que no quede una entry residual del aggregate.
+    await patientsWithActivePlanByClinic.deleteIfExists(ctx, {
       namespace: clinicId,
       key: null,
       id: pacienteId,
     });
-    return { inserted: true, purgadas: 0 };
+    return { inserted: false, purgadas: 0 };
   }
 
   await patientsWithActivePlanByClinic.deleteIfExists(ctx, {

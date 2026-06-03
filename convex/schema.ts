@@ -109,6 +109,11 @@ export default defineSchema({
       v.literal("paciente"),
       v.literal("admin"),
     ),
+    // Si está en `true`, el usuario (típicamente fisio/admin) también actúa
+    // como paciente de sí mismo en esta clínica: puede autoasignarse planes,
+    // ver el modo paciente y aparecer en queries de paciente. Para los
+    // documentos con `puesto === "paciente"` el flag es redundante y se omite.
+    tambienEsPaciente: v.optional(v.boolean()),
   })
     .index("by_userId", ["userId"])
     .index("by_clinicId", ["clinicId"])

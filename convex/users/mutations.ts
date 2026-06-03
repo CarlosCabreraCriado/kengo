@@ -297,6 +297,8 @@ export const updatePatient = mutation({
             userId: patientId,
             clinicId: m.clinicId,
             puesto: m.puesto,
+            tambienEsPaciente:
+              m.puesto === "fisio" || m.puesto === "admin" ? true : undefined,
           });
         }
       }

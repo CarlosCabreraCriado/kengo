@@ -7,6 +7,7 @@ import {
   tieneGestion,
 } from "../_helpers/permissions";
 import { assertCanAccessPaciente } from "../_helpers/authorization";
+import { membershipEsPaciente } from "../_helpers/patientAccess";
 
 /**
  * Lista membresías de un usuario con datos de clínica anidados.
@@ -87,13 +88,15 @@ async function resolvePacienteClinic(
   requesterId: Id<"users">,
   pacienteId: Id<"users">,
 ): Promise<Id<"clinics"> | null> {
-  // El propio paciente: devolvemos su primera clínica como paciente.
+  // El propio paciente: devolvemos su primera clínica como paciente. Para
+  // fisios/admins que actúan como sus propios pacientes, cuenta también la
+  // clínica donde tienen `tambienEsPaciente`.
   if (requesterId === pacienteId) {
     const own = await ctx.db
       .query("clinicMemberships")
       .withIndex("by_userId", (q: any) => q.eq("userId", requesterId))
       .collect();
-    return own.find((m: any) => m.puesto === "paciente")?.clinicId ?? null;
+    return own.find((m: any) => membershipEsPaciente(m))?.clinicId ?? null;
   }
 
   // Fisio/admin accediendo a un paciente: primera clínica donde el
@@ -113,7 +116,7 @@ async function resolvePacienteClinic(
         q.eq("userId", pacienteId).eq("clinicId", clinicId),
       )
       .unique();
-    if (pacienteEnClinica && pacienteEnClinica.puesto === "paciente") {
+    if (membershipEsPaciente(pacienteEnClinica)) {
       return clinicId;
     }
   }
