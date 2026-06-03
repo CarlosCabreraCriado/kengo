@@ -224,13 +224,17 @@ export const runDailyAlertRules = internalMutation({
       const clinicId = await getClinicIdForPatient(ctx, pacienteId);
       if (!clinicId) continue;
 
-      // Snapshot 7d (para inactividad y adherencia).
+      // Snapshot 7d (para inactividad y adherencia). Filtrado por clinicId
+      // porque la tabla está particionada por (pacienteId, clinicId, ventana)
+      // tras 519721d — un paciente multi-clínica tiene varios snapshots con
+      // el mismo (pacienteId, ventana) y `unique()` falla.
       const snap7d = await ctx.db
         .query("patientMetricsSnapshot")
         .withIndex("by_pacienteId_ventana", (q) =>
           q.eq("pacienteId", pacienteId).eq("ventana", "7d"),
         )
-        .unique();
+        .filter((q) => q.eq(q.field("clinicId"), clinicId))
+        .first();
 
       // === Regla 1: inactividad ===
       if (snap7d && snap7d.inactividadDias >= AS3_INACTIVIDAD_DIAS_WARN) {
