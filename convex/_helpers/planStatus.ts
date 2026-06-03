@@ -1,6 +1,5 @@
 import { Doc, Id } from "../_generated/dataModel";
 import { QueryCtx, MutationCtx } from "../_generated/server";
-import { esPaciente } from "./permissions";
 
 type Ctx = QueryCtx | MutationCtx;
 
@@ -44,27 +43,3 @@ export async function pacienteTienePlanEnCurso(
   return planesActivos.some((p) => isPlanEnCurso(p, hoyMadrid));
 }
 
-/**
- * Cuenta cuántos pacientes de la clínica tienen al menos un plan en curso.
- * Equivale a la cardinalidad de `plans.queries.listEnCursoPacientesInClinics`
- * para una sola clínica.
- */
-export async function countPacientesEnCursoEnClinica(
-  ctx: Ctx,
-  clinicId: Id<"clinics">,
-  hoyMadrid: string,
-): Promise<number> {
-  const memberships = await ctx.db
-    .query("clinicMemberships")
-    .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
-    .collect();
-  const pacienteIds = Array.from(
-    new Set(
-      memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
-    ),
-  );
-  const flags = await Promise.all(
-    pacienteIds.map((pid) => pacienteTienePlanEnCurso(ctx, pid, hoyMadrid)),
-  );
-  return flags.filter(Boolean).length;
-}
