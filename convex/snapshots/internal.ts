@@ -247,7 +247,7 @@ async function recomputePatientForWindow(
   // defecto DirectAggregate asume sumValue=0.
   // Sync tolerante (H6c): usamos las variantes *IfExists / *OrInsert para
   // que purgas externas (p.ej. la cascada de plan completado/cancelado en
-  // `_purgeAggregatesForInactivePatient`) no rompan el siguiente recompute.
+  // `_syncPatientActiveStateInClinic`) no rompan el siguiente recompute.
   // Si la entry no existía cuando se esperaba, `replaceOrInsert` la inserta;
   // `deleteIfExists` es no-op. El comportamiento en condiciones normales es
   // idéntico al sync original.
@@ -862,10 +862,6 @@ async function _syncPatientActiveStateInClinic(
 }
 
 export { _syncPatientActiveStateInClinic };
-// Alias temporal para no romper imports existentes mientras se renombra
-// el sitio de llamada en `plans/mutations.ts` y `plans/internal.ts`
-// (commit 2 de F7-close). Eliminar tras renombrar todos los callers.
-export { _syncPatientActiveStateInClinic as _purgeAggregatesForInactivePatient };
 
 /**
  * Wrapper invocable vía `npx convex run` para purgar manualmente los

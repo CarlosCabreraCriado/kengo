@@ -13,7 +13,7 @@ import {
 } from "../_helpers/authorization";
 import { diaSemana } from "../_helpers/validators";
 import { getCurrentMadridDate } from "../_helpers/datetime";
-import { _purgeAggregatesForInactivePatient } from "../snapshots/internal";
+import { _syncPatientActiveStateInClinic } from "../snapshots/internal";
 
 // Encola una push al paciente avisando de que tiene un plan nuevo o
 // recién activado. Llamar SOLO cuando el plan pase a `estado === "activo"`
@@ -163,6 +163,11 @@ export const create = mutation({
 
     if (estadoInicial === "activo") {
       await schedulePushNuevoPlan(ctx, args.pacienteId, planId, args.titulo);
+      await _syncPatientActiveStateInClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+      );
       await scheduleRecomputeClinic(ctx, args.clinicId);
     }
 
@@ -211,7 +216,7 @@ export const updateEstado = mutation({
       );
     }
     if (estadoAnterior !== args.estado) {
-      await _purgeAggregatesForInactivePatient(
+      await _syncPatientActiveStateInClinic(
         ctx,
         plan.pacienteId,
         plan.clinicId,
@@ -274,6 +279,15 @@ export const update = mutation({
     }
 
     if (args.fechaInicio !== undefined || args.fechaFin !== undefined) {
+      // Cambiar fechas puede mover al paciente dentro/fuera de "en curso"
+      // según `isPlanEnCurso(plan, hoyMadrid)`. Sincroniza el aggregate
+      // `patientsWithActivePlanByClinic` para que `pacientesActivos` quede
+      // coherente sin esperar al sweep diario.
+      await _syncPatientActiveStateInClinic(
+        ctx,
+        plan.pacienteId,
+        plan.clinicId,
+      );
       await scheduleRecomputeClinic(ctx, plan.clinicId);
     }
 
@@ -303,7 +317,7 @@ export const remove = mutation({
 
     if (await planHasActivity(ctx, args.planId)) {
       await ctx.db.patch(args.planId, { estado: "cancelado" });
-      await _purgeAggregatesForInactivePatient(
+      await _syncPatientActiveStateInClinic(
         ctx,
         plan.pacienteId,
         plan.clinicId,
@@ -316,7 +330,7 @@ export const remove = mutation({
       await ctx.db.delete(ex._id);
     }
     await ctx.db.delete(args.planId);
-    await _purgeAggregatesForInactivePatient(
+    await _syncPatientActiveStateInClinic(
       ctx,
       plan.pacienteId,
       plan.clinicId,
@@ -376,10 +390,11 @@ export const version = mutation({
       newPlanId,
       args.titulo,
     );
-    // Aunque version() siempre crea un plan activo nuevo (no-op esperado),
-    // se invoca por consistencia con el resto de mutations que tocan
-    // plans.estado. El check interno devuelve purgadas: 0.
-    await _purgeAggregatesForInactivePatient(
+    // version() siempre crea un plan activo nuevo, así que el sync
+    // garantiza que el paciente esté en `patientsWithActivePlanByClinic`
+    // (no-op si ya estaba). Llamada coherente con el resto de mutations
+    // que tocan plans.estado o sus fechas.
+    await _syncPatientActiveStateInClinic(
       ctx,
       oldPlan.pacienteId,
       oldPlan.clinicId,
