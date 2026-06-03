@@ -76,6 +76,7 @@ import type * as migrations_backfillPlanClinicIdFromFisio from "../migrations/ba
 import type * as migrations_backfillPlanClinicIdFromPatient from "../migrations/backfillPlanClinicIdFromPatient.js";
 import type * as migrations_backfillRollupsByClinic from "../migrations/backfillRollupsByClinic.js";
 import type * as migrations_backfillRoutineClinicId from "../migrations/backfillRoutineClinicId.js";
+import type * as migrations_backfillSessionsByClinic from "../migrations/backfillSessionsByClinic.js";
 import type * as migrations_backfillWeeklyByClinic from "../migrations/backfillWeeklyByClinic.js";
 import type * as migrations_clearExecutionAggregates from "../migrations/clearExecutionAggregates.js";
 import type * as migrations_deleteClinicCascade from "../migrations/deleteClinicCascade.js";
@@ -196,6 +197,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillPlanClinicIdFromPatient": typeof migrations_backfillPlanClinicIdFromPatient;
   "migrations/backfillRollupsByClinic": typeof migrations_backfillRollupsByClinic;
   "migrations/backfillRoutineClinicId": typeof migrations_backfillRoutineClinicId;
+  "migrations/backfillSessionsByClinic": typeof migrations_backfillSessionsByClinic;
   "migrations/backfillWeeklyByClinic": typeof migrations_backfillWeeklyByClinic;
   "migrations/clearExecutionAggregates": typeof migrations_clearExecutionAggregates;
   "migrations/deleteClinicCascade": typeof migrations_deleteClinicCascade;

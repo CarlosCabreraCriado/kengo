@@ -9,8 +9,8 @@
  */
 
 import { v } from "convex/values";
-import { query } from "../_generated/server";
-import { Doc, Id } from "../_generated/dataModel";
+import { query, QueryCtx } from "../_generated/server";
+import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser, tieneGestion } from "../_helpers/permissions";
 import { assertFisioInClinic } from "../_helpers/patientAccess";
 import {
@@ -20,6 +20,7 @@ import {
   getMadridDateOffset,
   rangeOfDates,
 } from "../_helpers/datetime";
+import { sessionsByClinic } from "../aggregates/sessionsByClinic";
 
 function fechaHoy(): string {
   return new Date().toISOString().split("T")[0];
@@ -126,6 +127,26 @@ export type ActividadDiariaClinica = {
 };
 
 /**
+ * Sesiones reales (no sintéticas) por fecha vía `sessionsByClinic.sumBatch`.
+ *
+ * El aggregate tiene `sumValue = esSintetica ? 0 : 1`, así que `sum()` por
+ * cada fecha equivale al filtro legacy `if (s.esSintetica === true) continue`.
+ * Una sola RPC al componente con N entries — O(log n) por día.
+ */
+async function loadActividadDiaria_aggregate(
+  ctx: QueryCtx,
+  clinicId: Id<"clinics">,
+  fechas: string[],
+): Promise<Map<string, number>> {
+  const queries = fechas.map((fecha) => ({
+    namespace: clinicId,
+    bounds: { eq: fecha },
+  }));
+  const sums = await sessionsByClinic.sumBatch(ctx, queries);
+  return new Map(fechas.map((fecha, i) => [fecha, sums[i]]));
+}
+
+/**
  * Sesiones reales (no sintéticas) por día en la clínica para los últimos 10
  * días, junto al total de los 10 días previos para calcular un delta. La
  * normalización 0-1 y el copy del delta se componen en el cliente.
@@ -141,36 +162,26 @@ export const getActividadDiariaClinica = query({
     const finPrevia = getMadridDateOffset(-10);
     const inicioPrevia = getMadridDateOffset(-19);
 
-    const sessions: Doc<"sessions">[] = await ctx.db
-      .query("sessions")
-      .withIndex("by_clinicId_fecha", (q) =>
-        q
-          .eq("clinicId", args.clinicId)
-          .gte("fecha", inicioPrevia)
-          .lte("fecha", hoy),
-      )
-      .collect();
-
-    const counts = new Map<string, number>();
-    for (const s of sessions) {
-      if (s.esSintetica === true) continue;
-      counts.set(s.fecha, (counts.get(s.fecha) ?? 0) + 1);
-    }
-
-    const days: ActividadDia[] = rangeOfDates(inicioActual, hoy).map(
-      (fecha) => ({
-        fecha,
-        label: getDiaSemana(fecha),
-        sesiones: counts.get(fecha) ?? 0,
-        today: fecha === hoy,
-      }),
+    const fechasActual = rangeOfDates(inicioActual, hoy);
+    const fechasPrevia = rangeOfDates(inicioPrevia, finPrevia);
+    const counts = await loadActividadDiaria_aggregate(
+      ctx,
+      args.clinicId,
+      [...fechasActual, ...fechasPrevia],
     );
+
+    const days: ActividadDia[] = fechasActual.map((fecha) => ({
+      fecha,
+      label: getDiaSemana(fecha),
+      sesiones: counts.get(fecha) ?? 0,
+      today: fecha === hoy,
+    }));
 
     let totalActual = 0;
     for (const d of days) totalActual += d.sesiones;
 
     let totalAnterior = 0;
-    for (const fecha of rangeOfDates(inicioPrevia, finPrevia)) {
+    for (const fecha of fechasPrevia) {
       totalAnterior += counts.get(fecha) ?? 0;
     }
 
