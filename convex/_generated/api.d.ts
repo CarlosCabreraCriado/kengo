@@ -76,6 +76,7 @@ import type * as migrations_backfillPlanClinicId from "../migrations/backfillPla
 import type * as migrations_backfillPlanClinicIdFallback from "../migrations/backfillPlanClinicIdFallback.js";
 import type * as migrations_backfillPlanClinicIdFromFisio from "../migrations/backfillPlanClinicIdFromFisio.js";
 import type * as migrations_backfillPlanClinicIdFromPatient from "../migrations/backfillPlanClinicIdFromPatient.js";
+import type * as migrations_backfillPlansByClinicActive from "../migrations/backfillPlansByClinicActive.js";
 import type * as migrations_backfillRollupsByClinic from "../migrations/backfillRollupsByClinic.js";
 import type * as migrations_backfillRoutineClinicId from "../migrations/backfillRoutineClinicId.js";
 import type * as migrations_backfillSessionsByClinic from "../migrations/backfillSessionsByClinic.js";
@@ -199,6 +200,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillPlanClinicIdFallback": typeof migrations_backfillPlanClinicIdFallback;
   "migrations/backfillPlanClinicIdFromFisio": typeof migrations_backfillPlanClinicIdFromFisio;
   "migrations/backfillPlanClinicIdFromPatient": typeof migrations_backfillPlanClinicIdFromPatient;
+  "migrations/backfillPlansByClinicActive": typeof migrations_backfillPlansByClinicActive;
   "migrations/backfillRollupsByClinic": typeof migrations_backfillRollupsByClinic;
   "migrations/backfillRoutineClinicId": typeof migrations_backfillRoutineClinicId;
   "migrations/backfillSessionsByClinic": typeof migrations_backfillSessionsByClinic;

@@ -19,6 +19,7 @@ import { executionsByPacienteDolor } from "../aggregates/executionsByPacienteDol
 import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
 import { patientsByClinicRiskScore } from "../aggregates/patientsByClinicRiskScore";
 import { patientsByClinicDolor } from "../aggregates/patientsByClinicDolor";
+import { plansByClinicActive } from "../aggregates/plansByClinicActive";
 import { sessionsByClinic } from "../aggregates/sessionsByClinic";
 
 type Ventana = "7d" | "15d" | "30d";
@@ -432,19 +433,27 @@ async function recomputeClinicForWindow(
 /**
  * Recompute completo de todos los pacientes con plan activo. Invocado por
  * `daily-maintenance`. Genera un snapshot por (paciente, clínica, ventana).
+ *
+ * F8-simplify: el set de trabajo se descubre iterando los namespaces del
+ * aggregate `plansByClinicActive` (clínicas con ≥1 plan activo) y, por
+ * clínica, leyendo planes vía `by_clinicId_estado`. Equivalente semántico al
+ * `.collect() by_estado` previo, sin el riesgo de chocar contra el límite de
+ * lectura por mutation cuando la tabla `plans` crece.
  */
 export const recomputeAllPatients = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ procesados: number }> => {
-    const planesActivos = await ctx.db
-      .query("plans")
-      .withIndex("by_estado", (q) => q.eq("estado", "activo"))
-      .collect();
-    // Pares (paciente, clínica) únicos: cada uno justifica un snapshot.
     const pares = new Set<string>();
-    for (const p of planesActivos) {
-      if (!p.clinicId) continue;
-      pares.add(`${p.pacienteId}|${p.clinicId}`);
+    for await (const clinicId of plansByClinicActive.iterNamespaces(ctx)) {
+      const plans = await ctx.db
+        .query("plans")
+        .withIndex("by_clinicId_estado", (q) =>
+          q.eq("clinicId", clinicId).eq("estado", "activo"),
+        )
+        .collect();
+      for (const p of plans) {
+        pares.add(`${p.pacienteId}|${p.clinicId}`);
+      }
     }
     for (const key of pares) {
       const [pid, cid] = key.split("|") as [Id<"users">, Id<"clinics">];
@@ -457,18 +466,28 @@ export const recomputeAllPatients = internalMutation({
 });
 
 /**
- * Recompute de todas las clínicas activas. Invocado por `daily-maintenance`.
+ * Recompute de todas las clínicas con planes activos. Invocado por
+ * `daily-maintenance`.
+ *
+ * F8-simplify — trade-off: iteramos sólo namespaces de `plansByClinicActive`,
+ * es decir, clínicas con al menos un plan en estado "activo". Una clínica que
+ * pierde su último plan activo NO entra al cron hasta que reaparezca un plan;
+ * su `clinicMetricsSnapshot` queda con los últimos valores (pacientesActivos
+ * puede mostrar el conteo de ayer). Si en el futuro la UI muestra clínicas
+ * "vacías", añadir un cron de limpieza o forzar recompute en el trigger de
+ * `plans` cuando el último activo cae.
  */
 export const recomputeAllClinics = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ procesados: number }> => {
-    const clinics = await ctx.db.query("clinics").collect();
-    for (const c of clinics) {
+    let procesados = 0;
+    for await (const clinicId of plansByClinicActive.iterNamespaces(ctx)) {
       for (const ventana of VENTANAS) {
-        await recomputeClinicForWindow(ctx, c._id, ventana);
+        await recomputeClinicForWindow(ctx, clinicId, ventana);
       }
+      procesados += 1;
     }
-    return { procesados: clinics.length };
+    return { procesados };
   },
 });
 
@@ -703,6 +722,58 @@ export const compareClinicMetricsH6 = internalQuery({
       dolor: { legacy: dolorLeg, aggregate: dolorAgg },
       sesiones: { legacy: sesLeg, aggregate: sesAgg },
       sampleSize: snapshots.length,
+    };
+  },
+});
+
+/**
+ * F8-simplify — shadow read. Compara los sets de trabajo (clínicas y pares
+ * paciente-clínica) del iterador legacy (`.collect()` sobre `plans`/`clinics`)
+ * vs el del aggregate (`plansByClinicActive.iterNamespaces`). Ejecutar antes
+ * del primer cron real para validar paridad. Eliminar tras `pairsMatch: true`
+ * y revisar `clinicsOnlyInLegacy` (clínicas legítimamente sin plan activo).
+ */
+export const compareF8 = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const legacyClinics = (await ctx.db.query("clinics").collect()).map(
+      (c) => c._id,
+    );
+    const aggClinics: Id<"clinics">[] = [];
+    for await (const cid of plansByClinicActive.iterNamespaces(ctx)) {
+      aggClinics.push(cid);
+    }
+    const legacyPairs = new Set<string>();
+    const planesActivos = await ctx.db
+      .query("plans")
+      .withIndex("by_estado", (q) => q.eq("estado", "activo"))
+      .collect();
+    for (const p of planesActivos) {
+      if (p.clinicId) legacyPairs.add(`${p.pacienteId}|${p.clinicId}`);
+    }
+    const aggPairs = new Set<string>();
+    for await (const cid of plansByClinicActive.iterNamespaces(ctx)) {
+      const plans = await ctx.db
+        .query("plans")
+        .withIndex("by_clinicId_estado", (q) =>
+          q.eq("clinicId", cid).eq("estado", "activo"),
+        )
+        .collect();
+      for (const p of plans) {
+        aggPairs.add(`${p.pacienteId}|${p.clinicId}`);
+      }
+    }
+    const aggSet = new Set(aggClinics);
+    const clinicsOnlyInLegacy = legacyClinics.filter((c) => !aggSet.has(c));
+    return {
+      clinicsLegacy: legacyClinics.length,
+      clinicsAgg: aggClinics.length,
+      clinicsOnlyInLegacy,
+      pairsLegacy: legacyPairs.size,
+      pairsAgg: aggPairs.size,
+      pairsMatch:
+        legacyPairs.size === aggPairs.size &&
+        [...legacyPairs].every((k) => aggPairs.has(k)),
     };
   },
 });
