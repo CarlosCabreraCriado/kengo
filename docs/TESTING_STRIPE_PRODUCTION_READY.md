@@ -265,41 +265,41 @@ Como Owner A (después de transferir a Admin A2, A ya no es owner):
 
 #### 3.4.2 Stripe Tax aplicado en factura
 
-- [ ] Stripe Dashboard → Subscription → Upcoming invoice
-- [ ] Verificar:
-  - [ ] Línea de IVA 21% (España) calculada automáticamente
-  - [ ] El total = subtotal + IVA
-  - [ ] La factura PDF (descargable desde Portal) muestra NIF/CIF, dirección y IVA
+- [x] Stripe Dashboard → Subscription → Upcoming invoice
+- [x] Verificar:
+  - [x] Línea de IVA 21% (España) calculada automáticamente
+  - [x] El total = subtotal + IVA
+  - [x] La factura PDF (descargable desde Portal) muestra NIF/CIF, dirección y IVA
 
 #### 3.4.3 Reactivar sin reenviar welcome
 
-- [ ] Cancelar suscripción → `canceled`.
-- [ ] Reactivar desde la UI ("Reactivar suscripción").
-- [ ] Completar Checkout otra vez.
-- [ ] Verificar:
-  - [ ] El email de bienvenida **NO** se reenvía (`welcomeEmailSentAt` ya estaba poblado, `notifyCheckoutCompleted` aborta).
+- [~] Cancelar suscripción → `canceled`. _(se valida en Bloque D)_
+- [~] Reactivar desde la UI ("Reactivar suscripción"). _(se valida en Bloque D)_
+- [~] Completar Checkout otra vez. _(se valida en Bloque D)_
+- [~] Verificar:
+  - [~] El email de bienvenida **NO** se reenvía (`welcomeEmailSentAt` ya estaba poblado, `notifyCheckoutCompleted` aborta). _(idempotencia ya validada en 3.4.1 setup mode + se re-valida en Bloque D)_
 
 #### 3.4.4 Forzar método de pago nuevo (`payment_method_collection: 'always'`)
 
-- [ ] Cancelar suscripción.
-- [ ] Reactivar → Stripe Checkout debe pedir un método de pago **nuevo** (no reutiliza el anterior automáticamente).
+- [~] Cancelar suscripción. _(se valida en Bloque D)_
+- [~] Reactivar → Stripe Checkout debe pedir un método de pago **nuevo** (no reutiliza el anterior automáticamente). _(se valida en Bloque D; `payment_method_collection: "always"` se mantiene en el branch subscription mode tras el fix de modos)_
 
 ---
 
 ### 3.5 Bloque D — Re-suscripción tras `canceled`
 
-- [ ] Tener una clínica con `estado = "canceled"` (cancelación definitiva, no `cancelAtPeriodEnd`).
+- [x] Tener una clínica con `estado = "canceled"` (cancelación definitiva, no `cancelAtPeriodEnd`).
   - Para forzarlo en test: `stripe subscriptions cancel sub_...` desde CLI.
-- [ ] Entrar a `/mi-clinica/suscripcion` como owner.
-- [ ] Verificar:
-  - [ ] El CTA muestra **"Reactivar suscripción"** (con icono `restart_alt`)
-  - [ ] Click abre Stripe Checkout (NO Customer Portal)
-  - [ ] El Checkout reusa el `stripeCustomerId` existente (no se crea uno nuevo)
-  - [ ] **NO** se aplica un nuevo trial (la suscripción nace en `active` tras el pago)
-- [ ] Tras pago exitoso:
-  - [ ] `clinicBilling.estadoLocal = "active"`
-  - [ ] `clinicBilling.stripeSubscriptionId` es uno nuevo (Stripe no permite reactivar una `canceled`, crea otra)
-  - [ ] El email welcome **no se reenvía** (idempotencia)
+- [x] Entrar a `/mi-clinica/suscripcion` como owner.
+- [x] Verificar:
+  - [x] El CTA muestra **"Reactivar suscripción"** (con icono `restart_alt`)
+  - [x] Click abre Stripe Checkout (NO Customer Portal)
+  - [x] El Checkout reusa el `stripeCustomerId` existente (no se crea uno nuevo)
+  - [x] **NO** se aplica un nuevo trial (la suscripción nace en `active` tras el pago)
+- [x] Tras pago exitoso:
+  - [x] `clinicBilling.estadoLocal = "active"`
+  - [x] `clinicBilling.stripeSubscriptionId` es uno nuevo (Stripe no permite reactivar una `canceled`, crea otra); el fix de `finalizeSubscriptionCheckout` lo persiste correctamente en local.
+  - [x] El email welcome **no se reenvía** (idempotencia)
 
 ---
 
