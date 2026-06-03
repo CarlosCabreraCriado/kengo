@@ -815,6 +815,26 @@ export const deletePatientSnapshotsForClinic = internalMutation({
 });
 
 /**
+ * H6b — utilidad shadow para listar las clínicas con datos de adherencia.
+ * Devuelve los `clinicId` distintos presentes en `patientsByClinicAdherencia`
+ * (cualquier ventana). Pensado para iterar el sweep `compareH6b` desde
+ * `npx convex run` sin tener que descubrir IDs a mano. Eliminar junto al
+ * resto de helpers `_legacy`/`_aggregate` y `compareH6b` tras validar.
+ */
+export const listH6bClinics = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<Id<"clinics">[]> => {
+    const set = new Set<Id<"clinics">>();
+    for await (const [clinicId] of patientsByClinicAdherencia.iterNamespaces(
+      ctx,
+    )) {
+      set.add(clinicId);
+    }
+    return [...set];
+  },
+});
+
+/**
  * H6b — shadow read. Compara `adherenciaPromedio` calculado con la fórmula
  * legacy (snapshots filtrados por pacientes con plan EN CURSO HOY) vs la
  * fórmula propuesta (sum/count directo del aggregate
