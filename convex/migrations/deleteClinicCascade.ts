@@ -54,6 +54,7 @@ import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { MutationCtx, QueryCtx } from "../_generated/server";
+import { _deleteAllPatientSnapshotsForClinic } from "../snapshots/internal";
 
 /** Cuenta documentos por tabla relacionada con la clínica. */
 async function recolectarCounts(
@@ -290,12 +291,12 @@ export const run = internalMutation({
       "by_clinicId_fecha",
       clinicId,
     );
-    await borrarPorIndice(
-      ctx,
-      "patientMetricsSnapshot",
-      "by_clinicId_ventana_riskScore",
-      clinicId,
-    );
+    // patientMetricsSnapshot: purgamos también las entradas en los 3
+    // DirectAggregates particionados por (clinicId, ventana). Sin esta pasada
+    // el borrado masivo dejaba aggregates con `id == pacienteId` apuntando a
+    // snapshots inexistentes (basura permanente en el componente, aunque el
+    // namespace incluyera el clinicId muerto).
+    await _deleteAllPatientSnapshotsForClinic(ctx, clinicId);
     await borrarPorIndice(
       ctx,
       "clinicMetricsSnapshot",
@@ -345,7 +346,6 @@ async function borrarPorIndice(
   table:
     | "exerciseExecutions"
     | "dailyPatientRollup"
-    | "patientMetricsSnapshot"
     | "clinicMetricsSnapshot"
     | "exerciseUsageRollup"
     | "physioAlerts"
