@@ -143,6 +143,7 @@ interface DialogClosedResult {
 
           <app-pd-inactivity-banner
             [dias]="diasUltimaActividad()"
+            [diasProgramados]="diasProgramados()"
             (recordar)="onEnviarMensaje()"
           />
 

@@ -123,6 +123,9 @@ async function recomputePatientForWindow(
 
   for (const d of dailies) {
     dailyByFecha.set(d.fecha, d);
+    // Última actividad: solo días con ejercicios realmente completados.
+    // `fallido` (día con plan y 0 completados) NO es actividad — equivale a
+    // un día perdido. Mismo criterio que `cumplimiento.service.ts`.
     if (d.totalCompletados > 0) {
       if (!ultimaActividad || d.fecha > ultimaActividad) {
         ultimaActividad = d.fecha;

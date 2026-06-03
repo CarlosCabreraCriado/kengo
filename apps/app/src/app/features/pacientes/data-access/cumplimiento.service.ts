@@ -449,9 +449,20 @@ export class CumplimientoService {
           ) / 10
         : null;
 
-    const ultimoDiaActividad = dias.find(
-      (d) => d.tipo === 'completado' || d.tipo === 'parcial',
-    );
+    // `dias` viene ordenado ASC por fecha (ver `buildCumplimientoResponse`),
+    // así que la última actividad real es el match más a la derecha:
+    // iteramos desde el final. Solo cuentan `completado` y `parcial`:
+    // `fallido` significa día con plan vigente y 0 ejercicios completados
+    // (ver `convex/_helpers/rollupComputation.ts:computeEstadoDia`), por lo
+    // que NO es actividad — es justo lo contrario.
+    let ultimoDiaActividad: CumplimientoDia | undefined;
+    for (let i = dias.length - 1; i >= 0; i--) {
+      const d = dias[i];
+      if (d.tipo === 'completado' || d.tipo === 'parcial') {
+        ultimoDiaActividad = d;
+        break;
+      }
+    }
     let diasDesdeUltimaSesion: number | null = null;
     if (ultimoDiaActividad) {
       // Diferencia de días calendario Madrid (estable frente a DST).

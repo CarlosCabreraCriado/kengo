@@ -32,13 +32,24 @@ import { Ui2InactivityBannerComponent } from '../../../../../../shared/ui-v2';
 })
 export class PdInactivityBannerComponent {
   readonly dias = input<number | null>(null);
+  /**
+   * Días con plan vigente en el rango cargado. Necesario para distinguir
+   * "paciente sin actividad pero con plan" (debe alertar) de "paciente
+   * sin plan / nuevo" (no debe alertar).
+   */
+  readonly diasProgramados = input<number>(0);
   readonly umbral = input<number>(7);
   readonly actionLabel = input<string>('Enviar recordatorio');
   readonly recordar = output<void>();
 
   readonly mostrar = computed(() => {
     const d = this.dias();
-    return d != null && d >= this.umbral();
+    if (d == null) {
+      // Sin actividad alguna en el rango: solo alertamos si había días
+      // programados (plan vigente). Un paciente sin plan no debe alertar.
+      return this.diasProgramados() > 0;
+    }
+    return d >= this.umbral();
   });
 
   readonly title = computed(() => {

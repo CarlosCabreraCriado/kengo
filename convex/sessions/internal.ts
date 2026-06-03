@@ -155,6 +155,15 @@ export async function recomputeAggregatesAndCheckAutoCloseImpl(
     agg.totalCompletados >= totalEsperados
   ) {
     await closeImpl(ctx, sessionId, "auto_completitud");
+  } else if (session.fecha) {
+    // Sesión sigue abierta: mantener el rollup del día fresco para que el
+    // detalle del paciente (badge "Inactivo", timeline) refleje la actividad
+    // en curso sin esperar al cierre o al cron nocturno. `closeImpl` ya
+    // dispara este mismo recompute al cerrar.
+    await ctx.runMutation(internal.rollups.internal.recomputeDayAndPropagate, {
+      pacienteId: session.pacienteId,
+      fecha: session.fecha,
+    });
   }
 }
 
