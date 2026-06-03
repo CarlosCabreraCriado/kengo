@@ -17,9 +17,9 @@ const FALLBACK_IMAGE = 'assets/portadas/clinica.webp';
       <img
         class="ui2-clinic__bg"
         [ngSrc]="bgSrc()"
-        width="800"
-        height="320"
+        fill
         priority
+        sizes="100vw"
         [loaderParams]="{ fit: 'cover', quality: 80 }"
         alt=""
       />

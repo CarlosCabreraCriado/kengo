@@ -17,6 +17,8 @@ export function kengoImageLoader(config: ImageLoaderConfig): string {
   if (!config.src.startsWith(base)) return config.src;
 
   const url = new URL(config.src);
+  url.searchParams.delete('width');
+  url.searchParams.delete('height');
   if (config.width) url.searchParams.set('width', String(config.width));
 
   const params = config.loaderParams ?? {};

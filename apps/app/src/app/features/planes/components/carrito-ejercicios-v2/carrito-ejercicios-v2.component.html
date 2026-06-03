@@ -74,8 +74,7 @@
               @if (it.ejercicio.portada) {
                 <img
                   [ngSrc]="thumbUrl(it.ejercicio.portada)"
-                  width="64"
-                  height="64"
+                  fill
                   loading="lazy"
                   [loaderParams]="{ fit: 'cover', quality: 80 }"
                   alt=""

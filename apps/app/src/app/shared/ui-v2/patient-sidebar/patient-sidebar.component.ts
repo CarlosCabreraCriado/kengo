@@ -203,8 +203,8 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
             <img
               class="ui2-sidebar__clinic-bg"
               [ngSrc]="clinicBackgroundSrc()"
-              width="280"
-              height="110"
+              fill
+              priority
               [loaderParams]="{ fit: 'cover', quality: 80 }"
               alt=""
             />

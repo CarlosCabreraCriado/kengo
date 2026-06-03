@@ -150,15 +150,15 @@
     @if (vista() === 'vineta') {
       <ui2-section [padding]="'0 20px 16px'">
         <div class="el-grid-vineta">
-          @for (e of ejercicios(); track e.id) {
+          @for (e of ejercicios(); track e.id; let i = $index) {
             <a class="el-card-vineta" [routerLink]="['/ejercicios', e.id]">
               <div class="el-card-vineta__media">
                 @if (e.portada) {
                   <img
                     [ngSrc]="getAssetUrl(e.portada)"
-                    width="200"
-                    height="200"
-                    loading="lazy"
+                    fill
+                    sizes="(min-width: 768px) 25vw, 45vw"
+                    [priority]="i === 0"
                     [loaderParams]="{ fit: 'cover', quality: 80 }"
                     [alt]="e.nombre"
                     (load)="onImageLoad(e.id)"
@@ -197,15 +197,14 @@
     @if (vista() === 'lista') {
       <ui2-section [padding]="'0 20px 16px'">
         <div class="el-grid-lista">
-          @for (e of ejercicios(); track e.id) {
+          @for (e of ejercicios(); track e.id; let i = $index) {
             <a class="el-card-lista" [routerLink]="['/ejercicios', e.id]">
               <div class="el-card-lista__media">
                 @if (e.portada) {
                   <img
                     [ngSrc]="getAssetUrl(e.portada)"
-                    width="96"
-                    height="96"
-                    loading="lazy"
+                    fill
+                    [priority]="i === 0"
                     [loaderParams]="{ fit: 'cover', quality: 80 }"
                     [alt]="e.nombre"
                     (load)="onImageLoad(e.id)"
