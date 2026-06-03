@@ -868,6 +868,12 @@ export const compareH6b = internalQuery({
       pacienteIds.filter((_, i) => enCursoFlags[i]),
     );
 
+    // Nota: `patientMetricsSnapshot` está particionado por
+    // `(pacienteId, clinicId, ventana)` tras la fase 3a, pero el único
+    // índice disponible es `by_pacienteId_ventana`. Hay que filtrar por
+    // `clinicId` y usar `.first()` (no `.unique()`) para no fallar cuando
+    // el paciente está en varias clínicas. Mismo patrón que
+    // `_deletePatientSnapshotsForClinic`.
     const snapshots: Array<{
       pacienteId: Id<"users">;
       doc: Doc<"patientMetricsSnapshot">;
@@ -878,7 +884,8 @@ export const compareH6b = internalQuery({
         .withIndex("by_pacienteId_ventana", (q) =>
           q.eq("pacienteId", pid).eq("ventana", ventana),
         )
-        .unique();
+        .filter((q) => q.eq(q.field("clinicId"), clinicId))
+        .first();
       if (snap) snapshots.push({ pacienteId: pid, doc: snap });
     }
 
