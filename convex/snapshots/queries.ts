@@ -1,14 +1,18 @@
 import { v } from "convex/values";
-import { query } from "../_generated/server";
+import { query, QueryCtx } from "../_generated/server";
+import { Doc, Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { assertFisioInClinic } from "../_helpers/patientAccess";
 import { assertCanAccessPaciente } from "../_helpers/authorization";
+import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
 
 const ventana = v.union(
   v.literal("7d"),
   v.literal("15d"),
   v.literal("30d"),
 );
+
+type Ventana = "7d" | "15d" | "30d";
 
 /**
  * Devuelve los snapshots de pacientes de una clínica para una ventana
@@ -33,32 +37,68 @@ export const getPatientMetrics = query({
     const ordenarPor = args.ordenarPor ?? "riskScore";
     const limit = args.limit ?? 100;
 
-    let snapshots;
     if (ordenarPor === "riskScore") {
-      snapshots = await ctx.db
+      return await ctx.db
         .query("patientMetricsSnapshot")
         .withIndex("by_clinicId_ventana_riskScore", (q) =>
           q.eq("clinicId", args.clinicId).eq("ventana", args.ventana),
         )
         .order("desc")
         .take(limit);
-    } else {
-      const all = await ctx.db
-        .query("patientMetricsSnapshot")
-        .withIndex("by_clinicId_ventana_riskScore", (q) =>
-          q.eq("clinicId", args.clinicId).eq("ventana", args.ventana),
-        )
-        .collect();
-      snapshots = all
-        .sort(
-          (a, b) => (a.adherencia ?? 101) - (b.adherencia ?? 101),
-        )
-        .slice(0, limit);
     }
-
-    return snapshots;
+    return await loadByAdherenciaAggregate(
+      ctx,
+      args.clinicId,
+      args.ventana,
+      limit,
+    );
   },
 });
+
+/**
+ * Lectura de snapshots ordenados por adherencia (asc) leyendo del
+ * DirectAggregate `patientsByClinicAdherencia`. O(log n + k) donde k = limit.
+ *
+ * El aggregate se mantiene sincronizado por `recomputePatientForWindow` (H5)
+ * tras cada upsert del snapshot. La paginación devuelve directamente la
+ * primera página con tamaño `limit`; para limits típicos (100-200) no se
+ * requiere iterar páginas adicionales.
+ *
+ * Cambio funcional respecto a la implementación pre-H1: los pacientes con
+ * `adherencia == null` (sin ventana medible — todo descanso o sin
+ * ejecuciones) quedan EXCLUIDOS del listado ordenado por adherencia. Antes
+ * aparecían al final del orden con sortKey ficticio 101; ahora no aparecen
+ * porque el aggregate no los almacena. Otros ordenados (riskScore) los
+ * siguen mostrando.
+ */
+async function loadByAdherenciaAggregate(
+  ctx: QueryCtx,
+  clinicId: Id<"clinics">,
+  ventana: Ventana,
+  limit: number,
+): Promise<Doc<"patientMetricsSnapshot">[]> {
+  const { page } = await patientsByClinicAdherencia.paginate(ctx, {
+    namespace: [clinicId, ventana],
+    pageSize: limit,
+    order: "asc",
+  });
+
+  const snapshots = await Promise.all(
+    page.map(async (item) => {
+      return await ctx.db
+        .query("patientMetricsSnapshot")
+        .withIndex("by_pacienteId_ventana", (q) =>
+          q.eq("pacienteId", item.id).eq("ventana", ventana),
+        )
+        .filter((q) => q.eq(q.field("clinicId"), clinicId))
+        .first();
+    }),
+  );
+
+  return snapshots.filter(
+    (s): s is Doc<"patientMetricsSnapshot"> => s !== null,
+  );
+}
 
 /**
  * Devuelve el snapshot de métricas de UN paciente para una ventana concreta.
