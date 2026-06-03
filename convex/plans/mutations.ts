@@ -37,20 +37,6 @@ async function schedulePushNuevoPlan(
   });
 }
 
-// Refresca el snapshot agregado de la clínica tras un cambio en planes:
-// el conteo `pacientesActivos` depende de la combinación estado+fechas, así
-// que cualquier mutación de plan que toque esos campos debe encolar este
-// recompute para que el KPI del dashboard del fisio quede sincronizado con
-// el listado de pacientes sin esperar al cron diario.
-async function scheduleRecomputeClinic(
-  ctx: any,
-  clinicId: Id<"clinics">,
-): Promise<void> {
-  await ctx.scheduler.runAfter(0, internal.snapshots.internal.recomputeClinic, {
-    clinicId,
-  });
-}
-
 const ejercicioPlanArgs = v.object({
   exerciseId: v.id("exercises"),
   sort: v.number(),
@@ -168,7 +154,6 @@ export const create = mutation({
         args.pacienteId,
         args.clinicId,
       );
-      await scheduleRecomputeClinic(ctx, args.clinicId);
     }
 
     return planId;
@@ -221,7 +206,6 @@ export const updateEstado = mutation({
         plan.pacienteId,
         plan.clinicId,
       );
-      await scheduleRecomputeClinic(ctx, plan.clinicId);
     }
   },
 });
@@ -288,7 +272,6 @@ export const update = mutation({
         plan.pacienteId,
         plan.clinicId,
       );
-      await scheduleRecomputeClinic(ctx, plan.clinicId);
     }
 
     return args.planId;
@@ -322,7 +305,6 @@ export const remove = mutation({
         plan.pacienteId,
         plan.clinicId,
       );
-      await scheduleRecomputeClinic(ctx, plan.clinicId);
       return { softDeleted: true };
     }
 
@@ -335,7 +317,6 @@ export const remove = mutation({
       plan.pacienteId,
       plan.clinicId,
     );
-    await scheduleRecomputeClinic(ctx, plan.clinicId);
     return { softDeleted: false };
   },
 });
@@ -399,7 +380,6 @@ export const version = mutation({
       oldPlan.pacienteId,
       oldPlan.clinicId,
     );
-    await scheduleRecomputeClinic(ctx, oldPlan.clinicId);
 
     return newPlanId;
   },

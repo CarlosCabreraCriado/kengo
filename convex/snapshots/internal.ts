@@ -6,7 +6,6 @@ import {
   QueryCtx,
 } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
-import { esPaciente } from "../_helpers/permissions";
 import {
   getMadridDateOffset,
   anioMes,
@@ -336,26 +335,13 @@ async function recomputeClinicForWindow(
   clinicId: Id<"clinics">,
   ventana: Ventana,
 ): Promise<void> {
-  // Pacientes con membership en la clínica.
-  const memberships = await ctx.db
-    .query("clinicMemberships")
-    .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
-    .collect();
-  const pacienteIds = Array.from(
-    new Set(
-      memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
-    ),
-  );
-
-  // pacientesActivos: pacientes con al menos un plan EN CURSO (estado activo
-  // y fechas Madrid vigentes). Misma definición que el filtro "Activos · N"
-  // del listado y que `plans.queries.listEnCursoPacientesInClinics`, vía el
-  // helper compartido `pacienteTienePlanEnCurso`.
-  const hoyMadrid = getCurrentMadridDate();
-  const enCursoFlags = await Promise.all(
-    pacienteIds.map((pid) => pacienteTienePlanEnCurso(ctx, pid, hoyMadrid)),
-  );
-  const pacientesActivos = enCursoFlags.filter(Boolean).length;
+  // pacientesActivos (F7-close): pacientes ÚNICOS con al menos un plan en
+  // curso, leído del DirectAggregate `patientsWithActivePlanByClinic`. La
+  // unicidad la garantiza el aggregate (id=pacienteId); el sync vive en
+  // `_syncPatientActiveStateInClinic` (mutations de planes + sweep diario).
+  const pacientesActivos = await patientsWithActivePlanByClinic.count(ctx, {
+    namespace: clinicId,
+  });
 
   // Adherencia (PR H6b): se lee del DirectAggregate
   // `patientsByClinicAdherencia` vía sum()/count(). Tras H6c los aggregates
