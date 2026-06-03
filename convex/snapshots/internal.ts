@@ -380,7 +380,7 @@ async function recomputeClinicForWindow(
   // Dolor (PR H6): se lee del DirectAggregate `patientsByClinicDolor`, que se
   // mantiene en sync desde `recomputePatientForWindow`. Sustituye la iteración
   // previa sobre snapshots.
-  const dolorMedio = await loadDolorMedio_aggregate(ctx, clinicId, ventana);
+  const dolorMedio = await loadDolorMedio(ctx, clinicId, ventana);
 
   // Sesiones últimos 7 días en la clínica (PR H6): se leen del aggregate
   // `sessionsByClinic`. Su `sumValue = esSintetica ? 0 : 1`, por lo que sum()
@@ -388,7 +388,7 @@ async function recomputeClinicForWindow(
   // (incluidas sintéticas). Cambio semántico aceptado.
   const desde7 = getMadridDateOffset(-6);
   const hasta = getMadridDateOffset(0);
-  const sesionesUltimos7d = await loadSesionesUltimos7d_aggregate(
+  const sesionesUltimos7d = await loadSesionesUltimos7d(
     ctx,
     clinicId,
     desde7,
@@ -609,12 +609,7 @@ function diffDays(desdeYMD: string, hastaYMD: string): number {
   return Math.round((b - a) / 86400000);
 }
 
-// === H6 — helpers temporales para shadow read ===
-// Eliminar (junto a `compareClinicMetricsH6` abajo) tras validar paridad en
-// dev (`match: true`). El aggregate helper queda integrado en
-// `recomputeClinicForWindow`.
-
-async function loadDolorMedio_aggregate(
+async function loadDolorMedio(
   ctx: QueryCtx,
   clinicId: Id<"clinics">,
   ventana: Ventana,
@@ -625,21 +620,7 @@ async function loadDolorMedio_aggregate(
   return count > 0 ? Math.round((sum / count) * 100) / 100 : undefined;
 }
 
-function loadDolorMedio_legacy(
-  snapshots: Doc<"patientMetricsSnapshot">[],
-): number | undefined {
-  let sum = 0;
-  let count = 0;
-  for (const s of snapshots) {
-    if (s.dolorPromedio !== undefined) {
-      sum += s.dolorPromedio;
-      count += 1;
-    }
-  }
-  return count > 0 ? Math.round((sum / count) * 100) / 100 : undefined;
-}
-
-async function loadSesionesUltimos7d_aggregate(
+async function loadSesionesUltimos7d(
   ctx: QueryCtx,
   clinicId: Id<"clinics">,
   desde7: string,
@@ -653,78 +634,6 @@ async function loadSesionesUltimos7d_aggregate(
     },
   });
 }
-
-async function loadSesionesUltimos7d_legacy(
-  ctx: QueryCtx,
-  clinicId: Id<"clinics">,
-  desde7: string,
-  hasta: string,
-): Promise<number> {
-  const sesiones = await ctx.db
-    .query("sessions")
-    .withIndex("by_clinicId_fecha", (q) =>
-      q.eq("clinicId", clinicId).gte("fecha", desde7).lte("fecha", hasta),
-    )
-    .collect();
-  return sesiones.length;
-}
-
-/**
- * H6 — shadow read. Compara dolorMedio y sesionesUltimos7d legacy vs
- * aggregate para una (clínica, ventana). Ejecutar manualmente en dev sobre
- * N clínicas y eliminar (junto a los helpers `_legacy`/`_aggregate`) tras
- * confirmar `match: true`. Discrepancia esperable en `sesiones`: el legacy
- * cuenta sintéticas, el aggregate no.
- */
-export const compareClinicMetricsH6 = internalQuery({
-  args: { clinicId: v.id("clinics"), ventana: ventanaValidator },
-  handler: async (ctx, { clinicId, ventana }) => {
-    const desde7 = getMadridDateOffset(-6);
-    const hasta = getMadridDateOffset(0);
-
-    const memberships = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
-      .collect();
-    const pacienteIds = Array.from(
-      new Set(
-        memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
-      ),
-    );
-    const snapshots: Doc<"patientMetricsSnapshot">[] = [];
-    for (const pid of pacienteIds) {
-      const snap = await ctx.db
-        .query("patientMetricsSnapshot")
-        .withIndex("by_pacienteId_ventana", (q) =>
-          q.eq("pacienteId", pid).eq("ventana", ventana),
-        )
-        .unique();
-      if (snap) snapshots.push(snap);
-    }
-
-    const dolorLeg = loadDolorMedio_legacy(snapshots);
-    const dolorAgg = await loadDolorMedio_aggregate(ctx, clinicId, ventana);
-    const sesLeg = await loadSesionesUltimos7d_legacy(
-      ctx,
-      clinicId,
-      desde7,
-      hasta,
-    );
-    const sesAgg = await loadSesionesUltimos7d_aggregate(
-      ctx,
-      clinicId,
-      desde7,
-      hasta,
-    );
-
-    return {
-      match: dolorLeg === dolorAgg && sesLeg === sesAgg,
-      dolor: { legacy: dolorLeg, aggregate: dolorAgg },
-      sesiones: { legacy: sesLeg, aggregate: sesAgg },
-      sampleSize: snapshots.length,
-    };
-  },
-});
 
 /**
  * F8-simplify — shadow read. Compara los sets de trabajo (clínicas y pares
