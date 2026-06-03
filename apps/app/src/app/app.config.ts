@@ -10,6 +10,9 @@ import { IMAGE_LOADER } from '@angular/common';
 import { CustomRouteReuseStrategy, provideConvex } from './core';
 import { isCapacitorNativePlatform } from './core/services/platform.service';
 import { kengoImageLoader } from './core/utils/image-loader';
+import { SESSION_RESETTABLES } from './core/auth/session-resettable';
+import { PlanBuilderService } from './features/planes/data-access/plan-builder.service';
+import { RutinaBuilderService } from './features/rutinas/data-access/rutina-builder.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,5 +28,9 @@ export const appConfig: ApplicationConfig = {
       enabled: !isDevMode() && !isCapacitorNativePlatform(),
       registrationStrategy: 'registerWhenStable:30000'
     }),
+    // Servicios singleton que mantienen estado de sesión y deben purgarse
+    // al hacer logout (SessionService.limpiar() recorre el multi-provide).
+    { provide: SESSION_RESETTABLES, useExisting: PlanBuilderService, multi: true },
+    { provide: SESSION_RESETTABLES, useExisting: RutinaBuilderService, multi: true },
   ],
 };

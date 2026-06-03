@@ -1,8 +1,16 @@
-import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import {
+  Injectable,
+  Injector,
+  signal,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
 import { RolUsuario, Usuario, Puesto } from '../../../../types/global';
 import { ConvexService, NotAuthenticatedError } from '../../convex/convex.service';
 import { BetterAuthService } from './better-auth.service';
 import { ClinicaActivaService } from './clinica-activa.service';
+import { SESSION_RESETTABLES } from '../session-resettable';
 import { LoggerService } from '../../services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { rawAssetUrl } from '../../utils/asset-url';
@@ -144,6 +152,11 @@ export class SessionService {
   private convex = inject(ConvexService);
   private betterAuth = inject(BetterAuthService);
   private logger = inject(LoggerService);
+  // Inyectamos el Injector y resolvemos SESSION_RESETTABLES lazy dentro de
+  // `limpiar()`. Resolverlo en construcción provocaría una dependencia
+  // circular: los servicios resettable (PlanBuilderService, etc.) inyectan
+  // a su vez `SessionService`.
+  private rootInjector = inject(Injector);
 
   constructor() {
     // Hidratación rápida desde localStorage para acelerar `sesionInicializada`
@@ -277,9 +290,57 @@ export class SessionService {
     this._error.set(null);
     this._loading.set(false);
     this._errorConexion.set(false);
-    localStorage.removeItem('carrito:last_fisio_id');
     this.clinicaActiva.clear();
     this.limpiarCacheUsuario();
+    this.purgarStorageDeSesion();
+    this.resetearServiciosDeSesion();
+  }
+
+  /**
+   * Purga toda clave de `localStorage` cuyo contenido esté ligado a la
+   * sesión del usuario que acaba de cerrar. Esto bloquea la fuga del
+   * carrito de ejercicios y otros artefactos cuando otro usuario inicia
+   * sesión en el mismo navegador.
+   *
+   * Las claves de `kengo:plan_builder:*` y `kengo:rutina_builder:*` las
+   * purgan los propios servicios resettable; aquí solo cubrimos las que
+   * no tienen dueño en `SESSION_RESETTABLES`.
+   */
+  private purgarStorageDeSesion(): void {
+    const keys = [
+      'carrito:last_fisio_id',
+      'carrito:last_paciente_id',
+      'kengo:sesion_activa:v2',
+      'kengo:mis-pacientes:filtro',
+      'kengo:sidebar-collapsed',
+    ];
+    for (const k of keys) {
+      try {
+        localStorage.removeItem(k);
+      } catch {
+        // localStorage puede fallar en modo privado; ignorar.
+      }
+    }
+  }
+
+  /**
+   * Notifica a cada servicio singleton registrado en `SESSION_RESETTABLES`
+   * que debe descartar el estado de la sesión que acaba de cerrar. El
+   * try/catch por servicio garantiza que un fallo aislado no bloquee
+   * la cadena de logout (debe ser irrevocable).
+   */
+  private resetearServiciosDeSesion(): void {
+    const resettables = this.rootInjector.get(SESSION_RESETTABLES, []);
+    for (const svc of resettables) {
+      try {
+        svc.resetSessionState();
+      } catch (err) {
+        this.logger.warn(
+          '[SessionService.limpiar] resetSessionState falló:',
+          err,
+        );
+      }
+    }
   }
 
   async cargarMiUsuario(): Promise<void> {

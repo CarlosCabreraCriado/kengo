@@ -11,6 +11,7 @@ import {
 import { Router } from '@angular/router';
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
+import { SessionResettable } from '../../../core/auth/session-resettable';
 import { AsignacionesService } from '../../pacientes/data-access/asignaciones.service';
 import { RutinasService } from '../../rutinas/data-access/rutinas.service';
 import { PlanesService } from './planes.service';
@@ -47,7 +48,7 @@ const SCHEMA_VERSION = 1;
 const DEFAULT_TTL_DAYS = 7;
 
 @Injectable({ providedIn: 'root' })
-export class PlanBuilderService {
+export class PlanBuilderService implements SessionResettable {
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
@@ -113,6 +114,7 @@ export class PlanBuilderService {
 
   readonly drawerOpen = this.itemsState.drawerOpen;
   private saveTimer: any = null; // debounce: simple setTimeout
+  private lastUserIdSeen: string | null = null;
 
   constructor() {
     // Auto-guardar con debounce cuando cambie algo relevante
@@ -131,6 +133,22 @@ export class PlanBuilderService {
 
         if (!p || !f) return;
         this.scheduleSave(350);
+      },
+      { injector: this.injector },
+    );
+
+    // Defensa en profundidad: si el usuario autenticado cambia a otro
+    // distinto (sin haber pasado por logout explícito), descartar el
+    // estado del usuario anterior. Cubre rehidrataciones de sesión o
+    // logins consecutivos sin pasar por SessionService.limpiar().
+    effect(
+      () => {
+        const currentUserId = this.sessionService.usuario()?.id ?? null;
+        const previousId = this.lastUserIdSeen;
+        this.lastUserIdSeen = currentUserId;
+        if (previousId && currentUserId && previousId !== currentUserId) {
+          this.resetSessionState();
+        }
       },
       { injector: this.injector },
     );
@@ -179,6 +197,12 @@ export class PlanBuilderService {
   async tryRestoreFor(pacienteId: string, fisioId?: string) {
     const f = fisioId || this.fisioId();
     if (!f) return;
+
+    // Rechaza restauraciones cuyo fisioId no coincida con el usuario
+    // autenticado actual: bloquea fugas de datos entre sesiones distintas
+    // en el mismo navegador (logout incompleto, storage manipulado, etc.).
+    const currentUserId = this.sessionService.usuario()?.id;
+    if (!currentUserId || currentUserId !== f) return;
 
     const persisted = this.planPersistence.read({ fisioId: f, pacienteId });
     if (!persisted) return;
@@ -665,6 +689,34 @@ export class PlanBuilderService {
     this.paciente.set(null);
     this.closeDrawer();
     this.originalSnapshot.set(null);
+  }
+
+  /**
+   * Invocado por `SessionService.limpiar()` al cerrar sesión y por el
+   * effect reactivo si el usuario autenticado cambia. Cancela escrituras
+   * pendientes, purga TODAS las entradas en localStorage del builder
+   * (independientemente del fisio) y blanquea signals.
+   */
+  resetSessionState(): void {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    this.purgeAllPlanBuilderStorage();
+    this.resetAll();
+  }
+
+  private purgeAllPlanBuilderStorage(): void {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k?.startsWith(PLAN_STORAGE_PREFIX)) keysToRemove.push(k);
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // localStorage puede fallar en modo privado; ignorar.
+    }
   }
 
   // ============================================

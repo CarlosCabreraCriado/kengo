@@ -7,6 +7,7 @@ import {
   effect,
 } from '@angular/core';
 import { SessionService } from '../../../core/auth/services/session.service';
+import { SessionResettable } from '../../../core/auth/session-resettable';
 import { LoggerService } from '../../../core/services/logger.service';
 import { RutinasService } from './rutinas.service';
 import {
@@ -39,7 +40,7 @@ const DEFAULT_TTL_DAYS = 7;
  * ni fechas — solo un fisio que la edite.
  */
 @Injectable({ providedIn: 'root' })
-export class RutinaBuilderService {
+export class RutinaBuilderService implements SessionResettable {
   private sessionService = inject(SessionService);
   private rutinasService = inject(RutinasService);
   private injector = inject(Injector);
@@ -88,6 +89,7 @@ export class RutinaBuilderService {
   });
 
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastUserIdSeen: string | null = null;
 
   constructor() {
     effect(
@@ -101,6 +103,21 @@ export class RutinaBuilderService {
 
         if (!active || !f) return;
         this.scheduleSave(350);
+      },
+      { injector: this.injector },
+    );
+
+    // Defensa en profundidad: si el usuario autenticado cambia a otro
+    // distinto sin pasar por logout explícito, descartar el estado
+    // residual del usuario anterior.
+    effect(
+      () => {
+        const currentUserId = this.sessionService.usuario()?.id ?? null;
+        const previousId = this.lastUserIdSeen;
+        this.lastUserIdSeen = currentUserId;
+        if (previousId && currentUserId && previousId !== currentUserId) {
+          this.resetSessionState();
+        }
       },
       { injector: this.injector },
     );
@@ -363,5 +380,33 @@ export class RutinaBuilderService {
   private clearStorage(): void {
     const f = this.fisioId();
     if (f) this.persistence.clear({ fisioId: f });
+  }
+
+  /**
+   * Invocado por `SessionService.limpiar()` al cerrar sesión y por el
+   * effect reactivo si el usuario autenticado cambia. Cancela escrituras
+   * pendientes, purga TODAS las entradas en localStorage del builder
+   * (de cualquier fisio) y blanquea signals vía `exit()`.
+   */
+  resetSessionState(): void {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    this.purgeAllRutinaBuilderStorage();
+    this.exit();
+  }
+
+  private purgeAllRutinaBuilderStorage(): void {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k?.startsWith(RUTINA_STORAGE_PREFIX)) keysToRemove.push(k);
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // localStorage puede fallar en modo privado; ignorar.
+    }
   }
 }

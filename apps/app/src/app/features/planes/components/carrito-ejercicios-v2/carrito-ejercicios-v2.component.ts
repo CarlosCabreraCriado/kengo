@@ -128,8 +128,15 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
     if (!this.rutinaSvc.isActive()) {
       const lastPacienteId = localStorage.getItem('carrito:last_paciente_id');
       const lastFisioId = localStorage.getItem('carrito:last_fisio_id');
-      if (lastPacienteId && lastFisioId) {
+      const currentFisioId = this.svc.fisioId();
+      // Solo restauramos si el carrito persistido pertenece al fisio
+      // actualmente autenticado. Si no, purgamos los punteros para no
+      // exponer el paciente del usuario anterior tras logout/login.
+      if (lastFisioId && currentFisioId && lastFisioId === currentFisioId && lastPacienteId) {
         this.svc.tryRestoreFor(lastPacienteId, lastFisioId);
+      } else if (lastPacienteId || lastFisioId) {
+        localStorage.removeItem('carrito:last_paciente_id');
+        localStorage.removeItem('carrito:last_fisio_id');
       }
     }
   }
