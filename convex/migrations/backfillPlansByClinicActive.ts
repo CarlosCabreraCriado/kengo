@@ -9,8 +9,8 @@
  * insert/update y por tanto no entraron al árbol.
  *
  * Necesario antes de PR F8-simplify para que `recomputeAll*` lo lean como
- * fuente del set de trabajo (de lo contrario el shadow read `compareF8`
- * devuelve `pairsAgg: 0`).
+ * fuente del set de trabajo. Sin este backfill, los planes preexistentes a
+ * la Fase 0 quedan fuera del árbol y `recomputeAllClinics` los ignora.
  *
  * Cómo ejecutar:
  *   npx convex run migrations/backfillPlansByClinicActive:run \
