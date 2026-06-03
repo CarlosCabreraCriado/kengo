@@ -839,6 +839,88 @@ export const listH6bClinics = internalQuery({
 });
 
 /**
+ * H6b — utilidad shadow para inspeccionar la divergencia entre legacy y
+ * aggregate en una (clínica, ventana). Devuelve, para cada paciente con
+ * adherencia medible en el snapshot, su `pacienteId`, `email`, adherencia,
+ * planes existentes (estado + fechas + clinicId) y si está enCurso HOY.
+ * Pensado para entender qué pacientes hacen caer el aggregate vs legacy
+ * (commit 0834b4c). Eliminar junto al resto de helpers tras decidir.
+ */
+export const inspectH6bClinic = internalQuery({
+  args: { clinicId: v.id("clinics"), ventana: ventanaValidator },
+  handler: async (ctx, { clinicId, ventana }) => {
+    const memberships = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .collect();
+    const pacienteIds = Array.from(
+      new Set(
+        memberships.filter((m) => esPaciente(m.puesto)).map((m) => m.userId),
+      ),
+    );
+
+    const hoyMadrid = getCurrentMadridDate();
+    const filas: Array<{
+      pacienteId: Id<"users">;
+      email: string | null;
+      adherencia: number | undefined;
+      snapshotActualizadoEn: number;
+      enCurso: boolean;
+      planes: Array<{
+        estado: string;
+        fechaInicio: string | undefined;
+        fechaFin: string | undefined;
+        clinicId: Id<"clinics"> | undefined;
+        mismaClinica: boolean;
+      }>;
+    }> = [];
+
+    for (const pid of pacienteIds) {
+      const snap = await ctx.db
+        .query("patientMetricsSnapshot")
+        .withIndex("by_pacienteId_ventana", (q) =>
+          q.eq("pacienteId", pid).eq("ventana", ventana),
+        )
+        .filter((q) => q.eq(q.field("clinicId"), clinicId))
+        .first();
+      if (!snap || snap.adherencia == null) continue;
+
+      const user = await ctx.db.get(pid);
+      const enCurso = await pacienteTienePlanEnCurso(ctx, pid, hoyMadrid);
+
+      const planes = await ctx.db
+        .query("plans")
+        .withIndex("by_pacienteId", (q) => q.eq("pacienteId", pid))
+        .collect();
+
+      filas.push({
+        pacienteId: pid,
+        email: user && "email" in user ? (user.email as string) ?? null : null,
+        adherencia: snap.adherencia,
+        snapshotActualizadoEn: snap.actualizadoEn,
+        enCurso,
+        planes: planes.map((p) => ({
+          estado: p.estado,
+          fechaInicio: p.fechaInicio,
+          fechaFin: p.fechaFin,
+          clinicId: p.clinicId,
+          mismaClinica: p.clinicId === clinicId,
+        })),
+      });
+    }
+
+    return {
+      total: filas.length,
+      enCurso: filas.filter((f) => f.enCurso).length,
+      noEnCurso: filas.filter((f) => !f.enCurso).length,
+      filas: filas.sort((a, b) =>
+        Number(a.enCurso) - Number(b.enCurso) || (a.adherencia ?? 0) - (b.adherencia ?? 0),
+      ),
+    };
+  },
+});
+
+/**
  * H6b — shadow read. Compara `adherenciaPromedio` calculado con la fórmula
  * legacy (snapshots filtrados por pacientes con plan EN CURSO HOY) vs la
  * fórmula propuesta (sum/count directo del aggregate
