@@ -140,6 +140,26 @@ import { Ui2SpinnerComponent } from '../spinner/spinner.component';
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    /* En móvil el botón de la campana no está pegado al borde derecho (lleva
+       el avatar a su lado), así que anclarse al wrap con right:0 deja el menú
+       saliéndose por la izquierda. Lo soltamos del wrap y lo anclamos al
+       viewport con safe-area, manteniendo el tope visual de 400px. */
+    @media (max-width: 1023.98px) {
+      .ui2-notif-menu {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 64px);
+        right: max(12px, env(safe-area-inset-right, 0px));
+        left: max(12px, env(safe-area-inset-left, 0px));
+        width: auto;
+        max-width: 400px;
+        margin-left: auto;
+        max-height: calc(
+          100dvh - env(safe-area-inset-top, 0px)
+          - env(safe-area-inset-bottom, 0px) - 88px
+        );
+      }
+    }
+
     .ui2-notif-menu__head {
       display: flex;
       align-items: center;
