@@ -117,12 +117,12 @@ const MONTHS = [
                   type="button"
                   class="ui2-user-menu__item ui2-user-menu__item--switch"
                   role="switch"
-                  [attr.aria-checked]="modoFisio()"
+                  [attr.aria-checked]="!modoFisio()"
                   (click)="onToggleModo($event)"
                 >
                   <span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>
-                  <span class="ui2-user-menu__label">{{ modoFisio() ? 'Modo fisio' : 'Modo paciente' }}</span>
-                  <span class="ui2-user-menu__switch" [class.ui2-user-menu__switch--on]="modoFisio()" aria-hidden="true">
+                  <span class="ui2-user-menu__label">Modo paciente</span>
+                  <span class="ui2-user-menu__switch" [class.ui2-user-menu__switch--on]="!modoFisio()" aria-hidden="true">
                     <span class="ui2-user-menu__thumb"></span>
                   </span>
                 </button>
