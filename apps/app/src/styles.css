@@ -843,6 +843,12 @@ body {
   max-width: 440px;
 }
 
+/* Override puntual: el formulario de "Vincularme a una clínica" tiene un
+   único input (código de acceso) + dos botones. 500px queda disperso. */
+.ui-dialog-panel--standard:has(app-vincular-clinica-dialog) {
+  max-width: 420px;
+}
+
 /* Override puntual: el detalle de miembro del equipo es un perfil vertical
    compacto (avatar + nombre + 1-2 filas de contacto). 500px queda muy
    disperso en desktop; 420px lo deja proporcionado. La regla móvil
@@ -850,6 +856,16 @@ body {
    en pantallas <768px porque se aplica con el mismo selector base. */
 @media (min-width: 768px) {
   .ui-dialog-panel--sheet:has(app-miembro-detail-dialog) {
+    max-width: 420px;
+  }
+}
+
+/* Override puntual: el selector "Vincular / Crear clínica" solo muestra dos
+   CTA bars con un header corto. 500px queda disperso en desktop; 420px lo
+   deja proporcionado. Mobile mantiene el bottom-sheet a 100vw por la regla
+   base del sheet. */
+@media (min-width: 768px) {
+  .ui-dialog-panel--sheet:has(app-seleccionar-opcion-clinica-dialog) {
     max-width: 420px;
   }
 }
