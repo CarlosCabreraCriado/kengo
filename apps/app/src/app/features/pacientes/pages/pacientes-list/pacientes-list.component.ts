@@ -5,13 +5,16 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  effect,
   HostListener,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { AuthService } from '../../../../core/auth/services/auth.service';
@@ -64,6 +67,7 @@ interface OrdenOption {
   standalone: true,
   imports: [
     DecimalPipe,
+    ReactiveFormsModule,
     Ui2AvatarComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
@@ -96,15 +100,22 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   private readonly PAGE_LOADER_KEY = 'pacientes-list';
 
   /**
-   * Datos críticos: lista de pacientes resuelta. Métricas y asignaciones
-   * (HTTP) son secundarias y se renderizan con skeleton mientras llegan.
-   * Si no hay clínicas todavía no se ha disparado la query — consideramos
-   * la página lista para no quedar bloqueada en spinner.
+   * Una vez la lista de pacientes ha cargado por primera vez, considera la
+   * página lista para siempre. Los refetches posteriores (cambio de búsqueda,
+   * de filtro o de clínica activa) NO deben reactivar el overlay global; el
+   * feedback visual del refetch se da con skeletons locales en el listado.
    */
+  private readonly hasLoadedOnce = signal(false);
+
   readonly pageReady = computed(() => {
     if (this.idsClinicas() === null) return false; // sesión aún no resuelta
-    return !this.pacientesRes.isLoading();
+    return this.hasLoadedOnce();
   });
+
+  /** Refetch en curso tras la primera carga — se muestra solo en la lista. */
+  readonly listaCargando = computed(
+    () => this.hasLoadedOnce() && this.pacientesRes.isLoading(),
+  );
 
   // Vista (toggle entre cuadrícula y lista)
   public vista = signal<Vista>('card');
@@ -156,6 +167,7 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   );
 
   private readonly busqueda = signal('');
+  readonly busquedaControl = new FormControl<string>('', { nonNullable: true });
   readonly filtroActividad = signal<FiltroActividad>(this.leerFiltroGuardado());
   readonly metricasMap = signal<MetricasPacientesBulk>({});
   readonly ordenActual = signal<OrdenPacientes>('nombre');
@@ -274,6 +286,34 @@ export class PacientesListComponent implements OnInit, OnDestroy {
     },
   };
 
+  constructor() {
+    // Búsqueda con debounce: evita re-suscribir Convex en cada tecla.
+    this.busquedaControl.valueChanges
+      .pipe(
+        map((v) => (v ?? '').trim()),
+        distinctUntilChanged(),
+        debounceTime(300),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((v) => this.busqueda.set(v));
+
+    // Marca la página como "ya cargada" la primera vez que la query
+    // devuelve un resultado (o cuando no hay clínica que consultar, en cuyo
+    // caso la query está en 'skip' permanente). A partir de ahí, los
+    // refetches reactivos no muestran el overlay global.
+    effect(() => {
+      if (this.hasLoadedOnce()) return;
+      const cid = this.idsClinicas();
+      if (cid !== null && cid.length === 0) {
+        this.hasLoadedOnce.set(true);
+        return;
+      }
+      if (this.pacientesQuery.value() !== undefined) {
+        this.hasLoadedOnce.set(true);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
   }
@@ -291,10 +331,6 @@ export class PacientesListComponent implements OnInit, OnDestroy {
       ? `${assetUrl(id_avatar, { fit: 'cover', width: 96, height: 96, quality: 80 })}`
       : null;
   }
-
-  onBuscar = (term: string) => {
-    this.busqueda.set((term ?? '').trim());
-  };
 
   seleccionarPaciente(p: Usuario) {
     this.planBuilderService.prepareForPaciente(p);

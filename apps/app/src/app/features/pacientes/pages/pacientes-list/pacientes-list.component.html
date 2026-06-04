@@ -92,7 +92,7 @@
       <div class="pl-controls__search">
         <ui2-search-box
           placeholder="Buscar por nombre, email…"
-          (valueChange)="onBuscar($event)"
+          [formControl]="busquedaControl"
         ></ui2-search-box>
       </div>
       <div class="pl-controls__trailing">
@@ -178,6 +178,18 @@
       ></ui2-segmented>
     </ui2-section>
 
+    <!-- ======================================================== -->
+    <!-- Refetch tras la primera carga: skeletons solo en la lista  -->
+    <!-- ======================================================== -->
+    @if (listaCargando()) {
+      <ui2-section [padding]="'0 20px 24px'">
+        <div class="pl-grid">
+          @for (i of [0, 1, 2, 3, 4, 5]; track i) {
+            <ui2-skeleton variant="block" height="148px"></ui2-skeleton>
+          }
+        </div>
+      </ui2-section>
+    } @else {
     <!-- ======================================================== -->
     <!-- Empty filtrado                                            -->
     <!-- ======================================================== -->
@@ -301,6 +313,7 @@
           }
         </div>
       </ui2-section>
+    }
     }
   }
 
