@@ -2,10 +2,10 @@
   <header class="flex items-center gap-3">
     <ui2-back-button [route]="['/mi-clinica']" ariaLabel="Volver a mi clínica"></ui2-back-button>
     <div class="flex-1 min-w-0">
-      <h1 class="text-2xl font-display text-ink-900 leading-none">Suscripción</h1>
-      @if (clinicaNombre()) {
-        <p class="text-sm text-ink-500 mt-1 truncate">{{ clinicaNombre() }}</p>
-      }
+      <ui2-big-title
+        title="Suscripción"
+        [sub]="clinicaNombre()"
+      ></ui2-big-title>
     </div>
   </header>
 

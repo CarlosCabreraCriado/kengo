@@ -19,6 +19,7 @@ import { ContactarVentasDialogComponent } from '../../components/contactar-venta
 import { PricingCardsComponent } from '../../components/pricing-cards/pricing-cards.component';
 import {
   Ui2BackButtonComponent,
+  Ui2BigTitleComponent,
   Ui2ButtonComponent,
   Ui2CardComponent,
   Ui2EmptyStateComponent,
@@ -77,6 +78,7 @@ const INVOICE_ESTADO_VM: Record<InvoiceEstado, InvoiceEstadoVm> = {
     UpperCasePipe,
     PricingCardsComponent,
     Ui2BackButtonComponent,
+    Ui2BigTitleComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
     Ui2EmptyStateComponent,
