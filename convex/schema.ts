@@ -543,11 +543,14 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   // === MENSAJERÍA (chat 1-1 fisio↔paciente dentro de una clínica) ===
-  // `archivedAt` se rellena cuando uno de los dos participantes pierde la
-  // membresía de la clínica (cascada en `clinicMemberships.remove`). Las
-  // conversaciones archivadas dejan de aparecer en `listMyConversations`
-  // pero no se borran para preservar el historial accesible si se
-  // restaurara la membresía.
+  // Cuando uno de los dos participantes pierde la membresía de la clínica,
+  // las cascadas en `clinicMemberships.remove`/`expelPatient`/`expelMember`
+  // borran (hard-delete) la conversación y sus mensajes; si vuelve a unirse,
+  // se empieza una conversación nueva.
+  // `archivedAt` queda como campo deprecado por compatibilidad con documentos
+  // pre-migración `migrations/dedupeUsersFromPendingMerge:cleanupArchived…`;
+  // el código actual ni lo lee ni lo escribe. Se eliminará del schema en un
+  // commit posterior cuando no queden documentos con valor.
   conversations: defineTable({
     pacienteId: v.id("users"),
     fisioId: v.id("users"),

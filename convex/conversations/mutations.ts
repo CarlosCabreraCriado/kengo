@@ -151,6 +151,17 @@ export const sendMessage = mutation({
     if (conv.pacienteId !== me._id && conv.fisioId !== me._id) {
       throw new Error("No tienes acceso a esta conversación");
     }
+    // Defensa en profundidad: validar que sigue siendo miembro de la clínica
+    // de la conversación. Bloquea a expulsados que conserven el id por URL.
+    const membership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", me._id).eq("clinicId", conv.clinicId),
+      )
+      .unique();
+    if (!membership) {
+      throw new Error("No tienes acceso a esta conversación");
+    }
 
     // Aislamiento de billing en chat (Bloque F): si la clínica está
     // suspendida, los fisios/admin pierden la capacidad de enviar
@@ -202,9 +213,9 @@ export const sendMessage = mutation({
   },
 });
 
-// Suma todos los mensajes no leídos del usuario en sus conversaciones no
-// archivadas. Usado como `badge` iOS en la push de chat para que el icono
-// muestre el total acumulado, no el de la conversación concreta.
+// Suma todos los mensajes no leídos del usuario en sus conversaciones. Usado
+// como `badge` iOS en la push de chat para que el icono muestre el total
+// acumulado, no el de la conversación concreta.
 async function computeUnreadBadgeForUser(
   ctx: any,
   userId: Id<"users">,
@@ -225,14 +236,8 @@ async function computeUnreadBadgeForUser(
   ]);
 
   let total = 0;
-  for (const c of asPaciente) {
-    if (c.archivedAt !== undefined) continue;
-    total += c.pacienteUnreadCount;
-  }
-  for (const c of asFisio) {
-    if (c.archivedAt !== undefined) continue;
-    total += c.fisioUnreadCount;
-  }
+  for (const c of asPaciente) total += c.pacienteUnreadCount;
+  for (const c of asFisio) total += c.fisioUnreadCount;
   return total;
 }
 
@@ -246,6 +251,15 @@ export const markAsRead = mutation({
       throw new Error("Conversación no encontrada");
     }
     if (conv.pacienteId !== me._id && conv.fisioId !== me._id) {
+      throw new Error("No tienes acceso a esta conversación");
+    }
+    const membership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", me._id).eq("clinicId", conv.clinicId),
+      )
+      .unique();
+    if (!membership) {
       throw new Error("No tienes acceso a esta conversación");
     }
 

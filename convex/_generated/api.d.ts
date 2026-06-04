@@ -93,6 +93,7 @@ import type * as migrations_clearPatientsByClinicAdherencia from "../migrations/
 import type * as migrations_clearPatientsByClinicDolor from "../migrations/clearPatientsByClinicDolor.js";
 import type * as migrations_clearPatientsByClinicRiskScore from "../migrations/clearPatientsByClinicRiskScore.js";
 import type * as migrations_clearPatientsWithActivePlanByClinic from "../migrations/clearPatientsWithActivePlanByClinic.js";
+import type * as migrations_dedupeUsersFromPendingMerge from "../migrations/dedupeUsersFromPendingMerge.js";
 import type * as migrations_deleteClinicCascade from "../migrations/deleteClinicCascade.js";
 import type * as migrations_deleteUserByEmail from "../migrations/deleteUserByEmail.js";
 import type * as migrations_deleteUserByEmailMutation from "../migrations/deleteUserByEmailMutation.js";
@@ -230,6 +231,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/clearPatientsByClinicDolor": typeof migrations_clearPatientsByClinicDolor;
   "migrations/clearPatientsByClinicRiskScore": typeof migrations_clearPatientsByClinicRiskScore;
   "migrations/clearPatientsWithActivePlanByClinic": typeof migrations_clearPatientsWithActivePlanByClinic;
+  "migrations/dedupeUsersFromPendingMerge": typeof migrations_dedupeUsersFromPendingMerge;
   "migrations/deleteClinicCascade": typeof migrations_deleteClinicCascade;
   "migrations/deleteUserByEmail": typeof migrations_deleteUserByEmail;
   "migrations/deleteUserByEmailMutation": typeof migrations_deleteUserByEmailMutation;

@@ -26,9 +26,6 @@ export const listMyConversations = query({
 
     const dedup = new Map<Id<"conversations">, (typeof asPaciente)[number]>();
     for (const c of [...asPaciente, ...asFisio]) {
-      // Las conversaciones archivadas por cascada al salir de una clínica
-      // no se listan; se preservan en BD para historial.
-      if (c.archivedAt !== undefined) continue;
       dedup.set(c._id, c);
     }
     const all = Array.from(dedup.values());
@@ -92,6 +89,18 @@ export const listMessages = query({
       throw new Error("Conversación no encontrada");
     }
     if (conv.pacienteId !== me._id && conv.fisioId !== me._id) {
+      throw new Error("No tienes acceso a esta conversación");
+    }
+    // Defensa en profundidad: si el usuario perdió la membresía en la clínica
+    // de la conversación (expulsión, baja), no puede seguir leyendo aunque
+    // figure como pacienteId/fisioId del documento.
+    const membership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", me._id).eq("clinicId", conv.clinicId),
+      )
+      .unique();
+    if (!membership) {
       throw new Error("No tienes acceso a esta conversación");
     }
 

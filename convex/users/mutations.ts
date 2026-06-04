@@ -51,6 +51,37 @@ export const upsertFromAuth = internalMutation({
       return existing._id;
     }
 
+    // Fallback por email: si un fisio creó al paciente con
+    // `upsertPatientWithMembership`, el registro existe como `pending-<email>`.
+    // Al activar la cuenta vía Better-Auth, no hay que duplicar el `users`
+    // (eso desacopla la conversación previa y rompe `listMessages` con
+    // "No tienes acceso"). Promovemos el pending al externalId real.
+    const email = args.email.toLowerCase().trim();
+    const byEmail = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .unique();
+
+    if (byEmail) {
+      if (byEmail.externalId.startsWith("pending-")) {
+        await ctx.db.patch(byEmail._id, {
+          externalId: args.externalId,
+          email: args.email,
+          firstName: args.firstName,
+          lastName: args.lastName,
+          emailVerified: args.emailVerified,
+          searchableText,
+        });
+        return byEmail._id;
+      }
+      // Colisión: ya hay otra cuenta activa con este email vinculada a un
+      // externalId distinto. No fusionamos (riesgo de mezclar identidades);
+      // abortamos el sign-in para forzar resolución manual.
+      throw new Error(
+        "Conflicto: este email ya está vinculado a otra cuenta. Contacta con soporte.",
+      );
+    }
+
     return await ctx.db.insert("users", {
       externalId: args.externalId,
       email: args.email,

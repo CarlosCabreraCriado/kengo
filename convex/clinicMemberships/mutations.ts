@@ -23,7 +23,9 @@ function esFacturable(puesto: "fisio" | "paciente" | "admin"): boolean {
 /**
  * Cascada cuando se elimina una membresía de `fisio` o `admin`:
  *   - Borra `assignments` donde figuraba como responsable.
- *   - Archiva conversaciones del fisio/admin en esa clínica.
+ *   - Borra (hard-delete) conversaciones del fisio/admin en esa clínica
+ *     junto con sus mensajes. Si vuelve a unirse, se empieza una conversación
+ *     nueva con cada paciente.
  *   - Los planes que había creado se mantienen (los pacientes los necesitan).
  *
  * Asume que la membresía ya ha sido eliminada por el caller.
@@ -33,8 +35,6 @@ async function cascadeRemoveStaff(
   userId: Id<"users">,
   clinicId: Id<"clinics">,
 ): Promise<void> {
-  const ahora = Date.now();
-
   const assignments = await ctx.db
     .query("assignments")
     .withIndex("by_fisioId_clinicId", (q) =>
@@ -50,10 +50,28 @@ async function cascadeRemoveStaff(
     )
     .collect();
   for (const c of conversacionesFisio) {
-    if (c.clinicId === clinicId && c.archivedAt === undefined) {
-      await ctx.db.patch(c._id, { archivedAt: ahora });
-    }
+    if (c.clinicId !== clinicId) continue;
+    await deleteConversationWithMessages(ctx, c._id);
   }
+}
+
+/**
+ * Borra una conversación junto con todos sus mensajes. Convex no cascadea,
+ * así que iteramos `messages` por `by_conversationId` antes de borrar el
+ * documento de `conversations`.
+ */
+async function deleteConversationWithMessages(
+  ctx: MutationCtx,
+  conversationId: Id<"conversations">,
+): Promise<void> {
+  const msgs = await ctx.db
+    .query("messages")
+    .withIndex("by_conversationId", (q) =>
+      q.eq("conversationId", conversationId),
+    )
+    .collect();
+  for (const m of msgs) await ctx.db.delete(m._id);
+  await ctx.db.delete(conversationId);
 }
 
 /**
@@ -67,7 +85,9 @@ async function cascadeRemoveStaff(
  *     paciente); si `hardDeleteBorradores: true`, los borra junto con sus
  *     `planExercises` (expulsión por admin: no tiene sentido conservar
  *     borradores que el paciente nunca llegó a ejecutar).
- *   - Archiva conversaciones donde el usuario figuraba como paciente.
+ *   - Borra (hard-delete) las conversaciones donde el usuario figuraba como
+ *     paciente, junto con sus mensajes. Si el paciente vuelve a vincularse,
+ *     la conversación con el fisio responsable se crea de cero.
  *   - Purga sus `patientMetricsSnapshot` y entradas en los DirectAggregates
  *     `patientsByClinic{Adherencia,RiskScore,Dolor}`.
  *
@@ -79,8 +99,6 @@ async function cascadeRemovePatient(
   clinicId: Id<"clinics">,
   options?: { hardDeleteBorradores?: boolean },
 ): Promise<void> {
-  const ahora = Date.now();
-
   const assignments = await ctx.db
     .query("assignments")
     .withIndex("by_pacienteId_clinicId", (q) =>
@@ -127,9 +145,8 @@ async function cascadeRemovePatient(
     )
     .collect();
   for (const c of conversacionesPaciente) {
-    if (c.clinicId === clinicId && c.archivedAt === undefined) {
-      await ctx.db.patch(c._id, { archivedAt: ahora });
-    }
+    if (c.clinicId !== clinicId) continue;
+    await deleteConversationWithMessages(ctx, c._id);
   }
 
   await _deletePatientSnapshotsForClinic(ctx, userId, clinicId);
