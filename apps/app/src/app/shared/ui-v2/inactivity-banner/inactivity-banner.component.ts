@@ -141,8 +141,13 @@ const VARIANTS: Record<Ui2InactivityBannerVariant, VariantSpec> = {
         .ui2-iab {
           flex-wrap: wrap;
         }
+        .ui2-iab__text {
+          flex-basis: calc(100% - 50px);
+        }
         .ui2-iab__action {
-          margin-left: 50px;
+          width: 100%;
+          margin-left: 0;
+          text-align: center;
         }
       }
     `,
