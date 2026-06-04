@@ -43,14 +43,51 @@ export interface PdHeroMeta {
       } @else {
         <div class="pd-hero__nav">
           <ui2-back-button (clicked)="volver.emit()" ariaLabel="Volver a pacientes" />
-          <button
-            type="button"
-            class="pd-hero__nav-action"
-            aria-label="Gestionar acceso"
-            (click)="gestionarAcceso.emit()"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">key</span>
-          </button>
+          <div class="pd-hero__nav-actions">
+            <button
+              type="button"
+              class="pd-hero__nav-action"
+              aria-label="Gestionar acceso"
+              (click)="gestionarAcceso.emit()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">key</span>
+            </button>
+            <button
+              type="button"
+              class="pd-hero__nav-action"
+              [attr.aria-expanded]="menuOpen()"
+              aria-label="Más acciones"
+              (click)="toggleMenu($event)"
+              (blur)="closeMenu()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">more_horiz</span>
+              @if (menuOpen()) {
+                <ul class="pd-hero__menu" role="menu" (mousedown)="$event.preventDefault()">
+                  <li
+                    role="menuitem"
+                    tabindex="0"
+                    (click)="editarPaciente.emit(); closeMenu()"
+                    (keyup.enter)="editarPaciente.emit(); closeMenu()"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    Editar paciente
+                  </li>
+                  @if (puedeEliminar()) {
+                    <li
+                      role="menuitem"
+                      tabindex="0"
+                      class="pd-hero__menu-item--danger"
+                      (click)="eliminarPaciente.emit(); closeMenu()"
+                      (keyup.enter)="eliminarPaciente.emit(); closeMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">person_remove</span>
+                      Eliminar paciente
+                    </li>
+                  }
+                </ul>
+              }
+            </button>
+          </div>
         </div>
       }
 
@@ -113,6 +150,14 @@ export interface PdHeroMeta {
             <button
               type="button"
               class="pd-hero__more"
+              aria-label="Gestionar acceso"
+              (click)="gestionarAcceso.emit()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">key</span>
+            </button>
+            <button
+              type="button"
+              class="pd-hero__more"
               [attr.aria-expanded]="menuOpen()"
               aria-label="Más acciones"
               (click)="toggleMenu($event)"
@@ -130,15 +175,18 @@ export interface PdHeroMeta {
                     <span class="material-symbols-outlined" aria-hidden="true">edit</span>
                     Editar paciente
                   </li>
-                  <li
-                    role="menuitem"
-                    tabindex="0"
-                    (click)="gestionarAcceso.emit(); closeMenu()"
-                    (keyup.enter)="gestionarAcceso.emit(); closeMenu()"
-                  >
-                    <span class="material-symbols-outlined" aria-hidden="true">key</span>
-                    Gestionar acceso
-                  </li>
+                  @if (puedeEliminar()) {
+                    <li
+                      role="menuitem"
+                      tabindex="0"
+                      class="pd-hero__menu-item--danger"
+                      (click)="eliminarPaciente.emit(); closeMenu()"
+                      (keyup.enter)="eliminarPaciente.emit(); closeMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">person_remove</span>
+                      Eliminar paciente
+                    </li>
+                  }
                 </ul>
               }
             </button>
@@ -195,7 +243,13 @@ export interface PdHeroMeta {
         justify-content: space-between;
         margin-bottom: 14px;
       }
+      .pd-hero__nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
       .pd-hero__nav-action {
+        position: relative;
         display: grid;
         place-items: center;
         width: 40px;
@@ -309,6 +363,9 @@ export interface PdHeroMeta {
         font-size: 18px;
         color: var(--ink-500);
       }
+      .pd-hero__menu-item--danger { color: var(--danger); }
+      .pd-hero__menu-item--danger:hover { background: rgba(239, 68, 68, 0.08); }
+      .pd-hero__menu-item--danger .material-symbols-outlined { color: var(--danger); }
     `,
   ],
 })
@@ -320,9 +377,11 @@ export class PdHeroComponent {
   readonly lastActivityDays = input<number | null>(null);
   readonly enviandoMensaje = input<boolean>(false);
   readonly isMobile = input<boolean>(false);
+  readonly puedeEliminar = input<boolean>(false);
 
   readonly editarPaciente = output<void>();
   readonly gestionarAcceso = output<void>();
+  readonly eliminarPaciente = output<void>();
   readonly crearPlan = output<void>();
   readonly enviarMensaje = output<void>();
   readonly volver = output<void>();

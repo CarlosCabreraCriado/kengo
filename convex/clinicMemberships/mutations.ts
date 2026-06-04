@@ -61,9 +61,12 @@ async function cascadeRemoveStaff(
  * clínica (puesto principal `paciente`, o fisio/admin con
  * `tambienEsPaciente: true` que sale completamente):
  *   - Borra `assignments(pacienteId, clinicId)`.
- *   - Cancela los planes activos/borrador del usuario atribuidos a esa
- *     clínica donde figure como paciente. Los planes no se borran para
- *     preservar el historial.
+ *   - Cancela los planes activos del usuario atribuidos a esa clínica
+ *     donde figure como paciente (soft-delete, preserva historial).
+ *   - Para los planes en borrador: por defecto los cancela (auto-salida del
+ *     paciente); si `hardDeleteBorradores: true`, los borra junto con sus
+ *     `planExercises` (expulsión por admin: no tiene sentido conservar
+ *     borradores que el paciente nunca llegó a ejecutar).
  *   - Archiva conversaciones donde el usuario figuraba como paciente.
  *   - Purga sus `patientMetricsSnapshot` y entradas en los DirectAggregates
  *     `patientsByClinic{Adherencia,RiskScore,Dolor}`.
@@ -74,6 +77,7 @@ async function cascadeRemovePatient(
   ctx: MutationCtx,
   userId: Id<"users">,
   clinicId: Id<"clinics">,
+  options?: { hardDeleteBorradores?: boolean },
 ): Promise<void> {
   const ahora = Date.now();
 
@@ -97,8 +101,21 @@ async function cascadeRemovePatient(
       q.eq("pacienteId", userId).eq("estado", "borrador"),
     )
     .collect();
-  for (const p of [...planesActivos, ...planesBorrador]) {
+  for (const p of planesActivos) {
     if (p.clinicId === clinicId) {
+      await ctx.db.patch(p._id, { estado: "cancelado" });
+    }
+  }
+  for (const p of planesBorrador) {
+    if (p.clinicId !== clinicId) continue;
+    if (options?.hardDeleteBorradores) {
+      const exes = await ctx.db
+        .query("planExercises")
+        .withIndex("by_planId", (q) => q.eq("planId", p._id))
+        .collect();
+      for (const e of exes) await ctx.db.delete(e._id);
+      await ctx.db.delete(p._id);
+    } else {
       await ctx.db.patch(p._id, { estado: "cancelado" });
     }
   }
@@ -273,6 +290,74 @@ export const remove = mutation({
         { clinicId },
       );
     }
+
+    return { ok: true };
+  },
+});
+
+/**
+ * Expulsa a un paciente de una clínica.
+ *
+ * Restricciones:
+ *   - Solo un `admin` de la clínica puede invocarla.
+ *   - El target debe tener puesto `paciente` (no aplica a fisios/admins —
+ *     esos se gestionan con `expelMember` o `remove`).
+ *   - No se puede expulsar a uno mismo.
+ *
+ * La cascada (ver `cascadeRemovePatient` con `hardDeleteBorradores: true`):
+ *   - Cancela los planes activos del paciente en la clínica (soft-delete,
+ *     preserva historial de ejecuciones).
+ *   - Hard-delete de los planes en borrador del paciente en la clínica,
+ *     junto con sus `planExercises`.
+ *   - Borra `assignments`, archiva conversaciones y purga snapshots del
+ *     paciente en la clínica.
+ *
+ * La cuenta del paciente (`users`) se conserva por si vuelve a vincularse
+ * en el futuro.
+ */
+export const expelPatient = mutation({
+  args: {
+    clinicId: v.id("clinics"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const actor = await getAuthenticatedUser(ctx);
+    await checkClinicPermission(ctx, actor._id, args.clinicId, ["admin"]);
+
+    if (actor._id === args.userId) {
+      throw new Error("No puedes expulsarte a ti mismo");
+    }
+
+    const membership: Doc<"clinicMemberships"> | null = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", args.userId).eq("clinicId", args.clinicId),
+      )
+      .unique();
+
+    if (!membership) {
+      throw new Error("El paciente no pertenece a esta clínica");
+    }
+
+    if (membership.puesto !== "paciente") {
+      throw new Error(
+        "Esta acción solo aplica a pacientes (no fisios ni administradores)",
+      );
+    }
+
+    await ctx.db.delete(membership._id);
+    await cascadeRemovePatient(ctx, args.userId, args.clinicId, {
+      hardDeleteBorradores: true,
+    });
+
+    // Sus planes activos/borrador acaban de moverse: refrescar el snapshot
+    // agregado de la clínica para que `pacientesActivos` quede alineado con
+    // el listado sin esperar al cron diario.
+    await ctx.scheduler.runAfter(
+      0,
+      internal.snapshots.internal.recomputeClinic,
+      { clinicId: args.clinicId },
+    );
 
     return { ok: true };
   },

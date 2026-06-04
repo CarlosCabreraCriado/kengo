@@ -132,10 +132,12 @@ interface DialogClosedResult {
             [lastActivityDays]="diasUltimaActividad()"
             [enviandoMensaje]="enviandoMensaje()"
             [isMobile]="isMovil()"
+            [puedeEliminar]="puedeEliminarPaciente()"
             (enviarMensaje)="onEnviarMensaje()"
             (crearPlan)="crearPlan()"
             (editarPaciente)="editarPaciente()"
             (gestionarAcceso)="gestionarAcceso()"
+            (eliminarPaciente)="onEliminarPaciente()"
             (volver)="volver()"
           />
 
@@ -462,6 +464,21 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
   readonly idsClinicas = computed(
     () => this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) ?? [],
   );
+
+  /**
+   * Visible para fisios y admins en modo fisio. La diferencia de
+   * comportamiento (admin puede ejecutar, fisio recibe diálogo informativo)
+   * se aplica al pulsar — la visibilidad es uniforme para no dar pistas
+   * indebidas al fisio sobre su propio rol.
+   */
+  readonly puedeEliminarPaciente = computed(
+    () => this.sessionService.enModoFisio() && this.paciente() !== null,
+  );
+
+  readonly esAdminClinicaActiva = computed(() => {
+    const cid = this.clinicaActiva.selectedClinicaId();
+    return cid ? this.sessionService.esAdminEnClinica(cid) : false;
+  });
 
   readonly avatarUrl = computed<string | null>(() => {
     const p = this.paciente();
@@ -897,5 +914,47 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     const pacienteId = this.route.snapshot.params['id'];
     const fecha = comentario.fechaRegistro.split('T')[0];
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', fecha]);
+  }
+
+  async onEliminarPaciente(): Promise<void> {
+    const paciente = this.paciente();
+    const clinicId = this.clinicaActiva.selectedClinicaId();
+    if (!paciente || !clinicId) return;
+
+    if (!this.esAdminClinicaActiva()) {
+      await this.dialogService.confirm({
+        title: 'Acción restringida',
+        message:
+          'Solo un administrador de la clínica puede eliminar a un paciente. Pide a un administrador que realice esta acción.',
+        confirmText: 'Entendido',
+        hideCancel: true,
+      });
+      return;
+    }
+
+    const nombre = this.fullName() || 'el paciente';
+    const ok = await this.dialogService.confirm({
+      title: '¿Eliminar paciente de la clínica?',
+      message: `${nombre} dejará de estar vinculado a esta clínica. El paciente dejará de tener acceso a la plataforma vinculado a tu clínica.`,
+      confirmText: 'Eliminar paciente',
+      cancelText: 'Cancelar',
+      confirmVariant: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      await this.convex.mutation(
+        api.clinicMemberships.mutations.expelPatient,
+        {
+          clinicId: clinicId as never,
+          userId: paciente.convexId as never,
+        },
+      );
+      this.toast.success('Paciente eliminado de la clínica');
+      this.router.navigate(['/mis-pacientes']);
+    } catch (err) {
+      this.logger.error('[paciente-detail] expelPatient falló', err);
+      this.toast.error('No se pudo eliminar al paciente. Inténtalo de nuevo.');
+    }
   }
 }
