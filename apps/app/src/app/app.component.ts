@@ -26,6 +26,7 @@ import { ExternalBrowserService } from './core/services/external-browser.service
 import { PushNotificationService } from './core/services/push-notification.service';
 import { ConvexService } from './core/convex/convex.service';
 import { assetUrl } from './core/utils/asset-url';
+import { DialogService } from './shared/services/dialog/dialog.service';
 import { ToastService } from './shared/services/toast/toast.service';
 import { ClinicasService } from './features/clinica/data-access/clinicas.service';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
@@ -84,6 +85,7 @@ export class AppComponent implements OnInit {
   private externalBrowser = inject(ExternalBrowserService);
   private pushNotifications = inject(PushNotificationService);
   private toast = inject(ToastService);
+  private dialogService = inject(DialogService);
   public sessionService = inject(SessionService);
   public convexService = inject(ConvexService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
@@ -261,6 +263,32 @@ export class AppComponent implements OnInit {
         }
       });
     }
+
+    // Pop-up informativo al activar modo paciente. Reacciona a la transición
+    // fisio → paciente desde cualquier punto de entrada (botón "Activar modo
+    // paciente", toggle del avatar, etc.). La primera evaluación se descarta
+    // para no disparar el diálogo tras un reload cuando el usuario ya estaba
+    // en paciente. Filtra también los casos en que `sincronizadorModo` fuerza
+    // paciente para usuarios sin capacidad fisio: ahí `puedeAlternarModo` es
+    // false y la instrucción "haz click en la foto para volver a fisio" no
+    // aplica.
+    let prevEnModoPaciente: boolean | null = null;
+    effect(() => {
+      const actual = this.sessionService.enModoPaciente();
+      const puedeAlternar = this.sessionService.puedeAlternarModo();
+      const prev = prevEnModoPaciente;
+      prevEnModoPaciente = actual;
+      if (prev === null) return;
+      if (!prev && actual && puedeAlternar) {
+        void this.dialogService.confirm({
+          title: 'Modo paciente activado',
+          message:
+            'Estás viendo la app tal y como la vería un paciente. Para volver a modo fisio, haz click en tu foto de perfil.',
+          confirmText: 'Entendido',
+          hideCancel: true,
+        });
+      }
+    });
   }
 
   ngOnInit() {
