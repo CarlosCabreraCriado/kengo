@@ -92,39 +92,20 @@ export const createPatient = action({
       };
     }
 
-    // Comprobar si existe en Better-Auth ya
-    const exists = await ctx.runQuery(internal.auth.queries.emailExists, { email });
-
-    // Crear cuenta Better-Auth si no existe y se proporciona password
-    if (!exists && args.password && args.password.length >= 6) {
-      const siteUrl = getSiteUrl();
-      const name = `${firstName} ${lastName}`.trim();
-      try {
-        // Origin requerido por el plugin crossDomain de Better-Auth: las
-        // llamadas server-to-server desde Node no añaden Origin automáticamente.
-        const res = await fetch(`${siteUrl}/api/auth/sign-up/email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Origin: getAppUrl(),
-          },
-          body: JSON.stringify({ email, password: args.password, name }),
-        });
-        if (!res.ok) {
-          const body = await res.text();
-          console.error("[createPatient] Better-Auth signup failed:", res.status, body);
-          // No abortamos — quizá el usuario ya existe en Better-Auth pero no en app
-        }
-      } catch (err) {
-        console.error("[createPatient] Better-Auth signup error:", err);
-      }
-    }
-
-    // Upsert usuario + membresía. La mutation puede lanzar ConvexError con
-    // códigos estructurados que aquí mapeamos a respuestas user-friendly:
+    // Upsert usuario + membresía ANTES del sign-up Better-Auth. Inserta la
+    // fila `users` con `externalId="pending-<email>"`; el trigger
+    // `auth.ts:onCreate` que dispara el sign-up posterior detectará ese
+    // pending y reescribirá `externalId` al id BA real. Si invertimos el
+    // orden, el trigger crearía la fila con externalId real y este upsert
+    // la vería como "usuario activo preexistente" lanzando
+    // REQUIRES_CONFIRMATION para CUALQUIER email nuevo.
+    //
+    // La mutation puede lanzar ConvexError con códigos estructurados que
+    // aquí mapeamos a respuestas user-friendly:
     //   - DUPLICADO_EN_CLINICA  → el paciente ya existe en esta clínica.
     //   - STAFF_EN_CLINICA      → el email pertenece a un profesional.
-    //   - REQUIRES_CONFIRMATION → existe activo, requiere confirmar reuse.
+    //   - REQUIRES_CONFIRMATION → existe activo en otra clínica, requiere
+    //                             confirmar reuse.
     let userId: string;
     let created: boolean;
     try {
@@ -160,6 +141,36 @@ export const createPatient = action({
       throw err;
     }
     void created;
+
+    // Crear cuenta Better-Auth si no existe y se proporciona password. Va
+    // DESPUÉS del upsert: el trigger `auth.ts:onCreate` ve la fila `users`
+    // en estado `pending-<email>` y hace rebind del externalId al id BA
+    // real (ver `auth.ts:99-126`).
+    const exists = await ctx.runQuery(internal.auth.queries.emailExists, { email });
+    if (!exists && args.password && args.password.length >= 6) {
+      const siteUrl = getSiteUrl();
+      const name = `${firstName} ${lastName}`.trim();
+      try {
+        // Origin requerido por el plugin crossDomain de Better-Auth: las
+        // llamadas server-to-server desde Node no añaden Origin automáticamente.
+        const res = await fetch(`${siteUrl}/api/auth/sign-up/email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: getAppUrl(),
+          },
+          body: JSON.stringify({ email, password: args.password, name }),
+        });
+        if (!res.ok) {
+          const body = await res.text();
+          console.error("[createPatient] Better-Auth signup failed:", res.status, body);
+          // No abortamos — el paciente queda en estado pending y podrá
+          // activar con el magic link / código generados a continuación.
+        }
+      } catch (err) {
+        console.error("[createPatient] Better-Auth signup error:", err);
+      }
+    }
 
     // Resolver el fisio creador (autenticado) — reutilizamos la identity ya
     // validada arriba. Necesario para autoasignación y atribución del access
