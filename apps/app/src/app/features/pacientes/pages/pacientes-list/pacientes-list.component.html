@@ -85,7 +85,7 @@
   </ui2-section>
 
   <!-- ========================================================== -->
-  <!-- Búsqueda + toggle de vista                                   -->
+  <!-- Búsqueda + toggle de vista + sort                            -->
   <!-- ========================================================== -->
   <ui2-section [padding]="'0 20px 12px'">
     <div class="pl-controls">
@@ -95,12 +95,51 @@
           (valueChange)="onBuscar($event)"
         ></ui2-search-box>
       </div>
-      <ui2-segmented
-        class="pl-controls__view"
-        [options]="vistaOptions"
-        [value]="vista()"
-        (valueChange)="setVista($event)"
-      ></ui2-segmented>
+      <div class="pl-controls__trailing">
+        <ui2-segmented
+          class="pl-controls__view"
+          [options]="vistaOptions"
+          [value]="vista()"
+          (valueChange)="setVista($event)"
+        ></ui2-segmented>
+
+        @if (totalPacientes() > 0) {
+          <div class="pl-sort">
+            <button
+              type="button"
+              class="pl-sort__trigger"
+              [class.pl-sort__trigger--active]="ordenActual() !== 'nombre'"
+              (click)="$event.stopPropagation(); sortMenuAbierto.set(!sortMenuAbierto())"
+              [attr.aria-expanded]="sortMenuAbierto()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span>
+              <span class="pl-sort__label">{{ ordenLabel() }}</span>
+              <span
+                class="material-symbols-outlined pl-sort__chevron"
+                [class.pl-sort__chevron--open]="sortMenuAbierto()"
+                aria-hidden="true"
+              >expand_more</span>
+            </button>
+
+            @if (sortMenuAbierto()) {
+              <div class="pl-sort__menu" role="menu">
+                @for (opt of ordenOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="pl-sort__option"
+                    [class.pl-sort__option--selected]="ordenActual() === opt.value"
+                    role="menuitem"
+                    (click)="setOrden(opt.value)"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">{{ opt.icon }}</span>
+                    <span>{{ opt.label }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   </ui2-section>
 
@@ -128,52 +167,15 @@
     ></ui2-empty-state>
   } @else {
     <!-- ======================================================== -->
-    <!-- Filtros + sort                                            -->
+    <!-- Filtros de actividad                                      -->
     <!-- ======================================================== -->
     <ui2-section [padding]="'0 20px 12px'">
-      <div class="pl-filterbar">
-        <ui2-segmented
-          class="pl-filterbar__filters"
-          [options]="filtroOptions()"
-          [value]="filtroActividad()"
-          (valueChange)="setFiltro($event)"
-        ></ui2-segmented>
-
-        <div class="pl-sort">
-          <button
-            type="button"
-            class="pl-sort__trigger"
-            [class.pl-sort__trigger--active]="ordenActual() !== 'nombre'"
-            (click)="$event.stopPropagation(); sortMenuAbierto.set(!sortMenuAbierto())"
-            [attr.aria-expanded]="sortMenuAbierto()"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span>
-            <span class="pl-sort__label">{{ ordenLabel() }}</span>
-            <span
-              class="material-symbols-outlined pl-sort__chevron"
-              [class.pl-sort__chevron--open]="sortMenuAbierto()"
-              aria-hidden="true"
-            >expand_more</span>
-          </button>
-
-          @if (sortMenuAbierto()) {
-            <div class="pl-sort__menu" role="menu">
-              @for (opt of ordenOptions; track opt.value) {
-                <button
-                  type="button"
-                  class="pl-sort__option"
-                  [class.pl-sort__option--selected]="ordenActual() === opt.value"
-                  role="menuitem"
-                  (click)="setOrden(opt.value)"
-                >
-                  <span class="material-symbols-outlined" aria-hidden="true">{{ opt.icon }}</span>
-                  <span>{{ opt.label }}</span>
-                </button>
-              }
-            </div>
-          }
-        </div>
-      </div>
+      <ui2-segmented
+        class="pl-filterbar__filters"
+        [options]="filtroOptions()"
+        [value]="filtroActividad()"
+        (valueChange)="setFiltro($event)"
+      ></ui2-segmented>
     </ui2-section>
 
     <!-- ======================================================== -->

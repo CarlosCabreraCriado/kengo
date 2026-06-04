@@ -104,7 +104,7 @@
 }
 
 /* ========================================================== */
-/*  Búsqueda + toggle de vista                                 */
+/*  Búsqueda + toggle de vista + sort                          */
 /* ========================================================== */
 
 .pl-controls {
@@ -119,23 +119,27 @@
   min-width: 200px;
 }
 
-.pl-controls__view { flex-shrink: 0; }
-
-/* ========================================================== */
-/*  Filterbar (filtros + sort)                                 */
-/* ========================================================== */
-
-.pl-filterbar {
+.pl-controls__trailing {
   display: flex;
   gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-.pl-filterbar__filters {
-  flex: 1;
-  min-width: 240px;
+@media (max-width: 767px) {
+  .pl-controls__trailing {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
 }
+
+.pl-controls__view { flex-shrink: 0; }
+
+/* ========================================================== */
+/*  Filtro de actividad                                        */
+/* ========================================================== */
+
+.pl-filterbar__filters { display: block; }
 
 .pl-sort {
   position: relative;
