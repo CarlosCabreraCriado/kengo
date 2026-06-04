@@ -3,6 +3,7 @@ import { DialogRef } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../core/utils/asset-url';
 
 import { SessionService } from '../../../core/auth/services/session.service';
+import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { LoggerService } from '../../../core/services/logger.service';
 import { Usuario } from '../../../../types/global';
@@ -49,6 +50,11 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
           <div class="loading-state">
             <div class="spinner"></div>
             <span>Cargando pacientes...</span>
+          </div>
+        } @else if (idsClinicas().length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">apartment</span>
+            <p>Necesitas seleccionar una clínica activa para ver pacientes</p>
           </div>
         } @else if (pacientesFiltrados().length === 0) {
           <div class="empty-state">
@@ -431,6 +437,7 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
 export class SelectorPacienteComponent implements OnInit {
   private dialogRef = inject(DialogRef<Usuario>);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private convex = inject(ConvexService);
   private logger = inject(LoggerService);
 
@@ -441,8 +448,9 @@ export class SelectorPacienteComponent implements OnInit {
   selectedId = signal<string | null>(null);
   selectedPaciente = signal<Usuario | null>(null);
 
-  private idsClinicas = computed(() => {
-    return this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) || [];
+  idsClinicas = computed<string[]>(() => {
+    const activeId = this.clinicaActiva.selectedClinicaId();
+    return activeId ? [activeId] : [];
   });
 
   pacientesFiltrados = computed(() => {
@@ -466,7 +474,6 @@ export class SelectorPacienteComponent implements OnInit {
 
     this.isLoading.set(true);
     try {
-      // El backend deduplica y devuelve los pacientes de TODAS las clínicas.
       const result = await this.convex.query(
         api.users.queries.listPatientsByClinic,
         { clinicIds: cids as Id<'clinics'>[], limit: 500 },

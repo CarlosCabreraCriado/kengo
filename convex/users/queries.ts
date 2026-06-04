@@ -6,7 +6,10 @@ import {
   esPaciente,
   tieneGestion,
 } from "../_helpers/permissions";
-import { assertCanAccessPaciente } from "../_helpers/authorization";
+import {
+  assertCanAccessPaciente,
+  getUserClinicIds,
+} from "../_helpers/authorization";
 
 export const me = query({
   args: {},
@@ -95,12 +98,19 @@ export const listPatientsByClinic = query({
     includeFisiosAsPatient: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const user = await getAuthenticatedUser(ctx);
 
     const resolvedIds =
       args.clinicIds ?? (args.clinicId ? [args.clinicId] : []);
     if (resolvedIds.length === 0) {
       return { results: [], total: 0 };
+    }
+
+    const userClinicIds = new Set(await getUserClinicIds(ctx, user._id));
+    for (const cid of resolvedIds) {
+      if (!userClinicIds.has(cid)) {
+        throw new Error("No tienes acceso a esta clínica");
+      }
     }
 
     const allMemberships = await Promise.all(
@@ -172,11 +182,18 @@ export const listFisiosByClinic = query({
     clinicIds: v.optional(v.array(v.id("clinics"))),
   },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const user = await getAuthenticatedUser(ctx);
 
     const resolvedIds =
       args.clinicIds ?? (args.clinicId ? [args.clinicId] : []);
     if (resolvedIds.length === 0) return [];
+
+    const userClinicIds = new Set(await getUserClinicIds(ctx, user._id));
+    for (const cid of resolvedIds) {
+      if (!userClinicIds.has(cid)) {
+        throw new Error("No tienes acceso a esta clínica");
+      }
+    }
 
     const allMemberships = await Promise.all(
       resolvedIds.map((cid) =>
