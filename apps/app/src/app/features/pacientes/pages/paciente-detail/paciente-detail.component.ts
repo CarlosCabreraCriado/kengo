@@ -849,7 +849,7 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     this.dialogService
       .open(AddPacienteDialogComponent, {
         maxWidth: '520px',
-        data: { clinicIds: this.idsClinicas(), usuario: p },
+        data: { usuario: p },
       })
       .closed.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((r: unknown) => {

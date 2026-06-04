@@ -1,7 +1,7 @@
 <ui2-dialog-host>
   <ui2-dialog-header
     [title]="resultado() ? 'Paciente añadido' : (isEdit() ? 'Editar paciente' : 'Nuevo paciente')"
-    [subtitle]="resultado() ? null : (isEdit() ? 'Actualiza los datos y las clínicas asignadas.' : 'Rellena los datos del paciente.')"
+    [subtitle]="resultado() ? null : (isEdit() ? 'Actualiza los datos del paciente.' : 'Rellena los datos del paciente.')"
     (closeClick)="finalizar()"
   ></ui2-dialog-header>
 
@@ -60,6 +60,14 @@
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
       >
+        @if (!isEdit() && clinicaActivaInfo().nombre) {
+          <ui2-card [padding]="14">
+            <p class="add-paciente-form__clinica-info">
+              Vinculando con <strong>{{ clinicaActivaInfo().nombre }}</strong>.
+            </p>
+          </ui2-card>
+        }
+
         <div class="add-paciente-form__row">
           <ui2-input
             label="Nombre"
@@ -91,41 +99,6 @@
           autocomplete="tel"
         ></ui2-input>
 
-        <div class="add-paciente-form__clinicas">
-          <ui2-section-label>
-            Clínicas asignadas
-          </ui2-section-label>
-
-          @if (clinicasRes.isLoading()) {
-            <div class="add-paciente-form__clinicas-loading">
-              <ui2-spinner size="sm"></ui2-spinner>
-              <span>Cargando clínicas...</span>
-            </div>
-          } @else if (clinicasRes.value().length === 0) {
-            <p class="add-paciente-form__empty">
-              No hay clínicas disponibles para asignar.
-            </p>
-          } @else {
-            <div class="add-paciente-form__clinicas-list" role="group" aria-label="Clínicas asignadas">
-              @for (c of clinicasRes.value(); track c.id) {
-                <label class="add-paciente-form__clinica-row">
-                  <ui2-checkbox
-                    [label]="c.nombre ?? 'Clínica ' + c.id"
-                    [ngModel]="isClinicSelected(c.id)"
-                    [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="toggleClinic(c.id, $event)"
-                  ></ui2-checkbox>
-                </label>
-              }
-            </div>
-            @if (selectedCount() === 0) {
-              <p class="add-paciente-form__hint add-paciente-form__hint--danger">
-                Selecciona al menos una clínica.
-              </p>
-            }
-          }
-        </div>
-
         @if (!isEdit()) {
           <p class="add-paciente-form__hint">
             Le enviaremos un email con un enlace directo de acceso y un código alternativo (válidos 30 días).
@@ -150,7 +123,7 @@
       <ui2-button variant="ghost" (clicked)="close()">Cancelar</ui2-button>
       <ui2-button
         variant="primary"
-        [disabled]="form.invalid || selectedCount() === 0"
+        [disabled]="form.invalid"
         [loading]="loading()"
         (clicked)="onSubmit()"
       >

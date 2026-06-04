@@ -1,6 +1,6 @@
 "use node";
 
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { action } from "../_generated/server";
 import { api, internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
@@ -38,6 +38,12 @@ export const createPatient = action({
     telefono: v.optional(v.string()),
     password: v.optional(v.string()),
     clinicId: v.id("clinics"),
+    /**
+     * Cuando el email ya pertenece a un usuario activo en la plataforma, esta
+     * bandera autoriza la vinculación a la clínica sin sobrescribir sus datos
+     * personales. Debe haberse precedido del flujo de confirmación en UI.
+     */
+    confirmReuseExisting: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{
     success: boolean;
@@ -65,6 +71,26 @@ export const createPatient = action({
     await ctx.runQuery(internal.billing.internal.assertActiveSubscription, {
       clinicId: args.clinicId,
     });
+
+    // Validar que el requester sea fisio/admin de la clínica destino antes de
+    // cualquier escritura. Cierra el gap de poder llamar la action con un
+    // clinicId arbitrario.
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { success: false, error: "No autenticado", code: "NO_AUTENTICADO" };
+    }
+    try {
+      await ctx.runQuery(internal.users.internal.assertCanCreatePatientInClinic, {
+        externalId: identity.subject,
+        clinicId: args.clinicId,
+      });
+    } catch {
+      return {
+        success: false,
+        error: "No tienes acceso a esta clínica",
+        code: "SIN_ACCESO_CLINICA",
+      };
+    }
 
     // Comprobar si existe en Better-Auth ya
     const exists = await ctx.runQuery(internal.auth.queries.emailExists, { email });
@@ -94,27 +120,54 @@ export const createPatient = action({
       }
     }
 
-    // Upsert usuario + membresía
-    const { userId, created } = await ctx.runMutation(
-      internal.users.mutations.upsertPatientWithMembership,
-      {
-        email,
-        firstName,
-        lastName,
-        telefono: args.telefono,
-        clinicId: args.clinicId,
-      },
-    );
+    // Upsert usuario + membresía. La mutation puede lanzar ConvexError con
+    // códigos estructurados que aquí mapeamos a respuestas user-friendly:
+    //   - DUPLICADO_EN_CLINICA  → el paciente ya existe en esta clínica.
+    //   - STAFF_EN_CLINICA      → el email pertenece a un profesional.
+    //   - REQUIRES_CONFIRMATION → existe activo, requiere confirmar reuse.
+    let userId: string;
+    let created: boolean;
+    try {
+      const result = await ctx.runMutation(
+        internal.users.mutations.upsertPatientWithMembership,
+        {
+          email,
+          firstName,
+          lastName,
+          telefono: args.telefono,
+          clinicId: args.clinicId,
+          confirmReuseExisting: args.confirmReuseExisting === true,
+        },
+      );
+      userId = result.userId as unknown as string;
+      created = result.created;
+    } catch (err) {
+      if (err instanceof ConvexError) {
+        const data = err.data as { code?: string; message?: string } | undefined;
+        const code = data?.code;
+        if (
+          code === "DUPLICADO_EN_CLINICA" ||
+          code === "STAFF_EN_CLINICA" ||
+          code === "REQUIRES_CONFIRMATION"
+        ) {
+          return {
+            success: false,
+            error: data?.message ?? "No se pudo vincular el paciente.",
+            code,
+          };
+        }
+      }
+      throw err;
+    }
+    void created;
 
-    // Resolver el fisio creador (autenticado) — necesario tanto para
-    // autoasignación como para attribuir el access token.
-    const identity = await ctx.auth.getUserIdentity();
-    const requester = identity
-      ? await ctx.runQuery(
-          internal.users.internal.getRequesterByExternalId,
-          { externalId: identity.subject },
-        )
-      : null;
+    // Resolver el fisio creador (autenticado) — reutilizamos la identity ya
+    // validada arriba. Necesario para autoasignación y atribución del access
+    // token.
+    const requester = await ctx.runQuery(
+      internal.users.internal.getRequesterByExternalId,
+      { externalId: identity.subject },
+    );
 
     // Auto-asignar al fisio creador como responsable del paciente en la
     // clínica primaria. La asignación es idempotente; si falla por cualquier

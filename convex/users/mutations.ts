@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, internalMutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import {
@@ -6,6 +6,7 @@ import {
   getAuthenticatedUser,
   requireActiveSubscription,
   requireAnyActiveSubscriptionForUser,
+  tieneGestion,
 } from "../_helpers/permissions";
 
 function buildSearchableText(
@@ -129,9 +130,20 @@ export const updateAvatar = mutation({
  * NO crea la cuenta Better-Auth ni envía email — eso es responsabilidad de la
  * action `createPatient` que orquesta todo.
  *
- * Si ya existe un usuario con el email, se reutiliza y solo se asegura la
- * membresía. Devuelve el `userId` Convex y un flag `created` indicando si fue
- * inserción nueva.
+ * Reglas de preservación de datos (evita que un fisio sobrescriba a otros
+ * usuarios de la plataforma):
+ *  - Email no existe → inserta nuevo usuario con los datos del form.
+ *  - Existe pero pending (`externalId="pending-…"`) → patchea datos del form
+ *    (la "creación" inicial nunca fue confirmada por el propio usuario).
+ *  - Existe activo, ya es paciente en clinicId → `DUPLICADO_EN_CLINICA`.
+ *  - Existe activo, es fisio/admin en clinicId → `STAFF_EN_CLINICA`.
+ *  - Existe activo, sin membership en clinicId y sin `confirmReuseExisting` →
+ *    `REQUIRES_CONFIRMATION` (la action debe relanzar pidiendo confirmación).
+ *  - Existe activo + `confirmReuseExisting=true` → NO toca firstName/lastName/
+ *    telefono; solo añade la membresía como paciente.
+ *
+ * Devuelve `{ userId, created }`. `created` es true solo cuando se inserta
+ * un documento `users` nuevo.
  */
 export const upsertPatientWithMembership = internalMutation({
   args: {
@@ -140,6 +152,7 @@ export const upsertPatientWithMembership = internalMutation({
     lastName: v.string(),
     telefono: v.optional(v.string()),
     clinicId: v.id("clinics"),
+    confirmReuseExisting: v.boolean(),
   },
   handler: async (ctx, args) => {
     const email = args.email.toLowerCase().trim();
@@ -148,14 +161,13 @@ export const upsertPatientWithMembership = internalMutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .unique();
 
-    const searchableText = buildSearchableText(
-      args.firstName,
-      args.lastName,
-      email,
-    );
-
     let created = false;
     if (!user) {
+      const searchableText = buildSearchableText(
+        args.firstName,
+        args.lastName,
+        email,
+      );
       const userId = await ctx.db.insert("users", {
         externalId: `pending-${email}`,
         email,
@@ -168,18 +180,62 @@ export const upsertPatientWithMembership = internalMutation({
       user = await ctx.db.get(userId);
       created = true;
     } else {
-      // Actualizar datos básicos por si cambiaron
-      await ctx.db.patch(user._id, {
-        firstName: args.firstName,
-        lastName: args.lastName,
-        ...(args.telefono !== undefined && { telefono: args.telefono }),
-        searchableText,
-      });
+      const isPending = user.externalId.startsWith("pending-");
+      if (isPending) {
+        // El usuario fue creado por otro fisio pero nunca activó la cuenta:
+        // permitimos sobrescribir los datos con los del form actual.
+        const searchableText = buildSearchableText(
+          args.firstName,
+          args.lastName,
+          email,
+        );
+        await ctx.db.patch(user._id, {
+          firstName: args.firstName,
+          lastName: args.lastName,
+          ...(args.telefono !== undefined && { telefono: args.telefono }),
+          searchableText,
+        });
+      } else {
+        // Usuario activo: comprobar membership en la clínica destino antes
+        // de exigir confirmación, para que los códigos de error sean precisos.
+        const existing = await ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_userId_clinicId", (q) =>
+            q.eq("userId", user!._id).eq("clinicId", args.clinicId),
+          )
+          .unique();
+
+        if (existing?.puesto === "paciente") {
+          throw new ConvexError({
+            code: "DUPLICADO_EN_CLINICA",
+            message: "Este paciente ya está registrado en tu clínica.",
+          });
+        }
+        if (existing && tieneGestion(existing.puesto)) {
+          throw new ConvexError({
+            code: "STAFF_EN_CLINICA",
+            message:
+              "Este email pertenece a un profesional de esta clínica.",
+          });
+        }
+
+        if (!args.confirmReuseExisting) {
+          throw new ConvexError({
+            code: "REQUIRES_CONFIRMATION",
+            message:
+              "Este email ya está registrado en la plataforma. Confirma la vinculación.",
+          });
+        }
+
+        // Confirmado: vinculamos sin tocar nombre/apellidos/teléfono globales.
+      }
     }
 
     if (!user) throw new Error("Error creando usuario");
 
-    // Garantizar membresía como paciente (puesto=2)
+    // Garantizar membresía como paciente (idempotente para los casos pending
+    // y nuevo; para "activo confirmado" se ejecuta aquí porque ya sabemos que
+    // no había membresía conflictiva).
     const existingMembership = await ctx.db
       .query("clinicMemberships")
       .withIndex("by_userId_clinicId", (q) =>

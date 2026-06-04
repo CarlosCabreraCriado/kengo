@@ -7,9 +7,12 @@ import {
   tieneGestion,
 } from "../_helpers/permissions";
 import {
+  assertCanAccessClinic,
   assertCanAccessPaciente,
   getUserClinicIds,
 } from "../_helpers/authorization";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const me = query({
   args: {},
@@ -61,6 +64,76 @@ export const me = query({
       esFisio: hasFisioAccess,
       esPaciente: hasPacienteAccess || !hasFisioAccess,
       detalle,
+    };
+  },
+});
+
+/**
+ * Pre-check para el flujo "Nuevo paciente" antes de invocar la action de
+ * creación. Permite al frontend mostrar confirmación o bloquear según el
+ * estado del email tecleado. La verificación definitiva se repite en
+ * `upsertPatientWithMembership` — esto es solo UX.
+ *
+ * Estados devueltos:
+ *   - `new`                — el email no existe en la plataforma.
+ *   - `invalid_email`      — formato inválido (cliente debería validar también).
+ *   - `existing_pending`   — existe pero nunca activó la cuenta
+ *                            (externalId="pending-…"). Se trata como nuevo.
+ *   - `existing_active`    — existe y está activo en la plataforma. Requiere
+ *                            confirmación; sus datos personales NO se modifican.
+ *   - `duplicate_in_clinic`— ya es paciente en la clínica activa.
+ *   - `staff_in_clinic`    — es fisio/admin de la clínica activa.
+ *
+ * Seguridad: el requester debe ser fisio/admin de `clinicId`.
+ */
+export const precheckPatientEmail = query({
+  args: { email: v.string(), clinicId: v.id("clinics") },
+  handler: async (ctx, args) => {
+    const requester = await getAuthenticatedUser(ctx);
+    await assertCanAccessClinic(ctx, requester._id, args.clinicId, [
+      "fisio",
+      "admin",
+    ]);
+
+    const email = args.email.toLowerCase().trim();
+    if (!EMAIL_REGEX.test(email)) {
+      return { status: "invalid_email" as const };
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .unique();
+
+    if (!user) return { status: "new" as const };
+
+    const isPending = user.externalId.startsWith("pending-");
+    if (isPending) {
+      return {
+        status: "existing_pending" as const,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      };
+    }
+
+    const membership = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", user._id).eq("clinicId", args.clinicId),
+      )
+      .unique();
+
+    if (membership?.puesto === "paciente") {
+      return { status: "duplicate_in_clinic" as const };
+    }
+    if (membership && tieneGestion(membership.puesto)) {
+      return { status: "staff_in_clinic" as const };
+    }
+
+    return {
+      status: "existing_active" as const,
+      firstName: user.firstName,
+      lastName: user.lastName,
     };
   },
 });

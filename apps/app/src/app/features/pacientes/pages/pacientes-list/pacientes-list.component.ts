@@ -315,7 +315,7 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   openAddPaciente() {
     const dialogRef = this.dialogService.open(AddPacienteDialogComponent, {
       maxWidth: '520px',
-      data: { idsClinicas: this.idsClinicas() },
+      data: {},
     });
 
     dialogRef.closed
@@ -335,7 +335,7 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   openEditarPaciente(p: Usuario) {
     const dialogRef = this.dialogService.open(AddPacienteDialogComponent, {
       maxWidth: '520px',
-      data: { idsClinicas: this.idsClinicas(), usuario: p },
+      data: { usuario: p },
     });
 
     dialogRef.closed
