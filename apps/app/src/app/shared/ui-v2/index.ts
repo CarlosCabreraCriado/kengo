@@ -108,4 +108,6 @@ export type { SidebarNavGroup, SidebarNavItem } from './patient-sidebar/patient-
 export { Ui2WebTopbarComponent } from './web-topbar/web-topbar.component';
 export { Ui2NotificacionesMenuComponent } from './notificaciones-menu/notificaciones-menu.component';
 export { Ui2ClinicaSwitchMenuComponent } from './clinica-switch-menu/clinica-switch-menu.component';
+export { Ui2ClinicaSwitchTriggerComponent } from './clinica-switch-trigger/clinica-switch-trigger.component';
+export type { Ui2ClinicaSwitchTriggerPlacement } from './clinica-switch-trigger/clinica-switch-trigger.component';
 export { Ui2ModoPacienteWarningComponent } from './modo-paciente-warning/modo-paciente-warning.component';

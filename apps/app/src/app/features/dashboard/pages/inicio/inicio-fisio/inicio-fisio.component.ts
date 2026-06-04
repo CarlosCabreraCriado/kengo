@@ -10,7 +10,9 @@ import { PlanBuilderService } from '../../../../planes/data-access/plan-builder.
 import { CarritoPointers } from '../../../../planes/data-access/internal/carrito-pointers';
 import { RutinaBuilderService } from '../../../../rutinas/data-access/rutina-builder.service';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
-import type { NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
+import { ThemeService } from '../../../../../core/services/theme.service';
+import { ToastService } from '../../../../../shared/services/toast/toast.service';
+import type { Clinica, NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
 import { rawAssetUrl, assetUrl } from '../../../../../core/utils/asset-url';
 import {
   daysBetweenYMD,
@@ -20,6 +22,7 @@ import {
 } from '../../../../../shared/utils/madrid-date.util';
 import {
   Ui2CardComponent,
+  Ui2ClinicaSwitchTriggerComponent,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2EmptyStateComponent,
@@ -36,6 +39,7 @@ import {
   standalone: true,
   imports: [
     Ui2CardComponent,
+    Ui2ClinicaSwitchTriggerComponent,
     Ui2ClinicHeroCardComponent,
     Ui2CtaBarComponent,
     Ui2EmptyStateComponent,
@@ -59,6 +63,8 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
   private rutinaBuilderService = inject(RutinaBuilderService);
   private pageLoader = inject(PageLoaderService);
   private destroyRef = inject(DestroyRef);
+  private themeService = inject(ThemeService);
+  private toast = inject(ToastService);
   private readonly PAGE_LOADER_KEY = 'inicio-fisio';
 
   dashboardService = inject(DashboardFisioService);
@@ -285,6 +291,21 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
 
   irAClinica(): void {
     this.router.navigate(['/mi-clinica']);
+  }
+
+  onClinicaCambiada(clinica: Clinica): void {
+    this.themeService.aplicarTemaClinica(clinica);
+    const puesto = this.sessionService
+      .misclinicas()
+      .find((c) => c.clinicId === clinica.id)?.puesto;
+    const etiquetaPuesto =
+      puesto === 'admin'
+        ? 'Administrador'
+        : puesto === 'fisio'
+          ? 'Fisioterapeuta'
+          : 'Paciente';
+    this.toast.success(`Estás en ${clinica.nombre} (${etiquetaPuesto})`);
+    this.router.navigateByUrl('/inicio');
   }
 
   /** CTA primary del hero — varía según el estado: alertas urgentes, planes, etc. */

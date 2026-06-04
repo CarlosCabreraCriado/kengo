@@ -14,6 +14,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../../../core/auth/services/clinica-activa.service';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
+import { ThemeService } from '../../../../../core/services/theme.service';
+import { ToastService } from '../../../../../shared/services/toast/toast.service';
 import {
   ActividadHoyService,
   EjercicioUnificadoHoy,
@@ -36,6 +38,7 @@ import {
   Ui2AvatarComponent,
   Ui2ButtonComponent,
   Ui2CardComponent,
+  Ui2ClinicaSwitchTriggerComponent,
   Ui2ClinicHeroCardComponent,
   Ui2CtaBarComponent,
   Ui2ExerciseCardComponent,
@@ -73,6 +76,7 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
     Ui2AvatarComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
+    Ui2ClinicaSwitchTriggerComponent,
     Ui2ClinicHeroCardComponent,
     Ui2CtaBarComponent,
     Ui2ExerciseCardComponent,
@@ -97,6 +101,8 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
   private registroService = inject(SesionStateService);
   private destroyRef = inject(DestroyRef);
   private pageLoader = inject(PageLoaderService);
+  private themeService = inject(ThemeService);
+  private toast = inject(ToastService);
   private readonly PAGE_LOADER_KEY = 'inicio-paciente';
 
   actividadHoyService = inject(ActividadHoyService);
@@ -334,6 +340,21 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
 
   irAClinica(): void {
     this.router.navigate(['/mi-clinica']);
+  }
+
+  onClinicaCambiada(clinica: Clinica): void {
+    this.themeService.aplicarTemaClinica(clinica);
+    const puesto = this.sessionService
+      .misclinicas()
+      .find((c) => c.clinicId === clinica.id)?.puesto;
+    const etiquetaPuesto =
+      puesto === 'admin'
+        ? 'Administrador'
+        : puesto === 'fisio'
+          ? 'Fisioterapeuta'
+          : 'Paciente';
+    this.toast.success(`Estás en ${clinica.nombre} (${etiquetaPuesto})`);
+    this.router.navigateByUrl('/inicio');
   }
 
   async enviarMensajeAFisio(): Promise<void> {

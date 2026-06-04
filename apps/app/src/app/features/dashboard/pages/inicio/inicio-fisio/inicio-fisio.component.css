@@ -3,6 +3,10 @@
   width: 100%;
 }
 
+.if-clinica-card-wrap {
+  position: relative;
+}
+
 .if-page {
   display: flex;
   flex-direction: column;

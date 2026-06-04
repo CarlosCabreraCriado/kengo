@@ -3,6 +3,10 @@
   width: 100%;
 }
 
+.ip-clinica-card-wrap {
+  position: relative;
+}
+
 .ip-page {
   display: flex;
   flex-direction: column;

@@ -214,13 +214,19 @@
       <!-- Clínica -->
       @if (clinicaActual(); as clinica) {
         <ui2-section [padding]="'0 20px 14px'" class="if-clinica-section">
-          <ui2-clinic-hero-card
-            [name]="clinica.nombre"
-            [imageUrl]="clinicaImagenUrl()"
-            [address]="clinica.direccion ?? null"
-            [phone]="clinica.telefono ?? null"
-            (cardClick)="irAClinica()"
-          ></ui2-clinic-hero-card>
+          <div class="if-clinica-card-wrap">
+            <ui2-clinic-hero-card
+              [name]="clinica.nombre"
+              [imageUrl]="clinicaImagenUrl()"
+              [address]="clinica.direccion ?? null"
+              [phone]="clinica.telefono ?? null"
+              (cardClick)="irAClinica()"
+            ></ui2-clinic-hero-card>
+            <ui2-clinica-switch-trigger
+              placement="top"
+              (clinicaCambiada)="onClinicaCambiada($event)"
+            ></ui2-clinica-switch-trigger>
+          </div>
         </ui2-section>
       }
     </div>
