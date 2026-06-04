@@ -87,7 +87,7 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
     }
   `,
   styles: [`
-    :host { display: inline-flex; }
+    :host { display: inline-flex; max-width: 100%; min-width: 0; }
     .ui2-pill {
       display: inline-flex;
       align-items: center;
@@ -98,6 +98,8 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
       font-weight: 700;
       line-height: 1;
       letter-spacing: 0.1px;
+      max-width: 100%;
+      min-width: 0;
     }
     .ui2-pill--md {
       gap: 6px;
@@ -106,6 +108,7 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
     }
     .ui2-pill--clickable { cursor: pointer; }
     .ui2-pill__icon {
+      flex: 0 0 auto;
       font-size: 12px;
       line-height: 1;
     }

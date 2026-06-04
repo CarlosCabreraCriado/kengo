@@ -76,7 +76,8 @@ export interface PdPacienteMeta {
         font-weight: 600;
         color: var(--ink-900);
         text-align: right;
-        word-break: break-word;
+        min-width: 0;
+        overflow-wrap: anywhere;
       }
       dd a { color: inherit; text-decoration: none; }
       dd a:hover { text-decoration: underline; }

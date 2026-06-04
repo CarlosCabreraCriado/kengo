@@ -127,7 +127,14 @@ export interface PdHeroMeta {
               <ui2-pill variant="neutral" size="sm" icon="person">{{ meta()!.fisio }}</ui2-pill>
             }
             @if (paciente()?.email) {
-              <ui2-pill variant="neutral" size="sm" icon="mail">{{ paciente()!.email }}</ui2-pill>
+              <ui2-pill
+                variant="neutral"
+                size="sm"
+                icon="mail"
+                class="pd-hero__pill--email"
+              >
+                <span class="pd-hero__pill-text">{{ paciente()!.email }}</span>
+              </ui2-pill>
             }
           </div>
         </div>
@@ -307,6 +314,15 @@ export interface PdHeroMeta {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .pd-hero__pill--email { max-width: 100%; }
+      .pd-hero__pill-text {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .pd-hero__actions {
         display: inline-flex;
