@@ -1,11 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  ElementRef,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 let collapsibleCounter = 0;
@@ -47,9 +51,9 @@ let collapsibleCounter = 0;
         class="ui2-coll__body"
         [id]="bodyId"
         [attr.aria-hidden]="!isOpen()"
-        [style.max-height.px]="isOpen() ? maxBody() : 0"
+        [style.max-height.px]="isOpen() ? contentHeight() : 0"
       >
-        <div class="ui2-coll__inner">
+        <div class="ui2-coll__inner" #inner>
           <ng-content></ng-content>
         </div>
       </div>
@@ -121,7 +125,7 @@ let collapsibleCounter = 0;
         background: rgba(0, 0, 0, 0.04);
         border-radius: 9999px;
         padding: 4px;
-        transition: transform 200ms ease;
+        transition: transform 360ms cubic-bezier(0.4, 0, 0.2, 1);
       }
       .ui2-coll__chev--open {
         transform: rotate(180deg);
@@ -129,12 +133,29 @@ let collapsibleCounter = 0;
       .ui2-coll__body {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 280ms ease-out;
+        transition: max-height 380ms cubic-bezier(0.4, 0, 0.2, 1);
       }
       .ui2-coll__inner {
         padding: 0 14px 14px;
         border-top: 1px solid rgba(0, 0, 0, 0.04);
         padding-top: 12px;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition:
+          opacity 240ms cubic-bezier(0.4, 0, 0.2, 1),
+          transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .ui2-coll--open .ui2-coll__inner {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 80ms;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ui2-coll__body,
+        .ui2-coll__inner,
+        .ui2-coll__chev {
+          transition: none;
+        }
       }
     `,
   ],
@@ -150,7 +171,11 @@ export class Ui2CollapsibleComponent {
   readonly bodyId = `ui2-coll-body-${++collapsibleCounter}`;
   private readonly _open = signal<boolean>(false);
   readonly isOpen = computed(() => this._open());
-  readonly maxBody = signal<number>(2000);
+  readonly contentHeight = signal<number>(0);
+
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly innerRef = viewChild<ElementRef<HTMLDivElement>>('inner');
+  private resizeObserver?: ResizeObserver;
 
   constructor() {
     effect(
@@ -159,6 +184,22 @@ export class Ui2CollapsibleComponent {
       },
       { allowSignalWrites: true },
     );
+
+    effect(() => {
+      const el = this.innerRef()?.nativeElement;
+      if (!el || typeof ResizeObserver === 'undefined') return;
+
+      this.resizeObserver?.disconnect();
+      this.resizeObserver = new ResizeObserver(() => {
+        this.contentHeight.set(el.scrollHeight);
+      });
+      this.resizeObserver.observe(el);
+      this.contentHeight.set(el.scrollHeight);
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.resizeObserver?.disconnect();
+    });
   }
 
   toggle(): void {
