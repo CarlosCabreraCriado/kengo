@@ -5,7 +5,9 @@
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 12px 20px 140px;
+  /* padding-bottom reserva: tab-bar (70px) + offset inferior + 8px de gap +
+     alto del botón (~56px) + 36px de respiración entre último item y CTA. */
+  padding: 12px 20px calc(170px + max(16px, env(safe-area-inset-bottom, 0px)));
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -516,19 +518,28 @@
 }
 .pb-add-cta .material-symbols-outlined { font-size: 18px; }
 
-/* ===== Sticky CTA ===== */
+/* ===== Fixed CTA ===== */
+/* Se posiciona en el viewport, justo encima de <ui2-patient-tab-bar>
+   (70px de alto + offset inferior + 8px de respiración). El padding-bottom
+   de .pb-page reserva espacio en el flujo para que el último item del
+   formulario no quede oculto bajo el botón. */
 .pb-cta-bar {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: 0;
-  padding: 8px 0 calc(env(safe-area-inset-bottom, 0px));
-  z-index: 5;
+  position: fixed;
+  bottom: calc(70px + max(16px, env(safe-area-inset-bottom, 0px)) + 8px);
+  left: 16px;
+  right: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  z-index: var(--z-sticky);
   animation: pb-cta-enter 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 @media (min-width: 1024px) {
   .pb-cta-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: none;
     margin: 0 -32px;
     padding: 16px 32px calc(24px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, 0.85);
