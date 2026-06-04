@@ -44,14 +44,16 @@ export interface PdHeroMeta {
         <div class="pd-hero__nav">
           <ui2-back-button (clicked)="volver.emit()" ariaLabel="Volver a pacientes" />
           <div class="pd-hero__nav-actions">
-            <button
-              type="button"
-              class="pd-hero__nav-action"
-              aria-label="Gestionar acceso"
-              (click)="gestionarAcceso.emit()"
-            >
-              <span class="material-symbols-outlined" aria-hidden="true">key</span>
-            </button>
+            @if (!esPerfilPropio()) {
+              <button
+                type="button"
+                class="pd-hero__nav-action"
+                aria-label="Gestionar acceso"
+                (click)="gestionarAcceso.emit()"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">key</span>
+              </button>
+            }
             <button
               type="button"
               class="pd-hero__nav-action"
@@ -141,27 +143,38 @@ export interface PdHeroMeta {
 
         @if (!isMobile()) {
           <div class="pd-hero__actions">
-            <ui2-button
-              variant="secondary"
-              size="md"
-              iconLeft="chat"
-              [loading]="enviandoMensaje()"
-              (clicked)="enviarMensaje.emit()"
-            >Mensaje</ui2-button>
+            @if (esPerfilPropio()) {
+              <ui2-button
+                variant="secondary"
+                size="md"
+                iconLeft="swap_horiz"
+                (clicked)="activarModoPaciente.emit()"
+              >Activar modo paciente</ui2-button>
+            } @else {
+              <ui2-button
+                variant="secondary"
+                size="md"
+                iconLeft="chat"
+                [loading]="enviandoMensaje()"
+                (clicked)="enviarMensaje.emit()"
+              >Mensaje</ui2-button>
+            }
             <ui2-button
               variant="primary"
               size="md"
               iconLeft="add"
               (clicked)="crearPlan.emit()"
             >Nuevo plan</ui2-button>
-            <button
-              type="button"
-              class="pd-hero__more"
-              aria-label="Gestionar acceso"
-              (click)="gestionarAcceso.emit()"
-            >
-              <span class="material-symbols-outlined" aria-hidden="true">key</span>
-            </button>
+            @if (!esPerfilPropio()) {
+              <button
+                type="button"
+                class="pd-hero__more"
+                aria-label="Gestionar acceso"
+                (click)="gestionarAcceso.emit()"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">key</span>
+              </button>
+            }
             <button
               type="button"
               class="pd-hero__more"
@@ -210,14 +223,24 @@ export interface PdHeroMeta {
             [fullWidth]="true"
             (clicked)="crearPlan.emit()"
           >Nuevo plan</ui2-button>
-          <ui2-button
-            variant="secondary"
-            size="md"
-            iconLeft="chat"
-            [fullWidth]="true"
-            [loading]="enviandoMensaje()"
-            (clicked)="enviarMensaje.emit()"
-          >Mensaje</ui2-button>
+          @if (esPerfilPropio()) {
+            <ui2-button
+              variant="secondary"
+              size="md"
+              iconLeft="swap_horiz"
+              [fullWidth]="true"
+              (clicked)="activarModoPaciente.emit()"
+            >Activar modo paciente</ui2-button>
+          } @else {
+            <ui2-button
+              variant="secondary"
+              size="md"
+              iconLeft="chat"
+              [fullWidth]="true"
+              [loading]="enviandoMensaje()"
+              (clicked)="enviarMensaje.emit()"
+            >Mensaje</ui2-button>
+          }
         </div>
       }
     </header>
@@ -394,12 +417,14 @@ export class PdHeroComponent {
   readonly enviandoMensaje = input<boolean>(false);
   readonly isMobile = input<boolean>(false);
   readonly puedeEliminar = input<boolean>(false);
+  readonly esPerfilPropio = input<boolean>(false);
 
   readonly editarPaciente = output<void>();
   readonly gestionarAcceso = output<void>();
   readonly eliminarPaciente = output<void>();
   readonly crearPlan = output<void>();
   readonly enviarMensaje = output<void>();
+  readonly activarModoPaciente = output<void>();
   readonly volver = output<void>();
 
   readonly menuOpen = signal(false);

@@ -133,7 +133,9 @@ interface DialogClosedResult {
             [enviandoMensaje]="enviandoMensaje()"
             [isMobile]="isMovil()"
             [puedeEliminar]="puedeEliminarPaciente()"
+            [esPerfilPropio]="esPerfilPropio()"
             (enviarMensaje)="onEnviarMensaje()"
+            (activarModoPaciente)="onActivarModoPaciente()"
             (crearPlan)="crearPlan()"
             (editarPaciente)="editarPaciente()"
             (gestionarAcceso)="gestionarAcceso()"
@@ -471,8 +473,17 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
    * se aplica al pulsar — la visibilidad es uniforme para no dar pistas
    * indebidas al fisio sobre su propio rol.
    */
+  readonly esPerfilPropio = computed(
+    () =>
+      this.paciente() !== null &&
+      this.paciente()!.id === this.sessionService.usuario()?.id,
+  );
+
   readonly puedeEliminarPaciente = computed(
-    () => this.sessionService.enModoFisio() && this.paciente() !== null,
+    () =>
+      this.sessionService.enModoFisio() &&
+      this.paciente() !== null &&
+      !this.esPerfilPropio(),
   );
 
   readonly esAdminClinicaActiva = computed(() => {
@@ -876,6 +887,13 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     if (!p) return;
     this.planBuilderService.prepareForPaciente(p);
     this.planBuilderService.navigateAndOpenDrawer();
+  }
+
+  onActivarModoPaciente(): void {
+    if (!this.esPerfilPropio()) return;
+    if (!this.sessionService.puedeAlternarModo()) return;
+    this.sessionService.setRolUsuario('paciente');
+    this.router.navigateByUrl('/inicio');
   }
 
   async onEnviarMensaje(): Promise<void> {
