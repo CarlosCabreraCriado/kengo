@@ -64,8 +64,156 @@ function makeIconFilePatterns() {
   ];
 }
 
+// Ligaduras con interpolacion Angular:  <span class="material-symbols-outlined">{{ a ? 'icon_a' : 'icon_b' }}</span>
+// Captura el cuerpo del {{ ... }} para luego extraer cada literal snake_case con INNER_ICON_LITERAL.
+function makeLigatureInterpPatterns() {
+  return [
+    new RegExp(`class\\s*=\\s*"[^"]*material-symbols-outlined[^"]*"[^>]*>\\s*\\{\\{([^}]+)\\}\\}\\s*<`, 'g'),
+    new RegExp(`class\\s*=\\s*'[^']*material-symbols-outlined[^']*'[^>]*>\\s*\\{\\{([^}]+)\\}\\}\\s*<`, 'g'),
+  ];
+}
+
+const INNER_ICON_LITERAL = new RegExp(`['"](${ICON_NAME})['"]`, 'g');
+
 const STANDARD_PATTERNS = makePatterns();
 const ICON_FILE_PATTERNS = makeIconFilePatterns();
+const LIGATURE_INTERP_PATTERNS = makeLigatureInterpPatterns();
+
+// Firmas que delimitan funciones/computeds que mapean a iconos. Se usan para
+// extraer SOLO el cuerpo balanceado de ese mapper (no el resto del archivo),
+// evitando capturar `return 'X'` o `kind: 'X'` de hermanos no relacionados.
+// - metodo cuyo nombre termina en `Icon` (puestoIcon, directionIcon, ...).
+// - asignacion `icon = computed(...)` / `signal(...)` / `input(...)`.
+const ICON_MAPPER_SIGNATURE = /\b[a-zA-Z_$][\w$]*Icon\s*\(|\bicon\s*=\s*(?:computed|signal|input)\b/g;
+
+// Lee el siguiente bloque balanceado por `{}` o `()` empezando en `fromIndex`,
+// saltando whitespace inicial y parametros genericos `<...>` (p.ej. `computed<string>(...)`).
+// Devuelve el contenido interior (sin los delimitadores) o cadena vacia si no
+// encuentra ninguno. Ignora delimitadores dentro de strings y comentarios para
+// no romper el balanceo con codigo como `if (x === '(') {}`.
+function readBalancedBody(content, fromIndex) {
+  let i = fromIndex;
+  while (i < content.length) {
+    if (/\s/.test(content[i])) { i++; continue; }
+    // Salta parametros de tipo genericos: <T>, <string>, <Map<K, V>>.
+    if (content[i] === '<') {
+      let depth = 1;
+      i++;
+      while (i < content.length && depth > 0) {
+        if (content[i] === '<') depth++;
+        else if (content[i] === '>') depth--;
+        i++;
+      }
+      continue;
+    }
+    break;
+  }
+  if (i >= content.length) return '';
+  const opener = content[i];
+  if (opener !== '{' && opener !== '(') return '';
+  const closer = opener === '{' ? '}' : ')';
+  const start = i;
+  let depth = 0;
+  while (i < content.length) {
+    const ch = content[i];
+    // Strings: '...', "...", `...` (con interpolacion ${...} balanceada).
+    if (ch === "'" || ch === '"' || ch === '`') {
+      const quote = ch;
+      i++;
+      while (i < content.length) {
+        if (content[i] === '\\') { i += 2; continue; }
+        if (content[i] === quote) { i++; break; }
+        if (quote === '`' && content[i] === '$' && content[i + 1] === '{') {
+          i += 2;
+          let d = 1;
+          while (i < content.length && d > 0) {
+            if (content[i] === '{') d++;
+            else if (content[i] === '}') d--;
+            i++;
+          }
+          continue;
+        }
+        i++;
+      }
+      continue;
+    }
+    // Comentario de linea.
+    if (ch === '/' && content[i + 1] === '/') {
+      const nl = content.indexOf('\n', i);
+      if (nl < 0) return '';
+      i = nl + 1;
+      continue;
+    }
+    // Comentario de bloque.
+    if (ch === '/' && content[i + 1] === '*') {
+      const end = content.indexOf('*/', i + 2);
+      if (end < 0) return '';
+      i = end + 2;
+      continue;
+    }
+    if (ch === opener) depth++;
+    else if (ch === closer) {
+      depth--;
+      if (depth === 0) return content.slice(start + 1, i);
+    }
+    i++;
+  }
+  return '';
+}
+
+// Devuelve concatenacion de los cuerpos de todos los mappers de iconos encontrados.
+// Para `puestoIcon(p: string): string {...}`, balancea el `(` de params, luego
+// salta la anotacion de retorno hasta encontrar el `{` del cuerpo y lo balancea.
+// Para `icon = computed(() => {...})`, balancea el `(...)` de computed (contiene la arrow).
+function extractIconMapperRegions(content) {
+  const regions = [];
+  ICON_MAPPER_SIGNATURE.lastIndex = 0;
+  let m;
+  while ((m = ICON_MAPPER_SIGNATURE.exec(content)) !== null) {
+    const matched = m[0];
+    let cursor = m.index + matched.length;
+
+    if (matched.endsWith('(')) {
+      // Caso metodo: cursor esta justo despues del '(' de params. Retrocede al '('.
+      cursor -= 1;
+      const params = readBalancedBody(content, cursor);
+      // Avanza mas alla del ')' que cierra los params.
+      let after = cursor;
+      let depth = 0;
+      for (; after < content.length; after++) {
+        const ch = content[after];
+        if (ch === '(') depth++;
+        else if (ch === ')') {
+          depth--;
+          if (depth === 0) { after++; break; }
+        }
+      }
+      // Salta la anotacion de retorno (`: string`, `: 'a' | 'b'`, etc.) hasta el '{'.
+      // Maximo 300 chars: si en ese rango aparece ';' o '=' antes que '{' descartamos
+      // (es una declaracion sin cuerpo o una asignacion, no un metodo con body).
+      const limit = Math.min(after + 300, content.length);
+      while (after < limit) {
+        const ch = content[after];
+        if (ch === '{') break;
+        if (ch === ';' || ch === '=') { after = -1; break; }
+        after++;
+      }
+      if (after >= 0 && after < limit && content[after] === '{') {
+        const body = readBalancedBody(content, after);
+        if (body) regions.push(body);
+      } else if (params) {
+        // Fallback: si no encontramos cuerpo, al menos conservamos los params
+        // (poco util en la practica, pero evita perder informacion).
+        regions.push(params);
+      }
+    } else {
+      // Caso `icon = computed/signal/input`: el siguiente token es '('.
+      const body = readBalancedBody(content, cursor);
+      if (body) regions.push(body);
+    }
+  }
+  return regions.join('\n');
+}
 
 function walk(dir, files = []) {
   for (const entry of readdirSync(dir)) {
@@ -110,11 +258,52 @@ function extractIconsFromFile(path) {
     }
   }
 
+  for (const re of LIGATURE_INTERP_PATTERNS) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(content)) !== null) {
+      const inner = m[1];
+      // Si hay un operador ternario (no `?.` ni `??`), solo escaneamos despues del
+      // primer `?` para ignorar literales de la condicion (p.ej. `x === 'privado' ?
+      // 'icon_a' : 'icon_b'` -> NO captura 'privado'). Si no hay ternario, el cuerpo
+      // entero ES la expresion del icono (p.ej. `{{ 'icon_x' }}` o `{{ x ?? 'icon' }}`).
+      let qIdx = -1;
+      for (let k = 0; k < inner.length; k++) {
+        if (inner[k] === '?' && inner[k + 1] !== '.' && inner[k + 1] !== '?') {
+          qIdx = k;
+          break;
+        }
+      }
+      const scanned = qIdx >= 0 ? inner.slice(qIdx) : inner;
+      INNER_ICON_LITERAL.lastIndex = 0;
+      let lit;
+      while ((lit = INNER_ICON_LITERAL.exec(scanned)) !== null) {
+        found.add(lit[1]);
+      }
+    }
+  }
+
   if (isIconRelatedFile(path)) {
     for (const re of ICON_FILE_PATTERNS) {
       re.lastIndex = 0;
       let m;
       while ((m = re.exec(content)) !== null) {
+        found.add(m[1]);
+      }
+    }
+  }
+
+  // Aunque el archivo no este marcado como "icon-related" por su nombre, escanea
+  // los cuerpos de mappers de iconos (`*Icon(...)`, `icon = computed(...)`) con
+  // los mismos patrones de `return 'X'` / `key: 'X'`. Asi capturamos iconos en
+  // componentes con logica condicional (p.ej. trend.component.ts, seleccionar-clinica.component.ts)
+  // sin contaminar el snapshot con strings devueltos por hermanos no relacionados.
+  const mapperRegions = extractIconMapperRegions(content);
+  if (mapperRegions) {
+    for (const re of ICON_FILE_PATTERNS) {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(mapperRegions)) !== null) {
         found.add(m[1]);
       }
     }
