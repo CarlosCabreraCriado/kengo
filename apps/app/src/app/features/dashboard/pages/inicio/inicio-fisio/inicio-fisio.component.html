@@ -95,8 +95,8 @@
       @if (estadoSituacion() === 'urgente') {
         <ui2-cta-bar
           variant="primary"
-          icon="priority_high"
-          title="REVISAR ALERTAS"
+          icon="group"
+          title="MIS PACIENTES"
           [subtitle]="alertasCount() + ' sin leer · ' + planesCount() + ' planes por vencer'"
           (clicked)="irAPacientes()"
         ></ui2-cta-bar>
