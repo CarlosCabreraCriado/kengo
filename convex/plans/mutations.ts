@@ -9,7 +9,7 @@ import {
 } from "../_helpers/permissions";
 import {
   assertCanAccessClinic,
-  getPlanIfOwned,
+  assertCanManagePlan,
 } from "../_helpers/authorization";
 import { membershipEsPaciente } from "../_helpers/patientAccess";
 import { diaSemana } from "../_helpers/validators";
@@ -174,9 +174,8 @@ export const updateEstado = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
-    const plan = await ctx.db.get(args.planId);
-    if (!plan) throw new Error("Plan no encontrado");
+    const user = await getAuthenticatedUser(ctx);
+    const plan = await assertCanManagePlan(ctx, user._id, args.planId);
     if (plan.estado === "modificado") {
       throw new Error(
         "Este plan es una versión histórica y no se puede modificar.",
@@ -231,8 +230,8 @@ export const update = mutation({
     ejercicios: v.optional(v.array(ejercicioPlanArgs)),
   },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
-    const plan = await getPlanIfOwned(ctx, args.planId);
+    const user = await getAuthenticatedUser(ctx);
+    const plan = await assertCanManagePlan(ctx, user._id, args.planId);
     if (plan.estado === "modificado") {
       throw new Error(
         "Este plan es una versión histórica y no se puede editar.",
@@ -286,7 +285,8 @@ export const update = mutation({
 export const remove = mutation({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
-    const plan = await getPlanIfOwned(ctx, args.planId);
+    const user = await getAuthenticatedUser(ctx);
+    const plan = await assertCanManagePlan(ctx, user._id, args.planId);
     if (plan.estado === "modificado") {
       throw new Error(
         "Este plan es una versión histórica y no se puede eliminar.",
@@ -335,7 +335,7 @@ export const version = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const oldPlan = await getPlanIfOwned(ctx, args.oldPlanId, user._id);
+    const oldPlan = await assertCanManagePlan(ctx, user._id, args.oldPlanId);
     await requireActiveSubscription(ctx, oldPlan.clinicId);
 
     const today = new Date().toISOString().split("T")[0]!;

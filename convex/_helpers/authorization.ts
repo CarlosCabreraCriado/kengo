@@ -10,24 +10,6 @@ import {
 type AnyCtx = QueryCtx | MutationCtx;
 
 /**
- * Devuelve el plan si el usuario autenticado es su fisioterapeuta.
- * Lanza error si no existe o no tiene permisos.
- */
-export async function getPlanIfOwned(
-  ctx: AnyCtx,
-  planId: Id<"plans">,
-  userId?: Id<"users">,
-): Promise<Doc<"plans">> {
-  const ownerId = userId ?? (await getAuthenticatedUser(ctx))._id;
-  const plan = await ctx.db.get(planId);
-  if (!plan) throw new Error("Plan no encontrado");
-  if (plan.fisioId !== ownerId) {
-    throw new Error("No tienes permisos sobre este plan");
-  }
-  return plan;
-}
-
-/**
  * Devuelve la rutina si el usuario es su autor.
  * Lanza error si no existe o no tiene permisos.
  */
@@ -198,6 +180,32 @@ export async function assertCanAccessPlan(
   }
 
   // Plan legado sin clinicId — caer al criterio por paciente.
+  await assertCanAccessPaciente(ctx, userId, plan.pacienteId);
+  return plan;
+}
+
+/**
+ * Lanza si `userId` no puede GESTIONAR (editar/eliminar/versionar/cambiar
+ * estado) el plan. A diferencia de `assertCanAccessPlan`, NO concede acceso al
+ * paciente dueño: solo fisio/admin de la clínica del plan.
+ *   - Con clinicId: requiere ser fisio/admin de esa clínica.
+ *   - Sin clinicId (legado): cae a `assertCanAccessPaciente`, que ya exige rol
+ *     de gestión sobre el paciente en alguna clínica común.
+ */
+export async function assertCanManagePlan(
+  ctx: AnyCtx,
+  userId: Id<"users">,
+  planId: Id<"plans">,
+): Promise<Doc<"plans">> {
+  const plan = await ctx.db.get(planId);
+  if (!plan) throw new Error("Plan no encontrado");
+
+  if (plan.clinicId) {
+    await assertCanAccessClinic(ctx, userId, plan.clinicId, PUESTOS_GESTION);
+    return plan;
+  }
+
+  // Plan legado sin clinicId — caer al criterio por paciente (gestión-only).
   await assertCanAccessPaciente(ctx, userId, plan.pacienteId);
   return plan;
 }

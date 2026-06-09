@@ -111,6 +111,11 @@ async function load() {
       userId: string,
       planId: string,
     ) => Promise<unknown>;
+    assertCanManagePlan: (
+      ctx: unknown,
+      userId: string,
+      planId: string,
+    ) => Promise<unknown>;
     assertCanAccessSession: (
       ctx: unknown,
       userId: string,
@@ -129,6 +134,7 @@ async function load() {
     assertCanAccessClinic,
     assertCanAccessPaciente,
     assertCanAccessPlan,
+    assertCanManagePlan,
     assertCanAccessSession,
     assertCanAccessRoutine,
   } = await load();
@@ -280,6 +286,89 @@ async function load() {
         ],
       });
       await assertCanAccessPlan(ctx, "pac1", "p1");
+    },
+  );
+
+  await test(
+    "assertCanManagePlan: fisio de la clínica (no creador) SÍ puede gestionar",
+    async () => {
+      const ctx = makeCtx({
+        plans: [
+          { _id: "p1", pacienteId: "pac1", fisioId: "fisioA", clinicId: "c1" },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisioA", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "fisioB", clinicId: "c1", puesto: "fisio" },
+        ],
+      });
+      const r = await assertCanManagePlan(ctx, "fisioB", "p1");
+      assert.equal((r as MockDoc)._id, "p1");
+    },
+  );
+
+  await test(
+    "assertCanManagePlan: admin de la clínica SÍ puede gestionar",
+    async () => {
+      const ctx = makeCtx({
+        plans: [
+          { _id: "p1", pacienteId: "pac1", fisioId: "fisioA", clinicId: "c1" },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "admin1", clinicId: "c1", puesto: "admin" },
+        ],
+      });
+      await assertCanManagePlan(ctx, "admin1", "p1");
+    },
+  );
+
+  await test(
+    "assertCanManagePlan: paciente dueño del plan NO puede gestionar",
+    async () => {
+      const ctx = makeCtx({
+        plans: [
+          { _id: "p1", pacienteId: "pac1", fisioId: "fisioA", clinicId: "c1" },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "pac1", clinicId: "c1", puesto: "paciente" },
+        ],
+      });
+      await assertThrows(
+        () => assertCanManagePlan(ctx, "pac1", "p1"),
+        "No tienes acceso",
+      );
+    },
+  );
+
+  await test(
+    "assertCanManagePlan: fisio de OTRA clínica NO puede (IDOR bloqueado)",
+    async () => {
+      const ctx = makeCtx({
+        plans: [
+          { _id: "p1", pacienteId: "pac1", fisioId: "fisioA", clinicId: "c1" },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisioA", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "fisioB", clinicId: "c2", puesto: "fisio" },
+        ],
+      });
+      await assertThrows(
+        () => assertCanManagePlan(ctx, "fisioB", "p1"),
+        "No tienes acceso",
+      );
+    },
+  );
+
+  await test(
+    "assertCanManagePlan: plan legado sin clinicId, fisio que gestiona al paciente SÍ",
+    async () => {
+      const ctx = makeCtx({
+        plans: [{ _id: "p1", pacienteId: "pac1", fisioId: "fisioA" }],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisioB", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "pac1", clinicId: "c1", puesto: "paciente" },
+        ],
+      });
+      await assertCanManagePlan(ctx, "fisioB", "p1");
     },
   );
 
