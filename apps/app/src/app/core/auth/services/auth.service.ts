@@ -3,6 +3,7 @@ import { RouteReuseStrategy, Router } from '@angular/router';
 import { CustomRouteReuseStrategy } from '../../config/route-reuse-strategy';
 import { environment as env } from '../../../../environments/environment';
 import { SessionService } from './session.service';
+import { ClinicaActivaService } from './clinica-activa.service';
 import { BetterAuthService } from './better-auth.service';
 import type { ConvexTokenResult } from './better-auth.service';
 import { ConvexService } from '../../convex/convex.service';
@@ -28,6 +29,7 @@ import { api } from '../../../../../../../convex/_generated/api';
 export class AuthService {
   private router = inject(Router);
   private sessionService = inject(SessionService);
+  private clinicaActiva = inject(ClinicaActivaService);
   private routeReuseStrategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
   private betterAuth = inject(BetterAuthService);
   private convex = inject(ConvexService);
@@ -170,6 +172,102 @@ export class AuthService {
    */
   isAuthenticated(): boolean {
     return this.isLoggedIn();
+  }
+
+  // =========================
+  //  IMPERSONACIÓN (soporte)
+  // =========================
+
+  /**
+   * Impersona a un usuario objetivo (solo técnicos de soporte). Replica el flujo
+   * post-login: tras el swap de sesión en Better-Auth, refresca el token Convex,
+   * limpia el contexto del técnico y recarga la sesión como el usuario objetivo.
+   * El gate real está en el servidor (`adminUserIds`): si el caller no es técnico,
+   * `betterAuth.impersonate` devuelve 403 y abortamos.
+   */
+  async impersonar(target: {
+    externalId: string;
+    email: string;
+    nombre: string;
+  }): Promise<void> {
+    // 1. Auditar el INICIO mientras seguimos autenticados como técnico.
+    try {
+      await this.convex.mutation(api.impersonation.mutations.logStart, {
+        targetExternalId: target.externalId,
+      });
+    } catch (err) {
+      // No bloqueamos la impersonación si solo falla la auditoría — el registro
+      // nativo `session.impersonatedBy` es el backstop autoritativo.
+      this.logger.warn('[Impersonar] logStart falló:', err);
+    }
+
+    // 2. Swap de sesión: Better-Auth emite la sesión del usuario objetivo.
+    const res = await this.betterAuth.impersonate(target.externalId);
+    if (!res.ok) {
+      throw new Error(
+        res.code === 'NETWORK_ERROR'
+          ? 'NETWORK_ERROR'
+          : 'IMPERSONACION_NO_AUTORIZADA',
+      );
+    }
+
+    // 3. Refrescar token Convex con la nueva sesión (subject = objetivo).
+    await this.convex.setAuth(() => this.betterAuth.getConvexToken());
+
+    // 4. Limpiar contexto del técnico (cache de usuario + clínica activa) para no
+    //    mezclar sus datos con los del usuario impersonado.
+    this.sessionService.limpiarCacheUsuario();
+    this.clinicaActiva.clear();
+
+    // 5. Marcar impersonación activa (banner) y recargar como el objetivo.
+    this.sessionService.setImpersonacion({
+      targetExternalId: target.externalId,
+      targetEmail: target.email,
+      targetNombre: target.nombre,
+    });
+    await this.sessionService.cargarMiUsuario();
+    this.isLoggedIn.set(true);
+    this.routeReuseStrategy.setCachingEnabled(true);
+
+    // 6. Entrar como el usuario objetivo.
+    this.router.navigate(['/inicio']);
+  }
+
+  /**
+   * Termina la impersonación y restaura la sesión del técnico.
+   */
+  async salirDeImpersonacion(): Promise<void> {
+    const info = this.sessionService.impersonacion();
+
+    // 1. Restaurar la sesión del técnico en Better-Auth.
+    await this.betterAuth.stopImpersonating();
+
+    // 2. Refrescar token Convex (subject = técnico de nuevo).
+    await this.convex.setAuth(() => this.betterAuth.getConvexToken());
+
+    // 3. Limpiar contexto del usuario impersonado y el flag de impersonación.
+    this.sessionService.limpiarCacheUsuario();
+    this.clinicaActiva.clear();
+    this.sessionService.clearImpersonacion();
+
+    // 4. Recargar como el técnico.
+    await this.sessionService.cargarMiUsuario();
+    this.isLoggedIn.set(true);
+    this.routeReuseStrategy.setCachingEnabled(true);
+
+    // 5. Auditar el FIN (ya autenticados como técnico).
+    if (info) {
+      try {
+        await this.convex.mutation(api.impersonation.mutations.logStop, {
+          targetExternalId: info.targetExternalId,
+        });
+      } catch (err) {
+        this.logger.warn('[Impersonar] logStop falló:', err);
+      }
+    }
+
+    // 6. Volver a la pantalla de soporte.
+    this.router.navigate(['/soporte']);
   }
 
   /**

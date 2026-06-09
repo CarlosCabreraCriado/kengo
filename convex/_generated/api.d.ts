@@ -18,6 +18,7 @@ import type * as _helpers_permissions from "../_helpers/permissions.js";
 import type * as _helpers_planStatus from "../_helpers/planStatus.js";
 import type * as _helpers_planVersioning from "../_helpers/planVersioning.js";
 import type * as _helpers_rollupComputation from "../_helpers/rollupComputation.js";
+import type * as _helpers_support from "../_helpers/support.js";
 import type * as _helpers_syncPatientAggregateValue from "../_helpers/syncPatientAggregateValue.js";
 import type * as _helpers_validators from "../_helpers/validators.js";
 import type * as accessCodes_actions from "../accessCodes/actions.js";
@@ -68,6 +69,8 @@ import type * as executions_queries from "../executions/queries.js";
 import type * as exercises_mutations from "../exercises/mutations.js";
 import type * as exercises_queries from "../exercises/queries.js";
 import type * as http from "../http.js";
+import type * as impersonation_mutations from "../impersonation/mutations.js";
+import type * as impersonation_queries from "../impersonation/queries.js";
 import type * as me_queries from "../me/queries.js";
 import type * as migrations_backfillClinicOwner from "../migrations/backfillClinicOwner.js";
 import type * as migrations_backfillDailyByClinic from "../migrations/backfillDailyByClinic.js";
@@ -156,6 +159,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/planStatus": typeof _helpers_planStatus;
   "_helpers/planVersioning": typeof _helpers_planVersioning;
   "_helpers/rollupComputation": typeof _helpers_rollupComputation;
+  "_helpers/support": typeof _helpers_support;
   "_helpers/syncPatientAggregateValue": typeof _helpers_syncPatientAggregateValue;
   "_helpers/validators": typeof _helpers_validators;
   "accessCodes/actions": typeof accessCodes_actions;
@@ -206,6 +210,8 @@ declare const fullApi: ApiFromModules<{
   "exercises/mutations": typeof exercises_mutations;
   "exercises/queries": typeof exercises_queries;
   http: typeof http;
+  "impersonation/mutations": typeof impersonation_mutations;
+  "impersonation/queries": typeof impersonation_queries;
   "me/queries": typeof me_queries;
   "migrations/backfillClinicOwner": typeof migrations_backfillClinicOwner;
   "migrations/backfillDailyByClinic": typeof migrations_backfillDailyByClinic;
@@ -305,7 +311,7 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
+  betterAuth: import("../betterAuth/_generated/component.js").ComponentApi<"betterAuth">;
   stripe: import("@convex-dev/stripe/_generated/component.js").ComponentApi<"stripe">;
   executionsByPaciente: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"executionsByPaciente">;
   executionsByClinic: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"executionsByClinic">;

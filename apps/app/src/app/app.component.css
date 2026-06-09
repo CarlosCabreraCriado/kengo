@@ -1,0 +1,8 @@
+/* Impersonación (soporte): cuando el banner global está visible, reservamos su
+   altura en los shells para que no tape el header/sidebar. Los shells usan
+   `h-dvh` (100dvh) con box-sizing border-box, así que el padding-top recorta el
+   área de contenido SIN provocar overflow — el banner fijo ocupa exactamente esa
+   franja reservada. Aplica a las <section> hijas directas del shell raíz. */
+:host(.impersonating) > section {
+  padding-top: var(--imp-banner-h);
+}

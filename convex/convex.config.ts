@@ -1,5 +1,8 @@
 import { defineApp } from "convex/server";
-import betterAuth from "@convex-dev/better-auth/convex.config";
+// LOCAL INSTALL del componente Better-Auth (antes: "@convex-dev/better-auth/convex.config").
+// Conserva el mismo nombre de componente "betterAuth" → mismas tablas/datos.
+// Necesario para extender el schema con los campos del plugin admin (impersonación).
+import betterAuth from "./betterAuth/convex.config";
 import stripe from "@convex-dev/stripe/convex.config.js";
 import aggregate from "@convex-dev/aggregate/convex.config";
 import migrations from "@convex-dev/migrations/convex.config";

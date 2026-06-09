@@ -666,4 +666,27 @@ export default defineSchema({
     itemsUpdated: v.number(),
     itemsArchived: v.number(),
   }).index("by_collection", ["collection"]),
+
+  // === AUDITORÍA DE IMPERSONACIÓN ===
+  // Bitácora de cada inicio/fin de impersonación por parte de un técnico de
+  // soporte (plugin admin de Better-Auth). Es defensa en profundidad +
+  // trazabilidad consultable: la sesión de Better-Auth ya lleva `impersonatedBy`
+  // de forma nativa, pero aquí guardamos un registro inmutable y consultable de
+  // quién impersonó a quién y cuándo. Paralelo a `clinicOwnershipAudit`.
+  impersonationAudit: defineTable({
+    /** Técnico que inició/terminó la impersonación (externalId de Better-Auth). */
+    technicianExternalId: v.string(),
+    /** Email del técnico, para lectura humana sin join. */
+    technicianEmail: v.optional(v.string()),
+    /** Usuario suplantado (externalId de Better-Auth). */
+    targetExternalId: v.string(),
+    /** Email del usuario suplantado. */
+    targetEmail: v.optional(v.string()),
+    action: v.union(v.literal("start"), v.literal("stop")),
+    /** Motivo libre (p. ej. ticket de soporte). */
+    reason: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_technician", ["technicianExternalId"])
+    .index("by_target", ["targetExternalId"]),
 });

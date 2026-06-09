@@ -4,25 +4,32 @@ import {
   type AuthFunctions,
 } from "@convex-dev/better-auth";
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
-import { magicLink } from "better-auth/plugins";
+import { admin, magicLink } from "better-auth/plugins";
 import { components, internal } from "./_generated/api";
 import { query } from "./_generated/server";
-import { betterAuth, type BetterAuthOptions } from "better-auth";
+// `better-auth/minimal` es el inicializador sin Kysely, recomendado para Convex
+// (la persistencia la provee el adapter del componente, no Kysely). Es el mismo
+// `betterAuth` que usa internamente @convex-dev/better-auth.
+import { betterAuth, type BetterAuthOptions } from "better-auth/minimal";
 import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
+// Schema del componente en LOCAL INSTALL — incluye los campos del plugin admin.
+import authSchema from "./betterAuth/schema";
 
 // Better-Auth necesita una baseURL absoluta para construir URLs en flujos
 // async (magic-link, reset password, etc.) cuando se invoca desde un
-// httpAction sin Request context. Si SITE_URL falta, queremos fallar
-// limpio en el bootstrap del deployment en vez de manifestarlo más tarde
-// con `new URL('')` lanzando "Invalid URL".
-const siteUrl = process.env["SITE_URL"];
-if (!siteUrl) {
-  throw new Error(
-    "[auth] SITE_URL no está definido. Configurarlo con `npx convex env set SITE_URL <url>` antes de desplegar.",
-  );
-}
+// httpAction sin Request context.
+//
+// IMPORTANTE (local install): NO validamos/lanzamos en top-level. Este módulo lo
+// importa el componente local (`convex/betterAuth/adapter.ts`) durante el ANÁLISIS
+// de módulos del push, en un contexto donde las env vars del deployment pueden no
+// estar disponibles. Un `throw` aquí rompía el push entero:
+//   "Failed to analyze adapter.js: [auth] SITE_URL no está definido".
+// La validación estricta vive ahora en `createAuth()` (se invoca en runtime, con
+// las env vars presentes). Para el path de generación de schema basta con un
+// baseURL placeholder válido — su valor no afecta a `getAuthTables`.
 const appUrl = process.env["APP_URL"] ?? "https://kengoapp.com";
+const resolveSiteUrl = () => process.env["SITE_URL"] ?? appUrl;
 
 // NOTA sobre la firma del JWT de Convex:
 //
@@ -80,7 +87,12 @@ export function clearPendingMagicLink(email: string): void {
 
 const authFunctions: AuthFunctions = internal.auth;
 
-export const authComponent = createClient<DataModel>(components.betterAuth, {
+export const authComponent = createClient<DataModel, typeof authSchema>(
+  components.betterAuth,
+  {
+  // LOCAL INSTALL: el cliente usa nuestro schema local (con campos del plugin
+  // admin) para tipar y validar las operaciones contra el componente.
+  local: { schema: authSchema },
   verbose: false,
   authFunctions,
   triggers: {
@@ -140,14 +152,23 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
 
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
-export const createAuth = (ctx: GenericCtx<DataModel>) =>
-  betterAuth({
+/**
+ * Opciones de Better-Auth, separadas de la instanciación.
+ *
+ * Esta separación es un requisito del LOCAL INSTALL: el componente
+ * (`convex/betterAuth/adapter.ts`) pasa `createAuthOptions` a `createApi`, que la
+ * invoca con `ctx = {}` SOLO para derivar el schema vía `getAuthTables` (no usa el
+ * `database` adapter, por eso el ctx vacío es seguro). La instancia real de auth se
+ * crea con `createAuth(ctx)` más abajo.
+ */
+export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
+  ({
     // Necesario para que `auth.api.signInMagicLink` (y el plugin
     // magic-link en general) construya correctamente la URL del verify.
     // Sin esto, `ctx.context.baseURL` queda vacío cuando se invoca
     // programáticamente desde un httpAction y `new URL('')` lanza
     // "Invalid URL: ''".
-    baseURL: siteUrl,
+    baseURL: resolveSiteUrl(),
     trustedOrigins: [
       appUrl,
       `https://www.${appUrl.replace(/^https?:\/\//, "")}`,
@@ -191,7 +212,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
       },
     },
     plugins: [
-      crossDomain({ siteUrl }),
+      crossDomain({ siteUrl: resolveSiteUrl() }),
       convex({ authConfig }),
       magicLink({
         expiresIn: 5 * 60,
@@ -201,8 +222,39 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
           pendingMagicLinks.set(email, token);
         },
       }),
+      // Plugin admin: habilita la impersonación de usuarios por parte del equipo
+      // de soporte (`auth.api.impersonateUser` / `stopImpersonating`). Marca la
+      // sesión con `impersonatedBy` (ver convex/betterAuth/schema.ts).
+      //
+      // `adminUserIds`: allowlist de externalIds (id de Better-Auth) de los
+      // técnicos autorizados. Cuando está definido, el sistema de roles se ignora
+      // (no hace falta campo `role` poblado). Se configura por env var:
+      //   npx convex env set SUPPORT_USER_IDS "<id1>,<id2>"
+      // Si la env var está vacía, NADIE puede impersonar (lista vacía), pero el
+      // schema del plugin sigue presente — seguro por defecto.
+      admin({
+        adminUserIds: (process.env["SUPPORT_USER_IDS"] ?? "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        // Ventana corta de impersonación (default de Better-Auth es 1 h).
+        impersonationSessionDuration: 60 * 30, // 30 minutos
+        // No permitir impersonar a otros técnicos/admins.
+        allowImpersonatingAdmins: false,
+      }),
     ],
-  } satisfies BetterAuthOptions);
+  }) satisfies BetterAuthOptions;
+
+export const createAuth = (ctx: GenericCtx<DataModel>) => {
+  // Validación estricta en runtime (aquí SÍ están las env vars del deployment).
+  // Antes vivía en top-level, pero rompía el análisis del componente local.
+  if (!process.env["SITE_URL"]) {
+    throw new Error(
+      "[auth] SITE_URL no está definido. Configurarlo con `npx convex env set SITE_URL <url>` antes de desplegar.",
+    );
+  }
+  return betterAuth(createAuthOptions(ctx));
+};
 
 export const getCurrentUser = query({
   args: {},

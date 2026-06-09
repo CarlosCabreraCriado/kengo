@@ -18,6 +18,7 @@ export { ClinicAdminGuard } from './guards/clinic-admin.guard';
 export { ActiveSubscriptionGuard } from './guards/active-subscription.guard';
 export { OnboardingGuard } from './guards/onboarding.guard';
 export { ClinicaActivaGuard } from './guards/clinica-activa.guard';
+export { SoporteGuard } from './guards/soporte.guard';
 export {
   clinicaActivaResourceGuard,
   type ResourceType as ClinicaActivaResourceType,

@@ -19,6 +19,7 @@ import {
   ThemeService,
 } from './core';
 import { ConnectionErrorComponent } from './core/components/connection-error/connection-error.component';
+import { ImpersonationBannerComponent } from './features/soporte/components/impersonation-banner/impersonation-banner.component';
 import { PlatformService } from './core/services/platform.service';
 import { OrientationLockService } from './core/services/orientation-lock.service';
 import { KeyboardService } from './core/services/keyboard.service';
@@ -54,10 +55,14 @@ import type {
 @Component({
   selector: 'app-root',
   standalone: true,
+  // Marca el shell cuando hay impersonación activa para reservar el alto del
+  // banner (ver app.component.css → `:host(.impersonating) > section`).
+  host: { '[class.impersonating]': 'sessionService.estaImpersonando()' },
   imports: [
     RouterOutlet,
     BillingBannerComponent,
     ConnectionErrorComponent,
+    ImpersonationBannerComponent,
     Ui2CarritoEjerciciosComponent,
     Ui2CreamBgComponent,
     Ui2PageLoaderOverlayComponent,

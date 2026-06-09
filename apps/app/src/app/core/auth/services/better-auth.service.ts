@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 import { createAuthClient } from 'better-auth/client';
-import { magicLinkClient } from 'better-auth/client/plugins';
+import { adminClient, magicLinkClient } from 'better-auth/client/plugins';
 import {
   crossDomainClient,
   convexClient,
@@ -87,7 +87,15 @@ export class BetterAuthService {
 
   private authClient = createAuthClient({
     baseURL: environment.CONVEX_SITE_URL,
-    plugins: [crossDomainClient(), convexClient(), magicLinkClient()],
+    plugins: [
+      crossDomainClient(),
+      convexClient(),
+      magicLinkClient(),
+      // Cliente del plugin admin: expone `authClient.admin.impersonateUser` /
+      // `stopImpersonating`. El gate real (quién puede impersonar) vive en el
+      // servidor (`adminUserIds` en convex/auth.ts); este cliente solo invoca.
+      adminClient(),
+    ],
   });
 
   // Buffer reactivo de las últimas llamadas a `getConvexToken`. Expuesto como
@@ -399,6 +407,54 @@ export class BetterAuthService {
       await Preferences.remove({ key: PREFS_SESSION_KEY });
     } catch {
       // ignore
+    }
+  }
+
+  // =========================
+  //  IMPERSONACIÓN (soporte)
+  // =========================
+
+  /**
+   * Impersona a un usuario (plugin admin de Better-Auth). Better-Auth crea una
+   * NUEVA sesión para el usuario objetivo (con `impersonatedBy` = id del técnico)
+   * y el crossDomainClient persiste su cookie en localStorage. Tras esto, hay que
+   * refrescar el token Convex (`convex.setAuth`) para que las queries pasen a
+   * resolver al usuario objetivo. Esa orquestación vive en `AuthService.impersonar`.
+   *
+   * `userId` es el id de Better-Auth del objetivo (== `users.externalId`).
+   * El servidor rechaza (403) si el caller no está en `adminUserIds`.
+   */
+  async impersonate(userId: string): Promise<{ ok: boolean; code?: string }> {
+    try {
+      const result = await (
+        this.authClient as any
+      ).admin.impersonateUser({ userId });
+      if (result?.error) {
+        this.logger.warn('Better-Auth impersonate error:', result.error);
+        return { ok: false, code: result.error.code };
+      }
+      // Persistir la cookie de impersonación igual que un login normal (native).
+      await this.backupToNative();
+      return { ok: true };
+    } catch (err) {
+      this.logger.warn('Better-Auth impersonate failed:', err);
+      return { ok: false, code: 'NETWORK_ERROR' };
+    }
+  }
+
+  /**
+   * Termina la impersonación: Better-Auth restaura la sesión del técnico. Igual
+   * que en `impersonate`, el caller debe refrescar el token Convex después.
+   */
+  async stopImpersonating(): Promise<{ ok: boolean }> {
+    try {
+      await (this.authClient as any).admin.stopImpersonating();
+      // Persistir la cookie restaurada del técnico (native).
+      await this.backupToNative();
+      return { ok: true };
+    } catch (err) {
+      this.logger.warn('Better-Auth stopImpersonating failed:', err);
+      return { ok: false };
     }
   }
 }

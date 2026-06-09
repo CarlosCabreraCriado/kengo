@@ -38,6 +38,30 @@ function leerModoPersistido(): RolUsuario | null {
   }
 }
 
+const IMPERSONACION_STORAGE_KEY = 'kengo:impersonacion';
+
+/**
+ * Estado de una impersonación activa (técnico de soporte actuando como otro
+ * usuario). Se persiste en localStorage para sobrevivir reloads — el banner de
+ * impersonación debe seguir visible aunque se recargue la página.
+ */
+export interface ImpersonacionInfo {
+  targetExternalId: string;
+  targetEmail: string;
+  targetNombre: string;
+}
+
+function leerImpersonacionPersistida(): ImpersonacionInfo | null {
+  try {
+    const raw = localStorage.getItem(IMPERSONACION_STORAGE_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as ImpersonacionInfo;
+    return v && typeof v.targetExternalId === 'string' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * SessionService — gestiona el estado del usuario autenticado.
  * Tras la consolidación a Convex-only, esta clase consume exclusivamente
@@ -90,6 +114,17 @@ export class SessionService {
       }
     }
   });
+
+  /**
+   * Impersonación activa (técnico de soporte). `null` cuando el usuario opera
+   * con su propia sesión. La controla `AuthService.impersonar` /
+   * `salirDeImpersonacion`; el banner global la lee para mostrarse.
+   */
+  private _impersonacion = signal<ImpersonacionInfo | null>(
+    typeof window !== 'undefined' ? leerImpersonacionPersistida() : null,
+  );
+  public impersonacion = computed(() => this._impersonacion());
+  public estaImpersonando = computed(() => this._impersonacion() !== null);
 
   private _usuario = signal<Usuario | null>(null);
   private _loading = signal<boolean>(false);
@@ -292,9 +327,30 @@ export class SessionService {
     this._loading.set(false);
     this._errorConexion.set(false);
     this.clinicaActiva.clear();
+    this.clearImpersonacion();
     this.limpiarCacheUsuario();
     this.purgarStorageDeSesion();
     this.resetearServiciosDeSesion();
+  }
+
+  /** Marca que hay una impersonación activa (técnico actuando como `info`). */
+  setImpersonacion(info: ImpersonacionInfo): void {
+    this._impersonacion.set(info);
+    try {
+      localStorage.setItem(IMPERSONACION_STORAGE_KEY, JSON.stringify(info));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Limpia el estado de impersonación. */
+  clearImpersonacion(): void {
+    this._impersonacion.set(null);
+    try {
+      localStorage.removeItem(IMPERSONACION_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
   }
 
   /**

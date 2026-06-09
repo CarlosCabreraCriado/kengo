@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
-import { AuthGuard, ClinicaActivaGuard, OnboardingGuard } from './core';
+import {
+  AuthGuard,
+  ClinicaActivaGuard,
+  OnboardingGuard,
+  SoporteGuard,
+} from './core';
 
 /**
  * Convención de naming de rutas:
@@ -133,6 +138,18 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     loadChildren: () =>
       import('./features/perfil/perfil.routes').then((m) => m.PERFIL_ROUTES),
+  },
+
+  // Soporte técnico: impersonación de usuarios. Solo accesible para técnicos en
+  // la allowlist `SUPPORT_USER_IDS` (gate en SoporteGuard + servidor). Exento de
+  // OnboardingGuard/ClinicaActivaGuard porque el técnico opera fuera de clínica.
+  {
+    path: 'soporte',
+    canActivate: [AuthGuard, SoporteGuard],
+    loadComponent: () =>
+      import('./features/soporte/pages/soporte/soporte.component').then(
+        (m) => m.SoporteComponent,
+      ),
   },
 
   {
