@@ -293,11 +293,50 @@ export const extendTrialForClinic = internalAction({
       return { caso: "iniciado", ...result } as const;
     }
 
+    const stripe = getStripeClient();
+
+    // El puntero local puede apuntar a una sub muerta (`canceled` /
+    // `incomplete_expired`). Si la hay, `resolveActiveSubscriptionId` cura el
+    // puntero hacia la sub viva más reciente del customer; si no hay ninguna
+    // viva, devuelve el subId original (que seguirá muerto).
+    const customerId = data.billing.stripeCustomerId;
+    const resolvedSubId = customerId
+      ? await resolveActiveSubscriptionId(
+          ctx,
+          stripe,
+          clinicId,
+          data.billing.stripeSubscriptionId,
+          customerId,
+        )
+      : data.billing.stripeSubscriptionId;
+
+    const resolvedSub = await stripe.subscriptions
+      .retrieve(resolvedSubId)
+      .catch(() => null);
+    const subMuerta =
+      !resolvedSub ||
+      resolvedSub.status === "canceled" ||
+      resolvedSub.status === "incomplete_expired";
+
+    // Sin ninguna sub viva: Stripe no permite revivir una `canceled`. Limpiamos
+    // el puntero local para desbloquear la idempotencia de `startTrialForClinic`
+    // y creamos una sub nueva con trial reutilizando el customer existente.
+    if (subMuerta) {
+      await ctx.runMutation(
+        internal.billing.internal.clearStripeSubscriptionId,
+        { clinicId },
+      );
+      const result = await ctx.runAction(
+        internal.billing.actions.startTrialForClinic,
+        { clinicId, trialDays: dias },
+      );
+      return { caso: "iniciado", ...result } as const;
+    }
+
     const trialEndMs = Date.now() + dias * 24 * 60 * 60 * 1000;
     const trialEndSec = Math.floor(trialEndMs / 1000);
 
-    const stripe = getStripeClient();
-    await stripe.subscriptions.update(data.billing.stripeSubscriptionId, {
+    await stripe.subscriptions.update(resolvedSubId, {
       trial_end: trialEndSec,
       proration_behavior: "none",
     });

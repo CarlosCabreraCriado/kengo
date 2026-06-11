@@ -345,6 +345,31 @@ export const upsertStripeSubscriptionId = internalMutation({
   },
 });
 
+/**
+ * Borra el `stripeSubscriptionId` local de una clínica. Se usa cuando la sub
+ * apuntada está muerta (`canceled`/`incomplete_expired`) y no existe ninguna
+ * viva en el customer: hay que crear una sub nueva, pero `startTrialForClinic`
+ * corta por idempotencia si el campo sigue presente. Limpiarlo desbloquea esa
+ * recreación. Idempotente: si ya estaba vacío, no escribe.
+ */
+export const clearStripeSubscriptionId = internalMutation({
+  args: {
+    clinicId: v.id("clinics"),
+  },
+  handler: async (ctx, { clinicId }) => {
+    const existing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+    if (!existing) return;
+    if (existing.stripeSubscriptionId === undefined) return;
+    await ctx.db.patch(existing._id, {
+      stripeSubscriptionId: undefined,
+      actualizadoEn: Date.now(),
+    });
+  },
+});
+
 export const recordWebhookEvent = internalMutation({
   args: {
     eventId: v.string(),
