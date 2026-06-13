@@ -5,7 +5,11 @@ import { Id } from "../_generated/dataModel";
 import {
   getAuthenticatedUser,
   requireActiveSubscription,
+  tieneGestion,
+  PUESTOS_GESTION,
 } from "../_helpers/permissions";
+import { assertCanAccessClinic } from "../_helpers/authorization";
+import { membershipEsPaciente } from "../_helpers/patientAccess";
 
 const MAX_MESSAGE_LENGTH = 4000;
 const PREVIEW_LENGTH = 200;
@@ -38,31 +42,43 @@ export const startConversationWithPatient = mutation({
     let clinicId: Id<"clinics"> | null = null;
 
     if (args.clinicId) {
-      const assignment = await ctx.db
-        .query("assignments")
-        .withIndex("by_pacienteId_clinicId", (q) =>
-          q.eq("pacienteId", args.pacienteId).eq("clinicId", args.clinicId!),
+      // El caller debe ser fisio/admin de la clínica indicada…
+      await assertCanAccessClinic(ctx, fisio._id, args.clinicId, PUESTOS_GESTION);
+      // …y el paciente debe pertenecer a esa clínica como paciente.
+      const pacienteMembership = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_userId_clinicId", (q) =>
+          q.eq("userId", args.pacienteId).eq("clinicId", args.clinicId!),
         )
         .unique();
-
-      if (!assignment || assignment.fisioId !== fisio._id) {
-        throw new Error(
-          "No puedes iniciar una conversación con este paciente: no eres su fisio asignado.",
-        );
+      if (!membershipEsPaciente(pacienteMembership)) {
+        throw new Error("Este paciente no pertenece a la clínica seleccionada.");
       }
       clinicId = args.clinicId;
     } else {
-      const candidates = await ctx.db
-        .query("assignments")
-        .filter((q) => q.eq(q.field("pacienteId"), args.pacienteId))
+      // Sin clínica explícita (fallback de robustez; el frontend siempre pasa
+      // clinicId): elige una clínica donde el caller tenga gestión y el
+      // paciente sea paciente.
+      const misMemberships = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_userId", (q) => q.eq("userId", fisio._id))
         .collect();
-      const mine = candidates.find((a) => a.fisioId === fisio._id);
-      if (!mine) {
-        throw new Error(
-          "No tienes a este paciente asignado en ninguna clínica.",
-        );
+      for (const m of misMemberships) {
+        if (!tieneGestion(m.puesto)) continue;
+        const pm = await ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_userId_clinicId", (q) =>
+            q.eq("userId", args.pacienteId).eq("clinicId", m.clinicId),
+          )
+          .unique();
+        if (membershipEsPaciente(pm)) {
+          clinicId = m.clinicId;
+          break;
+        }
       }
-      clinicId = mine.clinicId;
+      if (!clinicId) {
+        throw new Error("No compartes ninguna clínica con este paciente.");
+      }
     }
 
     const existing = await findExistingConversation(
