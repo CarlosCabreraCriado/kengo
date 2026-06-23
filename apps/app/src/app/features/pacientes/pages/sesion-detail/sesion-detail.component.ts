@@ -10,19 +10,15 @@ import {
 import { Router, ActivatedRoute } from '@angular/router';
 import { DecimalPipe, NgOptimizedImage } from '@angular/common';
 import { useResponsive } from '../../../../shared';
-import { CumplimientoService } from '../../data-access/cumplimiento.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
-import type { DiaSemana, Usuario } from '../../../../../types/global';
+import type { Usuario } from '../../../../../types/global';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
-import {
-  diaSemanaFromYMD,
-  ymdToDateForDisplay,
-} from '../../../../shared/utils/madrid-date.util';
+import { ymdToDateForDisplay } from '../../../../shared/utils/madrid-date.util';
 import {
   Ui2AvatarComponent,
   Ui2BackButtonComponent,
@@ -35,56 +31,33 @@ import {
   Ui2SpinnerComponent,
 } from '../../../../shared/ui-v2';
 
-interface RegistroExpandido {
-  id: string;
-  fechaHora: string;
+type EstadoDia = 'completado' | 'parcial' | 'fallido' | 'descanso' | 'sin_plan';
+
+interface EjercicioDetalle {
+  planExerciseId: string;
+  sort: number;
+  nombre: string;
+  portada: string | null;
+  series?: number;
+  repeticiones?: number;
+  duracionSeg?: number;
+  instruccionesPaciente?: string;
+  programadoHoy: boolean;
   completado: boolean;
   repeticionesRealizadas?: number;
   duracionRealSeg?: number;
   dolorEscala?: number;
   esfuerzoEscala?: number;
   notaPaciente?: string;
-  planItemId: {
-    id: string;
-    sort: number;
-    series?: number;
-    repeticiones?: number;
-    duracionSeg?: number;
-    instruccionesPaciente?: string;
-    ejercicio: {
-      id: string;
-      nombre: string;
-      portada: string | null;
-    };
-    plan: {
-      id: string;
-      titulo: string;
-    };
-  };
+  fechaHora?: string;
 }
 
-interface GrupoPlan {
-  planId: string;
-  planTitulo: string;
-  registros: RegistroExpandido[];
-}
-
-interface EjercicioAgendado {
-  id: string;
-  sort: number;
-  nombre: string;
-  portada: string | null;
-  series: number | null;
-  repeticiones: number | null;
-  duracionSeg: number | null;
-}
-
-interface PlanAgendadoDetalle {
+interface PlanDetalle {
   planId: string;
   titulo: string;
   esperados: number;
   completados: number;
-  ejercicios: EjercicioAgendado[];
+  ejercicios: EjercicioDetalle[];
 }
 
 @Component({
@@ -113,7 +86,6 @@ interface PlanAgendadoDetalle {
 export class SesionDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private cumplimientoService = inject(CumplimientoService);
   private convex = inject(ConvexService);
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
@@ -124,43 +96,74 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
   isMovil = useResponsive().esMobile;
 
   // State
-  readonly grupos = signal<GrupoPlan[]>([]);
+  readonly planes = signal<PlanDetalle[]>([]);
+  readonly estadoDia = signal<EstadoDia | null>(null);
+  readonly totalEsperados = signal(0);
+  readonly totalCompletados = signal(0);
+  readonly dolorMedio = signal<number | null>(null);
   readonly fecha = signal<string>('');
   readonly pacienteId = signal<string>('');
   readonly paciente = signal<Usuario | null>(null);
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly planesAgendados = signal<PlanAgendadoDetalle[]>([]);
-  readonly esFallido = signal(false);
 
-  /** Datos críticos del primer paint: registros cargados (success o vacío). */
+  /** Datos críticos del primer paint: detalle cargado (success o vacío). */
   readonly pageReady = computed(() => !this.isLoading());
 
   // Computed
-  readonly totalEjercicios = computed(() =>
-    this.grupos().reduce((sum, g) => sum + g.registros.length, 0),
+  readonly hayPlanes = computed(() => this.planes().length > 0);
+
+  readonly totalComentarios = computed(() =>
+    this.planes().reduce(
+      (sum, p) =>
+        sum +
+        p.ejercicios.filter((e) => e.completado && e.notaPaciente?.trim())
+          .length,
+      0,
+    ),
   );
 
-  readonly promedioDolor = computed(() => {
-    const todos = this.grupos().flatMap((g) => g.registros);
-    const dolores = todos
-      .filter((r) => r.dolorEscala != null)
-      .map((r) => r.dolorEscala!);
-    if (dolores.length === 0) return null;
-    return (
-      Math.round((dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10) /
-      10
-    );
+  readonly estadoLabel = computed<string>(() => {
+    switch (this.estadoDia()) {
+      case 'completado':
+        return 'Completada';
+      case 'parcial':
+        return 'Parcial';
+      case 'fallido':
+        return 'Sin completar';
+      case 'descanso':
+      case 'sin_plan':
+        return 'Descanso';
+      default:
+        return '';
+    }
   });
 
-  readonly totalComentarios = computed(() => {
-    const todos = this.grupos().flatMap((g) => g.registros);
-    return todos.filter((r) => r.notaPaciente?.trim()).length;
+  readonly estadoIcon = computed<string>(() => {
+    switch (this.estadoDia()) {
+      case 'completado':
+        return 'check_circle';
+      case 'parcial':
+        return 'pending';
+      case 'fallido':
+        return 'cancel';
+      default:
+        return 'bedtime';
+    }
   });
 
-  readonly totalEsperados = computed(() =>
-    this.planesAgendados().reduce((sum, p) => sum + p.esperados, 0),
-  );
+  readonly estadoColor = computed<string>(() => {
+    switch (this.estadoDia()) {
+      case 'completado':
+        return 'var(--success)';
+      case 'parcial':
+        return 'var(--warning)';
+      case 'fallido':
+        return 'var(--danger)';
+      default:
+        return 'var(--ink-400)';
+    }
+  });
 
   readonly pacienteNombre = computed<string>(() => {
     const p = this.paciente();
@@ -173,24 +176,13 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
   readonly pacienteAvatarUrl = computed<string | null>(() => {
     const p = this.paciente();
     if (!p?.avatar) return null;
-    return assetUrl(p.avatar, { fit: 'cover', width: 128, height: 128, quality: 80 });
+    return assetUrl(p.avatar, {
+      fit: 'cover',
+      width: 128,
+      height: 128,
+      quality: 80,
+    });
   });
-
-  readonly hayEstado = computed(
-    () => this.totalEjercicios() > 0 || this.esFallido(),
-  );
-
-  readonly estadoIcon = computed(() =>
-    this.esFallido() ? 'cancel' : 'check_circle',
-  );
-
-  readonly estadoLabel = computed(() =>
-    this.esFallido() ? 'Sin actividad' : 'Completada',
-  );
-
-  readonly estadoColor = computed(() =>
-    this.esFallido() ? 'var(--danger)' : 'var(--success)',
-  );
 
   ngOnInit() {
     this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
@@ -206,7 +198,7 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
     this.pacienteId.set(id);
     this.fecha.set(fecha);
     this.cargarPaciente();
-    this.cargarRegistros();
+    this.cargarDetalleDia();
   }
 
   ngOnDestroy(): void {
@@ -226,150 +218,54 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async cargarRegistros() {
+  /**
+   * Carga el desglose del día por plan desde la misma lógica que el rollup
+   * (`getDayDetailByPaciente`), de modo que los contadores coinciden con el
+   * timeline de actividad y se muestran TODOS los planes del día (incluidos los
+   * pendientes), no solo los que tienen ejercicios completados.
+   */
+  private async cargarDetalleDia() {
     this.isLoading.set(true);
     this.error.set(null);
 
     try {
-      // Modelo nuevo: 1 documento por sesión clínica con sus ejecuciones
-      // (`exerciseExecutions`) ya agrupadas y expandidas. Un día tiene 1 sesión
-      // habitualmente (BN1), pero la query devuelve array por compatibilidad.
       const clinicId = this.clinicaActiva.selectedClinicaId();
-      const sesiones = (await this.convex.query(
-        api.sessions.queries.getByPacienteAndDateWithExecutions,
+      const dia = await this.convex.query(
+        api.sessions.queries.getDayDetailByPaciente,
         {
           pacienteId: this.pacienteId(),
           fecha: this.fecha(),
-          soloCompletados: true,
           ...(clinicId ? { clinicId: clinicId as never } : {}),
         },
-      )) ?? [];
+      );
 
-      const validos: RegistroExpandido[] = [];
-      for (const sesion of sesiones) {
-        for (const e of sesion.executions ?? []) {
-          if (!e.planExercise || !e.planExercise.exercise || !e.planExercise.plan) {
-            continue;
-          }
-          validos.push({
-            id: e._id,
-            fechaHora: e.fechaHora,
-            completado: e.completado,
-            repeticionesRealizadas: e.repeticionesRealizadas,
-            duracionRealSeg: e.duracionRealSeg,
-            dolorEscala: e.dolorEscala,
-            esfuerzoEscala: e.esfuerzoEscala,
-            notaPaciente: e.notaPaciente,
-            planItemId: {
-              id: e.planExercise._id,
-              sort: e.planExercise.sort,
-              series: e.planExercise.series,
-              repeticiones: e.planExercise.repeticiones,
-              duracionSeg: e.planExercise.duracionSeg,
-              instruccionesPaciente: e.planExercise.instruccionesPaciente,
-              ejercicio: {
-                id: e.planExercise.exercise._id,
-                nombre: e.planExercise.exercise.nombreEjercicio,
-                portada: e.planExercise.exercise.portada ?? null,
-              },
-              plan: {
-                id: e.planExercise.plan._id,
-                titulo: e.planExercise.plan.titulo,
-              },
-            },
-          });
-        }
-      }
-
-      validos.sort((a, b) => {
-        if (a.planItemId.plan.id !== b.planItemId.plan.id) {
-          return a.planItemId.plan.id.localeCompare(b.planItemId.plan.id);
-        }
-        return a.planItemId.sort - b.planItemId.sort;
-      });
-
-      this.grupos.set(this.agruparPorPlan(validos));
-
-      if (validos.length === 0) {
-        await this.cargarPlanesAgendados();
+      if (dia) {
+        this.planes.set((dia.planes ?? []) as PlanDetalle[]);
+        this.estadoDia.set(dia.estadoDia as EstadoDia);
+        this.totalEsperados.set(dia.totalEsperados);
+        this.totalCompletados.set(dia.totalCompletados);
+        this.dolorMedio.set(dia.dolorPromedio ?? null);
       }
     } catch (err) {
-      this.logger.error('Error cargando registros de sesión:', err);
+      this.logger.error('Error cargando detalle de sesión:', err);
       this.error.set('Error al cargar los detalles de la sesión');
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  private agruparPorPlan(registros: RegistroExpandido[]): GrupoPlan[] {
-    const mapa = new Map<string, GrupoPlan>();
+  // === Helpers de plan ===
 
-    for (const reg of registros) {
-      const planId = reg.planItemId.plan.id;
-      if (!mapa.has(planId)) {
-        mapa.set(planId, {
-          planId,
-          planTitulo: reg.planItemId.plan.titulo,
-          registros: [],
-        });
-      }
-      mapa.get(planId)!.registros.push(reg);
-    }
-
-    return Array.from(mapa.values());
+  planPorcentaje(plan: PlanDetalle): number {
+    if (plan.esperados <= 0) return plan.completados > 0 ? 100 : 0;
+    return Math.min(100, Math.round((plan.completados / plan.esperados) * 100));
   }
 
-  private async cargarPlanesAgendados() {
-    try {
-      const resp = await this.cumplimientoService.getCumplimiento(
-        this.pacienteId(),
-        this.fecha(),
-        this.fecha(),
-      );
-      const dia = resp.dias.find((d) => d.fecha === this.fecha());
-      if (!dia || dia.tipo !== 'fallido') return;
-
-      const planesConEjercicios = dia.planes.filter((p) => p.esperados > 0);
-      if (planesConEjercicios.length === 0) return;
-
-      this.esFallido.set(true);
-
-      const diaSemana = diaSemanaFromYMD(this.fecha());
-
-      const ejerciciosPorPlan = await Promise.all(
-        planesConEjercicios.map((p) =>
-          this.convex.query(api.plans.queries.listExercisesByPlanId, {
-            planId: p.planId as any,
-          }),
-        ),
-      );
-
-      this.planesAgendados.set(
-        planesConEjercicios.map((p, i) => {
-          const items = ((ejerciciosPorPlan[i] ?? []) as any[]).filter(
-            (item: any) => {
-              const dias = item.diasSemana as DiaSemana[] | undefined;
-              if (!dias || dias.length === 0) return true;
-              return dias.includes(diaSemana);
-            },
-          );
-          return {
-            ...p,
-            ejercicios: items.map((item: any) => ({
-              id: item._id,
-              sort: item.sort,
-              nombre: item.ejercicio?.nombreEjercicio ?? '',
-              portada: item.ejercicio?.portada ?? null,
-              series: item.series ?? null,
-              repeticiones: item.repeticiones ?? null,
-              duracionSeg: item.duracionSeg ?? null,
-            })),
-          };
-        }),
-      );
-    } catch {
-      // silently ignore — empty state will show
-    }
+  planColor(plan: PlanDetalle): 'success' | 'warning' | 'danger' {
+    if (plan.esperados > 0 && plan.completados >= plan.esperados)
+      return 'success';
+    if (plan.completados > 0) return 'warning';
+    return 'danger';
   }
 
   // === Helpers ===
