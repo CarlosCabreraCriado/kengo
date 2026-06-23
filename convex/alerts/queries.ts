@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
-import { query } from "../_generated/server";
+import { query, QueryCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import { esAdmin, getAuthenticatedUser } from "../_helpers/permissions";
 import {
   assertFisioInClinic,
   getManagedClinicIds,
@@ -13,6 +13,58 @@ const severidad = v.union(
   v.literal("warn"),
   v.literal("alta"),
 );
+
+type Severidad = "info" | "warn" | "alta";
+
+/**
+ * Devuelve las alertas pendientes de UNA clínica que debe ver `userId`:
+ *  - Admins de la clínica: todas las pendientes (supervisión).
+ *  - Fisios: solo las de pacientes de los que son responsables
+ *    (`assignments` con `fisioId === userId`). Los pacientes sin fisio
+ *    responsable no aparecen para ningún fisio — solo para admins.
+ */
+async function pendingAlertsForFisioEnClinica(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  clinicId: Id<"clinics">,
+  severidadFiltro?: Severidad,
+): Promise<Doc<"physioAlerts">[]> {
+  const membership = await ctx.db
+    .query("clinicMemberships")
+    .withIndex("by_userId_clinicId", (q) =>
+      q.eq("userId", userId).eq("clinicId", clinicId),
+    )
+    .unique();
+
+  const base = severidadFiltro
+    ? ctx.db
+        .query("physioAlerts")
+        .withIndex("by_clinicId_estado_severidad", (q) =>
+          q
+            .eq("clinicId", clinicId)
+            .eq("estado", "pendiente")
+            .eq("severidad", severidadFiltro),
+        )
+    : ctx.db
+        .query("physioAlerts")
+        .withIndex("by_clinicId_estado", (q) =>
+          q.eq("clinicId", clinicId).eq("estado", "pendiente"),
+        );
+  const alerts = await base.order("desc").collect();
+
+  // Admins ven todas las alertas de la clínica.
+  if (membership && esAdmin(membership.puesto)) return alerts;
+
+  // Fisios: filtrar a sus pacientes asignados en esta clínica.
+  const misAsignaciones = await ctx.db
+    .query("assignments")
+    .withIndex("by_fisioId_clinicId", (q) =>
+      q.eq("fisioId", userId).eq("clinicId", clinicId),
+    )
+    .collect();
+  const misPacientes = new Set(misAsignaciones.map((a) => a.pacienteId));
+  return alerts.filter((a) => misPacientes.has(a.pacienteId));
+}
 
 /**
  * Lista alertas pendientes de una clínica concreta. Soporta filtro por
@@ -140,11 +192,18 @@ export const listByPaciente = query({
 });
 
 /**
- * Lista alertas pendientes de las clínicas que gestiona el fisio actual.
+ * Lista alertas pendientes que debe ver el usuario actual en sus clínicas
+ * gestionadas.
+ *
+ * Visibilidad: los **admins** ven todas las alertas de la clínica; los
+ * **fisios** solo ven las de pacientes de los que son responsables
+ * (`assignments`). Los pacientes sin fisio responsable solo aparecen para
+ * admins. Ver `pendingAlertsForFisioEnClinica`.
  *
  * Si `clinicId` se proporciona, restringe el resultado a esa clínica (tras
- * validar que el fisio es miembro con rol de gestión). Sin `clinicId`, el
- * comportamiento legado: union de todas las clínicas gestionadas.
+ * validar que el usuario es miembro con rol de gestión). Sin `clinicId`,
+ * agrega todas las clínicas gestionadas. `paginationOpts` se conserva por
+ * compatibilidad de API; el resultado se devuelve en una única página.
  */
 export const listForCurrentFisio = query({
   args: {
@@ -155,29 +214,17 @@ export const listForCurrentFisio = query({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
 
-    // Caso aislado por clínica activa: validamos pertenencia y delegamos a
-    // la consulta indexada por clínica.
+    // Caso aislado por clínica activa: validamos pertenencia y delegamos al
+    // helper que restringe por fisio responsable (admins ven todo).
     if (args.clinicId) {
       await assertFisioInClinic(ctx, user._id, args.clinicId);
-      if (args.severidad) {
-        return await ctx.db
-          .query("physioAlerts")
-          .withIndex("by_clinicId_estado_severidad", (q) =>
-            q
-              .eq("clinicId", args.clinicId!)
-              .eq("estado", "pendiente")
-              .eq("severidad", args.severidad!),
-          )
-          .order("desc")
-          .paginate(args.paginationOpts);
-      }
-      return await ctx.db
-        .query("physioAlerts")
-        .withIndex("by_clinicId_estado", (q) =>
-          q.eq("clinicId", args.clinicId!).eq("estado", "pendiente"),
-        )
-        .order("desc")
-        .paginate(args.paginationOpts);
+      const page = await pendingAlertsForFisioEnClinica(
+        ctx,
+        user._id,
+        args.clinicId,
+        args.severidad,
+      );
+      return { page, isDone: true, continueCursor: "" };
     }
 
     const clinicIds = await getManagedClinicIds(ctx, user._id);
@@ -186,45 +233,18 @@ export const listForCurrentFisio = query({
       return { page: [] as Doc<"physioAlerts">[], isDone: true, continueCursor: "" };
     }
 
-    // Si el fisio gestiona una sola clínica, delegamos en la query indexada.
-    if (clinicIds.length === 1) {
-      const clinicId = clinicIds[0];
-      if (args.severidad) {
-        return await ctx.db
-          .query("physioAlerts")
-          .withIndex("by_clinicId_estado_severidad", (q) =>
-            q
-              .eq("clinicId", clinicId)
-              .eq("estado", "pendiente")
-              .eq("severidad", args.severidad!),
-          )
-          .order("desc")
-          .paginate(args.paginationOpts);
-      }
-      return await ctx.db
-        .query("physioAlerts")
-        .withIndex("by_clinicId_estado", (q) =>
-          q.eq("clinicId", clinicId).eq("estado", "pendiente"),
-        )
-        .order("desc")
-        .paginate(args.paginationOpts);
-    }
-
-    // Multi-clínica: union manual sin paginar (el caso típico es 1-2 clínicas).
+    // Multi-clínica (legacy): union manual de las alertas que ve el usuario en
+    // cada clínica gestionada, aplicando el mismo filtro por responsable.
     const all: Doc<"physioAlerts">[] = [];
     const clinicIdSet = new Set<Id<"clinics">>(clinicIds);
     for (const clinicId of clinicIdSet) {
-      const docs = await ctx.db
-        .query("physioAlerts")
-        .withIndex("by_clinicId_estado", (q) =>
-          q.eq("clinicId", clinicId).eq("estado", "pendiente"),
-        )
-        .order("desc")
-        .collect();
-      for (const d of docs) {
-        if (args.severidad && d.severidad !== args.severidad) continue;
-        all.push(d);
-      }
+      const docs = await pendingAlertsForFisioEnClinica(
+        ctx,
+        user._id,
+        clinicId,
+        args.severidad,
+      );
+      all.push(...docs);
     }
     all.sort((a, b) => b._creationTime - a._creationTime);
     return { page: all, isDone: true, continueCursor: "" };
