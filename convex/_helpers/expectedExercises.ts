@@ -22,6 +22,22 @@ function isPlanVigente(plan: Doc<"plans">, target: string): boolean {
 }
 
 /**
+ * Colapsa cadenas de versiones: descarta todo plan cuyo `planSucesor` también
+ * esté presente en la lista. Tras un `plans.version`, el plan viejo
+ * (`modificado`) y el nuevo (`activo`) pueden quedar vigentes el mismo día; sin
+ * este filtro ambos se contabilizarían y el plan histórico generaría una barra
+ * de progreso fantasma (`esperados>0, completados=0`) en el timeline y duplicaría
+ * `totalEsperados`. Maneja cadenas de N versiones: cada predecesor se elimina si
+ * su sucesor inmediato sigue en la lista.
+ */
+export function dropSupersededVersions(
+  plans: Doc<"plans">[],
+): Doc<"plans">[] {
+  const ids = new Set(plans.map((p) => p._id));
+  return plans.filter((p) => !(p.planSucesor && ids.has(p.planSucesor)));
+}
+
+/**
  * Devuelve los planes (`activo`, `completado` o `modificado`) vigentes para
  * el paciente en la fecha indicada. Un plan completado o modificado puede
  * seguir teniendo registros de actividad si la fecha cae dentro de su
@@ -64,8 +80,9 @@ export async function getActivePlansForPatientOnDate(
   const vigentes = [...activos, ...completados, ...modificados].filter((p) =>
     isPlanVigente(p, target),
   );
-  if (!clinicId) return vigentes;
-  return vigentes.filter(
+  const sinSuperseder = dropSupersededVersions(vigentes);
+  if (!clinicId) return sinSuperseder;
+  return sinSuperseder.filter(
     (p) => p.clinicId === undefined || p.clinicId === clinicId,
   );
 }

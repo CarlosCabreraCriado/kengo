@@ -73,6 +73,17 @@ export function madridCronHourForLocal2355(
 }
 
 /**
+ * Desplaza una fecha YYYY-MM-DD en `offsetDays` días (independiente de TZ).
+ * Usar offsetDays negativo para retroceder. Devuelve YYYY-MM-DD.
+ */
+export function addDaysToYMD(fechaYMD: string, offsetDays: number): string {
+  const [y, m, d] = fechaYMD.split("-").map(Number);
+  const utc = new Date(Date.UTC(y, m - 1, d));
+  utc.setUTCDate(utc.getUTCDate() + offsetDays);
+  return utc.toISOString().slice(0, 10);
+}
+
+/**
  * Convierte una fecha YYYY-MM-DD en su semana ISO 8601 ("YYYY-Www").
  * Reglas ISO: lunes = primer día de la semana; la primera semana del año
  * es la que contiene el primer jueves (equivalente: contiene el 4 de enero).

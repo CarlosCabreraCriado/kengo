@@ -13,8 +13,26 @@ import {
 } from "../_helpers/authorization";
 import { membershipEsPaciente } from "../_helpers/patientAccess";
 import { diaSemana } from "../_helpers/validators";
-import { getCurrentMadridDate } from "../_helpers/datetime";
+import { addDaysToYMD, getCurrentMadridDate } from "../_helpers/datetime";
 import { _syncPatientActiveStateInClinic } from "../snapshots/internal";
+
+/**
+ * Calcula la `fechaFin` del plan que se versiona para que no solape con el
+ * sucesor: el menor entre la fechaFin actual y el día anterior al inicio del
+ * sucesor. Nunca devuelve una fecha anterior a la `fechaInicio` del plan viejo
+ * (para no invertir el intervalo en el caso degenerado en que el sucesor
+ * empiece antes de que el plan viejo arrancara).
+ */
+function clampFechaFinAlSucesor(
+  fechaFinActual: string,
+  nuevoInicio: string,
+  oldFechaInicio: string | undefined,
+): string {
+  const sinSolape = addDaysToYMD(nuevoInicio, -1);
+  let result = fechaFinActual < sinSolape ? fechaFinActual : sinSolape;
+  if (oldFechaInicio && result < oldFechaInicio) result = oldFechaInicio;
+  return result;
+}
 
 // Encola una push al paciente avisando de que tiene un plan nuevo o
 // recién activado. Llamar SOLO cuando el plan pase a `estado === "activo"`
@@ -339,12 +357,19 @@ export const version = mutation({
     await requireActiveSubscription(ctx, oldPlan.clinicId);
 
     const today = new Date().toISOString().split("T")[0]!;
+    const nuevoInicio = args.fechaInicio ?? today;
 
     // Marcar el plan anterior como "modificado": indica que fue reemplazado
-    // por una nueva versión (no que se completó naturalmente).
+    // por una nueva versión (no que se completó naturalmente). Recortamos su
+    // `fechaFin` al día anterior al inicio del sucesor para que ambas versiones
+    // no queden vigentes el mismo día (evita doble conteo en los rollups).
     await ctx.db.patch(args.oldPlanId, {
       estado: "modificado" as const,
-      fechaFin: oldPlan.fechaFin ?? today,
+      fechaFin: clampFechaFinAlSucesor(
+        oldPlan.fechaFin ?? today,
+        nuevoInicio,
+        oldPlan.fechaInicio,
+      ),
     });
 
     // Create new plan — hereda la clínica del anterior.
@@ -352,7 +377,7 @@ export const version = mutation({
       titulo: args.titulo,
       descripcion: args.descripcion,
       estado: "activo",
-      fechaInicio: args.fechaInicio ?? today,
+      fechaInicio: nuevoInicio,
       fechaFin: args.fechaFin,
       pacienteId: oldPlan.pacienteId,
       fisioId: user._id,

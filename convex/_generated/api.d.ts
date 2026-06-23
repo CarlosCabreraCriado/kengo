@@ -107,6 +107,7 @@ import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
 import type * as migrations_markVersionedAsModificado from "../migrations/markVersionedAsModificado.js";
 import type * as migrations_patchPlanClinicId from "../migrations/patchPlanClinicId.js";
 import type * as migrations_purgeAggregatesForInactivePatients from "../migrations/purgeAggregatesForInactivePatients.js";
+import type * as migrations_recomputeOverlappingPlanVersions from "../migrations/recomputeOverlappingPlanVersions.js";
 import type * as migrations_setTambienEsPacienteForFisios from "../migrations/setTambienEsPacienteForFisios.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as notificationPreferences_mutations from "../notificationPreferences/mutations.js";
@@ -249,6 +250,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/markVersionedAsModificado": typeof migrations_markVersionedAsModificado;
   "migrations/patchPlanClinicId": typeof migrations_patchPlanClinicId;
   "migrations/purgeAggregatesForInactivePatients": typeof migrations_purgeAggregatesForInactivePatients;
+  "migrations/recomputeOverlappingPlanVersions": typeof migrations_recomputeOverlappingPlanVersions;
   "migrations/setTambienEsPacienteForFisios": typeof migrations_setTambienEsPacienteForFisios;
   "migrations/validation": typeof migrations_validation;
   "notificationPreferences/mutations": typeof notificationPreferences_mutations;
