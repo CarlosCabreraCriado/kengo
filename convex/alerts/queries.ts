@@ -68,8 +68,6 @@ export const listByPaciente = query({
         v.literal("comentario"),
         v.literal("dolor_alto"),
         v.literal("inactividad"),
-        v.literal("adherencia_baja"),
-        v.literal("tendencia_negativa"),
       ),
     ),
     estado: v.optional(

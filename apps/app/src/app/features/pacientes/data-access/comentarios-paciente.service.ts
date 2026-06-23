@@ -6,7 +6,7 @@ import type { ComentariosPacienteResponse } from '../../../../types/global';
 interface AlertDoc {
   _id: string;
   _creationTime: number;
-  tipo: 'comentario' | 'dolor_alto' | 'inactividad' | 'adherencia_baja' | 'tendencia_negativa';
+  tipo: 'comentario' | 'dolor_alto' | 'inactividad';
   pacienteId: string;
   clinicId: string;
   exerciseExecutionId?: string;

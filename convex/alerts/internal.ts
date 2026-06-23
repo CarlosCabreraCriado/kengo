@@ -1,17 +1,12 @@
 import { v } from "convex/values";
 import { internalMutation, MutationCtx } from "../_generated/server";
-import { Doc, Id } from "../_generated/dataModel";
+import { Id } from "../_generated/dataModel";
 import { getClinicIdForPatient } from "../_helpers/expectedExercises";
-import { getMadridDateOffset, anioMes } from "../_helpers/datetime";
 
-// Umbrales (AS3–AS5). Modificables sin redeploy mediante un patch del schema
+// Umbrales (AS3). Modificables sin redeploy mediante un patch del schema
 // si producto valida otros valores.
 const AS3_INACTIVIDAD_DIAS_WARN = 5;
 const AS3_INACTIVIDAD_DIAS_ALTA = 10;
-const AS4_ADHERENCIA_PCT_WARN = 50;
-const AS4_ADHERENCIA_PCT_ALTA = 30;
-const AS5_TENDENCIA_PP_WARN = -20;
-const AS5_TENDENCIA_PP_ALTA = -40;
 
 async function getPacienteNombre(
   ctx: MutationCtx,
@@ -143,10 +138,7 @@ export const createDolorAltoAlert = internalMutation({
   },
 });
 
-type AlertaTipoDiaria =
-  | "inactividad"
-  | "adherencia_baja"
-  | "tendencia_negativa";
+type AlertaTipoDiaria = "inactividad";
 
 /**
  * Comprueba si el paciente ya tiene una alerta `pendiente` del tipo dado.
@@ -173,20 +165,10 @@ function severidadInactividad(dias: number): "warn" | "alta" {
   return dias >= AS3_INACTIVIDAD_DIAS_ALTA ? "alta" : "warn";
 }
 
-function severidadAdherencia(pct: number): "warn" | "alta" {
-  return pct < AS4_ADHERENCIA_PCT_ALTA ? "alta" : "warn";
-}
-
-function severidadTendencia(deltaPp: number): "warn" | "alta" {
-  return deltaPp <= AS5_TENDENCIA_PP_ALTA ? "alta" : "warn";
-}
-
 /**
  * Reglas diarias de alertas. Invocada por el cron `daily-maintenance` una
  * vez al día. Genera alertas:
  *  - `inactividad` (AS3): paciente con plan activo y `inactividadDias >= 5`.
- *  - `adherencia_baja` (AS4): paciente con plan activo y adherencia 7d < 50%.
- *  - `tendencia_negativa` (AS5): paciente con tendenciaAdherencia mensual <= -20pp.
  *
  * Reglas comunes:
  *  - Solo se generan para pacientes con plan activo.
@@ -199,8 +181,6 @@ export const runDailyAlertRules = internalMutation({
   handler: async (ctx): Promise<{ generadas: number; porTipo: Record<AlertaTipoDiaria, number> }> => {
     const porTipo: Record<AlertaTipoDiaria, number> = {
       inactividad: 0,
-      adherencia_baja: 0,
-      tendencia_negativa: 0,
     };
 
     // Iterar pacientes con plan activo (universo de la regla).
@@ -216,7 +196,6 @@ export const runDailyAlertRules = internalMutation({
       return { generadas: 0, porTipo };
     }
 
-    const mesActual = anioMes(getMadridDateOffset(0));
     const fechaGeneracion = new Date().toISOString();
 
     let generadas = 0;
@@ -255,70 +234,10 @@ export const runDailyAlertRules = internalMutation({
           generadas += 1;
         }
       }
-
-      // === Regla 2: adherencia_baja ===
-      if (
-        snap7d &&
-        snap7d.adherencia !== undefined &&
-        snap7d.adherencia < AS4_ADHERENCIA_PCT_WARN
-      ) {
-        if (!(await hayPendiente(ctx, pacienteId, "adherencia_baja"))) {
-          const pacienteNombre = await getPacienteNombre(ctx, pacienteId);
-          await ctx.db.insert("physioAlerts", {
-            tipo: "adherencia_baja",
-            severidad: severidadAdherencia(snap7d.adherencia),
-            estado: "pendiente",
-            pacienteId,
-            clinicId,
-            generadoPor: "regla_diaria",
-            adherenciaPct: snap7d.adherencia,
-            pacienteNombre,
-            fechaGeneracion,
-          });
-          porTipo.adherencia_baja += 1;
-          generadas += 1;
-        }
-      }
-
-      // === Regla 3: tendencia_negativa ===
-      // El monthly rollup está particionado por (paciente, clínica, mes).
-      // La alerta es por clínica, así que leemos el rollup de la misma clínica.
-      const monthly: Doc<"monthlyPatientRollup"> | null = await ctx.db
-        .query("monthlyPatientRollup")
-        .withIndex("by_pacienteId_clinicId_anioMes", (q) =>
-          q
-            .eq("pacienteId", pacienteId)
-            .eq("clinicId", clinicId)
-            .eq("anioMes", mesActual),
-        )
-        .unique();
-      const tendencia = monthly?.tendenciaAdherencia;
-      if (
-        tendencia !== undefined &&
-        tendencia !== null &&
-        tendencia <= AS5_TENDENCIA_PP_WARN
-      ) {
-        if (!(await hayPendiente(ctx, pacienteId, "tendencia_negativa"))) {
-          const pacienteNombre = await getPacienteNombre(ctx, pacienteId);
-          await ctx.db.insert("physioAlerts", {
-            tipo: "tendencia_negativa",
-            severidad: severidadTendencia(tendencia),
-            estado: "pendiente",
-            pacienteId,
-            clinicId,
-            generadoPor: "regla_diaria",
-            adherenciaPct: monthly?.adherencia,
-            pacienteNombre,
-            fechaGeneracion,
-          });
-          porTipo.tendencia_negativa += 1;
-          generadas += 1;
-        }
-      }
     }
 
     console.log(
-      `[alerts:daily] pacientes=${pacienteIds.length} generadas=${generadas} inactividad=${porTipo.inactividad} adherencia=${porTipo.adherencia_baja} tendencia=${porTipo.tendencia_negativa}`,
+      `[alerts:daily] pacientes=${pacienteIds.length} generadas=${generadas} inactividad=${porTipo.inactividad}`,
     );
     return { generadas, porTipo };
   },

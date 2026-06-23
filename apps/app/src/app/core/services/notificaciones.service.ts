@@ -9,18 +9,12 @@ import type { NotificacionApp } from '../../../types/global';
 
 interface AlertDoc {
   _id: string;
-  tipo:
-    | 'comentario'
-    | 'dolor_alto'
-    | 'inactividad'
-    | 'adherencia_baja'
-    | 'tendencia_negativa';
+  tipo: 'comentario' | 'dolor_alto' | 'inactividad';
   pacienteId: string;
   pacienteNombre: string;
   texto?: string;
   dolorEscala?: number;
   inactividadDias?: number;
-  adherenciaPct?: number;
   fechaGeneracion: string;
   estado: 'pendiente' | 'revisada' | 'descartada';
 }
@@ -35,12 +29,6 @@ function tituloFromAlert(a: AlertDoc): string {
       return a.inactividadDias !== undefined
         ? `Inactividad (${a.inactividadDias} días)`
         : 'Inactividad';
-    case 'adherencia_baja':
-      return a.adherenciaPct !== undefined
-        ? `Adherencia baja (${a.adherenciaPct}%)`
-        : 'Adherencia baja';
-    case 'tendencia_negativa':
-      return 'Tendencia negativa';
     case 'comentario':
     default:
       return 'Comentario';

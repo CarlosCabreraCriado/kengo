@@ -414,8 +414,6 @@ export default defineSchema({
       v.literal("comentario"),
       v.literal("dolor_alto"),
       v.literal("inactividad"),
-      v.literal("adherencia_baja"),
-      v.literal("tendencia_negativa"),
     ),
     severidad: v.union(
       v.literal("info"),
