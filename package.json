@@ -1,6 +1,6 @@
 {
   "name": "kengo",
-  "version": "0.0.2",
+  "version": "1.0.1",
   "engines": {
     "node": "22.16.0"
   },
