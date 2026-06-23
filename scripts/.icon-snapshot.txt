@@ -9,7 +9,6 @@ arrow_back
 arrow_forward
 assignment
 assignment_ind
-assignment_late
 auto_awesome
 badge
 bedtime
@@ -99,6 +98,7 @@ notifications_off
 open_in_full
 open_in_new
 pause
+pending
 person
 person_add
 person_off
@@ -113,7 +113,6 @@ play_arrow
 play_circle
 policy
 print
-priority_high
 progress_activity
 public
 qr_code_2

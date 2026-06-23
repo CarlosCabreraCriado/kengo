@@ -7,6 +7,7 @@
 # documentados en exploración 2026-06-03:
 task_alt
 bedtime
+pending
 change_circle
 remove_circle
 heart_broken
