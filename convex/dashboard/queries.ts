@@ -21,15 +21,16 @@ import {
   rangeOfDates,
 } from "../_helpers/datetime";
 import { sessionsByClinic } from "../aggregates/sessionsByClinic";
+import { batchGetMap } from "../_helpers/batchGet";
 
+// Zona horaria Madrid (coherente con crons y resto del backend). Antes usaba
+// UTC (`new Date().toISOString()`), que desfasaba el corte "hoy"/"+7d".
 function fechaHoy(): string {
-  return new Date().toISOString().split("T")[0];
+  return getCurrentMadridDate();
 }
 
 function fechaDentroDe(days: number): string {
-  return new Date(Date.now() + days * 86400000)
-    .toISOString()
-    .split("T")[0];
+  return getMadridDateOffset(days);
 }
 
 async function getFisioIdsEnClinicasDelUsuario(
@@ -83,6 +84,10 @@ export const planesPorVencer = query({
       pacienteId: string;
     }> = [];
 
+    // 1) Recolectar los planes que vencen (una query por fisio de la clínica).
+    const planesVencen: Array<(typeof planesPorVencer)[number] & {
+      pacienteId: Id<"users">;
+    }> = [];
     for (const fisioId of fisioIds) {
       const planes = await ctx.db
         .query("plans")
@@ -93,20 +98,33 @@ export const planesPorVencer = query({
       for (const plan of planes) {
         if (!plan.fechaFin) continue;
         if (plan.fechaFin >= hoy && plan.fechaFin <= limite) {
-          const paciente = await ctx.db.get(plan.pacienteId);
-          const nombre = paciente
-            ? `${paciente.firstName} ${paciente.lastName}`.trim()
-            : "";
-          planesPorVencer.push({
+          planesVencen.push({
             id: plan._id,
             titulo: plan.titulo,
             fechaFin: plan.fechaFin,
-            pacienteNombre: nombre,
+            pacienteNombre: "",
             pacienteId: plan.pacienteId,
           });
         }
       }
     }
+
+    // 2) Resolver nombres de paciente en un único batch (antes: un `get` por
+    //    plan dentro del loop → N+1).
+    const pacientes = await batchGetMap(
+      ctx,
+      planesVencen.map((p) => p.pacienteId),
+    );
+    for (const p of planesVencen) {
+      const paciente = pacientes.get(p.pacienteId);
+      planesPorVencer.push({
+        ...p,
+        pacienteNombre: paciente
+          ? `${paciente.firstName} ${paciente.lastName}`.trim()
+          : "",
+      });
+    }
+
     planesPorVencer.sort((a, b) => a.fechaFin.localeCompare(b.fechaFin));
     return planesPorVencer.slice(0, 10);
   },

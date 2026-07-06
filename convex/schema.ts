@@ -236,7 +236,10 @@ export default defineSchema({
     .index("by_pacienteId", ["pacienteId"])
     .index("by_pacienteId_fecha", ["pacienteId", "fecha"])
     .index("by_clinicId_fecha", ["clinicId", "fecha"])
-    .index("by_pacienteId_estado", ["pacienteId", "estado"]),
+    .index("by_pacienteId_estado", ["pacienteId", "estado"])
+    // Cierre nocturno: trae solo las sesiones `en_curso` con fecha < hoy sin
+    // escanear toda la tabla (`closeOpenSessionsAtEndOfDay`).
+    .index("by_estado_fecha", ["estado", "fecha"]),
 
   // === EJECUCIONES DE EJERCICIO (rediseño — sustituye a `planRecords`) ===
   // Cada ejecución pertenece a una sesión. Sin denormalizaciones de nombre

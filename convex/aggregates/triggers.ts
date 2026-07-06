@@ -8,8 +8,6 @@ import type {
 } from "convex/server";
 import type { Value as ConvexValue } from "convex/values";
 import { DataModel } from "../_generated/dataModel";
-import { executionsByPaciente } from "./executionsByPaciente";
-import { executionsByClinic } from "./executionsByClinic";
 import { executionsByPacienteDolor } from "./executionsByPacienteDolor";
 import { sessionsByClinic } from "./sessionsByClinic";
 import { plansByClinicActive } from "./plansByClinicActive";
@@ -65,9 +63,11 @@ function filteredTrigger<
 export const triggers = new Triggers<DataModel>();
 
 // === exerciseExecutions ===
-// Aggregates simples: la inserción se hace siempre (sin filtro).
-triggers.register("exerciseExecutions", executionsByPaciente.trigger());
-triggers.register("exerciseExecutions", executionsByClinic.trigger());
+// NOTA: `executionsByPaciente` y `executionsByClinic` ya NO se registran: eran
+// aggregates write-only (nadie los lee; el cálculo migró a `dailyPatientRollup`,
+// ver snapshots/internal.ts). Se elimina el coste de escritura en la ruta
+// caliente de `executions.create`. Sus componentes siguen en convex.config.ts;
+// su teardown definitivo es una operación de deploy aparte.
 
 // Filtrado: sólo ejecuciones completadas con dolor reportado.
 triggers.register(

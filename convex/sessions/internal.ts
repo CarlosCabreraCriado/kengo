@@ -269,15 +269,19 @@ export const closeOpenSessionsAtEndOfDay = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ cerradas: number }> => {
     const hoy = getCurrentMadridDate();
-    const abiertas = (await ctx.db.query("sessions").collect()).filter(
-      (s) => s.estado === "en_curso",
-    );
+    // Índice `by_estado_fecha`: solo las sesiones `en_curso` con fecha
+    // estrictamente anterior a hoy (las de fecha=hoy siguen abiertas; el cron
+    // correrá mañana). Evita escanear toda la tabla `sessions`.
+    const abiertas = await ctx.db
+      .query("sessions")
+      .withIndex("by_estado_fecha", (q) =>
+        q.eq("estado", "en_curso").lt("fecha", hoy),
+      )
+      .collect();
 
     let cerradas = 0;
     for (const s of abiertas) {
-      // Solo cerramos las sesiones cuya `fecha` es estrictamente anterior
-      // a hoy. Sesiones con fecha=hoy siguen abiertas (cron correrá mañana).
-      if (!s.fecha || s.fecha >= hoy) continue;
+      if (!s.fecha) continue;
       await closeImpl(ctx, s._id, "cron_nocturno");
       cerradas += 1;
     }
