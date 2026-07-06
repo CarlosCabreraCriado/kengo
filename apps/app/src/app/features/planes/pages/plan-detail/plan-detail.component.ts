@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { assetUrl } from '../../../../core/utils/asset-url';
@@ -57,6 +57,7 @@ import { PlanMiniCalendarComponent } from '../../components/plan-mini-calendar/p
     PlanWeekDotsComponent,
     PlanMiniCalendarComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-detail.component.html',
   styleUrl: './plan-detail.component.css',
   host: {

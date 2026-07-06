@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   inject,
   OnDestroy,
@@ -49,6 +50,7 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
     Ui2IconBadgeComponent,
   ],
   animations: [slideAnimation, fadeAnimation],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="rp-shell">
       <main class="rp-main" [@slide]="pantallaIndex()">

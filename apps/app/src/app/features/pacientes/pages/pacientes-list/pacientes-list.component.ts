@@ -9,6 +9,7 @@ import {
   HostListener,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
@@ -266,18 +267,15 @@ export class PacientesListComponent implements OnInit, OnDestroy {
   );
 
   readonly pacientesRes = {
+    // Computed puro: solo mapea el resultado de la query. La carga de datos
+    // complementarios (asignaciones + métricas) vive en un `effect()` del
+    // constructor, no aquí, para no mezclar lectura con efectos de red.
     value: computed<Usuario[]>(() => {
       const result = this.pacientesQuery.value();
       if (!result) return [];
-      const usuarios = result.results.map((u) =>
+      return result.results.map((u) =>
         this.sessionService.transformarUsuarioConvex(u),
       );
-      // Disparar carga de datos complementarios cuando llegan los pacientes
-      queueMicrotask(() => {
-        this.cargarAsignaciones();
-        this.cargarMetricas();
-      });
-      return usuarios;
     }),
     isLoading: this.pacientesQuery.isLoading,
     error: this.pacientesQuery.error,
@@ -296,6 +294,19 @@ export class PacientesListComponent implements OnInit, OnDestroy {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((v) => this.busqueda.set(v));
+
+    // Cuando llega (o cambia) el listado de pacientes, recarga datos
+    // complementarios vía HTTP. Se traquea solo `pacientesQuery.value()`;
+    // las cargas van en `untracked` para no re-disparar el effect por sus
+    // lecturas internas (p. ej. `idsClinicas()`).
+    effect(() => {
+      const result = this.pacientesQuery.value();
+      if (!result) return;
+      untracked(() => {
+        this.cargarAsignaciones();
+        this.cargarMetricas();
+      });
+    });
 
     // Marca la página como "ya cargada" la primera vez que la query
     // devuelve un resultado (o cuando no hay clínica que consultar, en cuyo
@@ -322,8 +333,14 @@ export class PacientesListComponent implements OnInit, OnDestroy {
     this.pageLoader.unregister(this.PAGE_LOADER_KEY);
   }
 
-  /** True mientras las métricas (HTTP) están cargando — para mostrar skeleton. */
-  readonly metricasCargando = computed(() => Object.keys(this.metricasMap()).length === 0);
+  /**
+   * True mientras las métricas (HTTP) están cargando — para mostrar skeleton.
+   * Se basa en un flag que se activa tras la primera respuesta (éxito o
+   * error), no en si el mapa está vacío: una clínica sin métricas dejaría el
+   * skeleton encendido para siempre.
+   */
+  private readonly metricasCargadas = signal(false);
+  readonly metricasCargando = computed(() => !this.metricasCargadas());
 
   avatarUrl(p: Usuario): string | null {
     const id_avatar = p?.avatar;
@@ -525,8 +542,11 @@ export class PacientesListComponent implements OnInit, OnDestroy {
       .getMetricasBulk()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (metricas) => this.metricasMap.set(metricas),
-        error: () => undefined,
+        next: (metricas) => {
+          this.metricasMap.set(metricas);
+          this.metricasCargadas.set(true);
+        },
+        error: () => this.metricasCargadas.set(true),
       });
   }
 }

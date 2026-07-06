@@ -603,9 +603,12 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     }
     this.cargarPaciente(pacienteId);
     this.cargarPlanes(pacienteId);
-    this.cargarCumplimiento(pacienteId);
+    // Cumplimiento y comentarios cargan en paralelo, pero el agrupado de
+    // sesiones necesita los comentarios: le pasamos la promesa para que
+    // espere solo en el paso final (evita pintar sesiones sin comentarios).
+    const comentariosReady = this.cargarComentarios(pacienteId);
+    this.cargarCumplimiento(pacienteId, comentariosReady);
     this.cargarSnapshotDolor(pacienteId);
-    this.cargarComentarios(pacienteId);
     this.cargarFisioResponsable(pacienteId);
   }
 
@@ -672,7 +675,10 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async cargarCumplimiento(pacienteId: string): Promise<void> {
+  private async cargarCumplimiento(
+    pacienteId: string,
+    comentariosReady?: Promise<void>,
+  ): Promise<void> {
     this.isLoadingSesiones.set(true);
     this.isLoadingEstadisticas.set(true);
 
@@ -700,6 +706,10 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
               diasConActividad.map((d) => d.fecha),
             )
           : [];
+
+      // Espera a que los comentarios estén cargados antes de agrupar, para
+      // que las sesiones se pinten ya con sus comentarios asociados.
+      await comentariosReady;
 
       const sesionesAg = this.cumplimientoService.buildSesionesAgrupadas(
         dias,

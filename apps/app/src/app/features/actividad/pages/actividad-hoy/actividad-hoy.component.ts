@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
@@ -79,6 +80,7 @@ interface DiaProximoConEjercicios {
     Ui2SectionComponent,
     Ui2SpinnerComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-hoy.component.html',
   styleUrl: './actividad-hoy.component.css',
   host: {

@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   Output,
   EventEmitter,
@@ -33,6 +34,7 @@ import {
     Ui2PillComponent,
     Ui2SectionComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './resumen-sesion.component.html',
   styleUrl: './resumen-sesion.component.css',
   host: {

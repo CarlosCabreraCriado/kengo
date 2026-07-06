@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   inject,
   OnInit,
@@ -75,6 +76,7 @@ import { PlanWeekDotsComponent } from '../../components/plan-week-dots/plan-week
     PlanDayTogglesComponent,
     PlanWeekDotsComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-builder.component.html',
   styleUrl: './plan-builder.component.css',
   host: {

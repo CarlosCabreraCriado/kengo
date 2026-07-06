@@ -38,6 +38,10 @@ export const routes: Routes = [
 
   {
     path: 'onboarding',
+    // Guard en la ruta `loadChildren` (no solo en la hija) para no descargar
+    // el bundle de onboarding a usuarios sin sesión. OnboardingGuard aquí no
+    // hace loop: solo redirige a /inicio cuando el usuario YA tiene clínica.
+    canActivate: [AuthGuard, OnboardingGuard],
     loadChildren: () =>
       import('./features/onboarding/onboarding.routes').then(
         (m) => m.ONBOARDING_ROUTES,

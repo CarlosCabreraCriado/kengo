@@ -45,19 +45,20 @@ export class MetricasPacientesService {
 
     if (!clinicIds || clinicIds.length === 0) return {};
 
-    const all: SnapshotDoc[] = [];
-    for (const clinicId of clinicIds) {
-      const snaps = (await this.convex.query(
-        api.snapshots.queries.getPatientMetrics,
-        {
-          clinicId: clinicId as any,
-          ventana,
-          ordenarPor: 'adherencia',
-          limit: 200,
-        },
-      )) as SnapshotDoc[];
-      for (const s of snaps) all.push(s);
-    }
+    // Una query por clínica, en paralelo (antes era secuencial: latencia
+    // lineal con el nº de clínicas gestionadas).
+    const perClinic = await Promise.all(
+      clinicIds.map(
+        (clinicId) =>
+          this.convex.query(api.snapshots.queries.getPatientMetrics, {
+            clinicId: clinicId as never,
+            ventana,
+            ordenarPor: 'adherencia',
+            limit: 200,
+          }) as Promise<SnapshotDoc[]>,
+      ),
+    );
+    const all: SnapshotDoc[] = perClinic.flat();
 
     const out: MetricasPacientesBulk = {};
     for (const s of all) {
