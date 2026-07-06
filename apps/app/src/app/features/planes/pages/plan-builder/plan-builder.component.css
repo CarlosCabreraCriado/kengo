@@ -137,10 +137,18 @@
 }
 
 /* ===== Date inputs ===== */
+/* minmax(0, 1fr): el <input type="date"> nativo (iOS/WebKit) tiene un ancho
+   mínimo intrínseco que con `1fr` (= minmax(auto, 1fr)) desborda la celda y
+   solapa la columna vecina en pantallas estrechas. */
 .pb-dates {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+}
+@media (max-width: 360px) {
+  .pb-dates {
+    grid-template-columns: 1fr;
+  }
 }
 .pb-date-field {
   display: flex;
@@ -154,8 +162,17 @@
   color: var(--ink-500);
   text-transform: uppercase;
 }
-.pb-date-input {
-  width: 100%;
+/* Shell visible del campo de fecha. El input date nativo va invisible y
+   estirado encima (absoluto): en iOS/WKWebView el input date impone un ancho
+   mínimo intrínseco (shadow DOM) que ignora min-width:0 y appearance:none,
+   desbordando la celda del grid; fuera del flujo no puede solapar y el tap
+   sigue abriendo el picker nativo. */
+.pb-date-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 41px;
   padding: 10px 12px;
   border: 1px solid rgba(var(--kengo-primary-rgb), 0.3);
   border-radius: 12px;
@@ -165,11 +182,30 @@
   color: var(--ink-900);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-.pb-date-input:focus {
-  outline: none;
+.pb-date-shell:focus-within {
   border-color: var(--kengo-primary);
   background: white;
   box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
+}
+.pb-date-shell__value {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pb-date-shell__value--empty {
+  color: var(--ink-400);
+}
+.pb-date-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .pb-duration-tip {
@@ -532,6 +568,18 @@
   margin: 0 auto;
   z-index: var(--z-sticky);
   animation: pb-cta-enter 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  transition:
+    opacity var(--kb-transition-duration) var(--kb-transition-easing),
+    transform var(--kb-transition-duration) var(--kb-transition-easing);
+}
+/* Teclado abierto: el CTA fixed está anclado al viewport, que se encoge con
+   `Keyboard.resize` nativo — sin esto el botón "sube" hasta media pantalla
+   tapando el campo en edición. Se desvanece igual que la tab-bar
+   (body.kb-visible, ver styles.css) y reaparece al cerrar el teclado. */
+:host-context(body.kb-visible) .pb-cta-bar {
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
 }
 @media (min-width: 1024px) {
   .pb-cta-bar {

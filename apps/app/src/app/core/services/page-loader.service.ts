@@ -1,5 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
-import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import { GuardsCheckEnd, NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
 
@@ -11,9 +11,13 @@ import { filter } from 'rxjs/operators';
  * `ready === false`, el overlay se muestra sobre el `<router-outlet>`.
  *
  * Además se gestiona un "force show" durante la transición de ruta: en
- * `NavigationStart` el overlay aparece inmediatamente (antes de que el
- * componente destino monte y se registre), y se libera tras `NavigationEnd`
- * con un pequeño grace period para que la página tenga tiempo de registrarse.
+ * `GuardsCheckEnd` (guards resueltos, la navegación sigue adelante) el
+ * overlay aparece antes de que el componente destino monte y se registre,
+ * y se libera tras `NavigationEnd` con un pequeño grace period para que la
+ * página tenga tiempo de registrarse. No se usa `NavigationStart` a
+ * propósito: se emite antes de los `canDeactivate`, y cubriría la página
+ * con el overlay mientras un guard asíncrono (p.ej. el diálogo de "cambios
+ * sin guardar") todavía puede cancelar la navegación → flicker.
  */
 @Injectable({ providedIn: 'root' })
 export class PageLoaderService {
@@ -46,7 +50,7 @@ export class PageLoaderService {
       .pipe(
         filter(
           (e) =>
-            e instanceof NavigationStart ||
+            e instanceof GuardsCheckEnd ||
             e instanceof NavigationEnd ||
             e instanceof NavigationCancel ||
             e instanceof NavigationError,
@@ -54,12 +58,14 @@ export class PageLoaderService {
         takeUntilDestroyed(),
       )
       .subscribe((event) => {
-        if (event instanceof NavigationStart) {
-          // Mostrar overlay inmediatamente al iniciar navegación. Si nadie
-          // se registra en 350 ms, lo liberamos (la página probablemente no
-          // usa el patrón). Si alguien se registra antes, su signal toma el
-          // control y `forced` se libera al primer tick.
-          this.forceShow(350);
+        if (event instanceof GuardsCheckEnd) {
+          // Mostrar overlay cuando los guards ya han aprobado la navegación
+          // (si un canDeactivate la cancela, shouldActivate llega en false y
+          // no se muestra nada). Si nadie se registra en 350 ms, lo
+          // liberamos (la página probablemente no usa el patrón). Si alguien
+          // se registra antes, su signal toma el control y `forced` se
+          // libera al primer tick.
+          if (event.shouldActivate) this.forceShow(350);
           return;
         }
         // En cualquier finalización (end/cancel/error), libera el force

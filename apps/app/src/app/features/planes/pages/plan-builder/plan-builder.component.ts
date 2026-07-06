@@ -296,6 +296,13 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     return `Plan ${nombrePaciente} ${fechaFormateada}`;
   }
 
+  /** Valor visible del shell de fecha (el input nativo está oculto). */
+  formatFechaInput(ymd: string | null): string {
+    if (!ymd) return '';
+    const [y, m, d] = ymd.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
   private formatDateShort(dateStr: string): string {
     if (!dateStr) return '';
     const [y, m, d] = dateStr.split('-').map(Number);
