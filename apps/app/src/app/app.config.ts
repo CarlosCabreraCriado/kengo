@@ -1,5 +1,5 @@
 import { ApplicationConfig, isDevMode } from '@angular/core';
-import { provideRouter, RouteReuseStrategy } from '@angular/router';
+import { provideRouter, RouteReuseStrategy, withPreloading } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withFetch } from '@angular/common/http';
@@ -8,6 +8,7 @@ import { IMAGE_LOADER } from '@angular/common';
 
 // Core imports
 import { CustomRouteReuseStrategy, provideConvex } from './core';
+import { SessionPreloadStrategy } from './core/config/session-preload.strategy';
 import { isCapacitorNativePlatform } from './core/services/platform.service';
 import { kengoImageLoader } from './core/utils/image-loader';
 import { SESSION_RESETTABLES } from './core/auth/session-resettable';
@@ -16,7 +17,7 @@ import { RutinaBuilderService } from './features/rutinas/data-access/rutina-buil
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
+    provideRouter(routes, withPreloading(SessionPreloadStrategy)),
     provideHttpClient(withFetch()),
     provideAnimationsAsync(), // Still needed for CDK animations
     { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },

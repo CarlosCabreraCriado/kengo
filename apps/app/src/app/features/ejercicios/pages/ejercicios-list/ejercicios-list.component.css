@@ -236,6 +236,11 @@
   background: var(--cream-100);
   box-shadow: var(--shadow-card);
   transition: transform 0.12s ease, box-shadow 0.2s ease;
+  /* Catálogo largo: no renderizar cards fuera del viewport. `auto` como
+     primer valor recuerda el tamaño real tras el primer render; 240px es
+     solo la estimación inicial (ancho ~180px con aspect 3/4). */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 240px;
 }
 
 .el-card-vineta:hover {
@@ -327,6 +332,9 @@
   text-decoration: none;
   color: inherit;
   transition: transform 0.12s ease, box-shadow 0.2s ease;
+  /* Ver nota en .el-card-vineta — media de 88px + padding 10px×2. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 110px;
 }
 
 .el-card-lista:hover {

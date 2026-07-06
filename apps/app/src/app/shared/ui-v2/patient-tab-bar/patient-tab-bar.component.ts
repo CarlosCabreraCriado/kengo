@@ -107,6 +107,9 @@ const DEFAULT_TABS: TabItem[] = [
       color: white;
       box-shadow: 0 6px 16px -4px rgba(var(--kengo-primary-rgb), 0.5);
     }
+    .ui2-tab-bar__item:active:not(.ui2-tab-bar__item--active):not(.ui2-tab-bar__item--disabled) {
+      background: rgba(0, 0, 0, 0.05);
+    }
     .ui2-tab-bar__item--disabled {
       background: transparent;
       color: var(--ink-300);

@@ -2,6 +2,7 @@ import { Component, DestroyRef, NgZone, OnInit, computed, effect, inject, signal
 import {
   RouterOutlet,
   Router,
+  RouteReuseStrategy,
   NavigationCancel,
   NavigationEnd,
 } from '@angular/router';
@@ -19,13 +20,21 @@ import {
   ThemeService,
 } from './core';
 import { ConnectionErrorComponent } from './core/components/connection-error/connection-error.component';
+import { OfflineBannerComponent } from './core/components/offline-banner/offline-banner.component';
 import { ImpersonationBannerComponent } from './features/soporte/components/impersonation-banner/impersonation-banner.component';
 import { PlatformService } from './core/services/platform.service';
 import { OrientationLockService } from './core/services/orientation-lock.service';
 import { KeyboardService } from './core/services/keyboard.service';
+import { BackButtonService } from './core/services/back-button.service';
+import { AppLifecycleService } from './core/services/app-lifecycle.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
 import { PushNotificationService } from './core/services/push-notification.service';
 import { ConvexService } from './core/convex/convex.service';
+import { CustomRouteReuseStrategy } from './core/config/route-reuse-strategy';
+import {
+  ScrollContainerDirective,
+  ScrollContainerService,
+} from './core/services/scroll-container.service';
 import { assetUrl } from './core/utils/asset-url';
 import { DialogService } from './shared/services/dialog/dialog.service';
 import { ToastService } from './shared/services/toast/toast.service';
@@ -60,8 +69,10 @@ import type {
   host: { '[class.impersonating]': 'sessionService.estaImpersonando()' },
   imports: [
     RouterOutlet,
+    ScrollContainerDirective,
     BillingBannerComponent,
     ConnectionErrorComponent,
+    OfflineBannerComponent,
     ImpersonationBannerComponent,
     Ui2CarritoEjerciciosComponent,
     Ui2CreamBgComponent,
@@ -87,6 +98,8 @@ export class AppComponent implements OnInit {
   // el bootstrap (registra listeners de Capacitor y propaga
   // `--keyboard-height` al DOM). No se usa directamente desde el template.
   private keyboard = inject(KeyboardService);
+  private backButton = inject(BackButtonService);
+  private appLifecycle = inject(AppLifecycleService);
   private externalBrowser = inject(ExternalBrowserService);
   private pushNotifications = inject(PushNotificationService);
   private toast = inject(ToastService);
@@ -96,6 +109,9 @@ export class AppComponent implements OnInit {
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
   private clinicasService = inject(ClinicasService);
   private logger = inject(LoggerService);
+  private scrollContainer = inject(ScrollContainerService);
+  // Misma instancia que usa el Router (provista vía useClass en app.config).
+  private routeReuseStrategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
 
   public mostrarNavegacion = false;
 
@@ -362,6 +378,11 @@ export class AppComponent implements OnInit {
       });
     }
 
+    // Botón atrás hardware (solo Android) y ciclo de vida resume/pause
+    // (badge, auto-retry de conexión, refresh tras suspensión larga).
+    this.backButton.init();
+    this.appLifecycle.init();
+
     this.configurarTeclado();
   }
 
@@ -454,6 +475,13 @@ export class AppComponent implements OnInit {
     // Verificar ruta inicial
     this.actualizarNavegacion(this.router.url);
 
+    // El <main> del shell persiste entre navegaciones (envuelve al
+    // router-outlet), así que el scroll se heredaría de la página anterior.
+    // Reset a top en cada cambio de path, EXCEPTO cuando la estrategia de
+    // reuse acaba de re-attachear un componente cacheado (ella restaura la
+    // posición guardada) o cuando solo cambian los query params (filtros).
+    let previousPath = this.router.url.split('?')[0];
+
     // Observar cambios de ruta
     this.router.events
       .pipe(
@@ -465,7 +493,15 @@ export class AppComponent implements OnInit {
       )
       .subscribe((event) => {
         if (event instanceof NavigationEnd) {
-          this.actualizarNavegacion(event.urlAfterRedirects || event.url);
+          const url = event.urlAfterRedirects || event.url;
+          this.actualizarNavegacion(url);
+
+          const path = url.split('?')[0];
+          const wasReattach = this.routeReuseStrategy.consumeReattachFlag();
+          if (path !== previousPath && !wasReattach) {
+            this.scrollContainer.scrollToTop();
+          }
+          previousPath = path;
         }
       });
   }

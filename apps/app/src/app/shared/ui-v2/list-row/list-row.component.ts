@@ -70,6 +70,9 @@ import { Ui2IconBadgeComponent } from '../icon-badge/icon-badge.component';
     .ui2-list-row--clickable:hover {
       background: rgba(0, 0, 0, 0.02);
     }
+    .ui2-list-row--clickable:active {
+      background: rgba(0, 0, 0, 0.05);
+    }
     .ui2-list-row__text {
       flex: 1;
       min-width: 0;

@@ -2,6 +2,9 @@
      de cualquier shell. Solo visible cuando hay impersonación activa. -->
 <app-impersonation-banner />
 
+<!-- Pill de estado de red: "Sin conexión" con debounce / flash de reconexión. -->
+<app-offline-banner />
+
 <!-- Gate de primer paint: hasta que la sesión esté resuelta solo se muestra
      el fondo cream V2, sin nav ni contenido, para evitar el flash del shell
      legacy del modo fisio cuando el rol por defecto aún no se ha sustituido. -->
@@ -35,7 +38,7 @@
           [userName]="firstName()"
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
-        <main class="relative min-h-0 flex-1 overflow-y-auto">
+        <main appScrollContainer class="relative min-h-0 flex-1 overflow-y-auto">
           <router-outlet></router-outlet>
           <ui2-page-loader-overlay></ui2-page-loader-overlay>
         </main>
@@ -51,7 +54,7 @@
         [userName]="userName()"
         [avatarUrl]="avatarUrl()"
       ></ui2-patient-header>
-      <main class="ui2-main-mobile relative min-h-0 flex-1 overflow-y-auto">
+      <main appScrollContainer class="ui2-main-mobile relative min-h-0 flex-1 overflow-y-auto">
         <router-outlet></router-outlet>
         <ui2-page-loader-overlay></ui2-page-loader-overlay>
       </main>
@@ -91,7 +94,7 @@
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
         <app-billing-banner></app-billing-banner>
-        <main class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <main appScrollContainer class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
           <router-outlet></router-outlet>
           <ui2-page-loader-overlay></ui2-page-loader-overlay>
         </main>
@@ -108,6 +111,7 @@
         [avatarUrl]="avatarUrl()"
       ></ui2-patient-header>
       <main
+        appScrollContainer
         class="ui2-main-mobile relative flex min-h-0 flex-1 flex-col overflow-y-auto"
       >
         <app-billing-banner></app-billing-banner>

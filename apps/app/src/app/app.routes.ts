@@ -30,6 +30,10 @@ export const routes: Routes = [
   {
     path: 'inicio',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
+    // `data.preload` la consume SessionPreloadStrategy: descarga el chunk en
+    // idle tras iniciar sesión, solo si el rol coincide ('fisio'|'paciente')
+    // o para ambos (true). La precarga NO ejecuta guards.
+    data: { preload: true },
     loadChildren: () =>
       import('./features/dashboard/dashboard.routes').then(
         (m) => m.DASHBOARD_ROUTES,
@@ -73,6 +77,7 @@ export const routes: Routes = [
   {
     path: 'ejercicios',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
+    data: { preload: 'fisio' },
     loadChildren: () =>
       import('./features/ejercicios/ejercicios.routes').then(
         (m) => m.EJERCICIOS_ROUTES,
@@ -97,6 +102,7 @@ export const routes: Routes = [
   {
     path: 'mis-pacientes',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
+    data: { preload: 'fisio' },
     loadChildren: () =>
       import('./features/pacientes/pacientes.routes').then(
         (m) => m.PACIENTES_ROUTES,
@@ -115,6 +121,7 @@ export const routes: Routes = [
   {
     path: 'planes',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
+    data: { preload: 'fisio' },
     loadChildren: () =>
       import('./features/planes/planes.routes').then((m) => m.PLANES_ROUTES),
   },
@@ -122,6 +129,7 @@ export const routes: Routes = [
   {
     path: 'actividad-personal',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
+    data: { preload: 'paciente' },
     loadChildren: () =>
       import('./features/actividad/actividad.routes').then(
         (m) => m.ACTIVIDAD_ROUTES,
@@ -131,6 +139,7 @@ export const routes: Routes = [
   {
     path: 'mi-plan',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
+    data: { preload: 'paciente' },
     loadChildren: () =>
       import('./features/sesion/sesion.routes').then((m) => m.SESION_ROUTES),
   },
@@ -159,6 +168,7 @@ export const routes: Routes = [
   {
     path: 'mensajes',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
+    data: { preload: true },
     loadChildren: () =>
       import('./features/mensajes/mensajes.routes').then(
         (m) => m.MENSAJES_ROUTES,

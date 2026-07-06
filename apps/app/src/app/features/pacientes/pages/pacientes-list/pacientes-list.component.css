@@ -266,6 +266,9 @@
   transition: transform 0.12s ease, box-shadow 0.2s ease;
   font: inherit;
   color: inherit;
+  /* Listas de pacientes largas: no renderizar cards fuera del viewport. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 170px;
 }
 
 .pl-card:hover {

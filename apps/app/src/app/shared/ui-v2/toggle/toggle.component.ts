@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, effect, forwardRef, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { HapticsService } from '../../../core/services/haptics.service';
 
 /**
  * Toggle iOS-style V2 — coral cuando está activo, animación translateX 16px.
@@ -62,6 +63,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   `],
 })
 export class Ui2ToggleComponent implements ControlValueAccessor {
+  private readonly haptics = inject(HapticsService);
+
   readonly checked = input<boolean>(false);
   readonly ariaLabel = input<string>('Toggle');
   readonly valueChange = output<boolean>();
@@ -89,6 +92,7 @@ export class Ui2ToggleComponent implements ControlValueAccessor {
   toggle(): void {
     if (this.disabled()) return;
     const next = !this.state();
+    void this.haptics.impact('light');
     this.internal.set(next);
     this.onChange(next);
     this.onTouched();

@@ -2,10 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { Device } from '@capacitor/device';
-import {
-  FirebaseMessaging,
-  type Notification,
-} from '@capacitor-firebase/messaging';
+import type { Notification } from '@capacitor-firebase/messaging';
 import { ConvexService } from '../convex/convex.service';
 import { PlatformService } from './platform.service';
 import { LoggerService } from './logger.service';
@@ -51,6 +48,17 @@ export class PushNotificationService {
   private cachedDeviceId: string | null = null;
 
   /**
+   * Import dinámico del plugin: el SDK web de Firebase que arrastra
+   * `@capacitor-firebase/messaging` pesa en el bundle inicial y solo se usa
+   * en nativo y después de tener sesión. Con el import diferido, el chunk se
+   * descarga la primera vez que se necesita (init/teardown/clearBadge).
+   */
+  private async plugin() {
+    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
+    return FirebaseMessaging;
+  }
+
+  /**
    * Inicializa el sistema de push para el usuario autenticado actual.
    * Idempotente: si ya se ha inicializado y el token sigue vivo, solo hace
    * un `touch`. Llamar SIEMPRE después de tener sesión válida.
@@ -62,7 +70,8 @@ export class PushNotificationService {
     }
 
     try {
-      const perm = await FirebaseMessaging.requestPermissions();
+      const messaging = await this.plugin();
+      const perm = await messaging.requestPermissions();
       this._permissionState.set(perm.receive as PermissionState);
       if (perm.receive !== 'granted') {
         this._initialized.set(true);
@@ -70,11 +79,11 @@ export class PushNotificationService {
       }
 
       const deviceId = await this.getDeviceId();
-      const { token } = await FirebaseMessaging.getToken();
+      const { token } = await messaging.getToken();
       this._token.set(token);
 
       await this.registerToken(token, deviceId);
-      this.registerListeners();
+      await this.registerListeners();
       this._initialized.set(true);
     } catch (err) {
       this.logger.error('[Push] init falló:', err);
@@ -108,7 +117,8 @@ export class PushNotificationService {
     }
 
     try {
-      await FirebaseMessaging.removeAllListeners();
+      const messaging = await this.plugin();
+      await messaging.removeAllListeners();
     } catch {
       // ignorar
     }
@@ -138,11 +148,13 @@ export class PushNotificationService {
     });
   }
 
-  private registerListeners(): void {
+  private async registerListeners(): Promise<void> {
     if (this.listenersRegistered) return;
     this.listenersRegistered = true;
 
-    FirebaseMessaging.addListener('tokenReceived', async ({ token }) => {
+    const messaging = await this.plugin();
+
+    void messaging.addListener('tokenReceived', async ({ token }) => {
       this._token.set(token);
       try {
         const deviceId = await this.getDeviceId();
@@ -152,7 +164,7 @@ export class PushNotificationService {
       }
     });
 
-    FirebaseMessaging.addListener('notificationActionPerformed', ({ notification }) => {
+    void messaging.addListener('notificationActionPerformed', ({ notification }) => {
       this.navigateForNotification(notification);
     });
 
@@ -163,7 +175,7 @@ export class PushNotificationService {
     // mensaje del propio chat la UI ya está reaccionando (la query reactiva
     // del thread se actualiza sola). Si en el futuro hace falta un toast
     // in-app, este es el listener donde engancharlo.
-    FirebaseMessaging.addListener('notificationReceived', () => {
+    void messaging.addListener('notificationReceived', () => {
       // no-op
     });
   }
@@ -199,7 +211,8 @@ export class PushNotificationService {
   async clearBadge(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
     try {
-      await FirebaseMessaging.removeAllDeliveredNotifications();
+      const messaging = await this.plugin();
+      await messaging.removeAllDeliveredNotifications();
     } catch (err) {
       this.logger.warn('[Push] clearBadge falló (se ignora):', err);
     }

@@ -26,6 +26,10 @@ import {
   Ui2IconBadgeComponent,
 } from '../../../../shared/ui-v2';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
+import {
+  BackButtonService,
+  BackHandler,
+} from '../../../../core/services/back-button.service';
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { Usuario } from '../../../../../types/global';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
@@ -48,12 +52,15 @@ import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builde
   templateUrl: './carrito-ejercicios-v2.component.html',
   styleUrls: ['./carrito-ejercicios-v2.component.css'],
 })
-export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
+export class Ui2CarritoEjerciciosComponent
+  implements AfterViewInit, OnDestroy, BackHandler
+{
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly injector = inject(Injector);
   private readonly dialog = inject(Dialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly backButton = inject(BackButtonService);
 
   readonly svc = inject(PlanBuilderService);
   readonly rutinaSvc = inject(RutinaBuilderService);
@@ -138,10 +145,20 @@ export class Ui2CarritoEjerciciosComponent implements AfterViewInit, OnDestroy {
         CarritoPointers.clear();
       }
     }
+
+    this.backButton.register(this);
   }
 
   ngOnDestroy(): void {
     this.drawerEff?.destroy();
+    this.backButton.unregister(this);
+  }
+
+  /** Botón atrás de Android: si el drawer está abierto, lo cierra. */
+  handleBack(): boolean {
+    if (!this.drawerAbierto()) return false;
+    this.cerrar();
+    return true;
   }
 
   private checkRouteForTab(url: string): void {

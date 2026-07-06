@@ -18,7 +18,11 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            // R8: reduce el APK/AAB y el tiempo de arranque. Los plugins de
+            // Capacitor traen sus consumer-proguard-rules; validar un build
+            // release firmado (push, deep links, plugins) antes de publicar.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

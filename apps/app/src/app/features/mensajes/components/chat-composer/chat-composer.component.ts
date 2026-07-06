@@ -19,6 +19,8 @@ import {
       <input
         class="composer__input"
         type="text"
+        enterkeyhint="send"
+        autocomplete="off"
         [placeholder]="placeholder()"
         [value]="text()"
         [disabled]="disabled()"

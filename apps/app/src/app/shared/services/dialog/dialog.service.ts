@@ -3,6 +3,7 @@ import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { firstValueFrom } from 'rxjs';
 
+import { HapticsService } from '../../../core/services/haptics.service';
 import type { Ui2DialogVariant } from '../../ui-v2';
 
 export interface DialogOptions<D = unknown> {
@@ -54,6 +55,7 @@ const VARIANT_DEFAULTS: Record<
 })
 export class DialogService {
   private dialog = inject(Dialog);
+  private haptics = inject(HapticsService);
 
   /**
    * Apertura genérica. Preferir los shortcuts tipados (`openInformative`,
@@ -180,12 +182,32 @@ export class DialogService {
     this.dialog.closeAll();
   }
 
+  /** true si hay algún diálogo CDK abierto. Lo consulta BackButtonService. */
+  get hasOpenDialogs(): boolean {
+    return this.dialog.openDialogs.length > 0;
+  }
+
+  /**
+   * Cierra el diálogo superior (el último abierto). Pasa por el `close`
+   * interceptado del ref, así que los sheets conservan su animación de
+   * salida. Usado por el botón atrás de Android.
+   */
+  closeTop(): void {
+    this.dialog.openDialogs.at(-1)?.close();
+  }
+
   /**
    * Diálogo de confirmación reutilizable. Reemplaza a `window.confirm()`, que
    * en WebView nativa (Capacitor) puede no renderizarse o bloquear el thread.
    * Resuelve a `true` si el usuario confirma, `false` si cancela o cierra.
    */
   async confirm(data: ConfirmDialogData): Promise<boolean> {
+    // Aviso háptico pre-destructivo: la vibración acompaña a la aparición del
+    // diálogo de confirmación peligrosa (borrar paciente, cancelar plan...).
+    if (data.confirmVariant === 'danger') {
+      void this.haptics.impact('warning');
+    }
+
     // Import dinámico para evitar ciclo con el barrel de ui-v2 y para que el
     // bundle del service no arrastre el componente.
     const { Ui2ConfirmDialogComponent } = await import(

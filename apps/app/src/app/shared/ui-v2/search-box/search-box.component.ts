@@ -23,6 +23,9 @@ let nextId = 0;
       <input
         [id]="searchId"
         type="search"
+        inputmode="search"
+        enterkeyhint="search"
+        autocorrect="off"
         [placeholder]="placeholder()"
         [attr.aria-label]="ariaLabel() ?? placeholder()"
         [disabled]="disabled()"

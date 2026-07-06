@@ -488,21 +488,21 @@
 
 @font-face {
   font-family: kengoFont;
-  src: url(./assets/fonts/SocialGothic-Bold.woff2) format("woff2");
+  src: url(/assets/fonts/SocialGothic-Bold.woff2) format("woff2");
   font-display: swap;
 }
 
 /* Alias V2: misma fuente, nombre alineado con la guía de diseño */
 @font-face {
   font-family: KengoDisplay;
-  src: url(./assets/fonts/SocialGothic-Bold.woff2) format("woff2");
+  src: url(/assets/fonts/SocialGothic-Bold.woff2) format("woff2");
   font-weight: 700;
   font-display: swap;
 }
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji.woff2) format("woff2");
+  src: url(/assets/fonts/galvji.woff2) format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -510,7 +510,7 @@
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji-bold.woff2) format("woff2");
+  src: url(/assets/fonts/galvji-bold.woff2) format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -518,7 +518,7 @@
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji-oblique.woff2) format("woff2");
+  src: url(/assets/fonts/galvji-oblique.woff2) format("woff2");
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -526,7 +526,7 @@
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji-bold-oblique.woff2) format("woff2");
+  src: url(/assets/fonts/galvji-bold-oblique.woff2) format("woff2");
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -551,6 +551,60 @@ body {
   height: 100lvh;
   overflow: hidden;
   background-color: var(--cream-50);
+}
+
+/* =========================================
+   Native feel — comportamiento táctil de app nativa
+   -----------------------------------------
+   Ajustes globales para que la WebView no delate comportamientos de
+   navegador: sin flash de tap, sin rubber-band del documento, sin menú
+   contextual de long-press en chrome de UI. El contenido legible (chat,
+   notas, descripciones) queda fuera a propósito: debe seguir siendo
+   seleccionable/copiable.
+   ========================================= */
+html {
+  -webkit-tap-highlight-color: transparent;
+  /* Evita el auto-ajuste de tamaño de texto al rotar en iOS */
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body {
+  /* El documento nunca rebota: el bounce nativo iOS vive en los <main>
+     internos con overflow-y-auto, que sí lo conservan. */
+  overscroll-behavior-y: none;
+}
+
+/* Chrome de UI no seleccionable. Solo elementos interactivos y de
+   navegación — nunca body/cards/listas enteras. */
+button,
+a,
+label,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+ui2-patient-tab-bar,
+ui2-patient-header,
+ui2-web-topbar,
+ui2-back-button,
+.material-symbols-outlined {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Long-press sobre imágenes: sin menú contextual iOS ni drag fantasma. */
+img {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
+/* Defensa frente a herencia: los campos editables siempre seleccionables. */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* =========================================
@@ -639,7 +693,7 @@ body {
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url(./assets/fonts/material-symbols-subset.woff2) format('woff2');
+  src: url(/assets/fonts/material-symbols-subset.woff2) format('woff2');
 }
 
 .material-symbols-outlined {
@@ -695,6 +749,51 @@ body {
   /* Padding inferior estándar (ya no hay nav móvil) */
   .pb-nav {
     padding-bottom: 1.5rem;
+  }
+
+  /* Feedback táctil estándar para elementos interactivos ui2 sin :active
+     propio (list-row, cta-bar, date-tile, pills/kpi clicables). */
+  .pressable {
+    transition:
+      transform 0.12s ease,
+      opacity 0.12s ease;
+  }
+  .pressable:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+}
+
+/* =========================================
+   Transición de página — fade-in del componente enrutado
+   -----------------------------------------
+   Alternativa ligera a withViewTransitions (incompatible con la
+   CustomRouteReuseStrategy y limitado a iOS 18+). El componente activado
+   por el router-outlet del shell entra con un fade corto. También aplica
+   al re-attach de rutas cacheadas: al ser 150ms es imperceptible como
+   molestia y da continuidad visual.
+   ========================================= */
+@keyframes kengo-page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+main > router-outlet + * {
+  animation: kengo-page-in 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main > router-outlet + * {
+    animation: none;
+  }
+  .pressable,
+  .pressable:active {
+    transition: none;
+    transform: none;
   }
 }
 

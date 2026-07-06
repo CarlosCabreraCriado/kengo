@@ -66,6 +66,9 @@ export interface Ui2SegmentedOption {
       cursor: pointer;
       transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     }
+    .ui2-seg__item:active:not(.ui2-seg__item--active) {
+      background: rgba(0, 0, 0, 0.05);
+    }
     .ui2-seg__item--active {
       background: var(--kengo-primary);
       color: white;

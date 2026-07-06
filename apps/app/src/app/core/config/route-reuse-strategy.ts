@@ -5,6 +5,7 @@ import {
   DetachedRouteHandle,
 } from '@angular/router';
 import { LoggerService } from '../services/logger.service';
+import { ScrollContainerService } from '../services/scroll-container.service';
 
 interface CachedRoute {
   handle: DetachedRouteHandle;
@@ -20,6 +21,12 @@ interface CachedRoute {
 @Injectable({ providedIn: 'root' })
 export class CustomRouteReuseStrategy implements RouteReuseStrategy {
   private logger = inject(LoggerService);
+  private scrollContainer = inject(ScrollContainerService);
+
+  // Flag de un solo uso: retrieve() lo activa cuando la navegación re-attachea
+  // un componente cacheado. AppComponent lo consume en NavigationEnd para NO
+  // resetear el scroll a top en ese caso (la posición se restaura aquí).
+  private navigationWasReattach = false;
 
   // Almacén de rutas cacheadas con su posición de scroll
   private cache = new Map<string, CachedRoute>();
@@ -47,14 +54,28 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
   private cachingEnabled = true;
 
   constructor() {
-    // Escuchar el evento scroll para guardar la posición continuamente
-    if (typeof window !== 'undefined') {
-      window.addEventListener('scroll', () => {
+    // Guardar la posición continuamente. El scroll real NO vive en window
+    // (html/body tienen overflow:hidden) sino en el <main> del shell,
+    // registrado en ScrollContainerService. Los eventos scroll no burbujean,
+    // pero sí se capturan a nivel de documento con capture:true.
+    if (typeof document !== 'undefined') {
+      document.addEventListener('scroll', () => {
         if (this.currentRoute && this.routesToCache.has(this.currentRoute)) {
-          this.scrollPositions.set(this.currentRoute, window.scrollY);
+          this.scrollPositions.set(this.currentRoute, this.scrollContainer.scrollTop);
         }
-      }, { passive: true });
+      }, { capture: true, passive: true });
     }
+  }
+
+  /**
+   * Devuelve true (y resetea el flag) si la última activación de ruta fue un
+   * re-attach desde caché. Un solo consumidor: el scroll-to-top de
+   * AppComponent en NavigationEnd.
+   */
+  consumeReattachFlag(): boolean {
+    const was = this.navigationWasReattach;
+    this.navigationWasReattach = false;
+    return was;
   }
 
   /**
@@ -126,14 +147,13 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
     const cached = this.cache.get(key);
 
     if (cached) {
+      this.navigationWasReattach = true;
+
       // Restaurar la posición del scroll después de que el componente se renderice
       // Usamos requestAnimationFrame + setTimeout para asegurar que el DOM esté listo
       requestAnimationFrame(() => {
         setTimeout(() => {
-          window.scrollTo({
-            top: cached.scrollPosition,
-            behavior: 'instant'
-          });
+          this.scrollContainer.scrollTo(cached.scrollPosition);
         }, 50);
       });
 

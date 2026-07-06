@@ -2,6 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, forwardRef, input, signal
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
+type InputMode = 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
+type EnterKeyHint = 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send';
+type AutoCapitalize = 'off' | 'none' | 'sentences' | 'words' | 'characters';
 
 let nextId = 0;
 
@@ -37,6 +40,12 @@ let nextId = 0;
           [disabled]="disabled()"
           [required]="required()"
           [autocomplete]="autocomplete()"
+          [attr.inputmode]="effectiveInputmode()"
+          [attr.enterkeyhint]="enterkeyhint()"
+          [attr.autocapitalize]="effectiveAutocapitalize()"
+          [attr.autocorrect]="effectiveAutocorrect()"
+          [attr.spellcheck]="spellcheck()"
+          [attr.name]="name()"
           [value]="value()"
           (input)="onInput($event)"
           (blur)="onBlur()"
@@ -145,6 +154,12 @@ export class Ui2InputComponent implements ControlValueAccessor {
   readonly required = input<boolean>(false);
   readonly readonly = input<boolean>(false);
   readonly autocomplete = input<string>('off');
+  readonly inputmode = input<InputMode | null>(null);
+  readonly enterkeyhint = input<EnterKeyHint | null>(null);
+  readonly autocapitalize = input<AutoCapitalize | null>(null);
+  readonly autocorrect = input<'on' | 'off' | null>(null);
+  readonly spellcheck = input<boolean | null>(null);
+  readonly name = input<string | null>(null);
 
   readonly inputId = `ui2-input-${++nextId}`;
   readonly value = signal<string>('');
@@ -154,6 +169,34 @@ export class Ui2InputComponent implements ControlValueAccessor {
   readonly effectiveType = computed(() => {
     if (this.type() === 'password' && this.showPassword()) return 'text';
     return this.type();
+  });
+
+  /* Defaults sensatos derivados del type — el teclado móvil se adapta sin
+     que cada formulario tenga que repetir los atributos. Cualquier valor
+     explícito del consumidor gana sobre el default. */
+  readonly effectiveInputmode = computed<InputMode | null>(() => {
+    if (this.inputmode()) return this.inputmode();
+    switch (this.type()) {
+      case 'email': return 'email';
+      case 'tel': return 'tel';
+      case 'url': return 'url';
+      case 'search': return 'search';
+      default: return null;
+    }
+  });
+
+  readonly effectiveAutocapitalize = computed<AutoCapitalize | null>(() => {
+    if (this.autocapitalize()) return this.autocapitalize();
+    const t = this.type();
+    if (t === 'email' || t === 'password' || t === 'url' || t === 'tel') return 'off';
+    return null;
+  });
+
+  readonly effectiveAutocorrect = computed<'on' | 'off' | null>(() => {
+    if (this.autocorrect()) return this.autocorrect();
+    const t = this.type();
+    if (t === 'email' || t === 'password' || t === 'url' || t === 'tel') return 'off';
+    return null;
   });
 
   private onChange: (value: string) => void = () => undefined;

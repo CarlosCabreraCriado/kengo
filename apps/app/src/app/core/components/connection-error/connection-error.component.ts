@@ -7,6 +7,7 @@ import {
 import { AuthService } from '../../auth/services/auth.service';
 import { SessionService } from '../../auth/services/session.service';
 import { ConvexService } from '../../convex/convex.service';
+import { NetworkService } from '../../services/network.service';
 import { Ui2ButtonComponent } from '../../../shared/ui-v2/button/button.component';
 
 @Component({
@@ -21,11 +22,16 @@ export class ConnectionErrorComponent {
   private auth = inject(AuthService);
   private session = inject(SessionService);
   private convex = inject(ConvexService);
+  private network = inject(NetworkService);
 
   readonly reintentando = signal(false);
+  readonly sinRed = signal(false);
 
   // Mensaje secundario según el último motivo conocido del fallo.
   readonly detalle = (): string => {
+    if (this.sinRed()) {
+      return 'Sigues sin conexión. Comprueba el wifi o los datos móviles.';
+    }
     switch (this.convex.tokenError()) {
       case 'timeout':
         return 'El servidor está tardando demasiado en responder.';
@@ -40,6 +46,15 @@ export class ConnectionErrorComponent {
 
   async reintentar(): Promise<void> {
     if (this.reintentando()) return;
+
+    // Sin red no tiene sentido lanzar el retry (fallaría con timeout tras
+    // varios segundos): avisar de inmediato.
+    if (!this.network.online()) {
+      this.sinRed.set(true);
+      return;
+    }
+    this.sinRed.set(false);
+
     this.reintentando.set(true);
     try {
       await this.auth.reintentarConexion();

@@ -317,9 +317,13 @@ Servir desde `https://kengoapp.com/.well-known/apple-app-site-association` (Cont
 }
 ```
 
-Reemplazar `TEAMID` por el Apple Team ID. Una vez disponible, añadir en Xcode → Signing & Capabilities → Associated Domains: `applinks:kengoapp.com`.
+Reemplazar `TEAMID` por el Apple Team ID.
 
-Hasta que esto exista, los deep links HTTPS (`https://kengoapp.com/magic?t=...`) **no abrirán la app** en iOS — degradan a navegación web normal. El custom scheme `kengo://` sigue funcionando.
+**Estado del repo**: `App.entitlements` ya declara `com.apple.developer.associated-domains` con `applinks:kengoapp.com`, `applinks:www.kengoapp.com` y `webcredentials:kengoapp.com`. Falta la parte externa: (1) activar la capability *Associated Domains* en el App ID del portal de Apple Developer, y (2) publicar el AASA de arriba. Sin ambas, iOS ignora el entitlement en silencio.
+
+`webcredentials:kengoapp.com` permite que iCloud Keychain ofrezca las credenciales del dominio web en la app. **Limitación conocida**: el WebView nativo sirve la app desde `https://app.kengoapp.local` (ver `capacitor.config.ts`), y el autofill de contraseñas dentro del WebView se asocia a ese dominio, no a `kengoapp.com`. Las credenciales guardadas en la web y en la app no se comparten entre sí. **No cambiar `server.hostname`** para "arreglarlo": cambiaría el origin de `localStorage` y todos los usuarios instalados perderían la sesión persistida, el user-cache y el theme-cache.
+
+Hasta que el AASA exista, los deep links HTTPS (`https://kengoapp.com/magic?t=...`) **no abrirán la app** en iOS — degradan a navegación web normal. El custom scheme `kengo://` sigue funcionando.
 
 ### 6.5 Android App Links — `assetlinks.json`
 
@@ -366,6 +370,14 @@ Esto regenera todos los tamaños en `apps/app/ios/App/App/Assets.xcassets/` y `a
 - **Android**: keystore propio (no el `debug.keystore`) y publicación en Play Console (track interno primero).
 
 Estas tareas no se abordaron en esta sesión; viven en una fase posterior.
+
+**Checklist pre-release** (verificar en cada publicación):
+
+- [ ] `aps-environment`: el `App.entitlements` del repo dice `development` (correcto para debug). Al archivar para distribución, Xcode debe firmarlo con `production`. Verificar en el IPA: `codesign -d --entitlements - App.app`.
+- [ ] **R8/minify Android**: `release.minifyEnabled = true` + `shrinkResources = true` ya están en `build.gradle`. Probar un build release **firmado** en dispositivo (push, deep links `kengo://`, cámara, share) antes de subir a Play — las consumer-proguard-rules de los plugins deberían cubrir todo, pero es la única forma de confirmarlo.
+- [ ] **Source maps**: las configs `production` y `native` de `apps/app/project.json` llevan `"sourceMap": false` explícito. Comprobar que `dist/apps/app/browser` no contiene `*.js.map` tras el build de release (`find dist/apps/app/browser -name '*.js.map'` vacío). Si aparecen, el build se hizo con configuración `development`.
+- [ ] **assetlinks.json** publicado y verificado: `adb shell pm get-app-links com.kengoapp.app`.
+- [ ] **apple-app-site-association** publicado + capability *Associated Domains* activa en el App ID.
 
 ### 6.8 Prueba en simulador iOS — primera ejecución
 

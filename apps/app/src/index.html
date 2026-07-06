@@ -4,7 +4,7 @@
     <meta charset="utf-8"/>
     <title>Kengo</title>
     <base href="/"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"/>
     <meta name="theme-color" content="#e75c3e"/>
     <meta name="description" content="Kengo - Plataforma de gestión de fisioterapia"/>
     <meta name="mobile-web-app-capable" content="yes"/>
@@ -14,6 +14,14 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico"/>
     <link rel="apple-touch-icon" href="icons/icon-192x192.png"/>
     <link rel="preconnect" href="https://assets.kengoapp.com" crossorigin/>
+    <!-- Preload de las 3 fuentes críticas del primer frame (body, display e
+         iconos). Las URLs de los @font-face en styles.css son absolutas
+         (/assets/...) a propósito: así el builder no las reescribe a
+         media/*.hash.woff2 y el preload apunta al MISMO recurso (una sola
+         descarga). Las variantes bold/oblique de Galvji no son críticas. -->
+    <link rel="preload" href="assets/fonts/galvji.woff2" as="font" type="font/woff2" crossorigin/>
+    <link rel="preload" href="assets/fonts/SocialGothic-Bold.woff2" as="font" type="font/woff2" crossorigin/>
+    <link rel="preload" href="assets/fonts/material-symbols-subset.woff2" as="font" type="font/woff2" crossorigin/>
     <link rel="manifest" href="manifest.webmanifest">
 </head>
 

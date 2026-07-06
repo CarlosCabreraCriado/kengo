@@ -35,6 +35,10 @@ let nextId = 0;
           [disabled]="disabled()"
           [required]="required()"
           [attr.maxlength]="maxLength()"
+          [attr.enterkeyhint]="enterkeyhint()"
+          [attr.autocapitalize]="autocapitalize()"
+          [attr.spellcheck]="spellcheck()"
+          [attr.name]="name()"
           [style.resize]="resize()"
           [value]="value()"
           (input)="onInput($event)"
@@ -120,6 +124,10 @@ export class Ui2TextareaComponent implements ControlValueAccessor {
   readonly maxLength = input<number | null>(null);
   readonly showCount = input<boolean>(false);
   readonly resize = input<'none' | 'vertical' | 'horizontal' | 'both'>('vertical');
+  readonly enterkeyhint = input<'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send' | null>(null);
+  readonly autocapitalize = input<'off' | 'none' | 'sentences' | 'words' | 'characters' | null>(null);
+  readonly spellcheck = input<boolean | null>(null);
+  readonly name = input<string | null>(null);
 
   readonly textareaId = `ui2-textarea-${++nextId}`;
   readonly value = signal<string>('');

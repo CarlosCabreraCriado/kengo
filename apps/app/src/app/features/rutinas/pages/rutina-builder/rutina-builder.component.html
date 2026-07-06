@@ -196,6 +196,8 @@
                         <span class="rb-dosage-field__label">Series</span>
                         <input
                           type="number"
+                          inputmode="numeric"
+                          enterkeyhint="done"
                           min="1"
                           class="rb-dosage-input"
                           [value]="it.series ?? ''"
@@ -206,6 +208,8 @@
                         <span class="rb-dosage-field__label">Reps</span>
                         <input
                           type="number"
+                          inputmode="numeric"
+                          enterkeyhint="done"
                           min="1"
                           class="rb-dosage-input"
                           [value]="it.repeticiones ?? ''"
@@ -216,6 +220,8 @@
                         <span class="rb-dosage-field__label">Descanso (s)</span>
                         <input
                           type="number"
+                          inputmode="numeric"
+                          enterkeyhint="done"
                           min="0"
                           class="rb-dosage-input"
                           [value]="it.descansoSeg ?? ''"

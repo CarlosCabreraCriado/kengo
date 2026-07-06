@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HapticsService } from '../../../core/services/haptics.service';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -25,6 +26,8 @@ export interface ToastOptions {
   providedIn: 'root'
 })
 export class ToastService {
+  private haptics = inject(HapticsService);
+
   private toastsSignal = signal<Toast[]>([]);
 
   toasts = computed(() => this.toastsSignal());
@@ -32,6 +35,15 @@ export class ToastService {
   private idCounter = 0;
 
   show(message: string, type: ToastType = 'info', options: ToastOptions = {}): string {
+    // Feedback háptico acoplado al toast: es el punto por el que pasan todas
+    // las confirmaciones y errores de la app, así que la vibración acompaña
+    // al resultado de cada acción sin instrumentar cada feature.
+    if (type === 'success') {
+      void this.haptics.impact('success');
+    } else if (type === 'error' || type === 'warning') {
+      void this.haptics.impact('warning');
+    }
+
     const id = `toast-${++this.idCounter}`;
     const duration = options.duration ?? 4000;
 

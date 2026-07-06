@@ -32,6 +32,8 @@
               placeholder="tu@email.com"
               iconLeft="mail"
               autocomplete="email"
+              enterkeyhint="next"
+              name="email"
               formControlName="email"
               [error]="emailError ?? null"
             ></ui2-input>
@@ -43,6 +45,8 @@
                 placeholder="••••••••"
                 iconLeft="lock"
                 autocomplete="current-password"
+                enterkeyhint="go"
+                name="password"
                 formControlName="password"
                 [error]="passwordError ?? null"
               ></ui2-input>

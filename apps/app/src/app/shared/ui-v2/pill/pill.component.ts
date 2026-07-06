@@ -106,7 +106,18 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
       padding: 8px 14px;
       font-size: 12px;
     }
-    .ui2-pill--clickable { cursor: pointer; }
+    .ui2-pill--clickable {
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+    .ui2-pill--clickable:active {
+      transform: scale(0.95);
+      opacity: 0.85;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ui2-pill--clickable,
+      .ui2-pill--clickable:active { transition: none; transform: none; }
+    }
     .ui2-pill__icon {
       flex: 0 0 auto;
       font-size: 12px;
