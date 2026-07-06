@@ -103,7 +103,9 @@ export class SuscripcionComponent {
   protected readonly loading = this.subs.loading;
   protected readonly error = this.subs.error;
 
-  protected readonly clinicId = this.subs.clinicIdAdmin;
+  protected readonly clinicId = computed<string | null>(() =>
+    this.subs.esAdminEnClinicaActiva() ? this.subs.clinicIdActiva() : null,
+  );
 
   protected readonly estadoVm = computed<EstadoVm>(() => {
     const estado = this.suscripcion()?.estado ?? 'none';

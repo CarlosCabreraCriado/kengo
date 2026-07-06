@@ -139,7 +139,6 @@ import type * as sync_actions from "../sync/actions.js";
 import type * as sync_directusClient from "../sync/directusClient.js";
 import type * as sync_internal from "../sync/internal.js";
 import type * as users_actions from "../users/actions.js";
-import type * as users_details from "../users/details.js";
 import type * as users_internal from "../users/internal.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
@@ -282,7 +281,6 @@ declare const fullApi: ApiFromModules<{
   "sync/directusClient": typeof sync_directusClient;
   "sync/internal": typeof sync_internal;
   "users/actions": typeof users_actions;
-  "users/details": typeof users_details;
   "users/internal": typeof users_internal;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;

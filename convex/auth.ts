@@ -6,7 +6,6 @@ import {
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { admin, magicLink } from "better-auth/plugins";
 import { components, internal } from "./_generated/api";
-import { query } from "./_generated/server";
 // `better-auth/minimal` es el inicializador sin Kysely, recomendado para Convex
 // (la persistencia la provee el adapter del componente, no Kysely). Es el mismo
 // `betterAuth` que usa internamente @convex-dev/better-auth.
@@ -255,10 +254,3 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
   }
   return betterAuth(createAuthOptions(ctx));
 };
-
-export const getCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
-    return await authComponent.getAuthUser(ctx);
-  },
-});

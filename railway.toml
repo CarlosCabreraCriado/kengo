@@ -11,6 +11,5 @@ builder = "railpack"
 #   Build Command:  npm run railway:build:frontend
 #   Start Command:  npm run railway:start:frontend
 #
-# BACKEND (system.kengoapp.com):
-#   Build Command:  npm run railway:build:backend
-#   Start Command:  npm run railway:start:backend
+# El backend Node/Express se retiró en la migración completa a Convex; ya no
+# existe servicio BACKEND ni scripts `railway:*:backend`.

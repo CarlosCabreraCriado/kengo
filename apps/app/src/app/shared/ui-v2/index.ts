@@ -33,7 +33,6 @@ export { Ui2InputComponent } from './input/input.component';
 export { Ui2TextareaComponent } from './textarea/textarea.component';
 export { Ui2SelectComponent } from './select/select.component';
 export type { Ui2SelectOption } from './select/select.component';
-export { Ui2CheckboxComponent } from './checkbox/checkbox.component';
 export { Ui2RadioGroupComponent } from './radio-group/radio-group.component';
 export type { Ui2RadioOption } from './radio-group/radio-group.component';
 export { Ui2SearchBoxComponent } from './search-box/search-box.component';
@@ -43,8 +42,6 @@ export type { Ui2SkeletonVariant } from './skeleton/skeleton.component';
 export { Ui2PageLoaderOverlayComponent } from './page-loader-overlay/page-loader-overlay.component';
 export { Ui2BackButtonComponent } from './back-button/back-button.component';
 export { Ui2EmptyStateComponent } from './empty-state/empty-state.component';
-export { Ui2DatepickerComponent } from './datepicker/datepicker.component';
-export type { Ui2DatepickerMode } from './datepicker/datepicker.component';
 export { Ui2ProgressBarComponent } from './progress-bar/progress-bar.component';
 export type {
   Ui2ProgressBarSize,
@@ -82,9 +79,7 @@ export { Ui2DateTileComponent } from './date-tile/date-tile.component';
 export { Ui2HorizontalScrollerComponent } from './horizontal-scroller/horizontal-scroller.component';
 export { Ui2CtaBarComponent } from './cta-bar/cta-bar.component';
 export type { Ui2CtaBarVariant } from './cta-bar/cta-bar.component';
-export { Ui2FisioMessageCardComponent } from './fisio-message-card/fisio-message-card.component';
 export { Ui2ProgressRingComponent } from './progress-ring/progress-ring.component';
-export { Ui2ActivityRingsComponent } from './activity-rings/activity-rings.component';
 export { Ui2ExerciseCardComponent } from './exercise-card/exercise-card.component';
 export { Ui2ClinicHeroCardComponent } from './clinic-hero-card/clinic-hero-card.component';
 export { Ui2SegmentedComponent } from './segmented/segmented.component';
@@ -95,8 +90,6 @@ export { Ui2WebActivityChartComponent } from './web-activity-chart/web-activity-
 export type { Ui2ActivityDay } from './web-activity-chart/web-activity-chart.component';
 export { Ui2NextAppointmentComponent } from './next-appointment/next-appointment.component';
 export type { Ui2AppointmentVm } from './next-appointment/next-appointment.component';
-export { Ui2WebAchievementsListComponent } from './web-achievements-list/web-achievements-list.component';
-export type { Ui2AchievementListItem } from './web-achievements-list/web-achievements-list.component';
 
 // --- Shell paciente ---
 export { Ui2CreamBgComponent } from './cream-bg/cream-bg.component';

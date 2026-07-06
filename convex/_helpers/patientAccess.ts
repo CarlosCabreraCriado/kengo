@@ -18,20 +18,6 @@ export function membershipEsPaciente(
 }
 
 /**
- * @deprecated Usa `resolveAndAssertPacienteId`. Esta función no valida
- * acceso y se mantiene solo para compatibilidad temporal. Su firma se
- * elimina cuando ningún caller la use.
- */
-export async function resolvePacienteId(
-  _ctx: AnyCtx,
-  pacienteId: string | undefined,
-  fallbackUserId: Id<"users">,
-): Promise<Id<"users">> {
-  if (!pacienteId) return fallbackUserId;
-  return pacienteId as Id<"users">;
-}
-
-/**
  * Resuelve el `pacienteId` a operar (el del argumento si llega, o el del
  * usuario autenticado como fallback) **y valida el acceso**: solo se devuelve
  * el id si el `userId` puede acceder a los datos clínicos de ese paciente

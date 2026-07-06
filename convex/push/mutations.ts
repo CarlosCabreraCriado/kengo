@@ -83,27 +83,6 @@ export const unregisterPushToken = mutation({
 });
 
 /**
- * Actualiza `lastSeenAt` del token del usuario actual para el dispositivo
- * dado. Llamado al arrancar la app, idempotente.
- */
-export const touchPushToken = mutation({
-  args: { deviceId: v.string() },
-  handler: async (ctx, { deviceId }) => {
-    const user = await getAuthenticatedUser(ctx);
-    const existing = await ctx.db
-      .query("pushTokens")
-      .withIndex("by_userId_deviceId", (q) =>
-        q.eq("userId", user._id).eq("deviceId", deviceId),
-      )
-      .unique();
-    if (existing) {
-      await ctx.db.patch(existing._id, { lastSeenAt: Date.now() });
-    }
-    return null;
-  },
-});
-
-/**
  * Borra un push token por id. Internal: solo lo invoca la action FCM al
  * recibir UNREGISTERED / INVALID_ARGUMENT (token inválido en el server FCM).
  */

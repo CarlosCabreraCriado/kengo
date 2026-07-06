@@ -59,14 +59,6 @@ export class SubscriptionService {
     return m?.puesto === 'admin';
   });
 
-  /**
-   * @deprecated Usa `clinicIdActiva` (fisio/admin) o `esAdminEnClinicaActiva`
-   * según el caso. Se mantiene como alias hasta migrar todos los callers.
-   */
-  public readonly clinicIdAdmin = computed<string | null>(() => {
-    return this.esAdminEnClinicaActiva() ? this.clinicIdActiva() : null;
-  });
-
   private readonly query = this.convex.watchQuery(
     api.billing.queries.getMyClinicSubscription,
     () => {

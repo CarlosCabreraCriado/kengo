@@ -66,42 +66,6 @@ async function pendingAlertsForFisioEnClinica(
   return alerts.filter((a) => misPacientes.has(a.pacienteId));
 }
 
-/**
- * Lista alertas pendientes de una clínica concreta. Soporta filtro por
- * severidad. Paginada (compatible con `usePaginatedQuery`).
- */
-export const listPendingByClinic = query({
-  args: {
-    clinicId: v.id("clinics"),
-    severidad: v.optional(severidad),
-    paginationOpts: paginationOptsValidator,
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthenticatedUser(ctx);
-    await assertFisioInClinic(ctx, user._id, args.clinicId);
-
-    if (args.severidad) {
-      return await ctx.db
-        .query("physioAlerts")
-        .withIndex("by_clinicId_estado_severidad", (q) =>
-          q
-            .eq("clinicId", args.clinicId)
-            .eq("estado", "pendiente")
-            .eq("severidad", args.severidad!),
-        )
-        .order("desc")
-        .paginate(args.paginationOpts);
-    }
-
-    return await ctx.db
-      .query("physioAlerts")
-      .withIndex("by_clinicId_estado", (q) =>
-        q.eq("clinicId", args.clinicId).eq("estado", "pendiente"),
-      )
-      .order("desc")
-      .paginate(args.paginationOpts);
-  },
-});
 
 /**
  * Lista las alertas (de cualquier estado) asociadas a un paciente concreto.
