@@ -80,6 +80,7 @@
     "@convex-dev/stripe": "^0.1.4",
     "@tailwindcss/postcss": "^4.0.6",
     "better-auth": "1.5.3",
+    "capacitor-native-settings": "^8.1.0",
     "convex": "^1.35.1",
     "express": "^5.1.0",
     "firebase": "^12.13.0",

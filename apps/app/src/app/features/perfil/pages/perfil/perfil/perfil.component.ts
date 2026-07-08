@@ -21,6 +21,8 @@ import { EmailVerificationService } from '../../../../../core/auth/services/emai
 import { ConvexService } from '../../../../../core/convex/convex.service';
 import { StorageService } from '../../../../../core/services/storage.service';
 import { DialogService } from '../../../../../shared/services/dialog';
+import { PushNotificationService } from '../../../../../core/services/push-notification.service';
+import { PlatformService } from '../../../../../core/services/platform.service';
 
 // Types
 import { Usuario } from '../../../../../../types/global';
@@ -80,7 +82,20 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private pageLoader = inject(PageLoaderService);
   private dialogService = inject(DialogService);
   private logger = inject(LoggerService);
+  private pushNotifications = inject(PushNotificationService);
+  private platform = inject(PlatformService);
   private readonly PAGE_LOADER_KEY = 'perfil';
+
+  /**
+   * True en nativo cuando el usuario ha denegado el permiso de notificaciones
+   * en los ajustes del sistema. Los toggles de preferencias siguen funcionando
+   * (son server-side), pero sin permiso del sistema no llegará ninguna push.
+   */
+  readonly notifPermisoDenegado = computed(
+    () =>
+      this.platform.isNative() &&
+      this.pushNotifications.permissionState() === 'denied',
+  );
 
   /** Datos críticos: usuario disponible. */
   readonly pageReady = computed(() => this.sessionService.usuario() !== null);
@@ -177,6 +192,9 @@ export class PerfilComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.formularioCambiado.set(true);
       });
+    // Sincroniza el estado del permiso del sistema para decidir si mostrar el
+    // aviso de "notificaciones desactivadas". Best-effort, solo nativo.
+    void this.pushNotifications.refreshPermissionState();
   }
 
   ngOnDestroy() {
@@ -356,6 +374,30 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   toggleLegal() {
     this.legalExpanded.update((v) => !v);
+  }
+
+  /**
+   * Abre los ajustes de la app en el sistema para que el usuario reactive el
+   * permiso de notificaciones. Import dinámico del plugin para no cargarlo en
+   * el bundle inicial.
+   */
+  async abrirAjustesNotificaciones() {
+    if (!this.platform.isNative()) return;
+    try {
+      const { NativeSettings, IOSSettings, AndroidSettings } = await import(
+        'capacitor-native-settings'
+      );
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.getPlatform() === 'ios') {
+        await NativeSettings.openIOS({ option: IOSSettings.App });
+      } else {
+        await NativeSettings.openAndroid({
+          option: AndroidSettings.ApplicationDetails,
+        });
+      }
+    } catch (err) {
+      this.logger.error('No se pudieron abrir los ajustes del sistema', err);
+    }
   }
 
   async setNotifPref(

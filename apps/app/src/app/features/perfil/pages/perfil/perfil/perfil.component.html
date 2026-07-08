@@ -387,6 +387,30 @@
                   <ui2-spinner size="md" color="primary" label="Cargando preferencias…"></ui2-spinner>
                 </div>
               } @else {
+                @if (notifPermisoDenegado()) {
+                  <div class="perfil-notif-aviso">
+                    <span
+                      class="material-symbols-outlined perfil-notif-aviso__icon"
+                      aria-hidden="true"
+                      >notifications_off</span
+                    >
+                    <div class="perfil-notif-aviso__body">
+                      <p class="perfil-notif-aviso__text">
+                        Las notificaciones están desactivadas en los ajustes del
+                        sistema. Actívalas para recibir avisos de tu plan y
+                        mensajes.
+                      </p>
+                      <ui2-button
+                        variant="secondary"
+                        size="sm"
+                        type="button"
+                        (clicked)="abrirAjustesNotificaciones()"
+                      >
+                        Abrir ajustes
+                      </ui2-button>
+                    </div>
+                  </div>
+                }
                 <ui2-toggle-row
                   icon="chat"
                   title="Mensajes"

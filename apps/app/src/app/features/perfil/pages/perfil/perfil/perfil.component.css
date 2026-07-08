@@ -204,6 +204,37 @@
   gap: 6px;
 }
 
+.perfil-notif-aviso {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+  background: var(--bg-warning, rgb(250 244 233));
+  border: 1px solid var(--border-ink-100, rgb(0 0 0 / 6%));
+}
+
+.perfil-notif-aviso__icon {
+  color: var(--text-warning, rgb(180 120 20));
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.perfil-notif-aviso__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.perfil-notif-aviso__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-ink-700, rgb(60 60 60));
+}
+
 .perfil-form-grid {
   display: grid;
   grid-template-columns: 1fr;
