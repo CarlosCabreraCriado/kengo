@@ -47,6 +47,12 @@ export class PushNotificationService {
   private listenersRegistered = false;
   private cachedDeviceId: string | null = null;
 
+  /** Promesa de un `init()` en curso, para deduplicar llamadas concurrentes. */
+  private initInFlight: Promise<void> | null = null;
+  /** Nº de reintentos ya programados en esta secuencia de init. */
+  private retriesScheduled = 0;
+  private static readonly RETRY_DELAYS_MS = [1000, 5000, 15000];
+
   /**
    * Import dinámico del plugin: el SDK web de Firebase que arrastra
    * `@capacitor-firebase/messaging` pesa en el bundle inicial y solo se usa
@@ -59,11 +65,30 @@ export class PushNotificationService {
   }
 
   /**
-   * Inicializa el sistema de push para el usuario autenticado actual.
-   * Idempotente: si ya se ha inicializado y el token sigue vivo, solo hace
-   * un `touch`. Llamar SIEMPRE después de tener sesión válida.
+   * Inicializa (o refresca) el sistema de push para el usuario autenticado
+   * actual. Idempotente y seguro de llamar múltiples veces: pide permisos si
+   * hace falta, obtiene el token FCM y lo re-registra en Convex (upsert por
+   * dispositivo, que además refresca `lastSeenAt`). Llamar tras tener sesión
+   * válida, y también al volver a foreground o tras un re-login.
+   *
+   * Si `getToken()` o `requestPermissions()` fallan (p. ej. carrera de iOS en
+   * la que el token APNs aún no está disponible), reintenta con backoff
+   * (1 s / 5 s / 15 s) en vez de rendirse hasta reiniciar la app.
    */
-  async init(): Promise<void> {
+  init(): Promise<void> {
+    if (this.initInFlight) return this.initInFlight;
+    this.initInFlight = this.doInit().finally(() => {
+      this.initInFlight = null;
+    });
+    return this.initInFlight;
+  }
+
+  /** Alias semántico para llamadas de "refresco" (foreground/resume). */
+  touch(): Promise<void> {
+    return this.init();
+  }
+
+  private async doInit(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
       this._initialized.set(true);
       return;
@@ -85,9 +110,45 @@ export class PushNotificationService {
       await this.registerToken(token, deviceId);
       await this.registerListeners();
       this._initialized.set(true);
+      this.retriesScheduled = 0;
     } catch (err) {
       this.logger.error('[Push] init falló:', err);
+      this.scheduleRetry();
+    }
+  }
+
+  /**
+   * Programa un reintento de `init()` con backoff. Hasta 3 intentos; tras
+   * agotarlos marca inicializado para no bloquear otras llamadas (un futuro
+   * `resume` volverá a intentarlo).
+   */
+  private scheduleRetry(): void {
+    if (this.retriesScheduled >= PushNotificationService.RETRY_DELAYS_MS.length) {
       this._initialized.set(true);
+      this.retriesScheduled = 0;
+      return;
+    }
+    const delay =
+      PushNotificationService.RETRY_DELAYS_MS[this.retriesScheduled];
+    this.retriesScheduled += 1;
+    setTimeout(() => {
+      void this.init();
+    }, delay);
+  }
+
+  /**
+   * Sincroniza `permissionState` con el estado real del sistema sin pedir
+   * permiso. Útil al volver a foreground: el usuario puede haberlo cambiado
+   * en Ajustes. No registra token; solo actualiza el signal para la UI.
+   */
+  async refreshPermissionState(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) return;
+    try {
+      const messaging = await this.plugin();
+      const perm = await messaging.checkPermissions();
+      this._permissionState.set(perm.receive as PermissionState);
+    } catch (err) {
+      this.logger.warn('[Push] checkPermissions falló (se ignora):', err);
     }
   }
 
@@ -127,6 +188,7 @@ export class PushNotificationService {
 
   private resetLocalState(): void {
     this.listenersRegistered = false;
+    this.retriesScheduled = 0;
     this._token.set(null);
     this._initialized.set(false);
   }

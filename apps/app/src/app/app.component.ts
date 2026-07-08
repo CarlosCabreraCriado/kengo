@@ -244,23 +244,26 @@ export class AppComponent implements OnInit {
     if (this.platform.isNative()) {
       this.configurarPlataformaNativa();
 
-      // Inicializa push notifications una vez tengamos sesión válida con
-      // usuario cargado. El servicio es idempotente; si el usuario hace
-      // logout y vuelve a entrar, `teardown` y luego `init` se encargan
-      // de re-registrar el token.
-      let pushIniciado = false;
+      // Inicializa push notifications cuando hay sesión válida con usuario
+      // cargado. Seguimos el id de usuario en vez de un flag de "ya iniciado":
+      // así un logout→login en caliente (sin reiniciar la app) vuelve a
+      // registrar el token del nuevo usuario. `init()` es idempotente y hace
+      // touch del token en cada llamada.
+      let pushUserId: string | null = null;
       effect(() => {
-        if (pushIniciado) return;
         if (
-          this.sessionService.sesionInicializada() &&
-          this.sessionService.isLoggedIn() &&
-          this.sessionService.usuario()
+          !this.sessionService.sesionInicializada() ||
+          !this.sessionService.isLoggedIn()
         ) {
-          pushIniciado = true;
-          this.pushNotifications.init().catch((err) => {
-            this.logger.error('[Push] init falló desde AppComponent:', err);
-          });
+          pushUserId = null;
+          return;
         }
+        const usuario = this.sessionService.usuario();
+        if (!usuario || usuario.id === pushUserId) return;
+        pushUserId = usuario.id;
+        this.pushNotifications.init().catch((err) => {
+          this.logger.error('[Push] init falló desde AppComponent:', err);
+        });
       });
 
       // Ocultar splash cuando la sesión esté inicializada (evita flash blanco

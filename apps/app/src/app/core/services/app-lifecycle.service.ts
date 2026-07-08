@@ -50,6 +50,15 @@ export class AppLifecycleService {
     // aportan (las verá dentro). Best-effort, no bloquea.
     void this.pushNotifications.clearBadge();
 
+    // Touch del registro push: recupera a usuarios que quedaron sin token por
+    // un fallo previo (carrera APNs, red) y refresca `lastSeenAt`. También
+    // resincroniza el estado de permiso por si lo cambiaron en Ajustes del
+    // sistema mientras la app estaba en background. Best-effort.
+    if (this.sessionService.isLoggedIn()) {
+      void this.pushNotifications.refreshPermissionState();
+      void this.pushNotifications.init();
+    }
+
     // Si quedó visible el overlay de error de conexión, reintentar
     // automáticamente — lo habitual es que la red haya vuelto mientras la
     // app estaba en background.
