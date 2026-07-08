@@ -83,8 +83,10 @@ export const unregisterPushToken = mutation({
 });
 
 /**
- * Borra un push token por id. Internal: solo lo invoca la action FCM al
- * recibir UNREGISTERED / INVALID_ARGUMENT (token inválido en el server FCM).
+ * Borra un push token por id. Internal: solo lo invoca la action FCM cuando
+ * FCM confirma que el token ya no está registrado (404 / UNREGISTERED /
+ * registration-token-not-registered). NO se borra por errores genéricos de
+ * argumento, que pueden deberse a un payload malformado y no al token.
  */
 export const deletePushTokenById = internalMutation({
   args: { tokenId: v.id("pushTokens") },
@@ -94,5 +96,67 @@ export const deletePushTokenById = internalMutation({
       await ctx.db.delete(tokenId);
     }
     return null;
+  },
+});
+
+const NOTIFICATION_KEY = v.union(
+  v.literal("chat"),
+  v.literal("dailyReminder"),
+  v.literal("newPlan"),
+);
+
+const SEND_RESULT = v.union(
+  v.literal("ok"),
+  v.literal("sin_token"),
+  v.literal("prefs_off"),
+  v.literal("error"),
+  v.literal("stale"),
+  v.literal("sin_service_account"),
+);
+
+/**
+ * Registra el resultado de un envío push en `pushSendLog`. Internal: lo invoca
+ * `push.actions.sendPushToUser`. Best-effort para diagnóstico; no debe romper
+ * el envío si falla.
+ */
+export const logPushResult = internalMutation({
+  args: {
+    userId: v.id("users"),
+    notificationKey: v.optional(NOTIFICATION_KEY),
+    resultado: SEND_RESULT,
+    detalle: v.optional(v.string()),
+    createdAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("pushSendLog", {
+      userId: args.userId,
+      notificationKey: args.notificationKey,
+      resultado: args.resultado,
+      detalle: args.detalle,
+      createdAt: args.createdAt,
+    });
+    return null;
+  },
+});
+
+const PUSH_LOG_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Purga registros de `pushSendLog` con más de 30 días. Internal: lo invoca el
+ * cron diario de mantenimiento. Borra hasta 500 por ejecución (el volumen
+ * diario de envíos es bajo, así que basta con un lote).
+ */
+export const purgeOldPushLogs = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - PUSH_LOG_RETENTION_MS;
+    const viejos = await ctx.db
+      .query("pushSendLog")
+      .withIndex("by_createdAt", (q) => q.lt("createdAt", cutoff))
+      .take(500);
+    for (const doc of viejos) {
+      await ctx.db.delete(doc._id);
+    }
+    return viejos.length;
   },
 });

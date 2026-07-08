@@ -32,6 +32,54 @@ function parseServiceAccount(): ServiceAccount | null {
   }
 }
 
+/**
+ * Caché del access token OAuth a nivel de módulo. Los tokens de Google duran
+ * ~1 h; sin caché se pedía uno nuevo por cada paciente del cron diario. El
+ * estado de módulo sobrevive entre invocaciones en entornos calientes de
+ * Convex; en frío simplemente se re-autoriza.
+ */
+let cachedToken: { accessToken: string; expiryMs: number } | null = null;
+const TOKEN_SAFETY_MARGIN_MS = 5 * 60 * 1000;
+
+async function getAccessToken(sa: ServiceAccount): Promise<string | null> {
+  const now = Date.now();
+  if (cachedToken && cachedToken.expiryMs - TOKEN_SAFETY_MARGIN_MS > now) {
+    return cachedToken.accessToken;
+  }
+  const jwt = new JWT({
+    email: sa.client_email,
+    key: sa.private_key,
+    scopes: [FCM_SCOPE],
+  });
+  const { access_token: accessToken, expiry_date: expiryDate } =
+    await jwt.authorize();
+  if (!accessToken) return null;
+  // `expiry_date` viene en epoch ms; si falta, asumir 55 min.
+  cachedToken = {
+    accessToken,
+    expiryMs: expiryDate ?? now + 55 * 60 * 1000,
+  };
+  return accessToken;
+}
+
+const MAX_TRANSIENT_RETRIES = 2;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** ¿El status/cuerpo de FCM indican token muerto (borrar del registro)? */
+function isTokenStale(status: number, body: string): boolean {
+  return (
+    status === 404 ||
+    body.includes("UNREGISTERED") ||
+    body.includes("registration-token-not-registered")
+  );
+}
+
+/** ¿Es un error transitorio que merece reintento? (429 o 5xx) */
+function isTransient(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
 const NOTIFICATION_KEY = v.union(
   v.literal("chat"),
   v.literal("dailyReminder"),
@@ -69,11 +117,32 @@ export const sendPushToUser = internalAction({
     badge: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const log = (
+      resultado:
+        | "ok"
+        | "sin_token"
+        | "prefs_off"
+        | "error"
+        | "stale"
+        | "sin_service_account",
+      detalle?: string,
+    ) =>
+      ctx
+        .runMutation(internal.push.mutations.logPushResult, {
+          userId: args.userId,
+          notificationKey: args.notificationKey,
+          resultado,
+          detalle,
+          createdAt: Date.now(),
+        })
+        .catch((err) => console.error("[Push] logPushResult falló:", err));
+
     const sa = parseServiceAccount();
     if (!sa) {
       console.warn(
         "[Push] FCM_SERVICE_ACCOUNT no configurada, omitiendo envío",
       );
+      await log("sin_service_account");
       return false;
     }
 
@@ -83,6 +152,7 @@ export const sendPushToUser = internalAction({
         { userId: args.userId },
       );
       if (!prefs[args.notificationKey]) {
+        await log("prefs_off");
         return false;
       }
     }
@@ -91,17 +161,14 @@ export const sendPushToUser = internalAction({
       userId: args.userId,
     });
     if (tokens.length === 0) {
+      await log("sin_token");
       return false;
     }
 
-    const jwt = new JWT({
-      email: sa.client_email,
-      key: sa.private_key,
-      scopes: [FCM_SCOPE],
-    });
-    const { access_token: accessToken } = await jwt.authorize();
+    const accessToken = await getAccessToken(sa);
     if (!accessToken) {
       console.error("[Push] No se pudo obtener access token de Google");
+      await log("error", "sin_access_token");
       return false;
     }
 
@@ -116,56 +183,67 @@ export const sendPushToUser = internalAction({
         ? { apns: { payload: { aps: { badge: args.badge } } } }
         : {};
 
-    await Promise.all(
+    // Resultado por token: "ok" | "stale" | "error".
+    const results = await Promise.all(
       tokens.map(async (t: Doc<"pushTokens">) => {
-        const payload = {
+        const body = JSON.stringify({
           message: {
             token: t.token,
             notification: { title: args.title, body: args.body },
             ...(args.data ? { data: args.data } : {}),
             ...apnsBlock,
           },
-        };
+        });
 
-        let res: Response;
-        try {
-          res = await fetch(url, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(payload),
-          });
-        } catch (err) {
+        for (let intento = 0; ; intento++) {
+          let res: Response;
+          try {
+            res = await fetch(url, { method: "POST", headers, body });
+          } catch (err) {
+            console.error(
+              `[Push] Error de red enviando a token ${t._id}:`,
+              err,
+            );
+            return "error" as const;
+          }
+
+          if (res.ok) return "ok" as const;
+
+          const errBody = await res.text();
+
+          if (isTransient(res.status) && intento < MAX_TRANSIENT_RETRIES) {
+            await sleep(1000 * 2 ** intento);
+            continue;
+          }
+
+          const stale = isTokenStale(res.status, errBody);
           console.error(
-            `[Push] Error de red enviando a token ${t._id}:`,
-            err,
+            `[Push] FCM ${res.status} para token ${t._id}${
+              stale ? " (stale, borrando)" : ""
+            }: ${errBody}`,
           );
-          return;
-        }
 
-        if (res.ok) return;
-
-        const errBody = await res.text();
-        const isStale =
-          res.status === 404 ||
-          errBody.includes("UNREGISTERED") ||
-          errBody.includes("registration-token-not-registered") ||
-          (res.status === 400 && errBody.includes("INVALID_ARGUMENT"));
-
-        console.error(
-          `[Push] FCM ${res.status} para token ${t._id}${
-            isStale ? " (stale, borrando)" : ""
-          }: ${errBody}`,
-        );
-
-        if (isStale) {
-          await ctx.runMutation(
-            internal.push.mutations.deletePushTokenById,
-            { tokenId: t._id },
-          );
+          if (stale) {
+            await ctx.runMutation(internal.push.mutations.deletePushTokenById, {
+              tokenId: t._id,
+            });
+            return "stale" as const;
+          }
+          return "error" as const;
         }
       }),
     );
 
-    return true;
+    const okCount = results.filter((r) => r === "ok").length;
+    const staleCount = results.filter((r) => r === "stale").length;
+    const errCount = results.filter((r) => r === "error").length;
+    const detalle = `ok=${okCount} stale=${staleCount} error=${errCount} de ${tokens.length}`;
+
+    if (okCount > 0) {
+      await log("ok", detalle);
+      return true;
+    }
+    await log(staleCount > 0 && errCount === 0 ? "stale" : "error", detalle);
+    return false;
   },
 });

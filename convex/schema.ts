@@ -48,6 +48,35 @@ export default defineSchema({
     .index("by_userId_deviceId", ["userId", "deviceId"])
     .index("by_token", ["token"]),
 
+  // === LOG DE ENVÍOS PUSH ===
+  // Un registro por invocación de `push.actions.sendPushToUser` (resultado
+  // agregado del envío a todos los dispositivos del usuario). Sirve para
+  // diagnosticar quejas a posteriori: los logs del Convex self-hosted apenas
+  // retienen minutos. Un cron diario purga registros con más de 30 días.
+  pushSendLog: defineTable({
+    userId: v.id("users"),
+    notificationKey: v.optional(
+      v.union(
+        v.literal("chat"),
+        v.literal("dailyReminder"),
+        v.literal("newPlan"),
+      ),
+    ),
+    resultado: v.union(
+      v.literal("ok"),
+      v.literal("sin_token"),
+      v.literal("prefs_off"),
+      v.literal("error"),
+      v.literal("stale"),
+      v.literal("sin_service_account"),
+    ),
+    /** Detalle libre: nº de tokens ok/fallidos, status FCM, etc. */
+    detalle: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_userId", ["userId"]),
+
   // === PREFERENCIAS DE NOTIFICACIÓN ===
   // Un registro por usuario; si no existe se asumen defaults (todo true).
   // Cada clave corresponde a una `notificationKey` aceptada por

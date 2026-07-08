@@ -97,4 +97,14 @@ crons.daily(
   {},
 );
 
+// Limpieza del log de envíos push (`pushSendLog`): borra registros con más de
+// 30 días. Hora 04:30 UTC, tras el sync de Directus y lejos del recordatorio
+// de las 17:00.
+crons.daily(
+  "push-log-cleanup",
+  { hourUTC: 4, minuteUTC: 30 },
+  internal.push.mutations.purgeOldPushLogs,
+  {},
+);
+
 export default crons;
