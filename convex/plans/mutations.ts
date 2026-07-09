@@ -12,7 +12,8 @@ import {
   assertCanManagePlan,
 } from "../_helpers/authorization";
 import { membershipEsPaciente } from "../_helpers/patientAccess";
-import { diaSemana } from "../_helpers/validators";
+import { diaSemana, tipoEjercicio } from "../_helpers/validators";
+import { normalizarMetricaEjercicio } from "../_helpers/exercises";
 import { addDaysToYMD, getCurrentMadridDate } from "../_helpers/datetime";
 import { _syncPatientActiveStateInClinic } from "../snapshots/internal";
 
@@ -59,6 +60,7 @@ async function schedulePushNuevoPlan(
 const ejercicioPlanArgs = v.object({
   exerciseId: v.id("exercises"),
   sort: v.number(),
+  tipo: v.optional(tipoEjercicio),
   series: v.optional(v.number()),
   repeticiones: v.optional(v.number()),
   duracionSeg: v.optional(v.number()),
@@ -74,6 +76,7 @@ async function insertPlanExercises(
   ejercicios: Array<{
     exerciseId: any;
     sort: number;
+    tipo?: "repeticiones" | "duracion";
     series?: number;
     repeticiones?: number;
     duracionSeg?: number;
@@ -84,13 +87,15 @@ async function insertPlanExercises(
   }>,
 ) {
   for (const ej of ejercicios) {
+    const { repeticiones, duracionSeg } = normalizarMetricaEjercicio(ej);
     await ctx.db.insert("planExercises", {
       planId,
       exerciseId: ej.exerciseId,
       sort: ej.sort,
+      tipo: ej.tipo,
       series: ej.series,
-      repeticiones: ej.repeticiones,
-      duracionSeg: ej.duracionSeg,
+      repeticiones,
+      duracionSeg,
       descansoSeg: ej.descansoSeg,
       diasSemana: ej.diasSemana,
       instruccionesPaciente: ej.instruccionesPaciente,

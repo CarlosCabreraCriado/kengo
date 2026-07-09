@@ -102,8 +102,13 @@ export const syncFromDirectus = internalAction({
           directusId: e.id_ejercicio,
           nombreEjercicio: e.nombre_ejercicio!.trim(),
           descripcion: e.descripcion ?? undefined,
+          // Normaliza el toggle booleano de Directus al enum interno.
+          tipo: (e.es_por_duracion ? "duracion" : "repeticiones") as
+            | "duracion"
+            | "repeticiones",
           seriesDefecto: toNumberOrUndefined(e.series_defecto),
           repeticionesDefecto: toNumberOrUndefined(e.repeticiones_defecto),
+          duracionDefectoSeg: toNumberOrUndefined(e.duracion_defecto),
           video: e.video ?? undefined,
           portada: e.portada ?? undefined,
           directusUpdatedAt: effectiveUpdatedMs(e),

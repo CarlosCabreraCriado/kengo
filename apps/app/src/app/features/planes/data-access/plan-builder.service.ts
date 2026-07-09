@@ -282,7 +282,7 @@ export class PlanBuilderService implements SessionResettable {
 
   addEjercicio(
     e: Ejercicio,
-    options?: { series?: number; repeticiones?: number },
+    options?: { series?: number; repeticiones?: number; duracionSeg?: number },
   ) {
     this.itemsState.add(e, { ...options, descansoSeg: 20 });
   }
@@ -331,6 +331,7 @@ export class PlanBuilderService implements SessionResettable {
       items: this.items().map((i, index) => ({
         ejercicio: i.ejercicio.id,
         sort: index + 1,
+        tipo: i.tipo,
         series: i.series,
         repeticiones: i.repeticiones,
         duracionSeg: i.duracionSeg,
@@ -368,6 +369,7 @@ export class PlanBuilderService implements SessionResettable {
     items: {
       ejercicio: string;
       sort: number;
+      tipo?: 'repeticiones' | 'duracion';
       series?: number;
       repeticiones?: number;
       duracionSeg?: number;
@@ -401,6 +403,7 @@ export class PlanBuilderService implements SessionResettable {
         ejercicios: payload.items.map((item) => ({
           exerciseId: item.ejercicio as any,
           sort: item.sort,
+          tipo: item.tipo,
           series: item.series,
           repeticiones: item.repeticiones,
           duracionSeg: item.duracionSeg,
@@ -430,6 +433,7 @@ export class PlanBuilderService implements SessionResettable {
       fechaFin: this.fechaFin(),
       items: this.items().map((i) => ({
         ejercicio: i.ejercicio.id,
+        tipo: i.tipo,
         series: i.series,
         repeticiones: i.repeticiones,
         duracionSeg: i.duracionSeg,
@@ -521,6 +525,7 @@ export class PlanBuilderService implements SessionResettable {
         ejercicios: this.items().map((item, i) => ({
           exerciseId: this.resolveExerciseIdFromItem(item),
           sort: i + 1,
+          tipo: item.tipo,
           series: item.series,
           repeticiones: item.repeticiones,
           duracionSeg: item.duracionSeg,
@@ -587,6 +592,7 @@ export class PlanBuilderService implements SessionResettable {
         ejercicios: this.items().map((item, index) => ({
           exerciseId: this.resolveExerciseIdFromItem(item),
           sort: index + 1,
+          tipo: item.tipo,
           series: item.series,
           repeticiones: item.repeticiones,
           duracionSeg: item.duracionSeg,
@@ -625,6 +631,7 @@ export class PlanBuilderService implements SessionResettable {
       const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
         sort: idx + 1,
         ejercicio: e.ejercicio,
+        tipo: e.tipo ?? e.ejercicio.tipo,
         series: e.series ?? 3,
         repeticiones: e.repeticiones ?? 12,
         duracionSeg: e.duracionSeg,
@@ -667,6 +674,7 @@ export class PlanBuilderService implements SessionResettable {
       ejercicios: this.items().map((item, idx) => ({
         ejercicio: item.ejercicio.id,
         sort: idx + 1,
+        tipo: item.tipo,
         series: item.series,
         repeticiones: item.repeticiones,
         duracionSeg: item.duracionSeg,

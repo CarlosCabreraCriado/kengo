@@ -137,9 +137,15 @@
                     <div class="rb-ex__body">
                       <h4 class="rb-ex__name">{{ it.ejercicio.nombre }}</h4>
                       <div class="rb-ex__pills">
-                        <ui2-pill variant="primary" size="sm" icon="repeat">
-                          {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
-                        </ui2-pill>
+                        @if (it.tipo === 'duracion') {
+                          <ui2-pill variant="primary" size="sm" icon="timer">
+                            {{ it.series || 3 }} × {{ it.duracionSeg || 30 }}s
+                          </ui2-pill>
+                        } @else {
+                          <ui2-pill variant="primary" size="sm" icon="repeat">
+                            {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
+                          </ui2-pill>
+                        }
                         @if (it.descansoSeg) {
                           <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
                         }
@@ -204,18 +210,33 @@
                           (change)="updateNumber(i, 'series', $event)"
                         />
                       </label>
-                      <label class="rb-dosage-field">
-                        <span class="rb-dosage-field__label">Reps</span>
-                        <input
-                          type="number"
-                          inputmode="numeric"
-                          enterkeyhint="done"
-                          min="1"
-                          class="rb-dosage-input"
-                          [value]="it.repeticiones ?? ''"
-                          (change)="updateNumber(i, 'repeticiones', $event)"
-                        />
-                      </label>
+                      @if (it.tipo === 'duracion') {
+                        <label class="rb-dosage-field">
+                          <span class="rb-dosage-field__label">Duración (s)</span>
+                          <input
+                            type="number"
+                            inputmode="numeric"
+                            enterkeyhint="done"
+                            min="1"
+                            class="rb-dosage-input"
+                            [value]="it.duracionSeg ?? ''"
+                            (change)="updateNumber(i, 'duracionSeg', $event)"
+                          />
+                        </label>
+                      } @else {
+                        <label class="rb-dosage-field">
+                          <span class="rb-dosage-field__label">Reps</span>
+                          <input
+                            type="number"
+                            inputmode="numeric"
+                            enterkeyhint="done"
+                            min="1"
+                            class="rb-dosage-input"
+                            [value]="it.repeticiones ?? ''"
+                            (change)="updateNumber(i, 'repeticiones', $event)"
+                          />
+                        </label>
+                      }
                       <label class="rb-dosage-field">
                         <span class="rb-dosage-field__label">Descanso (s)</span>
                         <input

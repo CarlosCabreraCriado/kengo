@@ -125,42 +125,81 @@
               </div>
             </div>
 
-            <!-- Repeticiones -->
-            <div class="ed-preset ed-preset--last">
-              <span class="ed-preset__label">Repeticiones</span>
-              <div class="ed-preset__chips">
-                @for (rep of repeticionesPresets; track rep) {
+            @if (esPorDuracion()) {
+              <!-- Duración (segundos) -->
+              <div class="ed-preset ed-preset--last">
+                <span class="ed-preset__label">Duración (s)</span>
+                <div class="ed-preset__chips">
+                  @for (dur of duracionPresets; track dur) {
+                    <button
+                      type="button"
+                      class="ed-chip"
+                      [class.ed-chip--active]="duracionSeleccionada() === dur && !mostrarOtroDuracion()"
+                      [attr.aria-pressed]="duracionSeleccionada() === dur && !mostrarOtroDuracion()"
+                      (click)="seleccionarDuracion(dur)"
+                    >
+                      {{ dur }}
+                    </button>
+                  }
                   <button
                     type="button"
                     class="ed-chip"
-                    [class.ed-chip--active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
-                    [attr.aria-pressed]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
-                    (click)="seleccionarRepeticiones(rep)"
+                    [class.ed-chip--active]="mostrarOtroDuracion()"
+                    [attr.aria-pressed]="mostrarOtroDuracion()"
+                    (click)="seleccionarDuracion('otro')"
                   >
-                    {{ rep }}
+                    Otro
                   </button>
-                }
-                <button
-                  type="button"
-                  class="ed-chip"
-                  [class.ed-chip--active]="mostrarOtroRepeticiones()"
-                  [attr.aria-pressed]="mostrarOtroRepeticiones()"
-                  (click)="seleccionarRepeticiones('otro')"
-                >
-                  Otro
-                </button>
-                @if (mostrarOtroRepeticiones()) {
-                  <input
-                    type="number"
-                    min="1"
-                    class="ed-chip-input"
-                    aria-label="Repeticiones personalizadas"
-                    [value]="repeticionesSeleccionadas()"
-                    (change)="onRepeticionesOtroChange(($any($event.target)).value)"
-                  />
-                }
+                  @if (mostrarOtroDuracion()) {
+                    <input
+                      type="number"
+                      min="1"
+                      class="ed-chip-input"
+                      aria-label="Duración personalizada en segundos"
+                      [value]="duracionSeleccionada()"
+                      (change)="onDuracionOtroChange(($any($event.target)).value)"
+                    />
+                  }
+                </div>
               </div>
-            </div>
+            } @else {
+              <!-- Repeticiones -->
+              <div class="ed-preset ed-preset--last">
+                <span class="ed-preset__label">Repeticiones</span>
+                <div class="ed-preset__chips">
+                  @for (rep of repeticionesPresets; track rep) {
+                    <button
+                      type="button"
+                      class="ed-chip"
+                      [class.ed-chip--active]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                      [attr.aria-pressed]="repeticionesSeleccionadas() === rep && !mostrarOtroRepeticiones()"
+                      (click)="seleccionarRepeticiones(rep)"
+                    >
+                      {{ rep }}
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="ed-chip"
+                    [class.ed-chip--active]="mostrarOtroRepeticiones()"
+                    [attr.aria-pressed]="mostrarOtroRepeticiones()"
+                    (click)="seleccionarRepeticiones('otro')"
+                  >
+                    Otro
+                  </button>
+                  @if (mostrarOtroRepeticiones()) {
+                    <input
+                      type="number"
+                      min="1"
+                      class="ed-chip-input"
+                      aria-label="Repeticiones personalizadas"
+                      [value]="repeticionesSeleccionadas()"
+                      (change)="onRepeticionesOtroChange(($any($event.target)).value)"
+                    />
+                  }
+                </div>
+              </div>
+            }
           </ui2-card>
         }
 

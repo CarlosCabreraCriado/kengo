@@ -73,6 +73,8 @@ async function enrichPlans(ctx: any, plans: any[]) {
               _id: exercise._id,
               nombreEjercicio: exercise.nombreEjercicio,
               descripcion: exercise.descripcion,
+              tipo: exercise.tipo,
+              duracionDefectoSeg: exercise.duracionDefectoSeg,
               portada: exercise.portada,
               video: exercise.video,
             }
@@ -114,6 +116,8 @@ async function loadPlanExercises(ctx: any, planId: any) {
             _id: exercise._id,
             nombreEjercicio: exercise.nombreEjercicio,
             descripcion: exercise.descripcion,
+            tipo: exercise.tipo,
+            duracionDefectoSeg: exercise.duracionDefectoSeg,
             portada: exercise.portada,
             video: exercise.video,
           }

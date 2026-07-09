@@ -4,6 +4,7 @@
  */
 
 import { DiaSemana, UUID } from '../types/common';
+import { TipoEjercicio } from '../domain/exercises';
 
 export type VisibilidadRutina = 'privado' | 'clinica';
 
@@ -24,6 +25,7 @@ export interface CreateRutinaPayload {
 export interface CreateRutinaEjercicioPayload {
   ejercicio: string;
   sort: number;
+  tipo?: TipoEjercicio;
   series?: number;
   repeticiones?: number;
   duracionSeg?: number;
@@ -47,6 +49,7 @@ export interface UpdateRutinaPayload {
  */
 export interface UpdateRutinaEjercicioPayload {
   sort?: number;
+  tipo?: TipoEjercicio;
   series?: number;
   repeticiones?: number;
   duracionSeg?: number;

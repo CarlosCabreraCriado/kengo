@@ -149,6 +149,7 @@ export class RutinaBuilderService implements SessionResettable {
     const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
       sort: idx + 1,
       ejercicio: e.ejercicio,
+      tipo: e.tipo ?? e.ejercicio.tipo,
       series: e.series ?? 3,
       repeticiones: e.repeticiones ?? 12,
       duracionSeg: e.duracionSeg,
@@ -207,6 +208,7 @@ export class RutinaBuilderService implements SessionResettable {
       descripcion: this.descripcion(),
       items: this.items().map((i) => ({
         ejercicio: i.ejercicio.id,
+        tipo: i.tipo,
         series: i.series,
         repeticiones: i.repeticiones,
         duracionSeg: i.duracionSeg,
@@ -245,6 +247,7 @@ export class RutinaBuilderService implements SessionResettable {
       ejercicios: this.items().map((item, idx) => ({
         ejercicio: item.ejercicio.id,
         sort: idx + 1,
+        tipo: item.tipo,
         series: item.series,
         repeticiones: item.repeticiones,
         duracionSeg: item.duracionSeg,
@@ -274,6 +277,7 @@ export class RutinaBuilderService implements SessionResettable {
       ejercicios: this.items().map((item, idx) => ({
         ejercicio: item.ejercicio.id,
         sort: idx + 1,
+        tipo: item.tipo,
         series: item.series,
         repeticiones: item.repeticiones,
         duracionSeg: item.duracionSeg,
@@ -294,6 +298,7 @@ export class RutinaBuilderService implements SessionResettable {
       const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
         sort: idx + 1,
         ejercicio: e.ejercicio,
+        tipo: e.tipo ?? e.ejercicio.tipo,
         series: e.series ?? 3,
         repeticiones: e.repeticiones ?? 12,
         duracionSeg: e.duracionSeg,
@@ -320,7 +325,7 @@ export class RutinaBuilderService implements SessionResettable {
 
   add(
     ejercicio: Ejercicio,
-    options?: { series?: number; repeticiones?: number },
+    options?: { series?: number; repeticiones?: number; duracionSeg?: number },
   ): void {
     this.itemsState.add(ejercicio, options);
   }

@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { diaSemana } from "./_helpers/validators";
+import { diaSemana, tipoEjercicio } from "./_helpers/validators";
 
 export default defineSchema({
   // === USUARIOS ===
@@ -156,8 +156,14 @@ export default defineSchema({
   exercises: defineTable({
     nombreEjercicio: v.string(),
     descripcion: v.optional(v.string()),
+    // Discriminador de métrica por serie: "repeticiones" (por defecto) o
+    // "duracion" (temporizado, p. ej. plancha isométrica). Opcional durante la
+    // migración; los consumidores tratan `undefined` como "repeticiones".
+    tipo: v.optional(tipoEjercicio),
     seriesDefecto: v.optional(v.number()),
     repeticionesDefecto: v.optional(v.number()),
+    // Duración por defecto (segundos) sugerida para ejercicios de tipo "duracion".
+    duracionDefectoSeg: v.optional(v.number()),
     video: v.optional(v.string()),
     portada: v.optional(v.string()),
     directusId: v.optional(v.number()),
@@ -225,6 +231,9 @@ export default defineSchema({
     planId: v.id("plans"),
     exerciseId: v.id("exercises"),
     sort: v.number(),
+    // Denormalizado desde el catálogo: discriminador explícito reps/duración
+    // que viaja con la prescripción y sobrevive a cambios del catálogo.
+    tipo: v.optional(tipoEjercicio),
     series: v.optional(v.number()),
     repeticiones: v.optional(v.number()),
     duracionSeg: v.optional(v.number()),
@@ -503,6 +512,8 @@ export default defineSchema({
     routineId: v.id("routines"),
     exerciseId: v.id("exercises"),
     sort: v.number(),
+    // Denormalizado desde el catálogo (ver planExercises.tipo).
+    tipo: v.optional(tipoEjercicio),
     series: v.optional(v.number()),
     repeticiones: v.optional(v.number()),
     duracionSeg: v.optional(v.number()),

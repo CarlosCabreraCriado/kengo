@@ -341,14 +341,18 @@ export class Ui2CarritoEjerciciosComponent
   }
 
   dosificacion(it: {
+    tipo?: 'repeticiones' | 'duracion';
     series?: number;
     repeticiones?: number;
     duracionSeg?: number;
   }): string {
     const parts: string[] = [];
     parts.push(`${it.series ?? '—'} series`);
-    parts.push(`${it.repeticiones ?? '—'} reps`);
-    if (it.duracionSeg) parts.push(`${it.duracionSeg}s`);
+    if (it.tipo === 'duracion') {
+      parts.push(`${it.duracionSeg ?? '—'}s`);
+    } else {
+      parts.push(`${it.repeticiones ?? '—'} reps`);
+    }
     return parts.join(' · ');
   }
 }

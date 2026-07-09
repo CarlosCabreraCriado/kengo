@@ -124,6 +124,7 @@ export class RutinasService {
       const ejercicios = payload.ejercicios.map((item, idx) => ({
         exerciseId: item.ejercicio as any,
         sort: item.sort ?? idx + 1,
+        tipo: item.tipo,
         series: item.series,
         repeticiones: item.repeticiones,
         duracionSeg: item.duracionSeg,
@@ -194,6 +195,7 @@ export class RutinasService {
       const ejercicios = payload.ejercicios.map((item, idx) => ({
         exerciseId: item.ejercicio as any,
         sort: item.sort ?? idx + 1,
+        tipo: item.tipo,
         series: item.series,
         repeticiones: item.repeticiones,
         duracionSeg: item.duracionSeg,
@@ -283,11 +285,14 @@ export class RutinasService {
             descripcion: ej.descripcion ?? '',
             portada: ej.portada ?? '',
             video: ej.video ?? '',
+            tipo: ej.tipo,
             seriesDefecto: ej.seriesDefecto,
             repeticionesDefecto: ej.repeticionesDefecto,
+            duracionDefectoSeg: ej.duracionDefectoSeg,
             categoria: ej.categorias ?? [],
           } as Ejercicio)
         : ({} as Ejercicio),
+      tipo: re.tipo ?? re.ejercicio?.tipo,
       series: re.series,
       repeticiones: re.repeticiones,
       duracionSeg: re.duracionSeg,

@@ -18,8 +18,10 @@ export type DirectusEjercicio = {
   id_ejercicio: number;
   nombre_ejercicio: string | null;
   descripcion: string | null;
+  es_por_duracion: boolean | null;
   series_defecto: string | number | null;
   repeticiones_defecto: string | number | null;
+  duracion_defecto: string | number | null;
   video: string | null;
   portada: string | null;
   date_created: string | null;
@@ -100,8 +102,10 @@ export async function fetchEjerciciosUpdatedSince(
     "id_ejercicio",
     "nombre_ejercicio",
     "descripcion",
+    "es_por_duracion",
     "series_defecto",
     "repeticiones_defecto",
+    "duracion_defecto",
     "video",
     "portada",
     "date_created",

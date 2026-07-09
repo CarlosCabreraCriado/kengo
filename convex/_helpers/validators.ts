@@ -10,6 +10,11 @@ export const diaSemana = v.union(
   v.literal("D"),
 );
 
+export const tipoEjercicio = v.union(
+  v.literal("repeticiones"),
+  v.literal("duracion"),
+);
+
 export const estadoPlan = v.union(
   v.literal("borrador"),
   v.literal("activo"),

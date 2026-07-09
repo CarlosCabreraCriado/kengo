@@ -5,6 +5,7 @@
 
 import { DiaSemana, UUID } from '../types/common';
 import { EstadoPlan } from '../records/plans.record';
+import { TipoEjercicio } from '../domain/exercises';
 
 /**
  * Payload para crear un nuevo plan
@@ -26,6 +27,7 @@ export interface CreatePlanPayload {
 export interface CreatePlanEjercicioPayload {
   ejercicio: string;
   sort: number;
+  tipo?: TipoEjercicio;
   series?: number;
   repeticiones?: number;
   duracionSeg?: number;
@@ -51,6 +53,7 @@ export interface UpdatePlanPayload {
  */
 export interface UpdatePlanEjercicioPayload {
   sort?: number;
+  tipo?: TipoEjercicio;
   series?: number;
   repeticiones?: number;
   duracionSeg?: number;

@@ -7,11 +7,13 @@ import {
   checkClinicPermission,
 } from "../_helpers/permissions";
 import { getRoutineIfOwned } from "../_helpers/authorization";
-import { diaSemana } from "../_helpers/validators";
+import { diaSemana, tipoEjercicio } from "../_helpers/validators";
+import { normalizarMetricaEjercicio } from "../_helpers/exercises";
 
 const ejercicioRutinaValidator = v.object({
   exerciseId: v.id("exercises"),
   sort: v.number(),
+  tipo: v.optional(tipoEjercicio),
   series: v.optional(v.number()),
   repeticiones: v.optional(v.number()),
   duracionSeg: v.optional(v.number()),
@@ -67,13 +69,16 @@ export const create = mutation({
     });
 
     for (const ejercicio of args.ejercicios) {
+      const { repeticiones, duracionSeg } =
+        normalizarMetricaEjercicio(ejercicio);
       await ctx.db.insert("routineExercises", {
         routineId,
         exerciseId: ejercicio.exerciseId,
         sort: ejercicio.sort,
+        tipo: ejercicio.tipo,
         series: ejercicio.series,
-        repeticiones: ejercicio.repeticiones,
-        duracionSeg: ejercicio.duracionSeg,
+        repeticiones,
+        duracionSeg,
         descansoSeg: ejercicio.descansoSeg,
         diasSemana: ejercicio.diasSemana,
         instruccionesPaciente: ejercicio.instruccionesPaciente,
@@ -148,13 +153,16 @@ export const update = mutation({
       }
 
       for (const ejercicio of args.ejercicios) {
+        const { repeticiones, duracionSeg } =
+          normalizarMetricaEjercicio(ejercicio);
         await ctx.db.insert("routineExercises", {
           routineId: args.routineId,
           exerciseId: ejercicio.exerciseId,
           sort: ejercicio.sort,
+          tipo: ejercicio.tipo,
           series: ejercicio.series,
-          repeticiones: ejercicio.repeticiones,
-          duracionSeg: ejercicio.duracionSeg,
+          repeticiones,
+          duracionSeg,
           descansoSeg: ejercicio.descansoSeg,
           diasSemana: ejercicio.diasSemana,
           instruccionesPaciente: ejercicio.instruccionesPaciente,
@@ -201,6 +209,7 @@ export const duplicate = mutation({
         routineId: newRoutineId,
         exerciseId: ex.exerciseId,
         sort: ex.sort,
+        tipo: ex.tipo,
         series: ex.series,
         repeticiones: ex.repeticiones,
         duracionSeg: ex.duracionSeg,

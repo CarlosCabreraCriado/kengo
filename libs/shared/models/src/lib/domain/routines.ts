@@ -5,7 +5,7 @@
 
 import { DiaSemana, UUID } from '../types/common';
 import { Usuario } from './users';
-import { Ejercicio } from './exercises';
+import { Ejercicio, TipoEjercicio } from './exercises';
 
 // Re-exportado desde el payload (que es donde se define ahora)
 export { VisibilidadRutina } from '../payloads/routines.payload';
@@ -33,6 +33,8 @@ export interface EjercicioRutina {
   sort: number;
   rutinaId: string;
   ejercicio: Ejercicio;
+  /** Denormalizado desde el catálogo; `undefined` ⇒ `'repeticiones'`. */
+  tipo?: TipoEjercicio;
   series?: number;
   repeticiones?: number;
   duracionSeg?: number;

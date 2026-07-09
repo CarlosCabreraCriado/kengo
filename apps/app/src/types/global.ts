@@ -38,6 +38,7 @@ export {
   UserData,
   Accesos,
   Ejercicio,
+  TipoEjercicio,
   Categoria,
   EjercicioFavorito,
   Plan,

@@ -224,9 +224,15 @@
                       <h4 class="pb-ex__name">{{ it.ejercicio.nombre }}</h4>
                       <!-- Resumen pills (mobile-collapsed only, oculto en desktop) -->
                       <div class="pb-ex__summary">
-                        <ui2-pill variant="primary" size="sm" icon="repeat">
-                          {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
-                        </ui2-pill>
+                        @if (it.tipo === 'duracion') {
+                          <ui2-pill variant="primary" size="sm" icon="timer">
+                            {{ it.series || 3 }} × {{ it.duracionSeg || 30 }}s
+                          </ui2-pill>
+                        } @else {
+                          <ui2-pill variant="primary" size="sm" icon="repeat">
+                            {{ it.series || 3 }} × {{ it.repeticiones || 12 }}
+                          </ui2-pill>
+                        }
                         @if (it.descansoSeg) {
                           <ui2-pill variant="soft" size="sm" icon="timer">{{ it.descansoSeg }}s</ui2-pill>
                         }
@@ -262,18 +268,33 @@
                           (change)="updateNumber(i, 'series', $event)"
                         />
                       </label>
-                      <label class="pb-dosage-field">
-                        <span class="pb-dosage-field__label">Reps</span>
-                        <input
-                          type="number"
-                          inputmode="numeric"
-                          enterkeyhint="done"
-                          min="1"
-                          class="pb-dosage-input"
-                          [value]="it.repeticiones ?? ''"
-                          (change)="updateNumber(i, 'repeticiones', $event)"
-                        />
-                      </label>
+                      @if (it.tipo === 'duracion') {
+                        <label class="pb-dosage-field">
+                          <span class="pb-dosage-field__label">Duración (s)</span>
+                          <input
+                            type="number"
+                            inputmode="numeric"
+                            enterkeyhint="done"
+                            min="1"
+                            class="pb-dosage-input"
+                            [value]="it.duracionSeg ?? ''"
+                            (change)="updateNumber(i, 'duracionSeg', $event)"
+                          />
+                        </label>
+                      } @else {
+                        <label class="pb-dosage-field">
+                          <span class="pb-dosage-field__label">Reps</span>
+                          <input
+                            type="number"
+                            inputmode="numeric"
+                            enterkeyhint="done"
+                            min="1"
+                            class="pb-dosage-input"
+                            [value]="it.repeticiones ?? ''"
+                            (change)="updateNumber(i, 'repeticiones', $event)"
+                          />
+                        </label>
+                      }
                       <label class="pb-dosage-field">
                         <span class="pb-dosage-field__label">Descanso (s)</span>
                         <input

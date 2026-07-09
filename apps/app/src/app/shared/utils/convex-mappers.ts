@@ -4,6 +4,7 @@ import type {
   EjercicioPlan,
   PlanCompleto,
   RegistroEjercicio,
+  TipoEjercicio,
   Usuario,
 } from '../../../types/global';
 
@@ -74,10 +75,13 @@ export function mapConvexToEjercicioPlan(e: {
     _id?: string;
     nombreEjercicio?: string;
     descripcion?: string;
+    tipo?: TipoEjercicio;
+    duracionDefectoSeg?: number;
     video?: string;
     portada?: string;
   } | null;
   exerciseId?: string;
+  tipo?: TipoEjercicio;
   series?: number;
   repeticiones?: number;
   duracionSeg?: number;
@@ -94,10 +98,14 @@ export function mapConvexToEjercicioPlan(e: {
       id: mapId(e.ejercicio) || (e.exerciseId ?? ''),
       nombre: e.ejercicio?.nombreEjercicio ?? '',
       descripcion: e.ejercicio?.descripcion ?? '',
+      tipo: e.ejercicio?.tipo,
+      duracionDefectoSeg: e.ejercicio?.duracionDefectoSeg,
       video: e.ejercicio?.video ?? '',
       portada: e.ejercicio?.portada ?? '',
       categoria: [],
     } as Ejercicio,
+    // Denormalizado en la prescripción; fallback al tipo del catálogo.
+    tipo: e.tipo ?? e.ejercicio?.tipo,
     series: e.series,
     repeticiones: e.repeticiones,
     duracionSeg: e.duracionSeg,

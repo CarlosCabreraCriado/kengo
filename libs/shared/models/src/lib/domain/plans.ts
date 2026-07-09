@@ -5,7 +5,7 @@
 
 import { DiaSemana, UUID } from '../types/common';
 import { Usuario } from './users';
-import { Ejercicio } from './exercises';
+import { Ejercicio, TipoEjercicio } from './exercises';
 
 // Re-export de EstadoPlan desde records/plans.record
 export { EstadoPlan } from '../records/plans.record';
@@ -57,6 +57,8 @@ export interface EjercicioPlan {
   ejercicio: Ejercicio;
   instruccionesPaciente?: string;
   notasFisio?: string;
+  /** Denormalizado desde el catálogo; `undefined` ⇒ `'repeticiones'`. */
+  tipo?: TipoEjercicio;
   series?: number;
   repeticiones?: number;
   duracionSeg?: number;

@@ -22,6 +22,7 @@ export class BuilderItemsState {
     options?: {
       series?: number;
       repeticiones?: number;
+      duracionSeg?: number;
       descansoSeg?: number;
     },
   ): boolean {
@@ -30,11 +31,17 @@ export class BuilderItemsState {
     );
     if (exists) return false;
 
-    const series =
-      options?.series ?? ejercicio.seriesDefecto ?? 3;
-    const repeticiones =
-      options?.repeticiones ?? ejercicio.repeticionesDefecto ?? 12;
+    const esDuracion = ejercicio.tipo === 'duracion';
+    const series = options?.series ?? ejercicio.seriesDefecto ?? 3;
     const descansoSeg = options?.descansoSeg ?? 45;
+    // Invariante: solo se rellena la métrica correspondiente al tipo; series y
+    // descanso son ortogonales y aplican a ambos.
+    const repeticiones = esDuracion
+      ? undefined
+      : options?.repeticiones ?? ejercicio.repeticionesDefecto ?? 12;
+    const duracionSeg = esDuracion
+      ? options?.duracionSeg ?? ejercicio.duracionDefectoSeg ?? 30
+      : undefined;
     const orden = this.items().length + 1;
 
     this.items.update((list) => [
@@ -42,9 +49,10 @@ export class BuilderItemsState {
       {
         ejercicio,
         sort: orden,
+        tipo: esDuracion ? 'duracion' : 'repeticiones',
         series,
         repeticiones,
-        duracionSeg: undefined,
+        duracionSeg,
         descansoSeg,
         diasSemana: ['L', 'X', 'V'],
       },

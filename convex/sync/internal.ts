@@ -14,6 +14,7 @@
 
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { tipoEjercicio } from "../_helpers/validators";
 
 // ============================================================================
 // Estado de sincronización
@@ -142,8 +143,10 @@ export const upsertExercises = internalMutation({
         directusId: v.number(),
         nombreEjercicio: v.string(),
         descripcion: v.optional(v.string()),
+        tipo: v.optional(tipoEjercicio),
         seriesDefecto: v.optional(v.number()),
         repeticionesDefecto: v.optional(v.number()),
+        duracionDefectoSeg: v.optional(v.number()),
         video: v.optional(v.string()),
         portada: v.optional(v.string()),
         directusUpdatedAt: v.number(),
@@ -165,8 +168,10 @@ export const upsertExercises = internalMutation({
         await ctx.db.patch(existing._id, {
           nombreEjercicio: item.nombreEjercicio,
           descripcion: item.descripcion,
+          tipo: item.tipo,
           seriesDefecto: item.seriesDefecto,
           repeticionesDefecto: item.repeticionesDefecto,
+          duracionDefectoSeg: item.duracionDefectoSeg,
           video: item.video,
           portada: item.portada,
           directusUpdatedAt: item.directusUpdatedAt,
@@ -177,8 +182,10 @@ export const upsertExercises = internalMutation({
         await ctx.db.insert("exercises", {
           nombreEjercicio: item.nombreEjercicio,
           descripcion: item.descripcion,
+          tipo: item.tipo,
           seriesDefecto: item.seriesDefecto,
           repeticionesDefecto: item.repeticionesDefecto,
+          duracionDefectoSeg: item.duracionDefectoSeg,
           video: item.video,
           portada: item.portada,
           directusId: item.directusId,

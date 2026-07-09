@@ -71,17 +71,25 @@ export class EjercicioDetailComponent {
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  // Presets de series y repeticiones
+  // Presets de series, repeticiones y duración (segundos)
   readonly seriesPresets = [1, 3, 5];
   readonly repeticionesPresets = [10, 15, 20];
+  readonly duracionPresets = [20, 30, 45, 60];
 
   // Signals para selección (inicializados con defaults del ejercicio)
   seriesSeleccionadas = signal<number | null>(null);
   repeticionesSeleccionadas = signal<number | null>(null);
+  duracionSeleccionada = signal<number | null>(null);
 
   // Flags para mostrar input "Otro"
   mostrarOtroSeries = signal<boolean>(false);
   mostrarOtroRepeticiones = signal<boolean>(false);
+  mostrarOtroDuracion = signal<boolean>(false);
+
+  // Ejercicio temporizado (por duración) vs por repeticiones
+  readonly esPorDuracion = computed(
+    () => this.ejercicio()?.tipo === 'duracion',
+  );
 
   // Detectar modo rutina (crear plantilla sin paciente)
   readonly isRutinaMode = computed(() => this.rutinaBuilderService.isActive());
@@ -168,13 +176,16 @@ export class EjercicioDetailComponent {
     if (ej) {
       const seriesDefault = ej.seriesDefecto ?? 3;
       const repsDefault = ej.repeticionesDefecto ?? 10;
+      const duracionDefault = ej.duracionDefectoSeg ?? 30;
 
       this.seriesSeleccionadas.set(seriesDefault);
       this.repeticionesSeleccionadas.set(repsDefault);
+      this.duracionSeleccionada.set(duracionDefault);
 
       // Si el valor no está en presets, mostrar "Otro"
       this.mostrarOtroSeries.set(!this.seriesPresets.includes(seriesDefault));
       this.mostrarOtroRepeticiones.set(!this.repeticionesPresets.includes(repsDefault));
+      this.mostrarOtroDuracion.set(!this.duracionPresets.includes(duracionDefault));
     }
   }
 
@@ -214,14 +225,34 @@ export class EjercicioDetailComponent {
     if (!Number.isNaN(val) && val > 0) this.repeticionesSeleccionadas.set(val);
   }
 
+  seleccionarDuracion(valor: number | 'otro') {
+    if (valor === 'otro') {
+      this.mostrarOtroDuracion.set(true);
+    } else {
+      this.duracionSeleccionada.set(valor);
+      this.mostrarOtroDuracion.set(false);
+    }
+  }
+
+  onDuracionOtroChange(value: string | number) {
+    const val = typeof value === 'number' ? value : parseInt(value, 10);
+    if (!Number.isNaN(val) && val > 0) this.duracionSeleccionada.set(val);
+  }
+
   async asignarEjercicio() {
     const ejercicio = this.ejercicio();
     if (!ejercicio) return;
 
-    const options = {
-      series: this.seriesSeleccionadas() ?? 3,
-      repeticiones: this.repeticionesSeleccionadas() ?? 10,
-    };
+    // El tipo del catálogo decide qué métrica se envía (series siempre).
+    const options = this.esPorDuracion()
+      ? {
+          series: this.seriesSeleccionadas() ?? 3,
+          duracionSeg: this.duracionSeleccionada() ?? 30,
+        }
+      : {
+          series: this.seriesSeleccionadas() ?? 3,
+          repeticiones: this.repeticionesSeleccionadas() ?? 10,
+        };
 
     // En modo rutina, añadir directamente sin pedir paciente
     if (this.isRutinaMode()) {
