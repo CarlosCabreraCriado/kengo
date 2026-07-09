@@ -97,7 +97,7 @@
   --z-base: 0;             /* fondo (ui2-cream-bg) */
   --z-content: 10;         /* contenido normal del shell, section wrappers */
   --z-sticky: 20;          /* headers/footers sticky internos de página */
-  --z-floating: 30;        /* tab-bar móvil, controles flotantes locales */
+  --z-floating: 30;        /* controles flotantes locales de página */
   --z-loader: 50;          /* page-loader-overlay, loaders sticky */
   --z-header: 60;          /* top bar (mobile y desktop) */
   --z-banner: 70;          /* offline-banner, billing-banner sobre header */
