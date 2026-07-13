@@ -18,6 +18,7 @@ import { PlanesService } from './planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import { getMadridDate } from '../../../shared/utils/madrid-date.util';
 import {
   Usuario,
   ID,
@@ -581,13 +582,21 @@ export class PlanBuilderService implements SessionResettable {
     }
 
     try {
-      const tomorrow = new Date(Date.now() + 864e5).toISOString().split('T')[0];
+      // La nueva versión rige desde HOY: solo se envía `fechaInicio` si el
+      // fisio eligió explícitamente una fecha futura. Enviar la fechaInicio
+      // heredada del plan viejo (comportamiento anterior) backdateaba la
+      // versión nueva y reescribía la historia de días pasados; el backend
+      // además clampa cualquier fecha pasada a hoy (`computeVersionDates`).
+      const hoy = getMadridDate();
+      const fechaInicioForm = this.fechaInicio();
+      const fechaInicioExplicita =
+        fechaInicioForm && fechaInicioForm > hoy ? fechaInicioForm : undefined;
 
       const newPlanId = await this.convex.mutation(api.plans.mutations.version, {
         oldPlanId: oldPlanId as any,
         titulo: this.titulo() || 'Plan sin título',
         descripcion: this.descripcion() || '',
-        fechaInicio: this.fechaInicio() || tomorrow,
+        fechaInicio: fechaInicioExplicita,
         fechaFin: this.fechaFin() ?? undefined,
         ejercicios: this.items().map((item, index) => ({
           exerciseId: this.resolveExerciseIdFromItem(item),

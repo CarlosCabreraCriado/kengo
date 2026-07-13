@@ -86,6 +86,11 @@ export class SesionStateService {
   // por red. Se drena en `aplicarFeedbackFinal` y `finalizarSesion`.
   private pendingExecutions: PendingExecution[] = [];
 
+  // Guards anti-duplicados: ejercicios con insert en vuelo y flag de drain
+  // en curso (aplicarFeedbackFinal y finalizarSesion pueden solaparse).
+  private inFlightPlanExerciseIds = new Set<string>();
+  private draining = false;
+
   // ========= Estado de la sesión =========
 
   readonly planActivo = signal<PlanCompleto | null>(null);
@@ -106,6 +111,14 @@ export class SesionStateService {
   readonly modoMultiPlan = signal<boolean>(false);
   readonly configSesion = signal<ConfigSesionMultiPlan | null>(null);
   readonly ejerciciosMultiPlan = signal<EjercicioSesionMultiPlan[]>([]);
+
+  /**
+   * La sesión en curso es "extra": el paciente eligió hacer ejercicios no
+   * programados hoy (día de descanso). Solo afecta al copy de la UI — el
+   * backend infiere los extras por su cuenta y no cuentan para la
+   * completitud del día.
+   */
+  readonly sesionEsExtra = signal<boolean>(false);
 
   // ========= Computed =========
 
@@ -189,15 +202,30 @@ export class SesionStateService {
   // ========= Métodos principales =========
 
   /**
-   * Cargar el plan activo del paciente actual
+   * Cargar el plan activo del paciente actual. Con varios planes activos la
+   * elección es determinista: solo planes vigentes hoy, ordenados por mayor
+   * `version` y `fechaInicio` más reciente (antes se cogía el primero que
+   * devolviera el listado, con resultados arbitrarios).
    */
   async cargarPlanPaciente(): Promise<PlanCompleto | null> {
     const userId = this.usuarioId();
     if (!userId) return null;
 
     try {
-      const planes = await this.planesService.getPlanesByPaciente(userId);
-      const planActivo = planes.find((p) => p.estado === 'activo');
+      const hoy = getMadridDate();
+      const planes = (await this.planesService.getPlanesByPaciente(userId))
+        .filter(
+          (p) =>
+            p.estado === 'activo' &&
+            (!p.fechaInicio || p.fechaInicio <= hoy) &&
+            (!p.fechaFin || p.fechaFin >= hoy),
+        )
+        .sort(
+          (a, b) =>
+            (b.version ?? 1) - (a.version ?? 1) ||
+            (b.fechaInicio ?? '').localeCompare(a.fechaInicio ?? ''),
+        );
+      const planActivo = planes[0];
 
       if (!planActivo) return null;
 
@@ -217,11 +245,20 @@ export class SesionStateService {
    * Iniciar una sesión con un plan específico. Convex es la primera fuente
    * de reanudación: si existe sesión `en_curso` para hoy, se rehidratan los
    * registros desde sus executions y se aplica el hint de UI (si coincide).
+   *
+   * Si hoy no hay ejercicios programados del plan, devuelve `'descanso'` y
+   * NO carga ejercicios (antes hacía fallback silencioso a TODO el plan, lo
+   * que permitía completar "la sesión" con ejercicios de otros días). El
+   * caller puede relanzar con `{ extra: true }` si el paciente elige
+   * explícitamente hacer ejercicios extra.
    */
-  async iniciarSesion(planId?: string): Promise<boolean> {
+  async iniciarSesion(
+    planId?: string,
+    opts?: { extra?: boolean },
+  ): Promise<'ok' | 'descanso' | 'error'> {
     try {
       const userId = this.usuarioId();
-      if (!userId) return false;
+      if (!userId) return 'error';
 
       // Cargar plan (planId de la ruta o plan activo del paciente)
       let plan: PlanCompleto | null = null;
@@ -232,11 +269,23 @@ export class SesionStateService {
       }
 
       if (!plan || !plan.items?.length) {
-        return false;
+        return 'error';
       }
 
       const ejerciciosHoy = this.filtrarEjerciciosHoy(plan.items);
-      const items = ejerciciosHoy.length > 0 ? ejerciciosHoy : plan.items;
+      if (ejerciciosHoy.length === 0 && !opts?.extra) {
+        // Día de descanso para este plan: mostrar pantalla de descanso.
+        // planActivo se setea (con items vacíos) para que la página salga
+        // del estado de carga y pueda ofrecer "hacer ejercicios extra".
+        this.planActivo.set({ ...plan, items: [] });
+        this.sesionEsExtra.set(false);
+        this.estadoPantalla.set('resumen');
+        return 'descanso';
+      }
+
+      const esExtra = ejerciciosHoy.length === 0;
+      const items = esExtra ? plan.items : ejerciciosHoy;
+      this.sesionEsExtra.set(esExtra);
 
       this.planActivo.set({ ...plan, items });
 
@@ -254,7 +303,7 @@ export class SesionStateService {
         this.tiempoInicioSesion.set(null);
         this.sesionActualId.set(null);
         this.persistencia.limpiar();
-        return true;
+        return 'ok';
       }
 
       // Sesión en curso: rehidratar
@@ -296,10 +345,10 @@ export class SesionStateService {
         this.estadoPantalla.set('resumen');
       }
 
-      return true;
+      return 'ok';
     } catch (error) {
       this.logger.error('Error al iniciar sesión:', error);
-      return false;
+      return 'error';
     }
   }
 
@@ -317,6 +366,9 @@ export class SesionStateService {
       this.modoMultiPlan.set(true);
       this.configSesion.set(config);
       this.ejerciciosMultiPlan.set(config.ejercicios);
+      // Ejercicios de una fecha no programada ejecutados hoy = sesión extra
+      // (solo copy; el backend clasifica los extras por su cuenta).
+      this.sesionEsExtra.set(!config.esFechaProgramada);
 
       const session = await this.consultarSesionHoy();
 
@@ -487,6 +539,13 @@ export class SesionStateService {
       return;
     }
 
+    // Guard anti-duplicados: no relanzar si ya hay un insert en vuelo para
+    // este ejercicio (doble pulsación / reentrada tras rehidratar). El
+    // backend deduplica igualmente por identidad, pero así evitamos filas
+    // locales y round-trips innecesarios.
+    if (this.inFlightPlanExerciseIds.has(planExerciseId)) return;
+    this.inFlightPlanExerciseIds.add(planExerciseId);
+
     const payload: PendingExecutionPayload = {
       planExerciseId,
       fechaHora,
@@ -511,16 +570,35 @@ export class SesionStateService {
         payload,
       );
 
-      const registro: RegistroEjercicio = {
+      this.upsertRegistroLocal({
         ...registroBase,
         executionId: executionId as string,
-      };
-
-      this.registrosSesion.update((regs) => [...regs, registro]);
+      });
     } catch (error) {
       this.logger.error('Error al registrar execution; encolando para retry:', error);
       this.pendingExecutions.push({ payload, registroBase });
+    } finally {
+      this.inFlightPlanExerciseIds.delete(planExerciseId);
     }
+  }
+
+  /**
+   * Inserta o actualiza el registro local por `planItemId`: al repetir un
+   * ejercicio (o rehidratar y volver a completarlo) el backend devuelve la
+   * misma execution, así que en cliente tampoco debe duplicarse la fila.
+   */
+  private upsertRegistroLocal(registro: RegistroEjercicio): void {
+    this.registrosSesion.update((regs) => {
+      const idx = regs.findIndex(
+        (r) =>
+          r.planItemId === registro.planItemId ||
+          (!!registro.executionId && r.executionId === registro.executionId),
+      );
+      if (idx === -1) return [...regs, registro];
+      const next = regs.slice();
+      next[idx] = { ...next[idx], ...registro };
+      return next;
+    });
   }
 
   /**
@@ -591,25 +669,39 @@ export class SesionStateService {
    */
   private async drainPendingExecutions(): Promise<void> {
     if (this.pendingExecutions.length === 0) return;
+    // `aplicarFeedbackFinal` y `finalizarSesion` pueden solaparse: un solo
+    // drain a la vez para no reenviar la misma cola dos veces.
+    if (this.draining) return;
+    this.draining = true;
 
-    const remaining: PendingExecution[] = [];
-    for (const pending of this.pendingExecutions) {
-      try {
-        const executionId = await this.convex.mutation(
-          api.executions.mutations.create,
-          pending.payload,
-        );
-        const registro: RegistroEjercicio = {
-          ...pending.registroBase,
-          executionId: executionId as string,
-        };
-        this.registrosSesion.update((regs) => [...regs, registro]);
-      } catch (error) {
-        this.logger.error('Reintento de execution falló; permanece en cola:', error);
-        remaining.push(pending);
+    try {
+      // Dedupe de la cola por planExerciseId conservando el último payload
+      // (reintentos de un mismo ejercicio encolados varias veces).
+      const porPlanExercise = new Map<string, PendingExecution>();
+      for (const pending of this.pendingExecutions) {
+        porPlanExercise.set(pending.payload.planExerciseId, pending);
       }
+
+      const remaining: PendingExecution[] = [];
+      for (const pending of porPlanExercise.values()) {
+        try {
+          const executionId = await this.convex.mutation(
+            api.executions.mutations.create,
+            pending.payload,
+          );
+          this.upsertRegistroLocal({
+            ...pending.registroBase,
+            executionId: executionId as string,
+          });
+        } catch (error) {
+          this.logger.error('Reintento de execution falló; permanece en cola:', error);
+          remaining.push(pending);
+        }
+      }
+      this.pendingExecutions = remaining;
+    } finally {
+      this.draining = false;
     }
-    this.pendingExecutions = remaining;
   }
 
   /**
@@ -668,6 +760,8 @@ export class SesionStateService {
     this.temporizador.reset();
     this.sesionActualId.set(null);
     this.pendingExecutions = [];
+    this.inFlightPlanExerciseIds.clear();
+    this.sesionEsExtra.set(false);
   }
 
   // ========= Hint de UI (delegado a SesionPersistenceService) =========

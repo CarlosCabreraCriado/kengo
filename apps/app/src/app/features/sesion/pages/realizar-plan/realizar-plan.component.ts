@@ -105,6 +105,33 @@ import { slideAnimation, fadeAnimation } from './realizar-plan.animations';
         />
       }
 
+      @if (diaDescanso()) {
+        <div class="rp-overlay rp-overlay--error" @fade>
+          <div class="rp-state">
+            <ui2-icon-badge icon="bedtime" color="var(--kengo-primary)" [size]="64" [radius]="20" />
+            <div class="rp-state__text">
+              <h2 class="rp-state__title">Hoy toca descansar</h2>
+              <p class="rp-state__message">
+                Tu plan no tiene ejercicios programados para hoy. El descanso
+                también forma parte de tu recuperación.
+              </p>
+              <p class="rp-state__message">
+                Si aun así quieres entrenar, puedes hacer ejercicios extra:
+                se registrarán, pero no cuentan para tu día.
+              </p>
+            </div>
+            <div class="rp-state__actions">
+              <ui2-button variant="secondary" size="md" [fullWidth]="true" (clicked)="onHacerExtra()">
+                Hacer ejercicios extra
+              </ui2-button>
+              <ui2-button variant="primary" size="lg" [fullWidth]="true" (clicked)="onVolverInicio()">
+                Volver al inicio
+              </ui2-button>
+            </div>
+          </div>
+        </div>
+      }
+
       @if (error()) {
         <div class="rp-overlay rp-overlay--error" @fade>
           <div class="rp-state">
@@ -272,6 +299,10 @@ export class RealizarPlanComponent implements OnInit, OnDestroy {
   // Modal de confirmación
   readonly mostrarConfirmacionSalida = signal(false);
 
+  // Día de descanso: el plan no tiene ejercicios programados hoy. El
+  // paciente puede volver al inicio o elegir hacer ejercicios extra.
+  readonly diaDescanso = signal(false);
+
   // Timeline drawer
   readonly timelineAbierto = signal(false);
 
@@ -314,12 +345,23 @@ export class RealizarPlanComponent implements OnInit, OnDestroy {
 
     // Flujo original: cargar por planId de la ruta
     const planId = this.route.snapshot.paramMap.get('planId');
-    const success = await this.registroService.iniciarSesion(
+    const resultado = await this.registroService.iniciarSesion(
       planId ?? undefined,
     );
 
-    if (!success) {
-      // El error se manejará a través del estado del servicio
+    this.diaDescanso.set(resultado === 'descanso');
+    // 'error' se maneja a través del estado del servicio
+  }
+
+  /** El paciente elige hacer ejercicios extra en su día de descanso. */
+  async onHacerExtra(): Promise<void> {
+    const planId = this.route.snapshot.paramMap.get('planId');
+    const resultado = await this.registroService.iniciarSesion(
+      planId ?? undefined,
+      { extra: true },
+    );
+    if (resultado === 'ok') {
+      this.diaDescanso.set(false);
     }
   }
 

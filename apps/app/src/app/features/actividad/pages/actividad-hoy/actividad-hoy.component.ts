@@ -350,7 +350,9 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
     if (ejercicios.length === 0) return;
 
     const config: ConfigSesionMultiPlan = {
-      titulo: `Ejercicios del ${dia.diaSemana}`,
+      // Sesión extra: son ejercicios de otro día ejecutados hoy. El backend
+      // los registra como "extra" (no cuentan para completar el día).
+      titulo: `Extra · ejercicios del ${dia.diaSemana}`,
       fecha: dia.fecha,
       esFechaProgramada: false,
       ejercicios,
