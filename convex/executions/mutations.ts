@@ -47,12 +47,102 @@ const exerciseExecutionArgs = {
   notaPaciente: v.optional(v.string()),
 };
 
+interface ExecutionEntrada {
+  planExerciseId: Id<"planExercises">;
+  fechaHora: string;
+  completado: boolean;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
+}
+
+/**
+ * Inserta o reutiliza la ejecución de un ejercicio dentro de una sesión.
+ *
+ * Idempotencia por IDENTIDAD para completadas: si ya existe una execution
+ * completada para `(sessionId, planExerciseId)`, se parchea con los últimos
+ * valores (solo los campos definidos — un reintento sin feedback no borra la
+ * nota/dolor ya guardados) y `fechaHora` nueva, devolviendo el id canónico.
+ * Así los reintentos del cliente con distinto `fechaHora` no crean filas
+ * duplicadas que inflen los contadores.
+ *
+ * Las no-completadas mantienen el dedup por terna exacta
+ * `(sessionId, planExerciseId, fechaHora)` (comportamiento previo).
+ */
+async function upsertExecutionImpl(
+  ctx: MutationCtx,
+  params: {
+    sessionId: Id<"sessions">;
+    pacienteId: Id<"users">;
+    planId: Id<"plans">;
+    clinicId: Id<"clinics">;
+    fecha: string;
+    entrada: ExecutionEntrada;
+  },
+): Promise<Id<"exerciseExecutions">> {
+  const { sessionId, pacienteId, planId, clinicId, fecha, entrada } = params;
+
+  const existentes = await ctx.db
+    .query("exerciseExecutions")
+    .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+    .filter((q) => q.eq(q.field("planExerciseId"), entrada.planExerciseId))
+    .collect();
+
+  if (entrada.completado) {
+    const previa = existentes.find((e) => e.completado);
+    if (previa) {
+      const patch: Partial<{
+        fechaHora: string;
+        repeticionesRealizadas: number;
+        duracionRealSeg: number;
+        dolorEscala: number;
+        esfuerzoEscala: number;
+        notaPaciente: string;
+      }> = { fechaHora: entrada.fechaHora };
+      if (entrada.repeticionesRealizadas !== undefined)
+        patch.repeticionesRealizadas = entrada.repeticionesRealizadas;
+      if (entrada.duracionRealSeg !== undefined)
+        patch.duracionRealSeg = entrada.duracionRealSeg;
+      if (entrada.dolorEscala !== undefined)
+        patch.dolorEscala = entrada.dolorEscala;
+      if (entrada.esfuerzoEscala !== undefined)
+        patch.esfuerzoEscala = entrada.esfuerzoEscala;
+      if (entrada.notaPaciente !== undefined)
+        patch.notaPaciente = entrada.notaPaciente;
+      await ctx.db.patch(previa._id, patch);
+      return previa._id;
+    }
+  } else {
+    const dup = existentes.find((e) => e.fechaHora === entrada.fechaHora);
+    if (dup) return dup._id;
+  }
+
+  return await ctx.db.insert("exerciseExecutions", {
+    sessionId,
+    planExerciseId: entrada.planExerciseId,
+    pacienteId,
+    planId,
+    clinicId,
+    fecha,
+    fechaHora: entrada.fechaHora,
+    completado: entrada.completado,
+    repeticionesRealizadas: entrada.repeticionesRealizadas,
+    duracionRealSeg: entrada.duracionRealSeg,
+    dolorEscala: entrada.dolorEscala,
+    esfuerzoEscala: entrada.esfuerzoEscala,
+    notaPaciente: entrada.notaPaciente,
+  });
+}
+
 /**
  * Inserta una ejecución del paciente autenticado. Crea/reanuda la sesión
  * del día, recompute agregados (auto-cierra si completa todo), genera
  * alerta de comentario si hay nota.
  *
- * Idempotente por `(sessionId, planExerciseId, fechaHora)`.
+ * Idempotente por IDENTIDAD `(sessionId, planExerciseId)` para completadas
+ * (ver `upsertExecutionImpl`); por terna con `fechaHora` para el resto.
  */
 export const create = mutation({
   args: exerciseExecutionArgs,
@@ -99,38 +189,14 @@ export const createBatch = mutation({
       const fecha = enforceMadridFecha(user._id, entrada.fecha);
       const sessionId = await openOrResumeImpl(ctx, user._id, fecha);
 
-      // Idempotencia: ya existe execution con esta terna?
-      const dup = await ctx.db
-        .query("exerciseExecutions")
-        .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("planExerciseId"), entrada.planExerciseId),
-            q.eq(q.field("fechaHora"), entrada.fechaHora),
-          ),
-        )
-        .first();
-
-      let executionId: Id<"exerciseExecutions">;
-      if (dup) {
-        executionId = dup._id;
-      } else {
-        executionId = await ctx.db.insert("exerciseExecutions", {
-          sessionId,
-          planExerciseId: entrada.planExerciseId,
-          pacienteId: user._id,
-          planId,
-          clinicId,
-          fecha,
-          fechaHora: entrada.fechaHora,
-          completado: entrada.completado,
-          repeticionesRealizadas: entrada.repeticionesRealizadas,
-          duracionRealSeg: entrada.duracionRealSeg,
-          dolorEscala: entrada.dolorEscala,
-          esfuerzoEscala: entrada.esfuerzoEscala,
-          notaPaciente: entrada.notaPaciente,
-        });
-      }
+      const executionId = await upsertExecutionImpl(ctx, {
+        sessionId,
+        pacienteId: user._id,
+        planId,
+        clinicId,
+        fecha,
+        entrada,
+      });
       ids.push(executionId);
       sesionesAfectadas.add(sessionId);
 
@@ -258,33 +324,13 @@ async function createImpl(
 
   const sessionId = await openOrResumeImpl(ctx, pacienteId, fecha);
 
-  // Idempotencia.
-  const dup = await ctx.db
-    .query("exerciseExecutions")
-    .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
-    .filter((q) =>
-      q.and(
-        q.eq(q.field("planExerciseId"), args.planExerciseId),
-        q.eq(q.field("fechaHora"), args.fechaHora),
-      ),
-    )
-    .first();
-  if (dup) return dup._id;
-
-  const executionId = await ctx.db.insert("exerciseExecutions", {
+  const executionId = await upsertExecutionImpl(ctx, {
     sessionId,
-    planExerciseId: args.planExerciseId,
     pacienteId,
     planId,
     clinicId,
     fecha,
-    fechaHora: args.fechaHora,
-    completado: args.completado,
-    repeticionesRealizadas: args.repeticionesRealizadas,
-    duracionRealSeg: args.duracionRealSeg,
-    dolorEscala: args.dolorEscala,
-    esfuerzoEscala: args.esfuerzoEscala,
-    notaPaciente: args.notaPaciente,
+    entrada: args,
   });
 
   await recomputeAggregatesAndCheckAutoCloseImpl(ctx, sessionId);

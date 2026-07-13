@@ -54,9 +54,18 @@ export const create = mutation({
         throw new Error("No tienes acceso a este recurso");
       }
     }
-    const fecha = args.fechaInicio
-      ? args.fechaInicio.slice(0, 10)
-      : getCurrentMadridDate();
+    // La fecha de la sesión es SIEMPRE la fecha actual Europe/Madrid, la
+    // misma que `enforceMadridFecha` fuerza en las executions. Derivarla de
+    // `args.fechaInicio` (ISO UTC) desalineaba sesión y ejecuciones de noche
+    // (23:00-00:00 Madrid caía en el día UTC anterior).
+    const fecha = getCurrentMadridDate();
+    const fechaCliente = args.fechaInicio?.slice(0, 10);
+    if (fechaCliente && fechaCliente !== fecha) {
+      console.warn(
+        `[tz_mismatch] sessions.create paciente=${user._id} ` +
+          `fecha_recibida=${fechaCliente} fecha_esperada=${fecha} — forzando fecha Madrid.`,
+      );
+    }
     return await openOrResumeImpl(ctx, user._id, fecha, args.clinicId);
   },
 });

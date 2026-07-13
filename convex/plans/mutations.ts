@@ -14,26 +14,10 @@ import {
 import { membershipEsPaciente } from "../_helpers/patientAccess";
 import { diaSemana, tipoEjercicio } from "../_helpers/validators";
 import { normalizarMetricaEjercicio } from "../_helpers/exercises";
-import { addDaysToYMD, getCurrentMadridDate } from "../_helpers/datetime";
+import { getCurrentMadridDate } from "../_helpers/datetime";
+import { computeVersionDates } from "../_helpers/planVersioning";
 import { _syncPatientActiveStateInClinic } from "../snapshots/internal";
-
-/**
- * Calcula la `fechaFin` del plan que se versiona para que no solape con el
- * sucesor: el menor entre la fechaFin actual y el día anterior al inicio del
- * sucesor. Nunca devuelve una fecha anterior a la `fechaInicio` del plan viejo
- * (para no invertir el intervalo en el caso degenerado en que el sucesor
- * empiece antes de que el plan viejo arrancara).
- */
-function clampFechaFinAlSucesor(
-  fechaFinActual: string,
-  nuevoInicio: string,
-  oldFechaInicio: string | undefined,
-): string {
-  const sinSolape = addDaysToYMD(nuevoInicio, -1);
-  let result = fechaFinActual < sinSolape ? fechaFinActual : sinSolape;
-  if (oldFechaInicio && result < oldFechaInicio) result = oldFechaInicio;
-  return result;
-}
+import { recomputeAggregatesAndCheckAutoCloseImpl } from "../sessions/internal";
 
 // Encola una push al paciente avisando de que tiene un plan nuevo o
 // recién activado. Llamar SOLO cuando el plan pase a `estado === "activo"`
@@ -361,20 +345,22 @@ export const version = mutation({
     const oldPlan = await assertCanManagePlan(ctx, user._id, args.oldPlanId);
     await requireActiveSubscription(ctx, oldPlan.clinicId);
 
-    const today = new Date().toISOString().split("T")[0]!;
-    const nuevoInicio = args.fechaInicio ?? today;
+    // Fechas efectivas: la nueva versión rige desde HOY (Madrid, nunca
+    // retroactiva) y el plan viejo conserva su vigencia hasta ayer — los días
+    // pasados se siguen evaluando contra la versión vigente entonces
+    // (`computeVersionDates`). Versionar no reescribe la historia.
+    const today = getCurrentMadridDate();
+    const { nuevoInicio, oldFechaFin } = computeVersionDates(
+      oldPlan,
+      args.fechaInicio,
+      today,
+    );
 
     // Marcar el plan anterior como "modificado": indica que fue reemplazado
-    // por una nueva versión (no que se completó naturalmente). Recortamos su
-    // `fechaFin` al día anterior al inicio del sucesor para que ambas versiones
-    // no queden vigentes el mismo día (evita doble conteo en los rollups).
+    // por una nueva versión (no que se completó naturalmente).
     await ctx.db.patch(args.oldPlanId, {
       estado: "modificado" as const,
-      fechaFin: clampFechaFinAlSucesor(
-        oldPlan.fechaFin ?? today,
-        nuevoInicio,
-        oldPlan.fechaInicio,
-      ),
+      fechaFin: oldFechaFin,
     });
 
     // Create new plan — hereda la clínica del anterior.
@@ -411,6 +397,26 @@ export const version = mutation({
       oldPlan.pacienteId,
       oldPlan.clinicId,
     );
+
+    // El versionado cambia los esperados de HOY: refrescar la sesión abierta
+    // del día (que a su vez recomputa el rollup) o, si no hay sesión, el
+    // rollup directamente. Nota: si lo ya ejecutado hoy satisface la versión
+    // nueva, el recompute puede auto-cerrar la sesión como completada — es la
+    // semántica correcta.
+    const sesionHoy = await ctx.db
+      .query("sessions")
+      .withIndex("by_pacienteId_fecha", (q) =>
+        q.eq("pacienteId", oldPlan.pacienteId).eq("fecha", today),
+      )
+      .first();
+    if (sesionHoy) {
+      await recomputeAggregatesAndCheckAutoCloseImpl(ctx, sesionHoy._id);
+    } else {
+      await ctx.runMutation(internal.rollups.internal.recomputeDayAndPropagate, {
+        pacienteId: oldPlan.pacienteId,
+        fecha: today,
+      });
+    }
 
     return newPlanId;
   },

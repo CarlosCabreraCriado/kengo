@@ -8,11 +8,14 @@ import {
   getExpectedExercisesForPatientOnDate,
   sumExpectedByPlan,
 } from "../_helpers/expectedExercises";
+import { computeAggregatesFromExecutions } from "../_helpers/rollupComputation";
 import {
-  computeAggregatesFromExecutions,
-  ExecutionAggregateInput,
-} from "../_helpers/rollupComputation";
+  computeEstadoSesion,
+  DayCounts,
+} from "../_helpers/sessionCounting";
+import { computeDayCountsForPatient } from "../_helpers/sessionCountingDb";
 import { getCurrentMadridDate, getDiaSemana } from "../_helpers/datetime";
+import { Doc } from "../_generated/dataModel";
 
 const AS2_DOLOR_ALTO_THRESHOLD = 8;
 
@@ -119,43 +122,65 @@ export const recomputeAggregatesAndCheckAutoClose = internalMutation({
   },
 });
 
-export async function recomputeAggregatesAndCheckAutoCloseImpl(
+/**
+ * Recomputa y persiste los denormalizados de la sesión con el conteo
+ * canónico por IDENTIDAD (`computeDayCounts`):
+ * - `totalEsperados` y `planIds` se refrescan SIEMPRE desde los planes
+ *   vigentes hoy (autocorrige versionados a mitad de día).
+ * - `totalCompletados` = esperados matcheados (dedup); `totalExtras` =
+ *   completados no programados hoy.
+ * - Agregados dolor/esfuerzo/duración sobre las ejecuciones dedup (una
+ *   repetición fantasma no pondera el dolorPromedio).
+ */
+async function refreshSessionCounts(
   ctx: MutationCtx,
-  sessionId: Id<"sessions">,
-): Promise<void> {
-  const session = await ctx.db.get(sessionId);
-  if (!session) return;
-
+  session: Doc<"sessions">,
+): Promise<DayCounts> {
   const executions = await ctx.db
     .query("exerciseExecutions")
-    .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+    .withIndex("by_sessionId", (q) => q.eq("sessionId", session._id))
     .collect();
 
-  const aggInputs: ExecutionAggregateInput[] = executions.map((e) => ({
-    completado: e.completado,
-    dolorEscala: e.dolorEscala,
-    esfuerzoEscala: e.esfuerzoEscala,
-    duracionRealSeg: e.duracionRealSeg,
-  }));
-  const agg = computeAggregatesFromExecutions(aggInputs);
+  const { counts, expected } = await computeDayCountsForPatient(ctx, {
+    pacienteId: session.pacienteId,
+    fecha: session.fecha,
+    clinicId: session.clinicId,
+    executions,
+  });
+  const agg = computeAggregatesFromExecutions(counts.dedupExecutions);
+  const planIds = Array.from(new Set(expected.map((e) => e.planId)));
 
-  await ctx.db.patch(sessionId, {
-    totalCompletados: agg.totalCompletados,
+  await ctx.db.patch(session._id, {
+    totalEsperados: counts.totalEsperados,
+    totalCompletados: counts.totalCompletados,
+    totalExtras: counts.totalExtras,
+    planIds,
     duracionTotalSeg: agg.duracionTotalSeg,
     dolorMin: agg.dolorMin,
     dolorMax: agg.dolorMax,
     dolorPromedio: agg.dolorPromedio,
     esfuerzoPromedio: agg.esfuerzoPromedio,
   });
+  return counts;
+}
 
-  const totalEsperados = session.totalEsperados ?? 0;
+export async function recomputeAggregatesAndCheckAutoCloseImpl(
+  ctx: MutationCtx,
+  sessionId: Id<"sessions">,
+): Promise<void> {
+  const session = await ctx.db.get(sessionId);
+  if (!session) return;
+  if (session.fecha === undefined) return; // sesión legacy sin fecha → no aplica
+
+  const counts = await refreshSessionCounts(ctx, session);
+
   if (
     session.estado === "en_curso" &&
-    totalEsperados > 0 &&
-    agg.totalCompletados >= totalEsperados
+    counts.totalEsperados > 0 &&
+    counts.totalCompletados >= counts.totalEsperados
   ) {
-    await closeImpl(ctx, sessionId, "auto_completitud");
-  } else if (session.fecha) {
+    await closeImpl(ctx, sessionId, "auto_completitud", counts);
+  } else {
     // Sesión sigue abierta: mantener el rollup del día fresco para que el
     // detalle del paciente (badge "Inactivo", timeline) refleje la actividad
     // en curso sin esperar al cierre o al cron nocturno. `closeImpl` ya
@@ -191,43 +216,23 @@ export async function closeImpl(
   ctx: MutationCtx,
   sessionId: Id<"sessions">,
   motivoCierre: "auto_completitud" | "cron_nocturno",
+  freshCounts?: DayCounts,
 ): Promise<void> {
   const session = await ctx.db.get(sessionId);
   if (!session) return;
   if (session.fecha === undefined) return; // sesión legacy sin fecha → no aplica
 
-  // Si la sesión se abrió antes de que los `planExercises` estuvieran
-  // disponibles, `totalEsperados` quedó en 0 y caería siempre en
-  // `completada_parcial`. Recalcular aquí garantiza que el estado refleje el
-  // plan vigente al cierre (ver AUDITORIA_AGGREGATES_CONVEX.md Bug P2).
-  let totalEsperados = session.totalEsperados ?? 0;
-  let totalEsperadosResolved = false;
-  if (totalEsperados === 0 && session.clinicId) {
-    const diaSemana = getDiaSemana(session.fecha);
-    const expected = await getExpectedExercisesForPatientOnDate(
-      ctx,
-      session.pacienteId,
-      session.fecha,
-      diaSemana,
-      session.clinicId,
-    );
-    const recomputed = sumExpectedByPlan(expected).totalEsperados;
-    if (recomputed > 0) {
-      totalEsperados = recomputed;
-      totalEsperadosResolved = true;
-    }
-  }
-  const totalCompletados = session.totalCompletados ?? 0;
-  const estado: "completada" | "completada_parcial" =
-    totalEsperados > 0 && totalCompletados >= totalEsperados
-      ? "completada"
-      : "completada_parcial";
+  // El estado se decide con el conteo por IDENTIDAD recién recomputado
+  // (cubre también el caso legacy de sesión abierta antes de que existieran
+  // los `planExercises`: los esperados se refrescan siempre). El caller que
+  // acaba de refrescar (auto-cierre) pasa `freshCounts` para no recomputar.
+  const counts = freshCounts ?? (await refreshSessionCounts(ctx, session));
+  const estado = computeEstadoSesion(counts);
 
   await ctx.db.patch(sessionId, {
     estado,
     motivoCierre,
     fechaFin: new Date().toISOString(),
-    ...(totalEsperadosResolved ? { totalEsperados } : {}),
   });
 
   // Trigger rollups (recompute day + mark stale weekly/monthly).
@@ -246,16 +251,19 @@ export async function closeImpl(
     });
   }
 
-  // Alerta dolor_alto si dolorMax >= AS2 (default 8).
+  // Alerta dolor_alto si dolorMax >= AS2 (default 8). Se relee el doc:
+  // `refreshSessionCounts` puede haber actualizado `dolorMax` tras el
+  // snapshot local de `session`.
+  const dolorMax = (await ctx.db.get(sessionId))?.dolorMax;
   if (
-    session.dolorMax !== undefined &&
-    session.dolorMax >= AS2_DOLOR_ALTO_THRESHOLD &&
+    dolorMax !== undefined &&
+    dolorMax >= AS2_DOLOR_ALTO_THRESHOLD &&
     session.clinicId
   ) {
     await ctx.runMutation(internal.alerts.internal.createDolorAltoAlert, {
       pacienteId: session.pacienteId,
       sessionId,
-      dolorEscala: session.dolorMax,
+      dolorEscala: dolorMax,
     });
   }
 }

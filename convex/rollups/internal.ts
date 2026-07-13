@@ -2,18 +2,13 @@ import { v } from "convex/values";
 import { internalMutation, MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
-import {
-  getActivePlansForPatientOnDate,
-  getExpectedExercisesForPatientOnDate,
-  sumExpectedByPlan,
-} from "../_helpers/expectedExercises";
+import { getActivePlansForPatientOnDate } from "../_helpers/expectedExercises";
+import { computeDayCountsForPatient } from "../_helpers/sessionCountingDb";
 import {
   anioMes,
   anioSemanaISO,
   endOfISOWeek,
   endOfMonth,
-  getCurrentMadridDate,
-  getDiaSemana,
   getMadridDateOffset,
   rangeOfDates,
   startOfISOWeek,
@@ -24,7 +19,6 @@ import {
   computeRachaMaxima,
   EstadoDia,
 } from "../_helpers/rollupComputation";
-import { resolveCanonicalPlanId } from "../_helpers/planVersioning";
 import { patientsWithActivePlanByClinic } from "../aggregates/patientsWithActivePlanByClinic";
 
 /**
@@ -87,13 +81,11 @@ export async function recomputeDayAndPropagateImpl(
   for (const cId of planesByClinic.keys()) clinicIdsConActividad.add(cId);
 
   // 6. Para cada clínica con actividad, computar y upsertar su daily.
-  const diaSemana = getDiaSemana(fecha);
   for (const clinicId of clinicIdsConActividad) {
     await upsertDailyForClinic(ctx, {
       pacienteId,
       clinicId,
       fecha,
-      diaSemana,
       sessions: sessions.filter((s) => s.clinicId === clinicId),
       executions: executions.filter((e) => e.clinicId === clinicId),
       planes: planesByClinic.get(clinicId) ?? [],
@@ -128,7 +120,6 @@ interface UpsertDailyInput {
   pacienteId: Id<"users">;
   clinicId: Id<"clinics">;
   fecha: string;
-  diaSemana: ReturnType<typeof getDiaSemana>;
   sessions: Doc<"sessions">[];
   executions: Doc<"exerciseExecutions">[];
   planes: Doc<"plans">[];
@@ -138,54 +129,39 @@ async function upsertDailyForClinic(
   ctx: MutationCtx,
   input: UpsertDailyInput,
 ): Promise<void> {
-  const { pacienteId, clinicId, fecha, diaSemana, sessions, executions, planes } =
-    input;
+  const { pacienteId, clinicId, fecha, sessions, executions, planes } = input;
 
-  // Ejercicios esperados restringidos a los planes de esta clínica.
-  const expected = await getExpectedExercisesForPatientOnDate(
-    ctx,
+  // Conteo canónico por IDENTIDAD (mismo helper que el cierre de sesión y
+  // el detalle del fisio): esperados restringidos a los planes de esta
+  // clínica, completados = esperados matcheados (dedup por planExerciseId,
+  // con fallback cross-versión por exerciseId), extras aparte.
+  const { counts } = await computeDayCountsForPatient(ctx, {
     pacienteId,
     fecha,
-    diaSemana,
     clinicId,
-  );
-  const { totalEsperados, porPlan: esperadosPorPlan } =
-    sumExpectedByPlan(expected);
+    executions,
+  });
+  const totalEsperados = counts.totalEsperados;
+  const totalCompletados = counts.totalCompletados;
 
-  // Completados + dolor + esfuerzo agregados sobre las ejecuciones de esta
-  // clínica. Las executions guardan el `planId` con el que se crearon, pero
-  // si después el plan se versiona (estado="modificado" + planSucesor), los
-  // `planExercises` esperados pasan al sucesor y `esperadosPorPlan` los
-  // contabiliza bajo el id nuevo. Para que `planAggregates` cuadre, las
-  // executions del plan antiguo se atribuyen al id canónico (ver Bug 1 en
+  // Dolor/esfuerzo agregados sobre las ejecuciones dedup, atribuyendo el
+  // dolor por plan al id canónico de cada ejecución (las executions guardan
+  // el `planId` inmutable con el que se crearon; tras un versionado los
+  // esperados viven en el sucesor — ver Bug 1 en
   // AUDITORIA_AGGREGATES_CONVEX.md).
-  const canonicalPlanCache = new Map<Id<"plans">, Id<"plans">>();
-  const completadosPorPlan = new Map<Id<"plans">, number>();
   const doloresPorPlan = new Map<Id<"plans">, number[]>();
-  let totalCompletados = 0;
   let dolorSum = 0;
   let dolorCount = 0;
   let esfuerzoSum = 0;
   let esfuerzoCount = 0;
-  for (const ex of executions) {
-    const canonicalPlanId = await resolveCanonicalPlanId(
-      ctx,
-      ex.planId,
-      canonicalPlanCache,
-    );
-    if (ex.completado) {
-      totalCompletados += 1;
-      completadosPorPlan.set(
-        canonicalPlanId,
-        (completadosPorPlan.get(canonicalPlanId) ?? 0) + 1,
-      );
-    }
+  for (const ex of counts.dedupExecutions) {
     if (ex.dolorEscala !== undefined) {
       dolorSum += ex.dolorEscala;
       dolorCount += 1;
-      const arr = doloresPorPlan.get(canonicalPlanId) ?? [];
+      const planKey = ex.canonicalPlanId ?? ex.planId;
+      const arr = doloresPorPlan.get(planKey) ?? [];
       arr.push(ex.dolorEscala);
-      doloresPorPlan.set(canonicalPlanId, arr);
+      doloresPorPlan.set(planKey, arr);
     }
     if (ex.esfuerzoEscala !== undefined) {
       esfuerzoSum += ex.esfuerzoEscala;
@@ -193,16 +169,23 @@ async function upsertDailyForClinic(
     }
   }
 
-  const planAggregates = planes.map((p) => {
-    const dolores = doloresPorPlan.get(p._id);
+  // Una entrada por plan vigente de la clínica + entradas adicionales de
+  // `porPlan` (extras atribuidos a un plan no vigente hoy) para que el
+  // trabajo hecho nunca desaparezca del desglose.
+  const planIdsAgg = new Set<Id<"plans">>(planes.map((p) => p._id));
+  for (const planId of counts.porPlan.keys()) planIdsAgg.add(planId);
+  const planAggregates = Array.from(planIdsAgg).map((planId) => {
+    const c = counts.porPlan.get(planId);
+    const dolores = doloresPorPlan.get(planId);
     const dolorMedio =
       dolores && dolores.length > 0
         ? round2(dolores.reduce((a, b) => a + b, 0) / dolores.length)
         : undefined;
     return {
-      planId: p._id,
-      esperados: esperadosPorPlan.get(p._id) ?? 0,
-      completados: completadosPorPlan.get(p._id) ?? 0,
+      planId,
+      esperados: c?.esperados ?? 0,
+      completados: c?.completados ?? 0,
+      extras: c?.extras ?? 0,
       dolorMedio,
     };
   });
@@ -234,6 +217,7 @@ async function upsertDailyForClinic(
     planAggregates,
     totalEsperados,
     totalCompletados,
+    totalExtras: counts.totalExtras,
     dolorPromedio,
     esfuerzoPromedio,
     estadoDia,

@@ -19,6 +19,8 @@ import type * as _helpers_permissions from "../_helpers/permissions.js";
 import type * as _helpers_planStatus from "../_helpers/planStatus.js";
 import type * as _helpers_planVersioning from "../_helpers/planVersioning.js";
 import type * as _helpers_rollupComputation from "../_helpers/rollupComputation.js";
+import type * as _helpers_sessionCounting from "../_helpers/sessionCounting.js";
+import type * as _helpers_sessionCountingDb from "../_helpers/sessionCountingDb.js";
 import type * as _helpers_support from "../_helpers/support.js";
 import type * as _helpers_syncPatientAggregateValue from "../_helpers/syncPatientAggregateValue.js";
 import type * as _helpers_validators from "../_helpers/validators.js";
@@ -110,6 +112,7 @@ import type * as migrations_markVersionedAsModificado from "../migrations/markVe
 import type * as migrations_patchPlanClinicId from "../migrations/patchPlanClinicId.js";
 import type * as migrations_purgeAggregatesForInactivePatients from "../migrations/purgeAggregatesForInactivePatients.js";
 import type * as migrations_recomputeOverlappingPlanVersions from "../migrations/recomputeOverlappingPlanVersions.js";
+import type * as migrations_repairSessionsIntegrity from "../migrations/repairSessionsIntegrity.js";
 import type * as migrations_setTambienEsPacienteForFisios from "../migrations/setTambienEsPacienteForFisios.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as notificationPreferences_mutations from "../notificationPreferences/mutations.js";
@@ -163,6 +166,8 @@ declare const fullApi: ApiFromModules<{
   "_helpers/planStatus": typeof _helpers_planStatus;
   "_helpers/planVersioning": typeof _helpers_planVersioning;
   "_helpers/rollupComputation": typeof _helpers_rollupComputation;
+  "_helpers/sessionCounting": typeof _helpers_sessionCounting;
+  "_helpers/sessionCountingDb": typeof _helpers_sessionCountingDb;
   "_helpers/support": typeof _helpers_support;
   "_helpers/syncPatientAggregateValue": typeof _helpers_syncPatientAggregateValue;
   "_helpers/validators": typeof _helpers_validators;
@@ -254,6 +259,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/patchPlanClinicId": typeof migrations_patchPlanClinicId;
   "migrations/purgeAggregatesForInactivePatients": typeof migrations_purgeAggregatesForInactivePatients;
   "migrations/recomputeOverlappingPlanVersions": typeof migrations_recomputeOverlappingPlanVersions;
+  "migrations/repairSessionsIntegrity": typeof migrations_repairSessionsIntegrity;
   "migrations/setTambienEsPacienteForFisios": typeof migrations_setTambienEsPacienteForFisios;
   "migrations/validation": typeof migrations_validation;
   "notificationPreferences/mutations": typeof notificationPreferences_mutations;

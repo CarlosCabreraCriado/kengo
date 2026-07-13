@@ -90,6 +90,7 @@ export async function getActivePlansForPatientOnDate(
 export interface ExpectedExerciseItem {
   planExerciseId: Id<"planExercises">;
   planId: Id<"plans">;
+  exerciseId: Id<"exercises">;
 }
 
 /**
@@ -136,6 +137,7 @@ export async function getExpectedExercisesForPatientOnDate(
       out.push({
         planExerciseId: item._id,
         planId: plan._id,
+        exerciseId: item.exerciseId,
       });
     }
   }

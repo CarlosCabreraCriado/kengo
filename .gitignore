@@ -83,3 +83,4 @@ Thumbs.db
 # desde dentro de convex/. El convex.json del root anclá la "functions dir";
 # este ignore es una red de seguridad por si reaparece.
 convex/convex/
+backups/

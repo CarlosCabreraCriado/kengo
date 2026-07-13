@@ -8,10 +8,12 @@ import { batchGetMap } from "../_helpers/batchGet";
 import {
   getActivePlansForPatientOnDate,
   getExpectedExercisesForPatientOnDate,
-  sumExpectedByPlan,
 } from "../_helpers/expectedExercises";
 import { getDiaSemana } from "../_helpers/datetime";
 import { computeEstadoDia } from "../_helpers/rollupComputation";
+import { computeDayCounts, ExpectedSlot } from "../_helpers/sessionCounting";
+import { enrichExecutionsForCount } from "../_helpers/sessionCountingDb";
+import { resolveCanonicalPlanId } from "../_helpers/planVersioning";
 
 export const getById = query({
   args: { sessionId: v.id("sessions") },
@@ -100,6 +102,7 @@ export const listRecentByPaciente = query({
         estado: s.estado,
         totalEsperados: s.totalEsperados,
         totalCompletados: s.totalCompletados,
+        totalExtras: s.totalExtras,
         duracionTotalSeg: s.duracionTotalSeg,
         dolorPromedio: s.dolorPromedio,
         esSintetica: s.esSintetica,
@@ -169,6 +172,19 @@ export const getByPacienteAndDateWithExecutions = query({
       batchGetMap(ctx, planIds),
     ]);
 
+    // Conjunto esperado del día para marcar cada execution como programada o
+    // extra (informativo para la UI; los totales ya vienen del doc de sesión).
+    const expectedHoy = await getExpectedExercisesForPatientOnDate(
+      ctx,
+      targetUserId,
+      args.fecha,
+      getDiaSemana(args.fecha),
+      targetClinicId ?? undefined,
+    );
+    const expectedPlanExerciseIds = new Set(
+      expectedHoy.map((e) => e.planExerciseId),
+    );
+
     return sessions.map((s, i) => {
       const sessionExecutions = allExecutions[i] ?? [];
       const filtered = args.soloCompletados
@@ -185,6 +201,7 @@ export const getByPacienteAndDateWithExecutions = query({
           _id: e._id,
           fechaHora: e.fechaHora,
           completado: e.completado,
+          programadoHoy: expectedPlanExerciseIds.has(e.planExerciseId),
           repeticionesRealizadas: e.repeticionesRealizadas,
           duracionRealSeg: e.duracionRealSeg,
           dolorEscala: e.dolorEscala,
@@ -225,6 +242,7 @@ export const getByPacienteAndDateWithExecutions = query({
         motivoCierre: s.motivoCierre,
         totalEsperados: s.totalEsperados,
         totalCompletados: s.totalCompletados,
+        totalExtras: s.totalExtras,
         duracionTotalSeg: s.duracionTotalSeg,
         dolorMin: s.dolorMin,
         dolorMax: s.dolorMax,
@@ -241,22 +259,18 @@ export const getByPacienteAndDateWithExecutions = query({
 /**
  * Detalle del día de un paciente con el desglose POR PLAN: para cada plan
  * vigente ese día devuelve `esperados`/`completados` y la lista de ejercicios
- * marcados como hechos o pendientes, más el estado del día (`estadoDia`).
+ * marcados como hechos o pendientes, más el estado del día (`estadoDia`), el
+ * total de `extras` (trabajo completado no programado ese día) y su detalle.
  *
- * Computa en vivo con los MISMOS helpers que el rollup
- * (`getActivePlansForPatientOnDate` + `getExpectedExercisesForPatientOnDate` +
- * `computeEstadoDia`), por lo que los contadores cuadran con el timeline
- * (`dailyPatientRollup`) por construcción — sin el sesgo de
- * `getByPacienteAndDateWithExecutions`, que solo conoce lo ejecutado y oculta
- * planes/ejercicios pendientes.
+ * Computa en vivo con el MISMO helper de conteo por identidad que el cierre
+ * de sesión y el rollup (`computeDayCounts`), por lo que los contadores
+ * cuadran con el timeline (`dailyPatientRollup`) y con las filas del desglose
+ * por construcción: `totalCompletados` = esperados matcheados (dedup por
+ * planExerciseId, con fallback cross-versión por exerciseId de catálogo).
  *
- * `completados` por plan se atribuye por PROPIEDAD del `planExercise` (qué plan
- * lo contiene), no por `resolveCanonicalPlanId`: la resolución canónica salta
- * siempre a la última versión de la cadena y, en días previos a un versionado,
- * atribuiría las ejecuciones del plan viejo al sucesor (mostrando 0). La
- * propiedad del `planExercise` es correcta por fecha porque
- * `getActivePlansForPatientOnDate` (con `dropSupersededVersions`) ya devuelve la
- * versión vigente de cada día.
+ * `completados` por plan se atribuye por PROPIEDAD del `planExercise` esperado
+ * (qué plan vigente lo prescribe); los extras se atribuyen al plan canónico de
+ * la ejecución.
  */
 export const getDayDetailByPaciente = query({
   args: {
@@ -286,19 +300,29 @@ export const getDayDetailByPaciente = query({
       clinicId,
     );
 
-    // 2. Esperados por plan (idéntico al rollup).
-    const expected = await getExpectedExercisesForPatientOnDate(
+    // 2. Esperados por plan (idéntico al rollup), enriquecidos con el plan
+    //    canónico para el matching cross-versión.
+    const canonicalCache = new Map<Id<"plans">, Id<"plans">>();
+    const expectedItems = await getExpectedExercisesForPatientOnDate(
       ctx,
       targetUserId,
       fecha,
       diaSemana,
       clinicId,
     );
-    const { totalEsperados, porPlan: esperadosPorPlan } =
-      sumExpectedByPlan(expected);
+    const expected: ExpectedSlot[] = [];
+    for (const it of expectedItems) {
+      expected.push({
+        ...it,
+        canonicalPlanId: await resolveCanonicalPlanId(
+          ctx,
+          it.planId,
+          canonicalCache,
+        ),
+      });
+    }
 
-    // 3. planExercises de cada plan vigente (una sola lectura por plan) +
-    //    mapa de propiedad planExerciseId → plan, para atribuir completados.
+    // 3. planExercises de cada plan vigente (una sola lectura por plan).
     const planExercisesByPlan = await Promise.all(
       planes.map((p) =>
         ctx.db
@@ -307,12 +331,6 @@ export const getDayDetailByPaciente = query({
           .collect(),
       ),
     );
-    const ownerByPlanExercise = new Map<Id<"planExercises">, Id<"plans">>();
-    planes.forEach((p, i) => {
-      for (const pe of planExercisesByPlan[i]) {
-        ownerByPlanExercise.set(pe._id, p._id);
-      }
-    });
 
     // 4. Ejecuciones del día filtradas a la clínica.
     const allExecs = await ctx.db
@@ -325,42 +343,41 @@ export const getDayDetailByPaciente = query({
       ? allExecs.filter((e) => e.clinicId === targetClinicId)
       : allExecs;
 
-    // 5. Completados por plan + última ejecución completada por planExercise
-    //    (para el detalle). `totalCompletados` cuenta todas las completadas del
-    //    día (igual que el rollup), para que `estadoDia` cuadre con el timeline.
-    const completadosPorPlan = new Map<Id<"plans">, number>();
-    const execByPlanExercise = new Map<
-      Id<"planExercises">,
-      Doc<"exerciseExecutions">
-    >();
-    let totalCompletados = 0;
+    // 5. Conteo canónico por IDENTIDAD (mismo helper que sesión y rollup):
+    //    `totalCompletados` = esperados matcheados (dedup, con fallback
+    //    cross-versión por exerciseId) — el número cuadra con las filas del
+    //    desglose por construcción. El trabajo no programado hoy va a `extras`.
+    const { enriched } = await enrichExecutionsForCount(
+      ctx,
+      executions,
+      canonicalCache,
+    );
+    const counts = computeDayCounts(expected, enriched);
+    const totalEsperados = counts.totalEsperados;
+    const totalCompletados = counts.totalCompletados;
+
     let dolorSum = 0;
     let dolorCount = 0;
-    for (const ex of executions) {
-      if (ex.completado) {
-        totalCompletados += 1;
-        const owner = ownerByPlanExercise.get(ex.planExerciseId);
-        if (owner) {
-          completadosPorPlan.set(owner, (completadosPorPlan.get(owner) ?? 0) + 1);
-        }
-        const prev = execByPlanExercise.get(ex.planExerciseId);
-        if (!prev || ex.fechaHora > prev.fechaHora) {
-          execByPlanExercise.set(ex.planExerciseId, ex);
-        }
-      }
+    for (const ex of counts.dedupExecutions) {
       if (ex.dolorEscala !== undefined) {
         dolorSum += ex.dolorEscala;
         dolorCount += 1;
       }
     }
 
-    // 6. Detalle de ejercicios por plan: los programados ese día + los que
-    //    tengan ejecución completada (aunque sea fuera de calendario), para no
-    //    ocultar trabajo hecho.
-    const allExerciseIds = planExercisesByPlan
-      .flat()
-      .map((pe) => pe.exerciseId)
-      .filter(Boolean);
+    // 6. Detalle de ejercicios por plan: los programados ese día, marcados
+    //    como hechos si un esperado fue matcheado (aunque la ejecución apunte
+    //    al planExercise de una versión anterior del plan).
+    const extrasPlanExerciseMap = await batchGetMap(
+      ctx,
+      counts.extras.map((e) => e.planExerciseId),
+    );
+    const allExerciseIds = [
+      ...planExercisesByPlan.flat().map((pe) => pe.exerciseId),
+      ...counts.extras
+        .map((e) => e.exerciseId)
+        .filter((id): id is Id<"exercises"> => id !== undefined),
+    ];
     const exMap = await batchGetMap<"exercises">(ctx, allExerciseIds);
 
     const aplicaDia = (pe: Doc<"planExercises">): boolean =>
@@ -371,9 +388,9 @@ export const getDayDetailByPaciente = query({
     const planesDetalle = planes
       .map((plan, i) => {
         const ejercicios = planExercisesByPlan[i]
-          .filter((pe) => aplicaDia(pe) || execByPlanExercise.has(pe._id))
+          .filter((pe) => aplicaDia(pe))
           .map((pe) => {
-            const exec = execByPlanExercise.get(pe._id) ?? null;
+            const exec = counts.matchedByExpected.get(pe._id) ?? null;
             const exercise = pe.exerciseId
               ? exMap.get(pe.exerciseId) ?? null
               : null;
@@ -386,8 +403,8 @@ export const getDayDetailByPaciente = query({
               repeticiones: pe.repeticiones,
               duracionSeg: pe.duracionSeg,
               instruccionesPaciente: pe.instruccionesPaciente,
-              programadoHoy: aplicaDia(pe),
-              completado: exec ? exec.completado : false,
+              programadoHoy: true,
+              completado: exec !== null,
               repeticionesRealizadas: exec?.repeticionesRealizadas,
               duracionRealSeg: exec?.duracionRealSeg,
               dolorEscala: exec?.dolorEscala,
@@ -398,18 +415,48 @@ export const getDayDetailByPaciente = query({
           })
           .sort((a, b) => a.sort - b.sort);
 
+        const c = counts.porPlan.get(plan._id);
         return {
           planId: plan._id,
           titulo: plan.titulo,
-          esperados: esperadosPorPlan.get(plan._id) ?? 0,
-          completados: completadosPorPlan.get(plan._id) ?? 0,
+          esperados: c?.esperados ?? 0,
+          completados: c?.completados ?? 0,
+          extras: c?.extras ?? 0,
           ejercicios,
         };
       })
-      // Ocultar planes vigentes sin nada que mostrar ese día (0 programados y 0
-      // hechos), igual que el timeline (`buildSesionesAgrupadas` filtra
-      // `esperados > 0`). Se conservan los que tengan trabajo hecho.
-      .filter((p) => p.ejercicios.length > 0);
+      // Ocultar planes vigentes sin nada que mostrar ese día (0 programados y
+      // 0 extras). Los extras propios se muestran en la sección `extras`.
+      .filter((p) => p.ejercicios.length > 0 || p.extras > 0);
+
+    // 7. Sección de extras: trabajo completado no programado hoy, con nombre
+    //    del ejercicio y plan de origen (canónico) para que el fisio lo vea.
+    const extrasPlanIds = counts.extras.map(
+      (e) => e.canonicalPlanId ?? e.planId,
+    );
+    const extrasPlansMap = await batchGetMap(ctx, extrasPlanIds);
+    const extrasDetalle = counts.extras.map((e) => {
+      const pe = extrasPlanExerciseMap.get(e.planExerciseId) ?? null;
+      const exercise = e.exerciseId ? exMap.get(e.exerciseId) ?? null : null;
+      const plan = extrasPlansMap.get(e.canonicalPlanId ?? e.planId) ?? null;
+      return {
+        executionId: e.executionId,
+        planExerciseId: e.planExerciseId,
+        nombre: exercise?.nombreEjercicio ?? "",
+        portada: exercise?.portada ?? null,
+        series: pe?.series,
+        repeticiones: pe?.repeticiones,
+        duracionSeg: pe?.duracionSeg,
+        planId: plan?._id ?? null,
+        planTitulo: plan?.titulo ?? null,
+        fechaHora: e.fechaHora,
+        repeticionesRealizadas: e.repeticionesRealizadas,
+        duracionRealSeg: e.duracionRealSeg,
+        dolorEscala: e.dolorEscala,
+        esfuerzoEscala: e.esfuerzoEscala,
+        notaPaciente: e.notaPaciente,
+      };
+    });
 
     const estadoDia = computeEstadoDia(
       totalEsperados,
@@ -424,8 +471,10 @@ export const getDayDetailByPaciente = query({
       estadoDia,
       totalEsperados,
       totalCompletados,
+      totalExtras: counts.totalExtras,
       dolorPromedio,
       planes: planesDetalle,
+      extras: extrasDetalle,
     };
   },
 });

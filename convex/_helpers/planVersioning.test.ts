@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 import { Id } from "../_generated/dataModel";
-import { resolveCanonicalPlanId } from "./planVersioning";
+import { computeVersionDates, resolveCanonicalPlanId } from "./planVersioning";
 
 type FakePlan = {
   _id: Id<"plans">;
@@ -99,4 +99,66 @@ test("plan inexistente → devuelve el id de partida", async () => {
     "pX" as Id<"plans">,
   );
   assert.equal(out, "pX");
+});
+
+// ─── computeVersionDates ───
+
+const HOY = "2026-07-13";
+
+test("computeVersionDates: sin fecha solicitada → nueva versión desde hoy, viejo hasta ayer", () => {
+  const out = computeVersionDates(
+    { fechaInicio: "2026-06-19", fechaFin: "2026-07-08" },
+    undefined,
+    HOY,
+  );
+  assert.equal(out.nuevoInicio, "2026-07-13");
+  assert.equal(out.oldFechaFin, "2026-07-08"); // fechaFin actual ya era < ayer
+});
+
+test("computeVersionDates: fecha retroactiva (fechaInicio heredada del viejo) se clampa a hoy", () => {
+  const out = computeVersionDates(
+    { fechaInicio: "2026-06-19", fechaFin: "2026-07-26" },
+    "2026-06-19",
+    HOY,
+  );
+  assert.equal(out.nuevoInicio, "2026-07-13");
+  assert.equal(out.oldFechaFin, "2026-07-12"); // vigente hasta ayer
+});
+
+test("computeVersionDates: fecha futura explícita se respeta", () => {
+  const out = computeVersionDates(
+    { fechaInicio: "2026-06-19", fechaFin: "2026-07-26" },
+    "2026-07-20",
+    HOY,
+  );
+  assert.equal(out.nuevoInicio, "2026-07-20");
+  assert.equal(out.oldFechaFin, "2026-07-19");
+});
+
+test("computeVersionDates: versionar el mismo día del inicio no invierte el intervalo", () => {
+  const out = computeVersionDates(
+    { fechaInicio: "2026-07-13", fechaFin: "2026-08-13" },
+    undefined,
+    HOY,
+  );
+  assert.equal(out.nuevoInicio, "2026-07-13");
+  // Piso en fechaInicio: ambas versiones comparten el día; dropSupersededVersions
+  // descarta la vieja al contar.
+  assert.equal(out.oldFechaFin, "2026-07-13");
+});
+
+test("computeVersionDates: plan viejo sin fechas → viejo termina ayer", () => {
+  const out = computeVersionDates({}, undefined, HOY);
+  assert.equal(out.nuevoInicio, "2026-07-13");
+  assert.equal(out.oldFechaFin, "2026-07-12");
+});
+
+test("computeVersionDates: plan viejo con inicio futuro → la nueva versión hereda ese inicio", () => {
+  const out = computeVersionDates(
+    { fechaInicio: "2026-07-20", fechaFin: "2026-08-20" },
+    undefined,
+    HOY,
+  );
+  assert.equal(out.nuevoInicio, "2026-07-20");
+  assert.equal(out.oldFechaFin, "2026-07-20"); // piso en su fechaInicio (degenerado, dropSuperseded lo cubre)
 });

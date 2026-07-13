@@ -262,7 +262,12 @@ export default defineSchema({
       v.union(v.literal("auto_completitud"), v.literal("cron_nocturno")),
     ),
     totalEsperados: v.optional(v.number()),
+    // Nº de planExercises esperados con ≥1 ejecución completada (dedup por
+    // identidad; ver `_helpers/sessionCounting.ts`). Nunca > totalEsperados.
     totalCompletados: v.optional(v.number()),
+    // Ejecuciones completadas (dedup) de ejercicios NO programados ese día:
+    // no cuentan para la completitud.
+    totalExtras: v.optional(v.number()),
     duracionTotalSeg: v.optional(v.number()),
     dolorMin: v.optional(v.number()),
     dolorMax: v.optional(v.number()),
@@ -316,11 +321,13 @@ export default defineSchema({
         planId: v.id("plans"),
         esperados: v.number(),
         completados: v.number(),
+        extras: v.optional(v.number()),
         dolorMedio: v.optional(v.number()),
       }),
     ),
     totalEsperados: v.number(),
     totalCompletados: v.number(),
+    totalExtras: v.optional(v.number()),
     dolorPromedio: v.optional(v.number()),
     esfuerzoPromedio: v.optional(v.number()),
     estadoDia: v.union(
@@ -672,6 +679,23 @@ export default defineSchema({
   })
     .index("by_clinicId", ["clinicId"])
     .index("by_toUserId", ["toUserId"]),
+
+  // Auditoría de migraciones de reparación de datos: una fila por documento
+  // reparado y migración, con el estado antes/después serializado. Permite
+  // revisar qué cambió una reparación masiva (p.ej.
+  // `repairSessionsIntegrity`) y revertir manualmente casos puntuales.
+  dataRepairAudit: defineTable({
+    migracion: v.string(),
+    sessionId: v.id("sessions"),
+    pacienteId: v.id("users"),
+    clinicId: v.id("clinics"),
+    fecha: v.string(),
+    /** JSON.stringify del subconjunto de campos previos a la reparación. */
+    antes: v.string(),
+    /** JSON.stringify del subconjunto de campos tras la reparación. */
+    despues: v.string(),
+    createdAt: v.number(),
+  }).index("by_migracion_sessionId", ["migracion", "sessionId"]),
 
   // Bitácora de eventos Stripe procesados. Garantiza idempotencia del
   // `onEvent` handler en `convex/http.ts`: aunque Stripe reentregue un
