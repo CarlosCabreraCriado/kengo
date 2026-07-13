@@ -11,6 +11,7 @@
 import type * as _helpers_authorization from "../_helpers/authorization.js";
 import type * as _helpers_batchGet from "../_helpers/batchGet.js";
 import type * as _helpers_datetime from "../_helpers/datetime.js";
+import type * as _helpers_exercises from "../_helpers/exercises.js";
 import type * as _helpers_expectedExercises from "../_helpers/expectedExercises.js";
 import type * as _helpers_mutationWithTriggers from "../_helpers/mutationWithTriggers.js";
 import type * as _helpers_patientAccess from "../_helpers/patientAccess.js";
@@ -90,6 +91,7 @@ import type * as migrations_backfillPlansByClinicActive from "../migrations/back
 import type * as migrations_backfillRollupsByClinic from "../migrations/backfillRollupsByClinic.js";
 import type * as migrations_backfillRoutineClinicId from "../migrations/backfillRoutineClinicId.js";
 import type * as migrations_backfillSessionsByClinic from "../migrations/backfillSessionsByClinic.js";
+import type * as migrations_backfillTipoEjercicio from "../migrations/backfillTipoEjercicio.js";
 import type * as migrations_backfillWeeklyByClinic from "../migrations/backfillWeeklyByClinic.js";
 import type * as migrations_clearExecutionAggregates from "../migrations/clearExecutionAggregates.js";
 import type * as migrations_clearPatientsByClinicAdherencia from "../migrations/clearPatientsByClinicAdherencia.js";
@@ -153,6 +155,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/authorization": typeof _helpers_authorization;
   "_helpers/batchGet": typeof _helpers_batchGet;
   "_helpers/datetime": typeof _helpers_datetime;
+  "_helpers/exercises": typeof _helpers_exercises;
   "_helpers/expectedExercises": typeof _helpers_expectedExercises;
   "_helpers/mutationWithTriggers": typeof _helpers_mutationWithTriggers;
   "_helpers/patientAccess": typeof _helpers_patientAccess;
@@ -232,6 +235,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/backfillRollupsByClinic": typeof migrations_backfillRollupsByClinic;
   "migrations/backfillRoutineClinicId": typeof migrations_backfillRoutineClinicId;
   "migrations/backfillSessionsByClinic": typeof migrations_backfillSessionsByClinic;
+  "migrations/backfillTipoEjercicio": typeof migrations_backfillTipoEjercicio;
   "migrations/backfillWeeklyByClinic": typeof migrations_backfillWeeklyByClinic;
   "migrations/clearExecutionAggregates": typeof migrations_clearExecutionAggregates;
   "migrations/clearPatientsByClinicAdherencia": typeof migrations_clearPatientsByClinicAdherencia;

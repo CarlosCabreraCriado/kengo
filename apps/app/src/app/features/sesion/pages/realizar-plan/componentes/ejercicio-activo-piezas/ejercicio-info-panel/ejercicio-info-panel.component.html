@@ -36,8 +36,8 @@
             @if (esTemporizador()) {
               <app-temporizador
                 [tiempoInicial]="duracionSeg()"
-                [autoIniciar]="true"
                 label="segundos"
+                (iniciado)="temporizadorIniciado.set(true)"
                 (tiempoAgotado)="tiempoAgotado.emit()"
               />
             } @else {
@@ -126,6 +126,7 @@
         [iconOnly]="videoExpandido()"
         class="primary-action"
         [class.final]="esUltimaSerie()"
+        [disabled]="esTemporizador() && !temporizadorIniciado()"
         (clicked)="completarSerie.emit()"
       >
         @if (!videoExpandido()) {

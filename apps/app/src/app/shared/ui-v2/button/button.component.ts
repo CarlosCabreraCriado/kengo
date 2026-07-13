@@ -106,6 +106,19 @@ const VARIANT_CLASS: Record<Ui2ButtonVariant, string> = {
     .ui2-btn__icon { font-size: 1.2em; line-height: 1; }
     .ui2-btn__content { display: inline-flex; align-items: center; gap: 6px; }
     .ui2-btn__content--invisible { opacity: 0; }
+    /* En icon-only el contenido proyectado es solo etiqueta accesible: se saca
+       del flujo flex para que el icono quede perfectamente centrado (sin el gap). */
+    .ui2-btn--icon-only .ui2-btn__content {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
     .ui2-btn__spinner {
       position: absolute;
       width: 1.1em;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { TemporizadorComponent } from '../../temporizador/temporizador.component';
 import { TimelineSesionComponent } from '../../timeline-sesion/timeline-sesion.component';
 import { SafeHtmlPipe } from '../../../../../../../shared/pipes/safe-html.pipe';
@@ -47,6 +47,9 @@ export class EjercicioInfoPanelComponent {
   readonly togglePlayPause = output<void>();
   readonly abrirTimeline = output<void>();
   readonly previewEjercicio = output<{ ejercicio: EjercicioPlan; index: number }>();
+
+  /** Pasa a true tras iniciar el cronómetro por primera vez en la serie. */
+  readonly temporizadorIniciado = signal(false);
 
   readonly seriesArray = computed(() => {
     const total = this.totalSeries();

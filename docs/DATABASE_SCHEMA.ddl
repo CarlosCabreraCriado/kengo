@@ -820,7 +820,7 @@ CREATE TABLE `ejercicios` (
   `es_por_duracion` tinyint(1) NOT NULL DEFAULT '0',
   `series_defecto` varchar(255) DEFAULT '3',
   `repeticiones_defecto` varchar(255) DEFAULT '15',
-  `duracion_defecto` varchar(255) DEFAULT NULL,
+  `duracion_defecto` int DEFAULT NULL,
   `video` char(36) DEFAULT NULL,
   `portada` char(36) DEFAULT NULL,
   `descripcion` text,
