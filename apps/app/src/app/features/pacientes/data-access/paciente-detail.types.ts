@@ -22,6 +22,8 @@ export interface SesionAgrupada {
   fechaFormateada: string;
   registros: RegistroEjercicioRecord[];
   totalEjercicios: number;
+  /** Completados fuera de programación ese día (no cuentan en el X/Y). */
+  ejerciciosExtras: number;
   promedioDolorValue: number | null;
   comentarios: ComentarioSesion[];
   totalComentarios: number;
@@ -32,6 +34,7 @@ export interface SesionAgrupada {
     titulo: string;
     esperados: number;
     completados: number;
+    extras?: number;
   }[];
   /** True si la sesión tiene comentarios en sus registros o una
    *  notificación tipo "comentario" del fisio asociada por fecha. */

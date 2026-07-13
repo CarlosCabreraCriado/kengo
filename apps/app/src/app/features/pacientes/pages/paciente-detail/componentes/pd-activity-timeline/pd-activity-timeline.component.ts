@@ -72,11 +72,11 @@ const TIPO_ICON: Record<string, string> = {
           @for (sesion of sesiones(); track sesion.fecha) {
             <li
               class="atl-row"
-              [class.atl-row--clickable]="sesion.tipo !== 'descanso'"
+              [class.atl-row--clickable]="esClicable(sesion)"
               [class.atl-row--open]="fechaExpandida() === sesion.fecha"
               [style.--row-color]="tipoColor(sesion.tipo)"
-              [attr.role]="sesion.tipo !== 'descanso' ? 'button' : null"
-              [attr.tabindex]="sesion.tipo !== 'descanso' ? 0 : null"
+              [attr.role]="esClicable(sesion) ? 'button' : null"
+              [attr.tabindex]="esClicable(sesion) ? 0 : null"
               (click)="onClick(sesion)"
               (keyup.enter)="onClick(sesion)"
               (keyup.space)="onClick(sesion)"
@@ -99,10 +99,19 @@ const TIPO_ICON: Record<string, string> = {
                         <span>Sin actividad</span>
                       }
                       @case ('descanso') {
-                        <span>Descanso</span>
+                        @if (sesion.ejerciciosExtras > 0) {
+                          <span>Descanso · {{ sesion.ejerciciosExtras }} extra{{ sesion.ejerciciosExtras !== 1 ? 's' : '' }}</span>
+                        } @else {
+                          <span>Descanso</span>
+                        }
                       }
                     }
                   </span>
+                  @if (sesion.ejerciciosExtras > 0 && sesion.tipo !== 'descanso') {
+                    <span class="atl-row__extra" title="Ejercicios extra no programados ese día">
+                      +{{ sesion.ejerciciosExtras }} extra{{ sesion.ejerciciosExtras !== 1 ? 's' : '' }}
+                    </span>
+                  }
                   @if (sesion.tieneObservacionSesion && sesion.tipo !== 'descanso') {
                     <span class="atl-row__chat" title="Tiene comentarios" aria-label="Tiene comentarios">
                       <span class="material-symbols-outlined" aria-hidden="true">chat_bubble</span>
@@ -121,6 +130,10 @@ const TIPO_ICON: Record<string, string> = {
                           ></div>
                         </div>
                         <span class="atl-plan__count">{{ plan.completados }}/{{ plan.esperados }}</span>
+                        @if ((plan.extras ?? 0) > 0) {
+                          <!-- Los extras no llenan la barra (mide prescripción) -->
+                          <span class="atl-plan__extra">+{{ plan.extras }} extra</span>
+                        }
                       </div>
                     }
                   </div>
@@ -306,6 +319,16 @@ const TIPO_ICON: Record<string, string> = {
         min-width: 32px;
         text-align: right;
       }
+      .atl-plan__extra,
+      .atl-row__extra {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--kengo-primary);
+        background: var(--kengo-primary-light);
+        border-radius: 9999px;
+        padding: 1px 8px;
+        white-space: nowrap;
+      }
       .atl-row__meta {
         margin-top: 8px;
         display: flex;
@@ -415,8 +438,13 @@ export class PdActivityTimelineComponent {
     return undefined;
   }
 
+  /** Un día de descanso solo es clicable si tiene ejercicios extra que ver. */
+  esClicable(sesion: SesionAgrupada): boolean {
+    return sesion.tipo !== 'descanso' || sesion.ejerciciosExtras > 0;
+  }
+
   onClick(sesion: SesionAgrupada): void {
-    if (sesion.tipo === 'descanso') return;
+    if (!this.esClicable(sesion)) return;
     this.verSesion.emit(sesion);
   }
 }

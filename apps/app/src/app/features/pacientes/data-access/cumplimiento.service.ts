@@ -9,8 +9,6 @@ import type {
   CumplimientoDia,
   TipoCumplimiento,
   ResumenCumplimiento,
-  PlanCompleto,
-  RegistroEjercicio,
   RegistroEjercicioRecord,
   NotificacionFisio,
 } from '../../../../types/global';
@@ -22,7 +20,6 @@ import {
 import {
   daysBetweenYMD,
   getMadridDate,
-  getMadridDiaSemana,
   offsetMadridDate,
   ymdMadridFromInstant,
 } from '../../../shared/utils/madrid-date.util';
@@ -51,10 +48,12 @@ interface DailyRollup {
     planId: string;
     esperados: number;
     completados: number;
+    extras?: number;
     dolorMedio?: number;
   }[];
   totalEsperados: number;
   totalCompletados: number;
+  totalExtras?: number;
   dolorPromedio?: number;
   esfuerzoPromedio?: number;
   estadoDia:
@@ -112,91 +111,11 @@ export class CumplimientoService {
     }
   }
 
-  /**
-   * Computa cumplimiento para HOY en tiempo real (sin depender del cron).
-   */
-  getCumplimientoHoy(
-    planes: PlanCompleto[],
-    registrosHoy: RegistroEjercicio[],
-  ): CumplimientoDia | null {
-    // Día de referencia: calendario Europe/Madrid (mismo huso que el backend).
-    const fechaHoy = getMadridDate();
-    const diaHoy = getMadridDiaSemana();
-
-    const planesActivos = planes.filter((p) => {
-      if (p.estado !== 'activo') return false;
-      // `plan.fechaInicio`/`fechaFin` son strings YYYY-MM-DD Madrid;
-      // la comparación lexicográfica coincide con la comparación calendario.
-      if (p.fechaInicio && p.fechaInicio > fechaHoy) return false;
-      if (p.fechaFin && p.fechaFin < fechaHoy) return false;
-      return true;
-    });
-
-    if (planesActivos.length === 0) return null;
-
-    let totalEsperados = 0;
-    let totalCompletados = 0;
-    let todoDescanso = true;
-    const planesDetalle: CumplimientoDia['planes'] = [];
-
-    for (const plan of planesActivos) {
-      const itemsHoy = plan.items.filter((item) => {
-        if (!item.diasSemana || item.diasSemana.length === 0) return true;
-        return item.diasSemana.includes(diaHoy);
-      });
-
-      const esperados = itemsHoy.length;
-      let completados = 0;
-
-      for (const item of itemsHoy) {
-        const regsItem = registrosHoy.filter((r) => r.planItemId === item.id || r.planItemId === (item as any)._convexId);
-        if (regsItem.length >= 1) {
-          completados++;
-        }
-      }
-
-      if (esperados > 0) todoDescanso = false;
-      totalEsperados += esperados;
-      totalCompletados += completados;
-
-      planesDetalle.push({
-        planId: plan.id,
-        titulo: plan.titulo,
-        esperados,
-        completados,
-      });
-    }
-
-    let tipo: TipoCumplimiento;
-    if (todoDescanso) {
-      tipo = 'descanso';
-    } else if (totalCompletados >= totalEsperados && totalEsperados > 0) {
-      tipo = 'completado';
-    } else if (totalCompletados > 0) {
-      tipo = 'parcial';
-    } else {
-      tipo = 'fallido';
-    }
-
-    const dolores = registrosHoy
-      .filter((r) => r.dolorEscala != null)
-      .map((r) => r.dolorEscala!);
-    const dolorPromedio =
-      dolores.length > 0
-        ? Math.round(
-            (dolores.reduce((a, b) => a + b, 0) / dolores.length) * 10,
-          ) / 10
-        : null;
-
-    return {
-      fecha: fechaHoy,
-      tipo,
-      ejerciciosEsperados: totalEsperados,
-      ejerciciosCompletados: totalCompletados,
-      dolorPromedio: dolorPromedio,
-      planes: planesDetalle,
-    };
-  }
+  // NOTA: el antiguo `getCumplimientoHoy` (conteo de "hoy" recalculado en
+  // cliente con criterio propio) se eliminó: el estado de hoy se lee ahora
+  // en tiempo real de `api.sessions.queries.getDayDetailByPaciente`, que usa
+  // el mismo conteo por identidad que rollups y detalle del fisio (ver
+  // `racha-paciente.service.ts`).
 
   /**
    * Cumplimiento del rango actual + del rango anterior del mismo tamaño.
@@ -297,12 +216,14 @@ export class CumplimientoService {
         tipo,
         ejerciciosEsperados: r.totalEsperados,
         ejerciciosCompletados: r.totalCompletados,
+        ejerciciosExtras: r.totalExtras ?? 0,
         dolorPromedio: r.dolorPromedio ?? null,
         planes: r.planAggregates.map((p) => ({
           planId: p.planId as string,
           titulo: '', // sin denormalizar; lookup opcional si la UI lo requiere
           esperados: p.esperados,
           completados: p.completados,
+          extras: p.extras ?? 0,
         })),
       };
     });
@@ -384,12 +305,18 @@ export class CumplimientoService {
         fechaFormateada: formatDate(dia.fecha, 'long'),
         registros: regs,
         totalEjercicios: dia.ejerciciosCompletados,
+        ejerciciosExtras: dia.ejerciciosExtras ?? 0,
         promedioDolorValue: promedioDolor,
         comentarios,
         totalComentarios: comentarios.length,
         tipo: dia.tipo,
         ejerciciosEsperados: dia.ejerciciosEsperados,
-        planes: dia.planes.filter((p) => p.esperados > 0),
+        // No ocultar planes con trabajo hecho: antes se filtraba solo por
+        // `esperados > 0` y desaparecía el plan que tenía los completados o
+        // extras (barra "0/7" huérfana en el timeline).
+        planes: dia.planes.filter(
+          (p) => p.esperados > 0 || p.completados > 0 || (p.extras ?? 0) > 0,
+        ),
         tieneObservacionSesion: false, // se setea en enriquecer
       };
     });

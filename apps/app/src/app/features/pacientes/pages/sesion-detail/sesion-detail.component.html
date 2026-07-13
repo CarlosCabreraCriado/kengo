@@ -30,7 +30,7 @@
             <ui2-back-button (clicked)="volver()" ariaLabel="Volver al paciente" />
             <h2 class="sesion-hero__title">{{ formatearFechaLarga(fecha()) }}</h2>
           </div>
-          @if (hayPlanes()) {
+          @if (hayContenido()) {
             <div class="sesion-hero__pills">
               <ui2-pill variant="custom" [color]="estadoColor()" [icon]="estadoIcon()">
                 {{ estadoLabel() }}
@@ -38,6 +38,11 @@
               <ui2-pill variant="neutral" icon="fitness_center">
                 {{ totalCompletados() }}/{{ totalEsperados() }} ejercicios
               </ui2-pill>
+              @if (totalExtras() > 0) {
+                <ui2-pill variant="soft" icon="add_circle">
+                  +{{ totalExtras() }} extra{{ totalExtras() !== 1 ? 's' : '' }}
+                </ui2-pill>
+              }
               @if (totalComentarios() > 0) {
                 <ui2-pill variant="primary" icon="chat_bubble">
                   {{ totalComentarios() }} comentario{{ totalComentarios() !== 1 ? 's' : '' }}
@@ -108,7 +113,7 @@
         }
 
         <!-- Empty: día sin plan / descanso -->
-        @if (!hayPlanes()) {
+        @if (!hayContenido()) {
           <ui2-empty-state
             icon="event_busy"
             title="Sin plan ese día"
@@ -246,6 +251,117 @@
                       <ui2-icon-badge
                         [icon]="ej.completado ? 'check' : 'schedule'"
                         [color]="ej.completado ? 'var(--success)' : 'var(--ink-400)'"
+                        [size]="32"
+                        [radius]="9999"
+                      />
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          </ui2-card>
+        }
+
+        <!-- Ejercicios extra: completados fuera de la programación del día.
+             No cuentan para el X/Y ni para el estado de la sesión. -->
+        @if (hayExtras()) {
+          <ui2-card [padding]="0">
+            <div class="plan-header">
+              <ui2-icon-badge
+                icon="add_circle"
+                color="var(--kengo-primary)"
+                [size]="40"
+              />
+              <div class="plan-header__text">
+                <span class="plan-header__title">Ejercicios extra</span>
+                <span class="plan-header__subtitle">
+                  {{ extras().length }} no programado{{ extras().length !== 1 ? 's' : '' }} ese día · no cuentan para la sesión
+                </span>
+              </div>
+            </div>
+
+            <div class="plan-body">
+              @for (ex of extras(); track ex.executionId) {
+                <article class="ejercicio-row">
+                  <!-- Thumbnail -->
+                  <div class="ejercicio-row__thumb">
+                    @if (assetUrl(ex.portada); as portadaSrc) {
+                      <img
+                        [ngSrc]="portadaSrc"
+                        width="64"
+                        height="64"
+                        loading="lazy"
+                        [loaderParams]="{ fit: 'cover', quality: 80 }"
+                        [alt]="ex.nombre"
+                        class="ejercicio-row__img"
+                      />
+                    } @else {
+                      <ui2-icon-badge
+                        icon="fitness_center"
+                        color="var(--ink-400)"
+                        [size]="64"
+                        [radius]="14"
+                      />
+                    }
+                  </div>
+
+                  <!-- Info -->
+                  <div class="ejercicio-row__info">
+                    <h3 class="ejercicio-row__name">{{ ex.nombre }}</h3>
+
+                    <div class="ejercicio-row__pills">
+                      <ui2-pill variant="soft">Extra</ui2-pill>
+                      @if (ex.planTitulo) {
+                        <ui2-pill variant="neutral">{{ ex.planTitulo }}</ui2-pill>
+                      }
+                      <ui2-pill variant="neutral">{{ formatHora(ex.fechaHora) }}</ui2-pill>
+                    </div>
+
+                    <!-- Realized values -->
+                    @if (ex.repeticionesRealizadas !== undefined || ex.duracionRealSeg !== undefined) {
+                      <div class="ejercicio-row__realizado">
+                        @if (ex.repeticionesRealizadas !== undefined) {
+                          <span class="realizado-tag">
+                            <span class="material-symbols-outlined" aria-hidden="true">replay</span>
+                            {{ ex.repeticionesRealizadas }} reps realizadas
+                          </span>
+                        }
+                        @if (ex.duracionRealSeg !== undefined) {
+                          <span class="realizado-tag">
+                            <span class="material-symbols-outlined" aria-hidden="true">timer</span>
+                            {{ formatDuracion(ex.duracionRealSeg) }}
+                          </span>
+                        }
+                      </div>
+                    }
+
+                    <!-- Note -->
+                    @if (ex.notaPaciente?.trim()) {
+                      <div class="note-bubble">
+                        <span class="material-symbols-outlined note-bubble__icon" aria-hidden="true">
+                          format_quote
+                        </span>
+                        <span class="note-bubble__text">{{ ex.notaPaciente }}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Trailing badge / dolor -->
+                  @if (ex.dolorEscala !== undefined) {
+                    <div class="ejercicio-row__dolor">
+                      <ui2-pill
+                        variant="custom"
+                        size="md"
+                        [color]="getDolorColor(ex.dolorEscala)"
+                      >
+                        {{ ex.dolorEscala }}<span class="dolor-suffix">/10</span>
+                      </ui2-pill>
+                    </div>
+                  } @else {
+                    <div class="ejercicio-row__badge">
+                      <ui2-icon-badge
+                        icon="check"
+                        color="var(--success)"
                         [size]="32"
                         [radius]="9999"
                       />

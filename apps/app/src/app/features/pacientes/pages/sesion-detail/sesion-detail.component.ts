@@ -57,7 +57,27 @@ interface PlanDetalle {
   titulo: string;
   esperados: number;
   completados: number;
+  extras: number;
   ejercicios: EjercicioDetalle[];
+}
+
+/** Ejecución completada de un ejercicio NO programado ese día. */
+interface ExtraDetalle {
+  executionId: string;
+  planExerciseId: string;
+  nombre: string;
+  portada: string | null;
+  series?: number;
+  repeticiones?: number;
+  duracionSeg?: number;
+  planId: string | null;
+  planTitulo: string | null;
+  fechaHora: string;
+  repeticionesRealizadas?: number;
+  duracionRealSeg?: number;
+  dolorEscala?: number;
+  esfuerzoEscala?: number;
+  notaPaciente?: string;
 }
 
 @Component({
@@ -97,6 +117,8 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
 
   // State
   readonly planes = signal<PlanDetalle[]>([]);
+  readonly extras = signal<ExtraDetalle[]>([]);
+  readonly totalExtras = signal(0);
   readonly estadoDia = signal<EstadoDia | null>(null);
   readonly totalEsperados = signal(0);
   readonly totalCompletados = signal(0);
@@ -112,15 +134,18 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
 
   // Computed
   readonly hayPlanes = computed(() => this.planes().length > 0);
+  readonly hayExtras = computed(() => this.extras().length > 0);
+  readonly hayContenido = computed(() => this.hayPlanes() || this.hayExtras());
 
-  readonly totalComentarios = computed(() =>
-    this.planes().reduce(
-      (sum, p) =>
-        sum +
-        p.ejercicios.filter((e) => e.completado && e.notaPaciente?.trim())
-          .length,
-      0,
-    ),
+  readonly totalComentarios = computed(
+    () =>
+      this.planes().reduce(
+        (sum, p) =>
+          sum +
+          p.ejercicios.filter((e) => e.completado && e.notaPaciente?.trim())
+            .length,
+        0,
+      ) + this.extras().filter((e) => e.notaPaciente?.trim()).length,
   );
 
   readonly estadoLabel = computed<string>(() => {
@@ -241,6 +266,8 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
 
       if (dia) {
         this.planes.set((dia.planes ?? []) as PlanDetalle[]);
+        this.extras.set((dia.extras ?? []) as ExtraDetalle[]);
+        this.totalExtras.set(dia.totalExtras ?? 0);
         this.estadoDia.set(dia.estadoDia as EstadoDia);
         this.totalEsperados.set(dia.totalEsperados);
         this.totalCompletados.set(dia.totalCompletados);
@@ -302,6 +329,14 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
     const min = Math.floor(seg / 60);
     const rest = seg % 60;
     return rest > 0 ? `${min}m ${rest}s` : `${min}m`;
+  }
+
+  formatHora(fechaHora: string): string {
+    return new Date(fechaHora).toLocaleTimeString('es-ES', {
+      timeZone: 'Europe/Madrid',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   // === Navigation ===

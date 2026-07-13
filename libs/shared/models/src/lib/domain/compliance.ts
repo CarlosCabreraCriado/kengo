@@ -10,8 +10,16 @@ export interface CumplimientoDia {
   tipo: TipoCumplimiento;
   ejerciciosEsperados: number;
   ejerciciosCompletados: number;
+  /** Completados fuera de la programación del día (no cuentan en el X/Y). */
+  ejerciciosExtras?: number;
   dolorPromedio: number | null;
-  planes: { planId: string; titulo: string; esperados: number; completados: number }[];
+  planes: {
+    planId: string;
+    titulo: string;
+    esperados: number;
+    completados: number;
+    extras?: number;
+  }[];
 }
 
 export interface ResumenCumplimiento {

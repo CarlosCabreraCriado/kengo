@@ -3,7 +3,10 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { CumplimientoService } from '../../pacientes/data-access/cumplimiento.service';
 import { ActividadHoyService } from '../../actividad/data-access/actividad-hoy.service';
+import { ConvexService } from '../../../core/convex/convex.service';
 import { LoggerService } from '../../../core/services/logger.service';
+import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
 import type { CumplimientoDia, DiaSemana } from '../../../../types/global';
 import {
   daysBetweenYMD,
@@ -27,7 +30,26 @@ export class RachaPacienteService {
   private clinicaActiva = inject(ClinicaActivaService);
   private cumplimientoService = inject(CumplimientoService);
   private actividadHoyService = inject(ActividadHoyService);
+  private convex = inject(ConvexService);
   private logger = inject(LoggerService);
+
+  /**
+   * Estado de HOY en tiempo real desde el backend (mismo conteo por
+   * identidad que rollups y detalle del fisio). Sustituye al antiguo
+   * `getCumplimientoHoy` recalculado en cliente con criterio propio.
+   */
+  private readonly hoyDetalle = this.convex.watchQuery(
+    api.sessions.queries.getDayDetailByPaciente,
+    () => {
+      const usuario = this.sessionService.usuario();
+      if (!usuario?.id || !this.sessionService.enModoPaciente()) return 'skip';
+      const clinicId = this.clinicaActiva.selectedClinicaId();
+      return {
+        fecha: getMadridDate(),
+        ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
+      };
+    },
+  );
 
   readonly cargando = signal<boolean>(false);
   readonly rachaActual = signal<number>(0);
@@ -107,14 +129,13 @@ export class RachaPacienteService {
 
         let estado: DiaSemanaCalendario['estado'];
         if (esHoy) {
-          // Para hoy, usar datos en tiempo real del ActividadHoyService.
-          const cumplimientoHoy = this.cumplimientoService.getCumplimientoHoy(
-            this.actividadHoyService.planesActivos(),
-            this.actividadHoyService.registrosHoy(),
-          );
-          if (cumplimientoHoy) {
-            estado = cumplimientoHoy.tipo as DiaSemanaCalendario['estado'];
+          // Para hoy, estado en tiempo real del backend (watchQuery
+          // reactivo sobre `getDayDetailByPaciente`).
+          const estadoDia = this.hoyDetalle.value()?.estadoDia;
+          if (estadoDia === 'completado' || estadoDia === 'parcial' || estadoDia === 'fallido') {
+            estado = estadoDia;
           } else {
+            // 'descanso' | 'sin_plan' | aún cargando
             estado = 'descanso';
           }
         } else if (diaCumplimiento) {
