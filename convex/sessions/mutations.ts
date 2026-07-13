@@ -16,6 +16,7 @@ import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { assertCanAccessClinic } from "../_helpers/authorization";
+import { membershipEsPaciente } from "../_helpers/patientAccess";
 import { getCurrentMadridDate } from "../_helpers/datetime";
 import { closeImpl, openOrResumeImpl } from "./internal";
 
@@ -40,7 +41,18 @@ export const create = mutation({
   handler: async (ctx, args): Promise<Id<"sessions">> => {
     const user = await getAuthenticatedUser(ctx);
     if (args.clinicId) {
-      await assertCanAccessClinic(ctx, user._id, args.clinicId, ["paciente"]);
+      // Acepta al paciente puro y al fisio/admin que actúa como su propio
+      // paciente (`tambienEsPaciente: true`), igual que el resto del backend
+      // (`resolveAndAssertPacienteAndClinic`). El guard estricto `["paciente"]`
+      // rechazaba a estos últimos al iniciar su sesión en /mi-plan.
+      const membership = await assertCanAccessClinic(
+        ctx,
+        user._id,
+        args.clinicId,
+      );
+      if (!membershipEsPaciente(membership)) {
+        throw new Error("No tienes acceso a este recurso");
+      }
     }
     const fecha = args.fechaInicio
       ? args.fechaInicio.slice(0, 10)
