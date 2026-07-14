@@ -73,11 +73,46 @@ function makeLigatureInterpPatterns() {
   ];
 }
 
+// Bindings de prop de icono con una EXPRESION (no un literal simple):
+//   [icon]="cond ? 'assignment_turned_in' : 'assignment'"
+//   [iconLeft]="estado() === 'ok' ? 'check' : 'error'"
+// Los patrones STANDARD solo cazan `[icon]="'nombre'"` (literal pelado); aqui
+// capturamos el cuerpo entero del binding para extraer cada literal snake_case
+// con la misma logica ternaria que las ligaduras interpoladas.
+function makeBindingInterpPatterns() {
+  const propAlt = ICON_PROPS.join('|');
+  return [
+    new RegExp(`\\[(?:${propAlt})\\]\\s*=\\s*"([^"]*)"`, 'g'),
+    new RegExp(`\\[(?:${propAlt})\\]\\s*=\\s*'([^']*)'`, 'g'),
+  ];
+}
+
 const INNER_ICON_LITERAL = new RegExp(`['"](${ICON_NAME})['"]`, 'g');
+
+// De una expresion Angular (cuerpo de {{...}} o de un binding [icon]="..."),
+// anade a `found` los literales snake_case de icono. Si hay un ternario (no `?.`
+// ni `??`), solo escanea despues del primer `?` para ignorar literales de la
+// condicion (p.ej. `x === 'privado' ? 'icon_a' : 'icon_b'` -> NO captura 'privado').
+function collectIconLiterals(expr, found) {
+  let qIdx = -1;
+  for (let k = 0; k < expr.length; k++) {
+    if (expr[k] === '?' && expr[k + 1] !== '.' && expr[k + 1] !== '?') {
+      qIdx = k;
+      break;
+    }
+  }
+  const scanned = qIdx >= 0 ? expr.slice(qIdx) : expr;
+  INNER_ICON_LITERAL.lastIndex = 0;
+  let lit;
+  while ((lit = INNER_ICON_LITERAL.exec(scanned)) !== null) {
+    found.add(lit[1]);
+  }
+}
 
 const STANDARD_PATTERNS = makePatterns();
 const ICON_FILE_PATTERNS = makeIconFilePatterns();
 const LIGATURE_INTERP_PATTERNS = makeLigatureInterpPatterns();
+const BINDING_INTERP_PATTERNS = makeBindingInterpPatterns();
 
 // Firmas que delimitan funciones/computeds que mapean a iconos. Se usan para
 // extraer SOLO el cuerpo balanceado de ese mapper (no el resto del archivo),
@@ -262,24 +297,15 @@ function extractIconsFromFile(path) {
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(content)) !== null) {
-      const inner = m[1];
-      // Si hay un operador ternario (no `?.` ni `??`), solo escaneamos despues del
-      // primer `?` para ignorar literales de la condicion (p.ej. `x === 'privado' ?
-      // 'icon_a' : 'icon_b'` -> NO captura 'privado'). Si no hay ternario, el cuerpo
-      // entero ES la expresion del icono (p.ej. `{{ 'icon_x' }}` o `{{ x ?? 'icon' }}`).
-      let qIdx = -1;
-      for (let k = 0; k < inner.length; k++) {
-        if (inner[k] === '?' && inner[k + 1] !== '.' && inner[k + 1] !== '?') {
-          qIdx = k;
-          break;
-        }
-      }
-      const scanned = qIdx >= 0 ? inner.slice(qIdx) : inner;
-      INNER_ICON_LITERAL.lastIndex = 0;
-      let lit;
-      while ((lit = INNER_ICON_LITERAL.exec(scanned)) !== null) {
-        found.add(lit[1]);
-      }
+      collectIconLiterals(m[1], found);
+    }
+  }
+
+  for (const re of BINDING_INTERP_PATTERNS) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(content)) !== null) {
+      collectIconLiterals(m[1], found);
     }
   }
 

@@ -9,6 +9,7 @@ arrow_back
 arrow_forward
 assignment
 assignment_ind
+assignment_turned_in
 auto_awesome
 badge
 bedtime
@@ -31,6 +32,7 @@ chevron_right
 clinical_notes
 close
 close_fullscreen
+cloud_done
 cloud_off
 content_copy
 credit_card
