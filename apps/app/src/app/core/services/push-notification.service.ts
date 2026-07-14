@@ -64,6 +64,12 @@ export class PushNotificationService {
     return FirebaseMessaging;
   }
 
+  /** Import diferido del plugin de badge (solo se usa en nativo). */
+  private async badgePlugin() {
+    const { Badge } = await import('@capawesome/capacitor-badge');
+    return Badge;
+  }
+
   /**
    * Inicializa (o refresca) el sistema de push para el usuario autenticado
    * actual. Idempotente y seguro de llamar múltiples veces: pide permisos si
@@ -261,14 +267,12 @@ export class PushNotificationService {
 
   /**
    * Limpia las notificaciones entregadas del centro de notificaciones del
-   * sistema. Llamar al abrir lista o detalle de conversaciones.
+   * sistema (la bandeja). Llamar al abrir lista o detalle de conversaciones.
    *
-   * Nota sobre el badge iOS: el plugin `@capacitor-firebase/messaging` v8 no
-   * expone API para setear el badge count desde el cliente. El icono se
-   * mantiene con el último valor enviado por el server hasta la siguiente
-   * push, que siempre recalcula el total real de mensajes no leídos. Para
-   * actualización inmediata haría falta integrar `@capacitor/badge` o un
-   * silent push desde `markAsRead`; se deja como mejora futura.
+   * Ojo: esto NO toca el número del badge del icono. El contador del icono lo
+   * gobierna en exclusiva `setBadge()` (llamado reactivamente por
+   * `BadgeSyncService` con el total real de no leídos). No mezclar ambas
+   * responsabilidades: `clearBadge` limpia la bandeja, `setBadge` fija el número.
    */
   async clearBadge(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
@@ -277,6 +281,27 @@ export class PushNotificationService {
       await messaging.removeAllDeliveredNotifications();
     } catch (err) {
       this.logger.warn('[Push] clearBadge falló (se ignora):', err);
+    }
+  }
+
+  /**
+   * Fija el número del badge del icono de la app al valor dado. Es la única
+   * fuente de verdad del contador del icono mientras la app está viva; el
+   * servidor solo lo setea vía payload APNs cuando la app está cerrada.
+   *
+   * Solo iOS: es donde el badge numérico es un problema real (el server lo
+   * sube pero nada lo baja al leer). En Android el `aps.badge` se ignora y el
+   * "dot" del launcher se gestiona vaciando la bandeja (`clearBadge`), así que
+   * aquí es no-op. Best-effort: si no hay permiso de badge, `Badge.set` es
+   * no-op silencioso; envolvemos en try/catch para no romper nunca el flujo.
+   */
+  async setBadge(count: number): Promise<void> {
+    if (!this.platform.isIOS()) return;
+    try {
+      const badge = await this.badgePlugin();
+      await badge.set({ count: Math.max(0, Math.trunc(count)) });
+    } catch (err) {
+      this.logger.warn('[Push] setBadge falló (se ignora):', err);
     }
   }
 }

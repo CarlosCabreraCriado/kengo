@@ -10,6 +10,7 @@ import {
 } from "../_helpers/permissions";
 import { assertCanAccessClinic } from "../_helpers/authorization";
 import { membershipEsPaciente } from "../_helpers/patientAccess";
+import { computeUnreadBadgeForUser } from "./helpers";
 
 const MAX_MESSAGE_LENGTH = 4000;
 const PREVIEW_LENGTH = 200;
@@ -228,34 +229,6 @@ export const sendMessage = mutation({
     return messageId;
   },
 });
-
-// Suma todos los mensajes no leídos del usuario en sus conversaciones. Usado
-// como `badge` iOS en la push de chat para que el icono muestre el total
-// acumulado, no el de la conversación concreta.
-async function computeUnreadBadgeForUser(
-  ctx: any,
-  userId: Id<"users">,
-): Promise<number> {
-  const [asPaciente, asFisio] = await Promise.all([
-    ctx.db
-      .query("conversations")
-      .withIndex("by_pacienteId_lastMessageAt", (q: any) =>
-        q.eq("pacienteId", userId),
-      )
-      .collect(),
-    ctx.db
-      .query("conversations")
-      .withIndex("by_fisioId_lastMessageAt", (q: any) =>
-        q.eq("fisioId", userId),
-      )
-      .collect(),
-  ]);
-
-  let total = 0;
-  for (const c of asPaciente) total += c.pacienteUnreadCount;
-  for (const c of asFisio) total += c.fisioUnreadCount;
-  return total;
-}
 
 export const markAsRead = mutation({
   args: { conversationId: v.id("conversations") },

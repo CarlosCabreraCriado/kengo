@@ -79,6 +79,7 @@
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
+    "@capawesome/capacitor-badge": "^8.0.2",
     "@convex-dev/better-auth": "^0.11.5",
     "@convex-dev/stripe": "^0.1.4",
     "@tailwindcss/postcss": "^4.0.6",

@@ -46,3 +46,9 @@ project(':capacitor-splash-screen').projectDir = new File('../../../node_modules
 
 include ':capacitor-status-bar'
 project(':capacitor-status-bar').projectDir = new File('../../../node_modules/@capacitor/status-bar/android')
+
+include ':capawesome-capacitor-badge'
+project(':capawesome-capacitor-badge').projectDir = new File('../../../node_modules/@capawesome/capacitor-badge/android')
+
+include ':capacitor-native-settings'
+project(':capacitor-native-settings').projectDir = new File('../../../node_modules/capacitor-native-settings/android')

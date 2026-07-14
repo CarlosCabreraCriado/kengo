@@ -43,10 +43,12 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true,
     },
     FirebaseMessaging: {
-      // Banner+badge+sound también con app en foreground en iOS. Sin esto,
-      // iOS no muestra notificación cuando la app está abierta y solo se
-      // recibe el callback `notificationReceived`.
-      presentationOptions: ['alert', 'badge', 'sound'],
+      // Banner+sonido también con app en foreground en iOS. Sin esto, iOS no
+      // muestra notificación cuando la app está abierta y solo se recibe el
+      // callback `notificationReceived`. Se omite 'badge' a propósito: con la
+      // app viva el número del icono lo gobierna en exclusiva `BadgeSyncService`
+      // (total real de no leídos), no el payload de cada push.
+      presentationOptions: ['alert', 'sound'],
     },
   },
 };

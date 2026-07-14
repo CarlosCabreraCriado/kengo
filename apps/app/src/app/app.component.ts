@@ -29,6 +29,7 @@ import { BackButtonService } from './core/services/back-button.service';
 import { AppLifecycleService } from './core/services/app-lifecycle.service';
 import { ExternalBrowserService } from './core/services/external-browser.service';
 import { PushNotificationService } from './core/services/push-notification.service';
+import { BadgeSyncService } from './core/services/badge-sync.service';
 import { ConvexService } from './core/convex/convex.service';
 import { CustomRouteReuseStrategy } from './core/config/route-reuse-strategy';
 import {
@@ -102,6 +103,11 @@ export class AppComponent implements OnInit {
   private appLifecycle = inject(AppLifecycleService);
   private externalBrowser = inject(ExternalBrowserService);
   private pushNotifications = inject(PushNotificationService);
+  // Referenciado para forzar su creación en el bootstrap: arranca la
+  // suscripción reactiva que mantiene el badge del icono sincronizado con el
+  // total de no leídos (solo iOS; inerte en el resto). No se usa desde el
+  // template.
+  private badgeSync = inject(BadgeSyncService);
   private toast = inject(ToastService);
   private dialogService = inject(DialogService);
   public sessionService = inject(SessionService);

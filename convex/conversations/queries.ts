@@ -3,6 +3,7 @@ import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { batchGetMap } from "../_helpers/batchGet";
+import { computeUnreadBadgeForUser } from "./helpers";
 
 export const listMyConversations = query({
   args: {},
@@ -120,5 +121,19 @@ export const listMessages = query({
       text: m.text,
       readAt: m.readAt ?? null,
     }));
+  },
+});
+
+/**
+ * Total de mensajes no leídos del usuario autenticado (suma cross-clínica,
+ * como paciente y como fisio). Query ligera y reactiva: el cliente la espeja
+ * al badge del icono de la app (`BadgeSyncService`). Coincide con el valor que
+ * la push de chat manda como `badge` iOS.
+ */
+export const getMyUnreadTotal = query({
+  args: {},
+  handler: async (ctx) => {
+    const me = await getAuthenticatedUser(ctx);
+    return await computeUnreadBadgeForUser(ctx, me._id);
   },
 });
