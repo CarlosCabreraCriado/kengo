@@ -4,6 +4,9 @@
   "engines": {
     "node": "22.16.0"
   },
+  "overrides": {
+    "@swc-node/core": "1.13.3"
+  },
   "scripts": {
     "ports": "node scripts/dev-ports.mjs",
     "icons:regenerate": "node scripts/regenerate-icon-font.mjs",

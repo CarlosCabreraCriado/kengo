@@ -84,3 +84,9 @@ Thumbs.db
 # este ignore es una red de seguridad por si reaparece.
 convex/convex/
 backups/
+
+# pnpm: este monorepo usa npm; artefactos de un `pnpm install` accidental
+# (rompieron el `npm ci` de Railway en julio 2026)
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.pnpm-store/
