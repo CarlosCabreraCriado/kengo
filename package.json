@@ -2,7 +2,7 @@
   "name": "kengo",
   "version": "1.0.1",
   "engines": {
-    "node": "22.16.0"
+    "node": "24.16.0"
   },
   "overrides": {
     "@swc-node/core": "1.13.3"
