@@ -41,26 +41,6 @@ export async function getUserClinicIds(
   return memberships.map((m) => m.clinicId);
 }
 
-/**
- * Devuelve el conjunto de userIds que comparten al menos una clínica con el usuario dado.
- * Útil para verificar acceso a recursos compartidos por clínica.
- */
-export async function getCoworkerUserIds(
-  ctx: AnyCtx,
-  userId: Id<"users">,
-): Promise<Set<Id<"users">>> {
-  const clinicIds = await getUserClinicIds(ctx, userId);
-  const userIds = new Set<Id<"users">>();
-  for (const cId of clinicIds) {
-    const members = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q) => q.eq("clinicId", cId))
-      .collect();
-    for (const m of members) userIds.add(m.userId);
-  }
-  return userIds;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Validaciones de acceso multiclinica
 //
@@ -236,7 +216,9 @@ export async function assertCanAccessSession(
  * Reglas:
  *   - "privado": solo el autor.
  *   - "clinica" con clinicId: cualquier miembro de esa clínica.
- *   - "clinica" sin clinicId (legacy): el autor, o cualquier coworker.
+ *   - "clinica" sin clinicId: solo el autor. Es un estado ilegal una vez
+ *     ejecutado `migrations/backfillRoutineClinicId:resolvePendientes`;
+ *     denegar a terceros evita que estas rutinas crucen fronteras de clínica.
  */
 export async function assertCanAccessRoutine(
   ctx: AnyCtx,
@@ -257,10 +239,5 @@ export async function assertCanAccessRoutine(
     return routine;
   }
 
-  // Rutina "clinica" sin clinicId (legacy): comprobar coworkers del autor.
-  const coworkers = await getCoworkerUserIds(ctx, routine.autorId);
-  if (!coworkers.has(userId)) {
-    throw new Error(ERR_NO_ACCESO);
-  }
-  return routine;
+  throw new Error(ERR_NO_ACCESO);
 }

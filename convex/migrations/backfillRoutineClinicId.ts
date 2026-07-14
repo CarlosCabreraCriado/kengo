@@ -12,11 +12,17 @@
  *
  * Cómo ejecutar:
  *   npx convex run migrations/backfillRoutineClinicId:run
- *   npx convex run migrations/backfillRoutineClinicId:run --prod
  *
- * Las rutinas pendientes deberán resolverse manualmente (preguntar al autor
- * a qué clínica corresponde) antes de promover la regla a obligatoria en las
- * mutations.
+ * Los pendientes que deja `run` se resuelven de forma determinista con:
+ *   npx convex run migrations/backfillRoutineClinicId:resolvePendientes
+ *
+ * Reglas de `resolvePendientes` (rutinas "clinica" sin clinicId restantes):
+ *   - Autor con ≥1 clínica de gestión → se asigna la de membresía más
+ *     antigua (el autor puede reasignarla después editando la rutina).
+ *   - Autor sin clínica de gestión → se convierte a `visibilidad: "privado"`
+ *     (bajo aislamiento estricto nadie más puede verla legítimamente).
+ *
+ * Tras ejecutar ambas, el invariante es: toda rutina "clinica" tiene clinicId.
  */
 
 import { internalMutation } from "../_generated/server";
@@ -87,5 +93,67 @@ export const run = internalMutation({
     }
 
     return { privadasLimpiadas, yaConClinica, backfilled, pendientes };
+  },
+});
+
+/**
+ * Resuelve los pendientes que `run` no pudo asignar automáticamente.
+ * Idempotente: solo toca rutinas "clinica" sin `clinicId`.
+ */
+export const resolvePendientes = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const routines = await ctx.db.query("routines").collect();
+
+    let asignadas = 0;
+    let convertidasAPrivado = 0;
+    const detalle: Array<{
+      routineId: Id<"routines">;
+      accion: "clinicId_asignado" | "convertida_a_privado";
+      clinicId?: Id<"clinics">;
+    }> = [];
+
+    for (const r of routines) {
+      if (r.visibilidad !== "clinica" || r.clinicId) continue;
+
+      const memberships = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_userId", (q) => q.eq("userId", r.autorId))
+        .collect();
+
+      const gestionables = memberships.filter((m) => tieneGestion(m.puesto));
+
+      if (gestionables.length === 0) {
+        await ctx.db.patch(r._id, { visibilidad: "privado" });
+        convertidasAPrivado++;
+        detalle.push({ routineId: r._id, accion: "convertida_a_privado" });
+        continue;
+      }
+
+      // Determinista: la membresía de gestión más antigua del autor. El
+      // autor puede reasignar la clínica después editando la rutina.
+      const masAntigua = gestionables.reduce((a, b) =>
+        a._creationTime <= b._creationTime ? a : b,
+      );
+      await ctx.db.patch(r._id, { clinicId: masAntigua.clinicId });
+      asignadas++;
+      detalle.push({
+        routineId: r._id,
+        accion: "clinicId_asignado",
+        clinicId: masAntigua.clinicId,
+      });
+    }
+
+    console.log(
+      `[backfillRoutineClinicId:resolvePendientes] asignadas=${asignadas} convertidasAPrivado=${convertidasAPrivado}`,
+    );
+    if (detalle.length > 0) {
+      console.log(
+        "[backfillRoutineClinicId:resolvePendientes] detalle:",
+        JSON.stringify(detalle, null, 2),
+      );
+    }
+
+    return { asignadas, convertidasAPrivado, detalle };
   },
 });

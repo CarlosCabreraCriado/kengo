@@ -633,8 +633,9 @@ export class PlanBuilderService implements SessionResettable {
    */
   async loadFromRutina(rutinaId: string): Promise<boolean> {
     try {
-      const rutina = await this.rutinasService.getRutinaById(rutinaId);
-      if (!rutina) return false;
+      const res = await this.rutinasService.getRutinaById(rutinaId);
+      if (res.status !== 'ok') return false;
+      const rutina = res.rutina;
 
       // Convertir ejercicios de rutina a ejercicios de plan
       const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({

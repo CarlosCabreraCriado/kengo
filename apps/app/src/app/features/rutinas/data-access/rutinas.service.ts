@@ -29,6 +29,16 @@ import {
 
 type FiltroVisibilidad = 'todas' | 'privadas' | 'clinica';
 
+/**
+ * Resultado discriminado de `getRutinaById`: distingue "sin acceso" (la
+ * rutina existe pero pertenece a una clínica donde el usuario no es miembro)
+ * de un fallo genérico, para que la UI no los confunda con "sin ejercicios".
+ */
+export type GetRutinaResult =
+  | { status: 'ok'; rutina: RutinaCompleta }
+  | { status: 'no-acceso' }
+  | { status: 'error' };
+
 @Injectable({ providedIn: 'root' })
 export class RutinasService {
   private convex = inject(ConvexService);
@@ -42,12 +52,24 @@ export class RutinasService {
     api.routines.queries.list,
     () => {
       if (!this.sessionService.usuario()?.id) return 'skip' as const;
+      // Aislamiento multiclínica: las rutinas de clínica se acotan a la
+      // clínica activa. Leer la señal aquí re-suscribe la query al cambiar
+      // de clínica. Si el usuario tiene clínicas pero aún no hay activa
+      // (autoselección pendiente en el primer arranque), esperamos.
+      const clinicId = this.clinicaActiva.selectedClinicaId();
+      if (this.sessionService.misclinicas().length > 0 && !clinicId) {
+        return 'skip' as const;
+      }
       const vis = this.filtroVisibilidad();
       const visibilidad =
         vis === 'privadas' ? ('privado' as const) :
         vis === 'clinica' ? ('clinica' as const) :
         undefined;
-      return { visibilidad, search: this.busqueda().trim() || undefined };
+      return {
+        visibilidad,
+        clinicId: (clinicId ?? undefined) as never,
+        search: this.busqueda().trim() || undefined,
+      };
     },
   );
 
@@ -105,17 +127,21 @@ export class RutinasService {
 
   // ========= CRUD Methods =========
 
-  async getRutinaById(id: string): Promise<RutinaCompleta | null> {
+  async getRutinaById(id: string): Promise<GetRutinaResult> {
     try {
       const raw = await this.convex.query(
         api.routines.queries.getById,
         { routineId: id as any },
       );
-      if (!raw) return null;
-      return this.mapConvexToRutinaCompleta(raw);
+      if (!raw) return { status: 'error' };
+      return { status: 'ok', rutina: this.mapConvexToRutinaCompleta(raw) };
     } catch (error) {
+      const code = (error as { data?: { code?: string } } | null)?.data?.code;
+      if (code === 'NO_ACCESO') {
+        return { status: 'no-acceso' };
+      }
       this.logger.error('Error al obtener rutina:', error);
-      return null;
+      return { status: 'error' };
     }
   }
 
@@ -179,12 +205,25 @@ export class RutinasService {
         nombre: payload.nombre,
         descripcion: payload.descripcion,
         visibilidad: payload.visibilidad as 'privado' | 'clinica' | undefined,
+        clinicId: this.clinicIdParaVisibilidad(payload.visibilidad) as never,
       });
       return true;
     } catch (error) {
       this.logger.error('Error al actualizar rutina:', error);
       return false;
     }
+  }
+
+  /**
+   * Al hacer una rutina visible para la clínica, la clínica destino es la
+   * activa (mismo criterio que `createRutina`). Si se omite, el backend
+   * conserva la clínica actual de la rutina o exige una (CLINIC_ID_REQUIRED).
+   */
+  private clinicIdParaVisibilidad(
+    visibilidad: VisibilidadRutina | undefined,
+  ): string | undefined {
+    if (visibilidad !== 'clinica') return undefined;
+    return this.clinicaActiva.selectedClinicaId() ?? undefined;
   }
 
   async updateRutinaCompleta(
@@ -210,6 +249,7 @@ export class RutinasService {
         nombre: payload.nombre,
         descripcion: payload.descripcion,
         visibilidad: payload.visibilidad as 'privado' | 'clinica',
+        clinicId: this.clinicIdParaVisibilidad(payload.visibilidad) as never,
         ejercicios,
       });
       return true;

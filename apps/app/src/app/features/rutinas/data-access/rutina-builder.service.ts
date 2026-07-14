@@ -140,8 +140,9 @@ export class RutinaBuilderService implements SessionResettable {
 
   /** Activa modo edición: carga rutina existente. */
   async startEdit(rutinaId: string): Promise<{ visibilidad: string } | null> {
-    const rutina = await this.rutinasService.getRutinaById(rutinaId);
-    if (!rutina) return null;
+    const res = await this.rutinasService.getRutinaById(rutinaId);
+    if (res.status !== 'ok') return null;
+    const rutina = res.rutina;
 
     this._isActive.set(true);
     this.rutinaEditId.set(rutinaId);
@@ -292,8 +293,9 @@ export class RutinaBuilderService implements SessionResettable {
   /** Reemplaza los items con los de otra rutina (flujo "duplicar"). */
   async loadFromRutina(rutinaId: string): Promise<boolean> {
     try {
-      const rutina = await this.rutinasService.getRutinaById(rutinaId);
-      if (!rutina) return false;
+      const res = await this.rutinasService.getRutinaById(rutinaId);
+      if (res.status !== 'ok') return false;
+      const rutina = res.rutina;
 
       const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
         sort: idx + 1,

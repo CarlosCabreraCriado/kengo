@@ -150,12 +150,23 @@ export class RutinasListComponent implements OnInit, OnDestroy {
     }
 
     this.expandedRutinaId.set(rutina.id);
+    // Resetear antes de cargar: si la carga falla no deben quedar los
+    // ejercicios de la rutina expandida anteriormente.
+    this.previewEjercicios.set([]);
     this.loadingPreview.set(true);
 
     try {
-      const completa = await this.rutinasService.getRutinaById(rutina.id);
-      if (completa) {
-        this.previewEjercicios.set(completa.ejercicios);
+      const res = await this.rutinasService.getRutinaById(rutina.id);
+      if (res.status === 'ok') {
+        this.previewEjercicios.set(res.rutina.ejercicios);
+      } else {
+        this.expandedRutinaId.set(null);
+        this.toastService.show(
+          res.status === 'no-acceso'
+            ? 'No tienes acceso a esta rutina en la clínica activa'
+            : 'No se pudo cargar la rutina',
+          'error',
+        );
       }
     } finally {
       this.loadingPreview.set(false);

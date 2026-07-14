@@ -445,6 +445,28 @@ async function load() {
     },
   );
 
+  await test(
+    "assertCanAccessRoutine: rutina de clínica sin clinicId solo el autor (estado ilegal post-backfill)",
+    async () => {
+      const ctx = makeCtx({
+        routines: [
+          { _id: "r1", autorId: "fisio1", visibilidad: "clinica" },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "fisio2", clinicId: "c1", puesto: "fisio" },
+        ],
+      });
+      await assertCanAccessRoutine(ctx, "fisio1", "r1");
+      // Un coworker del autor ya NO tiene acceso: sin clinicId no se puede
+      // acotar la rutina a una clínica y no debe cruzar fronteras.
+      await assertThrows(
+        () => assertCanAccessRoutine(ctx, "fisio2", "r1"),
+        "No tienes acceso",
+      );
+    },
+  );
+
   if (process.exitCode === 1) {
     console.error("\nFAIL");
   } else {

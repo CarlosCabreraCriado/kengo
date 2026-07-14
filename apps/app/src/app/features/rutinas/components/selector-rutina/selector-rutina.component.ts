@@ -91,10 +91,16 @@ export class SelectorRutinaComponent implements OnInit {
     this.selectedRutina.set(rutina);
 
     this.isLoadingPreview.set(true);
+    this.previewEjercicios.set([]);
     try {
-      const completa = await this.rutinasService.getRutinaById(rutina.id);
-      if (completa) {
-        this.previewEjercicios.set(completa.ejercicios);
+      const res = await this.rutinasService.getRutinaById(rutina.id);
+      if (res.status === 'ok') {
+        this.previewEjercicios.set(res.rutina.ejercicios);
+      } else {
+        // Sin acceso o error: deseleccionar para no permitir confirmar una
+        // rutina cuyos ejercicios no se pudieron cargar.
+        this.selectedId.set(null);
+        this.selectedRutina.set(null);
       }
     } finally {
       this.isLoadingPreview.set(false);

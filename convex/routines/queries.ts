@@ -1,8 +1,11 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { query } from "../_generated/server";
-import type { Doc, Id } from "../_generated/dataModel";
+import type { Doc } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import { assertCanAccessRoutine } from "../_helpers/authorization";
+import {
+  assertCanAccessClinic,
+  assertCanAccessRoutine,
+} from "../_helpers/authorization";
 
 /**
  * Helper: enriquece los ejercicios de una rutina con datos completos del ejercicio y sus categorías.
@@ -54,6 +57,12 @@ export const list = query({
     visibilidad: v.optional(
       v.union(v.literal("privado"), v.literal("clinica")),
     ),
+    /**
+     * Clínica activa del usuario. Las rutinas de clínica se acotan a ella
+     * (aislamiento estricto multiclínica). Sin `clinicId` solo se devuelven
+     * las rutinas privadas del propio usuario.
+     */
+    clinicId: v.optional(v.id("clinics")),
     search: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -66,29 +75,39 @@ export const list = query({
       .unique();
     if (!user) return [];
 
+    const own = await ctx.db
+      .query("routines")
+      .withIndex("by_autorId", (q) => q.eq("autorId", user._id))
+      .collect();
+    const ownPrivadas = own.filter((r) => r.visibilidad === "privado");
+
+    // Rutinas de la clínica activa, solo si el usuario es miembro. Toda
+    // rutina devuelta aquí pasa assertCanAccessRoutine en getById: mismo
+    // criterio (membresía en routine.clinicId), sin sorpresas al abrirla.
+    let clinicRoutines: Doc<"routines">[] = [];
+    const clinicId = args.clinicId;
+    if (clinicId) {
+      try {
+        await assertCanAccessClinic(ctx, user._id, clinicId);
+        const byClinic = await ctx.db
+          .query("routines")
+          .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+          .collect();
+        clinicRoutines = byClinic.filter((r) => r.visibilidad === "clinica");
+      } catch {
+        // No miembro de la clínica indicada → aislamiento: sin rutinas de clínica.
+        clinicRoutines = [];
+      }
+    }
+
     let routines: Doc<"routines">[];
-
     if (args.visibilidad === "privado") {
-      routines = await ctx.db
-        .query("routines")
-        .withIndex("by_autorId", (q) => q.eq("autorId", user._id))
-        .collect();
+      routines = ownPrivadas;
     } else if (args.visibilidad === "clinica") {
-      routines = await getClinicRoutines(ctx, user._id);
+      routines = clinicRoutines;
     } else {
-      // Todas: propias + las de mi clínica
-      const own = await ctx.db
-        .query("routines")
-        .withIndex("by_autorId", (q) => q.eq("autorId", user._id))
-        .collect();
-
-      const clinicRoutines = await getClinicRoutines(ctx, user._id);
-
-      const ownIds = new Set(own.map((r: Doc<"routines">) => r._id));
-      routines = [
-        ...own,
-        ...clinicRoutines.filter((r: Doc<"routines">) => !ownIds.has(r._id)),
-      ];
+      // Todas: privadas propias + las de la clínica activa (disjuntas por visibilidad).
+      routines = [...ownPrivadas, ...clinicRoutines];
     }
 
     // Filtro de búsqueda por nombre (client-side sobre el resultado)
@@ -103,51 +122,21 @@ export const list = query({
   },
 });
 
-/**
- * Helper: obtiene rutinas de clínica filtradas por las clínicas del usuario.
- */
-async function getClinicRoutines(
-  ctx: { db: { query: any; get: any } },
-  userId: Id<"users">,
-) {
-  // Obtener clínicas del usuario
-  const memberships = await ctx.db
-    .query("clinicMemberships")
-    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
-    .collect();
-
-  if (memberships.length === 0) return [];
-
-  const clinicIds = new Set(memberships.map((m: any) => m.clinicId));
-
-  // Obtener miembros de esas clínicas
-  const allClinicMembers = [];
-  for (const clinicId of clinicIds) {
-    const members = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q: any) => q.eq("clinicId", clinicId))
-      .collect();
-    allClinicMembers.push(...members);
-  }
-
-  const clinicMemberIds = new Set(allClinicMembers.map((m: any) => m.userId as string));
-
-  // Obtener rutinas de clínica solo de miembros de mis clínicas
-  const allClinicRoutines = await ctx.db
-    .query("routines")
-    .withIndex("by_visibilidad", (q: any) => q.eq("visibilidad", "clinica"))
-    .collect();
-
-  return allClinicRoutines.filter((r: Doc<"routines">) =>
-    clinicMemberIds.has(r.autorId as string),
-  );
-}
-
 export const getById = query({
   args: { routineId: v.id("routines") },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const routine = await assertCanAccessRoutine(ctx, user._id, args.routineId);
+    let routine: Doc<"routines">;
+    try {
+      routine = await assertCanAccessRoutine(ctx, user._id, args.routineId);
+    } catch {
+      // ConvexError con code: los Error planos se redactan en producción y
+      // el cliente no podría distinguir "sin acceso" de un fallo genérico.
+      throw new ConvexError({
+        code: "NO_ACCESO",
+        message: "No tienes acceso a esta rutina",
+      });
+    }
 
     const exercises = await ctx.db
       .query("routineExercises")
@@ -176,4 +165,3 @@ export const getById = query({
     };
   },
 });
-
