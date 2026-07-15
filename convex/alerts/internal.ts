@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { internalMutation, MutationCtx } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getClinicIdForPatient } from "../_helpers/expectedExercises";
+import { getReferenciaInactividad } from "../_helpers/inactividad";
+import { getCurrentMadridDate, diffDaysYMD } from "../_helpers/datetime";
 
 // Umbrales (AS3). Modificables sin redeploy mediante un patch del schema
 // si producto valida otros valores.
@@ -197,6 +199,7 @@ export const runDailyAlertRules = internalMutation({
     }
 
     const fechaGeneracion = new Date().toISOString();
+    const hoy = getCurrentMadridDate();
 
     let generadas = 0;
     for (const pacienteId of pacienteIds) {
@@ -216,8 +219,24 @@ export const runDailyAlertRules = internalMutation({
         .first();
 
       // === Regla 1: inactividad ===
+      // Guard de defensa en profundidad: aunque el snapshot ya no debería
+      // sobreestimar la inactividad de pacientes recientes, exigimos que el
+      // paciente lleve OBLIGADO a tener actividad (alta / inicio de plan) al
+      // menos el umbral WARN antes de generar la alerta. Protege ante un
+      // snapshot obsoleto.
       if (snap7d && snap7d.inactividadDias >= AS3_INACTIVIDAD_DIAS_WARN) {
-        if (!(await hayPendiente(ctx, pacienteId, "inactividad"))) {
+        const refInicio = await getReferenciaInactividad(
+          ctx,
+          pacienteId,
+          clinicId,
+          hoy,
+        );
+        const suficienteAntiguedad =
+          diffDaysYMD(refInicio, hoy) >= AS3_INACTIVIDAD_DIAS_WARN;
+        if (
+          suficienteAntiguedad &&
+          !(await hayPendiente(ctx, pacienteId, "inactividad"))
+        ) {
           const pacienteNombre = await getPacienteNombre(ctx, pacienteId);
           await ctx.db.insert("physioAlerts", {
             tipo: "inactividad",
@@ -240,5 +259,52 @@ export const runDailyAlertRules = internalMutation({
       `[alerts:daily] pacientes=${pacienteIds.length} generadas=${generadas} inactividad=${porTipo.inactividad}`,
     );
     return { generadas, porTipo };
+  },
+});
+
+/**
+ * Limpieza puntual (one-off) de las alertas `inactividad` FALSAS ya emitidas
+ * antes del fix: pacientes recién dados de alta o con plan recién asignado.
+ * Borra las alertas `pendiente` cuyo paciente aún no lleva obligado a tener
+ * actividad el umbral WARN (usa la antigüedad de referencia directamente, no
+ * el snapshot, que puede no haberse recomputado todavía).
+ *
+ * Ejecutar una vez tras desplegar el fix:
+ *   npx convex run alerts/internal:purgeStaleInactividadAlerts
+ */
+export const purgeStaleInactividadAlerts = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<{ revisadas: number; borradas: number }> => {
+    const hoy = getCurrentMadridDate();
+
+    // Dataset pequeño: filtramos en memoria las pendientes de tipo inactividad.
+    const pendientes = await ctx.db
+      .query("physioAlerts")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("estado"), "pendiente"),
+          q.eq(q.field("tipo"), "inactividad"),
+        ),
+      )
+      .collect();
+
+    let borradas = 0;
+    for (const alerta of pendientes) {
+      const refInicio = await getReferenciaInactividad(
+        ctx,
+        alerta.pacienteId,
+        alerta.clinicId,
+        hoy,
+      );
+      if (diffDaysYMD(refInicio, hoy) < AS3_INACTIVIDAD_DIAS_WARN) {
+        await ctx.db.delete(alerta._id);
+        borradas += 1;
+      }
+    }
+
+    console.log(
+      `[alerts:purge-inactividad] revisadas=${pendientes.length} borradas=${borradas}`,
+    );
+    return { revisadas: pendientes.length, borradas };
   },
 });

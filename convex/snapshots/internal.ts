@@ -10,9 +10,11 @@ import {
   getMadridDateOffset,
   anioMes,
   getCurrentMadridDate,
+  diffDaysYMD,
 } from "../_helpers/datetime";
 import { computeRiskScore, computeRachaActual } from "../_helpers/rollupComputation";
 import { pacienteTienePlanEnCurso } from "../_helpers/planStatus";
+import { getReferenciaInactividad } from "../_helpers/inactividad";
 import { syncPatientAggregateValue } from "../_helpers/syncPatientAggregateValue";
 import { executionsByPacienteDolor } from "../aggregates/executionsByPacienteDolor";
 import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
@@ -165,12 +167,26 @@ async function recomputePatientForWindow(
   const dolorPromedio =
     dolorCount > 0 ? Math.round((dolorSum / dolorCount) * 100) / 100 : undefined;
 
-  const inactividadDias = ultimaActividad
-    ? Math.max(
-        0,
-        diffDays(ultimaActividad, hasta) - 0,
-      )
-    : dias;
+  // `inactividadDias` mide inactividad honesta:
+  //  - con actividad en la ventana: días desde la última actividad real.
+  //  - sin actividad: días desde que el paciente estaba REALMENTE obligado a
+  //    tener actividad (el más reciente entre inicio del plan en curso y su
+  //    fecha de alta en la clínica), acotado a la ventana. Antes se asumía la
+  //    ventana completa (7d), lo que marcaba como inactivos a pacientes recién
+  //    dados de alta o con plan recién asignado. La referencia solo se consulta
+  //    en la rama sin actividad (la cohorte afectada), evitando lecturas extra.
+  let inactividadDias: number;
+  if (ultimaActividad) {
+    inactividadDias = Math.max(0, diffDaysYMD(ultimaActividad, hasta));
+  } else {
+    const refInicio = await getReferenciaInactividad(
+      ctx,
+      pacienteId,
+      clinicId,
+      hasta,
+    );
+    inactividadDias = Math.min(dias, Math.max(0, diffDaysYMD(refInicio, hasta)));
+  }
 
   // Racha actual: serie de los últimos N días en orden cronológico.
   const fechas: string[] = [];
@@ -602,14 +618,6 @@ export const recomputeExerciseUsage = internalMutation({
     return { procesados };
   },
 });
-
-function diffDays(desdeYMD: string, hastaYMD: string): number {
-  const [y1, m1, d1] = desdeYMD.split("-").map(Number);
-  const [y2, m2, d2] = hastaYMD.split("-").map(Number);
-  const a = Date.UTC(y1, m1 - 1, d1);
-  const b = Date.UTC(y2, m2 - 1, d2);
-  return Math.round((b - a) / 86400000);
-}
 
 async function loadDolorMedio(
   ctx: QueryCtx,

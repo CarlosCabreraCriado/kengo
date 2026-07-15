@@ -11,6 +11,7 @@ import { strict as assert } from "node:assert";
 import {
   anioMes,
   anioSemanaISO,
+  diffDaysYMD,
   endOfISOWeek,
   endOfMonth,
   getCurrentMadridDate,
@@ -114,6 +115,17 @@ test("madridCronHourForLocal2355: en enero (CET) = 22 UTC", () => {
   // CET = UTC+1 en enero → 23:55 Madrid = 22:55 UTC.
   const d = new Date("2026-01-15T12:00:00Z");
   assert.equal(madridCronHourForLocal2355(d), 22);
+});
+
+test("diffDaysYMD: diferencia positiva, cero y negativa", () => {
+  assert.equal(diffDaysYMD("2026-07-15", "2026-07-15"), 0);
+  assert.equal(diffDaysYMD("2026-07-12", "2026-07-15"), 3);
+  assert.equal(diffDaysYMD("2026-07-15", "2026-07-12"), -3);
+});
+
+test("diffDaysYMD: cruza límite de mes/año", () => {
+  assert.equal(diffDaysYMD("2026-06-30", "2026-07-01"), 1);
+  assert.equal(diffDaysYMD("2025-12-31", "2026-01-01"), 1);
 });
 
 console.log("done.");
