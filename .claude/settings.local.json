@@ -19,7 +19,6 @@
       "Bash(npx nx build:*)",
       "WebSearch",
       "Bash(npx convex *)",
-      "Bash(curl -s 'https://api.kengoapp.com/items/rutinas_ejercicios?limit=-1&fields=id,rutina,ejercicio,sort,series,repeticiones,duracion_seg,descanso_seg,veces_dia,dias_semana,instrucciones_paciente,notas_fisio' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcxMzcwYTQwLWQyMzEtNGQ4Mi04OGEyLWZjZmY3ZTU0M2QxZSIsInJvbGUiOiIyMTFkYzQ4Mi01OWVmLTQ5NTQtYjhkMy00ZmM3NDVhNmI1NGIiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc3Njk4MTU1OSwiZXhwIjoxNzc3MDY3OTU5LCJpc3MiOiJkaXJlY3R1cyJ9.R3GibpWYp5GMvP5J55a4pZx20L_RKmpU_IjTm-xh99U')",
       "Bash(python3 -m json.tool)",
       "WebFetch(domain:labs.convex.dev)",
       "Bash(npm view *)"

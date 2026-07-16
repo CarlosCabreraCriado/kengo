@@ -17,8 +17,8 @@
           <p class="font-semibold text-ink-900">El responsable de la suscripción es {{ ownerNombre() }}</p>
           <p class="text-sm text-ink-500 mt-1">
             Solo el propietario de {{ clinicaNombre() }} puede activar, modificar
-            o cancelar la suscripción. Puedes consultar el estado y las facturas
-            aquí, pero las acciones de pago las gestiona {{ ownerNombre() }}.
+            o cancelar la suscripción. Puedes consultar el estado aquí, pero las
+            acciones de pago y las facturas las gestiona {{ ownerNombre() }}.
           </p>
         </div>
       </div>
@@ -57,6 +57,8 @@
                 variant="primary"
                 size="md"
                 iconLeft="credit_card"
+                [loading]="accionEnCurso()"
+                [disabled]="accionEnCurso()"
                 (clicked)="accionPrincipal()"
               >Actualizar método de pago</ui2-button>
             </div>
@@ -73,6 +75,16 @@
         <div>
           <p class="font-semibold text-ink-900">¡Suscripción activada!</p>
           <p class="text-sm text-ink-500 mt-1">El estado puede tardar unos segundos en sincronizarse.</p>
+        </div>
+      </div>
+    </ui2-card>
+  } @else if (retornoStripe() === 'cancel') {
+    <ui2-card class="block">
+      <div class="flex items-start gap-3 p-1">
+        <span class="material-symbols-outlined text-ink-500" aria-hidden="true">info</span>
+        <div>
+          <p class="font-semibold text-ink-900">No se completó el pago</p>
+          <p class="text-sm text-ink-500 mt-1">Puedes reintentarlo cuando quieras desde esta pantalla.</p>
         </div>
       </div>
     </ui2-card>
@@ -104,7 +116,7 @@
         <p class="plan-hero__overline">Tu plan actual</p>
         <ui2-pill [variant]="estadoVm().variant" size="md" [icon]="estadoVm().icon">
           @if (suscripcion()!.estado === 'trialing' && diasRestantesTrial() > 0) {
-            Trial · {{ diasRestantesTrial() }} días
+            Trial · {{ diasRestantesTrial() }} {{ diasRestantesTrial() === 1 ? 'día' : 'días' }}
           } @else {
             {{ estadoVm().texto }}
           }
@@ -181,7 +193,8 @@
         size="lg"
         [iconLeft]="iconoAccionPrincipal()"
         [fullWidth]="true"
-        [loading]="loading()"
+        [loading]="accionEnCurso()"
+        [disabled]="accionEnCurso()"
         (clicked)="accionPrincipal()"
       >{{ etiquetaAccionPrincipal() }}</ui2-button>
 
@@ -192,6 +205,7 @@
           size="md"
           iconLeft="cancel"
           [fullWidth]="true"
+          [disabled]="accionEnCurso()"
           (clicked)="cancelarSuscripcion()"
         >Cancelar suscripción</ui2-button>
       }

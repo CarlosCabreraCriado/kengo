@@ -216,6 +216,10 @@ export class ConvexService {
             return;
           }
 
+          // M-10: al cambiar de args (p.ej. cambio de clínica activa) reseteamos
+          // el valor para no mostrar durante la re-suscripción los datos de la
+          // clínica/suscripción anterior (flash de estado ajeno).
+          value.set(undefined);
           isLoading.set(true);
 
           currentUnsubscribe = this.client.onUpdate(
@@ -227,6 +231,15 @@ export class ConvexService {
                 isLoading.set(false);
                 error.set(null);
                 this.isConnected.set(true);
+              });
+            },
+            // M-9: propagar el error de la query. Antes no se pasaba callback y
+            // la señal `error` nunca se poblaba → spinner infinito y la rama de
+            // error de los componentes quedaba muerta.
+            (err: Error) => {
+              this.ngZone.run(() => {
+                error.set(err);
+                isLoading.set(false);
               });
             },
           );

@@ -6,6 +6,7 @@ import {
   requireActiveSubscription,
   requireAnyActiveSubscriptionForUser,
 } from "../_helpers/permissions";
+import { assertCanAccessPaciente } from "../_helpers/authorization";
 
 function buildUrl(token: string): string {
   const appUrl = (process.env["APP_URL"] as string) || "https://kengoapp.com";
@@ -41,6 +42,10 @@ export const create = mutation({
     } else {
       await requireAnyActiveSubscriptionForUser(ctx, requester._id);
     }
+    // El magic link concede acceso a la sesión de `userId`. Exigimos que sea
+    // un paciente que el solicitante gestiona; de lo contrario cualquier fisio
+    // podría acuñar un enlace de login para un usuario arbitrario (ATO).
+    await assertCanAccessPaciente(ctx, requester._id, args.userId);
     const targetId = args.userId;
 
     const token = randomToken();
@@ -67,7 +72,12 @@ export const create = mutation({
 export const revoke = mutation({
   args: { id: v.id("accessTokens") },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const actor = await getAuthenticatedUser(ctx);
+    const token = await ctx.db.get(args.id);
+    if (!token) return { ok: true };
+    // B-10: solo quien gestiona al paciente objetivo (o el propio paciente)
+    // puede revocar su token de acceso.
+    await assertCanAccessPaciente(ctx, actor._id, token.userId);
     await ctx.db.patch(args.id, { activo: false });
     return { ok: true };
   },
@@ -128,6 +138,10 @@ export const getOrCreateForUser = internalMutation({
     creadoPor: v.id("users"),
   },
   handler: async (ctx, args) => {
+    // Punto único de acuñación para `sendByEmail` y el flujo de PDF: exigimos
+    // que `creadoPor` gestione al paciente destinatario del magic link.
+    await assertCanAccessPaciente(ctx, args.creadoPor, args.pacienteId);
+
     const existing = await ctx.db
       .query("accessTokens")
       .withIndex("by_userId", (q) => q.eq("userId", args.pacienteId))

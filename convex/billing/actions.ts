@@ -1,12 +1,12 @@
 "use node";
 
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import Stripe from "stripe";
 import { StripeSubscriptions } from "@convex-dev/stripe";
 import { internal, components } from "../_generated/api";
 import { internalAction, action, type ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { planParaFisios } from "./_helpers";
+import { planParaFisios, LIMITE_FISIOS_AUTOSERVICIO } from "./_helpers";
 
 const stripeApi = new StripeSubscriptions(components.stripe);
 
@@ -212,24 +212,30 @@ export const startTrialForClinic = internalAction({
 
     const quantity = Math.max(1, data.cantidadFisios);
     await syncStripeCustomerTierLabel(stripe, customerId, quantity);
-    const subscription = await stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: priceId, quantity }],
-      trial_period_days: days,
-      metadata: { orgId: clinicId },
-      // Si al final del trial no hay método de pago, dejamos que Stripe cree la
-      // factura y marque la subscription como past_due. El wall de pago se
-      // activará vía webhook + helper requireActiveSubscription (sesión 3).
-      trial_settings: {
-        end_behavior: { missing_payment_method: "create_invoice" },
+    const subscription = await stripe.subscriptions.create(
+      {
+        customer: customerId,
+        items: [{ price: priceId, quantity }],
+        trial_period_days: days,
+        metadata: { orgId: clinicId },
+        // Si al final del trial no hay método de pago, dejamos que Stripe cree la
+        // factura y marque la subscription como past_due. El wall de pago se
+        // activará vía webhook + helper requireActiveSubscription (sesión 3).
+        trial_settings: {
+          end_behavior: { missing_payment_method: "create_invoice" },
+        },
+        // Stripe Tax: calcula IVA automáticamente al emitir facturas. Si el
+        // admin no completó Checkout (donde se recoge NIF/CIF + address), la
+        // primera factura post-trial saldrá sin tax — el correo
+        // `trial_will_end` debe insistir en completar datos antes del final
+        // del trial.
+        automatic_tax: { enabled: true },
       },
-      // Stripe Tax: calcula IVA automáticamente al emitir facturas. Si el
-      // admin no completó Checkout (donde se recoge NIF/CIF + address), la
-      // primera factura post-trial saldrá sin tax — el correo
-      // `trial_will_end` debe insistir en completar datos antes del final
-      // del trial.
-      automatic_tax: { enabled: true },
-    });
+      // M-2: clave de idempotencia por clínica. Si la action se reintenta tras
+      // crear la sub pero antes de persistirla (timeout/fallo parcial), Stripe
+      // devuelve la MISMA sub en vez de crear una segunda sub de trial.
+      { idempotencyKey: `trial-sub-${clinicId}` },
+    );
 
     const trialEnd = subscription.trial_end
       ? subscription.trial_end * 1000
@@ -437,6 +443,43 @@ export const createCheckoutSession = action({
 
     const estado = data.billing?.estadoLocal ?? "none";
     const useSetupMode = estado === "trialing";
+
+    // H-2: en modo `subscription` (reactivar / none / canceled) evitamos crear
+    // una segunda subscription mientras el customer tenga una viva en Stripe.
+    // Si hay una `active`/`trialing`, rechazamos (debe gestionarse desde el
+    // Portal). Si hay residuales `past_due`/`unpaid`/`incomplete` (una S1
+    // huérfana de un impago o de un pago SCA sin confirmar), las cancelamos
+    // antes de crear la S2 para no acabar con doble facturación.
+    if (!useSetupMode) {
+      const existentes = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 100,
+      });
+      for (const s of existentes.data) {
+        if (s.status === "active" || s.status === "trialing") {
+          throw new ConvexError({
+            code: "SUBSCRIPTION_ALREADY_ACTIVE",
+            message:
+              "Ya existe una suscripción activa para esta clínica. Gestiónala desde el portal de pago.",
+          });
+        }
+        if (
+          s.status === "past_due" ||
+          s.status === "unpaid" ||
+          s.status === "incomplete"
+        ) {
+          try {
+            await stripe.subscriptions.cancel(s.id);
+          } catch (err) {
+            console.error(
+              `[billing] createCheckoutSession: no se pudo cancelar la sub residual ${s.id} (clinic=${clinicId})`,
+              err,
+            );
+          }
+        }
+      }
+    }
 
     const session = useSetupMode
       ? await stripe.checkout.sessions.create({
@@ -742,15 +785,40 @@ export const finalizeSetupCheckout = internalAction({
       invoice_settings: { default_payment_method: pmId },
     });
 
-    // `trial_end: 'now'` termina el trial inmediatamente y dispara la
-    // facturación del periodo. Stripe acepta tanto el literal "now" como un
-    // timestamp en segundos; usamos timestamp para evitar fricción con
-    // versiones del SDK que tipan trial_end como number.
-    await stripe.subscriptions.update(subId, {
-      default_payment_method: pmId,
-      trial_end: Math.floor(Date.now() / 1000),
-      proration_behavior: "none",
-    });
+    // El comportamiento depende del estado real de la subscription: si el
+    // trial ya expiró (end_behavior `create_invoice` dejó una invoice abierta
+    // y la sub en `past_due`/`unpaid`), poner `trial_end` NO cobra esa
+    // invoice; hay que pagarla con el método nuevo. Si el trial sigue vigente,
+    // lo terminamos con `trial_end: 'now'` para disparar el primer cobro.
+    const sub = await stripe.subscriptions.retrieve(subId);
+    if (sub.status === "past_due" || sub.status === "unpaid") {
+      await stripe.subscriptions.update(subId, {
+        default_payment_method: pmId,
+      });
+      const latestInvoiceId =
+        typeof sub.latest_invoice === "string"
+          ? sub.latest_invoice
+          : sub.latest_invoice?.id;
+      if (latestInvoiceId) {
+        try {
+          await stripe.invoices.pay(latestInvoiceId, { payment_method: pmId });
+        } catch (err) {
+          console.error(
+            `[billing] finalizeSetupCheckout: error pagando invoice ${latestInvoiceId} clinic=${clinicId}`,
+            err,
+          );
+        }
+      }
+    } else {
+      // Stripe acepta el literal "now" (SDK 20 lo tipa como `'now' | number`);
+      // un timestamp `Date.now()` puede llegar ya en el pasado por latencia y
+      // ser rechazado con "trial_end is in the past".
+      await stripe.subscriptions.update(subId, {
+        default_payment_method: pmId,
+        trial_end: "now",
+        proration_behavior: "none",
+      });
+    }
   },
 });
 
@@ -785,6 +853,28 @@ export const finalizeSubscriptionCheckout = internalAction({
       internal.billing.internal.upsertStripeSubscriptionId,
       { clinicId, stripeSubscriptionId: newSubId },
     );
+
+    // Aplicar el estado real de la S2 inmediatamente. Sus webhooks
+    // (`customer.subscription.created`, `invoice.paid`) suelen llegar ANTES de
+    // que esta action persista el puntero, por lo que el filtro anti-zombi
+    // (H-1) los descarta como "sub ajena" mientras el puntero apunta a la S1.
+    // Sin este sync la clínica seguiría `canceled` (bloqueada) hasta el
+    // siguiente evento de la S2, que puede tardar un ciclo de facturación.
+    // No pasamos `eventCreatedMs` para no sellar el ordering: los eventos
+    // legítimos de la S2 que lleguen después deben poder aplicarse.
+    const sub = await stripe.subscriptions.retrieve(newSubId);
+    const item = sub.items.data[0];
+    await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
+      clinicId,
+      status: sub.status,
+      trialEnd: sub.trial_end ? sub.trial_end * 1000 : undefined,
+      currentPeriodEnd: item?.current_period_end
+        ? item.current_period_end * 1000
+        : undefined,
+      cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+      quantity: item?.quantity,
+      stripeSubscriptionId: newSubId,
+    });
   },
 });
 
@@ -983,31 +1073,50 @@ export const listInvoicesForClinic = action({
  */
 export const updateStripeQuantity = internalAction({
   args: { clinicId: v.id("clinics"), quantity: v.number() },
-  handler: async (ctx, { clinicId, quantity }): Promise<void> => {
+  // El arg `quantity` se conserva por compatibilidad pero se IGNORA: la
+  // cantidad se recomputa en ejecución (M-3).
+  handler: async (ctx, { clinicId }): Promise<void> => {
     const data = await ctx.runQuery(
       internal.billing.internal.getBillingContext,
       { clinicId },
     );
-    const subId = data.billing?.stripeSubscriptionId;
-    if (!subId) return;
+
+    // M-3: recomputar la cantidad AHORA, no usar el valor congelado al encolar.
+    // Dos cambios de plantilla casi simultáneos encolan dos actions cuyo orden
+    // de ejecución Convex no garantiza; recomputando, la última en correr deja
+    // Stripe con la cantidad real.
+    const cantidad = Math.max(1, data.cantidadFisios);
+
+    // Por encima del tope de autoservicio no empujamos a Stripe (enterprise se
+    // gestiona a mano; ver decisión de pricing). syncQuantityFromMemberships ya
+    // marca `requiereContactoVentas` en ese caso.
+    if (data.cantidadFisios > LIMITE_FISIOS_AUTOSERVICIO) return;
+
+    const localSubId = data.billing?.stripeSubscriptionId;
+    const customerId = data.billing?.stripeCustomerId;
+    if (!localSubId || !customerId) return;
+
+    // M-5: self-heal del puntero si la sub local está muerta (cancelada), para
+    // no fallar al actualizar la cantidad contra una S1 huérfana.
+    const stripe = getStripeClient();
+    const subId = await resolveActiveSubscriptionId(
+      ctx,
+      stripe,
+      clinicId,
+      localSubId,
+      customerId,
+    );
 
     await stripeApi.updateSubscriptionQuantity(ctx, {
       stripeSubscriptionId: subId,
-      quantity,
+      quantity: cantidad,
     });
 
-    const customerId = data.billing?.stripeCustomerId;
-    if (customerId) {
-      await syncStripeCustomerTierLabel(
-        getStripeClient(),
-        customerId,
-        quantity,
-      );
-    }
+    await syncStripeCustomerTierLabel(stripe, customerId, cantidad);
 
     await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
       clinicId,
-      cantidadFisios: quantity,
+      cantidadFisios: cantidad,
     });
   },
 });

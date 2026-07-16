@@ -27,6 +27,16 @@ export class ActiveSubscriptionGuard implements CanActivate {
       await this.session.cargarMiUsuario();
     }
 
+    // Esperar a la primera emisión de la query de billing antes de decidir.
+    // En cold start / navegación directa por URL, `bloqueada()` es false
+    // mientras la query aún no ha emitido, lo que dejaba entrar a una clínica
+    // suspendida y el bloqueo saltaba recién al guardar (H-8). Cuando no hay
+    // clínica facturable la query está en `skip` y `loading()` ya es false.
+    const inicio = Date.now();
+    while (this.subs.loading() && Date.now() - inicio < 3000) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
     if (!this.subs.bloqueada()) return true;
 
     return this.router.createUrlTree(['/mi-clinica/suscripcion'], {

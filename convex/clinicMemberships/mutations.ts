@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { MutationCtx } from "../_generated/server";
 import { mutation } from "../_helpers/mutationWithTriggers";
 import { internal } from "../_generated/api";
@@ -9,6 +9,7 @@ import {
   getAuthenticatedUser,
   requireActiveSubscription,
 } from "../_helpers/permissions";
+import { LIMITE_FISIOS_AUTOSERVICIO } from "../billing/_helpers";
 import { _deletePatientSnapshotsForClinic } from "../snapshots/internal";
 
 const PUESTOS_FACTURABLES: ReadonlyArray<"fisio" | "admin"> = [
@@ -166,7 +167,13 @@ export const add = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const actor = await getAuthenticatedUser(ctx);
+    // Solo un admin de la clínica puede dar de alta miembros. Sin este check,
+    // cualquier usuario autenticado podía autoconcederse el puesto de admin en
+    // una clínica ajena. El alta legítima (onboarding, códigos de invitación)
+    // no pasa por aquí: `clinics.create` y `accessCodes.consume` insertan la
+    // membresía directamente con su propia autorización.
+    await checkClinicPermission(ctx, actor._id, args.clinicId, ["admin"]);
     // Solo bloquear el alta si el nuevo puesto es facturable. Pacientes
     // pueden seguir vinculándose aunque la clínica esté impagada.
     if (args.puesto === "fisio" || args.puesto === "admin") {
@@ -179,6 +186,31 @@ export const add = mutation({
         q.eq("userId", args.userId).eq("clinicId", args.clinicId),
       )
       .unique();
+
+    // M-4: bloquear el alta NETA de un asiento facturable por encima del tope
+    // de autoservicio. Enterprise (>10) se gestiona por ventas; el límite se
+    // hace cumplir en código, no en el price de Stripe (decisión de pricing).
+    const nuevoEsFacturable =
+      args.puesto === "fisio" || args.puesto === "admin";
+    const yaEraFacturable =
+      existing?.puesto === "fisio" || existing?.puesto === "admin";
+    if (nuevoEsFacturable && !yaEraFacturable) {
+      const facturablesActuales = (
+        await ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
+          .collect()
+      ).filter(
+        (m) => m.puesto === "fisio" || m.puesto === "admin",
+      ).length;
+      if (facturablesActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
+        throw new ConvexError({
+          code: "REQUIERE_CONTACTO_VENTAS",
+          message:
+            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
+        });
+      }
+    }
 
     // Los fisios/admins de una clínica actúan automáticamente también como
     // sus propios pacientes: pueden ver el modo paciente, autoasignarse
@@ -256,10 +288,19 @@ export const add = mutation({
 export const remove = mutation({
   args: { membershipId: v.id("clinicMemberships") },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const actor = await getAuthenticatedUser(ctx);
 
     const membership = await ctx.db.get(args.membershipId);
     if (!membership) return { ok: true };
+
+    // Autorización: solo el propio usuario (auto-salida de la clínica) o un
+    // admin de la clínica del membership. Sin esto, cualquier autenticado
+    // podía borrar la membresía de otro y disparar sus cascadas de borrado.
+    if (actor._id !== membership.userId) {
+      await checkClinicPermission(ctx, actor._id, membership.clinicId, [
+        "admin",
+      ]);
+    }
 
     const eraFacturable = esFacturable(membership.puesto);
     const clinicId = membership.clinicId;

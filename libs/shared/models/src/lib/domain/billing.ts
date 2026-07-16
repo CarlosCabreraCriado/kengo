@@ -10,7 +10,9 @@ export type SubscriptionEstado =
   | 'canceled'
   | 'incomplete'
   | 'unpaid'
-  | 'none';
+  | 'none'
+  /** Enterprise (>10 fisios) pendiente de acuerdo con ventas; opera con normalidad. */
+  | 'enterprise_pending';
 
 export interface PlanInfo {
   nombre: string;
@@ -43,6 +45,14 @@ export interface ClinicSubscription {
   ownerNombre: string | null;
   /** `true` si el usuario autenticado es el propietario. */
   esOwner: boolean;
+  /**
+   * Veredicto de bloqueo calculado en el servidor, espejo del gating del
+   * backend (`billingPermiteOperar`): `true` cuando la clínica NO puede operar
+   * (unpaid, canceled, incomplete, o past_due con la gracia agotada). El
+   * frontend lo consume directamente en vez de rederivarlo, evitando la
+   * ambigüedad del estado `none` (sin fila = permisivo).
+   */
+  bloqueada: boolean;
 }
 
 export const PLANES: PlanInfo[] = [

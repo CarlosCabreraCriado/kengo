@@ -10,7 +10,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs/operators';
 
 import { SubscriptionService } from './subscription.service';
-import { SessionService } from '../auth/services/session.service';
+import type { ClinicSubscription } from '@kengo/shared-models';
 import {
   Ui2ButtonComponent,
   Ui2CardComponent,
@@ -23,7 +23,8 @@ interface BannerVm {
   icon: string;
   titulo: string;
   mensaje: string;
-  ctaLabel: string;
+  /** Ausente = banner informativo sin CTA (fisio no-admin de la clínica). */
+  ctaLabel?: string;
 }
 
 const VARIANT_STYLES: Record<BannerVariant, { bg: string; fg: string; border: string }> = {
@@ -55,6 +56,8 @@ const RUTAS_OCULTAR = ['/mi-clinica/suscripcion'];
     @if (visible(); as vm) {
       <div
         class="billing-banner px-5 pt-3"
+        role="status"
+        aria-live="polite"
         [style.--banner-bg]="styles()[vm.variant].bg"
         [style.--banner-fg]="styles()[vm.variant].fg"
         [style.--banner-border]="styles()[vm.variant].border"
@@ -69,12 +72,14 @@ const RUTAS_OCULTAR = ['/mi-clinica/suscripcion'];
               <p class="billing-banner__title">{{ vm.titulo }}</p>
               <p class="billing-banner__message">{{ vm.mensaje }}</p>
             </div>
-            <ui2-button
-              variant="ghost"
-              size="sm"
-              iconRight="arrow_forward"
-              (clicked)="abrirSuscripcion()"
-            >{{ vm.ctaLabel }}</ui2-button>
+            @if (vm.ctaLabel) {
+              <ui2-button
+                variant="ghost"
+                size="sm"
+                iconRight="arrow_forward"
+                (clicked)="abrirSuscripcion()"
+              >{{ vm.ctaLabel }}</ui2-button>
+            }
           </div>
         </ui2-card>
       </div>
@@ -118,7 +123,10 @@ const RUTAS_OCULTAR = ['/mi-clinica/suscripcion'];
         margin: 0;
         font-size: 14px;
         font-weight: 700;
-        color: var(--banner-fg);
+        /* Texto en ink oscuro para asegurar contraste AA sobre el fondo
+           tintado (el amber de warning como texto no alcanzaba 4.5:1). El color
+           semántico se mantiene en el icono, que sí contrasta a 22px. */
+        color: var(--ink-900);
         line-height: 1.2;
       }
       .billing-banner__message {
@@ -132,7 +140,6 @@ const RUTAS_OCULTAR = ['/mi-clinica/suscripcion'];
 })
 export class BillingBannerComponent {
   private readonly subs = inject(SubscriptionService);
-  private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly datePipe = new DatePipe('es-ES');
 
@@ -149,13 +156,56 @@ export class BillingBannerComponent {
   );
 
   protected readonly visible = computed<BannerVm | null>(() => {
-    if (!this.session.esAdmin()) return null;
-
     const url = this.currentUrl();
     if (RUTAS_OCULTAR.some((r) => url.startsWith(r))) return null;
 
+    // La query de billing solo corre para miembros facturables (fisio/admin)
+    // de la clínica activa, así que `sub` definido ya implica que el usuario
+    // trabaja en ella. No filtramos por admin aquí (M-7): el fisio no-admin
+    // también debe ver el aviso, pero en variante informativa sin CTA.
     const sub = this.subs.suscripcion();
     if (!sub) return null;
+
+    const vm = this.bannerBase(sub);
+    if (!vm) return null;
+
+    // M-7: solo el admin de la clínica ACTIVA puede resolver el pago (el CTA
+    // lleva a /mi-clinica/suscripcion, que el guard de admin bloquea al resto).
+    // Para el fisio no-admin: mismo aviso, sin CTA, indicando a quién avisar.
+    if (!this.subs.esAdminEnClinicaActiva()) {
+      const owner = this.subs.ownerNombre();
+      return {
+        ...vm,
+        ctaLabel: undefined,
+        mensaje: owner ? `${vm.mensaje} Avisa a ${owner}.` : vm.mensaje,
+      };
+    }
+    return vm;
+  });
+
+  private bannerBase(sub: ClinicSubscription): BannerVm | null {
+    // Estados bloqueantes con copy específico (van antes del genérico de
+    // suspensión). `canceled`/`incomplete` también dan `bloqueada() === true`,
+    // pero merecen un mensaje y CTA propios (H-6).
+    if (sub.estado === 'canceled') {
+      return {
+        variant: 'danger',
+        icon: 'block',
+        titulo: 'Suscripción cancelada',
+        mensaje: 'Reactívala para volver a crear planes y gestionar pacientes.',
+        ctaLabel: 'Reactivar',
+      };
+    }
+
+    if (sub.estado === 'incomplete') {
+      return {
+        variant: 'warning',
+        icon: 'error',
+        titulo: 'Pago pendiente de confirmación',
+        mensaje: 'Completa el pago para activar la suscripción.',
+        ctaLabel: 'Resolver',
+      };
+    }
 
     if (this.subs.bloqueada()) {
       return {
@@ -207,7 +257,7 @@ export class BillingBannerComponent {
     }
 
     return null;
-  });
+  }
 
   protected abrirSuscripcion(): void {
     void this.router.navigate(['/mi-clinica/suscripcion']);

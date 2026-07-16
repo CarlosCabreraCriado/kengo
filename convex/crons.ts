@@ -73,6 +73,17 @@ crons.daily(
   {},
 );
 
+// Reconciliación de trials: recupera clínicas que se quedaron sin fila
+// `clinicBilling` (fallo del `startTrialForClinic` encolado al crearse la
+// clínica) reencolando el arranque del trial. Idempotente. Hora 03:45 UTC,
+// tras `billing-grace-expired` (03:30).
+crons.daily(
+  "billing-reconcile-trials",
+  { hourUTC: 3, minuteUTC: 45 },
+  internal.billing.internal.reconcileMissingTrials,
+  {},
+);
+
 // Sync diario del catálogo de ejercicios desde Directus (CMS administrado por
 // admins). Pull incremental por `date_updated` sobre las colecciones
 // `ejercicios`, `categorias` y `ejercicios_categorias`. Detecta borrados

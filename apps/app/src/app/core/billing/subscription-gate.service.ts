@@ -1,8 +1,9 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, Injector, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { DialogService } from '../../shared/services/dialog/dialog.service';
 import { SessionService } from '../auth/services/session.service';
+import { SubscriptionService } from './subscription.service';
 
 /**
  * Captura el error `ConvexError({ code: "SUBSCRIPTION_INACTIVE" })` lanzado por
@@ -22,6 +23,8 @@ export class SubscriptionGateService {
   private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
   private readonly session = inject(SessionService);
+  // Resolución lazy para evitar el ciclo Gate → Subscription → Convex → Gate.
+  private readonly injector = inject(Injector);
 
   private readonly mostrando = signal(false);
 
@@ -51,6 +54,26 @@ export class SubscriptionGateService {
     if (this.mostrando()) return;
     this.mostrando.set(true);
     try {
+      const subs = this.injector.get(SubscriptionService);
+
+      // M-6: solo el admin de la clínica activa puede reactivar el pago. Para
+      // el fisio no-admin, la ruta /mi-clinica/suscripcion la bloquea el guard
+      // de admin, así que mostramos un aviso informativo indicándole a quién
+      // avisar, sin CTA de navegación (que sería un callejón sin salida).
+      if (!subs.esAdminEnClinicaActiva()) {
+        const owner = subs.ownerNombre();
+        await this.dialog.confirm({
+          title: 'Suscripción de la clínica inactiva',
+          message: owner
+            ? `Avisa a ${owner} para reactivar la suscripción de la clínica.`
+            : 'Avisa al responsable de la clínica para reactivar la suscripción.',
+          confirmText: 'Entendido',
+          hideCancel: true,
+          confirmVariant: 'primary',
+        });
+        return;
+      }
+
       const ir = await this.dialog.confirm({
         title: 'Tu suscripción no está activa',
         message:

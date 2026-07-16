@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, OnDestroy, OnInit, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
@@ -216,13 +216,6 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
     const fileId = this.clinicaActual()?.imagenes?.[0]?.fileId;
     return fileId ? rawAssetUrl(fileId) : null;
   });
-
-  // ============================================================
-  // Datos mockeados (TODO: cablear con backend real)
-  // ============================================================
-
-  /** Sesiones que el fisio espera/registra hoy. TODO: cablear con snapshots.sesionesHoy. */
-  readonly sesionesHoyMock = signal<number>(0);
 
   ngOnInit(): void {
     this.pageLoader.register(this.PAGE_LOADER_KEY, this.pageReady);
