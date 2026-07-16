@@ -135,6 +135,13 @@ export class DashboardFisioService {
   // --- Actividad de la clínica (gráfica web) ---
   readonly actividadCargando = computed(() => this.actividadSub.isLoading());
 
+  /** Sesiones reales que la clínica ha registrado hoy (día `today` de la actividad). */
+  readonly sesionesHoy = computed<number>(() => {
+    const data = this.actividadSub.value() as ActividadDiariaClinica | null;
+    if (!data) return 0;
+    return data.days.find((d) => d.today)?.sesiones ?? 0;
+  });
+
   readonly actividadDiaria = computed<Ui2ActivityDay[]>(() => {
     const data = this.actividadSub.value() as ActividadDiariaClinica | null;
     if (!data || data.days.length === 0) {

@@ -57,7 +57,7 @@
       <ui2-mini-stat
         icon="event_available"
         label="Sesiones hoy"
-        [value]="sesionesHoyMock().toString()"
+        [value]="dashboardService.sesionesHoy().toString()"
         color="var(--ink-700)"
       ></ui2-mini-stat>
     </div>
@@ -83,9 +83,9 @@
           [deltaColor]="adherenciaDeltaColor()"
         ></ui2-kpi-card>
         <ui2-kpi-card
-          icon="notifications"
-          label="Alertas"
-          [value]="alertasCount().toString()"
+          icon="event_available"
+          label="Sesiones hoy"
+          [value]="dashboardService.sesionesHoy().toString()"
         ></ui2-kpi-card>
       </div>
     </ui2-section>
