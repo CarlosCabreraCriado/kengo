@@ -168,6 +168,10 @@ export const consume = mutation({
             "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
         });
       }
+      // B-10: promover a fisio añade un asiento facturable; exigir suscripción
+      // operativa (un código emitido antes de un impago no debe subir la
+      // quantity de una clínica que Stripe no podrá cobrar).
+      await requireActiveSubscription(ctx, codeDoc.clinicId);
 
       await ctx.db.patch(existingMembership._id, {
         puesto: "fisio",
@@ -211,6 +215,8 @@ export const consume = mutation({
             "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
         });
       }
+      // B-10: alta de fisio = asiento facturable; exigir suscripción operativa.
+      await requireActiveSubscription(ctx, codeDoc.clinicId);
     }
 
     await ctx.db.insert("clinicMemberships", {
@@ -279,7 +285,11 @@ export const consume = mutation({
 export const deactivate = mutation({
   args: { codeId: v.id("accessCodes") },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    const code = await ctx.db.get(args.codeId);
+    if (!code) return;
+    // B-10: solo un fisio/admin de la clínica del código puede (des)activarlo.
+    await checkClinicPermission(ctx, user._id, code.clinicId, ["fisio", "admin"]);
     await ctx.db.patch(args.codeId, { activo: false });
   },
 });
@@ -287,7 +297,10 @@ export const deactivate = mutation({
 export const reactivate = mutation({
   args: { codeId: v.id("accessCodes") },
   handler: async (ctx, args) => {
-    await getAuthenticatedUser(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    const code = await ctx.db.get(args.codeId);
+    if (!code) return;
+    await checkClinicPermission(ctx, user._id, code.clinicId, ["fisio", "admin"]);
     await ctx.db.patch(args.codeId, { activo: true });
   },
 });

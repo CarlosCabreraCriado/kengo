@@ -8,6 +8,8 @@ import {
   requireAnyActiveSubscriptionForUser,
   tieneGestion,
 } from "../_helpers/permissions";
+import { assertCanAccessPaciente } from "../_helpers/authorization";
+import { getManagedClinicIds } from "../_helpers/patientAccess";
 
 function buildSearchableText(
   firstName?: string | null,
@@ -328,6 +330,10 @@ export const updatePatient = mutation({
       await requireAnyActiveSubscriptionForUser(ctx, fisio._id);
     }
     const patientId: Id<"users"> = args.patientId;
+    // El paciente debe ser accesible por el fisio (miembro paciente de una
+    // clínica que gestiona). Sin esto, un fisio podía editar datos o
+    // reconciliar membresías de un paciente de una clínica ajena.
+    await assertCanAccessPaciente(ctx, fisio._id, patientId);
 
     // Patch de datos básicos
     const patch: Record<string, unknown> = {};
@@ -356,8 +362,26 @@ export const updatePatient = mutation({
       await ctx.db.patch(patientId, patch);
     }
 
-    // Reconciliar membresías si se proporcionan
+    // Reconciliar membresías si se proporcionan. La reconciliación se limita
+    // ESTRICTAMENTE a las clínicas que el fisio gestiona: nunca se tocan las
+    // membresías del paciente en clínicas ajenas (ni se borran ni se crean).
     if (args.clinicMemberships) {
+      const managedClinicIds = new Set(
+        (await getManagedClinicIds(ctx, fisio._id)).map((id) => String(id)),
+      );
+
+      // Rechazar cualquier intento de crear membresía en una clínica que el
+      // fisio no gestiona.
+      for (const m of args.clinicMemberships) {
+        if (!managedClinicIds.has(String(m.clinicId))) {
+          throw new ConvexError({
+            code: "NO_ACCESO",
+            message:
+              "No puedes modificar membresías en una clínica que no gestionas.",
+          });
+        }
+      }
+
       const existing = await ctx.db
         .query("clinicMemberships")
         .withIndex("by_userId", (q) => q.eq("userId", patientId!))
@@ -370,14 +394,15 @@ export const updatePatient = mutation({
         existing.map((m) => `${m.clinicId}-${m.puesto}`),
       );
 
-      // Eliminar las que ya no están
+      // Eliminar las que ya no están, SOLO en clínicas gestionadas.
       for (const m of existing) {
+        if (!managedClinicIds.has(String(m.clinicId))) continue;
         if (!desiredKeys.has(`${m.clinicId}-${m.puesto}`)) {
           await ctx.db.delete(m._id);
         }
       }
 
-      // Crear las nuevas
+      // Crear las nuevas (ya validado que su clínica es gestionada).
       for (const m of args.clinicMemberships) {
         if (!existingKeys.has(`${m.clinicId}-${m.puesto}`)) {
           await ctx.db.insert("clinicMemberships", {

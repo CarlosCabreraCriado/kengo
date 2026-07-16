@@ -86,20 +86,23 @@ export const complete = mutation({
     observacionesGenerales: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
-    await getAuthenticatedUser(ctx);
+    const user = await getAuthenticatedUser(ctx);
+
+    // Cargar y validar propiedad ANTES de escribir nada: la sesión solo la
+    // puede cerrar/anotar su propio paciente. Antes se patcheaba
+    // `observacionesPaciente` sobre `sessionId` sin comprobar el dueño.
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) return;
+    if (session.pacienteId !== user._id) {
+      throw new Error("No tienes acceso a este recurso");
+    }
 
     if (args.observacionesGenerales?.trim()) {
       await ctx.db.patch(args.sessionId, {
         observacionesPaciente: args.observacionesGenerales,
       });
-    }
-
-    const session = await ctx.db.get(args.sessionId);
-    if (!session) return;
-
-    // Materializa la observación general como alerta `comentario` para el
-    // fisio (la idempotencia por sessionId la gestiona `createCommentAlert`).
-    if (args.observacionesGenerales?.trim()) {
+      // Materializa la observación general como alerta `comentario` para el
+      // fisio (la idempotencia por sessionId la gestiona `createCommentAlert`).
       await ctx.runMutation(internal.alerts.internal.createCommentAlert, {
         pacienteId: session.pacienteId,
         sessionId: args.sessionId,

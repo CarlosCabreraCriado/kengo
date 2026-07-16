@@ -49,12 +49,4 @@ export class StorageService {
 
     return { key, url: publicUrl };
   }
-
-  /**
-   * Borra un objeto de R2 por su key. Útil para limpiar avatares antiguos
-   * cuando el usuario sube uno nuevo.
-   */
-  async delete(key: string): Promise<void> {
-    await this.convex.action(api.storage.actions.deleteObject, { key });
-  }
 }

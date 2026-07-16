@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
@@ -58,6 +58,11 @@ const ESTADO_VM: Record<SubscriptionEstado, EstadoVm> = {
   incomplete: { texto: 'Incompleta', variant: 'warning', icon: 'hourglass_empty' },
   unpaid: { texto: 'Suspendida', variant: 'danger', icon: 'lock' },
   none: { texto: 'Sin suscripción', variant: 'neutral', icon: 'info' },
+  enterprise_pending: {
+    texto: 'Plan a medida',
+    variant: 'soft',
+    icon: 'apartment',
+  },
 };
 
 const INVOICE_ESTADO_VM: Record<InvoiceEstado, InvoiceEstadoVm> = {
@@ -94,6 +99,7 @@ const INVOICE_ESTADO_VM: Record<InvoiceEstado, InvoiceEstadoVm> = {
 })
 export class SuscripcionComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly convex = inject(ConvexService);
   private readonly dialogService = inject(DialogService);
   private readonly logger = inject(LoggerService);
@@ -102,6 +108,8 @@ export class SuscripcionComponent {
   protected readonly suscripcion = this.subs.suscripcion;
   protected readonly loading = this.subs.loading;
   protected readonly error = this.subs.error;
+  /** Acción de billing en vuelo — bloquea los CTAs para evitar doble click (H-10). */
+  protected readonly accionEnCurso = this.subs.accionEnCurso;
 
   protected readonly clinicId = computed<string | null>(() =>
     this.subs.esAdminEnClinicaActiva() ? this.subs.clinicIdActiva() : null,
@@ -168,16 +176,13 @@ export class SuscripcionComponent {
   protected readonly facturasError = signal<string | null>(null);
   protected readonly facturasCargando = signal<boolean>(false);
 
-  protected readonly retornoStripe = toSignal(
-    this.route.queryParamMap.pipe(
-      map((qp) => {
-        if (qp.has('ok')) return 'ok' as const;
-        if (qp.has('cancel')) return 'cancel' as const;
-        return null;
-      }),
-    ),
-    { initialValue: null },
-  );
+  /**
+   * Resultado del retorno de Checkout (web). Se lee UNA vez del query param y
+   * se limpia la URL (M-9), para que la tarjeta de éxito/cancelación no
+   * reaparezca al recargar o volver con el back, y para no dejar `?ok=1` en
+   * marcadores. `null` cuando no venimos de Stripe.
+   */
+  protected readonly retornoStripe = signal<'ok' | 'cancel' | null>(null);
 
   /**
    * Llegada redirigida desde `ActiveSubscriptionGuard` al intentar entrar a
@@ -190,10 +195,27 @@ export class SuscripcionComponent {
   );
 
   constructor() {
+    // Retorno de Checkout web: leer `ok`/`cancel` una sola vez y limpiar la URL
+    // (M-9), preservando el resto de params (p.ej. `bloqueada`).
+    const qp = this.route.snapshot.queryParamMap;
+    if (qp.has('ok')) this.retornoStripe.set('ok');
+    else if (qp.has('cancel')) this.retornoStripe.set('cancel');
+    if (this.retornoStripe()) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { ok: null, cancel: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+
     effect(() => {
       const id = this.clinicId();
       const sub = this.suscripcion();
-      if (!id || !sub || sub.estado === 'none') {
+      // Solo el owner puede listar facturas (la action es owner-only). Antes se
+      // llamaba para cualquier admin y fallaba con un error permanente bajo un
+      // texto que prometía las facturas (H-9).
+      if (!id || !sub || sub.estado === 'none' || !sub.esOwner) {
         this.facturas.set([]);
         this.facturasError.set(null);
         return;

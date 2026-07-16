@@ -172,6 +172,18 @@ export const update = mutation({
       await ctx.db.patch(clinicId, patch);
     }
 
+    // Borrado de las keys huérfanas en R2 desde el servidor, dentro de este
+    // flujo ya autorizado (admin de la clínica) y con keys que provienen de
+    // los datos de la propia clínica. Antes el frontend borraba vía una acción
+    // pública `deleteObject` invocable con cualquier key (S-3 de la auditoría).
+    if (orphanedKeys.length > 0) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.storage.actions.deleteOrphanedObjects,
+        { keys: orphanedKeys },
+      );
+    }
+
     return { orphanedKeys };
   },
 });

@@ -133,7 +133,9 @@ export const migrateExistingClinics = internalMutation({
       if (cantidadFisios > LIMITE_FISIOS_AUTOSERVICIO) {
         await ctx.db.insert("clinicBilling", {
           clinicId: clinic._id,
-          estadoLocal: "none",
+          // B-9: enterprise_pending (no bloqueante) en vez de `none` (que
+          // bloqueaba de golpe a la clínica al ejecutar la migración).
+          estadoLocal: "enterprise_pending",
           requiereContactoVentas: true,
           cantidadFisios,
           actualizadoEn: Date.now(),

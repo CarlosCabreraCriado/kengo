@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { internal, components } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { registerRoutes as registerStripeRoutes } from "@convex-dev/stripe";
+import { resolveInvoiceSubscriptionId } from "./billing/_webhookHelpers";
 import {
   authComponent,
   createAuth,
@@ -40,13 +41,17 @@ registerStripeRoutes(http, components.stripe, {
         }
         case "invoice.paid":
         case "invoice.payment_failed": {
-          const invoice = event.data.object as {
-            subscription?: string;
-          };
-          if (!invoice.subscription) return undefined;
+          // A partir de la API 2025-03-31 ("basil"/"dahlia") el id de la
+          // suscripción ya no vive en `invoice.subscription` sino en
+          // `invoice.parent.subscription_details.subscription`. El helper
+          // cubre ambos formatos (ver `_webhookHelpers.ts`).
+          const subscriptionId = resolveInvoiceSubscriptionId(
+            event.data.object,
+          );
+          if (!subscriptionId) return undefined;
           const sub = await ctx.runQuery(
             components.stripe.public.getSubscription,
-            { stripeSubscriptionId: invoice.subscription },
+            { stripeSubscriptionId: subscriptionId },
           );
           return sub?.orgId ? (sub.orgId as Id<"clinics">) : undefined;
         }
@@ -58,12 +63,30 @@ registerStripeRoutes(http, components.stripe, {
     const eventCreatedMs = event.created * 1000;
     const clinicId = await resolveClinicId();
 
-    // Dedup global por `event.id`. Si ya procesamos este evento (caso típico:
-    // Stripe reentrega por timeout), abortamos sin ejecutar efectos
-    // colaterales. El componente Stripe ya hace upserts idempotentes en sus
-    // tablas internas, pero nuestro `onEvent` no estaría protegido sin esto.
+    // Id de la subscription del evento, para descartar eventos de una S1 zombi
+    // que ya no es la vigente de la clínica (H-1). Barato: no requiere query.
+    const eventSubscriptionId: string | undefined = (() => {
+      switch (event.type) {
+        case "customer.subscription.created":
+        case "customer.subscription.updated":
+        case "customer.subscription.deleted":
+          return (event.data.object as { id?: string }).id;
+        case "invoice.paid":
+        case "invoice.payment_failed":
+          return resolveInvoiceSubscriptionId(event.data.object);
+        default:
+          return undefined;
+      }
+    })();
+
+    // Dedup global por `event.id`, patrón de dos fases: `claimWebhookEvent`
+    // solo devuelve `skip` si un intento ANTERIOR llegó a sellarse con éxito
+    // (`markWebhookEventProcessed`, al final del try). Si el intento previo
+    // quedó a medias, se reprocesa. Esto evita perder eventos ante fallos
+    // transitorios (el componente Stripe ya hace upserts idempotentes en sus
+    // tablas internas, pero nuestro `onEvent` no estaría protegido sin esto).
     const { skip } = await ctx.runMutation(
-      internal.billing.internal.recordWebhookEvent,
+      internal.billing.internal.claimWebhookEvent,
       {
         eventId: event.id,
         eventType: event.type,
@@ -82,7 +105,7 @@ registerStripeRoutes(http, components.stripe, {
       switch (event.type) {
         case "customer.subscription.created":
         case "customer.subscription.updated": {
-          if (!clinicId) return;
+          if (!clinicId) break;
           const sub = event.data.object;
           const item = sub.items.data[0];
           await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
@@ -95,26 +118,31 @@ registerStripeRoutes(http, components.stripe, {
             cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
             quantity: item?.quantity,
             eventCreatedMs,
+            stripeSubscriptionId: eventSubscriptionId,
           });
           break;
         }
         case "customer.subscription.deleted": {
-          if (!clinicId) return;
-          await ctx.runMutation(internal.billing.internal.markCanceled, {
-            clinicId,
-          });
-          // Email de cancelación al propietario (referencia: Bloque G del
-          // plan production-ready). El destinatario es determinista gracias
-          // a `clinics.ownerUserId`.
-          await ctx.scheduler.runAfter(
-            0,
-            internal.billing.actions.notifySubscriptionCanceled,
-            { clinicId },
+          if (!clinicId) break;
+          const { applied } = await ctx.runMutation(
+            internal.billing.internal.markCanceled,
+            { clinicId, eventCreatedMs, stripeSubscriptionId: eventSubscriptionId },
           );
+          // Email de cancelación al propietario SOLO si la cancelación se
+          // aplicó de verdad (no cuando el evento era de una S1 zombi o llegó
+          // fuera de orden). El destinatario es determinista vía
+          // `clinics.ownerUserId`.
+          if (applied) {
+            await ctx.scheduler.runAfter(
+              0,
+              internal.billing.actions.notifySubscriptionCanceled,
+              { clinicId },
+            );
+          }
           break;
         }
         case "customer.subscription.trial_will_end": {
-          if (!clinicId) return;
+          if (!clinicId) break;
           await ctx.runMutation(
             internal.billing.internal.enqueueTrialEndingNotification,
             { clinicId },
@@ -122,24 +150,29 @@ registerStripeRoutes(http, components.stripe, {
           break;
         }
         case "invoice.paid": {
-          if (!clinicId) return;
+          if (!clinicId) break;
           await ctx.runMutation(
             internal.billing.internal.markActiveAfterPayment,
-            { clinicId },
+            { clinicId, eventCreatedMs, stripeSubscriptionId: eventSubscriptionId },
           );
           break;
         }
         case "invoice.payment_failed": {
-          if (!clinicId) return;
+          if (!clinicId) break;
           const days = Number(process.env["STRIPE_GRACE_PERIOD_DAYS"] ?? 7);
           await ctx.runMutation(
             internal.billing.internal.markPastDueWithGrace,
-            { clinicId, gracePeriodDays: days },
+            {
+              clinicId,
+              gracePeriodDays: days,
+              eventCreatedMs,
+              stripeSubscriptionId: eventSubscriptionId,
+            },
           );
           break;
         }
         case "checkout.session.completed": {
-          if (!clinicId) return;
+          if (!clinicId) break;
           const session = event.data.object;
           // Bifurcación según el modo de la session:
           //   - `setup`: el customer acaba de añadir su método de pago para
@@ -177,6 +210,13 @@ registerStripeRoutes(http, components.stripe, {
           // persiste el componente Stripe en sus tablas; no requieren acción.
           break;
       }
+      // Sellamos el evento como procesado SOLO tras completar los efectos
+      // colaterales con éxito. Si el switch lanzó, no llegamos aquí: el
+      // registro queda sin sellar y el retry de Stripe lo reprocesará.
+      await ctx.runMutation(
+        internal.billing.internal.markWebhookEventProcessed,
+        { eventId: event.id },
+      );
     } catch (err) {
       console.error("[stripe webhook] Error procesando evento", event.type, err);
       // Re-lanzamos para que Stripe reintente el webhook automáticamente.
@@ -578,6 +618,25 @@ http.route({
           message: "El email proporcionado no es válido",
         }),
         { status: 400, headers },
+      );
+    }
+
+    // B-13: rate limit por IP para frenar spam vía Resend.
+    const ip =
+      request.headers.get("cf-connecting-ip") ??
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "unknown";
+    const { allowed } = await ctx.runMutation(
+      internal.contact.internal.hitContactRateLimit,
+      { bucket: ip },
+    );
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
+        }),
+        { status: 429, headers },
       );
     }
 

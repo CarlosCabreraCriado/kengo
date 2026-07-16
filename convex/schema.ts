@@ -640,6 +640,9 @@ export default defineSchema({
       v.literal("incomplete"),
       v.literal("unpaid"),
       v.literal("none"),
+      // Clínica enterprise (>10 fisios) pendiente de acuerdo con ventas: opera
+      // con normalidad (no bloqueada) mientras se cierra el contrato. Ver B-9.
+      v.literal("enterprise_pending"),
     ),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
@@ -708,10 +711,22 @@ export default defineSchema({
     // `event.created` de Stripe en milisegundos.
     createdMs: v.number(),
     clinicId: v.optional(v.id("clinics")),
-    processedAt: v.number(),
+    // Sellado en `markWebhookEventProcessed` tras procesar con éxito. Un
+    // registro sin `processedAt` significa que el evento fue reclamado pero su
+    // procesamiento quedó a medias (patrón de dos fases, ver billing/internal).
+    processedAt: v.optional(v.number()),
   })
     .index("by_eventId", ["eventId"])
     .index("by_clinicId_createdMs", ["clinicId", "createdMs"]),
+
+  // Rate limit del formulario público de contacto (`/api/contact/send`).
+  // Una fila por bucket (IP): ventana deslizante simple para frenar spam vía
+  // Resend. Ver `convex/contact/internal.ts`.
+  contactRateLimit: defineTable({
+    bucket: v.string(),
+    count: v.number(),
+    windowStartMs: v.number(),
+  }).index("by_bucket", ["bucket"]),
 
   // === ESTADO DE SINCRONIZACIÓN DIRECTUS ===
   // Una fila por colección Directus sincronizada. `lastSyncedAt` es la cota

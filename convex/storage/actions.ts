@@ -1,7 +1,7 @@
 "use node";
 
 import { v } from "convex/values";
-import { action } from "../_generated/server";
+import { action, internalAction } from "../_generated/server";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { r2Client, r2Bucket, r2PublicUrl } from "./r2Client";
@@ -80,22 +80,32 @@ export const generateUploadUrl = action({
 });
 
 /**
- * Borra un objeto de R2. Requiere autenticación; las reglas de autorización
- * fina (¿puede este usuario borrar este archivo?) son responsabilidad del caller.
+ * Borra objetos huérfanos de R2. Es `internalAction`: NO es invocable desde el
+ * cliente. La autorización vive en el llamador, que ya validó el acceso y
+ * conoce que las keys pertenecen al recurso — p.ej. `clinics.update` (admin-only)
+ * calcula las keys huérfanas a partir de los datos de su propia clínica y la
+ * programa vía `ctx.scheduler`. Exponerlo como acción pública permitía a
+ * cualquier usuario autenticado borrar objetos arbitrarios de R2 conociendo su
+ * key (las URLs públicas de logos/avatares revelan la key).
  */
-export const deleteObject = action({
-  args: { key: v.string() },
-  handler: async (ctx, args): Promise<{ ok: boolean }> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("No autenticado");
+export const deleteOrphanedObjects = internalAction({
+  args: { keys: v.array(v.string()) },
+  handler: async (_ctx, args): Promise<{ deleted: number }> => {
+    if (args.keys.length === 0) return { deleted: 0 };
 
     const client = r2Client();
-    await client.send(
-      new DeleteObjectCommand({
-        Bucket: r2Bucket(),
-        Key: args.key,
-      }),
-    );
-    return { ok: true };
+    let deleted = 0;
+    for (const key of args.keys) {
+      try {
+        await client.send(
+          new DeleteObjectCommand({ Bucket: r2Bucket(), Key: key }),
+        );
+        deleted++;
+      } catch (err) {
+        // Best-effort: un fallo al borrar una key no debe abortar el resto.
+        console.error(`[storage] Error borrando key huérfana ${key}:`, err);
+      }
+    }
+    return { deleted };
   },
 });

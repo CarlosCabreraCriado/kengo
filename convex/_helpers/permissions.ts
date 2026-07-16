@@ -165,12 +165,17 @@ export async function checkClinicPermission(
  * Se trata `!billing` como permisivo: clínica recién creada (race con la
  * action de trial start) o clínica pre-Stripe que aún no tiene registro.
  */
-function billingPermiteOperar(billing: {
+export function billingPermiteOperar(billing: {
   estadoLocal: string;
   graceUntil?: number;
 } | null): boolean {
   if (!billing) return true;
   if (billing.estadoLocal === "trialing" || billing.estadoLocal === "active") {
+    return true;
+  }
+  // Enterprise (>10 fisios) pendiente de acuerdo con ventas: opera con
+  // normalidad mientras se cierra el contrato — no bloqueamos (B-9).
+  if (billing.estadoLocal === "enterprise_pending") {
     return true;
   }
   if (

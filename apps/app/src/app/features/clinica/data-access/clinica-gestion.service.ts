@@ -133,7 +133,7 @@ export class ClinicaGestionService {
     try {
       const convexId = clinicaId as Id<'clinics'>;
 
-      const result = await this.convex.mutation(
+      await this.convex.mutation(
         api.clinics.mutations.update,
         {
           clinicId: convexId,
@@ -157,13 +157,9 @@ export class ClinicaGestionService {
         },
       );
 
-      const orphaned = result?.orphanedKeys ?? [];
-      if (orphaned.length > 0) {
-        await Promise.allSettled(
-          orphaned.map((k) => this.storage.delete(k)),
-        );
-      }
-
+      // El borrado de las keys huérfanas en R2 lo hace ahora el backend
+      // (clinics.update lo programa vía scheduler), dentro del flujo admin ya
+      // autorizado. El frontend ya no borra objetos de R2 directamente.
       return { success: true };
     } catch (err: any) {
       const errorMsg = err?.data?.message || err?.message || 'Error al actualizar la clínica';

@@ -715,6 +715,13 @@ async function generatePlanPdfInternal(
 export const generatePlanPdf = action({
   args: { planId: v.id("plans") },
   handler: async (ctx, args) => {
+    // B-12: gatear igual que `generateAndSendPlanPdf`. La generación del PDF
+    // también acuña un magic link (getOrCreateForUser) y es acción de fisio, así
+    // que un fisio con la clínica suspendida no debe poder generarlo.
+    await ctx.runQuery(
+      internal.billing.internal.assertActiveSubscriptionByPlanId,
+      { planId: args.planId },
+    );
     return await generatePlanPdfInternal(ctx, args.planId);
   },
 });

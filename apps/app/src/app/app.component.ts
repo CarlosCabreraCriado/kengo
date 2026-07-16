@@ -37,6 +37,7 @@ import {
   ScrollContainerService,
 } from './core/services/scroll-container.service';
 import { assetUrl } from './core/utils/asset-url';
+import { normalizeAppUrlPath } from './shared/utils/deep-link.util';
 import { DialogService } from './shared/services/dialog/dialog.service';
 import { ToastService } from './shared/services/toast/toast.service';
 import { ClinicasService } from './features/clinica/data-access/clinicas.service';
@@ -343,11 +344,21 @@ export class AppComponent implements OnInit {
     // Deep links: `kengo://magic?t=...`, `https://kengoapp.com/...`,
     // `kengo://billing/return?status=...`. Los listeners de Capacitor corren
     // fuera de NgZone — hay que entrar para que el Router dispare CD.
+    // Dedup del retorno de billing (B-4): el interstitial dispara el deep link
+    // automáticamente y además deja un enlace manual de fallback; si ambos
+    // llegan, `appUrlOpen` correría dos veces (doble toast). Ignoramos un 2º
+    // `/billing/return` en menos de 5 s. Persistente entre eventos porque el
+    // listener se registra una sola vez.
+    let ultimoBillingReturnMs = 0;
+
     CapacitorApp.addListener('appUrlOpen', (event) => {
       this.ngZone.run(() => {
         try {
           const parsed = new URL(event.url);
-          const path = parsed.pathname + parsed.search + parsed.hash;
+          // Para esquemas custom (`kengo://billing/return`) el host NO forma
+          // parte de `pathname`; `normalizeAppUrlPath` lo recompone para que
+          // la comparación con las rutas Angular funcione (ver deep-link.util).
+          const path = normalizeAppUrlPath(event.url);
           if (!path || path === '/') return;
 
           // Retorno desde Stripe Checkout / Customer Portal (browser modal
@@ -357,6 +368,9 @@ export class AppComponent implements OnInit {
           // El watchQuery de SubscriptionService recogerá el cambio cuando el
           // webhook de Stripe lo propague (delay típico 1-3 s).
           if (path.startsWith('/billing/return')) {
+            const ahora = Date.now();
+            if (ahora - ultimoBillingReturnMs < 5000) return;
+            ultimoBillingReturnMs = ahora;
             void this.externalBrowser.close();
             const status = parsed.searchParams.get('status');
             if (status === 'success') {

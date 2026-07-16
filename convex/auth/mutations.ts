@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
+import { LIMITE_FISIOS_AUTOSERVICIO } from "../billing/_helpers";
 
 // ─── RECOVERY CODES ───
 
@@ -164,6 +166,27 @@ export const createMembershipFromCode = internalMutation({
       return null;
     }
 
+    // B-11: aplicar las MISMAS validaciones que `accessCodes.consume`, que la
+    // vía de registro se saltaba (expiración, usos máximos, vínculo por email).
+    if (codeDoc.fechaExpiracion && new Date() > new Date(codeDoc.fechaExpiracion)) {
+      console.error("[Auth] Código de acceso expirado:", codigoNorm);
+      return null;
+    }
+    if (
+      codeDoc.usosMaximos !== undefined &&
+      codeDoc.usosActuales >= codeDoc.usosMaximos
+    ) {
+      console.error("[Auth] Código de acceso agotado:", codigoNorm);
+      return null;
+    }
+    if (
+      codeDoc.email &&
+      codeDoc.email.toLowerCase() !== normalizedEmail
+    ) {
+      console.error("[Auth] Código vinculado a otro email:", codigoNorm);
+      return null;
+    }
+
     // Verificar que el usuario no está ya vinculado
     const existingMembership = await ctx.db
       .query("clinicMemberships")
@@ -180,6 +203,29 @@ export const createMembershipFromCode = internalMutation({
     const puesto: "fisio" | "paciente" =
       codeDoc.tipo === "fisioterapeuta" ? "fisio" : "paciente";
 
+    // M-4: si el alta es de un fisio (asiento facturable), respetar el tope de
+    // autoservicio. Enterprise se gestiona por ventas; no dejamos que un código
+    // suba la cantidad por encima del límite (que Stripe no podría facturar
+    // correctamente). Los pacientes no cuentan.
+    if (puesto === "fisio") {
+      const facturablesActuales = (
+        await ctx.db
+          .query("clinicMemberships")
+          .withIndex("by_clinicId", (q) =>
+            q.eq("clinicId", codeDoc.clinicId),
+          )
+          .collect()
+      ).filter(
+        (m) => m.puesto === "fisio" || m.puesto === "admin",
+      ).length;
+      if (facturablesActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
+        console.error(
+          `[Auth] Alta de fisio bloqueada por tope de autoservicio (clinic=${codeDoc.clinicId}, actuales=${facturablesActuales})`,
+        );
+        return null;
+      }
+    }
+
     // Crear membresía. Los fisios actúan también como sus propios pacientes.
     await ctx.db.insert("clinicMemberships", {
       userId: user._id,
@@ -192,6 +238,16 @@ export const createMembershipFromCode = internalMutation({
     await ctx.db.patch(codeDoc._id, {
       usosActuales: codeDoc.usosActuales + 1,
     });
+
+    // B-11: alta facturable → sincronizar la quantity en Stripe, como hacen
+    // las demás vías de alta (`accessCodes.consume`, `clinicMemberships.*`).
+    if (puesto === "fisio") {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.billing.internal.syncQuantityFromMemberships,
+        { clinicId: codeDoc.clinicId },
+      );
+    }
 
     return { clinicId: codeDoc.clinicId };
   },

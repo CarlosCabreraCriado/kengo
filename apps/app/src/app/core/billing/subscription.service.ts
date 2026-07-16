@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, type Signal } from '@angular/core';
+import { Injectable, computed, inject, signal, type Signal } from '@angular/core';
 import { ConvexService } from '../convex/convex.service';
 import { SessionService } from '../auth/services/session.service';
 import { ClinicaActivaService } from '../auth/services/clinica-activa.service';
@@ -76,11 +76,27 @@ export class SubscriptionService {
     () => this.suscripcion()?.estado === 'trialing',
   );
 
+  /**
+   * Días de CALENDARIO restantes de trial en la zona horaria local (B-1). Se
+   * comparan medianoches locales, no ventanas de 24 h: si el trial acaba hoy a
+   * las 23:00, muestra 0 ("hoy"), no 1. `0` = termina hoy o ya venció.
+   */
   public readonly diasRestantesTrial = computed<number>(() => {
     const sub = this.suscripcion();
     if (!sub?.trialEnd) return 0;
-    const ms = sub.trialEnd - Date.now();
-    return Math.max(0, Math.ceil(ms / DIA_MS));
+    const fin = new Date(sub.trialEnd);
+    const ahora = new Date();
+    const finMedianoche = new Date(
+      fin.getFullYear(),
+      fin.getMonth(),
+      fin.getDate(),
+    ).getTime();
+    const hoyMedianoche = new Date(
+      ahora.getFullYear(),
+      ahora.getMonth(),
+      ahora.getDate(),
+    ).getTime();
+    return Math.max(0, Math.round((finMedianoche - hoyMedianoche) / DIA_MS));
   });
 
   public readonly enPeriodoGracia = computed(() => {
@@ -113,20 +129,33 @@ export class SubscriptionService {
     () => this.suscripcion()?.clinicaNombre ?? '',
   );
 
-  public readonly bloqueada = computed(() => {
-    const sub = this.suscripcion();
-    if (!sub) return false;
-    if (sub.estado === 'unpaid') return true;
-    if (sub.estado === 'past_due' && !this.enPeriodoGracia()) return true;
-    return false;
-  });
+  /**
+   * Veredicto de bloqueo calculado en el servidor (espejo de
+   * `billingPermiteOperar`): cubre unpaid/canceled/incomplete y past_due con
+   * gracia agotada, sin la ambigüedad del `none` (sin fila = permisivo). Se
+   * lee directo del payload en vez de rederivarlo en el cliente.
+   */
+  public readonly bloqueada = computed(
+    () => this.suscripcion()?.bloqueada === true,
+  );
 
   public readonly cancelaAlFinDelPeriodo = computed(
     () => this.suscripcion()?.cancelAtPeriodEnd === true,
   );
 
+  /**
+   * `true` mientras una acción de billing (checkout/portal/cancelar/reactivar)
+   * está en vuelo. Evita el doble click que crearía dos Checkout sessions o
+   * dos actions concurrentes (H-10). Se cablea a `[loading]`/`[disabled]` de
+   * los CTAs.
+   */
+  private readonly _accionEnCurso = signal(false);
+  public readonly accionEnCurso = this._accionEnCurso.asReadonly();
+
   /** Inicia Checkout de Stripe y redirige al usuario. */
   async iniciarCheckout(clinicId: string): Promise<void> {
+    if (this._accionEnCurso()) return;
+    this._accionEnCurso.set(true);
     try {
       const { url } = await this.convex.action(
         api.billing.actions.createCheckoutSession,
@@ -136,11 +165,15 @@ export class SubscriptionService {
     } catch (err) {
       this.logger.error('[SubscriptionService] checkout', err);
       this.toast.error('No se pudo iniciar el proceso de pago');
+    } finally {
+      this._accionEnCurso.set(false);
     }
   }
 
   /** Abre el Customer Portal de Stripe (gestión de pago, cancelación, facturas). */
   async abrirPortal(clinicId: string): Promise<void> {
+    if (this._accionEnCurso()) return;
+    this._accionEnCurso.set(true);
     try {
       const { url } = await this.convex.action(
         api.billing.actions.createCustomerPortalSession,
@@ -150,11 +183,15 @@ export class SubscriptionService {
     } catch (err) {
       this.logger.error('[SubscriptionService] portal', err);
       this.toast.error('No se pudo abrir el portal de gestión');
+    } finally {
+      this._accionEnCurso.set(false);
     }
   }
 
   /** Cancela la suscripción al final del período actual. */
   async cancelar(clinicId: string): Promise<void> {
+    if (this._accionEnCurso()) return;
+    this._accionEnCurso.set(true);
     try {
       await this.convex.action(api.billing.actions.cancelSubscription, {
         clinicId: clinicId as never,
@@ -164,11 +201,15 @@ export class SubscriptionService {
     } catch (err) {
       this.logger.error('[SubscriptionService] cancelar', err);
       this.toast.error('No se pudo cancelar la suscripción');
+    } finally {
+      this._accionEnCurso.set(false);
     }
   }
 
   /** Reactiva una suscripción marcada para cancelarse al final del período. */
   async reactivar(clinicId: string): Promise<void> {
+    if (this._accionEnCurso()) return;
+    this._accionEnCurso.set(true);
     try {
       await this.convex.action(api.billing.actions.reactivateSubscription, {
         clinicId: clinicId as never,
@@ -177,6 +218,8 @@ export class SubscriptionService {
     } catch (err) {
       this.logger.error('[SubscriptionService] reactivar', err);
       this.toast.error('No se pudo reactivar la suscripción');
+    } finally {
+      this._accionEnCurso.set(false);
     }
   }
 

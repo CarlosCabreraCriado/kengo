@@ -3,6 +3,7 @@ import { query, internalQuery } from "../_generated/server";
 import {
   getAuthenticatedUser,
   checkClinicPermission,
+  billingPermiteOperar,
 } from "../_helpers/permissions";
 import {
   PLANES,
@@ -76,6 +77,10 @@ export const getMyClinicSubscription = query({
         ownerUserId,
         ownerNombre,
         esOwner,
+        // Sin fila `clinicBilling` la clínica opera (permisivo, como el
+        // backend). Flag calculado en servidor para que el frontend no tenga
+        // que replicar `billingPermiteOperar` y no bloquee un `none` ambiguo.
+        bloqueada: false,
       };
     }
 
@@ -96,6 +101,9 @@ export const getMyClinicSubscription = query({
       ownerUserId,
       ownerNombre,
       esOwner,
+      // Mismo veredicto que el gating del backend (`billingPermiteOperar`):
+      // bloquea unpaid/canceled/incomplete y past_due con gracia agotada.
+      bloqueada: !billingPermiteOperar(billing),
     };
   },
 });
