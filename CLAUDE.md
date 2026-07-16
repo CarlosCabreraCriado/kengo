@@ -26,7 +26,7 @@ kengo/
 ## Backend Integration
 
 - **Directus CMS**: Primary data source
-- **Custom API**: Secondary endpoint at `API_URL` (localhost:4201 in dev, system.kengoapp.com in prod)
+- **Convex**: Custom endpoints served over HTTP at `CONVEX_SITE_URL` (backend.kengoapp.com). El antiguo backend Express (system.kengoapp.com) fue decomisionado tras la migración completa a Convex.
 
 ## Convex CLI
 
