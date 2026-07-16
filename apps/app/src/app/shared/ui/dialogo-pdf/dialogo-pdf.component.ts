@@ -121,7 +121,7 @@ export class DialogoPdfComponent {
         };
       }
     } catch {
-      this.toast.error('Error al preparar la impresion');
+      this.toast.error('Error al preparar la impresión');
     } finally {
       this.imprimiendo.set(false);
     }

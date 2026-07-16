@@ -251,7 +251,7 @@ export class PdCommentsComponent {
     if (pendientes > 0) {
       return `${pendientes} pendiente${pendientes === 1 ? '' : 's'}`;
     }
-    return `${total} observación${total === 1 ? '' : 'es'}`;
+    return `${total} ${total === 1 ? 'observación' : 'observaciones'}`;
   });
 
   formatDate(iso: string): string {

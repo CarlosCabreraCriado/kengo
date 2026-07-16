@@ -84,10 +84,10 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   diasNombres: Record<DiaSemana, string> = {
     L: 'Lunes',
     M: 'Martes',
-    X: 'Miercoles',
+    X: 'Miércoles',
     J: 'Jueves',
     V: 'Viernes',
-    S: 'Sabado',
+    S: 'Sábado',
     D: 'Domingo',
   };
 

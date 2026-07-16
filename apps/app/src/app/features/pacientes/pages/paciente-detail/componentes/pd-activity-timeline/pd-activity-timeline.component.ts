@@ -48,7 +48,7 @@ const TIPO_ICON: Record<string, string> = {
         <header class="atl-head">
           <div class="atl-head__text">
             <span class="atl-overline">Últimos {{ rangoLabel() }}</span>
-            <h3 class="atl-title">{{ totalSesiones() }} sesion{{ totalSesiones() === 1 ? '' : 'es' }}</h3>
+            <h3 class="atl-title">{{ totalSesiones() }} {{ totalSesiones() === 1 ? 'sesión' : 'sesiones' }}</h3>
             <p class="atl-subtitle">
               {{ diasProgramados() }} días programados@if (diasSinActividad() > 0) {, {{ diasSinActividad() }} sin actividad}
             </p>

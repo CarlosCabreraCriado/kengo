@@ -124,9 +124,9 @@ export class SesionStateService {
 
   readonly tituloSesion = computed(() => {
     if (this.modoMultiPlan()) {
-      return this.configSesion()?.titulo ?? 'Tu sesion';
+      return this.configSesion()?.titulo ?? 'Tu sesión';
     }
-    return this.planActivo()?.titulo ?? 'Tu sesion';
+    return this.planActivo()?.titulo ?? 'Tu sesión';
   });
 
   readonly ejerciciosList = computed<EjercicioPlan[]>(() => {
