@@ -1,0 +1,36 @@
+name: Redeploy semanal Convex Backend
+
+# Reinicia el servicio Convex Backend en Railway para liberar la memoria
+# acumulada por el ejecutor Node y el churn de isolates (bugs upstream de
+# convex-backend). Contexto y auditoría: docs/CONVEX_RAILWAY_MEMORIA.md
+
+on:
+  schedule:
+    # Domingos 05:30 UTC: fuera de la cadena de crons de Convex (02:00-04:30 UTC)
+    # y en la franja de menor tráfico de la app.
+    - cron: "30 5 * * 0"
+  workflow_dispatch: {}
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Redeploy del servicio Convex Backend
+        run: railway redeploy --service a7f4e53a-fc4f-4f76-8ae5-80ae35167b1c --yes
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Verificar healthcheck
+        run: |
+          sleep 60
+          for i in $(seq 1 10); do
+            code=$(curl -s -m 10 -o /dev/null -w '%{http_code}' https://convex.kengoapp.com/version || true)
+            echo "Intento $i: /version -> $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 30
+          done
+          echo "El backend no respondió 200 tras el redeploy" >&2
+          exit 1
