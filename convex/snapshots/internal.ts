@@ -696,21 +696,21 @@ async function _deletePatientSnapshotsForClinic(
     const dirNS: [Id<"clinics">, Ventana] = [clinicId, ventana];
 
     if (snap.adherencia != null) {
-      await patientsByClinicAdherencia.delete(ctx, {
+      await patientsByClinicAdherencia.deleteIfExists(ctx, {
         namespace: dirNS,
         key: snap.adherencia,
         id: pacienteId,
       });
     }
 
-    await patientsByClinicRiskScore.delete(ctx, {
+    await patientsByClinicRiskScore.deleteIfExists(ctx, {
       namespace: dirNS,
       key: snap.riskScore,
       id: pacienteId,
     });
 
     if (snap.dolorPromedio != null) {
-      await patientsByClinicDolor.delete(ctx, {
+      await patientsByClinicDolor.deleteIfExists(ctx, {
         namespace: dirNS,
         key: snap.dolorPromedio,
         id: pacienteId,
@@ -758,21 +758,21 @@ async function _deleteAllPatientSnapshotsForClinic(
     const dirNS: [Id<"clinics">, Ventana] = [clinicId, snap.ventana];
 
     if (snap.adherencia != null) {
-      await patientsByClinicAdherencia.delete(ctx, {
+      await patientsByClinicAdherencia.deleteIfExists(ctx, {
         namespace: dirNS,
         key: snap.adherencia,
         id: snap.pacienteId,
       });
     }
 
-    await patientsByClinicRiskScore.delete(ctx, {
+    await patientsByClinicRiskScore.deleteIfExists(ctx, {
       namespace: dirNS,
       key: snap.riskScore,
       id: snap.pacienteId,
     });
 
     if (snap.dolorPromedio != null) {
-      await patientsByClinicDolor.delete(ctx, {
+      await patientsByClinicDolor.deleteIfExists(ctx, {
         namespace: dirNS,
         key: snap.dolorPromedio,
         id: snap.pacienteId,
