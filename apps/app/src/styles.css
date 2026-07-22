@@ -975,6 +975,16 @@ main > router-outlet + * {
   }
 }
 
+/* Override puntual: el calendario del datepicker es una rejilla de 7 columnas;
+   con los 500px del sheet las celdas de día se ven enormes en desktop. ~360px
+   las deja en un tamaño natural. La regla base móvil (max-width: 100vw +
+   align-self: flex-end) sigue ganando en <768px por el mismo selector base. */
+@media (min-width: 768px) {
+  .ui-dialog-panel--sheet:has(ui2-datepicker-sheet) {
+    max-width: 360px;
+  }
+}
+
 .selector-paciente-dialog {
   width: 100%;
   max-width: 500px;

@@ -107,7 +107,16 @@ const pad2 = (n: number): string => (n < 10 ? `0${n}` : `${n}`);
   `,
   styles: [`
     :host { display: block; }
-    .dp-cal { display: flex; flex-direction: column; gap: 12px; }
+    /* max-width + centrado: evita que las celdas de día se agranden en sheets
+       anchos (desktop, tablets), manteniendo un calendario legible. */
+    .dp-cal {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+    }
 
     .dp-cal__nav {
       display: flex;
