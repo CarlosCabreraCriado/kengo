@@ -79,47 +79,17 @@
       <ui2-card [padding]="14">
         <div class="pb-section">
           <ui2-section-label>Duración</ui2-section-label>
-          <!-- Shell visible + input date nativo invisible encima: en iOS el
-               input date impone un ancho intrínseco que desborda el grid y
-               solapa la columna vecina; absolutamente posicionado sale del
-               flujo y el picker nativo sigue abriéndose al tocar. -->
           <div class="pb-dates">
-            <label class="pb-date-field">
-              <span class="pb-date-field__label">Inicio</span>
-              <span class="pb-date-shell">
-                <span
-                  class="pb-date-shell__value"
-                  [class.pb-date-shell__value--empty]="!svc.fechaInicio()"
-                  aria-hidden="true"
-                  >{{ formatFechaInput(svc.fechaInicio()) || 'dd/mm/aaaa' }}</span
-                >
-                <input
-                  type="date"
-                  class="pb-date-native"
-                  formControlName="fechaInicio"
-                  [min]="minDate"
-                  (change)="onFechaInicioChange($event)"
-                />
-              </span>
-            </label>
-            <label class="pb-date-field">
-              <span class="pb-date-field__label">Fin</span>
-              <span class="pb-date-shell">
-                <span
-                  class="pb-date-shell__value"
-                  [class.pb-date-shell__value--empty]="!svc.fechaFin()"
-                  aria-hidden="true"
-                  >{{ formatFechaInput(svc.fechaFin()) || 'dd/mm/aaaa' }}</span
-                >
-                <input
-                  type="date"
-                  class="pb-date-native"
-                  formControlName="fechaFin"
-                  [min]="form.value.fechaInicio || minDate"
-                  (change)="onFechaFinChange($event)"
-                />
-              </span>
-            </label>
+            <ui2-datepicker
+              label="Inicio"
+              formControlName="fechaInicio"
+              [min]="minDate"
+            ></ui2-datepicker>
+            <ui2-datepicker
+              label="Fin"
+              formControlName="fechaFin"
+              [min]="form.value.fechaInicio || minDate"
+            ></ui2-datepicker>
           </div>
           <ui2-segmented
             [options]="duracionOptions"

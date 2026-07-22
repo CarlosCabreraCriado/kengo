@@ -76,6 +76,8 @@ export { Ui2KpiCardComponent } from './kpi-card/kpi-card.component';
 export { Ui2MessageBubbleComponent } from './message-bubble/message-bubble.component';
 export type { Ui2MessageBubbleFrom } from './message-bubble/message-bubble.component';
 export { Ui2DateTileComponent } from './date-tile/date-tile.component';
+export { Ui2DatepickerComponent } from './datepicker/datepicker.component';
+export type { Ui2DatepickerMode } from './datepicker/datepicker.types';
 export { Ui2HorizontalScrollerComponent } from './horizontal-scroller/horizontal-scroller.component';
 export { Ui2CtaBarComponent } from './cta-bar/cta-bar.component';
 export type { Ui2CtaBarVariant } from './cta-bar/cta-bar.component';

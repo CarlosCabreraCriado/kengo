@@ -40,6 +40,7 @@ import {
   Ui2BigTitleComponent,
   Ui2ButtonComponent,
   Ui2CardComponent,
+  Ui2DatepickerComponent,
   Ui2EmptyStateComponent,
   Ui2InputComponent,
   Ui2PillComponent,
@@ -66,6 +67,7 @@ import { PlanWeekDotsComponent } from '../../components/plan-week-dots/plan-week
     Ui2BigTitleComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
+    Ui2DatepickerComponent,
     Ui2EmptyStateComponent,
     Ui2InputComponent,
     Ui2PillComponent,
@@ -114,6 +116,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   isLoading = signal(false);
   isSaving = signal(false);
+
+  /** Evita que el recálculo programático de "Fin" marque la duración como "Otro". */
+  private recalculandoFin = false;
 
   ejercicioEditando = signal<number | null>(null);
 
@@ -246,6 +251,21 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
         this.svc.fechaInicio.set(v.fechaInicio || null);
         this.svc.fechaFin.set(v.fechaFin || null);
       });
+
+    // Antes lo disparaba el `(change)` del <input type=date>; con `ui2-datepicker`
+    // (CVA) reaccionamos al valueChanges del control: al cambiar el inicio se
+    // recalcula el fin si hay un preset de días activo.
+    this.form.controls.fechaInicio.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.calcularFechaFin());
+
+    // Un cambio de "Fin" hecho por el usuario pasa la duración a "Otro". Se
+    // ignora el cambio programático que hace `calcularFechaFin` (flag guard).
+    this.form.controls.fechaFin.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (!this.recalculandoFin) this.duracionSeleccionada.set('custom');
+      });
   }
 
   ngOnDestroy() {
@@ -294,13 +314,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     const nombrePaciente = paciente ? paciente.first_name : 'Paciente';
     const fechaFormateada = this.formatDateShort(fechaInicio);
     return `Plan ${nombrePaciente} ${fechaFormateada}`;
-  }
-
-  /** Valor visible del shell de fecha (el input nativo está oculto). */
-  formatFechaInput(ymd: string | null): string {
-    if (!ymd) return '';
-    const [y, m, d] = ymd.split('-');
-    return `${d}/${m}/${y}`;
   }
 
   private formatDateShort(dateStr: string): string {
@@ -555,22 +568,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     this.calcularFechaFin();
   }
 
-  onFechaInicioChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.value) {
-      this.form.patchValue({ fechaInicio: input.value });
-      this.calcularFechaFin();
-    }
-  }
-
-  onFechaFinChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.value) {
-      this.form.patchValue({ fechaFin: input.value });
-      this.duracionSeleccionada.set('custom');
-    }
-  }
-
   private calcularFechaFin() {
     const fechaInicio = this.form.value.fechaInicio;
     const dias = this.duracionSeleccionada();
@@ -580,7 +577,11 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       const utc = new Date(Date.UTC(y, m - 1, d, 12));
       utc.setUTCDate(utc.getUTCDate() + dias);
       const fechaFin = utc.toISOString().slice(0, 10);
+      // Flag para que el valueChanges de `fechaFin` no interprete este cambio
+      // programático como una edición manual (no debe marcar duración "Otro").
+      this.recalculandoFin = true;
       this.form.patchValue({ fechaFin });
+      this.recalculandoFin = false;
     }
   }
 

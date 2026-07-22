@@ -136,10 +136,9 @@
   gap: 14px;
 }
 
-/* ===== Date inputs ===== */
-/* minmax(0, 1fr): el <input type="date"> nativo (iOS/WebKit) tiene un ancho
-   mínimo intrínseco que con `1fr` (= minmax(auto, 1fr)) desborda la celda y
-   solapa la columna vecina en pantallas estrechas. */
+/* ===== Fechas (Inicio/Fin) ===== */
+/* Los dos <ui2-datepicker> van lado a lado; colapsan a una columna en móviles
+   muy estrechos. minmax(0, 1fr) evita que el contenido desborde la celda. */
 .pb-dates {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -149,63 +148,6 @@
   .pb-dates {
     grid-template-columns: 1fr;
   }
-}
-.pb-date-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.pb-date-field__label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  color: var(--ink-500);
-  text-transform: uppercase;
-}
-/* Shell visible del campo de fecha. El input date nativo va invisible y
-   estirado encima (absoluto): en iOS/WKWebView el input date impone un ancho
-   mínimo intrínseco (shadow DOM) que ignora min-width:0 y appearance:none,
-   desbordando la celda del grid; fuera del flujo no puede solapar y el tap
-   sigue abriendo el picker nativo. */
-.pb-date-shell {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  min-height: 41px;
-  padding: 10px 12px;
-  border: 1px solid rgba(var(--kengo-primary-rgb), 0.3);
-  border-radius: 12px;
-  background: var(--cream-50);
-  font-family: Galvji, kengoFont, sans-serif;
-  font-size: 13px;
-  color: var(--ink-900);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-.pb-date-shell:focus-within {
-  border-color: var(--kengo-primary);
-  background: white;
-  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.15);
-}
-.pb-date-shell__value {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.pb-date-shell__value--empty {
-  color: var(--ink-400);
-}
-.pb-date-native {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  -webkit-appearance: none;
-  appearance: none;
 }
 
 .pb-duration-tip {
