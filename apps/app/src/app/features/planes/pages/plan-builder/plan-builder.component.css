@@ -514,6 +514,9 @@
     opacity var(--kb-transition-duration) var(--kb-transition-easing),
     transform var(--kb-transition-duration) var(--kb-transition-easing);
 }
+.pb-cta-bar__inner {
+  width: 100%;
+}
 /* Teclado abierto: el CTA fixed está anclado al viewport, que se encoge con
    `Keyboard.resize` nativo — sin esto el botón "sube" hasta media pantalla
    tapando el campo en edición. Se desvanece igual que la tab-bar
@@ -524,19 +527,28 @@
   pointer-events: none;
 }
 @media (min-width: 1024px) {
+  /* Full-bleed: el host es w-full (fuera del cap de 1280 de .pb-page), así que
+     la barra ocupa todo el ancho de <main>. El padding horizontal vive en el
+     __inner, que replica el ancho/padding de .pb-page para alinear el botón
+     con las tarjetas del contenido. */
   .pb-cta-bar {
     position: sticky;
     bottom: 0;
     left: 0;
     right: 0;
     max-width: none;
-    margin: 0 -32px;
-    padding: 16px 32px calc(24px + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+    padding: 16px 0 calc(24px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
     border-top: 1px solid rgba(0, 0, 0, 0.04);
+  }
+  .pb-cta-bar__inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
   }
 }
 

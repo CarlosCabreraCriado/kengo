@@ -358,10 +358,13 @@
       }
     </section>
   </form>
+</div>
 
-  <!-- Sticky CTA -->
-  @if (showCta()) {
-    <div class="pb-cta-bar">
+<!-- Sticky CTA — fuera de .pb-page (capada a 1280) para que en desktop la barra
+     ocupe todo el ancho de <main>; el __inner realinea el botón con el contenido. -->
+@if (showCta()) {
+  <div class="pb-cta-bar">
+    <div class="pb-cta-bar__inner">
       <ui2-button
         variant="primary"
         size="lg"
@@ -372,5 +375,5 @@
         (clicked)="guardarPlan()"
       >Guardar plan</ui2-button>
     </div>
-  }
-</div>
+  </div>
+}
