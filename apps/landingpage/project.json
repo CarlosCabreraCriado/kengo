@@ -14,7 +14,6 @@
         "browser": "apps/landingpage/src/main.ts",
         "server": "apps/landingpage/src/main.server.ts",
         "outputMode": "static",
-        "polyfills": ["zone.js"],
         "tsConfig": "apps/landingpage/tsconfig.app.json",
         "assets": [
           {
