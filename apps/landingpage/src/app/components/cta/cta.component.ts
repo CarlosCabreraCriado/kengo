@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 @Component({
   selector: 'web-cta',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [ScrollAnimateDirective],
   template: `

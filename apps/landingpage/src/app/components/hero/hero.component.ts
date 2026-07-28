@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'web-hero',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   template: `
     <header class="hero" id="top">

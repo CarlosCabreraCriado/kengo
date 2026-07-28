@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 interface FeatureRow {
@@ -22,6 +22,7 @@ interface FeatureRow {
 
 @Component({
   selector: 'web-features',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [ScrollAnimateDirective],
   template: `

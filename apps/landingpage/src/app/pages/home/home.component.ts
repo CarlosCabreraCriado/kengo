@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { HeaderComponent } from '../../components/header/header.component';
 import { HeroComponent } from '../../components/hero/hero.component';
 import { StatsComponent } from '../../components/stats/stats.component';
@@ -11,6 +11,7 @@ import { FooterComponent } from '../../components/footer/footer.component';
 
 @Component({
   selector: 'web-home',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     HeaderComponent,

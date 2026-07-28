@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 interface Testimonial {
@@ -12,6 +12,7 @@ interface Testimonial {
 
 @Component({
   selector: 'web-testimonials',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [ScrollAnimateDirective],
   template: `

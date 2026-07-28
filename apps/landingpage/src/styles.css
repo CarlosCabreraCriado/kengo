@@ -60,11 +60,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* El documento (html) debe ser el contenedor de scroll: con height:100% +
+   overflow-y:auto el scroller pasaba a ser el body, dejando window.scrollY
+   siempre a 0 (rompía la clase .scrolled del nav y scroll-padding-top). */
 html,
 body {
-  height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
 }
 
 /* Scrollbar: visible solo en desktop */

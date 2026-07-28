@@ -1,7 +1,8 @@
-import { Component, signal, HostListener } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, HostListener } from '@angular/core';
 
 @Component({
   selector: 'web-header',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   template: `
     <nav [class.scrolled]="isScrolled()">

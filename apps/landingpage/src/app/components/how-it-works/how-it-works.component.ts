@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 interface Step {
@@ -9,6 +9,7 @@ interface Step {
 
 @Component({
   selector: 'web-how-it-works',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [ScrollAnimateDirective],
   template: `

@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -13,6 +13,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
 
 @Component({
   selector: 'web-footer',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [ReactiveFormsModule, ScrollAnimateDirective],
   template: `
