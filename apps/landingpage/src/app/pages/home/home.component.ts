@@ -29,27 +29,27 @@ import { FooterComponent } from '../../components/footer/footer.component';
     <main>
       <web-hero />
       <web-stats />
-      @defer (on idle) {
+      @defer (hydrate on idle) {
         <web-features />
       } @placeholder {
         <div style="min-height: 400px"></div>
       }
-      @defer (on idle) {
+      @defer (hydrate on idle) {
         <web-clinicas />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
-      @defer (on idle) {
+      @defer (hydrate on idle) {
         <web-how-it-works />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
-      @defer (on viewport) {
+      @defer (hydrate on viewport) {
         <web-testimonials />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
-      @defer (on viewport) {
+      @defer (hydrate on viewport) {
         <web-cta />
       } @placeholder {
         <div style="min-height: 200px"></div>
