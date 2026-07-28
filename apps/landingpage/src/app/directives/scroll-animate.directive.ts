@@ -1,7 +1,15 @@
-import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2 } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  Renderer2,
+  inject,
+} from '@angular/core';
 
 @Directive({
-  selector: '[scrollAnimate]',
+  selector: '[webScrollAnimate]',
   standalone: true,
 })
 export class ScrollAnimateDirective implements OnInit, OnDestroy {
@@ -11,7 +19,8 @@ export class ScrollAnimateDirective implements OnInit, OnDestroy {
 
   private observer: IntersectionObserver | null = null;
 
-  constructor(private el: ElementRef, private renderer: Renderer2) {}
+  private el = inject(ElementRef);
+  private renderer = inject(Renderer2);
 
   ngOnInit() {
     if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
