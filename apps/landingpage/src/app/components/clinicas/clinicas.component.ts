@@ -29,14 +29,34 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
           </div>
         </div>
         <div class="mock-wrap">
-          <img
-            class="mock"
-            src="assets/shots/personalizacion.png"
-            width="1500"
-            height="1592"
-            alt="La app de Kengo personalizada con distintos colores de clínica"
-            loading="lazy"
-          />
+          <picture>
+            <source
+              type="image/avif"
+              srcset="
+                assets/shots/personalizacion-640w.avif   640w,
+                assets/shots/personalizacion-960w.avif   960w,
+                assets/shots/personalizacion-1280w.avif 1280w
+              "
+              sizes="(max-width: 560px) 92vw, 520px"
+            />
+            <source
+              type="image/webp"
+              srcset="
+                assets/shots/personalizacion-640w.webp   640w,
+                assets/shots/personalizacion-960w.webp   960w,
+                assets/shots/personalizacion-1280w.webp 1280w
+              "
+              sizes="(max-width: 560px) 92vw, 520px"
+            />
+            <img
+              class="mock"
+              src="assets/shots/personalizacion-960w.png"
+              width="1500"
+              height="1592"
+              alt="La app de Kengo personalizada con distintos colores de clínica"
+              loading="lazy"
+            />
+          </picture>
         </div>
       </div>
     </section>

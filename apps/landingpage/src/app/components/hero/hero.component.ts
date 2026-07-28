@@ -32,14 +32,36 @@ import { Component } from '@angular/core';
           </div>
         </div>
         <div class="hero-shot">
-          <img
-            class="mock"
-            src="assets/shots/Multidevice.png"
-            width="1500"
-            height="809"
-            alt="Kengo en móvil, tablet y escritorio"
-            fetchpriority="high"
-          />
+          <picture>
+            <source
+              type="image/avif"
+              srcset="
+                assets/shots/Multidevice-640w.avif   640w,
+                assets/shots/Multidevice-960w.avif   960w,
+                assets/shots/Multidevice-1280w.avif 1280w,
+                assets/shots/Multidevice-1500w.avif 1500w
+              "
+              sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1240px) calc(100vw - 130px), 1088px"
+            />
+            <source
+              type="image/webp"
+              srcset="
+                assets/shots/Multidevice-640w.webp   640w,
+                assets/shots/Multidevice-960w.webp   960w,
+                assets/shots/Multidevice-1280w.webp 1280w,
+                assets/shots/Multidevice-1500w.webp 1500w
+              "
+              sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1240px) calc(100vw - 130px), 1088px"
+            />
+            <img
+              class="mock"
+              src="assets/shots/Multidevice-960w.png"
+              width="1500"
+              height="809"
+              alt="Kengo en móvil, tablet y escritorio"
+              fetchpriority="high"
+            />
+          </picture>
         </div>
       </div>
     </header>

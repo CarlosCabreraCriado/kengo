@@ -44,7 +44,8 @@
     "railway:build:frontend": "nx build app --configuration production",
     "railway:start:frontend": "node apps/app/server.js",
     "railway:build:landingpage": "nx build landingpage --configuration production",
-    "railway:start:landingpage": "node apps/landingpage/server.js"
+    "railway:start:landingpage": "node apps/landingpage/server.js",
+    "images:landingpage": "node tools/scripts/optimize-images.mjs"
   },
   "private": true,
   "workspaces": [
@@ -140,6 +141,7 @@
     "postcss": "^8.5.3",
     "prettier": "^3.5.1",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "sharp": "^0.35.3",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
     "typescript": "5.8.3",

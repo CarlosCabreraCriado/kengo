@@ -236,6 +236,11 @@ img {
 }
 
 /* Mockups de producto */
+/* El <picture> es transparente para el layout: la <img> sigue siendo
+   hija directa de .mock-wrap (flex) y de los sangrados. */
+picture {
+  display: contents;
+}
 .mock {
   display: block;
   width: 100%;

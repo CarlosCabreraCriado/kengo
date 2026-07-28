@@ -7,7 +7,14 @@ interface FeatureRow {
   titleHtml: string;
   copy: string;
   ticks: string[];
-  img: { src: string; width: number; height: number; alt: string; small?: boolean };
+  img: {
+    base: string;
+    width: number;
+    height: number;
+    alt: string;
+    sizes: string;
+    small?: boolean;
+  };
   reversed?: boolean;
   band?: 'sand' | 'soft';
   bleed?: 'left' | 'right';
@@ -40,15 +47,27 @@ interface FeatureRow {
             </ul>
           </div>
           <div class="mock-wrap">
-            <img
-              class="mock"
-              [class.mock-sm]="f.img.small"
-              [src]="f.img.src"
-              [width]="f.img.width"
-              [height]="f.img.height"
-              [alt]="f.img.alt"
-              loading="lazy"
-            />
+            <picture>
+              <source
+                type="image/avif"
+                [srcset]="srcset(f.img.base, 'avif')"
+                [sizes]="f.img.sizes"
+              />
+              <source
+                type="image/webp"
+                [srcset]="srcset(f.img.base, 'webp')"
+                [sizes]="f.img.sizes"
+              />
+              <img
+                class="mock"
+                [class.mock-sm]="f.img.small"
+                [src]="'assets/shots/' + f.img.base + '-960w.png'"
+                [width]="f.img.width"
+                [height]="f.img.height"
+                [alt]="f.img.alt"
+                loading="lazy"
+              />
+            </picture>
           </div>
         </div>
       </section>
@@ -173,6 +192,12 @@ interface FeatureRow {
   ],
 })
 export class FeaturesComponent {
+  srcset(base: string, ext: 'avif' | 'webp'): string {
+    return [640, 960, 1280]
+      .map((w) => `assets/shots/${base}-${w}w.${ext} ${w}w`)
+      .join(', ');
+  }
+
   features: FeatureRow[] = [
     {
       id: 'fisios',
@@ -185,10 +210,11 @@ export class FeaturesComponent {
         'Vista de cuadrícula o lista, con favoritos siempre a mano',
       ],
       img: {
-        src: 'assets/shots/ejercicios.png',
+        base: 'ejercicios',
         width: 1500,
         height: 1134,
         alt: 'Catálogo de ejercicios de Kengo',
+        sizes: '(max-width: 680px) 92vw, 640px',
       },
       reversed: true,
       bleed: 'left',
@@ -203,10 +229,11 @@ export class FeaturesComponent {
         'Duplica y ajusta sin partir de cero',
       ],
       img: {
-        src: 'assets/shots/rutinas.png',
+        base: 'rutinas',
         width: 1500,
         height: 1253,
         alt: 'Rutinas guardadas en Kengo',
+        sizes: '(max-width: 660px) 92vw, 620px',
       },
       band: 'sand',
       bleed: 'right',
@@ -222,10 +249,11 @@ export class FeaturesComponent {
         'Racha de días y progreso visible sesión a sesión',
       ],
       img: {
-        src: 'assets/shots/ejercicio.png',
+        base: 'ejercicio',
         width: 1500,
         height: 1969,
         alt: 'Sesión guiada con vídeo en Kengo',
+        sizes: '(max-width: 480px) 92vw, 440px',
         small: true,
       },
       reversed: true,
@@ -241,10 +269,11 @@ export class FeaturesComponent {
         'Planes por vencer, ordenados por urgencia',
       ],
       img: {
-        src: 'assets/shots/stats.png',
+        base: 'stats',
         width: 1500,
         height: 1952,
         alt: 'Seguimiento de adherencia de un paciente',
+        sizes: '(max-width: 480px) 92vw, 440px',
         small: true,
       },
     },
@@ -258,10 +287,11 @@ export class FeaturesComponent {
         'Los cambios del plan se sincronizan al momento',
       ],
       img: {
-        src: 'assets/shots/chat.png',
+        base: 'chat',
         width: 1500,
         height: 1644,
         alt: 'Chat entre fisio y paciente en Kengo',
+        sizes: '(max-width: 560px) 92vw, 520px',
       },
       reversed: true,
       band: 'sand',

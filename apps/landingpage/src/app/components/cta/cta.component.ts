@@ -35,14 +35,34 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
           </div>
         </div>
         <div class="mock-wrap">
-          <img
-            class="mock mock-xs"
-            src="assets/shots/icono-app.png"
-            width="1500"
-            height="1714"
-            alt="Kengo en la pantalla de inicio del iPhone"
-            loading="lazy"
-          />
+          <picture>
+            <source
+              type="image/avif"
+              srcset="
+                assets/shots/icono-app-640w.avif   640w,
+                assets/shots/icono-app-960w.avif   960w,
+                assets/shots/icono-app-1280w.avif 1280w
+              "
+              sizes="(max-width: 440px) 92vw, 400px"
+            />
+            <source
+              type="image/webp"
+              srcset="
+                assets/shots/icono-app-640w.webp   640w,
+                assets/shots/icono-app-960w.webp   960w,
+                assets/shots/icono-app-1280w.webp 1280w
+              "
+              sizes="(max-width: 440px) 92vw, 400px"
+            />
+            <img
+              class="mock mock-xs"
+              src="assets/shots/icono-app-960w.png"
+              width="1500"
+              height="1714"
+              alt="Kengo en la pantalla de inicio del iPhone"
+              loading="lazy"
+            />
+          </picture>
         </div>
       </div>
     </section>
