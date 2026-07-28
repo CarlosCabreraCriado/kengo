@@ -180,7 +180,7 @@ export class FeaturesComponent {
     {
       id: 'fisios',
       num: '01 — Catálogo',
-      titleHtml: '422 ejercicios.<br>Ninguno que<br>grabar tú.',
+      titleHtml: 'Más de 500<br>ejercicios. Ninguno<br>que grabar tú.',
       copy: 'Un catálogo grabado con fisioterapeutas, filtrado por región corporal y material. Búscalo, marca favoritos y arrástralo al plan.',
       ticks: [
         'Vídeo profesional en cada ficha, con descripción de ejecución',

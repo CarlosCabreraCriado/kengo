@@ -87,7 +87,7 @@ interface Kpi {
 })
 export class StatsComponent {
   kpis: Kpi[] = [
-    { value: '422', label: 'ejercicios grabados en vídeo, listos para asignar' },
+    { value: '+500', label: 'ejercicios grabados en vídeo, listos para asignar' },
     { value: '87%', label: 'de adherencia media en pacientes con plan activo' },
     { value: '2 min', label: 'para montar un plan completo desde una rutina' },
     { value: '3', label: 'perfiles: fisio, paciente y administrador de clínica' },
