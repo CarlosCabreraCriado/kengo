@@ -21,6 +21,12 @@
   --color-peach: #fff0e4;
 }
 
+/* Navegación por anclas: scroll suave y offset para la barra nav fija */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
 /* Fuente display de titulares (siempre en mayúsculas) */
 @font-face {
   font-family: KengoDisplay;

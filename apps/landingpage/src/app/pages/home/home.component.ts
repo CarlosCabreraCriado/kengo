@@ -28,17 +28,17 @@ import { FooterComponent } from '../../components/footer/footer.component';
     <main>
       <web-hero />
       <web-stats />
-      @defer (on viewport) {
+      @defer (on idle) {
         <web-features />
       } @placeholder {
         <div style="min-height: 400px"></div>
       }
-      @defer (on viewport) {
+      @defer (on idle) {
         <web-clinicas />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
-      @defer (on viewport) {
+      @defer (on idle) {
         <web-how-it-works />
       } @placeholder {
         <div style="min-height: 200px"></div>
