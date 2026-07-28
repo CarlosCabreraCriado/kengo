@@ -93,6 +93,15 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
           gap: 44px;
         }
       }
+
+      @media (max-width: 640px) {
+        .brand-sec {
+          padding: 76px 0;
+        }
+        .brand-in {
+          gap: 36px;
+        }
+      }
     `,
   ],
 })

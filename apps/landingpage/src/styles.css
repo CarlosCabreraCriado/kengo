@@ -142,6 +142,20 @@ body {
 /* ============================================
    LANDING · PRIMITIVOS COMPARTIDOS
    ============================================ */
+:root {
+  --gutter: 32px;
+  /* Distancia del borde del contenido de .wrap al borde del viewport.
+     588px = (1240px máx de .wrap − 2×32px de gutter desktop) / 2.
+     Recalcular si cambian el max-width de .wrap o el gutter desktop. */
+  --bleed: max(var(--gutter), 50vw - 588px);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --gutter: 20px;
+  }
+}
+
 img {
   max-width: 100%;
   display: block;
@@ -150,7 +164,7 @@ img {
 .wrap {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 var(--gutter);
 }
 
 /* Eyebrow (microcopy con guion) */

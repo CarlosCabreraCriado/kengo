@@ -87,8 +87,12 @@ interface Step {
       }
 
       @media (max-width: 640px) {
+        .steps {
+          padding: 76px 0;
+        }
         .step-grid {
           grid-template-columns: 1fr;
+          margin-top: 40px;
         }
       }
     `,

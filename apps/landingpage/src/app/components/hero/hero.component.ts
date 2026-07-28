@@ -175,8 +175,12 @@ import { Component } from '@angular/core';
           padding-top: 112px;
         }
         .hero-shot {
-          max-height: 210px;
-          padding: 0 26px;
+          max-height: none;
+          padding: 0 var(--gutter);
+        }
+        .hero::before,
+        .hero::after {
+          display: none;
         }
       }
     `,

@@ -148,6 +148,15 @@ interface Testimonial {
           grid-template-columns: 1fr;
         }
       }
+
+      @media (max-width: 640px) {
+        .tests {
+          padding: 76px 0;
+        }
+        .test-grid {
+          margin-top: 40px;
+        }
+      }
     `,
   ],
 })

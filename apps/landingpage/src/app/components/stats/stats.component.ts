@@ -82,6 +82,13 @@ interface Kpi {
           border-bottom: 1px solid var(--color-ink-200);
         }
       }
+
+      /* En móvil se omiten los KPIs para acortar el scroll hasta el contenido */
+      @media (max-width: 640px) {
+        :host {
+          display: none;
+        }
+      }
     `,
   ],
 })

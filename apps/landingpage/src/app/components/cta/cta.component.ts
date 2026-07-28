@@ -101,7 +101,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
       .cta .mock-wrap {
         align-self: end;
         justify-content: flex-end;
-        margin-right: calc(-1 * max(32px, 50vw - 588px));
+        margin-right: calc(-1 * var(--bleed));
       }
 
       .cta .mock {
@@ -117,8 +117,14 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
         .cta-copy {
           padding: 80px 0 0;
         }
-        .cta .mock-wrap {
-          margin-right: calc(-1 * max(20px, 50vw - 588px));
+      }
+
+      @media (max-width: 640px) {
+        .cta-copy {
+          padding: 64px 0 0;
+        }
+        .cta-in {
+          gap: 36px;
         }
       }
     `,

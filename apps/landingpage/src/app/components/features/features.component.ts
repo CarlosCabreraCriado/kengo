@@ -136,7 +136,7 @@ interface FeatureRow {
         justify-content: flex-start;
         align-items: flex-end;
         align-self: end;
-        margin-left: calc(-1 * max(32px, 50vw - 588px));
+        margin-left: calc(-1 * var(--bleed));
       }
       .bleed-left .mock {
         margin: 0 auto 0 0;
@@ -144,7 +144,7 @@ interface FeatureRow {
       }
       .bleed-right .mock-wrap {
         justify-content: flex-end;
-        margin-right: calc(-1 * max(32px, 50vw - 588px));
+        margin-right: calc(-1 * var(--bleed));
       }
       .bleed-right .mock {
         margin-right: 0;
@@ -159,17 +159,14 @@ interface FeatureRow {
         .feat.rev .feat-in > .mock-wrap {
           order: 0;
         }
-        .bleed-right .mock-wrap {
-          margin-right: calc(-1 * max(20px, 50vw - 588px));
-        }
-        .bleed-left .mock-wrap {
-          margin-left: calc(-1 * max(20px, 50vw - 588px));
-        }
       }
 
       @media (max-width: 640px) {
         .feat {
           padding: 76px 0;
+        }
+        .feat-in {
+          gap: 36px;
         }
       }
     `,
