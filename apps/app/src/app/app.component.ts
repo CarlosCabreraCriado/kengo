@@ -42,6 +42,7 @@ import { DialogService } from './shared/services/dialog/dialog.service';
 import { ToastService } from './shared/services/toast/toast.service';
 import { ClinicasService } from './features/clinica/data-access/clinicas.service';
 import { Ui2CarritoEjerciciosComponent } from './features/planes/components/carrito-ejercicios-v2/carrito-ejercicios-v2.component';
+import { CarritoLayoutService } from './features/planes/data-access/carrito-layout.service';
 import {
   Ui2CreamBgComponent,
   Ui2PageLoaderOverlayComponent,
@@ -115,6 +116,9 @@ export class AppComponent implements OnInit {
   public convexService = inject(ConvexService);
   private themeService = inject(ThemeService); // Inicia gestión dinámica de colores
   private clinicasService = inject(ClinicasService);
+  // Visibilidad de la pestaña del carrito: el shell reserva un carril derecho en
+  // el <main> de desktop fisio cuando está visible (ver app.component.css).
+  public carritoLayout = inject(CarritoLayoutService);
   private logger = inject(LoggerService);
   private scrollContainer = inject(ScrollContainerService);
   // Misma instancia que usa el Router (provista vía useClass en app.config).

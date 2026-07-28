@@ -6,3 +6,12 @@
 :host(.impersonating) > section {
   padding-top: var(--imp-banner-h);
 }
+
+/* Reserva un carril derecho cuando la pestaña del carrito de ejercicios está
+   visible, para que su overlay fijo (`.ui2-cart__tab`, anclado a right:0) no
+   tape botones/controles del contenido en desktop. Solo se aplica al <main> de
+   desktop fisio (ver app.component.html). */
+.ui2-main--cart-inset {
+  padding-right: 72px;
+  transition: padding-right 200ms ease-out;
+}

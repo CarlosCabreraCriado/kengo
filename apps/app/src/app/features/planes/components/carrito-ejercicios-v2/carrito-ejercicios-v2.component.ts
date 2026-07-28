@@ -34,6 +34,7 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 import { Usuario } from '../../../../../types/global';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { CarritoPointers } from '../../data-access/internal/carrito-pointers';
+import { CarritoLayoutService } from '../../data-access/carrito-layout.service';
 import { RutinaBuilderService } from '../../../rutinas/data-access/rutina-builder.service';
 
 @Component({
@@ -64,12 +65,22 @@ export class Ui2CarritoEjerciciosComponent
 
   readonly svc = inject(PlanBuilderService);
   readonly rutinaSvc = inject(RutinaBuilderService);
+  private readonly carritoLayout = inject(CarritoLayoutService);
 
   readonly isRutinaMode = computed(() => this.rutinaSvc.isActive());
   readonly isEditMode = computed(() => this.svc.isEditMode());
 
   readonly drawerAbierto = signal(false);
   readonly ocultarTab = signal(false);
+
+  /**
+   * Fuente de verdad de la visibilidad de la pestaña lateral: hay sujeto
+   * (paciente o modo rutina) y la ruta no la oculta. La lee el template y se
+   * publica al shell vía `CarritoLayoutService` para reservar el carril derecho.
+   */
+  readonly tabVisible = computed(
+    () => (!!this.svc.paciente() || this.isRutinaMode()) && !this.ocultarTab(),
+  );
 
   readonly pacienteNombre = computed(() => {
     const p = this.svc.paciente();
@@ -109,6 +120,7 @@ export class Ui2CarritoEjerciciosComponent
   readonly canGuardarRutina = computed(() => this.items().length > 0);
 
   private drawerEff!: EffectRef;
+  private tabVisibleEff!: EffectRef;
 
   ngAfterViewInit(): void {
     this.drawerEff = effect(
@@ -118,6 +130,13 @@ export class Ui2CarritoEjerciciosComponent
           : this.svc.drawerOpen();
         this.drawerAbierto.set(shouldOpen);
       },
+      { injector: this.injector },
+    );
+
+    // Publica la visibilidad de la pestaña al shell para que reserve el carril
+    // derecho del contenido en desktop y no la tape.
+    this.tabVisibleEff = effect(
+      () => this.carritoLayout.setTabVisible(this.tabVisible()),
       { injector: this.injector },
     );
 
@@ -151,6 +170,8 @@ export class Ui2CarritoEjerciciosComponent
 
   ngOnDestroy(): void {
     this.drawerEff?.destroy();
+    this.tabVisibleEff?.destroy();
+    this.carritoLayout.setTabVisible(false);
     this.backButton.unregister(this);
   }
 

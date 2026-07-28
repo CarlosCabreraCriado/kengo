@@ -94,7 +94,11 @@
           [avatarUrl]="avatarUrl()"
         ></ui2-web-topbar>
         <app-billing-banner></app-billing-banner>
-        <main appScrollContainer class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <main
+          appScrollContainer
+          class="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
+          [class.ui2-main--cart-inset]="carritoLayout.tabVisible()"
+        >
           <router-outlet></router-outlet>
           <ui2-page-loader-overlay></ui2-page-loader-overlay>
         </main>
