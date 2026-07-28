@@ -27,24 +27,22 @@ html {
   scroll-padding-top: 5.5rem;
 }
 
+/* Fuentes self-hosted en WOFF2 subseteado (Latin-1 + puntuación tipográfica).
+   Viven en public/fonts/ (URL estable, sin hash) para poder precargarlas
+   desde index.html. Se regeneran con pyftsubset desde los TTF originales. */
+
 /* Fuente display de titulares (siempre en mayúsculas) */
 @font-face {
   font-family: KengoDisplay;
-  src: url(./assets/fonts/SocialGothic-Bold.ttf) format("truetype");
+  src: url(/fonts/SocialGothic-Bold.woff2) format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: kengoFont;
-  src: url(./assets/fonts/galvji-bold.ttf) format("truetype");
-  font-display: swap;
-}
-
-@font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji.ttf) format("truetype");
+  src: url(/fonts/galvji.woff2) format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -52,25 +50,9 @@ html {
 
 @font-face {
   font-family: Galvji;
-  src: url(./assets/fonts/galvji-bold.ttf) format("truetype");
+  src: url(/fonts/galvji-bold.woff2) format("woff2");
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: Galvji;
-  src: url(./assets/fonts/galvji-oblique.ttf) format("truetype");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: Galvji;
-  src: url(./assets/fonts/galvji-bold-oblique.ttf) format("truetype");
-  font-weight: 700;
-  font-style: italic;
   font-display: swap;
 }
 
@@ -128,15 +110,6 @@ body {
   text-transform: uppercase;
   line-height: 1;
   letter-spacing: 0.02em;
-}
-
-.titulo-kengo {
-  font-family: "kengoFont" !important;
-}
-
-.fuente-kengo {
-  font-family: "kengoFont";
-  color: var(--color-primary);
 }
 
 /* ============================================
