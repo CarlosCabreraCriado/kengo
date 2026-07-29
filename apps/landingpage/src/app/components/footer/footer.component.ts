@@ -1,27 +1,24 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import {
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
-
-type ContactState = 'form' | 'sending' | 'success' | 'error';
+import { ContactFormComponent } from '../contact-form/contact-form.component';
 
 @Component({
   selector: 'web-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ReactiveFormsModule, ScrollAnimateDirective],
+  imports: [ScrollAnimateDirective, RouterLink, ContactFormComponent],
   template: `
     <footer>
       <div class="wrap">
         <div class="foot-top scroll-reveal" webScrollAnimate>
           <div class="foot-brand">
-            <a href="#top" aria-label="Kengo — inicio">
+            <a routerLink="/" aria-label="Kengo — inicio">
               <img src="logo-kengo-horizontal.svg" alt="Kengo" />
             </a>
             <p>
@@ -32,26 +29,28 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
           <div class="foot-cols">
             <div class="foot-col">
               <h5>Producto</h5>
-              <a href="#fisios">Para fisios</a>
-              <a href="#pacientes">Para pacientes</a>
-              <a href="#clinicas">Clínicas</a>
-              <a href="#como">Cómo funciona</a>
+              <!-- routerLink + fragment en vez de href="#...": desde una
+                   página legal el ancla suelta no lleva a ninguna parte. -->
+              <a routerLink="/" fragment="fisios">Para fisios</a>
+              <a routerLink="/" fragment="pacientes">Para pacientes</a>
+              <a routerLink="/" fragment="clinicas">Clínicas</a>
+              <a routerLink="/" fragment="como">Cómo funciona</a>
             </div>
             <div class="foot-col">
               <h5>Empresa</h5>
-              <a href="#top">Sobre Kengo</a>
+              <a routerLink="/">Sobre Kengo</a>
               <button type="button" class="foot-link" (click)="abrirModal()">
                 Contacto
               </button>
-              <button type="button" class="foot-link" (click)="abrirModal()">
-                Soporte
-              </button>
+              <a routerLink="/soporte">Soporte</a>
             </div>
             <div class="foot-col">
               <h5>Legal</h5>
-              <a href="#top">Privacidad</a>
-              <a href="#top">Términos</a>
-              <a href="#top">Cookies</a>
+              <a routerLink="/legal/privacidad">Privacidad</a>
+              <a routerLink="/legal/terminos">Términos</a>
+              <a routerLink="/legal/cookies">Cookies</a>
+              <a routerLink="/legal/aviso-legal">Aviso legal</a>
+              <a routerLink="/eliminar-cuenta">Eliminar cuenta</a>
             </div>
           </div>
         </div>
@@ -97,127 +96,7 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
           </div>
 
           <div class="modal-body">
-            @switch (estado()) {
-              @case ('form') {
-                <form [formGroup]="contactForm" (ngSubmit)="enviar()">
-                  <div class="form-group">
-                    <label for="nombre" class="form-label">Nombre *</label>
-                    <input
-                      id="nombre"
-                      type="text"
-                      formControlName="nombre"
-                      class="form-input"
-                      placeholder="Tu nombre"
-                    />
-                  </div>
-
-                  <div class="form-group">
-                    <label for="email" class="form-label">Email *</label>
-                    <input
-                      id="email"
-                      type="email"
-                      formControlName="email"
-                      class="form-input"
-                      placeholder="tu&#64;email.com"
-                    />
-                  </div>
-
-                  <div class="form-group">
-                    <label for="asunto" class="form-label">Asunto</label>
-                    <input
-                      id="asunto"
-                      type="text"
-                      formControlName="asunto"
-                      class="form-input"
-                      placeholder="Asunto del mensaje"
-                    />
-                  </div>
-
-                  <div class="form-group">
-                    <label for="mensaje" class="form-label">Mensaje *</label>
-                    <textarea
-                      id="mensaje"
-                      formControlName="mensaje"
-                      class="form-input form-textarea"
-                      placeholder="Escribe tu mensaje..."
-                      rows="4"
-                    ></textarea>
-                  </div>
-
-                  <button
-                    type="submit"
-                    [disabled]="contactForm.invalid"
-                    class="submit-btn"
-                  >
-                    Enviar mensaje
-                  </button>
-                </form>
-              }
-              @case ('sending') {
-                <div class="state-container">
-                  <div class="spinner"></div>
-                  <p class="state-text">Enviando mensaje...</p>
-                </div>
-              }
-              @case ('success') {
-                <div class="state-container">
-                  <div class="success-icon">
-                    <svg
-                      class="h-8 w-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                  <p class="state-title">Mensaje enviado</p>
-                  <p class="state-text">Te responderemos lo antes posible.</p>
-                  <button
-                    (click)="cerrarModal()"
-                    class="submit-btn"
-                    style="margin-top: 16px;"
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              }
-              @case ('error') {
-                <div class="state-container">
-                  <div class="error-icon">
-                    <svg
-                      class="h-8 w-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </div>
-                  <p class="state-title">Error al enviar</p>
-                  <p class="state-text">
-                    No se pudo enviar el mensaje. Inténtalo de nuevo.
-                  </p>
-                  <button
-                    (click)="estado.set('form')"
-                    class="submit-btn"
-                    style="margin-top: 16px;"
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              }
-            }
+            <web-contact-form #contactForm idPrefix="contacto" />
           </div>
         </div>
       </div>
@@ -523,17 +402,12 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
 export class FooterComponent {
   currentYear = new Date().getFullYear();
   modalAbierto = signal(false);
-  estado = signal<ContactState>('form');
 
-  private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
-
-  contactForm: FormGroup = this.fb.group({
-    nombre: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    asunto: [''],
-    mensaje: ['', Validators.required],
-  });
+  /**
+   * El formulario vive en `ContactFormComponent`, compartido con las páginas
+   * de soporte y de eliminación de cuenta. Aquí solo se gobierna el modal.
+   */
+  private contactForm = viewChild(ContactFormComponent);
 
   onBackdrop(event: MouseEvent) {
     if (event.target === event.currentTarget) {
@@ -542,28 +416,13 @@ export class FooterComponent {
   }
 
   abrirModal() {
-    this.estado.set('form');
-    this.contactForm.reset();
     this.modalAbierto.set(true);
+    // El componente se crea al abrirse el modal, así que se reinicia en el
+    // siguiente tick, cuando ya existe la instancia.
+    queueMicrotask(() => this.contactForm()?.reiniciar());
   }
 
   cerrarModal() {
     this.modalAbierto.set(false);
-  }
-
-  enviar() {
-    if (this.contactForm.invalid) return;
-
-    this.estado.set('sending');
-
-    this.http
-      .post<{ success: boolean }>(
-        `${environment.convexSiteUrl}/api/contact/send`,
-        this.contactForm.value,
-      )
-      .subscribe({
-        next: (res) => this.estado.set(res?.success ? 'success' : 'error'),
-        error: () => this.estado.set('error'),
-      });
   }
 }

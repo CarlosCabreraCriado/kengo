@@ -1,0 +1,18 @@
+{
+  "name": "shared-legal",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/legal/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:ui"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": [
+          "libs/shared/legal/**/*.ts",
+          "libs/shared/legal/**/*.html"
+        ]
+      }
+    }
+  }
+}

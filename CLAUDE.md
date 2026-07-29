@@ -15,13 +15,17 @@ Kengo is a healthcare/physiotherapy management platform built with Angular 20. I
 ```
 kengo/
 ├── apps/
-│   ├── app/                    # Angular frontend application
-│   ├── landingpage/            # Angular landing page
-│   └── backend/                # Node.js/Express API
+│   ├── app/                    # Angular frontend application (kengoapp.com)
+│   └── landingpage/            # Angular landing page (www.kengoapp.com)
 └── libs/
     └── shared/
-        └── models/             # @kengo/shared-models library
+        ├── models/             # @kengo/shared-models library
+        └── legal/              # @kengo/legal — textos legales compartidos
 ```
+
+> Reparto de dominios (`railway.toml`): el **apex** `kengoapp.com` sirve la
+> **app**; `www.kengoapp.com` sirve la **landing**. No hay redirect entre
+> ellos: son dos servicios de Railway distintos.
 
 ## Backend Integration
 
@@ -43,6 +47,24 @@ After making code changes, ALWAYS run `/verify` before committing to catch lint 
 ## Subdirectory Instructions
 
 `apps/app/CLAUDE.md` contains Angular-specific coding standards (signals, OnPush, accessibility, component patterns). It loads automatically when working in that directory.
+
+## Contenido legal
+
+Los cuatro documentos legales (privacidad, términos, cookies y aviso legal) viven **solo** en `libs/shared/legal` (`@kengo/legal`), como componentes standalone de contenido puro: sin `ui-v2`, sin router y sin servicios. Nunca dupliques el texto en una app — es texto con validez jurídica y dos copias divergen.
+
+Se consumen desde tres sitios:
+
+- **App, diálogo**: `features/legal/components/legal-dialog` (perfil y registro).
+- **App, páginas públicas**: `/legal/*`, sin `AuthGuard` — las stores revisan la política sin iniciar sesión.
+- **Landing**: `/legal/*`, prerenderizadas (SSG), que es la versión canónica indexable. La de la app lleva `noindex` + `canonical` hacia `www`.
+
+Reglas:
+
+- El título, la descripción y la **versión** de cada documento salen de `LEGAL_DOCS` (`legal-docs.metadata.ts`). Al revisar un texto de forma sustancial hay que subir su `version`: es lo que se guarda en la tabla `consents` como prueba del consentimiento (art. 7.1 RGPD).
+- El prefijo de selector de la librería es `ui-` (`eslint.config.js` solo admite `app|web|ui|ui2`).
+- El CSS usa tokens con fallback (`--ink-900` en la app, `--color-ink` en la landing): la librería no debe conocer a ninguna de las dos.
+- Las URLs públicas que se declaran en App Store Connect y Play Console son las de `www.kengoapp.com`. **No usar `kengoapp.com/soporte`**: en la app esa ruta es la pantalla interna de impersonación con `SoporteGuard`.
+- Al tocar `.well-known`, verificar con `curl -i` mirando el **body**: `express.static` ignora los directorios que empiezan por punto (`dotfiles: 'ignore'` por defecto en `send`), así que un fallo cae en el fallback SPA y devuelve `index.html` con **200**, aparentando funcionar. `apps/app/server.js` ya lo resuelve.
 
 ## Multiclínica
 

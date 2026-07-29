@@ -1,0 +1,37 @@
+/* A diferencia del `auth-shell`, esta pantalla es un documento largo: se
+   alinea arriba en vez de centrarse verticalmente y respeta las safe areas
+   del dispositivo (notch y barra gestual), porque es una ruta que se abre
+   también desde enlaces externos dentro del WebView nativo. */
+.legal-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: calc(24px + env(safe-area-inset-top)) 20px
+    calc(32px + env(safe-area-inset-bottom));
+}
+
+.legal-shell__panel {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.legal-shell__nav {
+  display: flex;
+}
+
+.legal-shell__doc {
+  display: block;
+}
+
+.legal-shell__updated {
+  margin: 20px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--ink-100, #ece1d8);
+  font-size: 12px;
+  color: var(--ink-500);
+}

@@ -12,6 +12,13 @@ export interface CreateUsuarioPayload {
   email: string;
   password: string;
   codigo_clinica?: string;
+  /**
+   * Versión de los textos legales que el usuario aceptó al registrarse
+   * (`LEGAL_DOCS[...].version` de `@kengo/legal`). El backend deja constancia
+   * del consentimiento con esta versión — sin ella no habría forma de probar
+   * qué texto se aceptó.
+   */
+  consent_version?: string;
 }
 
 /**

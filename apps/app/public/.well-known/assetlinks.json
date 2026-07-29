@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kengoapp.app",
+      "sha256_cert_fingerprints": [
+        "PENDIENTE_SHA256_CLAVE_DE_FIRMA_DE_PLAY",
+        "PENDIENTE_SHA256_CLAVE_DE_SUBIDA"
+      ]
+    }
+  }
+]

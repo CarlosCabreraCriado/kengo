@@ -16,9 +16,21 @@
     </style>
 
 
+    <!--
+      Tema de arranque. `Theme.SplashScreen` delega en el splash de plataforma
+      en Android 12+ y lo emula con un layer-list en API 24-30. En AMBOS casos
+      el icono se dibuja en una caja de 288dp recortada a un círculo de 192dp,
+      así que `windowSplashScreenAnimatedIcon` tiene que apuntar a un drawable
+      CUADRADO: con `@drawable/splash` (rectangular, generado por
+      @capacitor/assets) el logo salía achatado en Android 10.
+
+      `@drawable/splash` se conserva para el camino de fallback del plugin,
+      que sí pinta una imagen a pantalla completa (`androidSplashResourceName`
+      en capacitor.config.ts).
+    -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splashBackground</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

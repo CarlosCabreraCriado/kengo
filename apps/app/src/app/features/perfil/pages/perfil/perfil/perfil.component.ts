@@ -12,6 +12,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { assetUrl } from '../../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
@@ -21,11 +22,14 @@ import { EmailVerificationService } from '../../../../../core/auth/services/emai
 import { ConvexService } from '../../../../../core/convex/convex.service';
 import { StorageService } from '../../../../../core/services/storage.service';
 import { DialogService } from '../../../../../shared/services/dialog';
+import { ToastService } from '../../../../../shared/services/toast';
+import { AuthService } from '../../../../../core/auth/services/auth.service';
 import { PushNotificationService } from '../../../../../core/services/push-notification.service';
 import { PlatformService } from '../../../../../core/services/platform.service';
 
 // Types
 import { Usuario } from '../../../../../../types/global';
+import { LEGAL_DOC_ORDER, LEGAL_DOCS, type LegalDocId } from '@kengo/legal';
 
 import { api } from '../../../../../../../../../convex/_generated/api';
 import { environment as env } from '../../../../../../environments/environment';
@@ -51,6 +55,18 @@ import {
 } from '../../../../../shared/ui-v2';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
 import { LoggerService } from '../../../../../core/services/logger.service';
+
+/**
+ * Presentación de cada documento legal en la lista de perfil. El título vive
+ * en `@kengo/legal`; aquí solo el icono y el subtítulo, que son propios de
+ * esta pantalla.
+ */
+const PERFIL_LEGAL_ICONS: Record<LegalDocId, { icon: string; sub: string }> = {
+  privacidad: { icon: 'policy', sub: 'Cómo protegemos tus datos' },
+  terminos: { icon: 'gavel', sub: 'Condiciones de uso del servicio' },
+  cookies: { icon: 'cookie', sub: 'Almacenamiento en tu dispositivo' },
+  'aviso-legal': { icon: 'balance', sub: 'Titularidad y datos de la empresa' },
+};
 
 @Component({
   selector: 'app-perfil',
@@ -84,6 +100,8 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private logger = inject(LoggerService);
   private pushNotifications = inject(PushNotificationService);
   private platform = inject(PlatformService);
+  private authService = inject(AuthService);
+  private toast = inject(ToastService);
   private readonly PAGE_LOADER_KEY = 'perfil';
 
   /**
@@ -109,6 +127,30 @@ export class PerfilComponent implements OnInit, OnDestroy {
   public securityExpanded = signal(false);
   public notificacionesExpanded = signal(false);
   public legalExpanded = signal(false);
+  public cuentaExpanded = signal(false);
+
+  /** Bloquea el botón mientras se consulta el preflight o se purga la cuenta. */
+  public eliminandoCuenta = signal(false);
+
+  /** Pie de la pantalla. La versión sale del environment para no divergir. */
+  public readonly appVersion = env.APP_VERSION;
+  public readonly currentYear = new Date().getFullYear();
+
+  /**
+   * Documentos legales que se listan en la sección "Legal". El título y el
+   * orden salen de `@kengo/legal` (fuente única); aquí solo se decide la
+   * presentación: icono y subtítulo.
+   *
+   * Los iconos `gavel`, `cookie` y `balance` se añadieron al subset de
+   * Material Symbols — si se cambian, hay que volver a ejecutar
+   * `npm run icons:regenerate`.
+   */
+  public readonly legalDocs = LEGAL_DOC_ORDER.map((id) => ({
+    id,
+    title: LEGAL_DOCS[id].title,
+    icon: PERFIL_LEGAL_ICONS[id].icon,
+    sub: PERFIL_LEGAL_ICONS[id].sub,
+  }));
 
   // === PREFERENCIAS DE NOTIFICACIÓN ===
   private readonly notifPrefsQuery = this.convex.watchQuery(
@@ -351,11 +393,76 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   // === MÉTODOS DE LEGAL ===
 
-  async abrirPrivacyPolicy() {
-    const { PrivacyPolicyComponent } = await import(
-      './privacy-policy/privacy-policy.component'
+  /**
+   * Abre cualquiera de los documentos legales en un diálogo informativo. El
+   * texto vive en `@kengo/legal` y se comparte con las páginas públicas
+   * `/legal/*` y con la landing, de modo que no puede divergir.
+   */
+  async abrirLegal(doc: LegalDocId) {
+    const { LegalDialogComponent } = await import(
+      '../../../../legal/components/legal-dialog/legal-dialog.component'
     );
-    this.dialogService.openInformative(PrivacyPolicyComponent);
+    this.dialogService.openInformative(LegalDialogComponent, {
+      data: { doc },
+    });
+  }
+
+  // === ELIMINACIÓN DE CUENTA ===
+
+  /**
+   * Flujo de borrado de cuenta exigido por Apple (guideline 5.1.1(v)) y por
+   * Google Play: debe poder iniciarse desde dentro de la app.
+   *
+   * Se consulta el preflight justo antes de abrir el diálogo — y el servidor
+   * lo vuelve a validar al confirmar — porque los bloqueos (ser propietario de
+   * una clínica, tener una suscripción viva) pueden cambiar mientras la
+   * pantalla está abierta.
+   */
+  async eliminarCuenta() {
+    const usuario = this.sessionService.usuario();
+    if (!usuario) return;
+
+    this.eliminandoCuenta.set(true);
+    try {
+      const preflight = await this.convex.query(
+        api.users.deletion.preflight,
+        {},
+      );
+
+      const { EliminarCuentaDialogComponent } = await import(
+        './eliminar-cuenta/eliminar-cuenta-dialog.component'
+      );
+
+      const dialogRef = this.dialogService.openForm<
+        InstanceType<typeof EliminarCuentaDialogComponent>,
+        unknown,
+        string | undefined
+      >(EliminarCuentaDialogComponent, {
+        data: {
+          email: usuario.email,
+          bloqueos: preflight.bloqueos,
+          resumen: preflight.resumen,
+        },
+      });
+
+      const confirmacionEmail = await firstValueFrom(dialogRef.closed);
+      if (!confirmacionEmail) return;
+
+      await this.convex.action(api.users.deletionActions.deleteMyAccount, {
+        confirmacionEmail,
+      });
+
+      // La sesión ya no tiene usuario detrás: se cierra sin intentar
+      // revalidarla contra el servidor.
+      await this.authService.logout();
+    } catch (error) {
+      this.logger.error('[perfil] error al eliminar la cuenta', error);
+      this.toast.error(
+        'No se pudo eliminar la cuenta. Inténtalo de nuevo o escríbenos a info@kengoapp.com.',
+      );
+    } finally {
+      this.eliminandoCuenta.set(false);
+    }
   }
 
   // === MÉTODOS DE SECCIONES COLAPSABLES ===
@@ -374,6 +481,10 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   toggleLegal() {
     this.legalExpanded.update((v) => !v);
+  }
+
+  toggleCuenta() {
+    this.cuentaExpanded.update((v) => !v);
   }
 
   /**

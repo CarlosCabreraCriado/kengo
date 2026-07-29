@@ -4,10 +4,17 @@
 <dict>
 	<key>aps-environment</key>
 	<string>production</string>
+	<!-- El filtrado por ruta vive en el AASA
+	     (apps/app/public/.well-known/apple-app-site-association), no aquí: el
+	     entitlement no admite paths. Allí se excluyen /legal/*, /soporte,
+	     /eliminar-cuenta y /billing-return.html para que se abran en el
+	     navegador.
+
+	     www.kengoapp.com se retiró: es la landing, ningún enlace del backend
+	     apunta ahí y mantenerlo obligaba a publicar un segundo AASA. -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:kengoapp.com</string>
-		<string>applinks:www.kengoapp.com</string>
 		<string>webcredentials:kengoapp.com</string>
 	</array>
 </dict>

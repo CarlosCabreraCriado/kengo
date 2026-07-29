@@ -33,8 +33,8 @@ Trabajo de código pendiente para que la app se sienta nativa, no como web embeb
   `StatusBar.setBackgroundColor({ color })` debe llamarse cuando `ThemeService` cambie el primario para que la barra de sistema acompañe al color de la clínica activa.
   **Áreas a tocar**: `apps/app/src/app/core/theme/theme.service.ts` debe exponer un `effect` que en native invoque `StatusBar.setBackgroundColor(this.primaryColor())`.
 
-- [ ] **A4. Banner offline con `@capacitor/network`**
-  El plugin está instalado pero no hay listener ni componente. Diseñar un `Ui2OfflineBannerComponent` que escuche `Network.addListener('networkStatusChange', ...)` y muestre un banner persistente cuando `connected=false`.
+- [x] **A4. Banner offline con `@capacitor/network`** — *hecho*
+  Verificado en dispositivo (2026-07-29): con el A90 sin red, la app muestra el banner "Sin conexión" en la pantalla de login.
 
 - [ ] **A5. Pull-to-refresh en `mensajes` y `actividad-personal`**
   Patrón nativo esperado en mobile. Opciones:
@@ -45,16 +45,13 @@ Trabajo de código pendiente para que la app se sienta nativa, no como web embeb
 - [ ] **A6. Verificar conflicto de edge swipe back iOS con `onSwipe` del `ejercicio-activo`**
   iOS tiene gesto nativo de "swipe-back desde el borde" en WKWebView. El componente `ejercicio-activo.component.ts` define un `onSwipe` con `SwipeGesturesDirective`. Probar en device físico iOS y, si hay conflicto, deshabilitar el gesto nativo en esa ruta concreta vía `webView.allowsBackForwardNavigationGestures = false` (requiere bridge nativo o configuración Info.plist).
 
-- [ ] **A7. Iconos y splash propios con `@capacitor/assets`**
-  Los assets actuales son los placeholders de Capacitor. Pasos:
-  ```bash
-  npm install --save-dev @capacitor/assets
-  # Colocar fuentes vectoriales/PNG:
-  #   apps/app/assets/icon-only.png   (1024×1024)
-  #   apps/app/assets/splash.png      (2732×2732, fondo coral con logo centrado)
-  cd apps/app && npx capacitor-assets generate
-  ```
-  Coordinar con diseño para tener los PNGs definitivos.
+- [x] **A7. Iconos y splash propios con `@capacitor/assets`** — *hecho*
+  Assets de marca en `apps/app/assets/` y `npm run cap:assets` configurado. Dos correcciones aplicadas el 2026-07-29, ambas verificadas en un A90 (API 29) y un emulador (API 36):
+
+  1. **Icono del launcher**: faltaban `icon-foreground.png` e `icon-background.png`, así que el icono adaptativo de Android 8+ seguía siendo la X azul de Capacitor. Generados desde `logo.svg` (foreground) y con el degradado melocotón muestreado del icono existente (background).
+  2. **Splash achatado**: `windowSplashScreenAnimatedIcon` apuntaba a los `drawable*/splash.png` rectangulares y `core-splashscreen` los estira a una caja cuadrada de 288dp. Ahora apunta a `res/drawable/splash_icon.xml`, un vector cuadrado. Ver `apps/app/CLAUDE.md` y `CAPACITOR_NATIVE_APP.md` §3.8.
+
+  Pendiente menor: el splash nativo es blanco y el gate de sesión pinta cream — hay un salto de color perceptible en ambas plataformas. Decidido no tocarlo por ahora.
 
 ---
 
@@ -112,34 +109,24 @@ Nada de lo implementado ha pisado un simulador/emulador real todavía. El códig
 - [ ] **C3. Deploy del frontend (Railway)**
   Necesario para que `https://kengoapp.com/billing-return.html` esté servido y el flujo Stripe en native funcione.
 
-- [ ] **C4. `apple-app-site-association` en `https://kengoapp.com/.well-known/`**
-  Habilita Universal Links iOS. Requiere coordinación con quien hospeda el dominio (Railway frontend o redirect en Convex). Reemplazar `TEAMID` por el Apple Team ID real:
-  ```json
-  {
-    "applinks": {
-      "details": [
-        { "appID": "TEAMID.com.kengoapp.app", "paths": ["*"] }
-      ]
-    }
-  }
-  ```
-  Tras servirlo, añadir entitlement en Xcode → Signing & Capabilities → Associated Domains: `applinks:kengoapp.com`.
+- [x] **C4. `apple-app-site-association` en `https://kengoapp.com/.well-known/`** — *fichero creado*
+  Vive en `apps/app/public/.well-known/apple-app-site-association` (Angular copia el directorio con punto al build) y `apps/app/server.js` lo sirve con `Content-Type: application/json`.
 
-- [ ] **C5. `assetlinks.json` en `https://kengoapp.com/.well-known/`**
-  Habilita Android App Links (`autoVerify=true`). Requiere SHA-256 del keystore release:
+  Usa **allowlist**: solo `/magic` y `/invitacion` abren la app. `/legal/*`, `/soporte`, `/eliminar-cuenta` y `/billing-return.html` están excluidos explícitamente para que se abran en el navegador — es donde Apple y Google revisan las URLs legales, y lo que `billing-return.html` necesita para rebotar a `kengo://billing/return`.
+
+  Pendiente: activar la capability *Associated Domains* en el App ID del portal de Apple Developer. Sin eso, iOS ignora el entitlement en silencio.
+
+- [ ] **C5. `assetlinks.json` — falta la huella SHA-256**
+  El fichero ya existe en `apps/app/public/.well-known/assetlinks.json`, pero con marcadores `PENDIENTE_*`. Hay que sustituirlos por **dos** huellas:
+
+  1. La de la **clave de firma de Play** (Play Console → Integridad de la app → Certificado de la clave de firma). Es la que Google usa para validar, porque con Play App Signing la app se re-firma en el servidor.
+  2. La de la **clave de subida** (el keystore local), para que las builds locales también verifiquen.
+
   ```bash
-  keytool -list -v -keystore release.keystore -alias kengo
+  keytool -list -v -keystore release.keystore -alias kengo   # solo da la de subida
   ```
-  ```json
-  [{
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.kengoapp.app",
-      "sha256_cert_fingerprints": ["FINGERPRINT_DEL_KEYSTORE"]
-    }
-  }]
-  ```
+
+  El `intent-filter` de `AndroidManifest.xml` ya está acotado por `android:path` a `/magic` y `/invitacion`.
 
 - [ ] **C6. Apple Developer Account + certificate de distribución**
   Necesario para subir a TestFlight y luego App Store. Recomendable Fastlane + `match` para gestión.

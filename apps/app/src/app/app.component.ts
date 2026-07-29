@@ -232,7 +232,12 @@ export class AppComponent implements OnInit {
     typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches,
   );
 
-  // Rutas donde NO se debe mostrar la navegación
+  // Rutas donde NO se debe mostrar la navegación.
+  //
+  // `/legal` entra aquí porque es público: lo abre gente sin sesión (entre
+  // otros, los revisores de App Store y Play). Con el shell puesto se vería
+  // una barra lateral con "Mi plan" o "Hola Usuario" sobre datos vacíos, que
+  // es desconcertante y no corresponde a lo que es: un documento.
   private rutasSinNavegacion = [
     '/login',
     '/registro',
@@ -242,6 +247,7 @@ export class AppComponent implements OnInit {
     '/recuperar-password',
     '/reset-password',
     '/seleccionar-clinica',
+    '/legal',
   ];
 
   constructor() {

@@ -16,7 +16,10 @@ import {
   Ui2ButtonComponent,
   Ui2StepperComponent,
   Ui2StepComponent,
+  Ui2CheckboxComponent,
 } from '../../../../shared/ui-v2';
+import { DialogService } from '../../../../shared/services/dialog';
+import { LEGAL_DOCS, type LegalDocId } from '@kengo/legal';
 import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-models';
 
 @Component({
@@ -33,6 +36,7 @@ import type { CreateUsuarioPayload, RegistroErrorCode } from '@kengo/shared-mode
     Ui2ButtonComponent,
     Ui2StepperComponent,
     Ui2StepComponent,
+    Ui2CheckboxComponent,
   ],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.css',
@@ -44,6 +48,7 @@ export class RegistroComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private dialogService = inject(DialogService);
 
   currentStep = signal(0);
   error = signal<string | null>(null);
@@ -71,9 +76,15 @@ export class RegistroComponent {
     ],
   });
 
+  // Los dos consentimientos van separados y sin premarcar. El del art. 9 RGPD
+  // (datos de salud) exige consentimiento **explícito** y diferenciado del
+  // resto de condiciones: no vale un "al continuar aceptas" ni una casilla ya
+  // marcada. `requiredTrue` impide continuar sin marcarlos.
   passwordForm = this.fb.group({
     password: ['', passwordRequired()],
     repetir: ['', passwordRepeatRequired],
+    aceptaTerminos: [false, Validators.requiredTrue],
+    consienteDatosSalud: [false, Validators.requiredTrue],
   }, { validators: passwordMatchValidator() });
 
   nextStep(): void {
@@ -94,6 +105,18 @@ export class RegistroComponent {
     this.currentStep.set(event.selectedIndex);
   }
 
+  /**
+   * Muestra un documento legal sin salir del registro. Navegar a `/legal/*`
+   * destruiría el stepper y el usuario perdería lo ya introducido, así que se
+   * abre en un diálogo sobre la propia pantalla.
+   */
+  async abrirLegal(doc: LegalDocId): Promise<void> {
+    const { LegalDialogComponent } = await import(
+      '../../../legal/components/legal-dialog/legal-dialog.component'
+    );
+    this.dialogService.openInformative(LegalDialogComponent, { data: { doc } });
+  }
+
   async completarRegistro(): Promise<void> {
     if (!this.passwordForm.valid || !this.passwordsMatch) {
       return;
@@ -109,6 +132,9 @@ export class RegistroComponent {
         email: this.datosForm.value.email!.toLowerCase().trim(),
         password: this.passwordForm.value.password!,
         codigo_clinica: this.codigoClinicaForm.value.codigo?.trim() || undefined,
+        // Versión del texto que el usuario acaba de aceptar. El backend la
+        // guarda como prueba del consentimiento (art. 7.1 RGPD).
+        consent_version: LEGAL_DOCS['privacidad'].version,
       };
 
       const result = await this.authService.register(payload);

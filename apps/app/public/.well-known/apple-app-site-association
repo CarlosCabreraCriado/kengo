@@ -1,0 +1,44 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["LTZK7CBKWL.com.kengoapp.app"],
+        "components": [
+          {
+            "/": "/legal/*",
+            "exclude": true,
+            "comment": "Documentos legales: deben abrirse en el navegador para que Apple y Google puedan revisarlos."
+          },
+          {
+            "/": "/soporte*",
+            "exclude": true,
+            "comment": "Support URL declarada en App Store Connect."
+          },
+          {
+            "/": "/eliminar-cuenta*",
+            "exclude": true,
+            "comment": "URL de borrado de cuenta exigida por el formulario de Data Safety de Google Play."
+          },
+          {
+            "/": "/billing-return.html*",
+            "exclude": true,
+            "comment": "Debe abrir en el navegador para poder rebotar a kengo://billing/return tras el pago."
+          },
+          {
+            "/": "/magic",
+            "?": { "t": "?*" },
+            "comment": "Enlace magico de acceso."
+          },
+          {
+            "/": "/invitacion",
+            "?": { "codigo": "?*" },
+            "comment": "Invitacion de paciente."
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["LTZK7CBKWL.com.kengoapp.app"]
+  }
+}

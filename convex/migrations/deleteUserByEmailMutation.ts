@@ -15,6 +15,8 @@ import type { Doc, Id } from "../_generated/dataModel";
 type DeleteStats = {
   clinicsReassigned: number;
   clinicsOrphaned: number;
+  clinicsOwnerReassigned: number;
+  clinicsOwnerOrphaned: number;
   conversations: number;
   messages: number;
   plans: number;
@@ -36,26 +38,46 @@ type DeleteStats = {
   verificationCodes: number;
   recoveryCodes: number;
   clinicMemberships: number;
+  pushTokens: number;
+  notificationPreferences: number;
+  pushSendLog: number;
 };
 
+/**
+ * Acepta `userId` o `email`. El autoborrado desde la app (`users/deletion.ts`)
+ * pasa **siempre** el `userId` resuelto desde la sesión: aceptar un email
+ * arbitrario en un flujo autenticado permitiría borrar la cuenta de otra
+ * persona. El `email` se mantiene para el uso por CLI/dashboard.
+ */
 export const collectAndDeleteConvex = internalMutation({
-  args: { email: v.string() },
+  args: {
+    email: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
+  },
   handler: async (
     ctx,
     args,
   ): Promise<{
     userId: Id<"users">;
+    /** Email real del documento, necesario para limpiar Better-Auth. */
+    email: string;
     externalId: string;
     avatarKey: string | null;
     stats: DeleteStats;
   }> => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .unique();
+    if (!args.userId && !args.email) {
+      throw new Error("MISSING_IDENTIFIER: se requiere userId o email");
+    }
+
+    const user = args.userId
+      ? await ctx.db.get(args.userId)
+      : await ctx.db
+          .query("users")
+          .withIndex("by_email", (q) => q.eq("email", args.email as string))
+          .unique();
 
     if (!user) {
-      throw new Error(`USER_NOT_FOUND: ${args.email}`);
+      throw new Error(`USER_NOT_FOUND: ${args.userId ?? args.email}`);
     }
 
     const userId = user._id;
@@ -65,6 +87,8 @@ export const collectAndDeleteConvex = internalMutation({
     const stats: DeleteStats = {
       clinicsReassigned: 0,
       clinicsOrphaned: 0,
+      clinicsOwnerReassigned: 0,
+      clinicsOwnerOrphaned: 0,
       conversations: 0,
       messages: 0,
       plans: 0,
@@ -86,14 +110,29 @@ export const collectAndDeleteConvex = internalMutation({
       verificationCodes: 0,
       recoveryCodes: 0,
       clinicMemberships: 0,
+      pushTokens: 0,
+      notificationPreferences: 0,
+      pushSendLog: 0,
     };
 
-    // 1. Reasignar `clinics.createdBy` cuando el usuario fue creator.
-    //    Si no hay otro admin/fisio en la clínica, dejamos la clínica con
-    //    createdBy huérfano (no la borramos: puede contener datos reales).
+    // 1. Reasignar `clinics.createdBy` y `clinics.ownerUserId` cuando el
+    //    usuario los ocupaba. Si no hay otro admin/fisio en la clínica,
+    //    dejamos el campo huérfano (no la borramos: puede contener datos
+    //    reales de otros pacientes).
+    //
+    //    `ownerUserId` es especialmente sensible: el schema lo declara
+    //    obligatorio (`v.id("users")`) con la invariante de que toda clínica
+    //    tiene exactamente un owner, y de él cuelga la gestión de la
+    //    suscripción. Dejarlo apuntando a un documento borrado rompe esa
+    //    invariante, así que quien invoque este borrado debería haber exigido
+    //    antes la transferencia de propiedad (ver `users/deletion.ts`). Aquí
+    //    se resuelve igualmente por si el borrado llega por la vía de
+    //    mantenimiento (CLI).
     const allClinics: Doc<"clinics">[] = await ctx.db.query("clinics").collect();
     for (const clinic of allClinics) {
-      if (clinic.createdBy !== userId) continue;
+      const esCreator = clinic.createdBy === userId;
+      const esOwner = clinic.ownerUserId === userId;
+      if (!esCreator && !esOwner) continue;
 
       const memberships = await ctx.db
         .query("clinicMemberships")
@@ -107,14 +146,29 @@ export const collectAndDeleteConvex = internalMutation({
       );
       const reemplazo = otroAdmin ?? otroFisio;
 
-      if (reemplazo) {
-        await ctx.db.patch(clinic._id, { createdBy: reemplazo.userId });
-        stats.clinicsReassigned++;
-      } else {
-        stats.clinicsOrphaned++;
-        console.warn(
-          `[deleteUserByEmail] clínica ${clinic._id} sin reemplazo para createdBy. Queda huérfana.`,
-        );
+      if (esCreator) {
+        if (reemplazo) {
+          await ctx.db.patch(clinic._id, { createdBy: reemplazo.userId });
+          stats.clinicsReassigned++;
+        } else {
+          stats.clinicsOrphaned++;
+          console.warn(
+            `[deleteUser] clínica ${clinic._id} sin reemplazo para createdBy. Queda huérfana.`,
+          );
+        }
+      }
+
+      if (esOwner) {
+        if (reemplazo) {
+          await ctx.db.patch(clinic._id, { ownerUserId: reemplazo.userId });
+          stats.clinicsOwnerReassigned++;
+        } else {
+          stats.clinicsOwnerOrphaned++;
+          console.error(
+            `[deleteUser] clínica ${clinic._id} se queda sin owner: no hay otro admin/fisio. ` +
+              `Revisar manualmente — la gestión de la suscripción queda sin responsable.`,
+          );
+        }
       }
     }
 
@@ -361,9 +415,40 @@ export const collectAndDeleteConvex = internalMutation({
       stats.clinicMemberships++;
     }
 
-    // 17. Documento `users` (al final, cuando ya no quedan referencias).
+    // 17. Datos de notificaciones: token del dispositivo, preferencias y log
+    //     de envíos. Son datos personales (identifican el dispositivo), así
+    //     que deben desaparecer con la cuenta — de lo contrario quedaría
+    //     información del usuario tras ejercer el derecho de supresión.
+    const pushTokens = await ctx.db
+      .query("pushTokens")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    for (const t of pushTokens) {
+      await ctx.db.delete(t._id);
+      stats.pushTokens++;
+    }
+
+    const notifPrefs = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    for (const p of notifPrefs) {
+      await ctx.db.delete(p._id);
+      stats.notificationPreferences++;
+    }
+
+    const sendLogs = await ctx.db
+      .query("pushSendLog")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    for (const l of sendLogs) {
+      await ctx.db.delete(l._id);
+      stats.pushSendLog++;
+    }
+
+    // 18. Documento `users` (al final, cuando ya no quedan referencias).
     await ctx.db.delete(userId);
 
-    return { userId, externalId, avatarKey, stats };
+    return { userId, email: user.email, externalId, avatarKey, stats };
   },
 });

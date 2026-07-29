@@ -46,6 +46,12 @@ export const register = action({
     email: v.string(),
     password: v.string(),
     codigo_clinica: v.optional(v.string()),
+    /**
+     * Versión de los textos legales aceptados en el formulario
+     * (`LEGAL_DOCS[...].version` de `@kengo/legal`). Opcional para no romper
+     * clientes antiguos; cuando llega, se deja constancia del consentimiento.
+     */
+    consent_version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const firstName = args.first_name.trim();
@@ -105,6 +111,17 @@ export const register = action({
     } catch (err) {
       console.error("[Auth] Better-Auth signup error:", err);
       return { success: false, error: "Error al crear la cuenta", code: "SERVER_ERROR" };
+    }
+
+    // Dejar constancia del consentimiento prestado en el formulario. Va antes
+    // de la membresía y del email para que quede registrado aunque cualquiera
+    // de esos pasos falle.
+    if (args.consent_version) {
+      await ctx.runMutation(internal.users.consents.recordSignupConsents, {
+        email,
+        version: args.consent_version,
+        origen: "registro",
+      });
     }
 
     // Crear membresía de clínica si hay código (el puesto se deriva del propio código)

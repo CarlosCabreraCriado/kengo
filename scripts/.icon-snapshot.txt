@@ -12,6 +12,7 @@ assignment_ind
 assignment_turned_in
 auto_awesome
 badge
+balance
 bedtime
 block
 bookmark
@@ -35,6 +36,7 @@ close_fullscreen
 cloud_done
 cloud_off
 content_copy
+cookie
 credit_card
 delete
 description
@@ -61,6 +63,7 @@ folder_open
 format_quote
 forum
 forward_to_inbox
+gavel
 grid_view
 group
 group_add

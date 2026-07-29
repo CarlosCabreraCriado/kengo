@@ -487,6 +487,7 @@ export class AuthService {
         email: payload.email.toLowerCase().trim(),
         password: payload.password,
         codigo_clinica: payload.codigo_clinica?.trim(),
+        consent_version: payload.consent_version,
       },
       { requireAuth: false },
     );

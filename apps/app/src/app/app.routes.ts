@@ -27,6 +27,16 @@ export const routes: Routes = [
 
   ...AUTH_ROUTES,
 
+  // Documentos legales. Públicos y SIN guards: las stores revisan la política
+  // de privacidad desde un navegador sin sesión, y `kengoapp.com` es el
+  // dominio que se declara en App Store Connect y Play Console. El texto se
+  // comparte con la landing vía `@kengo/legal`.
+  {
+    path: 'legal',
+    loadChildren: () =>
+      import('./features/legal/legal.routes').then((m) => m.LEGAL_ROUTES),
+  },
+
   {
     path: 'inicio',
     canActivate: [AuthGuard, OnboardingGuard, ClinicaActivaGuard],
@@ -174,4 +184,9 @@ export const routes: Routes = [
         (m) => m.MENSAJES_ROUTES,
       ),
   },
+
+  // Catch-all. Sin esta ruta, una URL desconocida no casa con nada y el
+  // router deja la pantalla en blanco (el servidor ya devuelve index.html
+  // para cualquier path). Debe ir siempre la última.
+  { path: '**', redirectTo: '/inicio' },
 ];
