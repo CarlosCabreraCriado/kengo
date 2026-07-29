@@ -1,0 +1,23 @@
+<ui2-dialog-host variant="informative">
+  <ui2-dialog-header
+    [title]="meta.title"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    @switch (doc) {
+      @case ('privacidad') {
+        <ui-legal-privacidad></ui-legal-privacidad>
+      }
+      @case ('terminos') {
+        <ui-legal-terminos></ui-legal-terminos>
+      }
+      @case ('cookies') {
+        <ui-legal-cookies></ui-legal-cookies>
+      }
+      @case ('aviso-legal') {
+        <ui-legal-aviso-legal></ui-legal-aviso-legal>
+      }
+    }
+  </ui2-dialog-content>
+</ui2-dialog-host>

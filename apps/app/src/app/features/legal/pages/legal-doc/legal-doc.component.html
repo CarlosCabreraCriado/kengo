@@ -1,0 +1,38 @@
+<ui2-cream-bg></ui2-cream-bg>
+
+<section class="legal-shell">
+  <div class="legal-shell__panel">
+    <div class="legal-shell__nav">
+      <ui2-back-button ariaLabel="Volver" (clicked)="volver()"></ui2-back-button>
+    </div>
+
+    <ui2-big-title
+      [title]="meta.title"
+      overline="KENGO"
+      [sub]="meta.description"
+    ></ui2-big-title>
+
+    <ui2-card [padding]="22">
+      <article class="legal-shell__doc">
+        @switch (doc) {
+          @case ('privacidad') {
+            <ui-legal-privacidad></ui-legal-privacidad>
+          }
+          @case ('terminos') {
+            <ui-legal-terminos></ui-legal-terminos>
+          }
+          @case ('cookies') {
+            <ui-legal-cookies></ui-legal-cookies>
+          }
+          @case ('aviso-legal') {
+            <ui-legal-aviso-legal></ui-legal-aviso-legal>
+          }
+        }
+
+        <p class="legal-shell__updated">
+          Última actualización: {{ meta.lastUpdated }}
+        </p>
+      </article>
+    </ui2-card>
+  </div>
+</section>
