@@ -178,8 +178,13 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.svc.closeDrawer();
   }
 
+  /**
+   * Va al catálogo y abre el carrito allí. El `.then()` es necesario:
+   * `ngOnDestroy` cierra el drawer durante la navegación, así que abrirlo antes
+   * no serviría de nada. Mismo patrón que `irAGaleria()` en `plan-builder`.
+   */
   navegarACatalogo() {
-    this.router.navigate(['/ejercicios']);
+    this.router.navigate(['/ejercicios']).then(() => this.svc.openDrawer());
   }
 
   // ========= Drag & Drop =========

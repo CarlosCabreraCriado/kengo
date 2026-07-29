@@ -138,7 +138,14 @@ export class RutinaBuilderService implements SessionResettable {
     this.itemsState.openDrawer();
   }
 
-  /** Activa modo edición: carga rutina existente. */
+  /**
+   * Activa modo edición: carga rutina existente.
+   *
+   * A diferencia de `start()`, no abre el drawer: en `/rutinas/:id/editar` la
+   * pestaña del carrito está oculta, así que un panel abierto ahí no se podría
+   * reabrir tras cerrarlo. Se abre al ir al catálogo (`navegarACatalogo`), igual
+   * que hace `plan-builder` en `irAGaleria()`.
+   */
   async startEdit(rutinaId: string): Promise<{ visibilidad: string } | null> {
     const res = await this.rutinasService.getRutinaById(rutinaId);
     if (res.status !== 'ok') return null;
@@ -164,7 +171,6 @@ export class RutinaBuilderService implements SessionResettable {
     this.titulo.set(rutina.nombre);
     this.descripcion.set(rutina.descripcion || '');
     this.originalSnapshot.set(this.captureSnapshot());
-    this.itemsState.openDrawer();
 
     return { visibilidad: rutina.visibilidad };
   }
