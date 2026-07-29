@@ -1,0 +1,138 @@
+/**
+ * Estilos de la prosa legal, compartidos por los cuatro documentos.
+ *
+ * Los tokens se resuelven con fallback en cascada porque las dos apps usan
+ * escalas distintas: la app define `--ink-900/--ink-700` (styles.css) y la
+ * landing `--color-ink/--color-ink-700`. La librería no debe conocer a
+ * ninguna de las dos, así que declara sus propias variables y deja que gane
+ * la que exista en el host.
+ */
+
+:host {
+  display: block;
+
+  --legal-ink: var(--ink-900, var(--color-ink, #43342c));
+  --legal-ink-soft: var(--ink-700, var(--color-ink-700, #6f5d54));
+  --legal-rule: var(--ink-100, var(--color-ink-200, #ece1d8));
+
+  color: var(--legal-ink-soft);
+}
+
+.legal-section {
+  margin-bottom: 22px;
+}
+
+.legal-section:last-child {
+  margin-bottom: 0;
+}
+
+.legal-section h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--legal-ink);
+  margin: 0 0 8px;
+  line-height: 1.3;
+}
+
+.legal-section h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--legal-ink);
+  margin: 12px 0 6px;
+  line-height: 1.35;
+}
+
+.legal-section p {
+  font-size: 13px;
+  color: var(--legal-ink-soft);
+  margin: 0 0 8px;
+  line-height: 1.55;
+}
+
+.legal-section p:last-child {
+  margin-bottom: 0;
+}
+
+.legal-section__lead {
+  font-weight: 600;
+  color: var(--legal-ink);
+  margin-top: 8px;
+}
+
+.legal-section ul,
+.legal-section ol {
+  padding-left: 20px;
+  margin: 4px 0 8px;
+  font-size: 13px;
+  color: var(--legal-ink-soft);
+  line-height: 1.55;
+}
+
+.legal-section ul {
+  list-style: disc;
+}
+
+.legal-section ol {
+  list-style: decimal;
+}
+
+.legal-section ul ul,
+.legal-section ol ol {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.legal-section li {
+  margin-bottom: 4px;
+}
+
+.legal-section strong {
+  color: var(--legal-ink);
+}
+
+.legal-section a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Tabla usada en la política de cookies. Se desborda con scroll propio en
+   móvil en vez de ensanchar la página. */
+.legal-table-wrap {
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.legal-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 460px;
+  font-size: 12px;
+}
+
+.legal-table th,
+.legal-table td {
+  border: 1px solid var(--legal-rule);
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+.legal-table th {
+  color: var(--legal-ink);
+  font-weight: 700;
+}
+
+/* En pantallas anchas (páginas web) el texto puede respirar más que dentro
+   del diálogo móvil. */
+@media (min-width: 768px) {
+  .legal-section h2 {
+    font-size: 16px;
+  }
+
+  .legal-section p,
+  .legal-section ul,
+  .legal-section ol {
+    font-size: 14px;
+  }
+}

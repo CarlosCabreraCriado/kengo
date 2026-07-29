@@ -20,7 +20,8 @@
     "useDefineForClassFields": false,
     "lib": ["ES2022", "dom"],
     "paths": {
-      "@kengo/shared-models": ["libs/shared/models/src/index.ts"]
+      "@kengo/shared-models": ["libs/shared/models/src/index.ts"],
+      "@kengo/legal": ["libs/shared/legal/src/index.ts"]
     }
   },
   "angularCompilerOptions": {
