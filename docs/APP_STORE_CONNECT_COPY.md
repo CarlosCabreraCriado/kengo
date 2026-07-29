@@ -79,11 +79,21 @@ Marca **Yes, we collect data**. Luego marca:
 |---|---|---|---|---|
 | Contact Info | Email Address | Sí | No | App Functionality, Account Management |
 | Contact Info | Name | Sí | No | App Functionality |
+| Contact Info | Phone Number | Sí | No | App Functionality (`users.telefono`, opcional) |
+| Contact Info | Physical Address | Sí | No | App Functionality (`users.direccion`, opcional) |
 | Health & Fitness | Health (datos de ejercicio, dolor reportado, adherencia) | Sí | No | App Functionality, Product Personalization |
+| Health & Fitness | Fitness | Sí | No | App Functionality |
+| Financial Info | Purchase History | Sí | No | App Functionality (suscripción de clínica vía Stripe) |
+| User Content | Photos or Videos | Sí | No | App Functionality (avatar del usuario) |
+| User Content | Other User Content | Sí | No | App Functionality (mensajes fisio↔paciente) |
 | Identifiers | User ID | Sí | No | App Functionality |
-| Usage Data | Product Interaction | Sí | No | Analytics |
-| Diagnostics | Crash Data | No | No | App Functionality |
-| Diagnostics | Performance Data | No | No | Analytics |
+| Identifiers | Device ID | Sí | No | App Functionality (token de push, `pushTokens.deviceId`) |
+
+> **Revisar antes de enviar**: la versión anterior de esta tabla declaraba
+> `Usage Data → Product Interaction` y `Diagnostics` (Crash/Performance). No
+> declararlos si no hay SDK que los recoja: `IS_ANALYTICS_ENABLED` está en
+> `false` y no hay Crashlytics integrado. Declarar de más también genera
+> fricción en la revisión.
 
 ### 2.2 Tracking
 
@@ -95,8 +105,9 @@ Marca **Yes, we collect data**. Luego marca:
 
 **Required**. Necesitas tener publicada una política de privacidad accesible públicamente en HTTPS.
 
-- URL sugerida: `https://kengoapp.com/legal/privacidad` (o la ruta donde la sirváis).
-- Si todavía no existe la URL real, créala antes de mandar a TestFlight externo. Para TestFlight interno no la exige Apple pero sí App Store Connect en la pantalla de configuración → publicad un placeholder real cuanto antes.
+- **URL a declarar**: `https://www.kengoapp.com/legal/privacidad` — publicada y prerenderizada (SSG) desde `apps/landingpage`.
+
+> Ojo con el dominio: `kengoapp.com` (apex) sirve **la app**, y `www.kengoapp.com` **la landing**. La versión canónica e indexable es la de `www`. El apex responde igualmente en `https://kengoapp.com/legal/privacidad` (ruta pública sin `AuthGuard`), pero declara `noindex` + `canonical` hacia `www`, así que la URL que hay que dar a Apple es la de `www`.
 
 ---
 
@@ -217,11 +228,18 @@ rehabilitacion,fisioterapia,lesion,dolor,recuperacion,rutinas,clinica,pacientes,
 
 | Campo | Valor sugerido | Obligatorio |
 |---|---|---|
-| **Support URL** | `https://kengoapp.com/soporte` (o `mailto:soporte@kengoapp.com` si no tenéis página dedicada) | Sí |
-| **Marketing URL** | `https://kengoapp.com` | No (recomendado) |
-| **Privacy Policy URL** | `https://kengoapp.com/legal/privacidad` | Sí |
+| **Support URL** | `https://www.kengoapp.com/soporte` | Sí |
+| **Marketing URL** | `https://www.kengoapp.com` | No (recomendado) |
+| **Privacy Policy URL** | `https://www.kengoapp.com/legal/privacidad` | Sí |
 
-> Si todavía no existen estas rutas reales, créalas mínimo como página estática antes de mandar la build a Beta App Review. Apple rechaza si la URL devuelve 404 o redirecciona a la landing genérica sin contenido específico.
+> **No usar `https://kengoapp.com/soporte`**: en el apex esa ruta existe pero es la pantalla **interna de impersonación** protegida por `SoporteGuard`, y un revisor solo vería el login. La página pública de soporte vive en la landing.
+
+> Estas rutas ya existen y se prerenderizan a HTML estático (`apps/landingpage`, `outputMode: "static"`). Verificar tras cada deploy que devuelven el contenido correcto y no la portada — Apple rechaza tanto un 404 como una redirección a la landing genérica:
+>
+> ```bash
+> curl -s https://www.kengoapp.com/legal/privacidad | grep -o '<title>[^<]*</title>'
+> # Debe imprimir: <title>Política de privacidad · Kengo</title>
+> ```
 
 ---
 
@@ -229,8 +247,8 @@ rehabilitacion,fisioterapia,lesion,dolor,recuperacion,rutinas,clinica,pacientes,
 
 Aparece en la ficha. Formato Apple-friendly:
 
-- **(recomendada)** `© 2026 Kengo`
-- Variante con razón social: `© 2026 Kengo S.L.` (solo si la entidad legal se llama así oficialmente; si no, no inventes).
+- **(recomendada)** `© 2026 KENGO SC`
+> Debe coincidir con el responsable del tratamiento que declara la política de privacidad (**KENGO SC**) y con el titular de la cuenta de desarrollador. Si no coinciden, Apple lo marca.
 
 ---
 
@@ -386,7 +404,8 @@ App Preview (vídeos): opcional. Si lo añades, formato 1080×1920 vertical, 15-
 - [ ] Content Rights = No (no third-party content).
 - [ ] Age Rating completado → 4+.
 - [ ] App Privacy completado (data types + tracking = No).
-- [ ] Support URL, Marketing URL, Privacy Policy URL publicadas y respondiendo 200.
+- [ ] Support URL, Marketing URL, Privacy Policy URL publicadas, respondiendo 200 y con el `<title>` correcto (no el de la portada).
+- [ ] `https://kengoapp.com/.well-known/apple-app-site-association` devuelve `Content-Type: application/json` y **JSON en el body** (no `<!doctype html>`).
 - [ ] Copyright = `© 2026 Kengo`.
 - [ ] Release Notes v1.0.0 pegadas.
 - [ ] Beta App Description pegada (TestFlight).

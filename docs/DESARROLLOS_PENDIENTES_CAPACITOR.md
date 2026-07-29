@@ -112,34 +112,24 @@ Nada de lo implementado ha pisado un simulador/emulador real todavía. El códig
 - [ ] **C3. Deploy del frontend (Railway)**
   Necesario para que `https://kengoapp.com/billing-return.html` esté servido y el flujo Stripe en native funcione.
 
-- [ ] **C4. `apple-app-site-association` en `https://kengoapp.com/.well-known/`**
-  Habilita Universal Links iOS. Requiere coordinación con quien hospeda el dominio (Railway frontend o redirect en Convex). Reemplazar `TEAMID` por el Apple Team ID real:
-  ```json
-  {
-    "applinks": {
-      "details": [
-        { "appID": "TEAMID.com.kengoapp.app", "paths": ["*"] }
-      ]
-    }
-  }
-  ```
-  Tras servirlo, añadir entitlement en Xcode → Signing & Capabilities → Associated Domains: `applinks:kengoapp.com`.
+- [x] **C4. `apple-app-site-association` en `https://kengoapp.com/.well-known/`** — *fichero creado*
+  Vive en `apps/app/public/.well-known/apple-app-site-association` (Angular copia el directorio con punto al build) y `apps/app/server.js` lo sirve con `Content-Type: application/json`.
 
-- [ ] **C5. `assetlinks.json` en `https://kengoapp.com/.well-known/`**
-  Habilita Android App Links (`autoVerify=true`). Requiere SHA-256 del keystore release:
+  Usa **allowlist**: solo `/magic` y `/invitacion` abren la app. `/legal/*`, `/soporte`, `/eliminar-cuenta` y `/billing-return.html` están excluidos explícitamente para que se abran en el navegador — es donde Apple y Google revisan las URLs legales, y lo que `billing-return.html` necesita para rebotar a `kengo://billing/return`.
+
+  Pendiente: activar la capability *Associated Domains* en el App ID del portal de Apple Developer. Sin eso, iOS ignora el entitlement en silencio.
+
+- [ ] **C5. `assetlinks.json` — falta la huella SHA-256**
+  El fichero ya existe en `apps/app/public/.well-known/assetlinks.json`, pero con marcadores `PENDIENTE_*`. Hay que sustituirlos por **dos** huellas:
+
+  1. La de la **clave de firma de Play** (Play Console → Integridad de la app → Certificado de la clave de firma). Es la que Google usa para validar, porque con Play App Signing la app se re-firma en el servidor.
+  2. La de la **clave de subida** (el keystore local), para que las builds locales también verifiquen.
+
   ```bash
-  keytool -list -v -keystore release.keystore -alias kengo
+  keytool -list -v -keystore release.keystore -alias kengo   # solo da la de subida
   ```
-  ```json
-  [{
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.kengoapp.app",
-      "sha256_cert_fingerprints": ["FINGERPRINT_DEL_KEYSTORE"]
-    }
-  }]
-  ```
+
+  El `intent-filter` de `AndroidManifest.xml` ya está acotado por `android:path` a `/magic` y `/invitacion`.
 
 - [ ] **C6. Apple Developer Account + certificate de distribución**
   Necesario para subir a TestFlight y luego App Store. Recomendable Fastlane + `match` para gestión.
