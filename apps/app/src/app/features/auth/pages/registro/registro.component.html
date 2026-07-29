@@ -126,6 +126,29 @@
               [error]="repetirError ?? null"
             ></ui2-input>
 
+            <!-- Consentimientos. Los enlaces abren un diálogo en lugar de
+                 navegar: salir de la pantalla destruiría el stepper y el
+                 usuario perdería los datos ya introducidos. -->
+            <div class="auth-form__consents">
+              <ui2-checkbox formControlName="aceptaTerminos">
+                He leído y acepto los
+                <button type="button" class="auth-form__legal-link" (click)="abrirLegal('terminos')">
+                  Términos y condiciones
+                </button>
+                y la
+                <button type="button" class="auth-form__legal-link" (click)="abrirLegal('privacidad')">
+                  Política de privacidad
+                </button>.
+              </ui2-checkbox>
+
+              <ui2-checkbox formControlName="consienteDatosSalud">
+                Consiento expresamente que Kengo trate mis
+                <strong>datos de salud</strong> (ejercicios realizados, nivel de
+                dolor y evolución) con la finalidad de prestar el servicio de
+                seguimiento de mi tratamiento.
+              </ui2-checkbox>
+            </div>
+
             <div class="auth-form__nav">
               <ui2-button
                 variant="ghost"

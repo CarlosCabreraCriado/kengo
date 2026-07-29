@@ -1,0 +1,78 @@
+<ui2-dialog-host variant="standard">
+  <ui2-dialog-header
+    title="Eliminar cuenta"
+    (closeClick)="cancelar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    @if (bloqueado) {
+      <p class="borrar__intro">
+        Todavía no puedes eliminar tu cuenta. Resuelve antes lo siguiente:
+      </p>
+
+      <ul class="borrar__bloqueos">
+        @for (bloqueo of data.bloqueos; track bloqueo.tipo + bloqueo.clinicId) {
+          <li>{{ bloqueo.detalle }}</li>
+        }
+      </ul>
+    } @else {
+      <p class="borrar__intro">
+        Vas a eliminar tu cuenta de forma <strong>permanente</strong>. Esta
+        acción no se puede deshacer.
+      </p>
+
+      <div class="borrar__resumen">
+        <h4>Se eliminará</h4>
+        <ul>
+          <li>Tu perfil, tus datos de contacto y tu foto.</li>
+          @if (data.resumen.planes > 0) {
+            <li>{{ data.resumen.planes }} plan(es) de ejercicios.</li>
+          }
+          @if (data.resumen.sesiones > 0) {
+            <li>
+              {{ data.resumen.sesiones }} sesión(es) registradas, con su
+              historial de dolor y adherencia.
+            </li>
+          }
+          @if (data.resumen.conversaciones > 0) {
+            <li>{{ data.resumen.conversaciones }} conversación(es) y sus mensajes.</li>
+          }
+          @if (data.resumen.clinicas > 0) {
+            <li>Tu vinculación con {{ data.resumen.clinicas }} clínica(s).</li>
+          }
+        </ul>
+      </div>
+
+      <p class="borrar__nota">
+        Conservaremos bloqueada, sin uso activo, la información que debamos
+        guardar por obligación legal (facturación y documentación clínica).
+        Puedes consultar los plazos en la Política de privacidad.
+      </p>
+
+      <ui2-input
+        label="Escribe tu email para confirmar"
+        type="email"
+        [placeholder]="data.email"
+        iconLeft="mail"
+        autocomplete="off"
+        name="confirmacion-email"
+        [required]="true"
+        [formControl]="confirmacion"
+      ></ui2-input>
+    }
+  </ui2-dialog-content>
+
+  <ui2-dialog-actions>
+    <ui2-button variant="ghost" (clicked)="cancelar()">Cancelar</ui2-button>
+    @if (!bloqueado) {
+      <ui2-button
+        variant="danger"
+        iconLeft="delete_forever"
+        [disabled]="!coincide()"
+        (clicked)="confirmar()"
+      >
+        Eliminar mi cuenta
+      </ui2-button>
+    }
+  </ui2-dialog-actions>
+</ui2-dialog-host>

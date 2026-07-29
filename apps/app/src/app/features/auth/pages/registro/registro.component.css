@@ -81,3 +81,30 @@
 .auth-form__link--center {
   text-align: center;
 }
+
+/* Consentimientos del paso "Seguridad". Separados del resto del formulario
+   por una línea para que se lean como un bloque propio, no como un campo más. */
+.auth-form__consents {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 14px;
+  margin-top: 2px;
+  border-top: 1px solid var(--ink-100);
+}
+
+/* Los enlaces legales son botones (abren un diálogo), así que hay que
+   devolverles la apariencia de enlace dentro del texto de la etiqueta. */
+.auth-form__legal-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--kengo-primary-dark, var(--kengo-primary));
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-form__legal-link:hover {
+  opacity: 0.8;
+}

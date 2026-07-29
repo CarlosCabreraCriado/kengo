@@ -469,23 +469,73 @@
 
           @if (legalExpanded()) {
             <div class="perfil-section-body perfil-section-body--list">
-              <button
-                type="button"
-                class="perfil-list-item"
-                (click)="abrirPrivacyPolicy()"
+              @for (doc of legalDocs; track doc.id) {
+                <button
+                  type="button"
+                  class="perfil-list-item"
+                  (click)="abrirLegal(doc.id)"
+                >
+                  <ui2-icon-badge
+                    [icon]="doc.icon"
+                    color="var(--ink-700)"
+                    [size]="36"
+                    [radius]="10"
+                  ></ui2-icon-badge>
+                  <div class="perfil-list-item__text">
+                    <h4 class="perfil-list-item__title">{{ doc.title }}</h4>
+                    <p class="perfil-list-item__sub">{{ doc.sub }}</p>
+                  </div>
+                  <span class="material-symbols-outlined perfil-list-item__arrow" aria-hidden="true">chevron_right</span>
+                </button>
+              }
+            </div>
+          }
+        </ui2-card>
+      </ui2-section>
+
+      <!-- Sección: Cuenta (eliminación) -->
+      <ui2-section [padding]="'4px 20px 12px'">
+        <ui2-card [padding]="0">
+          <button
+            type="button"
+            class="perfil-row-btn"
+            (click)="toggleCuenta()"
+            [attr.aria-expanded]="cuentaExpanded()"
+          >
+            <ui2-icon-badge
+              icon="delete_forever"
+              color="var(--danger)"
+              [size]="40"
+              [radius]="12"
+            ></ui2-icon-badge>
+            <div class="perfil-row-btn__text">
+              <h3 class="perfil-row-btn__title">Cuenta</h3>
+              <p class="perfil-row-btn__sub">Eliminar tu cuenta y tus datos</p>
+            </div>
+            <span
+              class="material-symbols-outlined perfil-row-btn__chevron"
+              [class.perfil-row-btn__chevron--open]="cuentaExpanded()"
+              aria-hidden="true"
+            >expand_more</span>
+          </button>
+
+          @if (cuentaExpanded()) {
+            <div class="perfil-section-body">
+              <p class="perfil-danger-note">
+                Al eliminar tu cuenta se borran tu perfil, tus planes, tus
+                sesiones y tus mensajes de forma permanente. Conservaremos
+                bloqueada la información que debamos guardar por obligación
+                legal.
+              </p>
+              <ui2-button
+                variant="danger"
+                iconLeft="delete_forever"
+                [loading]="eliminandoCuenta()"
+                [disabled]="eliminandoCuenta()"
+                (clicked)="eliminarCuenta()"
               >
-                <ui2-icon-badge
-                  icon="policy"
-                  color="var(--ink-700)"
-                  [size]="36"
-                  [radius]="10"
-                ></ui2-icon-badge>
-                <div class="perfil-list-item__text">
-                  <h4 class="perfil-list-item__title">Política de privacidad</h4>
-                  <p class="perfil-list-item__sub">Cómo protegemos tus datos</p>
-                </div>
-                <span class="material-symbols-outlined perfil-list-item__arrow" aria-hidden="true">chevron_right</span>
-              </button>
+                Eliminar mi cuenta
+              </ui2-button>
             </div>
           }
         </ui2-card>
@@ -494,8 +544,8 @@
       <!-- Footer -->
       <footer class="perfil-footer">
         <span class="perfil-footer__brand">KENGO</span>
-        <span class="perfil-footer__version">Versión 1.0.0</span>
-        <span class="perfil-footer__copy">© 2026 Kengo Health</span>
+        <span class="perfil-footer__version">Versión {{ appVersion }}</span>
+        <span class="perfil-footer__copy">© {{ currentYear }} KENGO SC</span>
       </footer>
     }
   </main>

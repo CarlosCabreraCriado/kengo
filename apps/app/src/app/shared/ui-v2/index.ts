@@ -27,6 +27,7 @@ export { Ui2PillComponent } from './pill/pill.component';
 export type { Ui2PillVariant, Ui2PillSize } from './pill/pill.component';
 export { Ui2StatusDotComponent } from './status-dot/status-dot.component';
 export { Ui2ToggleComponent } from './toggle/toggle.component';
+export { Ui2CheckboxComponent } from './checkbox/checkbox.component';
 export { Ui2ButtonComponent } from './button/button.component';
 export type { Ui2ButtonVariant, Ui2ButtonSize } from './button/button.component';
 export { Ui2InputComponent } from './input/input.component';
