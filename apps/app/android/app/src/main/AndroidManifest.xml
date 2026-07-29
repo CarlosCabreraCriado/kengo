@@ -27,17 +27,34 @@
                 <data android:scheme="kengo" />
             </intent-filter>
 
-            <!-- Universal Links / Android App Links — requiere assetlinks.json
-                 servido en https://kengoapp.com/.well-known/assetlinks.json
-                 (con el SHA256 del keystore release). Hasta entonces autoVerify
-                 fallará silenciosamente y el OS tratará el dominio como link
-                 normal. -->
+            <!-- Android App Links — requiere assetlinks.json servido en
+                 https://kengoapp.com/.well-known/assetlinks.json con el
+                 SHA-256 de la clave de firma. Hasta entonces autoVerify falla
+                 silenciosamente y el OS trata el dominio como link normal.
+
+                 ALLOWLIST, no blacklist. Android no admite exclusiones de ruta
+                 (no existe pathNotPrefix), así que en vez de capturar todo el
+                 dominio e ir excluyendo, se enumera solo lo que DEBE abrir la
+                 app. Todo lo demás — /legal/*, /soporte, /eliminar-cuenta y
+                 /billing-return.html — se queda en el navegador, que es
+                 justamente donde Apple y Google revisan esas URLs, y lo que
+                 billing-return.html necesita para rebotar a
+                 kengo://billing/return.
+
+                 Se usa android:path (coincidencia exacta): el query string no
+                 forma parte del path, así que /magic?t=... casa con
+                 android:path="/magic" sin abrir la puerta a /magic-otra-cosa.
+                 Cada <data> lleva scheme+host+path completos porque Android
+                 combina los atributos de todos los <data> del filtro.
+
+                 www.kengoapp.com queda fuera a propósito: es la landing y
+                 ningún enlace generado por el backend apunta ahí. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="kengoapp.com" />
-                <data android:scheme="https" android:host="www.kengoapp.com" />
+                <data android:scheme="https" android:host="kengoapp.com" android:path="/magic" />
+                <data android:scheme="https" android:host="kengoapp.com" android:path="/invitacion" />
             </intent-filter>
         </activity>
 
