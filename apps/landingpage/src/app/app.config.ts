@@ -3,7 +3,10 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import {
+  provideRouter,
+  withInMemoryScrolling,
+} from '@angular/router';
 import {
   provideClientHydration,
   withEventReplay,
@@ -16,7 +19,16 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(appRoutes),
+    // `scrollPositionRestoration` evita llegar a una página legal con el
+    // scroll heredado de la portada; `anchorScrolling` mantiene vivos los
+    // enlaces de ancla del header y del footer al volver a la home.
+    provideRouter(
+      appRoutes,
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'enabled',
+        anchorScrolling: 'enabled',
+      }),
+    ),
     provideClientHydration(withEventReplay(), withIncrementalHydration()),
     provideHttpClient(withFetch()),
   ],

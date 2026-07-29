@@ -1,14 +1,16 @@
 import { Component, ChangeDetectionStrategy, signal, HostListener } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'web-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
+  imports: [RouterLink],
   template: `
     <nav [class.scrolled]="isScrolled()">
       <div class="nav-in">
-        <a href="#top" aria-label="Kengo — inicio">
+        <a routerLink="/" aria-label="Kengo — inicio">
           <svg
             class="logo"
             viewBox="140 232 315 130"
@@ -25,10 +27,10 @@ import { environment } from '../../../environments/environment';
           </svg>
         </a>
         <div class="nav-links">
-          <a href="#fisios">Para fisios</a>
-          <a href="#pacientes">Para pacientes</a>
-          <a href="#clinicas">Clínicas</a>
-          <a href="#como">Cómo funciona</a>
+          <a routerLink="/" fragment="fisios">Para fisios</a>
+          <a routerLink="/" fragment="pacientes">Para pacientes</a>
+          <a routerLink="/" fragment="clinicas">Clínicas</a>
+          <a routerLink="/" fragment="como">Cómo funciona</a>
         </div>
         <a [href]="registroUrl" class="btn btn-primary">
           Empieza gratis
