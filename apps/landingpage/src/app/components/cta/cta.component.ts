@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'web-cta',
@@ -19,7 +20,7 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
             asígnale un plan en la misma tarde.
           </p>
           <div class="cta-btns">
-            <a href="https://kengoapp.com/login" class="btn btn-primary">
+            <a [href]="registroUrl" class="btn btn-primary">
               Crear cuenta gratuita
               <svg
                 fill="none"
@@ -151,4 +152,6 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
     `,
   ],
 })
-export class CtaComponent {}
+export class CtaComponent {
+  protected readonly registroUrl = `${environment.appUrl}/registro`;
+}

@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'web-hero',
@@ -16,7 +17,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
             progreso a la vista y <b>una línea directa con él</b> entre sesiones.
           </p>
           <div class="hero-cta">
-            <a href="https://kengoapp.com/login" class="btn btn-primary">
+            <a [href]="registroUrl" class="btn btn-primary">
               Empieza gratis
               <svg
                 fill="none"
@@ -209,4 +210,6 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
     `,
   ],
 })
-export class HeroComponent {}
+export class HeroComponent {
+  protected readonly registroUrl = `${environment.appUrl}/registro`;
+}

@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, signal, HostListener } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'web-header',
@@ -29,7 +30,7 @@ import { Component, ChangeDetectionStrategy, signal, HostListener } from '@angul
           <a href="#clinicas">Clínicas</a>
           <a href="#como">Cómo funciona</a>
         </div>
-        <a href="https://kengoapp.com/login" class="btn btn-primary">
+        <a [href]="registroUrl" class="btn btn-primary">
           Empieza gratis
           <svg
             fill="none"
@@ -120,6 +121,8 @@ import { Component, ChangeDetectionStrategy, signal, HostListener } from '@angul
   ],
 })
 export class HeaderComponent {
+  protected readonly registroUrl = `${environment.appUrl}/registro`;
+
   isScrolled = signal(false);
 
   @HostListener('window:scroll')
