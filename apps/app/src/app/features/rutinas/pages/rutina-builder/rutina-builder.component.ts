@@ -118,7 +118,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
   readonly pageOverline = computed(() => {
     const total = this.totalItems();
-    return `${total} ejercicio${total === 1 ? '' : 's'} en la plantilla`;
+    return `${total} ejercicio${total === 1 ? '' : 's'} en la rutina`;
   });
 
   form = this.fb.group({
@@ -161,7 +161,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
     // Modo creación: verificar que estamos en modo rutina y hay ejercicios
     if (!this.svc.isActive()) {
-      this.toastService.show('Inicia la creación de plantilla primero');
+      this.toastService.show('Inicia la creación de rutina primero');
       this.router.navigate(['/rutinas']);
       return;
     }
@@ -227,7 +227,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.svc.remove(ejercicioId);
     // Si no quedan ejercicios, volver a la galería
     if (this.svc.items().length === 0) {
-      this.toastService.show('Añade ejercicios a la plantilla');
+      this.toastService.show('Añade ejercicios a la rutina');
       this.router.navigate(['/ejercicios']);
     }
   }
@@ -249,30 +249,30 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.isSaving.set(true);
     try {
       const v = this.form.value;
-      const nombre = v.nombre || 'Plantilla sin nombre';
+      const nombre = v.nombre || 'Rutina sin nombre';
       const descripcion = v.descripcion || '';
       const visibilidad = (v.visibilidad as 'privado' | 'clinica') || 'privado';
 
       if (this.isEditMode()) {
         const success = await this.svc.update(nombre, descripcion, visibilidad);
         if (success) {
-          this.toastService.show('Plantilla actualizada');
+          this.toastService.show('Rutina actualizada');
           // Marcar como guardado antes de salir: el guard de cambios
           // sin guardar verá `isDirty === false` durante la navegación.
           this.svc.markAsSaved();
           this.svc.exit();
           this.router.navigate(['/rutinas']);
         } else {
-          this.toastService.show('Error al actualizar plantilla', 'error');
+          this.toastService.show('Error al actualizar rutina', 'error');
         }
       } else {
         const rutinaId = await this.svc.save(nombre, descripcion, visibilidad);
         if (rutinaId) {
-          this.toastService.show('Plantilla guardada');
+          this.toastService.show('Rutina guardada');
           this.svc.exit();
           this.router.navigate(['/rutinas']);
         } else {
-          this.toastService.show('Error al guardar plantilla', 'error');
+          this.toastService.show('Error al guardar rutina', 'error');
         }
       }
     } catch (error) {

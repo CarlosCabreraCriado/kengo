@@ -10,7 +10,7 @@
       <div class="rb-header__title">
         <ui2-big-title
           [overline]="pageOverline()"
-          [title]="isEditMode() ? 'Editar plantilla' : 'Configurar plantilla'"
+          [title]="isEditMode() ? 'Editar rutina' : 'Configurar rutina'"
           sub="Define nombre, visibilidad y dosis de los ejercicios"
         ></ui2-big-title>
       </div>
@@ -315,7 +315,7 @@
         [loading]="isSaving()"
         [disabled]="!canSave() || isSaving()"
         (clicked)="guardarPlantilla()"
-      >{{ isEditMode() ? 'Actualizar plantilla' : 'Guardar plantilla' }}</ui2-button>
+      >{{ isEditMode() ? 'Actualizar rutina' : 'Guardar rutina' }}</ui2-button>
     </div>
   }
 </div>
