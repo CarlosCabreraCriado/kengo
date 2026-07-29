@@ -1,0 +1,467 @@
+/* =====================================================================
+   Layout compartido de las páginas de editor (plan-builder, rutina-builder).
+
+   NO es una hoja global: se consume como entrada extra de `styleUrls` en cada
+   página, así Angular la encapsula por componente y no engorda el bundle
+   inicial.
+
+       styleUrls: [
+         './plan-builder.component.css',
+         '../../../../shared/ui-v2/editor-page/editor-layout.css',
+       ]
+
+   Dos breakpoints con significados distintos — no mezclarlos:
+
+   - 768px  → frontera de *chrome*. Coincide con `esDesktop()` del shell
+              (`app.component.ts`): a partir de aquí hay sidebar + topbar y NO
+              hay tab-bar. Gobierna paddings y el modo del CTA, en
+              `editor-page.component.ts` / `editor-cta.component.ts`, y aquí
+              solo la cabecera.
+   - 1024px → frontera de *ancho disponible*. Gobierna el grid de dos columnas
+              y las filas de ejercicio siempre expandidas. Es una decisión de
+              espacio, no de chrome: entre 768 y 1023px el contenido ya compite
+              con el sidebar y no caben dos columnas.
+   ===================================================================== */
+
+/* ===== Cabecera de página ===== */
+.ui2-ed-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+.ui2-ed-header__title {
+  flex: 1;
+  min-width: 0;
+}
+/* En móvil las acciones secundarias bajan a una segunda fila al 50/50; a partir
+   de 768px vuelven a la misma línea que el título. */
+.ui2-ed-header__actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  width: 100%;
+  justify-content: stretch;
+}
+.ui2-ed-header__actions ui2-button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .ui2-ed-header__actions {
+    width: auto;
+    justify-content: flex-end;
+  }
+  .ui2-ed-header__actions ui2-button {
+    flex: initial;
+  }
+}
+
+/* ===== Grid principal: configuración | contenido ===== */
+.ui2-ed-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.ui2-ed-grid__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 1024px) {
+  .ui2-ed-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .ui2-ed-grid__aside {
+    position: sticky;
+    top: 16px;
+    gap: 16px;
+  }
+}
+
+/* Pila de campos dentro de una `ui2-card` de la columna de configuración. */
+.ui2-ed-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ===== Columna de contenido (lista de ejercicios) ===== */
+.ui2-ed-list-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ui2-ed-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+.ui2-ed-list-head__left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ui2-ed-list-head__count {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  color: var(--ink-900);
+  letter-spacing: -0.2px;
+  line-height: 1;
+}
+
+.ui2-ed-ex-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Guarda de CLS mientras resuelve el @defer de la lista. */
+.ui2-ed-defer-placeholder {
+  min-height: 280px;
+}
+
+/* ===== Fila de ejercicio =====
+   Un único DOM: la cabecera siempre visible y `.ui2-ed-ex__details` conmutado
+   por `[data-collapsed]` (acordeón en móvil). A partir de 1024px los detalles
+   están siempre abiertos y el resumen desaparece. */
+.ui2-ed-ex-item {
+  position: relative;
+}
+.ui2-ed-ex-item.cdk-drag-preview {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+.ui2-ed-ex-item.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.ui2-ed-drag-placeholder {
+  height: 76px;
+  border: 2px dashed rgba(var(--kengo-primary-rgb), 0.3);
+  border-radius: 18px;
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+}
+
+.ui2-ed-ex-preview ui2-card {
+  width: 280px;
+}
+.ui2-ed-ex-preview__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ui2-ed-ex {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui2-ed-ex__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.ui2-ed-drag-handle {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-400);
+  cursor: grab;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ui2-ed-drag-handle:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ink-700);
+}
+.ui2-ed-drag-handle:active {
+  cursor: grabbing;
+}
+.ui2-ed-drag-handle .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.ui2-ed-ex__order {
+  display: none;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 18px;
+  color: var(--kengo-primary);
+  letter-spacing: -0.3px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ui2-ed-ex__thumb {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff5ee, #fff);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+.ui2-ed-ex__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ui2-ed-ex__thumb .material-symbols-outlined {
+  font-size: 26px;
+  color: var(--kengo-primary);
+  opacity: 0.4;
+}
+.ui2-ed-ex__thumb--sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.ui2-ed-ex__name-block {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ui2-ed-ex__name {
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 15px;
+  color: var(--ink-900);
+  letter-spacing: -0.2px;
+  line-height: 1.15;
+  margin: 0;
+  word-break: break-word;
+}
+
+.ui2-ed-ex__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ui2-ed-ex__weekdots {
+  display: block;
+}
+
+/* Toggle edit/check: solo móvil, icono suelto. */
+.ui2-ed-ex__toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-self: center;
+}
+
+.ui2-ed-ex__details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 14px 14px;
+}
+
+/* Móvil: colapsado oculta los detalles; expandido oculta el resumen. */
+.ui2-ed-ex-item[data-collapsed="true"] .ui2-ed-ex__details {
+  display: none;
+}
+.ui2-ed-ex-item[data-collapsed="false"] .ui2-ed-ex__summary,
+.ui2-ed-ex-item[data-collapsed="false"] .ui2-ed-ex__weekdots {
+  display: none;
+}
+
+/* ===== Dosis ===== */
+.ui2-ed-dosage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.ui2-ed-dosage-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ui2-ed-dosage-field__label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--ink-400);
+  text-transform: uppercase;
+}
+.ui2-ed-dosage-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: white;
+  font-family: KengoDisplay, kengoFont, sans-serif;
+  font-size: 16px;
+  color: var(--ink-900);
+  letter-spacing: -0.2px;
+  text-align: center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ui2-ed-dosage-input:focus {
+  outline: none;
+  border-color: var(--kengo-primary);
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.12);
+}
+
+/* ===== Días de la semana ===== */
+.ui2-ed-days-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ui2-ed-days-block__label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--ink-400);
+  text-transform: uppercase;
+}
+
+/* ===== Textareas (instrucciones / notas privadas) ===== */
+.ui2-ed-textarea {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ui2-ed-textarea__label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--ink-400);
+  text-transform: uppercase;
+}
+.ui2-ed-textarea__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: var(--cream-50);
+  font-family: Galvji, kengoFont, sans-serif;
+  font-size: 13px;
+  color: var(--ink-900);
+  resize: vertical;
+  line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.ui2-ed-textarea__input:focus {
+  outline: none;
+  border-color: var(--kengo-primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.12);
+}
+.ui2-ed-textarea--private .ui2-ed-textarea__input {
+  background: rgba(var(--kengo-primary-rgb), 0.04);
+  border-color: rgba(var(--kengo-primary-rgb), 0.18);
+}
+
+/* ===== Descripción colapsable ===== */
+.ui2-ed-ex__desc-fold {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.ui2-ed-ex__desc-fold summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--kengo-primary);
+  list-style: none;
+}
+.ui2-ed-ex__desc-fold summary::-webkit-details-marker {
+  display: none;
+}
+.ui2-ed-ex__desc-fold summary::before {
+  content: "▸";
+  margin-right: 6px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+.ui2-ed-ex__desc-fold[open] summary::before {
+  transform: rotate(90deg);
+}
+.ui2-ed-ex__desc {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-700);
+  line-height: 1.5;
+}
+.ui2-ed-ex__desc :is(p, ul, ol) {
+  margin: 0 0 6px;
+}
+
+.ui2-ed-ex__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* ===== CTA discontinuo "añadir ejercicio" ===== */
+.ui2-ed-add-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border: 1.5px dashed rgba(var(--kengo-primary-rgb), 0.35);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--kengo-primary);
+  font-family: Galvji, kengoFont, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ui2-ed-add-cta:hover {
+  background: rgba(var(--kengo-primary-rgb), 0.05);
+  border-color: var(--kengo-primary);
+}
+.ui2-ed-add-cta .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* =====================================================================
+   ≥1024px: los detalles están siempre abiertos, el resumen es redundante
+   ===================================================================== */
+@media (min-width: 1024px) {
+  .ui2-ed-ex__head {
+    padding: 16px 18px 0;
+  }
+  .ui2-ed-ex__order {
+    display: inline-block;
+  }
+  .ui2-ed-ex__thumb {
+    width: 80px;
+    height: 80px;
+  }
+  .ui2-ed-ex__name {
+    font-size: 17px;
+  }
+
+  /* Pase lo que pase con data-collapsed. */
+  .ui2-ed-ex-item .ui2-ed-ex__details {
+    display: flex !important;
+    padding: 12px 18px 18px;
+  }
+  .ui2-ed-ex-item .ui2-ed-ex__summary,
+  .ui2-ed-ex-item .ui2-ed-ex__weekdots {
+    display: none !important;
+  }
+  .ui2-ed-ex__toggle {
+    display: none !important;
+  }
+}

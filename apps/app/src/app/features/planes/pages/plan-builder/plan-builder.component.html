@@ -1,20 +1,14 @@
-<div class="pb-page">
-  @if (isLoading()) {
-    <div class="pb-loading">
-      <ui2-spinner size="lg" color="primary" label="Cargando…"></ui2-spinner>
-    </div>
-  }
-
+<ui2-editor-page [loading]="isLoading()" loadingLabel="Cargando…">
   <!-- Header -->
-  <header class="pb-header">
+  <header class="ui2-ed-header">
     <ui2-back-button (clicked)="cancelar()" ariaLabel="Volver"></ui2-back-button>
-    <div class="pb-header__title">
+    <div class="ui2-ed-header__title">
       <ui2-big-title
         [title]="pageTitle()"
         sub="Configura los ejercicios y dosis del plan"
       ></ui2-big-title>
     </div>
-    <div class="pb-header__actions">
+    <div class="ui2-ed-header__actions">
       <ui2-button
         variant="secondary"
         size="sm"
@@ -53,11 +47,11 @@
   }
 
   <!-- Main grid -->
-  <form [formGroup]="form" novalidate class="pb-main">
+  <form [formGroup]="form" novalidate class="ui2-ed-grid">
     <!-- Columna izquierda: configuración -->
-    <aside class="pb-config">
+    <aside class="ui2-ed-grid__aside">
       <ui2-card [padding]="14">
-        <div class="pb-section">
+        <div class="ui2-ed-card-stack">
           <ui2-section-label>Datos del plan</ui2-section-label>
           <ui2-input
             label="Título del plan"
@@ -77,7 +71,7 @@
       </ui2-card>
 
       <ui2-card [padding]="14">
-        <div class="pb-section">
+        <div class="ui2-ed-card-stack">
           <ui2-section-label>Duración</ui2-section-label>
           <div class="pb-dates">
             <ui2-datepicker
@@ -107,11 +101,11 @@
     </aside>
 
     <!-- Columna derecha: ejercicios -->
-    <section class="pb-exercises">
-      <header class="pb-ex-head">
-        <div class="pb-ex-head__left">
+    <section class="ui2-ed-list-col">
+      <header class="ui2-ed-list-head">
+        <div class="ui2-ed-list-head__left">
           <ui2-section-label>Ejercicios</ui2-section-label>
-          <span class="pb-ex-head__count">{{ totalItems() }} ejercicio{{ totalItems() === 1 ? '' : 's' }}</span>
+          <span class="ui2-ed-list-head__count">{{ totalItems() }} ejercicio{{ totalItems() === 1 ? '' : 's' }}</span>
         </div>
         @if (totalItems() > 0) {
           <ui2-button
@@ -125,21 +119,21 @@
 
       @defer (when items().length > 0; prefetch on idle) {
         <div
-          class="pb-ex-list"
+          class="ui2-ed-ex-list"
           cdkDropList
           (cdkDropListDropped)="onDrop($event)"
         >
           @for (it of items(); track trackByIndex($index); let i = $index) {
             <article
-              class="pb-ex-item"
+              class="ui2-ed-ex-item"
               [attr.data-collapsed]="ejercicioEditando() !== i ? 'true' : 'false'"
               cdkDrag
               [cdkDragDisabled]="ejercicioEditando() === i"
             >
-              <div *cdkDragPreview class="pb-ex-preview">
+              <div *cdkDragPreview class="ui2-ed-ex-preview">
                 <ui2-card [padding]="12">
-                  <div class="pb-ex-preview__row">
-                    <div class="pb-ex__thumb pb-ex__thumb--sm">
+                  <div class="ui2-ed-ex-preview__row">
+                    <div class="ui2-ed-ex__thumb ui2-ed-ex__thumb--sm">
                       @if (it.ejercicio.portada) {
                         <img
                           [ngSrc]="assetUrl(it.ejercicio.portada, 96, 96)"
@@ -153,29 +147,29 @@
                         <span class="material-symbols-outlined" aria-hidden="true">fitness_center</span>
                       }
                     </div>
-                    <span class="pb-ex__name">{{ it.ejercicio.nombre }}</span>
+                    <span class="ui2-ed-ex__name">{{ it.ejercicio.nombre }}</span>
                   </div>
                 </ui2-card>
               </div>
 
-              <div *cdkDragPlaceholder class="pb-drag-placeholder"></div>
+              <div *cdkDragPlaceholder class="ui2-ed-drag-placeholder"></div>
 
               <ui2-card [padding]="0">
-                <div class="pb-ex">
+                <div class="ui2-ed-ex">
                   <!-- Cabecera siempre visible -->
-                  <div class="pb-ex__head">
+                  <div class="ui2-ed-ex__head">
                     <button
                       type="button"
-                      class="pb-drag-handle"
+                      class="ui2-ed-drag-handle"
                       cdkDragHandle
                       aria-label="Reordenar ejercicio"
                     >
                       <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
                     </button>
 
-                    <span class="pb-ex__order" aria-hidden="true">{{ i + 1 }}</span>
+                    <span class="ui2-ed-ex__order" aria-hidden="true">{{ i + 1 }}</span>
 
-                    <div class="pb-ex__thumb">
+                    <div class="ui2-ed-ex__thumb">
                       @if (it.ejercicio.portada) {
                         <img
                           [ngSrc]="assetUrl(it.ejercicio.portada, 128, 128)"
@@ -190,10 +184,10 @@
                       }
                     </div>
 
-                    <div class="pb-ex__name-block">
-                      <h4 class="pb-ex__name">{{ it.ejercicio.nombre }}</h4>
+                    <div class="ui2-ed-ex__name-block">
+                      <h4 class="ui2-ed-ex__name">{{ it.ejercicio.nombre }}</h4>
                       <!-- Resumen pills (mobile-collapsed only, oculto en desktop) -->
-                      <div class="pb-ex__summary">
+                      <div class="ui2-ed-ex__summary">
                         @if (it.tipo === 'duracion') {
                           <ui2-pill variant="primary" size="sm" icon="timer">
                             {{ it.series || 3 }} × {{ it.duracionSeg || 30 }}s
@@ -208,13 +202,13 @@
                         }
                       </div>
                       <app-plan-week-dots
-                        class="pb-ex__weekdots-summary"
+                        class="ui2-ed-ex__weekdots"
                         [dias]="it.diasSemana ?? []"
                       ></app-plan-week-dots>
                     </div>
 
                     <ui2-button
-                      class="pb-ex__toggle"
+                      class="ui2-ed-ex__toggle"
                       variant="ghost"
                       size="sm"
                       [iconLeft]="ejercicioEditando() === i ? 'check' : 'edit'"
@@ -224,73 +218,73 @@
                   </div>
 
                   <!-- Detalles editables (visibles en desktop o cuando expandido) -->
-                  <div class="pb-ex__details">
-                    <div class="pb-dosage-grid">
-                      <label class="pb-dosage-field">
-                        <span class="pb-dosage-field__label">Series</span>
+                  <div class="ui2-ed-ex__details">
+                    <div class="ui2-ed-dosage-grid">
+                      <label class="ui2-ed-dosage-field">
+                        <span class="ui2-ed-dosage-field__label">Series</span>
                         <input
                           type="number"
                           inputmode="numeric"
                           enterkeyhint="done"
                           min="1"
-                          class="pb-dosage-input"
+                          class="ui2-ed-dosage-input"
                           [value]="it.series ?? ''"
                           (change)="updateNumber(i, 'series', $event)"
                         />
                       </label>
                       @if (it.tipo === 'duracion') {
-                        <label class="pb-dosage-field">
-                          <span class="pb-dosage-field__label">Duración (s)</span>
+                        <label class="ui2-ed-dosage-field">
+                          <span class="ui2-ed-dosage-field__label">Duración (s)</span>
                           <input
                             type="number"
                             inputmode="numeric"
                             enterkeyhint="done"
                             min="1"
-                            class="pb-dosage-input"
+                            class="ui2-ed-dosage-input"
                             [value]="it.duracionSeg ?? ''"
                             (change)="updateNumber(i, 'duracionSeg', $event)"
                           />
                         </label>
                       } @else {
-                        <label class="pb-dosage-field">
-                          <span class="pb-dosage-field__label">Reps</span>
+                        <label class="ui2-ed-dosage-field">
+                          <span class="ui2-ed-dosage-field__label">Reps</span>
                           <input
                             type="number"
                             inputmode="numeric"
                             enterkeyhint="done"
                             min="1"
-                            class="pb-dosage-input"
+                            class="ui2-ed-dosage-input"
                             [value]="it.repeticiones ?? ''"
                             (change)="updateNumber(i, 'repeticiones', $event)"
                           />
                         </label>
                       }
-                      <label class="pb-dosage-field">
-                        <span class="pb-dosage-field__label">Descanso (s)</span>
+                      <label class="ui2-ed-dosage-field">
+                        <span class="ui2-ed-dosage-field__label">Descanso (s)</span>
                         <input
                           type="number"
                           inputmode="numeric"
                           enterkeyhint="done"
                           min="0"
-                          class="pb-dosage-input"
+                          class="ui2-ed-dosage-input"
                           [value]="it.descansoSeg ?? ''"
                           (change)="updateNumber(i, 'descansoSeg', $event)"
                         />
                       </label>
                     </div>
 
-                    <div class="pb-days-block">
-                      <span class="pb-days-block__label">Días de la semana</span>
+                    <div class="ui2-ed-days-block">
+                      <span class="ui2-ed-days-block__label">Días de la semana</span>
                       <app-plan-day-toggles
                         [value]="it.diasSemana ?? []"
                         (valueChange)="setDias(i, $event)"
                       ></app-plan-day-toggles>
                     </div>
 
-                    <label class="pb-textarea">
-                      <span class="pb-textarea__label">Instrucciones para el paciente</span>
+                    <label class="ui2-ed-textarea">
+                      <span class="ui2-ed-textarea__label">Instrucciones para el paciente</span>
                       <textarea
-                        class="pb-textarea__input"
+                        class="ui2-ed-textarea__input"
                         rows="2"
                         [value]="it.instruccionesPaciente ?? ''"
                         placeholder="Notas o indicaciones específicas"
@@ -298,10 +292,10 @@
                       ></textarea>
                     </label>
 
-                    <label class="pb-textarea pb-textarea--private">
-                      <span class="pb-textarea__label">Notas privadas (solo fisio)</span>
+                    <label class="ui2-ed-textarea ui2-ed-textarea--private">
+                      <span class="ui2-ed-textarea__label">Notas privadas (solo fisio)</span>
                       <textarea
-                        class="pb-textarea__input"
+                        class="ui2-ed-textarea__input"
                         rows="2"
                         [value]="it.notasFisio ?? ''"
                         placeholder="Notas internas no visibles para el paciente"
@@ -310,16 +304,16 @@
                     </label>
 
                     @if (it.ejercicio.descripcion) {
-                      <details class="pb-ex__desc-fold">
+                      <details class="ui2-ed-ex__desc-fold">
                         <summary>Ver descripción del ejercicio</summary>
                         <div
-                          class="pb-ex__desc"
+                          class="ui2-ed-ex__desc"
                           [innerHTML]="it.ejercicio.descripcion | safeHtml"
                         ></div>
                       </details>
                     }
 
-                    <div class="pb-ex__footer">
+                    <div class="ui2-ed-ex__footer">
                       <ui2-button
                         variant="danger"
                         size="sm"
@@ -336,7 +330,7 @@
 
         <button
           type="button"
-          class="pb-add-cta"
+          class="ui2-ed-add-cta"
           (click)="irAGaleria()"
         >
           <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
@@ -353,27 +347,25 @@
             (action)="irAGaleria()"
           ></ui2-empty-state>
         } @else {
-          <div class="pb-ex-defer-placeholder"></div>
+          <div class="ui2-ed-defer-placeholder"></div>
         }
       }
     </section>
   </form>
-</div>
+</ui2-editor-page>
 
-<!-- Sticky CTA — fuera de .pb-page (capada a 1280) para que en desktop la barra
-     ocupe todo el ancho de <main>; el __inner realinea el botón con el contenido. -->
+<!-- CTA — hermana de <ui2-editor-page> (fuera del cap de 1280) para que en
+     desktop la barra ocupe todo el ancho de <main>. -->
 @if (showCta()) {
-  <div class="pb-cta-bar">
-    <div class="pb-cta-bar__inner">
-      <ui2-button
-        variant="primary"
-        size="lg"
-        iconLeft="check_circle"
-        [fullWidth]="true"
-        [loading]="isSaving()"
-        [disabled]="saveDisabled()"
-        (clicked)="guardarPlan()"
-      >Guardar plan</ui2-button>
-    </div>
-  </div>
+  <ui2-editor-cta>
+    <ui2-button
+      variant="primary"
+      size="lg"
+      iconLeft="check_circle"
+      [fullWidth]="true"
+      [loading]="isSaving()"
+      [disabled]="saveDisabled()"
+      (clicked)="guardarPlan()"
+    >Guardar plan</ui2-button>
+  </ui2-editor-cta>
 }

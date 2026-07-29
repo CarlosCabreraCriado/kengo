@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { Location, NgOptimizedImage } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
   FormsModule,
@@ -16,28 +16,33 @@ import {
   Validators,
 } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { Dialog } from '@angular/cdk/dialog';
 
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
-import { SafeHtmlPipe, useResponsive } from '../../../../shared';
+import { SafeHtmlPipe } from '../../../../shared';
 import {
   Ui2BackButtonComponent,
   Ui2BigTitleComponent,
   Ui2ButtonComponent,
   Ui2CardComponent,
+  Ui2EditorCtaComponent,
+  Ui2EditorPageComponent,
   Ui2EmptyStateComponent,
   Ui2InputComponent,
   Ui2PillComponent,
   Ui2RadioGroupComponent,
-  Ui2SectionComponent,
-  Ui2SpinnerComponent,
+  Ui2SectionLabelComponent,
   Ui2TextareaComponent,
   type Ui2RadioOption,
 } from '../../../../shared/ui-v2';
+// Los toggles y los chips de días viven en `features/planes` y los comparten los
+// dos editores; el import cruzado rutinas→planes ya es la norma en esta feature
+// (ver `rutina-builder.service.ts`).
+import { PlanDayTogglesComponent } from '../../../planes/components/plan-day-toggles/plan-day-toggles.component';
+import { PlanWeekDotsComponent } from '../../../planes/components/plan-week-dots/plan-week-dots.component';
 
 @Component({
   selector: 'app-rutina-builder',
@@ -47,49 +52,39 @@ import {
     FormsModule,
     DragDropModule,
     NgOptimizedImage,
-    RouterLink,
     SafeHtmlPipe,
     Ui2BackButtonComponent,
     Ui2BigTitleComponent,
     Ui2ButtonComponent,
     Ui2CardComponent,
+    Ui2EditorCtaComponent,
+    Ui2EditorPageComponent,
     Ui2EmptyStateComponent,
     Ui2InputComponent,
     Ui2PillComponent,
     Ui2RadioGroupComponent,
-    Ui2SectionComponent,
-    Ui2SpinnerComponent,
+    Ui2SectionLabelComponent,
     Ui2TextareaComponent,
+    PlanDayTogglesComponent,
+    PlanWeekDotsComponent,
   ],
   templateUrl: './rutina-builder.component.html',
-  styleUrl: './rutina-builder.component.css',
+  styleUrls: ['../../../../shared/ui-v2/editor-page/editor-layout.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Sin `overflow`: el scroll vive en el <main appScrollContainer> del shell, que
+  // es lo que permite el `position: sticky` del CTA en desktop.
   host: {
-    class: 'flex flex-col flex-1 min-h-0 w-full overflow-hidden',
+    class: 'flex flex-col flex-1 min-h-0 w-full',
   },
 })
 export class RutinaBuilderComponent implements OnInit, OnDestroy {
   private location = inject(Location);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private dialog = inject(Dialog);
   private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
   private logger = inject(LoggerService);
   svc = inject(RutinaBuilderService);
-
-  isDesktop = useResponsive().esDesktop;
-
-  dias: DiaSemana[] = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  diasNombres: Record<DiaSemana, string> = {
-    L: 'Lunes',
-    M: 'Martes',
-    X: 'Miércoles',
-    J: 'Jueves',
-    V: 'Viernes',
-    S: 'Sábado',
-    D: 'Domingo',
-  };
 
   readonly visibilidadOptions: Ui2RadioOption[] = [
     {
@@ -120,6 +115,12 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     const total = this.totalItems();
     return `${total} ejercicio${total === 1 ? '' : 's'} en la rutina`;
   });
+
+  // Nota: aquí el CTA está siempre visible, a diferencia de plan-builder, que lo
+  // oculta hasta que `isDirty()`. El dirty tracking de `RutinaBuilderService`
+  // solo mira `titulo`/`descripcion`/`items`, no el FormGroup, así que renombrar
+  // la rutina o cambiar su visibilidad no lo activa y el botón desaparecería
+  // justo cuando hace falta.
 
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
@@ -204,19 +205,8 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.svc.updateItem(i, { [key]: v } as Partial<EjercicioPlan>);
   }
 
-  isDia(it: EjercicioPlan, d: DiaSemana) {
-    return it.diasSemana?.includes(d);
-  }
-
-  toggleDia(i: number, d: DiaSemana) {
-    const it = this.svc.items()[i];
-    const set = new Set(it.diasSemana || []);
-    if (set.has(d)) {
-      set.delete(d);
-    } else {
-      set.add(d);
-    }
-    this.svc.updateItem(i, { diasSemana: Array.from(set) as DiaSemana[] });
+  setDias(i: number, dias: DiaSemana[]) {
+    this.svc.updateItem(i, { diasSemana: dias });
   }
 
   toggleEdicion(i: number) {
