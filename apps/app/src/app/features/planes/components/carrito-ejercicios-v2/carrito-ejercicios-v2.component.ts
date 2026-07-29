@@ -182,9 +182,18 @@ export class Ui2CarritoEjerciciosComponent
     return true;
   }
 
+  /**
+   * Oculta la pestaña dentro de los editores: ahí el contenido de la página ya
+   * es la lista de ejercicios y la vía para añadir más es ir al catálogo, donde
+   * la pestaña sí se ve.
+   *
+   * `'/rutinas/'` con barra final cubre las dos subrutas que existen (`nueva` y
+   * `:id/editar`) y deja fuera la lista `/rutinas`, donde la pestaña sigue
+   * siendo útil mientras se construye una rutina.
+   */
   private checkRouteForTab(url: string): void {
     this.ocultarTab.set(
-      url.startsWith('/planes') || url.startsWith('/rutinas/nueva'),
+      url.startsWith('/planes') || url.startsWith('/rutinas/'),
     );
   }
 
