@@ -1,24 +1,25 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { HeaderComponent } from '../../components/header/header.component';
 import { HeroComponent } from '../../components/hero/hero.component';
-import { BenefitsComponent } from '../../components/benefits/benefits.component';
-import { HowItWorksComponent } from '../../components/how-it-works/how-it-works.component';
+import { StatsComponent } from '../../components/stats/stats.component';
 import { FeaturesComponent } from '../../components/features/features.component';
+import { ClinicasComponent } from '../../components/clinicas/clinicas.component';
+import { HowItWorksComponent } from '../../components/how-it-works/how-it-works.component';
 import { TestimonialsComponent } from '../../components/testimonials/testimonials.component';
 import { CtaComponent } from '../../components/cta/cta.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 
 @Component({
   selector: 'web-home',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
-    CommonModule,
     HeaderComponent,
     HeroComponent,
-    BenefitsComponent,
-    HowItWorksComponent,
+    StatsComponent,
     FeaturesComponent,
+    ClinicasComponent,
+    HowItWorksComponent,
     TestimonialsComponent,
     CtaComponent,
     FooterComponent,
@@ -27,38 +28,34 @@ import { FooterComponent } from '../../components/footer/footer.component';
     <web-header />
     <main>
       <web-hero />
-      @defer (on viewport) {
-        <web-benefits class="relative z-10" />
+      <web-stats />
+      @defer (hydrate on idle) {
+        <web-features />
+      } @placeholder {
+        <div style="min-height: 400px"></div>
+      }
+      @defer (hydrate on idle) {
+        <web-clinicas />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
-      @defer (on viewport) {
-        <web-how-it-works class="relative z-10" />
+      @defer (hydrate on idle) {
+        <web-how-it-works />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
-
-      <!--
-      @defer (on viewport) {
-        <web-features class="relative z-10" />
+      @defer (hydrate on viewport) {
+        <web-testimonials />
       } @placeholder {
         <div style="min-height: 200px"></div>
       }
--->
-
-      @defer (on viewport) {
-        <web-testimonials class="relative z-10" />
+      @defer (hydrate on viewport) {
+        <web-cta />
       } @placeholder {
-        <div style="min-height: 100px"></div>
-      }
-
-      @defer (on viewport) {
-        <web-cta class="relative z-10" />
-      } @placeholder {
-        <div style="min-height: 100px"></div>
+        <div style="min-height: 200px"></div>
       }
     </main>
-    <web-footer class="relative z-10" />
+    <web-footer />
   `,
 })
 export class HomeComponent {}

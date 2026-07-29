@@ -1,5 +1,4 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -14,124 +13,66 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
 
 @Component({
   selector: 'web-footer',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ScrollAnimateDirective],
+  imports: [ReactiveFormsModule, ScrollAnimateDirective],
   template: `
-    <footer class="footer-section relative z-10 overflow-hidden">
-      <!-- Top Wave Decoration -->
-      <div class="footer-wave">
-        <svg
-          viewBox="0 0 1440 120"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V0H1380C1320 0 1200 0 1080 0C960 0 840 0 720 0C600 0 480 0 360 0C240 0 120 0 60 0H0V120Z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
-
-      <div class="footer-content">
-        <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div
-            class="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-8"
-          >
-            <!-- Brand Column -->
-            <div class="scroll-reveal-left lg:col-span-5" scrollAnimate>
-              <a href="/" class="mb-6 inline-block">
-                <img
-                  src="logo-kengo-horizontal.svg"
-                  alt="Kengo"
-                  class="h-10"
-                />
-              </a>
-              <p class="mb-8 max-w-md text-base leading-relaxed text-gray-400">
-                Tu fisio, siempre contigo. Planes de ejercicios personalizados
-                con videos guiados, seguimiento de progreso y conexión directa
-                con tu fisioterapeuta.
-              </p>
-
+    <footer>
+      <div class="wrap">
+        <div class="foot-top scroll-reveal" webScrollAnimate>
+          <div class="foot-brand">
+            <a href="#top" aria-label="Kengo — inicio">
+              <img src="logo-kengo-horizontal.svg" alt="Kengo" />
+            </a>
+            <p>
+              La plataforma que mantiene el tratamiento vivo entre sesión y
+              sesión.
+            </p>
+          </div>
+          <div class="foot-cols">
+            <div class="foot-col">
+              <h5>Producto</h5>
+              <a href="#fisios">Para fisios</a>
+              <a href="#pacientes">Para pacientes</a>
+              <a href="#clinicas">Clínicas</a>
+              <a href="#como">Cómo funciona</a>
             </div>
-
-            <!-- Links Columns -->
-            <div class="scroll-reveal-right lg:col-span-7" scrollAnimate>
-              <div class="grid grid-cols-2 gap-8">
-                <!-- Product -->
-                <div>
-                  <h4 class="footer-heading">Producto</h4>
-                  <ul class="footer-links">
-                    <li><a href="#beneficios">Beneficios</a></li>
-                    <li><a href="#como-funciona">Cómo funciona</a></li>
-                    <li>
-                      <a href="https://kengoapp.com/login">Registrarse</a>
-                    </li>
-                  </ul>
-                </div>
-
-                <!-- Contact -->
-                <div>
-                  <h4 class="footer-heading">Contacto</h4>
-                  <ul class="footer-links">
-                    <li>
-                      <button (click)="abrirModal()" class="contact-btn">
-                        <svg
-                          class="mr-2 h-4 w-4 shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          stroke-width="1.5"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-                          />
-                        </svg>
-                        Escríbenos
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+            <div class="foot-col">
+              <h5>Empresa</h5>
+              <a href="#top">Sobre Kengo</a>
+              <button type="button" class="foot-link" (click)="abrirModal()">
+                Contacto
+              </button>
+              <button type="button" class="foot-link" (click)="abrirModal()">
+                Soporte
+              </button>
+            </div>
+            <div class="foot-col">
+              <h5>Legal</h5>
+              <a href="#top">Privacidad</a>
+              <a href="#top">Términos</a>
+              <a href="#top">Cookies</a>
             </div>
           </div>
-
-          <!-- Bottom Bar -->
-          <div class="footer-bottom scroll-reveal" scrollAnimate>
-            <div
-              class="flex flex-col items-center justify-between gap-4 md:flex-row"
-            >
-              <p class="text-sm text-gray-500">
-                &copy; {{ currentYear }} Kengo. Todos los derechos reservados.
-              </p>
-
-              <!-- Made with love -->
-              <p class="flex items-center gap-1 text-sm text-gray-500">
-                Hecho con
-                <span class="text-primary">
-                  <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fill-rule="evenodd"
-                      d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </span>
-                en España
-              </p>
-            </div>
-          </div>
+        </div>
+        <div class="foot-bot">
+          <span>&copy; {{ currentYear }} Kengo. Todos los derechos reservados.</span>
+          <span>Hecho en Canarias</span>
         </div>
       </div>
     </footer>
 
     <!-- Modal de contacto -->
     @if (modalAbierto()) {
-      <div class="modal-overlay" (click)="cerrarModal()">
-        <div class="modal-container" (click)="$event.stopPropagation()">
-          <!-- Header del modal -->
+      <div
+        class="modal-overlay"
+        role="button"
+        tabindex="0"
+        aria-label="Cerrar contacto"
+        (click)="onBackdrop($event)"
+        (keydown.escape)="cerrarModal()"
+      >
+        <div class="modal-container">
           <div class="modal-header">
             <h3 class="modal-title">Contacto</h3>
             <button
@@ -155,7 +96,6 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
             </button>
           </div>
 
-          <!-- Contenido del modal -->
           <div class="modal-body">
             @switch (estado()) {
               @case ('form') {
@@ -285,92 +225,90 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
   `,
   styles: [
     `
-      .footer-section {
-        position: relative;
-        background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+      :host {
+        display: block;
       }
 
-      .footer-wave {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 120px;
-        color: #ffffff;
-        transform: translateY(-99%);
-      }
-
-      .footer-wave svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .footer-content {
-        position: relative;
-        z-index: 1;
-      }
-
-      .footer-heading {
+      footer {
+        background: var(--color-cream);
+        border-top: 1px solid var(--color-ink-200);
+        color: var(--color-ink-700);
+        padding: 64px 0 40px;
         font-size: 14px;
-        font-weight: 600;
-        color: #ffffff;
+      }
+
+      .foot-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 40px;
+        flex-wrap: wrap;
+        padding-bottom: 40px;
+        border-bottom: 1px solid var(--color-ink-200);
+      }
+
+      .foot-brand {
+        max-width: 280px;
+      }
+
+      .foot-brand img {
+        height: 32px;
+      }
+
+      .foot-brand p {
+        margin: 18px 0 0;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .foot-cols {
+        display: flex;
+        gap: 72px;
+        flex-wrap: wrap;
+      }
+
+      .foot-col h5 {
+        margin: 0 0 14px;
+        font-size: 11px;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 20px;
+        color: #a34a2c;
+        font-weight: 700;
       }
 
-      .footer-links {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-      }
-
-      .footer-links li {
-        margin-bottom: 12px;
-      }
-
-      .footer-links a {
-        color: #9ca3af;
-        font-size: 15px;
+      .foot-col a,
+      .foot-col .foot-link {
+        display: block;
+        color: var(--color-ink-700);
+        margin-bottom: 9px;
         text-decoration: none;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-      }
-
-      .footer-links a:hover {
-        color: #e75c3e;
-        transform: translateX(4px);
-      }
-
-      .contact-btn {
         background: none;
         border: none;
-        color: #9ca3af;
-        font-size: 15px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
         padding: 0;
-        transition: all 0.2s ease;
-        font-family: inherit;
+        font: inherit;
+        cursor: pointer;
+        text-align: left;
       }
 
-      .contact-btn:hover {
-        color: #e75c3e;
-        transform: translateX(4px);
-      }
-      .footer-bottom {
-        margin-top: 48px;
-        padding-top: 32px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      .foot-col a:hover,
+      .foot-col .foot-link:hover {
+        color: var(--color-primary);
       }
 
-      /* Modal */
+      .foot-bot {
+        padding-top: 26px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 13px;
+        color: #7d6b62;
+      }
+
+      /* ============ Modal ============ */
       .modal-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.6);
+        background: rgba(67, 52, 44, 0.45);
         backdrop-filter: blur(4px);
         display: flex;
         align-items: center;
@@ -381,14 +319,14 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
       }
 
       .modal-container {
-        background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
+        background: #fff;
+        border: 1px solid var(--color-ink-200);
+        border-radius: 24px;
         width: 100%;
         max-width: 480px;
         max-height: 90vh;
         overflow-y: auto;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 25px 60px rgba(150, 100, 70, 0.25);
         animation: slideUp 0.3s ease;
       }
 
@@ -402,15 +340,15 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
       .modal-title {
         font-size: 20px;
         font-weight: 700;
-        color: #ffffff;
+        color: var(--color-ink);
         margin: 0;
       }
 
       .modal-close {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        color: #9ca3af;
+        background: var(--color-sand);
+        border: 1px solid var(--color-ink-200);
+        border-radius: 12px;
+        color: var(--color-ink-700);
         cursor: pointer;
         padding: 8px;
         transition: all 0.2s ease;
@@ -420,8 +358,8 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
       }
 
       .modal-close:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: #ffffff;
+        background: var(--color-peach);
+        color: var(--color-ink);
       }
 
       .modal-body {
@@ -435,32 +373,32 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
       .form-label {
         display: block;
         font-size: 13px;
-        font-weight: 500;
-        color: #9ca3af;
+        font-weight: 600;
+        color: var(--color-ink-700);
         margin-bottom: 6px;
       }
 
       .form-input {
         width: 100%;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 10px;
+        background: var(--color-cream);
+        border: 1px solid var(--color-ink-200);
+        border-radius: 12px;
         padding: 12px 14px;
         font-size: 15px;
-        color: #ffffff;
+        color: var(--color-ink);
         font-family: inherit;
-        transition: border-color 0.2s ease;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
         box-sizing: border-box;
       }
 
       .form-input::placeholder {
-        color: #4b5563;
+        color: var(--color-ink-500);
       }
 
       .form-input:focus {
         outline: none;
-        border-color: #e75c3e;
-        box-shadow: 0 0 0 3px rgba(231, 92, 62, 0.15);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(224, 112, 79, 0.15);
       }
 
       .form-textarea {
@@ -470,20 +408,21 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
 
       .submit-btn {
         width: 100%;
-        background: #e75c3e;
-        color: #ffffff;
+        background: var(--color-primary);
+        color: #fff;
         border: none;
-        border-radius: 10px;
+        border-radius: 999px;
         padding: 14px;
         font-size: 15px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.2s ease;
         font-family: inherit;
+        box-shadow: 0 8px 22px rgba(224, 112, 79, 0.28);
       }
 
       .submit-btn:hover:not(:disabled) {
-        background: #d4503a;
+        background: var(--color-primary-dark);
         transform: translateY(-1px);
       }
 
@@ -502,22 +441,22 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
 
       .state-title {
         font-size: 18px;
-        font-weight: 600;
-        color: #ffffff;
+        font-weight: 700;
+        color: var(--color-ink);
         margin: 16px 0 8px;
       }
 
       .state-text {
         font-size: 14px;
-        color: #9ca3af;
+        color: var(--color-ink-700);
         margin: 0;
       }
 
       .spinner {
         width: 40px;
         height: 40px;
-        border: 3px solid rgba(255, 255, 255, 0.1);
-        border-top-color: #e75c3e;
+        border: 3px solid var(--color-ink-200);
+        border-top-color: var(--color-primary);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
       }
@@ -526,8 +465,8 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
         width: 56px;
         height: 56px;
         border-radius: 50%;
-        background: rgba(34, 197, 94, 0.15);
-        color: #22c55e;
+        background: rgba(93, 138, 95, 0.16);
+        color: #3f6b45;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -537,11 +476,20 @@ type ContactState = 'form' | 'sending' | 'success' | 'error';
         width: 56px;
         height: 56px;
         border-radius: 50%;
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
+        background: rgba(224, 112, 79, 0.15);
+        color: var(--color-primary-dark);
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+
+      .h-5 {
+        width: 20px;
+        height: 20px;
+      }
+      .h-8 {
+        width: 32px;
+        height: 32px;
       }
 
       @keyframes fadeIn {
@@ -577,18 +525,20 @@ export class FooterComponent {
   modalAbierto = signal(false);
   estado = signal<ContactState>('form');
 
-  contactForm: FormGroup;
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
 
-  constructor(
-    private fb: FormBuilder,
-    private http: HttpClient,
-  ) {
-    this.contactForm = this.fb.group({
-      nombre: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      asunto: [''],
-      mensaje: ['', Validators.required],
-    });
+  contactForm: FormGroup = this.fb.group({
+    nombre: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    asunto: [''],
+    mensaje: ['', Validators.required],
+  });
+
+  onBackdrop(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+      this.cerrarModal();
+    }
   }
 
   abrirModal() {

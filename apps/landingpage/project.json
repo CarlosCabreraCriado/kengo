@@ -12,7 +12,8 @@
       "options": {
         "outputPath": "dist/apps/landingpage",
         "browser": "apps/landingpage/src/main.ts",
-        "polyfills": ["zone.js"],
+        "server": "apps/landingpage/src/main.server.ts",
+        "outputMode": "static",
         "tsConfig": "apps/landingpage/tsconfig.app.json",
         "assets": [
           {
@@ -31,8 +32,8 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "300kb",
-              "maximumError": "500kb"
+              "maximumWarning": "350kb",
+              "maximumError": "450kb"
             },
             {
               "type": "anyComponentStyle",
