@@ -85,89 +85,108 @@ type RunSummary = {
   r2: { status: "skipped" | "deleted" | "error"; key: string | null; error: string | null };
 };
 
-export const run = internalAction({
-  args: { email: v.string() },
-  handler: async (ctx, args): Promise<RunSummary> => {
-    const { userId, externalId, avatarKey, stats } = await ctx.runMutation(
-      internal.migrations.deleteUserByEmailMutation.collectAndDeleteConvex,
-      { email: args.email },
-    );
+/**
+ * Purga completa de un usuario: Convex, Better-Auth y R2.
+ *
+ * Se expone como helper (y no solo como `internalAction` con email) para que
+ * el autoborrado desde la app lo reutilice pasando el `userId` resuelto desde
+ * la sesión. Así el borrado vive en un único sitio y no hay dos cascadas que
+ * mantener sincronizadas.
+ */
+export async function purgeUser(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ctx: any,
+  target: { userId?: Id<"users">; email?: string },
+): Promise<RunSummary> {
+  const { userId, email, externalId, avatarKey, stats } = await ctx.runMutation(
+    internal.migrations.deleteUserByEmailMutation.collectAndDeleteConvex,
+    target.userId ? { userId: target.userId } : { email: target.email },
+  );
 
-    const baStats = {
-      sessions: 0,
-      accounts: 0,
-      twoFactor: 0,
-      oauthAccessTokens: 0,
-      oauthConsents: 0,
-      verifications: 0,
-      user: 0,
-      errors: [] as string[],
-    };
+  const baStats = {
+    sessions: 0,
+    accounts: 0,
+    twoFactor: 0,
+    oauthAccessTokens: 0,
+    oauthConsents: 0,
+    verifications: 0,
+    user: 0,
+    errors: [] as string[],
+  };
 
-    // Better-Auth: borrar todas las tablas que referencian al usuario.
-    const baCleanups: Array<{ model: string; where: WhereClause[]; key: keyof typeof baStats }> = [
-      { model: "session", where: [{ field: "userId", value: externalId }], key: "sessions" },
-      { model: "account", where: [{ field: "userId", value: externalId }], key: "accounts" },
-      { model: "twoFactor", where: [{ field: "userId", value: externalId }], key: "twoFactor" },
-      { model: "oauthAccessToken", where: [{ field: "userId", value: externalId }], key: "oauthAccessTokens" },
-      { model: "oauthConsent", where: [{ field: "userId", value: externalId }], key: "oauthConsents" },
-      { model: "verification", where: [{ field: "identifier", value: args.email }], key: "verifications" },
-    ];
+  // Better-Auth: borrar todas las tablas que referencian al usuario.
+  const baCleanups: Array<{ model: string; where: WhereClause[]; key: keyof typeof baStats }> = [
+    { model: "session", where: [{ field: "userId", value: externalId }], key: "sessions" },
+    { model: "account", where: [{ field: "userId", value: externalId }], key: "accounts" },
+    { model: "twoFactor", where: [{ field: "userId", value: externalId }], key: "twoFactor" },
+    { model: "oauthAccessToken", where: [{ field: "userId", value: externalId }], key: "oauthAccessTokens" },
+    { model: "oauthConsent", where: [{ field: "userId", value: externalId }], key: "oauthConsents" },
+    { model: "verification", where: [{ field: "identifier", value: email }], key: "verifications" },
+  ];
 
-    for (const step of baCleanups) {
-      try {
-        const count = await deleteAllBetterAuth(ctx, step.model, step.where);
-        (baStats[step.key] as number) = count;
-      } catch (err) {
-        const msg = `BA[${step.model}]: ${err instanceof Error ? err.message : String(err)}`;
-        console.error(`[deleteUserByEmail] ${msg}`);
-        baStats.errors.push(msg);
-      }
-    }
-
-    // Borrar el usuario Better-Auth al final (si la fila aún existe).
+  for (const step of baCleanups) {
     try {
-      const userRes: { count: number; isDone: boolean; continueCursor: string } =
-        await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
-          input: {
-            model: "user",
-            where: [{ field: "email", value: args.email }],
-          },
-          paginationOpts: { numItems: 5, cursor: null },
-        });
-      baStats.user = userRes.count;
+      const count = await deleteAllBetterAuth(ctx, step.model, step.where);
+      (baStats[step.key] as number) = count;
     } catch (err) {
-      const msg = `BA[user]: ${err instanceof Error ? err.message : String(err)}`;
+      const msg = `BA[${step.model}]: ${err instanceof Error ? err.message : String(err)}`;
       console.error(`[deleteUserByEmail] ${msg}`);
       baStats.errors.push(msg);
     }
+  }
 
-    // R2: borrar avatar si tenía.
-    let r2Status: "skipped" | "deleted" | "error" = "skipped";
-    let r2Error: string | null = null;
-    if (avatarKey) {
-      try {
-        const client = r2Client();
-        await client.send(
-          new DeleteObjectCommand({ Bucket: r2Bucket(), Key: avatarKey }),
-        );
-        r2Status = "deleted";
-      } catch (err) {
-        r2Status = "error";
-        r2Error = err instanceof Error ? err.message : String(err);
-        console.error(`[deleteUserByEmail] R2[${avatarKey}]: ${r2Error}`);
-      }
+  // Borrar el usuario Better-Auth al final (si la fila aún existe).
+  try {
+    const userRes: { count: number; isDone: boolean; continueCursor: string } =
+      await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+        input: {
+          model: "user",
+          where: [{ field: "email", value: email }],
+        },
+        paginationOpts: { numItems: 5, cursor: null },
+      });
+    baStats.user = userRes.count;
+  } catch (err) {
+    const msg = `BA[user]: ${err instanceof Error ? err.message : String(err)}`;
+    console.error(`[deleteUserByEmail] ${msg}`);
+    baStats.errors.push(msg);
+  }
+
+  // R2: borrar avatar si tenía.
+  let r2Status: "skipped" | "deleted" | "error" = "skipped";
+  let r2Error: string | null = null;
+  if (avatarKey) {
+    try {
+      const client = r2Client();
+      await client.send(
+        new DeleteObjectCommand({ Bucket: r2Bucket(), Key: avatarKey }),
+      );
+      r2Status = "deleted";
+    } catch (err) {
+      r2Status = "error";
+      r2Error = err instanceof Error ? err.message : String(err);
+      console.error(`[deleteUserByEmail] R2[${avatarKey}]: ${r2Error}`);
     }
+  }
 
-    const summary: RunSummary = {
-      email: args.email,
-      userId,
-      externalId,
-      convex: stats,
-      betterAuth: baStats,
-      r2: { status: r2Status, key: avatarKey, error: r2Error },
-    };
-    console.info("[deleteUserByEmail] resumen", summary);
-    return summary;
-  },
+  const summary: RunSummary = {
+    email,
+    userId,
+    externalId,
+    convex: stats,
+    betterAuth: baStats,
+    r2: { status: r2Status, key: avatarKey, error: r2Error },
+  };
+  console.info("[deleteUser] resumen", summary);
+  return summary;
+}
+
+/**
+ * Entrada por CLI/dashboard. Sigue aceptando email para no romper el uso
+ * documentado en la cabecera de este archivo.
+ */
+export const run = internalAction({
+  args: { email: v.string() },
+  handler: async (ctx, args): Promise<RunSummary> =>
+    purgeUser(ctx, { email: args.email }),
 });

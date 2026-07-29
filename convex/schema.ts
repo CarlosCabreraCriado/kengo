@@ -590,6 +590,31 @@ export default defineSchema({
     intentos_fallidos: v.number(),
   }).index("by_userId", ["userId"]),
 
+  // === CONSENTIMIENTOS (RGPD) ===
+  // Prueba del consentimiento prestado por el usuario. Sin este registro, la
+  // casilla del formulario es cosmética: el art. 7.1 RGPD exige poder
+  // *demostrar* que el interesado consintió, y el 9.2.a) exige que para datos
+  // de salud ese consentimiento sea explícito.
+  //
+  // `version` guarda la versión del texto aceptado (`LEGAL_DOCS[...].version`
+  // en `@kengo/legal`). Al publicar una revisión sustancial se sube la versión
+  // y se puede exigir un nuevo consentimiento comparando contra este registro.
+  consents: defineTable({
+    userId: v.id("users"),
+    tipo: v.union(
+      // Términos y condiciones + política de privacidad.
+      v.literal("terminos_privacidad"),
+      // Tratamiento de datos de salud (categoría especial, art. 9 RGPD).
+      v.literal("datos_salud"),
+    ),
+    version: v.string(),
+    aceptadoEn: v.number(),
+    /** Dónde se prestó: registro, invitación, re-consentimiento en la app. */
+    origen: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_tipo", ["userId", "tipo"]),
+
   // === MENSAJERÍA (chat 1-1 fisio↔paciente dentro de una clínica) ===
   // Cuando uno de los dos participantes pierde la membresía de la clínica,
   // las cascadas en `clinicMemberships.remove`/`expelPatient`/`expelMember`
