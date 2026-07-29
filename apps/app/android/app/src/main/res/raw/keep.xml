@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  `@drawable/splash` solo se referencia dinámicamente: el plugin
+  @capacitor/splash-screen lo resuelve con `getIdentifier()` a partir de
+  `androidSplashResourceName` (capacitor.config.ts), no desde ningún XML.
+  Con `shrinkResources true` en el build release el shrinker no puede verlo y
+  lo eliminaría, dejando el fallback del splash sin imagen.
+
+  `res/raw/` no lo toca @capacitor/assets.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/splash,@drawable/splash_icon" />

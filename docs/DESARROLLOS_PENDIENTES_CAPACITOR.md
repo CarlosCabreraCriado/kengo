@@ -33,8 +33,8 @@ Trabajo de código pendiente para que la app se sienta nativa, no como web embeb
   `StatusBar.setBackgroundColor({ color })` debe llamarse cuando `ThemeService` cambie el primario para que la barra de sistema acompañe al color de la clínica activa.
   **Áreas a tocar**: `apps/app/src/app/core/theme/theme.service.ts` debe exponer un `effect` que en native invoque `StatusBar.setBackgroundColor(this.primaryColor())`.
 
-- [ ] **A4. Banner offline con `@capacitor/network`**
-  El plugin está instalado pero no hay listener ni componente. Diseñar un `Ui2OfflineBannerComponent` que escuche `Network.addListener('networkStatusChange', ...)` y muestre un banner persistente cuando `connected=false`.
+- [x] **A4. Banner offline con `@capacitor/network`** — *hecho*
+  Verificado en dispositivo (2026-07-29): con el A90 sin red, la app muestra el banner "Sin conexión" en la pantalla de login.
 
 - [ ] **A5. Pull-to-refresh en `mensajes` y `actividad-personal`**
   Patrón nativo esperado en mobile. Opciones:
@@ -45,16 +45,13 @@ Trabajo de código pendiente para que la app se sienta nativa, no como web embeb
 - [ ] **A6. Verificar conflicto de edge swipe back iOS con `onSwipe` del `ejercicio-activo`**
   iOS tiene gesto nativo de "swipe-back desde el borde" en WKWebView. El componente `ejercicio-activo.component.ts` define un `onSwipe` con `SwipeGesturesDirective`. Probar en device físico iOS y, si hay conflicto, deshabilitar el gesto nativo en esa ruta concreta vía `webView.allowsBackForwardNavigationGestures = false` (requiere bridge nativo o configuración Info.plist).
 
-- [ ] **A7. Iconos y splash propios con `@capacitor/assets`**
-  Los assets actuales son los placeholders de Capacitor. Pasos:
-  ```bash
-  npm install --save-dev @capacitor/assets
-  # Colocar fuentes vectoriales/PNG:
-  #   apps/app/assets/icon-only.png   (1024×1024)
-  #   apps/app/assets/splash.png      (2732×2732, fondo coral con logo centrado)
-  cd apps/app && npx capacitor-assets generate
-  ```
-  Coordinar con diseño para tener los PNGs definitivos.
+- [x] **A7. Iconos y splash propios con `@capacitor/assets`** — *hecho*
+  Assets de marca en `apps/app/assets/` y `npm run cap:assets` configurado. Dos correcciones aplicadas el 2026-07-29, ambas verificadas en un A90 (API 29) y un emulador (API 36):
+
+  1. **Icono del launcher**: faltaban `icon-foreground.png` e `icon-background.png`, así que el icono adaptativo de Android 8+ seguía siendo la X azul de Capacitor. Generados desde `logo.svg` (foreground) y con el degradado melocotón muestreado del icono existente (background).
+  2. **Splash achatado**: `windowSplashScreenAnimatedIcon` apuntaba a los `drawable*/splash.png` rectangulares y `core-splashscreen` los estira a una caja cuadrada de 288dp. Ahora apunta a `res/drawable/splash_icon.xml`, un vector cuadrado. Ver `apps/app/CLAUDE.md` y `CAPACITOR_NATIVE_APP.md` §3.8.
+
+  Pendiente menor: el splash nativo es blanco y el gate de sesión pinta cream — hay un salto de color perceptible en ambas plataformas. Decidido no tocarlo por ahora.
 
 ---
 

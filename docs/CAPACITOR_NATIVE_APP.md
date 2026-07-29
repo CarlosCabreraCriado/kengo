@@ -135,9 +135,17 @@ Las claves de `@capacitor/preferences` (`ba_cookie`, `ba_session_data`) se eligi
 ### 3.8 Splash screen y status bar
 
 En `AppComponent`:
-- **Splash**: `SplashScreen.hide({ fadeOutDuration: 200 })` se llama dentro de un `effect()` que reacciona a `sessionService.sesionInicializada()`. Esto evita el flash blanco mientras Better-Auth restaura la sesión y Convex carga el usuario.
+- **Splash**: `SplashScreen.hide({ fadeOutDuration: 250 })` se llama dentro de un `effect()` que reacciona a `sessionService.sesionInicializada()`. Esto evita el flash blanco mientras Better-Auth restaura la sesión y Convex carga el usuario. Ojo: ese `fadeOutDuration` **se ignora** en el splash de lanzamiento — el plugin usa `launchFadeOutDuration` (200 ms por defecto) y avisa por logcat si el parámetro difiere.
 - **Status bar**: `StatusBar.setStyle({ style: Style.Default })` al arrancar.
-- En `capacitor.config.ts`: `SplashScreen.launchAutoHide: false` para que el control quede en código TS, y `Keyboard.resize: 'body'` para que el teclado virtual no tape los inputs.
+- En `capacitor.config.ts`: `SplashScreen.launchAutoHide: false` para que el control quede en código TS, y `Keyboard.resize: 'native'` (el `KeyboardService` lo sobrescribe a `Body` en runtime para Android).
+
+**Quién dibuja el splash en Android** — conocimiento que se perdió una vez y costó un bug de logo achatado:
+
+`showOnLaunch()` del plugin llama **siempre** a `installSplashScreen()` de `androidx.core:core-splashscreen`, en todas las versiones de Android, y solo cae a su `ImageView` propio si eso lanza excepción. Consecuencias:
+
+- El primer frame lo gobierna el **tema** (`AppTheme.NoActionBarLaunch`: `windowSplashScreenBackground` + `windowSplashScreenAnimatedIcon`), no el plugin.
+- `androidSplashResourceName`, `androidScaleType: 'CENTER_CROP'`, `backgroundColor` y `showSpinner` **no se aplican** al splash de lanzamiento: son solo del camino de fallback y de `SplashScreen.show()` en runtime.
+- Hay dos rutas de render con la misma geometría: la plataforma en API 31+ y un `layer-list` de la librería en API 24-30. Ambas meten el icono en una caja **cuadrada** de 288dp recortada a un círculo de 192dp; la de API 24-30 además fija `width`/`height`, así que **estira** cualquier drawable que no sea cuadrado. De ahí que `windowSplashScreenAnimatedIcon` apunte a `@drawable/splash_icon` (vector cuadrado hecho a mano) y no a los `drawable*/splash.png` rectangulares de `@capacitor/assets`. Detalle completo en `apps/app/CLAUDE.md`.
 
 ### 3.9 Stripe Checkout/Portal con retorno deep link
 
@@ -352,17 +360,19 @@ El `<intent-filter android:autoVerify="true">` ya está en el manifest; sin el f
 
 ### 6.6 Iconos y splash de marca
 
-Los assets actuales son los placeholders de Capacitor. Para sustituirlos:
+Los assets de marca ya están en su sitio. Para regenerarlos:
 
 ```bash
-npm install --save-dev @capacitor/assets
-# Colocar fuentes:
-#   apps/app/assets/icon-only.png   (1024×1024)
-#   apps/app/assets/splash.png      (2732×2732)
-cd apps/app && npx capacitor-assets generate
+npm run cap:assets     # @capacitor/assets con los colores de marca
+npm run cap:sync       # propaga al proyecto Xcode/Android Studio
 ```
 
-Esto regenera todos los tamaños en `apps/app/ios/App/App/Assets.xcassets/` y `apps/app/android/app/src/main/res/`.
+Fuentes en `apps/app/assets/`: `icon-only.png` (1024×1024), `icon-foreground.png` + `icon-background.png` (icono adaptativo de Android) y `splash.png` (2732×2732). Esto regenera todos los tamaños en `apps/app/ios/App/App/Assets.xcassets/` y `apps/app/android/app/src/main/res/`.
+
+**Dos recursos NO los genera esta herramienta y hay que mantenerlos a mano:**
+
+- `res/drawable/splash_icon.xml` — el icono del splash de arranque de Android. Vector cuadrado; ver §3.8 y `apps/app/CLAUDE.md`.
+- `res/raw/keep.xml` — protege `@drawable/splash` del `shrinkResources` del build release, porque el plugin solo lo referencia dinámicamente por nombre.
 
 ### 6.7 Firma y publicación
 
