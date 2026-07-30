@@ -235,7 +235,7 @@ En **Test Information** rellena:
 - **What to Test**: describe los flujos críticos (registro fisio → crear plan → asignar a paciente → modo paciente → realizar sesión).
 - **App Description**: copy corto.
 - **Feedback Email**: tu email de soporte.
-- **Demo Account**: imprescindible. Crea un usuario fisio y un paciente en producción de Kengo solo para Apple ("apple-review@kengoapp.com" o similar) y pon credenciales aquí. Sin esto Apple rechaza la review.
+- **Demo Account**: imprescindible. **Ya está resuelto**: las cuentas `review-fisio@kengoapp.com` y `review-paciente@kengoapp.com` existen en producción desde el 2026-07-30, con una clínica de demostración sembrada. Credenciales y texto para el campo *Notes* en `docs/CUENTAS_REVISION_TIENDAS.md`. Sin esto Apple rechaza la review.
 
 ---
 

@@ -119,7 +119,11 @@ Obligatoria para la categoría Health & Fitness. Puntos clave:
 
 ## 5. Cuenta de prueba para la revisión
 
-Igual que en Apple (`docs/APP_STORE_CONNECT_COPY.md` §9.4), Play exige credenciales si la app requiere login. Reutilizar las mismas cuentas y describir en las notas cómo entrar en modo fisioterapeuta y en modo paciente.
+**Ya creadas y verificadas en producción (2026-07-30)**: `review-fisio@kengoapp.com` y `review-paciente@kengoapp.com`, ambas con login por email + contraseña.
+
+Todo lo necesario para rellenar *Política → Contenido de la app → Acceso a la app* — credenciales, texto listo para pegar, inventario de los datos sembrados y las precauciones de mantenimiento — está en **`docs/CUENTAS_REVISION_TIENDAS.md`**, que es el documento único para Play y para App Store.
+
+> Dato relevante para este formulario: Play avisa de que sus revisores no pueden recibir códigos de un solo uso. No aplica aquí — Better-Auth está configurado sin verificación de email, así que estas cuentas entran solo con usuario y contraseña.
 
 ---
 

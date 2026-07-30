@@ -182,7 +182,7 @@ Tus datos viven cifrados en tránsito y en reposo. Cada acceso a información cl
 ¿Eres fisioterapeuta y quieres probar Kengo? Regístrate y crea tu primera clínica en menos de un minuto.
 ¿Eres paciente? Pide a tu fisio un código de invitación para empezar.
 
-Soporte: hola@kengoapp.com
+Soporte: info@kengoapp.com
 Web: https://kengoapp.com
 ```
 
@@ -285,7 +285,7 @@ Mejoras:
 Correcciones:
 • [bug corregido]
 
-Gracias por usar Kengo. Tu feedback en hola@kengoapp.com nos hace mejorar.
+Gracias por usar Kengo. Tu feedback en info@kengoapp.com nos hace mejorar.
 ```
 
 ---
@@ -309,12 +309,12 @@ Para empezar:
 • Si eres fisioterapeuta: regístrate y crea tu clínica.
 • Si eres paciente: usa el código de invitación que te dará tu fisio.
 
-Cualquier problema o sugerencia: hola@kengoapp.com.
+Cualquier problema o sugerencia: info@kengoapp.com.
 ```
 
 ### 9.2 Test Information → Feedback Email
 
-`hola@kengoapp.com` (o el alias real que vayáis a monitorizar). Apple muestra este email al tester para mandar feedback.
+`info@kengoapp.com` (o el alias real que vayáis a monitorizar). Apple muestra este email al tester para mandar feedback.
 
 ### 9.3 Test Information → Marketing URL & Privacy Policy URL
 
@@ -324,23 +324,16 @@ Mismas que en §6. Apple las exige también en TestFlight externo.
 
 > Si pides revisión externa de Apple y tu app requiere login, **debes** dar credenciales operativas. Sin esto, rechazo automático.
 
-Crear dos cuentas reales en producción:
+**Ya están creadas y verificadas en producción (2026-07-30).** Las credenciales, el texto exacto para el campo **Notes** y el inventario de los datos sembrados viven en **`docs/CUENTAS_REVISION_TIENDAS.md`**, que es el documento único para Apple y Google:
 
 ```
-Modo fisioterapeuta:
-  Usuario: apple-review-fisio@kengoapp.com
-  Contraseña: [generar password fuerte y guardar en 1Password]
-
-Modo paciente:
-  Usuario: apple-review-paciente@kengoapp.com
-  Contraseña: [generar password fuerte y guardar en 1Password]
+Modo fisioterapeuta:  review-fisio@kengoapp.com
+Modo paciente:        review-paciente@kengoapp.com
 ```
 
-Rellenar el campo **Sign-in required** = Yes y poner las credenciales del modo fisio (es el caso completo). Añadir nota en **Notes**:
+Las contraseñas están en el gestor de contraseñas, nunca en el repositorio. Rellenar **Sign-in required** = Yes con la cuenta de fisio, que es el caso completo.
 
-```
-Para revisar el modo paciente, la cuenta fisio tiene un paciente vinculado con email apple-review-paciente@kengoapp.com (mismo password). El switcher de clínica está en el menú lateral. Para acceso completo, usar el código de invitación KENGO-DEMO en pantalla de registro.
-```
+> Correcciones respecto a versiones anteriores de este documento: los emails ya no son `apple-review-*` (se unificaron para servir también a Google), y **no existe ningún código de invitación `KENGO-DEMO`** — `accessCodes.mutations.create` genera códigos aleatorios de 8 caracteres, de un solo uso y caducidad de 30 días, así que no se puede fijar uno a mano ni entregárselo a un revisor.
 
 ### 9.5 Per-build → "What to Test" (max 4000, por build)
 
@@ -360,9 +353,11 @@ Flujos críticos a validar:
 6. Realización de una sesión guiada completa (vídeo + series + descanso).
 7. Registro de feedback de dolor tras la sesión.
 8. Recepción de push notification (asegúrate de aceptar permisos al iniciar).
-9. Compra de suscripción de clínica (Stripe en navegador externo, vuelta a la app).
+9. Pantalla de suscripción de la clínica: muestra el estado del plan y la nota
+   de gestión desde la versión web (en la app no hay compra — los CTAs de pago
+   están ocultos en builds nativos por política de las tiendas).
 
-Si algo no funciona como esperas, mándanos un email a hola@kengoapp.com con el flujo que probabas y, si puedes, una captura.
+Si algo no funciona como esperas, mándanos un email a info@kengoapp.com con el flujo que probabas y, si puedes, una captura.
 ```
 
 ---
@@ -409,8 +404,8 @@ App Preview (vídeos): opcional. Si lo añades, formato 1080×1920 vertical, 15-
 - [ ] Copyright = `© 2026 Kengo`.
 - [ ] Release Notes v1.0.0 pegadas.
 - [ ] Beta App Description pegada (TestFlight).
-- [ ] Feedback Email = `hola@kengoapp.com`.
-- [ ] Demo accounts creadas en producción.
+- [ ] Feedback Email = `info@kengoapp.com`.
+- [x] Demo accounts creadas en producción (2026-07-30) — ver `docs/CUENTAS_REVISION_TIENDAS.md`.
 - [ ] Mínimo 1 screenshot 6.9" subido (recomendado 5-7).
 - [ ] Build subida y procesada (ver `docs/SETUP_TESTFLIGHT.md`).
 
