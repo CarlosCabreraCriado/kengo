@@ -79,3 +79,17 @@ export function limitePacientesParaFisios(
 export function requiereContactoVentas(n: number): boolean {
   return n > LIMITE_FISIOS_AUTOSERVICIO;
 }
+
+/**
+ * ¿Excede la clínica el cap de pacientes de la variante base?
+ * Guard compartido por `setPlanVariante` y `createCheckoutSession` para
+ * impedir contratar/volver a base con más pacientes vinculados que el cap.
+ * `limite === null` (enterprise, fuera de tramo) nunca excede.
+ */
+export function excedeCapBase(
+  nFisios: number,
+  nPacientes: number,
+): { excede: boolean; limite: number | null } {
+  const limite = limitePacientesParaFisios(nFisios, "base");
+  return { excede: limite !== null && nPacientes > limite, limite };
+}

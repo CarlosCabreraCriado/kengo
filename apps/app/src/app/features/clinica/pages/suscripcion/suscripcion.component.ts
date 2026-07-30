@@ -15,6 +15,7 @@ import { SubscriptionService } from '../../../../core/billing/subscription.servi
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
+import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { PricingCardsComponent } from '../../components/pricing-cards/pricing-cards.component';
 import {
@@ -27,8 +28,10 @@ import {
   Ui2PillComponent,
   Ui2ProgressBarComponent,
   Ui2SectionLabelComponent,
+  Ui2SegmentedComponent,
   Ui2SpinnerComponent,
   Ui2PillVariant,
+  type Ui2SegmentedOption,
 } from '../../../../shared/ui-v2';
 import { api } from '../../../../../../../../convex/_generated/api';
 
@@ -36,6 +39,7 @@ import type {
   InvoiceEstado,
   InvoiceItem,
   PlanInfo,
+  PlanVariante,
   SubscriptionEstado,
 } from '@kengo/shared-models';
 
@@ -91,6 +95,7 @@ const INVOICE_ESTADO_VM: Record<InvoiceEstado, InvoiceEstadoVm> = {
     Ui2PillComponent,
     Ui2ProgressBarComponent,
     Ui2SectionLabelComponent,
+    Ui2SegmentedComponent,
     Ui2SpinnerComponent,
   ],
   templateUrl: './suscripcion.component.html',
@@ -102,6 +107,7 @@ export class SuscripcionComponent {
   private readonly router = inject(Router);
   private readonly convex = inject(ConvexService);
   private readonly dialogService = inject(DialogService);
+  private readonly toast = inject(ToastService);
   private readonly logger = inject(LoggerService);
   protected readonly subs = inject(SubscriptionService);
 
@@ -165,12 +171,59 @@ export class SuscripcionComponent {
   protected readonly pacientesVinculados = this.subs.pacientesVinculados;
   protected readonly capPacientesAlcanzado = this.subs.capPacientesAlcanzado;
 
-  /** Precio mensual del plan actual según la variante activa. */
-  protected readonly precioActualEur = computed<number>(() => {
-    const sub = this.suscripcion();
-    if (!sub) return 0;
-    return sub.precioMensualActualEur ?? this.precioDe(sub.plan);
+  /**
+   * Estados sin sub viva en los que el CTA principal crea una sub nueva
+   * (`mode: 'subscription'`). Solo aquí tiene sentido elegir variante antes
+   * del checkout; con sub viva el cambio va por la sección "Pacientes
+   * ilimitados" (`setPlanVariante`, con prorrateo).
+   */
+  protected readonly preCheckout = computed<boolean>(() => {
+    const estado = this.suscripcion()?.estado ?? 'none';
+    return (
+      estado === 'none' || estado === 'canceled' || estado === 'incomplete'
+    );
   });
+
+  /**
+   * Variante elegida en el segmented pre-checkout. `null` = seguir la
+   * persistida de la clínica (evita un effect de inicialización). Estado
+   * efímero de UI: no se persiste hasta que el owner lanza el checkout.
+   */
+  protected readonly varianteSeleccionada = signal<PlanVariante | null>(null);
+
+  /** Variante que reflejan las pricing-cards (y que irá al checkout). */
+  protected readonly varianteCards = computed<PlanVariante>(() =>
+    this.preCheckout()
+      ? (this.varianteSeleccionada() ?? this.variante())
+      : this.variante(),
+  );
+
+  protected readonly segmentedOptions = computed<Ui2SegmentedOption[]>(() => {
+    const limite = this.planActual()?.limitePacientes;
+    return [
+      { id: 'base', label: limite ? `Hasta ${limite} pacientes` : 'Plan base' },
+      { id: 'ilimitada', label: 'Pacientes ilimitados' },
+    ];
+  });
+
+  protected seleccionarVariante(id: string): void {
+    const variante = id as PlanVariante;
+    if (variante === 'base') {
+      const limite = this.planActual()?.limitePacientes ?? Infinity;
+      if (this.pacientesVinculados() > limite) {
+        this.toast.error(
+          `Tienes ${this.pacientesVinculados()} pacientes vinculados: el plan base admite ${limite}. Necesitas la variante ilimitada.`,
+        );
+        return;
+      }
+    }
+    this.varianteSeleccionada.set(variante);
+  }
+
+  /** Precio mensual del plan actual según la variante activa. */
+  protected readonly precioActualEur = computed<number>(
+    () => this.suscripcion()?.precioMensualActualEur ?? 0,
+  );
 
   /** Precio del plan actual en la OTRA variante (para el diálogo de cambio). */
   protected readonly precioOtraVarianteEur = computed<number>(() => {
@@ -290,7 +343,7 @@ export class SuscripcionComponent {
     // No usamos `abrirPortal` porque el Portal no permite re-suscribirse
     // desde cero a un customer cuya subscription terminó.
     if (estado === 'canceled') {
-      await this.subs.iniciarCheckout(id);
+      await this.subs.iniciarCheckout(id, this.varianteCards());
       return;
     }
     // Sub viva con cancelación programada (`active` o `trialing` con
@@ -303,12 +356,14 @@ export class SuscripcionComponent {
       await this.subs.reactivar(id);
       return;
     }
-    if (
-      estado === 'none' ||
-      estado === 'trialing' ||
-      estado === 'incomplete'
-    ) {
+    // `trialing` abre Checkout en `mode: 'setup'` (solo recoge el método de
+    // pago sobre la sub existente): la variante no aplica ahí.
+    if (estado === 'trialing') {
       await this.subs.iniciarCheckout(id);
+      return;
+    }
+    if (estado === 'none' || estado === 'incomplete') {
+      await this.subs.iniciarCheckout(id, this.varianteCards());
       return;
     }
     await this.subs.abrirPortal(id);

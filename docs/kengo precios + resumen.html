@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Kengo — Carrusel de precios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coral:#E65D3E;
+    --coral-dark:#C24A2F;
+    --peach:#F8D1BF;
+    --charcoal:#2B2620;
+    --cream:#FBFAF6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#e9e5db;
+    font-family:'Poppins', sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 12px 60px;
+    min-height:100vh;
+  }
+  .app-header{text-align:center; margin-bottom:22px; color:var(--charcoal);}
+  .app-header h1{font-size:20px; font-weight:700; letter-spacing:0.02em;}
+  .app-header p{font-size:13px; font-weight:400; opacity:0.6; margin-top:4px;}
+
+  /* the stage is the container every inner size is relative to (cqw = 1% of its width) */
+  .stage{
+    position:relative;
+    width:min(92vw, 480px);
+    aspect-ratio:1/1;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 24px 60px -20px rgba(43,38,32,0.45);
+    container-type: inline-size;
+    container-name: card;
+  }
+  .slide{
+    position:absolute;
+    inset:0;
+    width:100%; height:100%;
+    display:none;
+    flex-direction:column;
+    padding:7.4cqw;
+    color:var(--charcoal);
+    overflow:hidden;
+  }
+  .slide.active{display:flex;}
+
+  .eyebrow{
+    font-size:2.5cqw;
+    font-weight:600;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    opacity:0.65;
+    position:relative;
+    z-index:2;
+    padding-right:26cqw; /* keep clear of logo mark */
+  }
+
+  /* ---------- visual logo mark (badge + wordmark) ---------- */
+  .logo{
+    position:absolute;
+    top:6cqw; right:4cqw;
+    display:flex;
+    align-items:center;
+    z-index:3;
+  }
+  .logo-icon{
+    width:13cqw; height:13cqw;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:none;
+    color:var(--coral);
+  }
+  .logo-icon svg{width:100%; height:100%;}
+
+  /* ---------- energy wave signature (freedom / movement) ---------- */
+  .wave-burst{position:absolute; right:-16cqw; bottom:-16cqw; width:70cqw; height:70cqw; pointer-events:none; z-index:1;}
+  .wave-burst svg{width:100%; height:100%;}
+
+  /* ---------- Slide 1: cover ---------- */
+  #s1{background:var(--charcoal); color:var(--cream);}
+  #s1 .eyebrow{color:var(--peach); opacity:0.9;}
+  #s1 .logo-icon{color:var(--coral);}
+  #s1 .cover-headline{
+    margin-top:6cqw;
+    font-size:6.6cqw;
+    font-weight:800;
+    line-height:1.14;
+    max-width:88%;
+    position:relative;
+    z-index:2;
+  }
+  #s1 .cover-headline em{font-style:normal; color:var(--coral);}
+  #s1 .cover-sub{
+    margin-top:5cqw;
+    font-size:2.9cqw;
+    font-weight:400;
+    line-height:1.55;
+    max-width:76%;
+    opacity:0.85;
+    position:relative;
+    z-index:2;
+  }
+  .motion-streaks{position:absolute; inset:0; z-index:0;}
+  .cover-watermark{
+    position:absolute;
+    right:-14cqw; bottom:-10cqw;
+    width:62cqw; height:62cqw;
+    color:var(--coral);
+    opacity:0.16;
+    z-index:0;
+    pointer-events:none;
+  }
+  .cover-watermark svg{width:100%; height:100%;}
+
+  /* ---------- Slides 2–4: plans ---------- */
+  .plan-slide .eyebrow{color:var(--coral-dark);}
+  .plan-name{margin-top:3cqw; font-size:5.4cqw; font-weight:800; line-height:1.05; position:relative; z-index:2;}
+  .plan-tagline{
+    margin-top:2.2cqw;
+    font-size:2.5cqw;
+    font-weight:500;
+    opacity:0.72;
+    max-width:78%;
+    line-height:1.5;
+    position:relative;
+    z-index:2;
+  }
+
+  .team-row{
+    margin-top:5cqw;
+    display:flex;
+    align-items:center;
+    gap:2.4cqw;
+    position:relative;
+    z-index:2;
+  }
+  .team-dots{display:flex; gap:1cqw;}
+  .team-dots .p{width:2.6cqw; height:2.6cqw; border-radius:50%; background:var(--coral); flex:none;}
+  .team-label{font-size:2.5cqw; font-weight:600; opacity:0.8;}
+
+  .cap-row{
+    margin-top:3cqw;
+    font-size:2.5cqw;
+    font-weight:500;
+    opacity:0.6;
+    position:relative;
+    z-index:2;
+  }
+
+  .price-block{
+    margin-top:5.5cqw;
+    display:flex;
+    flex-direction:column;
+    gap:2.2cqw;
+    position:relative;
+    z-index:2;
+  }
+  .price-chip.primary{
+    display:flex;
+    align-items:baseline;
+    gap:2%;
+    padding:3cqw 4cqw;
+    border-radius:14px;
+    background:var(--charcoal);
+    color:var(--cream);
+  }
+  .price-chip.primary .amount{font-size:6.4cqw; font-weight:800; line-height:1;}
+  .price-chip.primary .per{font-size:2cqw; font-weight:600; opacity:0.65;}
+  .price-chip.primary .desc{
+    margin-left:auto;
+    font-size:2cqw;
+    font-weight:500;
+    text-align:right;
+    max-width:32%;
+    line-height:1.3;
+    opacity:0.8;
+  }
+
+  /* secondary = unlimited option, deliberately understated */
+  .price-chip.secondary{
+    display:flex;
+    align-items:center;
+    gap:1.6cqw;
+    padding:1.6cqw 3.4cqw;
+    border:1px dashed currentColor;
+    border-radius:999px;
+    opacity:0.55;
+    width:fit-content;
+  }
+  .price-chip.secondary .tag{font-size:2.1cqw; font-weight:600;}
+  .price-chip.secondary .val{font-size:2.3cqw; font-weight:700; margin-left:auto;}
+
+  .footnote{
+    margin-top:auto;
+    padding-top:3cqw;
+    font-size:2cqw;
+    font-weight:500;
+    opacity:0.5;
+    max-width:85%;
+    line-height:1.4;
+    position:relative;
+    z-index:2;
+  }
+
+  /* ---------- Slide 5B: comparison of all plans (organic, not a spec table) ---------- */
+  #s-compare{background:var(--cream);}
+  #s-compare .eyebrow{color:var(--coral-dark);}
+  #s-compare .logo-icon{color:var(--coral); z-index:4;}
+
+  .compare-title{
+    margin-top:3cqw;
+    font-size:4.2cqw;
+    font-weight:800;
+    line-height:1.22;
+    max-width:42cqw;
+    position:relative;
+    z-index:2;
+  }
+  .compare-title em{font-style:normal; color:var(--coral);}
+  .compare-sub{
+    margin-top:2cqw;
+    font-size:1.9cqw;
+    font-weight:500;
+    opacity:0.6;
+    max-width:40cqw;
+    line-height:1.5;
+    position:relative;
+    z-index:2;
+  }
+
+  .bubble{
+    position:absolute;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    box-shadow:0 10px 24px -12px rgba(43,38,32,0.25);
+  }
+  .bubble .b-persona{font-weight:500; opacity:0.75; line-height:1.3;}
+  .bubble .b-name{font-weight:800; line-height:1;}
+  .bubble .b-price{display:flex; align-items:baseline; gap:0.5cqw;}
+  .bubble .b-price .per{font-weight:600; opacity:0.65;}
+  .bubble .b-unlimited{
+    display:inline-flex;
+    align-items:center;
+    gap:0.6cqw;
+    border:1px dashed currentColor;
+    opacity:0.55;
+    border-radius:999px;
+    width:fit-content;
+  }
+  .bubble .b-unlimited span:last-child{font-weight:700;}
+
+  .bubble-lonely{
+    left:4cqw; top:70cqw; width:32cqw; height:22cqw;
+    padding:2.2cqw 2.6cqw;
+    border-radius:26px 26px 26px 6px;
+    background:rgba(230,93,62,0.09);
+    color:var(--charcoal);
+    transform:rotate(-2.5deg);
+    z-index:2;
+  }
+  .bubble-lonely .b-persona{font-size:1.5cqw; margin-bottom:0.5cqw;}
+  .bubble-lonely .b-name{font-size:2.8cqw; margin-bottom:1.2cqw;}
+  .bubble-lonely .b-price .amt{font-size:3.8cqw;}
+  .bubble-lonely .b-price .per{font-size:1.4cqw;}
+  .bubble-lonely .b-unlimited{margin-top:0.9cqw; padding:0.5cqw 1.2cqw; font-size:1.1cqw;}
+
+  .bubble-smart{
+    left:26cqw; top:38cqw; width:38cqw; height:30cqw;
+    padding:2.8cqw 3cqw;
+    border-radius:6px 26px 26px 26px;
+    background:var(--peach);
+    color:var(--charcoal);
+    transform:rotate(1.8deg);
+    z-index:2;
+  }
+  .bubble-smart .b-persona{font-size:1.7cqw; margin-bottom:0.6cqw;}
+  .bubble-smart .b-name{font-size:3.4cqw; margin-bottom:1.5cqw;}
+  .bubble-smart .b-price .amt{font-size:4.6cqw;}
+  .bubble-smart .b-price .per{font-size:1.6cqw;}
+  .bubble-smart .b-unlimited{margin-top:1.1cqw; padding:0.65cqw 1.4cqw; font-size:1.25cqw;}
+
+  .bubble-medium{
+    left:46cqw; top:2cqw; width:42cqw; height:34cqw;
+    padding:3.2cqw 3.4cqw;
+    border-radius:26px 26px 6px 26px;
+    background:var(--coral);
+    color:var(--cream);
+    transform:rotate(-1.2deg);
+    z-index:2;
+  }
+  .bubble-medium .b-persona{font-size:1.9cqw; margin-bottom:0.8cqw; opacity:0.85;}
+  .bubble-medium .b-name{font-size:4.2cqw; margin-bottom:1.8cqw;}
+  .bubble-medium .b-price .amt{font-size:5.6cqw;}
+  .bubble-medium .b-price .per{font-size:1.8cqw;}
+  .bubble-medium .b-unlimited{margin-top:1.4cqw; padding:0.8cqw 1.6cqw; font-size:1.4cqw;}
+
+  #s2{background:var(--cream);}
+  #s2 .logo-icon{color:var(--coral);}
+
+  #s3{background:var(--peach);}
+  #s3 .eyebrow{color:var(--coral-dark);}
+  #s3 .logo-icon{color:var(--coral);}
+
+  #s4{background:var(--coral); color:var(--cream);}
+  #s4 .eyebrow{color:var(--cream); opacity:0.75;}
+  #s4 .logo-icon{color:var(--cream);}
+  #s4 .team-dots .p{background:var(--cream);}
+  #s4 .price-chip.primary{background:var(--cream); color:var(--charcoal);}
+  #s4 .cap-row{opacity:0.75;}
+  #s4 .footnote{opacity:0.7;}
+
+  /* ---------- Slide 5: closing ---------- */
+  #s5{background:var(--charcoal); color:var(--cream); justify-content:center; align-items:center; text-align:center;}
+  #s5 .eyebrow{color:var(--peach); padding-right:0;}
+  #s5 .logo-icon{color:var(--coral);}
+  #s5 .closing-headline{margin-top:4cqw; font-size:6cqw; font-weight:800; line-height:1.15; position:relative; z-index:2;}
+  #s5 .closing-sub{margin-top:5cqw; font-size:2.8cqw; font-weight:400; opacity:0.8; max-width:78%; position:relative; z-index:2;}
+  #s5 .cta-pill{
+    margin-top:8cqw;
+    padding:2.6cqw 7cqw;
+    background:var(--coral);
+    border-radius:999px;
+    font-size:2.7cqw;
+    font-weight:700;
+    color:var(--cream);
+    position:relative;
+    z-index:2;
+  }
+
+  /* ---------- nav ---------- */
+  .nav{display:flex; align-items:center; gap:18px; margin-top:26px;}
+  .nav button{
+    background:var(--charcoal);
+    color:var(--cream);
+    border:none;
+    width:38px; height:38px;
+    border-radius:50%;
+    font-size:16px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform 0.15s ease, background 0.15s ease;
+  }
+  .nav button:hover{background:var(--coral);}
+  .nav button:active{transform:scale(0.92);}
+  .dots{display:flex; gap:8px;}
+  .dots span{
+    width:8px; height:8px;
+    border-radius:50%;
+    background:var(--charcoal);
+    opacity:0.25;
+    cursor:pointer;
+    transition:opacity 0.15s ease, transform 0.15s ease;
+  }
+  .dots span.active{opacity:1; transform:scale(1.25); background:var(--coral);}
+
+  .caption-note{
+    margin-top:20px;
+    max-width:min(92vw,480px);
+    font-size:12px;
+    color:var(--charcoal);
+    opacity:0.55;
+    text-align:center;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Kengo — Elige tu ritmo</h1>
+  <p>Carrusel de Instagram · 5 slides · 1080×1080</p>
+</div>
+
+<div class="stage">
+
+  <!-- SLIDE 1 — Portada -->
+  <div class="slide active" id="s1">
+    <div class="motion-streaks">
+      <svg viewBox="0 0 500 500" width="100%" height="100%" preserveAspectRatio="none">
+        <g stroke="#E65D3E" stroke-width="3" stroke-linecap="round" opacity="0.55">
+          <line x1="330" y1="0" x2="500" y2="170"/>
+          <line x1="380" y1="0" x2="500" y2="120"/>
+          <line x1="430" y1="0" x2="500" y2="70"/>
+        </g>
+        <g stroke="#F8D1BF" stroke-width="2" stroke-linecap="round" opacity="0.4">
+          <circle cx="420" cy="420" r="40" fill="none"/>
+          <circle cx="420" cy="420" r="75" fill="none"/>
+          <circle cx="420" cy="420" r="112" fill="none"/>
+        </g>
+      </svg>
+    </div>
+    <div class="cover-watermark">
+      <svg viewBox="0 0 595.28 595.28" fill="currentColor"><path d="M306.66,222.37h19.88c.91,0,1.65.74,1.65,1.65l-29.34,106.38h1.04c2.36-9.15,5.06-17.57,8.11-25.27,3.05-7.69,6.34-14.38,9.88-20.07,3.54-5.68,7.21-10.12,11.02-13.31,3.81-3.19,7.73-4.78,11.75-4.78,2.77,0,4.99,1.04,6.65,3.12,1.66,2.08,2.5,4.51,2.5,7.28,0,5.27-1.97,10.78-5.93,16.53-2.68,3.9-6.13,8.03-10.36,12.4-3.86,3.99-4.72,10.03-2.16,14.96l24.35,47.03c.63,1.21-.25,2.66-1.62,2.66h-18.79c-.67,0-1.29-.37-1.61-.96l-17.92-33.6c-3.88-7.28-3-16.19,2.24-22.57,1.64-1.99,3.12-3.85,4.45-5.55,3.39-4.37,6.03-8.07,7.9-11.13,1.87-3.05,3.15-5.44,3.85-7.17.69-1.73,1.04-3.15,1.04-4.26,0-2.77-1.04-4.16-3.12-4.16s-4.65,2.08-7.69,6.24c-3.05,4.16-6.27,10.12-9.67,17.88-3.4,7.76-6.76,17.16-10.09,28.18-3.21,10.62-6.09,22.5-8.66,35.64-.17.85-.91,1.48-1.78,1.48h-22.16c-1.01,0-1.82-.81-1.82-1.82l34.77-145.11c0-.91.74-1.65,1.65-1.65Z"/><circle cx="253.35" cy="358.93" r="13.97"/></svg>
+    </div>
+    <div class="eyebrow">Kengo</div>
+    <div class="cover-headline">Se acabó el reposo.<br>Ahora toca <em>moverte</em>.</div>
+    <div class="cover-sub">Kengo acompaña a fisios y clínicas dentro y fuera de la consulta — solos, en equipo pequeño o en equipo grande.</div>
+  </div>
+
+  <!-- SLIDE 2 — Lonely -->
+  <div class="slide plan-slide" id="s2">
+    <div class="wave-burst">
+      <svg viewBox="0 0 300 300">
+        <circle cx="230" cy="230" r="55" fill="none" stroke="#E65D3E" stroke-width="2.5" opacity="0.35"/>
+      </svg>
+    </div>
+    <div class="eyebrow">1 fisioterapeuta</div>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 595.28 595.28" fill="currentColor"><path d="M306.66,222.37h19.88c.91,0,1.65.74,1.65,1.65l-29.34,106.38h1.04c2.36-9.15,5.06-17.57,8.11-25.27,3.05-7.69,6.34-14.38,9.88-20.07,3.54-5.68,7.21-10.12,11.02-13.31,3.81-3.19,7.73-4.78,11.75-4.78,2.77,0,4.99,1.04,6.65,3.12,1.66,2.08,2.5,4.51,2.5,7.28,0,5.27-1.97,10.78-5.93,16.53-2.68,3.9-6.13,8.03-10.36,12.4-3.86,3.99-4.72,10.03-2.16,14.96l24.35,47.03c.63,1.21-.25,2.66-1.62,2.66h-18.79c-.67,0-1.29-.37-1.61-.96l-17.92-33.6c-3.88-7.28-3-16.19,2.24-22.57,1.64-1.99,3.12-3.85,4.45-5.55,3.39-4.37,6.03-8.07,7.9-11.13,1.87-3.05,3.15-5.44,3.85-7.17.69-1.73,1.04-3.15,1.04-4.26,0-2.77-1.04-4.16-3.12-4.16s-4.65,2.08-7.69,6.24c-3.05,4.16-6.27,10.12-9.67,17.88-3.4,7.76-6.76,17.16-10.09,28.18-3.21,10.62-6.09,22.5-8.66,35.64-.17.85-.91,1.48-1.78,1.48h-22.16c-1.01,0-1.82-.81-1.82-1.82l34.77-145.11c0-.91.74-1.65,1.65-1.65Z"/><circle cx="253.35" cy="358.93" r="13.97"/></svg>
+      </div>
+    </div>
+    <div class="plan-name">Lonely</div>
+    <div class="plan-tagline">Para el fisio que vuela en solitario y quiere moverse con total libertad.</div>
+    <div class="team-row">
+      <div class="team-dots"><div class="p"></div></div>
+      <div class="team-label">1 licencia</div>
+    </div>
+    <div class="cap-row">Hasta 150 pacientes activos</div>
+    <div class="price-block">
+      <div class="price-chip primary">
+        <div class="amount">89€</div><div class="per">/mes</div>
+        <div class="desc">hasta 150 pacientes</div>
+      </div>
+      <div class="price-chip secondary">
+        <span class="tag">Pacientes ilimitados</span><span class="val">109€/mes</span>
+      </div>
+    </div>
+    <div class="footnote">Mismas herramientas de Kengo en todos los planes. La diferencia está en el tamaño de tu equipo.</div>
+  </div>
+
+  <!-- SLIDE 3 — Smart -->
+  <div class="slide plan-slide" id="s3">
+    <div class="wave-burst">
+      <svg viewBox="0 0 300 300">
+        <circle cx="230" cy="230" r="55" fill="none" stroke="#2B2620" stroke-opacity="0.2" stroke-width="2.5"/>
+        <circle cx="230" cy="230" r="90" fill="none" stroke="#E65D3E" stroke-opacity="0.35" stroke-width="2.5"/>
+      </svg>
+    </div>
+    <div class="eyebrow">2–4 fisioterapeutas</div>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 595.28 595.28" fill="currentColor"><path d="M306.66,222.37h19.88c.91,0,1.65.74,1.65,1.65l-29.34,106.38h1.04c2.36-9.15,5.06-17.57,8.11-25.27,3.05-7.69,6.34-14.38,9.88-20.07,3.54-5.68,7.21-10.12,11.02-13.31,3.81-3.19,7.73-4.78,11.75-4.78,2.77,0,4.99,1.04,6.65,3.12,1.66,2.08,2.5,4.51,2.5,7.28,0,5.27-1.97,10.78-5.93,16.53-2.68,3.9-6.13,8.03-10.36,12.4-3.86,3.99-4.72,10.03-2.16,14.96l24.35,47.03c.63,1.21-.25,2.66-1.62,2.66h-18.79c-.67,0-1.29-.37-1.61-.96l-17.92-33.6c-3.88-7.28-3-16.19,2.24-22.57,1.64-1.99,3.12-3.85,4.45-5.55,3.39-4.37,6.03-8.07,7.9-11.13,1.87-3.05,3.15-5.44,3.85-7.17.69-1.73,1.04-3.15,1.04-4.26,0-2.77-1.04-4.16-3.12-4.16s-4.65,2.08-7.69,6.24c-3.05,4.16-6.27,10.12-9.67,17.88-3.4,7.76-6.76,17.16-10.09,28.18-3.21,10.62-6.09,22.5-8.66,35.64-.17.85-.91,1.48-1.78,1.48h-22.16c-1.01,0-1.82-.81-1.82-1.82l34.77-145.11c0-.91.74-1.65,1.65-1.65Z"/><circle cx="253.35" cy="358.93" r="13.97"/></svg>
+      </div>
+    </div>
+    <div class="plan-name">Smart</div>
+    <div class="plan-tagline">Para equipos pequeños que empiezan a moverse en la misma dirección.</div>
+    <div class="team-row">
+      <div class="team-dots"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div></div>
+      <div class="team-label">2–4 licencias</div>
+    </div>
+    <div class="cap-row">Hasta 300 pacientes activos</div>
+    <div class="price-block">
+      <div class="price-chip primary">
+        <div class="amount">249€</div><div class="per">/mes</div>
+        <div class="desc">hasta 300 pacientes</div>
+      </div>
+      <div class="price-chip secondary">
+        <span class="tag">Pacientes ilimitados</span><span class="val">279€/mes</span>
+      </div>
+    </div>
+    <div class="footnote">Mismas herramientas de Kengo en todos los planes. La diferencia está en el tamaño de tu equipo.</div>
+  </div>
+
+  <!-- SLIDE 4 — Medium -->
+  <div class="slide plan-slide" id="s4">
+    <div class="wave-burst">
+      <svg viewBox="0 0 300 300">
+        <circle cx="230" cy="230" r="50" fill="none" stroke="#FBFAF6" stroke-opacity="0.25" stroke-width="2.5"/>
+        <circle cx="230" cy="230" r="85" fill="none" stroke="#FBFAF6" stroke-opacity="0.3" stroke-width="2.5"/>
+        <circle cx="230" cy="230" r="120" fill="none" stroke="#FBFAF6" stroke-opacity="0.4" stroke-width="2.5"/>
+      </svg>
+    </div>
+    <div class="eyebrow">5–9 fisioterapeutas</div>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 595.28 595.28" fill="currentColor"><path d="M306.66,222.37h19.88c.91,0,1.65.74,1.65,1.65l-29.34,106.38h1.04c2.36-9.15,5.06-17.57,8.11-25.27,3.05-7.69,6.34-14.38,9.88-20.07,3.54-5.68,7.21-10.12,11.02-13.31,3.81-3.19,7.73-4.78,11.75-4.78,2.77,0,4.99,1.04,6.65,3.12,1.66,2.08,2.5,4.51,2.5,7.28,0,5.27-1.97,10.78-5.93,16.53-2.68,3.9-6.13,8.03-10.36,12.4-3.86,3.99-4.72,10.03-2.16,14.96l24.35,47.03c.63,1.21-.25,2.66-1.62,2.66h-18.79c-.67,0-1.29-.37-1.61-.96l-17.92-33.6c-3.88-7.28-3-16.19,2.24-22.57,1.64-1.99,3.12-3.85,4.45-5.55,3.39-4.37,6.03-8.07,7.9-11.13,1.87-3.05,3.15-5.44,3.85-7.17.69-1.73,1.04-3.15,1.04-4.26,0-2.77-1.04-4.16-3.12-4.16s-4.65,2.08-7.69,6.24c-3.05,4.16-6.27,10.12-9.67,17.88-3.4,7.76-6.76,17.16-10.09,28.18-3.21,10.62-6.09,22.5-8.66,35.64-.17.85-.91,1.48-1.78,1.48h-22.16c-1.01,0-1.82-.81-1.82-1.82l34.77-145.11c0-.91.74-1.65,1.65-1.65Z"/><circle cx="253.35" cy="358.93" r="13.97"/></svg>
+      </div>
+    </div>
+    <div class="plan-name">Medium</div>
+    <div class="plan-tagline">Para equipos consolidados, listos para crecer sin fricción.</div>
+    <div class="team-row">
+      <div class="team-dots">
+        <div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div>
+        <div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div>
+      </div>
+      <div class="team-label">5–9 licencias</div>
+    </div>
+    <div class="cap-row">Hasta 500 pacientes activos</div>
+    <div class="price-block">
+      <div class="price-chip primary">
+        <div class="amount">449€</div><div class="per">/mes</div>
+        <div class="desc">hasta 500 pacientes</div>
+      </div>
+      <div class="price-chip secondary">
+        <span class="tag">Pacientes ilimitados</span><span class="val">489€/mes</span>
+      </div>
+    </div>
+    <div class="footnote">Mismas herramientas de Kengo en todos los planes. La diferencia está en el tamaño de tu equipo.</div>
+  </div>
+
+  <!-- SLIDE 5B — Comparativa de todos los planes -->
+  <div class="slide" id="s-compare">
+    <div class="eyebrow">Kengo</div>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 595.28 595.28" fill="currentColor"><path d="M306.66,222.37h19.88c.91,0,1.65.74,1.65,1.65l-29.34,106.38h1.04c2.36-9.15,5.06-17.57,8.11-25.27,3.05-7.69,6.34-14.38,9.88-20.07,3.54-5.68,7.21-10.12,11.02-13.31,3.81-3.19,7.73-4.78,11.75-4.78,2.77,0,4.99,1.04,6.65,3.12,1.66,2.08,2.5,4.51,2.5,7.28,0,5.27-1.97,10.78-5.93,16.53-2.68,3.9-6.13,8.03-10.36,12.4-3.86,3.99-4.72,10.03-2.16,14.96l24.35,47.03c.63,1.21-.25,2.66-1.62,2.66h-18.79c-.67,0-1.29-.37-1.61-.96l-17.92-33.6c-3.88-7.28-3-16.19,2.24-22.57,1.64-1.99,3.12-3.85,4.45-5.55,3.39-4.37,6.03-8.07,7.9-11.13,1.87-3.05,3.15-5.44,3.85-7.17.69-1.73,1.04-3.15,1.04-4.26,0-2.77-1.04-4.16-3.12-4.16s-4.65,2.08-7.69,6.24c-3.05,4.16-6.27,10.12-9.67,17.88-3.4,7.76-6.76,17.16-10.09,28.18-3.21,10.62-6.09,22.5-8.66,35.64-.17.85-.91,1.48-1.78,1.48h-22.16c-1.01,0-1.82-.81-1.82-1.82l34.77-145.11c0-.91.74-1.65,1.65-1.65Z"/><circle cx="253.35" cy="358.93" r="13.97"/></svg>
+      </div>
+    </div>
+    <div class="compare-title">No hay un tamaño único.<br>Hay <em>tu</em> tamaño.</div>
+    <div class="compare-sub">Da igual dónde estés hoy: aquí tienes tu sitio en Kengo.</div>
+
+    <div class="wave-burst">
+      <svg viewBox="0 0 300 300">
+        <circle cx="230" cy="230" r="45" fill="none" stroke="#E65D3E" stroke-opacity="0.3" stroke-width="2.5"/>
+        <circle cx="230" cy="230" r="80" fill="none" stroke="#2B2620" stroke-opacity="0.12" stroke-width="2.5"/>
+        <circle cx="230" cy="230" r="115" fill="none" stroke="#E65D3E" stroke-opacity="0.15" stroke-width="2.5"/>
+      </svg>
+    </div>
+
+    <div class="bubble bubble-lonely">
+      <div class="b-persona">Vuelas en solitario, a tu manera.</div>
+      <div class="b-name">Lonely</div>
+      <div class="b-price"><span class="amt">89€</span><span class="per">/mes</span></div>
+      <div class="b-unlimited"><span>Ilimitado</span><span>109€/mes</span></div>
+    </div>
+
+    <div class="bubble bubble-smart">
+      <div class="b-persona">Ya no vas solo/a: sois equipo.</div>
+      <div class="b-name">Smart</div>
+      <div class="b-price"><span class="amt">249€</span><span class="per">/mes</span></div>
+      <div class="b-unlimited"><span>Ilimitado</span><span>279€/mes</span></div>
+    </div>
+
+    <div class="bubble bubble-medium">
+      <div class="b-persona">Una clínica que no para de crecer.</div>
+      <div class="b-name">Medium</div>
+      <div class="b-price"><span class="amt">449€</span><span class="per">/mes</span></div>
+      <div class="b-unlimited"><span>Ilimitado</span><span>489€/mes</span></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 — Cierre / CTA -->
+  <div class="slide" id="s5">
+    <div class="wave-burst">
+      <svg viewBox="0 0 300 300" width="100%" height="100%">
+        <circle cx="230" cy="230" r="50" fill="none" stroke="#E65D3E" stroke-opacity="0.35" stroke-width="2.5"/>
+        <circle cx="230" cy="230" r="90" fill="none" stroke="#F8D1BF" stroke-opacity="0.3" stroke-width="2.5"/>
+        <circle cx="230" cy="230" r="130" fill="none" stroke="#F8D1BF" stroke-opacity="0.2" stroke-width="2.5"/>
+      </svg>
+    </div>
+    <div class="eyebrow">Kengo</div>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 595.28 595.28" fill="currentColor"><path d="M306.66,222.37h19.88c.91,0,1.65.74,1.65,1.65l-29.34,106.38h1.04c2.36-9.15,5.06-17.57,8.11-25.27,3.05-7.69,6.34-14.38,9.88-20.07,3.54-5.68,7.21-10.12,11.02-13.31,3.81-3.19,7.73-4.78,11.75-4.78,2.77,0,4.99,1.04,6.65,3.12,1.66,2.08,2.5,4.51,2.5,7.28,0,5.27-1.97,10.78-5.93,16.53-2.68,3.9-6.13,8.03-10.36,12.4-3.86,3.99-4.72,10.03-2.16,14.96l24.35,47.03c.63,1.21-.25,2.66-1.62,2.66h-18.79c-.67,0-1.29-.37-1.61-.96l-17.92-33.6c-3.88-7.28-3-16.19,2.24-22.57,1.64-1.99,3.12-3.85,4.45-5.55,3.39-4.37,6.03-8.07,7.9-11.13,1.87-3.05,3.15-5.44,3.85-7.17.69-1.73,1.04-3.15,1.04-4.26,0-2.77-1.04-4.16-3.12-4.16s-4.65,2.08-7.69,6.24c-3.05,4.16-6.27,10.12-9.67,17.88-3.4,7.76-6.76,17.16-10.09,28.18-3.21,10.62-6.09,22.5-8.66,35.64-.17.85-.91,1.48-1.78,1.48h-22.16c-1.01,0-1.82-.81-1.82-1.82l34.77-145.11c0-.91.74-1.65,1.65-1.65Z"/><circle cx="253.35" cy="358.93" r="13.97"/></svg>
+      </div>
+    </div>
+    <div class="closing-headline">Tu equipo.<br>Tu ritmo.<br>Tu Kengo.</div>
+    <div class="closing-sub">Cuéntanos cómo es tu clínica y te ayudamos a encontrar tu plan.</div>
+    <div class="cta-pill">Escríbenos →</div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Anterior">‹</button>
+  <div class="dots" id="dots"></div>
+  <button id="next" aria-label="Siguiente">›</button>
+</div>
+
+<div class="caption-note">
+  Vista previa a escala · cada slide está pensada como imagen cuadrada independiente de 1080×1080 px para el carrusel de Instagram.
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsContainer = document.getElementById('dots');
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('span');
+    if(i === 0) dot.classList.add('active');
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  });
+  const dots = Array.from(dotsContainer.children);
+
+  function goTo(i){
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = (i + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+  }
+
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowRight') goTo(current + 1);
+    if(e.key === 'ArrowLeft') goTo(current - 1);
+  });
+</script>
+
+</body>
+</html>

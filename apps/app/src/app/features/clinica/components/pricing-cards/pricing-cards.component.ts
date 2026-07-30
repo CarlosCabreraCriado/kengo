@@ -18,7 +18,12 @@ import type { PlanInfo, PlanVariante } from '@kengo/shared-models';
 interface PlanView {
   nombre: string;
   overline: string;
-  precioMensualEur: number;
+  /** Precio de la variante activa/seleccionada (el grande de la card). */
+  precioDestacadoEur: number;
+  /** Chip discreto con la OTRA variante. */
+  chipEtiqueta: string;
+  chipPrecioEur: number;
+  chipDetalle: string;
   rangoFisiosMax: number;
   destacado: boolean;
   features: string[];
@@ -97,11 +102,16 @@ export class PricingCardsComponent {
         featurePacientes,
         ...override.features.slice(1),
       ].filter(Boolean);
+      // El precio grande sigue a la variante activa; el chip punteado muestra
+      // siempre la otra, para que ambos precios sean visibles a la vez.
+      const esIlimitada = variante === 'ilimitada';
       return {
         nombre: p.nombre,
         overline: override.overline,
-        precioMensualEur:
-          variante === 'ilimitada' ? p.precioIlimitadoEur : p.precioBaseEur,
+        precioDestacadoEur: esIlimitada ? p.precioIlimitadoEur : p.precioBaseEur,
+        chipEtiqueta: esIlimitada ? 'Base' : 'Ilimitado',
+        chipPrecioEur: esIlimitada ? p.precioBaseEur : p.precioIlimitadoEur,
+        chipDetalle: esIlimitada ? `hasta ${p.limitePacientes} pacientes` : '',
         rangoFisiosMax: p.rangoFisiosMax,
         destacado: override.destacado,
         features,

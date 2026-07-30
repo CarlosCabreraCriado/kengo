@@ -249,8 +249,10 @@
       ></ui2-empty-state>
     }
 
-    <!-- Variante base/ilimitada — solo owner con plan autoservicio -->
-    @if (esOwner() && !requiereContactoVentas() && planActual(); as plan) {
+    <!-- Variante base/ilimitada — solo owner con sub viva y plan autoservicio.
+         En pre-checkout (none/canceled/incomplete) no hay sub que actualizar
+         en Stripe: la variante se elige con el segmented de las cards. -->
+    @if (esOwner() && !requiereContactoVentas() && !preCheckout() && planActual(); as plan) {
       <section class="flex flex-col gap-2">
         <ui2-section-label>Pacientes ilimitados</ui2-section-label>
         <ui2-card class="block" [padding]="16">
@@ -289,10 +291,21 @@
     <!-- Pricing cards -->
     <section class="flex flex-col gap-2">
       <ui2-section-label>Planes disponibles</ui2-section-label>
+      <!-- Selector de variante pre-checkout: define el precio destacado de
+           las cards y la variante que se envía al Checkout. Con sub viva el
+           cambio de variante vive en la sección "Pacientes ilimitados". -->
+      @if (esOwner() && preCheckout() && !requiereContactoVentas() && planActual()) {
+        <ui2-segmented
+          class="self-center my-1"
+          [options]="segmentedOptions()"
+          [value]="varianteCards()"
+          (valueChange)="seleccionarVariante($event)"
+        ></ui2-segmented>
+      }
       <app-pricing-cards
         [planes]="planes()"
         [planActualNombre]="planActual()?.nombre ?? null"
-        [variante]="variante()"
+        [variante]="varianteCards()"
         (contactarVentas)="abrirDialogContactarVentas()"
       ></app-pricing-cards>
     </section>

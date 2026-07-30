@@ -26,12 +26,6 @@ export interface PlanInfo {
   limitePacientes: number;
   rangoFisiosMin: number;
   rangoFisiosMax: number;
-  /**
-   * Compat transitoria: precio que renderizaba el frontend antiguo. El
-   * backend lo rellena (base para `planes`, variante actual para `plan`)
-   * hasta completar el despliegue del pricing v2.
-   */
-  precioMensualEur?: number;
 }
 
 export interface ClinicSubscription {

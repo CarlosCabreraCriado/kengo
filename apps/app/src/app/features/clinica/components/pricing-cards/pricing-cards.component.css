@@ -232,6 +232,46 @@
   .pricing-card__period { font-size: 14px; }
 }
 
+/* ─────────────────  CHIP DE LA OTRA VARIANTE  ─────────────────
+   Pill punteada discreta (misma firma que el carrusel de marketing):
+   muestra siempre el precio de la variante no seleccionada. */
+
+.pricing-card__alt-chip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 5px 14px;
+  margin-top: 12px;
+  border: 1px dashed color-mix(in srgb, var(--ink-500) 55%, transparent);
+  border-radius: 9999px;
+  color: var(--ink-500);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.pricing-card__alt-tag {
+  font-weight: 600;
+}
+
+.pricing-card__alt-detail {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.pricing-card__alt-val {
+  font-weight: 700;
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pricing-card.is-popular .pricing-card__alt-chip {
+  border-color: color-mix(in srgb, var(--kengo-primary) 40%, transparent);
+  color: color-mix(in srgb, var(--kengo-primary) 70%, var(--ink-700));
+}
+
 /* ─────────────────────  HAIRLINE  ───────────────────── */
 
 .pricing-card__hairline {

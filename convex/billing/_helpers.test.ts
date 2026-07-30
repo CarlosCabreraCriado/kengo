@@ -15,6 +15,7 @@ import {
   precioParaFisios,
   limitePacientesParaFisios,
   requiereContactoVentas,
+  excedeCapBase,
 } from "./_helpers";
 
 function test(name: string, fn: () => void) {
@@ -110,4 +111,23 @@ test("limitePacientesParaFisios: fuera de tramo (enterprise) → null", () => {
 test("requiereContactoVentas: 9 no, 10 sí", () => {
   assert.equal(requiereContactoVentas(9), false);
   assert.equal(requiereContactoVentas(10), true);
+});
+
+// --- excedeCapBase ---
+
+test("excedeCapBase: en el límite exacto no excede", () => {
+  assert.deepEqual(excedeCapBase(1, 150), { excede: false, limite: 150 });
+  assert.deepEqual(excedeCapBase(4, 300), { excede: false, limite: 300 });
+  assert.deepEqual(excedeCapBase(9, 500), { excede: false, limite: 500 });
+});
+
+test("excedeCapBase: límite + 1 excede", () => {
+  assert.deepEqual(excedeCapBase(1, 151), { excede: true, limite: 150 });
+  assert.deepEqual(excedeCapBase(2, 301), { excede: true, limite: 300 });
+  assert.deepEqual(excedeCapBase(5, 501), { excede: true, limite: 500 });
+});
+
+test("excedeCapBase: fuera de tramo (enterprise) → limite null, nunca excede", () => {
+  assert.deepEqual(excedeCapBase(10, 9999), { excede: false, limite: null });
+  assert.deepEqual(excedeCapBase(0, 9999), { excede: false, limite: null });
 });

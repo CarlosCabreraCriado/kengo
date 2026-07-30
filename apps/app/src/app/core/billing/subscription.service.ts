@@ -176,19 +176,39 @@ export class SubscriptionService {
   private readonly _accionEnCurso = signal(false);
   public readonly accionEnCurso = this._accionEnCurso.asReadonly();
 
-  /** Inicia Checkout de Stripe y redirige al usuario. */
-  async iniciarCheckout(clinicId: string): Promise<void> {
+  /**
+   * Inicia Checkout de Stripe y redirige al usuario. `variante` solo se envía
+   * desde los estados pre-checkout (none/canceled/incomplete), donde el
+   * segmented de la pantalla permite elegir base vs ilimitado; en modo setup
+   * (trialing) el backend la ignoraría.
+   */
+  async iniciarCheckout(
+    clinicId: string,
+    variante?: PlanVariante,
+  ): Promise<void> {
     if (this._accionEnCurso()) return;
     this._accionEnCurso.set(true);
     try {
       const { url } = await this.convex.action(
         api.billing.actions.createCheckoutSession,
-        { clinicId: clinicId as never, returnTo: this.returnTo },
+        {
+          clinicId: clinicId as never,
+          returnTo: this.returnTo,
+          ...(variante ? { variante } : {}),
+        },
       );
       await this.externalBrowser.redirect(url);
     } catch (err) {
-      this.logger.error('[SubscriptionService] checkout', err);
-      this.toast.error('No se pudo iniciar el proceso de pago');
+      const code = (err as { data?: { code?: string } })?.data?.code;
+      if (code === 'PACIENTES_EXCEDEN_LIMITE') {
+        const data = (err as { data?: { limite?: number; pacientesActuales?: number } }).data;
+        this.toast.error(
+          `No puedes contratar el plan base: tienes ${data?.pacientesActuales ?? '?'} pacientes y el límite es ${data?.limite ?? '?'}`,
+        );
+      } else {
+        this.logger.error('[SubscriptionService] checkout', err);
+        this.toast.error('No se pudo iniciar el proceso de pago');
+      }
     } finally {
       this._accionEnCurso.set(false);
     }

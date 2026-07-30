@@ -30,8 +30,16 @@
 
       <div class="pricing-card__price">
         <span class="pricing-card__currency">€</span>
-        <span class="pricing-card__amount">{{ view.precioMensualEur | number:'1.0-0' }}</span>
+        <span class="pricing-card__amount">{{ view.precioDestacadoEur | number:'1.0-0' }}</span>
         <span class="pricing-card__period">/mes</span>
+      </div>
+
+      <div class="pricing-card__alt-chip">
+        <span class="pricing-card__alt-tag">{{ view.chipEtiqueta }}</span>
+        @if (view.chipDetalle) {
+          <span class="pricing-card__alt-detail">{{ view.chipDetalle }}</span>
+        }
+        <span class="pricing-card__alt-val">{{ view.chipPrecioEur | number:'1.0-0' }} €/mes</span>
       </div>
 
       <div class="pricing-card__hairline" aria-hidden="true"></div>

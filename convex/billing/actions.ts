@@ -8,7 +8,7 @@ import { internalAction, action, type ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import {
   planParaFisios,
-  limitePacientesParaFisios,
+  excedeCapBase,
   LIMITE_FISIOS_AUTOSERVICIO,
   type PlanVariante,
 } from "./_helpers";
@@ -69,17 +69,10 @@ function getEnv(name: string): string {
   return value;
 }
 
-/**
- * Price de Stripe para la variante de pricing de la clínica.
- *
- * Fallback transitorio: mientras dura la rotación de prices (pricing v2),
- * `STRIPE_PRICE_ID_BASE` puede no existir todavía en el entorno; en ese caso
- * usamos el `STRIPE_PRICE_ID` clásico. Eliminar el fallback (y la env var
- * vieja) cuando la migración esté completada.
- */
+/** Price de Stripe para la variante de pricing de la clínica. */
 function getPriceIdForVariante(variante: PlanVariante | undefined): string {
   if (variante === "ilimitada") return getEnv("STRIPE_PRICE_ID_ILIMITADO");
-  return process.env["STRIPE_PRICE_ID_BASE"] ?? getEnv("STRIPE_PRICE_ID");
+  return getEnv("STRIPE_PRICE_ID_BASE");
 }
 
 /**
@@ -399,10 +392,19 @@ export const createCheckoutSession = action({
      * `kengo://billing/return?status=...` para devolver el control a la app.
      */
     returnTo: v.optional(v.union(v.literal("native"), v.literal("web"))),
+    /**
+     * Variante elegida en la UI pre-checkout (none/canceled/incomplete). Solo
+     * aplica en `mode: 'subscription'`; en `mode: 'setup'` (trialing) se
+     * ignora — la sub S1 ya existe y su variante se cambia con
+     * `setPlanVariante`. Se persiste en `clinicBilling` antes de crear la
+     * sesión para que el webhook (`resolveVarianteFromPriceId`) y la etiqueta
+     * del customer queden coherentes con el price elegido.
+     */
+    variante: v.optional(v.union(v.literal("base"), v.literal("ilimitada"))),
   },
   handler: async (
     ctx,
-    { clinicId, returnTo = "web" },
+    { clinicId, returnTo = "web", variante: varianteArg },
   ): Promise<{ url: string }> => {
     const externalId = await requireExternalId(ctx);
     await ctx.runQuery(
@@ -443,8 +445,8 @@ export const createCheckoutSession = action({
     //     y la sub pasa a `active`. Una única sub durante toda la vida.
     //   - `canceled | none | incomplete`: necesitamos crear una nueva sub
     //     (Stripe no permite revivir una sub `canceled`). `mode:
-    //     'subscription'` crea S2 sin trial (el `STRIPE_PRICE_ID` no tiene
-    //     `trial_period_days` configurado a nivel de Price). El webhook
+    //     'subscription'` crea S2 sin trial (los prices v2 base/ilimitado no
+    //     tienen `trial_period_days` configurado a nivel de Price). El webhook
     //     persiste el `stripeSubscriptionId` nuevo en `clinicBilling`.
     //
     // Cumplimiento fiscal España (B2B), común a ambos modos:
@@ -462,18 +464,60 @@ export const createCheckoutSession = action({
     //     `startTrialForClinic`, así que la factura post-trial llevará IVA.
     const stripe = getStripeClient();
 
+    const estado = data.billing?.estadoLocal ?? "none";
+    const useSetupMode = estado === "trialing";
+
+    // Variante efectiva de la sesión. En modo setup (trialing) el arg se
+    // ignora: la S1 ya existe con su price y cambiarlo aquí puentearía el
+    // flujo `setPlanVariante` (proration). No lanzamos para no convertir en
+    // error una carrera benigna de UI (el estado cambió entre render y click).
+    const variantePersistida: PlanVariante = data.billing?.variante ?? "base";
+    const varianteEfectiva: PlanVariante = useSetupMode
+      ? variantePersistida
+      : (varianteArg ?? variantePersistida);
+    if (useSetupMode && varianteArg && varianteArg !== variantePersistida) {
+      console.warn(
+        `[billing] createCheckoutSession: variante '${varianteArg}' ignorada en modo setup (clinic=${clinicId})`,
+      );
+    }
+
+    // Mismo guard que `setPlanVariante`: no se puede contratar la variante
+    // base con más pacientes vinculados que su cap.
+    if (!useSetupMode && varianteEfectiva === "base") {
+      const { excede, limite } = excedeCapBase(
+        Math.max(1, data.cantidadFisios),
+        data.cantidadPacientes,
+      );
+      if (excede) {
+        throw new ConvexError({
+          code: "PACIENTES_EXCEDEN_LIMITE",
+          message: `No puedes contratar el plan base: tienes ${data.cantidadPacientes} pacientes y el límite es ${limite}.`,
+          limite,
+          pacientesActuales: data.cantidadPacientes,
+        });
+      }
+    }
+
+    // Persistir la variante elegida antes de crear la sesión: el webhook
+    // `checkout.session.completed` y `resolveVarianteFromPriceId` la
+    // reconfirmarán desde el priceId. Si el usuario abandona el Checkout la
+    // variante queda cambiada — aceptable en pre-checkout (la UI se
+    // inicializa desde ella).
+    if (!useSetupMode && varianteArg && varianteArg !== variantePersistida) {
+      await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
+        clinicId,
+        variante: varianteArg,
+      });
+    }
+
     // Sincroniza la etiqueta del tramo en el customer antes de abrir Checkout
     // para que aparezca en la factura siguiente.
-    const variante: PlanVariante = data.billing?.variante ?? "base";
     await syncStripeCustomerTierLabel(
       stripe,
       customerId,
       Math.max(1, data.cantidadFisios),
-      variante,
+      varianteEfectiva,
     );
-
-    const estado = data.billing?.estadoLocal ?? "none";
-    const useSetupMode = estado === "trialing";
 
     // H-2: en modo `subscription` (reactivar / none / canceled) evitamos crear
     // una segunda subscription mientras el customer tenga una viva en Stripe.
@@ -535,7 +579,7 @@ export const createCheckoutSession = action({
           customer: customerId,
           line_items: [
             {
-              price: getPriceIdForVariante(variante),
+              price: getPriceIdForVariante(varianteEfectiva),
               quantity: Math.max(1, data.cantidadFisios),
             },
           ],
@@ -719,11 +763,11 @@ export const setPlanVariante = action({
     if (varianteActual === variante) return { ok: true } as const;
 
     if (variante === "base") {
-      const limite = limitePacientesParaFisios(
+      const { excede, limite } = excedeCapBase(
         Math.max(1, data.cantidadFisios),
-        "base",
+        data.cantidadPacientes,
       );
-      if (limite !== null && data.cantidadPacientes > limite) {
+      if (excede) {
         throw new ConvexError({
           code: "PACIENTES_EXCEDEN_LIMITE",
           message: `No puedes volver al plan base: tienes ${data.cantidadPacientes} pacientes y el límite es ${limite}.`,
@@ -735,10 +779,18 @@ export const setPlanVariante = action({
 
     const localSubId = data.billing?.stripeSubscriptionId;
     const customerId = data.billing?.stripeCustomerId;
+    // Solo hay una sub que actualizar en Stripe si el estado local implica
+    // una sub viva. En `canceled`/`incomplete` el `stripeSubscriptionId`
+    // local puede apuntar a una sub muerta que Stripe rechazaría actualizar.
+    const estadoLocal = data.billing?.estadoLocal ?? "none";
+    const estadoConSubViva = !["none", "canceled", "incomplete"].includes(
+      estadoLocal,
+    );
 
-    // Sin subscription en Stripe (enterprise_pending / none): persistimos solo
-    // localmente; el próximo trial/checkout usará el price de esta variante.
-    if (localSubId && customerId) {
+    // Sin subscription viva en Stripe (enterprise_pending / none / canceled):
+    // persistimos solo localmente; el próximo trial/checkout usará el price
+    // de esta variante.
+    if (localSubId && customerId && estadoConSubViva) {
       const stripe = getStripeClient();
       const subId = await resolveActiveSubscriptionId(
         ctx,
