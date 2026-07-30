@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { LIMITE_FISIOS_AUTOSERVICIO } from "../billing/_helpers";
+import {
+  excedeCapacidadFisios,
+  excedeCapacidadPacientes,
+} from "../_helpers/capacity";
 
 // ─── RECOVERY CODES ───
 
@@ -206,24 +209,21 @@ export const createMembershipFromCode = internalMutation({
     // M-4: si el alta es de un fisio (asiento facturable), respetar el tope de
     // autoservicio. Enterprise se gestiona por ventas; no dejamos que un código
     // suba la cantidad por encima del límite (que Stripe no podría facturar
-    // correctamente). Los pacientes no cuentan.
+    // correctamente). Si es de paciente, respetar el cap de pacientes de la
+    // variante base. Este flujo no puede lanzar (el registro ya se completó),
+    // así que el alta simplemente no se vincula y se registra el motivo.
     if (puesto === "fisio") {
-      const facturablesActuales = (
-        await ctx.db
-          .query("clinicMemberships")
-          .withIndex("by_clinicId", (q) =>
-            q.eq("clinicId", codeDoc.clinicId),
-          )
-          .collect()
-      ).filter(
-        (m) => m.puesto === "fisio" || m.puesto === "admin",
-      ).length;
-      if (facturablesActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
+      if (await excedeCapacidadFisios(ctx, codeDoc.clinicId)) {
         console.error(
-          `[Auth] Alta de fisio bloqueada por tope de autoservicio (clinic=${codeDoc.clinicId}, actuales=${facturablesActuales})`,
+          `[Auth] Alta de fisio bloqueada por tope de autoservicio (clinic=${codeDoc.clinicId})`,
         );
         return null;
       }
+    } else if (await excedeCapacidadPacientes(ctx, codeDoc.clinicId)) {
+      console.error(
+        `[Auth] Alta de paciente bloqueada por cap del plan (clinic=${codeDoc.clinicId})`,
+      );
+      return null;
     }
 
     // Crear membresía. Los fisios actúan también como sus propios pacientes.

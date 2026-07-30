@@ -665,7 +665,7 @@ export default defineSchema({
       v.literal("incomplete"),
       v.literal("unpaid"),
       v.literal("none"),
-      // Clínica enterprise (>10 fisios) pendiente de acuerdo con ventas: opera
+      // Clínica enterprise (>9 fisios) pendiente de acuerdo con ventas: opera
       // con normalidad (no bloqueada) mientras se cierra el contrato. Ver B-9.
       v.literal("enterprise_pending"),
     ),
@@ -676,6 +676,9 @@ export default defineSchema({
     cancelAtPeriodEnd: v.optional(v.boolean()),
     graceUntil: v.optional(v.number()),
     cantidadFisios: v.optional(v.number()),
+    // Variante de pricing: "base" (con cap de pacientes) o "ilimitada".
+    // Ausente = "base" (clínicas anteriores a la introducción del campo).
+    variante: v.optional(v.union(v.literal("base"), v.literal("ilimitada"))),
     requiereContactoVentas: v.optional(v.boolean()),
     // Timestamp del último evento Stripe aplicado (en ms). Sirve para descartar
     // eventos que llegan fuera de orden — si recibimos uno con `event.created`

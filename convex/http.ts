@@ -3,7 +3,10 @@ import { httpAction } from "./_generated/server";
 import { internal, components } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { registerRoutes as registerStripeRoutes } from "@convex-dev/stripe";
-import { resolveInvoiceSubscriptionId } from "./billing/_webhookHelpers";
+import {
+  resolveInvoiceSubscriptionId,
+  resolveVarianteFromPriceId,
+} from "./billing/_webhookHelpers";
 import {
   authComponent,
   createAuth,
@@ -108,6 +111,13 @@ registerStripeRoutes(http, components.stripe, {
           if (!clinicId) break;
           const sub = event.data.object;
           const item = sub.items.data[0];
+          // Variante derivada del price del item. `undefined` (price antiguo o
+          // env vars sin configurar) significa "no tocar el valor persistido".
+          const variante = resolveVarianteFromPriceId(
+            item?.price?.id,
+            process.env["STRIPE_PRICE_ID_BASE"],
+            process.env["STRIPE_PRICE_ID_ILIMITADO"],
+          );
           await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
             clinicId,
             status: sub.status,
@@ -117,6 +127,7 @@ registerStripeRoutes(http, components.stripe, {
               : undefined,
             cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
             quantity: item?.quantity,
+            variante,
             eventCreatedMs,
             stripeSubscriptionId: eventSubscriptionId,
           });

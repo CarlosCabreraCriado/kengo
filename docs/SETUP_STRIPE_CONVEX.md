@@ -41,31 +41,52 @@ Abre https://dashboard.stripe.com y mira el toggle superior derecho:
 
 ---
 
-## 3. Crear el Price tiered
+## 3. Crear los Prices tiered (pricing v2: base + ilimitado)
 
-Bajo el producto, sección **"Pricing"**:
+> ⚠️ **Pricing v2 (2026-07)**: hay **DOS prices** sobre el mismo producto — "base"
+> (con cap de pacientes por plan) e "ilimitado". Ambos tiered/volume con quantity
+> = nº de fisios. El pricing original de un solo price (65/170/280) quedó
+> archivado tras la migración (`billing.actions.migrateSubscriptionsToPricingV2`).
+
+Bajo el producto, sección **"Pricing"**, crea **dos prices** con la misma mecánica:
 
 1. **Pricing model**: **Tiered pricing** (puede estar oculto detrás de "More pricing models").
 2. **Type**: `Recurring`
 3. **Billing period**: `Monthly`
 4. **Currency**: `EUR (€)`
 5. **Tiering mode**: **Volume** (no "Graduated").
-6. **Tiers** — exactamente 3 filas:
+6. **Tiers** — 4 filas por price ("Per unit" siempre `0,00`; el precio va en **Flat fee**):
 
-   | First unit | Last unit | Per unit | Flat fee |
-   |---|---|---|---|
-   | 1 | 1 | `0,00` | **`65,00`** |
-   | 2 | 4 | `0,00` | **`170,00`** |
-   | 5 | 10 | `0,00` | **`280,00`** |
+   **Price BASE** (nickname sugerido: `Kengo Base 2026`) — va a `STRIPE_PRICE_ID_BASE`:
 
-   ⚠️ El "Per unit" siempre `0`. El precio total va en **"Flat fee"** porque queremos un precio fijo por banda.
+   | First unit | Last unit | Per unit | Flat fee | Plan |
+   |---|---|---|---|---|
+   | 1 | 1 | `0,00` | **`89,00`** | Lonely |
+   | 2 | 4 | `0,00` | **`249,00`** | Smart |
+   | 5 | 9 | `0,00` | **`449,00`** | Medium |
+   | 10 | ∞ | `0,00` | **`449,00`** | (guardarraíl) |
 
-   ⚠️ El último tier **debe terminar en 10**, no en `∞`. Los planes con >10 fisios siguen un flujo "Contactar ventas" — la lógica de la app lo gestiona, pero si dejas el último tier abierto Stripe cobraría 280 € también a clínicas grandes.
+   **Price ILIMITADO** (nickname sugerido: `Kengo Ilimitado 2026`) — va a `STRIPE_PRICE_ID_ILIMITADO`:
 
-7. **Save product**.
-8. Tras guardar, copia el `priceId`:
-   - Producto → sección "Pricing" → clica el price → la URL muestra `price_1XxxxYyyyy...`.
-   - 📝 Apúntalo. Va a `STRIPE_PRICE_ID`.
+   | First unit | Last unit | Per unit | Flat fee | Plan |
+   |---|---|---|---|---|
+   | 1 | 1 | `0,00` | **`109,00`** | Lonely Ilimitado |
+   | 2 | 4 | `0,00` | **`279,00`** | Smart Ilimitado |
+   | 5 | 9 | `0,00` | **`489,00`** | Medium Ilimitado |
+   | 10 | ∞ | `0,00` | **`489,00`** | (guardarraíl) |
+
+   ⚠️ El tramo final `10 → ∞` lleva **flat = precio Medium**, NUNCA un per-unit:
+   evita la anomalía M-8 del price antiguo (11 fisios a 25 €/unit = 275 € < 280 €).
+   Los >9 fisios son enterprise ("Contactar ventas") y el código no empuja
+   quantity >9 a Stripe; el tramo es solo un guardarraíl.
+
+   ⚠️ Replica el `tax_behavior` del price antiguo (verificar con
+   `stripe prices retrieve <price_viejo>`) — con `automatic_tax` habilitado suele
+   ser `exclusive`.
+
+7. **Save**.
+8. Tras guardar, copia ambos `priceId` (`price_1Xxxx...`):
+   - 📝 El del base va a `STRIPE_PRICE_ID_BASE`; el del ilimitado a `STRIPE_PRICE_ID_ILIMITADO`.
 
 ---
 
@@ -123,17 +144,23 @@ El proyecto es Convex self-hosted en Railway, así que las env vars se gestionan
 
 1. https://railway.app/dashboard → proyecto Kengo → servicio que corre Convex (suele llamarse `convex` o `backend`).
 2. Pestaña **Variables** → **+ New Variable**.
-3. Añade estas 7:
+3. Añade estas 8:
 
    | Variable | Valor | Notas |
    |---|---|---|
    | `STRIPE_SECRET_KEY` | `sk_test_...` (o `sk_live_...`) | Paso 6 |
    | `STRIPE_WEBHOOK_SECRET` | `whsec_...` | Paso 5 |
-   | `STRIPE_PRICE_ID` | `price_1...` | Paso 3 |
+   | `STRIPE_PRICE_ID_BASE` | `price_1...` | Paso 3 — price base (89/249/449) |
+   | `STRIPE_PRICE_ID_ILIMITADO` | `price_1...` | Paso 3 — price ilimitado (109/279/489) |
    | `STRIPE_TRIAL_DAYS` | `14` | Días de trial gratuitos al crear clínica |
    | `STRIPE_GRACE_PERIOD_DAYS` | `7` | Días tras impago antes de bloquear el acceso |
    | `KENGO_APP_URL` | `https://kengoapp.com` (prod) o `http://localhost:4200` (dev) | URL base usada en `successUrl`/`cancelUrl` de Stripe Checkout |
-   | `SALES_EMAIL` | email del equipo que atiende casos enterprise (+10 fisios) | Recibe el formulario "Contactar ventas" |
+   | `SALES_EMAIL` | email del equipo que atiende casos enterprise (+9 fisios) | Recibe el formulario "Contactar ventas" |
+
+   > `STRIPE_PRICE_ID` (legacy, un solo price): el código lo mantiene como
+   > **fallback transitorio** (`STRIPE_PRICE_ID_BASE ?? STRIPE_PRICE_ID`).
+   > Bórrala junto con el fallback cuando la migración al pricing v2 esté
+   > verificada y el price antiguo archivado.
 
 4. Railway redeploya automáticamente al guardar nuevas variables. Espera a que el servicio pase a "Active".
 

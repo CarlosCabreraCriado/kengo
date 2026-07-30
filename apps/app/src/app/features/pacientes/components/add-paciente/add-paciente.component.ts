@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
@@ -66,6 +67,7 @@ export class AddPacienteDialogComponent {
   private toast = inject(ToastService);
   private dialogs = inject(DialogService);
   private logger = inject(LoggerService);
+  private router = inject(Router);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -187,6 +189,24 @@ export class AddPacienteDialogComponent {
     });
 
     if (!result.success) {
+      // Cap de pacientes de la variante base: ofrecer el upsell a ilimitado
+      // en vez del error genérico.
+      if (result.code === 'LIMITE_PACIENTES_ALCANZADO') {
+        const irAPlan = await this.dialogs.confirm({
+          title: 'Límite de pacientes alcanzado',
+          message:
+            (result.error ??
+              'Has alcanzado el límite de pacientes de tu plan.') +
+            ' Puedes pasar a la variante ilimitada desde la pantalla de suscripción.',
+          confirmText: 'Ver mi plan',
+          cancelText: 'Cerrar',
+        });
+        if (irAPlan) {
+          this.dialogRef.close();
+          void this.router.navigate(['/mi-clinica/suscripcion']);
+        }
+        return;
+      }
       throw new Error(result.error || 'No se pudo crear el usuario.');
     }
 

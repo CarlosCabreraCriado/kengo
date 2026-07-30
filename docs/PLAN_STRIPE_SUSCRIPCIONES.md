@@ -5,9 +5,27 @@
 
 ---
 
-## Context
+## ⚠️ Pricing v2 (2026-07) — Lonely / Smart / Medium
 
-Kengo es una plataforma de gestión clínica de fisioterapia. Hoy es gratuita; el negocio requiere monetizar mediante suscripciones mensuales por clínica, con tarifa escalonada por número de fisioterapeutas:
+El pricing original de este documento (65/170/280 €, tramo hasta 10 fisios, pacientes ilimitados) fue **sustituido en 2026-07** por el pricing v2. La tabla vigente es:
+
+| Plan | Fisios | Pacientes (base) | Base | Ilimitado |
+|------|--------|------------------|------|-----------|
+| Lonely | 1 | hasta 150 | 89 € / mes | 109 € / mes |
+| Smart | 2-4 | hasta 300 | 249 € / mes | 279 € / mes |
+| Medium | 5-9 | hasta 500 | 449 € / mes | 489 € / mes |
+| +9 | — | — | Contactar ventas | |
+
+Cambios clave respecto al modelo original (el resto del documento se conserva como histórico):
+
+- **Dos prices tiered/volume** en vez de uno: `STRIPE_PRICE_ID_BASE` (89/249/449) y `STRIPE_PRICE_ID_ILIMITADO` (109/279/489). La quantity sigue siendo el nº de fisios facturables; el cambio de variante hace **swap del price** del subscription item (`billing.actions.setPlanVariante`, owner-only, prorrateado). El tramo infinito (>9) lleva flat = precio Medium para evitar la anomalía M-8.
+- **`clinicBilling.variante`** (`"base" | "ilimitada"`, ausente = base). Los webhooks la derivan del price del item (`resolveVarianteFromPriceId`); un price desconocido (el antiguo, durante la migración) no toca el valor persistido.
+- **Cap de pacientes vinculados** en variante base (150/300/500): se aplica SOLO al alta neta de membresías `paciente` (`convex/_helpers/capacity.ts` → `assertCapacidadPacientes`, error `LIMITE_PACIENTES_ALCANZADO`) en `users.upsertPatientWithMembership`, `accessCodes.create/consume`, `auth` (registro con código) y `clinicMemberships.add`. No desvincula a nadie ni limita planes de tratamiento.
+- **Límite autoservicio 10 → 9 fisios** (`LIMITE_FISIOS_AUTOSERVICIO = 9`), centralizado en `assertCapacidadFisios`.
+- **`STRIPE_PRICE_ID` queda como fallback transitorio** (`STRIPE_PRICE_ID_BASE ?? STRIPE_PRICE_ID`); eliminar env var y fallback tras la migración.
+- **Migración de subs existentes**: internalAction `billing.actions.migrateSubscriptionsToPricingV2({ oldPriceId, dryRun })` — swap al price base con `proration_behavior: "none"` (aplica en la siguiente factura; trialing no cobra, past_due conserva su dunning). Idempotente; ejecutar con `dryRun: true` primero, re-ejecutar tras 1-2 h para cazar checkouts en vuelo, y después archivar el price antiguo.
+
+### Pricing original (obsoleto, histórico)
 
 | Fisios | Precio |
 |--------|--------|

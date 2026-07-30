@@ -15,11 +15,11 @@ import {
   styleUrl: './subscription-card.component.css',
 })
 export class MiClinicaSubscriptionCardComponent {
-  readonly plan = input<string>('FREE');
+  readonly plan = input<string>('SIN PLAN');
   readonly pillVariant = input<Ui2PillVariant>('neutral');
   readonly pillTexto = input<string>('Inactiva');
   readonly mostrarWarning = input<boolean>(false);
-  readonly warningMensaje = input<string>('Tu equipo supera el plan free.');
+  readonly warningMensaje = input<string>('Tu equipo supera el plan actual.');
   readonly ctaLabel = input<string>('Activar suscripción');
   readonly renovacion = input<string>('—');
   readonly enTrial = input<boolean>(false);

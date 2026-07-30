@@ -157,6 +157,40 @@ export class SuscripcionComponent {
     return Math.min(100, (this.fisiosActuales() / plan.rangoFisiosMax) * 100);
   });
 
+  // ─── Variante de pricing (base ↔ ilimitada) ───
+
+  protected readonly variante = this.subs.variante;
+  protected readonly esIlimitada = this.subs.esIlimitada;
+  protected readonly limitePacientes = this.subs.limitePacientes;
+  protected readonly pacientesVinculados = this.subs.pacientesVinculados;
+  protected readonly capPacientesAlcanzado = this.subs.capPacientesAlcanzado;
+
+  /** Precio mensual del plan actual según la variante activa. */
+  protected readonly precioActualEur = computed<number>(() => {
+    const sub = this.suscripcion();
+    if (!sub) return 0;
+    return sub.precioMensualActualEur ?? this.precioDe(sub.plan);
+  });
+
+  /** Precio del plan actual en la OTRA variante (para el diálogo de cambio). */
+  protected readonly precioOtraVarianteEur = computed<number>(() => {
+    const plan = this.planActual();
+    if (!plan) return 0;
+    return this.esIlimitada() ? plan.precioBaseEur : plan.precioIlimitadoEur;
+  });
+
+  protected readonly progresoPacientes = computed<number>(() => {
+    const limite = this.limitePacientes();
+    if (limite === null || limite === 0) return 0;
+    return Math.min(100, (this.pacientesVinculados() / limite) * 100);
+  });
+
+  /** Precio de un plan según la variante activa (para hints de upsell). */
+  protected precioDe(plan: PlanInfo | null): number {
+    if (!plan) return 0;
+    return this.esIlimitada() ? plan.precioIlimitadoEur : plan.precioBaseEur;
+  }
+
   protected readonly tierLleno = computed<boolean>(() => {
     const plan = this.planActual();
     if (!plan) return false;
@@ -311,6 +345,32 @@ export class SuscripcionComponent {
       },
       maxWidth: '480px',
     });
+  }
+
+  /**
+   * Cambia entre variante base e ilimitada, con confirmación que muestra el
+   * delta de precio. El backend hace el swap del price en Stripe con prorrateo.
+   */
+  protected async toggleIlimitado(): Promise<void> {
+    const id = this.clinicId();
+    const plan = this.planActual();
+    if (!id || !plan) return;
+
+    const aIlimitada = !this.esIlimitada();
+    const precioActual = this.precioActualEur();
+    const precioNuevo = this.precioOtraVarianteEur();
+
+    const confirmado = await this.dialogService.confirm({
+      title: aIlimitada ? 'Pasar a pacientes ilimitados' : 'Volver al plan base',
+      message: aIlimitada
+        ? `Tu suscripción pasará de ${precioActual} € a ${precioNuevo} €/mes (prorrateado en el ciclo actual) y podrás vincular pacientes sin límite.`
+        : `Tu suscripción pasará de ${precioActual} € a ${precioNuevo} €/mes. El plan ${plan.nombre} base admite hasta ${plan.limitePacientes} pacientes vinculados.`,
+      confirmText: aIlimitada ? 'Pasar a ilimitado' : 'Volver a base',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmado) return;
+
+    await this.subs.cambiarVariante(id, aIlimitada ? 'ilimitada' : 'base');
   }
 
   protected async cancelarSuscripcion(): Promise<void> {

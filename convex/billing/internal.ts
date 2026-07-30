@@ -39,6 +39,7 @@ export const upsertClinicBilling = internalMutation({
     cancelAtPeriodEnd: v.optional(v.boolean()),
     graceUntil: v.optional(v.number()),
     cantidadFisios: v.optional(v.number()),
+    variante: v.optional(v.union(v.literal("base"), v.literal("ilimitada"))),
     requiereContactoVentas: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -209,6 +210,9 @@ export const getBillingContext = internalQuery({
     const cantidadFisios = memberships.filter(
       (m) => m.puesto === "fisio" || m.puesto === "admin",
     ).length;
+    const cantidadPacientes = memberships.filter(
+      (m) => m.puesto === "paciente",
+    ).length;
 
     let owner: { email: string; name: string } | null = null;
     const ownerUser = await ctx.db.get(clinic.ownerUserId);
@@ -232,11 +236,13 @@ export const getBillingContext = internalQuery({
       },
       owner,
       cantidadFisios,
+      cantidadPacientes,
       billing: billing
         ? {
             stripeCustomerId: billing.stripeCustomerId,
             stripeSubscriptionId: billing.stripeSubscriptionId,
             estadoLocal: billing.estadoLocal,
+            variante: billing.variante,
           }
         : null,
     };
@@ -289,6 +295,12 @@ export const applySubscriptionEvent = internalMutation({
     currentPeriodEnd: v.optional(v.number()),
     cancelAtPeriodEnd: v.optional(v.boolean()),
     quantity: v.optional(v.number()),
+    /**
+     * Variante derivada del price del subscription item. `undefined` cuando el
+     * price no es ninguno de los dos conocidos (price antiguo durante la
+     * migración) — en ese caso NO se toca el valor persistido.
+     */
+    variante: v.optional(v.union(v.literal("base"), v.literal("ilimitada"))),
     /** Timestamp del evento Stripe (`event.created * 1000`). */
     eventCreatedMs: v.optional(v.number()),
     /** Id de la subscription del evento (`event.data.object.id`). */
@@ -330,6 +342,7 @@ export const applySubscriptionEvent = internalMutation({
       patch["currentPeriodEnd"] = args.currentPeriodEnd;
     }
     if (args.quantity !== undefined) patch["cantidadFisios"] = args.quantity;
+    if (args.variante !== undefined) patch["variante"] = args.variante;
     if (args.eventCreatedMs !== undefined) {
       patch["lastStripeEventMs"] = args.eventCreatedMs;
     }
@@ -372,6 +385,7 @@ export const applySubscriptionEvent = internalMutation({
       currentPeriodEnd: args.currentPeriodEnd,
       cancelAtPeriodEnd: args.cancelAtPeriodEnd ?? false,
       cantidadFisios: args.quantity,
+      variante: args.variante,
       lastStripeEventMs: args.eventCreatedMs,
       actualizadoEn: Date.now(),
     });
@@ -790,12 +804,37 @@ export const assertAdminOnClinicByExternalId = internalQuery({
   },
 });
 
+/**
+ * Lista todas las filas `clinicBilling`. Uso interno (migración de pricing).
+ * La tabla tiene una fila por clínica; `.collect()` es aceptable a la escala
+ * actual (mismo patrón que `checkGracePeriodsExpired`).
+ */
+export const listAllClinicBilling = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("clinicBilling").collect();
+    return rows.map((b) => ({
+      clinicId: b.clinicId,
+      estadoLocal: b.estadoLocal,
+      stripeCustomerId: b.stripeCustomerId,
+      stripeSubscriptionId: b.stripeSubscriptionId,
+      cantidadFisios: b.cantidadFisios,
+      variante: b.variante,
+    }));
+  },
+});
+
 function assertBillingPermiteOperar(billing: {
   estadoLocal: string;
   graceUntil?: number;
 } | null): void {
   if (!billing) return;
   if (billing.estadoLocal === "trialing" || billing.estadoLocal === "active") {
+    return;
+  }
+  // B-9: enterprise pendiente de ventas opera con normalidad (paridad con
+  // `billingPermiteOperar` en `_helpers/permissions.ts`).
+  if (billing.estadoLocal === "enterprise_pending") {
     return;
   }
   if (

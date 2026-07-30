@@ -106,6 +106,7 @@ export const createPatient = action({
     //   - STAFF_EN_CLINICA      → el email pertenece a un profesional.
     //   - REQUIRES_CONFIRMATION → existe activo en otra clínica, requiere
     //                             confirmar reuse.
+    //   - LIMITE_PACIENTES_ALCANZADO → cap de pacientes de la variante base.
     let userId: string;
     let created: boolean;
     try {
@@ -129,7 +130,8 @@ export const createPatient = action({
         if (
           code === "DUPLICADO_EN_CLINICA" ||
           code === "STAFF_EN_CLINICA" ||
-          code === "REQUIRES_CONFIRMATION"
+          code === "REQUIRES_CONFIRMATION" ||
+          code === "LIMITE_PACIENTES_ALCANZADO"
         ) {
           return {
             success: false,

@@ -6,7 +6,10 @@ import {
   checkClinicPermission,
   requireActiveSubscription,
 } from "../_helpers/permissions";
-import { LIMITE_FISIOS_AUTOSERVICIO } from "../billing/_helpers";
+import {
+  assertCapacidadFisios,
+  assertCapacidadPacientes,
+} from "../_helpers/capacity";
 
 // Todos los códigos generados por la app son invitaciones nominales de un
 // único uso con caducidad fija de 30 días. La regla vive aquí (no en cada
@@ -29,25 +32,14 @@ export const create = mutation({
     ]);
     await requireActiveSubscription(ctx, args.clinicId);
 
-    // Validación preventiva del límite autoservicio (+10 fisios). Aunque
-    // `consume` también la verifica, hacerlo aquí evita generar códigos que
-    // van a fallar al canjearse y permite mostrar al admin el camino de
-    // contacto comercial en el momento de la generación.
+    // Validación preventiva de los límites del plan. Aunque `consume` también
+    // los verifica, hacerlo aquí evita generar códigos que van a fallar al
+    // canjearse y permite mostrar al admin el camino comercial (ventas o
+    // variante ilimitada) en el momento de la generación.
     if (args.tipo === "fisioterapeuta") {
-      const memberships = await ctx.db
-        .query("clinicMemberships")
-        .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
-        .collect();
-      const fisiosActuales = memberships.filter(
-        (m) => m.puesto === "fisio" || m.puesto === "admin",
-      ).length;
-      if (fisiosActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
-        throw new ConvexError({
-          code: "REQUIERE_CONTACTO_VENTAS",
-          message:
-            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
-        });
-      }
+      await assertCapacidadFisios(ctx, args.clinicId);
+    } else {
+      await assertCapacidadPacientes(ctx, args.clinicId);
     }
 
     // Los códigos son invitaciones nominales: requieren email vinculado
@@ -153,21 +145,9 @@ export const consume = mutation({
 
       // Replicar las mismas garantías que la rama "alta nueva": al promover
       // a fisio la quantity facturable sube en +1, así que aplicamos el
-      // límite de autoservicio y disparamos el sync con Stripe.
-      const memberships = await ctx.db
-        .query("clinicMemberships")
-        .withIndex("by_clinicId", (q) => q.eq("clinicId", codeDoc.clinicId))
-        .collect();
-      const fisiosActuales = memberships.filter(
-        (m) => m.puesto === "fisio" || m.puesto === "admin",
-      ).length;
-      if (fisiosActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
-        throw new ConvexError({
-          code: "REQUIERE_CONTACTO_VENTAS",
-          message:
-            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
-        });
-      }
+      // límite de autoservicio y disparamos el sync con Stripe. (La promoción
+      // libera un slot de paciente, así que el cap de pacientes no aplica.)
+      await assertCapacidadFisios(ctx, codeDoc.clinicId);
       // B-10: promover a fisio añade un asiento facturable; exigir suscripción
       // operativa (un código emitido antes de un impago no debe subir la
       // quantity de una clínica que Stripe no podrá cobrar).
@@ -200,23 +180,13 @@ export const consume = mutation({
 
     // Si el código es de fisio, validar que la clínica no supera el límite
     // de plan autoservicio. La quantity facturada incluye fisio + admin.
+    // Si es de paciente, aplicar el cap de pacientes de la variante base.
     if (puesto === "fisio") {
-      const memberships = await ctx.db
-        .query("clinicMemberships")
-        .withIndex("by_clinicId", (q) => q.eq("clinicId", codeDoc.clinicId))
-        .collect();
-      const fisiosActuales = memberships.filter(
-        (m) => m.puesto === "fisio" || m.puesto === "admin",
-      ).length;
-      if (fisiosActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
-        throw new ConvexError({
-          code: "REQUIERE_CONTACTO_VENTAS",
-          message:
-            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
-        });
-      }
+      await assertCapacidadFisios(ctx, codeDoc.clinicId);
       // B-10: alta de fisio = asiento facturable; exigir suscripción operativa.
       await requireActiveSubscription(ctx, codeDoc.clinicId);
+    } else {
+      await assertCapacidadPacientes(ctx, codeDoc.clinicId);
     }
 
     await ctx.db.insert("clinicMemberships", {

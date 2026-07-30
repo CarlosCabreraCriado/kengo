@@ -25,6 +25,8 @@ export interface GenerarCodigoDialogResult {
   codigo?: string;
   /** Cierre por "requiere contacto comercial". El padre debe abrir el dialog de ventas. */
   requiereContactoVentas?: boolean;
+  /** Cierre por cap de pacientes del plan base. El padre debe ofrecer el upsell a ilimitado. */
+  limitePacientesAlcanzado?: boolean;
 }
 import {
   Ui2DialogHostComponent,
@@ -147,6 +149,11 @@ export class GenerarCodigoDialogComponent implements OnInit {
 
     if (result.errorCode === 'REQUIERE_CONTACTO_VENTAS') {
       this.dialogRef.close({ requiereContactoVentas: true });
+      return;
+    }
+
+    if (result.errorCode === 'LIMITE_PACIENTES_ALCANZADO') {
+      this.dialogRef.close({ limitePacientesAlcanzado: true });
       return;
     }
 

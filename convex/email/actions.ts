@@ -297,7 +297,7 @@ export const sendEnterpriseInvitationEmail = internalAction({
     const { error } = await resend.emails.send({
       from: "Kengo <noreply@kengoapp.com>",
       to: args.to,
-      subject: `Plan a medida para ${args.clinicaNombre} (+10 fisios)`,
+      subject: `Plan a medida para ${args.clinicaNombre} (+9 fisios)`,
       html: enterpriseInvitationTemplate(
         args.nombreAdmin,
         args.clinicaNombre,

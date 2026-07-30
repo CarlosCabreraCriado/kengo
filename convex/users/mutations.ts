@@ -9,6 +9,7 @@ import {
   tieneGestion,
 } from "../_helpers/permissions";
 import { assertCanAccessPaciente } from "../_helpers/authorization";
+import { assertCapacidadPacientes } from "../_helpers/capacity";
 import { getManagedClinicIds } from "../_helpers/patientAccess";
 
 function buildSearchableText(
@@ -277,6 +278,8 @@ export const upsertPatientWithMembership = internalMutation({
       .unique();
 
     if (!existingMembership) {
+      // Cap de pacientes de la variante base: solo bloquea el alta neta.
+      await assertCapacidadPacientes(ctx, args.clinicId);
       await ctx.db.insert("clinicMemberships", {
         userId: user._id,
         clinicId: args.clinicId,

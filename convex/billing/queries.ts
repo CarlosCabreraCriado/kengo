@@ -8,8 +8,27 @@ import {
 import {
   PLANES,
   planParaFisios,
+  precioParaFisios,
+  limitePacientesParaFisios,
   requiereContactoVentas,
+  type PlanVariante,
+  type PlanTier,
 } from "./_helpers";
+
+/**
+ * Compat transitoria: el frontend antiguo renderiza `precioMensualEur`.
+ * Se rellena con el precio de la variante indicada; eliminar cuando el
+ * frontend nuevo (que usa `precioBaseEur`/`precioIlimitadoEur`) esté
+ * desplegado en todas las plataformas.
+ */
+function withPrecioCompat(plan: PlanTier | null, variante: PlanVariante) {
+  if (!plan) return null;
+  return {
+    ...plan,
+    precioMensualEur:
+      variante === "ilimitada" ? plan.precioIlimitadoEur : plan.precioBaseEur,
+  };
+}
 
 /**
  * Devuelve el estado de la suscripción de la clínica indicada para el admin
@@ -41,14 +60,26 @@ export const getMyClinicSubscription = query({
     const fisiosActuales = memberships.filter(
       (m) => m.puesto === "fisio" || m.puesto === "admin",
     ).length;
+    const pacientesVinculados = memberships.filter(
+      (m) => m.puesto === "paciente",
+    ).length;
 
     const billing = await ctx.db
       .query("clinicBilling")
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
       .unique();
 
-    const plan = planParaFisios(fisiosActuales);
+    const variante: PlanVariante = billing?.variante ?? "base";
+    const plan = withPrecioCompat(planParaFisios(fisiosActuales), variante);
+    const planes = PLANES.map((p) => withPrecioCompat(p, "base"));
     const necesitaVentas = requiereContactoVentas(fisiosActuales);
+    // `null` = sin cap (variante ilimitada o enterprise). Para el estado
+    // `enterprise_pending` tampoco aplica cap (paridad con el enforcement).
+    const limitePacientes =
+      billing?.estadoLocal === "enterprise_pending"
+        ? null
+        : limitePacientesParaFisios(fisiosActuales, variante);
+    const precioMensualActualEur = precioParaFisios(fisiosActuales, variante);
 
     // Owner determinista (Bloque J): solo el propietario puede actuar sobre
     // la suscripción. Devolvemos `ownerUserId`, su nombre y un flag para
@@ -72,7 +103,11 @@ export const getMyClinicSubscription = query({
         fisiosActuales,
         cantidadFacturada: undefined,
         plan,
-        planes: PLANES,
+        planes,
+        variante,
+        limitePacientes,
+        pacientesVinculados,
+        precioMensualActualEur,
         requiereContactoVentas: necesitaVentas,
         ownerUserId,
         ownerNombre,
@@ -95,7 +130,11 @@ export const getMyClinicSubscription = query({
       fisiosActuales,
       cantidadFacturada: billing.cantidadFisios,
       plan,
-      planes: PLANES,
+      planes,
+      variante,
+      limitePacientes,
+      pacientesVinculados,
+      precioMensualActualEur,
       requiereContactoVentas:
         necesitaVentas || billing.requiereContactoVentas === true,
       ownerUserId,
