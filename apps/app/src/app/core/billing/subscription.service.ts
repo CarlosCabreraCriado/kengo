@@ -37,6 +37,26 @@ export class SubscriptionService {
   }
 
   /**
+   * `true` en builds nativos (iOS/Android): las políticas de las stores
+   * (Play Billing / Apple 3.1.1) impiden ofrecer el checkout/portal de
+   * Stripe en la app. La UI de decisiones de compra se oculta y se
+   * sustituye por mensajes de gestión desde la versión web.
+   */
+  public readonly pagosSoloWeb = computed(() => this.platform.isNative());
+
+  /**
+   * Defensa en profundidad para los métodos que compran o modifican el
+   * cobro: no-op con toast si algún CTA se cuela en un build nativo.
+   */
+  private bloqueadoEnNativo(): boolean {
+    if (!this.platform.isNative()) return false;
+    this.toast.info(
+      'Los pagos y cambios de plan se gestionan desde la versión web de Kengo',
+    );
+    return true;
+  }
+
+  /**
    * ID de la clínica activa cuando el usuario es miembro facturable
    * (`fisio` o `admin`). `null` en cualquier otro caso (sin clínica activa,
    * o solo paciente en ella).
@@ -186,6 +206,7 @@ export class SubscriptionService {
     clinicId: string,
     variante?: PlanVariante,
   ): Promise<void> {
+    if (this.bloqueadoEnNativo()) return;
     if (this._accionEnCurso()) return;
     this._accionEnCurso.set(true);
     try {
@@ -216,6 +237,7 @@ export class SubscriptionService {
 
   /** Abre el Customer Portal de Stripe (gestión de pago, cancelación, facturas). */
   async abrirPortal(clinicId: string): Promise<void> {
+    if (this.bloqueadoEnNativo()) return;
     if (this._accionEnCurso()) return;
     this._accionEnCurso.set(true);
     try {
@@ -252,6 +274,7 @@ export class SubscriptionService {
 
   /** Reactiva una suscripción marcada para cancelarse al final del período. */
   async reactivar(clinicId: string): Promise<void> {
+    if (this.bloqueadoEnNativo()) return;
     if (this._accionEnCurso()) return;
     this._accionEnCurso.set(true);
     try {
@@ -275,6 +298,7 @@ export class SubscriptionService {
     clinicId: string,
     variante: PlanVariante,
   ): Promise<boolean> {
+    if (this.bloqueadoEnNativo()) return false;
     if (this._accionEnCurso()) return false;
     this._accionEnCurso.set(true);
     try {

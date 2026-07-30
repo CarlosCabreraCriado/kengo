@@ -25,6 +25,11 @@ interface BannerVm {
   mensaje: string;
   /** Ausente = banner informativo sin CTA (fisio no-admin de la clínica). */
   ctaLabel?: string;
+  /**
+   * Copy alternativo para builds nativos: sin instrucciones de pago in-app
+   * (políticas de las stores) — la gestión se hace desde la versión web.
+   */
+  mensajeNativo?: string;
 }
 
 const VARIANT_STYLES: Record<BannerVariant, { bg: string; fg: string; border: string }> = {
@@ -180,6 +185,16 @@ export class BillingBannerComponent {
         mensaje: owner ? `${vm.mensaje} Avisa a ${owner}.` : vm.mensaje,
       };
     }
+
+    // En nativo el admin no puede pagar desde la app: copy sin instrucciones
+    // de pago y CTA neutro que solo navega a la pantalla de estado.
+    if (this.subs.pagosSoloWeb()) {
+      return {
+        ...vm,
+        mensaje: vm.mensajeNativo ?? vm.mensaje,
+        ctaLabel: 'Ver estado',
+      };
+    }
     return vm;
   });
 
@@ -193,6 +208,7 @@ export class BillingBannerComponent {
         icon: 'block',
         titulo: 'Suscripción cancelada',
         mensaje: 'Reactívala para volver a crear planes y gestionar pacientes.',
+        mensajeNativo: 'La reactivación se gestiona desde la versión web de Kengo.',
         ctaLabel: 'Reactivar',
       };
     }
@@ -203,6 +219,7 @@ export class BillingBannerComponent {
         icon: 'error',
         titulo: 'Pago pendiente de confirmación',
         mensaje: 'Completa el pago para activar la suscripción.',
+        mensajeNativo: 'El pago se completa desde la versión web de Kengo.',
         ctaLabel: 'Resolver',
       };
     }
@@ -213,6 +230,7 @@ export class BillingBannerComponent {
         icon: 'lock',
         titulo: 'Suscripción suspendida',
         mensaje: 'Actualiza el método de pago para volver a usar la app.',
+        mensajeNativo: 'El método de pago se actualiza desde la versión web de Kengo.',
         ctaLabel: 'Resolver',
       };
     }
@@ -227,6 +245,10 @@ export class BillingBannerComponent {
           dias > 0
             ? `Quedan ${dias} ${dias === 1 ? 'día' : 'días'} para resolverlo.`
             : 'Resuélvelo lo antes posible para evitar la suspensión.',
+        mensajeNativo:
+          dias > 0
+            ? `Quedan ${dias} ${dias === 1 ? 'día' : 'días'}. El pago se gestiona desde la versión web de Kengo.`
+            : 'El pago se gestiona desde la versión web de Kengo.',
         ctaLabel: 'Resolver',
       };
     }
@@ -241,6 +263,8 @@ export class BillingBannerComponent {
             ? `Tu trial termina en ${dias} ${dias === 1 ? 'día' : 'días'}`
             : 'Tu trial termina hoy',
         mensaje: 'Añade un método de pago para no interrumpir el servicio.',
+        mensajeNativo:
+          'Añade un método de pago desde la versión web de Kengo para no interrumpir el servicio.',
         ctaLabel: 'Añadir pago',
       };
     }
@@ -252,6 +276,7 @@ export class BillingBannerComponent {
         icon: 'event_busy',
         titulo: 'Cancelación programada',
         mensaje: `La suscripción se cancelará el ${fecha}.`,
+        mensajeNativo: `La suscripción se cancelará el ${fecha}. Puedes reactivarla desde la versión web de Kengo.`,
         ctaLabel: 'Reactivar',
       };
     }

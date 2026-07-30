@@ -86,6 +86,26 @@ export class SubscriptionGateService {
         return;
       }
 
+      // En nativo no hay CTA de reactivación (políticas de pagos de las
+      // stores): aviso con copy de gestión web y navegación solo al estado.
+      if (subs.pagosSoloWeb()) {
+        const ver = await this.dialog.confirm({
+          title: 'Tu suscripción no está activa',
+          message:
+            'La suscripción de tu clínica se gestiona desde la versión web de Kengo. ' +
+            'Puedes consultar su estado en la pantalla de suscripción.',
+          confirmText: 'Ver estado',
+          cancelText: 'Cerrar',
+          confirmVariant: 'primary',
+        });
+        if (ver) {
+          await this.router.navigate(['/mi-clinica/suscripcion'], {
+            queryParams: { bloqueada: '1' },
+          });
+        }
+        return;
+      }
+
       const ir = await this.dialog.confirm({
         title: 'Tu suscripción no está activa',
         message:

@@ -70,13 +70,12 @@ Nada de lo implementado ha pisado un simulador/emulador real todavía. El códig
 - [ ] **B2. Login + persistencia en emulador Android**
   Equivalente a B1 con `npm run cap:run:android` e inspección desde `chrome://inspect#devices`.
 
-- [ ] **B3. Stripe end-to-end con tarjeta de prueba**
-  1. Login como admin de clínica con suscripción no activa
-  2. Ir a `/mi-clinica/suscripcion` → tocar "Iniciar suscripción"
-  3. Tarjeta `4242 4242 4242 4242`
-  4. Verificar que vuelve a la app vía deep link `kengo://billing/return?status=success`
-  5. Verificar que el toast aparece y la suscripción se refresca (1-3 s después)
-  6. Repetir con cancel: tocar atrás en checkout → toast info "Has cancelado el pago".
+- [ ] **B3. Verificar la ocultación de los CTAs de pago en nativo** *(redefinido 2026-07: los CTAs de compra están ocultos en builds nativos — políticas de las stores — así que el e2e de checkout con tarjeta ya no aplica en nativo; ese flujo se valida en web)*
+  1. Login como owner de clínica en el build nativo
+  2. Ir a `/mi-clinica/suscripcion` → verificar: sin CTA de checkout/portal/reactivar/toggle ilimitado ni pricing cards; nota "La suscripción se gestiona desde la versión web" visible; "Cancelar suscripción" sí visible con sub activa
+  3. Banner de billing con copy web y CTA "Ver estado"; card de Mi Clínica con label "Ver suscripción"
+  4. Defensa: invocar `iniciarCheckout` desde devtools del WebView → toast informativo, no se abre browser
+  5. Deep link fallback: `kengo://billing/return?status=success` navega sin crash.
 
 - [ ] **B4. Convex realtime (WebSocket) en WebView**
   Probar la pantalla `/mensajes`: enviar un mensaje desde otra sesión y verificar que aparece en tiempo real en la app nativa. Riesgo: WKWebView puede aplicar algún throttling a WS en background.
@@ -161,7 +160,7 @@ Nada de lo implementado ha pisado un simulador/emulador real todavía. El códig
   - GitHub Actions linux runner para Android (build firmado → Play Console internal track).
   - Versionado automático sincronizando `package.json`, `Info.plist` `CFBundleVersion`, y `build.gradle` `versionCode`.
 
-- [ ] **D6. IAP wrapper (solo si Apple rechaza Stripe externo)**
+- [ ] **D6. IAP wrapper — supersedido (2026-07): los CTAs de compra están ocultos en nativo (`SubscriptionService.pagosSoloWeb`), la contratación es web-only y no hay superficie de rechazo. Activar solo si en el futuro se quiere vender dentro de la app.**
   Plan B documentado en `CAPACITOR_NATIVE_APP.md` §7.2. Opciones:
   - `@capacitor-community/stripe` con Apple Pay / Google Pay.
   - RevenueCat (`@revenuecat/purchases-capacitor`) — más completo, gestión de subscripciones.
@@ -183,7 +182,7 @@ Estos no son TODOs activos, pero conviene tenerlos a mano si las verificaciones 
 
 - [ ] **E2. Polling explícito de `SubscriptionService.refresh()`** — si tras volver de Stripe el delay del watchQuery (1-3 s) resulta disruptivo en B3, implementar refresh con timeout/reintentos en `subscription.service.ts`.
 
-- [ ] **E3. Lanzar primero solo en US** — si Apple rechaza el flujo Stripe externo en otras regiones, restringir release inicial al store estadounidense (donde la política post Epic v. Apple lo permite explícitamente). Plan B largo: D6 (IAP wrapper).
+- [ ] **E3. Lanzar primero solo en US — supersedido (2026-07)**: con los CTAs de compra ocultos en nativo ya no hay flujo Stripe que Apple pueda rechazar; el release puede ser global. Se conserva como referencia por si se reactiva el checkout in-app (programa de ofertas externas EEE/US o D6).
 
 ---
 

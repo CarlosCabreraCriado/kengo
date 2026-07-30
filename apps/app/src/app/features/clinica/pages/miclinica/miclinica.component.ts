@@ -283,7 +283,9 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
           this.abrirDialogContactarVentas();
         } else if (result?.limitePacientesAlcanzado) {
           this.toastService.warning(
-            'Has alcanzado el límite de pacientes de tu plan. Pasa a ilimitado desde Suscripción.',
+            this.subscriptionService.pagosSoloWeb()
+              ? 'Has alcanzado el límite de pacientes de tu plan. La ampliación se gestiona desde la versión web de Kengo.'
+              : 'Has alcanzado el límite de pacientes de tu plan. Pasa a ilimitado desde Suscripción.',
           );
           void this.router.navigate(['/mi-clinica/suscripcion']);
         }
@@ -449,7 +451,9 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     const sub = this.subscriptionService.suscripcion();
     if (!sub || sub.estado === 'none') return 'Sin suscripción activa';
     if (this.subscriptionService.bloqueada())
-      return 'Suspendida — actualiza el método de pago';
+      return this.subscriptionService.pagosSoloWeb()
+        ? 'Suspendida — se gestiona desde la versión web'
+        : 'Suspendida — actualiza el método de pago';
     if (sub.estado === 'trialing') {
       const dias = this.subscriptionService.diasRestantesTrial();
       return `Trial · ${dias} día${dias === 1 ? '' : 's'} restante${dias === 1 ? '' : 's'}`;
@@ -512,7 +516,9 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
 
   protected readonly mensajeWarningSuscripcion = computed<string>(() => {
     if (this.subscriptionService.bloqueada())
-      return 'Tu suscripción está suspendida. Actualiza el método de pago.';
+      return this.subscriptionService.pagosSoloWeb()
+        ? 'Tu suscripción está suspendida. El pago se gestiona desde la versión web de Kengo.'
+        : 'Tu suscripción está suspendida. Actualiza el método de pago.';
     if (this.enLimiteFisios())
       return 'Has alcanzado el plan máximo (9 fisios). Contacta con ventas.';
     return 'Tu equipo supera el plan actual. Activa una suscripción.';
@@ -529,8 +535,13 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     });
   });
 
-  /** Etiqueta del CTA principal de la suscripción según estado. */
+  /**
+   * Etiqueta del CTA principal de la suscripción según estado. En nativo el
+   * label es neutro: la card solo navega a la pantalla de estado (los CTAs
+   * de pago están ocultos allí por políticas de las stores).
+   */
   protected readonly suscripcionCtaLabel = computed<string>(() => {
+    if (this.subscriptionService.pagosSoloWeb()) return 'Ver suscripción';
     const sub = this.subscriptionService.suscripcion();
     if (!sub || sub.estado === 'none') return 'Activar suscripción';
     if (this.subscriptionService.bloqueada()) return 'Actualizar pago';

@@ -21,6 +21,7 @@ import { LoggerService } from '../../../../core/services/logger.service';
 
 import { Usuario } from '../../../../../types/global';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { SubscriptionService } from '../../../../core/billing/subscription.service';
 import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { api } from '../../../../../../../../convex/_generated/api';
@@ -68,6 +69,7 @@ export class AddPacienteDialogComponent {
   private dialogs = inject(DialogService);
   private logger = inject(LoggerService);
   private router = inject(Router);
+  private subscription = inject(SubscriptionService);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -197,7 +199,9 @@ export class AddPacienteDialogComponent {
           message:
             (result.error ??
               'Has alcanzado el límite de pacientes de tu plan.') +
-            ' Puedes pasar a la variante ilimitada desde la pantalla de suscripción.',
+            (this.subscription.pagosSoloWeb()
+              ? ' La variante ilimitada se activa desde la versión web de Kengo.'
+              : ' Puedes pasar a la variante ilimitada desde la pantalla de suscripción.'),
           confirmText: 'Ver mi plan',
           cancelText: 'Cerrar',
         });

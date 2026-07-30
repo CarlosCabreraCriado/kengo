@@ -25,6 +25,23 @@
     </ui2-card>
   }
 
+  @if (esOwner() && pagosSoloWeb() && suscripcion()) {
+    <ui2-card class="block" [padding]="16">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-ink-500" aria-hidden="true">language</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-ink-900">La suscripción se gestiona desde la versión web</p>
+          <p class="text-sm text-ink-500 mt-1">
+            En la aplicación puedes consultar el estado del plan de
+            {{ clinicaNombre() || 'tu clínica' }}. La activación, la
+            reactivación, los cambios de plan y el método de pago se gestionan
+            desde la versión web de Kengo con tu misma cuenta.
+          </p>
+        </div>
+      </div>
+    </ui2-card>
+  }
+
   @if (llegadaPorBloqueo() && bloqueada()) {
     <ui2-card
       class="block"
@@ -43,7 +60,10 @@
             La suscripción de {{ clinicaNombre() || 'esta clínica' }} está suspendida
           </p>
           <p class="text-sm text-ink-700 mt-1">
-            @if (esOwner()) {
+            @if (esOwner() && pagosSoloWeb()) {
+              La suscripción se gestiona desde la versión web de Kengo.
+              Tus pacientes pueden seguir realizando sus rutinas con normalidad.
+            } @else if (esOwner()) {
               Para volver a usar la aplicación necesitas actualizar el método de pago.
               Tus pacientes pueden seguir realizando sus rutinas con normalidad.
             } @else {
@@ -51,7 +71,7 @@
               Tus pacientes pueden seguir realizando sus rutinas con normalidad.
             }
           </p>
-          @if (esOwner()) {
+          @if (esOwner() && !pagosSoloWeb()) {
             <div class="mt-3">
               <ui2-button
                 variant="primary"
@@ -182,7 +202,11 @@
               ></ui2-progress-bar>
               @if (capPacientesAlcanzado()) {
                 <p class="stat__hint">
-                  Límite alcanzado — pasa a pacientes ilimitados para seguir añadiendo.
+                  @if (pagosSoloWeb()) {
+                    Límite alcanzado — la ampliación a pacientes ilimitados se gestiona desde la versión web.
+                  } @else {
+                    Límite alcanzado — pasa a pacientes ilimitados para seguir añadiendo.
+                  }
                 </p>
               }
             </div>
@@ -207,22 +231,29 @@
       @if (bloqueada()) {
         <div class="plan-hero__lock">
           <span class="material-symbols-outlined" aria-hidden="true">lock</span>
-          <span>Suscripción suspendida. Actualiza tu método de pago para continuar.</span>
+          @if (pagosSoloWeb()) {
+            <span>Suscripción suspendida. La gestión del pago se realiza desde la versión web de Kengo.</span>
+          } @else {
+            <span>Suscripción suspendida. Actualiza tu método de pago para continuar.</span>
+          }
         </div>
       }
     </section>
 
-    <!-- Acción principal — solo visible al propietario (Bloque H/J) -->
+    <!-- Acción principal — solo visible al propietario (Bloque H/J).
+         En nativo se oculta (compra/portal); "Cancelar" sí se mantiene. -->
     @if (esOwner() && !requiereContactoVentas()) {
-      <ui2-button
-        variant="primary"
-        size="lg"
-        [iconLeft]="iconoAccionPrincipal()"
-        [fullWidth]="true"
-        [loading]="accionEnCurso()"
-        [disabled]="accionEnCurso()"
-        (clicked)="accionPrincipal()"
-      >{{ etiquetaAccionPrincipal() }}</ui2-button>
+      @if (!pagosSoloWeb()) {
+        <ui2-button
+          variant="primary"
+          size="lg"
+          [iconLeft]="iconoAccionPrincipal()"
+          [fullWidth]="true"
+          [loading]="accionEnCurso()"
+          [disabled]="accionEnCurso()"
+          (clicked)="accionPrincipal()"
+        >{{ etiquetaAccionPrincipal() }}</ui2-button>
+      }
 
       <!-- Acción secundaria: cancelar suscripción -->
       @if (suscripcion()!.estado === 'active' && !cancelaAlFinDelPeriodo()) {
@@ -252,7 +283,7 @@
     <!-- Variante base/ilimitada — solo owner con sub viva y plan autoservicio.
          En pre-checkout (none/canceled/incomplete) no hay sub que actualizar
          en Stripe: la variante se elige con el segmented de las cards. -->
-    @if (esOwner() && !requiereContactoVentas() && !preCheckout() && planActual(); as plan) {
+    @if (esOwner() && !requiereContactoVentas() && !preCheckout() && !pagosSoloWeb() && planActual(); as plan) {
       <section class="flex flex-col gap-2">
         <ui2-section-label>Pacientes ilimitados</ui2-section-label>
         <ui2-card class="block" [padding]="16">
@@ -288,27 +319,30 @@
       </section>
     }
 
-    <!-- Pricing cards -->
-    <section class="flex flex-col gap-2">
-      <ui2-section-label>Planes disponibles</ui2-section-label>
-      <!-- Selector de variante pre-checkout: define el precio destacado de
-           las cards y la variante que se envía al Checkout. Con sub viva el
-           cambio de variante vive en la sección "Pacientes ilimitados". -->
-      @if (esOwner() && preCheckout() && !requiereContactoVentas() && planActual()) {
-        <ui2-segmented
-          class="self-center my-1"
-          [options]="segmentedOptions()"
-          [value]="varianteCards()"
-          (valueChange)="seleccionarVariante($event)"
-        ></ui2-segmented>
-      }
-      <app-pricing-cards
-        [planes]="planes()"
-        [planActualNombre]="planActual()?.nombre ?? null"
-        [variante]="varianteCards()"
-        (contactarVentas)="abrirDialogContactarVentas()"
-      ></app-pricing-cards>
-    </section>
+    <!-- Pricing cards — ocultas en nativo: precios sin compra in-app son
+         fricción conocida en la revisión de Apple. -->
+    @if (!pagosSoloWeb()) {
+      <section class="flex flex-col gap-2">
+        <ui2-section-label>Planes disponibles</ui2-section-label>
+        <!-- Selector de variante pre-checkout: define el precio destacado de
+             las cards y la variante que se envía al Checkout. Con sub viva el
+             cambio de variante vive en la sección "Pacientes ilimitados". -->
+        @if (esOwner() && preCheckout() && !requiereContactoVentas() && planActual()) {
+          <ui2-segmented
+            class="self-center my-1"
+            [options]="segmentedOptions()"
+            [value]="varianteCards()"
+            (valueChange)="seleccionarVariante($event)"
+          ></ui2-segmented>
+        }
+        <app-pricing-cards
+          [planes]="planes()"
+          [planActualNombre]="planActual()?.nombre ?? null"
+          [variante]="varianteCards()"
+          (contactarVentas)="abrirDialogContactarVentas()"
+        ></app-pricing-cards>
+      </section>
+    }
 
     <!-- Histórico de facturas -->
     @if (suscripcion()!.estado !== 'none') {
@@ -337,7 +371,7 @@
                 <ui2-pill [variant]="estadoFactura(factura.estado).variant" size="sm">
                   {{ estadoFactura(factura.estado).texto }}
                 </ui2-pill>
-                @if (factura.hostedUrl) {
+                @if (factura.hostedUrl && !pagosSoloWeb()) {
                   <a
                     [href]="factura.hostedUrl"
                     target="_blank"
@@ -350,7 +384,7 @@
                 }
               </ui2-list-row>
             }
-            @if (esOwner()) {
+            @if (esOwner() && !pagosSoloWeb()) {
               <div class="border-t border-black/5">
                 <ui2-list-row
                   icon="open_in_new"
@@ -364,6 +398,10 @@
                   <span class="material-symbols-outlined text-ink-400" aria-hidden="true">arrow_forward</span>
                 </ui2-list-row>
               </div>
+            } @else if (esOwner()) {
+              <p class="text-xs text-ink-400 text-center py-3 border-t border-black/5">
+                El histórico completo y la descarga de facturas están disponibles en la versión web.
+              </p>
             }
           }
         </ui2-card>

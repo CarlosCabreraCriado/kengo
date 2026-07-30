@@ -141,6 +141,13 @@ export class SuscripcionComponent {
   protected readonly ownerNombre = this.subs.ownerNombre;
   protected readonly clinicaNombre = this.subs.clinicaNombre;
 
+  /**
+   * En builds nativos las decisiones de compra (checkout, portal, reactivar,
+   * cambio de variante) no se ofrecen — políticas de pagos de las stores.
+   * La pantalla queda en modo consulta con una nota de gestión desde la web.
+   */
+  protected readonly pagosSoloWeb = this.subs.pagosSoloWeb;
+
   protected readonly planActual = computed<PlanInfo | null>(
     () => this.suscripcion()?.plan ?? null,
   );

@@ -353,29 +353,29 @@ un primer borrador, pero el marco del navegador y las métricas falsas se notan.
 
 ---
 
-## Decisión pendiente: pagos y política de Play
+## Decisión de pagos — RESUELTA (2026-07): opción 1
 
 Kengo cobra la suscripción de la clínica con **Stripe fuera de la app**. La
 política de pagos de Google exige Google Play Billing para compras digitales
-consumidas en la app, y es la causa de rechazo más habitual en apps con
-suscripción propia. Tras el acuerdo con Epic (marzo 2026) y las reglas de EEE del
-DMA, enlazar a un pago externo es posible, pero con condiciones y comisión.
+consumidas en la app (y la cláusula anti-steering prohíbe incluso dirigir al
+pago externo), así que **los CTAs de compra están ocultos en los builds
+nativos** (Android e iOS a la vez):
 
-Tres caminos, de menor a mayor coste:
+- `SubscriptionService.pagosSoloWeb` (computed sobre `PlatformService.isNative()`)
+  oculta checkout, portal, reactivar, cambio de variante, pricing cards y
+  enlaces a facturas de Stripe; guard defensivo no-op en los métodos del
+  servicio. "Cancelar suscripción" sigue disponible (cancelar no exige Play
+  Billing/IAP).
+- En su lugar, mensajes informativos "la suscripción se gestiona desde la
+  versión web de Kengo" **sin URL ni enlace clicable** (anti-steering).
+- Usar en la app una suscripción contratada en la web es lícito en ambas
+  tiendas (patrón multiplataforma; Apple 3.1.3(b)).
+- El deep link `kengo://billing/return` queda como fallback inofensivo.
 
-1. **No exponer el checkout en el build Android** — ocultar el CTA de suscripción
-   en nativo y que el admin de la clínica suscriba desde el navegador. Es lo más
-   rápido y lo que menos superficie de rechazo deja. Coste: cambio de UI
-   condicionado por plataforma.
-2. **Acogerse al programa de ofertas externas / facturación alternativa del EEE** —
-   permite el enlace de salida declarándolo en la consola y pagando la comisión
-   reducida. Coste: trámite en consola y comisiones.
-3. **Envolver el pago en Play Billing** (RevenueCat o `@capacitor-community/stripe`) —
-   coste alto: reescribir `SubscriptionService` y duplicar webhooks.
-
-**Para pruebas internas y cerradas no bloquea.** Hay que resolverlo antes de
-enviar a producción. El mismo debate está abierto para iOS
-(`DESARROLLOS_PENDIENTES_CAPACITOR.md` §E3).
+Alternativas descartadas (reactivables si algún día se quiere vender in-app):
+programa de ofertas externas / facturación alternativa del EEE (trámite +
+comisión) o Play Billing/IAP wrapper (RevenueCat, `@capacitor-community/stripe`;
+coste alto: reescribir `SubscriptionService` y duplicar webhooks).
 
 ---
 
