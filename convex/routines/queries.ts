@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { query } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { getAuthenticatedUser } from "../_helpers/permissions";
+import { getAuthenticatedUser, PUESTOS_GESTION } from "../_helpers/permissions";
 import {
   assertCanAccessClinic,
   assertCanAccessRoutine,
@@ -81,21 +81,24 @@ export const list = query({
       .collect();
     const ownPrivadas = own.filter((r) => r.visibilidad === "privado");
 
-    // Rutinas de la clínica activa, solo si el usuario es miembro. Toda
-    // rutina devuelta aquí pasa assertCanAccessRoutine en getById: mismo
-    // criterio (membresía en routine.clinicId), sin sorpresas al abrirla.
+    // Rutinas de la clínica activa, solo si el usuario es fisio/admin en ella.
+    // Toda rutina devuelta aquí pasa assertCanAccessRoutine en getById: mismo
+    // criterio (puesto de gestión en routine.clinicId), sin sorpresas al
+    // abrirla. Los pacientes no entran: la biblioteca de plantillas es del
+    // equipo, y lo que les toca se les copia a `plans`.
     let clinicRoutines: Doc<"routines">[] = [];
     const clinicId = args.clinicId;
     if (clinicId) {
       try {
-        await assertCanAccessClinic(ctx, user._id, clinicId);
+        await assertCanAccessClinic(ctx, user._id, clinicId, PUESTOS_GESTION);
         const byClinic = await ctx.db
           .query("routines")
           .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
           .collect();
         clinicRoutines = byClinic.filter((r) => r.visibilidad === "clinica");
       } catch {
-        // No miembro de la clínica indicada → aislamiento: sin rutinas de clínica.
+        // Sin puesto de gestión en la clínica indicada (no miembro, o miembro
+        // como paciente) → aislamiento: sin rutinas de clínica.
         clinicRoutines = [];
       }
     }

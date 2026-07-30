@@ -15,6 +15,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { esErrorYaGestionado } from '../../../../core/billing/subscription-gate.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 
@@ -259,10 +260,14 @@ export class AsignacionResponsableComponent {
       }
     } catch (err: unknown) {
       this.logger.error('Error guardando asignaciones:', err);
-      const errorMsg =
-        (err as { error?: { error?: string } })?.error?.error ||
-        'Error al guardar los cambios';
-      this.toast.error(errorMsg);
+      // El gate de suscripción ya abre su diálogo desde el interceptor de
+      // `ConvexService` y re-lanza: un toast encima serían dos avisos.
+      if (!esErrorYaGestionado(err)) {
+        const errorMsg =
+          (err as { error?: { error?: string } })?.error?.error ||
+          'Error al guardar los cambios';
+        this.toast.error(errorMsg);
+      }
     } finally {
       this.guardando.set(false);
     }

@@ -5,6 +5,10 @@
 <!-- Pill de estado de red: "Sin conexión" con debounce / flash de reconexión. -->
 <app-offline-banner />
 
+<!-- Pila de toasts. Fuera de los @if de shell: también hace falta en las
+     pantallas de auth, y es el único componente que pinta ToastService. -->
+<ui2-toast-container />
+
 <!-- Gate de primer paint: hasta que la sesión esté resuelta solo se muestra
      el fondo cream V2, sin nav ni contenido, para evitar el flash del shell
      legacy del modo fisio cuando el rol por defecto aún no se ha sustituido. -->

@@ -50,6 +50,12 @@
             [options]="visibilidadOptions"
             formControlName="visibilidad"
           ></ui2-radio-group>
+          @if (!puedeCambiarVisibilidad()) {
+            <p class="text-sm text-ink-500">
+              Puedes editar esta rutina porque está compartida con tu clínica,
+              pero solo quien la creó puede cambiar su visibilidad.
+            </p>
+          }
         </div>
       </ui2-card>
     </aside>

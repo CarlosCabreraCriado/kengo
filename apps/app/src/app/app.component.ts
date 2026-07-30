@@ -49,6 +49,7 @@ import {
   Ui2PatientHeaderComponent,
   Ui2PatientSidebarComponent,
   Ui2PatientTabBarComponent,
+  Ui2ToastContainerComponent,
   Ui2WebTopbarComponent,
 } from './shared/ui-v2';
 import {
@@ -83,6 +84,7 @@ import type {
     Ui2PatientHeaderComponent,
     Ui2PatientSidebarComponent,
     Ui2PatientTabBarComponent,
+    Ui2ToastContainerComponent,
     Ui2WebTopbarComponent,
   ],
   templateUrl: './app.component.html',

@@ -70,6 +70,9 @@ export {
 } from './dialog/dialog.component';
 export type { Ui2DialogActionsAlign, Ui2DialogVariant } from './dialog/dialog.component';
 
+// --- Toasts ---
+export { Ui2ToastContainerComponent } from './toast/toast-container.component';
+
 // --- Stepper ---
 export { Ui2StepperComponent, Ui2StepComponent } from './stepper/stepper.component';
 export type { Ui2StepperOrientation } from './stepper/stepper.component';

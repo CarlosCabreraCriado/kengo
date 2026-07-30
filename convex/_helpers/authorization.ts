@@ -1,3 +1,4 @@
+import { ConvexError } from "convex/values";
 import { QueryCtx, MutationCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import {
@@ -12,6 +13,14 @@ type AnyCtx = QueryCtx | MutationCtx;
 /**
  * Devuelve la rutina si el usuario es su autor.
  * Lanza error si no existe o no tiene permisos.
+ *
+ * Es el criterio ESTRICTO (solo el autor), reservado a las operaciones que no
+ * se comparten con el equipo de la clínica: hoy, borrar. Para editar, usa
+ * `assertCanManageRoutine`.
+ *
+ * Lanza `ConvexError` con `code` en vez de `Error` plano: Convex redacta los
+ * errores no estructurados en producción y el cliente no podría explicar el
+ * motivo al usuario.
  */
 export async function getRoutineIfOwned(
   ctx: AnyCtx,
@@ -20,9 +29,17 @@ export async function getRoutineIfOwned(
 ): Promise<Doc<"routines">> {
   const ownerId = userId ?? (await getAuthenticatedUser(ctx))._id;
   const routine = await ctx.db.get(routineId);
-  if (!routine) throw new Error("Rutina no encontrada");
+  if (!routine) {
+    throw new ConvexError({
+      code: "ROUTINE_NOT_FOUND",
+      message: "Esta rutina ya no existe.",
+    });
+  }
   if (routine.autorId !== ownerId) {
-    throw new Error("No tienes permisos sobre esta rutina");
+    throw new ConvexError({
+      code: "ROUTINE_NO_ES_TUYA",
+      message: "Solo quien creó la rutina puede realizar esta acción.",
+    });
   }
   return routine;
 }
@@ -215,10 +232,15 @@ export async function assertCanAccessSession(
  * Lanza si `userId` no puede acceder a la rutina.
  * Reglas:
  *   - "privado": solo el autor.
- *   - "clinica" con clinicId: cualquier miembro de esa clínica.
+ *   - "clinica" con clinicId: cualquier fisio/admin de esa clínica.
  *   - "clinica" sin clinicId: solo el autor. Es un estado ilegal una vez
  *     ejecutado `migrations/backfillRoutineClinicId:resolvePendientes`;
  *     denegar a terceros evita que estas rutinas crucen fronteras de clínica.
+ *
+ * Los pacientes quedan fuera a propósito, aunque sean miembros de la clínica:
+ * las rutinas son la biblioteca de plantillas del equipo, no contenido
+ * asignado. Lo que el paciente debe ver se le copia a `plans` al asignarle
+ * trabajo, y eso lo gobierna `assertCanAccessPlan`.
  */
 export async function assertCanAccessRoutine(
   ctx: AnyCtx,
@@ -235,9 +257,64 @@ export async function assertCanAccessRoutine(
   }
 
   if (routine.clinicId) {
-    await assertCanAccessClinic(ctx, userId, routine.clinicId);
+    await assertCanAccessClinic(ctx, userId, routine.clinicId, PUESTOS_GESTION);
     return routine;
   }
 
   throw new Error(ERR_NO_ACCESO);
+}
+
+/**
+ * Lanza si `userId` no puede EDITAR la rutina. Es a `assertCanAccessRoutine`
+ * lo que `assertCanManagePlan` es a `assertCanAccessPlan`: mismo eje (la
+ * clínica del recurso) pero exigiendo rol de gestión.
+ *
+ * Reglas:
+ *   - El autor siempre puede editar la suya, sea privada o de clínica.
+ *   - Una rutina "clinica" con clinicId la edita cualquier fisio/admin de esa
+ *     clínica, aunque no la haya creado: una rutina compartida con el equipo
+ *     es del equipo. Es el mismo criterio que rige los planes.
+ *   - Un paciente de la clínica no la edita — ni la lee: queda fuera ya en
+ *     `assertCanAccessRoutine`.
+ *   - Una rutina "privado" de otro, o "clinica" sin clinicId (estado ilegal
+ *     post-backfill), no la edita nadie más que el autor.
+ *
+ * Nota: quien edita sin ser el autor no puede cambiar la visibilidad ni mover
+ * la rutina de clínica — eso lo aplica `routines.update`, que es quien conoce
+ * los valores entrantes.
+ */
+export async function assertCanManageRoutine(
+  ctx: AnyCtx,
+  userId: Id<"users">,
+  routineId: Id<"routines">,
+): Promise<Doc<"routines">> {
+  const routine = await ctx.db.get(routineId);
+  if (!routine) {
+    throw new ConvexError({
+      code: "ROUTINE_NOT_FOUND",
+      message: "Esta rutina ya no existe.",
+    });
+  }
+
+  if (routine.autorId === userId) return routine;
+
+  if (routine.visibilidad !== "clinica" || !routine.clinicId) {
+    throw new ConvexError({
+      code: "ROUTINE_PRIVADA_DE_OTRO",
+      message:
+        "Esta rutina es privada de otro fisioterapeuta. Solo quien la creó puede editarla.",
+    });
+  }
+
+  try {
+    await assertCanAccessClinic(ctx, userId, routine.clinicId, PUESTOS_GESTION);
+  } catch {
+    throw new ConvexError({
+      code: "ROUTINE_FUERA_DE_CLINICA",
+      message:
+        "Esta rutina pertenece a una clínica en la que no eres fisioterapeuta ni administrador.",
+    });
+  }
+
+  return routine;
 }

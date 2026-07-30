@@ -27,6 +27,7 @@ import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
 import { MensajesService } from '../../../mensajes/data-access/mensajes.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { esErrorYaGestionado } from '../../../../core/billing/subscription-gate.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 import {
@@ -982,7 +983,11 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
       this.router.navigate(['/mis-pacientes']);
     } catch (err) {
       this.logger.error('[paciente-detail] expelPatient falló', err);
-      this.toast.error('No se pudo eliminar al paciente. Inténtalo de nuevo.');
+      // El gate de suscripción ya abre su diálogo desde el interceptor de
+      // `ConvexService` y re-lanza: un toast encima serían dos avisos.
+      if (!esErrorYaGestionado(err)) {
+        this.toast.error('No se pudo eliminar al paciente. Inténtalo de nuevo.');
+      }
     }
   }
 }

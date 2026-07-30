@@ -19,6 +19,12 @@ export interface Rutina {
   descripcion?: string;
   autor: UUID | Usuario;
   visibilidad: 'privado' | 'clinica';
+  /**
+   * Clínica a la que está compartida. Solo presente con
+   * `visibilidad === 'clinica'`. Se necesita para no reasignar la rutina a la
+   * clínica activa al guardarla desde otro contexto.
+   */
+  clinicId?: string;
   dateCreated?: string;
   dateUpdated?: string;
 }

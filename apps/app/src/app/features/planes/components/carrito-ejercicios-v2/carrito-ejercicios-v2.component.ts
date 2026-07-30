@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Dialog } from '@angular/cdk/dialog';
+import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -60,6 +61,7 @@ export class Ui2CarritoEjerciciosComponent
   private readonly toastService = inject(ToastService);
   private readonly injector = inject(Injector);
   private readonly dialog = inject(Dialog);
+  private readonly dialogService = inject(DialogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly backButton = inject(BackButtonService);
 
@@ -69,6 +71,9 @@ export class Ui2CarritoEjerciciosComponent
 
   readonly isRutinaMode = computed(() => this.rutinaSvc.isActive());
   readonly isEditMode = computed(() => this.svc.isEditMode());
+
+  /** Guard de reentrada de `guardarRutinaDirectamente`. */
+  private readonly guardandoRutina = signal(false);
 
   readonly drawerAbierto = signal(false);
   readonly ocultarTab = signal(false);
@@ -222,7 +227,7 @@ export class Ui2CarritoEjerciciosComponent
   eliminarAsignacion(): void {
     CarritoPointers.clear();
     this.svc.resetAll();
-    this.toastService.show('Asignación eliminada');
+    this.toastService.success('Asignación eliminada');
   }
 
   async cambiarPaciente(): Promise<void> {
@@ -246,7 +251,7 @@ export class Ui2CarritoEjerciciosComponent
             pacienteId: paciente.id,
             ...(fisioId ? { fisioId } : {}),
           });
-          this.toastService.show(
+          this.toastService.success(
             `Paciente cambiado a ${paciente.first_name} ${paciente.last_name}`,
           );
         }
@@ -262,11 +267,11 @@ export class Ui2CarritoEjerciciosComponent
 
   async configurarPlan(): Promise<void> {
     if (!this.svc.paciente()) {
-      this.toastService.show('Selecciona un paciente primero.');
+      this.toastService.warning('Selecciona un paciente primero.');
       return;
     }
     if (this.svc.items().length === 0) {
-      this.toastService.show('Añade ejercicios al plan.');
+      this.toastService.warning('Añade ejercicios al plan.');
       return;
     }
 
@@ -284,7 +289,7 @@ export class Ui2CarritoEjerciciosComponent
 
   async cargarRutina(): Promise<void> {
     if (!this.isRutinaMode() && !this.svc.paciente()) {
-      this.toastService.show('Selecciona un paciente primero.');
+      this.toastService.warning('Selecciona un paciente primero.');
       return;
     }
 
@@ -306,9 +311,9 @@ export class Ui2CarritoEjerciciosComponent
             ? await this.rutinaSvc.loadFromRutina(rutinaId)
             : await this.svc.loadFromRutina(rutinaId);
           if (success) {
-            this.toastService.show('Rutina cargada correctamente');
+            this.toastService.success('Rutina cargada correctamente');
           } else {
-            this.toastService.show('Error al cargar la rutina', 'error');
+            this.toastService.error('No se pudo cargar la rutina');
           }
         }
       });
@@ -321,7 +326,7 @@ export class Ui2CarritoEjerciciosComponent
 
   configurarRutina(): void {
     if (this.items().length === 0) {
-      this.toastService.show('Añade ejercicios primero.');
+      this.toastService.warning('Añade ejercicios primero.');
       return;
     }
     this.cerrar();
@@ -330,9 +335,11 @@ export class Ui2CarritoEjerciciosComponent
 
   async guardarRutinaDirectamente(): Promise<void> {
     if (this.items().length === 0) {
-      this.toastService.show('Añade ejercicios primero.');
+      this.toastService.warning('Añade ejercicios primero.');
       return;
     }
+    // Sin este guard, un doble toque abre dos diálogos y guarda dos rutinas.
+    if (this.guardandoRutina()) return;
 
     const { DialogoGuardarRutinaComponent } = await import(
       '../../../rutinas/components/dialogo-guardar-rutina/dialogo-guardar-rutina.component'
@@ -349,18 +356,38 @@ export class Ui2CarritoEjerciciosComponent
         const data = result as
           | { nombre: string; descripcion: string; visibilidad: 'privado' | 'clinica' }
           | undefined;
-        if (data) {
-          const rutinaId = this.rutinaSvc.isActive()
+        if (!data) return;
+
+        this.guardandoRutina.set(true);
+        try {
+          // Ambas ramas devuelven `GuardarRutinaResult`. Se discrimina por
+          // `status` y no por truthiness: el resultado es un objeto, así que
+          // `if (res)` daba siempre true y un fallo acababa mostrando "Rutina
+          // guardada", destruyendo el builder y navegando fuera.
+          const res = this.rutinaSvc.isActive()
             ? await this.rutinaSvc.save(data.nombre, data.descripcion, data.visibilidad)
             : await this.svc.saveAsRutina(data.nombre, data.descripcion, data.visibilidad);
 
-          if (rutinaId) {
-            this.toastService.show('Rutina guardada');
+          if (res.status === 'ok') {
+            this.toastService.success('Rutina guardada');
             if (this.rutinaSvc.isActive()) this.rutinaSvc.exit();
             this.router.navigate(['/rutinas']);
-          } else {
-            this.toastService.show('Error al guardar rutina', 'error');
+            return;
           }
+
+          // En fallo no se navega ni se llama a `exit()`: el carrito se queda
+          // intacto para que el trabajo no se pierda.
+          if (res.error.kind === 'mostrar') {
+            await this.dialogService.confirm({
+              title: res.error.title,
+              message: res.error.message,
+              confirmText: 'Entendido',
+              hideCancel: true,
+              confirmVariant: 'primary',
+            });
+          }
+        } finally {
+          this.guardandoRutina.set(false);
         }
       });
   }
