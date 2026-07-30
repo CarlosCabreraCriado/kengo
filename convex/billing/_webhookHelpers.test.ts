@@ -14,6 +14,7 @@ import {
   isForeignSubscriptionEvent,
   isOutOfOrderEvent,
   shouldGrantGraceOnPastDue,
+  resolveVarianteFromPriceId,
 } from "./_webhookHelpers";
 
 function test(name: string, fn: () => void) {
@@ -148,4 +149,43 @@ test("shouldGrantGraceOnPastDue: past_due SIN gracia (payment_failed perdido por
 test("shouldGrantGraceOnPastDue: desde unpaid (gracia ya agotada, bloqueada por el cron) → NO reabre", () => {
   assert.equal(shouldGrantGraceOnPastDue("unpaid", undefined), false);
   assert.equal(shouldGrantGraceOnPastDue("unpaid", 1_700_000_000_000), false);
+});
+
+// --- resolveVarianteFromPriceId (pricing v2) ---
+
+test("resolveVarianteFromPriceId: price base → 'base'", () => {
+  assert.equal(
+    resolveVarianteFromPriceId("price_base", "price_base", "price_ilim"),
+    "base",
+  );
+});
+
+test("resolveVarianteFromPriceId: price ilimitado → 'ilimitada'", () => {
+  assert.equal(
+    resolveVarianteFromPriceId("price_ilim", "price_base", "price_ilim"),
+    "ilimitada",
+  );
+});
+
+test("resolveVarianteFromPriceId: price desconocido (antiguo en migración) → undefined", () => {
+  assert.equal(
+    resolveVarianteFromPriceId("price_viejo", "price_base", "price_ilim"),
+    undefined,
+  );
+});
+
+test("resolveVarianteFromPriceId: sin priceId → undefined", () => {
+  assert.equal(
+    resolveVarianteFromPriceId(undefined, "price_base", "price_ilim"),
+    undefined,
+  );
+  assert.equal(resolveVarianteFromPriceId("", "price_base", "price_ilim"), undefined);
+});
+
+test("resolveVarianteFromPriceId: env vars sin configurar → undefined (nunca falso positivo)", () => {
+  assert.equal(
+    resolveVarianteFromPriceId("price_base", undefined, undefined),
+    undefined,
+  );
+  assert.equal(resolveVarianteFromPriceId("price_x", "", ""), undefined);
 });

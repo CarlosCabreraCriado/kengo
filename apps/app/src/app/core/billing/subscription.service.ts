@@ -7,7 +7,7 @@ import { PlatformService } from '../services/platform.service';
 import { LoggerService } from '../services/logger.service';
 import { ToastService } from '../../shared/services/toast/toast.service';
 import { api } from '../../../../../../convex/_generated/api';
-import type { ClinicSubscription } from '@kengo/shared-models';
+import type { ClinicSubscription, PlanVariante } from '@kengo/shared-models';
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
@@ -143,6 +143,30 @@ export class SubscriptionService {
     () => this.suscripcion()?.cancelAtPeriodEnd === true,
   );
 
+  /** Variante de pricing activa ("base" con cap de pacientes | "ilimitada"). */
+  public readonly variante = computed<PlanVariante>(
+    () => this.suscripcion()?.variante ?? 'base',
+  );
+
+  public readonly esIlimitada = computed(
+    () => this.variante() === 'ilimitada',
+  );
+
+  /** Cap de pacientes vinculados; `null` = sin cap (ilimitada o enterprise). */
+  public readonly limitePacientes = computed<number | null>(
+    () => this.suscripcion()?.limitePacientes ?? null,
+  );
+
+  public readonly pacientesVinculados = computed<number>(
+    () => this.suscripcion()?.pacientesVinculados ?? 0,
+  );
+
+  /** `true` cuando la variante base ya no admite vincular más pacientes. */
+  public readonly capPacientesAlcanzado = computed<boolean>(() => {
+    const limite = this.limitePacientes();
+    return limite !== null && this.pacientesVinculados() >= limite;
+  });
+
   /**
    * `true` mientras una acción de billing (checkout/portal/cancelar/reactivar)
    * está en vuelo. Evita el doble click que crearía dos Checkout sessions o
@@ -223,7 +247,45 @@ export class SubscriptionService {
     }
   }
 
-  /** Envía solicitud de contacto al equipo de ventas (caso +10 fisios). */
+  /**
+   * Cambia la variante de pricing ("base" ↔ "ilimitada"). Owner-only en el
+   * backend. Devuelve `true` si el cambio se aplicó.
+   */
+  async cambiarVariante(
+    clinicId: string,
+    variante: PlanVariante,
+  ): Promise<boolean> {
+    if (this._accionEnCurso()) return false;
+    this._accionEnCurso.set(true);
+    try {
+      await this.convex.action(api.billing.actions.setPlanVariante, {
+        clinicId: clinicId as never,
+        variante,
+      });
+      this.toast.success(
+        variante === 'ilimitada'
+          ? 'Tu plan ahora incluye pacientes ilimitados'
+          : 'Has vuelto al plan base',
+      );
+      return true;
+    } catch (err) {
+      const code = (err as { data?: { code?: string } })?.data?.code;
+      if (code === 'PACIENTES_EXCEDEN_LIMITE') {
+        const data = (err as { data?: { limite?: number; pacientesActuales?: number } }).data;
+        this.toast.error(
+          `No puedes volver al plan base: tienes ${data?.pacientesActuales ?? '?'} pacientes y el límite es ${data?.limite ?? '?'}`,
+        );
+      } else {
+        this.logger.error('[SubscriptionService] cambiarVariante', err);
+        this.toast.error('No se pudo cambiar el plan');
+      }
+      return false;
+    } finally {
+      this._accionEnCurso.set(false);
+    }
+  }
+
+  /** Envía solicitud de contacto al equipo de ventas (caso +9 fisios). */
   async contactarVentas(
     clinicId: string,
     mensaje: string,

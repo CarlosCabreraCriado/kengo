@@ -339,26 +339,26 @@ export function migrationAnnouncementTemplate(
 <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 24px 0; background-color: #f8f8f8; border-radius: 12px; overflow: hidden;">
   <tr>
     <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; color: #4a4a4a; font-size: 15px;">
-      <strong>1 fisio</strong>
+      <strong>Lonely — 1 fisio</strong>
     </td>
     <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; text-align: right; color: #1a1a1a; font-size: 15px; font-weight: 600;">
-      65 € / mes
+      89 € / mes
     </td>
   </tr>
   <tr>
     <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; color: #4a4a4a; font-size: 15px;">
-      <strong>2 a 4 fisios</strong>
+      <strong>Smart — 2 a 4 fisios</strong>
     </td>
     <td style="padding: 16px 20px; border-bottom: 1px solid #eaeaea; text-align: right; color: #1a1a1a; font-size: 15px; font-weight: 600;">
-      170 € / mes
+      249 € / mes
     </td>
   </tr>
   <tr>
     <td style="padding: 16px 20px; color: #4a4a4a; font-size: 15px;">
-      <strong>5 a 10 fisios</strong>
+      <strong>Medium — 5 a 9 fisios</strong>
     </td>
     <td style="padding: 16px 20px; text-align: right; color: #1a1a1a; font-size: 15px; font-weight: 600;">
-      280 € / mes
+      449 € / mes
     </td>
   </tr>
 </table>
@@ -390,7 +390,7 @@ export function enterpriseInvitationTemplate(
   Hola ${nombreAdmin}, te escribimos como administrador/a de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong>.
 </p>
 <p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-  Hemos lanzado planes de suscripción mensual en Kengo. Tu clínica cuenta actualmente con <strong>${fisiosActuales} fisioterapeutas</strong>, lo que excede el plan estándar de hasta 10 fisios. Por eso queremos prepararte un plan a medida que se ajuste a tu equipo.
+  Hemos lanzado planes de suscripción mensual en Kengo. Tu clínica cuenta actualmente con <strong>${fisiosActuales} fisioterapeutas</strong>, lo que excede el plan estándar de hasta 9 fisios. Por eso queremos prepararte un plan a medida que se ajuste a tu equipo.
 </p>
 <p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
   Mientras cerramos los detalles, tu clínica seguirá funcionando con normalidad. Cuéntanos cómo prefieres organizarlo y nuestro equipo te enviará una propuesta.

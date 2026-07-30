@@ -125,10 +125,15 @@
 
       @if (planActual(); as plan) {
         <div class="plan-hero__name-row">
-          <h2 class="plan-hero__name">{{ plan.nombre }}</h2>
+          <h2 class="plan-hero__name">
+            {{ plan.nombre }}
+            @if (esIlimitada()) {
+              <span class="plan-hero__variant">Ilimitado</span>
+            }
+          </h2>
           <p class="plan-hero__price">
             <span class="plan-hero__currency">€</span>
-            <span class="plan-hero__amount">{{ plan.precioMensualEur | number:'1.0-0' }}</span>
+            <span class="plan-hero__amount">{{ precioActualEur() | number:'1.0-0' }}</span>
             <span class="plan-hero__period">/mes</span>
           </p>
         </div>
@@ -157,10 +162,31 @@
             ></ui2-progress-bar>
             @if (tierLleno() && siguientePlan(); as siguiente) {
               <p class="stat__hint">
-                +1 fisio más → {{ siguiente.nombre }} ({{ siguiente.precioMensualEur | number:'1.0-0' }} €/mes)
+                +1 fisio más → {{ siguiente.nombre }} ({{ precioDe(siguiente) | number:'1.0-0' }} €/mes)
               </p>
             }
           </div>
+
+          @if (limitePacientes() !== null) {
+            <div class="stat">
+              <div class="stat__head">
+                <span class="stat__label">Pacientes vinculados</span>
+                <span class="stat__value">
+                  {{ pacientesVinculados() }}<em> / {{ limitePacientes() }}</em>
+                </span>
+              </div>
+              <ui2-progress-bar
+                [value]="progresoPacientes()"
+                size="md"
+                [color]="capPacientesAlcanzado() ? 'warning' : 'success'"
+              ></ui2-progress-bar>
+              @if (capPacientesAlcanzado()) {
+                <p class="stat__hint">
+                  Límite alcanzado — pasa a pacientes ilimitados para seguir añadiendo.
+                </p>
+              }
+            </div>
+          }
 
           @if (suscripcion()!.currentPeriodEnd && !cancelaAlFinDelPeriodo()) {
             <div class="stat stat--billing">
@@ -211,16 +237,53 @@
       }
     }
 
-    <!-- Caso +10 fisios — solo el propietario puede contactar con ventas -->
+    <!-- Caso +9 fisios — solo el propietario puede contactar con ventas -->
     @if (esOwner() && requiereContactoVentas()) {
       <ui2-empty-state
         icon="forum"
         title="Plan a medida"
-        message="Tu equipo supera los 10 fisioterapeutas. Cuéntanos tu caso y nuestro equipo de ventas te contactará."
+        message="Tu equipo supera los 9 fisioterapeutas. Cuéntanos tu caso y nuestro equipo de ventas te contactará."
         actionLabel="Contactar con ventas"
         actionIcon="forward_to_inbox"
         (action)="abrirDialogContactarVentas()"
       ></ui2-empty-state>
+    }
+
+    <!-- Variante base/ilimitada — solo owner con plan autoservicio -->
+    @if (esOwner() && !requiereContactoVentas() && planActual(); as plan) {
+      <section class="flex flex-col gap-2">
+        <ui2-section-label>Pacientes ilimitados</ui2-section-label>
+        <ui2-card class="block" [padding]="16">
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-ink-500" aria-hidden="true">all_inclusive</span>
+            <div class="flex-1 min-w-0">
+              @if (esIlimitada()) {
+                <p class="font-semibold text-ink-900">Tu plan incluye pacientes ilimitados</p>
+                <p class="text-sm text-ink-500 mt-1">
+                  Puedes volver al plan base ({{ plan.precioBaseEur | number:'1.0-0' }} €/mes,
+                  hasta {{ plan.limitePacientes }} pacientes) si tu equipo lo prefiere.
+                </p>
+              } @else {
+                <p class="font-semibold text-ink-900">¿Necesitas más de {{ plan.limitePacientes }} pacientes?</p>
+                <p class="text-sm text-ink-500 mt-1">
+                  Con la variante ilimitada ({{ plan.precioIlimitadoEur | number:'1.0-0' }} €/mes)
+                  vinculas pacientes sin límite manteniendo tu equipo actual.
+                </p>
+              }
+              <div class="mt-3">
+                <ui2-button
+                  [variant]="esIlimitada() ? 'ghost' : 'primary'"
+                  size="md"
+                  iconLeft="all_inclusive"
+                  [loading]="accionEnCurso()"
+                  [disabled]="accionEnCurso() || bloqueada()"
+                  (clicked)="toggleIlimitado()"
+                >{{ esIlimitada() ? 'Volver al plan base' : 'Pasar a ilimitado' }}</ui2-button>
+              </div>
+            </div>
+          </div>
+        </ui2-card>
+      </section>
     }
 
     <!-- Pricing cards -->
@@ -229,6 +292,7 @@
       <app-pricing-cards
         [planes]="planes()"
         [planActualNombre]="planActual()?.nombre ?? null"
+        [variante]="variante()"
         (contactarVentas)="abrirDialogContactarVentas()"
       ></app-pricing-cards>
     </section>

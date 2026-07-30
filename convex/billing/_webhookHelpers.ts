@@ -81,6 +81,23 @@ export function isOutOfOrderEvent(
 }
 
 /**
+ * Deriva la variante de pricing a partir del price del subscription item.
+ * Devuelve `undefined` si el price no es ninguno de los dos conocidos (p.ej.
+ * el price antiguo durante la ventana de migración, o env vars sin configurar):
+ * en ese caso el caller NO debe tocar la variante persistida.
+ */
+export function resolveVarianteFromPriceId(
+  priceId: string | undefined,
+  basePriceId: string | undefined,
+  ilimitadoPriceId: string | undefined,
+): "base" | "ilimitada" | undefined {
+  if (!priceId) return undefined;
+  if (basePriceId && priceId === basePriceId) return "base";
+  if (ilimitadoPriceId && priceId === ilimitadoPriceId) return "ilimitada";
+  return undefined;
+}
+
+/**
  * Decide si, al pasar a `past_due`, corresponde conceder un periodo de gracia
  * nuevo (y el email de aviso). Reglas:
  *

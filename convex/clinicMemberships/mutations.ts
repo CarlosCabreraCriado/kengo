@@ -1,4 +1,4 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { MutationCtx } from "../_generated/server";
 import { mutation } from "../_helpers/mutationWithTriggers";
 import { internal } from "../_generated/api";
@@ -9,7 +9,10 @@ import {
   getAuthenticatedUser,
   requireActiveSubscription,
 } from "../_helpers/permissions";
-import { LIMITE_FISIOS_AUTOSERVICIO } from "../billing/_helpers";
+import {
+  assertCapacidadFisios,
+  assertCapacidadPacientes,
+} from "../_helpers/capacity";
 import { _deletePatientSnapshotsForClinic } from "../snapshots/internal";
 
 const PUESTOS_FACTURABLES: ReadonlyArray<"fisio" | "admin"> = [
@@ -188,28 +191,19 @@ export const add = mutation({
       .unique();
 
     // M-4: bloquear el alta NETA de un asiento facturable por encima del tope
-    // de autoservicio. Enterprise (>10) se gestiona por ventas; el límite se
+    // de autoservicio. Enterprise (>9) se gestiona por ventas; el límite se
     // hace cumplir en código, no en el price de Stripe (decisión de pricing).
     const nuevoEsFacturable =
       args.puesto === "fisio" || args.puesto === "admin";
     const yaEraFacturable =
       existing?.puesto === "fisio" || existing?.puesto === "admin";
     if (nuevoEsFacturable && !yaEraFacturable) {
-      const facturablesActuales = (
-        await ctx.db
-          .query("clinicMemberships")
-          .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
-          .collect()
-      ).filter(
-        (m) => m.puesto === "fisio" || m.puesto === "admin",
-      ).length;
-      if (facturablesActuales + 1 > LIMITE_FISIOS_AUTOSERVICIO) {
-        throw new ConvexError({
-          code: "REQUIERE_CONTACTO_VENTAS",
-          message:
-            "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
-        });
-      }
+      await assertCapacidadFisios(ctx, args.clinicId);
+    }
+    // Cap de pacientes (variante base): aplica al alta neta de un paciente,
+    // incluida la degradación fisio/admin→paciente (consume un slot).
+    if (args.puesto === "paciente" && existing?.puesto !== "paciente") {
+      await assertCapacidadPacientes(ctx, args.clinicId);
     }
 
     // Los fisios/admins de una clínica actúan automáticamente también como

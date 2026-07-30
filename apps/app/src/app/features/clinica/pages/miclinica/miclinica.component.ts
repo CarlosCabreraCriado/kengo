@@ -145,13 +145,13 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
 
   /**
    * `true` cuando el admin ha alcanzado el límite de fisios del plan
-   * autoservicio (10) y necesita contactar comercial para crecer. Se evalúa
+   * autoservicio (9) y necesita contactar comercial para crecer. Se evalúa
    * a partir de la suscripción de la clínica donde el usuario es admin.
    */
   enLimiteFisios = computed(() => {
     const sub = this.subscriptionService.suscripcion();
     if (!sub) return false;
-    return sub.fisiosActuales >= 10;
+    return sub.fisiosActuales >= 9;
   });
 
   // Rol del usuario en la clínica actual
@@ -278,9 +278,14 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
           this.showSnackbar(`Código generado: ${result.codigo}`);
         } else if (result?.requiereContactoVentas) {
           this.toastService.warning(
-            'Has alcanzado el plan máximo (10 fisios). Contacta con ventas para un plan a medida.',
+            'Has alcanzado el plan máximo (9 fisios). Contacta con ventas para un plan a medida.',
           );
           this.abrirDialogContactarVentas();
+        } else if (result?.limitePacientesAlcanzado) {
+          this.toastService.warning(
+            'Has alcanzado el límite de pacientes de tu plan. Pasa a ilimitado desde Suscripción.',
+          );
+          void this.router.navigate(['/mi-clinica/suscripcion']);
         }
       });
   }
@@ -459,7 +464,8 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     }
     if (sub.estado === 'past_due') return 'Pago pendiente';
     if (sub.plan) {
-      return `Activa · ${sub.plan.nombre} · ${sub.plan.precioMensualEur} €/mes`;
+      const sufijo = sub.variante === 'ilimitada' ? ' Ilimitado' : '';
+      return `Activa · ${sub.plan.nombre}${sufijo} · ${sub.precioMensualActualEur} €/mes`;
     }
     return 'Activa';
   });
@@ -490,15 +496,15 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
 
   // ===== Datos derivados para el rediseño desktop =====
 
-  /** Nombre del plan actual en mayúsculas — fallback "FREE" si no hay suscripción. */
+  /** Nombre del plan actual en mayúsculas — fallback "SIN PLAN" si no hay suscripción. */
   protected readonly suscripcionPlanNombre = computed<string>(() => {
     const sub = this.subscriptionService.suscripcion();
-    return sub?.plan?.nombre?.toUpperCase() ?? 'FREE';
+    return sub?.plan?.nombre?.toUpperCase() ?? 'SIN PLAN';
   });
 
   /**
    * `true` si conviene mostrar el banner amarillo dentro de la subscription card.
-   * Lo activan: el plan está bloqueado por impago o el equipo supera el plan free.
+   * Lo activan: el plan está bloqueado por impago o el equipo llegó al tope.
    */
   protected readonly mostrarWarningSuscripcion = computed<boolean>(
     () => this.enLimiteFisios() || this.subscriptionService.bloqueada(),
@@ -508,8 +514,8 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     if (this.subscriptionService.bloqueada())
       return 'Tu suscripción está suspendida. Actualiza el método de pago.';
     if (this.enLimiteFisios())
-      return 'Has alcanzado el plan máximo (10 fisios). Contacta con ventas.';
-    return 'Tu equipo supera el plan free. Activa una suscripción.';
+      return 'Has alcanzado el plan máximo (9 fisios). Contacta con ventas.';
+    return 'Tu equipo supera el plan actual. Activa una suscripción.';
   });
 
   /** Fecha de renovación legible, o "—" si no aplica. */

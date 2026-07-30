@@ -11,14 +11,27 @@ export type SubscriptionEstado =
   | 'incomplete'
   | 'unpaid'
   | 'none'
-  /** Enterprise (>10 fisios) pendiente de acuerdo con ventas; opera con normalidad. */
+  /** Enterprise (>9 fisios) pendiente de acuerdo con ventas; opera con normalidad. */
   | 'enterprise_pending';
 
+/** Variante de pricing: "base" (con cap de pacientes) o "ilimitada". */
+export type PlanVariante = 'base' | 'ilimitada';
+
 export interface PlanInfo {
+  /** Nombre comercial del plan: "Lonely" | "Smart" | "Medium". */
   nombre: string;
-  precioMensualEur: number;
+  precioBaseEur: number;
+  precioIlimitadoEur: number;
+  /** Pacientes vinculados máximos en variante base. */
+  limitePacientes: number;
   rangoFisiosMin: number;
   rangoFisiosMax: number;
+  /**
+   * Compat transitoria: precio que renderizaba el frontend antiguo. El
+   * backend lo rellena (base para `planes`, variante actual para `plan`)
+   * hasta completar el despliegue del pricing v2.
+   */
+  precioMensualEur?: number;
 }
 
 export interface ClinicSubscription {
@@ -34,6 +47,14 @@ export interface ClinicSubscription {
   cantidadFacturada?: number;
   plan: PlanInfo | null;
   planes: PlanInfo[];
+  /** Variante de pricing activa de la clínica. */
+  variante: PlanVariante;
+  /** Cap de pacientes vinculados; `null` = sin cap (ilimitada o enterprise). */
+  limitePacientes: number | null;
+  /** Pacientes vinculados actualmente (puesto `paciente`). */
+  pacientesVinculados: number;
+  /** Precio mensual del plan actual según la variante activa (0 si sin plan). */
+  precioMensualActualEur: number;
   requiereContactoVentas: boolean;
   /**
    * `userId` del propietario único de la clínica (Bloque J). Solo este
@@ -53,22 +74,6 @@ export interface ClinicSubscription {
    * ambigüedad del estado `none` (sin fila = permisivo).
    */
   bloqueada: boolean;
-}
-
-export const PLANES: PlanInfo[] = [
-  { nombre: '1 Fisio', precioMensualEur: 65, rangoFisiosMin: 1, rangoFisiosMax: 1 },
-  { nombre: '2-4 Fisios', precioMensualEur: 170, rangoFisiosMin: 2, rangoFisiosMax: 4 },
-  { nombre: '5-10 Fisios', precioMensualEur: 280, rangoFisiosMin: 5, rangoFisiosMax: 10 },
-];
-
-export const LIMITE_FISIOS_AUTOSERVICIO = 10;
-
-export function planParaFisios(n: number): PlanInfo | null {
-  return PLANES.find((p) => n >= p.rangoFisiosMin && n <= p.rangoFisiosMax) ?? null;
-}
-
-export function requiereContactoVentas(n: number): boolean {
-  return n > LIMITE_FISIOS_AUTOSERVICIO;
 }
 
 export type InvoiceEstado =

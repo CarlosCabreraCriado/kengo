@@ -6,7 +6,12 @@ import { StripeSubscriptions } from "@convex-dev/stripe";
 import { internal, components } from "../_generated/api";
 import { internalAction, action, type ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { planParaFisios, LIMITE_FISIOS_AUTOSERVICIO } from "./_helpers";
+import {
+  planParaFisios,
+  limitePacientesParaFisios,
+  LIMITE_FISIOS_AUTOSERVICIO,
+  type PlanVariante,
+} from "./_helpers";
 
 const stripeApi = new StripeSubscriptions(components.stripe);
 
@@ -17,17 +22,26 @@ const stripeApi = new StripeSubscriptions(components.stripe);
  * es importante porque nuestro Price tiered usa `quantity = N fisios`, lo
  * que en factura se muestra como `"Producto × N"` y puede confundir.
  *
- * Si `cantidadFisios` está fuera de los tramos autoservicio (0 o >10),
+ * Si `cantidadFisios` está fuera de los tramos autoservicio (0 o >9),
  * limpiamos el field para no exponer un texto desactualizado o incorrecto.
  */
 async function syncStripeCustomerTierLabel(
   stripe: Stripe,
   customerId: string,
   cantidadFisios: number,
+  variante: PlanVariante,
 ): Promise<void> {
   const tier = planParaFisios(cantidadFisios);
   const custom_fields = tier
-    ? [{ name: "Plan", value: `Tramo ${tier.nombre}` }]
+    ? [
+        {
+          name: "Plan",
+          value:
+            variante === "ilimitada"
+              ? `Plan ${tier.nombre} Ilimitado`
+              : `Plan ${tier.nombre}`,
+        },
+      ]
     : [];
   try {
     await stripe.customers.update(customerId, {
@@ -53,6 +67,19 @@ function getEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`${name} no configurada`);
   return value;
+}
+
+/**
+ * Price de Stripe para la variante de pricing de la clínica.
+ *
+ * Fallback transitorio: mientras dura la rotación de prices (pricing v2),
+ * `STRIPE_PRICE_ID_BASE` puede no existir todavía en el entorno; en ese caso
+ * usamos el `STRIPE_PRICE_ID` clásico. Eliminar el fallback (y la env var
+ * vieja) cuando la migración esté completada.
+ */
+function getPriceIdForVariante(variante: PlanVariante | undefined): string {
+  if (variante === "ilimitada") return getEnv("STRIPE_PRICE_ID_ILIMITADO");
+  return process.env["STRIPE_PRICE_ID_BASE"] ?? getEnv("STRIPE_PRICE_ID");
 }
 
 /**
@@ -185,7 +212,8 @@ export const startTrialForClinic = internalAction({
     }
 
     const days = trialDays ?? Number(process.env["STRIPE_TRIAL_DAYS"] ?? 14);
-    const priceId = getEnv("STRIPE_PRICE_ID");
+    const variante: PlanVariante = data.billing?.variante ?? "base";
+    const priceId = getPriceIdForVariante(variante);
     const stripe = getStripeClient();
 
     let customerId = data.billing?.stripeCustomerId;
@@ -211,7 +239,7 @@ export const startTrialForClinic = internalAction({
     }
 
     const quantity = Math.max(1, data.cantidadFisios);
-    await syncStripeCustomerTierLabel(stripe, customerId, quantity);
+    await syncStripeCustomerTierLabel(stripe, customerId, quantity, variante);
     const subscription = await stripe.subscriptions.create(
       {
         customer: customerId,
@@ -252,6 +280,7 @@ export const startTrialForClinic = internalAction({
       trialEnd,
       currentPeriodEnd,
       cantidadFisios: quantity,
+      variante,
     });
 
     return { ok: true, trialEnd } as const;
@@ -435,10 +464,12 @@ export const createCheckoutSession = action({
 
     // Sincroniza la etiqueta del tramo en el customer antes de abrir Checkout
     // para que aparezca en la factura siguiente.
+    const variante: PlanVariante = data.billing?.variante ?? "base";
     await syncStripeCustomerTierLabel(
       stripe,
       customerId,
       Math.max(1, data.cantidadFisios),
+      variante,
     );
 
     const estado = data.billing?.estadoLocal ?? "none";
@@ -504,7 +535,7 @@ export const createCheckoutSession = action({
           customer: customerId,
           line_items: [
             {
-              price: getEnv("STRIPE_PRICE_ID"),
+              price: getPriceIdForVariante(variante),
               quantity: Math.max(1, data.cantidadFisios),
             },
           ],
@@ -654,6 +685,94 @@ export const reactivateSubscription = action({
     await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
       clinicId,
       cancelAtPeriodEnd: false,
+    });
+
+    return { ok: true } as const;
+  },
+});
+
+/**
+ * Cambia la variante de pricing de la clínica ("base" ↔ "ilimitada").
+ * Owner-only. Hace swap del price del subscription item en Stripe con
+ * prorrateo (upgrade a mitad de ciclo factura el delta; en trial es no-op).
+ *
+ * Guard de downgrade: no se puede volver a "base" si los pacientes vinculados
+ * superan el cap del plan actual — lanza `PACIENTES_EXCEDEN_LIMITE`.
+ */
+export const setPlanVariante = action({
+  args: {
+    clinicId: v.id("clinics"),
+    variante: v.union(v.literal("base"), v.literal("ilimitada")),
+  },
+  handler: async (ctx, { clinicId, variante }): Promise<{ ok: true }> => {
+    const externalId = await requireExternalId(ctx);
+    await ctx.runQuery(
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
+      { externalId, clinicId },
+    );
+
+    const data = await ctx.runQuery(
+      internal.billing.internal.getBillingContext,
+      { clinicId },
+    );
+    const varianteActual: PlanVariante = data.billing?.variante ?? "base";
+    if (varianteActual === variante) return { ok: true } as const;
+
+    if (variante === "base") {
+      const limite = limitePacientesParaFisios(
+        Math.max(1, data.cantidadFisios),
+        "base",
+      );
+      if (limite !== null && data.cantidadPacientes > limite) {
+        throw new ConvexError({
+          code: "PACIENTES_EXCEDEN_LIMITE",
+          message: `No puedes volver al plan base: tienes ${data.cantidadPacientes} pacientes y el límite es ${limite}.`,
+          limite,
+          pacientesActuales: data.cantidadPacientes,
+        });
+      }
+    }
+
+    const localSubId = data.billing?.stripeSubscriptionId;
+    const customerId = data.billing?.stripeCustomerId;
+
+    // Sin subscription en Stripe (enterprise_pending / none): persistimos solo
+    // localmente; el próximo trial/checkout usará el price de esta variante.
+    if (localSubId && customerId) {
+      const stripe = getStripeClient();
+      const subId = await resolveActiveSubscriptionId(
+        ctx,
+        stripe,
+        clinicId,
+        localSubId,
+        customerId,
+      );
+      const sub = await stripe.subscriptions.retrieve(subId);
+      const item = sub.items.data[0];
+      if (!item) throw new Error("La suscripción no tiene items");
+      await stripe.subscriptions.update(subId, {
+        items: [
+          {
+            id: item.id,
+            price: getPriceIdForVariante(variante),
+            quantity: item.quantity ?? Math.max(1, data.cantidadFisios),
+          },
+        ],
+        // Upgrade/downgrade a mitad de ciclo: prorratear el delta. En trial no
+        // hay factura, así que es un no-op hasta el primer cobro.
+        proration_behavior: "create_prorations",
+      });
+      await syncStripeCustomerTierLabel(
+        stripe,
+        customerId,
+        Math.max(1, data.cantidadFisios),
+        variante,
+      );
+    }
+
+    await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
+      clinicId,
+      variante,
     });
 
     return { ok: true } as const;
@@ -933,7 +1052,7 @@ export const notifySubscriptionCanceled = internalAction({
 });
 
 /**
- * Solicitud del admin de una clínica para contactar con ventas (caso +10
+ * Solicitud del admin de una clínica para contactar con ventas (caso +9
  * fisioterapeutas, fuera del autoservicio). Envía un email al equipo de
  * contacto vía Resend con los datos de la clínica y del solicitante.
  */
@@ -965,7 +1084,7 @@ export const contactarVentas = action({
     }
 
     const cuerpo = [
-      `Solicitud de plan enterprise (+10 fisioterapeutas)`,
+      `Solicitud de plan enterprise (+9 fisioterapeutas)`,
       ``,
       `Clínica: ${data.clinic.nombre}`,
       `Clinic ID: ${clinicId}`,
@@ -982,7 +1101,7 @@ export const contactarVentas = action({
     await ctx.runAction(internal.email.actions.sendContactForm, {
       nombre: adminNombre,
       email: adminEmail,
-      asunto: `[Kengo] +10 fisios — ${data.clinic.nombre}`,
+      asunto: `[Kengo] +9 fisios — ${data.clinic.nombre}`,
       mensaje: cuerpo,
     });
 
@@ -1112,7 +1231,12 @@ export const updateStripeQuantity = internalAction({
       quantity: cantidad,
     });
 
-    await syncStripeCustomerTierLabel(stripe, customerId, cantidad);
+    await syncStripeCustomerTierLabel(
+      stripe,
+      customerId,
+      cantidad,
+      data.billing?.variante ?? "base",
+    );
 
     await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
       clinicId,
@@ -1159,5 +1283,111 @@ export const recoverClinicSubscriptionId = internalAction({
       { clinicId, stripeSubscriptionId: alive.id },
     );
     return { ok: true, subId: alive.id } as const;
+  },
+});
+
+/**
+ * Migración pricing v2 (Lonely/Smart/Medium): mueve todas las suscripciones
+ * que sigan en el price antiguo al price base nuevo y persiste
+ * `variante: "base"` en `clinicBilling`. Idempotente y repetible — pensada
+ * para ejecutarse desde el Convex Dashboard tras crear los prices nuevos y
+ * configurar `STRIPE_PRICE_ID_BASE`/`STRIPE_PRICE_ID_ILIMITADO`.
+ *
+ * `proration_behavior: "none"`: el precio nuevo aplica en la SIGUIENTE
+ * factura, sin línea de ajuste a mitad de ciclo. Una sub `trialing` no cobra
+ * nada en el swap (la primera factura post-trial ya sale al precio nuevo) y
+ * una `past_due` conserva intacta su factura en dunning.
+ *
+ * Args: `{ "oldPriceId": "price_…", "dryRun": true }`.
+ */
+export const migrateSubscriptionsToPricingV2 = internalAction({
+  args: {
+    /** Price antiguo a sustituir (explícito: el env var ya puede estar rotado). */
+    oldPriceId: v.string(),
+    dryRun: v.optional(v.boolean()),
+  },
+  handler: async (
+    ctx,
+    { oldPriceId, dryRun },
+  ): Promise<{
+    revisadas: number;
+    migradas: string[];
+    saltadas: { clinicId: string; motivo: string }[];
+  }> => {
+    const basePriceId = getEnv("STRIPE_PRICE_ID_BASE");
+    const stripe = getStripeClient();
+    const rows = await ctx.runQuery(
+      internal.billing.internal.listAllClinicBilling,
+      {},
+    );
+
+    const migradas: string[] = [];
+    const saltadas: { clinicId: string; motivo: string }[] = [];
+
+    for (const row of rows) {
+      const subId = row.stripeSubscriptionId;
+      if (!subId) {
+        saltadas.push({ clinicId: row.clinicId, motivo: "sin subscription" });
+        continue;
+      }
+
+      const sub = await stripe.subscriptions
+        .retrieve(subId)
+        .catch(() => null);
+      if (!sub) {
+        saltadas.push({ clinicId: row.clinicId, motivo: "sub no encontrada" });
+        continue;
+      }
+      if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+        saltadas.push({ clinicId: row.clinicId, motivo: `sub ${sub.status}` });
+        continue;
+      }
+
+      const item = sub.items.data[0];
+      if (!item || item.price.id !== oldPriceId) {
+        saltadas.push({
+          clinicId: row.clinicId,
+          motivo: `price ya es ${item?.price.id ?? "desconocido"}`,
+        });
+        continue;
+      }
+
+      if (dryRun) {
+        migradas.push(row.clinicId);
+        continue;
+      }
+
+      await stripe.subscriptions.update(subId, {
+        items: [
+          {
+            id: item.id,
+            price: basePriceId,
+            quantity: item.quantity ?? 1,
+          },
+        ],
+        proration_behavior: "none",
+      });
+
+      await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
+        clinicId: row.clinicId,
+        variante: "base",
+      });
+
+      if (row.stripeCustomerId) {
+        await syncStripeCustomerTierLabel(
+          stripe,
+          row.stripeCustomerId,
+          Math.max(1, item.quantity ?? row.cantidadFisios ?? 1),
+          "base",
+        );
+      }
+
+      migradas.push(row.clinicId);
+      console.log(
+        `[billing] migrateSubscriptionsToPricingV2 clinic=${row.clinicId} sub=${subId} → ${basePriceId}`,
+      );
+    }
+
+    return { revisadas: rows.length, migradas, saltadas };
   },
 });

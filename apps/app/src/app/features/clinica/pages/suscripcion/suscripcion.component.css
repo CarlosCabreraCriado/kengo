@@ -134,6 +134,19 @@
   color: var(--ink-900);
 }
 
+/* Sufijo "Ilimitado" junto al nombre del plan cuando la variante lo es. */
+.plan-hero__variant {
+  display: inline-block;
+  margin-left: 6px;
+  font-family: Galvji, kengoFont, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--kengo-primary);
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
 .plan-hero__price {
   margin: 0;
   display: inline-flex;

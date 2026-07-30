@@ -173,7 +173,7 @@ export function billingPermiteOperar(billing: {
   if (billing.estadoLocal === "trialing" || billing.estadoLocal === "active") {
     return true;
   }
-  // Enterprise (>10 fisios) pendiente de acuerdo con ventas: opera con
+  // Enterprise (>9 fisios) pendiente de acuerdo con ventas: opera con
   // normalidad mientras se cierra el contrato — no bloqueamos (B-9).
   if (billing.estadoLocal === "enterprise_pending") {
     return true;

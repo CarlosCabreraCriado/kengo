@@ -13,7 +13,7 @@ import {
   Ui2PillComponent,
 } from '../../../../shared/ui-v2';
 
-import type { PlanInfo } from '@kengo/shared-models';
+import type { PlanInfo, PlanVariante } from '@kengo/shared-models';
 
 interface PlanView {
   nombre: string;
@@ -24,33 +24,29 @@ interface PlanView {
   features: string[];
 }
 
-const VIEW_OVERRIDES: Record<string, Pick<PlanView, 'overline' | 'destacado' | 'features'>> = {
-  '1 Fisio': {
+const VIEW_OVERRIDES: Record<
+  string,
+  Pick<PlanView, 'overline' | 'destacado'> & { features: string[] }
+> = {
+  Lonely: {
     overline: 'Individual',
     destacado: false,
-    features: [
-      '1 fisioterapeuta',
-      'Pacientes ilimitados',
-      'Catálogo de ejercicios',
-      'Soporte por email',
-    ],
+    features: ['1 fisioterapeuta', 'Catálogo de ejercicios', 'Soporte por email'],
   },
-  '2-4 Fisios': {
+  Smart: {
     overline: 'Equipo pequeño',
     destacado: true,
     features: [
       'Hasta 4 fisioterapeutas',
-      'Pacientes ilimitados',
       'Catálogo de ejercicios',
       'Soporte prioritario',
     ],
   },
-  '5-10 Fisios': {
+  Medium: {
     overline: 'Equipo',
     destacado: false,
     features: [
-      'Hasta 10 fisioterapeutas',
-      'Pacientes ilimitados',
+      'Hasta 9 fisioterapeutas',
       'Catálogo de ejercicios',
       'Soporte prioritario',
     ],
@@ -74,27 +70,41 @@ const VIEW_OVERRIDES: Record<string, Pick<PlanView, 'overline' | 'destacado' | '
 export class PricingCardsComponent {
   readonly planes = input.required<PlanInfo[]>();
   readonly planActualNombre = input<string | null>(null);
+  /** Variante con la que se renderizan precio y feature de pacientes. */
+  readonly variante = input<PlanVariante>('base');
   readonly contactarVentas = output<void>();
 
   protected readonly views = computed<PlanView[]>(() => {
+    const variante = this.variante();
     return this.planes().map((p) => {
       const override = VIEW_OVERRIDES[p.nombre] ?? {
         overline: p.nombre,
         destacado: false,
         features: [
           `Hasta ${p.rangoFisiosMax} fisioterapeuta${p.rangoFisiosMax === 1 ? '' : 's'}`,
-          'Pacientes ilimitados',
           'Catálogo de ejercicios',
           'Soporte por email',
         ],
       };
+      // La feature de pacientes depende de la variante: cap del plan en base,
+      // sin límite en ilimitada. Se inserta tras la primera feature (equipo).
+      const featurePacientes =
+        variante === 'ilimitada'
+          ? 'Pacientes ilimitados'
+          : `Hasta ${p.limitePacientes} pacientes`;
+      const features = [
+        override.features[0] ?? '',
+        featurePacientes,
+        ...override.features.slice(1),
+      ].filter(Boolean);
       return {
         nombre: p.nombre,
         overline: override.overline,
-        precioMensualEur: p.precioMensualEur,
+        precioMensualEur:
+          variante === 'ilimitada' ? p.precioIlimitadoEur : p.precioBaseEur,
         rangoFisiosMax: p.rangoFisiosMax,
         destacado: override.destacado,
-        features: override.features,
+        features,
       };
     });
   });
