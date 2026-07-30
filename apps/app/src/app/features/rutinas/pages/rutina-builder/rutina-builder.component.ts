@@ -19,7 +19,12 @@ import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 
 import { assetUrl } from '../../../../core/utils/asset-url';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
+import {
+  describirErrorRutina,
+  type ErrorRutina,
+} from '../../data-access/rutina-error';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
+import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
@@ -82,6 +87,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastService = inject(ToastService);
+  private dialog = inject(DialogService);
   private fb = inject(FormBuilder);
   private logger = inject(LoggerService);
   svc = inject(RutinaBuilderService);
@@ -110,6 +116,11 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   readonly items = computed(() => this.svc.items());
   readonly totalItems = computed(() => this.svc.totalItems());
   readonly canSave = computed(() => this.svc.canSave() && !this.isSaving());
+
+  /** Solo el autor puede cambiar la visibilidad; ver `ngOnInit`. */
+  readonly puedeCambiarVisibilidad = computed(
+    () => !this.isEditMode() || this.svc.esAutorDeRutinaEnEdicion(),
+  );
 
   readonly pageOverline = computed(() => {
     const total = this.totalItems();
@@ -146,7 +157,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
       this.isLoading.set(false);
 
       if (!result) {
-        this.toastService.show('No se pudo cargar la rutina', 'error');
+        this.toastService.error('No se pudo cargar la rutina');
         this.router.navigate(['/rutinas']);
         return;
       }
@@ -157,18 +168,25 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
         descripcion: this.svc.descripcion(),
         visibilidad: result.visibilidad as 'privado' | 'clinica',
       });
+
+      // Un fisio/admin de la clínica puede editar el contenido de una rutina
+      // compartida sin ser su autor, pero no cambiar su visibilidad ni moverla
+      // de clínica: el backend lo rechaza, así que no se ofrece el control.
+      if (!result.esAutor) {
+        this.form.controls.visibilidad.disable();
+      }
       return;
     }
 
     // Modo creación: verificar que estamos en modo rutina y hay ejercicios
     if (!this.svc.isActive()) {
-      this.toastService.show('Inicia la creación de rutina primero');
+      this.toastService.warning('Inicia la creación de rutina primero');
       this.router.navigate(['/rutinas']);
       return;
     }
 
     if (this.svc.items().length === 0) {
-      this.toastService.show('Añade ejercicios primero');
+      this.toastService.warning('Añade ejercicios primero');
       this.router.navigate(['/ejercicios']);
       return;
     }
@@ -222,7 +240,7 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.svc.remove(ejercicioId);
     // Si no quedan ejercicios, volver a la galería
     if (this.svc.items().length === 0) {
-      this.toastService.show('Añade ejercicios a la rutina');
+      this.toastService.warning('Añade ejercicios a la rutina');
       this.router.navigate(['/ejercicios']);
     }
   }
@@ -232,50 +250,71 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   async guardarPlantilla() {
     if (!this.form.valid) {
       this.form.markAllAsTouched();
-      this.toastService.show('Completa los campos requeridos');
+      this.toastService.warning('Completa los campos requeridos');
       return;
     }
 
     if (!this.canSave()) {
-      this.toastService.show('Faltan datos para guardar');
+      this.toastService.warning('Faltan datos para guardar');
       return;
     }
 
     this.isSaving.set(true);
     try {
-      const v = this.form.value;
+      // `getRawValue` y no `value`: el control de visibilidad está
+      // deshabilitado para quien no es el autor, y `value` omite los
+      // deshabilitados — se enviaría 'privado' y el backend lo rechazaría por
+      // intentar cambiar la visibilidad de una rutina ajena.
+      const v = this.form.getRawValue();
       const nombre = v.nombre || 'Rutina sin nombre';
       const descripcion = v.descripcion || '';
       const visibilidad = (v.visibilidad as 'privado' | 'clinica') || 'privado';
 
-      if (this.isEditMode()) {
-        const success = await this.svc.update(nombre, descripcion, visibilidad);
-        if (success) {
-          this.toastService.show('Rutina actualizada');
-          // Marcar como guardado antes de salir: el guard de cambios
-          // sin guardar verá `isDirty === false` durante la navegación.
-          this.svc.markAsSaved();
-          this.svc.exit();
-          this.router.navigate(['/rutinas']);
-        } else {
-          this.toastService.show('Error al actualizar rutina', 'error');
-        }
-      } else {
-        const rutinaId = await this.svc.save(nombre, descripcion, visibilidad);
-        if (rutinaId) {
-          this.toastService.show('Rutina guardada');
-          this.svc.exit();
-          this.router.navigate(['/rutinas']);
-        } else {
-          this.toastService.show('Error al guardar rutina', 'error');
-        }
+      const res = this.isEditMode()
+        ? await this.svc.update(nombre, descripcion, visibilidad)
+        : await this.svc.save(nombre, descripcion, visibilidad);
+
+      if (res.status === 'ok') {
+        this.toastService.success(
+          this.isEditMode() ? 'Rutina actualizada' : 'Rutina guardada',
+        );
+        // Marcar como guardado antes de salir: el guard de cambios sin
+        // guardar verá `isDirty === false` durante la navegación.
+        this.svc.markAsSaved();
+        this.svc.exit();
+        this.router.navigate(['/rutinas']);
+        return;
       }
+
+      await this.mostrarErrorGuardado(res.error);
     } catch (error) {
       this.logger.error('Error guardando plantilla:', error);
-      this.toastService.show('Error al guardar', 'error');
+      await this.mostrarErrorGuardado(describirErrorRutina(error));
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  /**
+   * Explica por qué no se ha podido guardar. Va en diálogo y no en toast
+   * porque es un final de camino: el usuario tiene que entender que sus
+   * cambios NO están guardados.
+   *
+   * No se navega ni se limpia el builder: el formulario se queda intacto para
+   * que el trabajo no se pierda mientras se resuelve el motivo.
+   */
+  private async mostrarErrorGuardado(error: ErrorRutina): Promise<void> {
+    // 'ya-gestionado' = suscripción inactiva; `SubscriptionGateService` ya ha
+    // abierto su propio diálogo desde el interceptor de `ConvexService`.
+    if (error.kind === 'ya-gestionado') return;
+
+    await this.dialog.confirm({
+      title: error.title,
+      message: error.message,
+      confirmText: 'Entendido',
+      hideCancel: true,
+      confirmVariant: 'primary',
+    });
   }
 
   cancelar() {

@@ -9,7 +9,8 @@ import {
 import { SessionService } from '../../../core/auth/services/session.service';
 import { SessionResettable } from '../../../core/auth/session-resettable';
 import { LoggerService } from '../../../core/services/logger.service';
-import { RutinasService } from './rutinas.service';
+import { RutinasService, type GuardarRutinaResult } from './rutinas.service';
+import { errorRutinaLocal } from './rutina-error';
 import {
   Ejercicio,
   EjercicioPlan,
@@ -63,6 +64,19 @@ export class RutinaBuilderService implements SessionResettable {
 
   readonly rutinaEditId = signal<string | null>(null);
   readonly isEditMode = computed(() => this.rutinaEditId() !== null);
+
+  /**
+   * Clínica que la rutina en edición ya tenía. Se conserva para no reasignarla
+   * a la clínica activa al guardar (ver `updateRutinaCompleta`).
+   */
+  private readonly rutinaEditClinicId = signal<string | undefined>(undefined);
+
+  /**
+   * `true` si el usuario creó la rutina en edición. Un fisio/admin de la
+   * clínica puede editar el contenido de una rutina ajena, pero no cambiar su
+   * visibilidad ni moverla de clínica.
+   */
+  readonly esAutorDeRutinaEnEdicion = signal(true);
 
   readonly titulo = signal<string>('');
   readonly descripcion = signal<string>('');
@@ -131,6 +145,8 @@ export class RutinaBuilderService implements SessionResettable {
   start(): void {
     this._isActive.set(true);
     this.rutinaEditId.set(null);
+    this.rutinaEditClinicId.set(undefined);
+    this.esAutorDeRutinaEnEdicion.set(true);
     this.itemsState.clear();
     this.titulo.set('');
     this.descripcion.set('');
@@ -146,13 +162,19 @@ export class RutinaBuilderService implements SessionResettable {
    * reabrir tras cerrarlo. Se abre al ir al catálogo (`navegarACatalogo`), igual
    * que hace `plan-builder` en `irAGaleria()`.
    */
-  async startEdit(rutinaId: string): Promise<{ visibilidad: string } | null> {
+  async startEdit(
+    rutinaId: string,
+  ): Promise<{ visibilidad: string; esAutor: boolean } | null> {
     const res = await this.rutinasService.getRutinaById(rutinaId);
     if (res.status !== 'ok') return null;
     const rutina = res.rutina;
 
     this._isActive.set(true);
     this.rutinaEditId.set(rutinaId);
+    this.rutinaEditClinicId.set(rutina.clinicId);
+
+    const esAutor = rutina.autor?.id === this.sessionService.usuario()?.id;
+    this.esAutorDeRutinaEnEdicion.set(esAutor);
 
     const items: EjercicioPlan[] = rutina.ejercicios.map((e, idx) => ({
       sort: idx + 1,
@@ -172,7 +194,7 @@ export class RutinaBuilderService implements SessionResettable {
     this.descripcion.set(rutina.descripcion || '');
     this.originalSnapshot.set(this.captureSnapshot());
 
-    return { visibilidad: rutina.visibilidad };
+    return { visibilidad: rutina.visibilidad, esAutor };
   }
 
   /** Cierra el modo: limpia storage, items y drawer. */
@@ -180,6 +202,8 @@ export class RutinaBuilderService implements SessionResettable {
     this.clearStorage();
     this._isActive.set(false);
     this.rutinaEditId.set(null);
+    this.rutinaEditClinicId.set(undefined);
+    this.esAutorDeRutinaEnEdicion.set(true);
     this.itemsState.clear();
     this.titulo.set('');
     this.descripcion.set('');
@@ -242,9 +266,26 @@ export class RutinaBuilderService implements SessionResettable {
     nombre: string,
     descripcion: string,
     visibilidad: 'privado' | 'clinica',
-  ): Promise<string | null> {
+  ): Promise<GuardarRutinaResult> {
     const fisio = this.fisioId();
-    if (!fisio || this.items().length === 0) return null;
+    if (!fisio) {
+      return {
+        status: 'fallo',
+        error: errorRutinaLocal(
+          'Necesitas el modo fisioterapeuta',
+          'Solo se pueden crear rutinas desde una clínica en la que seas fisioterapeuta o administrador. Cambia de clínica y vuelve a intentarlo.',
+        ),
+      };
+    }
+    if (this.items().length === 0) {
+      return {
+        status: 'fallo',
+        error: errorRutinaLocal(
+          'La rutina no tiene ejercicios',
+          'Añade al menos un ejercicio antes de guardar la rutina.',
+        ),
+      };
+    }
 
     const payload: CreateRutinaPayload = {
       nombre,
@@ -273,27 +314,48 @@ export class RutinaBuilderService implements SessionResettable {
     nombre: string,
     descripcion: string,
     visibilidad: 'privado' | 'clinica',
-  ): Promise<boolean> {
+  ): Promise<GuardarRutinaResult> {
     const rutinaId = this.rutinaEditId();
-    if (!rutinaId || this.items().length === 0) return false;
+    if (!rutinaId) {
+      return {
+        status: 'fallo',
+        error: errorRutinaLocal(
+          'No hay ninguna rutina en edición',
+          'Se ha perdido la referencia a la rutina. Vuelve al listado y ábrela de nuevo.',
+        ),
+      };
+    }
+    if (this.items().length === 0) {
+      return {
+        status: 'fallo',
+        error: errorRutinaLocal(
+          'La rutina no tiene ejercicios',
+          'Una rutina necesita al menos un ejercicio. Añade alguno o elimina la rutina desde el listado.',
+        ),
+      };
+    }
 
-    return this.rutinasService.updateRutinaCompleta(rutinaId, {
-      nombre,
-      descripcion,
-      visibilidad,
-      ejercicios: this.items().map((item, idx) => ({
-        ejercicio: item.ejercicio.id,
-        sort: idx + 1,
-        tipo: item.tipo,
-        series: item.series,
-        repeticiones: item.repeticiones,
-        duracionSeg: item.duracionSeg,
-        descansoSeg: item.descansoSeg,
-        diasSemana: item.diasSemana,
-        instruccionesPaciente: item.instruccionesPaciente,
-        notasFisio: item.notasFisio,
-      })),
-    });
+    return this.rutinasService.updateRutinaCompleta(
+      rutinaId,
+      {
+        nombre,
+        descripcion,
+        visibilidad,
+        ejercicios: this.items().map((item, idx) => ({
+          ejercicio: item.ejercicio.id,
+          sort: idx + 1,
+          tipo: item.tipo,
+          series: item.series,
+          repeticiones: item.repeticiones,
+          duracionSeg: item.duracionSeg,
+          descansoSeg: item.descansoSeg,
+          diasSemana: item.diasSemana,
+          instruccionesPaciente: item.instruccionesPaciente,
+          notasFisio: item.notasFisio,
+        })),
+      },
+      this.rutinaEditClinicId(),
+    );
   }
 
   /** Reemplaza los items con los de otra rutina (flujo "duplicar"). */

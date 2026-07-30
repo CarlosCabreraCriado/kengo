@@ -99,6 +99,11 @@ let nextGroup = 0;
       box-shadow: 0 0 0 3px rgba(var(--kengo-primary-rgb), 0.12);
     }
     .ui2-radio--disabled { opacity: 0.5; cursor: not-allowed; }
+    /* Grupo entero deshabilitado (setDisabledState del form control): sin esto
+       las opciones siguen con hover y cursor pointer, y parecen pulsables. */
+    .ui2-radio-group:disabled .ui2-radio { opacity: 0.5; cursor: not-allowed; }
+    .ui2-radio-group:disabled .ui2-radio:hover { border-color: var(--ink-300); }
+    .ui2-radio-group:disabled .ui2-radio--checked:hover { border-color: var(--kengo-primary); }
     .ui2-radio input { position: absolute; opacity: 0; pointer-events: none; }
     .ui2-radio__circle {
       width: 18px; height: 18px;

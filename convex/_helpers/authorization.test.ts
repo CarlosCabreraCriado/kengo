@@ -91,6 +91,24 @@ async function assertThrows(fn: () => Promise<unknown>, msg = "") {
   throw new Error("Esperaba que la función lanzase, no lo hizo");
 }
 
+/**
+ * Variante para los guards que lanzan `ConvexError({ code, message })`: el
+ * `message` de un ConvexError con payload de objeto no es legible, así que se
+ * compara el `code` del `data`.
+ */
+async function assertThrowsCode(fn: () => Promise<unknown>, code: string) {
+  try {
+    await fn();
+  } catch (err) {
+    const actual = (err as { data?: { code?: string } }).data?.code;
+    if (actual !== code) {
+      throw new Error(`Esperaba code "${code}", recibí "${actual}"`);
+    }
+    return;
+  }
+  throw new Error(`Esperaba que la función lanzase ${code}, no lo hizo`);
+}
+
 // Importar dinámicamente para que el tsc no se queje del ctx tipado.
 async function load() {
   const mod = await import("./authorization");
@@ -126,6 +144,11 @@ async function load() {
       userId: string,
       routineId: string,
     ) => Promise<unknown>;
+    assertCanManageRoutine: (
+      ctx: unknown,
+      userId: string,
+      routineId: string,
+    ) => Promise<unknown>;
   };
 }
 
@@ -137,6 +160,7 @@ async function load() {
     assertCanManagePlan,
     assertCanAccessSession,
     assertCanAccessRoutine,
+    assertCanManageRoutine,
   } = await load();
 
   console.log("authorization.test.ts");
@@ -446,6 +470,34 @@ async function load() {
   );
 
   await test(
+    "assertCanAccessRoutine: un paciente de la clínica NO lee la rutina",
+    async () => {
+      // Regresión: `assertCanAccessClinic` sin lista de puestos hereda un
+      // default que incluye "paciente", así que este guard dejaba a cualquier
+      // paciente de la clínica leer la biblioteca de plantillas del equipo
+      // (y duplicarla, porque `routines.duplicate` usa este mismo guard).
+      const ctx = makeCtx({
+        routines: [
+          {
+            _id: "r1",
+            autorId: "fisio1",
+            visibilidad: "clinica",
+            clinicId: "c1",
+          },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "pac1", clinicId: "c1", puesto: "paciente" },
+        ],
+      });
+      await assertThrows(
+        () => assertCanAccessRoutine(ctx, "pac1", "r1"),
+        "No tienes acceso",
+      );
+    },
+  );
+
+  await test(
     "assertCanAccessRoutine: rutina de clínica sin clinicId solo el autor (estado ilegal post-backfill)",
     async () => {
       const ctx = makeCtx({
@@ -466,6 +518,162 @@ async function load() {
       );
     },
   );
+
+  // ───────────────────────────────────────────────────────────────────────
+  // assertCanManageRoutine — el guard de ESCRITURA. Mismo eje que el de
+  // lectura (puesto de gestión en la clínica del recurso), así que a día de hoy
+  // admite y rechaza a los mismos. Existe aparte por dos motivos: lanza
+  // `ConvexError` con `code` para que el cliente pueda explicar el motivo, y
+  // deja el punto donde divergir si la lectura se abriera a más puestos.
+  // ───────────────────────────────────────────────────────────────────────
+
+  await test(
+    "assertCanManageRoutine: el autor edita su rutina privada",
+    async () => {
+      const ctx = makeCtx({
+        routines: [{ _id: "r1", autorId: "fisio1", visibilidad: "privado" }],
+        clinicMemberships: [],
+      });
+      await assertCanManageRoutine(ctx, "fisio1", "r1");
+    },
+  );
+
+  await test(
+    "assertCanManageRoutine: un fisio de la clínica edita la rutina de un compañero",
+    async () => {
+      const ctx = makeCtx({
+        routines: [
+          {
+            _id: "r1",
+            autorId: "fisio1",
+            visibilidad: "clinica",
+            clinicId: "c1",
+          },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "fisio2", clinicId: "c1", puesto: "fisio" },
+        ],
+      });
+      await assertCanManageRoutine(ctx, "fisio2", "r1");
+    },
+  );
+
+  await test(
+    "assertCanManageRoutine: un admin de la clínica edita la rutina de un fisio",
+    async () => {
+      const ctx = makeCtx({
+        routines: [
+          {
+            _id: "r1",
+            autorId: "fisio1",
+            visibilidad: "clinica",
+            clinicId: "c1",
+          },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "admin1", clinicId: "c1", puesto: "admin" },
+        ],
+      });
+      await assertCanManageRoutine(ctx, "admin1", "r1");
+    },
+  );
+
+  await test(
+    "assertCanManageRoutine: un paciente de la clínica NO edita (ni lee)",
+    async () => {
+      const ctx = makeCtx({
+        routines: [
+          {
+            _id: "r1",
+            autorId: "fisio1",
+            visibilidad: "clinica",
+            clinicId: "c1",
+          },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "pac1", clinicId: "c1", puesto: "paciente" },
+        ],
+      });
+      await assertThrows(
+        () => assertCanAccessRoutine(ctx, "pac1", "r1"),
+        "No tienes acceso",
+      );
+      await assertThrowsCode(
+        () => assertCanManageRoutine(ctx, "pac1", "r1"),
+        "ROUTINE_FUERA_DE_CLINICA",
+      );
+    },
+  );
+
+  await test(
+    "assertCanManageRoutine: un fisio de otra clínica no edita",
+    async () => {
+      const ctx = makeCtx({
+        routines: [
+          {
+            _id: "r1",
+            autorId: "fisio1",
+            visibilidad: "clinica",
+            clinicId: "c1",
+          },
+        ],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "fisio3", clinicId: "c2", puesto: "fisio" },
+        ],
+      });
+      await assertThrowsCode(
+        () => assertCanManageRoutine(ctx, "fisio3", "r1"),
+        "ROUTINE_FUERA_DE_CLINICA",
+      );
+    },
+  );
+
+  await test(
+    "assertCanManageRoutine: rutina privada de otro fisio, ni siendo compañero",
+    async () => {
+      const ctx = makeCtx({
+        routines: [{ _id: "r1", autorId: "fisio1", visibilidad: "privado" }],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "admin1", clinicId: "c1", puesto: "admin" },
+        ],
+      });
+      await assertThrowsCode(
+        () => assertCanManageRoutine(ctx, "admin1", "r1"),
+        "ROUTINE_PRIVADA_DE_OTRO",
+      );
+    },
+  );
+
+  await test(
+    "assertCanManageRoutine: rutina de clínica sin clinicId, solo el autor",
+    async () => {
+      const ctx = makeCtx({
+        routines: [{ _id: "r1", autorId: "fisio1", visibilidad: "clinica" }],
+        clinicMemberships: [
+          { _id: "m1", userId: "fisio1", clinicId: "c1", puesto: "fisio" },
+          { _id: "m2", userId: "fisio2", clinicId: "c1", puesto: "fisio" },
+        ],
+      });
+      await assertCanManageRoutine(ctx, "fisio1", "r1");
+      await assertThrowsCode(
+        () => assertCanManageRoutine(ctx, "fisio2", "r1"),
+        "ROUTINE_PRIVADA_DE_OTRO",
+      );
+    },
+  );
+
+  await test("assertCanManageRoutine: rutina inexistente", async () => {
+    const ctx = makeCtx({ routines: [], clinicMemberships: [] });
+    await assertThrowsCode(
+      () => assertCanManageRoutine(ctx, "fisio1", "r1"),
+      "ROUTINE_NOT_FOUND",
+    );
+  });
 
   if (process.exitCode === 1) {
     console.error("\nFAIL");

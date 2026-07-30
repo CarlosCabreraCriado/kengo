@@ -8,6 +8,7 @@ import {
 } from "../_helpers/permissions";
 import {
   assertCanAccessRoutine,
+  assertCanManageRoutine,
   getRoutineIfOwned,
 } from "../_helpers/authorization";
 import { diaSemana, tipoEjercicio } from "../_helpers/validators";
@@ -129,7 +130,33 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const routine = await getRoutineIfOwned(ctx, args.routineId);
+    // Editar una rutina de clínica está abierto a cualquier fisio/admin de esa
+    // clínica, no solo al autor: una rutina compartida con el equipo es del
+    // equipo (mismo criterio que los planes).
+    const routine = await assertCanManageRoutine(ctx, user._id, args.routineId);
+    const esAutor = routine.autorId === user._id;
+
+    // ...pero mover la rutina de clínica o hacerla privada sigue siendo del
+    // autor. Sin esto, un compañero podría marcarla "privado" y dejarla
+    // enterrada bajo el `autorId` original, invisible para todo el equipo.
+    //
+    // Se compara contra el valor almacenado, no contra `!== undefined`: el
+    // cliente reenvía `visibilidad` en cada guardado, así que un check por
+    // presencia bloquearía toda edición ajena.
+    if (!esAutor) {
+      const cambiaVisibilidad =
+        args.visibilidad !== undefined &&
+        args.visibilidad !== routine.visibilidad;
+      const cambiaClinica =
+        args.clinicId !== undefined && args.clinicId !== routine.clinicId;
+      if (cambiaVisibilidad || cambiaClinica) {
+        throw new ConvexError({
+          code: "ROUTINE_VISIBILIDAD_SOLO_AUTOR",
+          message:
+            "Solo quien creó la rutina puede cambiar su visibilidad o moverla de clínica.",
+        });
+      }
+    }
 
     // Patch metadata
     const patch: Record<string, unknown> = {};
@@ -150,7 +177,22 @@ export const update = mutation({
             "Para hacer visible una rutina a la clínica debes indicar la clínica destino.",
         });
       }
-      await checkClinicPermission(ctx, user._id, clinicId, ["fisio", "admin"]);
+      // Para el editor no-autor esto ya lo garantizó `assertCanManageRoutine`;
+      // sigue haciendo falta para el autor que dejó de ser fisio/admin de la
+      // clínica destino. Se reetiqueta como ConvexError para que el cliente
+      // pueda explicarlo (`checkClinicPermission` lanza un Error plano).
+      try {
+        await checkClinicPermission(ctx, user._id, clinicId, [
+          "fisio",
+          "admin",
+        ]);
+      } catch {
+        throw new ConvexError({
+          code: "ROUTINE_FUERA_DE_CLINICA",
+          message:
+            "Esta rutina pertenece a una clínica en la que no eres fisioterapeuta ni administrador.",
+        });
+      }
       await requireActiveSubscription(ctx, clinicId);
       if (routine.clinicId !== clinicId) patch["clinicId"] = clinicId;
     } else {
@@ -204,8 +246,10 @@ export const duplicate = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     // Solo se puede duplicar una rutina a la que se tiene acceso (autor o
-    // miembro de su clínica); la copia se crea como "privado" del usuario,
-    // así que basta con que tenga alguna clínica activa.
+    // fisio/admin de su clínica); la copia se crea como "privado" del usuario,
+    // así que basta con que tenga alguna clínica activa. El guard de lectura
+    // es suficiente aquí porque ya exige puesto de gestión: sin eso, un
+    // paciente podría sacarse una copia privada de la plantilla.
     const routine = await assertCanAccessRoutine(ctx, user._id, args.routineId);
     await requireAnyActiveSubscriptionForUser(ctx, user._id);
 

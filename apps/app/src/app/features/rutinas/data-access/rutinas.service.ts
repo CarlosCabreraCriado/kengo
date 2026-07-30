@@ -17,6 +17,11 @@ import {
   type FilteredList,
 } from '../../../shared/data-access/create-filtered-list';
 import { api } from '../../../../../../../convex/_generated/api';
+import {
+  describirErrorRutina,
+  errorRutinaLocal,
+  type ErrorRutina,
+} from './rutina-error';
 
 import {
   Rutina,
@@ -38,6 +43,15 @@ export type GetRutinaResult =
   | { status: 'ok'; rutina: RutinaCompleta }
   | { status: 'no-acceso' }
   | { status: 'error' };
+
+/**
+ * Resultado de una escritura de rutina. A diferencia del `boolean` que
+ * devolvían antes estos métodos, conserva el motivo del fallo para que el
+ * editor pueda explicárselo al usuario en un diálogo.
+ */
+export type GuardarRutinaResult =
+  | { status: 'ok'; id: string }
+  | { status: 'fallo'; error: ErrorRutina };
 
 @Injectable({ providedIn: 'root' })
 export class RutinasService {
@@ -83,6 +97,7 @@ export class RutinasService {
       descripcion: r.descripcion,
       autor: r.autorId,
       visibilidad: r.visibilidad,
+      clinicId: r.clinicId,
     }));
   });
 
@@ -145,7 +160,9 @@ export class RutinasService {
     }
   }
 
-  async createRutina(payload: CreateRutinaPayload): Promise<string | null> {
+  async createRutina(
+    payload: CreateRutinaPayload,
+  ): Promise<GuardarRutinaResult> {
     try {
       const ejercicios = payload.ejercicios.map((item, idx) => ({
         exerciseId: item.ejercicio as any,
@@ -173,7 +190,13 @@ export class RutinasService {
         this.logger.error(
           'Error al crear rutina: visibilidad "clinica" sin clínica activa seleccionada',
         );
-        return null;
+        return {
+          status: 'fallo',
+          error: errorRutinaLocal(
+            'Falta la clínica de destino',
+            'Para compartir una rutina con la clínica necesitas tener una clínica activa seleccionada. Elige una y vuelve a guardar.',
+          ),
+        };
       }
 
       const id = await this.convex.mutation(api.routines.mutations.create, {
@@ -184,10 +207,10 @@ export class RutinasService {
         ejercicios,
       });
 
-      return (id as string) ?? null;
+      return { status: 'ok', id: id as string };
     } catch (error) {
       this.logger.error('Error al crear rutina:', error);
-      return null;
+      return { status: 'fallo', error: describirErrorRutina(error) };
     }
   }
 
@@ -198,7 +221,7 @@ export class RutinasService {
       descripcion: string;
       visibilidad: VisibilidadRutina;
     }>
-  ): Promise<boolean> {
+  ): Promise<GuardarRutinaResult> {
     try {
       await this.convex.mutation(api.routines.mutations.update, {
         routineId: id as any,
@@ -207,10 +230,10 @@ export class RutinasService {
         visibilidad: payload.visibilidad as 'privado' | 'clinica' | undefined,
         clinicId: this.clinicIdParaVisibilidad(payload.visibilidad) as never,
       });
-      return true;
+      return { status: 'ok', id };
     } catch (error) {
       this.logger.error('Error al actualizar rutina:', error);
-      return false;
+      return { status: 'fallo', error: describirErrorRutina(error) };
     }
   }
 
@@ -226,10 +249,20 @@ export class RutinasService {
     return this.clinicaActiva.selectedClinicaId() ?? undefined;
   }
 
+  /**
+   * Reemplaza nombre, descripción y ejercicios de una rutina existente.
+   *
+   * `clinicIdActual` es la clínica que la rutina YA tiene. Solo se manda
+   * `clinicId` al backend cuando la rutina pasa de privada a compartida: si se
+   * mandase siempre la clínica activa, abrir por URL una rutina de otra
+   * clínica y guardarla la movería de clínica sin avisar. Omitido, el backend
+   * conserva la clínica actual de la rutina.
+   */
   async updateRutinaCompleta(
     id: string,
-    payload: Omit<CreateRutinaPayload, 'autor'>
-  ): Promise<boolean> {
+    payload: Omit<CreateRutinaPayload, 'autor'>,
+    clinicIdActual?: string,
+  ): Promise<GuardarRutinaResult> {
     try {
       const ejercicios = payload.ejercicios.map((item, idx) => ({
         exerciseId: item.ejercicio as any,
@@ -244,43 +277,51 @@ export class RutinasService {
         notasFisio: item.notasFisio,
       }));
 
+      const clinicId =
+        payload.visibilidad === 'clinica' && !clinicIdActual
+          ? this.clinicIdParaVisibilidad(payload.visibilidad)
+          : undefined;
+
       await this.convex.mutation(api.routines.mutations.update, {
         routineId: id as any,
         nombre: payload.nombre,
         descripcion: payload.descripcion,
         visibilidad: payload.visibilidad as 'privado' | 'clinica',
-        clinicId: this.clinicIdParaVisibilidad(payload.visibilidad) as never,
+        clinicId: clinicId as never,
         ejercicios,
       });
-      return true;
+      return { status: 'ok', id };
     } catch (error) {
       this.logger.error('Error al actualizar rutina completa:', error);
-      return false;
+      return { status: 'fallo', error: describirErrorRutina(error) };
     }
   }
 
-  async deleteRutina(id: string): Promise<boolean> {
+  async deleteRutina(id: string): Promise<GuardarRutinaResult> {
     try {
       await this.convex.mutation(api.routines.mutations.remove, {
         routineId: id as any,
       });
-      return true;
+      return { status: 'ok', id };
     } catch (error) {
       this.logger.error('Error al eliminar rutina:', error);
-      return false;
+      return { status: 'fallo', error: describirErrorRutina(error) };
     }
   }
 
-  async duplicarRutina(id: string, nuevoNombre: string): Promise<string | null> {
+  async duplicarRutina(
+    id: string,
+    nuevoNombre: string,
+  ): Promise<GuardarRutinaResult> {
     try {
       const newId = await this.convex.mutation(api.routines.mutations.duplicate, {
         routineId: id as any,
         nuevoNombre,
       });
-      return (newId as string) ?? null;
+      return { status: 'ok', id: newId as string };
     } catch (error) {
       this.logger.error('Error al duplicar rutina:', error);
-      return null;
+      return { status: 'fallo', error: describirErrorRutina(error) };
     }
   }
 
@@ -292,6 +333,7 @@ export class RutinasService {
       nombre: raw.nombre,
       descripcion: raw.descripcion,
       visibilidad: raw.visibilidad,
+      clinicId: raw.clinicId,
       autor: autor
         ? {
             id: mapId(autor),

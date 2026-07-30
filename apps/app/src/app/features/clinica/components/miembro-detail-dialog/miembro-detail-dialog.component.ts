@@ -19,6 +19,7 @@ import {
 
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
+import { esErrorYaGestionado } from '../../../../core/billing/subscription-gate.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 
@@ -182,9 +183,7 @@ export class MiembroDetailDialogComponent {
       await this.clinicasService.recargarFisiosClinica(this.clinicaId);
       this.dialogRef.close();
     } catch (err: unknown) {
-      this.toastService.error(
-        this.extraerMensajeError(err, 'No se pudo desvincular al fisioterapeuta'),
-      );
+      this.avisarError(err, 'No se pudo desvincular al fisioterapeuta');
     }
   }
 
@@ -211,9 +210,7 @@ export class MiembroDetailDialogComponent {
       this.toastService.success('Fisioterapeuta promocionado a administrador');
       await this.clinicasService.recargarFisiosClinica(this.clinicaId);
     } catch (err: unknown) {
-      this.toastService.error(
-        this.extraerMensajeError(err, 'No se pudo promocionar al fisioterapeuta'),
-      );
+      this.avisarError(err, 'No se pudo promocionar al fisioterapeuta');
     } finally {
       this.promocionando.set(false);
     }
@@ -243,9 +240,7 @@ export class MiembroDetailDialogComponent {
       await this.clinicasService.recargarFisiosClinica(this.clinicaId);
       this.dialogRef.close();
     } catch (err: unknown) {
-      this.toastService.error(
-        this.extraerMensajeError(err, 'No se pudo transferir la propiedad'),
-      );
+      this.avisarError(err, 'No se pudo transferir la propiedad');
     } finally {
       this.transfiriendo.set(false);
     }
@@ -253,6 +248,16 @@ export class MiembroDetailDialogComponent {
 
   cerrar(): void {
     this.dialogRef.close();
+  }
+
+  /**
+   * Avisa del fallo, salvo si otra capa ya lo ha hecho: el gate de suscripción
+   * abre su propio diálogo desde el interceptor de `ConvexService` y luego
+   * re-lanza, así que un toast aquí serían dos avisos del mismo hecho.
+   */
+  private avisarError(err: unknown, fallback: string): void {
+    if (esErrorYaGestionado(err)) return;
+    this.toastService.error(this.extraerMensajeError(err, fallback));
   }
 
   private extraerMensajeError(err: unknown, fallback: string): string {

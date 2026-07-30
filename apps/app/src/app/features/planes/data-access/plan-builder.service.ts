@@ -13,7 +13,11 @@ import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
 import { SessionResettable } from '../../../core/auth/session-resettable';
 import { AsignacionesService } from '../../pacientes/data-access/asignaciones.service';
-import { RutinasService } from '../../rutinas/data-access/rutinas.service';
+import {
+  RutinasService,
+  type GuardarRutinaResult,
+} from '../../rutinas/data-access/rutinas.service';
+import { errorRutinaLocal } from '../../rutinas/data-access/rutina-error';
 import { PlanesService } from './planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { LoggerService } from '../../../core/services/logger.service';
@@ -417,8 +421,12 @@ export class PlanBuilderService implements SessionResettable {
 
       return planId as string;
     } catch (error) {
+      // Se loguea aquí y se relanza: quien llama necesita el error para poder
+      // distinguir un fallo genérico de uno que otra capa ya ha atendido (el
+      // gate de suscripción abre su propio diálogo). Devolver `null` borraba
+      // el motivo y forzaba un toast genérico encima de ese diálogo.
       this.logger.error('Error al crear plan:', error);
-      return null;
+      throw error;
     }
   }
 
@@ -544,8 +552,9 @@ export class PlanBuilderService implements SessionResettable {
 
       return id;
     } catch (error) {
+      // Relanza: ver el motivo en `createPlanDeep`.
       this.logger.error('Error al actualizar plan:', error);
-      return null;
+      throw error;
     }
   }
 
@@ -619,8 +628,9 @@ export class PlanBuilderService implements SessionResettable {
 
       return newPlanId as string;
     } catch (error) {
+      // Relanza: ver el motivo en `createPlanDeep`.
       this.logger.error('Error al versionar plan:', error);
-      return null;
+      throw error;
     }
   }
 
@@ -666,15 +676,27 @@ export class PlanBuilderService implements SessionResettable {
   }
 
   /**
-   * Guardar la configuracion actual como rutina
+   * Guardar la configuracion actual como rutina.
+   *
+   * Devuelve el mismo `GuardarRutinaResult` que `RutinaBuilderService.save`
+   * para que quien llame pueda tratar ambos caminos igual y conserve el motivo
+   * del fallo. Antes degradaba a `string | null` y se perdía.
    */
   async saveAsRutina(
     nombre: string,
     descripcion: string,
     visibilidad: 'privado' | 'clinica',
-  ): Promise<string | null> {
+  ): Promise<GuardarRutinaResult> {
     const fisio = this.fisioId();
-    if (!fisio || this.items().length === 0) return null;
+    if (!fisio || this.items().length === 0) {
+      return {
+        status: 'fallo',
+        error: errorRutinaLocal(
+          'No hay nada que guardar',
+          'Añade al menos un ejercicio al plan antes de guardarlo como rutina.',
+        ),
+      };
+    }
 
     const payload: CreateRutinaPayload = {
       nombre,

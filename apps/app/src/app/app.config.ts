@@ -14,6 +14,7 @@ import { kengoImageLoader } from './core/utils/image-loader';
 import { SESSION_RESETTABLES } from './core/auth/session-resettable';
 import { PlanBuilderService } from './features/planes/data-access/plan-builder.service';
 import { RutinaBuilderService } from './features/rutinas/data-access/rutina-builder.service';
+import { ToastService } from './shared/services/toast/toast.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -33,5 +34,7 @@ export const appConfig: ApplicationConfig = {
     // al hacer logout (SessionService.limpiar() recorre el multi-provide).
     { provide: SESSION_RESETTABLES, useExisting: PlanBuilderService, multi: true },
     { provide: SESSION_RESETTABLES, useExisting: RutinaBuilderService, multi: true },
+    // Los toasts pendientes del usuario anterior no deben sobrevivir al logout.
+    { provide: SESSION_RESETTABLES, useExisting: ToastService, multi: true },
   ],
 };

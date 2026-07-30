@@ -6,6 +6,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
+import type { ErrorRutina } from '../../data-access/rutina-error';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
@@ -161,11 +162,10 @@ export class RutinasListComponent implements OnInit, OnDestroy {
         this.previewEjercicios.set(res.rutina.ejercicios);
       } else {
         this.expandedRutinaId.set(null);
-        this.toastService.show(
+        this.toastService.error(
           res.status === 'no-acceso'
             ? 'No tienes acceso a esta rutina en la clínica activa'
             : 'No se pudo cargar la rutina',
-          'error',
         );
       }
     } finally {
@@ -181,41 +181,56 @@ export class RutinasListComponent implements OnInit, OnDestroy {
 
   async duplicarRutina(rutina: Rutina) {
     const nuevoNombre = `${rutina.nombre} (copia)`;
-    const id = await this.rutinasService.duplicarRutina(rutina.id, nuevoNombre);
+    const res = await this.rutinasService.duplicarRutina(rutina.id, nuevoNombre);
 
-    if (id) {
-      this.toastService.show('Rutina duplicada');
+    if (res.status === 'ok') {
+      this.toastService.success('Rutina duplicada');
     } else {
-      this.toastService.show('Error al duplicar', 'error');
+      this.avisarFallo(res.error, 'No se pudo duplicar la rutina');
     }
   }
 
   async eliminarRutina(rutina: Rutina) {
     if (!confirm(`¿Eliminar la rutina "${rutina.nombre}"?`)) return;
 
-    const success = await this.rutinasService.deleteRutina(rutina.id);
-    if (success) {
-      this.toastService.show('Rutina eliminada');
+    const res = await this.rutinasService.deleteRutina(rutina.id);
+    if (res.status === 'ok') {
+      this.toastService.success('Rutina eliminada');
     } else {
-      this.toastService.show('Error al eliminar', 'error');
+      this.avisarFallo(res.error, 'No se pudo eliminar la rutina');
     }
   }
 
   async cambiarVisibilidadRutina(rutina: Rutina) {
     const nuevaVisibilidad = rutina.visibilidad === 'privado' ? 'clinica' : 'privado';
-    const success = await this.rutinasService.updateRutina(rutina.id, {
+    const res = await this.rutinasService.updateRutina(rutina.id, {
       visibilidad: nuevaVisibilidad,
     });
 
-    if (success) {
-      this.toastService.show(
+    if (res.status === 'ok') {
+      this.toastService.success(
         nuevaVisibilidad === 'clinica'
           ? 'Rutina compartida con la clínica'
           : 'Rutina ahora es privada',
       );
     } else {
-      this.toastService.show('Error al cambiar visibilidad', 'error');
+      this.avisarFallo(res.error, 'No se pudo cambiar la visibilidad');
     }
+  }
+
+  /**
+   * Avisa de un fallo con el motivo real cuando el backend lo da, y con
+   * `respaldo` cuando no.
+   *
+   * Calla si otra capa ya ha avisado: el gate de suscripción abre su propio
+   * diálogo desde el interceptor de `ConvexService`, y un toast encima serían
+   * dos avisos del mismo hecho.
+   */
+  private avisarFallo(error: ErrorRutina, respaldo: string): void {
+    if (error.kind === 'ya-gestionado') return;
+    this.toastService.error(
+      error.code === 'DESCONOCIDO' ? respaldo : error.message,
+    );
   }
 
   editarRutina(rutina: Rutina) {
@@ -280,9 +295,11 @@ export class RutinasListComponent implements OnInit, OnDestroy {
 
     if (success) {
       this.planBuilderService.openDrawer();
-      this.toastService.show(`Rutina "${rutina.nombre}" cargada para ${paciente.first_name}`);
+      this.toastService.success(
+        `Rutina "${rutina.nombre}" cargada para ${paciente.first_name}`,
+      );
     } else {
-      this.toastService.show('Error al cargar la rutina', 'error');
+      this.toastService.error('No se pudo cargar la rutina');
     }
   }
 

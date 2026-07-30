@@ -6,6 +6,24 @@ import { SessionService } from '../auth/services/session.service';
 import { SubscriptionService } from './subscription.service';
 
 /**
+ * `true` si el error ya lo ha atendido `SubscriptionGateService` con su propio
+ * diálogo, de modo que el `catch` del caller no debe mostrar nada encima.
+ *
+ * Hace falta porque `ConvexService.mutation/action` pasa el error por el gate y
+ * lo **re-lanza** (el caller necesita el error para no seguir adelante), así que
+ * el `true` que devuelve `handle()` nunca llega a quien escribe el `catch`.
+ * Sin este guard, un `catch → toast.error('No se pudo …')` genérico se pinta
+ * sobre el diálogo del gate y el usuario recibe dos avisos del mismo hecho.
+ *
+ * Función suelta y no método: los bloques `catch` que la necesitan están en
+ * componentes que no tienen por qué inyectar el gate entero.
+ */
+export function esErrorYaGestionado(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  return (err as { data?: { code?: string } }).data?.code === 'SUBSCRIPTION_INACTIVE';
+}
+
+/**
  * Captura el error `ConvexError({ code: "SUBSCRIPTION_INACTIVE" })` lanzado por
  * el backend cuando un fisio intenta una operación de escritura sin que su
  * clínica tenga suscripción operativa, y muestra un diálogo de confirmación
@@ -34,7 +52,7 @@ export class SubscriptionGateService {
    * toast genérico encima). Devuelve `false` para cualquier otro error.
    */
   handle(err: unknown): boolean {
-    if (!this.esSubscriptionInactive(err)) return false;
+    if (!esErrorYaGestionado(err)) return false;
 
     // En modo paciente nunca se debería disparar (el backend solo lanza este
     // error en operaciones de fisio), pero por defensa no mostramos el diálogo.
@@ -42,12 +60,6 @@ export class SubscriptionGateService {
 
     void this.mostrarDialog();
     return true;
-  }
-
-  private esSubscriptionInactive(err: unknown): boolean {
-    if (!err || typeof err !== 'object') return false;
-    const e = err as { data?: { code?: string }; message?: string };
-    return e.data?.code === 'SUBSCRIPTION_INACTIVE';
   }
 
   private async mostrarDialog(): Promise<void> {

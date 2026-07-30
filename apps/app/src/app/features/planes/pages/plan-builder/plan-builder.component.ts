@@ -26,6 +26,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { ToastService } from '../../../../shared/services/toast/toast.service';
+import { esErrorYaGestionado } from '../../../../core/billing/subscription-gate.service';
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
 import {
@@ -241,7 +242,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       this.syncFormFromService();
     } else {
       if (!this.svc.paciente() || this.svc.items().length === 0) {
-        this.toastService.show('Selecciona un paciente y ejercicios primero');
+        this.toastService.warning('Selecciona un paciente y ejercicios primero');
         this.router.navigate(['/mis-pacientes']);
         return;
       }
@@ -285,7 +286,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       if (success) {
         this.syncFormFromService();
       } else {
-        this.toastService.show('No se pudo cargar el plan', 'error');
+        this.toastService.error('No se pudo cargar el plan');
         this.router.navigate(['/mis-pacientes']);
       }
     } finally {
@@ -415,14 +416,14 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   async guardarPlan() {
     if (!this.form.valid) {
       this.form.markAllAsTouched();
-      this.toastService.show('Completa los campos requeridos');
+      this.toastService.warning('Completa los campos requeridos');
       return;
     }
 
     this.syncServiceFromForm();
 
     if (!this.canSubmit()) {
-      this.toastService.show('Faltan datos para guardar');
+      this.toastService.warning('Faltan datos para guardar');
       return;
     }
 
@@ -449,17 +450,22 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
         const mensaje = wasVersioned
           ? 'Nueva versión del plan creada'
           : this.isEditMode() ? 'Plan actualizado' : 'Plan creado';
-        this.toastService.show(mensaje);
+        this.toastService.success(mensaje);
         const action = this.isEditMode() || wasVersioned ? 'updated' : 'created';
         this.router.navigate(['/planes', planId], {
           queryParams: { action },
         });
       } else {
-        this.toastService.show('Error al guardar el plan', 'error');
+        // Sin excepción y sin id: el servicio no pudo resolver al paciente.
+        this.toastService.error('No se pudo guardar el plan');
       }
     } catch (error) {
       this.logger.error('Error guardando plan:', error);
-      this.toastService.show('Error al guardar', 'error');
+      // El gate de suscripción ya abre su diálogo desde el interceptor de
+      // `ConvexService` y re-lanza: un toast encima serían dos avisos.
+      if (!esErrorYaGestionado(error)) {
+        this.toastService.error('No se pudo guardar el plan');
+      }
     } finally {
       this.isSaving.set(false);
     }
@@ -488,9 +494,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
               r.visibilidad,
             );
             if (rutinaId) {
-              this.toastService.show('Rutina guardada');
+              this.toastService.success('Rutina guardada');
             } else {
-              this.toastService.show('Error al guardar la rutina', 'error');
+              this.toastService.error('No se pudo guardar la rutina');
             }
           } finally {
             this.isSaving.set(false);
@@ -518,12 +524,12 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
           try {
             const success = await this.svc.loadFromRutina(id);
             if (success) {
-              this.toastService.show('Rutina cargada');
+              this.toastService.success('Rutina cargada');
               if (!this.form.value.titulo && this.svc.titulo()) {
                 this.form.patchValue({ titulo: this.svc.titulo() });
               }
             } else {
-              this.toastService.show('Error al cargar la rutina', 'error');
+              this.toastService.error('No se pudo cargar la rutina');
             }
           } finally {
             this.isLoading.set(false);
