@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, input, output, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, forwardRef, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 let nextId = 0;
@@ -21,6 +21,7 @@ let nextId = 0;
     <div class="ui2-search" [class.ui2-search--disabled]="disabled()">
       <span class="material-symbols-outlined ui2-search__icon" aria-hidden="true">search</span>
       <input
+        #field
         [id]="searchId"
         type="search"
         inputmode="search"
@@ -29,20 +30,22 @@ let nextId = 0;
         [placeholder]="placeholder()"
         [attr.aria-label]="ariaLabel() ?? placeholder()"
         [disabled]="disabled()"
-        [value]="value()"
         (input)="onInput($event)"
         (blur)="onBlur()"
       />
-      @if (value()) {
-        <button
-          type="button"
-          class="ui2-search__clear"
-          aria-label="Limpiar búsqueda"
-          (click)="clear()"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">close</span>
-        </button>
-      }
+      <!-- Siempre montado: crear/destruir el botón relayouta con el input
+           enfocado y contribuye al parpadeo del teclado en iOS. -->
+      <button
+        type="button"
+        class="ui2-search__clear"
+        [class.ui2-search__clear--hidden]="!value()"
+        aria-label="Limpiar búsqueda"
+        [attr.aria-hidden]="!value()"
+        [tabindex]="value() ? 0 : -1"
+        (click)="clear()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
     </div>
   `,
   styles: [`
@@ -91,20 +94,36 @@ let nextId = 0;
       align-items: center;
     }
     .ui2-search__clear:hover { color: var(--ink-900); }
+    .ui2-search__clear--hidden { visibility: hidden; pointer-events: none; }
     .ui2-search__clear .material-symbols-outlined { font-size: 18px; }
   `],
 })
-export class Ui2SearchBoxComponent implements ControlValueAccessor {
+export class Ui2SearchBoxComponent implements ControlValueAccessor, AfterViewInit {
   readonly placeholder = input<string>('Buscar...');
   readonly ariaLabel = input<string | null>(null);
 
   readonly searchId = `ui2-search-${++nextId}`;
+  /* Estado interno para la UI (botón clear); nunca se bindea a [value] —
+     reescribir el value del input enfocado en cada tecla resetea el estado
+     de autofill de WKWebView y hace parpadear la QuickType bar en iOS. El
+     DOM solo se escribe en writeValue() y clear(). */
   readonly value = signal<string>('');
   readonly disabled = signal<boolean>(false);
   readonly valueChange = output<string>();
 
+  private readonly field = viewChild<ElementRef<HTMLInputElement>>('field');
+  private pendingValue: string | null = null;
+
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
+
+  ngAfterViewInit(): void {
+    if (this.pendingValue !== null) {
+      const el = this.field()?.nativeElement;
+      if (el) el.value = this.pendingValue;
+      this.pendingValue = null;
+    }
+  }
 
   onInput(event: Event): void {
     const v = (event.target as HTMLInputElement).value;
@@ -115,11 +134,27 @@ export class Ui2SearchBoxComponent implements ControlValueAccessor {
   onBlur(): void { this.onTouched(); }
   clear(): void {
     this.value.set('');
+    /* Escritura imperativa: hay consumidores sin formControl donde
+       writeValue() nunca llega a llamarse. */
+    this.setDomValue('');
     this.onChange('');
     this.valueChange.emit('');
   }
 
-  writeValue(value: string | null): void { this.value.set(value ?? ''); }
+  writeValue(value: string | number | null | undefined): void {
+    const normalized = value == null ? '' : String(value);
+    this.value.set(normalized);
+    this.setDomValue(normalized);
+  }
+
+  private setDomValue(v: string): void {
+    const el = this.field()?.nativeElement;
+    if (!el) {
+      this.pendingValue = v;
+      return;
+    }
+    if (el.value !== v) el.value = v;
+  }
   registerOnChange(fn: (value: string) => void): void { this.onChange = fn; }
   registerOnTouched(fn: () => void): void { this.onTouched = fn; }
   setDisabledState(isDisabled: boolean): void { this.disabled.set(isDisabled); }

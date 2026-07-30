@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, forwardRef, input, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 let nextId = 0;
@@ -28,6 +28,7 @@ let nextId = 0;
         [class.ui2-textarea__shell--disabled]="disabled()"
       >
         <textarea
+          #field
           [id]="textareaId"
           [placeholder]="placeholder()"
           [rows]="rows()"
@@ -40,7 +41,6 @@ let nextId = 0;
           [attr.spellcheck]="spellcheck()"
           [attr.name]="name()"
           [style.resize]="resize()"
-          [value]="value()"
           (input)="onInput($event)"
           (blur)="onBlur()"
         ></textarea>
@@ -113,7 +113,7 @@ let nextId = 0;
     }
   `],
 })
-export class Ui2TextareaComponent implements ControlValueAccessor {
+export class Ui2TextareaComponent implements ControlValueAccessor, AfterViewInit {
   readonly label = input<string | null>(null);
   readonly placeholder = input<string>('');
   readonly error = input<string | null>(null);
@@ -130,12 +130,27 @@ export class Ui2TextareaComponent implements ControlValueAccessor {
   readonly name = input<string | null>(null);
 
   readonly textareaId = `ui2-textarea-${++nextId}`;
+  /* Estado interno para la UI (count); nunca se bindea a [value] — reescribir
+     el value del elemento enfocado en cada tecla resetea el estado de autofill
+     de WKWebView y hace parpadear la QuickType bar en iOS. El DOM solo se
+     escribe en writeValue() (cambios programáticos del modelo). */
   readonly value = signal<string>('');
   readonly disabled = signal<boolean>(false);
   readonly count = computed(() => this.value().length);
 
+  private readonly field = viewChild<ElementRef<HTMLTextAreaElement>>('field');
+  private pendingValue: string | null = null;
+
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
+
+  ngAfterViewInit(): void {
+    if (this.pendingValue !== null) {
+      const el = this.field()?.nativeElement;
+      if (el) el.value = this.pendingValue;
+      this.pendingValue = null;
+    }
+  }
 
   onInput(event: Event): void {
     const v = (event.target as HTMLTextAreaElement).value;
@@ -144,8 +159,19 @@ export class Ui2TextareaComponent implements ControlValueAccessor {
   }
   onBlur(): void { this.onTouched(); }
 
-  writeValue(value: string | null): void {
-    this.value.set(value ?? '');
+  writeValue(value: string | number | null | undefined): void {
+    const normalized = value == null ? '' : String(value);
+    this.value.set(normalized);
+    this.setDomValue(normalized);
+  }
+
+  private setDomValue(v: string): void {
+    const el = this.field()?.nativeElement;
+    if (!el) {
+      this.pendingValue = v;
+      return;
+    }
+    if (el.value !== v) el.value = v;
   }
   registerOnChange(fn: (value: string) => void): void { this.onChange = fn; }
   registerOnTouched(fn: () => void): void { this.onTouched = fn; }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, forwardRef, input, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
@@ -33,6 +33,7 @@ let nextId = 0;
           <span class="material-symbols-outlined ui2-input__icon" aria-hidden="true">{{ iconLeft() }}</span>
         }
         <input
+          #field
           [id]="inputId"
           [type]="effectiveType()"
           [placeholder]="placeholder()"
@@ -46,7 +47,6 @@ let nextId = 0;
           [attr.autocorrect]="effectiveAutocorrect()"
           [attr.spellcheck]="spellcheck()"
           [attr.name]="name()"
-          [value]="value()"
           (input)="onInput($event)"
           (blur)="onBlur()"
         />
@@ -63,17 +63,20 @@ let nextId = 0;
           <span class="material-symbols-outlined ui2-input__icon" aria-hidden="true">{{ iconRight() }}</span>
         }
       </div>
-      @if (error()) {
-        <p class="ui2-input__msg ui2-input__msg--error">{{ error() }}</p>
-      } @else if (hint()) {
-        <p class="ui2-input__msg">{{ hint() }}</p>
-      }
+      <div class="ui2-input__msg-zone">
+        @if (error()) {
+          <p class="ui2-input__msg ui2-input__msg--error">{{ error() }}</p>
+        } @else if (hint()) {
+          <p class="ui2-input__msg">{{ hint() }}</p>
+        }
+      </div>
     </div>
   `,
   styles: [`
     :host { display: block; }
-    .ui2-input { display: flex; flex-direction: column; gap: 6px; }
+    .ui2-input { display: flex; flex-direction: column; }
     .ui2-input__label {
+      margin-bottom: 6px;
       font-family: Galvji, sans-serif;
       font-size: 11px;
       font-weight: 700;
@@ -136,14 +139,19 @@ let nextId = 0;
     .ui2-input__pwd-toggle:hover { color: var(--ink-700); }
     .ui2-input__msg {
       font-size: 11px;
+      line-height: 16px; /* fijo para que coincida con la reserva de la msg-zone */
       color: var(--ink-500);
-      margin: 0;
+      margin: 6px 0 0;
       padding: 0 4px;
     }
     .ui2-input__msg--error { color: var(--danger); font-weight: 600; }
+    /* Con foco se reserva una línea de mensaje para que el error pueda
+       aparecer/desaparecer al teclear sin cambiar la altura del formulario
+       (en iOS el relayout por tecla hace parpadear la barra del teclado). */
+    .ui2-input:focus-within .ui2-input__msg-zone { min-height: 22px; }
   `],
 })
-export class Ui2InputComponent implements ControlValueAccessor {
+export class Ui2InputComponent implements ControlValueAccessor, AfterViewInit {
   readonly label = input<string | null>(null);
   readonly placeholder = input<string>('');
   readonly type = input<InputType>('text');
@@ -162,9 +170,16 @@ export class Ui2InputComponent implements ControlValueAccessor {
   readonly name = input<string | null>(null);
 
   readonly inputId = `ui2-input-${++nextId}`;
+  /* Estado interno para la UI; nunca se bindea a [value] — reescribir el
+     value de un input enfocado en cada tecla resetea el estado de autofill
+     de WKWebView y hace parpadear la QuickType bar en iOS. El DOM solo se
+     escribe en writeValue() (cambios programáticos del modelo). */
   readonly value = signal<string>('');
   readonly disabled = signal<boolean>(false);
   readonly showPassword = signal<boolean>(false);
+
+  private readonly field = viewChild<ElementRef<HTMLInputElement>>('field');
+  private pendingValue: string | null = null;
 
   readonly effectiveType = computed(() => {
     if (this.type() === 'password' && this.showPassword()) return 'text';
@@ -202,6 +217,14 @@ export class Ui2InputComponent implements ControlValueAccessor {
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
+  ngAfterViewInit(): void {
+    if (this.pendingValue !== null) {
+      const el = this.field()?.nativeElement;
+      if (el) el.value = this.pendingValue;
+      this.pendingValue = null;
+    }
+  }
+
   onInput(event: Event): void {
     const v = (event.target as HTMLInputElement).value;
     this.value.set(v);
@@ -212,8 +235,19 @@ export class Ui2InputComponent implements ControlValueAccessor {
     this.onTouched();
   }
 
-  writeValue(value: string | null): void {
-    this.value.set(value ?? '');
+  writeValue(value: string | number | null | undefined): void {
+    const normalized = value == null ? '' : String(value);
+    this.value.set(normalized);
+    this.setDomValue(normalized);
+  }
+
+  private setDomValue(v: string): void {
+    const el = this.field()?.nativeElement;
+    if (!el) {
+      this.pendingValue = v;
+      return;
+    }
+    if (el.value !== v) el.value = v;
   }
   registerOnChange(fn: (value: string) => void): void {
     this.onChange = fn;
