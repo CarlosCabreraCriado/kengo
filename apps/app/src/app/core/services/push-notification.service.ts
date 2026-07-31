@@ -7,6 +7,7 @@ import { ConvexService } from '../convex/convex.service';
 import type { SessionResettable } from '../auth/session-resettable';
 import { PlatformService } from './platform.service';
 import { LoggerService } from './logger.service';
+import { ToastService } from '../../shared/services/toast/toast.service';
 import { api } from '../../../../../../convex/_generated/api';
 
 type PermissionState = 'unknown' | 'granted' | 'denied' | 'prompt';
@@ -21,9 +22,10 @@ type PermissionState = 'unknown' | 'granted' | 'denied' | 'prompt';
  *    permisos, obtiene el token FCM y lo registra en Convex
  *    (`api.push.mutations.registerPushToken`).
  *  - Listeners de `tokenReceived` re-registran en caso de rotación.
- *  - `notificationReceived` (foreground): no navegamos, dejamos que el
- *    sistema muestre el banner (configurado en `capacitor.config.ts` →
- *    `FirebaseMessaging.presentationOptions`).
+ *  - `notificationReceived` (foreground): en iOS no hacemos nada (el sistema
+ *    muestra el banner según `FirebaseMessaging.presentationOptions` de
+ *    `capacitor.config.ts`); en Android, donde el sistema no muestra nada en
+ *    foreground, enseñamos un toast in-app con acción de navegar.
  *  - `notificationActionPerformed` (tap del usuario): navega según
  *    `notification.data.type`.
  *  - `teardown()` se invoca desde el flujo de logout (`AuthService.logout`)
@@ -35,6 +37,7 @@ export class PushNotificationService implements SessionResettable {
   private platform = inject(PlatformService);
   private router = inject(Router);
   private logger = inject(LoggerService);
+  private toast = inject(ToastService);
 
   private _permissionState = signal<PermissionState>('unknown');
   private _token = signal<string | null>(null);
@@ -47,6 +50,12 @@ export class PushNotificationService implements SessionResettable {
 
   private listenersRegistered = false;
   private cachedDeviceId: string | null = null;
+
+  /**
+   * Caché de `Badge.isSupported()`: es estable durante la vida del proceso
+   * (depende del launcher/OS, no de la sesión), así que se consulta una vez.
+   */
+  private badgeSupported: boolean | null = null;
 
   /** Promesa de un `init()` en curso, para deduplicar llamadas concurrentes. */
   private initInFlight: Promise<void> | null = null;
@@ -102,6 +111,8 @@ export class PushNotificationService implements SessionResettable {
     }
 
     try {
+      await this.ensureAndroidChannels();
+
       const messaging = await this.plugin();
       const perm = await messaging.requestPermissions();
       this._permissionState.set(perm.receive as PermissionState);
@@ -134,6 +145,50 @@ export class PushNotificationService implements SessionResettable {
     } catch (err) {
       this.logger.error('[Push] init falló:', err);
       this.scheduleRetry();
+    }
+  }
+
+  /**
+   * Crea los canales de notificación de Android (8+), uno por tipo, alineados
+   * con `notificationPreferences` y con el mapping `ANDROID_CHANNEL_BY_KEY`
+   * del backend (`convex/push/actions.ts`). Todos nacen con importancia alta
+   * (heads-up); el usuario puede degradarlos por canal en Ajustes del sistema.
+   * Idempotente (Android ignora re-creaciones) y best-effort: un fallo aquí no
+   * debe impedir el registro del token. Independiente del permiso de
+   * notificaciones, así los canales ya existen cuando el usuario lo conceda.
+   */
+  private async ensureAndroidChannels(): Promise<void> {
+    if (!this.platform.isAndroid()) return;
+    try {
+      const { FirebaseMessaging, Importance } = await import(
+        '@capacitor-firebase/messaging'
+      );
+      const canales = [
+        {
+          id: 'mensajes',
+          name: 'Mensajes',
+          description: 'Mensajes de chat con tu fisio o tus pacientes',
+        },
+        {
+          id: 'recordatorios',
+          name: 'Recordatorios diarios',
+          description: 'Recordatorio diario para completar tus ejercicios',
+        },
+        {
+          id: 'planes',
+          name: 'Planes de ejercicios',
+          description: 'Avisos cuando tu fisio te asigna o actualiza un plan',
+        },
+      ];
+      for (const canal of canales) {
+        await FirebaseMessaging.createChannel({
+          ...canal,
+          importance: Importance.High,
+          vibration: true,
+        });
+      }
+    } catch (err) {
+      this.logger.warn('[Push] createChannel falló (se ignora):', err);
     }
   }
 
@@ -184,7 +239,7 @@ export class PushNotificationService implements SessionResettable {
       return;
     }
 
-    // Restos visuales de la cuenta saliente: número del icono a 0 (iOS) y
+    // Restos visuales de la cuenta saliente: número del icono a 0 y
     // bandeja vacía (los banners navegarían a recursos de la otra cuenta).
     // Locales, sin auth, tragan sus errores.
     void this.setBadge(0);
@@ -277,15 +332,40 @@ export class PushNotificationService implements SessionResettable {
       this.navigateForNotification(notification);
     });
 
-    // `notificationReceived` se dispara con app en foreground. Como
-    // `presentationOptions` está configurado a alert+badge+sound, iOS
-    // muestra el banner por su cuenta y no hacemos nada aquí; Android
-    // por defecto no muestra notificación en foreground, pero al ser un
-    // mensaje del propio chat la UI ya está reaccionando (la query reactiva
-    // del thread se actualiza sola). Si en el futuro hace falta un toast
-    // in-app, este es el listener donde engancharlo.
-    void messaging.addListener('notificationReceived', () => {
-      // no-op
+    // `notificationReceived` se dispara con app en foreground. En iOS el
+    // sistema ya muestra el banner (`presentationOptions`), así que solo
+    // actuamos en Android, donde en foreground no se muestra nada.
+    void messaging.addListener('notificationReceived', ({ notification }) => {
+      this.handleForegroundNotification(notification);
+    });
+  }
+
+  /**
+   * Aviso in-app para pushes recibidas con la app en foreground (solo
+   * Android: el sistema no muestra banner en ese estado). Se suprime cuando
+   * el usuario ya está dentro de la conversación del mensaje — ahí la query
+   * reactiva del thread pinta el mensaje sola y el toast sería ruido.
+   */
+  private handleForegroundNotification(notification: Notification): void {
+    if (!this.platform.isAndroid()) return;
+
+    const data = (notification.data ?? {}) as Record<string, string>;
+    if (
+      data['type'] === 'chat_message' &&
+      data['conversationId'] &&
+      this.router.url.startsWith(`/mensajes/${data['conversationId']}`)
+    ) {
+      return;
+    }
+
+    const mensaje =
+      [notification.title, notification.body].filter(Boolean).join(' · ') ||
+      'Tienes una notificación nueva';
+    this.toast.info(mensaje, {
+      action: {
+        label: 'Ver',
+        callback: () => this.navigateForNotification(notification),
+      },
     });
   }
 
@@ -308,12 +388,14 @@ export class PushNotificationService implements SessionResettable {
 
   /**
    * Limpia las notificaciones entregadas del centro de notificaciones del
-   * sistema (la bandeja). Llamar al abrir lista o detalle de conversaciones.
+   * sistema (la bandeja), en iOS y Android. Llamar al abrir lista o detalle
+   * de conversaciones.
    *
    * Ojo: esto NO toca el número del badge del icono. El contador del icono lo
    * gobierna en exclusiva `setBadge()` (llamado reactivamente por
-   * `BadgeSyncService` con el total real de no leídos). No mezclar ambas
-   * responsabilidades: `clearBadge` limpia la bandeja, `setBadge` fija el número.
+   * `BadgeSyncService` con el total real de no leídos, en launchers que lo
+   * soporten). No mezclar ambas responsabilidades: `clearBadge` limpia la
+   * bandeja, `setBadge` fija el número.
    */
   async clearBadge(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
@@ -328,18 +410,24 @@ export class PushNotificationService implements SessionResettable {
   /**
    * Fija el número del badge del icono de la app al valor dado. Es la única
    * fuente de verdad del contador del icono mientras la app está viva; el
-   * servidor solo lo setea vía payload APNs cuando la app está cerrada.
+   * servidor solo lo setea cuando la app está cerrada (`aps.badge` en iOS,
+   * `notification_count` en Android).
    *
-   * Solo iOS: es donde el badge numérico es un problema real (el server lo
-   * sube pero nada lo baja al leer). En Android el `aps.badge` se ignora y el
-   * "dot" del launcher se gestiona vaciando la bandeja (`clearBadge`), así que
-   * aquí es no-op. Best-effort: si no hay permiso de badge, `Badge.set` es
-   * no-op silencioso; envolvemos en try/catch para no romper nunca el flujo.
+   * iOS y Android: en Android el soporte depende del launcher (Samsung/Xiaomi
+   * muestran número; Pixel solo dot), así que se guarda por capacidad con
+   * `Badge.isSupported()` (cacheado), no por plataforma. Best-effort: si no
+   * hay permiso de badge, `Badge.set` es no-op silencioso; envolvemos en
+   * try/catch para no romper nunca el flujo.
    */
   async setBadge(count: number): Promise<void> {
-    if (!this.platform.isIOS()) return;
+    if (!Capacitor.isNativePlatform()) return;
     try {
       const badge = await this.badgePlugin();
+      if (this.badgeSupported === null) {
+        const { isSupported } = await badge.isSupported();
+        this.badgeSupported = isSupported;
+      }
+      if (!this.badgeSupported) return;
       await badge.set({ count: Math.max(0, Math.trunc(count)) });
     } catch (err) {
       this.logger.warn('[Push] setBadge falló (se ignora):', err);

@@ -251,7 +251,7 @@ Si no aparece: revisa los logs de la app (Xcode console o `adb logcat`) buscando
 - **Android 13+ (API 33+)**: ya requiere permiso runtime `POST_NOTIFICATIONS` (ya añadido en `AndroidManifest.xml`). El plugin Capawesome lo pide cuando llamas `requestPermissions()`.
 - **Token rota tras 270 días sin abrir app** (FCM): el listener `tokenReceived` lo re-registra automáticamente cuando el usuario vuelve a abrir.
 - **Foreground iOS**: `presentationOptions: ['alert', 'sound']` ya está en `capacitor.config.ts` para que se muestre banner también con app abierta. `'badge'` se omite a propósito: con la app viva el número del icono lo gobierna en exclusiva `BadgeSyncService`, no el payload de cada push.
-- **Foreground Android**: por defecto NO muestra banner si la app está en foreground. Para el chat eso es deseable (la UI ya está actualizándose). Si en el futuro quieres mostrar un toast in-app, engancha en el listener `notificationReceived` del `PushNotificationService`.
+- **Foreground Android**: el sistema NO muestra banner si la app está en foreground. La app lo cubre con un toast in-app (`ToastService`) desde el listener `notificationReceived` del `PushNotificationService`, con acción "Ver" que navega igual que el tap de la notificación. Se suprime si el usuario ya está dentro de la conversación del mensaje.
 - **Service account multi-entorno**: si tienes `dev` y `prod` en Convex, repite el paso 8 en ambos deployments con el mismo JSON (o uno distinto si quieres aislar dev y prod en proyectos Firebase separados — recomendado).
 - **Cambiar el `applicationId` después**: si en el futuro cambias el bundle ID en `capacitor.config.ts`, tienes que repetir los pasos 2 y 3 (re-registrar app en Firebase) y bajar `google-services.json` / `GoogleService-Info.plist` nuevos.
 
@@ -271,9 +271,10 @@ Si no aparece: revisa los logs de la app (Xcode console o `adb logcat`) buscando
 **Frontend Angular + nativo:**
 - `apps/app/capacitor.config.ts` — bloque `FirebaseMessaging.presentationOptions`
 - `apps/app/ios/App/App/AppDelegate.swift` — métodos `didRegister*` / `didReceiveRemoteNotification`
-- `apps/app/android/app/src/main/AndroidManifest.xml` — meta-data icono + permiso `POST_NOTIFICATIONS`
+- `apps/app/android/app/src/main/AndroidManifest.xml` — meta-data icono/color, canal por defecto (`mensajes`) + permiso `POST_NOTIFICATIONS`
 - `apps/app/android/app/src/main/res/drawable/ic_notification.xml` — icono blanco monocromo
-- `apps/app/src/app/core/services/push-notification.service.ts` — servicio Angular
+- `apps/app/src/app/core/services/push-notification.service.ts` — servicio Angular (registro, canales Android, foreground, badge)
+- `apps/app/src/app/core/services/badge-sync.service.ts` — espejo reactivo del badge del icono
 - `apps/app/src/app/app.component.ts` — effect que llama `init()`
 - `apps/app/src/app/core/auth/services/auth.service.ts` — `teardown()` en logout
 
@@ -302,13 +303,30 @@ Cada usuario puede silenciar tipos concretos desde **Perfil → Notificaciones**
 - Filtro en envío: `convex/push/actions.ts:sendPushToUser` admite `notificationKey` opcional; si la pref está en `false` no envía y devuelve `false`. Los tokens válidos NO se borran (es opt-out, no stale).
 - Callers que pasan la clave: chat (`notificationKey: "chat"`), recordatorio diario (`"dailyReminder"`), nuevo plan (`"newPlan"`).
 
-### Badge iOS (contador de mensajes no leídos)
+### Badge del icono (contador de mensajes no leídos)
 
-El icono de Kengo en iOS muestra el total de mensajes no leídos del usuario en todas sus conversaciones de clínicas con membresía vigente (suma cross-clínica de ambos roles). Android ignora el badge numérico.
+El icono de Kengo muestra el total de mensajes no leídos del usuario en todas sus conversaciones de clínicas con membresía vigente (suma cross-clínica de ambos roles). En iOS siempre; en Android solo en launchers con soporte de badge numérico (Samsung, Xiaomi… — Pixel Launcher solo pinta el dot).
 
-- Backend: `sendPushToUser` admite `badge?: number` y lo añade en `apns.payload.aps.badge`. `convex/conversations/mutations.ts:sendMessage` calcula el total tras patchear los unread counts (helper `computeUnreadBadgeForUser`, que filtra por membresía vigente).
-- Cliente, número del icono: `BadgeSyncService` espeja reactivamente la query `getMyUnreadTotal` → `PushNotificationService.setBadge()` (plugin `@capawesome/capacitor-badge`) mientras la app está viva. El server es la autoridad con la app cerrada (aps.badge); el cliente, con la app abierta.
+- Backend: `sendPushToUser` admite `badge?: number` y lo añade en `apns.payload.aps.badge` (iOS) y en `android.notification.notification_count` cuando es > 0 (Android). `convex/conversations/mutations.ts:sendMessage` calcula el total tras patchear los unread counts (helper `computeUnreadBadgeForUser`, que filtra por membresía vigente).
+- Cliente, número del icono: `BadgeSyncService` espeja reactivamente la query `getMyUnreadTotal` → `PushNotificationService.setBadge()` (plugin `@capawesome/capacitor-badge`) mientras la app está viva, en ambas plataformas. En Android el guard es por capacidad (`Badge.isSupported()`, cacheado), no por plataforma. El server es la autoridad con la app cerrada; el cliente, con la app abierta.
 - Cliente, bandeja: `PushNotificationService.clearBadge()` invoca `FirebaseMessaging.removeAllDeliveredNotifications()` para limpiar el centro de notificaciones al abrir el inbox, un thread, en cada resume y en el teardown de logout. No toca el número del icono.
+
+### Entrega Android: canales, prioridad y foreground
+
+Refuerzo de la entrega en Android (sin pasos manuales; requiere deploy Convex + rebuild Android):
+
+- **Canales de notificación** (Android 8+), uno por tipo y alineados con `notificationPreferences`. Los crea `PushNotificationService.ensureAndroidChannels()` en cada `init()` (idempotente), todos con importancia alta (heads-up); el usuario puede degradarlos por canal en Ajustes del sistema.
+
+  | id | Nombre visible | `notificationKey` |
+  |---|---|---|
+  | `mensajes` | Mensajes | `chat` |
+  | `recordatorios` | Recordatorios diarios | `dailyReminder` |
+  | `planes` | Planes de ejercicios | `newPlan` |
+
+  Los canales son inmutables tras crearse (la app no puede volver a subir la importancia): cambiar nombre/descripción es seguro, cambiar importancia exige un id nuevo. El mapping servidor vive en `ANDROID_CHANNEL_BY_KEY` (`convex/push/actions.ts`); pushes sin `notificationKey` caen en `mensajes`, que es también el canal por defecto declarado en el `AndroidManifest.xml` (meta-data `default_notification_channel_id`) para pushes que lleguen antes de que el JS cree los canales.
+- **Payload**: `sendPushToUser` añade un bloque `android` con `priority: "HIGH"` (sin él, Doze puede retrasar la entrega minutos u horas), `channel_id` según el tipo y `notification_count` (ver sección del badge). Campos en snake_case, como exige el API REST de FCM v1.
+- **Foreground**: toast in-app con acción "Ver" (ver gotcha "Foreground Android").
+- Instalaciones anteriores a los canales conservan el canal implícito "Miscellaneous" que creó FCM; es inofensivo y convive con los nuevos.
 
 ### Cambio de cuenta en el mismo dispositivo
 

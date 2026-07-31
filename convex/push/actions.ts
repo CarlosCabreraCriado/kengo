@@ -87,6 +87,18 @@ const NOTIFICATION_KEY = v.union(
 );
 
 /**
+ * Canal Android por tipo de notificación. Los ids deben coincidir con los
+ * canales que crea el cliente (`PushNotificationService.ensureAndroidChannels`)
+ * y con la meta-data `default_notification_channel_id` del AndroidManifest.
+ * Sin `notificationKey` (críticas/tests) se usa `mensajes` como fallback.
+ */
+const ANDROID_CHANNEL_BY_KEY = {
+  chat: "mensajes",
+  dailyReminder: "recordatorios",
+  newPlan: "planes",
+} as const;
+
+/**
  * Envía una push notification a todos los dispositivos del usuario indicado.
  *
  * Internal: se invoca vía `ctx.scheduler.runAfter(0, ...)` desde mutations
@@ -104,8 +116,10 @@ const NOTIFICATION_KEY = v.union(
  *  - `notificationKey`: si se proporciona, lee las prefs del receptor y aborta
  *    (devuelve `false`) cuando esa clave está en `false`. Si se omite, siempre
  *    se envía (caso reservado a notificaciones críticas o tests).
- *  - `badge`: número que aparece como contador de la app en iOS. Android lo
- *    ignora. Pasar `0` para limpiar el badge.
+ *  - `badge`: número que aparece como contador de la app. En iOS va como
+ *    `aps.badge` (0 limpia el badge); en Android como
+ *    `notification_count` solo cuando es > 0 (con 0 el sistema volvería al
+ *    auto-conteo — la limpieza en Android la hace el cliente vía `setBadge`).
  */
 export const sendPushToUser = internalAction({
   args: {
@@ -183,6 +197,24 @@ export const sendPushToUser = internalAction({
         ? { apns: { payload: { aps: { badge: args.badge } } } }
         : {};
 
+    // Bloque Android: prioridad HIGH para que Doze no retrase la entrega,
+    // canal según el tipo (heads-up controlable por el usuario en Ajustes) y
+    // `notification_count` como espejo del badge iOS (campos en snake_case,
+    // como exige el API REST de FCM v1).
+    const androidBlock = {
+      android: {
+        priority: "HIGH",
+        notification: {
+          channel_id: args.notificationKey
+            ? ANDROID_CHANNEL_BY_KEY[args.notificationKey]
+            : "mensajes",
+          ...(args.badge !== undefined && args.badge > 0
+            ? { notification_count: args.badge }
+            : {}),
+        },
+      },
+    };
+
     // Resultado por token: "ok" | "stale" | "error".
     const results = await Promise.all(
       tokens.map(async (t: Doc<"pushTokens">) => {
@@ -192,6 +224,7 @@ export const sendPushToUser = internalAction({
             notification: { title: args.title, body: args.body },
             ...(args.data ? { data: args.data } : {}),
             ...apnsBlock,
+            ...androidBlock,
           },
         });
 

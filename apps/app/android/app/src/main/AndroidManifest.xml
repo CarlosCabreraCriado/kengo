@@ -76,6 +76,14 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorPrimary"
         />
+        <!-- Canal por defecto para pushes que lleguen sin channel_id (p. ej.
+             antes de que el JS cree los canales, o durante un rollout con
+             backend viejo). Debe coincidir con un canal creado por
+             PushNotificationService.ensureAndroidChannels(). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="mensajes"
+        />
     </application>
 
     <!-- Permissions -->

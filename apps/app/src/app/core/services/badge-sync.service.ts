@@ -11,7 +11,7 @@ import { api } from '../../../../../../convex/_generated/api';
  * Mantiene el número del badge del icono de la app sincronizado con el total
  * real de mensajes no leídos del usuario, mientras la app está viva.
  *
- * Por qué existe: el servidor sube el badge vía payload APNs cuando llega una
+ * Por qué existe: el servidor sube el badge vía payload push cuando llega una
  * push de chat (app cerrada/background), pero nada lo bajaba al leer — el
  * plugin de FCM no expone API de badge y `markAsRead` no emite push. Este
  * servicio cierra el hueco: espeja reactivamente `getMyUnreadTotal` (Convex)
@@ -22,9 +22,11 @@ import { api } from '../../../../../../convex/_generated/api';
  *  - Servidor = autoridad cuando la app NO está viva (badge en la push de chat).
  *  - Este servicio = autoridad cuando la app está viva.
  *
- * Solo iOS: es la única plataforma donde el badge numérico es un problema (en
- * Android el `aps.badge` se ignora y el "dot" del launcher se limpia vaciando
- * la bandeja). En no-iOS el servicio es inerte (ni suscripción ni effect).
+ * iOS y Android: en ambas plataformas el servidor sube el contador con la
+ * push (`aps.badge` / `notification_count`) y nada lo bajaría al leer. En
+ * Android el número solo se pinta en launchers con soporte — ese guard fino
+ * vive en `setBadge()` (`Badge.isSupported()`), no aquí. En web el servicio
+ * es inerte (ni suscripción ni effect).
  *
  * Se instancia app-wide desde `AppComponent` (bloque nativo) para no depender
  * de que el usuario abra la pestaña de mensajes.
@@ -44,9 +46,9 @@ export class BadgeSyncService implements SessionResettable {
   private lastResumeTickApplied = 0;
 
   constructor() {
-    // El badge numérico del icono solo es un problema real en iOS. En el resto
-    // no montamos ni la suscripción reactiva ni el effect.
-    if (!this.platform.isIOS()) return;
+    // El badge numérico del icono solo existe en nativo; en web no montamos
+    // ni la suscripción reactiva ni el effect.
+    if (!this.platform.isNative()) return;
 
     const unreadTotalQuery = this.convex.watchQuery(
       api.conversations.queries.getMyUnreadTotal,
@@ -58,7 +60,8 @@ export class BadgeSyncService implements SessionResettable {
 
     effect(() => {
       // En background el servidor puede haber movido el badge del icono vía
-      // `aps.badge`: `lastBadgeSet` ya no refleja el icono real. Al volver,
+      // `aps.badge`/`notification_count`: `lastBadgeSet` ya no refleja el
+      // icono real. Al volver,
       // invalidar la dedup para re-aplicar aunque el total no haya cambiado.
       const tick = this.lifecycle.resumeTick();
       if (tick !== this.lastResumeTickApplied) {
