@@ -102,6 +102,11 @@ function buildProyectos(ports) {
     { name: `Build de aplicación (iOS) ${styleText('dim', '(build native + iconos + sync + Xcode)')}`, value: 'ios:build' },
     { name: `Sincronizar y abrir Xcode (iOS) ${styleText('dim', '(sync + open, sin rebuild)')}`, value: 'ios:sync-open' },
     { name: `Run en simulador iOS ${styleText('dim', '(cap run ios)')}`, value: 'ios:run' },
+    new Separator(styleText('dim', '  ── Android ──')),
+    { name: `Build de aplicación (Android) ${styleText('dim', '(build native + iconos + sync + Android Studio)')}`, value: 'android:build' },
+    { name: `Sincronizar y abrir Android Studio ${styleText('dim', '(sync + open, sin rebuild)')}`, value: 'android:sync-open' },
+    { name: `Run en emulador/dispositivo Android ${styleText('dim', '(cap run android)')}`, value: 'android:run' },
+    { name: `Release para Play Store ${styleText('dim', '(build + sync + gradlew bundleRelease → AAB)')}`, value: 'android:release' },
     new Separator(styleText('dim', '  ── Configuración ──')),
     { name: styleText('dim', 'Cambiar rango de puertos'), value: 'change-ports' },
   ];
@@ -160,7 +165,7 @@ const MODOS = [
   { name: `Produccion ${styleText('dim', '(build optimizado)')}`, value: 'production' },
 ];
 
-// ── Pipeline secuencial (iOS) ────────────────────────────────────────
+// ── Pipeline secuencial (iOS/Android) ────────────────────────────────
 
 async function runSequential(steps) {
   for (const step of steps) {
@@ -196,13 +201,34 @@ async function runSequential(steps) {
   return 0;
 }
 
-const IOS_ICON_SOURCE = 'apps/app/assets/icon-only.png';
+const ICON_SOURCE = 'apps/app/assets/icon-only.png';
+const ANDROID_ADAPTIVE_ICON_SOURCES = [
+  'apps/app/assets/icon-foreground.png',
+  'apps/app/assets/icon-background.png',
+];
 
-async function runIosBuildCompleto() {
-  const hasIconSource = existsSync(IOS_ICON_SOURCE);
+const NATIVE_PLATFORMS = {
+  ios: { nombre: 'iOS', ide: 'Xcode' },
+  android: { nombre: 'Android', ide: 'Android Studio' },
+};
+
+async function runNativeBuildCompleto(plat) {
+  const { nombre, ide } = NATIVE_PLATFORMS[plat];
+
+  const hasIconSource = existsSync(ICON_SOURCE);
   if (!hasIconSource) {
-    console.log(styleText('yellow', `\n  ⚠ No se encontró ${IOS_ICON_SOURCE}.`));
+    console.log(styleText('yellow', `\n  ⚠ No se encontró ${ICON_SOURCE}.`));
     console.log(styleText('dim', '    Saltando regeneración de iconos. Ver docs/CAPACITOR_NATIVE_APP.md §6.6.'));
+  }
+
+  // Sin los PNG foreground/background, @capacitor/assets no genera el icono
+  // adaptativo y el launcher de Android 8+ se queda con el placeholder.
+  if (plat === 'android' && hasIconSource) {
+    const faltan = ANDROID_ADAPTIVE_ICON_SOURCES.filter((f) => !existsSync(f));
+    if (faltan.length > 0) {
+      console.log(styleText('yellow', `\n  ⚠ Faltan fuentes del icono adaptativo: ${faltan.join(', ')}.`));
+      console.log(styleText('dim', '    El icono adaptativo de Android no se regenerará. Ver apps/app/CLAUDE.md (Splash screen nativo).'));
+    }
   }
 
   const steps = [
@@ -216,24 +242,44 @@ async function runIosBuildCompleto() {
           optional: true,
         }]
       : []),
-    { label: 'Sincronizar proyecto iOS', cmd: 'npx', args: ['cap', 'sync', 'ios'], cwd: 'apps/app' },
-    { label: 'Abrir proyecto en Xcode', cmd: 'npx', args: ['cap', 'open', 'ios'], cwd: 'apps/app' },
+    { label: `Sincronizar proyecto ${nombre}`, cmd: 'npx', args: ['cap', 'sync', plat], cwd: 'apps/app' },
+    { label: `Abrir proyecto en ${ide}`, cmd: 'npx', args: ['cap', 'open', plat], cwd: 'apps/app' },
   ];
 
   return runSequential(steps);
 }
 
-async function runIosSyncOpen() {
+async function runNativeSyncOpen(plat) {
+  const { nombre, ide } = NATIVE_PLATFORMS[plat];
   return runSequential([
-    { label: 'Sincronizar proyecto iOS', cmd: 'npx', args: ['cap', 'sync', 'ios'], cwd: 'apps/app' },
-    { label: 'Abrir proyecto en Xcode', cmd: 'npx', args: ['cap', 'open', 'ios'], cwd: 'apps/app' },
+    { label: `Sincronizar proyecto ${nombre}`, cmd: 'npx', args: ['cap', 'sync', plat], cwd: 'apps/app' },
+    { label: `Abrir proyecto en ${ide}`, cmd: 'npx', args: ['cap', 'open', plat], cwd: 'apps/app' },
   ]);
 }
 
-async function runIosSimulator() {
+async function runNativeRun(plat) {
+  const label = plat === 'ios' ? 'Run en simulador iOS' : 'Run en emulador/dispositivo Android';
   return runSequential([
-    { label: 'Run en simulador iOS', cmd: 'npx', args: ['cap', 'run', 'ios'], cwd: 'apps/app' },
+    { label, cmd: 'npx', args: ['cap', 'run', plat], cwd: 'apps/app' },
   ]);
+}
+
+const ANDROID_AAB_PATH = 'apps/app/android/app/build/outputs/bundle/release/app-release.aab';
+
+async function runAndroidRelease() {
+  console.log(styleText('yellow', '\n  ⚠ Sin keystore/signingConfig configurado, el AAB saldrá sin firmar'));
+  console.log(styleText('dim', '    y Play Console lo rechazará. Ver docs/PUBLICAR_ANDROID_GOOGLE_PLAY.md.'));
+
+  const code = await runSequential([
+    { label: 'Build native (Angular bundle)', cmd: 'npm', args: ['run', 'build:native'] },
+    { label: 'Sincronizar proyecto Android', cmd: 'npx', args: ['cap', 'sync', 'android'], cwd: 'apps/app' },
+    { label: 'Generar AAB de release (bundleRelease)', cmd: './gradlew', args: ['bundleRelease'], cwd: 'apps/app/android' },
+  ]);
+
+  if (code === 0) {
+    console.log(styleText('green', `  ✓ AAB generado en ${ANDROID_AAB_PATH}\n`));
+  }
+  return code;
 }
 
 // ── Caddy ─────────────────────────────────────────────────────────────
@@ -287,18 +333,12 @@ async function main() {
         continue;
       }
 
-      if (proyecto === 'ios:build') {
-        await runIosBuildCompleto();
-        continue;
-      }
-
-      if (proyecto === 'ios:sync-open') {
-        await runIosSyncOpen();
-        continue;
-      }
-
-      if (proyecto === 'ios:run') {
-        await runIosSimulator();
+      const [plat, accion] = proyecto.split(':');
+      if (plat === 'ios' || plat === 'android') {
+        if (accion === 'build') await runNativeBuildCompleto(plat);
+        else if (accion === 'sync-open') await runNativeSyncOpen(plat);
+        else if (accion === 'run') await runNativeRun(plat);
+        else if (accion === 'release') await runAndroidRelease();
         continue;
       }
 

@@ -213,6 +213,9 @@ cd apps/app/android
 # → app/build/outputs/bundle/release/app-release.aab
 ```
 
+> Atajo: `npm start` → **Release para Play Store** encadena build native + sync
+> + `bundleRelease` desde el menú.
+
 **Antes de subirlo, probar la variante release en dispositivo.** R8 y
 `shrinkResources` están activos y pueden romper reflexión en plugins de Capacitor
 (push, deep links, cámara) sin que el build falle:
