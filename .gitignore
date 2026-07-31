@@ -90,3 +90,9 @@ backups/
 pnpm-lock.yaml
 pnpm-workspace.yaml
 .pnpm-store/
+
+# Android release signing — credenciales y keystores nunca en el repo
+apps/app/android/keystore.properties
+apps/app/android/local.properties
+*.jks
+*.keystore

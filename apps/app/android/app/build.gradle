@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// Firma de release: credenciales fuera del repo en keystore.properties
+// (ignorado por git). Sin ese fichero, el bloque queda inerte y el build
+// release sale sin firmar (válido para CI/checks, no para Play).
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.kengoapp.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +25,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             // R8: reduce el APK/AAB y el tiempo de arranque. Los plugins de
             // Capacitor traen sus consumer-proguard-rules; validar un build
             // release firmado (push, deep links, plugins) antes de publicar.
