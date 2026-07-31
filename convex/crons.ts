@@ -118,4 +118,14 @@ crons.daily(
   {},
 );
 
+// Purga de push tokens sin actividad en 60 días (dispositivos abandonados
+// cuyo token FCM sigue "vivo" y nunca llega a UNREGISTERED). Hora 04:45 UTC,
+// tras `push-log-cleanup` (04:30).
+crons.daily(
+  "push-token-cleanup",
+  { hourUTC: 4, minuteUTC: 45 },
+  internal.push.mutations.purgeStalePushTokens,
+  {},
+);
+
 export default crons;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
@@ -45,6 +45,12 @@ export class MensajesShellComponent {
   );
 
   constructor() {
+    // Al salir del feature (tab bar, navegación externa) la conversación deja
+    // de estar "activa": sin este cleanup, el effect de markAsRead del
+    // servicio (root) marcaría leídos mensajes que el usuario no está viendo.
+    // La ruta no está en `routesToCache`, así que el destroy es real.
+    inject(DestroyRef).onDestroy(() => this.mensajes.selectConversation(null));
+
     effect(() => {
       const id = this.activeIdFromUrl();
       this.mensajes.selectConversation(id);

@@ -3,14 +3,14 @@ import { query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { batchGetMap } from "../_helpers/batchGet";
-import { computeUnreadBadgeForUser } from "./helpers";
+import { computeUnreadBadgeForUser, getMemberClinicIdSet } from "./helpers";
 
 export const listMyConversations = query({
   args: {},
   handler: async (ctx) => {
     const me = await getAuthenticatedUser(ctx);
 
-    const [asPaciente, asFisio] = await Promise.all([
+    const [asPaciente, asFisio, memberClinics] = await Promise.all([
       ctx.db
         .query("conversations")
         .withIndex("by_pacienteId_lastMessageAt", (q) =>
@@ -23,13 +23,18 @@ export const listMyConversations = query({
           q.eq("fisioId", me._id),
         )
         .collect(),
+      getMemberClinicIdSet(ctx, me._id),
     ]);
 
     const dedup = new Map<Id<"conversations">, (typeof asPaciente)[number]>();
     for (const c of [...asPaciente, ...asFisio]) {
       dedup.set(c._id, c);
     }
-    const all = Array.from(dedup.values());
+    // Sin membresía vigente no hay acceso (`listMessages`/`markAsRead` lo
+    // exigen): una huérfana en la bandeja sería una fila imposible de abrir.
+    const all = Array.from(dedup.values()).filter((c) =>
+      memberClinics.has(c.clinicId),
+    );
 
     all.sort((a, b) => {
       const aTime = a.lastMessageAt ?? 0;

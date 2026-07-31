@@ -14,6 +14,7 @@ import {
   assertCapacidadPacientes,
 } from "../_helpers/capacity";
 import { _deletePatientSnapshotsForClinic } from "../snapshots/internal";
+import { deleteConversationWithMessages } from "../conversations/helpers";
 
 const PUESTOS_FACTURABLES: ReadonlyArray<"fisio" | "admin"> = [
   "fisio",
@@ -57,25 +58,6 @@ async function cascadeRemoveStaff(
     if (c.clinicId !== clinicId) continue;
     await deleteConversationWithMessages(ctx, c._id);
   }
-}
-
-/**
- * Borra una conversación junto con todos sus mensajes. Convex no cascadea,
- * así que iteramos `messages` por `by_conversationId` antes de borrar el
- * documento de `conversations`.
- */
-async function deleteConversationWithMessages(
-  ctx: MutationCtx,
-  conversationId: Id<"conversations">,
-): Promise<void> {
-  const msgs = await ctx.db
-    .query("messages")
-    .withIndex("by_conversationId", (q) =>
-      q.eq("conversationId", conversationId),
-    )
-    .collect();
-  for (const m of msgs) await ctx.db.delete(m._id);
-  await ctx.db.delete(conversationId);
 }
 
 /**

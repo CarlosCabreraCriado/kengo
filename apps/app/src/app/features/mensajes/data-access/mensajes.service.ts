@@ -1,6 +1,8 @@
-import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { ClinicaActivaService, SessionService } from '../../../core';
 import { ConvexService } from '../../../core/convex/convex.service';
+import { AppLifecycleService } from '../../../core/services/app-lifecycle.service';
+import type { SessionResettable } from '../../../core/auth/session-resettable';
 import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../convex/_generated/dataModel';
@@ -90,37 +92,46 @@ interface RawMessage {
 }
 
 @Injectable({ providedIn: 'root' })
-export class MensajesService {
+export class MensajesService implements SessionResettable {
   private session = inject(SessionService);
   private convex = inject(ConvexService);
   private clinicaActiva = inject(ClinicaActivaService);
+  private lifecycle = inject(AppLifecycleService);
   private logger = inject(LoggerService);
 
   private readonly _activeConversationId = signal<string | null>(null);
   private readonly _searchTerm = signal<string>('');
   private readonly _autoStartAttempted = signal<boolean>(false);
-  /** Idempotencia del effect de `markAsRead`: el id de la última conversación
-   *  marcada como leída. `untracked` evita añadirlo como dependencia del effect. */
-  private readonly _lastReadConversationId = signal<string | null>(null);
+  /** Guard anti-duplicado mientras la mutation `markAsRead` está en vuelo.
+   *  Campo plano (no signal): escribirlo no debe re-disparar el effect. */
+  private _markInFlightId: string | null = null;
 
   constructor() {
-    // Marca como leída la conversación activa de forma reactiva: si está
-    // bloqueada por clínica activa distinta, no se dispara; al cambiar a la
-    // clínica correcta (desde el switcher o el CTA), `isActiveClinic` pasa a
-    // true y el effect ejecuta automáticamente markAsRead.
+    // Marca como leída la conversación activa mientras tenga no leídos. La
+    // idempotencia sale del propio estado del servidor (`unreadCount > 0`),
+    // así que cubre también los mensajes que llegan con el hilo ya abierto y
+    // el deep-link desde una push. Si está bloqueada por clínica activa
+    // distinta no se dispara (diseño deliberado del bloqueo por clínica: esas
+    // conversaciones siguen contando en el badge hasta cambiar de clínica);
+    // al cambiar a la correcta, `isActiveClinic` pasa a true y el effect
+    // ejecuta automáticamente markAsRead. Convergencia: la mutation pone el
+    // contador a 0, la query re-emite y el effect sale por `unreadCount === 0`.
     effect(() => {
+      // Dependencia explícita: re-evaluar al volver de background y como
+      // reintento si una mutation anterior falló (offline).
+      this.lifecycle.resumeTick();
+
       const conv = this.activeConversation();
-      if (!conv) {
-        untracked(() => this._lastReadConversationId.set(null));
-        return;
-      }
+      if (!conv) return;
       if (!conv.isActiveClinic) return;
-      const lastId = untracked(() => this._lastReadConversationId());
-      if (lastId === conv.id) return;
-      untracked(() => this._lastReadConversationId.set(conv.id));
-      this.markAsRead(conv.id).catch((err) =>
-        this.logger.error('Error al marcar como leído:', err),
-      );
+      if (conv.unreadCount === 0) return;
+      if (this._markInFlightId === conv.id) return;
+      this._markInFlightId = conv.id;
+      this.markAsRead(conv.id)
+        .catch((err) => this.logger.error('Error al marcar como leído:', err))
+        .finally(() => {
+          this._markInFlightId = null;
+        });
     });
   }
 
@@ -204,6 +215,13 @@ export class MensajesService {
     }
     return items;
   });
+
+  resetSessionState(): void {
+    this._activeConversationId.set(null);
+    this._searchTerm.set('');
+    this._autoStartAttempted.set(false);
+    this._markInFlightId = null;
+  }
 
   selectConversation(id: string | null): void {
     this._activeConversationId.set(id);

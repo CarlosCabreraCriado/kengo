@@ -116,6 +116,7 @@ import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
 import type * as migrations_markVersionedAsModificado from "../migrations/markVersionedAsModificado.js";
 import type * as migrations_patchPlanClinicId from "../migrations/patchPlanClinicId.js";
 import type * as migrations_purgeAggregatesForInactivePatients from "../migrations/purgeAggregatesForInactivePatients.js";
+import type * as migrations_purgeOrphanConversations from "../migrations/purgeOrphanConversations.js";
 import type * as migrations_recomputeOverlappingPlanVersions from "../migrations/recomputeOverlappingPlanVersions.js";
 import type * as migrations_repairSessionsIntegrity from "../migrations/repairSessionsIntegrity.js";
 import type * as migrations_setTambienEsPacienteForFisios from "../migrations/setTambienEsPacienteForFisios.js";
@@ -272,6 +273,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/markVersionedAsModificado": typeof migrations_markVersionedAsModificado;
   "migrations/patchPlanClinicId": typeof migrations_patchPlanClinicId;
   "migrations/purgeAggregatesForInactivePatients": typeof migrations_purgeAggregatesForInactivePatients;
+  "migrations/purgeOrphanConversations": typeof migrations_purgeOrphanConversations;
   "migrations/recomputeOverlappingPlanVersions": typeof migrations_recomputeOverlappingPlanVersions;
   "migrations/repairSessionsIntegrity": typeof migrations_repairSessionsIntegrity;
   "migrations/setTambienEsPacienteForFisios": typeof migrations_setTambienEsPacienteForFisios;

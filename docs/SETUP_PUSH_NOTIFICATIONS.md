@@ -250,7 +250,7 @@ Si no aparece: revisa los logs de la app (Xcode console o `adb logcat`) buscando
 - **iOS 18+ y permiso de notificaciones**: el prompt sigue siendo estándar. Si el usuario lo deniega, la única forma de revertirlo es Ajustes del sistema → Kengo → Notificaciones.
 - **Android 13+ (API 33+)**: ya requiere permiso runtime `POST_NOTIFICATIONS` (ya añadido en `AndroidManifest.xml`). El plugin Capawesome lo pide cuando llamas `requestPermissions()`.
 - **Token rota tras 270 días sin abrir app** (FCM): el listener `tokenReceived` lo re-registra automáticamente cuando el usuario vuelve a abrir.
-- **Foreground iOS**: `presentationOptions: ['alert', 'badge', 'sound']` ya está en `capacitor.config.ts` para que se muestre banner también con app abierta.
+- **Foreground iOS**: `presentationOptions: ['alert', 'sound']` ya está en `capacitor.config.ts` para que se muestre banner también con app abierta. `'badge'` se omite a propósito: con la app viva el número del icono lo gobierna en exclusiva `BadgeSyncService`, no el payload de cada push.
 - **Foreground Android**: por defecto NO muestra banner si la app está en foreground. Para el chat eso es deseable (la UI ya está actualizándose). Si en el futuro quieres mostrar un toast in-app, engancha en el listener `notificationReceived` del `PushNotificationService`.
 - **Service account multi-entorno**: si tienes `dev` y `prod` en Convex, repite el paso 8 en ambos deployments con el mismo JSON (o uno distinto si quieres aislar dev y prod en proyectos Firebase separados — recomendado).
 - **Cambiar el `applicationId` después**: si en el futuro cambias el bundle ID en `capacitor.config.ts`, tienes que repetir los pasos 2 y 3 (re-registrar app en Firebase) y bajar `google-services.json` / `GoogleService-Info.plist` nuevos.
@@ -304,11 +304,22 @@ Cada usuario puede silenciar tipos concretos desde **Perfil → Notificaciones**
 
 ### Badge iOS (contador de mensajes no leídos)
 
-El icono de Kengo en iOS muestra el total de mensajes no leídos del usuario en todas sus conversaciones no archivadas. Android ignora el badge.
+El icono de Kengo en iOS muestra el total de mensajes no leídos del usuario en todas sus conversaciones de clínicas con membresía vigente (suma cross-clínica de ambos roles). Android ignora el badge numérico.
 
-- Backend: `sendPushToUser` admite `badge?: number` y lo añade en `apns.payload.aps.badge`. `convex/conversations/mutations.ts:sendMessage` calcula el total tras patchear los unread counts (helper `computeUnreadBadgeForUser`).
-- Cliente: `PushNotificationService.clearBadge()` invoca `FirebaseMessaging.removeAllDeliveredNotifications()` para limpiar el centro de notificaciones al abrir el inbox o un thread.
-- **Limitación conocida**: `@capacitor-firebase/messaging` v8 no expone API para setear el badge desde el cliente, por lo que el icono se mantiene con el último valor que envió el server hasta la siguiente push de chat (que siempre recalcula el total correcto). Para que el badge baje a 0 en cuanto el usuario lee, instalar `@capacitor/badge` y llamarlo desde `clearBadge()`, o disparar un silent push desde `markAsRead`. No abordado en esta iteración.
+- Backend: `sendPushToUser` admite `badge?: number` y lo añade en `apns.payload.aps.badge`. `convex/conversations/mutations.ts:sendMessage` calcula el total tras patchear los unread counts (helper `computeUnreadBadgeForUser`, que filtra por membresía vigente).
+- Cliente, número del icono: `BadgeSyncService` espeja reactivamente la query `getMyUnreadTotal` → `PushNotificationService.setBadge()` (plugin `@capawesome/capacitor-badge`) mientras la app está viva. El server es la autoridad con la app cerrada (aps.badge); el cliente, con la app abierta.
+- Cliente, bandeja: `PushNotificationService.clearBadge()` invoca `FirebaseMessaging.removeAllDeliveredNotifications()` para limpiar el centro de notificaciones al abrir el inbox, un thread, en cada resume y en el teardown de logout. No toca el número del icono.
+
+### Cambio de cuenta en el mismo dispositivo
+
+Política: **un dispositivo = una sesión activa**. La tabla `pushTokens` guarda una fila por `(userId, deviceId)`; las capas que garantizan que la cuenta saliente deja de recibir pushes y de pintar su badge:
+
+1. `AuthService.logout` espera (acotado a 2.5 s) el `teardown()` de push **antes** de `convex.clearAuth()`, para que la mutation `unregisterPushToken` llegue con auth viva. `unregisterPushToken` borra **todas** las filas del `deviceId`, sean del usuario que sean.
+2. `teardown()` además pone el badge a 0 y vacía la bandeja.
+3. `registerPushToken` (login siguiente) barre por token exacto y por `deviceId`: cualquier fila de otro usuario en el mismo dispositivo se borra.
+4. Si el usuario deniega el permiso de push, `doInit()` dispara igualmente el unregister por `deviceId` (limpia residuos aunque nunca registre token).
+5. `PushNotificationService`/`BadgeSyncService` son `SessionResettable`: los cierres de sesión que no pasan por `logout()` (sesión zombie) también limpian estado local y badge.
+6. Cron diario `push-token-cleanup` (04:45 UTC): purga filas de `pushTokens` con `lastSeenAt`/`updatedAt` > 60 días.
 
 ### Despliegue de la iteración
 

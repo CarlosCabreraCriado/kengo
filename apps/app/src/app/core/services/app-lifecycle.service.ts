@@ -1,4 +1,4 @@
-import { inject, Injectable, NgZone } from '@angular/core';
+import { inject, Injectable, NgZone, signal } from '@angular/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { AuthService } from '../auth/services/auth.service';
 import { SessionService } from '../auth/services/session.service';
@@ -33,6 +33,13 @@ export class AppLifecycleService {
 
   private lastPause = 0;
 
+  private readonly _resumeTick = signal(0);
+  /** Se incrementa en cada resume nativo. Consumidores: MensajesService
+   *  (re-marcar leído el hilo abierto) y BadgeSyncService (invalidar la dedup
+   *  del badge). En web nunca cambia: los listeners solo se registran en
+   *  nativo, y la reactividad de Convex cubre ese caso. */
+  readonly resumeTick = this._resumeTick.asReadonly();
+
   init(): void {
     if (!this.platform.isNative()) return;
 
@@ -46,6 +53,8 @@ export class AppLifecycleService {
   }
 
   private onResume(): void {
+    this._resumeTick.update((v) => v + 1);
+
     // El usuario acaba de abrir la app: las notificaciones pendientes ya no
     // aportan (las verá dentro). Best-effort, no bloquea.
     void this.pushNotifications.clearBadge();

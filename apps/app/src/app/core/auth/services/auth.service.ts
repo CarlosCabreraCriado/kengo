@@ -61,37 +61,40 @@ export class AuthService {
   }
 
   /**
-   * Cierra sesión local-first: limpia el estado local y navega a `/login`
-   * inmediatamente. La limpieza server-side (revocar push token, invalidar
-   * cookie Better-Auth) se dispara en background con timeouts cortos.
+   * Cierra sesión revocando primero el push token y limpiando lo local
+   * inmediatamente después.
    *
-   * Razón: el try/catch del flujo anterior solo capturaba rechazos, no
-   * promesas colgadas. `pushNotifications.teardown` (mutation Convex sin
-   * timeout efectivo) y `betterAuth.authClient.signOut()` (fetch sin
-   * AbortController) podían colgarse indefinidamente con la red degradada y
-   * bloquear `limpiarEstadoLocal()` → el usuario nunca llegaba a `/login`.
+   * Orden crítico: `teardown()` (mutation `unregisterPushToken`) necesita la
+   * auth de Convex viva — si se lanzara en background y `clearAuth()` corriera
+   * antes, la mutation moriría siempre con NotAuthenticatedError y la fila de
+   * `pushTokens` sobreviviría: el dispositivo seguiría recibiendo pushes (y
+   * badge) de la cuenta saliente. Por eso se le espera, acotado con timeout:
+   * offline el logout completa igualmente en ≤2.5 s y el token residual lo
+   * purgan el barrido por `deviceId` de `registerPushToken` en el siguiente
+   * login y el cron `push-token-cleanup`.
    *
-   * Si la mutation `unregisterPushToken` no llega al servidor por estar la
-   * sesión ya limpiada, el token se desregistrará en el siguiente envío
-   * cuando FCM responda UNREGISTERED.
+   * `betterAuth.signOut()` no depende de la auth de Convex (fetch propio con
+   * cookie Better-Auth y timeout interno), así que sigue en background para
+   * no retrasar la navegación a `/login`.
    */
   async logout(evitarRedirect?: boolean): Promise<void> {
-    // 1. Disparar cleanup server-side en background. Las mutations Convex
-    //    aún pueden llegar al servidor con el token actual antes de que el
-    //    paso 2 invalide la auth local. Cada paso tiene timeout corto.
+    // 1. Revocar push token con la auth AÚN viva (badge a 0 y bandeja vacía
+    //    incluidos). Acotado: nunca bloquea el logout más de 2.5 s.
+    try {
+      await withTimeout(this.pushNotifications.teardown(), 2500);
+    } catch (err) {
+      this.logger.warn('[Logout] teardown push:', err);
+    }
+
+    // 2. Resto del cleanup server-side en background (no usa la auth Convex).
     void this.cleanupServidorBackground();
 
-    // 2. Limpieza local + navegación inmediatas (<100 ms).
+    // 3. Limpieza local + navegación inmediatas.
     this.convex.clearAuth();
     this.limpiarEstadoLocal(evitarRedirect);
   }
 
   private async cleanupServidorBackground(): Promise<void> {
-    try {
-      await withTimeout(this.pushNotifications.teardown(), 2000);
-    } catch (err) {
-      this.logger.warn('[Logout] teardown push (background):', err);
-    }
     try {
       await withTimeout(this.betterAuth.signOut(), 2000);
     } catch (err) {

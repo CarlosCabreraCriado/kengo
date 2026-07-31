@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { Device } from '@capacitor/device';
 import type { Notification } from '@capacitor-firebase/messaging';
 import { ConvexService } from '../convex/convex.service';
+import type { SessionResettable } from '../auth/session-resettable';
 import { PlatformService } from './platform.service';
 import { LoggerService } from './logger.service';
 import { api } from '../../../../../../convex/_generated/api';
@@ -29,7 +30,7 @@ type PermissionState = 'unknown' | 'granted' | 'denied' | 'prompt';
  *    para borrar el token del usuario actual y limpiar listeners.
  */
 @Injectable({ providedIn: 'root' })
-export class PushNotificationService {
+export class PushNotificationService implements SessionResettable {
   private convex = inject(ConvexService);
   private platform = inject(PlatformService);
   private router = inject(Router);
@@ -106,6 +107,19 @@ export class PushNotificationService {
       this._permissionState.set(perm.receive as PermissionState);
       if (perm.receive !== 'granted') {
         this._initialized.set(true);
+        // Sin permiso no se registrará token, pero el dispositivo puede
+        // arrastrar filas de `pushTokens` de una cuenta anterior que seguirían
+        // recibiendo sus pushes. `unregisterPushToken` borra por deviceId,
+        // sea de quien sea la fila. Best-effort.
+        void this.getDeviceId()
+          .then((deviceId) =>
+            this.convex.mutation(api.push.mutations.unregisterPushToken, {
+              deviceId,
+            }),
+          )
+          .catch(() => {
+            // best-effort: el barrido de registerPushToken y el cron cubren
+          });
         return;
       }
 
@@ -159,8 +173,9 @@ export class PushNotificationService {
   }
 
   /**
-   * Borra el token del usuario actual y limpia los listeners. Llamar
-   * antes de cerrar sesión en Convex; si falla (offline, etc.) se ignora
+   * Borra los tokens push del dispositivo, resetea el badge del icono, vacía
+   * la bandeja y limpia los listeners. Llamar ANTES de `convex.clearAuth()`
+   * (la mutation necesita la auth viva); si falla (offline, etc.) se ignora
    * el error para no bloquear el logout.
    */
   async teardown(): Promise<void> {
@@ -169,11 +184,16 @@ export class PushNotificationService {
       return;
     }
 
+    // Restos visuales de la cuenta saliente: número del icono a 0 (iOS) y
+    // bandeja vacía (los banners navegarían a recursos de la otra cuenta).
+    // Locales, sin auth, tragan sus errores.
+    void this.setBadge(0);
+    void this.clearBadge();
+
     try {
       const deviceId = await this.getDeviceId();
-      // timeoutMs corto: el flujo de logout corre esta mutation en background
-      // tras llamar a `convex.clearAuth()`. Si waitForAuth no resuelve en 1 s
-      // tras el clearAuth, abandonamos en vez de esperar los 8 s por defecto.
+      // timeoutMs como cinturón: si algo re-llama teardown con la auth ya
+      // invalidada, abandonamos en 1 s en vez de esperar los 8 s por defecto.
       await this.convex.mutation(
         api.push.mutations.unregisterPushToken,
         { deviceId },
@@ -197,6 +217,27 @@ export class PushNotificationService {
     this.retriesScheduled = 0;
     this._token.set(null);
     this._initialized.set(false);
+  }
+
+  /**
+   * Purga en cierres de sesión que no pasan por `AuthService.logout` (p.ej.
+   * sesión zombie en el arranque). Síncrono por contrato; los side-effects
+   * nativos son fire-and-forget best-effort. Sin mutation al servidor: en
+   * esas rutas la auth ya no es válida — el token residual lo limpian el
+   * barrido por deviceId del siguiente login y el cron. En el logout normal
+   * duplica parte de `teardown()`, todo idempotente.
+   */
+  resetSessionState(): void {
+    this.resetLocalState();
+    if (Capacitor.isNativePlatform()) {
+      void this.setBadge(0);
+      void this.clearBadge();
+      void this.plugin()
+        .then((m) => m.removeAllListeners())
+        .catch(() => {
+          // best-effort
+        });
+    }
   }
 
   private async getDeviceId(): Promise<string> {

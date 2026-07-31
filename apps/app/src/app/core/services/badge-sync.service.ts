@@ -1,6 +1,8 @@
 import { Injectable, effect, inject } from '@angular/core';
 import { SessionService } from '../auth/services/session.service';
+import type { SessionResettable } from '../auth/session-resettable';
 import { ConvexService } from '../convex/convex.service';
+import { AppLifecycleService } from './app-lifecycle.service';
 import { PlatformService } from './platform.service';
 import { PushNotificationService } from './push-notification.service';
 import { api } from '../../../../../../convex/_generated/api';
@@ -28,14 +30,18 @@ import { api } from '../../../../../../convex/_generated/api';
  * de que el usuario abra la pestaña de mensajes.
  */
 @Injectable({ providedIn: 'root' })
-export class BadgeSyncService {
+export class BadgeSyncService implements SessionResettable {
   private readonly convex = inject(ConvexService);
   private readonly session = inject(SessionService);
   private readonly platform = inject(PlatformService);
   private readonly push = inject(PushNotificationService);
+  private readonly lifecycle = inject(AppLifecycleService);
 
   /** Último valor efectivamente enviado a `setBadge`, para deduplicar. */
   private lastBadgeSet: number | null = null;
+
+  /** Último `resumeTick` procesado, para invalidar la dedup una sola vez. */
+  private lastResumeTickApplied = 0;
 
   constructor() {
     // El badge numérico del icono solo es un problema real en iOS. En el resto
@@ -51,6 +57,15 @@ export class BadgeSyncService {
     );
 
     effect(() => {
+      // En background el servidor puede haber movido el badge del icono vía
+      // `aps.badge`: `lastBadgeSet` ya no refleja el icono real. Al volver,
+      // invalidar la dedup para re-aplicar aunque el total no haya cambiado.
+      const tick = this.lifecycle.resumeTick();
+      if (tick !== this.lastResumeTickApplied) {
+        this.lastResumeTickApplied = tick;
+        this.lastBadgeSet = null;
+      }
+
       // Cold start: hasta que la sesión no esté inicializada no tocamos el
       // badge, para respetar el valor que el server dejó en el icono con la app
       // cerrada (si lo pisáramos con 0 aquí, parpadearía N→0→N).
@@ -68,6 +83,15 @@ export class BadgeSyncService {
       if (total === undefined) return;
       this.applyBadge(total);
     });
+  }
+
+  /**
+   * En el cambio de cuenta el teardown pone el icono a 0 imperativamente,
+   * dejando la dedup desincronizada: si el primer total de la cuenta entrante
+   * coincidiera con `lastBadgeSet`, el effect no re-aplicaría. Invalidarla.
+   */
+  resetSessionState(): void {
+    this.lastBadgeSet = null;
   }
 
   /** Fija el badge solo si cambió respecto al último valor puesto. */

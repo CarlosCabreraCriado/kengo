@@ -46,7 +46,8 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_deviceId", ["userId", "deviceId"])
-    .index("by_token", ["token"]),
+    .index("by_token", ["token"])
+    .index("by_deviceId", ["deviceId"]),
 
   // === LOG DE ENVÍOS PUSH ===
   // Un registro por invocación de `push.actions.sendPushToUser` (resultado
