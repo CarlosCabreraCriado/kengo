@@ -68,16 +68,26 @@ export class PushNotificationService implements SessionResettable {
    * `@capacitor-firebase/messaging` pesa en el bundle inicial y solo se usa
    * en nativo y después de tener sesión. Con el import diferido, el chunk se
    * descarga la primera vez que se necesita (init/teardown/clearBadge).
+   *
+   * Ojo: se devuelve el proxy ENVUELTO en un objeto, nunca a pelo. Resolver
+   * una promesa con el proxy de un plugin de Capacitor hace que el runtime
+   * compruebe si es thenable accediendo a `.then`, y en Android el bridge lo
+   * traduce en la llamada nativa `FirebaseMessaging.then()` → "not
+   * implemented on android" en TODA llamada al plugin (en iOS el bridge no lo
+   * sufre, por eso este bug solo rompía Android).
    */
   private async plugin() {
     const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
-    return FirebaseMessaging;
+    return { messaging: FirebaseMessaging };
   }
 
-  /** Import diferido del plugin de badge (solo se usa en nativo). */
+  /**
+   * Import diferido del plugin de badge (solo se usa en nativo). Envuelto en
+   * objeto por el mismo motivo que `plugin()`.
+   */
   private async badgePlugin() {
     const { Badge } = await import('@capawesome/capacitor-badge');
-    return Badge;
+    return { badge: Badge };
   }
 
   /**
@@ -113,7 +123,7 @@ export class PushNotificationService implements SessionResettable {
     try {
       await this.ensureAndroidChannels();
 
-      const messaging = await this.plugin();
+      const { messaging } = await this.plugin();
       const perm = await messaging.requestPermissions();
       this._permissionState.set(perm.receive as PermissionState);
       if (perm.receive !== 'granted') {
@@ -219,7 +229,7 @@ export class PushNotificationService implements SessionResettable {
   async refreshPermissionState(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
     try {
-      const messaging = await this.plugin();
+      const { messaging } = await this.plugin();
       const perm = await messaging.checkPermissions();
       this._permissionState.set(perm.receive as PermissionState);
     } catch (err) {
@@ -259,7 +269,7 @@ export class PushNotificationService implements SessionResettable {
     }
 
     try {
-      const messaging = await this.plugin();
+      const { messaging } = await this.plugin();
       await messaging.removeAllListeners();
     } catch {
       // ignorar
@@ -288,7 +298,7 @@ export class PushNotificationService implements SessionResettable {
       void this.setBadge(0);
       void this.clearBadge();
       void this.plugin()
-        .then((m) => m.removeAllListeners())
+        .then(({ messaging }) => messaging.removeAllListeners())
         .catch(() => {
           // best-effort
         });
@@ -316,7 +326,7 @@ export class PushNotificationService implements SessionResettable {
     if (this.listenersRegistered) return;
     this.listenersRegistered = true;
 
-    const messaging = await this.plugin();
+    const { messaging } = await this.plugin();
 
     void messaging.addListener('tokenReceived', async ({ token }) => {
       this._token.set(token);
@@ -400,7 +410,7 @@ export class PushNotificationService implements SessionResettable {
   async clearBadge(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
     try {
-      const messaging = await this.plugin();
+      const { messaging } = await this.plugin();
       await messaging.removeAllDeliveredNotifications();
     } catch (err) {
       this.logger.warn('[Push] clearBadge falló (se ignora):', err);
@@ -422,7 +432,7 @@ export class PushNotificationService implements SessionResettable {
   async setBadge(count: number): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
     try {
-      const badge = await this.badgePlugin();
+      const { badge } = await this.badgePlugin();
       if (this.badgeSupported === null) {
         const { isSupported } = await badge.isSupported();
         this.badgeSupported = isSupported;
