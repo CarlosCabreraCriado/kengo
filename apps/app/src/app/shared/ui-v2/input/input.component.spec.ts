@@ -14,6 +14,16 @@ class HostComponent {
   error: string | null = null;
 }
 
+@Component({
+  standalone: true,
+  imports: [Ui2InputComponent],
+  template: `<ui2-input [type]="tipo" [spellcheck]="sc" />`,
+})
+class SpellcheckHostComponent {
+  tipo: 'text' | 'email' | 'password' = 'email';
+  sc: boolean | null = null;
+}
+
 /**
  * Intercepta el setter nativo de `value` del elemento para contar cuántas
  * veces se escribe el DOM. Es la garantía de que teclear no provoca una
@@ -98,5 +108,40 @@ describe('Ui2InputComponent (CVA)', () => {
     fixture.detectChanges();
     const msg = fixture.nativeElement.querySelector('.ui2-input__msg-zone .ui2-input__msg--error');
     expect(msg?.textContent?.trim()).toBe('Email no válido');
+  });
+});
+
+describe('Ui2InputComponent (spellcheck por defecto)', () => {
+  let fixture: ComponentFixture<SpellcheckHostComponent>;
+  let host: SpellcheckHostComponent;
+
+  const inputEl = (): HTMLInputElement => fixture.nativeElement.querySelector('input');
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [SpellcheckHostComponent] }).compileComponents();
+    fixture = TestBed.createComponent(SpellcheckHostComponent);
+    host = fixture.componentInstance;
+  });
+
+  it('emite spellcheck="false" para email y password', () => {
+    host.tipo = 'email';
+    fixture.detectChanges();
+    expect(inputEl().getAttribute('spellcheck')).toBe('false');
+    host.tipo = 'password';
+    fixture.detectChanges();
+    expect(inputEl().getAttribute('spellcheck')).toBe('false');
+  });
+
+  it('no emite el atributo para type text sin valor explícito', () => {
+    host.tipo = 'text';
+    fixture.detectChanges();
+    expect(inputEl().hasAttribute('spellcheck')).toBeFalse();
+  });
+
+  it('el valor explícito del consumidor gana sobre el default', () => {
+    host.tipo = 'email';
+    host.sc = true;
+    fixture.detectChanges();
+    expect(inputEl().getAttribute('spellcheck')).toBe('true');
   });
 });

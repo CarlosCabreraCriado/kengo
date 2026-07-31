@@ -45,7 +45,7 @@ let nextId = 0;
           [attr.enterkeyhint]="enterkeyhint()"
           [attr.autocapitalize]="effectiveAutocapitalize()"
           [attr.autocorrect]="effectiveAutocorrect()"
-          [attr.spellcheck]="spellcheck()"
+          [attr.spellcheck]="effectiveSpellcheck()"
           [attr.name]="name()"
           (input)="onInput($event)"
           (blur)="onBlur()"
@@ -211,6 +211,16 @@ export class Ui2InputComponent implements ControlValueAccessor, AfterViewInit {
     if (this.autocorrect()) return this.autocorrect();
     const t = this.type();
     if (t === 'email' || t === 'password' || t === 'url' || t === 'tel') return 'off';
+    return null;
+  });
+
+  /* spellcheck="false" además de autocorrect="off": en iOS 17+ el spell check
+     activo hace que la QuickType bar (botón Contraseñas de AutoFill) se
+     refresque y parpadee en cada tecla en campos de credenciales. */
+  readonly effectiveSpellcheck = computed<boolean | null>(() => {
+    if (this.spellcheck() !== null) return this.spellcheck();
+    const t = this.type();
+    if (t === 'email' || t === 'password' || t === 'url' || t === 'tel') return false;
     return null;
   });
 
