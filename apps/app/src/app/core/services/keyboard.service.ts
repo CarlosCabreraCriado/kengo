@@ -56,18 +56,6 @@ export class KeyboardService {
       Keyboard.setScroll({ isDisabled: true }).catch(() => {
         // plugin no disponible
       });
-
-      // La accessory bar de WKWebView (flechas + Done) se mantiene VISIBLE
-      // a propósito: el default del plugin (hideFormAccessoryBar) swizzlea
-      // inputAccessoryView a nil y sin esa vista estable UIKit reconstruye
-      // los items de AutoFill de la QuickType bar en cada tecla — la
-      // palabra "Contraseñas" salta a la izquierda y se recentra (en
-      // Safari, con accessory bar, no ocurre). Para volver a ocultarla
-      // habría que resolver antes ese flicker (p. ej. parche nativo que
-      // devuelva una vista vacía en vez de nil).
-      Keyboard.setAccessoryBarVisible({ isVisible: true }).catch(() => {
-        // plugin no disponible
-      });
     }
 
     void this.registrarListeners();
