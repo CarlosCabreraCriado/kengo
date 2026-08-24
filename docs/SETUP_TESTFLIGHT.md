@@ -14,8 +14,8 @@ Guía operativa para llevar la app de Capacitor a TestFlight. El proyecto Xcode 
 | Apple Developer Team | `LTZK7CBKWL` | ✅ listo |
 | Code Sign Style | `Automatic` | ✅ listo (Xcode gestiona certs y profiles) |
 | iOS Deployment Target | `15.0` | ✅ válido (Apple exige iOS 12+; recomendado 13+) |
-| `MARKETING_VERSION` | `1.1.1` | ✅ (hotfix, 2026-08-25) |
-| `CURRENT_PROJECT_VERSION` | `4` | ⚠️ hay que incrementarlo en cada subida |
+| `MARKETING_VERSION` | `1.1.2` | ✅ (fix subida de imágenes, 2026-08-25) |
+| `CURRENT_PROJECT_VERSION` | `5` | ⚠️ hay que incrementarlo en cada subida |
 | `aps-environment` (entitlements) | `development` | ⚠️ debe ser `production` para archive/TestFlight |
 | Push Notifications | AppDelegate cablea APNs ↔ Firebase | ✅ código listo. Falta APNs Auth Key + capability "Push Notifications" en Apple Developer |
 | `ITSAppUsesNonExemptEncryption` | no declarado en `Info.plist` | ⚠️ Apple lo pregunta en cada build; declarar `NO` evita preguntas manuales |
@@ -125,7 +125,7 @@ Para evitar que Apple te pregunte en cada build "¿usas cifrado no exento?", añ
 
 ### 3.3 Incrementar build number
 
-Cada subida a TestFlight necesita un `CFBundleVersion` (`CURRENT_PROJECT_VERSION`) único y monótonamente creciente para una misma `MARKETING_VERSION`. Hoy está en `4`.
+Cada subida a TestFlight necesita un `CFBundleVersion` (`CURRENT_PROJECT_VERSION`) único y monótonamente creciente para una misma `MARKETING_VERSION`. Hoy está en `5`.
 
 Opciones:
 - **Manual**: en Xcode, target `App`, pestaña General, campo `Build` → poner `1` ahora, subir a `2`, `3`, ... en cada upload.
