@@ -53,10 +53,21 @@ curl -sI https://kengoapp.com | grep -iE '^server|cf-ray'   # server: railway-hi
    `subscribeToConnectionState`).
 4. En cuanto `assets.` vuelve a responder, se regresa al CDN.
 
-`apps/media/server.js` acepta los mismos query params que Cloudflare Image
-Transformations (`width`, `height`, `fit`, `format`, `quality`) usando
-`sharp`, y hace streaming con `Range` para vídeo. Detalles y variables en
-`apps/media/README.md`.
+Las imágenes se piden con la ruta de Cloudflare Image Transformations
+`/cdn-cgi/image/<opciones>/<key>` (`width`, `height`, `fit`, `format`,
+`quality`, `onerror=redirect`); es la **única** interfaz que Cloudflare
+interpreta — con query params (`?width=…`) devuelve el original completo sin
+`cf-resized`. `apps/media/server.js` acepta esa misma ruta (y, por
+compatibilidad, los query params) usando `sharp`, y hace streaming con
+`Range` para vídeo. Detalles y variables en `apps/media/README.md`.
+
+Cuota: el plan Free de Images permite **5.000 transformaciones únicas/mes**
+(par imagen + opciones). Por eso `kengoImageLoader` redondea la anchura a una
+escalera fija y toda URL transformada lleva `onerror=redirect`: si se agota la
+cuota o la transformación falla, Cloudflare redirige al original en la misma
+zona en lugar de devolver una imagen rota (error `9422`). Comprobación:
+`curl -sI -H 'Accept: image/webp' https://assets.kengoapp.com/cdn-cgi/image/width=256,format=webp,onerror=redirect/<key>.webp`
+debe traer `cf-resized: internal=ok…` y un `content-length` pequeño.
 
 ## Procedimiento de reversión
 
@@ -106,3 +117,9 @@ partidos**; hacerlo solo de forma temporal y anotarlo aquí.
   dominio `media.kengoapp.com` (CNAME solo DNS + TXT `_railway-verify.media`
   creados vía API). El primer deploy falló por construir un `master` anterior
   al código de `apps/media`; se resuelve al hacer push.
+- **2026-08-24**: se detecta que las URLs con query params
+  (`?width=400&…`) no se transformaban en Cloudflare (152 KB por portada en
+  móvil). `assetUrl()`/`kengoImageLoader()` pasan a la ruta
+  `/cdn-cgi/image/…` (8–12 KB) y `apps/media` la acepta también. **Desplegar
+  `apps/media` antes o a la vez que la app**: con el fallback activo, el
+  proxy antiguo responde 400 a la ruta nueva.

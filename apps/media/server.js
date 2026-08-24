@@ -8,10 +8,13 @@
  * `assets.` al arrancar y, si no responde, construye las URLs de imagen/vídeo
  * contra este servicio (ver `apps/app/src/app/core/services/asset-host.service.ts`).
  *
- * Contrato: el mismo que Cloudflare Image Transformations por query params
- * (`width`, `height`, `fit`, `format`, `quality`) que ya usan `asset-url.ts` e
- * `image-loader.ts`, para que las URLs sean intercambiables cambiando solo la
- * base. Los vídeos se sirven en streaming con soporte de `Range`.
+ * Contrato: el mismo que Cloudflare Image Transformations, es decir la ruta
+ * `/cdn-cgi/image/<opciones>/<key>` (`width`, `height`, `fit`, `format`,
+ * `quality`, alias `w/h/f/q`; el resto se ignora) que construyen
+ * `asset-url.ts` e `image-loader.ts`, para que las URLs sean intercambiables
+ * cambiando solo la base. Por compatibilidad se aceptan también los mismos
+ * parámetros como query string (`/<key>?width=…`); si hay ambos, gana la ruta.
+ * Los vídeos se sirven en streaming con soporte de `Range`.
  *
  * Env vars (las mismas que el deployment de Convex, ver convex/storage/r2Client.ts):
  *   R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
@@ -28,8 +31,20 @@ const R2_TIMEOUT_MS = 15_000;
 
 const IMAGE_EXTENSIONS = new Set(['webp', 'jpg', 'jpeg', 'png', 'avif', 'gif']);
 const PASSTHROUGH_EXTENSIONS = new Set(['mp4', 'webm', 'mov', 'pdf', 'txt']);
-const OUTPUT_FORMATS = new Set(['webp', 'jpg', 'jpeg', 'png', 'avif']);
-const FITS = new Set(['cover', 'contain', 'inside', 'outside']);
+const OUTPUT_FORMATS = new Set(['webp', 'jpg', 'jpeg', 'png', 'avif', 'auto']);
+// Modos de `fit` de Cloudflare → { fit de sharp, withoutEnlargement }.
+const FITS = {
+  cover: { fit: 'cover', withoutEnlargement: true },
+  contain: { fit: 'contain', withoutEnlargement: true },
+  inside: { fit: 'inside', withoutEnlargement: true },
+  outside: { fit: 'outside', withoutEnlargement: true },
+  'scale-down': { fit: 'inside', withoutEnlargement: true },
+  crop: { fit: 'cover', withoutEnlargement: true },
+  pad: { fit: 'contain', withoutEnlargement: false },
+  squeeze: { fit: 'fill', withoutEnlargement: false },
+};
+const OPTION_ALIASES = { w: 'width', h: 'height', f: 'format', q: 'quality' };
+const TRANSFORM_PATH = /^\/cdn-cgi\/image\/([^/]+)\/(.+)$/;
 
 const CONTENT_TYPES = {
   webp: 'image/webp',
@@ -124,23 +139,55 @@ function sanitizeKey(raw) {
   return key;
 }
 
-function parseTransform(query) {
+/**
+ * Separa `/cdn-cgi/image/<opciones>/<key>` en `{ options, path }`. Para
+ * cualquier otra ruta devuelve `{ options: {}, path }`.
+ */
+function splitTransformPath(reqPath) {
+  const m = TRANSFORM_PATH.exec(reqPath);
+  if (!m) return { options: {}, path: reqPath };
+  const options = {};
+  for (const pair of m[1].split(',')) {
+    const eq = pair.indexOf('=');
+    if (eq === -1) continue;
+    const name = pair.slice(0, eq);
+    options[OPTION_ALIASES[name] || name] = pair.slice(eq + 1);
+  }
+  return { options, path: `/${m[2]}` };
+}
+
+/**
+ * Normaliza las opciones (de ruta o de query, mismo contrato). Devuelve null
+ * si no hay ninguna transformación aplicable. Las opciones desconocidas
+ * (`onerror`, `dpr`, …) se ignoran, como hace Cloudflare con las inválidas.
+ */
+function parseTransform(raw) {
+  const source = {};
+  for (const [name, value] of Object.entries(raw)) source[OPTION_ALIASES[name] || name] = value;
   const clampDim = (v) => {
     const n = Number.parseInt(String(v), 10);
     if (!Number.isFinite(n) || n <= 0) return undefined;
     return Math.min(n, MAX_DIM);
   };
-  const width = query.width ? clampDim(query.width) : undefined;
-  const height = query.height ? clampDim(query.height) : undefined;
-  const fit = FITS.has(String(query.fit)) ? String(query.fit) : undefined;
-  const format = OUTPUT_FORMATS.has(String(query.format)) ? String(query.format) : undefined;
+  const width = source.width ? clampDim(source.width) : undefined;
+  const height = source.height ? clampDim(source.height) : undefined;
+  const fit = FITS[String(source.fit)] ? String(source.fit) : undefined;
+  const format = OUTPUT_FORMATS.has(String(source.format)) ? String(source.format) : undefined;
   let quality;
-  if (query.quality !== undefined) {
-    const q = Number.parseInt(String(query.quality), 10);
+  if (source.quality !== undefined) {
+    const q = Number.parseInt(String(source.quality), 10);
     if (Number.isFinite(q)) quality = Math.min(Math.max(q, 1), 100);
   }
   if (!width && !height && !fit && !format && quality === undefined) return null;
   return { width, height, fit, format, quality };
+}
+
+/** `format=auto`: negociación por `Accept`, como Cloudflare. */
+function negotiateFormat(t, accept) {
+  if (t.format !== 'auto') return t;
+  const a = String(accept || '');
+  const format = /image\/avif/.test(a) ? 'avif' : /image\/webp/.test(a) ? 'webp' : 'jpg';
+  return { ...t, format };
 }
 
 function transformCacheKey(key, t) {
@@ -189,11 +236,12 @@ async function getTransformed(key, t) {
   const original = await getImageBuffer(key);
   let pipeline = sharp(original.body, { animated: false });
   if (t.width || t.height) {
+    const mode = FITS[t.fit] ?? FITS.cover;
     pipeline = pipeline.resize({
       width: t.width,
       height: t.height,
-      fit: t.fit ?? 'cover',
-      withoutEnlargement: true,
+      fit: mode.fit,
+      withoutEnlargement: mode.withoutEnlargement,
     });
   }
   const format = t.format === 'jpg' ? 'jpeg' : (t.format ?? extensionOf(key));
@@ -255,7 +303,8 @@ app.options('/{*splat}', (req, res) => {
 });
 
 app.get('/{*splat}', async (req, res) => {
-  const key = sanitizeKey(req.path);
+  const { options: pathOptions, path } = splitTransformPath(req.path);
+  const key = sanitizeKey(path);
   if (!key) {
     res.status(400).type('text/plain').send('Bad key');
     return;
@@ -266,7 +315,10 @@ app.get('/{*splat}', async (req, res) => {
   try {
     // Imágenes con transformación → sharp (en memoria, cacheado).
     if (IMAGE_EXTENSIONS.has(ext)) {
-      const t = parseTransform(req.query);
+      // La ruta /cdn-cgi/image/ tiene prioridad sobre los query params legacy.
+      const raw = parseTransform({ ...req.query, ...pathOptions });
+      const t = raw && negotiateFormat(raw, req.headers.accept);
+      if (raw?.format === 'auto') res.setHeader('Vary', 'Accept');
       const entry = t ? await getTransformed(key, t) : await getImageBuffer(key);
       if (entry.etag) {
         res.setHeader('ETag', entry.etag);

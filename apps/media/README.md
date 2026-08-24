@@ -11,15 +11,20 @@ bloquean las IPs de Cloudflare durante los partidos de LaLiga y
 Mismas URLs que `assets.kengoapp.com`, cambiando solo el host:
 
 ```
-GET /planes/<uuid>.webp?width=400&height=300&fit=cover&format=webp&quality=80
+GET /cdn-cgi/image/width=400,height=300,fit=cover,format=webp,quality=80,onerror=redirect/planes/<uuid>.webp
+GET /planes/<uuid>.webp?width=400&height=300&fit=cover&format=webp   (legacy, compat)
 GET /videos/<uuid>.mp4            (Range soportado → 206)
 GET /health                       (Railway healthcheck)
 ```
 
-Parámetros de imagen: `width`, `height` (≤ `MEDIA_MAX_DIM`, 2048), `fit`
-(`cover|contain|inside|outside`), `format` (`webp|jpg|png|avif`), `quality`
-(1–100). Se procesan con `sharp` y se cachean en memoria (LRU acotada por
-`MEDIA_CACHE_MB`, 256 MB por defecto). Vídeos, PDF y `txt` se hacen streaming.
+Es la misma ruta `/cdn-cgi/image/<opciones>/<key>` de Cloudflare Image
+Transformations (la única que Cloudflare interpreta: los query params **no**
+transforman en `assets.`). Opciones: `width`/`w`, `height`/`h` (≤
+`MEDIA_MAX_DIM`, 2048), `fit` (`cover|contain|inside|outside|scale-down|crop|pad|squeeze`),
+`format`/`f` (`webp|jpg|png|avif|auto`; `auto` negocia por `Accept`), `quality`/`q`
+(1–100). Las desconocidas (`onerror`, `dpr`…) se ignoran. Se procesan con
+`sharp` y se cachean en memoria (LRU acotada por `MEDIA_CACHE_MB`, 256 MB por
+defecto). Vídeos, PDF y `txt` se hacen streaming, también bajo `/cdn-cgi/image/`.
 
 ## Servicio en Railway
 
@@ -38,6 +43,7 @@ Parámetros de imagen: `width`, `height` (≤ `MEDIA_MAX_DIM`, 2048), `fit`
 
 ```sh
 curl -I "https://media.kengoapp.com/health"
-curl -I "https://media.kengoapp.com/<key>.webp?width=400&format=webp"   # 200 image/webp
+curl -I "https://media.kengoapp.com/cdn-cgi/image/width=400,format=webp/<key>.webp"   # 200 image/webp
+curl -I "https://media.kengoapp.com/<key>.webp?width=400&format=webp"                 # legacy, 200 image/webp
 curl -sI -r 0-1023 "https://media.kengoapp.com/<key>.mp4" | head -5      # 206 + Content-Range
 ```
