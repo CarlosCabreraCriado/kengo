@@ -3,7 +3,8 @@ import { internalMutation, MutationCtx } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { getClinicIdForPatient } from "../_helpers/expectedExercises";
 import { getReferenciaInactividad } from "../_helpers/inactividad";
-import { getCurrentMadridDate, diffDaysYMD } from "../_helpers/datetime";
+import { getCurrentDateInTz, diffDaysYMD } from "../_helpers/datetime";
+import { TzCache } from "../_helpers/patientTz";
 
 // Umbrales (AS3). Modificables sin redeploy mediante un patch del schema
 // si producto valida otros valores.
@@ -199,12 +200,16 @@ export const runDailyAlertRules = internalMutation({
     }
 
     const fechaGeneracion = new Date().toISOString();
-    const hoy = getCurrentMadridDate();
+    const tzCache = new TzCache(ctx);
 
     let generadas = 0;
     for (const pacienteId of pacienteIds) {
       const clinicId = await getClinicIdForPatient(ctx, pacienteId);
       if (!clinicId) continue;
+
+      // "Hoy" en la TZ de cada paciente: coherente con sus rollups diarios.
+      const tz = await tzCache.get(pacienteId);
+      const hoy = getCurrentDateInTz(tz);
 
       // Snapshot 7d (para inactividad y adherencia). Filtrado por clinicId
       // porque la tabla está particionada por (pacienteId, clinicId, ventana)
@@ -230,6 +235,7 @@ export const runDailyAlertRules = internalMutation({
           pacienteId,
           clinicId,
           hoy,
+          tz,
         );
         const suficienteAntiguedad =
           diffDaysYMD(refInicio, hoy) >= AS3_INACTIVIDAD_DIAS_WARN;
@@ -275,7 +281,7 @@ export const runDailyAlertRules = internalMutation({
 export const purgeStaleInactividadAlerts = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ revisadas: number; borradas: number }> => {
-    const hoy = getCurrentMadridDate();
+    const tzCache = new TzCache(ctx);
 
     // Dataset pequeño: filtramos en memoria las pendientes de tipo inactividad.
     const pendientes = await ctx.db
@@ -290,11 +296,14 @@ export const purgeStaleInactividadAlerts = internalMutation({
 
     let borradas = 0;
     for (const alerta of pendientes) {
+      const tz = await tzCache.get(alerta.pacienteId);
+      const hoy = getCurrentDateInTz(tz);
       const refInicio = await getReferenciaInactividad(
         ctx,
         alerta.pacienteId,
         alerta.clinicId,
         hoy,
+        tz,
       );
       if (diffDaysYMD(refInicio, hoy) < AS3_INACTIVIDAD_DIAS_WARN) {
         await ctx.db.delete(alerta._id);

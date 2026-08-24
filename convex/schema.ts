@@ -24,6 +24,14 @@ export default defineSchema({
     // Texto denormalizado (lower-cased) para búsqueda full-text. Se mantiene
     // sincronizado en upsertFromAuth, updateProfile, updatePatient.
     searchableText: v.optional(v.string()),
+    // Zona horaria IANA del dispositivo del usuario (ej. "Atlantic/Canary").
+    // Define su "día" para sessions/executions/rollups. Sin valor → fallback
+    // Europe/Madrid (apps antiguas). Sincronizada vía users.syncTimezone.
+    timezone: v.optional(v.string()),
+    timezoneUpdatedAt: v.optional(v.number()),
+    // Guard de la reparación histórica de fechas (migrations/repairTimezoneFechas):
+    // se ejecuta UNA vez por usuario, al conocer su primera TZ no-Madrid.
+    tzRepairDoneAt: v.optional(v.number()),
   })
     .index("by_externalId", ["externalId"])
     .index("by_email", ["email"])

@@ -14,23 +14,24 @@ import { Id } from "../_generated/dataModel";
 import { getAuthenticatedUser, tieneGestion } from "../_helpers/permissions";
 import { assertFisioInClinic } from "../_helpers/patientAccess";
 import {
+  CLINIC_REF_TZ,
   DiaSemana,
-  getCurrentMadridDate,
+  getDateOffsetInTz,
   getDiaSemana,
-  getMadridDateOffset,
   rangeOfDates,
 } from "../_helpers/datetime";
 import { sessionsByClinic } from "../aggregates/sessionsByClinic";
 import { batchGetMap } from "../_helpers/batchGet";
 
-// Zona horaria Madrid (coherente con crons y resto del backend). Antes usaba
-// UTC (`new Date().toISOString()`), que desfasaba el corte "hoy"/"+7d".
+// Vistas agregadas de CLÍNICA: mezclan pacientes de varias TZ, así que el
+// corte "hoy"/"+7d" usa la TZ de referencia de clínica (decisión documentada;
+// desalineación máx. ±1 día para pacientes en otra TZ, cosmética).
 function fechaHoy(): string {
-  return getCurrentMadridDate();
+  return getDateOffsetInTz(CLINIC_REF_TZ, 0);
 }
 
 function fechaDentroDe(days: number): string {
-  return getMadridDateOffset(days);
+  return getDateOffsetInTz(CLINIC_REF_TZ, days);
 }
 
 async function getFisioIdsEnClinicasDelUsuario(
@@ -175,10 +176,10 @@ export const getActividadDiariaClinica = query({
     const user = await getAuthenticatedUser(ctx);
     await assertFisioInClinic(ctx, user._id, args.clinicId);
 
-    const hoy = getCurrentMadridDate();
-    const inicioActual = getMadridDateOffset(-9);
-    const finPrevia = getMadridDateOffset(-10);
-    const inicioPrevia = getMadridDateOffset(-19);
+    const hoy = fechaHoy();
+    const inicioActual = fechaDentroDe(-9);
+    const finPrevia = fechaDentroDe(-10);
+    const inicioPrevia = fechaDentroDe(-19);
 
     const fechasActual = rangeOfDates(inicioActual, hoy);
     const fechasPrevia = rangeOfDates(inicioPrevia, finPrevia);

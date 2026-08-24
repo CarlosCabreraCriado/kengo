@@ -6,7 +6,7 @@ import {
   resolveAndAssertPacienteAndClinic,
   resolveAndAssertPacienteId,
 } from "../_helpers/patientAccess";
-import { getCurrentMadridDate } from "../_helpers/datetime";
+import { getPatientToday } from "../_helpers/patientTz";
 
 /**
  * Lista las ejecuciones de un paciente en una fecha (YYYY-MM-DD).
@@ -45,7 +45,7 @@ export const listByPacienteAndDate = query({
 
 /**
  * Lista las ejecuciones de un paciente entre dos fechas (inclusivas).
- * Si no se pasa `hasta`, devuelve hasta hoy (Europe/Madrid).
+ * Si no se pasa `hasta`, devuelve hasta hoy (en la TZ del paciente).
  *
  * Para rangos largos (>30 días) usar `paginationOpts`.
  */
@@ -64,7 +64,7 @@ export const listByPacienteInRange = query({
       args.pacienteId,
       user._id,
     );
-    const hasta = args.hasta ?? getCurrentMadridDate();
+    const hasta = args.hasta ?? (await getPatientToday(ctx, targetUserId));
 
     if (args.paginationOpts) {
       const result = await ctx.db

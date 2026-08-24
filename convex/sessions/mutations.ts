@@ -17,7 +17,8 @@ import { internal } from "../_generated/api";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { assertCanAccessClinic } from "../_helpers/authorization";
 import { membershipEsPaciente } from "../_helpers/patientAccess";
-import { getCurrentMadridDate } from "../_helpers/datetime";
+import { getCurrentDateInTz } from "../_helpers/datetime";
+import { tzOf } from "../_helpers/patientTz";
 import { closeImpl, openOrResumeImpl } from "./internal";
 
 /**
@@ -54,16 +55,17 @@ export const create = mutation({
         throw new Error("No tienes acceso a este recurso");
       }
     }
-    // La fecha de la sesión es SIEMPRE la fecha actual Europe/Madrid, la
-    // misma que `enforceMadridFecha` fuerza en las executions. Derivarla de
-    // `args.fechaInicio` (ISO UTC) desalineaba sesión y ejecuciones de noche
-    // (23:00-00:00 Madrid caía en el día UTC anterior).
-    const fecha = getCurrentMadridDate();
+    // La fecha de la sesión se deriva SIEMPRE en servidor: instante actual +
+    // TZ persistida del paciente (misma regla que `derivePatientFecha` en las
+    // executions). Derivarla de `args.fechaInicio` (ISO UTC) desalineaba
+    // sesión y ejecuciones de noche.
+    const fecha = getCurrentDateInTz(tzOf(user));
     const fechaCliente = args.fechaInicio?.slice(0, 10);
     if (fechaCliente && fechaCliente !== fecha) {
       console.warn(
         `[tz_mismatch] sessions.create paciente=${user._id} ` +
-          `fecha_recibida=${fechaCliente} fecha_esperada=${fecha} — forzando fecha Madrid.`,
+          `fecha_recibida=${fechaCliente} fecha_derivada=${fecha} ` +
+          `tz=${tzOf(user)} — se ignora la fecha del cliente.`,
       );
     }
     return await openOrResumeImpl(ctx, user._id, fecha, args.clinicId);

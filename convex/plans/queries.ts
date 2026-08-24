@@ -5,15 +5,9 @@ import { esPaciente, getAuthenticatedUser } from "../_helpers/permissions";
 import { resolveAndAssertPacienteAndClinic } from "../_helpers/patientAccess";
 import { assertCanAccessPlan } from "../_helpers/authorization";
 import { batchGetMap } from "../_helpers/batchGet";
-import {
-  getCurrentMadridDate,
-  getDiaSemana,
-  getMadridDateOffset,
-} from "../_helpers/datetime";
-import {
-  getActivePlansForPatientOnDate,
-  getExpectedExercisesForPatientOnDate,
-} from "../_helpers/expectedExercises";
+import { getDateOffsetInTz, getDiaSemana } from "../_helpers/datetime";
+import { getPatientToday, getPatientTz, TzCache } from "../_helpers/patientTz";
+import { getExpectedExercisesForPatientOnDate } from "../_helpers/expectedExercises";
 import { isPlanEnCurso } from "../_helpers/planStatus";
 
 function fullName(user: any): string {
@@ -160,9 +154,11 @@ export const listEnCursoPacientesInClinics = query({
       ),
     );
 
-    const today = getCurrentMadridDate();
+    // "En curso hoy" se evalúa en el día de CADA paciente (su TZ).
+    const tzCache = new TzCache(ctx);
     const results = await Promise.all(
       pacienteIds.map(async (pid) => {
+        const today = getDateOffsetInTz(await tzCache.get(pid), 0);
         const plans = await ctx.db
           .query("plans")
           .withIndex("by_pacienteId_estado", (q) =>
@@ -293,7 +289,9 @@ export const getActiveForPatientToday = query({
         args.clinicId,
         user._id,
       );
-    const today = getCurrentMadridDate();
+    // "Hoy" en la TZ del paciente: a las 23:xx en Canarias su plan del día
+    // sigue vigente aunque en Madrid ya sea mañana.
+    const today = await getPatientToday(ctx, targetId);
 
     const activePlans = await ctx.db
       .query("plans")
@@ -329,7 +327,7 @@ export const getActiveAndFuture = query({
         args.clinicId,
         user._id,
       );
-    const today = getCurrentMadridDate();
+    const today = await getPatientToday(ctx, targetId);
 
     const activePlans = await ctx.db
       .query("plans")
@@ -379,9 +377,10 @@ export const getNextSessionForPatient = query({
         user._id,
       );
     const lookahead = args.maxDaysLookahead ?? 30;
+    const tz = await getPatientTz(ctx, targetId);
 
     for (let offset = 1; offset <= lookahead; offset++) {
-      const fecha = getMadridDateOffset(offset);
+      const fecha = getDateOffsetInTz(tz, offset);
       const diaSemana = getDiaSemana(fecha);
       const expected = await getExpectedExercisesForPatientOnDate(
         ctx,

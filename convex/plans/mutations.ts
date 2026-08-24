@@ -14,7 +14,8 @@ import {
 import { membershipEsPaciente } from "../_helpers/patientAccess";
 import { diaSemana, tipoEjercicio } from "../_helpers/validators";
 import { normalizarMetricaEjercicio } from "../_helpers/exercises";
-import { getCurrentMadridDate } from "../_helpers/datetime";
+import { getCurrentDateInTz } from "../_helpers/datetime";
+import { getPatientTz, tzOf } from "../_helpers/patientTz";
 import { computeVersionDates } from "../_helpers/planVersioning";
 import { _syncPatientActiveStateInClinic } from "../snapshots/internal";
 import { recomputeAggregatesAndCheckAutoCloseImpl } from "../sessions/internal";
@@ -135,7 +136,8 @@ export const create = mutation({
     const paciente = await ctx.db.get(args.pacienteId);
     if (!paciente) throw new Error("Paciente no encontrado");
 
-    const today = getCurrentMadridDate();
+    // Activación evaluada en el día del PACIENTE (su TZ, fallback Madrid).
+    const today = getCurrentDateInTz(tzOf(paciente));
     const estadoInicial: "activo" | "borrador" =
       args.fechaInicio && args.fechaFin && args.fechaFin >= today
         ? "activo"
@@ -345,11 +347,13 @@ export const version = mutation({
     const oldPlan = await assertCanManagePlan(ctx, user._id, args.oldPlanId);
     await requireActiveSubscription(ctx, oldPlan.clinicId);
 
-    // Fechas efectivas: la nueva versión rige desde HOY (Madrid, nunca
-    // retroactiva) y el plan viejo conserva su vigencia hasta ayer — los días
-    // pasados se siguen evaluando contra la versión vigente entonces
-    // (`computeVersionDates`). Versionar no reescribe la historia.
-    const today = getCurrentMadridDate();
+    // Fechas efectivas: la nueva versión rige desde HOY (el día del paciente
+    // en su TZ, nunca retroactiva) y el plan viejo conserva su vigencia hasta
+    // ayer — los días pasados se siguen evaluando contra la versión vigente
+    // entonces (`computeVersionDates`). Versionar no reescribe la historia.
+    const today = getCurrentDateInTz(
+      await getPatientTz(ctx, oldPlan.pacienteId),
+    );
     const { nuevoInicio, oldFechaFin } = computeVersionDates(
       oldPlan,
       args.fechaInicio,

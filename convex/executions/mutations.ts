@@ -2,43 +2,45 @@ import { v } from "convex/values";
 import { MutationCtx } from "../_generated/server";
 import { mutation } from "../_helpers/mutationWithTriggers";
 import { internal } from "../_generated/api";
-import { Id } from "../_generated/dataModel";
+import { Doc, Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
 import { getClinicIdForPatient } from "../_helpers/expectedExercises";
 import {
   openOrResumeImpl,
   recomputeAggregatesAndCheckAutoCloseImpl,
 } from "../sessions/internal";
-import { getCurrentMadridDate } from "../_helpers/datetime";
+import { getCurrentDateInTz } from "../_helpers/datetime";
+import { tzOf } from "../_helpers/patientTz";
 
 /**
- * Defensa híbrida contra clientes desfasados: si el cliente envió una `fecha`
- * distinta a la fecha actual del calendario Europe/Madrid (típicamente porque
- * usaba `new Date().toISOString().split('T')[0]`, que devuelve UTC), la
- * forzamos a la fecha canónica y dejamos un log con `tz_mismatch` para
- * detectar builds antiguas en producción.
+ * La fecha civil de una execution se deriva SIEMPRE en servidor: instante
+ * actual + zona horaria persistida del paciente (`users.timezone`, fallback
+ * Europe/Madrid). La `fecha` que envíe el cliente es solo telemetría — así el
+ * sistema es inmune a builds nativas desactualizadas y a clientes con reloj
+ * o zona mal configurados.
  *
- * Devuelve la fecha corregida que se debe persistir.
+ * Devuelve la fecha que se debe persistir.
  */
-function enforceMadridFecha(
+function derivePatientFecha(
   pacienteId: Id<"users">,
-  fechaRecibida: string,
+  tz: string,
+  fechaRecibida: string | undefined,
 ): string {
-  const expected = getCurrentMadridDate();
-  if (fechaRecibida !== expected) {
+  const fecha = getCurrentDateInTz(tz);
+  if (fechaRecibida && fechaRecibida !== fecha) {
     console.warn(
       `[tz_mismatch] paciente=${pacienteId} fecha_recibida=${fechaRecibida} ` +
-        `fecha_esperada=${expected} — cliente desfasado o antiguo. Forzando fecha Madrid.`,
+        `fecha_derivada=${fecha} tz=${tz} — se ignora la fecha del cliente.`,
     );
-    return expected;
   }
-  return fechaRecibida;
+  return fecha;
 }
 
 const exerciseExecutionArgs = {
   planExerciseId: v.id("planExercises"),
   fechaHora: v.string(),
-  fecha: v.string(),
+  // Solo telemetría desde clientes ≥ fix TZ; los antiguos la siguen enviando.
+  fecha: v.optional(v.string()),
   completado: v.boolean(),
   repeticionesRealizadas: v.optional(v.number()),
   duracionRealSeg: v.optional(v.number()),
@@ -148,7 +150,7 @@ export const create = mutation({
   args: exerciseExecutionArgs,
   handler: async (ctx, args): Promise<Id<"exerciseExecutions">> => {
     const user = await getAuthenticatedUser(ctx);
-    return await createImpl(ctx, user._id, args);
+    return await createImpl(ctx, user, args);
   },
 });
 
@@ -186,7 +188,7 @@ export const createBatch = mutation({
         planIdCache.set(entrada.planExerciseId, planId);
       }
 
-      const fecha = enforceMadridFecha(user._id, entrada.fecha);
+      const fecha = derivePatientFecha(user._id, tzOf(user), entrada.fecha);
       const sessionId = await openOrResumeImpl(ctx, user._id, fecha);
 
       const executionId = await upsertExecutionImpl(ctx, {
@@ -300,11 +302,11 @@ export const applyFeedbackBatch = mutation({
 
 async function createImpl(
   ctx: MutationCtx,
-  pacienteId: Id<"users">,
+  paciente: Doc<"users">,
   args: {
     planExerciseId: Id<"planExercises">;
     fechaHora: string;
-    fecha: string;
+    fecha?: string;
     completado: boolean;
     repeticionesRealizadas?: number;
     duracionRealSeg?: number;
@@ -313,6 +315,7 @@ async function createImpl(
     notaPaciente?: string;
   },
 ): Promise<Id<"exerciseExecutions">> {
+  const pacienteId = paciente._id;
   const planExercise = await ctx.db.get(args.planExerciseId);
   if (!planExercise) throw new Error("planExercise no encontrado");
   const planId = planExercise.planId;
@@ -320,7 +323,7 @@ async function createImpl(
   const clinicId = await getClinicIdForPatient(ctx, pacienteId);
   if (!clinicId) throw new Error("Paciente sin clínica asignada");
 
-  const fecha = enforceMadridFecha(pacienteId, args.fecha);
+  const fecha = derivePatientFecha(pacienteId, tzOf(paciente), args.fecha);
 
   const sessionId = await openOrResumeImpl(ctx, pacienteId, fecha);
 

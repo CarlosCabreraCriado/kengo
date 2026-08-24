@@ -9,11 +9,12 @@ import {
   anioSemanaISO,
   endOfISOWeek,
   endOfMonth,
-  getMadridDateOffset,
+  getDateOffsetInTz,
   rangeOfDates,
   startOfISOWeek,
   startOfMonth,
 } from "../_helpers/datetime";
+import { TzCache } from "../_helpers/patientTz";
 import {
   computeEstadoDia,
   computeRachaMaxima,
@@ -555,10 +556,15 @@ const MATERIALIZE_PATIENT_BATCH = 50;
 
 /**
  * Para cada paciente activo en cada clínica, si no existe `dailyPatientRollup`
- * de ayer (Madrid), invoca `recomputeDayAndPropagateImpl`. `computeEstadoDia`
- * generará `fallido`/`descanso`/`sin_plan` según corresponda al plan vigente,
- * asegurando que los días sin sesión cuenten en la adherencia y aparezcan en
- * el timeline.
+ * de ayer (EN LA TZ DE CADA PACIENTE), invoca `recomputeDayAndPropagateImpl`.
+ * `computeEstadoDia` generará `fallido`/`descanso`/`sin_plan` según
+ * corresponda al plan vigente, asegurando que los días sin sesión cuenten en
+ * la adherencia y aparezcan en el timeline.
+ *
+ * "Ayer" se resuelve por paciente: a las 02:30 UTC, para un paciente en una
+ * TZ americana "ayer Madrid" es su día EN CURSO — materializarlo lo marcaría
+ * `fallido` antes de que pudiera entrenar. `args.fecha` se mantiene como
+ * override manual global (aplica a todos).
  *
  * Sin esto, los rollups solo se crean cuando el paciente abre la app: las
  * métricas resultantes (adherencia, racha) ignoran los días "no abiertos" y
@@ -583,8 +589,8 @@ export const materializeMissingDailyRollupsForYesterday = internalMutation({
     procesados: number;
     completado: boolean;
   }> => {
-    const fecha = args.fecha ?? getMadridDateOffset(-1);
     const skip = args.skipPatients ?? 0;
+    const tzCache = new TzCache(ctx);
 
     const paresOrdenados = await listActivePatientPairsAfter(
       ctx,
@@ -600,7 +606,7 @@ export const materializeMissingDailyRollupsForYesterday = internalMutation({
           0,
           internal.rollups.internal.materializeMissingDailyRollupsForYesterday,
           {
-            fecha,
+            fecha: args.fecha,
             cursorClinic: clinicId,
             skipPatients: skip + procesados,
           },
@@ -608,6 +614,11 @@ export const materializeMissingDailyRollupsForYesterday = internalMutation({
         return { materializados, procesados, completado: false };
       }
       procesados += 1;
+
+      // "Ayer" en la TZ del paciente (salvo override manual).
+      const fecha =
+        args.fecha ??
+        getDateOffsetInTz(await tzCache.get(pacienteId), -1);
 
       const existing = await ctx.db
         .query("dailyPatientRollup")
@@ -625,7 +636,8 @@ export const materializeMissingDailyRollupsForYesterday = internalMutation({
     }
 
     console.log(
-      `[materialize-missing-rollups] fecha=${fecha} procesados=${procesados} materializados=${materializados} completado=true`,
+      `[materialize-missing-rollups] fechaBase=${args.fecha ?? "ayer-por-TZ"} ` +
+        `procesados=${procesados} materializados=${materializados} completado=true`,
     );
     return { materializados, procesados, completado: true };
   },

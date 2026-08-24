@@ -14,10 +14,13 @@ import {
   diffDaysYMD,
   endOfISOWeek,
   endOfMonth,
+  getCurrentDateInTz,
   getCurrentMadridDate,
+  getDateOffsetInTz,
   getMadridDateOffset,
-  madridCronHourForLocal2355,
+  isValidIanaTimezone,
   rangeOfDates,
+  shouldCloseSession,
   startOfISOWeek,
   startOfMonth,
 } from "./datetime";
@@ -105,16 +108,75 @@ test("rangeOfDates: mismo día devuelve array de 1", () => {
   assert.deepEqual(rangeOfDates("2026-04-27", "2026-04-27"), ["2026-04-27"]);
 });
 
-test("madridCronHourForLocal2355: en abril (CEST) = 21 UTC", () => {
-  // CEST = UTC+2 en abril → 23:55 Madrid = 21:55 UTC.
-  const d = new Date("2026-04-15T12:00:00Z");
-  assert.equal(madridCronHourForLocal2355(d), 21);
+test("getCurrentDateInTz: Canarias 23:30 local sigue siendo el MISMO día", () => {
+  // Viernes 23:30 en Canarias (UTC+0 invierno) = sábado 00:30 Madrid.
+  // Este es el bug reportado: con Madrid daría 2026-01-17.
+  const d = new Date("2026-01-16T23:30:00Z");
+  assert.equal(getCurrentDateInTz("Atlantic/Canary", d), "2026-01-16");
+  assert.equal(getCurrentDateInTz("Europe/Madrid", d), "2026-01-17");
 });
 
-test("madridCronHourForLocal2355: en enero (CET) = 22 UTC", () => {
-  // CET = UTC+1 en enero → 23:55 Madrid = 22:55 UTC.
-  const d = new Date("2026-01-15T12:00:00Z");
-  assert.equal(madridCronHourForLocal2355(d), 22);
+test("getCurrentDateInTz: Canarias en verano (UTC+1) misma ventana", () => {
+  // 23:30 Canarias en julio = 22:30 UTC = 00:30 Madrid del día siguiente.
+  const d = new Date("2026-07-10T22:30:00Z");
+  assert.equal(getCurrentDateInTz("Atlantic/Canary", d), "2026-07-10");
+  assert.equal(getCurrentDateInTz("Europe/Madrid", d), "2026-07-11");
+});
+
+test("getCurrentDateInTz: TZs extremas", () => {
+  const d = new Date("2026-01-16T23:30:00Z");
+  // LA (UTC-8): aún es por la tarde del día 16.
+  assert.equal(getCurrentDateInTz("America/Los_Angeles", d), "2026-01-16");
+  // Kiritimati (UTC+14): ya es día 17 por la tarde.
+  assert.equal(getCurrentDateInTz("Pacific/Kiritimati", d), "2026-01-17");
+});
+
+test("getCurrentDateInTz: transiciones DST Madrid", () => {
+  // 29 mar 2026 01:30 UTC = 02:30→03:30 CEST (salto): sigue siendo día 29.
+  assert.equal(
+    getCurrentDateInTz("Europe/Madrid", new Date("2026-03-29T01:30:00Z")),
+    "2026-03-29",
+  );
+  // 25 oct 2026 (vuelta a CET) 23:30 UTC = 00:30 CET del 26.
+  assert.equal(
+    getCurrentDateInTz("Europe/Madrid", new Date("2026-10-25T23:30:00Z")),
+    "2026-10-26",
+  );
+});
+
+test("getDateOffsetInTz: offsets en la TZ pedida", () => {
+  const d = new Date("2026-01-16T23:30:00Z");
+  assert.equal(getDateOffsetInTz("Atlantic/Canary", 0, d), "2026-01-16");
+  assert.equal(getDateOffsetInTz("Atlantic/Canary", -1, d), "2026-01-15");
+  assert.equal(getDateOffsetInTz("Europe/Madrid", -1, d), "2026-01-16");
+});
+
+test("isValidIanaTimezone", () => {
+  assert.equal(isValidIanaTimezone("Atlantic/Canary"), true);
+  assert.equal(isValidIanaTimezone("Europe/Madrid"), true);
+  assert.equal(isValidIanaTimezone("UTC"), true);
+  assert.equal(isValidIanaTimezone("Europe/Madrid "), false);
+  assert.equal(isValidIanaTimezone("<script>"), false);
+  assert.equal(isValidIanaTimezone(""), false);
+  assert.equal(isValidIanaTimezone("Not/AZone"), false);
+  assert.equal(isValidIanaTimezone("a".repeat(65)), false);
+});
+
+test("shouldCloseSession: no cierra el día en curso del paciente", () => {
+  // Cron a las 02:00 UTC del 17 ene (03:00 Madrid del 17).
+  const cronRun = new Date("2026-01-17T02:00:00Z");
+  // Canario con sesión del 16: su día 16 ya acabó (son las 02:00 del 17) → cierra.
+  assert.equal(shouldCloseSession("2026-01-16", "Atlantic/Canary", cronRun), true);
+  // Honolulu (UTC-10): a las 02:00 UTC del 17 aún son las 16:00 del 16 → NO cierra.
+  assert.equal(
+    shouldCloseSession("2026-01-16", "Pacific/Honolulu", cronRun),
+    false,
+  );
+  // Sesión de anteayer en Honolulu → sí cierra.
+  assert.equal(
+    shouldCloseSession("2026-01-15", "Pacific/Honolulu", cronRun),
+    true,
+  );
 });
 
 test("diffDaysYMD: diferencia positiva, cero y negativa", () => {

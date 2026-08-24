@@ -85,21 +85,29 @@ function lightenColor(hex: string, percent: number): string {
 
 function formatDate(date: string | undefined): string {
   if (!date) return "No definida";
+  // `date` es una fecha CIVIL YYYY-MM-DD: `new Date()` la parsea como
+  // medianoche UTC, así que hay que formatear con timeZone UTC EXPLÍCITA.
+  // Sin ella dependeríamos de la TZ del contenedor Node (hoy UTC en Railway
+  // por defecto; una env var TZ imprimiría un día menos en el PDF).
   const d = new Date(date);
   return d.toLocaleDateString("es-ES", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
 function formatDateTime(date: Date): string {
+  // Instante real ("Generado: ..."): TZ de referencia explícita en vez de la
+  // del contenedor (que imprimía hora UTC como si fuera local).
   return date.toLocaleString("es-ES", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Madrid",
   });
 }
 

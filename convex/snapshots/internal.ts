@@ -7,11 +7,12 @@ import {
 } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import {
-  getMadridDateOffset,
+  CLINIC_REF_TZ,
+  getDateOffsetInTz,
   anioMes,
-  getCurrentMadridDate,
   diffDaysYMD,
 } from "../_helpers/datetime";
+import { getPatientToday, getPatientTz } from "../_helpers/patientTz";
 import { computeRiskScore, computeRachaActual } from "../_helpers/rollupComputation";
 import { pacienteTienePlanEnCurso } from "../_helpers/planStatus";
 import { getReferenciaInactividad } from "../_helpers/inactividad";
@@ -94,8 +95,11 @@ async function recomputePatientForWindow(
   ventana: Ventana,
 ): Promise<void> {
   const dias = ventanaDays(ventana);
-  const desde = getMadridDateOffset(-dias + 1);
-  const hasta = getMadridDateOffset(0);
+  // Ventana anclada al "hoy" del PACIENTE (su TZ): coherente con la fecha
+  // que sellan sus executions/sessions.
+  const tz = await getPatientTz(ctx, pacienteId);
+  const desde = getDateOffsetInTz(tz, -dias + 1);
+  const hasta = getDateOffsetInTz(tz, 0);
 
   const dailies = await ctx.db
     .query("dailyPatientRollup")
@@ -184,14 +188,15 @@ async function recomputePatientForWindow(
       pacienteId,
       clinicId,
       hasta,
+      tz,
     );
     inactividadDias = Math.min(dias, Math.max(0, diffDaysYMD(refInicio, hasta)));
   }
 
-  // Racha actual: serie de los últimos N días en orden cronológico.
+  // Racha actual: serie de los últimos N días en orden cronológico (TZ paciente).
   const fechas: string[] = [];
   for (let i = -dias + 1; i <= 0; i++) {
-    fechas.push(getMadridDateOffset(i));
+    fechas.push(getDateOffsetInTz(tz, i));
   }
   const rachaActual = computeRachaActual(
     fechas.map((f) => dailyByFecha.get(f)?.estadoDia ?? "sin_plan"),
@@ -363,8 +368,11 @@ async function recomputeClinicForWindow(
   // `sessionsByClinic`. Su `sumValue = esSintetica ? 0 : 1`, por lo que sum()
   // cuenta sólo sesiones reales — el legacy contaba TODO en el rango
   // (incluidas sintéticas). Cambio semántico aceptado.
-  const desde7 = getMadridDateOffset(-6);
-  const hasta = getMadridDateOffset(0);
+  //
+  // TZ: agregado a nivel CLÍNICA → referencia única intencional
+  // (mezcla pacientes de varias TZ; desalineación máx. ±1 día, cosmética).
+  const desde7 = getDateOffsetInTz(CLINIC_REF_TZ, -6);
+  const hasta = getDateOffsetInTz(CLINIC_REF_TZ, 0);
   const sesionesUltimos7d = await loadSesionesUltimos7d(
     ctx,
     clinicId,
@@ -518,7 +526,10 @@ export const recomputeExerciseUsage = internalMutation({
     anioMes: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ procesados: number }> => {
-    const targetAnioMes = args.anioMes ?? anioMes(getMadridDateOffset(0));
+    // TZ: rollup a nivel clínica → mes en curso según la referencia única
+    // intencional para agregados multi-paciente.
+    const targetAnioMes =
+      args.anioMes ?? anioMes(getDateOffsetInTz(CLINIC_REF_TZ, 0));
     const desde = `${targetAnioMes}-01`;
     const hasta = `${targetAnioMes}-31`; // approx; comparación es lexicográfica YYYY-MM-DD
 
@@ -820,12 +831,10 @@ async function _syncPatientActiveStateInClinic(
   pacienteId: Id<"users">,
   clinicId: Id<"clinics">,
 ): Promise<{ inserted: boolean; purgadas: number }> {
-  const hoyMadrid = getCurrentMadridDate();
-  const tieneEnCurso = await pacienteTienePlanEnCurso(
-    ctx,
-    pacienteId,
-    hoyMadrid,
-  );
+  // "En curso hoy" en la TZ del paciente: su último día de plan cuenta
+  // completo aunque en Madrid ya sea mañana.
+  const hoy = await getPatientToday(ctx, pacienteId);
+  const tieneEnCurso = await pacienteTienePlanEnCurso(ctx, pacienteId, hoy);
 
   if (tieneEnCurso) {
     // No contabilizamos a los fisios/admins que actúan como sus propios

@@ -14,7 +14,13 @@ import {
   DayCounts,
 } from "../_helpers/sessionCounting";
 import { computeDayCountsForPatient } from "../_helpers/sessionCountingDb";
-import { getCurrentMadridDate, getDiaSemana } from "../_helpers/datetime";
+import {
+  DEFAULT_TZ,
+  getCurrentDateInTz,
+  getDiaSemana,
+  shouldCloseSession,
+} from "../_helpers/datetime";
+import { TzCache } from "../_helpers/patientTz";
 import { Doc } from "../_generated/dataModel";
 
 const AS2_DOLOR_ALTO_THRESHOLD = 8;
@@ -270,31 +276,45 @@ export async function closeImpl(
 
 /**
  * Invocado por el cron `nightly-session-close`. Cierra como
- * `completada_parcial` todas las sesiones `en_curso` cuya `fecha` sea
- * anterior a la fecha actual de Madrid.
+ * `completada_parcial` las sesiones `en_curso` cuyo día ya terminó EN LA TZ
+ * DE SU PACIENTE.
+ *
+ * El barrido usa `fecha < hoyMadrid` como superset barato (índice), y después
+ * filtra por TZ: a las 02:00 UTC el día aún está en curso para TZs por detrás
+ * de Madrid (Canarias, América) — cerrarlas ahí truncaría el día del paciente.
+ * Para TZs por delante de Madrid la sesión se cierra un ciclo más tarde
+ * (inofensivo: sigue abierta unas horas extra, nada la reabre mal).
  */
 export const closeOpenSessionsAtEndOfDay = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ cerradas: number }> => {
-    const hoy = getCurrentMadridDate();
+    const hoyMadrid = getCurrentDateInTz(DEFAULT_TZ);
     // Índice `by_estado_fecha`: solo las sesiones `en_curso` con fecha
-    // estrictamente anterior a hoy (las de fecha=hoy siguen abiertas; el cron
-    // correrá mañana). Evita escanear toda la tabla `sessions`.
+    // estrictamente anterior a hoy-Madrid. Evita escanear toda la tabla.
     const abiertas = await ctx.db
       .query("sessions")
       .withIndex("by_estado_fecha", (q) =>
-        q.eq("estado", "en_curso").lt("fecha", hoy),
+        q.eq("estado", "en_curso").lt("fecha", hoyMadrid),
       )
       .collect();
 
+    const tzCache = new TzCache(ctx);
     let cerradas = 0;
+    let pospuestas = 0;
     for (const s of abiertas) {
       if (!s.fecha) continue;
+      const tz = await tzCache.get(s.pacienteId);
+      if (!shouldCloseSession(s.fecha, tz)) {
+        // Su día local aún no acabó (TZ por detrás de Madrid): mañana caerá.
+        pospuestas += 1;
+        continue;
+      }
       await closeImpl(ctx, s._id, "cron_nocturno");
       cerradas += 1;
     }
     console.log(
-      `[nightly-session-close] hoy=${hoy} cerradas=${cerradas}/${abiertas.length}`,
+      `[nightly-session-close] hoyMadrid=${hoyMadrid} cerradas=${cerradas}` +
+        `/${abiertas.length} pospuestas=${pospuestas}`,
     );
     return { cerradas };
   },

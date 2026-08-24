@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
-import { getDiaSemana } from "../_helpers/datetime";
+import { getCurrentDateInTz, getDiaSemana } from "../_helpers/datetime";
+import { TzCache } from "../_helpers/patientTz";
 import { getExpectedExercisesForPatientOnDate } from "../_helpers/expectedExercises";
 
 /**
@@ -39,8 +40,12 @@ export const getTokensForUser = internalQuery({
  * `computeEstadoDia`, alineándolo con lo que la app muestra al paciente.
  */
 export const getReminderCandidates = internalQuery({
-  args: { today: v.string() },
-  handler: async (ctx, { today }) => {
+  args: {
+    // Override manual/tests: fuerza el mismo "hoy" para todos. Sin él, el
+    // día se resuelve por paciente con su TZ.
+    today: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const plansActivos = await ctx.db
       .query("plans")
       .withIndex("by_estado", (q) => q.eq("estado", "activo"))
@@ -50,7 +55,7 @@ export const getReminderCandidates = internalQuery({
       new Set(plansActivos.map((p) => p.pacienteId)),
     ) as Id<"users">[];
 
-    const diaSemana = getDiaSemana(today);
+    const tzCache = new TzCache(ctx);
     const candidatos: Id<"users">[] = [];
     for (const pacienteId of uniquePacienteIds) {
       // Comprobar token primero: es la lectura más barata y descarta a la
@@ -60,6 +65,11 @@ export const getReminderCandidates = internalQuery({
         .withIndex("by_userId", (q) => q.eq("userId", pacienteId))
         .first();
       if (!tieneToken) continue;
+
+      const today =
+        args.today ??
+        getCurrentDateInTz(await tzCache.get(pacienteId));
+      const diaSemana = getDiaSemana(today);
 
       const rollups = await ctx.db
         .query("dailyPatientRollup")

@@ -1,16 +1,17 @@
 import { Id } from "../_generated/dataModel";
 import { QueryCtx, MutationCtx } from "../_generated/server";
-import { getCurrentMadridDate } from "./datetime";
+import { getCurrentDateInTz } from "./datetime";
+import { getPatientTz } from "./patientTz";
 import { isPlanEnCurso } from "./planStatus";
 
 type Ctx = QueryCtx | MutationCtx;
 
 /**
- * Fecha de referencia (YYYY-MM-DD, Europe/Madrid) desde la que un paciente
- * estaba REALMENTE obligado a tener actividad en una clínica. Es la cota que
- * evita marcar como "inactivos" a pacientes recién dados de alta o con un plan
- * recién asignado: la inactividad no puede ser mayor que el tiempo que el
- * paciente lleva obligado a ejercitarse.
+ * Fecha de referencia (YYYY-MM-DD, en la TZ del paciente) desde la que un
+ * paciente estaba REALMENTE obligado a tener actividad en una clínica. Es la
+ * cota que evita marcar como "inactivos" a pacientes recién dados de alta o
+ * con un plan recién asignado: la inactividad no puede ser mayor que el tiempo
+ * que el paciente lleva obligado a ejercitarse.
  *
  * Se define como la fecha MÁS RECIENTE (max) de dos cotas — el paciente solo
  * está obligado cuando ambas se cumplen a la vez:
@@ -18,17 +19,22 @@ type Ctx = QueryCtx | MutationCtx;
  *      `planStart = plan.fechaInicio ?? fecha(_creationTime)`.
  *   b) Fecha de alta del paciente en la clínica (`clinicMemberships._creationTime`).
  *
- * Fallback: `hoyMadrid` (⇒ 0 días de inactividad ⇒ nunca alerta) si no se
- * puede resolver ninguna cota. Consumidores: el cálculo de `inactividadDias`
- * en `snapshots.internal`, el guard de la regla diaria en `alerts.internal` y
- * la limpieza `purgeStaleInactividadAlerts`.
+ * `hoy` debe venir calculado en la TZ del paciente (mismo criterio que los
+ * rollups); `tz` opcional evita una relectura de users si el caller ya la
+ * resolvió. Fallback: `hoy` (⇒ 0 días de inactividad ⇒ nunca alerta) si no
+ * se puede resolver ninguna cota. Consumidores: el cálculo de
+ * `inactividadDias` en `snapshots.internal`, el guard de la regla diaria en
+ * `alerts.internal` y la limpieza `purgeStaleInactividadAlerts`.
  */
 export async function getReferenciaInactividad(
   ctx: Ctx,
   pacienteId: Id<"users">,
   clinicId: Id<"clinics">,
-  hoyMadrid: string,
+  hoy: string,
+  tz?: string,
 ): Promise<string> {
+  const tzPaciente = tz ?? (await getPatientTz(ctx, pacienteId));
+
   // a) Inicio del plan en curso más antiguo de esta clínica.
   const planesActivos = await ctx.db
     .query("plans")
@@ -39,9 +45,10 @@ export async function getReferenciaInactividad(
   let planStartMin: string | undefined;
   for (const p of planesActivos) {
     if (p.clinicId !== clinicId) continue;
-    if (!isPlanEnCurso(p, hoyMadrid)) continue;
+    if (!isPlanEnCurso(p, hoy)) continue;
     const planStart =
-      p.fechaInicio ?? getCurrentMadridDate(new Date(p._creationTime));
+      p.fechaInicio ??
+      getCurrentDateInTz(tzPaciente, new Date(p._creationTime));
     if (!planStartMin || planStart < planStartMin) planStartMin = planStart;
   }
 
@@ -53,13 +60,13 @@ export async function getReferenciaInactividad(
     )
     .first();
   const altaDate = membership
-    ? getCurrentMadridDate(new Date(membership._creationTime))
+    ? getCurrentDateInTz(tzPaciente, new Date(membership._creationTime))
     : undefined;
 
   // La más reciente de ambas cotas (comparación lexicográfica de YYYY-MM-DD).
   const candidatos = [planStartMin, altaDate].filter(
     (d): d is string => d !== undefined,
   );
-  if (candidatos.length === 0) return hoyMadrid;
+  if (candidatos.length === 0) return hoy;
   return candidatos.reduce((a, b) => (a > b ? a : b));
 }

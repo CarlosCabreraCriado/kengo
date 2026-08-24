@@ -3,73 +3,108 @@
  * (sessions rediseñada, exerciseExecutions, rollups).
  *
  * Reglas:
- * - Día de referencia: zona Europe/Madrid (los pacientes y el cron nocturno
- *   se rigen por hora local).
+ * - Día de referencia: la zona horaria IANA del paciente (`users.timezone`),
+ *   con fallback `DEFAULT_TZ` (Europe/Madrid) cuando aún no está sincronizada.
+ *   La resolución de la TZ desde BD vive en `_helpers/patientTz.ts`.
+ * - Los agregados de clínica (dashboard, exerciseUsageRollup) siguen usando
+ *   Madrid como TZ de referencia única — decisión documentada en cada caller.
  * - Funciones puras (sin acceso a `ctx`) y deterministas: aceptan `now?: Date`
  *   para facilitar tests.
- *
- * Notas:
- * - Existe una versión simplificada en `convex/compliance/internal.ts`
- *   (`getHoyMadrid`, `getFechaMadridOffset`). Esta nueva implementación
- *   centraliza y amplía. La versión legacy quedará deprecada en Fase 5.
  */
 
-const TZ_MADRID = "Europe/Madrid";
+export const DEFAULT_TZ = "Europe/Madrid";
 
-const YMD_FORMATTER = new Intl.DateTimeFormat("en-CA", {
-  timeZone: TZ_MADRID,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
+/**
+ * TZ de referencia para agregados a nivel CLÍNICA (dashboard, snapshots de
+ * clínica, exerciseUsageRollup): mezclan pacientes de varias TZ, así que se
+ * fija una única referencia. Alias intencional — no confundir con el fallback
+ * de pacientes sin TZ (`DEFAULT_TZ`), que coincide en valor pero no en rol.
+ */
+export const CLINIC_REF_TZ = DEFAULT_TZ;
 
-const HOUR_FORMATTER = new Intl.DateTimeFormat("en-GB", {
-  timeZone: TZ_MADRID,
-  hour: "2-digit",
-  hour12: false,
-});
+// Un formatter por TZ (crearlos es caro; antes era un singleton Madrid).
+const YMD_FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+
+function ymdFormatterFor(tz: string): Intl.DateTimeFormat {
+  let fmt = YMD_FORMATTERS.get(tz);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    YMD_FORMATTERS.set(tz, fmt);
+  }
+  return fmt;
+}
+
+/**
+ * Valida un identificador de zona horaria IANA (p.ej. "Atlantic/Canary").
+ * El patrón previo evita pasar basura arbitraria a `Intl` (que lanza) y
+ * el try/catch descarta nombres con formato plausible pero inexistentes.
+ */
+export function isValidIanaTimezone(tz: string): boolean {
+  if (!tz || tz.length > 64 || !/^[A-Za-z_+\-/0-9]+$/.test(tz)) return false;
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Devuelve la fecha actual (o la pasada) en formato YYYY-MM-DD según el
- * calendario de Europe/Madrid.
+ * calendario de la zona horaria `tz`.
  */
-export function getCurrentMadridDate(now: Date = new Date()): string {
-  return YMD_FORMATTER.format(now);
+export function getCurrentDateInTz(tz: string, now: Date = new Date()): string {
+  return ymdFormatterFor(tz).format(now);
 }
 
 /**
  * Devuelve la fecha YYYY-MM-DD desplazada `offsetDays` días respecto a hoy
- * (Europe/Madrid). Usar offsetDays negativo para fechas pasadas.
+ * en la zona `tz`. Usar offsetDays negativo para fechas pasadas.
+ */
+export function getDateOffsetInTz(
+  tz: string,
+  offsetDays: number,
+  now: Date = new Date(),
+): string {
+  return addDaysToYMD(getCurrentDateInTz(tz, now), offsetDays);
+}
+
+/**
+ * ¿Debe el cron nocturno cerrar una sesión abierta con esta `fecha`?
+ * Solo cuando el día de la sesión ya terminó en la TZ de SU paciente —
+ * a las 02:00 UTC el día aún está en curso para TZs por detrás de Madrid
+ * (Canarias, América), y cerrar ahí truncaría el día del paciente.
+ */
+export function shouldCloseSession(
+  fechaSesion: string,
+  tz: string,
+  now: Date = new Date(),
+): boolean {
+  return fechaSesion < getCurrentDateInTz(tz, now);
+}
+
+/**
+ * @deprecated Usar `getCurrentDateInTz(tz)` con la TZ del paciente
+ * (`_helpers/patientTz.ts`). Solo válido donde Madrid es la TZ de referencia
+ * intencional (agregados de clínica).
+ */
+export function getCurrentMadridDate(now: Date = new Date()): string {
+  return getCurrentDateInTz(DEFAULT_TZ, now);
+}
+
+/**
+ * @deprecated Usar `getDateOffsetInTz(tz, offsetDays)` con la TZ del paciente.
  */
 export function getMadridDateOffset(
   offsetDays: number,
   now: Date = new Date(),
 ): string {
-  const baseYMD = YMD_FORMATTER.format(now);
-  const [y, m, d] = baseYMD.split("-").map(Number);
-  const utc = new Date(Date.UTC(y, m - 1, d));
-  utc.setUTCDate(utc.getUTCDate() + offsetDays);
-  return utc.toISOString().slice(0, 10);
-}
-
-/**
- * Calcula la hora UTC en la que se debe ejecutar un cron registrado a
- * "23:55 hora Madrid". Devuelve 22 (CET, invierno) o 21 (CEST, verano).
- *
- * NOTA: Convex no permite ajustar el horario de un cron dinámicamente; este
- * helper se mantiene por si se decide rotar el cron a una hora distinta o
- * para tests. El cron real se registra a 22:55 UTC fijo (= 23:55 CET /
- * 00:55 CEST), aceptando un desfase de 1h en los meses de horario de verano.
- */
-export function madridCronHourForLocal2355(
-  now: Date = new Date(),
-): number {
-  const madridHour = Number(HOUR_FORMATTER.format(now));
-  const utcHour = now.getUTCHours();
-  // offset(horas Madrid - UTC). Positivo: Madrid va por delante.
-  const offset = (madridHour - utcHour + 24) % 24;
-  // 23:55 Madrid = (23 - offset) UTC, normalizado a [0..23].
-  return (23 - offset + 24) % 24;
+  return getDateOffsetInTz(DEFAULT_TZ, offsetDays, now);
 }
 
 /**

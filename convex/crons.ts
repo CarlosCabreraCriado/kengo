@@ -25,21 +25,16 @@ crons.weekly(
 
 // Cierre nocturno de sesiones del día anterior (rediseño records — Fase 1).
 // Hora fija: 02:00 UTC.
-//   Península invierno (CET): 03:00 / verano (CEST): 04:00
-//   Canarias  invierno (WET): 02:00 / verano (WEST): 03:00
 //
-// NOTA: la spec original (`docs/PLAN_REDISENO_RECORDS.md` y
-// `_helpers/datetime.ts:55-73`) hablaba de "23:55 hora Madrid". El cron real
-// corre a 02:00 UTC fijo y eso es **intencional y seguro**: el handler
-// `closeOpenSessionsAtEndOfDay` cierra únicamente sesiones cuya `fecha` sea
-// estrictamente anterior a `getCurrentMadridDate()`, así que el desfase de
-// 3-4h con respecto a las 23:55 Madrid no causa cierres prematuros ni
-// pérdidas de datos. El único efecto es que las sesiones del día anterior
-// se cierran 3-4h más tarde que en la spec, pero antes de que
-// `daily-maintenance` (03:00 UTC = 04:00/05:00 Madrid) recompute rollups y
-// snapshots. Si en el futuro se quiere alinear con la spec literalmente,
-// usar `madridCronHourForLocal2355()` y rotar el cron — Convex ya no
-// soporta horas dinámicas, así que requeriría un re-deploy.
+// TZ-safe: el handler `closeOpenSessionsAtEndOfDay` barre `fecha < hoy-Madrid`
+// como superset barato (índice) y solo cierra una sesión cuando su día ya
+// terminó EN LA TZ DE SU PACIENTE (`shouldCloseSession`). Efectos por TZ:
+//   - Madrid/Canarias: la sesión de ayer se cierra a las 03-04h locales.
+//   - TZ por detrás de Madrid (América): la sesión del día en curso se
+//     POSPONE (no se cierra prematuramente); cae en el ciclo siguiente.
+//   - TZ por delante de Madrid (Asia/Pacífico): la sesión se cierra un ciclo
+//     más tarde de su medianoche local — inofensivo.
+// Convex no soporta crons con TZ ni horas dinámicas, de ahí la hora UTC fija.
 crons.daily(
   "nightly-session-close",
   { hourUTC: 2, minuteUTC: 0 },
@@ -49,9 +44,9 @@ crons.daily(
 
 // Materialización de rollups "fallidos" para pacientes activos: crea
 // `dailyPatientRollup` para cada paciente con plan en curso cuyo día de
-// ayer no quedó registrado (no abrió la app). Sin esto, la adherencia y
-// la racha calculadas ignoran los días "no abiertos" e inflan las métricas
-// reales (ver AUDITORIA_AGGREGATES_CONVEX.md Bug 2).
+// ayer (EN SU TZ) no quedó registrado (no abrió la app). Sin esto, la
+// adherencia y la racha calculadas ignoran los días "no abiertos" e inflan
+// las métricas reales (ver AUDITORIA_AGGREGATES_CONVEX.md Bug 2).
 // Se ejecuta a las 02:30 UTC, entre `nightly-session-close` (02:00) y
 // `daily-maintenance` (03:00), para que `recomputeAllPatients` vea ya los
 // rollups materializados.
@@ -98,7 +93,8 @@ crons.daily(
 );
 
 // Recordatorio diario push para pacientes con plan activo que aún no han
-// completado la sesión del día. Hora fija 17:00 UTC:
+// completado la sesión del día ("hoy" resuelto por paciente con SU TZ).
+// Hora fija 17:00 UTC:
 //   Península invierno (CET): 18:00 / verano (CEST): 19:00
 //   Canarias  invierno (WET): 17:00 / verano (WEST): 18:00
 crons.daily(

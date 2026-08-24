@@ -1,6 +1,9 @@
 import { ConvexError, v } from "convex/values";
+import { FunctionReference } from "convex/server";
 import { mutation, internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
+import { DEFAULT_TZ, isValidIanaTimezone } from "../_helpers/datetime";
 import {
   checkClinicPermission,
   getAuthenticatedUser,
@@ -139,6 +142,63 @@ export const updateProfile = mutation({
 
     await ctx.db.patch(user._id, patch);
     return user._id;
+  },
+});
+
+/**
+ * Sincroniza la zona horaria IANA del dispositivo del usuario autenticado.
+ * La llama el cliente al arrancar y al volver de background (resume) cuando
+ * detecta un cambio. Define el "día" del usuario para sessions/executions/
+ * rollups (fallback Europe/Madrid mientras no esté sincronizada).
+ *
+ * Nunca lanza por TZ inválida (no debe romper el arranque de la app):
+ * devuelve `{ accepted: false }` y no toca nada.
+ *
+ * La primera vez que un usuario sincroniza una TZ distinta de Madrid se
+ * programa la reparación histórica de fechas (ejecuciones selladas con el
+ * día Madrid en la ventana nocturna) — una única vez por usuario.
+ */
+export const syncTimezone = mutation({
+  args: {
+    timezone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+
+    if (!isValidIanaTimezone(args.timezone)) {
+      console.warn(
+        `[tz_sync] user=${user._id} timezone inválida recibida: ${JSON.stringify(
+          args.timezone.slice(0, 80),
+        )}`,
+      );
+      return { accepted: false as const };
+    }
+
+    if (user.timezone === args.timezone) return { accepted: true as const };
+
+    await ctx.db.patch(user._id, {
+      timezone: args.timezone,
+      timezoneUpdatedAt: Date.now(),
+    });
+
+    if (
+      user.timezone === undefined &&
+      args.timezone !== DEFAULT_TZ &&
+      user.tzRepairDoneAt === undefined
+    ) {
+      // Alias tipado: `_generated/api.d.ts` no incluye el módulo nuevo hasta
+      // el codegen del deploy (mismo patrón que repairSessionsIntegrity).
+      const repairForUser = (
+        internal.migrations as Record<string, Record<string, unknown>>
+      )["repairTimezoneFechas"]["repairForUser"] as FunctionReference<
+        "mutation",
+        "internal",
+        { userId: Id<"users"> }
+      >;
+      await ctx.scheduler.runAfter(0, repairForUser, { userId: user._id });
+    }
+
+    return { accepted: true as const };
   },
 });
 
