@@ -1,89 +1,180 @@
 /**
- * Mantenimiento diario consolidado. Punto de entrada del cron diario
+ * Mantenimiento diario. Punto de entrada del cron diario
  * (`crons.ts:daily-maintenance` a las 03:00 UTC).
  *
- * Tras Fase 5 (drop legacy), este archivo solo contiene la mutation del cron;
- * las funciones legacy de cumplimiento (`processCompliance`,
+ * Tras Fase 5 (drop legacy), este archivo solo contiene las mutations del
+ * cron; las funciones legacy de cumplimiento (`processCompliance`,
  * `recalculateClinicMetrics`, `calculateDailyCompliance`) se eliminaron.
  *
- * Tareas activas:
+ * Pasos (en este orden):
  *  - Expirar planes vencidos.
+ *  - Sincronizar `patientsWithActivePlanByClinic` con `isPlanEnCurso`.
  *  - Procesar rollups stale (semanales y mensuales).
  *  - Recompute snapshots (paciente + clínica).
  *  - Recompute exerciseUsageRollup del mes en curso.
  *  - Reglas diarias de alertas (Fase 4).
+ *
+ * Arquitectura: cada paso corre en su PROPIA transacción, encadenada con
+ * `ctx.scheduler.runAfter(0, runMaintenanceStep, { step: n+1 })`. Antes
+ * todos los pasos se ejecutaban dentro de una única mutation vía
+ * `ctx.runMutation`, y cualquier fallo de un paso (límite de lecturas /
+ * escrituras por transacción, tiempo de ejecución, conflicto OCC) hacía
+ * rollback de TODO el mantenimiento — incluido el sweep del aggregate — de
+ * forma silenciosa. Consecuencia observada en producción: pacientes con plan
+ * "empieza mañana" nunca entraban en el aggregate, el cron de materialización
+ * no les creaba días `fallido` y su adherencia quedaba clavada en 100 %.
+ *
+ * Reglas del encadenado:
+ *  - Un paso puede devolver `cursor` para pedir que se le vuelva a invocar
+ *    (batching por cursor). Los pasos pesados paginan internamente.
+ *  - Si un paso lanza, se registra con `console.error` y se continúa con el
+ *    siguiente: un fallo aislado ya no bloquea al resto.
+ *  - `ctx.runMutation` ejecuta el paso como sub-transacción: si lanza, sus
+ *    escrituras se descartan y el orquestador (que casi no lee) sobrevive
+ *    para programar el siguiente paso.
  */
 
+import { v } from "convex/values";
 import { internalMutation } from "../_helpers/mutationWithTriggers";
 import { internal } from "../_generated/api";
-import { expireOverduePlansImpl } from "../plans/internal";
+import { MutationCtx } from "../_generated/server";
 
-interface DailyMaintenanceResult {
-  expired: number;
-  activeSync: number;
-  weekly: number;
-  monthly: number;
-  patientsSnap: number;
-  clinicsSnap: number;
-  usage: number;
-  alertas: number;
+const STEPS = [
+  "expirePlans",
+  "syncActivePatients",
+  "weeklyRollups",
+  "monthlyRollups",
+  "patientSnapshots",
+  "clinicSnapshots",
+  "exerciseUsage",
+  "alerts",
+] as const;
+
+type Step = (typeof STEPS)[number];
+
+/** Resultado común de cada paso: `cursor` presente ⇒ quedan lotes. */
+export interface MaintenanceStepResult {
+  procesados: number;
+  cursor?: string;
 }
+
+/**
+ * Salvaguarda contra bucles: nº máximo de lotes por paso en una misma
+ * ejecución del mantenimiento. Muy por encima de lo que necesita cualquier
+ * paso real (≈ 100 pares por lote).
+ */
+const MAX_BATCHES_PER_STEP = 500;
 
 export const dailyMaintenance = internalMutation({
   args: {},
-  handler: async (ctx): Promise<DailyMaintenanceResult> => {
-    const expired = await expireOverduePlansImpl(ctx);
-
-    // Sweep que reevalúa `patientsWithActivePlanByClinic` con `isPlanEnCurso`
-    // según la fecha actual: cubre planes con `fechaInicio` futura que entran
-    // en curso al amanecer (las mutations de `plans` no pueden anticiparse al
-    // cambio de día). Debe ir DESPUÉS de `expireOverduePlansImpl` (que ya
-    // procesó las salidas por `fechaFin`) y ANTES de `recomputeAllClinics`
-    // (que leerá el aggregate fresco para `pacientesActivos`).
-    const activeSyncRes = await ctx.runMutation(
-      internal.snapshots.internal.syncActivePatientsAllClinics,
-      {},
+  handler: async (ctx): Promise<void> => {
+    console.log(`[maintenance] inicio (${STEPS.length} pasos)`);
+    await ctx.scheduler.runAfter(
+      0,
+      internal.compliance.internal.runMaintenanceStep,
+      { step: 0 },
     );
-
-    // El cron `nightly-session-close` (02:00 UTC) ya cerró las sesiones del
-    // día anterior. Aquí procesamos sus consecuencias.
-    const weeklyRes = await ctx.runMutation(
-      internal.rollups.internal.processStaleWeeklyRollups,
-      {},
-    );
-    const monthlyRes = await ctx.runMutation(
-      internal.rollups.internal.processStaleMonthlyRollups,
-      {},
-    );
-    const patientsRes = await ctx.runMutation(
-      internal.snapshots.internal.recomputeAllPatients,
-      {},
-    );
-    const clinicsSnapRes = await ctx.runMutation(
-      internal.snapshots.internal.recomputeAllClinics,
-      {},
-    );
-    const usageRes = await ctx.runMutation(
-      internal.snapshots.internal.recomputeExerciseUsage,
-      {},
-    );
-    const alertasRes = await ctx.runMutation(
-      internal.alerts.internal.runDailyAlertRules,
-      {},
-    );
-
-    console.log(
-      `[maintenance] expirados=${expired} activeSync=${activeSyncRes.procesados} weekly=${weeklyRes.procesados} monthly=${monthlyRes.procesados} patientsSnap=${patientsRes.procesados} clinicsSnap=${clinicsSnapRes.procesados} usage=${usageRes.procesados} alertas=${alertasRes.generadas}`,
-    );
-    return {
-      expired,
-      activeSync: activeSyncRes.procesados,
-      weekly: weeklyRes.procesados,
-      monthly: monthlyRes.procesados,
-      patientsSnap: patientsRes.procesados,
-      clinicsSnap: clinicsSnapRes.procesados,
-      usage: usageRes.procesados,
-      alertas: alertasRes.generadas,
-    };
   },
 });
+
+export const runMaintenanceStep = internalMutation({
+  args: {
+    step: v.number(),
+    cursor: v.optional(v.string()),
+    batch: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const name = STEPS[args.step];
+    if (!name) {
+      console.log("[maintenance] fin");
+      return;
+    }
+    const batch = args.batch ?? 0;
+
+    let next: string | undefined;
+    try {
+      const res = await runStep(ctx, name, args.cursor);
+      next = res.cursor;
+      console.log(
+        `[maintenance:${name}] lote=${batch} procesados=${res.procesados}` +
+          (next ? " (continúa)" : ""),
+      );
+    } catch (err) {
+      console.error(
+        `[maintenance:${name}] lote=${batch} ERROR — se continúa con el siguiente paso`,
+        err,
+      );
+    }
+
+    if (next && batch + 1 >= MAX_BATCHES_PER_STEP) {
+      console.error(
+        `[maintenance:${name}] alcanzado MAX_BATCHES_PER_STEP=${MAX_BATCHES_PER_STEP}; se aborta el paso`,
+      );
+      next = undefined;
+    }
+
+    if (next) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.compliance.internal.runMaintenanceStep,
+        { step: args.step, cursor: next, batch: batch + 1 },
+      );
+      return;
+    }
+    await ctx.scheduler.runAfter(
+      0,
+      internal.compliance.internal.runMaintenanceStep,
+      { step: args.step + 1 },
+    );
+  },
+});
+
+async function runStep(
+  ctx: MutationCtx,
+  step: Step,
+  cursor: string | undefined,
+): Promise<MaintenanceStepResult> {
+  switch (step) {
+    case "expirePlans":
+      return await ctx.runMutation(internal.plans.internal.expireOverduePlans, {
+        cursor,
+      });
+    case "syncActivePatients":
+      return await ctx.runMutation(
+        internal.snapshots.internal.syncActivePatientsAllClinics,
+        { cursor },
+      );
+    case "weeklyRollups":
+      return await ctx.runMutation(
+        internal.rollups.internal.processStaleWeeklyRollups,
+        {},
+      );
+    case "monthlyRollups":
+      return await ctx.runMutation(
+        internal.rollups.internal.processStaleMonthlyRollups,
+        {},
+      );
+    case "patientSnapshots":
+      return await ctx.runMutation(
+        internal.snapshots.internal.recomputeAllPatients,
+        { cursor },
+      );
+    case "clinicSnapshots":
+      return await ctx.runMutation(
+        internal.snapshots.internal.recomputeAllClinics,
+        {},
+      );
+    case "exerciseUsage":
+      return await ctx.runMutation(
+        internal.snapshots.internal.recomputeExerciseUsage,
+        { cursor },
+      );
+    case "alerts": {
+      const res = await ctx.runMutation(
+        internal.alerts.internal.runDailyAlertRules,
+        {},
+      );
+      return { procesados: res.generadas };
+    }
+  }
+}

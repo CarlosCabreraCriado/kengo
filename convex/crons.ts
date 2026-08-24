@@ -3,7 +3,9 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Mantenimiento diario consolidado: expira planes vencidos + recalcula compliance.
+// Mantenimiento diario: expira planes vencidos + sync del aggregate de
+// pacientes activos + rollups stale + snapshots + alertas. Cada paso corre en
+// su propia transacción encadenada (ver `compliance/internal.ts`).
 // Hora fija: 03:00 UTC.
 //   Península invierno: 04:00 / verano: 05:00
 //   Canarias  invierno: 03:00 / verano: 04:00
@@ -43,10 +45,11 @@ crons.daily(
 );
 
 // Materialización de rollups "fallidos" para pacientes activos: crea
-// `dailyPatientRollup` para cada paciente con plan en curso cuyo día de
-// ayer (EN SU TZ) no quedó registrado (no abrió la app). Sin esto, la
-// adherencia y la racha calculadas ignoran los días "no abiertos" e inflan
-// las métricas reales (ver AUDITORIA_AGGREGATES_CONVEX.md Bug 2).
+// `dailyPatientRollup` para cada paciente con plan activo (leído de `plans`,
+// no del aggregate) cuyos últimos 7 días (EN SU TZ, sin pasar de ayer) no
+// quedaron registrados (no abrió la app). Sin esto, la adherencia y la racha
+// calculadas ignoran los días "no abiertos" e inflan las métricas reales
+// (ver AUDITORIA_AGGREGATES_CONVEX.md Bug 2).
 // Se ejecuta a las 02:30 UTC, entre `nightly-session-close` (02:00) y
 // `daily-maintenance` (03:00), para que `recomputeAllPatients` vea ya los
 // rollups materializados.

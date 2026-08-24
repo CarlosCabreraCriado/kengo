@@ -17,6 +17,7 @@ import type * as _helpers_expectedExercises from "../_helpers/expectedExercises.
 import type * as _helpers_inactividad from "../_helpers/inactividad.js";
 import type * as _helpers_mutationWithTriggers from "../_helpers/mutationWithTriggers.js";
 import type * as _helpers_patientAccess from "../_helpers/patientAccess.js";
+import type * as _helpers_patientTz from "../_helpers/patientTz.js";
 import type * as _helpers_permissions from "../_helpers/permissions.js";
 import type * as _helpers_planStatus from "../_helpers/planStatus.js";
 import type * as _helpers_planVersioning from "../_helpers/planVersioning.js";
@@ -26,6 +27,7 @@ import type * as _helpers_sessionCountingDb from "../_helpers/sessionCountingDb.
 import type * as _helpers_support from "../_helpers/support.js";
 import type * as _helpers_syncPatientAggregateValue from "../_helpers/syncPatientAggregateValue.js";
 import type * as _helpers_validators from "../_helpers/validators.js";
+import type * as _helpers_virtualDaily from "../_helpers/virtualDaily.js";
 import type * as accessCodes_actions from "../accessCodes/actions.js";
 import type * as accessCodes_mutations from "../accessCodes/mutations.js";
 import type * as accessCodes_queries from "../accessCodes/queries.js";
@@ -119,6 +121,7 @@ import type * as migrations_purgeAggregatesForInactivePatients from "../migratio
 import type * as migrations_purgeOrphanConversations from "../migrations/purgeOrphanConversations.js";
 import type * as migrations_recomputeOverlappingPlanVersions from "../migrations/recomputeOverlappingPlanVersions.js";
 import type * as migrations_repairSessionsIntegrity from "../migrations/repairSessionsIntegrity.js";
+import type * as migrations_repairTimezoneFechas from "../migrations/repairTimezoneFechas.js";
 import type * as migrations_setTambienEsPacienteForFisios from "../migrations/setTambienEsPacienteForFisios.js";
 import type * as migrations_validation from "../migrations/validation.js";
 import type * as notificationPreferences_mutations from "../notificationPreferences/mutations.js";
@@ -174,6 +177,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/inactividad": typeof _helpers_inactividad;
   "_helpers/mutationWithTriggers": typeof _helpers_mutationWithTriggers;
   "_helpers/patientAccess": typeof _helpers_patientAccess;
+  "_helpers/patientTz": typeof _helpers_patientTz;
   "_helpers/permissions": typeof _helpers_permissions;
   "_helpers/planStatus": typeof _helpers_planStatus;
   "_helpers/planVersioning": typeof _helpers_planVersioning;
@@ -183,6 +187,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/support": typeof _helpers_support;
   "_helpers/syncPatientAggregateValue": typeof _helpers_syncPatientAggregateValue;
   "_helpers/validators": typeof _helpers_validators;
+  "_helpers/virtualDaily": typeof _helpers_virtualDaily;
   "accessCodes/actions": typeof accessCodes_actions;
   "accessCodes/mutations": typeof accessCodes_mutations;
   "accessCodes/queries": typeof accessCodes_queries;
@@ -276,6 +281,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/purgeOrphanConversations": typeof migrations_purgeOrphanConversations;
   "migrations/recomputeOverlappingPlanVersions": typeof migrations_recomputeOverlappingPlanVersions;
   "migrations/repairSessionsIntegrity": typeof migrations_repairSessionsIntegrity;
+  "migrations/repairTimezoneFechas": typeof migrations_repairTimezoneFechas;
   "migrations/setTambienEsPacienteForFisios": typeof migrations_setTambienEsPacienteForFisios;
   "migrations/validation": typeof migrations_validation;
   "notificationPreferences/mutations": typeof notificationPreferences_mutations;

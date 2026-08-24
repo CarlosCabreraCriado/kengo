@@ -425,20 +425,35 @@ async function recomputeClinicForWindow(
  * `.collect() by_estado` previo, sin el riesgo de chocar contra el límite de
  * lectura por mutation cuando la tabla `plans` crece.
  */
+/** Planes activos leídos por lote en los sweeps del mantenimiento diario. */
+const SNAPSHOT_PATIENT_BATCH = 25;
+const SYNC_ACTIVE_BATCH = 100;
+
+/**
+ * Recompute de snapshots de todos los pares `(paciente, clínica)` con plan
+ * en estado "activo". Invocado por `daily-maintenance`.
+ *
+ * Pagina `plans` por `by_estado` = activo en lotes de
+ * `SNAPSHOT_PATIENT_BATCH` y devuelve `cursor` mientras queden páginas: cada
+ * lote corre en su propia transacción (ver `compliance.internal`). Un par
+ * con varios planes activos repartidos en páginas distintas se recomputa
+ * más de una vez — idempotente, coste aceptable.
+ */
 export const recomputeAllPatients = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<{ procesados: number }> => {
+  args: { cursor: v.optional(v.string()) },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ procesados: number; cursor?: string }> => {
+    const page = await ctx.db
+      .query("plans")
+      .withIndex("by_estado", (q) => q.eq("estado", "activo"))
+      .paginate({ cursor: args.cursor ?? null, numItems: SNAPSHOT_PATIENT_BATCH });
+
     const pares = new Set<string>();
-    for await (const clinicId of plansByClinicActive.iterNamespaces(ctx)) {
-      const plans = await ctx.db
-        .query("plans")
-        .withIndex("by_clinicId_estado", (q) =>
-          q.eq("clinicId", clinicId).eq("estado", "activo"),
-        )
-        .collect();
-      for (const p of plans) {
-        pares.add(`${p.pacienteId}|${p.clinicId}`);
-      }
+    for (const p of page.page) {
+      if (!p.clinicId) continue;
+      pares.add(`${p.pacienteId}|${p.clinicId}`);
     }
     for (const key of pares) {
       const [pid, cid] = key.split("|") as [Id<"users">, Id<"clinics">];
@@ -446,7 +461,10 @@ export const recomputeAllPatients = internalMutation({
         await recomputePatientForWindow(ctx, pid, cid, ventana);
       }
     }
-    return { procesados: pares.size };
+    return {
+      procesados: pares.size,
+      cursor: page.isDone ? undefined : page.continueCursor,
+    };
   },
 });
 
@@ -460,34 +478,39 @@ export const recomputeAllPatients = internalMutation({
  * al cambio de día.
  *
  * Idempotente: el helper hace `insertIfDoesNotExist` / `deleteIfExists`.
- * Pares con varios planes activos se procesan una sola vez (Set por
- * `pacienteId|clinicId`).
+ * Pagina `plans` por `by_estado` = activo en lotes de `SYNC_ACTIVE_BATCH`
+ * (devuelve `cursor` mientras queden páginas); dentro de un lote, los pares
+ * repetidos se procesan una sola vez.
  *
  * Invocado por `compliance.dailyMaintenance` después de
  * `expireOverduePlansImpl` (que ya sincronizó los planes que vencen
  * hoy) y antes de `recomputeAllClinics` (que leerá el aggregate fresco).
  */
 export const syncActivePatientsAllClinics = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<{ procesados: number }> => {
+  args: { cursor: v.optional(v.string()) },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ procesados: number; cursor?: string }> => {
+    const page = await ctx.db
+      .query("plans")
+      .withIndex("by_estado", (q) => q.eq("estado", "activo"))
+      .paginate({ cursor: args.cursor ?? null, numItems: SYNC_ACTIVE_BATCH });
+
     const paresVistos = new Set<string>();
     let procesados = 0;
-    for await (const clinicId of plansByClinicActive.iterNamespaces(ctx)) {
-      const plans = await ctx.db
-        .query("plans")
-        .withIndex("by_clinicId_estado", (q) =>
-          q.eq("clinicId", clinicId).eq("estado", "activo"),
-        )
-        .collect();
-      for (const p of plans) {
-        const key = `${p.pacienteId}|${clinicId}`;
-        if (paresVistos.has(key)) continue;
-        paresVistos.add(key);
-        await _syncPatientActiveStateInClinic(ctx, p.pacienteId, clinicId);
-        procesados += 1;
-      }
+    for (const p of page.page) {
+      if (!p.clinicId) continue;
+      const key = `${p.pacienteId}|${p.clinicId}`;
+      if (paresVistos.has(key)) continue;
+      paresVistos.add(key);
+      await _syncPatientActiveStateInClinic(ctx, p.pacienteId, p.clinicId);
+      procesados += 1;
     }
-    return { procesados };
+    return {
+      procesados,
+      cursor: page.isDone ? undefined : page.continueCursor,
+    };
   },
 });
 
@@ -505,7 +528,7 @@ export const syncActivePatientsAllClinics = internalMutation({
  */
 export const recomputeAllClinics = internalMutation({
   args: {},
-  handler: async (ctx): Promise<{ procesados: number }> => {
+  handler: async (ctx): Promise<{ procesados: number; cursor?: string }> => {
     let procesados = 0;
     for await (const clinicId of plansByClinicActive.iterNamespaces(ctx)) {
       for (const ventana of VENTANAS) {
@@ -524,8 +547,12 @@ export const recomputeAllClinics = internalMutation({
 export const recomputeExerciseUsage = internalMutation({
   args: {
     anioMes: v.optional(v.string()),
+    cursor: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ procesados: number }> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ procesados: number; cursor?: string }> => {
     // TZ: rollup a nivel clínica → mes en curso según la referencia única
     // intencional para agregados multi-paciente.
     const targetAnioMes =
@@ -533,9 +560,13 @@ export const recomputeExerciseUsage = internalMutation({
     const desde = `${targetAnioMes}-01`;
     const hasta = `${targetAnioMes}-31`; // approx; comparación es lexicográfica YYYY-MM-DD
 
-    const clinics = await ctx.db.query("clinics").collect();
+    // Una clínica por lote: el volumen de ejecuciones mensuales de una
+    // clínica grande no cabe cómodamente junto al resto en una transacción.
+    const page = await ctx.db
+      .query("clinics")
+      .paginate({ cursor: args.cursor ?? null, numItems: 1 });
     let procesados = 0;
-    for (const clinic of clinics) {
+    for (const clinic of page.page) {
       const executions = await ctx.db
         .query("exerciseExecutions")
         .withIndex("by_clinicId_fecha", (q) =>
@@ -626,7 +657,10 @@ export const recomputeExerciseUsage = internalMutation({
         procesados += 1;
       }
     }
-    return { procesados };
+    return {
+      procesados,
+      cursor: page.isDone ? undefined : page.continueCursor,
+    };
   },
 });
 

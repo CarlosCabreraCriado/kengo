@@ -20,7 +20,6 @@ import {
   computeRachaMaxima,
   EstadoDia,
 } from "../_helpers/rollupComputation";
-import { patientsWithActivePlanByClinic } from "../aggregates/patientsWithActivePlanByClinic";
 
 /**
  * Recompute determinista del rollup diario de un (paciente, fecha) desde
@@ -305,6 +304,12 @@ async function markMonthlyStale(
 }
 
 /**
+ * Rollups stale procesados por lote. Cada lote corre en su propia
+ * transacción encadenado por `compliance.internal.runMaintenanceStep`.
+ */
+const STALE_ROLLUP_BATCH = 50;
+
+/**
  * Procesa rollups semanales marcados como stale. Recompute desde
  * `dailyPatientRollup` × 7 días. Idempotente.
  */
@@ -312,8 +317,11 @@ export const processStaleWeeklyRollups = internalMutation({
   args: {
     batchSize: v.optional(v.number()),
   },
-  handler: async (ctx, args): Promise<{ procesados: number }> => {
-    const limit = args.batchSize ?? 200;
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ procesados: number; cursor?: string }> => {
+    const limit = args.batchSize ?? STALE_ROLLUP_BATCH;
     const stale = await ctx.db
       .query("weeklyPatientRollup")
       .withIndex("by_stale", (q) => q.eq("stale", true))
@@ -321,7 +329,13 @@ export const processStaleWeeklyRollups = internalMutation({
     for (const w of stale) {
       await recomputeWeeklyImpl(ctx, w);
     }
-    return { procesados: stale.length };
+    // Página llena ⇒ probablemente quedan más: el orquestador reinvoca en
+    // una transacción nueva (el índice `by_stale` ya no devolverá los
+    // procesados).
+    return {
+      procesados: stale.length,
+      cursor: stale.length === limit ? "more" : undefined,
+    };
   },
 });
 
@@ -361,8 +375,11 @@ export const processStaleMonthlyRollups = internalMutation({
   args: {
     batchSize: v.optional(v.number()),
   },
-  handler: async (ctx, args): Promise<{ procesados: number }> => {
-    const limit = args.batchSize ?? 200;
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ procesados: number; cursor?: string }> => {
+    const limit = args.batchSize ?? STALE_ROLLUP_BATCH;
     const stale = await ctx.db
       .query("monthlyPatientRollup")
       .withIndex("by_stale", (q) => q.eq("stale", true))
@@ -370,7 +387,13 @@ export const processStaleMonthlyRollups = internalMutation({
     for (const m of stale) {
       await recomputeMonthlyImpl(ctx, m);
     }
-    return { procesados: stale.length };
+    // Página llena ⇒ probablemente quedan más: el orquestador reinvoca en
+    // una transacción nueva (el índice `by_stale` ya no devolverá los
+    // procesados).
+    return {
+      procesados: stale.length,
+      cursor: stale.length === limit ? "more" : undefined,
+    };
   },
 });
 
@@ -555,16 +578,31 @@ function round2(n: number): number {
 const MATERIALIZE_PATIENT_BATCH = 50;
 
 /**
- * Para cada paciente activo en cada clínica, si no existe `dailyPatientRollup`
- * de ayer (EN LA TZ DE CADA PACIENTE), invoca `recomputeDayAndPropagateImpl`.
- * `computeEstadoDia` generará `fallido`/`descanso`/`sin_plan` según
- * corresponda al plan vigente, asegurando que los días sin sesión cuenten en
- * la adherencia y aparezcan en el timeline.
+ * Días hacia atrás (desde ayer, en la TZ del paciente) que se revisan por
+ * par. Con 1 solo día, una noche en la que el cron no corriera dejaba un
+ * hueco permanente en el denominador de la adherencia; con una ventana corta
+ * el hueco se autocorrige en la siguiente ejecución.
+ */
+const MATERIALIZE_LOOKBACK_DAYS = 7;
+
+/**
+ * Para cada paciente con plan activo en cada clínica, si no existe
+ * `dailyPatientRollup` de alguno de los últimos `MATERIALIZE_LOOKBACK_DAYS`
+ * días (EN LA TZ DE CADA PACIENTE, sin pasar de ayer), invoca
+ * `recomputeDayAndPropagateImpl`. `computeEstadoDia` generará
+ * `fallido`/`descanso` según corresponda al plan vigente, asegurando que los
+ * días sin sesión cuenten en la adherencia y aparezcan en el timeline.
  *
  * "Ayer" se resuelve por paciente: a las 02:30 UTC, para un paciente en una
  * TZ americana "ayer Madrid" es su día EN CURSO — materializarlo lo marcaría
  * `fallido` antes de que pudiera entrenar. `args.fecha` se mantiene como
- * override manual global (aplica a todos).
+ * override manual global (aplica a todos, un único día).
+ *
+ * Los pares `(pacienteId, clinicId)` salen de la FUENTE DE VERDAD (`plans`
+ * con `estado === "activo"`), no del aggregate
+ * `patientsWithActivePlanByClinic`: ese aggregate depende de un sweep diario
+ * y, cuando el sweep dejó de correr, los pacientes cuyo plan se creó con
+ * `fechaInicio` futura nunca se materializaban (adherencia inflada al 100 %).
  *
  * Sin esto, los rollups solo se crean cuando el paciente abre la app: las
  * métricas resultantes (adherencia, racha) ignoran los días "no abiertos" y
@@ -578,7 +616,6 @@ const MATERIALIZE_PATIENT_BATCH = 50;
 export const materializeMissingDailyRollupsForYesterday = internalMutation({
   args: {
     fecha: v.optional(v.string()),
-    cursorClinic: v.optional(v.id("clinics")),
     skipPatients: v.optional(v.number()),
   },
   handler: async (
@@ -592,80 +629,108 @@ export const materializeMissingDailyRollupsForYesterday = internalMutation({
     const skip = args.skipPatients ?? 0;
     const tzCache = new TzCache(ctx);
 
-    const paresOrdenados = await listActivePatientPairsAfter(
-      ctx,
-      args.cursorClinic,
-    );
+    const paresOrdenados = await listActivePatientPairs(ctx);
     const pares = paresOrdenados.slice(skip);
 
     let materializados = 0;
     let procesados = 0;
-    for (const { pacienteId, clinicId } of pares) {
+    for (const { pacienteId, clinicId, fechaInicioMin } of pares) {
       if (procesados >= MATERIALIZE_PATIENT_BATCH) {
         await ctx.scheduler.runAfter(
           0,
           internal.rollups.internal.materializeMissingDailyRollupsForYesterday,
-          {
-            fecha: args.fecha,
-            cursorClinic: clinicId,
-            skipPatients: skip + procesados,
-          },
+          { fecha: args.fecha, skipPatients: skip + procesados },
         );
         return { materializados, procesados, completado: false };
       }
       procesados += 1;
 
-      // "Ayer" en la TZ del paciente (salvo override manual).
-      const fecha =
-        args.fecha ??
-        getDateOffsetInTz(await tzCache.get(pacienteId), -1);
+      // Override manual: un único día global. Sin override: ayer y los
+      // `MATERIALIZE_LOOKBACK_DAYS - 1` días anteriores en la TZ del paciente.
+      const tz = await tzCache.get(pacienteId);
+      const fechas = args.fecha
+        ? [args.fecha]
+        : Array.from({ length: MATERIALIZE_LOOKBACK_DAYS }, (_, i) =>
+            getDateOffsetInTz(tz, -1 - i),
+          );
 
-      const existing = await ctx.db
-        .query("dailyPatientRollup")
-        .withIndex("by_pacienteId_clinicId_fecha", (q) =>
-          q
-            .eq("pacienteId", pacienteId)
-            .eq("clinicId", clinicId)
-            .eq("fecha", fecha),
-        )
-        .unique();
-      if (existing) continue;
+      for (const fecha of fechas) {
+        // Antes del inicio del plan no hay nada que materializar.
+        if (fechaInicioMin && fecha < fechaInicioMin) continue;
 
-      await recomputeDayAndPropagateImpl(ctx, pacienteId, fecha);
-      materializados += 1;
+        const existing = await ctx.db
+          .query("dailyPatientRollup")
+          .withIndex("by_pacienteId_clinicId_fecha", (q) =>
+            q
+              .eq("pacienteId", pacienteId)
+              .eq("clinicId", clinicId)
+              .eq("fecha", fecha),
+          )
+          .unique();
+        if (existing) continue;
+
+        await recomputeDayAndPropagateImpl(ctx, pacienteId, fecha);
+        materializados += 1;
+      }
     }
 
     console.log(
       `[materialize-missing-rollups] fechaBase=${args.fecha ?? "ayer-por-TZ"} ` +
-        `procesados=${procesados} materializados=${materializados} completado=true`,
+        `lookback=${args.fecha ? 1 : MATERIALIZE_LOOKBACK_DAYS} ` +
+        `procesados=${skip + procesados} materializados=${materializados} completado=true`,
     );
     return { materializados, procesados, completado: true };
   },
 });
 
+interface ActivePatientPair {
+  pacienteId: Id<"users">;
+  clinicId: Id<"clinics">;
+  /** Menor `fechaInicio` entre los planes activos del par (si todos la tienen). */
+  fechaInicioMin?: string;
+}
+
 /**
- * Devuelve la lista ordenada de pares `(pacienteId, clinicId)` con plan en
- * curso, leída del aggregate `patientsWithActivePlanByClinic`. La ordenación
- * `(clinicId, pacienteId)` es estable para que el batching por cursor
- * `cursorClinic` + `skipPatients` no salte ni repita pares entre llamadas
- * encadenadas.
+ * Devuelve la lista ordenada y sin duplicados de pares `(pacienteId,
+ * clinicId)` con al menos un plan en estado "activo", leída directamente de
+ * `plans` (fuente de verdad). La ordenación `(clinicId, pacienteId)` es
+ * explícita y estable para que el batching por `skipPatients` no salte ni
+ * repita pares entre llamadas encadenadas.
+ *
+ * No se filtra por `fechaFin`: un plan recién vencido puede tener días
+ * pendientes dentro de la ventana de lookback, y para fechas fuera de la
+ * vigencia `recomputeDayAndPropagateImpl` simplemente no crea rollup.
  */
-async function listActivePatientPairsAfter(
+async function listActivePatientPairs(
   ctx: MutationCtx,
-  cursorClinic: Id<"clinics"> | undefined,
-): Promise<Array<{ pacienteId: Id<"users">; clinicId: Id<"clinics"> }>> {
-  const pares: Array<{ pacienteId: Id<"users">; clinicId: Id<"clinics"> }> = [];
-  for await (const clinicId of patientsWithActivePlanByClinic.iterNamespaces(
-    ctx,
-  )) {
-    if (cursorClinic && clinicId < cursorClinic) continue;
-    const { page } = await patientsWithActivePlanByClinic.paginate(ctx, {
-      namespace: clinicId,
-      pageSize: 1000,
-    });
-    for (const entry of page) {
-      pares.push({ pacienteId: entry.id, clinicId });
+): Promise<ActivePatientPair[]> {
+  const activos = await ctx.db
+    .query("plans")
+    .withIndex("by_estado", (q) => q.eq("estado", "activo"))
+    .collect();
+
+  const byKey = new Map<string, ActivePatientPair>();
+  for (const p of activos) {
+    if (!p.clinicId) continue;
+    const key = `${p.clinicId}|${p.pacienteId}`;
+    const prev = byKey.get(key);
+    if (!prev) {
+      byKey.set(key, {
+        pacienteId: p.pacienteId,
+        clinicId: p.clinicId,
+        fechaInicioMin: p.fechaInicio,
+      });
+      continue;
+    }
+    // Sin fechaInicio en alguno de los planes ⇒ sin cota inferior.
+    if (prev.fechaInicioMin === undefined || p.fechaInicio === undefined) {
+      prev.fechaInicioMin = undefined;
+    } else if (p.fechaInicio < prev.fechaInicioMin) {
+      prev.fechaInicioMin = p.fechaInicio;
     }
   }
-  return pares;
+
+  return Array.from(byKey.entries())
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([, pair]) => pair);
 }
