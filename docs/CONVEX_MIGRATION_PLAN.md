@@ -1358,7 +1358,7 @@ Fase 9 ← Fase 8 (archivos migrados)
 - [ ] Habilitar Cloudflare Image Resizing en el dominio (requiere plan Pro $20/mes — opcional)
 - [ ] Configurar Cache Rules en Cloudflare para `assets.kengoapp.com` (Edge TTL 1 mes, Browser TTL 1 día)
 - [ ] Esperar 1-2 semanas con bucket S3 origen vivo como rollback
-- [ ] Configurar CORS policy en R2 si el navegador bloquea PUT desde `localhost:4200`
+- [x] Configurar CORS policy en R2 — versionada en `scripts/r2-cors.json` (`npm run r2:cors`), 2026-08-25. Faltaba el origin de Capacitor y rompía la subida en las apps nativas.
 - [ ] Apagar bucket S3 origen y desactivar storage adapter de Directus
 
 ### FASE 9: Cleanup

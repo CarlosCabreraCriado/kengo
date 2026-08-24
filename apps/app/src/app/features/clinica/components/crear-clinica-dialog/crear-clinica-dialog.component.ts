@@ -318,6 +318,7 @@ export class CrearClinicaDialogComponent implements OnDestroy {
     let logoKey: string | undefined;
     const imageKeys: string[] = [];
     let imageUploadFailed = false;
+    let imageUploadError: string | undefined;
 
     try {
       if (this.logoFile()) {
@@ -329,6 +330,7 @@ export class CrearClinicaDialogComponent implements OnDestroy {
           logoKey = r.fileId;
         } else {
           imageUploadFailed = true;
+          imageUploadError ??= r.error;
         }
       }
       for (const file of this.newImageFiles()) {
@@ -340,6 +342,7 @@ export class CrearClinicaDialogComponent implements OnDestroy {
           imageKeys.push(r.fileId);
         } else {
           imageUploadFailed = true;
+          imageUploadError ??= r.error;
         }
       }
     } catch {
@@ -371,7 +374,7 @@ export class CrearClinicaDialogComponent implements OnDestroy {
 
     if (imageUploadFailed) {
       this.toast.warning(
-        'Clínica creada, pero algunas imágenes no se pudieron subir. Podrás añadirlas desde "Editar clínica".',
+        `Clínica creada, pero algunas imágenes no se pudieron subir${imageUploadError ? ` (${imageUploadError})` : ''}. Podrás añadirlas desde "Editar clínica".`,
       );
     }
     this.dialogRef.close(true);

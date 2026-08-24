@@ -69,6 +69,40 @@ zona en lugar de devolver una imagen rota (error `9422`). Comprobación:
 `curl -sI -H 'Accept: image/webp' https://assets.kengoapp.com/cdn-cgi/image/width=256,format=webp,onerror=redirect/<key>.webp`
 debe traer `cf-resized: internal=ok…` y un `content-length` pequeño.
 
+## CORS del bucket R2 (`kengo-assets`)
+
+Las subidas (logo y galería de clínica, avatar) hacen un **PUT presignado
+directo desde el cliente al endpoint S3 de R2** (`convex/storage/actions.ts`
+→ `apps/app/.../storage.service.ts`). En web ese PUT lleva `Content-Type`,
+así que el navegador lanza un preflight `OPTIONS` que el bucket solo acepta si
+el `Origin` está en su política CORS. La política **no se ve en el DNS ni en
+Railway**: vive en el bucket y hasta 2026-08-25 solo existía en el dashboard
+(faltaba `https://app.kengoapp.local`, el origin de los WebView de Capacitor,
+y por eso ninguna app nativa podía subir el logo de la clínica).
+
+- Fuente de verdad versionada: `scripts/r2-cors.json`.
+- Aplicar: `CLOUDFLARE_API_TOKEN=... npm run r2:cors` (token con permiso
+  *Workers R2 Storage: Edit*). Auditar: `npm run r2:cors:show`.
+- **Regla**: cada origen que se añada a `ALLOWED_ORIGINS` de `convex/http.ts`
+  (o a `trustedOrigins` de `convex/auth.ts`) se añade también a
+  `scripts/r2-cors.json` y se reaplica. Si cambia `server.hostname` en
+  `apps/app/capacitor.config.ts`, lo mismo.
+- Diagnóstico rápido de un origen, con una `uploadUrl` recién firmada:
+
+  ```bash
+  curl -si -X OPTIONS "$UPLOAD_URL" \
+    -H "Origin: https://app.kengoapp.local" \
+    -H "Access-Control-Request-Method: PUT" \
+    -H "Access-Control-Request-Headers: content-type" | grep -i access-control
+  ```
+
+  Sin `Access-Control-Allow-Origin` en la respuesta, el `fetch` del navegador
+  falla con `TypeError: Failed to fetch` antes de recibir status alguno.
+- En las apps nativas el PUT va por `CapacitorHttp` (pila de red del sistema,
+  sin CORS), así que una política incompleta ya no las rompe; sigue siendo
+  necesaria para la web y para `precargarDesdeUrl` del recorte de logo, que
+  hace `fetch` a `assets.kengoapp.com`.
+
 ## Procedimiento de reversión
 
 Si hubiera que volver a poner un host tras el proxy (p. ej. ataque DDoS):
@@ -106,6 +140,10 @@ partidos**; hacerlo solo de forma temporal y anotarlo aquí.
 
 ## Histórico
 
+- **2026-08-25**: la política CORS del bucket R2 no incluía el origin de
+  los WebView (`https://app.kengoapp.local`) y las apps nativas no podían
+  subir imágenes. Se versiona en `scripts/r2-cors.json` (+ `npm run r2:cors`)
+  y el PUT nativo pasa a `CapacitorHttp` para no depender de CORS.
 - **2026-08-24**: se documenta la topología y se pasan a "solo DNS" vía API
   `kengoapp.com`, `www`, `api` y `admin` (antes proxied, IPs
   `104.21.55.88` / `172.67.146.93`). Ajustes de zona que se revisaron y no

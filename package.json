@@ -47,7 +47,9 @@
     "railway:start:landingpage": "node apps/landingpage/server.js",
     "railway:build:media": "echo 'media: sin build, usa node_modules del root'",
     "railway:start:media": "node apps/media/server.js",
-    "images:landingpage": "node tools/scripts/optimize-images.mjs"
+    "images:landingpage": "node tools/scripts/optimize-images.mjs",
+    "r2:cors": "node scripts/r2-cors.mjs",
+    "r2:cors:show": "node scripts/r2-cors.mjs --show"
   },
   "private": true,
   "workspaces": [

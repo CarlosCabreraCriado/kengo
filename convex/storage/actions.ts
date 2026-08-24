@@ -9,6 +9,25 @@ import { r2Client, r2Bucket, r2PublicUrl } from "./r2Client";
 const ALLOWED_PREFIXES = new Set(["avatars", "logos", "clinic-files"]);
 
 /**
+ * Tipos MIME admitidos por prefijo. El frontend ya filtra (`image-upload`,
+ * `perfil`, galería), pero la presigned URL firma el `Content-Type` y R2 lo
+ * acepta tal cual: sin esta lista cualquier usuario autenticado podría subir
+ * un binario arbitrario servido luego desde `assets.kengoapp.com`.
+ */
+const ALLOWED_CONTENT_TYPES: Record<string, RegExp> = {
+  avatars: /^image\/(png|jpe?g|webp|gif|bmp|avif)$/i,
+  logos: /^image\/(png|jpe?g|webp|gif|bmp|avif)$/i,
+  "clinic-files": /^image\/(png|jpe?g|webp|gif|bmp|avif)$/i,
+};
+
+/**
+ * Límite lógico de tamaño (coincide con el máximo del frontend). R2 no lo
+ * impone en la presigned URL, pero el cliente lo declara y se rechaza aquí
+ * antes de firmar; sirve de documentación y de primera barrera.
+ */
+export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+/**
  * Extrae la extensión del nombre de archivo o, en su defecto, la deriva del
  * Content-Type. Devuelve un valor seguro de fallback (`bin`) si no hay pista.
  */
@@ -42,6 +61,8 @@ export const generateUploadUrl = action({
   args: {
     filename: v.string(),
     contentType: v.string(),
+    /** Tamaño en bytes declarado por el cliente (opcional por compatibilidad). */
+    size: v.optional(v.number()),
     prefix: v.union(
       v.literal("avatars"),
       v.literal("logos"),
@@ -57,6 +78,12 @@ export const generateUploadUrl = action({
 
     if (!ALLOWED_PREFIXES.has(args.prefix)) {
       throw new Error("Prefijo no permitido");
+    }
+    if (!ALLOWED_CONTENT_TYPES[args.prefix].test(args.contentType)) {
+      throw new Error(`Tipo de archivo no permitido: ${args.contentType}`);
+    }
+    if (args.size !== undefined && args.size > MAX_UPLOAD_BYTES) {
+      throw new Error("El archivo supera el tamaño máximo (8 MB)");
     }
 
     const ext = pickExtension(args.filename, args.contentType);

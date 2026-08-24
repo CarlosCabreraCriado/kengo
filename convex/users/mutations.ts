@@ -214,6 +214,9 @@ export const updateAvatar = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
+    if (args.key !== undefined && !args.key.startsWith("avatars/")) {
+      throw new Error("Key de avatar inválida");
+    }
     await ctx.db.patch(user._id, { avatar: args.key ?? undefined });
     return user._id;
   },

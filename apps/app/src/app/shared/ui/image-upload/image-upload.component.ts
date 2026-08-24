@@ -210,8 +210,15 @@ export class ImageUploadComponent implements OnInit, OnDestroy {
       this.imageChangedEvent = null;
       this.imageURL = null;
       this.pantallaCargarArchivo.set(false);
-    } catch {
-      // El usuario canceló o no concedió permisos; no notificar.
+    } catch (err) {
+      // Cancelar el selector no es un error; cualquier otra cosa (permiso
+      // denegado, plugin, decodificación) debe verse para poder diagnosticarla.
+      if (isUserCancellation(err)) return;
+      this.logger.error('[image-upload] Camera.getPhoto falló', err);
+      this.loadError.set(
+        'No se pudo obtener la imagen. Revisa los permisos de cámara/galería e inténtalo de nuevo.',
+      );
+      this.pantallaCargarArchivo.set(true);
     }
   }
 
@@ -506,4 +513,10 @@ async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
   return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+}
+
+/** @capacitor/camera rechaza con estos mensajes cuando el usuario cierra el selector. */
+function isUserCancellation(err: unknown): boolean {
+  const msg = String((err as { message?: string })?.message ?? err).toLowerCase();
+  return msg.includes('cancel') || msg.includes('no image picked');
 }

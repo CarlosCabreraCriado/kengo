@@ -1,0 +1,26 @@
+{
+  "$comment": "Política CORS del bucket R2 `kengo-assets`. Fuente de verdad versionada: aplicar con `npm run r2:cors`, auditar con `npm run r2:cors:show`. Los orígenes deben coincidir con ALLOWED_ORIGINS de convex/http.ts (los WebView de Capacitor usan https://app.kengoapp.local, ver apps/app/capacitor.config.ts).",
+  "rules": [
+    {
+      "id": "kengo-web-y-apps-nativas",
+      "allowed": {
+        "origins": [
+          "https://kengoapp.com",
+          "https://www.kengoapp.com",
+          "https://app.kengoapp.com",
+          "https://admin.kengoapp.com",
+          "http://localhost:4200",
+          "http://localhost:4210",
+          "https://app.kengoapp.local",
+          "capacitor://app.kengoapp.local",
+          "capacitor://localhost",
+          "https://localhost"
+        ],
+        "methods": ["PUT", "GET", "HEAD"],
+        "headers": ["content-type"]
+      },
+      "exposeHeaders": ["etag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

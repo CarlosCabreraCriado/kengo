@@ -94,6 +94,7 @@ Nada de lo implementado ha pisado un simulador/emulador real todavía. El códig
 
 - [ ] **B7. Cámara y galería en image-upload**
   Probar subida de avatar desde galería y cámara en iOS y Android. Confirmar que los permisos se piden correctamente la primera vez.
+  _2026-08-25_: causa raíz del fallo de subida identificada (CORS del bucket R2 sin `https://app.kengoapp.local`); corregido con `scripts/r2-cors.json` + PUT nativo vía `CapacitorHttp`. Pendiente reverificar en device tras el release.
 
 ---
 

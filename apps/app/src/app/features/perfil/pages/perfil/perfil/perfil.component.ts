@@ -312,12 +312,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
     const isImage = /^image\/(png|jpe?g|webp|gif|bmp|avif)$/i.test(file.type);
     const maxSizeMB = 5;
     if (!isImage) {
-      alert('Selecciona una imagen válida.');
+      this.toast.error('Selecciona una imagen válida.');
       input.value = '';
       return;
     }
     if (file.size > maxSizeMB * 1024 * 1024) {
-      alert(`La imagen supera ${maxSizeMB} MB.`);
+      this.toast.error(`La imagen supera ${maxSizeMB} MB.`);
       input.value = '';
       return;
     }
@@ -346,7 +346,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
       await this.sessionService.refreshUsuario();
     } catch (e) {
       this.logger.error(e);
-      alert('No se pudo actualizar la foto de perfil.');
+      const detalle = (e as { message?: string })?.message;
+      this.toast.error(
+        detalle
+          ? `No se pudo actualizar la foto de perfil: ${detalle}`
+          : 'No se pudo actualizar la foto de perfil.',
+      );
     } finally {
       this.subiendoAvatar.set(false);
     }
