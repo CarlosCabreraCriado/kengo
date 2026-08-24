@@ -26,7 +26,7 @@ tiene fallback automático a `media.`.
 | `convex.kengoapp.com` | Convex self-hosted, WebSocket (puerto 3210) | Railway | Solo DNS → `69.46.46.49` | `CONVEX_URL`. |
 | `backend.kengoapp.com` | Convex HTTP actions, Better-Auth, webhook Stripe (3211) | Railway | Solo DNS → `69.46.46.103` | `CONVEX_SITE_URL`. |
 | `assets.kengoapp.com` | Bucket R2 `kengo-assets` (dominio custom) + Image Transformations | Cloudflare | **Proxied (obligatorio)** | `ASSETS_URL`. Único host que cae durante los bloqueos. |
-| `media.kengoapp.com` | Proxy de respaldo de R2 (`apps/media`) | Railway | **Solo DNS** | `ASSETS_FALLBACK_URL`. Mismo contrato de URLs que `assets.`. |
+| `media.kengoapp.com` | Proxy de respaldo de R2 (`apps/media`), servicio "Media Cloudflare Fallback" | Railway | **Solo DNS** (CNAME `j2pdw64f.up.railway.app`) | `ASSETS_FALLBACK_URL`. Mismo contrato de URLs que `assets.`. Región europe-west4. |
 
 Comprobación rápida (todo excepto `assets.` debe devolver IPs de Railway
 `69.46.46.x`, AS400940, y **no** `104.21.x`/`172.67.x`, AS13335):
@@ -101,5 +101,8 @@ partidos**; hacerlo solo de forma temporal y anotarlo aquí.
   hubo que tocar: `always_use_https: on` (Railway ya redirige 301 http→https),
   `ssl: strict`, HSTS desactivado, sin Page Rules; la única Cache Rule
   (`assets-r2-long-cache-kengo`) aplica solo a `assets.`. Se crea
-  `apps/media` y el fallback automático en la app; **pendiente** el CNAME
-  `media.kengoapp.com` (solo DNS) al target que dé Railway.
+  `apps/media` y el fallback automático en la app. Servicio Railway "Media
+  Cloudflare Fallback" creado con las variables `R2_*` copiadas de Convex,
+  dominio `media.kengoapp.com` (CNAME solo DNS + TXT `_railway-verify.media`
+  creados vía API). El primer deploy falló por construir un `master` anterior
+  al código de `apps/media`; se resuelve al hacer push.
