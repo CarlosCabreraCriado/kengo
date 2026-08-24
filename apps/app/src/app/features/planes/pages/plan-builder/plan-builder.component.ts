@@ -376,6 +376,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   onDrop(ev: CdkDragDrop<unknown[]>) {
     if (ev.previousIndex === ev.currentIndex) return;
+    // `ejercicioEditando` es un índice: tras reordenar apuntaría a otro
+    // ejercicio, así que se cierra la fila abierta.
+    this.ejercicioEditando.set(null);
     this.svc.reorder(ev.previousIndex, ev.currentIndex);
   }
 
@@ -413,6 +416,18 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   toggleEdicion(i: number) {
     this.ejercicioEditando.set(this.ejercicioEditando() === i ? null : i);
+  }
+
+  /**
+   * Click en la cabecera de la fila: despliega o repliega. Ignora los clicks
+   * originados en un control (asa de arrastre, chevron, inputs del detalle) y
+   * los que solo cierran una selección de texto.
+   */
+  onHeadClick(ev: MouseEvent, i: number) {
+    const target = ev.target as HTMLElement | null;
+    if (target?.closest('button, a, input, textarea, select')) return;
+    if (window.getSelection()?.isCollapsed === false) return;
+    this.toggleEdicion(i);
   }
 
   // ========= Actions =========
@@ -565,10 +580,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   avatarUrl(id: string | null | undefined): string | null {
     if (!id) return null;
     return `${assetUrl(id, { width: 80, height: 80, fit: 'cover', format: 'webp' })}`;
-  }
-
-  trackByIndex(index: number) {
-    return index;
   }
 
   // ========= Manejo de fechas con presets =========

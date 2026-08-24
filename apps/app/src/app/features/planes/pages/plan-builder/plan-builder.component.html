@@ -123,7 +123,7 @@
           cdkDropList
           (cdkDropListDropped)="onDrop($event)"
         >
-          @for (it of items(); track trackByIndex($index); let i = $index) {
+          @for (it of items(); track it.ejercicio.id; let i = $index) {
             <article
               class="ui2-ed-ex-item"
               [attr.data-collapsed]="ejercicioEditando() !== i ? 'true' : 'false'"
@@ -152,12 +152,16 @@
                 </ui2-card>
               </div>
 
-              <div *cdkDragPlaceholder class="ui2-ed-drag-placeholder"></div>
-
               <ui2-card [padding]="0">
                 <div class="ui2-ed-ex">
-                  <!-- Cabecera siempre visible -->
-                  <div class="ui2-ed-ex__head">
+                  <!-- Cabecera siempre visible. Clicarla despliega/repliega:
+                       es una comodidad de puntero, no un control. El control
+                       accesible es el chevron del final, que ya lleva foco,
+                       teclado y `aria-expanded`; dar `tabindex` a este div
+                       duplicaría ese punto de tabulación en cada fila, así que
+                       se silencian las dos reglas de a11y a propósito. -->
+                  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+                  <div class="ui2-ed-ex__head" (click)="onHeadClick($event, i)">
                     <button
                       type="button"
                       class="ui2-ed-drag-handle"
@@ -211,14 +215,17 @@
                       class="ui2-ed-ex__toggle"
                       variant="ghost"
                       size="sm"
-                      [iconLeft]="ejercicioEditando() === i ? 'check' : 'edit'"
+                      iconLeft="expand_more"
                       [iconOnly]="true"
+                      [ariaLabel]="ejercicioEditando() === i ? 'Contraer ejercicio' : 'Editar ejercicio'"
+                      [ariaExpanded]="ejercicioEditando() === i"
+                      [ariaControls]="'ex-details-' + i"
                       (clicked)="toggleEdicion(i)"
                     ></ui2-button>
                   </div>
 
-                  <!-- Detalles editables (visibles en desktop o cuando expandido) -->
-                  <div class="ui2-ed-ex__details">
+                  <!-- Detalles editables (visibles solo cuando la fila está abierta) -->
+                  <div class="ui2-ed-ex__details" [id]="'ex-details-' + i">
                     <div class="ui2-ed-dosage-grid">
                       <label class="ui2-ed-dosage-field">
                         <span class="ui2-ed-dosage-field__label">Series</span>

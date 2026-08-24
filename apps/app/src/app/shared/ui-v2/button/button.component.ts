@@ -29,6 +29,9 @@ const VARIANT_CLASS: Record<Ui2ButtonVariant, string> = {
       [type]="type()"
       [disabled]="disabled() || loading()"
       [class]="classes()"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-expanded]="ariaExpanded()"
+      [attr.aria-controls]="ariaControls()"
       (click)="onClick($event)"
     >
       @if (loading()) {
@@ -141,6 +144,13 @@ export class Ui2ButtonComponent {
   readonly iconRight = input<string | null>(null);
   readonly iconOnly = input<boolean>(false);
   readonly fullWidth = input<boolean>(false);
+  /** Nombre accesible. Obligatorio de facto cuando `iconOnly` es true: el icono
+   *  va con `aria-hidden` y sin esto el botón no tendría nombre. */
+  readonly ariaLabel = input<string | null>(null);
+  /** Para botones que gobiernan un acordeón/desplegable. */
+  readonly ariaExpanded = input<boolean | null>(null);
+  /** Id del elemento que despliega `ariaExpanded`. */
+  readonly ariaControls = input<string | null>(null);
   readonly clicked = output<MouseEvent>();
 
   @HostBinding('class.ui2-btn--full-width') get hostFullWidth() {

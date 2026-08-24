@@ -18,9 +18,10 @@
               `editor-page.component.ts` / `editor-cta.component.ts`, y aquí
               solo la cabecera.
    - 1024px → frontera de *ancho disponible*. Gobierna el grid de dos columnas
-              y las filas de ejercicio siempre expandidas. Es una decisión de
-              espacio, no de chrome: entre 768 y 1023px el contenido ya compite
-              con el sidebar y no caben dos columnas.
+              de la página, la escala de la fila de ejercicio y el reparto en
+              dos columnas de su detalle. Es una decisión de espacio, no de
+              chrome: entre 768 y 1023px el contenido ya compite con el sidebar
+              y no caben dos columnas.
    ===================================================================== */
 
 /* ===== Cabecera de página ===== */
@@ -121,30 +122,28 @@
   gap: 10px;
 }
 
-/* Guarda de CLS mientras resuelve el @defer de la lista. */
+/* Guarda de CLS mientras resuelve el @defer de la lista. Con las filas
+   compactas la lista entera mide poco, así que una guarda alta sería el salto
+   que pretende evitar. */
 .ui2-ed-defer-placeholder {
-  min-height: 280px;
+  min-height: 120px;
 }
 
 /* ===== Fila de ejercicio =====
    Un único DOM: la cabecera siempre visible y `.ui2-ed-ex__details` conmutado
-   por `[data-collapsed]` (acordeón en móvil). A partir de 1024px los detalles
-   están siempre abiertos y el resumen desaparece. */
+   por `[data-collapsed]`. Es un acordeón en **todos** los breakpoints (una fila
+   abierta a la vez); ≥1024px solo cambia la escala y el reparto del detalle. */
 .ui2-ed-ex-item {
   position: relative;
 }
 .ui2-ed-ex-item.cdk-drag-preview {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
 }
+/* Hueco de arrastre: se usa el placeholder por defecto del CDK (un clon del
+   elemento) en lugar de uno propio con altura fija, porque la fila compacta
+   mide distinto según el breakpoint y si el nombre envuelve o no. */
 .ui2-ed-ex-item.cdk-drag-placeholder {
-  opacity: 0;
-}
-
-.ui2-ed-drag-placeholder {
-  height: 76px;
-  border: 2px dashed rgba(var(--kengo-primary-rgb), 0.3);
-  border-radius: 18px;
-  background: rgba(var(--kengo-primary-rgb), 0.04);
+  opacity: 0.3;
 }
 
 .ui2-ed-ex-preview ui2-card {
@@ -156,16 +155,28 @@
   gap: 10px;
 }
 
+/* `border-radius` + `overflow` propios: el fondo de hover de la cabecera tiene
+   esquinas rectas y se saldría del radio 22px de la `ui2-card` que la envuelve. */
 .ui2-ed-ex {
   display: flex;
   flex-direction: column;
+  border-radius: 22px;
+  overflow: hidden;
 }
 
+/* La cabecera entera despliega/repliega (ver `onHeadClick` en los builders); el
+   control accesible real sigue siendo el chevron de `.ui2-ed-ex__toggle`. */
 .ui2-ed-ex__head {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+.ui2-ed-ex__head:hover {
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .ui2-ed-drag-handle {
@@ -256,11 +267,27 @@
   display: block;
 }
 
-/* Toggle edit/check: solo móvil, icono suelto. */
+/* Chevron de despliegue. Es el control accesible del acordeón (lleva
+   `aria-expanded`/`aria-controls`); la cabecera entera solo lo duplica con el
+   ratón. Visible en todos los breakpoints.
+
+   Se rota el host en vez de usar el icono `expand_less`: ese glifo no está en
+   el subset auto-hosteado de Material Symbols (`scripts/.icon-snapshot.txt`) y
+   se renderizaría como el texto "expand_less". Rotar evita tener que engordar
+   la fuente y da la transición gratis. */
 .ui2-ed-ex__toggle {
   flex-shrink: 0;
   display: inline-flex;
   align-self: center;
+  transition: transform 0.18s ease;
+}
+.ui2-ed-ex-item[data-collapsed="false"] .ui2-ed-ex__toggle {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui2-ed-ex__toggle {
+    transition: none;
+  }
 }
 
 .ui2-ed-ex__details {
@@ -270,7 +297,8 @@
   padding: 0 14px 14px;
 }
 
-/* Móvil: colapsado oculta los detalles; expandido oculta el resumen. */
+/* Colapsado oculta los detalles; expandido oculta el resumen (que sería
+   redundante con los campos editables). Aplica en todos los breakpoints. */
 .ui2-ed-ex-item[data-collapsed="true"] .ui2-ed-ex__details {
   display: none;
 }
@@ -435,33 +463,73 @@
 }
 
 /* =====================================================================
-   ≥1024px: los detalles están siempre abiertos, el resumen es redundante
+   ≥1024px: la fila se compacta a una línea y el detalle se reparte en dos
+   columnas. El acordeón es el mismo que en móvil (`[data-collapsed]`), no se
+   fuerza la expansión: con las filas siempre abiertas cada card medía 529px y
+   una lista de 5 ejercicios 2651px, lo que hacía inviable reordenarla.
    ===================================================================== */
 @media (min-width: 1024px) {
-  .ui2-ed-ex__head {
-    padding: 16px 18px 0;
-  }
   .ui2-ed-ex__order {
     display: inline-block;
   }
   .ui2-ed-ex__thumb {
-    width: 80px;
-    height: 80px;
-  }
-  .ui2-ed-ex__name {
-    font-size: 17px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
   }
 
-  /* Pase lo que pase con data-collapsed. */
-  .ui2-ed-ex-item .ui2-ed-ex__details {
-    display: flex !important;
-    padding: 12px 18px 18px;
+  /* --- Fila compacta (70px): nombre + resumen + días en una sola línea. --- */
+  .ui2-ed-ex-item[data-collapsed="true"] .ui2-ed-ex__head {
+    padding: 10px 14px;
   }
-  .ui2-ed-ex-item .ui2-ed-ex__summary,
-  .ui2-ed-ex-item .ui2-ed-ex__weekdots {
-    display: none !important;
+  /* `flex-wrap` en vez de un breakpoint extra: cuando la columna se estrecha
+     (1024px con el sidebar abierto la deja en ~440px) el bloque de resumen cae
+     solo a una segunda línea y la fila pasa a ~99px, sin desbordar. */
+  .ui2-ed-ex__name-block {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
   }
-  .ui2-ed-ex__toggle {
-    display: none !important;
+  .ui2-ed-ex__name {
+    /* 180px es el umbral por debajo del cual el resumen baja de línea. */
+    flex: 1 1 180px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ui2-ed-ex__summary,
+  .ui2-ed-ex__weekdots {
+    flex: 0 0 auto;
+  }
+
+  /* --- Fila expandida --- */
+  .ui2-ed-ex-item[data-collapsed="false"] .ui2-ed-ex__head {
+    padding: 12px 14px 4px;
+  }
+  .ui2-ed-ex-item[data-collapsed="false"] .ui2-ed-ex__details {
+    padding: 4px 14px 14px;
+  }
+}
+
+/* =====================================================================
+   ≥1280px: el detalle se reparte en dos columnas (319px en vez de 529px).
+   No se hace ya en 1024px porque ahí la columna de contenido se queda en
+   ~440px con el sidebar abierto: media columna serían ~200px y los tres
+   inputs de dosis quedarían a ~60px cada uno.
+   ===================================================================== */
+@media (min-width: 1280px) {
+  .ui2-ed-ex-item[data-collapsed="false"] .ui2-ed-ex__details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px 16px;
+  }
+  /* Dosis y días ocupan la primera fila; los textarea caen uno por columna por
+     auto-placement. `--wide` es para rutina-builder, que solo tiene uno. */
+  .ui2-ed-ex__desc-fold,
+  .ui2-ed-ex__footer,
+  .ui2-ed-textarea--wide {
+    grid-column: 1 / -1;
   }
 }

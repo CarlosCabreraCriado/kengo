@@ -209,6 +209,9 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
   onDrop(ev: CdkDragDrop<unknown[]>) {
     if (ev.previousIndex === ev.currentIndex) return;
+    // `ejercicioEditando` es un índice: tras reordenar apuntaría a otro
+    // ejercicio, así que se cierra la fila abierta.
+    this.ejercicioEditando.set(null);
     this.svc.reorder(ev.previousIndex, ev.currentIndex);
   }
 
@@ -236,8 +239,22 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
     this.ejercicioEditando.set(this.ejercicioEditando() === i ? null : i);
   }
 
+  /**
+   * Click en la cabecera de la fila: despliega o repliega. Ignora los clicks
+   * originados en un control (asa de arrastre, chevron, inputs del detalle) y
+   * los que solo cierran una selección de texto.
+   */
+  onHeadClick(ev: MouseEvent, i: number) {
+    const target = ev.target as HTMLElement | null;
+    if (target?.closest('button, a, input, textarea, select')) return;
+    if (window.getSelection()?.isCollapsed === false) return;
+    this.toggleEdicion(i);
+  }
+
   removeEjercicio(ejercicioId: string) {
     this.svc.remove(ejercicioId);
+    // Los índices se desplazan: sin esto quedaría abierta la fila siguiente.
+    this.ejercicioEditando.set(null);
     // Si no quedan ejercicios, volver a la galería
     if (this.svc.items().length === 0) {
       this.toastService.warning('Añade ejercicios a la rutina');
@@ -332,9 +349,5 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
   assetUrl(id: string | null | undefined, w = 200, h = 200) {
     if (!id) return '';
     return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
-  }
-
-  trackByIndex(index: number) {
-    return index;
   }
 }
