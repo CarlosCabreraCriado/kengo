@@ -9,6 +9,11 @@ import {
   ElementRef,
   AfterViewInit,
 } from '@angular/core';
+import { buildAssetUrl, parseAssetUrl } from '../../../core/utils/asset-url';
+
+/** Tamaño del póster: el contenedor es 16:9 a ancho completo. */
+const POSTER_WIDTH = 1280;
+const POSTER_HEIGHT = 720;
 
 @Component({
   selector: 'app-video-ejercicio',
@@ -27,7 +32,7 @@ import {
           [class.object-cover]="fit() === 'cover'"
           [class.object-contain]="fit() === 'contain'"
           [src]="videoUrl"
-          [poster]="posterUrl"
+          [poster]="posterSrc"
           loop
           muted
           playsinline
@@ -38,7 +43,7 @@ import {
           class="h-full w-full"
           [class.object-cover]="fit() === 'cover'"
           [class.object-contain]="fit() === 'contain'"
-          [src]="posterUrl"
+          [src]="posterSrc"
           alt="Imagen del ejercicio"
         />
       } @else {
@@ -103,6 +108,24 @@ import {
 export class VideoEjercicioComponent implements AfterViewInit {
   @Input() videoUrl: string | null = null;
   @Input() posterUrl: string | null = null;
+
+  /**
+   * `<video poster>` no admite `ngSrc`, así que la transformación de
+   * Cloudflare (`/cdn-cgi/image/...`) se aplica aquí de forma explícita.
+   * Las URLs que no son de assets (blobs, locales) se devuelven tal cual.
+   */
+  get posterSrc(): string | null {
+    if (!this.posterUrl) return null;
+    const parsed = parseAssetUrl(this.posterUrl);
+    if (!parsed) return this.posterUrl;
+    return buildAssetUrl(parsed.base, parsed.key, {
+      width: POSTER_WIDTH,
+      height: POSTER_HEIGHT,
+      fit: 'cover',
+      format: 'webp',
+      quality: 80,
+    });
+  }
   @Input() autoplay = true;
   readonly fit = input<'cover' | 'contain'>('cover');
 

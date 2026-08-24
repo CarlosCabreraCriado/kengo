@@ -72,8 +72,9 @@
                 @if (item.ejercicio.portada) {
                   <img
                     [ngSrc]="getImageUrl(item.ejercicio.portada)"
-                    width="56"
-                    height="56"
+                    fill
+                    ngSrcset="64w, 128w, 192w"
+                    sizes="(min-width: 768px) 64px, 56px"
                     loading="lazy"
                     [loaderParams]="{ fit: 'cover', quality: 80 }"
                     [alt]="item.ejercicio.nombre"

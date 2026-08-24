@@ -31,7 +31,7 @@ import {
   BackButtonService,
   BackHandler,
 } from '../../../../core/services/back-button.service';
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 import { Usuario } from '../../../../../types/global';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
 import { CarritoPointers } from '../../data-access/internal/carrito-pointers';
@@ -392,9 +392,9 @@ export class Ui2CarritoEjerciciosComponent
       });
   }
 
-  thumbUrl(id: string | null | undefined, w = 160, h = 90): string {
-    if (!id) return '';
-    return assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' });
+  /** URL sin transformar: las dimensiones las pone NgOptimizedImage vía el loader. */
+  thumbUrl(id: string | null | undefined): string {
+    return id ? rawAssetUrl(id) : '';
   }
 
   dosificacion(it: {

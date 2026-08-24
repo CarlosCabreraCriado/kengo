@@ -10,7 +10,8 @@ import {
   viewChild,
   ElementRef,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgOptimizedImage, NgTemplateOutlet } from '@angular/common';
+import { rawAssetUrl } from '../../../../../../core/utils/asset-url';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import {
   Ui2PillComponent,
@@ -35,7 +36,12 @@ interface EjercicioTimeline {
 @Component({
   selector: 'app-timeline-sesion',
   standalone: true,
-  imports: [NgTemplateOutlet, Ui2PillComponent, Ui2ProgressBarComponent],
+  imports: [
+    NgOptimizedImage,
+    NgTemplateOutlet,
+    Ui2PillComponent,
+    Ui2ProgressBarComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (mode() === 'drawer') {
@@ -163,7 +169,11 @@ interface EjercicioTimeline {
             <div class="exercise-thumb">
               @if (item.portadaUrl) {
                 <img
-                  [src]="item.portadaUrl"
+                  [ngSrc]="item.portadaUrl"
+                  fill
+                  ngSrcset="64w, 128w"
+                  sizes="48px"
+                  [loaderParams]="{ fit: 'cover', quality: 80 }"
                   [alt]="item.ejercicio.ejercicio.nombre"
                   loading="lazy"
                 />
@@ -562,6 +572,7 @@ interface EjercicioTimeline {
     }
 
     .exercise-thumb {
+      position: relative;
       width: 48px;
       height: 48px;
       border-radius: 12px;
@@ -684,7 +695,7 @@ export class TimelineSesionComponent {
         estado,
         index: i,
         portadaUrl: ej.ejercicio?.portada
-          ? this.registroService.getAssetUrl(ej.ejercicio.portada, 96, 96)
+          ? rawAssetUrl(ej.ejercicio.portada)
           : null,
         showPlanDivider,
         planTitulo,

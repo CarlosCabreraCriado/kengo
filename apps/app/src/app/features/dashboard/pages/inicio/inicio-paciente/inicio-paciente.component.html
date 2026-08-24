@@ -145,60 +145,65 @@
   <!-- ========================================================== -->
   <div class="ip-grid">
     <div class="ip-col-left">
-      <!-- Ejercicios — scroller en mobile -->
-      @if (ejerciciosHoy().length > 0) {
-        <ui2-horizontal-scroller
-          class="ip-mobile-only"
-          label="Ejercicios de hoy"
-          action="Ver todo →"
-          (actionClick)="irAActividad()"
-        >
-          @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
-            <ui2-exercise-card
-              [name]="ej.nombre"
-              [sets]="ej.sets"
-              [imageUrl]="ej.imageUrl"
-              [done]="ej.done"
-              [index]="i"
-              (cardClick)="irAActividad()"
-            ></ui2-exercise-card>
-          }
-        </ui2-horizontal-scroller>
-      }
+      <!-- Ejercicios de hoy: una sola lista en el DOM (scroller móvil o grid desktop) -->
+      <ng-template #tarjetaEjercicio let-ej let-i="index" let-fluid="fluid">
+        <ui2-exercise-card
+          [class.ip-exercises-web__card]="fluid"
+          [name]="ej.nombre"
+          [sets]="ej.sets"
+          [imageUrl]="ej.imageUrl"
+          [done]="ej.done"
+          [index]="i"
+          [fluid]="fluid"
+          (cardClick)="irAActividad()"
+        ></ui2-exercise-card>
+      </ng-template>
 
-      <!-- Ejercicios — grid 3-col en desktop -->
       @if (ejerciciosHoy().length > 0) {
-        <section class="ip-exercises-web ip-desktop-only">
-          <header class="ip-exercises-web__head">
-            <div>
-              <span class="ip-exercises-web__eyebrow">Ejercicios de hoy</span>
-              <h3 class="ip-exercises-web__title">
-                {{ ejerciciosHoy().length }} EJERCICIOS · ~{{ tiempoEstimadoHoy() }}
-              </h3>
-            </div>
-            <button
-              type="button"
-              class="ip-exercises-web__link"
-              (click)="irAActividad()"
-            >
-              Ver plan completo →
-            </button>
-          </header>
-          <div class="ip-exercises-web__grid">
+        @if (esMobile()) {
+          <ui2-horizontal-scroller
+            label="Ejercicios de hoy"
+            action="Ver todo →"
+            (actionClick)="irAActividad()"
+          >
             @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
-              <ui2-exercise-card
-                class="ip-exercises-web__card"
-                [name]="ej.nombre"
-                [sets]="ej.sets"
-                [imageUrl]="ej.imageUrl"
-                [done]="ej.done"
-                [index]="i"
-                [fluid]="true"
-                (cardClick)="irAActividad()"
-              ></ui2-exercise-card>
+              <ng-container
+                *ngTemplateOutlet="
+                  tarjetaEjercicio;
+                  context: { $implicit: ej, index: i, fluid: false }
+                "
+              ></ng-container>
             }
-          </div>
-        </section>
+          </ui2-horizontal-scroller>
+        } @else {
+          <section class="ip-exercises-web">
+            <header class="ip-exercises-web__head">
+              <div>
+                <span class="ip-exercises-web__eyebrow">Ejercicios de hoy</span>
+                <h3 class="ip-exercises-web__title">
+                  {{ ejerciciosHoy().length }} EJERCICIOS · ~{{ tiempoEstimadoHoy() }}
+                </h3>
+              </div>
+              <button
+                type="button"
+                class="ip-exercises-web__link"
+                (click)="irAActividad()"
+              >
+                Ver plan completo →
+              </button>
+            </header>
+            <div class="ip-exercises-web__grid">
+              @for (ej of ejerciciosHoy(); track ej.id; let i = $index) {
+                <ng-container
+                  *ngTemplateOutlet="
+                    tarjetaEjercicio;
+                    context: { $implicit: ej, index: i, fluid: true }
+                  "
+                ></ng-container>
+              }
+            </div>
+          </section>
+        }
       }
 
       <!-- Activity chart — datos reales vía EstadisticasService -->

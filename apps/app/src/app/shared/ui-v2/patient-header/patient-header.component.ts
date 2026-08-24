@@ -37,6 +37,12 @@ import { Ui2ModoPacienteWarningComponent } from '../modo-paciente-warning/modo-p
           class="ui2-patient-header__logo"
           [class.ui2-patient-header__logo--clinica]="esLogoClinica()"
         >
+          <!--
+            Se queda en [src]: ThemeService ya entrega la URL transformada
+            (144×144, fit=cover) y los logos tienen proporciones arbitrarias, así
+            que NgOptimizedImage con width/height fijos dispara NG02952 por
+            aspect-ratio. Además el (error) hace fallback al SVG local.
+          -->
           <img
             [src]="themeService.logoIconUrl()"
             alt=""

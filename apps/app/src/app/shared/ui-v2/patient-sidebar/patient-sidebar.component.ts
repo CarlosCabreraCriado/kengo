@@ -134,6 +134,12 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
           class="ui2-sidebar__logo"
           [class.ui2-sidebar__logo--clinica]="esLogoClinica()"
         >
+          <!--
+            Se queda en [src]: ThemeService ya entrega la URL transformada
+            (144×144, fit=cover) y los logos tienen proporciones arbitrarias, así
+            que NgOptimizedImage con width/height fijos dispara NG02952 por
+            aspect-ratio. Además el (error) hace fallback al SVG local.
+          -->
           <img
             [src]="themeService.logoIconUrl()"
             alt=""
@@ -212,6 +218,7 @@ const DEFAULT_GROUPS: SidebarNavGroup[] = [
               [ngSrc]="clinicBackgroundSrc()"
               fill
               priority
+              sizes="20vw"
               [loaderParams]="{ fit: 'cover', quality: 80 }"
               alt=""
             />

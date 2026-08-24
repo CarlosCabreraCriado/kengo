@@ -33,7 +33,9 @@ import type {
   ConfigSesionMultiPlan,
   EjercicioSesionMultiPlan,
 } from '../../../../../../types/global';
-import { rawAssetUrl, thumbnailUrl } from '../../../../../core/utils/asset-url';
+import { NgTemplateOutlet } from '@angular/common';
+import { rawAssetUrl } from '../../../../../core/utils/asset-url';
+import { useResponsive } from '../../../../../shared/composables/use-responsive';
 import {
   Ui2AvatarComponent,
   Ui2ButtonComponent,
@@ -86,6 +88,7 @@ function formatSets(ej: EjercicioUnificadoHoy): string {
     Ui2ProgressRingComponent,
     Ui2SectionComponent,
     Ui2WebActivityChartComponent,
+    NgTemplateOutlet,
   ],
   templateUrl: './inicio-paciente.component.html',
   styleUrl: './inicio-paciente.component.css',
@@ -104,6 +107,8 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
   private themeService = inject(ThemeService);
   private toast = inject(ToastService);
   private readonly PAGE_LOADER_KEY = 'inicio-paciente';
+  /** Solo se renderiza una de las dos listas de ejercicios (scroller o grid). */
+  readonly esMobile = useResponsive().esMobile;
 
   actividadHoyService = inject(ActividadHoyService);
   rachaService = inject(RachaPacienteService);
@@ -195,7 +200,7 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
         id: ej.id ?? `${ej.planId}-${i}`,
         nombre: ej.ejercicio?.nombre ?? 'Ejercicio',
         sets: formatSets(ej),
-        imageUrl: portada ? thumbnailUrl(portada, 240, 160) : null,
+        imageUrl: portada ? rawAssetUrl(portada) : null,
         done: ej.completadoHoy,
       };
     });

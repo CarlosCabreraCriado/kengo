@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
+import { rawAssetUrl } from '../../../../../../core/utils/asset-url';
 import { SesionStateService } from '../../../../data-access/sesion-state.service';
 import {
   EjercicioPlan,
@@ -120,7 +121,7 @@ export class ResumenSesionComponent {
   });
 
   getImageUrl(id: string): string {
-    return this.registroService.getAssetUrl(id, 128, 128);
+    return rawAssetUrl(id);
   }
 
   formatDuracion(segundos: number): string {

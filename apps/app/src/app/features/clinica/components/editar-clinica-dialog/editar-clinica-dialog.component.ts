@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgOptimizedImage } from '@angular/common';
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Dialog, DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ClinicaGestionService } from '../../data-access/clinica-gestion.service';
@@ -197,7 +197,7 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open<{ file: File }>(ImageUploadComponent, {
       data: {
         url_perfil: this.existingLogoId()
-          ? `${assetUrl(this.existingLogoId(), { fit: 'cover' })}`
+          ? rawAssetUrl(this.existingLogoId())
           : null,
         resizeToWidth: 512,
         format: 'png',

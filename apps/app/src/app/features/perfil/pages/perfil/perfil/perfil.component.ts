@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
-import { assetUrl } from '../../../../../core/utils/asset-url';
+import { rawAssetUrl } from '../../../../../core/utils/asset-url';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
 // Servicios
@@ -179,7 +179,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   public url_perfil = computed(() => {
     const id_avatar = this.usuario()?.avatar;
     return id_avatar
-      ? `${assetUrl(id_avatar, { fit: 'cover' })}`
+      ? rawAssetUrl(id_avatar)
       : null;
   });
 

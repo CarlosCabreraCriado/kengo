@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
-import { assetUrl } from '../../../core/utils/asset-url';
+import { rawAssetUrl } from '../../../core/utils/asset-url';
+import { Ui2AvatarComponent } from '../../ui-v2/avatar/avatar.component';
 
 import { SessionService } from '../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../core/auth/services/clinica-activa.service';
@@ -13,7 +14,7 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
 @Component({
   selector: 'app-selector-paciente',
   standalone: true,
-  imports: [],
+  imports: [Ui2AvatarComponent],
   template: `
     <div class="selector-dialog">
       <!-- Header -->
@@ -70,17 +71,13 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
                 [class.selected]="selectedId() === paciente.id"
                 (click)="selectPaciente(paciente)"
               >
-                @if (avatarUrl(paciente)) {
-                  <img
-                    [src]="avatarUrl(paciente)"
-                    alt=""
-                    class="paciente-avatar"
-                  />
-                } @else {
-                  <div class="paciente-avatar-placeholder">
-                    <span class="material-symbols-outlined">person</span>
-                  </div>
-                }
+                <ui2-avatar
+                  class="paciente-avatar"
+                  [name]="nombreCompleto(paciente)"
+                  [src]="avatarUrl(paciente)"
+                  size="lg"
+                  [border]="true"
+                ></ui2-avatar>
                 <div class="paciente-info">
                   <span class="paciente-name">
                     {{ paciente.first_name }} {{ paciente.last_name }}
@@ -324,29 +321,7 @@ import type { Id } from '../../../../../../../convex/_generated/dataModel';
     }
 
     .paciente-avatar {
-      width: 3rem;
-      height: 3rem;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .paciente-avatar-placeholder {
-      width: 3rem;
-      height: 3rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #e4e4e7 0%, #d4d4d8 100%);
-      border: 2px solid white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .paciente-avatar-placeholder .material-symbols-outlined {
-      font-size: 1.5rem;
-      color: #a1a1aa;
+      flex-shrink: 0;
     }
 
     .paciente-info {
@@ -507,10 +482,12 @@ export class SelectorPacienteComponent implements OnInit {
     this.dialogRef.close();
   }
 
+  /** URL sin transformar: `ui2-avatar` la pasa por NgOptimizedImage. */
   avatarUrl(p: Usuario): string | null {
-    const id_avatar = p?.avatar;
-    return id_avatar
-      ? `${assetUrl(id_avatar, { fit: 'cover', width: 96, height: 96, quality: 80 })}`
-      : null;
+    return p?.avatar ? rawAssetUrl(p.avatar) : null;
+  }
+
+  nombreCompleto(p: Usuario): string {
+    return [p?.first_name, p?.last_name].filter(Boolean).join(' ');
   }
 }

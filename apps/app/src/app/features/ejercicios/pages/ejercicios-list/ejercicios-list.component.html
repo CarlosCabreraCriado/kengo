@@ -204,6 +204,8 @@
                   <img
                     [ngSrc]="getAssetUrl(e.portada)"
                     fill
+                    ngSrcset="128w, 192w"
+                    sizes="88px"
                     [priority]="i === 0"
                     [loaderParams]="{ fit: 'cover', quality: 80 }"
                     [alt]="e.nombre"

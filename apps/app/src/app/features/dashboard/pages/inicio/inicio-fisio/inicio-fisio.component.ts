@@ -13,7 +13,7 @@ import { PageLoaderService } from '../../../../../core/services/page-loader.serv
 import { ThemeService } from '../../../../../core/services/theme.service';
 import { ToastService } from '../../../../../shared/services/toast/toast.service';
 import type { Clinica, NotificacionApp, PlanPorVencer, Usuario } from '../../../../../../types/global';
-import { rawAssetUrl, assetUrl } from '../../../../../core/utils/asset-url';
+import { rawAssetUrl } from '../../../../../core/utils/asset-url';
 import {
   daysBetweenYMD,
   getDeviceTz,
@@ -203,11 +203,6 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
       day: 'numeric',
       month: 'short',
     });
-  }
-
-  emisorAvatarUrl(avatar: string | null): string | null {
-    if (!avatar) return null;
-    return assetUrl(avatar, { key: 'avatar' });
   }
 
   // --- Clínica ---

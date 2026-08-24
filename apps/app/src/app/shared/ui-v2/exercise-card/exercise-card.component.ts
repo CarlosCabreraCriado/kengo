@@ -1,3 +1,4 @@
+import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 /**
@@ -8,6 +9,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 @Component({
   selector: 'ui2-exercise-card',
   standalone: true,
+  imports: [NgOptimizedImage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class.ui2-ex-card-host--fluid]': 'fluid()',
@@ -25,7 +27,16 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
         [style.background]="headBackground()"
       >
         @if (imageUrl()) {
-          <img class="ui2-ex-card__img" [src]="imageUrl()!" [alt]="name()" />
+          <img
+            class="ui2-ex-card__img"
+            [ngSrc]="imageUrl()!"
+            fill
+            ngSrcset="128w, 256w, 384w"
+            sizes="(min-width: 1024px) 18vw, 120px"
+            [loaderParams]="{ fit: 'cover', quality: 80 }"
+            loading="lazy"
+            [alt]="name()"
+          />
         } @else {
           <span class="material-symbols-outlined ui2-ex-card__icon" aria-hidden="true">
             {{ fallbackIcon() }}
@@ -71,6 +82,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
       box-shadow: none;
     }
     .ui2-ex-card__head {
+      position: relative;
       display: grid;
       place-items: center;
       height: 80px;

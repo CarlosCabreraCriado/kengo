@@ -75,6 +75,8 @@
                 <img
                   [ngSrc]="thumbUrl(it.ejercicio.portada)"
                   fill
+                  ngSrcset="64w, 128w"
+                  sizes="56px"
                   loading="lazy"
                   [loaderParams]="{ fit: 'cover', quality: 80 }"
                   alt=""
