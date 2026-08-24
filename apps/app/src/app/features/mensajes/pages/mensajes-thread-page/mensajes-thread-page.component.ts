@@ -86,11 +86,25 @@ export class MensajesThreadPageComponent implements OnInit, OnDestroy {
   protected readonly bloqueadoPorClinica = this.mensajes.isActiveConversationBlocked;
 
   protected readonly mostrarStats = computed(
-    () => this.session.enModoFisio() && !this.bloqueadoPorClinica(),
+    () => !!this.conversation()?.iAmFisio && !this.bloqueadoPorClinica(),
   );
 
+  /**
+   * Rol del *otro* participante, derivado del rol real en la conversación
+   * (`iAmFisio`) y no del modo activo de sesión: un fisio con
+   * `tambienEsPaciente` puede estar en un chat donde él es el paciente.
+   */
   protected readonly participantRole = computed<'fisio' | 'paciente'>(() =>
-    this.session.enModoFisio() ? 'paciente' : 'fisio',
+    this.conversation()?.iAmFisio ? 'paciente' : 'fisio',
+  );
+
+  /**
+   * El acceso a la ficha exige ambas cosas: ser el fisio de esta conversación
+   * y estar en modo fisio — `FisioGuard` redirige a `/inicio` a quien esté en
+   * modo paciente.
+   */
+  protected readonly puedeVerFicha = computed(
+    () => !!this.conversation()?.iAmFisio && this.session.puedeGestionarPacientes(),
   );
 
   protected readonly placeholder = computed(() => {
@@ -103,6 +117,18 @@ export class MensajesThreadPageComponent implements OnInit, OnDestroy {
   onBack(): void {
     this.mensajes.selectConversation(null);
     this.router.navigate(['/mensajes']);
+  }
+
+  /**
+   * `participantId` ya es el `Id<'users'>` del paciente, que es justo lo que
+   * espera `/mis-pacientes/:id`: no hace falta ninguna query previa. Si la
+   * conversación es de otra clínica, `clinicaActivaResourceGuard('paciente')`
+   * conmuta la clínica activa durante la navegación.
+   */
+  onVerPaciente(): void {
+    const conv = this.conversation();
+    if (!conv) return;
+    this.router.navigate(['/mis-pacientes', conv.participantId]);
   }
 
   onSend(text: string): void {

@@ -357,6 +357,7 @@ export class MensajesService implements SessionResettable {
         read: raw.myUnreadCount === 0,
       },
       unreadCount: raw.myUnreadCount,
+      iAmFisio: raw.iAmFisio,
       patientStats: raw.patientStats ?? undefined,
     };
   }

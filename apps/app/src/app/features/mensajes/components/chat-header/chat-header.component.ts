@@ -49,9 +49,19 @@ export type ChatHeaderParticipantRole = 'fisio' | 'paciente';
           </div>
         }
 
-        <ui2-pill variant="custom" [color]="roleBadgeColor()" [size]="mobile() ? 'sm' : 'md'">
-          {{ roleBadgeLabel() }}
-        </ui2-pill>
+        @if (puedeVerFicha()) {
+          <ui2-pill
+            variant="soft"
+            [size]="mobile() ? 'sm' : 'md'"
+            icon="person"
+            [clickable]="true"
+            (pillClick)="verPaciente.emit()"
+          >Ver paciente</ui2-pill>
+        } @else {
+          <ui2-pill variant="custom" [color]="roleBadgeColor()" [size]="mobile() ? 'sm' : 'md'">
+            {{ roleBadgeLabel() }}
+          </ui2-pill>
+        }
       </div>
 
       @if (mobile() && mostrarStats() && conversation().patientStats; as stats) {
@@ -146,7 +156,10 @@ export class ChatHeaderComponent {
   readonly mobile = input<boolean>(false);
   readonly mostrarStats = input<boolean>(true);
   readonly participantRole = input<ChatHeaderParticipantRole>('paciente');
+  /** Sustituye el badge de rol por un acceso directo a la ficha del paciente. */
+  readonly puedeVerFicha = input<boolean>(false);
   readonly back = output<void>();
+  readonly verPaciente = output<void>();
 
   readonly successColor = 'var(--success)';
   readonly dangerColor = 'var(--danger)';

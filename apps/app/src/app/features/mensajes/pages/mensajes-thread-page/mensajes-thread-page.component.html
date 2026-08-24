@@ -5,6 +5,8 @@
         [conversation]="conv"
         [mostrarStats]="mostrarStats()"
         [participantRole]="participantRole()"
+        [puedeVerFicha]="puedeVerFicha()"
+        (verPaciente)="onVerPaciente()"
       ></app-chat-header>
       @if (bloqueadoPorClinica()) {
         <app-chat-clinic-block
@@ -30,7 +32,9 @@
           [mobile]="true"
           [mostrarStats]="mostrarStats()"
           [participantRole]="participantRole()"
+          [puedeVerFicha]="puedeVerFicha()"
           (back)="onBack()"
+          (verPaciente)="onVerPaciente()"
         ></app-chat-header>
       </div>
       @if (bloqueadoPorClinica()) {
