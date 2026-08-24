@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 export type Ui2PillVariant = 'primary' | 'soft' | 'neutral' | 'success' | 'warning' | 'danger' | 'custom';
@@ -48,8 +49,22 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
 @Component({
   selector: 'ui2-pill',
   standalone: true,
+  imports: [NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <!-- Un único <ng-content>: Angular solo proyecta el contenido en un slot,
+         así que duplicarlo en las dos ramas del @if deja vacía a una de ellas
+         (el <button> salía sin texto). El outlet lo reutiliza en ambas. -->
+    <ng-template #cuerpo>
+      @if (icon()) {
+        <span
+          class="material-symbols-outlined ui2-pill__icon"
+          aria-hidden="true"
+        >{{ icon() }}</span>
+      }
+      <ng-content></ng-content>
+    </ng-template>
+
     @if (clickable()) {
       <button
         type="button"
@@ -60,13 +75,7 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
         [style.box-shadow]="spec().shadow"
         (click)="onClick($event)"
       >
-        @if (icon()) {
-          <span
-            class="material-symbols-outlined ui2-pill__icon"
-            aria-hidden="true"
-          >{{ icon() }}</span>
-        }
-        <ng-content></ng-content>
+        <ng-container [ngTemplateOutlet]="cuerpo"></ng-container>
       </button>
     } @else {
       <span
@@ -76,13 +85,7 @@ const VARIANTS: Record<Exclude<Ui2PillVariant, 'custom'>, VariantSpec> = {
         [style.color]="spec().fg"
         [style.box-shadow]="spec().shadow"
       >
-        @if (icon()) {
-          <span
-            class="material-symbols-outlined ui2-pill__icon"
-            aria-hidden="true"
-          >{{ icon() }}</span>
-        }
-        <ng-content></ng-content>
+        <ng-container [ngTemplateOutlet]="cuerpo"></ng-container>
       </span>
     }
   `,
