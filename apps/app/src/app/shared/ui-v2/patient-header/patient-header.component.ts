@@ -106,6 +106,7 @@ import { Ui2ModoPacienteWarningComponent } from '../modo-paciente-warning/modo-p
               size="sm"
               [border]="true"
               [active]="isPerfilActive()"
+              [priority]="true"
             ></ui2-avatar>
           </button>
 

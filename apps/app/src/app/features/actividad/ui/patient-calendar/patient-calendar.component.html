@@ -120,9 +120,10 @@
                       <div class="cal-detail__thumb">
                         @if (ejercicio.portada) {
                           <img
-                            [ngSrc]="getAssetUrl(ejercicio.portada)"
-                            width="40"
-                            height="40"
+                            [ngSrc]="portadaUrl(ejercicio.portada)"
+                            fill
+                            ngSrcset="64w, 128w"
+                            sizes="44px"
                             loading="lazy"
                             [loaderParams]="{ fit: 'cover', quality: 80 }"
                             [alt]="ejercicio.nombre"

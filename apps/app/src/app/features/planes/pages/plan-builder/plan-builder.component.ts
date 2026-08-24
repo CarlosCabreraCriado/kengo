@@ -8,7 +8,7 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
@@ -572,9 +572,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
 
   // ========= Helpers =========
 
-  assetUrl(id: string | null | undefined, w = 200, h = 200) {
-    if (!id) return '';
-    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
+  portadaUrl(id: string | null | undefined): string {
+    return rawAssetUrl(id);
   }
 
   avatarUrl(id: string | null | undefined): string | null {

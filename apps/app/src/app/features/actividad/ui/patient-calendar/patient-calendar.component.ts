@@ -15,6 +15,7 @@ import { PlanesService } from '../../../planes/data-access/planes.service';
 import { SesionStateService } from '../../../sesion/data-access/sesion-state.service';
 import { ActividadHoyService } from '../../data-access/actividad-hoy.service';
 import { LoggerService } from '../../../../core/services/logger.service';
+import { rawAssetUrl } from '../../../../core/utils/asset-url';
 
 import {
   PlanCompleto,
@@ -287,8 +288,9 @@ export class PatientCalendarComponent implements OnInit {
     return seleccionado?.fecha.getTime() === dia.fecha.getTime();
   }
 
-  getAssetUrl(id?: string, width = 80, height = 80): string {
-    return this.planesService.getAssetUrl(id, width, height);
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
+  portadaUrl(id?: string): string {
+    return rawAssetUrl(id);
   }
 
   async iniciarSesionDia(dia: DiaCalendario): Promise<void> {

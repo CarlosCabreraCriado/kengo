@@ -169,8 +169,9 @@
                     @if (assetUrl(ej.portada); as portadaSrc) {
                       <img
                         [ngSrc]="portadaSrc"
-                        width="64"
-                        height="64"
+                        fill
+                        ngSrcset="128w, 192w"
+                        sizes="(min-width: 768px) 72px, 64px"
                         loading="lazy"
                         [loaderParams]="{ fit: 'cover', quality: 80 }"
                         [alt]="ej.nombre"
@@ -288,8 +289,9 @@
                     @if (assetUrl(ex.portada); as portadaSrc) {
                       <img
                         [ngSrc]="portadaSrc"
-                        width="64"
-                        height="64"
+                        fill
+                        ngSrcset="128w, 192w"
+                        sizes="(min-width: 768px) 72px, 64px"
                         loading="lazy"
                         [loaderParams]="{ fit: 'cover', quality: 80 }"
                         [alt]="ex.nombre"

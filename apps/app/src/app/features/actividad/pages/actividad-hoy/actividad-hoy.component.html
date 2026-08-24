@@ -52,9 +52,10 @@
               <span class="ah-exercise-row__thumb">
                 @if (ejercicio.ejercicio.portada) {
                   <img
-                    [ngSrc]="getAssetUrl(ejercicio.ejercicio.portada)"
-                    width="64"
-                    height="64"
+                    [ngSrc]="portadaUrl(ejercicio.ejercicio.portada)"
+                    fill
+                    ngSrcset="64w, 128w"
+                    sizes="48px"
                     loading="lazy"
                     [loaderParams]="{ fit: 'cover', quality: 80 }"
                     [alt]="ejercicio.ejercicio.nombre"
@@ -118,9 +119,10 @@
                       <span class="ah-day-list__thumb">
                         @if (ejercicio.portada) {
                           <img
-                            [ngSrc]="getAssetUrl(ejercicio.portada)"
-                            width="56"
-                            height="56"
+                            [ngSrc]="portadaUrl(ejercicio.portada)"
+                            fill
+                            ngSrcset="64w, 128w"
+                            sizes="36px"
                             loading="lazy"
                             [loaderParams]="{ fit: 'cover', quality: 80 }"
                             [alt]="ejercicio.nombre"

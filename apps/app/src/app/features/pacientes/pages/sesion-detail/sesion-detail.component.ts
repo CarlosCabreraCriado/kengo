@@ -14,7 +14,7 @@ import { SessionService } from '../../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { PageLoaderService } from '../../../../core/services/page-loader.service';
 import type { Usuario } from '../../../../../types/global';
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
@@ -319,9 +319,10 @@ export class SesionDetailComponent implements OnInit, OnDestroy {
     return 'var(--danger)';
   }
 
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
   assetUrl(portada: string | null): string | null {
     if (!portada) return null;
-    return `${assetUrl(portada, { fit: 'cover', width: 160, height: 160, quality: 80 })}`;
+    return rawAssetUrl(portada);
   }
 
   formatDuracion(seg: number): string {

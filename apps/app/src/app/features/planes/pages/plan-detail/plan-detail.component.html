@@ -248,9 +248,10 @@
                     <div class="pd-ex__thumb">
                       @if (item.ejercicio.portada) {
                         <img
-                          [ngSrc]="assetUrl(item.ejercicio.portada, 160, 160)"
-                          width="160"
-                          height="160"
+                          [ngSrc]="portadaUrl(item.ejercicio.portada)"
+                          fill
+                          ngSrcset="128w, 192w"
+                          sizes="(min-width: 1024px) 96px, 80px"
                           loading="lazy"
                           [loaderParams]="{ fit: 'cover', quality: 80 }"
                           [alt]="item.ejercicio.nombre"

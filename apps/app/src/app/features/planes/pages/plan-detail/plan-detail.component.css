@@ -291,6 +291,7 @@
 }
 
 .pd-ex__thumb {
+  position: relative;
   grid-area: thumb;
   width: 80px;
   height: 80px;

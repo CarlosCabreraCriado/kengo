@@ -136,9 +136,10 @@
                     <div class="ui2-ed-ex__thumb ui2-ed-ex__thumb--sm">
                       @if (it.ejercicio.portada) {
                         <img
-                          [ngSrc]="assetUrl(it.ejercicio.portada, 96, 96)"
-                          width="96"
-                          height="96"
+                          [ngSrc]="portadaUrl(it.ejercicio.portada)"
+                          fill
+                          ngSrcset="64w, 128w"
+                          sizes="40px"
                           loading="lazy"
                           [loaderParams]="{ fit: 'cover', quality: 80 }"
                           [alt]="it.ejercicio.nombre"
@@ -176,9 +177,10 @@
                     <div class="ui2-ed-ex__thumb">
                       @if (it.ejercicio.portada) {
                         <img
-                          [ngSrc]="assetUrl(it.ejercicio.portada, 128, 128)"
-                          width="128"
-                          height="128"
+                          [ngSrc]="portadaUrl(it.ejercicio.portada)"
+                          fill
+                          ngSrcset="64w, 128w"
+                          sizes="(min-width: 1024px) 48px, 64px"
                           loading="lazy"
                           [loaderParams]="{ fit: 'cover', quality: 80 }"
                           [alt]="it.ejercicio.nombre"

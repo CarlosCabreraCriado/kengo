@@ -290,8 +290,9 @@ export class EditarClinicaDialogComponent implements OnInit, OnDestroy {
     return url;
   }
 
+  /** Foto sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
   getExistingImageUrl(fileId: string): string {
-    return `${assetUrl(fileId, { fit: 'cover', width: 200, height: 150 })}`;
+    return rawAssetUrl(fileId);
   }
 
   // === Tabs ===

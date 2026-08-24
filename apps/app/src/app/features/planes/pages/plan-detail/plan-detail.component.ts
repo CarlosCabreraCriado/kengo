@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
 import { PlanBuilderService } from '../../data-access/plan-builder.service';
@@ -402,9 +402,9 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  assetUrl(id: string | null | undefined, w = 100, h = 100): string {
-    if (!id) return '';
-    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
+  portadaUrl(id: string | null | undefined): string {
+    return rawAssetUrl(id);
   }
 
   avatarUrl(id: string | null | undefined): string | null {

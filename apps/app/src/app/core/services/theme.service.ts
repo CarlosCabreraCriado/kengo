@@ -6,6 +6,9 @@ import { ClinicasService } from '../../features/clinica/data-access/clinicas.ser
 import { PlatformService } from './platform.service';
 import { LoggerService } from './logger.service';
 import type { Clinica } from '../../../types/global';
+
+/** Prefijo de Cloudflare Image Transformations; su ausencia delata una URL legacy. */
+const TRANSFORM_PREFIX = '/cdn-cgi/image/';
 interface ColorPalette {
   primary: string;
   primaryDark: string;
@@ -135,7 +138,7 @@ export class ThemeService {
    */
   private actualizarLogo(clinica: Clinica | null): void {
     if (clinica?.logo) {
-      const logoUrl = assetUrl(clinica.logo, { width: 144, height: 144, fit: 'cover' });
+      const logoUrl = this.logoUrlFor(clinica.logo);
       this.logoUrl.set(logoUrl);
       this.logoIconUrl.set(logoUrl);
       this.logger.log('[ThemeService] Logo de clínica aplicado:', logoUrl);
@@ -154,6 +157,11 @@ export class ThemeService {
     this.logoIconUrl.set(this.DEFAULT_LOGO_ICON);
   }
 
+  /** URL del logo de clínica: 144×144 recortado por Cloudflare (se consume con `[src]`, sin loader). */
+  private logoUrlFor(fileId: string): string {
+    return assetUrl(fileId, { width: 144, height: 144, fit: 'cover' });
+  }
+
   private leerCache(): ThemeCacheV2 | null {
     try {
       const raw = localStorage.getItem(this.CACHE_KEY);
@@ -163,6 +171,15 @@ export class ThemeService {
       if (new Date(data.expiresAt).getTime() < Date.now()) {
         localStorage.removeItem(this.CACHE_KEY);
         return null;
+      }
+      // Cachés anteriores a b9193a7 guardan el logo con query params
+      // (`?width=144&...`), que Cloudflare no transforma. Se regenera la URL
+      // conservando la paleta para no perder el arranque sin flash de colores.
+      if (data.logoFileId && !data.logoUrl.includes(TRANSFORM_PREFIX)) {
+        const logoUrl = this.logoUrlFor(data.logoFileId);
+        const migrated: ThemeCacheV2 = { ...data, logoUrl, logoIconUrl: logoUrl };
+        localStorage.setItem(this.CACHE_KEY, JSON.stringify(migrated));
+        return migrated;
       }
       return data;
     } catch {
@@ -176,9 +193,7 @@ export class ThemeService {
     const expiresAt = new Date(now.getTime() + this.CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
     const primary = clinica.colorPrimario || this.DEFAULT_PRIMARY;
     const logoFileId = clinica.logo || null;
-    const logoUrl = logoFileId
-      ? assetUrl(logoFileId, { width: 144, height: 144, fit: 'cover' })
-      : this.DEFAULT_LOGO;
+    const logoUrl = logoFileId ? this.logoUrlFor(logoFileId) : this.DEFAULT_LOGO;
     const logoIconUrl = logoFileId ? logoUrl : this.DEFAULT_LOGO_ICON;
 
     const cache: ThemeCacheV2 = {

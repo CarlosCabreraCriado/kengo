@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { rawAssetUrl } from '../../../../core/utils/asset-url';
 
 import { RutinasService } from '../../data-access/rutinas.service';
 import type { ErrorRutina } from '../../data-access/rutina-error';
@@ -273,9 +273,9 @@ export class RutinasListComponent implements OnInit, OnDestroy {
     });
   }
 
-  assetUrl(id: string | null | undefined, w = 60, h = 60): string {
-    if (!id) return '';
-    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
+  portadaUrl(id: string | null | undefined): string {
+    return rawAssetUrl(id);
   }
 
   // === Asignar a Paciente ===

@@ -14,6 +14,7 @@ import { DescansoRespiracionComponent } from '../../componentes/descanso-piezas/
 import { DescansoProximoComponent } from '../../componentes/descanso-piezas/descanso-proximo/descanso-proximo.component';
 import { EjercicioPlan } from '../../../../../../../types/global';
 import { Ui2ButtonComponent } from '../../../../../../shared/ui-v2';
+import { rawAssetUrl } from '../../../../../../core/utils/asset-url';
 
 @Component({
   selector: 'app-descanso',
@@ -57,7 +58,7 @@ export class DescansoComponent {
   readonly proximoEjercicio = this.registroService.proximoEjercicio;
   readonly proximoEjercicioPortada = computed(() => {
     const portadaId = this.proximoEjercicio()?.ejercicio?.portada;
-    return portadaId ? this.registroService.getAssetUrl(portadaId, 96, 96) : null;
+    return portadaId ? rawAssetUrl(portadaId) : null;
   });
 
   onTiempoAgotado(): void {

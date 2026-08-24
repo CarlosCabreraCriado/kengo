@@ -7,7 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { videoUrl } from '../../../../core/utils/asset-url';
+import { rawAssetUrl, videoUrl } from '../../../../core/utils/asset-url';
 import { Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { SessionService } from '../../../../core/auth/services/session.service';
@@ -276,6 +276,11 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
 
   getAssetUrl(id?: string, width = 80, height = 80): string {
     return this.planesService.getAssetUrl(id, width, height);
+  }
+
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
+  portadaUrl(id?: string): string {
+    return rawAssetUrl(id);
   }
 
   async iniciarSesionHoy(): Promise<void> {

@@ -17,7 +17,7 @@ import {
 } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { rawAssetUrl } from '../../../../core/utils/asset-url';
 import { RutinaBuilderService } from '../../data-access/rutina-builder.service';
 import {
   describirErrorRutina,
@@ -346,8 +346,8 @@ export class RutinaBuilderComponent implements OnInit, OnDestroy {
 
   // ========= Helpers =========
 
-  assetUrl(id: string | null | undefined, w = 200, h = 200) {
-    if (!id) return '';
-    return `${assetUrl(id, { width: w, height: h, fit: 'cover', format: 'webp' })}`;
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
+  portadaUrl(id: string | null | undefined): string {
+    return rawAssetUrl(id);
   }
 }

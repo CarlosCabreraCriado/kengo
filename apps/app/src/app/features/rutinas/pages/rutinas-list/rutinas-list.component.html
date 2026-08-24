@@ -231,9 +231,10 @@
                         <div class="rl-preview-item__media">
                           @if (ej.ejercicio.portada) {
                             <img
-                              [ngSrc]="assetUrl(ej.ejercicio.portada)"
-                              width="48"
-                              height="48"
+                              [ngSrc]="portadaUrl(ej.ejercicio.portada)"
+                              fill
+                              ngSrcset="64w, 128w"
+                              sizes="44px"
                               loading="lazy"
                               [loaderParams]="{ fit: 'cover', quality: 80 }"
                               [alt]="ej.ejercicio.nombre"

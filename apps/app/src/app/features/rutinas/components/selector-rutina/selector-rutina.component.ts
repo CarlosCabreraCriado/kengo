@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
 import { NgOptimizedImage } from '@angular/common';
 
-import { assetUrl } from '../../../../core/utils/asset-url';
+import { rawAssetUrl } from '../../../../core/utils/asset-url';
 import { RutinasService } from '../../data-access/rutinas.service';
 import { Rutina, RutinaCompleta } from '../../../../../types/global';
 import {
@@ -118,8 +118,8 @@ export class SelectorRutinaComponent implements OnInit {
     this.dialogRef.close();
   }
 
+  /** Portada sin transformar: el loader de NgOptimizedImage aplica el tamaño (modo `fill`). */
   thumbUrl(id: string | null | undefined): string {
-    if (!id) return '';
-    return assetUrl(id, { width: 80, height: 80, fit: 'cover', format: 'webp' });
+    return rawAssetUrl(id);
   }
 }

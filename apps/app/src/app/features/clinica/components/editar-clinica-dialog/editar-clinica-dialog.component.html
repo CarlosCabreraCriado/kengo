@@ -127,8 +127,9 @@
                   >
                     <img
                       [ngSrc]="getExistingImageUrl(img.fileId)"
-                      width="200"
-                      height="150"
+                      fill
+                      ngSrcset="256w, 384w, 512w"
+                      sizes="(min-width: 640px) 200px, 45vw"
                       loading="lazy"
                       [loaderParams]="{ fit: 'cover', quality: 80 }"
                       alt="Imagen de clínica"

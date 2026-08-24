@@ -72,8 +72,9 @@
                   @if (ej.ejercicio.portada) {
                     <img
                       [ngSrc]="thumbUrl(ej.ejercicio.portada)"
-                      width="48"
-                      height="48"
+                      fill
+                      ngSrcset="64w, 128w"
+                      sizes="36px"
                       loading="lazy"
                       [loaderParams]="{ fit: 'cover', quality: 80 }"
                       [alt]="ej.ejercicio.nombre"

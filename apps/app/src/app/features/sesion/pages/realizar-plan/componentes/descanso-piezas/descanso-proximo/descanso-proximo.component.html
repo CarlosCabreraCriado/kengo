@@ -17,8 +17,9 @@
           @if (proximoPortadaUrl(); as portadaSrc) {
             <img
               [ngSrc]="portadaSrc"
-              width="48"
-              height="48"
+              fill
+              ngSrcset="64w, 128w"
+              sizes="48px"
               loading="lazy"
               [loaderParams]="{ fit: 'cover', quality: 80 }"
               [alt]="proximo.ejercicio.nombre"

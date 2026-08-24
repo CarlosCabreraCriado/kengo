@@ -272,6 +272,7 @@
 }
 
 .ejercicio-row__thumb {
+  position: relative;
   width: 64px;
   height: 64px;
   border-radius: 14px;
