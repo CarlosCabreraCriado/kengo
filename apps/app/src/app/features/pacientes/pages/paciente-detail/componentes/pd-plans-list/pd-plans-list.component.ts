@@ -18,6 +18,7 @@ import {
   estadoLabelOf,
   estadoVariantOf,
 } from '../../../../../planes/data-access/plan-estado.constants';
+import { ymdToDateForDisplay } from '../../../../../../shared/utils/date-tz.util';
 
 @Component({
   selector: 'app-pd-plans-list',
@@ -171,9 +172,13 @@ export class PdPlansListComponent {
   formatRange(plan: Plan): string {
     const fmt = (s: string | null | undefined): string => {
       if (!s) return '';
-      const [y, m, d] = s.split('-').map(Number);
-      const date = new Date(Date.UTC(y, m - 1, d, 12));
-      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+      // Fecha CIVIL anclada a 12:00 UTC → formatear con timeZone UTC (sin
+      // ella, en TZ +12..+14 el label saltaba al día siguiente).
+      return ymdToDateForDisplay(s).toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+      });
     };
     const a = fmt(plan.fechaInicio);
     const b = fmt(plan.fechaFin);

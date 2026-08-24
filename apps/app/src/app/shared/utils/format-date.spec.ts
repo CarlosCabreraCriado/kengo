@@ -1,5 +1,8 @@
 import { formatDate } from './format-date';
-import { getMadridDate, offsetMadridDate } from './madrid-date.util';
+import { getDeviceTz, getTodayYmd, offsetTodayYmd } from './date-tz.util';
+
+const hoyDevice = (): string => getTodayYmd(getDeviceTz());
+const ayerDevice = (): string => offsetTodayYmd(getDeviceTz(), -1);
 
 describe('formatDate', () => {
   describe('variante "short"', () => {
@@ -19,28 +22,28 @@ describe('formatDate', () => {
   });
 
   describe('variante "long"', () => {
-    it('devuelve "Hoy" para la fecha de hoy en Madrid', () => {
-      const hoyYMD = getMadridDate();
+    it('devuelve "Hoy" para la fecha de hoy del viewer', () => {
+      const hoyYMD = hoyDevice();
       expect(formatDate(hoyYMD, 'long')).toBe('Hoy');
       // Por defecto sin variant también es long.
       expect(formatDate(hoyYMD)).toBe('Hoy');
     });
 
-    it('devuelve "{label} (Ayer)" para la fecha de ayer en Madrid', () => {
-      const ayerYMD = offsetMadridDate(-1);
+    it('devuelve "{label} (Ayer)" para la fecha de ayer del viewer', () => {
+      const ayerYMD = ayerDevice();
       const label = formatDate(ayerYMD, 'long');
       expect(label).toMatch(/\(Ayer\)$/);
     });
 
     it('devuelve "{Weekday} {dia} {mes}" sin sufijo para fechas del año actual', () => {
-      const hoyYMD = getMadridDate();
+      const hoyYMD = hoyDevice();
       const year = Number(hoyYMD.slice(0, 4));
       // Tomamos una fecha lejana del mismo año, pero distinta de hoy/ayer.
       const fechaMismoAno = `${year}-03-15`;
       // Si por casualidad coincide con hoy o ayer, saltamos.
       if (
         fechaMismoAno !== hoyYMD &&
-        fechaMismoAno !== offsetMadridDate(-1)
+        fechaMismoAno !== ayerDevice()
       ) {
         const label = formatDate(fechaMismoAno, 'long');
         expect(label).not.toMatch(/\(Ayer\)$/);
@@ -51,7 +54,7 @@ describe('formatDate', () => {
     });
 
     it('añade sufijo de año cuando la fecha es de un año distinto', () => {
-      const hoyYMD = getMadridDate();
+      const hoyYMD = hoyDevice();
       const yearActual = Number(hoyYMD.slice(0, 4));
       const otroYear = yearActual === 2026 ? '2030' : '2026';
       const fechaOtroAno = `${otroYear}-05-04`;
@@ -61,8 +64,8 @@ describe('formatDate', () => {
   });
 
   describe('robustez frente a husos del navegador', () => {
-    // formatDate ahora interpreta YYYY-MM-DD como Madrid, no como local.
-    // El día/mes que devuelve siempre coincide con el calendario Madrid,
+    // formatDate ahora interpreta YYYY-MM-DD como fecha civil pura.
+    // El día/mes que devuelve siempre coincide con el calendario de la fecha civil,
     // independientemente de la zona del navegador.
     it('un YYYY-MM-DD concreto siempre formatea con el día correcto', () => {
       // 27 abril es siempre 27 abril en Madrid, independientemente de la

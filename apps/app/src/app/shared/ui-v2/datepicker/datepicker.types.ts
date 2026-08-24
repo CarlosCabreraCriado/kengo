@@ -2,7 +2,7 @@
  * Tipos y lógica pura de calendario para `ui2-datepicker`.
  *
  * Toda la aritmética de fechas trabaja con strings 'yyyy-mm-dd' y `Date`
- * anclados a las 12:00 UTC (patrón de `madrid-date.util.ts`), usando SIEMPRE
+ * anclados a las 12:00 UTC (patrón de `date-tz.util.ts`), usando SIEMPRE
  * `getUTC*`. Nunca `new Date('yyyy-mm-dd')` naive (interpretaría medianoche UTC
  * y desplazaría el día en zonas negativas). Las comparaciones de rango se hacen
  * por orden lexicográfico de 'yyyy-mm-dd', que es TZ-safe.

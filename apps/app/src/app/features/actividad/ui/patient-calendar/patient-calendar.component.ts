@@ -25,9 +25,10 @@ import {
 } from '../../../../../types/global';
 import {
   diaSemanaFromYMD,
-  getMadridDate,
+  getDeviceTz,
+  getTodayYmd,
   ymdToDateForDisplay,
-} from '../../../../shared/utils/madrid-date.util';
+} from '../../../../shared/utils/date-tz.util';
 
 import {
   Ui2BigTitleComponent,
@@ -118,7 +119,7 @@ export class PatientCalendarComponent implements OnInit {
   readonly planesActivosYFuturos = signal<PlanCompleto[]>([]);
   // `mesActual` siempre es un Date a 12:00 UTC (Madrid-safe). Lecturas con
   // `getUTC*`, mutaciones con `setUTC*`.
-  readonly mesActual = signal<Date>(ymdToDateForDisplay(getMadridDate()));
+  readonly mesActual = signal<Date>(ymdToDateForDisplay(getTodayYmd(getDeviceTz())));
   readonly diaSeleccionado = signal<DiaCalendario | null>(null);
 
   readonly usuarioId = computed(() => this.sessionService.usuario()?.id);
@@ -129,7 +130,7 @@ export class PatientCalendarComponent implements OnInit {
   });
 
   readonly fechaHoy = computed(() => {
-    const hoy = ymdToDateForDisplay(getMadridDate());
+    const hoy = ymdToDateForDisplay(getTodayYmd(getDeviceTz()));
     const dia = this.NOMBRES_DIAS[hoy.getUTCDay()];
     const numero = hoy.getUTCDate();
     const mes = this.NOMBRES_MESES[hoy.getUTCMonth()].toLowerCase();
@@ -143,7 +144,7 @@ export class PatientCalendarComponent implements OnInit {
     const mesActual = this.mesActual();
     // Hoy en calendario Madrid, materializado a 12:00 UTC. Comparamos con
     // `getTime()` porque todos los Date del calendario se construyen igual.
-    const hoyDate = ymdToDateForDisplay(getMadridDate());
+    const hoyDate = ymdToDateForDisplay(getTodayYmd(getDeviceTz()));
     const hoyTime = hoyDate.getTime();
 
     const year = mesActual.getUTCFullYear();

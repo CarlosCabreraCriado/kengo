@@ -17,7 +17,11 @@ import {
 } from '../../../../../types/global';
 import { DialogService, ToastService } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
-import { getMadridDate } from '../../../../shared/utils/madrid-date.util';
+import {
+  getTodayYmd,
+  patientTzOf,
+  ymdToDateForDisplay,
+} from '../../../../shared/utils/date-tz.util';
 import {
   ESTADO_DESCRIPCION,
   estadoLabelOf,
@@ -186,7 +190,8 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
   puedeActivar = computed(() => {
     const p = this.plan();
     if (!p?.fechaInicio || !p?.fechaFin) return false;
-    return p.fechaFin >= getMadridDate();
+    // "Hoy" del PACIENTE del plan: su último día cuenta completo.
+    return p.fechaFin >= getTodayYmd(patientTzOf(p.paciente as Usuario | null));
   });
 
   transicionesDisponibles = computed<EstadoPlan[]>(() =>
@@ -240,7 +245,9 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     const pacienteId = (plan.paciente as Usuario | null)?.id;
     if (!pacienteId) return;
     const desde = plan.fechaInicio || undefined;
-    const hasta = plan.fechaFin || getMadridDate();
+    const hasta =
+      plan.fechaFin ||
+      getTodayYmd(patientTzOf(plan.paciente as Usuario | null));
     try {
       const resp = await this.cumplimientoService.getCumplimiento(
         pacienteId,
@@ -372,20 +379,26 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(this.backRoute() as unknown[]);
   }
 
+  // `dateStr` es una fecha CIVIL YYYY-MM-DD: parsearla con `new Date()` la
+  // interpretaba como medianoche UTC y `toLocaleDateString` sin timeZone la
+  // formateaba en la TZ del dispositivo → un día MENOS en cualquier offset
+  // negativo (usuario de viaje en América). Ancla a 12:00 UTC + timeZone UTC.
   formatDate(dateStr: string | null | undefined): string {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('es-ES', {
+    return ymdToDateForDisplay(dateStr).toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+      timeZone: 'UTC',
     });
   }
 
   formatDateShort(dateStr: string | null | undefined): string {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('es-ES', {
+    return ymdToDateForDisplay(dateStr).toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'short',
+      timeZone: 'UTC',
     });
   }
 

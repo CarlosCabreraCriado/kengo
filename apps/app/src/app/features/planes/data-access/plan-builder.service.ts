@@ -22,7 +22,7 @@ import { PlanesService } from './planes.service';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
-import { getMadridDate } from '../../../shared/utils/madrid-date.util';
+import { getDeviceTz, getTodayYmd } from '../../../shared/utils/date-tz.util';
 import {
   Usuario,
   ID,
@@ -596,7 +596,7 @@ export class PlanBuilderService implements SessionResettable {
       // heredada del plan viejo (comportamiento anterior) backdateaba la
       // versión nueva y reescribía la historia de días pasados; el backend
       // además clampa cualquier fecha pasada a hoy (`computeVersionDates`).
-      const hoy = getMadridDate();
+      const hoy = getTodayYmd(getDeviceTz());
       const fechaInicioForm = this.fechaInicio();
       const fechaInicioExplicita =
         fechaInicioForm && fechaInicioForm > hoy ? fechaInicioForm : undefined;

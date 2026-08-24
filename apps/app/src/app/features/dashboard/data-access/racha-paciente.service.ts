@@ -11,9 +11,10 @@ import type { CumplimientoDia, DiaSemana } from '../../../../types/global';
 import {
   daysBetweenYMD,
   diaSemanaFromYMD,
-  getMadridDate,
-  offsetMadridDate,
-} from '../../../shared/utils/madrid-date.util';
+  getDeviceTz,
+  getTodayYmd,
+  offsetTodayYmd,
+} from '../../../shared/utils/date-tz.util';
 
 export interface DiaSemanaCalendario {
   fecha: string;
@@ -45,7 +46,7 @@ export class RachaPacienteService {
       if (!usuario?.id || !this.sessionService.enModoPaciente()) return 'skip';
       const clinicId = this.clinicaActiva.selectedClinicaId();
       return {
-        fecha: getMadridDate(),
+        fecha: getTodayYmd(getDeviceTz()),
         ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
       };
     },
@@ -92,7 +93,7 @@ export class RachaPacienteService {
   readonly cumplimientoSemana = computed<DiaSemanaCalendario[]>(() => {
     const dias = this.diasCumplimiento();
     const planes = this.actividadHoyService.planesActivos();
-    const hoyStr = getMadridDate();
+    const hoyStr = getTodayYmd(getDeviceTz());
 
     // Lunes = 0..., Domingo = 6. `diaSemanaFromYMD` devuelve 'L'..'D'.
     // Iteramos los 7 días de la semana actual partiendo del lunes Madrid.
@@ -103,7 +104,7 @@ export class RachaPacienteService {
 
     for (let i = 0; i < 7; i++) {
       // Offset desde hoy hasta el día i de la semana (lunes = 0).
-      const fechaStr = offsetMadridDate(i - idxHoy);
+      const fechaStr = offsetTodayYmd(getDeviceTz(), i - idxHoy);
       const esHoy = fechaStr === hoyStr;
       const esFuturo = fechaStr > hoyStr;
       const letraIdx = i; // 0=lunes → L, 1=martes → M, etc.
@@ -194,8 +195,8 @@ export class RachaPacienteService {
     try {
       // Rango de los últimos 14 días en calendario Europe/Madrid (mismo
       // huso que `dailyPatientRollup.fecha`).
-      const desdeStr = offsetMadridDate(-14);
-      const hastaStr = getMadridDate();
+      const desdeStr = offsetTodayYmd(getDeviceTz(), -14);
+      const hastaStr = getTodayYmd(getDeviceTz());
 
       const resp = await this.cumplimientoService.getCumplimiento(
         userId,
@@ -221,7 +222,7 @@ export class RachaPacienteService {
 
   private calcularRacha(dias: CumplimientoDia[]): number {
     const sorted = [...dias].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    let fechaEsperada = getMadridDate();
+    let fechaEsperada = getTodayYmd(getDeviceTz());
     let racha = 0;
 
     for (const dia of sorted) {

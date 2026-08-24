@@ -9,10 +9,11 @@ import {
   mapConvexToPlanCompleto,
   mapConvexToRegistro,
 } from '../../../shared/utils/convex-mappers';
+import { TimezoneService } from '../../../core/services/timezone.service';
 import {
-  getMadridDate,
-  getMadridDiaSemana,
-} from '../../../shared/utils/madrid-date.util';
+  getDiaSemanaHoy,
+  getTodayYmd,
+} from '../../../shared/utils/date-tz.util';
 import {
   PlanCompleto,
   RegistroEjercicio,
@@ -32,6 +33,7 @@ export class ActividadHoyService {
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
   private convex = inject(ConvexService);
+  private timezone = inject(TimezoneService);
 
   // ===== Suscripciones reactivas a Convex =====
   // Las queries se re-evalúan automáticamente cuando cambia `usuario()`,
@@ -58,7 +60,9 @@ export class ActividadHoyService {
       const clinicId = this.clinicaActiva.selectedClinicaId();
       return {
         pacienteId: (u.convexId ?? u.id) as Id<'users'>,
-        fecha: getMadridDate(),
+        // "Hoy" del paciente en SU TZ (deviceTz es señal: el resume nativo
+        // la re-detecta y la query se re-evalúa).
+        fecha: getTodayYmd(this.timezone.deviceTz()),
         ...(clinicId ? { clinicId: clinicId as Id<'clinics'> } : {}),
       };
     },
@@ -90,8 +94,11 @@ export class ActividadHoyService {
    */
   readonly cargada = computed(() => !this.cargando());
 
-  // Computed: día actual en zona Europe/Madrid (mismo huso que el backend).
-  private readonly diaHoy = computed(() => getMadridDiaSemana());
+  // Computed: día de la semana actual en la TZ del dispositivo del paciente
+  // (mismo criterio que el backend, que usa su TZ persistida).
+  private readonly diaHoy = computed(() =>
+    getDiaSemanaHoy(this.timezone.deviceTz()),
+  );
 
   // Computed: actividad del día con estado de completado
   readonly actividadHoy = computed<ActividadPlanDia[]>(() => {

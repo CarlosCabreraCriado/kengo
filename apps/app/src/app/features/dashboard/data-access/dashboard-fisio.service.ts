@@ -11,9 +11,10 @@ import type {
 import type { Ui2ActivityDay } from '../../../shared/ui-v2';
 import {
   diaSemanaFromYMD,
-  getMadridDate,
-  offsetMadridDate,
-} from '../../../shared/utils/madrid-date.util';
+  getDeviceTz,
+  getTodayYmd,
+  offsetTodayYmd,
+} from '../../../shared/utils/date-tz.util';
 
 interface ActividadDia {
   fecha: string;
@@ -147,10 +148,10 @@ export class DashboardFisioService {
     if (!data || data.days.length === 0) {
       // Fallback: 10 días con value=0 mientras llegan los datos. Mantiene la
       // gráfica válida sin saltos de layout porque `data` es input.required.
-      const hoy = getMadridDate();
+      const hoy = getTodayYmd(getDeviceTz());
       const days: Ui2ActivityDay[] = [];
       for (let i = -9; i <= 0; i++) {
-        const fecha = offsetMadridDate(i);
+        const fecha = offsetTodayYmd(getDeviceTz(), i);
         days.push({
           label: diaSemanaFromYMD(fecha),
           value: 0,

@@ -11,7 +11,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { DialogService } from '../../services/dialog';
-import { ymdToDateForDisplay } from '../../utils/madrid-date.util';
+import { ymdToDateForDisplay } from '../../utils/date-tz.util';
 import type { Ui2DatepickerMode, Ui2DatepickerSheetData } from './datepicker.types';
 // Import de solo-tipo (se borra en compilación): permite referenciar el tipo
 // del componente sin cargar su código; el valor llega vía `import()` perezoso.

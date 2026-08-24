@@ -12,6 +12,7 @@ import { BetterAuthService } from './better-auth.service';
 import { ClinicaActivaService } from './clinica-activa.service';
 import { SESSION_RESETTABLES } from '../session-resettable';
 import { LoggerService } from '../../services/logger.service';
+import { TimezoneService } from '../../services/timezone.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { rawAssetUrl } from '../../utils/asset-url';
 import { CarritoPointers } from '../../../features/planes/data-access/internal/carrito-pointers';
@@ -188,6 +189,7 @@ export class SessionService {
   private convex = inject(ConvexService);
   private betterAuth = inject(BetterAuthService);
   private logger = inject(LoggerService);
+  private timezone = inject(TimezoneService);
   // Inyectamos el Injector y resolvemos SESSION_RESETTABLES lazy dentro de
   // `limpiar()`. Resolverlo en construcción provocaría una dependencia
   // circular: los servicios resettable (PlanBuilderService, etc.) inyectan
@@ -419,6 +421,10 @@ export class SessionService {
       const usuario = this.transformarUsuarioConvex(convexUser);
       this._usuario.set(usuario);
 
+      // Sincronizar la TZ del dispositivo (define el "día" del usuario en
+      // backend). Best-effort en background: no bloquea el arranque.
+      void this.timezone.syncWithBackend();
+
       if (usuario.esFisio) {
         CarritoPointers.set({ fisioId: usuario.id });
       } else {
@@ -490,6 +496,7 @@ export class SessionService {
       esFisio: esFisio ?? false,
       esPaciente: esPaciente ?? true,
       numero_colegiado: u.numeroColegiado || undefined,
+      timezone: u.timezone || undefined,
     };
   }
 

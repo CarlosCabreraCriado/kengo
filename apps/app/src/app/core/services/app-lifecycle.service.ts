@@ -6,6 +6,7 @@ import { ConvexService } from '../convex/convex.service';
 import { LoggerService } from './logger.service';
 import { PlatformService } from './platform.service';
 import { PushNotificationService } from './push-notification.service';
+import { TimezoneService } from './timezone.service';
 
 /**
  * Ciclo de vida nativo (resume/pause). Sin esto, al volver de background la
@@ -27,6 +28,7 @@ export class AppLifecycleService {
   private readonly sessionService = inject(SessionService);
   private readonly convexService = inject(ConvexService);
   private readonly pushNotifications = inject(PushNotificationService);
+  private readonly timezone = inject(TimezoneService);
 
   /** Tras una pausa más larga que esto, se refrescan los datos del usuario. */
   private static readonly REFRESH_TRAS_PAUSA_MS = 30 * 60 * 1000;
@@ -66,6 +68,9 @@ export class AppLifecycleService {
     if (this.sessionService.isLoggedIn()) {
       void this.pushNotifications.refreshPermissionState();
       void this.pushNotifications.init();
+      // La TZ del dispositivo puede haber cambiado en background (viaje,
+      // ajustes). Solo re-sincroniza si difiere de la última enviada.
+      void this.timezone.syncWithBackend();
     }
 
     // Si quedó visible el overlay de error de conexión, reintentar

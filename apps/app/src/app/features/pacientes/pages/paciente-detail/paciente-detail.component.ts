@@ -31,9 +31,10 @@ import { esErrorYaGestionado } from '../../../../core/billing/subscription-gate.
 import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
 import {
-  getMadridDate,
-  offsetMadridDate,
-} from '../../../../shared/utils/madrid-date.util';
+  getTodayYmd,
+  offsetTodayYmd,
+  patientTzOf,
+} from '../../../../shared/utils/date-tz.util';
 
 // Diálogos
 import { AddPacienteDialogComponent } from '../../components/add-paciente/add-paciente.component';
@@ -184,6 +185,7 @@ interface DialogClosedResult {
               <aside class="pd2-col pd2-col--side">
                 <app-pd-active-plan-card
                   [plan]="planActivo()"
+                  [patientTz]="paciente()?.timezone ?? null"
                   (verPlan)="verPlan($event)"
                   (crearPlan)="crearPlan()"
                 />
@@ -216,6 +218,7 @@ interface DialogClosedResult {
               <app-pd-active-plan-card
                 [plan]="planActivo()"
                 [bare]="true"
+                [patientTz]="paciente()?.timezone ?? null"
                 (verPlan)="verPlan($event)"
                 (crearPlan)="crearPlan()"
               />
@@ -657,7 +660,8 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     this.isLoadingPlanes.set(true);
     try {
       const planes = await this.planesService.getPlanesByPaciente(pacienteId);
-      const hoyYMD = getMadridDate();
+      // "Hoy" del PACIENTE (su TZ): su último día de plan cuenta completo.
+      const hoyYMD = getTodayYmd(patientTzOf(this.paciente()));
       const corregidos = planes.map((plan) => {
         if (
           plan.estado === 'activo' &&
@@ -684,8 +688,9 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     this.isLoadingEstadisticas.set(true);
 
     try {
-      const hasta = getMadridDate();
-      const desde = offsetMadridDate(-(RANGO_DIAS - 1));
+      const tzPaciente = patientTzOf(this.paciente());
+      const hasta = getTodayYmd(tzPaciente);
+      const desde = offsetTodayYmd(tzPaciente, -(RANGO_DIAS - 1));
 
       const { actual, trend } =
         await this.cumplimientoService.getCumplimientoConTendencia(
@@ -720,7 +725,12 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
       // Sesiones más recientes primero.
       this.sesiones.set([...sesionesAg].reverse());
       this.estadisticas.set(
-        this.cumplimientoService.buildEstadisticas(dias, sesionesAg, actual.resumen),
+        this.cumplimientoService.buildEstadisticas(
+          dias,
+          sesionesAg,
+          actual.resumen,
+          patientTzOf(this.paciente()),
+        ),
       );
     } catch (err) {
       this.logger.error('Error cargando cumplimiento:', err);

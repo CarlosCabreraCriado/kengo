@@ -3,9 +3,10 @@ import { DiaSemana } from '../../../../../types/global';
 import {
   daysBetweenYMD,
   diaSemanaFromYMD,
-  getMadridDate,
+  getDeviceTz,
+  getTodayYmd,
   ymdToDateForDisplay,
-} from '../../../../shared/utils/madrid-date.util';
+} from '../../../../shared/utils/date-tz.util';
 
 interface CalCell {
   ymd: string;
@@ -194,7 +195,7 @@ export class PlanMiniCalendarComponent {
   readonly dowLabels = DOW_LABELS;
 
   readonly mesActual = linkedSignal<Date>(() => {
-    const ymd = this.fechaInicio() || getMadridDate();
+    const ymd = this.fechaInicio() || getTodayYmd(getDeviceTz());
     return ymdToDateForDisplay(ymd);
   });
 
@@ -223,7 +224,7 @@ export class PlanMiniCalendarComponent {
 
   readonly cells = computed<CalCell[]>(() => {
     const anchor = this.anchorYmd();
-    const today = getMadridDate();
+    const today = getTodayYmd(getDeviceTz());
     const start = this.fechaInicio() || null;
     const end = this.fechaFin() || null;
     const dias = new Set(this.diasActivos() ?? []);

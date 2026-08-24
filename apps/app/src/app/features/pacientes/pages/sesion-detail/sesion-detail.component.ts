@@ -18,7 +18,7 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 import { ConvexService } from '../../../../core/convex/convex.service';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { api } from '../../../../../../../../convex/_generated/api';
-import { ymdToDateForDisplay } from '../../../../shared/utils/madrid-date.util';
+import { ymdToDateForDisplay } from '../../../../shared/utils/date-tz.util';
 import {
   Ui2AvatarComponent,
   Ui2BackButtonComponent,

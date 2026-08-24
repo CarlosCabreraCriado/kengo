@@ -6,11 +6,13 @@ import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
 import { Id } from '../../../../../../../convex/_generated/dataModel';
 import {
+  daysBetweenYMD,
   diaSemanaFromYMD,
-  getMadridDate,
-  offsetMadridDate,
+  getDeviceTz,
+  getTodayYmd,
+  offsetTodayYmd,
   ymdToDateForDisplay,
-} from '../../../shared/utils/madrid-date.util';
+} from '../../../shared/utils/date-tz.util';
 
 export type PeriodoEstadisticas = 'semana' | 'mes' | 'plan';
 
@@ -114,7 +116,7 @@ export class EstadisticasService {
     const daily = this.dailyHistorico();
     const ult10 = ultimosNDias(10);
     const mapaPorFecha = new Map(daily.map((d) => [d.fecha, d]));
-    const hoyStr = getMadridDate();
+    const hoyStr = getTodayYmd(getDeviceTz());
 
     return ult10.map((fecha) => {
       const r = mapaPorFecha.get(fecha);
@@ -220,12 +222,13 @@ export class EstadisticasService {
     const plan = this.planActivo();
     if (!plan) return 'Tu progreso de las últimas semanas.';
 
+    // Semanas en días de CALENDARIO (no fracciones de 24h sobre medianoche
+    // UTC: `new Date('YYYY-MM-DD')` + Date.now() saltaba de semana 1-2h antes).
     const semanas = plan.fechaInicio
       ? Math.max(
           1,
           Math.floor(
-            (Date.now() - new Date(plan.fechaInicio).getTime()) /
-              (1000 * 60 * 60 * 24 * 7),
+            daysBetweenYMD(plan.fechaInicio, getTodayYmd(getDeviceTz())) / 7,
           ),
         )
       : null;
@@ -327,15 +330,13 @@ export class EstadisticasService {
     this.cargando.set(true);
     this.error.set(null);
     try {
-      const hoyYMD = getMadridDate();
-      const desde30YMD = offsetMadridDate(-29);
-      // Date a 12:00 UTC, seguro para los formatters de semana/mes (no
-      // dependen del huso del navegador con esa hora).
-      const hoyDate = ymdToDateForDisplay(hoyYMD);
+      const tz = getDeviceTz();
+      const hoyYMD = getTodayYmd(tz);
+      const desde30YMD = offsetTodayYmd(tz, -29);
       const desdeAnioSemana = '2020-W01';
-      const hastaAnioSemana = formatISOWeek(hoyDate);
+      const hastaAnioSemana = formatISOWeek(hoyYMD);
       const desdeAnioMes = '2020-01';
-      const hastaAnioMes = formatYearMonth(hoyDate);
+      const hastaAnioMes = formatYearMonth(hoyYMD);
 
       const [daily, weekly, monthly, planes, historial] = await Promise.all([
         this.convex.query(api.rollups.queries.getDailyByPaciente, {
@@ -396,25 +397,21 @@ export class EstadisticasService {
   }
 
   private weeklyActual(): WeeklyRollup | null {
-    // Date Madrid-safe (12:00 UTC) para que `formatISOWeek` lea día/mes
-    // correctamente sin importar el huso del navegador ni el DST.
-    const semanaHoy = formatISOWeek(ymdToDateForDisplay(getMadridDate()));
+    const semanaHoy = formatISOWeek(getTodayYmd(getDeviceTz()));
     return this.weeklyHistorico().find((w) => w.anioSemana === semanaHoy) ?? null;
   }
 
   private weeklyAnterior(): WeeklyRollup | null {
-    // -7 días sobre el calendario Madrid (no sobre milisegundos: el cambio
+    // -7 días sobre el calendario (no sobre milisegundos: el cambio
     // CET↔CEST haría que 7×86400000 ms saltase a otro día).
-    const semanaPrevia = formatISOWeek(
-      ymdToDateForDisplay(offsetMadridDate(-7)),
-    );
+    const semanaPrevia = formatISOWeek(offsetTodayYmd(getDeviceTz(), -7));
     return (
       this.weeklyHistorico().find((w) => w.anioSemana === semanaPrevia) ?? null
     );
   }
 
   private monthlyActual(): MonthlyRollup | null {
-    const mesHoy = formatYearMonth(ymdToDateForDisplay(getMadridDate()));
+    const mesHoy = formatYearMonth(getTodayYmd(getDeviceTz()));
     return this.monthlyHistorico().find((m) => m.anioMes === mesHoy) ?? null;
   }
 
@@ -489,8 +486,9 @@ export class EstadisticasService {
 // ============================================================
 
 function ultimosNDias(n: number): string[] {
+  const tz = getDeviceTz();
   const result: string[] = [];
-  for (let i = n - 1; i >= 0; i--) result.push(offsetMadridDate(-i));
+  for (let i = n - 1; i >= 0; i--) result.push(offsetTodayYmd(tz, -i));
   return result;
 }
 
@@ -510,9 +508,12 @@ function computeBarValue(r: DailyRollup | undefined): number {
   return Math.min(1, r.totalCompletados / r.totalEsperados);
 }
 
-function formatISOWeek(d: Date): string {
-  // ISO 8601 week date — algoritmo estándar
-  const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+function formatISOWeek(ymd: string): string {
+  // ISO 8601 week date — algoritmo estándar sobre la fecha CIVIL (aritmética
+  // 100% en UTC; antes se leía con getters locales y en TZ extremas saltaba
+  // de semana, desplazando el rango de las queries de rollups).
+  const [y, m, d] = ymd.split('-').map(Number);
+  const target = new Date(Date.UTC(y, m - 1, d));
   const dayNr = (target.getUTCDay() + 6) % 7;
   target.setUTCDate(target.getUTCDate() - dayNr + 3);
   const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
@@ -524,8 +525,8 @@ function formatISOWeek(d: Date): string {
   return `${target.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-function formatYearMonth(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+function formatYearMonth(ymd: string): string {
+  return ymd.slice(0, 7);
 }
 
 function formatDelta(n: number): string {
@@ -568,8 +569,9 @@ function buildSesionVm(s: SesionReciente): SesionHistoricaVm {
 
 function formatHistoryDay(fecha: string): string {
   const d = ymdToDateForDisplay(fecha);
-  const hoyYMD = getMadridDate();
-  const ayerYMD = offsetMadridDate(-1);
+  const tz = getDeviceTz();
+  const hoyYMD = getTodayYmd(tz);
+  const ayerYMD = offsetTodayYmd(tz, -1);
 
   const dayLetter = dayLetterFor(fecha);
   const dia = d.getUTCDate();

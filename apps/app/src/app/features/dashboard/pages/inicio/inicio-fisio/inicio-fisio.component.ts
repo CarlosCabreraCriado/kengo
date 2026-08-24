@@ -16,10 +16,11 @@ import type { Clinica, NotificacionApp, PlanPorVencer, Usuario } from '../../../
 import { rawAssetUrl, assetUrl } from '../../../../../core/utils/asset-url';
 import {
   daysBetweenYMD,
-  getMadridDate,
-  offsetMadridDate,
-  ymdMadridFromInstant,
-} from '../../../../../shared/utils/madrid-date.util';
+  getDeviceTz,
+  getTodayYmd,
+  offsetTodayYmd,
+  ymdFromInstant,
+} from '../../../../../shared/utils/date-tz.util';
 import {
   Ui2CardComponent,
   Ui2ClinicaSwitchTriggerComponent,
@@ -163,7 +164,7 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
   diasParaVencer(fechaFin: string): number {
     // `fechaFin` viene como YYYY-MM-DD (calendario Madrid). `daysBetweenYMD`
     // cuenta días enteros del calendario, estable frente a DST.
-    return daysBetweenYMD(getMadridDate(), fechaFin);
+    return daysBetweenYMD(getTodayYmd(getDeviceTz()), fechaFin);
   }
 
   textoVencimiento(plan: PlanPorVencer): string {
@@ -194,8 +195,8 @@ export class InicioFisioComponent implements OnInit, OnDestroy {
     if (horas < 24) return `Hace ${horas}h`;
 
     // A partir de "Ayer" estamos comparando días calendario Madrid.
-    const fechaYMD = ymdMadridFromInstant(fecha);
-    const ayerYMD = offsetMadridDate(-1);
+    const fechaYMD = ymdFromInstant(fecha, getDeviceTz());
+    const ayerYMD = offsetTodayYmd(getDeviceTz(), -1);
     if (fechaYMD === ayerYMD) return 'Ayer';
     return new Date(fecha).toLocaleDateString('es-ES', {
       timeZone: 'Europe/Madrid',

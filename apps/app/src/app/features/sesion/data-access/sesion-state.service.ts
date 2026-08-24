@@ -16,9 +16,10 @@ import { Id } from '../../../../../../../convex/_generated/dataModel';
 import { SesionPersistenceService } from './sesion-persistence.service';
 import { SesionTemporizadorService } from './sesion-temporizador.service';
 import {
-  getMadridDate,
-  getMadridDiaSemana,
-} from '../../../shared/utils/madrid-date.util';
+  getDeviceTz,
+  getDiaSemanaHoy,
+  getTodayYmd,
+} from '../../../shared/utils/date-tz.util';
 import {
   ConvexExecutionRecord,
   mapConvexToRegistro,
@@ -212,7 +213,7 @@ export class SesionStateService {
     if (!userId) return null;
 
     try {
-      const hoy = getMadridDate();
+      const hoy = getTodayYmd(getDeviceTz());
       const planes = (await this.planesService.getPlanesByPaciente(userId))
         .filter(
           (p) =>
@@ -529,7 +530,9 @@ export class SesionStateService {
       : ejercicio.id;
 
     const fechaHora = new Date().toISOString();
-    const fecha = getMadridDate();
+    // Solo telemetría: el backend deriva la fecha real con la TZ persistida
+    // del paciente (`derivePatientFecha`) e ignora esta.
+    const fecha = getTodayYmd(getDeviceTz());
 
     let planExerciseId: Id<'planExercises'>;
     try {
@@ -808,12 +811,12 @@ export class SesionStateService {
   }
 
   /**
-   * Consultar la sesión del paciente autenticado para hoy (zona Madrid).
+   * Consultar la sesión del paciente autenticado para hoy (en su TZ).
    * Devuelve la primera (BN1: 1 sesión por paciente y día) o null.
    */
   private async consultarSesionHoy(): Promise<SesionRehidratable | null> {
     try {
-      const fecha = getMadridDate();
+      const fecha = getTodayYmd(getDeviceTz());
       const clinicId = this.clinicaActiva.selectedClinicaId();
       const sessions = await this.convex.query(
         api.sessions.queries.getByPacienteAndDateWithExecutions,
@@ -857,7 +860,7 @@ export class SesionStateService {
    * `actividad`). Lee de `exerciseExecutions` directamente.
    */
   async obtenerRegistrosHoy(pacienteId: string): Promise<RegistroEjercicio[]> {
-    const hoy = getMadridDate();
+    const hoy = getTodayYmd(getDeviceTz());
 
     try {
       const convexUserId = this.resolveUserConvexId(pacienteId);
@@ -880,7 +883,7 @@ export class SesionStateService {
   // ========= Helpers =========
 
   private filtrarEjerciciosHoy(items: EjercicioPlan[]): EjercicioPlan[] {
-    const hoy = getMadridDiaSemana();
+    const hoy = getDiaSemanaHoy(getDeviceTz());
 
     return items.filter((item) => {
       if (!item.diasSemana || item.diasSemana.length === 0) {

@@ -11,6 +11,12 @@ import { Router } from '@angular/router';
 import { NotificacionesService } from '../../../core/services/notificaciones.service';
 import type { NotificacionApp } from '../../../../types/global';
 import { Ui2AvatarComponent } from '../avatar/avatar.component';
+import {
+  daysBetweenYMD,
+  getDeviceTz,
+  getTodayYmd,
+  ymdFromInstant,
+} from '../../utils/date-tz.util';
 import { Ui2SpinnerComponent } from '../spinner/spinner.component';
 
 /**
@@ -394,7 +400,10 @@ export class Ui2NotificacionesMenuComponent {
     if (mins < 60) return `${mins} min`;
     const horas = Math.floor(mins / 60);
     if (horas < 24) return `${horas} h`;
-    const dias = Math.floor(horas / 24);
+    // A partir de aquí, días de CALENDARIO en la TZ del viewer (con ventanas
+    // de 24h, algo de anteayer por la noche seguía siendo "ayer").
+    const tz = getDeviceTz();
+    const dias = daysBetweenYMD(ymdFromInstant(fecha, tz), getTodayYmd(tz));
     if (dias === 1) return 'ayer';
     if (dias < 7) return `${dias} d`;
     return new Date(fecha).toLocaleDateString('es-ES', {

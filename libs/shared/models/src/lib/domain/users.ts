@@ -52,6 +52,12 @@ export interface Usuario {
   /** @computed Derivado de clinicas[].puesto - true si paciente en alguna clínica o sin acceso fisio */
   esPaciente: boolean;
   numero_colegiado?: string;
+  /**
+   * Zona horaria IANA del dispositivo del usuario (ej. "Atlantic/Canary"),
+   * sincronizada por la app. Define su "día" (sessions/executions/rollups).
+   * Ausente si nunca sincronizó → tratar como Europe/Madrid.
+   */
+  timezone?: string;
 }
 
 /**

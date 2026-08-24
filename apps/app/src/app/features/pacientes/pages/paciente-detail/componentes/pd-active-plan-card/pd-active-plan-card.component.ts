@@ -10,9 +10,13 @@ import { Plan } from '../../../../../../../types/global';
 
 function formatYmdShort(s: string | null | undefined): string {
   if (!s) return '';
-  const [y, m, d] = s.split('-').map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d, 12));
-  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  // Fecha CIVIL anclada a 12:00 UTC → formatear SIEMPRE con timeZone UTC
+  // (sin ella, en TZ +12..+14 el label saltaba al día siguiente).
+  return ymdToDateForDisplay(s).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
 }
 import {
   Ui2ButtonComponent,
@@ -22,8 +26,10 @@ import {
 } from '../../../../../../shared/ui-v2';
 import {
   daysBetweenYMD,
-  getMadridDate,
-} from '../../../../../../shared/utils/madrid-date.util';
+  getTodayYmd,
+  patientTzOf,
+  ymdToDateForDisplay,
+} from '../../../../../../shared/utils/date-tz.util';
 
 @Component({
   selector: 'app-pd-active-plan-card',
@@ -147,27 +153,32 @@ import {
 export class PdActivePlanCardComponent {
   readonly plan = input<Plan | null>(null);
   readonly bare = input<boolean>(false);
+  /** TZ IANA del paciente dueño del plan (su "hoy"); null → fallback Madrid. */
+  readonly patientTz = input<string | null>(null);
   readonly verPlan = output<Plan>();
   readonly crearPlan = output<void>();
 
   readonly Math = Math;
+
+  private readonly hoy = computed(() =>
+    getTodayYmd(patientTzOf({ timezone: this.patientTz() })),
+  );
 
   readonly progress = computed<number>(() => {
     const p = this.plan();
     if (!p?.fechaInicio || !p?.fechaFin) return 0;
     const inicio = p.fechaInicio;
     const fin = p.fechaFin;
-    const hoy = getMadridDate();
     const total = daysBetweenYMD(inicio, fin);
     if (total <= 0) return 1;
-    const transcurrido = daysBetweenYMD(inicio, hoy);
+    const transcurrido = daysBetweenYMD(inicio, this.hoy());
     return Math.max(0, Math.min(1, transcurrido / total));
   });
 
   readonly daysLeft = computed<number | null>(() => {
     const p = this.plan();
     if (!p?.fechaFin) return null;
-    return daysBetweenYMD(getMadridDate(), p.fechaFin);
+    return daysBetweenYMD(this.hoy(), p.fechaFin);
   });
 
   formatRange(): string {

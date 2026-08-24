@@ -24,11 +24,12 @@ import {
 } from '../../../../../types/global';
 import {
   diaSemanaFromYMD,
-  getMadridDate,
-  getMadridDiaSemana,
-  offsetMadridDate,
+  getDeviceTz,
+  getDiaSemanaHoy,
+  getTodayYmd,
+  offsetTodayYmd,
   ymdToDateForDisplay,
-} from '../../../../shared/utils/madrid-date.util';
+} from '../../../../shared/utils/date-tz.util';
 import {
   useResponsive,
   DialogService,
@@ -140,14 +141,14 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
 
   readonly usuarioId = computed(() => this.sessionService.usuario()?.id);
   readonly fechaHoy = computed(() => {
-    const hoy = ymdToDateForDisplay(getMadridDate());
+    const hoy = ymdToDateForDisplay(getTodayYmd(getDeviceTz()));
     const dia = this.NOMBRES_DIAS[hoy.getUTCDay()];
     const numero = hoy.getUTCDate();
     const mes = this.NOMBRES_MESES[hoy.getUTCMonth()];
     return `${dia}, ${numero} de ${mes}`;
   });
 
-  readonly diaHoy = computed(() => getMadridDiaSemana());
+  readonly diaHoy = computed(() => getDiaSemanaHoy(getDeviceTz()));
 
   readonly actividadHoy = this.actividadHoyService.actividadHoy;
   readonly hayActividadHoy = this.actividadHoyService.hayActividadHoy;
@@ -163,7 +164,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
     const resultado: DiaProximoConEjercicios[] = [];
 
     for (let i = 1; i <= 14 && resultado.length < 7; i++) {
-      const fechaYMD = offsetMadridDate(i);
+      const fechaYMD = offsetTodayYmd(getDeviceTz(), i);
       const diaSemana = diaSemanaFromYMD(fechaYMD);
       const fecha = ymdToDateForDisplay(fechaYMD);
 
@@ -326,7 +327,7 @@ export class ActividadHoyComponent implements OnInit, OnDestroy {
     const planes = this.planesActivosYFuturos();
     // `dia.fecha` se construyó a 12:00 UTC con `ymdToDateForDisplay`, así que
     // formatearla en Madrid devuelve siempre el mismo YYYY-MM-DD.
-    const fechaYMD = getMadridDate(dia.fecha);
+    const fechaYMD = getTodayYmd(getDeviceTz(), dia.fecha);
     const diaSemana = diaSemanaFromYMD(fechaYMD);
 
     for (const plan of planes) {

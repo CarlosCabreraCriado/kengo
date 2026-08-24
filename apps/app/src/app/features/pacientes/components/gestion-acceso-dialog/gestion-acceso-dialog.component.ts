@@ -25,6 +25,12 @@ import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ClinicaActivaService } from '../../../../core/auth/services/clinica-activa.service';
 import { ClipboardService } from '../../../../core/services/clipboard.service';
 import { LoggerService } from '../../../../core/services/logger.service';
+import {
+  daysBetweenYMD,
+  getDeviceTz,
+  getTodayYmd,
+  ymdFromInstant,
+} from '../../../../shared/utils/date-tz.util';
 
 import type { Usuario } from '../../../../../types/global';
 
@@ -235,17 +241,20 @@ export class GestionAccesoDialogComponent implements OnInit {
   formatearUltimoUso(fecha: string | null): string {
     if (!fecha) return 'Nunca';
 
-    const d = new Date(fecha);
-    const ahora = new Date();
-    const diffMs = ahora.getTime() - d.getTime();
-    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    // Días de CALENDARIO en la TZ del viewer, no ventanas de 24h (con
+    // ventanas, "ayer 23:50" era "Hoy" a las 00:10).
+    const tz = getDeviceTz();
+    const diffDias = daysBetweenYMD(ymdFromInstant(fecha, tz), getTodayYmd(tz));
 
     if (diffDias === 0) return 'Hoy';
     if (diffDias === 1) return 'Ayer';
     if (diffDias < 7) return `Hace ${diffDias} días`;
     if (diffDias < 30) return `Hace ${Math.floor(diffDias / 7)} semanas`;
 
-    return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   close() {

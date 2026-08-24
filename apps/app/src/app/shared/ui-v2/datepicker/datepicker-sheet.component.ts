@@ -12,7 +12,7 @@ import {
   Ui2DialogHeaderComponent,
   Ui2DialogHostComponent,
 } from '../dialog/dialog.component';
-import { getMadridDate } from '../../utils/madrid-date.util';
+import { getDeviceTz, getTodayYmd } from '../../utils/date-tz.util';
 import {
   addMonths,
   buildMonthGrid,
@@ -208,7 +208,8 @@ export class Ui2DatepickerSheetComponent {
   private dialogRef = inject(DialogRef<string, Ui2DatepickerSheetComponent>);
   private data = inject<Ui2DatepickerSheetData>(DIALOG_DATA);
 
-  private readonly today = getMadridDate();
+  // "Hoy" del viewer (marca visual del calendario): TZ del dispositivo.
+  private readonly today = getTodayYmd(getDeviceTz());
   readonly weekdays = WEEKDAYS_LMD;
 
   /** Mes visible; arranca en el mes del valor o, si no hay, en el mes actual. */

@@ -1,35 +1,38 @@
 import {
-  getMadridDate,
-  offsetMadridDate,
+  getDeviceTz,
+  getTodayYmd,
+  offsetTodayYmd,
   ymdToDateForDisplay,
-} from './madrid-date.util';
+} from './date-tz.util';
 
 /** Variante de formato de fecha disponible en el helper compartido. */
 export type FormatDateVariant = 'long' | 'short';
 
-const TZ_MADRID = 'Europe/Madrid';
-
+// Los formatters extraen etiquetas (mes, día de semana) de un Date anclado a
+// 12:00 UTC (`ymdToDateForDisplay`), así que la TZ correcta es UTC: es una
+// fecha CIVIL, no un instante — ninguna TZ del dispositivo debe desplazarla.
 const SHORT_MONTH_FORMATTER = new Intl.DateTimeFormat('es-ES', {
-  timeZone: TZ_MADRID,
+  timeZone: 'UTC',
   month: 'short',
 });
 const LONG_MONTH_FORMATTER = new Intl.DateTimeFormat('es-ES', {
-  timeZone: TZ_MADRID,
+  timeZone: 'UTC',
   month: 'long',
 });
 const WEEKDAY_FORMATTER = new Intl.DateTimeFormat('es-ES', {
-  timeZone: TZ_MADRID,
+  timeZone: 'UTC',
   weekday: 'short',
 });
 
 /**
- * Formatea una fecha YYYY-MM-DD (calendario Europe/Madrid) en español.
+ * Formatea una fecha civil YYYY-MM-DD en español.
  *
  * - `'long'` (por defecto): "Hoy" / "Sáb 27 abril (Ayer)" / "Mar 4 mayo 2027".
  * - `'short'`: "27 abr".
  *
- * "Hoy" y "Ayer" se calculan respecto al calendario Europe/Madrid (mismo
- * huso que el backend), no respecto al huso del navegador.
+ * "Hoy" y "Ayer" son relativos al VIEWER: se calculan con la TZ del
+ * dispositivo de quien mira (un canario a las 23:30 sigue viendo "Hoy" en su
+ * día local).
  */
 export function formatDate(
   iso: string,
@@ -43,8 +46,9 @@ export function formatDate(
     return `${day} ${month}`;
   }
 
-  const hoyYMD = getMadridDate();
-  const ayerYMD = offsetMadridDate(-1);
+  const tz = getDeviceTz();
+  const hoyYMD = getTodayYmd(tz);
+  const ayerYMD = offsetTodayYmd(tz, -1);
 
   if (iso === hoyYMD) return 'Hoy';
   const esAyer = iso === ayerYMD;

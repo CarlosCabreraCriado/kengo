@@ -1,6 +1,6 @@
 import { TipoCumplimiento } from '../../../../types/global';
 import { formatDate } from '../../../shared/utils/format-date';
-import { ymdMadridFromInstant } from '../../../shared/utils/madrid-date.util';
+import { getDeviceTz, ymdFromInstant } from '../../../shared/utils/date-tz.util';
 
 /** Color tailwind para una escala de dolor 0-10. */
 export function getDolorColor(dolor: number | null): string {
@@ -52,5 +52,5 @@ export function formatearFecha(fecha: string): string {
  * interpretándolo como día calendario en Europe/Madrid.
  */
 export function formatearFechaComentario(fechaIso: string): string {
-  return formatDate(ymdMadridFromInstant(fechaIso), 'short');
+  return formatDate(ymdFromInstant(fechaIso, getDeviceTz()), 'short');
 }

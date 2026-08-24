@@ -30,11 +30,13 @@ import { esErrorYaGestionado } from '../../../../core/billing/subscription-gate.
 import { EjercicioPlan, DiaSemana } from '../../../../../types/global';
 import { SafeHtmlPipe } from '../../../../shared';
 import {
+  addDaysYmd,
   daysBetweenYMD,
   diaSemanaFromYMD,
-  getMadridDate,
-  offsetMadridDate,
-} from '../../../../shared/utils/madrid-date.util';
+  getDeviceTz,
+  getTodayYmd,
+  offsetTodayYmd,
+} from '../../../../shared/utils/date-tz.util';
 import {
   Ui2AvatarComponent,
   Ui2BackButtonComponent,
@@ -148,7 +150,9 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     return v === 'custom' ? 'custom' : String(v);
   });
 
-  minDate = getMadridDate();
+  // "Hoy" del fisio (deviceTz): aproximación aceptable para el minDate del
+  // formulario — el backend valida activación con la TZ del paciente.
+  minDate = getTodayYmd(getDeviceTz());
 
   isEditMode = computed(() => this.svc.isEditMode());
   paciente = computed(() => this.svc.paciente());
@@ -213,7 +217,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
     for (let i = 0; i < totalDias; i++) {
       const dia = diaSemanaFromYMD(cursor);
       if (diasUnion.has(dia)) sesiones++;
-      cursor = offsetMadridDateFromYmd(cursor, 1);
+      cursor = addDaysYmd(cursor, 1);
     }
     return `${totalDias} días totales · ${sesiones} sesion${sesiones === 1 ? '' : 'es'} programada${sesiones === 1 ? '' : 's'}`;
   });
@@ -337,7 +341,7 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   private generarDescripcionPorDefecto(): string {
     const paciente = this.svc.paciente();
     const fisio = this.sessionService.usuario();
-    const fechaHoy = this.formatDateFull(getMadridDate());
+    const fechaHoy = this.formatDateFull(getTodayYmd(getDeviceTz()));
 
     const nombrePaciente = paciente
       ? `${paciente.first_name} ${paciente.last_name}`
@@ -597,16 +601,6 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
   }
 
   getTomorrowString(): string {
-    return offsetMadridDate(1);
+    return offsetTodayYmd(getDeviceTz(), 1);
   }
-}
-
-/**
- * Suma `offset` días a un YYYY-MM-DD interpretado como Madrid sin saltos DST.
- */
-function offsetMadridDateFromYmd(ymd: string, offset: number): string {
-  const [y, m, d] = ymd.split('-').map(Number);
-  const utc = new Date(Date.UTC(y, m - 1, d, 12));
-  utc.setUTCDate(utc.getUTCDate() + offset);
-  return utc.toISOString().slice(0, 10);
 }

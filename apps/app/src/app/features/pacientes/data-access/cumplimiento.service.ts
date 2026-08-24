@@ -18,11 +18,13 @@ import {
   SesionAgrupada,
 } from './paciente-detail.types';
 import {
+  addDaysYmd,
   daysBetweenYMD,
-  getMadridDate,
-  offsetMadridDate,
-  ymdMadridFromInstant,
-} from '../../../shared/utils/madrid-date.util';
+  getDeviceTz,
+  getTodayYmd,
+  offsetTodayYmd,
+  ymdFromInstant,
+} from '../../../shared/utils/date-tz.util';
 
 export interface CumplimientoConTendencia {
   actual: CumplimientoResponse;
@@ -90,8 +92,9 @@ export class CumplimientoService {
         return { dias: [], resumen: this.emptyResumen() };
       }
 
-      // Default: año en curso si no se pasa rango (calendario Europe/Madrid).
-      const hoy = getMadridDate();
+      // Default: año en curso si no se pasa rango (TZ del dispositivo; para
+      // el detalle de fisio los rangos llegan explícitos desde el caller).
+      const hoy = getTodayYmd(getDeviceTz());
       const inicioAno = `${hoy.slice(0, 4)}-01-01`;
 
       const rollups = (await this.convex.query(
@@ -128,9 +131,9 @@ export class CumplimientoService {
     clinicId?: string | null,
   ): Promise<CumplimientoConTendencia> {
     const dias = daysBetweenYMD(desde, hasta) + 1; // ambos inclusive
-    const offsetDesde = -dias;
-    const desdeAnterior = offsetMadridDate(offsetDesde, new Date(`${desde}T12:00:00Z`));
-    const hastaAnterior = offsetMadridDate(-1, new Date(`${desde}T12:00:00Z`));
+    // Aritmética pura de calendario sobre el YMD (sin pasar por instantes).
+    const desdeAnterior = addDaysYmd(desde, -dias);
+    const hastaAnterior = addDaysYmd(desde, -1);
 
     const [actual, anterior] = await Promise.all([
       this.getCumplimiento(pacienteId, desde, hasta, clinicId),
@@ -363,6 +366,9 @@ export class CumplimientoService {
     dias: CumplimientoDia[],
     sesiones: SesionAgrupada[],
     resumen: ResumenCumplimiento,
+    // TZ del PACIENTE cuya actividad se mira (el fisio pasa la del paciente;
+    // en modo paciente el default del dispositivo es la suya).
+    tz: string = getDeviceTz(),
   ): EstadisticasPaciente {
     const doloresGenerales = sesiones
       .filter((s) => s.promedioDolorValue !== null)
@@ -392,10 +398,10 @@ export class CumplimientoService {
     }
     let diasDesdeUltimaSesion: number | null = null;
     if (ultimoDiaActividad) {
-      // Diferencia de días calendario Madrid (estable frente a DST).
+      // Diferencia de días calendario (estable frente a DST).
       diasDesdeUltimaSesion = daysBetweenYMD(
         ultimoDiaActividad.fecha,
-        getMadridDate(),
+        getTodayYmd(tz),
       );
     }
 
@@ -404,8 +410,8 @@ export class CumplimientoService {
       adherenciaGeneral: resumen.adherenciaReal,
       promedioDolorGeneral,
       diasDesdeUltimaSesion,
-      rachaActual: this.calcularRachaCumplimiento(dias),
-      adherenciaSemanal: this.calcularAdherenciaSemanalCumplimiento(dias),
+      rachaActual: this.calcularRachaCumplimiento(dias, tz),
+      adherenciaSemanal: this.calcularAdherenciaSemanalCumplimiento(dias, tz),
     };
   }
 
@@ -417,9 +423,9 @@ export class CumplimientoService {
     const grupos = new Map<string, RegistroEjercicioRecord[]>();
     for (const reg of registros) {
       // `reg.fechaHora` es un instante UTC (ISO con `Z`). El día calendario
-      // del paciente se calcula en Europe/Madrid para coincidir con el
-      // contrato de `dailyPatientRollup.fecha` y `sessions.fecha`.
-      const fecha = ymdMadridFromInstant(reg.fechaHora);
+      // del paciente se calcula en su TZ para coincidir con el contrato de
+      // `dailyPatientRollup.fecha` y `sessions.fecha`.
+      const fecha = ymdFromInstant(reg.fechaHora, getDeviceTz());
       if (!grupos.has(fecha)) {
         grupos.set(fecha, []);
       }
@@ -428,9 +434,12 @@ export class CumplimientoService {
     return grupos;
   }
 
-  private calcularRachaCumplimiento(dias: CumplimientoDia[]): number {
+  private calcularRachaCumplimiento(
+    dias: CumplimientoDia[],
+    tz: string,
+  ): number {
     const sorted = [...dias].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    let fechaEsperada = getMadridDate();
+    let fechaEsperada = getTodayYmd(tz);
     let racha = 0;
 
     for (const dia of sorted) {
@@ -454,15 +463,16 @@ export class CumplimientoService {
 
   private calcularAdherenciaSemanalCumplimiento(
     dias: CumplimientoDia[],
+    tz: string,
   ): { semana: string; porcentaje: number }[] {
     const resultado: { semana: string; porcentaje: number }[] = [];
 
     for (let i = 0; i < 4; i++) {
       // Ventanas de 7 días contadas hacia atrás desde hoy en calendario
-      // Madrid (no en milisegundos: el cambio CET↔CEST haría una semana
-      // de 6 u 8 días).
-      const finStr = offsetMadridDate(-i * 7);
-      const inicioStr = offsetMadridDate(-i * 7 - 6);
+      // (no en milisegundos: el cambio CET↔CEST haría una semana de 6 u
+      // 8 días).
+      const finStr = offsetTodayYmd(tz, -i * 7);
+      const inicioStr = offsetTodayYmd(tz, -i * 7 - 6);
 
       const diasSemana = dias.filter(
         (d) =>
