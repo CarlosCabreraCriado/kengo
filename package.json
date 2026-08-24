@@ -45,6 +45,8 @@
     "railway:start:frontend": "node apps/app/server.js",
     "railway:build:landingpage": "nx build landingpage --configuration production",
     "railway:start:landingpage": "node apps/landingpage/server.js",
+    "railway:build:media": "echo 'media: sin build, usa node_modules del root'",
+    "railway:start:media": "node apps/media/server.js",
     "images:landingpage": "node tools/scripts/optimize-images.mjs"
   },
   "private": true,

@@ -6,14 +6,38 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { ConvexService } from '../../convex/convex.service';
+import { AssetHostService } from '../../services/asset-host.service';
 import { NetworkService } from '../../services/network.service';
 
-type BannerEstado = 'hidden' | 'offline' | 'reconnected';
+type BannerEstado = 'hidden' | 'offline' | 'reconnected' | 'restricted' | 'reconnecting';
+
+const TEXTO: Record<Exclude<BannerEstado, 'hidden'>, string> = {
+  offline: 'Sin conexión',
+  reconnected: 'Conectado de nuevo',
+  restricted: 'Conexión limitada por tu operador',
+  reconnecting: 'Reconectando…',
+};
+
+const ICONO: Record<Exclude<BannerEstado, 'hidden'>, string> = {
+  offline: 'cloud_off',
+  reconnected: 'cloud_done',
+  restricted: 'sports_soccer',
+  reconnecting: 'sync',
+};
 
 /**
  * Pill compacta de estado de red. Aparece con debounce de 2s al perder
  * conexión (evita parpadeos en túneles/ascensores) y muestra un flash breve
  * de reconexión al volver. No bloquea la UI: Convex resincroniza solo.
+ *
+ * Con red disponible distingue además dos degradaciones:
+ * - `restricted`: el host de assets en Cloudflare no responde y se sirve
+ *   desde el proxy de Railway — la firma de los bloqueos de LaLiga a las IPs
+ *   de Cloudflare durante los partidos. El mensaje deja claro que no es un
+ *   fallo de la app y evita tickets de soporte.
+ * - `reconnecting`: el WebSocket de Convex lleva > `DEBOUNCE_WS_MS` caído
+ *   tras haber conectado alguna vez.
  */
 @Component({
   selector: 'app-offline-banner',
@@ -24,13 +48,14 @@ type BannerEstado = 'hidden' | 'offline' | 'reconnected';
       <div
         class="offline-banner"
         [class.offline-banner--ok]="estado() === 'reconnected'"
+        [class.offline-banner--warn]="estado() === 'restricted'"
         role="status"
         aria-live="polite"
       >
         <span class="material-symbols-outlined offline-banner__icon" aria-hidden="true">
-          {{ estado() === 'offline' ? 'cloud_off' : 'cloud_done' }}
+          {{ icono() }}
         </span>
-        {{ estado() === 'offline' ? 'Sin conexión' : 'Conectado de nuevo' }}
+        {{ texto() }}
       </div>
     }
   `,
@@ -57,6 +82,9 @@ type BannerEstado = 'hidden' | 'offline' | 'reconnected';
     .offline-banner--ok {
       background: var(--success);
     }
+    .offline-banner--warn {
+      background: var(--warning, #b45309);
+    }
     .offline-banner__icon {
       font-size: 16px;
     }
@@ -71,14 +99,27 @@ type BannerEstado = 'hidden' | 'offline' | 'reconnected';
 })
 export class OfflineBannerComponent {
   private readonly network = inject(NetworkService);
+  private readonly convex = inject(ConvexService);
+  private readonly assetHost = inject(AssetHostService);
 
   private static readonly DEBOUNCE_OFFLINE_MS = 2000;
   private static readonly FLASH_RECONNECT_MS = 2500;
+  private static readonly DEBOUNCE_WS_MS = 8000;
 
   readonly estado = signal<BannerEstado>('hidden');
 
+  readonly texto = (): string => {
+    const e = this.estado();
+    return e === 'hidden' ? '' : TEXTO[e];
+  };
+  readonly icono = (): string => {
+    const e = this.estado();
+    return e === 'hidden' ? '' : ICONO[e];
+  };
+
   private offlineTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private wsTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     effect(() => {
@@ -98,12 +139,50 @@ export class OfflineBannerComponent {
       if (estabaOffline) {
         this.estado.set('reconnected');
         this.reconnectTimer = setTimeout(() => {
-          this.estado.set('hidden');
+          this.estado.set(untracked(() => this.estadoDegradado()));
         }, OfflineBannerComponent.FLASH_RECONNECT_MS);
       } else {
-        this.estado.set('hidden');
+        this.estado.set(untracked(() => this.estadoDegradado()));
       }
     });
+
+    // Degradaciones con red: solo se evalúan cuando el banner no está en un
+    // estado transitorio (offline / flash de reconexión), que tienen prioridad.
+    effect(() => {
+      const restricted = this.assetHost.fallbackActivo();
+      const wsDown = this.convex.hasEverConnected() && !this.convex.isConnected();
+      const actual = untracked(this.estado);
+      if (actual === 'offline' || actual === 'reconnected') return;
+
+      if (restricted) {
+        this.clearWsTimer();
+        this.estado.set('restricted');
+        return;
+      }
+      if (wsDown) {
+        if (actual === 'reconnecting' || this.wsTimer) return;
+        this.wsTimer = setTimeout(() => {
+          this.wsTimer = null;
+          if (this.network.online()) this.estado.set('reconnecting');
+        }, OfflineBannerComponent.DEBOUNCE_WS_MS);
+        return;
+      }
+      this.clearWsTimer();
+      this.estado.set('hidden');
+    });
+  }
+
+  /** Estado a mostrar con red disponible (sin debounce del WS). */
+  private estadoDegradado(): BannerEstado {
+    if (this.assetHost.fallbackActivo()) return 'restricted';
+    return 'hidden';
+  }
+
+  private clearWsTimer(): void {
+    if (this.wsTimer) {
+      clearTimeout(this.wsTimer);
+      this.wsTimer = null;
+    }
   }
 
   private clearTimers(): void {
@@ -115,5 +194,6 @@ export class OfflineBannerComponent {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    this.clearWsTimer();
   }
 }

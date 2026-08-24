@@ -57,7 +57,14 @@ export class ConvexService {
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
 
+  // Espejo de `ConnectionState.isWebSocketConnected` del cliente Convex.
+  // Antes solo pasaba a true en el primer onUpdate y nunca volvía a false,
+  // así que la app no podía distinguir "WebSocket caído" de "sin datos".
+  // Consumidores: OfflineBannerComponent (estado "Reconectando…").
   readonly isConnected = signal(false);
+  // true una vez el WebSocket ha llegado a "ready" al menos una vez: evita
+  // avisar de desconexión durante el arranque.
+  readonly hasEverConnected = signal(false);
 
   // Espejo reactivo del estado de auth en el cliente Convex. setAuth lo pone a
   // true solo tras un token válido; clearAuth a false. watchQuery lo lee
@@ -74,6 +81,14 @@ export class ConvexService {
 
   constructor() {
     this.client = new ConvexClient(environment.CONVEX_URL);
+
+    const unsubscribeState = this.client.subscribeToConnectionState((state) => {
+      this.ngZone.run(() => {
+        this.isConnected.set(state.isWebSocketConnected);
+        if (state.hasEverConnected) this.hasEverConnected.set(true);
+      });
+    });
+    this.destroyRef.onDestroy(unsubscribeState);
   }
 
   /**
@@ -230,7 +245,6 @@ export class ConvexService {
                 value.set(result);
                 isLoading.set(false);
                 error.set(null);
-                this.isConnected.set(true);
               });
             },
             // M-9: propagar el error de la query. Antes no se pasaba callback y

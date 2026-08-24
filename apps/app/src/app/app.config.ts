@@ -1,4 +1,4 @@
-import { ApplicationConfig, isDevMode } from '@angular/core';
+import { ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
 import { provideRouter, RouteReuseStrategy, withPreloading } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -12,6 +12,7 @@ import { SessionPreloadStrategy } from './core/config/session-preload.strategy';
 import { isCapacitorNativePlatform } from './core/services/platform.service';
 import { kengoImageLoader } from './core/utils/image-loader';
 import { SESSION_RESETTABLES } from './core/auth/session-resettable';
+import { AssetHostService } from './core/services/asset-host.service';
 import { BadgeSyncService } from './core/services/badge-sync.service';
 import { PushNotificationService } from './core/services/push-notification.service';
 import { MensajesService } from './features/mensajes/data-access/mensajes.service';
@@ -26,6 +27,9 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(), // Still needed for CDK animations
     { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
     { provide: IMAGE_LOADER, useValue: kengoImageLoader },
+    // Sonda no bloqueante del host de assets: conmuta a media.kengoapp.com
+    // cuando el operador bloquea Cloudflare (partidos de LaLiga).
+    provideAppInitializer(() => inject(AssetHostService).init()),
     ...provideConvex(),
     provideServiceWorker('ngsw-worker.js', {
       // Deshabilitado en native: el SW interfiere con WKWebView (capacitor://) y

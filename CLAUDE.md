@@ -16,7 +16,8 @@ Kengo is a healthcare/physiotherapy management platform built with Angular 20. I
 kengo/
 ├── apps/
 │   ├── app/                    # Angular frontend application (kengoapp.com)
-│   └── landingpage/            # Angular landing page (www.kengoapp.com)
+│   ├── landingpage/            # Angular landing page (www.kengoapp.com)
+│   └── media/                  # Proxy de respaldo de R2 en Railway (media.kengoapp.com)
 └── libs/
     └── shared/
         ├── models/             # @kengo/shared-models library
@@ -29,8 +30,9 @@ kengo/
 
 ## Backend Integration
 
-- **Directus CMS**: Primary data source
-- **Convex**: Custom endpoints served over HTTP at `CONVEX_SITE_URL` (backend.kengoapp.com). El antiguo backend Express (system.kengoapp.com) fue decomisionado tras la migración completa a Convex.
+- **Convex** (self-hosted en Railway): fuente de datos principal. WebSocket en `CONVEX_URL` (convex.kengoapp.com) y endpoints HTTP en `CONVEX_SITE_URL` (backend.kengoapp.com). El antiguo backend Express (system.kengoapp.com) fue decomisionado tras la migración completa a Convex.
+- **Directus CMS** (api.kengoapp.com): solo catálogo de ejercicios, leído por el cron `directus-catalog-sync` de Convex. El cliente Angular ya no habla con Directus.
+- **Cloudflare**: DNS de `kengoapp.com`, R2 (`assets.kengoapp.com`) e Image Transformations. **Nunca poner un host de la ruta crítica de la app tras el proxy de Cloudflare** (nube naranja): los operadores españoles bloquean sus IPs durante los partidos de LaLiga. Solo `assets.` está proxied y tiene fallback automático a `media.kengoapp.com` (`apps/media`, proxy de R2 en Railway). Topología completa y checklist en `docs/INFRAESTRUCTURA_RED.md`.
 
 ## Convex CLI
 

@@ -16,5 +16,12 @@ builder = "railpack"
 #   Start Command:  npm run railway:start:landingpage
 #   Healthcheck:    /health (expuesto por apps/landingpage/server.js)
 #
+# MEDIA — servicio "media" (media.kengoapp.com), proxy de respaldo de R2 sin
+# Cloudflare delante (bloqueos de LaLiga). Ver apps/media/README.md:
+#   Build Command:  npm run railway:build:media
+#   Start Command:  npm run railway:start:media
+#   Healthcheck:    /health
+#   Variables:      R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
+#
 # El backend Node/Express se retiró en la migración completa a Convex; ya no
 # existe servicio BACKEND ni scripts `railway:*:backend`.

@@ -1,4 +1,4 @@
-import { environment } from '../../../environments/environment';
+import { assetsBase } from './asset-host.store';
 
 export interface AssetUrlOptions {
   width?: number;
@@ -39,8 +39,12 @@ function ensureExtension(rawKey: string, ext?: string): string {
  * - Vídeos: `<uuid>.mp4`
  *
  * Cloudflare Image Resizing parsea los query params (`width`, `format`, `fit`,
- * `quality`). Cambiar `ASSETS_URL` permite apuntar a un CDN alternativo sin
- * tocar callers.
+ * `quality`); el proxy de respaldo `apps/media` acepta el mismo contrato.
+ *
+ * La base sale de `assetsBase()` (signal): normalmente `ASSETS_URL`, y
+ * `ASSETS_FALLBACK_URL` cuando `AssetHostService` detecta que Cloudflare está
+ * bloqueado por el operador. Al ser un signal, los templates que llaman a esta
+ * función se re-renderizan solos al conmutar.
  */
 export function assetUrl(
   key: string | number | undefined | null,
@@ -48,7 +52,7 @@ export function assetUrl(
 ): string {
   if (key === null || key === undefined || key === '') return '';
 
-  const base = environment.ASSETS_URL.replace(/\/$/, '');
+  const base = assetsBase();
   const keyWithExt = ensureExtension(String(key), opts?.extension ?? 'webp');
 
   const params = new URLSearchParams();

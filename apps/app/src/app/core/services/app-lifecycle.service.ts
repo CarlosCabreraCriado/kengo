@@ -1,6 +1,7 @@
 import { inject, Injectable, NgZone, signal } from '@angular/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { AuthService } from '../auth/services/auth.service';
+import { AssetHostService } from './asset-host.service';
 import { SessionService } from '../auth/services/session.service';
 import { ConvexService } from '../convex/convex.service';
 import { LoggerService } from './logger.service';
@@ -29,6 +30,7 @@ export class AppLifecycleService {
   private readonly convexService = inject(ConvexService);
   private readonly pushNotifications = inject(PushNotificationService);
   private readonly timezone = inject(TimezoneService);
+  private readonly assetHost = inject(AssetHostService);
 
   /** Tras una pausa más larga que esto, se refrescan los datos del usuario. */
   private static readonly REFRESH_TRAS_PAUSA_MS = 30 * 60 * 1000;
@@ -60,6 +62,10 @@ export class AppLifecycleService {
     // El usuario acaba de abrir la app: las notificaciones pendientes ya no
     // aportan (las verá dentro). Best-effort, no bloquea.
     void this.pushNotifications.clearBadge();
+
+    // La app puede haber estado en background durante todo un partido (o al
+    // revés): re-sondear el host de assets sin esperar al timer periódico.
+    void this.assetHost.probe();
 
     // Touch del registro push: recupera a usuarios que quedaron sin token por
     // un fallo previo (carrera APNs, red) y refresca `lastSeenAt`. También
