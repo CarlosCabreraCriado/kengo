@@ -107,6 +107,9 @@ export const startConversationWithFisio = mutation({
   handler: async (ctx, args) => {
     const paciente = await getAuthenticatedUser(ctx);
 
+    // El fisio nunca lo pasa el cliente: se resuelve aquí y en vivo contra
+    // `assignments`, de modo que un cambio de responsable se refleja en el
+    // siguiente arranque de conversación.
     let assignment;
     if (args.clinicId) {
       assignment = await ctx.db
@@ -114,15 +117,30 @@ export const startConversationWithFisio = mutation({
         .withIndex("by_pacienteId_clinicId", (q) =>
           q.eq("pacienteId", paciente._id).eq("clinicId", args.clinicId!),
         )
-        .first();
+        .unique();
       if (!assignment) return null;
     } else {
-      const assignments = await ctx.db
-        .query("assignments")
-        .filter((q) => q.eq(q.field("pacienteId"), paciente._id))
+      // Sin clínica explícita (fallback de robustez; el frontend siempre pasa
+      // clinicId): recorrer las membresías del paciente y buscar por índice.
+      // La versión anterior hacía `.filter()` sin índice, un full scan de
+      // `assignments`, y se quedaba con `assignments[0]` arbitrariamente.
+      const memberships = await ctx.db
+        .query("clinicMemberships")
+        .withIndex("by_userId", (q) => q.eq("userId", paciente._id))
         .collect();
-      if (assignments.length === 0) return null;
-      assignment = assignments[0];
+      for (const m of memberships) {
+        const candidato = await ctx.db
+          .query("assignments")
+          .withIndex("by_pacienteId_clinicId", (q) =>
+            q.eq("pacienteId", paciente._id).eq("clinicId", m.clinicId),
+          )
+          .unique();
+        if (candidato) {
+          assignment = candidato;
+          break;
+        }
+      }
+      if (!assignment) return null;
     }
 
     const existing = await findExistingConversation(

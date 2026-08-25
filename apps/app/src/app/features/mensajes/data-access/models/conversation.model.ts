@@ -36,5 +36,13 @@ export interface Conversation {
    * los que él es el paciente.
    */
   iAmFisio: boolean;
+  /**
+   * Solo significativo cuando `iAmFisio` es `false`: indica si el fisio de este
+   * hilo sigue siendo mi responsable en esa clínica. `null` = no aplica (soy yo
+   * el fisio). Es `false` tanto si el responsable cambió como si me quedé sin
+   * responsable: `conversations.fisioId` se congela al crear el hilo y ningún
+   * flujo lo reencamina al reasignar.
+   */
+  otherIsMyResponsable: boolean | null;
   patientStats?: PatientStats;
 }

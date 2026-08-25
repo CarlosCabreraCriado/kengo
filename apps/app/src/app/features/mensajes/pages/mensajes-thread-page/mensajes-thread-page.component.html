@@ -17,6 +17,21 @@
         <div class="thread-page__body">
           <app-chat-thread [items]="items()"></app-chat-thread>
         </div>
+        @if (noEsMiResponsable()) {
+          <div class="thread-page__stale" role="status">
+            <span class="thread-page__stale-text">
+              Este fisio no es tu responsable.
+            </span>
+            <ui2-button
+              variant="ghost"
+              size="sm"
+              [loading]="abriendoHiloActual()"
+              (clicked)="onIrAFisioActual()"
+            >
+              Escribir a tu responsable
+            </ui2-button>
+          </div>
+        }
         <app-chat-composer
           [placeholder]="composerPlaceholder()"
           [disabled]="bloqueoComposer()"
@@ -43,10 +58,29 @@
           (switchClinic)="onSwitchToClinic()"
         ></app-chat-clinic-block>
       } @else {
-        <div class="thread-page__thread" [class.thread-page__thread--with-subbar]="mostrarStats() && !!conv.patientStats">
+        <div
+          class="thread-page__thread"
+          [class.thread-page__thread--with-subbar]="mostrarStats() && !!conv.patientStats"
+          [class.thread-page__thread--with-notice]="noEsMiResponsable()"
+        >
           <app-chat-thread [items]="items()" [mobile]="true"></app-chat-thread>
         </div>
         <div class="thread-page__composer">
+          @if (noEsMiResponsable()) {
+            <div class="thread-page__stale" role="status">
+              <span class="thread-page__stale-text">
+                Este fisio no es tu responsable.
+              </span>
+              <ui2-button
+                variant="ghost"
+                size="sm"
+                [loading]="abriendoHiloActual()"
+                (clicked)="onIrAFisioActual()"
+              >
+                Escribir a tu responsable
+              </ui2-button>
+            </div>
+          }
           <app-chat-composer
             [placeholder]="composerPlaceholder()"
             [disabled]="bloqueoComposer()"

@@ -58,3 +58,26 @@
   right: 0;
   z-index: 5;
 }
+
+/* Aviso de hilo con un fisio que ya no es el responsable del paciente. */
+.thread-page__stale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 20px;
+  background: var(--cream-100, #f7eedf);
+  border-top: 1px solid var(--ink-100, #f3f4f6);
+}
+
+.thread-page__stale-text {
+  font-size: 13px;
+  color: var(--ink-500, #6b7280);
+}
+
+/* El composer móvil es absoluto: al crecer con el aviso hay que subir el
+   suelo del thread para que no quede tapado. */
+.thread-page__thread--with-notice {
+  bottom: 134px;
+}

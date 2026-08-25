@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { LoggerService } from '../../../core/services/logger.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import type { Id } from '../../../../../../../convex/_generated/dataModel';
 import type { AsignacionResponsable, BulkAsignacionPayload, BulkAsignacionResponse } from '../../../../types/global';
 
 @Injectable({ providedIn: 'root' })
@@ -34,28 +35,32 @@ export class AsignacionesService {
     return from(this.bulkAssignImpl(payload.clinicId, payload.asignaciones));
   }
 
+  /**
+   * Envía el diff tal cual, **incluidos los `fisioId: null`**: para el servidor
+   * `null` significa "retirar la asignación de este paciente". Antes se
+   * filtraban y la baja se conseguía por efecto colateral de que `bulkAssign`
+   * borrase la clínica entera antes de reinsertar — lo que dejaba sin
+   * responsable a todos los pacientes ausentes del diff.
+   *
+   * Tampoco se traga el error: el componente necesita verlo para avisar, y el
+   * gate de suscripción de `ConvexService` re-lanza tras abrir su diálogo.
+   */
   private async bulkAssignImpl(
     clinicId: string,
     asignaciones: { pacienteId: string; fisioId: string | null }[],
   ): Promise<BulkAsignacionResponse> {
-    try {
-      const validAsignaciones = asignaciones.filter((a) => a.fisioId !== null);
+    const { asignadas, eliminadas } = await this.convex.mutation(
+      api.assignments.mutations.bulkAssign,
+      {
+        clinicId: clinicId as Id<'clinics'>,
+        assignments: asignaciones as {
+          pacienteId: Id<'users'>;
+          fisioId: Id<'users'> | null;
+        }[],
+      },
+    );
 
-      const resolvedAssignments = validAsignaciones.map((a) => ({
-        pacienteId: a.pacienteId,
-        fisioId: a.fisioId!,
-      }));
-
-      await this.convex.mutation(api.assignments.mutations.bulkAssign, {
-        clinicId: clinicId as any,
-        assignments: resolvedAssignments as any,
-      });
-
-      const eliminadas = asignaciones.length - validAsignaciones.length;
-      return { success: true, asignadas: resolvedAssignments.length, eliminadas };
-    } catch {
-      return { success: false, asignadas: 0, eliminadas: 0 };
-    }
+    return { success: true, asignadas, eliminadas };
   }
 
   getFisioResponsable(pacienteId: string, clinicaId: string): Observable<AsignacionResponsable | null> {

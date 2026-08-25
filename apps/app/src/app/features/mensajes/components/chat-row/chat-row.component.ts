@@ -30,9 +30,14 @@ import type { Conversation } from '../../data-access/models/conversation.model';
           <span class="row__name" [class.row__name--unread]="hasUnread()">{{ conversation().participantName }}</span>
           <span class="row__time" [class.row__time--unread]="hasUnread()">{{ relativeTime() }}</span>
         </div>
-        @if (attenuated() && conversation().clinicName) {
+        @if (noEsMiResponsable() || (attenuated() && conversation().clinicName)) {
           <div class="row__clinic">
-            <ui2-pill variant="neutral" size="sm">{{ conversation().clinicName }}</ui2-pill>
+            @if (noEsMiResponsable()) {
+              <ui2-pill variant="neutral" size="sm">No es tu responsable</ui2-pill>
+            }
+            @if (attenuated() && conversation().clinicName) {
+              <ui2-pill variant="neutral" size="sm">{{ conversation().clinicName }}</ui2-pill>
+            }
           </div>
         }
         <div class="row__bottom">
@@ -78,6 +83,9 @@ import type { Conversation } from '../../data-access/models/conversation.model';
     .row--attenuated:hover { opacity: 0.72; }
 
     .row__clinic {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
       margin-top: 2px;
     }
 
@@ -168,6 +176,16 @@ export class ChatRowComponent {
 
   readonly hasUnread = computed(() => this.conversation().unreadCount > 0);
   readonly attenuated = computed(() => !this.conversation().isActiveClinic);
+
+  /**
+   * Hilo con un fisio que no es mi responsable en esa clínica: o dejó de serlo
+   * (reasignación) o nunca lo fue (un colega con gestión también puede abrir
+   * chat). Sin esta marca el paciente no lo distingue del hilo vigente — y
+   * cuando el fisio migró a otra cuenta suya, ambos muestran el mismo nombre.
+   */
+  readonly noEsMiResponsable = computed(
+    () => this.conversation().otherIsMyResponsable === false,
+  );
 
   readonly relativeTime = computed(() =>
     this.mensajes.formatRelativeDay(this.conversation().lastMessage.timestamp),

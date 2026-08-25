@@ -249,8 +249,10 @@ export class AsignacionResponsableComponent {
       const result = await firstValueFrom(this.asignacionesService.bulkAsignar(payload));
 
       if (result.success) {
-        // Actualizar originales para reflejar el nuevo estado
-        this.asignacionesOriginales.set(new Map(edit));
+        // Recargar desde servidor en vez de dar por bueno el estado local: el
+        // optimismo ciego es lo que ocultaba que `bulkAssign` borrase las
+        // asignaciones de los pacientes ausentes del diff.
+        await this.cargarDatos(clinicaId);
         const partes: string[] = [];
         partes.push(`${result.asignadas} asignada${result.asignadas !== 1 ? 's' : ''}`);
         if (result.eliminadas > 0) {
