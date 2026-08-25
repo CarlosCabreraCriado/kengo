@@ -70,9 +70,16 @@ export class MensajesShellComponent {
       if (this.mensajes.autoStartAttempted()) return;
       if (!this.clinicaActiva.selectedClinicaId()) return;
       // Solo cuenta como "ya tiene conversación" si existe en la clínica
-      // activa actual. Si solo tiene en otras clínicas, igualmente
-      // queremos arrancar una para la activa.
-      if (this.mensajes.conversations().some((c) => c.isActiveClinic)) return;
+      // activa actual **y con su fisio responsable actual**. Si solo tiene en
+      // otras clínicas, o si el único hilo de esta clínica es con el fisio
+      // anterior (reasignación: `conversations.fisioId` se congela al crear),
+      // igualmente queremos arrancar la del responsable vigente.
+      if (
+        this.mensajes
+          .conversations()
+          .some((c) => c.isActiveClinic && c.otherIsMyResponsable)
+      )
+        return;
 
       this.mensajes.markAutoStartAttempted();
       const id = await this.mensajes.startConversationWithFisio();

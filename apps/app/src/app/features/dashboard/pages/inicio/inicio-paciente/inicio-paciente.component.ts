@@ -1,16 +1,13 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  DestroyRef,
   OnDestroy,
   OnInit,
   computed,
   effect,
   inject,
-  signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SessionService } from '../../../../../core/auth/services/session.service';
 import { ClinicaActivaService } from '../../../../../core/auth/services/clinica-activa.service';
 import { PageLoaderService } from '../../../../../core/services/page-loader.service';
@@ -23,7 +20,9 @@ import {
 import { EstadisticasService } from '../../../../actividad/data-access/estadisticas.service';
 import { NextSessionService } from '../../../../actividad/data-access/next-session.service';
 import { RachaPacienteService } from '../../../data-access/racha-paciente.service';
-import { AsignacionesService } from '../../../../pacientes/data-access/asignaciones.service';
+import { ConvexService } from '../../../../../core/convex/convex.service';
+import { api } from '../../../../../../../../../convex/_generated/api';
+import type { Id } from '../../../../../../../../../convex/_generated/dataModel';
 import { ClinicasService } from '../../../../clinica/data-access/clinicas.service';
 import { MensajesService } from '../../../../mensajes/data-access/mensajes.service';
 import { SesionStateService } from '../../../../sesion/data-access/sesion-state.service';
@@ -98,11 +97,10 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private clinicaActiva = inject(ClinicaActivaService);
   private router = inject(Router);
-  private asignacionesService = inject(AsignacionesService);
+  private convex = inject(ConvexService);
   private clinicasService = inject(ClinicasService);
   private mensajesService = inject(MensajesService);
   private registroService = inject(SesionStateService);
-  private destroyRef = inject(DestroyRef);
   private pageLoader = inject(PageLoaderService);
   private themeService = inject(ThemeService);
   private toast = inject(ToastService);
@@ -128,9 +126,6 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
   sinPlanesActivos = this.actividadHoyService.sinPlanesActivos;
   esDescanso = computed(() => this.actividadHoyService.badgeType() === 'rest');
 
-  fisioAsignado = signal<AsignacionResponsable | null>(null);
-  cargandoFisio = signal(true);
-
   private clinicaPaciente = computed(() => {
     const activeId = this.clinicaActiva.selectedClinicaId();
     if (!activeId) return null;
@@ -139,6 +134,45 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
       ?.clinicas?.find((c) => c.clinicId === activeId);
     return membresia?.puesto === 'paciente' ? membresia.clinicId : null;
   });
+
+  /**
+   * Fisio responsable en la clínica activa. Reactivo (`watchQuery`) y no una
+   * query one-shot: esta ruta está en `routesToCache`, así que el componente
+   * no se destruye al navegar y una reasignación en servidor dejaría el dato
+   * —y el destinatario del chat— congelado durante toda la sesión.
+   */
+  private readonly fisioResponsableQuery = this.convex.watchQuery(
+    api.assignments.queries.getFisioResponsable,
+    () => {
+      const userId = this.sessionService.usuario()?.id;
+      const clinicaId = this.clinicaPaciente();
+      if (!userId || !clinicaId) return 'skip' as const;
+      return {
+        pacienteId: userId as Id<'users'>,
+        clinicId: clinicaId as Id<'clinics'>,
+      };
+    },
+  );
+
+  readonly fisioAsignado = computed<AsignacionResponsable | null>(() => {
+    const result = this.fisioResponsableQuery.value();
+    const clinicaId = this.clinicaPaciente();
+    if (!result || !clinicaId) return null;
+    return {
+      id: result._id,
+      idPaciente: result.pacienteId,
+      idFisio: result.fisioId,
+      idClinica: clinicaId,
+      nombreFisio: result.fisioNombre,
+      apellidoFisio: result.fisioApellido,
+      avatarFisio: result.fisioAvatar,
+      fechaCreacion: new Date(result._creationTime).toISOString(),
+    };
+  });
+
+  readonly cargandoFisio = computed(() =>
+    this.fisioResponsableQuery.isLoading(),
+  );
 
   // Clínica a mostrar en la card "Mi clínica" del paciente. Preferimos la
   // clínica donde el usuario está registrado como paciente; si no existe
@@ -302,33 +336,6 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
         this.rachaService.cargarSiNecesario(userId);
       }
     });
-
-    effect(() => {
-      const userId = this.sessionService.usuario()?.id;
-      const clinicaId = this.clinicaPaciente();
-      if (!userId || !clinicaId) {
-        // Sin contexto de paciente (p. ej. fisio en modo paciente sin puesto
-        // 'paciente') no hay asignación que buscar. Liberamos el gate de carga
-        // para que la UI no quede bloqueada esperando indefinidamente.
-        this.fisioAsignado.set(null);
-        this.cargandoFisio.set(false);
-        return;
-      }
-      this.cargandoFisio.set(true);
-      this.asignacionesService
-        .getFisioResponsable(userId, clinicaId)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (asignacion) => {
-            this.fisioAsignado.set(asignacion);
-            this.cargandoFisio.set(false);
-          },
-          error: () => {
-            this.fisioAsignado.set(null);
-            this.cargandoFisio.set(false);
-          },
-        });
-    });
   }
 
   ngOnInit(): void {
@@ -363,24 +370,20 @@ export class InicioPacienteComponent implements OnInit, OnDestroy {
   }
 
   async enviarMensajeAFisio(): Promise<void> {
-    const idFisio = this.fisioAsignado()?.idFisio;
-    if (!idFisio) return;
-
-    const existing = this.mensajesService
-      .conversations()
-      .find((c) => c.participantId === idFisio);
-    if (existing) {
-      this.router.navigate(['/mensajes', existing.id]);
-      return;
-    }
-
+    // El destinatario lo resuelve el servidor contra `assignments`, en vivo.
+    // Buscar antes en `conversations()` por el id cacheado del fisio abría el
+    // hilo del responsable anterior tras una reasignación, y además el `find`
+    // no filtraba por clínica. La mutation es idempotente: devuelve el hilo
+    // existente con el responsable actual si ya lo hay.
     const conversationId =
       await this.mensajesService.startConversationWithFisio();
     if (conversationId) {
       this.router.navigate(['/mensajes', conversationId]);
-    } else {
-      this.router.navigate(['/mensajes']);
+      return;
     }
+    this.toast.info(
+      'Todavía no tienes un fisio responsable asignado en esta clínica.',
+    );
   }
 
   irAPlan(): void {

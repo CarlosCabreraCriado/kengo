@@ -74,6 +74,7 @@ interface RawConversation {
   lastMessageSenderId: string | null;
   myUnreadCount: number;
   iAmFisio: boolean;
+  otherIsMyResponsable: boolean | null;
   patientStats: {
     adherence: number;
     lastPainScale: number;
@@ -358,6 +359,7 @@ export class MensajesService implements SessionResettable {
       },
       unreadCount: raw.myUnreadCount,
       iAmFisio: raw.iAmFisio,
+      otherIsMyResponsable: raw.otherIsMyResponsable ?? null,
       patientStats: raw.patientStats ?? undefined,
     };
   }

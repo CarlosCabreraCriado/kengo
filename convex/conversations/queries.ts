@@ -46,9 +46,38 @@ export const listMyConversations = query({
       c.pacienteId === me._id ? c.fisioId : c.pacienteId,
     );
     const clinicIds = all.map((c) => c.clinicId);
-    const [usersMap, clinicsMap] = await Promise.all([
+
+    // `conversations.fisioId` se fija al crear el hilo y ningún flujo lo
+    // reencamina: reasignar el responsable (`assignments.assign`/`bulkAssign`)
+    // deja el hilo antiguo intacto y arriba de la bandeja (ordena por
+    // `lastMessageAt`). Sin esta bandera el paciente no puede distinguir el
+    // hilo vigente del anterior — y cuando el fisio migra a otra cuenta suya
+    // ambos muestran el mismo nombre. Una lectura indexada por clínica
+    // distinta en la que figuro como paciente; son pocas.
+    const clinicasComoPaciente = Array.from(
+      new Set(
+        all.filter((c) => c.pacienteId === me._id).map((c) => c.clinicId),
+      ),
+    );
+
+    const [usersMap, clinicsMap, responsablePorClinica] = await Promise.all([
       batchGetMap<"users">(ctx, otherIds),
       batchGetMap<"clinics">(ctx, clinicIds),
+      (async () => {
+        const map = new Map<Id<"clinics">, Id<"users"> | null>();
+        await Promise.all(
+          clinicasComoPaciente.map(async (clinicId) => {
+            const assignment = await ctx.db
+              .query("assignments")
+              .withIndex("by_pacienteId_clinicId", (q) =>
+                q.eq("pacienteId", me._id).eq("clinicId", clinicId),
+              )
+              .unique();
+            map.set(clinicId, assignment?.fisioId ?? null);
+          }),
+        );
+        return map;
+      })(),
     ]);
 
     return all.map((c) => {
@@ -74,6 +103,11 @@ export const listMyConversations = query({
         lastMessageSenderId: c.lastMessageSenderId ?? null,
         myUnreadCount,
         iAmFisio: !iAmPaciente,
+        // Solo significativo cuando soy el paciente (`iAmFisio === false`);
+        // `null` = no aplica. `false` incluye el caso de no tener responsable.
+        otherIsMyResponsable: iAmPaciente
+          ? responsablePorClinica.get(c.clinicId) === c.fisioId
+          : null,
         patientStats: null as null | {
           adherence: number;
           lastPainScale: number;

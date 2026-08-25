@@ -5,6 +5,7 @@ import {
   OnInit,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { ClinicaActivaService, SessionService, SubscriptionService } from '../../../../core';
@@ -14,6 +15,7 @@ import { ChatClinicBlockComponent } from '../../components/chat-clinic-block/cha
 import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
 import { ChatHeaderComponent } from '../../components/chat-header/chat-header.component';
 import { ChatThreadComponent } from '../../components/chat-thread/chat-thread.component';
+import { Ui2ButtonComponent } from '../../../../shared/ui-v2';
 import { MensajesService } from '../../data-access/mensajes.service';
 import { PushNotificationService } from '../../../../core/services/push-notification.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
@@ -27,6 +29,7 @@ import { ToastService } from '../../../../shared/services/toast/toast.service';
     ChatComposerComponent,
     ChatHeaderComponent,
     ChatThreadComponent,
+    Ui2ButtonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mensajes-thread-page.component.html',
@@ -85,6 +88,18 @@ export class MensajesThreadPageComponent implements OnInit, OnDestroy {
    */
   protected readonly bloqueadoPorClinica = this.mensajes.isActiveConversationBlocked;
 
+  /**
+   * El fisio de este hilo no es mi responsable en esta clínica.
+   * `conversations.fisioId` se congela al crear el hilo, así que tras una
+   * reasignación el hilo antiguo sigue arriba de la bandeja: sin este aviso el
+   * paciente sigue escribiendo a la cuenta anterior sin saberlo.
+   */
+  protected readonly noEsMiResponsable = computed(
+    () => this.conversation()?.otherIsMyResponsable === false,
+  );
+
+  protected readonly abriendoHiloActual = signal(false);
+
   protected readonly mostrarStats = computed(
     () => !!this.conversation()?.iAmFisio && !this.bloqueadoPorClinica(),
   );
@@ -133,6 +148,28 @@ export class MensajesThreadPageComponent implements OnInit, OnDestroy {
 
   onSend(text: string): void {
     this.mensajes.sendMessage(text);
+  }
+
+  /**
+   * Lleva al hilo del responsable actual. La mutation resuelve el fisio en
+   * servidor contra `assignments` y es idempotente: devuelve el hilo existente
+   * si ya lo hay, o lo crea si es la primera vez.
+   */
+  async onIrAFisioActual(): Promise<void> {
+    if (this.abriendoHiloActual()) return;
+    this.abriendoHiloActual.set(true);
+    try {
+      const id = await this.mensajes.startConversationWithFisio();
+      if (id) {
+        this.router.navigate(['/mensajes', id]);
+        return;
+      }
+      this.toast.info(
+        'Todavía no tienes un fisio responsable asignado en esta clínica.',
+      );
+    } finally {
+      this.abriendoHiloActual.set(false);
+    }
   }
 
   onSwitchToClinic(): void {
