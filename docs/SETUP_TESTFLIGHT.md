@@ -14,11 +14,11 @@ Guía operativa para llevar la app de Capacitor a TestFlight. El proyecto Xcode 
 | Apple Developer Team | `LTZK7CBKWL` | ✅ listo |
 | Code Sign Style | `Automatic` | ✅ listo (Xcode gestiona certs y profiles) |
 | iOS Deployment Target | `15.0` | ✅ válido (Apple exige iOS 12+; recomendado 13+) |
-| `MARKETING_VERSION` | `1.1.2` | ✅ (fix subida de imágenes, 2026-08-25) |
-| `CURRENT_PROJECT_VERSION` | `5` | ⚠️ hay que incrementarlo en cada subida |
-| `aps-environment` (entitlements) | `development` | ⚠️ debe ser `production` para archive/TestFlight |
+| `MARKETING_VERSION` | `1.2.0` | ✅ (borrado de cuenta del propietario, 2026-08-25) |
+| `CURRENT_PROJECT_VERSION` | `6` | ⚠️ hay que incrementarlo en cada subida |
+| `aps-environment` (entitlements) | `production` | ✅ aplicado (ver §3.1) |
 | Push Notifications | AppDelegate cablea APNs ↔ Firebase | ✅ código listo. Falta APNs Auth Key + capability "Push Notifications" en Apple Developer |
-| `ITSAppUsesNonExemptEncryption` | no declarado en `Info.plist` | ⚠️ Apple lo pregunta en cada build; declarar `NO` evita preguntas manuales |
+| `ITSAppUsesNonExemptEncryption` | `false` en `Info.plist` | ✅ aplicado (ver §3.2); evita el estado "Missing Compliance" |
 | App Icon | un único asset 1024×1024 (`AppIcon-512@2x.png`) | ✅ válido con Xcode 14+ (single-size icon) |
 | Launch Screen | `LaunchScreen.storyboard` | ✅ listo |
 | Permisos en `Info.plist` | cámara + fotos (lectura/escritura) | ✅ con descripciones en español |
@@ -95,9 +95,13 @@ Rellenar en **My Apps → Kengo → App Privacy → Get Started**.
 
 ---
 
-## 3. Cambios necesarios en el repo (4 pequeños)
+## 3. Cambios en el repo
 
-### 3.1 Cambiar `aps-environment` a `production`
+> §3.1 y §3.2 **ya están aplicados** en el repositorio desde la versión 1.1.0;
+> se conservan documentados para saber por qué están ahí y qué revisar si
+> alguna vez dejan de funcionar. §3.3 es la única acción recurrente.
+
+### 3.1 `aps-environment` a `production` — ✅ aplicado
 
 Xcode con automatic signing **a veces** lo sobrescribe en archive, pero declarar `production` explícitamente evita ambigüedad.
 
@@ -110,7 +114,7 @@ Xcode con automatic signing **a veces** lo sobrescribe en archive, pero declarar
 
 > Si necesitas seguir probando push en device local con builds Debug, mantén dos `.entitlements` (Debug=development, Release=production) y referencia cada uno en `CODE_SIGN_ENTITLEMENTS` por configuración. Para empezar, basta con `production` único.
 
-### 3.2 Declarar exención criptográfica
+### 3.2 Declarar exención criptográfica — ✅ aplicado
 
 Para evitar que Apple te pregunte en cada build "¿usas cifrado no exento?", añade en `Info.plist`:
 
@@ -125,13 +129,13 @@ Para evitar que Apple te pregunte en cada build "¿usas cifrado no exento?", añ
 
 ### 3.3 Incrementar build number
 
-Cada subida a TestFlight necesita un `CFBundleVersion` (`CURRENT_PROJECT_VERSION`) único y monótonamente creciente para una misma `MARKETING_VERSION`. Hoy está en `5`.
+Cada subida a TestFlight necesita un `CFBundleVersion` (`CURRENT_PROJECT_VERSION`) único y monótonamente creciente. Hoy está en `6`. **Un build ya subido no se puede reutilizar**: si App Store Connect rechaza el binario por número repetido, es esto.
 
 Opciones:
 - **Manual**: en Xcode, target `App`, pestaña General, campo `Build` → poner `1` ahora, subir a `2`, `3`, ... en cada upload.
 - **Automatizado** (recomendado a futuro): añadir un Run Script Phase con `agvtool next-version -all` o leerlo del git short-sha.
 
-Para la primera subida deja `1`. Apunta siempre el último número usado.
+Apunta siempre el último número usado; el histórico está en la tabla de §0.
 
 ### 3.4 (Opcional pero recomendado) Compartir el scheme `App`
 

@@ -13,12 +13,12 @@ actual del repo hasta producción en Google Play.
 |---|---|
 | Proyecto Android (Capacitor 8) | ✅ existe en `apps/app/android` |
 | `applicationId` | ✅ `com.kengoapp.app` (inmutable tras publicar) |
-| `versionCode` / `versionName` | ✅ `5` / `1.1.2` |
+| `versionCode` / `versionName` | ✅ `6` / `1.2.0` |
 | `minSdk` / `targetSdk` | ✅ 24 / 36 → cumple el requisito de Play de agosto 2026 |
 | R8 en release (`minifyEnabled`) | ✅ activado — **hay que validar un build release firmado** |
 | FCM (`google-services.json`) | ✅ presente, proyecto `kengo-7e804` |
 | Deep links `kengo://` + App Links | ✅ manifest acotado a `/magic` e `/invitacion` |
-| **Keystore de release + `signingConfigs`** | ❌ **no existe** → no se puede firmar un AAB |
+| **Keystore de release + `signingConfigs`** | ✅ bloque en `app/build.gradle` leyendo `keystore.properties` (gitignored). Sin ese fichero el build sale sin firmar |
 | **`assetlinks.json`** | ❌ tiene marcadores `PENDIENTE_*` |
 | Ficha en Play Console | ❌ sin crear |
 
@@ -233,7 +233,7 @@ Reglas de versionado para cada subida posterior:
 
 - `versionCode` **entero, siempre creciente** — Play rechaza un valor repetido.
 - `versionName` visible al usuario; mantenerlo alineado con `package.json`
-  (hoy `1.0.1`).
+  (hoy `1.2.0`).
 
 ---
 

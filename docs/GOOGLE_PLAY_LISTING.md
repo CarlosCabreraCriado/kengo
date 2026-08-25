@@ -105,7 +105,7 @@ Obligatoria para la categoría Health & Fitness. Puntos clave:
 
 ## 4. Requisitos técnicos pendientes
 
-- [ ] **Keystore de release** y bloque `signingConfigs` en `apps/app/android/app/build.gradle` (hoy no existe: no se puede firmar un AAB).
+- [x] **Keystore de release** y bloque `signingConfigs` en `apps/app/android/app/build.gradle` — hecho; las credenciales viven en `keystore.properties`, fuera del repositorio.
 - [ ] Activar **Play App Signing** y obtener el SHA-256 de la clave de firma.
 - [ ] Rellenar `apps/app/public/.well-known/assetlinks.json` con **las dos** huellas (la de subida y la que genera Google al re-firmar). Hoy contiene marcadores `PENDIENTE_*`.
 - [ ] Verificar los App Links tras el despliegue:

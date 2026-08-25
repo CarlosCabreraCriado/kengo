@@ -11,5 +11,5 @@ export const environment = {
   // Versión de marketing mostrada en el pie de Perfil. Debe mantenerse
   // sincronizada con `package.json`, `android/app/build.gradle` (versionName)
   // e `Info.plist` (MARKETING_VERSION) en cada release.
-  APP_VERSION: '1.1.2',
+  APP_VERSION: '1.2.0',
 };

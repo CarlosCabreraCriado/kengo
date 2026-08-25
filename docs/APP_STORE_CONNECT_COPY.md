@@ -256,6 +256,23 @@ Aparece en la ficha. Formato Apple-friendly:
 
 > Aparece en la pestaña "Novedades" de la ficha y en la pantalla de actualización dentro de la app. Aplica a cada versión `MARKETING_VERSION`, no a cada build TestFlight.
 
+**Versión 1.2.0 — la que se envía a App Store** **(602/4000)**:
+
+```
+Kengo llega a la App Store.
+
+• Actividad diaria: los ejercicios que te tocan hoy, de un vistazo.
+• Sesiones guiadas con vídeo, contador de series y temporizador de descanso.
+• Registro de dolor y notas al terminar cada sesión.
+• Progreso con rachas, historial y evolución del dolor.
+• Chat directo con tu fisioterapeuta.
+• Para fisioterapeutas: catálogo de ejercicios, constructor de planes, rutinas
+  reutilizables y seguimiento de la adherencia de cada paciente.
+• Ahora puedes eliminar tu cuenta y todos tus datos desde Perfil.
+
+Gracias por usar Kengo. Cuéntanos qué mejorarías en info@kengoapp.com.
+```
+
 **Versión 1.0.0 (primer lanzamiento)** **(326/4000)**:
 
 ```
@@ -401,8 +418,8 @@ App Preview (vídeos): opcional. Si lo añades, formato 1080×1920 vertical, 15-
 - [ ] App Privacy completado (data types + tracking = No).
 - [ ] Support URL, Marketing URL, Privacy Policy URL publicadas, respondiendo 200 y con el `<title>` correcto (no el de la portada).
 - [ ] `https://kengoapp.com/.well-known/apple-app-site-association` devuelve `Content-Type: application/json` y **JSON en el body** (no `<!doctype html>`).
-- [ ] Copyright = `© 2026 Kengo`.
-- [ ] Release Notes v1.0.0 pegadas.
+- [ ] Copyright = `© 2026 KENGO SC` (igual que §7).
+- [ ] Release Notes v1.2.0 pegadas (§8).
 - [ ] Beta App Description pegada (TestFlight).
 - [ ] Feedback Email = `info@kengoapp.com`.
 - [x] Demo accounts creadas en producción (2026-07-30) — ver `docs/CUENTAS_REVISION_TIENDAS.md`.
