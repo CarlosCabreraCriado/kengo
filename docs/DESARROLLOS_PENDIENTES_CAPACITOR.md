@@ -92,6 +92,16 @@ Nada de lo implementado ha pisado un simulador/emulador real todavía. El códig
 - [ ] **B6. Vibración real en device físico**
   Los simuladores iOS NO emiten haptic feedback. Probar `HapticsService.timerEnd()` y `restEnd()` en device físico (ejercicio activo, fin de descanso).
 
+- [ ] **B8. Borrado de cuenta de un propietario de clínica** *(nuevo 2026-08-25)*
+  Con una cuenta desechable —**nunca** con `review-fisio@kengoapp.com`, que
+  cerraría la clínica de demostración—: crear clínica, ir a Perfil → Eliminar
+  cuenta, comprobar que el diálogo enumera la clínica y exige el checkbox
+  además del email, confirmar, y verificar en el dashboard de Convex que no
+  quedan `clinics`/`clinicBilling`/`plans` de esa clínica y que la suscripción
+  de Stripe figura cancelada.
+  Requisito de la guideline 5.1.1(v): antes, un propietario único no tenía
+  ninguna forma de completar el borrado.
+
 - [ ] **B7. Cámara y galería en image-upload**
   Probar subida de avatar desde galería y cámara en iOS y Android. Confirmar que los permisos se piden correctamente la primera vez.
   _2026-08-25_: causa raíz del fallo de subida identificada (CORS del bucket R2 sin `https://app.kengoapp.local`); corregido con `scripts/r2-cors.json` + PUT nativo vía `CapacitorHttp`. Pendiente reverificar en device tras el release.

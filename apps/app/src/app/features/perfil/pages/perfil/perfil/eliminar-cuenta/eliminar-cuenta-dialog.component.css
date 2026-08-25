@@ -59,3 +59,49 @@
   line-height: 1.5;
   color: var(--ink-500);
 }
+
+/* Cierre de clínicas: es la consecuencia más grave del borrado (destruye
+   datos de terceros, no solo del titular), así que se separa del resumen
+   neutro con el acento de peligro. El catálogo no tiene una superficie
+   "danger" tintada, así que se reutiliza el crema del resumen y el énfasis
+   lo dan el borde y el título en `--danger`. */
+.borrar__clinicas {
+  background: var(--cream-100, #fdf3ea);
+  border: 1px solid var(--danger);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.borrar__clinicas h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.borrar__clinicas p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-700);
+}
+
+.borrar__clinicas ul {
+  list-style: disc;
+  padding-left: 18px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-700);
+}
+
+.borrar__clinicas li {
+  margin-bottom: 6px;
+}
+
+.borrar__clinica-detalle {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-500);
+}

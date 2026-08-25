@@ -269,63 +269,7 @@ export const run = internalMutation({
       return { applied: false as const, clinicId, nombre: clinic.nombre, counts };
     }
 
-    // === FASE DESTRUCTIVA ===
-    // Orden: hijos primero, padre al final. Para tablas con sub-hijos
-    // (plans→planExercises, sessions→exerciseExecutions, routines→
-    // routineExercises, conversations→messages) borramos por dentro.
-
-    await borrarPlanesYEjercicios(ctx, clinicId);
-    await borrarSesionesYEjecuciones(ctx, clinicId);
-    // exerciseExecutions: defensa en profundidad por si quedó alguno
-    // huérfano (sesión borrada en paso anterior limpiaría los suyos, pero
-    // este barrido cubre referencias directas por clinicId).
-    await borrarPorIndice(
-      ctx,
-      "exerciseExecutions",
-      "by_clinicId_fecha",
-      clinicId,
-    );
-    await borrarPorIndice(
-      ctx,
-      "dailyPatientRollup",
-      "by_clinicId_fecha",
-      clinicId,
-    );
-    // patientMetricsSnapshot: purgamos también las entradas en los 3
-    // DirectAggregates particionados por (clinicId, ventana). Sin esta pasada
-    // el borrado masivo dejaba aggregates con `id == pacienteId` apuntando a
-    // snapshots inexistentes (basura permanente en el componente, aunque el
-    // namespace incluyera el clinicId muerto).
-    await _deleteAllPatientSnapshotsForClinic(ctx, clinicId);
-    await borrarPorIndice(
-      ctx,
-      "clinicMetricsSnapshot",
-      "by_clinicId_ventana",
-      clinicId,
-    );
-    await borrarPorIndice(
-      ctx,
-      "exerciseUsageRollup",
-      "by_clinicId_anioMes",
-      clinicId,
-    );
-    await borrarPorIndice(ctx, "physioAlerts", "by_clinicId_estado", clinicId);
-    await borrarPorIndice(ctx, "accessCodes", "by_clinicId", clinicId);
-    await borrarPorIndice(ctx, "assignments", "by_clinicId", clinicId);
-    await borrarConversacionesYMensajes(ctx, clinicId);
-    await borrarRutinasYEjercicios(ctx, clinicId);
-    await borrarPorIndice(
-      ctx,
-      "stripeWebhookEvents",
-      "by_clinicId_createdMs",
-      clinicId,
-    );
-    await borrarPorIndice(ctx, "clinicMemberships", "by_clinicId", clinicId);
-    await borrarPorIndice(ctx, "clinicFiles", "by_clinicId", clinicId);
-    await borrarPorIndice(ctx, "clinicBilling", "by_clinicId", clinicId);
-    await borrarPorIndice(ctx, "clinicOwnershipAudit", "by_clinicId", clinicId);
-
-    await ctx.db.delete(clinicId);
+    await _purgeClinic(ctx, clinicId);
 
     console.log(
       `[deleteClinicCascade APPLIED] clinic="${clinic.nombre}" (${clinicId}) counts:`,
@@ -335,6 +279,81 @@ export const run = internalMutation({
     return { applied: true as const, clinicId, nombre: clinic.nombre, counts };
   },
 });
+
+/**
+ * Fase destructiva de la cascada, aislada para poder reutilizarla.
+ *
+ * La usan dos caminos con validaciones muy distintas:
+ *   - `run` (mantenimiento): confirma el nombre exacto de la clínica.
+ *   - el borrado de cuenta (`users/deletionActions.ts`): el propietario cierra
+ *     sus clínicas como parte de eliminar su cuenta, requisito de la guideline
+ *     5.1.1(v) de Apple.
+ *
+ * No valida nada por sí misma ni cancela la suscripción de Stripe: eso es
+ * responsabilidad del caller.
+ */
+export async function _purgeClinic(
+  ctx: MutationCtx,
+  clinicId: Id<"clinics">,
+): Promise<void> {
+  // === FASE DESTRUCTIVA ===
+  // Orden: hijos primero, padre al final. Para tablas con sub-hijos
+  // (plans→planExercises, sessions→exerciseExecutions, routines→
+  // routineExercises, conversations→messages) borramos por dentro.
+
+  await borrarPlanesYEjercicios(ctx, clinicId);
+  await borrarSesionesYEjecuciones(ctx, clinicId);
+  // exerciseExecutions: defensa en profundidad por si quedó alguno
+  // huérfano (sesión borrada en paso anterior limpiaría los suyos, pero
+  // este barrido cubre referencias directas por clinicId).
+  await borrarPorIndice(
+    ctx,
+    "exerciseExecutions",
+    "by_clinicId_fecha",
+    clinicId,
+  );
+  await borrarPorIndice(
+    ctx,
+    "dailyPatientRollup",
+    "by_clinicId_fecha",
+    clinicId,
+  );
+  // patientMetricsSnapshot: purgamos también las entradas en los 3
+  // DirectAggregates particionados por (clinicId, ventana). Sin esta pasada
+  // el borrado masivo dejaba aggregates con `id == pacienteId` apuntando a
+  // snapshots inexistentes (basura permanente en el componente, aunque el
+  // namespace incluyera el clinicId muerto).
+  await _deleteAllPatientSnapshotsForClinic(ctx, clinicId);
+  await borrarPorIndice(
+    ctx,
+    "clinicMetricsSnapshot",
+    "by_clinicId_ventana",
+    clinicId,
+  );
+  await borrarPorIndice(
+    ctx,
+    "exerciseUsageRollup",
+    "by_clinicId_anioMes",
+    clinicId,
+  );
+  await borrarPorIndice(ctx, "physioAlerts", "by_clinicId_estado", clinicId);
+  await borrarPorIndice(ctx, "accessCodes", "by_clinicId", clinicId);
+  await borrarPorIndice(ctx, "assignments", "by_clinicId", clinicId);
+  await borrarConversacionesYMensajes(ctx, clinicId);
+  await borrarRutinasYEjercicios(ctx, clinicId);
+  await borrarPorIndice(
+    ctx,
+    "stripeWebhookEvents",
+    "by_clinicId_createdMs",
+    clinicId,
+  );
+  await borrarPorIndice(ctx, "clinicMemberships", "by_clinicId", clinicId);
+  await borrarPorIndice(ctx, "clinicFiles", "by_clinicId", clinicId);
+  await borrarPorIndice(ctx, "clinicBilling", "by_clinicId", clinicId);
+  await borrarPorIndice(ctx, "clinicOwnershipAudit", "by_clinicId", clinicId);
+
+  await ctx.db.delete(clinicId);
+}
 
 // --- helpers ---------------------------------------------------------------
 

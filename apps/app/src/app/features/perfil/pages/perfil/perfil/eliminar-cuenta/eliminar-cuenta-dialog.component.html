@@ -21,6 +21,46 @@
         acción no se puede deshacer.
       </p>
 
+      @if (cierraClinicas) {
+        <div class="borrar__clinicas">
+          <h4>
+            Eres propietario de
+            {{ clinicasACerrar.length === 1 ? 'una clínica' : 'varias clínicas' }}
+          </h4>
+          <p>
+            Al eliminar tu cuenta
+            {{ clinicasACerrar.length === 1 ? 'se cerrará' : 'se cerrarán' }}
+            y se borrarán todos sus datos, incluidos los de sus pacientes. Si
+            prefieres que la clínica siga activa, transfiere antes la propiedad
+            a otro administrador desde Mi clínica.
+          </p>
+
+          <ul>
+            @for (clinica of clinicasACerrar; track clinica.clinicId) {
+              <li>
+                <strong>{{ clinica.clinicNombre }}</strong>
+                <span class="borrar__clinica-detalle">
+                  @if (clinica.otrosMiembros > 0) {
+                    {{ clinica.otrosMiembros }}
+                    {{ clinica.otrosMiembros === 1 ? 'persona perderá' : 'personas perderán' }}
+                    el acceso.
+                  } @else {
+                    No hay más miembros.
+                  }
+                  @if (clinica.planes > 0) {
+                    Se borrarán {{ clinica.planes }}
+                    {{ clinica.planes === 1 ? 'plan' : 'planes' }}.
+                  }
+                  @if (clinica.suscripcionViva) {
+                    Su suscripción se cancelará.
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
       <div class="borrar__resumen">
         <h4>Se eliminará</h4>
         <ul>
@@ -49,6 +89,15 @@
         Puedes consultar los plazos en la Política de privacidad.
       </p>
 
+      @if (cierraClinicas) {
+        <ui2-checkbox [formControl]="aceptaCierre">
+          Entiendo que
+          {{ clinicasACerrar.length === 1 ? 'la clínica se cerrará' : 'las clínicas se cerrarán' }}
+          y que sus datos, incluidos los de sus pacientes, se borrarán de forma
+          permanente.
+        </ui2-checkbox>
+      }
+
       <ui2-input
         label="Escribe tu email para confirmar"
         type="email"
@@ -68,7 +117,7 @@
       <ui2-button
         variant="danger"
         iconLeft="delete_forever"
-        [disabled]="!coincide()"
+        [disabled]="!puedeConfirmar()"
         (clicked)="confirmar()"
       >
         Eliminar mi cuenta

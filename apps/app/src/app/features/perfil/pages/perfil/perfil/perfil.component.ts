@@ -30,6 +30,9 @@ import { PlatformService } from '../../../../../core/services/platform.service';
 // Types
 import { Usuario } from '../../../../../../types/global';
 import { LEGAL_DOC_ORDER, LEGAL_DOCS, type LegalDocId } from '@kengo/legal';
+// Solo el tipo: el componente del diálogo se sigue cargando de forma
+// diferida con import() dentro de eliminarCuenta().
+import type { EliminarCuentaConfirmacion } from './eliminar-cuenta/eliminar-cuenta-dialog.component';
 
 import { api } from '../../../../../../../../../convex/_generated/api';
 import { environment as env } from '../../../../../../environments/environment';
@@ -419,9 +422,8 @@ export class PerfilComponent implements OnInit, OnDestroy {
    * Google Play: debe poder iniciarse desde dentro de la app.
    *
    * Se consulta el preflight justo antes de abrir el diálogo — y el servidor
-   * lo vuelve a validar al confirmar — porque los bloqueos (ser propietario de
-   * una clínica, tener una suscripción viva) pueden cambiar mientras la
-   * pantalla está abierta.
+   * lo vuelve a validar al confirmar — porque el alcance del borrado (de qué
+   * clínicas es propietario) puede cambiar mientras la pantalla está abierta.
    */
   async eliminarCuenta() {
     const usuario = this.sessionService.usuario();
@@ -441,20 +443,22 @@ export class PerfilComponent implements OnInit, OnDestroy {
       const dialogRef = this.dialogService.openForm<
         InstanceType<typeof EliminarCuentaDialogComponent>,
         unknown,
-        string | undefined
+        EliminarCuentaConfirmacion | undefined
       >(EliminarCuentaDialogComponent, {
         data: {
           email: usuario.email,
           bloqueos: preflight.bloqueos,
+          clinicasACerrar: preflight.clinicasACerrar,
           resumen: preflight.resumen,
         },
       });
 
-      const confirmacionEmail = await firstValueFrom(dialogRef.closed);
-      if (!confirmacionEmail) return;
+      const confirmacion = await firstValueFrom(dialogRef.closed);
+      if (!confirmacion) return;
 
       await this.convex.action(api.users.deletionActions.deleteMyAccount, {
-        confirmacionEmail,
+        confirmacionEmail: confirmacion.confirmacionEmail,
+        confirmarCierreDeClinicas: confirmacion.confirmarCierreDeClinicas,
       });
 
       // La sesión ya no tiene usuario detrás: se cierra sin intentar

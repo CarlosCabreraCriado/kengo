@@ -83,8 +83,15 @@ ningún correo. La clínica de demostración ya tiene datos sembrados.
 La suscripción de la clínica se gestiona con Stripe en el navegador, fuera de la
 app. No hay compras integradas.
 
-La cuenta se puede eliminar desde Perfil → Eliminar cuenta, y también desde
+Eliminación de cuenta (guideline 5.1.1(v)): Perfil → Eliminar cuenta. El
+borrado se completa sin contactar con soporte; también está disponible en
 https://www.kengoapp.com/eliminar-cuenta sin instalar la app.
+
+Para verificarlo sin destruir las cuentas de revisión, se puede registrar una
+cuenta nueva con cualquier email desde la propia app (no hace falta verificar
+el correo) y eliminarla acto seguido. Si se elimina la cuenta de
+fisioterapeuta, su clínica de demostración se cierra con ella y las
+credenciales de arriba dejan de funcionar.
 ```
 
 ---
@@ -160,10 +167,13 @@ Pasos (Stripe Dashboard + Convex Dashboard):
 
 ## 6. Cómo borrar la clínica demo
 
-Cuando deje de hacer falta, y solo entonces: eliminar `assignments`, `plans` y
-`planExercises` de `clinicId = jx77t41db17j6kyeghnq7q2ts58bhvs9`, después las
-`clinicMemberships`, la `clinics` y la fila de `clinicBilling`, y por último las
-dos cuentas de Better-Auth. Mientras la app esté publicada en cualquiera de las
+Cuando deje de hacer falta, y solo entonces: desde la propia app, eliminar la
+cuenta `review-fisio@kengoapp.com` (es la propietaria, así que su borrado cierra
+la clínica en cascada) y después la de paciente. A mano, el equivalente es
+eliminar `assignments`, `plans` y `planExercises` de
+`clinicId = jx77t41db17j6kyeghnq7q2ts58bhvs9`, después las `clinicMemberships`,
+la `clinics` y la fila de `clinicBilling`, y por último las dos cuentas de
+Better-Auth. Mientras la app esté publicada en cualquiera de las
 dos tiendas, **no borrar nada**: Apple exige que la cuenta demo siga operativa
 durante toda la vida de la app.
 

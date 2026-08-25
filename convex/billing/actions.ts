@@ -693,6 +693,76 @@ export const cancelSubscription = action({
 });
 
 /**
+ * Cancela **de inmediato** la suscripción de una clínica que se está cerrando
+ * como parte del borrado de cuenta de su propietario.
+ *
+ * Se diferencia de `cancelSubscription` en tres cosas, y las tres importan:
+ *
+ *  1. Es interna: la autorización ya la hizo el flujo de borrado, que trabaja
+ *     con la identidad de la sesión.
+ *  2. Cancela ya, no al final del periodo: la clínica deja de existir, no hay
+ *     nadie a quien seguir dando servicio hasta que venza.
+ *  3. **Borra antes `orgId` del metadata** de la suscripción. El webhook de
+ *     `convex/http.ts` resuelve la clínica por ese campo al recibir
+ *     `customer.subscription.updated/deleted`; si lo dejáramos puesto, el
+ *     evento de cancelación llegaría mientras la cascada está purgando y
+ *     reescribiría `clinicBilling` de una clínica medio borrada. Es el mismo
+ *     orden que documenta `docs/CUENTAS_REVISION_TIENDAS.md` §5.
+ *
+ * Si Stripe falla, propaga el error: es preferible que el usuario reintente el
+ * borrado a purgar la clínica dejando viva una suscripción que sigue cobrando.
+ */
+export const cancelSubscriptionForClinicClosure = internalAction({
+  args: { clinicId: v.id("clinics") },
+  handler: async (
+    ctx,
+    { clinicId },
+  ): Promise<{ ok: true; canceled: boolean }> => {
+    const data = await ctx.runQuery(
+      internal.billing.internal.getBillingContext,
+      { clinicId },
+    );
+    const localSubId = data.billing?.stripeSubscriptionId;
+    const customerId = data.billing?.stripeCustomerId;
+
+    if (!localSubId || !customerId) {
+      // Clínica sin suscripción (nunca la tuvo, o ya se canceló y se
+      // desvinculó a mano). No hay nada que cancelar.
+      return { ok: true, canceled: false } as const;
+    }
+
+    const stripe = getStripeClient();
+    const subId = await resolveActiveSubscriptionId(
+      ctx,
+      stripe,
+      clinicId,
+      localSubId,
+      customerId,
+    );
+
+    // `resolveActiveSubscriptionId` devuelve el id local cuando no encuentra
+    // ninguna suscripción viva, así que hay que comprobar el estado: Stripe
+    // rechaza tanto el update como el cancel sobre una ya cancelada, y eso
+    // dejaría al usuario sin poder borrar su cuenta. Es el caso normal de una
+    // clínica cuya suscripción se canceló hace tiempo.
+    const sub = await stripe.subscriptions.retrieve(subId).catch(() => null);
+    if (!sub || sub.status === "canceled" || sub.status === "incomplete_expired") {
+      return { ok: true, canceled: false } as const;
+    }
+
+    // Stripe borra una clave de metadata cuando se envía con valor vacío.
+    await stripe.subscriptions.update(subId, { metadata: { orgId: "" } });
+    await stripe.subscriptions.cancel(subId);
+
+    console.log(
+      `[billing] cancelSubscriptionForClinicClosure clinic=${clinicId} sub=${subId} cancelada por borrado de cuenta`,
+    );
+
+    return { ok: true, canceled: true } as const;
+  },
+});
+
+/**
  * Reactiva una suscripción que estaba marcada para cancelarse al final del
  * periodo.
  */
