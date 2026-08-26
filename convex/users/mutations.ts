@@ -12,7 +12,10 @@ import {
   tieneGestion,
 } from "../_helpers/permissions";
 import { assertCanAccessPaciente } from "../_helpers/authorization";
-import { assertCapacidadPacientes } from "../_helpers/capacity";
+import {
+  assertCapacidadPacientes,
+  assertCapacidadFisios,
+} from "../_helpers/capacity";
 import { getManagedClinicIds } from "../_helpers/patientAccess";
 
 function buildSearchableText(
@@ -460,10 +463,17 @@ export const updatePatient = mutation({
         existing.map((m) => `${m.clinicId}-${m.puesto}`),
       );
 
+      // Clínicas cuyo número de asientos facturables cambia en esta llamada
+      // (altas o bajas): al final hay que resincronizar la quantity de Stripe.
+      const clinicasFacturablesTocadas = new Set<string>();
+
       // Eliminar las que ya no están, SOLO en clínicas gestionadas.
       for (const m of existing) {
         if (!managedClinicIds.has(String(m.clinicId))) continue;
         if (!desiredKeys.has(`${m.clinicId}-${m.puesto}`)) {
+          if (m.puesto === "fisio" || m.puesto === "admin") {
+            clinicasFacturablesTocadas.add(String(m.clinicId));
+          }
           await ctx.db.delete(m._id);
         }
       }
@@ -471,14 +481,32 @@ export const updatePatient = mutation({
       // Crear las nuevas (ya validado que su clínica es gestionada).
       for (const m of args.clinicMemberships) {
         if (!existingKeys.has(`${m.clinicId}-${m.puesto}`)) {
+          const esFacturable = m.puesto === "fisio" || m.puesto === "admin";
+          // M-4: esta vía también da de alta asientos facturables, así que
+          // tiene que pasar por el mismo techo que `clinicMemberships.add` y
+          // `accessCodes.consume`. Sin esto se podía superar el tope de la
+          // clínica por la puerta de atrás.
+          if (esFacturable) {
+            await assertCapacidadFisios(ctx, m.clinicId);
+            clinicasFacturablesTocadas.add(String(m.clinicId));
+          }
           await ctx.db.insert("clinicMemberships", {
             userId: patientId,
             clinicId: m.clinicId,
             puesto: m.puesto,
-            tambienEsPaciente:
-              m.puesto === "fisio" || m.puesto === "admin" ? true : undefined,
+            tambienEsPaciente: esFacturable ? true : undefined,
           });
         }
+      }
+
+      // Mantener la quantity de Stripe en sintonía con los asientos reales
+      // (no-op en clínicas con contrato a medida, donde Stripe manda).
+      for (const clinicId of clinicasFacturablesTocadas) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.billing.internal.syncQuantityFromMemberships,
+          { clinicId: clinicId as Id<"clinics"> },
+        );
       }
     }
 

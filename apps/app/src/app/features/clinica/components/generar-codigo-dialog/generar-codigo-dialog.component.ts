@@ -27,6 +27,11 @@ export interface GenerarCodigoDialogResult {
   requiereContactoVentas?: boolean;
   /** Cierre por cap de pacientes del plan base. El padre debe ofrecer el upsell a ilimitado. */
   limitePacientesAlcanzado?: boolean;
+  /**
+   * Cierre por plazas agotadas en una clínica con contrato a medida. No es un
+   * upsell de plan: hay que ampliar el contrato existente.
+   */
+  plazasAgotadas?: boolean;
 }
 import {
   Ui2DialogHostComponent,
@@ -149,6 +154,11 @@ export class GenerarCodigoDialogComponent implements OnInit {
 
     if (result.errorCode === 'REQUIERE_CONTACTO_VENTAS') {
       this.dialogRef.close({ requiereContactoVentas: true });
+      return;
+    }
+
+    if (result.errorCode === 'PLAZAS_AGOTADAS') {
+      this.dialogRef.close({ plazasAgotadas: true });
       return;
     }
 

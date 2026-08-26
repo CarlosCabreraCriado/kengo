@@ -688,6 +688,12 @@ export default defineSchema({
     // Variante de pricing: "base" (con cap de pacientes) o "ilimitada".
     // Ausente = "base" (clínicas anteriores a la introducción del campo).
     variante: v.optional(v.union(v.literal("base"), v.literal("ilimitada"))),
+    // Techo de asientos facturables pactado en un contrato a medida, leído de
+    // la `quantity` de Stripe. Presente ⟺ la suscripción usa un price que no
+    // es de autoservicio; ausente = rige `LIMITE_FISIOS_AUTOSERVICIO`.
+    // En estas clínicas Stripe es la fuente de verdad de la quantity: Convex
+    // la lee del webhook y nunca la reescribe.
+    limiteFisios: v.optional(v.number()),
     requiereContactoVentas: v.optional(v.boolean()),
     // Timestamp del último evento Stripe aplicado (en ms). Sirve para descartar
     // eventos que llegan fuera de orden — si recibimos uno con `event.created`

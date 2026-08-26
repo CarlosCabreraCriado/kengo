@@ -164,10 +164,32 @@ export class SuscripcionComponent {
     () => this.suscripcion()?.requiereContactoVentas === true,
   );
 
+  /**
+   * Contrato a medida: el plan lo gestiona ventas en Stripe, así que la página
+   * no ofrece Checkout, cambio de variante ni upsell de tramo.
+   */
+  protected readonly esAMedida = computed(
+    () => this.suscripcion()?.esAMedida === true,
+  );
+
+  /** Techo de asientos: plazas contratadas o tope del plan autoservicio. */
+  protected readonly limiteFisios = computed(
+    () => this.suscripcion()?.limiteFisios ?? 0,
+  );
+
+  /**
+   * `true` cuando la clínica gestiona su plan desde la app. Es falso tanto si
+   * ya tiene contrato a medida como si superó el autoservicio y espera a
+   * ventas: en ambos casos el plan se toca fuera de aquí.
+   */
+  protected readonly gestionAutoservicio = computed(
+    () => !this.requiereContactoVentas() && !this.esAMedida(),
+  );
+
   protected readonly progresoFisios = computed<number>(() => {
-    const plan = this.planActual();
-    if (!plan) return 0;
-    return Math.min(100, (this.fisiosActuales() / plan.rangoFisiosMax) * 100);
+    const limite = this.limiteFisios();
+    if (limite <= 0) return 0;
+    return Math.min(100, (this.fisiosActuales() / limite) * 100);
   });
 
   // ─── Variante de pricing (base ↔ ilimitada) ───
@@ -252,12 +274,14 @@ export class SuscripcionComponent {
   }
 
   protected readonly tierLleno = computed<boolean>(() => {
-    const plan = this.planActual();
-    if (!plan) return false;
-    return this.fisiosActuales() >= plan.rangoFisiosMax;
+    const limite = this.limiteFisios();
+    if (limite <= 0) return false;
+    return this.fisiosActuales() >= limite;
   });
 
   protected readonly siguientePlan = computed<PlanInfo | null>(() => {
+    // En un contrato a medida no hay "tramo siguiente" al que subir.
+    if (this.esAMedida()) return null;
     const plan = this.planActual();
     if (!plan) return null;
     const todos = this.planes();

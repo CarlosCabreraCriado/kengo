@@ -11,6 +11,7 @@ import {
   precioParaFisios,
   limitePacientesParaFisios,
   requiereContactoVentas,
+  LIMITE_FISIOS_AUTOSERVICIO,
   type PlanVariante,
 } from "./_helpers";
 
@@ -56,14 +57,28 @@ export const getMyClinicSubscription = query({
     const variante: PlanVariante = billing?.variante ?? "base";
     const plan = planParaFisios(fisiosActuales);
     const planes = [...PLANES];
-    const necesitaVentas = requiereContactoVentas(fisiosActuales);
-    // `null` = sin cap (variante ilimitada o enterprise). Para el estado
-    // `enterprise_pending` tampoco aplica cap (paridad con el enforcement).
+    // Techo de asientos: las plazas pactadas si hay contrato a medida (las fija
+    // ventas como `quantity` en Stripe), si no el tope de autoservicio.
+    const esAMedida = billing?.limiteFisios !== undefined;
+    const limiteFisios = billing?.limiteFisios ?? LIMITE_FISIOS_AUTOSERVICIO;
+    // "Contactar con ventas" solo aplica al autoservicio: una clínica a medida
+    // que agota sus plazas amplía el contrato, no cambia de plan.
+    const necesitaVentas =
+      !esAMedida && requiereContactoVentas(fisiosActuales);
+    // `null` = sin cap (variante ilimitada o enterprise). Ni `enterprise_pending`
+    // ni un contrato a medida arrastran cap (paridad con el enforcement de
+    // `checkCapacidadPacientes`).
     const limitePacientes =
-      billing?.estadoLocal === "enterprise_pending"
+      billing?.estadoLocal === "enterprise_pending" || esAMedida
         ? null
         : limitePacientesParaFisios(fisiosActuales, variante);
-    const precioMensualActualEur = precioParaFisios(fisiosActuales, variante);
+    // Un contrato a medida no tiene tramo ni precio de tarifa: devolver el del
+    // tramo por número de fisios induciría a error (una clínica a medida con 7
+    // fisios "parecería" Medium a 449 €). El importe real está en las facturas.
+    const planEfectivo = esAMedida ? null : plan;
+    const precioMensualActualEur = esAMedida
+      ? 0
+      : precioParaFisios(fisiosActuales, variante);
 
     // Owner determinista (Bloque J): solo el propietario puede actuar sobre
     // la suscripción. Devolvemos `ownerUserId`, su nombre y un flag para
@@ -86,12 +101,14 @@ export const getMyClinicSubscription = query({
         graceUntil: undefined,
         fisiosActuales,
         cantidadFacturada: undefined,
-        plan,
+        plan: planEfectivo,
         planes,
         variante,
         limitePacientes,
         pacientesVinculados,
         precioMensualActualEur,
+        limiteFisios,
+        esAMedida,
         requiereContactoVentas: necesitaVentas,
         ownerUserId,
         ownerNombre,
@@ -113,14 +130,17 @@ export const getMyClinicSubscription = query({
       graceUntil: billing.graceUntil,
       fisiosActuales,
       cantidadFacturada: billing.cantidadFisios,
-      plan,
+      plan: planEfectivo,
       planes,
       variante,
       limitePacientes,
       pacientesVinculados,
       precioMensualActualEur,
+      limiteFisios,
+      esAMedida,
       requiereContactoVentas:
-        necesitaVentas || billing.requiereContactoVentas === true,
+        necesitaVentas ||
+        (!esAMedida && billing.requiereContactoVentas === true),
       ownerUserId,
       ownerNombre,
       esOwner,

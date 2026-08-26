@@ -117,10 +117,10 @@ Marca cada bloque tras superarlo. Si encuentras un bug, anótalo y arréglalo an
   - Acceder a `/inicio`, `/perfil`.
 - [ ] Confirmar que **no aparece** banner de billing al paciente.
 
-### 3.7 +10 fisios (corte enterprise)
+### 3.7 +9 fisios (corte enterprise)
 
-- [ ] Llevar a una clínica de prueba a 10 fisios facturables.
-- [ ] Como admin, generar código para el fisio nº 11 desde `/mi-clinica`:
+- [ ] Llevar a una clínica de prueba a 9 fisios facturables.
+- [ ] Como admin, generar código para el fisio nº 10 desde `/mi-clinica`:
   - Backend lanza `REQUIERE_CONTACTO_VENTAS`.
   - El dialog `GenerarCodigoDialog` se cierra automáticamente.
   - Se abre `ContactarVentasDialog` con el mensaje pre-rellenado.
@@ -128,6 +128,26 @@ Marca cada bloque tras superarlo. Si encuentras un bug, anótalo y arréglalo an
   - Verificar email recibido en `CONTACT_EMAILS` (Resend Dashboard).
   - Toast "Mensaje enviado" en la UI.
 - [ ] Caso alternativo: si un fisio intenta canjear un código existente y la clínica ya está al límite, debe fallar con el mismo `REQUIERE_CONTACTO_VENTAS` al canjear.
+
+### 3.7b Contrato a medida (plazas gestionadas desde Stripe)
+
+Procedimiento para el equipo de gestión en `docs/Guia-Gestores-Kengo.docx`;
+referencia técnica en `docs/GUIA_ENTERPRISE_VENTAS.md`.
+
+- [ ] Sobre la clínica anterior (9 fisios, bloqueada), en Stripe Dashboard:
+      cambiar la suscripción a un price a medida y poner `quantity = 15`.
+- [ ] Verificar en Convex que `clinicBilling.limiteFisios === 15`.
+- [ ] En `/mi-clinica/suscripcion`: el plan se muestra como "A medida" y la barra
+      dice "9 / 15". No aparecen ni las pricing cards, ni el CTA de contratar,
+      ni el toggle de pacientes ilimitados.
+- [ ] Invitar fisios hasta el nº 15 → todas las altas deben pasar.
+- [ ] Intentar el nº 16 → `PLAZAS_AGOTADAS` con el mensaje de ampliar contrato.
+- [ ] Añadir y eliminar un fisio → comprobar en Stripe que la quantity **sigue
+      en 15**: Convex ya no la reescribe en clínicas a medida.
+- [ ] Devolver la suscripción al price estándar → `limiteFisios` desaparece y el
+      techo vuelve a 9.
+- [ ] Ejecutar `billing.actions.reconcileLimitesAMedida` a mano dos veces:
+      la segunda debe reportar `ajustadas: 0` (idempotente).
 
 ### 3.8 Webhooks idempotentes
 

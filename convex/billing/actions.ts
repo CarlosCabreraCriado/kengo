@@ -12,6 +12,7 @@ import {
   LIMITE_FISIOS_AUTOSERVICIO,
   type PlanVariante,
 } from "./_helpers";
+import { esPriceAMedida } from "./_webhookHelpers";
 
 const stripeApi = new StripeSubscriptions(components.stripe);
 
@@ -22,6 +23,9 @@ const stripeApi = new StripeSubscriptions(components.stripe);
  * es importante porque nuestro Price tiered usa `quantity = N fisios`, lo
  * que en factura se muestra como `"Producto × N"` y puede confundir.
  *
+ * Con un contrato a medida (`esAMedida`) la etiqueta es "Plan a medida": los
+ * tramos de autoservicio no describen lo que paga esa clínica.
+ *
  * Si `cantidadFisios` está fuera de los tramos autoservicio (0 o >9),
  * limpiamos el field para no exponer un texto desactualizado o incorrecto.
  */
@@ -30,9 +34,12 @@ async function syncStripeCustomerTierLabel(
   customerId: string,
   cantidadFisios: number,
   variante: PlanVariante,
+  esAMedida = false,
 ): Promise<void> {
-  const tier = planParaFisios(cantidadFisios);
-  const custom_fields = tier
+  const tier = esAMedida ? null : planParaFisios(cantidadFisios);
+  const custom_fields = esAMedida
+    ? [{ name: "Plan", value: "Plan a medida" }]
+    : tier
     ? [
         {
           name: "Plan",
@@ -97,6 +104,118 @@ function getAppUrl(): string {
     );
   }
   return parsed.origin;
+}
+
+/**
+ * Contexto mínimo de clínica/owner que necesitan los dos caminos que crean
+ * customer. Es el subconjunto de `getBillingContext` que consumen.
+ */
+type ClinicCustomerData = {
+  clinic: { nombre: string; email?: string };
+  owner: { email: string; name: string } | null;
+};
+
+/**
+ * Devuelve el `stripeCustomerId` de la clínica, creando uno solo si de verdad
+ * no existe ninguno.
+ *
+ * Antes de crear busca en Stripe por `metadata.orgId`. Parece redundante con la
+ * idempotency key `create_customer_<clinicId>` del componente, pero cubre justo
+ * el hueco que esa key deja: **caduca a las 24 h**, y el cron
+ * `billing-reconcile-trials` corre exactamente cada 24 h. Si una ejecución
+ * anterior murió entre crear el customer y persistir `clinicBilling` — en medio
+ * van `syncCustomerDefaults` y `subscriptions.create` — el customer quedó
+ * huérfano en Stripe y sin fila local, y sin esta búsqueda el cron crearía uno
+ * nuevo cada día indefinidamente, sin ninguna señal. Las dos protecciones se
+ * complementan: la key cubre el reintento inmediato (el índice de búsqueda de
+ * Stripe tarda hasta ~1 min en refrescar) y la búsqueda cubre el resto.
+ *
+ * Con más de un customer para el mismo `orgId` **aborta**. Ese estado no
+ * debería existir, y elegir uno por nuestra cuenta arriesga facturar contra el
+ * que no es: mejor que salte y se consolide a mano.
+ *
+ * Ojo: al reutilizar no se escribe la tabla `customers` del componente
+ * `@convex-dev/stripe` (solo la toca su propio `createCustomer`). No importa
+ * porque no la leemos en ningún sitio — el webhook resuelve la clínica por
+ * `metadata.orgId`, nunca por esa tabla.
+ */
+async function getOrCreateCustomerForClinic(
+  ctx: ActionCtx,
+  stripe: Stripe,
+  clinicId: Id<"clinics">,
+  data: ClinicCustomerData,
+): Promise<string> {
+  const encontrados = await stripe.customers
+    .search({ query: `metadata['orgId']:'${clinicId}'`, limit: 2 })
+    .catch((err: unknown) => {
+      // La búsqueda es una red de seguridad, no el camino feliz: si el índice
+      // de Stripe no responde seguimos adelante apoyados en la idempotency
+      // key, que cubre el caso frecuente.
+      console.warn(
+        `[billing] búsqueda de customer por orgId falló para clinic=${clinicId}: ${(err as Error).message}`,
+      );
+      return null;
+    });
+
+  if (encontrados && encontrados.data.length > 1) {
+    const ids = encontrados.data.map((c) => c.id).join(", ");
+    console.error(
+      `[billing] clinic=${clinicId} tiene ${encontrados.data.length} customers en Stripe (${ids}) — hay que consolidarlos a mano`,
+    );
+    throw new Error(
+      `Clínica ${clinicId} con customers duplicados en Stripe: ${ids}`,
+    );
+  }
+
+  const huerfano = encontrados?.data[0];
+  if (huerfano) {
+    console.log(
+      `[billing] reutilizado customer ${huerfano.id} para clinic=${clinicId} (existía en Stripe sin fila clinicBilling)`,
+    );
+    return huerfano.id;
+  }
+
+  const created = await stripeApi.createCustomer(ctx, {
+    email: data.owner?.email ?? data.clinic.email,
+    name: data.owner?.name ?? data.clinic.nombre,
+    metadata: { orgId: clinicId },
+    idempotencyKey: clinicId,
+  });
+  return created.customerId;
+}
+
+/**
+ * Fija en el customer los dos campos que no se pueden pasar en la creación:
+ *
+ *  - `address.country`: Stripe Tax rechaza crear una subscription con
+ *    `automatic_tax: enabled` si el customer no tiene país. Ponemos ES como
+ *    baseline; Checkout lo sobrescribe con la dirección fiscal real vía
+ *    `customer_update: { address: "auto" }`.
+ *  - `description`: el nombre de la clínica. `name` y `email` son los del
+ *    owner, así que un fisio con varias clínicas genera un customer por
+ *    clínica todos con el mismo nombre y correo, indistinguibles en el
+ *    Dashboard salvo abriendo cada uno a mirar el `metadata`. `description` es
+ *    la columna que Stripe enseña en la lista de Customers y, a diferencia de
+ *    `name`, Checkout no la sobrescribe (`customer_update: { name: "auto" }`).
+ *
+ * Un solo `retrieve` y, como mucho, un `update`; idempotente.
+ */
+async function syncCustomerDefaults(
+  stripe: Stripe,
+  customerId: string,
+  nombreClinica: string,
+): Promise<void> {
+  const customer = await stripe.customers.retrieve(customerId);
+  if ("deleted" in customer) return;
+
+  const patch: Stripe.CustomerUpdateParams = {};
+  if (!customer.address?.country) patch.address = { country: "ES" };
+  if (customer.description !== nombreClinica) {
+    patch.description = nombreClinica;
+  }
+  if (Object.keys(patch).length === 0) return;
+
+  await stripe.customers.update(customerId, patch);
 }
 
 const APP_URL_FALLBACK = "https://kengoapp.com";
@@ -209,27 +328,10 @@ export const startTrialForClinic = internalAction({
     const priceId = getPriceIdForVariante(variante);
     const stripe = getStripeClient();
 
-    let customerId = data.billing?.stripeCustomerId;
-    if (!customerId) {
-      const created = await stripeApi.createCustomer(ctx, {
-        email: data.owner?.email ?? data.clinic.email,
-        name: data.owner?.name ?? data.clinic.nombre,
-        metadata: { orgId: clinicId },
-        idempotencyKey: clinicId,
-      });
-      customerId = created.customerId;
-    }
-
-    // Stripe Tax exige una country en el customer para aceptar la creación de
-    // la subscription con `automatic_tax: enabled`. Si no la tiene (cliente
-    // recién creado o pre-Checkout), fijamos ES como baseline. Checkout la
-    // sobrescribirá luego con la dirección real vía `customer_update: address`.
-    const stripeCustomer = await stripe.customers.retrieve(customerId);
-    if (!("deleted" in stripeCustomer) && !stripeCustomer.address?.country) {
-      await stripe.customers.update(customerId, {
-        address: { country: "ES" },
-      });
-    }
+    const customerId =
+      data.billing?.stripeCustomerId ??
+      (await getOrCreateCustomerForClinic(ctx, stripe, clinicId, data));
+    await syncCustomerDefaults(stripe, customerId, data.clinic.nombre);
 
     const quantity = Math.max(1, data.cantidadFisios);
     await syncStripeCustomerTierLabel(stripe, customerId, quantity, variante);
@@ -417,16 +519,22 @@ export const createCheckoutSession = action({
       { clinicId },
     );
 
-    let customerId = data.billing?.stripeCustomerId;
-    if (!customerId) {
-      const created = await stripeApi.createCustomer(ctx, {
-        email: data.owner?.email ?? data.clinic.email,
-        name: data.owner?.name ?? data.clinic.nombre,
-        metadata: { orgId: clinicId },
-        idempotencyKey: clinicId,
+    // Contrato a medida: el Checkout adjuntaría un price de autoservicio y
+    // borraría el price negociado que ventas configuró en el Dashboard. La UI
+    // ya oculta el CTA, pero el gate tiene que estar también en servidor.
+    if (data.billing?.limiteFisios !== undefined) {
+      throw new ConvexError({
+        code: "SUSCRIPCION_A_MEDIDA",
+        message:
+          "Tu clínica tiene un contrato a medida. Contacta con nosotros para cambiarlo.",
       });
-      customerId = created.customerId;
     }
+
+    const stripe = getStripeClient();
+    const customerId =
+      data.billing?.stripeCustomerId ??
+      (await getOrCreateCustomerForClinic(ctx, stripe, clinicId, data));
+    await syncCustomerDefaults(stripe, customerId, data.clinic.nombre);
 
     const appUrl = getAppUrl();
     const isNative = returnTo === "native";
@@ -462,7 +570,6 @@ export const createCheckoutSession = action({
     //   - `automatic_tax` (solo subscription): aplica al invoice del nuevo
     //     sub. En `trialing` el `automatic_tax` ya está activo en S1 desde
     //     `startTrialForClinic`, así que la factura post-trial llevará IVA.
-    const stripe = getStripeClient();
 
     const estado = data.billing?.estadoLocal ?? "none";
     const useSetupMode = estado === "trialing";
@@ -829,6 +936,16 @@ export const setPlanVariante = action({
       internal.billing.internal.getBillingContext,
       { clinicId },
     );
+    // Contrato a medida: el swap de price sustituiría el price negociado por
+    // uno de autoservicio. La variante base/ilimitada no aplica aquí.
+    if (data.billing?.limiteFisios !== undefined) {
+      throw new ConvexError({
+        code: "SUSCRIPCION_A_MEDIDA",
+        message:
+          "Tu clínica tiene un contrato a medida. Contacta con nosotros para cambiarlo.",
+      });
+    }
+
     const varianteActual: PlanVariante = data.billing?.variante ?? "base";
     if (varianteActual === variante) return { ok: true } as const;
 
@@ -1328,9 +1445,16 @@ export const updateStripeQuantity = internalAction({
     // Stripe con la cantidad real.
     const cantidad = Math.max(1, data.cantidadFisios);
 
-    // Por encima del tope de autoservicio no empujamos a Stripe (enterprise se
-    // gestiona a mano; ver decisión de pricing). syncQuantityFromMemberships ya
-    // marca `requiereContactoVentas` en ese caso.
+    // Contrato a medida: la `quantity` de Stripe son las PLAZAS CONTRATADAS que
+    // fijó ventas en el Dashboard, no el uso real. Reescribirla aquí borraría
+    // el contrato, así que Stripe manda y no tocamos nada.
+    // `syncQuantityFromMemberships` ya corta antes; esto es el cinturón por si
+    // alguien encola la action directamente.
+    if (data.billing?.limiteFisios !== undefined) return;
+
+    // Por encima del tope de autoservicio tampoco empujamos: enterprise se
+    // gestiona a mano (ver decisión de pricing) y `syncQuantityFromMemberships`
+    // ya marca `requiereContactoVentas` en ese caso.
     if (data.cantidadFisios > LIMITE_FISIOS_AUTOSERVICIO) return;
 
     const localSubId = data.billing?.stripeSubscriptionId;
@@ -1364,6 +1488,82 @@ export const updateStripeQuantity = internalAction({
       clinicId,
       cantidadFisios: cantidad,
     });
+  },
+});
+
+/**
+ * Reconciliación diaria de los contratos a medida. Relee de Stripe el price y
+ * la `quantity` de cada suscripción viva y refresca `clinicBilling.limiteFisios`.
+ *
+ * Por qué hace falta: cuando ventas amplía las plazas desde el Stripe Dashboard,
+ * el techo llega a Convex por webhook. Si ese webhook se pierde, ventas cree
+ * haber ampliado la clínica y el cliente sigue bloqueado — un fallo silencioso
+ * que nadie detecta hasta que el cliente se queja. Esto lo cierra en 24 h.
+ *
+ * Idempotente: `setLimiteFisios` no escribe si el valor ya coincide.
+ */
+export const reconcileLimitesAMedida = internalAction({
+  args: {},
+  handler: async (ctx): Promise<{ revisadas: number; ajustadas: number }> => {
+    const filas = await ctx.runQuery(
+      internal.billing.internal.listBillingConSubscription,
+      {},
+    );
+    if (filas.length === 0) return { revisadas: 0, ajustadas: 0 };
+
+    const stripe = getStripeClient();
+    const conocidos = [
+      process.env["STRIPE_PRICE_ID_BASE"],
+      process.env["STRIPE_PRICE_ID_ILIMITADO"],
+      process.env["STRIPE_PRICE_ID"],
+    ];
+
+    let ajustadas = 0;
+    for (const fila of filas) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(
+          fila.stripeSubscriptionId,
+        );
+        // Una sub muerta no describe el contrato vigente: dejarla en paz evita
+        // limpiar el techo de una clínica que solo cambió de subscription.
+        if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+          continue;
+        }
+
+        const item = sub.items.data[0];
+        const esAMedida = esPriceAMedida(item?.price?.id, conocidos);
+        const limite = esAMedida ? (item?.quantity ?? null) : null;
+
+        const { cambiado } = await ctx.runMutation(
+          internal.billing.internal.setLimiteFisios,
+          { clinicId: fila.clinicId, limiteFisios: limite },
+        );
+        if (!cambiado) continue;
+
+        ajustadas++;
+        console.log(
+          `[billing] reconcileLimitesAMedida: clinic=${fila.clinicId} limiteFisios ${fila.limiteFisios ?? "—"} → ${limite ?? "—"}`,
+        );
+
+        // La etiqueta de la factura sigue al contrato.
+        if (fila.stripeCustomerId) {
+          await syncStripeCustomerTierLabel(
+            stripe,
+            fila.stripeCustomerId,
+            limite ?? 0,
+            fila.variante ?? "base",
+            esAMedida,
+          );
+        }
+      } catch (err) {
+        // Una clínica que falle no debe abortar el barrido completo.
+        console.error(
+          `[billing] reconcileLimitesAMedida: fallo en clinic=${fila.clinicId}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    return { revisadas: filas.length, ajustadas };
   },
 });
 
@@ -1511,5 +1711,93 @@ export const migrateSubscriptionsToPricingV2 = internalAction({
     }
 
     return { revisadas: rows.length, migradas, saltadas };
+  },
+});
+
+/**
+ * Rellena el `description` de los customers de Stripe ya creados con el nombre
+ * de su clínica. One-shot para el parque existente; lo nuevo ya nace con él
+ * desde `syncCustomerDefaults`.
+ *
+ * Sin esto, un fisio con varias clínicas aparece en el Dashboard como N
+ * customers con su mismo nombre y correo, y ventas solo puede distinguirlos
+ * abriendo cada uno a comprobar el `metadata.orgId` — que es justo lo que pide
+ * `docs/GUIA_ENTERPRISE_VENTAS.md` antes de tocar plazas o precio.
+ *
+ * Dry-run por defecto (`apply: false`), como `dropStaleClinicBilling`.
+ *
+ * Los errores se capturan **por customer**: las clínicas cuya fila todavía
+ * apunta a un customer de modo test fallan con `No such customer`, y eso no
+ * debe abortar el barrido de las demás. Salen listadas en `fallidas`.
+ */
+export const backfillCustomerDescriptions = internalAction({
+  args: { apply: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { apply = false },
+  ): Promise<{
+    apply: boolean;
+    revisadas: number;
+    actualizables: { customerId: string; nombre: string }[];
+    yaCorrectas: number;
+    fallidas: { customerId: string; motivo: string }[];
+  }> => {
+    // Anotado a mano porque `listBillingConCustomer` aún no está en el api
+    // generado: `convex codegen` haría push real a producción.
+    const filas: {
+      clinicId: Id<"clinics">;
+      stripeCustomerId: string;
+      nombre: string;
+    }[] = await ctx.runQuery(
+      internal.billing.internal.listBillingConCustomer,
+      {},
+    );
+    const stripe = getStripeClient();
+
+    const actualizables: { customerId: string; nombre: string }[] = [];
+    const yaCorrectas: string[] = [];
+    const fallidas: { customerId: string; motivo: string }[] = [];
+
+    for (const fila of filas) {
+      try {
+        const customer = await stripe.customers.retrieve(fila.stripeCustomerId);
+        if ("deleted" in customer) {
+          fallidas.push({
+            customerId: fila.stripeCustomerId,
+            motivo: "customer borrado en Stripe",
+          });
+          continue;
+        }
+        if (customer.description === fila.nombre) {
+          yaCorrectas.push(fila.stripeCustomerId);
+          continue;
+        }
+        actualizables.push({
+          customerId: fila.stripeCustomerId,
+          nombre: fila.nombre,
+        });
+        if (apply) {
+          await stripe.customers.update(fila.stripeCustomerId, {
+            description: fila.nombre,
+          });
+        }
+      } catch (err) {
+        fallidas.push({
+          customerId: fila.stripeCustomerId,
+          motivo: (err as Error).message,
+        });
+      }
+    }
+
+    console.log(
+      `[billing] backfillCustomerDescriptions apply=${apply}: ${actualizables.length} actualizable(s), ${yaCorrectas.length} ya correcta(s), ${fallidas.length} fallida(s)`,
+    );
+    return {
+      apply,
+      revisadas: filas.length,
+      actualizables,
+      yaCorrectas: yaCorrectas.length,
+      fallidas,
+    };
   },
 });

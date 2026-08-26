@@ -38,34 +38,89 @@ export async function contarMiembros(
 }
 
 /**
- * `true` si dar de alta un asiento facturable más superaría el tope de
- * autoservicio. Variante no-throw para los flujos que no pueden lanzar
+ * Techo de asientos facturables de una clínica. Sale de `clinicBilling`:
+ *
+ * - **Contrato a medida** (`limiteFisios` presente): son las plazas que ventas
+ *   pactó y fijó como `quantity` en el Stripe Dashboard. Llega vía webhook
+ *   (`applySubscriptionEvent`); ningún código de la app lo escribe.
+ * - **Autoservicio** (ausente): rige `LIMITE_FISIOS_AUTOSERVICIO`.
+ */
+export async function limiteFisiosDeClinica(
+  ctx: QueryCtx | MutationCtx,
+  clinicId: Id<"clinics">,
+): Promise<{ limite: number; esAMedida: boolean }> {
+  const billing = await ctx.db
+    .query("clinicBilling")
+    .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+    .unique();
+  if (billing?.limiteFisios !== undefined) {
+    return { limite: billing.limiteFisios, esAMedida: true };
+  }
+  return { limite: LIMITE_FISIOS_AUTOSERVICIO, esAMedida: false };
+}
+
+/**
+ * Evalúa de una sola pasada si cabe un asiento facturable más: cuenta miembros
+ * y resuelve el techo aplicable. Base común de las dos variantes públicas.
+ */
+async function evaluarCapacidadFisios(
+  ctx: QueryCtx | MutationCtx,
+  clinicId: Id<"clinics">,
+): Promise<{
+  excede: boolean;
+  facturables: number;
+  limite: number;
+  esAMedida: boolean;
+}> {
+  const { facturables } = await contarMiembros(ctx, clinicId);
+  const { limite, esAMedida } = await limiteFisiosDeClinica(ctx, clinicId);
+  return { excede: facturables + 1 > limite, facturables, limite, esAMedida };
+}
+
+/**
+ * `true` si dar de alta un asiento facturable más superaría el techo de la
+ * clínica. Variante no-throw para los flujos que no pueden lanzar
  * (p.ej. registro con código en `auth/mutations.ts`).
  */
 export async function excedeCapacidadFisios(
   ctx: QueryCtx | MutationCtx,
   clinicId: Id<"clinics">,
 ): Promise<boolean> {
-  const { facturables } = await contarMiembros(ctx, clinicId);
-  return facturables + 1 > LIMITE_FISIOS_AUTOSERVICIO;
+  const { excede } = await evaluarCapacidadFisios(ctx, clinicId);
+  return excede;
 }
 
 /**
- * M-4: bloquea el alta NETA de un asiento facturable por encima del tope de
- * autoservicio. Enterprise (>9) se gestiona por ventas; el límite se hace
- * cumplir en código, no en el price de Stripe (decisión de pricing).
+ * M-4: bloquea el alta NETA de un asiento facturable por encima del techo de
+ * la clínica. En autoservicio el techo es `LIMITE_FISIOS_AUTOSERVICIO` y la
+ * salida es contactar con ventas; en un contrato a medida son las plazas
+ * pactadas y la salida es ampliar el contrato. Códigos distintos porque
+ * llevan al usuario a sitios distintos.
  */
 export async function assertCapacidadFisios(
   ctx: QueryCtx | MutationCtx,
   clinicId: Id<"clinics">,
 ): Promise<void> {
-  if (await excedeCapacidadFisios(ctx, clinicId)) {
+  const { excede, limite, esAMedida } = await evaluarCapacidadFisios(
+    ctx,
+    clinicId,
+  );
+  if (!excede) return;
+
+  if (esAMedida) {
     throw new ConvexError({
-      code: "REQUIERE_CONTACTO_VENTAS",
-      message:
-        "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
+      code: "PLAZAS_AGOTADAS",
+      message: `Has ocupado las ${limite} plazas de tu contrato. Contacta con nosotros para ampliarlo.`,
+      limite,
     });
   }
+
+  throw new ConvexError({
+    code: "REQUIERE_CONTACTO_VENTAS",
+    message:
+      "La clínica ya cuenta con el máximo de fisios del plan. Contacta con ventas para ampliar.",
+    limite,
+  });
 }
 
 /**
@@ -84,7 +139,12 @@ export async function checkCapacidadPacientes(
   const { facturables, pacientes } = await contarMiembros(ctx, clinicId);
 
   // Enterprise pendiente de ventas: sin cap (paridad con billingPermiteOperar).
-  if (billing?.estadoLocal === "enterprise_pending") {
+  // Contrato a medida ya cerrado: tampoco, porque el cap de pacientes se pacta
+  // aparte y los tramos de autoservicio (150/300/500) no le aplican.
+  if (
+    billing?.estadoLocal === "enterprise_pending" ||
+    billing?.limiteFisios !== undefined
+  ) {
     return { excede: false, limite: null, pacientes };
   }
 

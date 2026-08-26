@@ -6,6 +6,7 @@ import { registerRoutes as registerStripeRoutes } from "@convex-dev/stripe";
 import {
   resolveInvoiceSubscriptionId,
   resolveVarianteFromPriceId,
+  esPriceAMedida,
 } from "./billing/_webhookHelpers";
 import {
   authComponent,
@@ -118,6 +119,15 @@ registerStripeRoutes(http, components.stripe, {
             process.env["STRIPE_PRICE_ID_BASE"],
             process.env["STRIPE_PRICE_ID_ILIMITADO"],
           );
+          // Contrato a medida: la `quantity` que ventas fija en el Dashboard
+          // son las PLAZAS CONTRATADAS y pasan a ser el techo de fisios de la
+          // clínica. `null` limpia el techo cuando la suscripción vuelve a un
+          // price de autoservicio (distinto de `undefined` = "no tocar").
+          const esAMedida = esPriceAMedida(item?.price?.id, [
+            process.env["STRIPE_PRICE_ID_BASE"],
+            process.env["STRIPE_PRICE_ID_ILIMITADO"],
+            process.env["STRIPE_PRICE_ID"],
+          ]);
           await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
             clinicId,
             status: sub.status,
@@ -128,6 +138,7 @@ registerStripeRoutes(http, components.stripe, {
             cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
             quantity: item?.quantity,
             variante,
+            limiteFisios: esAMedida ? (item?.quantity ?? null) : null,
             eventCreatedMs,
             stripeSubscriptionId: eventSubscriptionId,
           });

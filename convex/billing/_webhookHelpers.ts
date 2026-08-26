@@ -98,6 +98,34 @@ export function resolveVarianteFromPriceId(
 }
 
 /**
+ * `true` si el price del subscription item NO es ninguno de los de
+ * autoservicio, es decir, si la suscripción responde a un contrato a medida
+ * negociado por ventas desde el Stripe Dashboard.
+ *
+ * Los `conocidos` son `STRIPE_PRICE_ID_BASE`, `STRIPE_PRICE_ID_ILIMITADO` y el
+ * legacy `STRIPE_PRICE_ID` (fallback de la ventana de migración): omitir este
+ * último trataría como enterprise a las clínicas aún sin migrar.
+ *
+ * Devolvemos `false` ante cualquier duda, porque un falso positivo sustituiría
+ * el tope de autoservicio por la quantity de Stripe:
+ * - sin `priceId`, no asumimos nada;
+ * - si NO hay ningún price conocido configurado (env vars ausentes en un
+ *   despliegue mal montado) no podemos discriminar, así que tratamos todo
+ *   como autoservicio en lugar de marcar a medida a toda la base.
+ */
+export function esPriceAMedida(
+  priceId: string | undefined,
+  conocidos: Array<string | undefined>,
+): boolean {
+  if (!priceId) return false;
+  const configurados = conocidos.filter(
+    (p): p is string => p !== undefined && p !== "",
+  );
+  if (configurados.length === 0) return false;
+  return !configurados.includes(priceId);
+}
+
+/**
  * Decide si, al pasar a `past_due`, corresponde conceder un periodo de gracia
  * nuevo (y el email de aviso). Reglas:
  *

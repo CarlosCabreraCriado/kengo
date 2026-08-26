@@ -543,7 +543,7 @@ tiers: [
   - [ ] Logs en Convex Dashboard durante las primeras semanas
 - [ ] Documentación de soporte:
   - [ ] FAQ pública: cómo cambia mi precio si añado fisio, cuándo se cobra el prorrateo, política de cancelación, política de reembolso
-  - [ ] Guía interna: cómo gestionar un caso enterprise (+10 fisios) en Stripe Dashboard
+  - [x] Guía interna: cómo gestionar un caso enterprise (+9 fisios) en Stripe Dashboard → `docs/Guia-Gestores-Kengo.docx` (guía completa de operaciones para gestión, generada por `npm run guia:gestores`) + `docs/GUIA_ENTERPRISE_VENTAS.md` (referencia técnica), 2026-08-26. Ventas fija el price negociado y la quantity = plazas contratadas; Convex las lee por webhook en `clinicBilling.limiteFisios` y las usa como techo de la clínica.
 
 > ✅ **Sesión 7 completada el 2026-04-30** — preparación de código para producción cerrada. **FASE 14 lista para despliegue** (solo quedan acciones humanas: replicar Stripe en live, flip de variables, ejecutar la mutation desde Dashboard, redactar FAQ pública, configurar alertas).
 >

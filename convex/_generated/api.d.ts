@@ -115,6 +115,7 @@ import type * as migrations_deleteClinicCascade from "../migrations/deleteClinic
 import type * as migrations_deleteUserByEmail from "../migrations/deleteUserByEmail.js";
 import type * as migrations_deleteUserByEmailMutation from "../migrations/deleteUserByEmailMutation.js";
 import type * as migrations_disablePatientCodesWithoutEmail from "../migrations/disablePatientCodesWithoutEmail.js";
+import type * as migrations_dropStaleClinicBilling from "../migrations/dropStaleClinicBilling.js";
 import type * as migrations_inspectPendingPlans from "../migrations/inspectPendingPlans.js";
 import type * as migrations_legacyUsers from "../migrations/legacyUsers.js";
 import type * as migrations_markVersionedAsModificado from "../migrations/markVersionedAsModificado.js";
@@ -279,6 +280,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/deleteUserByEmail": typeof migrations_deleteUserByEmail;
   "migrations/deleteUserByEmailMutation": typeof migrations_deleteUserByEmailMutation;
   "migrations/disablePatientCodesWithoutEmail": typeof migrations_disablePatientCodesWithoutEmail;
+  "migrations/dropStaleClinicBilling": typeof migrations_dropStaleClinicBilling;
   "migrations/inspectPendingPlans": typeof migrations_inspectPendingPlans;
   "migrations/legacyUsers": typeof migrations_legacyUsers;
   "migrations/markVersionedAsModificado": typeof migrations_markVersionedAsModificado;
