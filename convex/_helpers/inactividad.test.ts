@@ -73,6 +73,11 @@ function makeCtx(plans: FakePlan[], mem: FakeMembership | null) {
   });
   return {
     db: {
+      // `getReferenciaInactividad` resuelve la TZ del paciente con
+      // `ctx.db.get(pacienteId)`. Devolver null deja el fallback DEFAULT_TZ
+      // (Europe/Madrid), que es el criterio con el que están escritas las
+      // fechas de estos casos.
+      get: async () => null,
       query: (table: string) => {
         if (table === "plans") return chain(plans);
         if (table === "clinicMemberships") return chain(mem ? [mem] : []);
