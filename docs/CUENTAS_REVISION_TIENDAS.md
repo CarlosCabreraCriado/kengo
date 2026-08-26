@@ -63,36 +63,73 @@ aplicación. No hay compras dentro de la app.
 ## 3. Texto para *App Review Information* (App Store)
 
 En **Sign-In Required** marcar *Yes* y poner la cuenta de fisioterapeuta, que es
-el caso completo. En **Notes**:
+el caso completo.
+
+**Support URL**: `https://www.kengoapp.com/soporte` — con `www.`. El apex
+`kengoapp.com/soporte` devuelve 200 pero sirve el shell de la app, cuya ruta
+`/soporte` es la impersonación protegida por `SoporteGuard`: el revisor solo
+vería un login. Ver `docs/APP_STORE_CONNECT_COPY.md` §6.
+
+En **Notes**, en inglés: App Review no garantiza revisor hispanohablante y las
+notas son justo donde no conviene que no te entiendan. El orden no es casual —
+la 3.1.1 va primero porque es el mayor riesgo de rechazo de esta app.
 
 ```
-Kengo tiene dos modos, derivados del puesto del usuario en su clínica.
+Kengo is a physiotherapy platform used by clinics and their patients. The app
+has two modes, derived from the user's role in their clinic.
 
-La cuenta facilitada arriba (review-fisio@kengoapp.com) entra en modo
-fisioterapeuta: catálogo de ejercicios con vídeo, constructor de planes, ficha
-del paciente con adherencia y dolor, y chat.
+SIGN-IN
+The account provided above (review-fisio@kengoapp.com) signs in as
+PHYSIOTHERAPIST: exercise catalogue with video, plan builder, patient record
+with adherence and pain evolution, and chat with the patient.
 
-Para revisar el modo paciente, cerrar sesión y entrar con:
-  review-paciente@kengoapp.com / [contraseña]
-Muestra la actividad del día, la sesión guiada con vídeo y contador de series, el
-registro de dolor al terminar y el chat con su fisioterapeuta.
+To review the PATIENT mode, sign out and use:
+review-paciente@kengoapp.com / [contraseña]
+It shows today's activity, a guided session with video, set counter and rest
+timer, the pain log at the end of the session, progress, and chat with the
+physiotherapist.
 
-Ambas cuentas usan email y contraseña; no se necesita enlace mágico ni recibir
-ningún correo. La clínica de demostración ya tiene datos sembrados.
+Both accounts use email and password. No email verification, no one-time code
+and no social login are involved. The demo clinic already has an active plan,
+session history and a conversation, so no screen appears empty.
 
-La suscripción de la clínica se gestiona con Stripe en el navegador, fuera de la
-app. No hay compras integradas.
+NO IN-APP PURCHASES (guideline 3.1.1)
+Kengo is a business-to-business service. The subscription is contracted by the
+clinic, not by the individual user, and is paid on the web with Stripe outside
+the app. The app sells nothing and unlocks no feature through purchase; all
+purchase call-to-actions are hidden in native builds. Patients are invited by
+their clinic and pay nothing.
 
-Eliminación de cuenta (guideline 5.1.1(v)): Perfil → Eliminar cuenta. El
-borrado se completa sin contactar con soporte; también está disponible en
-https://www.kengoapp.com/eliminar-cuenta sin instalar la app.
+ACCOUNT DELETION (guideline 5.1.1(v))
+In the app: "Perfil" (Profile) tab -> "Cuenta" section -> tap it to expand ->
+"Eliminar mi cuenta". Deletion completes inside the app, with no need to
+contact support. It is also available without installing the app at
+https://www.kengoapp.com/eliminar-cuenta
 
-Para verificarlo sin destruir las cuentas de revisión, se puede registrar una
-cuenta nueva con cualquier email desde la propia app (no hace falta verificar
-el correo) y eliminarla acto seguido. Si se elimina la cuenta de
-fisioterapeuta, su clínica de demostración se cierra con ella y las
-credenciales de arriba dejan de funcionar.
+Please do NOT delete review-fisio@kengoapp.com: it owns the demo clinic, and
+deleting it closes that clinic in cascade, so the credentials above would stop
+working for future reviews. To test deletion, register a new account from the
+app with any email address - the clinic code field is optional and no email
+verification is required - and delete that one.
+
+MEDICAL CONTENT
+Kengo does not diagnose and does not provide medical advice. Exercises are
+prescribed to each patient by their own licensed physiotherapist; the app only
+delivers, guides and tracks them.
+
+OTHER NOTES
+Push notifications are session reminders - please accept the permission prompt
+if you want to see them. The app connects to our production backend, so all
+data shown is real.
+
+Any questions: info@kengoapp.com
 ```
+
+> La ruta de borrado lleva el nombre del acordeón a propósito. La sección
+> **Cuenta** está colapsada por defecto (`perfil.component.html`): con un
+> escueto "Perfil → Eliminar cuenta" el revisor abre Perfil, no ve ningún botón
+> y marca la 5.1.1(v) como incumplida. Si se renombra esa sección en la app,
+> actualizar también este texto y las dos páginas de la landing.
 
 ---
 

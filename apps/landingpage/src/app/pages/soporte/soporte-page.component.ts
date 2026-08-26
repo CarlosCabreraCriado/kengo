@@ -58,17 +58,20 @@ const CANONICAL = 'https://www.kengoapp.com/soporte';
             <details class="faq">
               <summary>¿Cómo gestiono la suscripción de mi clínica?</summary>
               <p>
-                Desde la aplicación, en Mi clínica → Suscripción. Allí puedes
-                iniciar, cambiar o cancelar el plan. La cancelación surte
-                efecto al final del periodo ya abonado.
+                En la aplicación, en Mi clínica → Suscripción, puedes consultar
+                el estado del plan de tu clínica. La contratación, los cambios
+                de plan, el método de pago y la cancelación se gestionan desde
+                la versión web de Kengo con tu misma cuenta. La cancelación
+                surte efecto al final del periodo ya abonado.
               </p>
             </details>
 
             <details class="faq">
               <summary>¿Cómo elimino mi cuenta y mis datos?</summary>
               <p>
-                Puedes hacerlo desde la aplicación, en Perfil → Eliminar
-                cuenta. También puedes solicitarlo desde
+                Puedes hacerlo desde la aplicación: entra en Perfil, despliega
+                la sección Cuenta y pulsa Eliminar mi cuenta. También puedes
+                solicitarlo desde
                 <a routerLink="/eliminar-cuenta">esta página</a> si ya no
                 tienes acceso a la app.
               </p>

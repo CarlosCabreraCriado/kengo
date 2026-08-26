@@ -41,7 +41,8 @@ const CANONICAL = 'https://www.kengoapp.com/eliminar-cuenta';
           <ol>
             <li>Abre Kengo e inicia sesión.</li>
             <li>Ve a <strong>Perfil</strong>.</li>
-            <li>Abre la sección <strong>Eliminar cuenta</strong>.</li>
+            <li>Despliega la sección <strong>Cuenta</strong>.</li>
+            <li>Pulsa <strong>Eliminar mi cuenta</strong>.</li>
             <li>Confirma la operación siguiendo las instrucciones.</li>
           </ol>
           <p>
