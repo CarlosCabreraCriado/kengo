@@ -80,6 +80,16 @@ Bajo el producto, sección **"Pricing"**, crea **dos prices** con la misma mecá
    Los >9 fisios son enterprise ("Contactar ventas") y el código no empuja
    quantity >9 a Stripe; el tramo es solo un guardarraíl.
 
+   ℹ️ Las clínicas enterprise no usan estos dos prices, sino uno **negociado**
+   que ventas adjunta a mano desde el Dashboard. Cualquier price que no sea
+   `STRIPE_PRICE_ID_BASE`, `STRIPE_PRICE_ID_ILIMITADO` ni el legacy
+   `STRIPE_PRICE_ID` marca la suscripción como "a medida": su `quantity` pasa a
+   ser el techo de plazas de la clínica y Convex deja de reescribirla. Ver
+   `docs/GUIA_ENTERPRISE_VENTAS.md` y, para el procedimiento del equipo de
+   gestión, `docs/Guia-Gestores-Kengo.docx`. Consecuencia práctica: **no crees prices
+   nuevos para promociones de autoservicio** sin registrarlos como conocidos, o
+   esas clínicas quedarán tratadas como enterprise.
+
    ⚠️ Replica el `tax_behavior` del price antiguo (verificar con
    `stripe prices retrieve <price_viejo>`) — con `automatic_tax` habilitado suele
    ser `exclusive`.

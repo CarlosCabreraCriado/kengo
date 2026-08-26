@@ -49,6 +49,18 @@ export interface ClinicSubscription {
   pacientesVinculados: number;
   /** Precio mensual del plan actual según la variante activa (0 si sin plan). */
   precioMensualActualEur: number;
+  /**
+   * Techo de asientos facturables (fisio + admin) de la clínica. En
+   * autoservicio son los 9 del plan; con contrato a medida, las plazas que
+   * ventas pactó y fijó como `quantity` en Stripe.
+   */
+  limiteFisios: number;
+  /**
+   * `true` si la suscripción usa un price negociado fuera de los planes de
+   * autoservicio. Esas clínicas no contratan ni cambian de variante desde la
+   * app: su plan se gestiona en Stripe.
+   */
+  esAMedida: boolean;
   requiereContactoVentas: boolean;
   /**
    * `userId` del propietario único de la clínica (Bloque J). Solo este

@@ -144,15 +144,25 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
   );
 
   /**
-   * `true` cuando el admin ha alcanzado el límite de fisios del plan
-   * autoservicio (9) y necesita contactar comercial para crecer. Se evalúa
-   * a partir de la suscripción de la clínica donde el usuario es admin.
+   * `true` cuando la clínica ha agotado su techo de asientos: los 9 del plan
+   * autoservicio, o las plazas del contrato a medida. El techo lo resuelve el
+   * servidor (`limiteFisios`), así que la app no replica el número.
    */
   enLimiteFisios = computed(() => {
     const sub = this.subscriptionService.suscripcion();
     if (!sub) return false;
-    return sub.fisiosActuales >= 9;
+    return sub.fisiosActuales >= sub.limiteFisios;
   });
+
+  /** Techo de asientos vigente, para los mensajes de límite. */
+  limiteFisios = computed(
+    () => this.subscriptionService.suscripcion()?.limiteFisios ?? null,
+  );
+
+  /** `true` si la clínica tiene un contrato a medida gestionado por ventas. */
+  esPlanAMedida = computed(
+    () => this.subscriptionService.suscripcion()?.esAMedida ?? false,
+  );
 
   // Rol del usuario en la clínica actual
   rolEnClinica = computed<{ nombre: string; icono: string } | null>(() => {
@@ -277,8 +287,17 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
         if (result?.codigo) {
           this.showSnackbar(`Código generado: ${result.codigo}`);
         } else if (result?.requiereContactoVentas) {
+          const limite = this.limiteFisios();
           this.toastService.warning(
-            'Has alcanzado el plan máximo (9 fisios). Contacta con ventas para un plan a medida.',
+            `Has alcanzado el plan máximo (${limite ?? 9} fisios). Contacta con ventas para un plan a medida.`,
+          );
+          this.abrirDialogContactarVentas();
+        } else if (result?.plazasAgotadas) {
+          const limite = this.limiteFisios();
+          this.toastService.warning(
+            limite === null
+              ? 'Has ocupado todas las plazas de tu contrato. Contacta con nosotros para ampliarlo.'
+              : `Has ocupado las ${limite} plazas de tu contrato. Contacta con nosotros para ampliarlo.`,
           );
           this.abrirDialogContactarVentas();
         } else if (result?.limitePacientesAlcanzado) {
@@ -317,7 +336,7 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
       data: {
         clinicId: clinica.id,
         fisiosActuales:
-          this.subscriptionService.suscripcion()?.fisiosActuales ?? 10,
+          this.subscriptionService.suscripcion()?.fisiosActuales ?? 0,
       },
       maxWidth: '480px',
     });
@@ -519,8 +538,12 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
       return this.subscriptionService.pagosSoloWeb()
         ? 'Tu suscripción está suspendida. El pago se gestiona desde la versión web de Kengo.'
         : 'Tu suscripción está suspendida. Actualiza el método de pago.';
-    if (this.enLimiteFisios())
-      return 'Has alcanzado el plan máximo (9 fisios). Contacta con ventas.';
+    if (this.enLimiteFisios()) {
+      const limite = this.limiteFisios();
+      if (this.esPlanAMedida())
+        return `Has ocupado las ${limite} plazas de tu contrato. Contacta con nosotros.`;
+      return `Has alcanzado el plan máximo (${limite} fisios). Contacta con ventas.`;
+    }
     return 'Tu equipo supera el plan actual. Activa una suscripción.';
   });
 

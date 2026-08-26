@@ -113,8 +113,13 @@
                   <div class="mc-limite-fisios">
                     <span class="material-symbols-outlined mc-limite-icon" aria-hidden="true">info</span>
                     <div class="mc-limite-text">
-                      <p class="mc-limite-title">Has alcanzado el plan máximo (9 fisios)</p>
-                      <p class="mc-limite-desc">Para añadir más fisioterapeutas necesitas un plan a medida.</p>
+                      @if (esPlanAMedida()) {
+                        <p class="mc-limite-title">Has ocupado las {{ limiteFisios() }} plazas de tu contrato</p>
+                        <p class="mc-limite-desc">Para añadir más fisioterapeutas hay que ampliar tu contrato.</p>
+                      } @else {
+                        <p class="mc-limite-title">Has alcanzado el plan máximo ({{ limiteFisios() }} fisios)</p>
+                        <p class="mc-limite-desc">Para añadir más fisioterapeutas necesitas un plan a medida.</p>
+                      }
                       <ui2-button
                         variant="ghost"
                         size="sm"

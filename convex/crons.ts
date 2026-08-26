@@ -82,6 +82,19 @@ crons.daily(
   {},
 );
 
+// Reconciliación de contratos a medida: relee de Stripe el price y la quantity
+// de cada suscripción viva para refrescar `clinicBilling.limiteFisios`. Red de
+// seguridad por si se pierde el webhook con el que ventas amplía las plazas
+// desde el Dashboard: sin esto la clínica seguiría bloqueada en 9 fisios sin
+// que nadie lo detecte. Hora 04:15 UTC, entre `directus-catalog-sync` (04:00)
+// y `push-log-cleanup` (04:30).
+crons.daily(
+  "billing-reconcile-limites-a-medida",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.billing.actions.reconcileLimitesAMedida,
+  {},
+);
+
 // Sync diario del catálogo de ejercicios desde Directus (CMS administrado por
 // admins). Pull incremental por `date_updated` sobre las colecciones
 // `ejercicios`, `categorias` y `ejercicios_categorias`. Detecta borrados

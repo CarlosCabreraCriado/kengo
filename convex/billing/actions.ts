@@ -12,6 +12,7 @@ import {
   LIMITE_FISIOS_AUTOSERVICIO,
   type PlanVariante,
 } from "./_helpers";
+import { esPriceAMedida } from "./_webhookHelpers";
 
 const stripeApi = new StripeSubscriptions(components.stripe);
 
@@ -22,6 +23,9 @@ const stripeApi = new StripeSubscriptions(components.stripe);
  * es importante porque nuestro Price tiered usa `quantity = N fisios`, lo
  * que en factura se muestra como `"Producto × N"` y puede confundir.
  *
+ * Con un contrato a medida (`esAMedida`) la etiqueta es "Plan a medida": los
+ * tramos de autoservicio no describen lo que paga esa clínica.
+ *
  * Si `cantidadFisios` está fuera de los tramos autoservicio (0 o >9),
  * limpiamos el field para no exponer un texto desactualizado o incorrecto.
  */
@@ -30,9 +34,12 @@ async function syncStripeCustomerTierLabel(
   customerId: string,
   cantidadFisios: number,
   variante: PlanVariante,
+  esAMedida = false,
 ): Promise<void> {
-  const tier = planParaFisios(cantidadFisios);
-  const custom_fields = tier
+  const tier = esAMedida ? null : planParaFisios(cantidadFisios);
+  const custom_fields = esAMedida
+    ? [{ name: "Plan", value: "Plan a medida" }]
+    : tier
     ? [
         {
           name: "Plan",
@@ -467,6 +474,17 @@ export const createCheckoutSession = action({
     const estado = data.billing?.estadoLocal ?? "none";
     const useSetupMode = estado === "trialing";
 
+    // Contrato a medida: el Checkout adjuntaría un price de autoservicio y
+    // borraría el price negociado que ventas configuró en el Dashboard. La UI
+    // ya oculta el CTA, pero el gate tiene que estar también en servidor.
+    if (data.billing?.limiteFisios !== undefined) {
+      throw new ConvexError({
+        code: "SUSCRIPCION_A_MEDIDA",
+        message:
+          "Tu clínica tiene un contrato a medida. Contacta con nosotros para cambiarlo.",
+      });
+    }
+
     // Variante efectiva de la sesión. En modo setup (trialing) el arg se
     // ignora: la S1 ya existe con su price y cambiarlo aquí puentearía el
     // flujo `setPlanVariante` (proration). No lanzamos para no convertir en
@@ -829,6 +847,16 @@ export const setPlanVariante = action({
       internal.billing.internal.getBillingContext,
       { clinicId },
     );
+    // Contrato a medida: el swap de price sustituiría el price negociado por
+    // uno de autoservicio. La variante base/ilimitada no aplica aquí.
+    if (data.billing?.limiteFisios !== undefined) {
+      throw new ConvexError({
+        code: "SUSCRIPCION_A_MEDIDA",
+        message:
+          "Tu clínica tiene un contrato a medida. Contacta con nosotros para cambiarlo.",
+      });
+    }
+
     const varianteActual: PlanVariante = data.billing?.variante ?? "base";
     if (varianteActual === variante) return { ok: true } as const;
 
@@ -1328,9 +1356,16 @@ export const updateStripeQuantity = internalAction({
     // Stripe con la cantidad real.
     const cantidad = Math.max(1, data.cantidadFisios);
 
-    // Por encima del tope de autoservicio no empujamos a Stripe (enterprise se
-    // gestiona a mano; ver decisión de pricing). syncQuantityFromMemberships ya
-    // marca `requiereContactoVentas` en ese caso.
+    // Contrato a medida: la `quantity` de Stripe son las PLAZAS CONTRATADAS que
+    // fijó ventas en el Dashboard, no el uso real. Reescribirla aquí borraría
+    // el contrato, así que Stripe manda y no tocamos nada.
+    // `syncQuantityFromMemberships` ya corta antes; esto es el cinturón por si
+    // alguien encola la action directamente.
+    if (data.billing?.limiteFisios !== undefined) return;
+
+    // Por encima del tope de autoservicio tampoco empujamos: enterprise se
+    // gestiona a mano (ver decisión de pricing) y `syncQuantityFromMemberships`
+    // ya marca `requiereContactoVentas` en ese caso.
     if (data.cantidadFisios > LIMITE_FISIOS_AUTOSERVICIO) return;
 
     const localSubId = data.billing?.stripeSubscriptionId;
@@ -1364,6 +1399,82 @@ export const updateStripeQuantity = internalAction({
       clinicId,
       cantidadFisios: cantidad,
     });
+  },
+});
+
+/**
+ * Reconciliación diaria de los contratos a medida. Relee de Stripe el price y
+ * la `quantity` de cada suscripción viva y refresca `clinicBilling.limiteFisios`.
+ *
+ * Por qué hace falta: cuando ventas amplía las plazas desde el Stripe Dashboard,
+ * el techo llega a Convex por webhook. Si ese webhook se pierde, ventas cree
+ * haber ampliado la clínica y el cliente sigue bloqueado — un fallo silencioso
+ * que nadie detecta hasta que el cliente se queja. Esto lo cierra en 24 h.
+ *
+ * Idempotente: `setLimiteFisios` no escribe si el valor ya coincide.
+ */
+export const reconcileLimitesAMedida = internalAction({
+  args: {},
+  handler: async (ctx): Promise<{ revisadas: number; ajustadas: number }> => {
+    const filas = await ctx.runQuery(
+      internal.billing.internal.listBillingConSubscription,
+      {},
+    );
+    if (filas.length === 0) return { revisadas: 0, ajustadas: 0 };
+
+    const stripe = getStripeClient();
+    const conocidos = [
+      process.env["STRIPE_PRICE_ID_BASE"],
+      process.env["STRIPE_PRICE_ID_ILIMITADO"],
+      process.env["STRIPE_PRICE_ID"],
+    ];
+
+    let ajustadas = 0;
+    for (const fila of filas) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(
+          fila.stripeSubscriptionId,
+        );
+        // Una sub muerta no describe el contrato vigente: dejarla en paz evita
+        // limpiar el techo de una clínica que solo cambió de subscription.
+        if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+          continue;
+        }
+
+        const item = sub.items.data[0];
+        const esAMedida = esPriceAMedida(item?.price?.id, conocidos);
+        const limite = esAMedida ? (item?.quantity ?? null) : null;
+
+        const { cambiado } = await ctx.runMutation(
+          internal.billing.internal.setLimiteFisios,
+          { clinicId: fila.clinicId, limiteFisios: limite },
+        );
+        if (!cambiado) continue;
+
+        ajustadas++;
+        console.log(
+          `[billing] reconcileLimitesAMedida: clinic=${fila.clinicId} limiteFisios ${fila.limiteFisios ?? "—"} → ${limite ?? "—"}`,
+        );
+
+        // La etiqueta de la factura sigue al contrato.
+        if (fila.stripeCustomerId) {
+          await syncStripeCustomerTierLabel(
+            stripe,
+            fila.stripeCustomerId,
+            limite ?? 0,
+            fila.variante ?? "base",
+            esAMedida,
+          );
+        }
+      } catch (err) {
+        // Una clínica que falle no debe abortar el barrido completo.
+        console.error(
+          `[billing] reconcileLimitesAMedida: fallo en clinic=${fila.clinicId}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    return { revisadas: filas.length, ajustadas };
   },
 });
 

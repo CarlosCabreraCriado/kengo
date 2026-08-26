@@ -74,6 +74,9 @@ export const upsertClinicBilling = internalMutation({
  * clínica. Llamada desde `clinicMemberships.add/remove` y `accessCodes.consume`
  * mediante `ctx.scheduler.runAfter(0, ...)`.
  *
+ * - Si la clínica tiene un contrato a medida (`limiteFisios` presente), NO
+ *   toca Stripe: ahí la `quantity` son las plazas que ventas pactó en el
+ *   Dashboard y reescribirlas con el uso real borraría el contrato.
  * - Si n > LIMITE_FISIOS_AUTOSERVICIO marca `requiereContactoVentas = true` y
  *   no toca Stripe (la mutation que dispara debería haber bloqueado antes con
  *   `REQUIERE_CONTACTO_VENTAS`).
@@ -85,6 +88,15 @@ export const upsertClinicBilling = internalMutation({
 export const syncQuantityFromMemberships = internalMutation({
   args: { clinicId: v.id("clinics") },
   handler: async (ctx, { clinicId }) => {
+    const existente = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+
+    // Contrato a medida: Stripe manda sobre la quantity. Tampoco marcamos
+    // `requiereContactoVentas`: esta clínica YA pasó por ventas.
+    if (existente?.limiteFisios !== undefined) return;
+
     const memberships = await ctx.db
       .query("clinicMemberships")
       .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
@@ -94,12 +106,8 @@ export const syncQuantityFromMemberships = internalMutation({
     ).length;
 
     if (n > LIMITE_FISIOS_AUTOSERVICIO) {
-      const existing = await ctx.db
-        .query("clinicBilling")
-        .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
-        .unique();
-      if (existing) {
-        await ctx.db.patch(existing._id, {
+      if (existente) {
+        await ctx.db.patch(existente._id, {
           requiereContactoVentas: true,
           actualizadoEn: Date.now(),
         });
@@ -115,22 +123,17 @@ export const syncQuantityFromMemberships = internalMutation({
       return;
     }
 
-    const billing = await ctx.db
-      .query("clinicBilling")
-      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
-      .unique();
-
-    // B-5: si la clínica bajó de >10 a ≤10 fisios, limpiar el flag de
+    // B-5: si la clínica bajó de >9 a ≤9 fisios, limpiar el flag de
     // "contactar ventas" que pudo quedar puesto antes (solo se ponía a true).
-    if (billing?.requiereContactoVentas === true) {
-      await ctx.db.patch(billing._id, {
+    if (existente?.requiereContactoVentas === true) {
+      await ctx.db.patch(existente._id, {
         requiereContactoVentas: false,
         actualizadoEn: Date.now(),
       });
     }
 
-    if (!billing?.stripeSubscriptionId) return;
-    if (billing.cantidadFisios === n) return;
+    if (!existente?.stripeSubscriptionId) return;
+    if (existente.cantidadFisios === n) return;
 
     await ctx.scheduler.runAfter(
       0,
@@ -147,7 +150,9 @@ export const syncQuantityFromMemberships = internalMutation({
  * caído) y nada lo reintentaba: la clínica operaba gratis indefinidamente por la
  * permisividad de `billing === null`. Reencola el arranque del trial;
  * `startTrialForClinic` es idempotente (aborta si ya hay subId). Se saltan las
- * clínicas enterprise (>10 fisios), que se gestionan por ventas.
+ * clínicas enterprise (>9 fisios), que se gestionan por ventas. Las clínicas
+ * con contrato a medida quedan excluidas por construcción: tienen fila
+ * `clinicBilling` (es donde vive `limiteFisios`), así que nunca entran aquí.
  */
 export const reconcileMissingTrials = internalMutation({
   args: {},
@@ -243,6 +248,7 @@ export const getBillingContext = internalQuery({
             stripeSubscriptionId: billing.stripeSubscriptionId,
             estadoLocal: billing.estadoLocal,
             variante: billing.variante,
+            limiteFisios: billing.limiteFisios,
           }
         : null,
     };
@@ -305,6 +311,13 @@ export const applySubscriptionEvent = internalMutation({
     eventCreatedMs: v.optional(v.number()),
     /** Id de la subscription del evento (`event.data.object.id`). */
     stripeSubscriptionId: v.optional(v.string()),
+    /**
+     * Techo de plazas de un contrato a medida, derivado de la `quantity` de
+     * Stripe cuando el price no es de autoservicio. Convenio de tres estados:
+     * `number` = fijar, `null` = limpiar (volvió a un price estándar),
+     * `undefined` = no tocar el valor persistido.
+     */
+    limiteFisios: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -343,6 +356,22 @@ export const applySubscriptionEvent = internalMutation({
     }
     if (args.quantity !== undefined) patch["cantidadFisios"] = args.quantity;
     if (args.variante !== undefined) patch["variante"] = args.variante;
+    if (args.limiteFisios !== undefined) {
+      // `null` → `undefined` en el patch borra el campo en Convex.
+      patch["limiteFisios"] = args.limiteFisios ?? undefined;
+    }
+    // Adopción de una subscription creada FUERA de la app: cuando ventas monta
+    // a mano el contrato de una clínica que nunca contrató (p.ej. las que la
+    // migración dejó en `enterprise_pending`), no hay `stripeSubscriptionId`
+    // local. Sin anclarlo aquí, la clínica quedaría invisible para la
+    // reconciliación diaria y para el self-heal de la quantity. Solo se rellena
+    // el hueco: si ya hay uno, manda `isForeignSubscriptionEvent`.
+    if (
+      existing?.stripeSubscriptionId === undefined &&
+      args.stripeSubscriptionId !== undefined
+    ) {
+      patch["stripeSubscriptionId"] = args.stripeSubscriptionId;
+    }
     if (args.eventCreatedMs !== undefined) {
       patch["lastStripeEventMs"] = args.eventCreatedMs;
     }
@@ -386,9 +415,63 @@ export const applySubscriptionEvent = internalMutation({
       cancelAtPeriodEnd: args.cancelAtPeriodEnd ?? false,
       cantidadFisios: args.quantity,
       variante: args.variante,
+      limiteFisios: args.limiteFisios ?? undefined,
+      stripeSubscriptionId: args.stripeSubscriptionId,
       lastStripeEventMs: args.eventCreatedMs,
       actualizadoEn: Date.now(),
     });
+  },
+});
+
+/**
+ * Filas `clinicBilling` con subscription viva en Stripe. Insumo de
+ * `reconcileLimitesAMedida`: la reconciliación necesita saber a qué
+ * suscripciones preguntar.
+ */
+export const listBillingConSubscription = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const billings = await ctx.db.query("clinicBilling").collect();
+    return billings
+      .filter((b) => b.stripeSubscriptionId !== undefined)
+      .map((b) => ({
+        clinicId: b.clinicId,
+        stripeSubscriptionId: b.stripeSubscriptionId as string,
+        stripeCustomerId: b.stripeCustomerId,
+        limiteFisios: b.limiteFisios,
+        variante: b.variante,
+      }));
+  },
+});
+
+/**
+ * Fija o limpia el techo de plazas de un contrato a medida. Deliberadamente
+ * más estrecha que `applySubscriptionEvent`: la reconciliación solo debe
+ * tocar este campo, sin recalcular estado ni disparar gracia/emails.
+ *
+ * `null` limpia el campo (la clínica volvió a un price de autoservicio).
+ * Idempotente: si el valor ya coincide, no escribe.
+ */
+export const setLimiteFisios = internalMutation({
+  args: {
+    clinicId: v.id("clinics"),
+    limiteFisios: v.union(v.number(), v.null()),
+  },
+  handler: async (ctx, { clinicId, limiteFisios }) => {
+    const existing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+    if (!existing) return { cambiado: false };
+
+    const nuevo = limiteFisios ?? undefined;
+    if (existing.limiteFisios === nuevo) return { cambiado: false };
+
+    await ctx.db.patch(existing._id, {
+      limiteFisios: nuevo,
+      actualizadoEn: Date.now(),
+    });
+    return { cambiado: true };
   },
 });
 

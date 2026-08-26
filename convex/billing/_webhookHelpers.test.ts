@@ -15,6 +15,7 @@ import {
   isOutOfOrderEvent,
   shouldGrantGraceOnPastDue,
   resolveVarianteFromPriceId,
+  esPriceAMedida,
 } from "./_webhookHelpers";
 
 function test(name: string, fn: () => void) {
@@ -188,4 +189,41 @@ test("resolveVarianteFromPriceId: env vars sin configurar → undefined (nunca f
     undefined,
   );
   assert.equal(resolveVarianteFromPriceId("price_x", "", ""), undefined);
+});
+
+// --- esPriceAMedida ---
+
+const CONOCIDOS = ["price_base", "price_ilim", "price_legacy"];
+
+test("esPriceAMedida: price base → false", () => {
+  assert.equal(esPriceAMedida("price_base", CONOCIDOS), false);
+});
+
+test("esPriceAMedida: price ilimitado → false", () => {
+  assert.equal(esPriceAMedida("price_ilim", CONOCIDOS), false);
+});
+
+test("esPriceAMedida: price legacy (migración) → false", () => {
+  assert.equal(esPriceAMedida("price_legacy", CONOCIDOS), false);
+});
+
+test("esPriceAMedida: price negociado → true", () => {
+  assert.equal(esPriceAMedida("price_enterprise_myo", CONOCIDOS), true);
+});
+
+test("esPriceAMedida: sin priceId → false (no asumir enterprise por falta de datos)", () => {
+  assert.equal(esPriceAMedida(undefined, CONOCIDOS), false);
+  assert.equal(esPriceAMedida("", CONOCIDOS), false);
+});
+
+test("esPriceAMedida: env vars sin configurar → false (nunca falso positivo)", () => {
+  // Con los tres env vacíos no se puede discriminar. Marcar "a medida" ahí
+  // sustituiría el tope de 9 por la quantity en TODA la base de clínicas.
+  assert.equal(esPriceAMedida("price_base", [undefined, "", undefined]), false);
+  assert.equal(esPriceAMedida("price_x", []), false);
+});
+
+test("esPriceAMedida: basta un price conocido configurado para discriminar", () => {
+  assert.equal(esPriceAMedida("price_base", ["price_base", undefined]), false);
+  assert.equal(esPriceAMedida("price_custom", ["price_base", undefined]), true);
 });
