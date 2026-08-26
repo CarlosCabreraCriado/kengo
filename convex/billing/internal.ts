@@ -4,6 +4,7 @@ import {
   internalQuery,
 } from "../_generated/server";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import { LIMITE_FISIOS_AUTOSERVICIO } from "./_helpers";
 import {
   shouldSkipEvent,
@@ -441,6 +442,34 @@ export const listBillingConSubscription = internalQuery({
         limiteFisios: b.limiteFisios,
         variante: b.variante,
       }));
+  },
+});
+
+/**
+ * Filas `clinicBilling` con customer de Stripe, junto al nombre de su clínica.
+ * Insumo de `backfillCustomerDescriptions`: es lo único que hace falta para
+ * rellenar el `description` de los customers ya creados.
+ */
+export const listBillingConCustomer = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const billings = await ctx.db.query("clinicBilling").collect();
+    const filas: {
+      clinicId: Id<"clinics">;
+      stripeCustomerId: string;
+      nombre: string;
+    }[] = [];
+    for (const b of billings) {
+      if (!b.stripeCustomerId) continue;
+      const clinic = await ctx.db.get(b.clinicId);
+      if (!clinic) continue;
+      filas.push({
+        clinicId: b.clinicId,
+        stripeCustomerId: b.stripeCustomerId,
+        nombre: clinic.nombre,
+      });
+    }
+    return filas;
   },
 });
 
