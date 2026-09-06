@@ -424,3 +424,24 @@
   line-height: 1.55;
   color: var(--ink-700);
 }
+
+/* === Tarjetas aportadas a clínicas === */
+
+.perfil-tarjetas-intro,
+.perfil-tarjetas-vacio {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.perfil-tarjetas-vacio {
+  padding: 8px 0 4px;
+}
+
+.perfil-tarjeta-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}

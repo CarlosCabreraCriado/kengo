@@ -42,6 +42,83 @@
     </ui2-card>
   }
 
+  @if (esOwner() && metodoPagoPendiente() && suscripcion()) {
+    <ui2-card
+      class="block"
+      [padding]="16"
+      [style.background]="'rgba(245, 158, 11, 0.10)'"
+      [style.border]="'1px solid rgba(245, 158, 11, 0.35)'"
+    >
+      <div class="flex items-start gap-3">
+        <span
+          class="material-symbols-outlined text-warning"
+          aria-hidden="true"
+          style="font-size: 28px; line-height: 1;"
+        >credit_card_off</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-ink-900">Hace falta un método de pago nuevo</p>
+          <p class="text-sm text-ink-700 mt-1">
+            La tarjeta que pagaba la suscripción
+            @if (metodoPagoRetiradoPorNombre()) {
+              la retiró {{ metodoPagoRetiradoPorNombre() }}
+            } @else {
+              se retiró
+            }
+            @if (metodoPagoPendienteDesde()) {
+              el {{ metodoPagoPendienteDesde() | date: 'd MMMM' }}.
+            } @else {
+              recientemente.
+            }
+            @if (pagosSoloWeb()) {
+              Añade otra desde la versión web de Kengo
+            } @else {
+              Añade otra
+            }
+            @if (proximoCobro()) {
+              antes del {{ proximoCobro() | date: 'd MMMM' }}
+            }
+            para evitar la suspensión. Mientras tanto la clínica sigue funcionando con normalidad.
+          </p>
+          @if (!pagosSoloWeb()) {
+            <div class="mt-3">
+              <ui2-button
+                variant="primary"
+                size="md"
+                iconLeft="credit_card"
+                [loading]="accionEnCurso()"
+                [disabled]="accionEnCurso()"
+                (clicked)="accionPrincipal()"
+              >Añadir método de pago</ui2-button>
+            </div>
+          }
+        </div>
+      </div>
+    </ui2-card>
+  }
+
+  @if (esOwner() && !metodoPagoPendiente() && metodoPagoActivo() && !metodoPagoActivo()!.aportadaPorEsOwner) {
+    <ui2-card class="block" [padding]="16">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-ink-500" aria-hidden="true">credit_card</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-ink-900">
+            La suscripción se cobra en la tarjeta de {{ metodoPagoActivo()!.aportadaPorNombre }}
+          </p>
+          <p class="text-sm text-ink-500 mt-1">
+            @if (metodoPagoActivo()!.ultimos4) {
+              Tarjeta terminada en {{ metodoPagoActivo()!.ultimos4 }}.
+            }
+            Su titular puede retirarla cuando quiera desde su cuenta; si eso
+            ocurre te avisaremos para que añadas la tuya.
+            @if (!pagosSoloWeb()) {
+              También puedes cambiarla ahora desde «Gestionar pago».
+            }
+          </p>
+        </div>
+      </div>
+    </ui2-card>
+  }
+
   @if (llegadaPorBloqueo() && bloqueada()) {
     <ui2-card
       class="block"

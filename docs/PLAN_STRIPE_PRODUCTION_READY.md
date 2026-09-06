@@ -466,10 +466,18 @@ Ejecutar todos los flujos en **staging con Stripe test mode** antes de aprobar p
 - [ ] Tras migración: todas las clínicas tienen `ownerUserId` no-nulo
 - [ ] Admin no-owner abre suscripción → ve estado pero no CTAs
 - [ ] Admin no-owner intenta `createCheckoutSession` vía DevTools → `OWNER_REQUIRED`
-- [ ] `transferOwnership` cambia `ownerUserId` + emails a antiguo y nuevo owner
+- [x] `transferOwnership` cambia `ownerUserId` + emails a antiguo y nuevo owner (`notifyOwnershipTransferred`; en `forceTransferOwnership` solo al nuevo)
+- [x] `transferOwnership` / `forceTransferOwnership` / fusión / borrado con reemplazo programan `billing.actions.syncCustomerOwner`: el customer de Stripe pasa al `email` del nuevo owner (y al `name`, solo si aún era el del saliente). Backfill `billing.actions.backfillCustomerOwners` para las transferencias previas.
 - [ ] Owner intenta transferir a un fisio → rechazo
 - [ ] Admin no-owner intenta degradar al owner → rechazo
 - [ ] `forceTransferOwnership` desde Dashboard queda registrada en `clinicOwnershipAudit`
+
+### Titularidad del método de pago (Bloque K)
+
+- [x] `clinicPaymentMethods` espeja los PM del customer con quién los aportó (webhook `payment_method.*`, `finalizeSetupCheckout`, cron `billing-reconcile-metodos-pago`).
+- [x] El titular retira su tarjeta desde `/perfil` (`billing.actions.retirarMiMetodoDePago`) sin ser owner ni miembro; si era la activa, `metodoPagoPendienteDesde` + email al owner + banners.
+- [x] Al transferir, el owner saliente elige mantener o retirar sus tarjetas (`transferOwnership.retirarMiMetodoDePago`, opcional: los clientes nativos 1.2.0 equivalen a "mantener").
+- [ ] Validado en test según `TESTING_STRIPE_PRODUCTION_READY.md` §3.11.
 
 ### Multi-clínica
 
@@ -519,7 +527,7 @@ Implementadas las 10 fases en código en una sola sesión continua. El typecheck
 
 **Backend (Convex)**
 - Bloque A — webhooks: tabla `stripeWebhookEvents` con dedup por `event.id`; `clinicBilling.lastStripeEventMs` para ordering; `applySubscriptionEvent` descarta eventos stale; `convex/http.ts` registra cada evento antes de aplicarlo y resuelve `clinicId` de forma unificada.
-- Bloque J — propietario único: `clinics.ownerUserId` (opcional, pendiente de migrar a no-opcional tras backfill), `clinicOwnershipAudit`, helpers (`esOwner`, `assertOwnerOnClinic`, `assertOwnerOnClinicByExternalId`, `assertNotOwnerWithoutTransfer`, `assertOwnerIsAdmin`), `clinics.transferOwnership`, `clinics.forceTransferOwnership` (soporte). `clinics.create` ahora asigna automáticamente `ownerUserId = user._id`. `getBillingContext` lee del owner con fallback al primer admin pre-migración. Las 6 billing actions pasan a `assertOwnerOnClinicByExternalId`. Migración `migrations/backfillClinicOwner.ts` con flag `apply` (dry-run/aplicar).
+- Bloque J — propietario único: `clinics.ownerUserId` (opcional, pendiente de migrar a no-opcional tras backfill), `clinicOwnershipAudit`, helpers (`esOwner`, `assertOwnerOnClinic`, `assertOwnerOnClinicByExternalId`, `assertNotOwnerWithoutTransfer`, `assertOwnerIsAdmin`), `clinics.transferOwnership`, `clinics.forceTransferOwnership` (soporte). `clinics.create` ahora asigna automáticamente `ownerUserId = user._id`. `getBillingContext` lee del owner (`ownerUserId` ya es no-opcional; el fallback al primer admin de la ventana de migración se retiró). Las 6 billing actions pasan a `assertOwnerOnClinicByExternalId`. Migración `migrations/backfillClinicOwner.ts` con flag `apply` (dry-run/aplicar).
 - Bloque B — bloqueo del owner: `clinicMemberships.remove` y degradación en `add` rechazan si el saliente es el owner (código `OWNER_MUST_TRANSFER_FIRST`).
 - Bloque C — Stripe Tax + métodos pago: `createCheckoutSession` ahora llama directamente a `stripe.checkout.sessions.create` con `automatic_tax`, `tax_id_collection: { required: 'if_supported' }`, `customer_update: { name, address }`, `payment_method_collection: 'always'`. `startTrialForClinic` añade `automatic_tax: { enabled: true }`. Apple/Google Pay vienen vía wallets en Dashboard (sin código).
 - Bloque E — aislamiento estricto: `routines.create` acepta `clinicId` (obligatorio si `visibilidad === 'clinica'`), valida con `requireActiveSubscription` contra esa clínica; `update` lee `routine.clinicId`; `duplicate` mantiene fallback al helper "any-active" porque la copia es privada.

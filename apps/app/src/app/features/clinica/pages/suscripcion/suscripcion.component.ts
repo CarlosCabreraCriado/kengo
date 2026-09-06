@@ -148,6 +148,18 @@ export class SuscripcionComponent {
    */
   protected readonly pagosSoloWeb = this.subs.pagosSoloWeb;
 
+  /**
+   * Titularidad del método de pago: la tarjeta activa la aportó otra persona
+   * (owner anterior) o se retiró y hay que añadir otra antes del próximo cobro.
+   */
+  protected readonly metodoPagoPendiente = this.subs.metodoPagoPendiente;
+  protected readonly metodoPagoPendienteDesde = this.subs.metodoPagoPendienteDesde;
+  protected readonly metodoPagoRetiradoPorNombre = this.subs.metodoPagoRetiradoPorNombre;
+  protected readonly metodoPagoActivo = this.subs.metodoPagoActivo;
+  protected readonly proximoCobro = computed(
+    () => this.suscripcion()?.currentPeriodEnd ?? this.suscripcion()?.trialEnd,
+  );
+
   protected readonly planActual = computed<PlanInfo | null>(
     () => this.suscripcion()?.plan ?? null,
   );
@@ -404,6 +416,9 @@ export class SuscripcionComponent {
     const estado = this.suscripcion()?.estado ?? 'none';
     if (estado === 'canceled') return 'Reactivar suscripción';
     if (this.cancelaAlFinDelPeriodo()) return 'Reactivar suscripción';
+    // Sin tarjeta que cobre: la acción es añadirla (Portal en `active`,
+    // Checkout setup en `trialing`; `accionPrincipal` ya enruta cada caso).
+    if (this.metodoPagoPendiente()) return 'Añadir método de pago';
     if (estado === 'none' || estado === 'incomplete')
       return 'Activar suscripción';
     if (estado === 'trialing') return 'Añadir método de pago';

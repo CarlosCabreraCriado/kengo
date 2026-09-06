@@ -703,8 +703,60 @@ export default defineSchema({
     // Garantiza idempotencia: si la clínica reactiva tras un cancel, no se
     // reenvía la bienvenida.
     welcomeEmailSentAt: v.optional(v.number()),
+    // Método de pago que cobra la suscripción, espejo de Stripe: el de la
+    // subscription (`default_payment_method`) manda sobre el del customer
+    // (`invoice_settings.default_payment_method`). Se guardan los dos en crudo
+    // porque llegan en eventos distintos; el activo se deriva con
+    // `defaultPaymentMethodDe` (`billing/_helpers.ts`).
+    stripeSubscriptionDefaultPaymentMethodId: v.optional(v.string()),
+    stripeCustomerDefaultPaymentMethodId: v.optional(v.string()),
+    // Sellado cuando el titular retira la tarjeta que cobraba y la suscripción
+    // sigue viva: la clínica opera hasta la siguiente renovación, pero el
+    // owner tiene que añadir otro método de pago. Se limpia al adjuntarse un
+    // PM nuevo o al fijarse un default vivo. Ver `clinicPaymentMethods`.
+    metodoPagoPendienteDesde: v.optional(v.number()),
+    metodoPagoRetiradoPorUserId: v.optional(v.id("users")),
     actualizadoEn: v.number(),
-  }).index("by_clinicId", ["clinicId"]),
+  })
+    .index("by_clinicId", ["clinicId"])
+    .index("by_stripeCustomerId", ["stripeCustomerId"]),
+
+  // Titularidad de los métodos de pago de una clínica. El customer de Stripe
+  // es de la clínica, pero cada tarjeta la aporta una persona (el owner del
+  // momento, único que puede abrir Checkout/Portal). Registrarlo permite que
+  // esa persona la retire desde su cuenta aunque ya no sea owner ni miembro,
+  // y saber a quién avisar cuando la tarjeta activa desaparece. Espejo de
+  // Stripe: lo escriben el webhook `payment_method.*`, la acción de retirada
+  // y la reconciliación diaria; una fila detached nunca se borra.
+  clinicPaymentMethods: defineTable({
+    clinicId: v.id("clinics"),
+    stripeCustomerId: v.string(),
+    stripePaymentMethodId: v.string(),
+    aportadaPorUserId: v.id("users"),
+    /** Tipo de Stripe (`card`, `sepa_debit`, …). */
+    tipo: v.string(),
+    marca: v.optional(v.string()),
+    ultimos4: v.optional(v.string()),
+    caducaMes: v.optional(v.number()),
+    caducaAnio: v.optional(v.number()),
+    attachedAt: v.number(),
+    detachedAt: v.optional(v.number()),
+    detachedByUserId: v.optional(v.id("users")),
+    /** `titular` desde Mi cuenta; `transfer` al ceder la propiedad; `stripe` desde Portal/Dashboard o reconciliación. */
+    detachedVia: v.optional(
+      v.union(v.literal("titular"), v.literal("transfer"), v.literal("stripe")),
+    ),
+    origen: v.union(
+      v.literal("webhook"),
+      v.literal("backfill"),
+      v.literal("reconcile"),
+    ),
+    /** Idempotencia del email al owner cuando se retira la tarjeta activa. */
+    avisoRetiradaEnviadoAt: v.optional(v.number()),
+  })
+    .index("by_clinicId", ["clinicId"])
+    .index("by_aportadaPorUserId", ["aportadaPorUserId"])
+    .index("by_stripePaymentMethodId", ["stripePaymentMethodId"]),
 
   // Bitácora de transferencias de propiedad de clínica. Cada fila registra
   // un cambio de `clinics.ownerUserId`, ya sea por el flujo normal

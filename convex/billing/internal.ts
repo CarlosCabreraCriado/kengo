@@ -5,7 +5,7 @@ import {
 } from "../_generated/server";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { LIMITE_FISIOS_AUTOSERVICIO } from "./_helpers";
+import { LIMITE_FISIOS_AUTOSERVICIO, defaultPaymentMethodDe } from "./_helpers";
 import {
   shouldSkipEvent,
   isForeignSubscriptionEvent,
@@ -193,6 +193,18 @@ export const reconcileMissingTrials = internalMutation({
 });
 
 /**
+ * Nombre con el que se identifica a un usuario en Stripe (`customer.name`).
+ * Único formateo compartido entre la creación del customer y la
+ * sincronización al cambiar de owner, para que ambos comparen lo mismo.
+ */
+export function nombreCompleto(user: {
+  firstName: string;
+  lastName: string;
+}): string {
+  return `${user.firstName} ${user.lastName}`.trim();
+}
+
+/**
  * Devuelve la información que las actions de Stripe necesitan para crear
  * customer/subscription o leer estado actual: clínica, owner (email/name)
  * y el `clinicBilling` cacheado si existe.
@@ -223,10 +235,7 @@ export const getBillingContext = internalQuery({
     let owner: { email: string; name: string } | null = null;
     const ownerUser = await ctx.db.get(clinic.ownerUserId);
     if (ownerUser) {
-      owner = {
-        email: ownerUser.email,
-        name: `${ownerUser.firstName} ${ownerUser.lastName}`.trim(),
-      };
+      owner = { email: ownerUser.email, name: nombreCompleto(ownerUser) };
     }
 
     const billing = await ctx.db
@@ -252,6 +261,129 @@ export const getBillingContext = internalQuery({
             limiteFisios: billing.limiteFisios,
           }
         : null,
+    };
+  },
+});
+
+/**
+ * Contexto para alinear el customer de Stripe con el propietario actual de la
+ * clínica tras una transferencia (`billing.actions.syncCustomerOwner` y el
+ * backfill). Devuelve el owner vigente y el nombre del owner saliente, que
+ * `buildCustomerOwnerPatch` usa para decidir si `customer.name` sigue siendo
+ * el de la persona o alguien lo cambió por una razón social.
+ *
+ * `ownerAnteriorNombre` lo pasan las mutaciones que aún tienen a mano al
+ * usuario saliente (imprescindible cuando ese usuario se está borrando y no
+ * queda audit). Sin arg, se deduce del `fromUserId` de la última fila de
+ * `clinicOwnershipAudit`; si no hay audit o ese usuario ya no existe, queda
+ * `undefined` y el name no se toca.
+ */
+export const getCustomerOwnerSyncContext = internalQuery({
+  args: {
+    clinicId: v.id("clinics"),
+    ownerAnteriorNombre: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { clinicId, ownerAnteriorNombre },
+  ): Promise<{
+    stripeCustomerId: string | null;
+    owner: { email: string; name: string } | null;
+    ownerAnteriorNombre: string | undefined;
+  }> => {
+    const clinic = await ctx.db.get(clinicId);
+    if (!clinic) {
+      return { stripeCustomerId: null, owner: null, ownerAnteriorNombre };
+    }
+
+    const billing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+
+    const ownerUser = await ctx.db.get(clinic.ownerUserId);
+    const owner = ownerUser
+      ? { email: ownerUser.email, name: nombreCompleto(ownerUser) }
+      : null;
+
+    let anterior = ownerAnteriorNombre;
+    if (anterior === undefined) {
+      const ultimoAudit = await ctx.db
+        .query("clinicOwnershipAudit")
+        .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+        .order("desc")
+        .first();
+      if (ultimoAudit?.fromUserId) {
+        const anteriorUser = await ctx.db.get(ultimoAudit.fromUserId);
+        if (anteriorUser) anterior = nombreCompleto(anteriorUser);
+      }
+    }
+
+    return {
+      stripeCustomerId: billing?.stripeCustomerId ?? null,
+      owner,
+      ownerAnteriorNombre: anterior,
+    };
+  },
+});
+
+/**
+ * Datos para los emails de transferencia de propiedad. `anterior` es `null`
+ * cuando no se conoce o ya no existe (transferencia forzada por soporte,
+ * borrado de cuenta). `teniaTarjeta` = el saliente aportó alguna tarjeta a
+ * esta clínica (viva o no); `hayTarjetaActiva` = hoy hay un default vivo.
+ */
+export const getOwnershipTransferEmailContext = internalQuery({
+  args: {
+    clinicId: v.id("clinics"),
+    fromUserId: v.optional(v.id("users")),
+    toUserId: v.id("users"),
+  },
+  handler: async (
+    ctx,
+    { clinicId, fromUserId, toUserId },
+  ): Promise<{
+    clinicaNombre: string;
+    nuevo: { email: string; nombre: string } | null;
+    anterior: { email: string; nombre: string } | null;
+    hayTarjetaActiva: boolean;
+    teniaTarjeta: boolean;
+    proximoCobro?: number;
+  }> => {
+    const clinic = await ctx.db.get(clinicId);
+    if (!clinic) throw new Error("Clínica no encontrada");
+    const nuevoUser = await ctx.db.get(toUserId);
+    const anteriorUser = fromUserId ? await ctx.db.get(fromUserId) : null;
+    const billing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+
+    const filas = await ctx.db
+      .query("clinicPaymentMethods")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .collect();
+    const activo = billing ? defaultPaymentMethodDe(billing) : null;
+    const hayTarjetaActiva =
+      activo !== null &&
+      filas.some(
+        (f) => f.stripePaymentMethodId === activo && f.detachedAt === undefined,
+      );
+    const teniaTarjeta =
+      fromUserId !== undefined &&
+      filas.some((f) => f.aportadaPorUserId === fromUserId);
+
+    return {
+      clinicaNombre: clinic.nombre,
+      nuevo: nuevoUser
+        ? { email: nuevoUser.email, nombre: nombreCompleto(nuevoUser) }
+        : null,
+      anterior: anteriorUser
+        ? { email: anteriorUser.email, nombre: nombreCompleto(anteriorUser) }
+        : null,
+      hayTarjetaActiva,
+      teniaTarjeta,
+      proximoCobro: billing?.currentPeriodEnd ?? billing?.trialEnd,
     };
   },
 });

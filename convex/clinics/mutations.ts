@@ -8,6 +8,7 @@ import {
   getAuthenticatedUser,
   checkClinicPermission,
 } from "../_helpers/permissions";
+import { nombreCompleto } from "../billing/internal";
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
@@ -207,10 +208,18 @@ export const transferOwnership = mutation({
   args: {
     clinicId: v.id("clinics"),
     toUserId: v.id("users"),
+    /**
+     * Decisión del owner saliente sobre las tarjetas que aportó a la clínica:
+     * `true` las retira (el nuevo owner deberá añadir la suya antes del
+     * siguiente cobro); ausente/`false` las mantiene (tarjeta de empresa).
+     * Opcional para no romper a los clientes nativos anteriores, que no lo
+     * envían y equivalen a "mantener".
+     */
+    retirarMiMetodoDePago: v.optional(v.boolean()),
   },
   handler: async (
     ctx,
-    { clinicId, toUserId },
+    { clinicId, toUserId, retirarMiMetodoDePago = false },
   ): Promise<{
     ok: true;
     previousOwnerId: import("../_generated/dataModel").Id<"users">;
@@ -238,9 +247,29 @@ export const transferOwnership = mutation({
       createdAt: Date.now(),
     });
 
-    // Los emails de notificación (al antiguo y al nuevo owner) se enviarán
-    // desde el Bloque G del plan production-ready, cuando estén disponibles
-    // las templates correspondientes.
+    // Las facturas y avisos de Stripe van al email del customer, que era el
+    // del owner saliente. Fire-and-forget: si falla, lo recoge el backfill.
+    await ctx.scheduler.runAfter(
+      0,
+      internal.billing.actions.syncCustomerOwner,
+      { clinicId, ownerAnteriorNombre: nombreCompleto(me) },
+    );
+
+    // Tarjetas del saliente y emails a ambos owners. Si se retiran, el email
+    // se encadena al final de la retirada para reflejar el estado final.
+    if (retirarMiMetodoDePago) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.billing.actions.retirarMetodosDePagoDeUsuarioEnClinica,
+        { clinicId, userId: me._id, toUserId },
+      );
+    } else {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.billing.actions.notifyOwnershipTransferred,
+        { clinicId, fromUserId: me._id, toUserId, tarjetaRetirada: false },
+      );
+    }
 
     return { ok: true, previousOwnerId: me._id, newOwnerId: toUserId };
   },
@@ -284,6 +313,10 @@ export const forceTransferOwnership = internalMutation({
       );
     }
 
+    // Cargar al saliente antes del patch: puede no existir ya (owner
+    // desaparecido), y entonces no se toca el `name` del customer.
+    const ownerAnterior = await ctx.db.get(clinic.ownerUserId);
+
     await ctx.db.patch(clinicId, { ownerUserId: toUserId });
 
     await ctx.db.insert("clinicOwnershipAudit", {
@@ -295,6 +328,23 @@ export const forceTransferOwnership = internalMutation({
       executedByAdminEmail,
       createdAt: Date.now(),
     });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.billing.actions.syncCustomerOwner,
+      {
+        clinicId,
+        ownerAnteriorNombre: ownerAnterior
+          ? nombreCompleto(ownerAnterior)
+          : undefined,
+      },
+    );
+    // Solo al nuevo owner: el saliente puede haber desaparecido.
+    await ctx.scheduler.runAfter(
+      0,
+      internal.billing.actions.notifyOwnershipTransferred,
+      { clinicId, toUserId, tarjetaRetirada: false },
+    );
 
     console.log(
       `[forceTransferOwnership] clinic=${clinicId} from=${clinic.ownerUserId ?? "<none>"} to=${toUserId} by=${executedByAdminEmail} reason="${reason}"`,

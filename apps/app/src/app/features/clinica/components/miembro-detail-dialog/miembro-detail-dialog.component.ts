@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { firstValueFrom } from 'rxjs';
 
 import {
   Ui2AvatarComponent,
@@ -28,6 +29,11 @@ import { assetUrl } from '../../../../core/utils/asset-url';
 
 import { api } from '../../../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../../../convex/_generated/dataModel';
+import type { MetodoDePagoAportado } from '@kengo/shared-models';
+import type {
+  TransferirPropiedadDecision,
+  TransferirPropiedadDialogData,
+} from '../transferir-propiedad-dialog/transferir-propiedad-dialog.component';
 
 export interface MiembroDetailDialogData {
   clinicaId: string;
@@ -221,20 +227,58 @@ export class MiembroDetailDialogComponent {
     if (!m || !this.puedeTransferirPropiedad() || this.transfiriendo()) return;
 
     const nombre = this.fullName() || 'este administrador';
-    const confirmed = await this.dialogService.confirm({
-      title: 'Transferir propiedad',
-      message: `${nombre} pasará a ser el responsable de la suscripción. Recibirá los emails de billing y podrá cancelar o cambiar el método de pago. Tú mantendrás tu rol de administrador pero dejarás de ver las opciones de pago.`,
-      confirmText: 'Transferir propiedad',
-      cancelText: 'Cancelar',
-      confirmVariant: 'primary',
-    });
-    if (!confirmed) return;
+
+    // Titularidad del método de pago: si el owner saliente aportó tarjetas a
+    // esta clínica, decide antes qué pasa con ellas. Sin tarjetas, basta el
+    // confirm de siempre.
+    let retirarMiMetodoDePago = false;
+    let tarjetas: MetodoDePagoAportado[] = [];
+    try {
+      tarjetas = (await this.convex.query(
+        api.billing.queries.listMisMetodosDePago,
+        { clinicId: this.clinicaId as Id<'clinics'> },
+      )) as MetodoDePagoAportado[];
+    } catch {
+      // Si no se pueden leer, se transfiere manteniendo la tarjeta (el
+      // titular siempre podrá retirarla desde Mi cuenta).
+      tarjetas = [];
+    }
+
+    if (tarjetas.length > 0) {
+      const { TransferirPropiedadDialogComponent } = await import(
+        '../transferir-propiedad-dialog/transferir-propiedad-dialog.component'
+      );
+      const ref = this.dialogService.openForm<
+        InstanceType<typeof TransferirPropiedadDialogComponent>,
+        TransferirPropiedadDialogData,
+        TransferirPropiedadDecision | undefined
+      >(TransferirPropiedadDialogComponent, {
+        data: {
+          nombreNuevo: nombre,
+          clinicaNombre: tarjetas[0]?.clinicaNombre ?? 'la clínica',
+          tarjetas,
+        },
+      });
+      const decision = await firstValueFrom(ref.closed);
+      if (!decision) return;
+      retirarMiMetodoDePago = decision.retirarMiMetodoDePago;
+    } else {
+      const confirmed = await this.dialogService.confirm({
+        title: 'Transferir propiedad',
+        message: `${nombre} pasará a ser el responsable de la suscripción: recibirá las facturas y los avisos de pago y podrá modificarla o cancelarla. Tú mantendrás tu rol de administrador pero dejarás de ver las opciones de pago.`,
+        confirmText: 'Transferir propiedad',
+        cancelText: 'Cancelar',
+        confirmVariant: 'primary',
+      });
+      if (!confirmed) return;
+    }
 
     this.transfiriendo.set(true);
     try {
       await this.convex.mutation(api.clinics.mutations.transferOwnership, {
         clinicId: this.clinicaId as Id<'clinics'>,
         toUserId: this.fisioId as Id<'users'>,
+        ...(retirarMiMetodoDePago ? { retirarMiMetodoDePago: true } : {}),
       });
       this.toastService.success('Propiedad transferida correctamente');
       await this.clinicasService.recargarFisiosClinica(this.clinicaId);

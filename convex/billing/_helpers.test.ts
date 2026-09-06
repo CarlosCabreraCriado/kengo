@@ -16,6 +16,11 @@ import {
   limitePacientesParaFisios,
   requiereContactoVentas,
   excedeCapBase,
+  buildCustomerOwnerPatch,
+  ownerEnFecha,
+  defaultPaymentMethodDe,
+  resumenTarjeta,
+  debeMarcarPendiente,
 } from "./_helpers";
 
 function test(name: string, fn: () => void) {
@@ -130,4 +135,169 @@ test("excedeCapBase: límite + 1 excede", () => {
 test("excedeCapBase: fuera de tramo (enterprise) → limite null, nunca excede", () => {
   assert.deepEqual(excedeCapBase(10, 9999), { excede: false, limite: null });
   assert.deepEqual(excedeCapBase(0, 9999), { excede: false, limite: null });
+});
+
+// --- buildCustomerOwnerPatch ---
+
+const ana = { email: "ana@clinica.es", name: "Ana Pérez" };
+
+test("buildCustomerOwnerPatch: email distinto → solo email si el name no era del anterior", () => {
+  assert.deepEqual(
+    buildCustomerOwnerPatch(
+      { email: "luis@clinica.es", name: "Fisio Centro S.L." },
+      ana,
+      "Luis Gómez",
+    ),
+    { email: "ana@clinica.es" },
+  );
+});
+
+test("buildCustomerOwnerPatch: name = owner anterior → email y name", () => {
+  assert.deepEqual(
+    buildCustomerOwnerPatch(
+      { email: "luis@clinica.es", name: "Luis Gómez" },
+      ana,
+      "Luis Gómez",
+    ),
+    { email: "ana@clinica.es", name: "Ana Pérez" },
+  );
+});
+
+test("buildCustomerOwnerPatch: name vacío → se rellena aunque no haya anterior", () => {
+  assert.deepEqual(
+    buildCustomerOwnerPatch({ email: "luis@clinica.es", name: null }, ana, undefined),
+    { email: "ana@clinica.es", name: "Ana Pérez" },
+  );
+});
+
+test("buildCustomerOwnerPatch: sin ownerAnteriorNombre y name distinto → solo email", () => {
+  assert.deepEqual(
+    buildCustomerOwnerPatch(
+      { email: "luis@clinica.es", name: "Luis Gómez" },
+      ana,
+      undefined,
+    ),
+    { email: "ana@clinica.es" },
+  );
+});
+
+test("buildCustomerOwnerPatch: nada que cambiar → null (email case-insensitive, espacios)", () => {
+  assert.equal(
+    buildCustomerOwnerPatch(
+      { email: " Ana@Clinica.es ", name: "Ana Pérez " },
+      ana,
+      "Luis Gómez",
+    ),
+    null,
+  );
+});
+
+test("buildCustomerOwnerPatch: mismo email, name del anterior → solo name", () => {
+  assert.deepEqual(
+    buildCustomerOwnerPatch(
+      { email: "ana@clinica.es", name: "Luis Gómez" },
+      ana,
+      "Luis Gómez",
+    ),
+    { name: "Ana Pérez" },
+  );
+});
+
+// --- ownerEnFecha ---
+
+const auditsAB = [
+  { fromUserId: "A", toUserId: "B", createdAt: 1000 },
+  { fromUserId: "B", toUserId: "C", createdAt: 2000 },
+];
+
+test("ownerEnFecha: sin audits → owner actual", () => {
+  assert.equal(ownerEnFecha([], "Z", 500), "Z");
+});
+
+test("ownerEnFecha: antes de la primera transferencia → fromUserId de esa", () => {
+  assert.equal(ownerEnFecha(auditsAB, "C", 500), "A");
+});
+
+test("ownerEnFecha: entre dos transferencias → owner intermedio", () => {
+  assert.equal(ownerEnFecha(auditsAB, "C", 1500), "B");
+});
+
+test("ownerEnFecha: después de la última → owner actual", () => {
+  assert.equal(ownerEnFecha(auditsAB, "C", 3000), "C");
+});
+
+test("ownerEnFecha: audit sin fromUserId → toUserId del anterior, o actual", () => {
+  const audits = [
+    { toUserId: "B", createdAt: 1000 },
+    { toUserId: "C", createdAt: 2000 },
+  ];
+  assert.equal(ownerEnFecha(audits, "C", 1500), "B");
+  assert.equal(ownerEnFecha(audits, "C", 500), "C");
+});
+
+test("ownerEnFecha: no depende del orden de entrada", () => {
+  assert.equal(ownerEnFecha([...auditsAB].reverse(), "C", 1500), "B");
+});
+
+// --- defaultPaymentMethodDe ---
+
+test("defaultPaymentMethodDe: la subscription manda sobre el customer", () => {
+  assert.equal(
+    defaultPaymentMethodDe({
+      stripeSubscriptionDefaultPaymentMethodId: "pm_sub",
+      stripeCustomerDefaultPaymentMethodId: "pm_cus",
+    }),
+    "pm_sub",
+  );
+  assert.equal(
+    defaultPaymentMethodDe({ stripeCustomerDefaultPaymentMethodId: "pm_cus" }),
+    "pm_cus",
+  );
+  assert.equal(defaultPaymentMethodDe({}), null);
+});
+
+// --- resumenTarjeta ---
+
+test("resumenTarjeta: card, sepa y otros", () => {
+  assert.deepEqual(
+    resumenTarjeta({
+      type: "card",
+      card: { brand: "visa", last4: "4242", exp_month: 9, exp_year: 2028 },
+    }),
+    { tipo: "card", marca: "visa", ultimos4: "4242", caducaMes: 9, caducaAnio: 2028 },
+  );
+  assert.deepEqual(
+    resumenTarjeta({ type: "sepa_debit", sepa_debit: { last4: "3000" } }),
+    { tipo: "sepa_debit", marca: "SEPA", ultimos4: "3000" },
+  );
+  assert.deepEqual(resumenTarjeta({ type: "paypal" }), { tipo: "paypal" });
+});
+
+// --- debeMarcarPendiente ---
+
+test("debeMarcarPendiente: solo si era la activa y la sub sigue viva", () => {
+  assert.equal(
+    debeMarcarPendiente({ pmRetirado: "pm_1", defaultActual: "pm_1", estadoLocal: "active" }),
+    true,
+  );
+  assert.equal(
+    debeMarcarPendiente({ pmRetirado: "pm_1", defaultActual: "pm_1", estadoLocal: "trialing" }),
+    true,
+  );
+  assert.equal(
+    debeMarcarPendiente({ pmRetirado: "pm_1", defaultActual: "pm_2", estadoLocal: "active" }),
+    false,
+  );
+  assert.equal(
+    debeMarcarPendiente({ pmRetirado: "pm_1", defaultActual: null, estadoLocal: "active" }),
+    false,
+  );
+  assert.equal(
+    debeMarcarPendiente({ pmRetirado: "pm_1", defaultActual: "pm_1", estadoLocal: "canceled" }),
+    false,
+  );
+  assert.equal(
+    debeMarcarPendiente({ pmRetirado: "pm_1", defaultActual: "pm_1", estadoLocal: undefined }),
+    false,
+  );
 });

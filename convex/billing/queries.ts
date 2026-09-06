@@ -1,6 +1,12 @@
 import { v } from "convex/values";
 import { query, internalQuery } from "../_generated/server";
 import {
+  listarVivasDeUsuario,
+  metodoPagoActivoDe,
+  type MetodoDePagoAportado,
+} from "./paymentMethods";
+import { nombreCompleto } from "./internal";
+import {
   getAuthenticatedUser,
   checkClinicPermission,
   billingPermiteOperar,
@@ -53,6 +59,12 @@ export const getMyClinicSubscription = query({
       .query("clinicBilling")
       .withIndex("by_clinicId", (q) => q.eq("clinicId", args.clinicId))
       .unique();
+
+    let metodoPagoRetiradoPorNombre: string | undefined;
+    if (billing?.metodoPagoRetiradoPorUserId) {
+      const u = await ctx.db.get(billing.metodoPagoRetiradoPorUserId);
+      metodoPagoRetiradoPorNombre = u ? nombreCompleto(u) : undefined;
+    }
 
     const variante: PlanVariante = billing?.variante ?? "base";
     const plan = planParaFisios(fisiosActuales);
@@ -147,7 +159,31 @@ export const getMyClinicSubscription = query({
       // Mismo veredicto que el gating del backend (`billingPermiteOperar`):
       // bloquea unpaid/canceled/incomplete y past_due con gracia agotada.
       bloqueada: !billingPermiteOperar(billing),
+      // Titularidad del método de pago (campos aditivos; los clientes nativos
+      // anteriores los ignoran).
+      metodoPagoPendienteDesde: billing.metodoPagoPendienteDesde,
+      metodoPagoRetiradoPorNombre: metodoPagoRetiradoPorNombre,
+      metodoPagoActivo: await metodoPagoActivoDe(
+        ctx,
+        args.clinicId,
+        billing,
+        clinic.ownerUserId,
+      ),
     };
+  },
+});
+
+/**
+ * Tarjetas vivas que el usuario autenticado ha aportado a clínicas (todas o
+ * una concreta). No exige ser miembro: la titularidad sobrevive a salir de la
+ * clínica. Alimenta "Mi cuenta → Tarjetas aportadas" y el paso de la
+ * transferencia de propiedad.
+ */
+export const listMisMetodosDePago = query({
+  args: { clinicId: v.optional(v.id("clinics")) },
+  handler: async (ctx, { clinicId }): Promise<MetodoDePagoAportado[]> => {
+    const user = await getAuthenticatedUser(ctx);
+    return await listarVivasDeUsuario(ctx, user._id, clinicId);
   },
 });
 

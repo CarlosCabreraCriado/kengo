@@ -62,6 +62,59 @@ Un price nuevo que no se registre como conocido convierte en enterprise a toda
 clínica que lo use. No crear prices para promociones de autoservicio: usar
 cupones. Documentado también en `docs/SETUP_STRIPE_CONVEX.md`.
 
+## Titularidad del método de pago
+
+El customer de Stripe es de la **clínica**, pero cada tarjeta la aporta una
+persona: el owner del momento, único que puede abrir Checkout/Portal. Al
+transferir la propiedad, esa tarjeta seguiría cobrándose sin que su titular
+pudiera tocarla (pierde el Portal con la propiedad). Para evitarlo:
+
+- **Tabla `clinicPaymentMethods`** (`convex/schema.ts`): un PM por fila con
+  `aportadaPorUserId`, marca/últimos 4/caducidad, `attachedAt` y, si procede,
+  `detachedAt` + `detachedVia` (`titular` | `transfer` | `stripe`). Nunca se
+  borra: es historial. La escriben `convex/billing/paymentMethods.ts`
+  (mutations internas), el webhook `payment_method.attached|detached|
+  automatically_updated` y `customer.updated` en `convex/http.ts`,
+  `finalizeSetupCheckout` y la reconciliación.
+- **Atribución**: fila nueva → owner actual de la clínica. En el backfill /
+  reconciliación, `ownerEnFecha(audits, ownerActual, pm.created)`
+  (`_helpers.ts`) reconstruye quién era owner cuando se adjuntó a partir de
+  `clinicOwnershipAudit`. El PM lleva además `metadata.orgId`,
+  `aportadaPorUserId` y `aportadaPorEmail` en Stripe
+  (`stampPaymentMethodMetadata`) para que soporte lo vea en el Dashboard.
+- **Default que cobra**: `clinicBilling.stripeSubscriptionDefaultPaymentMethodId`
+  y `stripeCustomerDefaultPaymentMethodId` en crudo; el activo se deriva con
+  `defaultPaymentMethodDe` (la subscription manda). Se espejan desde
+  `customer.subscription.*` y `customer.updated`.
+- **Retirada por el titular**: `billing.actions.retirarMiMetodoDePago` exige
+  `aportadaPorUserId === yo` (`getForContributor`), no ser owner ni miembro.
+  Hace `detach` + `markDetached`. Si era la activa y la suscripción sigue viva
+  (`debeMarcarPendiente`), sella `clinicBilling.metodoPagoPendienteDesde` y
+  programa `notifyMetodoPagoRetirado` al owner (idempotente por
+  `avisoRetiradaEnviadoAt`; se descarta si entre tanto llegó otra tarjeta o si
+  quien retiró es el owner). No corta el servicio: la clínica sigue hasta la
+  siguiente renovación y entonces aplica la gracia habitual.
+- **Transferencia**: `transferOwnership` acepta `retirarMiMetodoDePago`
+  (opcional → los clientes nativos antiguos equivalen a "mantener"). Con
+  `true`, `retirarMetodosDePagoDeUsuarioEnClinica` desvincula las tarjetas
+  vivas del saliente (`detachedVia: "transfer"`) y encadena los emails
+  (`notifyOwnershipTransferred`, a ambos owners).
+- **UI web**: `/perfil` → "Tarjetas aportadas a clínicas" (lista + Retirar);
+  `/mi-clinica/suscripcion` → banner ámbar de pendiente y nota "se cobra en la
+  tarjeta de X"; diálogo de transferencia con la elección. La app nativa
+  1.2.0 no tiene estas pantallas: los emails cubren el hueco.
+- **Reconciliación**: `billing.actions.reconcilePaymentMethods({ apply })`,
+  dry-run por defecto; cron `billing-reconcile-metodos-pago` a las 05:00 UTC
+  con `apply: true`. Altas que perdió el webhook, bajas hechas desde el
+  Dashboard y refresco de defaults; errores por clínica en `fallidas`.
+
+Huecos: una tarjeta de empresa aportada por el gerente saliente puede
+retirarla ese gerente (se acepta: podía cancelar la suscripción entera cuando
+era owner, no interrumpe el servicio y el owner queda avisado con la gracia
+por delante). Un `customer.updated` que llegue antes que el
+`payment_method.attached` deja el default apuntando a un PM sin fila hasta
+que llega el alta: `limpiarPendienteSiHayDefaultVivo` lo resuelve entonces.
+
 ## Huecos conocidos
 
 - `pause_collection` no se lee: una suscripción pausada que Stripe mantiene en

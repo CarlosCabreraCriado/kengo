@@ -253,6 +253,23 @@ export class BillingBannerComponent {
       };
     }
 
+    // Titularidad: la tarjeta que cobraba la retiró su titular. Va antes del
+    // aviso de trial porque es más urgente y su CTA es el mismo.
+    if (sub.metodoPagoPendienteDesde !== undefined) {
+      const quien = sub.metodoPagoRetiradoPorNombre;
+      return {
+        variant: 'warning',
+        icon: 'credit_card_off',
+        titulo: 'Hace falta un método de pago nuevo',
+        mensaje: quien
+          ? `${quien} retiró la tarjeta que pagaba la suscripción. Añade otra antes del próximo cobro.`
+          : 'La tarjeta que pagaba la suscripción se retiró. Añade otra antes del próximo cobro.',
+        mensajeNativo:
+          'La tarjeta que pagaba la suscripción se retiró. El método de pago se añade desde la versión web de Kengo.',
+        ctaLabel: 'Añadir pago',
+      };
+    }
+
     if (this.subs.enTrial() && this.subs.diasRestantesTrial() <= 5) {
       const dias = this.subs.diasRestantesTrial();
       return {

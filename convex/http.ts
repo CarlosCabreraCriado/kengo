@@ -8,6 +8,7 @@ import {
   resolveVarianteFromPriceId,
   esPriceAMedida,
 } from "./billing/_webhookHelpers";
+import { idDeRef, resumenTarjeta } from "./billing/_helpers";
 import {
   authComponent,
   createAuth,
@@ -18,6 +19,14 @@ import {
 } from "./auth";
 
 const http = httpRouter();
+
+/**
+ * Margen antes de avisar al owner de que su tarjeta activa se retiró: si fue
+ * un "cambiar tarjeta" desde el Portal, en ese tiempo llegan el
+ * `payment_method.attached` y el `customer.updated` que limpian el pendiente
+ * y el aviso se descarta solo.
+ */
+const AVISO_RETIRADA_DELAY_MS = 2 * 60 * 1000;
 
 // Better-Auth standard routes (login, signup, signout, etc.)
 authComponent.registerRoutes(http, createAuth, { cors: true });
@@ -42,6 +51,28 @@ registerStripeRoutes(http, components.stripe, {
           const orgId = (event.data.object as { metadata?: Record<string, string> })
             .metadata?.["orgId"];
           return orgId ? (orgId as Id<"clinics">) : undefined;
+        }
+        case "payment_method.attached":
+        case "payment_method.detached":
+        case "payment_method.automatically_updated":
+        case "payment_method.updated":
+        case "customer.updated": {
+          // Eventos sin `metadata.orgId`: se resuelve la clínica por el
+          // customer (índice `clinicBilling.by_stripeCustomerId`). El PM trae
+          // `customer`; el customer es él mismo.
+          const obj = event.data.object as { id: string; customer?: unknown };
+          const customerId =
+            event.type === "customer.updated"
+              ? obj.id
+              : typeof obj.customer === "string"
+                ? obj.customer
+                : (obj.customer as { id?: string } | null | undefined)?.id;
+          if (!customerId) return undefined;
+          const clinicId = await ctx.runQuery(
+            internal.billing.paymentMethods.getClinicIdByCustomer,
+            { stripeCustomerId: customerId },
+          );
+          return clinicId ?? undefined;
         }
         case "invoice.paid":
         case "invoice.payment_failed": {
@@ -142,6 +173,95 @@ registerStripeRoutes(http, components.stripe, {
             eventCreatedMs,
             stripeSubscriptionId: eventSubscriptionId,
           });
+          // Titularidad: el default de la subscription manda sobre el del
+          // customer. Se espeja aparte porque no está sujeto al ordering guard
+          // de `applySubscriptionEvent` (un default es idempotente).
+          await ctx.runMutation(
+            internal.billing.paymentMethods.setDefaultPaymentMethods,
+            {
+              clinicId,
+              subscriptionDefault: idDeRef(sub.default_payment_method) ?? null,
+            },
+          );
+          break;
+        }
+        case "customer.updated": {
+          if (!clinicId) break;
+          const customer = event.data.object;
+          await ctx.runMutation(
+            internal.billing.paymentMethods.setDefaultPaymentMethods,
+            {
+              clinicId,
+              customerDefault:
+                idDeRef(customer.invoice_settings?.default_payment_method) ??
+                null,
+            },
+          );
+          break;
+        }
+        case "payment_method.attached": {
+          if (!clinicId) break;
+          const pm = event.data.object;
+          const customerId = idDeRef(pm.customer);
+          if (!customerId) break;
+          await ctx.runMutation(
+            internal.billing.paymentMethods.upsertFromStripe,
+            {
+              clinicId,
+              stripeCustomerId: customerId,
+              stripePaymentMethodId: pm.id,
+              ...resumenTarjeta(pm),
+              attachedAtMs: pm.created * 1000,
+              origen: "webhook",
+            },
+          );
+          // Deja constancia en Stripe de quién aportó la tarjeta, para que
+          // soporte lo vea en el Dashboard sin abrir Convex.
+          await ctx.scheduler.runAfter(
+            0,
+            internal.billing.actions.stampPaymentMethodMetadata,
+            { stripePaymentMethodId: pm.id },
+          );
+          break;
+        }
+        case "payment_method.automatically_updated":
+        case "payment_method.updated": {
+          if (!clinicId) break;
+          const pm = event.data.object;
+          const customerId = idDeRef(pm.customer);
+          if (!customerId) break;
+          // Solo refresca marca/últimos4/caducidad (card updater). Si la fila
+          // no existía (webhook de alta perdido) la crea con el owner actual.
+          await ctx.runMutation(
+            internal.billing.paymentMethods.upsertFromStripe,
+            {
+              clinicId,
+              stripeCustomerId: customerId,
+              stripePaymentMethodId: pm.id,
+              ...resumenTarjeta(pm),
+              attachedAtMs: pm.created * 1000,
+              origen: "webhook",
+            },
+          );
+          break;
+        }
+        case "payment_method.detached": {
+          // Portal, Dashboard o nuestra propia acción (que ya marcó la fila:
+          // aquí sale `yaEstaba`). Si era la que cobraba, avisar al owner con
+          // un margen para que los eventos hermanos de un "cambiar tarjeta"
+          // (attached + customer.updated) lleguen antes y anulen el aviso.
+          const pm = event.data.object;
+          const { eraActiva } = await ctx.runMutation(
+            internal.billing.paymentMethods.markDetached,
+            { stripePaymentMethodId: pm.id, via: "stripe" },
+          );
+          if (eraActiva) {
+            await ctx.scheduler.runAfter(
+              AVISO_RETIRADA_DELAY_MS,
+              internal.billing.actions.notifyMetodoPagoRetirado,
+              { stripePaymentMethodId: pm.id },
+            );
+          }
           break;
         }
         case "customer.subscription.deleted": {

@@ -441,6 +441,79 @@
         </ui2-card>
       </ui2-section>
 
+      <!-- Sección: Tarjetas aportadas a clínicas (titularidad del método de pago) -->
+      <ui2-section [padding]="'4px 20px 12px'">
+        <ui2-card [padding]="0">
+          <button
+            type="button"
+            class="perfil-row-btn"
+            (click)="toggleTarjetas()"
+            [attr.aria-expanded]="tarjetasExpanded()"
+          >
+            <ui2-icon-badge
+              icon="credit_card"
+              color="var(--ink-700)"
+              [size]="40"
+              [radius]="12"
+            ></ui2-icon-badge>
+            <div class="perfil-row-btn__text">
+              <h3 class="perfil-row-btn__title">Tarjetas aportadas a clínicas</h3>
+              <p class="perfil-row-btn__sub">
+                @if (tarjetas().length > 0) {
+                  {{ tarjetas().length }} {{ tarjetas().length === 1 ? 'tarjeta' : 'tarjetas' }} a tu nombre
+                } @else {
+                  Métodos de pago que has puesto tú
+                }
+              </p>
+            </div>
+            <span
+              class="material-symbols-outlined perfil-row-btn__chevron"
+              [class.perfil-row-btn__chevron--open]="tarjetasExpanded()"
+              aria-hidden="true"
+            >expand_more</span>
+          </button>
+
+          @if (tarjetasExpanded()) {
+            <div class="perfil-section-body">
+              <p class="perfil-tarjetas-intro">
+                Las tarjetas que añades para pagar la suscripción de una clínica
+                siguen siendo tuyas: puedes retirarlas cuando quieras, aunque ya
+                no seas su propietario.
+              </p>
+              @if (tarjetasLoading() && tarjetas().length === 0) {
+                <div class="flex justify-center py-4"><ui2-spinner></ui2-spinner></div>
+              } @else if (tarjetas().length === 0) {
+                <p class="perfil-tarjetas-vacio">No has aportado tarjetas a ninguna clínica.</p>
+              } @else {
+                @for (t of tarjetas(); track t.id; let first = $first) {
+                  <ui2-list-row
+                    icon="credit_card"
+                    iconColor="var(--ink-700)"
+                    [title]="etiquetaTarjeta(t)"
+                    [subtitle]="subtituloTarjeta(t)"
+                    [isFirst]="first"
+                  >
+                    <div class="perfil-tarjeta-acciones">
+                      @if (t.esActiva) {
+                        <ui2-pill variant="success" size="sm">Activa</ui2-pill>
+                      }
+                      <ui2-button
+                        variant="ghost"
+                        size="sm"
+                        iconLeft="credit_card_off"
+                        [loading]="tarjetaRetirando() === t.id"
+                        [disabled]="tarjetaRetirando() !== null"
+                        (clicked)="retirarTarjeta(t)"
+                      >Retirar</ui2-button>
+                    </div>
+                  </ui2-list-row>
+                }
+              }
+            </div>
+          }
+        </ui2-card>
+      </ui2-section>
+
       <!-- Sección: Legal -->
       <ui2-section [padding]="'4px 20px 12px'">
         <ui2-card [padding]="0">

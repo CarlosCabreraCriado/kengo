@@ -69,7 +69,7 @@
 ```bash
 stripe listen \
   --forward-to http://localhost:8000/stripe/webhook \
-  --events customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,customer.subscription.trial_will_end,invoice.paid,invoice.payment_failed,checkout.session.completed
+  --events customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,customer.subscription.trial_will_end,invoice.paid,invoice.payment_failed,checkout.session.completed,customer.updated,payment_method.attached,payment_method.detached,payment_method.automatically_updated
 ```
 
 - [ ] CLI imprime `whsec_...` → copiarlo a `STRIPE_WEBHOOK_SECRET` en Convex
@@ -191,6 +191,8 @@ Crear con antelación (en `npm start` test):
   - [x] Nueva fila en `clinicOwnershipAudit` con `via: "self"`, `fromUserId: OwnerA`, `toUserId: AdminA2`
   - [x] Toast "Propiedad transferida correctamente"
   - [x] Tras refrescar, Owner A ve el dialog de Admin A2 con badge "Propietario", botón de transferencia **ya no aparece** (Owner A ya no es owner)
+  - [ ] Stripe Dashboard → customer de la clínica: `email` es el de Admin A2 (lo aplica `billing/actions:syncCustomerOwner`, programada por la mutation; segundos). `name` pasa a Admin A2 **solo** si seguía siendo el de Owner A; si Checkout lo cambió por una razón social, no se toca.
+  - [ ] Logs de Convex: `[billing] syncCustomerOwner clinic=... email, name actualizado(s)` sin warnings.
 
 #### 3.2.3 Owner intenta salir de la clínica sin transferir
 
@@ -230,6 +232,7 @@ Como Owner A (después de transferir a Admin A2, A ya no es owner):
 - [x] Verificar:
   - [x] `clinics.ownerUserId` cambia
   - [x] Nueva fila en `clinicOwnershipAudit` con `via: "support"`, `reason`, `executedByAdminEmail`
+  - [ ] Customer de Stripe con el `email` del nuevo owner (misma regla de `name` que en 3.2.2; si el owner saliente ya no existe, `name` no se toca)
 
 ---
 
@@ -415,6 +418,62 @@ Para cada email, comprobar **subject** + **cuerpo menciona `clinicaNombre`** + *
 - [ ] `tieneAccesoActivo()` eliminado de `subscription.service.ts`.
 - [ ] Grep `tieneAccesoActivo` en `apps/app/src` → 0 resultados.
 - [ ] (Opcional) Histórico de facturas paginado / con límite mayor a 6.
+
+---
+
+### 3.11 Bloque K — Titularidad del método de pago
+
+Contexto: el customer de Stripe es de la clínica, pero cada tarjeta la aporta una persona. `clinicPaymentMethods` registra quién; esa persona puede retirarla desde **Mi cuenta → Tarjetas aportadas a clínicas** aunque ya no sea owner ni miembro. Referencia técnica en `docs/GUIA_ENTERPRISE_VENTAS.md`.
+
+Pre-requisito: los eventos `payment_method.attached|detached|automatically_updated` habilitados en el endpoint (§2.4) y en `stripe listen` (§1.3).
+
+#### 3.11.1 Alta de tarjeta
+
+- [ ] Owner A añade tarjeta por Checkout (trial) o Portal.
+- [ ] Verificar:
+  - [ ] Fila en `clinicPaymentMethods` con `aportadaPorUserId = A`, `origen: "webhook"`, marca/últimos4/caducidad.
+  - [ ] `clinicBilling.stripeSubscriptionDefaultPaymentMethodId` / `stripeCustomerDefaultPaymentMethodId` apuntan al PM.
+  - [ ] En el Dashboard de Stripe el PM tiene `metadata.orgId`, `aportadaPorUserId`, `aportadaPorEmail` (lo escribe `stampPaymentMethodMetadata`).
+  - [ ] En `/perfil` → "Tarjetas aportadas a clínicas", A ve la tarjeta con pill **Activa**.
+
+#### 3.11.2 Transferencia manteniendo la tarjeta
+
+- [ ] A transfiere a B (`/mi-clinica` → miembro → Transferir). Como A tiene tarjetas, aparece el diálogo con las dos opciones; elegir **Mantener**.
+- [ ] Verificar:
+  - [ ] `ownerUserId = B`; fila del PM intacta; sin `metodoPagoPendienteDesde`.
+  - [ ] Email a B ("Ahora eres el propietario…", variante "se sigue cobrando en la tarjeta de A") y a A ("Has transferido…", con cómo retirarla).
+  - [ ] B ve en `/mi-clinica/suscripcion` la tarjeta "La suscripción se cobra en la tarjeta de A".
+  - [ ] A sigue viendo la tarjeta en `/perfil`, ya sin ser owner.
+
+#### 3.11.3 Retirada por el titular
+
+- [ ] A retira desde `/perfil` (confirm en rojo por ser la activa).
+- [ ] Verificar:
+  - [ ] `detach` en Stripe; fila con `detachedAt`, `detachedVia: "titular"`, `detachedByUserId = A`.
+  - [ ] `clinicBilling.metodoPagoPendienteDesde` sellado, `metodoPagoRetiradoPorUserId = A`; defaults limpiados.
+  - [ ] Email a B "Hace falta un método de pago nuevo" con la fecha del próximo cobro (una sola vez: `avisoRetiradaEnviadoAt`).
+  - [ ] B ve el banner ámbar en `/mi-clinica/suscripcion` y el banner global; CTA "Añadir método de pago" abre el Portal.
+  - [ ] B añade tarjeta en el Portal → `payment_method.attached` crea la fila (atribuida a B) y limpia el pendiente; banners desaparecen.
+
+#### 3.11.4 Transferencia retirando la tarjeta
+
+- [ ] Repetir 3.11.2 eligiendo **Retirar mi tarjeta**.
+- [ ] Verificar: mismo estado final que 3.11.3 en un solo paso (`detachedVia: "transfer"`), email a B en la variante "no tiene ahora ningún método de pago" y a A "tu tarjeta se ha retirado".
+
+#### 3.11.5 Renovación sin tarjeta
+
+- [ ] Con el pendiente sellado y sin tarjeta, forzar la renovación (`trial_end` corto o test clock) → `invoice.payment_failed` → `past_due` + gracia + email de impago, como hasta ahora.
+
+#### 3.11.6 Negativos y compatibilidad
+
+- [ ] Desde DevTools, `api.billing.actions.retirarMiMetodoDePago` con un PM ajeno → `PM_NOT_CONTRIBUTOR`; dos veces con el propio → `PM_ALREADY_DETACHED`.
+- [ ] `api.clinics.mutations.transferOwnership` **sin** `retirarMiMetodoDePago` (simula la app nativa 1.2.0) → comportamiento "mantener" + emails.
+- [ ] App nativa 1.2.0 instalada: `/mi-clinica/suscripcion` y la transferencia siguen funcionando (los campos nuevos de `getMyClinicSubscription` se ignoran).
+- [ ] "Cambiar tarjeta" desde el Portal (añadir nueva + eliminar antigua): no llega email de retirada (el `attached` limpia el pendiente antes de que venza el retardo de 2 min del aviso).
+
+#### 3.11.7 Reconciliación
+
+- [ ] Borrar a mano una fila de `clinicPaymentMethods` y desvincular otro PM desde el Dashboard → `billing/actions:reconcilePaymentMethods {}` (dry-run) lista un alta y una baja; `{ "apply": true }` repara ambas. El cron `billing-reconcile-metodos-pago` (05:00 UTC) hace lo mismo a diario.
 
 ---
 
@@ -629,6 +688,10 @@ stripe events resend evt_XXXXX
 | `billing/internal:setGraceUntilForTesting`  | `{ "clinicId", "daysFromNow": -1 }`                            | Forzar gracia agotada                   |
 | `billing/internal:checkGracePeriodsExpired` | `{}`                                                           | Disparar cron de gracia manualmente     |
 | `clinics/mutations:forceTransferOwnership`  | `{ "clinicId", "toUserId", "reason", "executedByAdminEmail" }` | Transferir propiedad por soporte        |
+| `billing/actions:syncCustomerOwner`         | `{ "clinicId" }`                                               | Alinear email/nombre del customer con el owner |
+| `billing/actions:backfillCustomerOwners`    | `{ "apply": false }` o `true`                                  | Idem para todas las clínicas (dry-run)  |
+| `billing/actions:reconcilePaymentMethods`   | `{ "apply": false }` o `true`                                  | Espejo Stripe → `clinicPaymentMethods` (titularidad) |
+| `billing/actions:retirarMetodosDePagoDeUsuarioEnClinica` | `{ "clinicId", "userId", "toUserId" }`            | Retirar las tarjetas de un usuario en una clínica (soporte) |
 
 ### Tarjetas de prueba Stripe (test mode)
 

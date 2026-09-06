@@ -26,9 +26,11 @@ import { ToastService } from '../../../../../shared/services/toast';
 import { AuthService } from '../../../../../core/auth/services/auth.service';
 import { PushNotificationService } from '../../../../../core/services/push-notification.service';
 import { PlatformService } from '../../../../../core/services/platform.service';
+import { PaymentMethodsService } from '../../../../../core/billing/payment-methods.service';
 
 // Types
 import { Usuario } from '../../../../../../types/global';
+import type { MetodoDePagoAportado } from '@kengo/shared-models';
 import { LEGAL_DOC_ORDER, LEGAL_DOCS, type LegalDocId } from '@kengo/legal';
 // Solo el tipo: el componente del diálogo se sigue cargando de forma
 // diferida con import() dentro de eliminarCuenta().
@@ -51,6 +53,7 @@ import {
   Ui2CardComponent,
   Ui2IconBadgeComponent,
   Ui2InputComponent,
+  Ui2ListRowComponent,
   Ui2PillComponent,
   Ui2SectionComponent,
   Ui2SpinnerComponent,
@@ -83,6 +86,7 @@ const PERFIL_LEGAL_ICONS: Record<LegalDocId, { icon: string; sub: string }> = {
     Ui2CardComponent,
     Ui2IconBadgeComponent,
     Ui2InputComponent,
+    Ui2ListRowComponent,
     Ui2PillComponent,
     Ui2SectionComponent,
     Ui2SpinnerComponent,
@@ -100,6 +104,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
   private pageLoader = inject(PageLoaderService);
   private dialogService = inject(DialogService);
+  private readonly paymentMethods = inject(PaymentMethodsService);
   private logger = inject(LoggerService);
   private pushNotifications = inject(PushNotificationService);
   private platform = inject(PlatformService);
@@ -129,6 +134,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   public personalExpanded = signal(true);
   public securityExpanded = signal(false);
   public notificacionesExpanded = signal(false);
+  public tarjetasExpanded = signal(false);
   public legalExpanded = signal(false);
   public cuentaExpanded = signal(false);
 
@@ -488,8 +494,68 @@ export class PerfilComponent implements OnInit, OnDestroy {
     this.notificacionesExpanded.update((v) => !v);
   }
 
+  toggleTarjetas() {
+    this.tarjetasExpanded.update((v) => !v);
+  }
+
   toggleLegal() {
     this.legalExpanded.update((v) => !v);
+  }
+
+  // === TARJETAS APORTADAS A CLÍNICAS ===
+
+  /** Tarjetas vivas que este usuario aportó a alguna clínica (titularidad). */
+  protected readonly tarjetas = this.paymentMethods.tarjetas;
+  protected readonly tarjetasLoading = this.paymentMethods.loading;
+  protected readonly tarjetaRetirando = this.paymentMethods.retirando;
+
+  protected etiquetaTarjeta(t: MetodoDePagoAportado): string {
+    const marca = t.marca
+      ? t.marca.charAt(0).toUpperCase() + t.marca.slice(1)
+      : 'Tarjeta';
+    return t.ultimos4 ? `${marca} •••• ${t.ultimos4}` : marca;
+  }
+
+  protected subtituloTarjeta(t: MetodoDePagoAportado): string {
+    const partes = [t.clinicaNombre];
+    partes.push(
+      t.esActiva ? 'Método de pago activo' : 'No es el método de pago activo',
+    );
+    if (t.caducaMes && t.caducaAnio) {
+      partes.push(
+        `caduca ${String(t.caducaMes).padStart(2, '0')}/${String(t.caducaAnio).slice(-2)}`,
+      );
+    }
+    return partes.join(' · ');
+  }
+
+  /**
+   * Retirar una tarjeta aportada. Si es la que cobra, la clínica sigue hasta
+   * el próximo cobro y el backend avisa al propietario para que añada otra.
+   */
+  async retirarTarjeta(t: MetodoDePagoAportado): Promise<void> {
+    const fecha = t.proximoCobro
+      ? new Date(t.proximoCobro).toLocaleDateString('es-ES', {
+          day: 'numeric',
+          month: 'long',
+        })
+      : 'la próxima renovación';
+    const message = t.esActiva
+      ? `Se dejará de cobrar la suscripción de ${t.clinicaNombre} en esta tarjeta. ` +
+        (t.soyOwner
+          ? `Tendrás hasta el ${fecha} para añadir otra desde Mi clínica → Suscripción.`
+          : `Avisaremos al propietario para que añada otra antes del ${fecha}.`)
+      : `La tarjeta ${this.etiquetaTarjeta(t)} dejará de estar disponible para ${t.clinicaNombre}.`;
+
+    const confirmed = await this.dialogService.confirm({
+      title: 'Retirar tarjeta',
+      message,
+      confirmText: 'Retirar tarjeta',
+      cancelText: 'Cancelar',
+      confirmVariant: t.esActiva ? 'danger' : 'primary',
+    });
+    if (!confirmed) return;
+    await this.paymentMethods.retirar(t);
   }
 
   toggleCuenta() {

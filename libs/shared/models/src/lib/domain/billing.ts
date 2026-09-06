@@ -80,6 +80,46 @@ export interface ClinicSubscription {
    * ambigüedad del estado `none` (sin fila = permisivo).
    */
   bloqueada: boolean;
+  /**
+   * Titularidad del método de pago (campos aditivos, opcionales para que los
+   * clientes anteriores sigan funcionando). `metodoPagoPendienteDesde` se
+   * sella cuando el titular retira la tarjeta que cobraba y la suscripción
+   * sigue viva: el owner debe añadir otra antes del próximo cobro.
+   */
+  metodoPagoPendienteDesde?: number;
+  /** Quién retiró la tarjeta activa (si se conoce). */
+  metodoPagoRetiradoPorNombre?: string;
+  /** Tarjeta que cobra hoy y quién la aportó; `null` si no hay ninguna viva. */
+  metodoPagoActivo?: {
+    marca?: string;
+    ultimos4?: string;
+    aportadaPorNombre: string;
+    aportadaPorEsOwner: boolean;
+  } | null;
+}
+
+/**
+ * Tarjeta aportada por el usuario a una clínica. Espejo de
+ * `api.billing.queries.listMisMetodosDePago`.
+ */
+export interface MetodoDePagoAportado {
+  /** `stripePaymentMethodId`. */
+  id: string;
+  clinicId: string;
+  clinicaNombre: string;
+  tipo: string;
+  marca?: string;
+  ultimos4?: string;
+  caducaMes?: number;
+  caducaAnio?: number;
+  /** `true` si es la que cobra la suscripción hoy. */
+  esActiva: boolean;
+  attachedAt: number;
+  estadoSuscripcion: string;
+  /** Próximo cobro previsto (`currentPeriodEnd ?? trialEnd`). */
+  proximoCobro?: number;
+  /** `true` si el usuario sigue siendo el propietario de esa clínica. */
+  soyOwner: boolean;
 }
 
 export type InvoiceEstado =

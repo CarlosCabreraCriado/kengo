@@ -109,7 +109,7 @@ tiers: [
   - [x] Branding (logo Kengo, colores, política privacidad URL)
 - [x] Crear **Webhook endpoint** en Stripe (test):
   - [x] URL real: `https://backend.kengoapp.com/stripe/webhook` (Convex self-hosted en Railway, no `*.convex.site`)
-  - [x] Suscribirse a eventos: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.trial_will_end`, `invoice.paid`, `invoice.payment_failed`, `invoice.finalized`, `payment_intent.succeeded`, `payment_intent.payment_failed`, `customer.created`, `customer.updated`, `invoice.created`
+  - [x] Suscribirse a eventos: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.trial_will_end`, `invoice.paid`, `invoice.payment_failed`, `invoice.finalized`, `payment_intent.succeeded`, `payment_intent.payment_failed`, `customer.created`, `customer.updated`, `invoice.created`, `payment_method.attached`, `payment_method.detached`, `payment_method.automatically_updated` (estos tres, titularidad del método de pago; ver `docs/GUIA_ENTERPRISE_VENTAS.md`)
   - [x] Anotar el `webhookSecret`
 - [x] Añadir variables de entorno al **deployment de Convex** (gestionadas en Railway → Variables del servicio Convex):
   - [x] `STRIPE_SECRET_KEY` (test key `sk_test_...`)

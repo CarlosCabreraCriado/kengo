@@ -14,6 +14,9 @@ import {
   enterpriseInvitationTemplate,
   patientInvitationTemplate,
   therapistInvitationTemplate,
+  paymentMethodRemovedTemplate,
+  ownershipTransferredNewOwnerTemplate,
+  ownershipTransferredPreviousOwnerTemplate,
 } from "./templates";
 
 export const sendEmail = internalAction({
@@ -434,5 +437,104 @@ export const sendContactForm = internalAction({
 
     console.log(`[Email] Email de contacto enviado desde ${args.email}`);
     return true;
+  },
+});
+
+const tarjetaArgs = v.object({
+  marca: v.optional(v.string()),
+  ultimos4: v.optional(v.string()),
+});
+
+export const sendPaymentMethodRemovedEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombreOwner: v.string(),
+    clinicaNombre: v.string(),
+    retiradaPorNombre: v.string(),
+    tarjeta: tarjetaArgs,
+    proximoCobro: v.optional(v.number()),
+    portalUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: `[Kengo · ${args.clinicaNombre}] Hace falta un método de pago nuevo`,
+      html: paymentMethodRemovedTemplate(args),
+    });
+    if (error) {
+      console.error("[Email] Error enviando payment-method-removed:", error);
+      return false;
+    }
+    console.log(`[Email] Payment-method-removed enviado a ${args.to}`);
+    return true;
+  },
+});
+
+export const sendOwnershipTransferredEmails = internalAction({
+  args: {
+    clinicaNombre: v.string(),
+    nuevo: v.object({ to: v.string(), nombre: v.string() }),
+    anterior: v.optional(v.object({ to: v.string(), nombre: v.string() })),
+    tarjetaRetirada: v.boolean(),
+    hayTarjetaActiva: v.boolean(),
+    teniaTarjeta: v.boolean(),
+    proximoCobro: v.optional(v.number()),
+    portalUrl: v.string(),
+    cuentaUrl: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+    const resend = new Resend(apiKey);
+    const nombreAnterior = args.anterior?.nombre ?? "El propietario anterior";
+
+    const nuevo = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.nuevo.to,
+      subject: `[Kengo · ${args.clinicaNombre}] Ahora eres el propietario de la clínica`,
+      html: ownershipTransferredNewOwnerTemplate({
+        nombreNuevo: args.nuevo.nombre,
+        nombreAnterior,
+        clinicaNombre: args.clinicaNombre,
+        tarjetaRetirada: args.tarjetaRetirada,
+        hayTarjetaActiva: args.hayTarjetaActiva,
+        proximoCobro: args.proximoCobro,
+        portalUrl: args.portalUrl,
+      }),
+    });
+    if (nuevo.error) {
+      console.error("[Email] Error enviando ownership-transferred (nuevo):", nuevo.error);
+    }
+
+    if (args.anterior) {
+      const anterior = await resend.emails.send({
+        from: "Kengo <noreply@kengoapp.com>",
+        to: args.anterior.to,
+        subject: `[Kengo · ${args.clinicaNombre}] Has transferido la propiedad de la clínica`,
+        html: ownershipTransferredPreviousOwnerTemplate({
+          nombreAnterior: args.anterior.nombre,
+          nombreNuevo: args.nuevo.nombre,
+          clinicaNombre: args.clinicaNombre,
+          tarjetaRetirada: args.tarjetaRetirada,
+          teniaTarjeta: args.teniaTarjeta,
+          cuentaUrl: args.cuentaUrl,
+        }),
+      });
+      if (anterior.error) {
+        console.error("[Email] Error enviando ownership-transferred (anterior):", anterior.error);
+      }
+    }
+    console.log(`[Email] Ownership-transferred enviado (${args.clinicaNombre})`);
+    return !nuevo.error;
   },
 });

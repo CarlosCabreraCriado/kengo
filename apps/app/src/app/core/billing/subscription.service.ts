@@ -97,6 +97,24 @@ export class SubscriptionService {
   );
 
   /**
+   * La tarjeta que cobraba se retiró (por su titular) con la suscripción
+   * viva: el owner debe añadir otra antes del próximo cobro.
+   */
+  public readonly metodoPagoPendiente = computed(
+    () => this.suscripcion()?.metodoPagoPendienteDesde !== undefined,
+  );
+  public readonly metodoPagoPendienteDesde = computed(
+    () => this.suscripcion()?.metodoPagoPendienteDesde,
+  );
+  public readonly metodoPagoRetiradoPorNombre = computed(
+    () => this.suscripcion()?.metodoPagoRetiradoPorNombre ?? null,
+  );
+  /** Tarjeta activa y quién la aportó; `null` si no hay ninguna viva. */
+  public readonly metodoPagoActivo = computed(
+    () => this.suscripcion()?.metodoPagoActivo ?? null,
+  );
+
+  /**
    * Días de CALENDARIO restantes de trial en la zona horaria local (B-1). Se
    * comparan medianoches locales, no ventanas de 24 h: si el trial acaba hoy a
    * las 23:00, muestra 0 ("hoy"), no 1. `0` = termina hoy o ya venció.

@@ -607,6 +607,22 @@ const seccion1 = [
 // ─────────────────────────────────────────────────────────────
 
 const seccion2 = [
+  createSubsectionTitle("1.6 La tarjeta de un antiguo propietario"),
+  createParagraph(
+    "La suscripción es de la clínica, pero la tarjeta la pone una persona: el propietario del momento. Kengo recuerda quién puso cada tarjeta. Cuando cambia el propietario, la tarjeta no cambia sola.",
+  ),
+  ...createBulletList([
+    "Al transferir la propiedad desde la aplicación, el propietario saliente elige: mantener su tarjeta (tarjeta de la clínica) o retirarla. Si la retira, el nuevo propietario recibe un correo para poner la suya antes del siguiente cobro.",
+    "Quien puso una tarjeta puede retirarla cuando quiera desde «Mi cuenta → Tarjetas aportadas a clínicas», aunque ya no sea propietario ni miembro. Al retirar la tarjeta que cobra, la clínica sigue funcionando hasta la siguiente renovación y el propietario actual recibe un aviso.",
+    "En Stripe, cada tarjeta lleva en su apartado Metadata quién la puso (aportadaPorEmail). Si un cliente pregunta «¿de quién es la tarjeta que se está cobrando?», ahí está la respuesta.",
+    "Si una clínica se queda sin tarjeta y nadie pone otra, en el siguiente cobro pasa a impago con los 7 días de gracia habituales (sección 3).",
+  ]),
+  ...infoBox(
+    "No retires tarjetas desde Stripe",
+    "Si hay que quitar una tarjeta, que lo haga su titular desde su cuenta o el propietario desde el Portal. Hacerlo desde el Dashboard funciona, pero el titular no se entera y la aplicación tarda hasta un día en reflejarlo.",
+  ),
+  espacio(200),
+
   createSectionTitle("2. Descuentos y promociones"),
 
   ...alertBox(
@@ -966,7 +982,7 @@ const anexoA = [
       [
         "Cambiar el propietario de una clínica",
         "Clinic ID, correo del nuevo propietario y motivo",
-        "El nuevo propietario debe ser ya miembro. Queda registrado quién lo pidió y por qué.",
+        "El nuevo propietario debe ser ya miembro. Queda registrado quién lo pidió y por qué. El correo del cliente en Stripe se actualiza solo (y el nombre, salvo que ya fuera una razón social). La tarjeta del propietario anterior se mantiene: él puede retirarla desde su cuenta y el nuevo propietario pone la suya desde «Mi clínica → Suscripción». Ver 1.6.",
       ],
       [
         "Fusionar dos cuentas de la misma persona",

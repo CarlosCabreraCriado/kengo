@@ -10,7 +10,9 @@
 
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
+import { nombreCompleto } from "../billing/internal";
 
 type DeleteStats = {
   clinicsReassigned: number;
@@ -162,6 +164,13 @@ export const collectAndDeleteConvex = internalMutation({
         if (reemplazo) {
           await ctx.db.patch(clinic._id, { ownerUserId: reemplazo.userId });
           stats.clinicsOwnerReassigned++;
+          // No queda audit ni usuario del que deducir el nombre saliente:
+          // se pasa explícito para que el customer de Stripe se actualice.
+          await ctx.scheduler.runAfter(
+            0,
+            internal.billing.actions.syncCustomerOwner,
+            { clinicId: clinic._id, ownerAnteriorNombre: nombreCompleto(user) },
+          );
         } else {
           stats.clinicsOwnerOrphaned++;
           console.error(

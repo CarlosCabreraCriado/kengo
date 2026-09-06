@@ -10,8 +10,13 @@ import {
   planParaFisios,
   excedeCapBase,
   LIMITE_FISIOS_AUTOSERVICIO,
+  buildCustomerOwnerPatch,
+  ownerEnFecha,
+  resumenTarjeta,
+  idDeRef,
   type PlanVariante,
 } from "./_helpers";
+import type { MetodoDePagoAportado } from "./paymentMethods";
 import { esPriceAMedida } from "./_webhookHelpers";
 
 const stripeApi = new StripeSubscriptions(components.stripe);
@@ -217,6 +222,80 @@ async function syncCustomerDefaults(
 
   await stripe.customers.update(customerId, patch);
 }
+
+/**
+ * Forma tipada de `getCustomerOwnerSyncContext`. Anotada a mano porque las
+ * actions que llaman a queries del mismo `api` necesitan tipos explícitos
+ * para no entrar en inferencia circular.
+ */
+type CustomerOwnerSyncContext = {
+  stripeCustomerId: string | null;
+  owner: { email: string; name: string } | null;
+  ownerAnteriorNombre: string | undefined;
+};
+
+type CustomerOwnerPatch = { email?: string; name?: string };
+
+/**
+ * Lee el customer y calcula el patch de owner. `null` cuando no hay nada que
+ * cambiar; lanza si el customer no existe o está borrado en Stripe.
+ */
+async function resolveCustomerOwnerPatch(
+  stripe: Stripe,
+  customerId: string,
+  data: CustomerOwnerSyncContext,
+): Promise<CustomerOwnerPatch | null> {
+  if (!data.owner) throw new Error("la clínica no tiene owner resoluble");
+  const customer = await stripe.customers.retrieve(customerId);
+  if ("deleted" in customer) throw new Error("customer borrado en Stripe");
+  return buildCustomerOwnerPatch(customer, data.owner, data.ownerAnteriorNombre);
+}
+
+/**
+ * Alinea `email`/`name` del customer de Stripe con el propietario actual de la
+ * clínica. La programan con `runAfter(0)` todas las vías que reescriben
+ * `clinics.ownerUserId` (`transferOwnership`, `forceTransferOwnership`, la
+ * fusión de cuentas y el borrado con reemplazo). Sin ella, facturas y avisos
+ * de impago seguirían llegando al owner saliente.
+ *
+ * Fire-and-forget: nunca lanza. La propiedad ya cambió en Convex y un fallo
+ * aquí no debe aparecerle al usuario; queda en logs y lo recoge el backfill
+ * `backfillCustomerOwners`.
+ */
+export const syncCustomerOwner = internalAction({
+  args: {
+    clinicId: v.id("clinics"),
+    ownerAnteriorNombre: v.optional(v.string()),
+  },
+  handler: async (ctx, { clinicId, ownerAnteriorNombre }): Promise<void> => {
+    try {
+      const data: CustomerOwnerSyncContext = await ctx.runQuery(
+        internal.billing.internal.getCustomerOwnerSyncContext,
+        { clinicId, ownerAnteriorNombre },
+      );
+      const customerId = data.stripeCustomerId;
+      if (!customerId || !data.owner) {
+        console.warn(
+          `[billing] syncCustomerOwner clinic=${clinicId} sin customer u owner; nada que sincronizar.`,
+        );
+        return;
+      }
+
+      const stripe = getStripeClient();
+      const patch = await resolveCustomerOwnerPatch(stripe, customerId, data);
+      if (!patch) return;
+
+      await stripe.customers.update(customerId, patch);
+      console.log(
+        `[billing] syncCustomerOwner clinic=${clinicId} customer=${customerId}: ${Object.keys(patch).join(", ")} actualizado(s)`,
+      );
+    } catch (err) {
+      console.warn(
+        `[billing] syncCustomerOwner falló para clinic=${clinicId}: ${(err as Error).message}`,
+      );
+    }
+  },
+});
 
 const APP_URL_FALLBACK = "https://kengoapp.com";
 
@@ -1142,6 +1221,21 @@ export const finalizeSetupCheckout = internalAction({
     await stripe.customers.update(customerId, {
       invoice_settings: { default_payment_method: pmId },
     });
+    // Titularidad: registrar el PM (el `payment_method.attached` llegará y
+    // será idempotente) y espejar el default sin esperar al webhook.
+    const pmObj = await stripe.paymentMethods.retrieve(pmId);
+    await ctx.runMutation(internal.billing.paymentMethods.upsertFromStripe, {
+      clinicId,
+      stripeCustomerId: customerId,
+      stripePaymentMethodId: pmId,
+      ...resumenTarjeta(pmObj),
+      attachedAtMs: pmObj.created * 1000,
+      origen: "webhook",
+    });
+    await ctx.runMutation(
+      internal.billing.paymentMethods.setDefaultPaymentMethods,
+      { clinicId, subscriptionDefault: pmId, customerDefault: pmId },
+    );
 
     // El comportamiento depende del estado real de la subscription: si el
     // trial ya expiró (end_behavior `create_invoice` dejó una invoice abierta
@@ -1799,5 +1893,465 @@ export const backfillCustomerDescriptions = internalAction({
       yaCorrectas: yaCorrectas.length,
       fallidas,
     };
+  },
+});
+
+/**
+ * Backfill puntual: alinea `email`/`name` de los customers con el owner
+ * actual de cada clínica. Cubre las transferencias anteriores a que
+ * `syncCustomerOwner` existiera y cualquier `runAfter` que fallara. El nombre
+ * del owner saliente sale del último `clinicOwnershipAudit`, así que un name
+ * que ya sea razón social no se toca (ver `buildCustomerOwnerPatch`).
+ *
+ * Dry-run por defecto y errores capturados por customer, como
+ * `backfillCustomerDescriptions`.
+ */
+export const backfillCustomerOwners = internalAction({
+  args: { apply: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { apply = false },
+  ): Promise<{
+    apply: boolean;
+    revisadas: number;
+    actualizables: {
+      clinicId: Id<"clinics">;
+      customerId: string;
+      patch: CustomerOwnerPatch;
+    }[];
+    yaCorrectas: number;
+    fallidas: { clinicId: Id<"clinics">; customerId: string; motivo: string }[];
+  }> => {
+    const filas: {
+      clinicId: Id<"clinics">;
+      stripeCustomerId: string;
+      nombre: string;
+    }[] = await ctx.runQuery(
+      internal.billing.internal.listBillingConCustomer,
+      {},
+    );
+    const stripe = getStripeClient();
+
+    const actualizables: {
+      clinicId: Id<"clinics">;
+      customerId: string;
+      patch: CustomerOwnerPatch;
+    }[] = [];
+    let yaCorrectas = 0;
+    const fallidas: {
+      clinicId: Id<"clinics">;
+      customerId: string;
+      motivo: string;
+    }[] = [];
+
+    for (const fila of filas) {
+      try {
+        const data: CustomerOwnerSyncContext = await ctx.runQuery(
+          internal.billing.internal.getCustomerOwnerSyncContext,
+          { clinicId: fila.clinicId },
+        );
+        const patch = await resolveCustomerOwnerPatch(
+          stripe,
+          fila.stripeCustomerId,
+          data,
+        );
+        if (!patch) {
+          yaCorrectas++;
+          continue;
+        }
+        actualizables.push({
+          clinicId: fila.clinicId,
+          customerId: fila.stripeCustomerId,
+          patch,
+        });
+        if (apply) {
+          await stripe.customers.update(fila.stripeCustomerId, patch);
+        }
+      } catch (err) {
+        fallidas.push({
+          clinicId: fila.clinicId,
+          customerId: fila.stripeCustomerId,
+          motivo: (err as Error).message,
+        });
+      }
+    }
+
+    console.log(
+      `[billing] backfillCustomerOwners apply=${apply}: ${actualizables.length} actualizable(s), ${yaCorrectas} ya correcta(s), ${fallidas.length} fallida(s)`,
+    );
+    return {
+      apply,
+      revisadas: filas.length,
+      actualizables,
+      yaCorrectas,
+      fallidas,
+    };
+  },
+});
+
+// ─── Titularidad del método de pago ───
+
+/**
+ * Deja constancia en el propio PaymentMethod de Stripe de quién lo aportó
+ * (`metadata`), para que soporte lo vea en el Dashboard sin abrir Convex.
+ * Fire-and-forget: nunca lanza.
+ */
+export const stampPaymentMethodMetadata = internalAction({
+  args: { stripePaymentMethodId: v.string() },
+  handler: async (ctx, { stripePaymentMethodId }): Promise<void> => {
+    try {
+      const info: { clinicId: Id<"clinics">; userId: Id<"users">; email: string } | null =
+        await ctx.runQuery(internal.billing.paymentMethods.getContributorInfo, {
+          stripePaymentMethodId,
+        });
+      if (!info) return;
+      const stripe = getStripeClient();
+      await stripe.paymentMethods.update(stripePaymentMethodId, {
+        metadata: {
+          orgId: info.clinicId,
+          aportadaPorUserId: info.userId,
+          aportadaPorEmail: info.email,
+        },
+      });
+    } catch (err) {
+      console.warn(
+        `[billing] stampPaymentMethodMetadata falló para pm=${stripePaymentMethodId}: ${(err as Error).message}`,
+      );
+    }
+  },
+});
+
+/**
+ * Avisa al owner de que la tarjeta que cobraba se ha retirado. Se programa con
+ * retardo desde el webhook/acción de retirada; `getAvisoRetiradaContext`
+ * devuelve `null` si entre tanto llegó otra tarjeta, si ya se envió o si quien
+ * la retiró es el propio owner.
+ */
+export const notifyMetodoPagoRetirado = internalAction({
+  args: { stripePaymentMethodId: v.string() },
+  handler: async (ctx, { stripePaymentMethodId }): Promise<void> => {
+    const data = await ctx.runQuery(
+      internal.billing.paymentMethods.getAvisoRetiradaContext,
+      { stripePaymentMethodId },
+    );
+    if (!data) return;
+    const appUrl = getAppUrlOrFallback();
+    const enviado = await ctx.runAction(
+      internal.email.actions.sendPaymentMethodRemovedEmail,
+      {
+        to: data.owner.email,
+        nombreOwner: data.owner.name,
+        clinicaNombre: data.clinicaNombre,
+        retiradaPorNombre: data.retiradaPorNombre,
+        tarjeta: { marca: data.tarjeta.marca, ultimos4: data.tarjeta.ultimos4 },
+        proximoCobro: data.proximoCobro,
+        portalUrl: `${appUrl}/mi-clinica/suscripcion`,
+      },
+    );
+    if (enviado) {
+      await ctx.runMutation(
+        internal.billing.paymentMethods.markAvisoRetiradaEnviado,
+        { filaId: data.filaId },
+      );
+    }
+  },
+});
+
+/**
+ * Desvincula un PM en Stripe y lo marca localmente. Base compartida por la
+ * retirada del titular y por la transferencia con "retirar mi tarjeta". Si
+ * era el que cobraba y quien lo retira no es el owner, programa el aviso.
+ */
+async function retirarPaymentMethod(
+  ctx: ActionCtx,
+  stripe: Stripe,
+  args: {
+    stripePaymentMethodId: string;
+    byUserId: Id<"users">;
+    via: "titular" | "transfer";
+  },
+): Promise<{ eraActiva: boolean }> {
+  try {
+    await stripe.paymentMethods.detach(args.stripePaymentMethodId);
+  } catch (err) {
+    // Ya desvinculado en Stripe (p.ej. desde el Portal) → solo alinear local.
+    const msg = (err as Error).message ?? "";
+    if (!/not attached|No such payment_method/i.test(msg)) throw err;
+    console.warn(
+      `[billing] retirarPaymentMethod pm=${args.stripePaymentMethodId} ya no estaba adjunto en Stripe: ${msg}`,
+    );
+  }
+  const res: { eraActiva: boolean } = await ctx.runMutation(
+    internal.billing.paymentMethods.markDetached,
+    {
+      stripePaymentMethodId: args.stripePaymentMethodId,
+      byUserId: args.byUserId,
+      via: args.via,
+    },
+  );
+  if (res.eraActiva) {
+    await ctx.scheduler.runAfter(
+      0,
+      internal.billing.actions.notifyMetodoPagoRetirado,
+      { stripePaymentMethodId: args.stripePaymentMethodId },
+    );
+  }
+  return { eraActiva: res.eraActiva };
+}
+
+/**
+ * El titular de una tarjeta la retira desde su cuenta. No exige ser owner ni
+ * miembro de la clínica: la titularidad sobrevive a ambas cosas. No corta el
+ * servicio: la clínica sigue hasta la siguiente renovación y entonces aplica
+ * la gracia habitual si nadie añadió otra tarjeta.
+ */
+export const retirarMiMetodoDePago = action({
+  args: { stripePaymentMethodId: v.string() },
+  handler: async (
+    ctx,
+    { stripePaymentMethodId },
+  ): Promise<{ eraActiva: boolean }> => {
+    const externalId = await requireExternalId(ctx);
+    const fila: { userId: Id<"users">; clinicId: Id<"clinics">; ownerUserId: Id<"users"> } =
+      await ctx.runQuery(internal.billing.paymentMethods.getForContributor, {
+        externalId,
+        stripePaymentMethodId,
+      });
+    const stripe = getStripeClient();
+    const res = await retirarPaymentMethod(ctx, stripe, {
+      stripePaymentMethodId,
+      byUserId: fila.userId,
+      via: "titular",
+    });
+    console.log(
+      `[billing] retirarMiMetodoDePago clinic=${fila.clinicId} pm=${stripePaymentMethodId} user=${fila.userId} eraActiva=${res.eraActiva}`,
+    );
+    return res;
+  },
+});
+
+/**
+ * Al transferir la propiedad eligiendo "retirar mi tarjeta": desvincula todas
+ * las tarjetas vivas que el owner saliente aportó a esa clínica. Fire-and-forget
+ * desde `transferOwnership`; el email de transferencia se encadena después
+ * para que refleje el estado final.
+ */
+export const retirarMetodosDePagoDeUsuarioEnClinica = internalAction({
+  args: {
+    clinicId: v.id("clinics"),
+    userId: v.id("users"),
+    toUserId: v.id("users"),
+  },
+  handler: async (ctx, { clinicId, userId, toUserId }): Promise<void> => {
+    const vivas: MetodoDePagoAportado[] = await ctx.runQuery(
+      internal.billing.paymentMethods.listByUser,
+      { userId, clinicId },
+    );
+    const stripe = getStripeClient();
+    let retiradas = 0;
+    for (const pm of vivas) {
+      try {
+        await retirarPaymentMethod(ctx, stripe, {
+          stripePaymentMethodId: pm.id,
+          byUserId: userId,
+          via: "transfer",
+        });
+        retiradas++;
+      } catch (err) {
+        console.error(
+          `[billing] retirarMetodosDePagoDeUsuarioEnClinica clinic=${clinicId} pm=${pm.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+    console.log(
+      `[billing] retirarMetodosDePagoDeUsuarioEnClinica clinic=${clinicId} user=${userId}: ${retiradas}/${vivas.length} retirada(s)`,
+    );
+    await ctx.runAction(internal.billing.actions.notifyOwnershipTransferred, {
+      clinicId,
+      fromUserId: userId,
+      toUserId,
+      tarjetaRetirada: retiradas > 0,
+    });
+  },
+});
+
+/**
+ * Emails de transferencia de propiedad (a ambos owners). Se programa desde
+ * `transferOwnership` (o al final de la retirada de tarjetas si la hubo) y
+ * desde `forceTransferOwnership` (solo al nuevo owner: `fromUserId` ausente).
+ */
+export const notifyOwnershipTransferred = internalAction({
+  args: {
+    clinicId: v.id("clinics"),
+    fromUserId: v.optional(v.id("users")),
+    toUserId: v.id("users"),
+    tarjetaRetirada: v.boolean(),
+  },
+  handler: async (
+    ctx,
+    { clinicId, fromUserId, toUserId, tarjetaRetirada },
+  ): Promise<void> => {
+    const data: {
+      clinicaNombre: string;
+      nuevo: { email: string; nombre: string } | null;
+      anterior: { email: string; nombre: string } | null;
+      hayTarjetaActiva: boolean;
+      teniaTarjeta: boolean;
+      proximoCobro?: number;
+    } = await ctx.runQuery(
+      internal.billing.internal.getOwnershipTransferEmailContext,
+      { clinicId, fromUserId, toUserId },
+    );
+    if (!data.nuevo) return;
+    const appUrl = getAppUrlOrFallback();
+    await ctx.runAction(internal.email.actions.sendOwnershipTransferredEmails, {
+      clinicaNombre: data.clinicaNombre,
+      nuevo: { to: data.nuevo.email, nombre: data.nuevo.nombre },
+      anterior: data.anterior
+        ? { to: data.anterior.email, nombre: data.anterior.nombre }
+        : undefined,
+      tarjetaRetirada,
+      hayTarjetaActiva: data.hayTarjetaActiva,
+      teniaTarjeta: data.teniaTarjeta,
+      proximoCobro: data.proximoCobro,
+      portalUrl: `${appUrl}/mi-clinica/suscripcion`,
+      cuentaUrl: `${appUrl}/perfil`,
+    });
+  },
+});
+
+/**
+ * Espejo Stripe → `clinicPaymentMethods`: da de alta los PM que faltan
+ * (atribuidos a quien era owner cuando se adjuntaron, vía `ownerEnFecha`),
+ * marca detached los que ya no están en Stripe y refresca los defaults.
+ * Sirve de backfill inicial (dry-run por defecto) y de red de seguridad
+ * diaria (cron con `apply: true`). Errores por clínica en `fallidas`.
+ */
+export const reconcilePaymentMethods = internalAction({
+  args: { apply: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { apply = false },
+  ): Promise<{
+    apply: boolean;
+    revisadas: number;
+    altas: { clinicId: Id<"clinics">; pm: string; aportadaPorUserId: Id<"users">; tarjeta: string }[];
+    bajas: { clinicId: Id<"clinics">; pm: string }[];
+    defaultsActualizados: number;
+    fallidas: { clinicId: Id<"clinics">; customerId: string; motivo: string }[];
+  }> => {
+    const filas: {
+      clinicId: Id<"clinics">;
+      stripeCustomerId: string;
+      nombre: string;
+    }[] = await ctx.runQuery(
+      internal.billing.internal.listBillingConCustomer,
+      {},
+    );
+    const stripe = getStripeClient();
+
+    const altas: { clinicId: Id<"clinics">; pm: string; aportadaPorUserId: Id<"users">; tarjeta: string }[] = [];
+    const bajas: { clinicId: Id<"clinics">; pm: string }[] = [];
+    const fallidas: { clinicId: Id<"clinics">; customerId: string; motivo: string }[] = [];
+    let defaultsActualizados = 0;
+
+    for (const fila of filas) {
+      try {
+        const contexto = await ctx.runQuery(
+          internal.billing.paymentMethods.getReconcileContext,
+          { clinicId: fila.clinicId },
+        );
+        if (!contexto) continue;
+
+        const enStripe = await stripe.customers.listPaymentMethods(
+          fila.stripeCustomerId,
+          { limit: 100 },
+        );
+        const idsStripe = new Set(enStripe.data.map((pm) => pm.id));
+        const idsLocales = new Set(contexto.vivas.map((f) => f.stripePaymentMethodId));
+
+        for (const pm of enStripe.data) {
+          if (idsLocales.has(pm.id)) continue;
+          const creadoMs = pm.created * 1000;
+          const aportadaPorUserId = ownerEnFecha(
+            contexto.audits,
+            contexto.ownerUserId,
+            creadoMs,
+          );
+          const tarjeta = resumenTarjeta(pm);
+          altas.push({
+            clinicId: fila.clinicId,
+            pm: pm.id,
+            aportadaPorUserId,
+            tarjeta: `${tarjeta.marca ?? tarjeta.tipo} ${tarjeta.ultimos4 ?? ""}`.trim(),
+          });
+          if (apply) {
+            await ctx.runMutation(internal.billing.paymentMethods.upsertFromStripe, {
+              clinicId: fila.clinicId,
+              stripeCustomerId: fila.stripeCustomerId,
+              stripePaymentMethodId: pm.id,
+              ...tarjeta,
+              attachedAtMs: creadoMs,
+              origen: contexto.vivas.length === 0 ? "backfill" : "reconcile",
+              aportadaPorUserId,
+            });
+            if (!pm.metadata?.["aportadaPorUserId"]) {
+              await ctx.scheduler.runAfter(
+                0,
+                internal.billing.actions.stampPaymentMethodMetadata,
+                { stripePaymentMethodId: pm.id },
+              );
+            }
+          }
+        }
+
+        for (const local of contexto.vivas) {
+          if (idsStripe.has(local.stripePaymentMethodId)) continue;
+          bajas.push({ clinicId: fila.clinicId, pm: local.stripePaymentMethodId });
+          if (apply) {
+            const res: { eraActiva: boolean } = await ctx.runMutation(
+              internal.billing.paymentMethods.markDetached,
+              { stripePaymentMethodId: local.stripePaymentMethodId, via: "stripe" },
+            );
+            if (res.eraActiva) {
+              await ctx.scheduler.runAfter(
+                0,
+                internal.billing.actions.notifyMetodoPagoRetirado,
+                { stripePaymentMethodId: local.stripePaymentMethodId },
+              );
+            }
+          }
+        }
+
+        if (apply) {
+          const customer = await stripe.customers.retrieve(fila.stripeCustomerId);
+          const customerDefault =
+            "deleted" in customer
+              ? null
+              : (idDeRef(customer.invoice_settings?.default_payment_method) ?? null);
+          let subscriptionDefault: string | null = null;
+          if (contexto.stripeSubscriptionId) {
+            const sub = await stripe.subscriptions.retrieve(contexto.stripeSubscriptionId);
+            subscriptionDefault = idDeRef(sub.default_payment_method) ?? null;
+          }
+          await ctx.runMutation(
+            internal.billing.paymentMethods.setDefaultPaymentMethods,
+            { clinicId: fila.clinicId, subscriptionDefault, customerDefault },
+          );
+          defaultsActualizados++;
+        }
+      } catch (err) {
+        fallidas.push({
+          clinicId: fila.clinicId,
+          customerId: fila.stripeCustomerId,
+          motivo: (err as Error).message,
+        });
+      }
+    }
+
+    console.log(
+      `[billing] reconcilePaymentMethods apply=${apply}: ${altas.length} alta(s), ${bajas.length} baja(s), ${fallidas.length} fallida(s)`,
+    );
+    return { apply, revisadas: filas.length, altas, bajas, defaultsActualizados, fallidas };
   },
 });

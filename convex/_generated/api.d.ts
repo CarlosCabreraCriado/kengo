@@ -60,6 +60,7 @@ import type * as billing__webhookHelpers from "../billing/_webhookHelpers.js";
 import type * as billing_actions from "../billing/actions.js";
 import type * as billing_internal from "../billing/internal.js";
 import type * as billing_migrations from "../billing/migrations.js";
+import type * as billing_paymentMethods from "../billing/paymentMethods.js";
 import type * as billing_queries from "../billing/queries.js";
 import type * as clinicMemberships_mutations from "../clinicMemberships/mutations.js";
 import type * as clinicMemberships_queries from "../clinicMemberships/queries.js";
@@ -225,6 +226,7 @@ declare const fullApi: ApiFromModules<{
   "billing/actions": typeof billing_actions;
   "billing/internal": typeof billing_internal;
   "billing/migrations": typeof billing_migrations;
+  "billing/paymentMethods": typeof billing_paymentMethods;
   "billing/queries": typeof billing_queries;
   "clinicMemberships/mutations": typeof clinicMemberships_mutations;
   "clinicMemberships/queries": typeof clinicMemberships_queries;

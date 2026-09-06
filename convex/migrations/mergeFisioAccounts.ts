@@ -42,6 +42,7 @@ import { internalMutation } from '../_helpers/mutationWithTriggers';
 import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import { assertOwnerIsAdmin } from '../_helpers/permissions';
+import { nombreCompleto } from '../billing/internal';
 
 export const MIGRACION = 'mergeFisioAccounts/2026-08';
 
@@ -418,6 +419,7 @@ export const mergeMembershipsAndOwnership = internalMutation({
         q.eq('ownerUserId', args.sourceUserId),
       )
       .collect();
+    const sourceUser = owned.length > 0 ? await ctx.db.get(args.sourceUserId) : null;
     for (const clinic of owned) {
       actions.push(`clinics.ownerUserId: traspasar ${clinic.nombre}`);
       if (args.apply) {
@@ -431,6 +433,17 @@ export const mergeMembershipsAndOwnership = internalMutation({
           reason: `Fusión de cuentas duplicadas del mismo fisio (${MIGRACION})`,
           createdAt: Date.now(),
         });
+        // El customer de Stripe lleva el email/nombre del owner saliente.
+        await ctx.scheduler.runAfter(
+          0,
+          internal.billing.actions.syncCustomerOwner,
+          {
+            clinicId: clinic._id,
+            ownerAnteriorNombre: sourceUser
+              ? nombreCompleto(sourceUser)
+              : undefined,
+          },
+        );
       }
     }
 

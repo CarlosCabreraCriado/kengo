@@ -401,7 +401,9 @@ La primera vez que se invoca un deep link `kengo://...` desde Safari/Chrome dent
 
 2. **Rechazo de Apple/Google por Stripe externo**: **mitigado** — los CTAs de compra están ocultos en builds nativos (`SubscriptionService.pagosSoloWeb`) y sustituidos por mensajes de gestión desde la versión web sin enlace (anti-steering). La contratación es web-only (patrón multiplataforma, Apple 3.1.3(b)). Si algún día se quiere el checkout dentro de la app: programa de ofertas externas EEE/US o IAP wrapper (`@capacitor-community/stripe` / RevenueCat).
 
-3. **`appId` mal elegido**: fijado a `com.kengoapp.app`. Cambiarlo después implica re-publicar como app nueva. **Decisión final.**
+3. **Compatibilidad del backend con binarios ya publicados**: el bundle web va dentro del IPA/AAB (sin OTA ni gate de versión) y usa el mismo Convex que la web. Regla: no renombrar/mover funciones públicas ni añadir args obligatorios; solo args opcionales y campos nuevos en las respuestas (no hay `returns:` validators). Ejemplo: la titularidad del método de pago (2026-09) añadió `transferOwnership.retirarMiMetodoDePago` opcional y campos aditivos en `getMyClinicSubscription`; la 1.2.0 sigue funcionando (sin la sección "Tarjetas aportadas" de `/perfil` ni el banner de pendiente, que llegarán en la siguiente release; los emails cubren el hueco).
+
+4. **`appId` mal elegido**: fijado a `com.kengoapp.app`. Cambiarlo después implica re-publicar como app nueva. **Decisión final.**
 
 4. **Universal Links sin `.well-known`**: los magic links HTTPS no abrirán la app hasta que se publiquen `apple-app-site-association` y `assetlinks.json`. Mitigado por el custom scheme `kengo://` como fallback en emails y QR.
 

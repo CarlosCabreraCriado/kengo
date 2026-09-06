@@ -95,6 +95,18 @@ crons.daily(
   {},
 );
 
+// Reconciliación de titularidad de tarjetas: espejo Stripe → `clinicPaymentMethods`
+// (altas que perdió el webhook, bajas hechas desde el Dashboard, defaults).
+// Sin esto, un titular no vería su tarjeta en "Mi cuenta" o el owner no
+// recibiría el aviso al retirarse la activa. Hora 05:00 UTC: tras el resto de
+// reconciliaciones de billing (03:30–04:15) y `push-log-cleanup` (04:30).
+crons.daily(
+  "billing-reconcile-metodos-pago",
+  { hourUTC: 5, minuteUTC: 0 },
+  internal.billing.actions.reconcilePaymentMethods,
+  { apply: true },
+);
+
 // Sync diario del catálogo de ejercicios desde Directus (CMS administrado por
 // admins). Pull incremental por `date_updated` sobre las colecciones
 // `ejercicios`, `categorias` y `ejercicios_categorias`. Detecta borrados

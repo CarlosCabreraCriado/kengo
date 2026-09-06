@@ -1,0 +1,43 @@
+<ui2-dialog-host variant="standard">
+  <ui2-dialog-header
+    title="Transferir propiedad"
+    [subtitle]="data.clinicaNombre"
+    (closeClick)="cancelar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    <p class="tp__intro">
+      <strong>{{ data.nombreNuevo }}</strong> pasará a ser el responsable de la
+      suscripción: recibirá las facturas y los avisos de pago y podrá
+      modificarla o cancelarla. Tú mantendrás tu rol de administrador.
+    </p>
+
+    <div class="tp__tarjetas">
+      <h4>{{ data.tarjetas.length === 1 ? 'Tu tarjeta en esta clínica' : 'Tus tarjetas en esta clínica' }}</h4>
+      <ul>
+        @for (t of data.tarjetas; track t.id) {
+          <li>
+            <span class="material-symbols-outlined" aria-hidden="true">credit_card</span>
+            <span>{{ etiqueta(t) }}</span>
+            @if (t.esActiva) {
+              <span class="tp__activa">Cobra la suscripción</span>
+            }
+          </li>
+        }
+      </ul>
+    </div>
+
+    <ui2-radio-group
+      label="¿Qué hacemos con el método de pago?"
+      [options]="opciones()"
+      [formControl]="opcion"
+    ></ui2-radio-group>
+  </ui2-dialog-content>
+
+  <ui2-dialog-actions>
+    <ui2-button variant="ghost" (clicked)="cancelar()">Cancelar</ui2-button>
+    <ui2-button variant="primary" iconLeft="workspace_premium" (clicked)="confirmar()">
+      Transferir propiedad
+    </ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

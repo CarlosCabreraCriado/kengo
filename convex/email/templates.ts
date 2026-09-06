@@ -511,3 +511,121 @@ ${codeBlock(codigo, "Tu código de acceso:")}
     "Este email fue enviado por Kengo.<br>Si no esperabas esta invitación, puedes ignorarla.",
   );
 }
+
+function fechaLarga(ms: number | undefined): string {
+  if (!ms) return "la próxima renovación";
+  return new Date(ms).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function etiquetaTarjeta(t: { marca?: string; ultimos4?: string }): string {
+  const marca = t.marca ? t.marca.charAt(0).toUpperCase() + t.marca.slice(1) : "Tarjeta";
+  return t.ultimos4 ? `${marca} terminada en ${t.ultimos4}` : marca;
+}
+
+/**
+ * Al owner actual: la tarjeta que cobraba la suscripción la ha retirado su
+ * titular (un antiguo propietario). Hay que añadir otra antes del próximo
+ * cobro para no entrar en impago.
+ */
+export function paymentMethodRemovedTemplate(args: {
+  nombreOwner: string;
+  clinicaNombre: string;
+  retiradaPorNombre: string;
+  tarjeta: { marca?: string; ultimos4?: string };
+  proximoCobro?: number;
+  portalUrl: string;
+}): string {
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Hace falta un método de pago nuevo
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${args.nombreOwner}, ${args.retiradaPorNombre} ha retirado la ${etiquetaTarjeta(args.tarjeta).toLowerCase()} con la que se pagaba la suscripción de <strong style="color: ${BRAND_COLOR};">${args.clinicaNombre}</strong>.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  La clínica sigue funcionando con normalidad, pero el próximo cobro está previsto para el <strong>${fechaLarga(args.proximoCobro)}</strong>. Añade un método de pago antes de esa fecha para evitar la suspensión.
+</p>
+${ctaButton(args.portalUrl, "Añadir método de pago")}
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Recibes este aviso porque eres el propietario de la clínica en Kengo.
+</p>`;
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres propietario de la clínica.",
+  );
+}
+
+/**
+ * Al nuevo owner tras una transferencia: qué implica y qué pasa con el pago.
+ */
+export function ownershipTransferredNewOwnerTemplate(args: {
+  nombreNuevo: string;
+  nombreAnterior: string;
+  clinicaNombre: string;
+  tarjetaRetirada: boolean;
+  hayTarjetaActiva: boolean;
+  proximoCobro?: number;
+  portalUrl: string;
+}): string {
+  let pago: string;
+  if (args.tarjetaRetirada || !args.hayTarjetaActiva) {
+    pago = `La suscripción no tiene ahora ningún método de pago. El próximo cobro está previsto para el <strong>${fechaLarga(args.proximoCobro)}</strong>: añade tu tarjeta antes de esa fecha para evitar la suspensión.`;
+  } else {
+    pago = `La suscripción se sigue cobrando en la tarjeta que aportó ${args.nombreAnterior}. Puede retirarla cuando quiera desde su cuenta; si eso ocurre te avisaremos para que añadas la tuya.`;
+  }
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Ahora eres el propietario de ${args.clinicaNombre}
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${args.nombreNuevo}, ${args.nombreAnterior} te ha transferido la propiedad de <strong style="color: ${BRAND_COLOR};">${args.clinicaNombre}</strong>. Desde ahora eres el responsable de la suscripción: recibirás las facturas y los avisos de pago, y solo tú puedes modificarla o cancelarla.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  ${pago}
+</p>
+${ctaButton(args.portalUrl, "Ver la suscripción")}`;
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Eres propietario de la clínica.",
+  );
+}
+
+/**
+ * Al owner saliente: confirmación y qué ha pasado con su tarjeta.
+ */
+export function ownershipTransferredPreviousOwnerTemplate(args: {
+  nombreAnterior: string;
+  nombreNuevo: string;
+  clinicaNombre: string;
+  tarjetaRetirada: boolean;
+  teniaTarjeta: boolean;
+  cuentaUrl: string;
+}): string {
+  let tarjeta: string;
+  if (!args.teniaTarjeta) {
+    tarjeta = "No tenías ninguna tarjeta asociada a esta clínica, así que no hay nada más que hacer.";
+  } else if (args.tarjetaRetirada) {
+    tarjeta = "Tu tarjeta se ha retirado de la suscripción: no se te cobrará nada más por esta clínica.";
+  } else {
+    tarjeta = "Tu tarjeta sigue siendo el método de pago de la suscripción. Puedes retirarla cuando quieras desde <strong>Mi cuenta → Tarjetas aportadas a clínicas</strong>; avisaremos al nuevo propietario para que añada la suya.";
+  }
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Has transferido la propiedad de ${args.clinicaNombre}
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${args.nombreAnterior}, ${args.nombreNuevo} es desde ahora el propietario de <strong style="color: ${BRAND_COLOR};">${args.clinicaNombre}</strong> y el responsable de su suscripción. Tú conservas tu puesto de administrador.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  ${tarjeta}
+</p>
+${ctaButton(args.cuentaUrl, "Ir a mi cuenta")}`;
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Recibes este aviso por seguridad de tu cuenta.",
+  );
+}

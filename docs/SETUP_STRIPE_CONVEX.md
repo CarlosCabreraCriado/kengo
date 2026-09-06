@@ -119,7 +119,7 @@ Bajo el producto, sección **"Pricing"**, crea **dos prices** con la misma mecá
 2. **Endpoint URL**: la URL HTTP de tu backend Convex con sufijo `/stripe/webhook`.
    - Kengo: `https://backend.kengoapp.com/stripe/webhook`
 3. **Description** (opcional): `Kengo Convex backend (test|live)`
-4. **Events to send** — exactamente estos 13:
+4. **Events to send** — exactamente estos 16:
    - `checkout.session.completed`
    - `customer.created`
    - `customer.updated`
@@ -133,6 +133,9 @@ Bajo el producto, sección **"Pricing"**, crea **dos prices** con la misma mecá
    - `invoice.payment_failed`
    - `payment_intent.succeeded`
    - `payment_intent.payment_failed`
+   - `payment_method.attached` — titularidad del método de pago (`clinicPaymentMethods`)
+   - `payment_method.detached` — ídem; dispara el aviso al owner si era la tarjeta activa
+   - `payment_method.automatically_updated` — refresco de marca/últimos 4/caducidad (card updater)
 5. **Add endpoint**.
 6. En la página del endpoint, busca **"Signing secret"** → **Reveal** → copia `whsec_...`.
    - 📝 Apúntalo. Va a `STRIPE_WEBHOOK_SECRET`.
