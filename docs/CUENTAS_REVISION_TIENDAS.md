@@ -62,6 +62,9 @@ aplicación. No hay compras dentro de la app.
 
 ## 3. Texto para *App Review Information* (App Store)
 
+> Si App Review pregunta por el modelo de negocio (2.1(b) / 3.1.1), la
+> respuesta completa está en `RESPUESTA_APPLE_2_1B_BUSINESS_MODEL.md`.
+
 En **Sign-In Required** marcar *Yes* y poner la cuenta de fisioterapeuta, que es
 el caso completo.
 
