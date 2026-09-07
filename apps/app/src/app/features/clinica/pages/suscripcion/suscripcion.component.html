@@ -324,22 +324,12 @@
           }
 
           @if (suscripcion()!.currentPeriodEnd && !cancelaAlFinDelPeriodo()) {
-            <div class="stat stat--billing" [class.stat--cargo]="!!proximaFactura()">
+            <div class="stat stat--billing">
               <span class="stat__label">Próximo cargo</span>
               <span class="stat__date">
                 <span class="material-symbols-outlined" aria-hidden="true">event</span>
                 {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
               </span>
-              @if (proximaFactura(); as pf) {
-                <p class="stat__amount">
-                  {{ pf.total / 100 | number:'1.2-2' }} {{ pf.moneda | uppercase }}
-                  @if (pf.impuestos > 0) {
-                    · impuestos incluidos
-                  } @else {
-                    · sin cuota de impuesto
-                  }
-                </p>
-              }
             </div>
           }
 

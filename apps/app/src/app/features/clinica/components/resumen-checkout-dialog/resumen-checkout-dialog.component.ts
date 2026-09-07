@@ -26,6 +26,7 @@ export interface ResumenCheckoutDialogData {
   esAMedida: boolean;
   /** "Smart Ilimitado", "A medida"… (sin el prefijo "Plan"). */
   planLabel: string;
+  /** Plazas de fisio incluidas (techo del tramo o plazas contratadas), no miembros actuales. */
   fisios: number;
   /** Base mensual sin impuestos. `null` = contrato a medida sin preview. */
   importeMensualEur: number | null;
@@ -84,9 +85,10 @@ export class ResumenCheckoutDialogComponent {
       ? null
       : Math.round(this.importe * (100 + IGIC_PORCENTAJE)) / 100;
 
-  protected readonly planSubtitulo = `${this.data.planLabel} · ${this.data.fisios} ${
-    this.data.fisios === 1 ? 'fisioterapeuta' : 'fisioterapeutas'
-  }`;
+  protected readonly planSubtitulo =
+    this.data.fisios === 1
+      ? `${this.data.planLabel} · 1 fisioterapeuta`
+      : `${this.data.planLabel} · hasta ${this.data.fisios} fisioterapeutas`;
 
   protected readonly cuandoSeCobra: CuandoSeCobraVm = this.calcularCuandoSeCobra();
 

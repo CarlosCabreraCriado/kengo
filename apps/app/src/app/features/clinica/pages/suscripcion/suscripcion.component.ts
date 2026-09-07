@@ -81,7 +81,7 @@ const REGIMEN_FISCAL_VM: Record<RegimenFiscal, RegimenFiscalVm> = {
   desconocido: {
     texto: 'Pendiente de dirección fiscal',
     detalle:
-      'Se determina al añadir el método de pago. Puedes corregir la dirección desde el portal de pago.',
+      'Los impuestos se determinan al emitirse las facturas en función de la dirección de facturación del método de pago.',
     icon: 'pin_drop',
   },
 };
@@ -518,7 +518,12 @@ export class SuscripcionComponent {
         accion,
         esAMedida,
         planLabel,
-        fisios: Math.max(1, this.fisiosActuales()),
+        // Plazas incluidas, no miembros actuales: a medida son las que fija
+        // ventas en Stripe (`limiteFisios`); en autoservicio, el techo del
+        // tramo (Medium incluye hasta 9 aunque hoy haya 7).
+        fisios: esAMedida
+          ? Math.max(1, this.limiteFisios())
+          : Math.max(1, plan?.rangoFisiosMax ?? this.fisiosActuales()),
         importeMensualEur,
         trialEnd: sub.trialEnd,
       },

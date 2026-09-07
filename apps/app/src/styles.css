@@ -935,10 +935,11 @@ main > router-outlet + * {
 
 /* Override puntual: el resumen previo al Checkout son cuatro filas cortas y
    una tarjeta de dos líneas; a 500px queda desproporcionado en escritorio.
+   460px deja respirar a las filas de precio e impuestos sin dispersarse.
    Solo fuera del rango móvil, donde el sheet debe seguir a 100vw. */
 @media (min-width: 768px) {
   .ui-dialog-panel--sheet:has(app-resumen-checkout-dialog) {
-    max-width: 420px;
+    max-width: 460px;
   }
 }
 
