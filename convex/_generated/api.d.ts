@@ -56,6 +56,7 @@ import type * as auth_actions from "../auth/actions.js";
 import type * as auth_mutations from "../auth/mutations.js";
 import type * as auth_queries from "../auth/queries.js";
 import type * as billing__helpers from "../billing/_helpers.js";
+import type * as billing__taxHelpers from "../billing/_taxHelpers.js";
 import type * as billing__webhookHelpers from "../billing/_webhookHelpers.js";
 import type * as billing_actions from "../billing/actions.js";
 import type * as billing_internal from "../billing/internal.js";
@@ -222,6 +223,7 @@ declare const fullApi: ApiFromModules<{
   "auth/mutations": typeof auth_mutations;
   "auth/queries": typeof auth_queries;
   "billing/_helpers": typeof billing__helpers;
+  "billing/_taxHelpers": typeof billing__taxHelpers;
   "billing/_webhookHelpers": typeof billing__webhookHelpers;
   "billing/actions": typeof billing_actions;
   "billing/internal": typeof billing_internal;
