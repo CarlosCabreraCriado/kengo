@@ -164,3 +164,19 @@ export interface InvoicesResult {
   invoices: InvoiceItem[];
   error?: string;
 }
+
+/**
+ * Vista previa de la próxima factura, leída de Stripe en vivo. Espejo de
+ * `api.billing.actions.getProximaFacturaForClinic`. Es la fuente del importe
+ * de un contrato a medida (Convex no persiste precios). Importes en céntimos.
+ */
+export interface ProximaFactura {
+  /** Neto tras descuentos, antes de impuestos. */
+  subtotal: number;
+  /** Cuota de impuesto (0 con inversión del sujeto pasivo). */
+  impuestos: number;
+  total: number;
+  moneda: string;
+  /** Timestamp ms del cobro previsto; `null` si Stripe no lo informa. */
+  fecha: number | null;
+}

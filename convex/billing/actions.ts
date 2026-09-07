@@ -685,10 +685,20 @@ export const createCheckoutSession = action({
       { clinicId },
     );
 
-    // Contrato a medida: el Checkout adjuntaría un price de autoservicio y
-    // borraría el price negociado que ventas configuró en el Dashboard. La UI
-    // ya oculta el CTA, pero el gate tiene que estar también en servidor.
-    if (data.billing?.limiteFisios !== undefined) {
+    const estado = data.billing?.estadoLocal ?? "none";
+    const esTrial = estado === "trialing";
+    const checkoutAction: CheckoutAction = esTrial
+      ? "attach_pm_end_trial"
+      : "create_subscription";
+    const esAMedida = data.billing?.limiteFisios !== undefined;
+
+    // Contrato a medida: solo se bloquea la rama que crearía una S2 con un
+    // price de autoservicio (borraría el price negociado que ventas configuró
+    // en el Dashboard). En trial el Checkout es `mode: 'setup'` y se limita a
+    // adjuntar la tarjeta a la sub existente sin tocar su price, así que el
+    // owner sí puede añadirla desde aquí. La UI oculta el CTA en el otro caso,
+    // pero el gate tiene que estar también en servidor.
+    if (esAMedida && checkoutAction === "create_subscription") {
       throw new ConvexError({
         code: "SUSCRIPCION_A_MEDIDA",
         message:
@@ -735,12 +745,6 @@ export const createCheckoutSession = action({
     //   - `customer_update`: tras Checkout, Stripe actualiza
     //     name/address/tax_id en el customer existente.
 
-    const estado = data.billing?.estadoLocal ?? "none";
-    const esTrial = estado === "trialing";
-    const checkoutAction: CheckoutAction = esTrial
-      ? "attach_pm_end_trial"
-      : "create_subscription";
-
     // Variante efectiva de la sesión. Durante el trial el arg se ignora: la
     // S1 ya existe con su price y cambiarlo aquí puentearía el flujo
     // `setPlanVariante` (proration). No lanzamos para no convertir en error
@@ -785,12 +789,16 @@ export const createCheckoutSession = action({
     }
 
     // Sincroniza la etiqueta del tramo en el customer antes de abrir Checkout
-    // para que aparezca en la factura siguiente.
+    // para que aparezca en la factura siguiente. En un contrato a medida la
+    // etiqueta es fija ("Plan a medida"): no reescribirla con el tramo.
     await syncStripeCustomerTierLabel(
       stripe,
       customerId,
-      Math.max(1, data.cantidadFisios),
+      esAMedida
+        ? (data.billing?.limiteFisios ?? 0)
+        : Math.max(1, data.cantidadFisios),
       varianteEfectiva,
+      esAMedida,
     );
 
     // H-2: al reactivar (none / canceled / incomplete) no abrimos Checkout si
@@ -1400,17 +1408,28 @@ export const finalizeCheckout = internalAction({
           }
         }
       } else if (sub.status === "trialing") {
-        // Una sola llamada: el régimen viaja con la request que genera la
-        // primera factura. Stripe acepta el literal "now" (SDK 20 lo tipa
-        // como `'now' | number`); un timestamp `Date.now()` puede llegar ya
-        // en el pasado por latencia y ser rechazado.
-        await stripe.subscriptions.update(subIdLocal, {
-          default_payment_method: pmId,
-          trial_end: "now",
-          proration_behavior: "none",
-          default_tax_rates: defaultTaxRates,
-          automatic_tax: { enabled: false },
-        });
+        if (data.billing?.limiteFisios !== undefined) {
+          // Contrato a medida: el trial lo pactó ventas y forma parte del
+          // contrato. Solo se adjunta la tarjeta y se fija el régimen; el
+          // primer cobro sale en la fecha de `trial_end` que hay en Stripe.
+          await stripe.subscriptions.update(subIdLocal, {
+            default_payment_method: pmId,
+            default_tax_rates: defaultTaxRates,
+            automatic_tax: { enabled: false },
+          });
+        } else {
+          // Una sola llamada: el régimen viaja con la request que genera la
+          // primera factura. Stripe acepta el literal "now" (SDK 20 lo tipa
+          // como `'now' | number`); un timestamp `Date.now()` puede llegar ya
+          // en el pasado por latencia y ser rechazado.
+          await stripe.subscriptions.update(subIdLocal, {
+            default_payment_method: pmId,
+            trial_end: "now",
+            proration_behavior: "none",
+            default_tax_rates: defaultTaxRates,
+            automatic_tax: { enabled: false },
+          });
+        }
       } else if (esSubscriptionActualizable(sub.status)) {
         // Reentrega del webhook con la S1 ya `active`: no volver a tocar el
         // trial, solo asegurar PM y régimen.
@@ -1883,6 +1902,96 @@ export const listInvoicesForClinic = action({
         error: "No se pudieron cargar las facturas",
       };
     }
+  },
+});
+
+/**
+ * Vista previa de la próxima factura de la clínica, leída de Stripe en vivo.
+ * Es la única fuente fiable del importe de un contrato a medida: Convex no
+ * persiste precios y el price negociado puede llevar tramos o descuentos que
+ * no queremos replicar. Importes en céntimos. Devuelve `null` (sin lanzar)
+ * si la clínica no tiene sub viva o Stripe falla: la UI simplemente no pinta
+ * el importe.
+ */
+export const getProximaFacturaForClinic = action({
+  args: { clinicId: v.id("clinics") },
+  handler: async (
+    ctx,
+    { clinicId },
+  ): Promise<{
+    subtotal: number;
+    impuestos: number;
+    total: number;
+    moneda: string;
+    fecha: number | null;
+  } | null> => {
+    const externalId = await requireExternalId(ctx);
+    await ctx.runQuery(
+      internal.billing.internal.assertOwnerOnClinicByExternalId,
+      { externalId, clinicId },
+    );
+
+    const billing = await ctx.runQuery(
+      internal.billing.queries.getClinicBillingStatusInternal,
+      { clinicId },
+    );
+    const customerId = billing?.stripeCustomerId;
+    const subscriptionId = billing?.stripeSubscriptionId;
+    if (!customerId || !subscriptionId) return null;
+
+    try {
+      const stripe = getStripeClient();
+      const preview = await stripe.invoices.createPreview({
+        customer: customerId,
+        subscription: subscriptionId,
+      });
+      const total = preview.total ?? 0;
+      // `total_excluding_tax` ya descuenta cupones; si Stripe no lo informa
+      // (sin impuestos configurados) el total es también el neto.
+      const subtotal = preview.total_excluding_tax ?? total;
+      const fechaSeg = preview.next_payment_attempt ?? preview.period_end;
+      return {
+        subtotal,
+        impuestos: total - subtotal,
+        total,
+        moneda: preview.currency ?? "eur",
+        fecha: fechaSeg ? fechaSeg * 1000 : null,
+      };
+    } catch (err) {
+      // Una sub cancelada o sin próxima factura hace que Stripe rechace el
+      // preview; no es un error de la pantalla.
+      console.warn(
+        `[billing] getProximaFacturaForClinic: sin preview para clinic=${clinicId}: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  },
+});
+
+/**
+ * Internal: fija la etiqueta "Plan a medida" en el customer de una clínica
+ * con contrato a medida. La encola el webhook `customer.subscription.*`
+ * cuando el price no es de autoservicio, para que la factura siguiente no
+ * salga con el tramo anterior ("Plan Medium") aunque ventas cambie el price
+ * desde el Dashboard sin pasar por la app.
+ */
+export const syncTierLabelAMedida = internalAction({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, { clinicId }): Promise<void> => {
+    const billing = await ctx.runQuery(
+      internal.billing.queries.getClinicBillingStatusInternal,
+      { clinicId },
+    );
+    if (!billing?.stripeCustomerId || billing.limiteFisios === undefined) {
+      return;
+    }
+    await syncStripeCustomerTierLabel(
+      getStripeClient(),
+      billing.stripeCustomerId,
+      billing.limiteFisios,
+      billing.variante ?? "base",
+      true,
+    );
   },
 });
 

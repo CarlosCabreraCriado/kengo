@@ -220,11 +220,20 @@
         </ui2-pill>
       </div>
 
-      <!-- Cabecera: un contrato a medida no tiene tramo ni precio de tarifa,
-           así que se nombra por lo que es y remite a las facturas. -->
+      <!-- Cabecera: un contrato a medida no tiene tramo ni precio de tarifa;
+           el importe sale de la vista previa de la próxima factura de Stripe
+           (solo la ve el owner) y hasta que llega no se pinta nada. -->
       @if (esAMedida()) {
         <div class="plan-hero__name-row">
           <h2 class="plan-hero__name">A medida</h2>
+          @if (proximaFactura(); as pf) {
+            <p class="plan-hero__price">
+              <span class="plan-hero__currency">€</span>
+              <span class="plan-hero__amount">{{ pf.subtotal / 100 | number:'1.2-2' }}</span>
+              <span class="plan-hero__period">/mes</span>
+              <span class="plan-hero__tax">+ impuestos</span>
+            </p>
+          }
         </div>
       } @else if (planActual(); as plan) {
         <div class="plan-hero__name-row">
@@ -301,12 +310,22 @@
           }
 
           @if (suscripcion()!.currentPeriodEnd && !cancelaAlFinDelPeriodo()) {
-            <div class="stat stat--billing">
+            <div class="stat stat--billing" [class.stat--cargo]="!!proximaFactura()">
               <span class="stat__label">Próximo cargo</span>
               <span class="stat__date">
                 <span class="material-symbols-outlined" aria-hidden="true">event</span>
                 {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
               </span>
+              @if (proximaFactura(); as pf) {
+                <p class="stat__amount">
+                  {{ pf.total / 100 | number:'1.2-2' }} {{ pf.moneda | uppercase }}
+                  @if (pf.impuestos > 0) {
+                    · impuestos incluidos
+                  } @else {
+                    · sin cuota de impuesto
+                  }
+                </p>
+              }
             </div>
           }
 
@@ -342,8 +361,12 @@
     </section>
 
     <!-- Acción principal — solo visible al propietario (Bloque H/J).
-         En nativo se oculta (compra/portal); "Cancelar" sí se mantiene. -->
-    @if (esOwner() && gestionAutoservicio()) {
+         En nativo se oculta (compra/portal); "Cancelar" sí se mantiene.
+         Con contrato a medida también aparece: en trial abre Checkout (solo
+         adjunta la tarjeta, sin tocar el price ni el trial pactado) y con la
+         sub viva abre el Portal para gestionar el pago. Solo se oculta cuando
+         aún no hay contrato y hay que hablar con ventas. -->
+    @if (esOwner() && !requiereContactoVentas()) {
       @if (!pagosSoloWeb()) {
         <ui2-button
           variant="primary"
@@ -356,8 +379,9 @@
         >{{ etiquetaAccionPrincipal() }}</ui2-button>
       }
 
-      <!-- Acción secundaria: cancelar suscripción -->
-      @if (suscripcion()!.estado === 'active' && !cancelaAlFinDelPeriodo()) {
+      <!-- Acción secundaria: cancelar suscripción. Un contrato a medida no se
+           autocancela: se habla con nosotros (tarjeta "Tu contrato"). -->
+      @if (gestionAutoservicio() && suscripcion()!.estado === 'active' && !cancelaAlFinDelPeriodo()) {
         <ui2-button
           variant="ghost"
           size="md"
@@ -391,11 +415,21 @@
             <div class="flex-1 min-w-0">
               <p class="font-semibold text-ink-900">
                 {{ limiteFisios() }} plazas de fisioterapeuta
+                @if (proximaFactura(); as pf) {
+                  · {{ pf.subtotal / 100 | number:'1.2-2' }} €/mes + impuestos
+                }
               </p>
               <p class="text-sm text-ink-500 mt-1">
                 Tu plan está pactado con nosotros y no tiene límite de pacientes.
                 Para cambiar las plazas o las condiciones, escríbenos.
               </p>
+              @if (suscripcion()!.estado === 'trialing' && !metodoPagoActivo() && suscripcion()!.trialEnd) {
+                <p class="text-sm text-warning mt-2">
+                  Añade un método de pago antes del
+                  {{ suscripcion()!.trialEnd | date:'d MMMM' }} para que el
+                  contrato siga activo sin interrupciones.
+                </p>
+              }
               <div class="mt-3">
                 <ui2-button
                   variant="ghost"
@@ -523,7 +557,7 @@
                   subtitle="Abre el portal de Stripe"
                   [isFirst]="false"
                   [rowClickable]="true"
-                  (rowClick)="accionPrincipal()"
+                  (rowClick)="abrirPortal()"
                 >
                   <span class="material-symbols-outlined text-ink-400" aria-hidden="true">arrow_forward</span>
                 </ui2-list-row>

@@ -121,6 +121,18 @@ describe('SubscriptionService — guard de pagos en nativo', () => {
       expect(toastStub.info).not.toHaveBeenCalled();
     });
 
+    it('iniciarCheckout con SUSCRIPCION_A_MEDIDA avisa sin redirigir', async () => {
+      const service = setup(false);
+      convexStub.action.and.rejectWith({
+        data: { code: 'SUSCRIPCION_A_MEDIDA' },
+      });
+      await service.iniciarCheckout('clinic-1');
+      expect(browserStub.redirect).not.toHaveBeenCalled();
+      expect(toastStub.error).toHaveBeenCalledWith(
+        'Tu clínica tiene un contrato a medida: escríbenos para cambiarlo',
+      );
+    });
+
     it('abrirPortal llega al backend y redirige', async () => {
       const service = setup(false);
       await service.abrirPortal('clinic-1');

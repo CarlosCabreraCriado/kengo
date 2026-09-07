@@ -251,7 +251,11 @@ Customer Portal. **Nunca** se usa el CP de la ficha de la clínica.
 1. **Tax Rate**: Dashboard → Products → **Tax rates** → New: display name
    `IGIC`, 7 %, **exclusive**, country `ES`, jurisdiction `Canarias`. Deja
    `tax_type` sin fijar (el enum de Stripe no contempla IGIC). Copia el
-   `txr_...` a `STRIPE_TAX_RATE_ID_IGIC`.
+   `txr_...` a `STRIPE_TAX_RATE_ID_IGIC`. Debe existir **un único** Tax Rate
+   IGIC activo: `syncRegimenFiscal` compara los `default_tax_rates` de la sub
+   con ese id y un segundo IGIC creado a mano desde el Dashboard (p. ej. al
+   montar un contrato a medida) lo consideraría "desalineado" y lo
+   sustituiría. No lo pongas nunca a nivel de item de la suscripción.
 2. **Prices**: en los dos prices de autoservicio pon `tax_behavior` =
    **exclusive** (solo se puede fijar una vez). Los precios de la app son
    netos ("+ impuestos").

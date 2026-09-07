@@ -244,6 +244,12 @@ export class SubscriptionService {
         this.toast.error(
           `No puedes contratar el plan base: tienes ${data?.pacientesActuales ?? '?'} pacientes y el límite es ${data?.limite ?? '?'}`,
         );
+      } else if (code === 'SUSCRIPCION_A_MEDIDA') {
+        // Contrato a medida fuera del trial: el plan se gestiona con ventas,
+        // no con un Checkout nuevo.
+        this.toast.error(
+          'Tu clínica tiene un contrato a medida: escríbenos para cambiarlo',
+        );
       } else {
         this.logger.error('[SubscriptionService] checkout', err);
         this.toast.error('No se pudo iniciar el proceso de pago');

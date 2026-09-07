@@ -40,6 +40,7 @@ import type {
   InvoiceItem,
   PlanInfo,
   PlanVariante,
+  ProximaFactura,
   RegimenFiscal,
   SubscriptionEstado,
 } from '@kengo/shared-models';
@@ -349,6 +350,14 @@ export class SuscripcionComponent {
   protected readonly facturasCargando = signal<boolean>(false);
 
   /**
+   * Próxima factura leída de Stripe (solo owner con contrato a medida): es la
+   * única fuente del importe de un plan negociado, que la query no conoce.
+   * `null` mientras carga o si Stripe no puede previsualizarla — en ese caso
+   * la pantalla no pinta importe alguno en lugar de inventar un 0.
+   */
+  protected readonly proximaFactura = signal<ProximaFactura | null>(null);
+
+  /**
    * Resultado del retorno de Checkout (web). Se lee UNA vez del query param y
    * se limpia la URL (M-9), para que la tarjeta de éxito/cancelación no
    * reaparezca al recargar o volver con el back, y para no dejar `?ok=1` en
@@ -394,6 +403,33 @@ export class SuscripcionComponent {
       }
       void this.cargarFacturas(id);
     });
+
+    effect(() => {
+      const id = this.clinicId();
+      const sub = this.suscripcion();
+      const conCobro =
+        sub?.estado === 'trialing' ||
+        sub?.estado === 'active' ||
+        sub?.estado === 'past_due';
+      if (!id || !sub || !sub.esOwner || !sub.esAMedida || !conCobro) {
+        this.proximaFactura.set(null);
+        return;
+      }
+      void this.cargarProximaFactura(id);
+    });
+  }
+
+  private async cargarProximaFactura(clinicId: string): Promise<void> {
+    try {
+      const result = await this.convex.action(
+        api.billing.actions.getProximaFacturaForClinic,
+        { clinicId: clinicId as never },
+      );
+      this.proximaFactura.set(result as ProximaFactura | null);
+    } catch (err) {
+      this.logger.error('[SuscripcionComponent] cargarProximaFactura', err);
+      this.proximaFactura.set(null);
+    }
   }
 
   private async cargarFacturas(clinicId: string): Promise<void> {
@@ -412,6 +448,16 @@ export class SuscripcionComponent {
     } finally {
       this.facturasCargando.set(false);
     }
+  }
+
+  /**
+   * Portal de Stripe directo (histórico de facturas, tarjeta). No pasa por
+   * `accionPrincipal`, que en trial abre Checkout en vez del Portal.
+   */
+  protected async abrirPortal(): Promise<void> {
+    const id = this.clinicId();
+    if (!id) return;
+    await this.subs.abrirPortal(id);
   }
 
   protected estadoFactura(estado: InvoiceEstado): InvoiceEstadoVm {

@@ -183,6 +183,17 @@ registerStripeRoutes(http, components.stripe, {
               subscriptionDefault: idDeRef(sub.default_payment_method) ?? null,
             },
           );
+          // Etiqueta de factura: con price a medida, "Plan a medida". El cron
+          // de reconciliación solo la toca cuando cambia el techo, así que un
+          // cambio de price hecho en el Dashboard la dejaría con el tramo
+          // anterior hasta el siguiente Checkout.
+          if (esAMedida) {
+            await ctx.scheduler.runAfter(
+              0,
+              internal.billing.actions.syncTierLabelAMedida,
+              { clinicId },
+            );
+          }
           break;
         }
         case "customer.updated": {

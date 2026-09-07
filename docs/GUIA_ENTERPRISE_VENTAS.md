@@ -33,13 +33,30 @@ son las **plazas contratadas**, y pasan a ser el techo de asientos facturables
 
 - `syncQuantityFromMemberships` y `updateStripeQuantity` **no tocan Stripe**:
   la quantity la manda ventas.
-- `createCheckoutSession` y `setPlanVariante` lanzan `SUSCRIPCION_A_MEDIDA`
-  (harían swap de price y borrarían el negociado).
+- `setPlanVariante` lanza `SUSCRIPCION_A_MEDIDA` (haría swap de price y
+  borraría el negociado). `createCheckoutSession` solo lo lanza en la rama
+  `create_subscription` (sin sub viva crearía una S2 con price de
+  autoservicio); **en trial el Checkout sí se permite**: es `mode: setup`,
+  adjunta la tarjeta y fija el régimen fiscal sin tocar el price, y
+  `finalizeCheckout` **respeta el `trial_end` pactado** (no envía
+  `trial_end: 'now'` como en autoservicio). Con la sub viva el owner gestiona la
+  tarjeta desde el Portal, que no tiene gate a medida.
 - Sin cap de pacientes (`checkCapacidadPacientes`), igual que
   `enterprise_pending`.
 - La query `getMyClinicSubscription` devuelve `esAMedida: true`, `plan: null` y
-  `precioMensualActualEur: 0`; el importe real vive en las facturas.
-- Etiqueta de factura "Plan a medida" vía `syncStripeCustomerTierLabel`.
+  `precioMensualActualEur: 0`. El importe lo lee la pantalla de Stripe en vivo
+  con `billing.actions.getProximaFacturaForClinic` (preview de la próxima
+  factura: neto, impuestos, total y fecha; owner-only).
+- Etiqueta de factura "Plan a medida" vía `syncStripeCustomerTierLabel`; el
+  webhook `customer.subscription.*` encola `syncTierLabelAMedida` para que un
+  cambio de price hecho en el Dashboard no deje el tramo anterior en la
+  factura siguiente.
+- **Impuestos: no fijar `tax_rates` en el item de la suscripción.** La app
+  pone `default_tax_rates` (IGIC) o `tax_exempt: reverse` según el CP que
+  recoge el Checkout (`docs/SETUP_STRIPE_CONVEX.md` §Impuestos). Un tax rate a
+  nivel de item prevalece sobre el default de la sub y cobraría IGIC aunque la
+  dirección fiscal resulte peninsular. Si ventas lo añadió a mano, quitarlo
+  del item; el régimen correcto llega al completar el owner su Checkout.
 
 ## Vinculación con la clínica
 

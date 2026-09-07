@@ -422,6 +422,19 @@
   margin-top: 6px;
 }
 
+/* Importe del próximo cargo (contrato a medida): segunda línea bajo la fecha. */
+.stat--cargo {
+  flex-wrap: wrap;
+}
+
+.stat__amount {
+  flex-basis: 100%;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Precio neto: el impuesto (IGIC o inversión del sujeto pasivo) se aplica en
    la factura según la dirección fiscal. */
 .plan-hero__tax {
