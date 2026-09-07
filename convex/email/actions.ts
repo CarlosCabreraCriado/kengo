@@ -108,6 +108,10 @@ export const sendTrialEndingEmail = internalAction({
     nombreAdmin: v.string(),
     clinicaNombre: v.string(),
     diasRestantes: v.number(),
+    /** Con tarjeta guardada el email es un recordatorio del primer cargo. */
+    tieneMetodoPago: v.optional(v.boolean()),
+    /** Fin del trial en ms, para decir la fecha exacta del primer cargo. */
+    trialEnd: v.optional(v.number()),
     portalUrl: v.string(),
   },
   handler: async (_ctx, args) => {
@@ -121,12 +125,15 @@ export const sendTrialEndingEmail = internalAction({
     const { error } = await resend.emails.send({
       from: "Kengo <noreply@kengoapp.com>",
       to: args.to,
-      subject: `[Kengo · ${args.clinicaNombre}] Tu periodo de prueba termina pronto`,
+      subject: args.tieneMetodoPago
+        ? `[Kengo · ${args.clinicaNombre}] Tu periodo de prueba termina pronto: primer cargo`
+        : `[Kengo · ${args.clinicaNombre}] Tu periodo de prueba termina pronto`,
       html: trialEndingTemplate(
         args.nombreAdmin,
         args.clinicaNombre,
         args.diasRestantes,
         args.portalUrl,
+        { tieneMetodoPago: args.tieneMetodoPago ?? false, trialEnd: args.trialEnd },
       ),
     });
 
@@ -179,6 +186,11 @@ export const sendWelcomeAfterCheckoutEmail = internalAction({
     to: v.string(),
     nombreAdmin: v.string(),
     clinicaNombre: v.string(),
+    /**
+     * Fin del trial en ms cuando la tarjeta se guardó durante la prueba: la
+     * suscripción aún no cobra y el email debe decir cuándo lo hará.
+     */
+    trialEnd: v.optional(v.number()),
     portalUrl: v.string(),
   },
   handler: async (_ctx, args) => {
@@ -192,11 +204,14 @@ export const sendWelcomeAfterCheckoutEmail = internalAction({
     const { error } = await resend.emails.send({
       from: "Kengo <noreply@kengoapp.com>",
       to: args.to,
-      subject: `[Kengo · ${args.clinicaNombre}] Tu suscripción está activa`,
+      subject: args.trialEnd
+        ? `[Kengo · ${args.clinicaNombre}] Método de pago guardado`
+        : `[Kengo · ${args.clinicaNombre}] Tu suscripción está activa`,
       html: welcomeAfterCheckoutTemplate(
         args.nombreAdmin,
         args.clinicaNombre,
         args.portalUrl,
+        args.trialEnd,
       ),
     });
 

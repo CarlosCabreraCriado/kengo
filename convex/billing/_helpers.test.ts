@@ -21,6 +21,12 @@ import {
   defaultPaymentMethodDe,
   resumenTarjeta,
   debeMarcarPendiente,
+  tierLabel,
+  formatEur,
+  totalConIgic,
+  formatFechaLargaEs,
+  buildCheckoutSubmitMessage,
+  CHECKOUT_CUSTOM_TEXT_MAX,
 } from "./_helpers";
 
 function test(name: string, fn: () => void) {
@@ -300,4 +306,108 @@ test("debeMarcarPendiente: solo si era la activa y la sub sigue viva", () => {
     debeMarcarPendiente({ pmRetirado: "pm_1", defaultActual: "pm_1", estadoLocal: undefined }),
     false,
   );
+});
+
+// --- texto del Checkout ---
+
+/** `Intl` usa U+00A0 antes del símbolo de euro; los asserts comparan con espacio normal. */
+const norm = (s: string) => s.replace(/\u00a0/g, " ");
+
+test("tierLabel: tramo + variante, a medida y fallback", () => {
+  const smart = planParaFisios(3);
+  assert.equal(tierLabel(smart, "base", false), "Plan Smart");
+  assert.equal(tierLabel(smart, "ilimitada", false), "Plan Smart Ilimitado");
+  assert.equal(tierLabel(smart, "base", true), "Plan a medida");
+  assert.equal(tierLabel(null, "base", false), "Tu plan Kengo");
+});
+
+test("formatEur: entero sin decimales, con céntimos dos decimales y coma", () => {
+  assert.equal(norm(formatEur(249)), "249 €");
+  assert.equal(norm(formatEur(266.43)), "266,43 €");
+  assert.equal(norm(formatEur(1234.5)), "1234,50 €");
+});
+
+test("totalConIgic: 7 % redondeado a céntimos", () => {
+  assert.equal(totalConIgic(249), 266.43);
+  assert.equal(totalConIgic(279), 298.53);
+  assert.equal(totalConIgic(89), 95.23);
+  assert.equal(totalConIgic(100), 107);
+});
+
+// 2026-10-09T22:30:00Z = 00:30 del día 10 en Madrid, 23:30 del día 9 en Canarias.
+const TRIAL_END = Date.UTC(2026, 9, 9, 22, 30);
+
+test("formatFechaLargaEs: fecha larga en español en la TZ dada (Madrid por defecto)", () => {
+  assert.equal(formatFechaLargaEs(TRIAL_END), "10 de octubre de 2026");
+  assert.equal(formatFechaLargaEs(TRIAL_END, "Atlantic/Canary"), "9 de octubre de 2026");
+  assert.equal(formatFechaLargaEs(TRIAL_END, "UTC"), "9 de octubre de 2026");
+});
+
+test("buildCheckoutSubmitMessage: create_subscription → importe, dos regímenes y cobro hoy", () => {
+  const msg = norm(
+    buildCheckoutSubmitMessage({
+      accion: "create_subscription",
+      planLabel: "Plan Smart Ilimitado",
+      importeMensualEur: 279,
+    }),
+  );
+  assert.ok(msg.startsWith("Plan Smart Ilimitado: 279 € al mes, sin impuestos."));
+  assert.ok(msg.includes("+7 % de IGIC (298,53 € al mes)"));
+  assert.ok(msg.includes("inversión del sujeto pasivo"));
+  assert.ok(msg.includes("no se cobra nada"));
+  assert.ok(msg.includes("hoy mismo"));
+  assert.ok(!msg.includes("periodo de prueba"));
+});
+
+test("buildCheckoutSubmitMessage: trial con fecha → cobro el día del fin del trial", () => {
+  const msg = norm(
+    buildCheckoutSubmitMessage({
+      accion: "attach_pm_end_trial",
+      planLabel: "Plan Lonely",
+      importeMensualEur: 89,
+      trialEndMs: TRIAL_END,
+    }),
+  );
+  assert.ok(msg.includes("89 € al mes"));
+  assert.ok(msg.includes("(95,23 € al mes)"));
+  assert.ok(msg.includes("continúa hasta el 10 de octubre de 2026"));
+  assert.ok(!msg.includes("hoy mismo"));
+});
+
+test("buildCheckoutSubmitMessage: trial sin fecha → 'cuando termine'", () => {
+  const msg = buildCheckoutSubmitMessage({
+    accion: "attach_pm_end_trial",
+    planLabel: "Plan Medium",
+    importeMensualEur: 449,
+  });
+  assert.ok(msg.includes("cuando termine"));
+  assert.ok(!msg.includes("hasta el"));
+});
+
+test("buildCheckoutSubmitMessage: a medida sin importe → sin cifras", () => {
+  const msg = buildCheckoutSubmitMessage({
+    accion: "attach_pm_end_trial",
+    planLabel: "Plan a medida",
+    importeMensualEur: null,
+    trialEndMs: TRIAL_END,
+  });
+  assert.ok(msg.startsWith("Plan a medida: el importe pactado aparecerá en tu factura."));
+  assert.ok(!msg.includes("€"));
+  assert.ok(!msg.includes("IGIC ("));
+  assert.ok(msg.includes("+7 % de IGIC;"));
+  assert.ok(msg.includes("10 de octubre de 2026"));
+});
+
+test("buildCheckoutSubmitMessage: nunca supera el máximo de Stripe", () => {
+  const casos = [
+    buildCheckoutSubmitMessage({ accion: "create_subscription", planLabel: "Plan Medium Ilimitado", importeMensualEur: 489 }),
+    buildCheckoutSubmitMessage({ accion: "attach_pm_end_trial", planLabel: "Plan Medium Ilimitado", importeMensualEur: 489, trialEndMs: TRIAL_END }),
+    buildCheckoutSubmitMessage({ accion: "attach_pm_end_trial", planLabel: "Plan a medida", importeMensualEur: 12345.67, trialEndMs: TRIAL_END }),
+    buildCheckoutSubmitMessage({ accion: "create_subscription", planLabel: "X".repeat(2000), importeMensualEur: 1 }),
+  ];
+  for (const msg of casos) {
+    assert.ok(msg.length <= CHECKOUT_CUSTOM_TEXT_MAX, `longitud ${msg.length}`);
+  }
+  assert.ok(casos[0].length < 700, `mensaje normal demasiado largo: ${casos[0].length}`);
+  assert.ok(casos[3].endsWith("…"));
 });

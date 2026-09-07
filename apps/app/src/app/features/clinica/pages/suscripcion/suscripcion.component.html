@@ -170,8 +170,22 @@
       <div class="flex items-start gap-3 p-1">
         <span class="material-symbols-outlined text-success" aria-hidden="true">check_circle</span>
         <div>
-          <p class="font-semibold text-ink-900">¡Suscripción activada!</p>
-          <p class="text-sm text-ink-500 mt-1">El estado puede tardar unos segundos en sincronizarse.</p>
+          <!-- En trial la tarjeta no activa nada: la prueba sigue y el primer
+               cargo sale en su fecha. Fuera de trial, la S2 cobra al momento. -->
+          @if (suscripcion()?.estado === 'trialing') {
+            <p class="font-semibold text-ink-900">Método de pago guardado</p>
+            <p class="text-sm text-ink-500 mt-1">
+              @if (suscripcion()!.trialEnd) {
+                Tu periodo de prueba sigue hasta el {{ suscripcion()!.trialEnd | date:'dd/MM/yyyy' }};
+                ese día se hará el primer cargo.
+              } @else {
+                Tu periodo de prueba sigue; el primer cargo se hará al terminar.
+              }
+            </p>
+          } @else {
+            <p class="font-semibold text-ink-900">¡Suscripción activada!</p>
+            <p class="text-sm text-ink-500 mt-1">El estado puede tardar unos segundos en sincronizarse.</p>
+          }
         </div>
       </div>
     </ui2-card>

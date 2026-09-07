@@ -12,6 +12,9 @@
  * "ilimitada" no tiene cap.
  */
 
+import { IGIC_PORCENTAJE } from "./_taxHelpers";
+import { DEFAULT_TZ } from "../_helpers/datetime";
+
 export type PlanVariante = "base" | "ilimitada";
 
 export interface PlanTier {
@@ -242,4 +245,128 @@ export function debeMarcarPendiente(args: {
 }): boolean {
   if (args.defaultActual !== args.pmRetirado) return false;
   return !ESTADOS_SIN_COBRO.has(args.estadoLocal ?? "none");
+}
+
+// ---------------------------------------------------------------------------
+// Texto informativo del Checkout
+// ---------------------------------------------------------------------------
+
+/**
+ * Etiqueta de plan que se muestra en factura (custom field del customer) y
+ * en el texto del Checkout. "Tu plan Kengo" es el fallback fuera de tramos,
+ * que en la práctica no llega a Checkout (el CTA está oculto con >9 fisios).
+ */
+export function tierLabel(
+  tier: PlanTier | null,
+  variante: PlanVariante,
+  esAMedida: boolean,
+): string {
+  if (esAMedida) return "Plan a medida";
+  if (!tier) return "Tu plan Kengo";
+  return variante === "ilimitada"
+    ? `Plan ${tier.nombre} Ilimitado`
+    : `Plan ${tier.nombre}`;
+}
+
+/**
+ * Importe en euros con formato español: "249 €" si es entero, "266,43 €" si
+ * lleva céntimos. `Intl` pone un espacio no separable (U+00A0) antes del
+ * símbolo; se respeta porque el texto no debe partirse ahí.
+ */
+export function formatEur(n: number): string {
+  const entero = Number.isInteger(n);
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: entero ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+}
+
+/** Total mensual con IGIC redondeado a céntimos: 249 → 266.43. */
+export function totalConIgic(baseEur: number): number {
+  return Math.round(baseEur * (100 + IGIC_PORCENTAJE)) / 100;
+}
+
+/**
+ * "9 de octubre de 2026". La zona horaria va explícita porque Convex corre en
+ * UTC y un `trial_end` a las 23:30 en Madrid caería en el día siguiente.
+ */
+export function formatFechaLargaEs(ms: number, tz: string = DEFAULT_TZ): string {
+  return new Date(ms).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: tz,
+  });
+}
+
+/** Límite documentado por Stripe para `custom_text.*.message`. */
+export const CHECKOUT_CUSTOM_TEXT_MAX = 1200;
+
+export interface CheckoutSubmitMessageInput {
+  /**
+   * `create_subscription`: sin sub viva, el primer cargo sale al confirmar.
+   * `attach_pm_end_trial`: la S1 sigue en trial; el cargo sale en `trialEndMs`.
+   * (El literal conserva el nombre histórico porque viaja en metadata de
+   * sesiones en vuelo.)
+   */
+  accion: "create_subscription" | "attach_pm_end_trial";
+  planLabel: string;
+  /** Base mensual sin impuestos. `null` = contrato a medida sin preview. */
+  importeMensualEur: number | null;
+  /** Fin del trial en ms; solo aplica con `attach_pm_end_trial`. */
+  trialEndMs?: number;
+}
+
+/**
+ * Texto para `custom_text.submit.message` del Checkout. En `mode: 'setup'`
+ * Stripe no pinta ningún importe, así que este párrafo es lo único que le
+ * dice al cliente qué va a pagar, con qué impuesto y cuándo. Texto plano
+ * (Stripe no interpreta Markdown) y como máximo 1200 caracteres.
+ *
+ * El impuesto no se puede cerrar aquí: depende del código postal que el
+ * cliente teclea en esta misma página, por eso se enuncian los dos casos.
+ */
+export function buildCheckoutSubmitMessage(
+  input: CheckoutSubmitMessageInput,
+): string {
+  const { accion, planLabel, importeMensualEur, trialEndMs } = input;
+
+  const partes: string[] = [];
+
+  if (importeMensualEur !== null) {
+    partes.push(
+      `${planLabel}: ${formatEur(importeMensualEur)} al mes, sin impuestos.`,
+    );
+    partes.push(
+      `Los impuestos dependen de la dirección fiscal que indiques aquí: clínica en Canarias, +${IGIC_PORCENTAJE} % de IGIC (${formatEur(totalConIgic(importeMensualEur))} al mes); resto de España, UE y otros países, sin cuota de impuesto en la factura por inversión del sujeto pasivo.`,
+    );
+  } else {
+    partes.push(`${planLabel}: el importe pactado aparecerá en tu factura.`);
+    partes.push(
+      `Los impuestos dependen de la dirección fiscal que indiques aquí: clínica en Canarias, +${IGIC_PORCENTAJE} % de IGIC; resto de España, UE y otros países, sin cuota de impuesto en la factura por inversión del sujeto pasivo.`,
+    );
+  }
+
+  partes.push("En esta página no se cobra nada: solo se guarda tu tarjeta.");
+
+  if (accion === "create_subscription") {
+    partes.push(
+      "El primer cargo se realiza hoy mismo, en cuanto confirmes, y después cada mes en la misma fecha. Puedes cancelar cuando quieras desde Kengo.",
+    );
+  } else if (trialEndMs !== undefined) {
+    partes.push(
+      `Tu periodo de prueba continúa hasta el ${formatFechaLargaEs(trialEndMs)}: ese día se realizará el primer cargo y después uno cada mes. Puedes cancelar antes desde Kengo sin coste.`,
+    );
+  } else {
+    partes.push(
+      "Tu periodo de prueba continúa: el primer cargo se realizará cuando termine y después uno cada mes. Puedes cancelar antes desde Kengo sin coste.",
+    );
+  }
+
+  const msg = partes.join(" ");
+  return msg.length > CHECKOUT_CUSTOM_TEXT_MAX
+    ? `${msg.slice(0, CHECKOUT_CUSTOM_TEXT_MAX - 1)}…`
+    : msg;
 }

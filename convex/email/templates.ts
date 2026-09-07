@@ -213,6 +213,9 @@ export function trialEndingTemplate(
   clinicaNombre: string,
   diasRestantes: number,
   portalUrl: string,
+  opciones: { tieneMetodoPago: boolean; trialEnd?: number } = {
+    tieneMetodoPago: false,
+  },
 ): string {
   const diasTexto =
     diasRestantes <= 0
@@ -220,6 +223,30 @@ export function trialEndingTemplate(
       : diasRestantes === 1
         ? "mañana"
         : `en ${diasRestantes} días`;
+
+  if (opciones.tieneMetodoPago) {
+    // Ya hay tarjeta: la prueba termina cobrando sola. Recordatorio del
+    // primer cargo, sin pedir ninguna acción.
+    const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Tu periodo de prueba termina ${diasTexto}
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Hola ${nombreAdmin}, el periodo de prueba de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong> termina el ${fechaLarga(opciones.trialEnd)}.
+</p>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Ya tienes una tarjeta guardada, así que no tienes que hacer nada: ese día se realizará el primer cargo de forma automática, con el impuesto que corresponda a la dirección fiscal de la clínica (IGIC si está en Canarias; inversión del sujeto pasivo en el resto). Después, un cargo cada mes y la factura en este mismo correo.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Si prefieres no continuar, puedes cancelar antes de esa fecha desde la pantalla de suscripción sin ningún coste.
+</p>
+${ctaButton(portalUrl, "Ver suscripción")}`;
+
+    return baseLayout(
+      content,
+      "Este email fue enviado por Kengo.<br>Eres administrador de la clínica.",
+    );
+  }
 
   const content = `
 <h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
@@ -249,13 +276,19 @@ export function welcomeAfterCheckoutTemplate(
   nombreAdmin: string,
   clinicaNombre: string,
   portalUrl: string,
+  /** Fin del trial en ms si la tarjeta se guardó durante la prueba. */
+  trialEnd?: number,
 ): string {
+  const estadoTexto = trialEnd
+    ? `hemos guardado el método de pago de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong>. Tu periodo de prueba sigue hasta el ${fechaLarga(trialEnd)}: ese día se realizará el primer cargo, con el impuesto que corresponda a tu dirección fiscal, y después uno cada mes. Recibirás cada factura en este mismo correo.`
+    : `la suscripción de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong> ya está activa. Recibirás cada mes la factura en este mismo correo.`;
+
   const content = `
 <h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
   Bienvenido a Kengo
 </h2>
 <p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-  Hola ${nombreAdmin}, la suscripción de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong> ya está activa. Recibirás cada mes la factura en este mismo correo.
+  Hola ${nombreAdmin}, ${estadoTexto}
 </p>
 <p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
   Desde el portal de cliente puedes cambiar el método de pago, descargar facturas y cancelar la suscripción cuando lo necesites.
@@ -521,6 +554,7 @@ function fechaLarga(ms: number | undefined): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Madrid",
   });
 }
 

@@ -57,14 +57,25 @@ Marca cada bloque tras superarlo. Si encuentras un bug, anótalo y arréglalo an
   - Customer creado con `metadata.orgId = <clinicId>`.
   - Subscription en estado `trialing`, `quantity = 1`, `trial_settings.end_behavior.missing_payment_method = "create_invoice"`.
 
-### 3.2 Activación (añadir tarjeta y salir del trial)
+### 3.2 Activación (añadir tarjeta durante el trial)
 
-- [ ] Entrar en `/mi-clinica/suscripcion` como admin.
-- [ ] Click "Añadir método de pago".
-- [ ] En Stripe Checkout, usar tarjeta `4242 4242 4242 4242`, fecha cualquiera futura, CVC cualquiera.
-- [ ] Volver a la app con `?ok=1`.
-- [ ] Verificar `clinicBilling.estadoLocal = "active"` (Convex Dashboard → tabla).
-- [ ] El banner de trial desaparece.
+Desde 2026-09 añadir la tarjeta **no termina el trial**: la prueba sigue hasta
+su fecha y el primer cargo sale entonces (antes se enviaba `trial_end: 'now'`).
+
+- [ ] Entrar en `/mi-clinica/suscripcion` como owner.
+- [ ] Click "Añadir método de pago" → se abre el resumen previo (sheet) con plan,
+      importe base, los dos regímenes fiscales (IGIC / inversión del sujeto
+      pasivo), la fecha del primer cargo y qué pedirá Stripe. "Cancelar" no navega.
+- [ ] "Continuar a Stripe" → Checkout `mode: setup`. Bajo el botón aparece el
+      texto (`custom_text.submit`) con el importe, el total con IGIC y "Tu
+      periodo de prueba continúa hasta el {fecha}".
+- [ ] Usar tarjeta `4242 4242 4242 4242`, fecha futura, CVC cualquiera, dirección con CP.
+- [ ] Volver a la app con `?ok=1` → banner "Método de pago guardado" con la fecha del primer cargo.
+- [ ] Verificar `clinicBilling.estadoLocal` sigue `"trialing"`; la sub en Stripe conserva
+      `trial_end` y tiene `default_payment_method` y los `default_tax_rates` del régimen.
+- [ ] El CTA pasa a "Gestionar pago" (abre el Portal). Email "Método de pago guardado" con la fecha.
+- [ ] Acelerar `trial_end` desde el Dashboard (o test clock) → factura emitida y cobrada
+      con el impuesto correcto → `invoice.paid` → `estadoLocal = "active"` y el banner de trial desaparece.
 
 ### 3.3 Crecimiento (escalado de tier por nº de fisios)
 

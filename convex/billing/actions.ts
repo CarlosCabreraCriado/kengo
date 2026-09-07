@@ -8,12 +8,16 @@ import { internalAction, action, type ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import {
   planParaFisios,
+  precioParaFisios,
   excedeCapBase,
   LIMITE_FISIOS_AUTOSERVICIO,
   buildCustomerOwnerPatch,
   ownerEnFecha,
   resumenTarjeta,
   idDeRef,
+  defaultPaymentMethodDe,
+  tierLabel,
+  buildCheckoutSubmitMessage,
   type PlanVariante,
 } from "./_helpers";
 import type { MetodoDePagoAportado } from "./paymentMethods";
@@ -50,19 +54,10 @@ async function syncStripeCustomerTierLabel(
   esAMedida = false,
 ): Promise<void> {
   const tier = esAMedida ? null : planParaFisios(cantidadFisios);
-  const custom_fields = esAMedida
-    ? [{ name: "Plan", value: "Plan a medida" }]
-    : tier
-    ? [
-        {
-          name: "Plan",
-          value:
-            variante === "ilimitada"
-              ? `Plan ${tier.nombre} Ilimitado`
-              : `Plan ${tier.nombre}`,
-        },
-      ]
-    : [];
+  const custom_fields =
+    esAMedida || tier
+      ? [{ name: "Plan", value: tierLabel(tier, variante, esAMedida) }]
+      : [];
   try {
     await stripe.customers.update(customerId, {
       invoice_settings: { custom_fields },
@@ -247,8 +242,56 @@ interface RegimenAplicado {
  * Qué debe hacer `finalizeCheckout` al completarse una sesión de Checkout
  * (siempre `mode: 'setup'`). Viaja en `metadata.action` de la sesión y del
  * SetupIntent.
+ *
+ *   - `attach_pm_end_trial`: adjuntar la tarjeta a la S1 en trial. El nombre
+ *     es histórico (antes terminaba el trial con `trial_end: 'now'`); desde
+ *     2026-09 el trial sigue su curso y el primer cargo sale en `trial_end`.
+ *     No se renombra porque hay sesiones en vuelo con ese literal.
+ *   - `create_subscription`: sin sub viva; crear la S2 y cobrar al momento.
  */
 type CheckoutAction = "attach_pm_end_trial" | "create_subscription";
+
+/**
+ * Vista previa de la próxima factura de una sub viva, en céntimos. Es la
+ * única fuente fiable del importe de un contrato a medida (Convex no persiste
+ * precios). Devuelve `null` sin lanzar si Stripe rechaza el preview (sub
+ * cancelada o sin próxima factura).
+ */
+async function previewProximaFactura(
+  stripe: Stripe,
+  customerId: string,
+  subscriptionId: string,
+): Promise<{
+  subtotal: number;
+  impuestos: number;
+  total: number;
+  moneda: string;
+  fecha: number | null;
+} | null> {
+  try {
+    const preview = await stripe.invoices.createPreview({
+      customer: customerId,
+      subscription: subscriptionId,
+    });
+    const total = preview.total ?? 0;
+    // `total_excluding_tax` ya descuenta cupones; si Stripe no lo informa
+    // (sin impuestos configurados) el total es también el neto.
+    const subtotal = preview.total_excluding_tax ?? total;
+    const fechaSeg = preview.next_payment_attempt ?? preview.period_end;
+    return {
+      subtotal,
+      impuestos: total - subtotal,
+      total,
+      moneda: preview.currency ?? "eur",
+      fecha: fechaSeg ? fechaSeg * 1000 : null,
+    };
+  } catch (err) {
+    console.warn(
+      `[billing] previewProximaFactura: sin preview para sub=${subscriptionId}: ${(err as Error).message}`,
+    );
+    return null;
+  }
+}
 
 /**
  * Lee la dirección fiscal del customer, resuelve el régimen y alinea
@@ -729,12 +772,16 @@ export const createCheckoutSession = action({
     // cobraría dentro del propio Checkout, antes de saber el código postal.
     //
     // La `action` de la sesión le dice al finalize qué hacer:
-    //   - `attach_pm_end_trial` (trialing): la S1 ya existe; adjuntar el PM y
-    //     terminar el trial con `trial_end: 'now'`. Una única sub durante
-    //     toda la vida.
+    //   - `attach_pm_end_trial` (trialing): la S1 ya existe; adjuntar el PM
+    //     sin tocar el trial. El primer cargo sale en `trial_end`. Una única
+    //     sub durante toda la vida.
     //   - `create_subscription` (canceled | none | incomplete | trial
     //     vencido): Stripe no permite revivir una sub `canceled`; el finalize
     //     crea la S2 en servidor con el PM y los tax rates.
+    //
+    // En `mode: 'setup'` Stripe no pinta ningún importe, así que el
+    // `custom_text.submit` que se construye más abajo es lo único que informa
+    // al cliente de precio, impuesto y momento del cobro dentro del Checkout.
     //
     // Cumplimiento fiscal España (B2B):
     //   - `tax_id_collection.required: 'if_supported'`: pide NIF/CIF al
@@ -825,6 +872,28 @@ export const createCheckoutSession = action({
       }
     }
 
+    // Texto informativo bajo el botón de Stripe. El importe a medida sale del
+    // preview de la próxima factura (única fuente fiable); si Stripe no lo da,
+    // el texto omite la cifra en vez de inventarla.
+    const fisiosTramo = Math.max(1, data.cantidadFisios);
+    const tier = esAMedida ? null : planParaFisios(fisiosTramo);
+    let importeMensualEur: number | null = null;
+    if (esAMedida) {
+      const subId = data.billing?.stripeSubscriptionId;
+      const preview = subId
+        ? await previewProximaFactura(stripe, customerId, subId)
+        : null;
+      importeMensualEur = preview ? preview.subtotal / 100 : null;
+    } else if (tier) {
+      importeMensualEur = precioParaFisios(fisiosTramo, varianteEfectiva);
+    }
+    const submitMessage = buildCheckoutSubmitMessage({
+      accion: checkoutAction,
+      planLabel: tierLabel(tier, varianteEfectiva, esAMedida),
+      importeMensualEur,
+      trialEndMs: esTrial ? data.billing?.trialEnd : undefined,
+    });
+
     const session = await stripe.checkout.sessions.create({
       mode: "setup",
       customer: customerId,
@@ -834,6 +903,7 @@ export const createCheckoutSession = action({
       billing_address_collection: "required",
       tax_id_collection: { enabled: true, required: "if_supported" },
       customer_update: { name: "auto", address: "auto" },
+      custom_text: { submit: { message: submitMessage } },
       setup_intent_data: {
         metadata: {
           orgId: clinicId,
@@ -1185,6 +1255,10 @@ export const notifyTrialEnding = internalAction({
       { clinicId },
     );
     const diasRestantes = diasHasta(billing?.trialEnd);
+    // Con tarjeta guardada el trial termina cobrando solo: el aviso cambia de
+    // "añade un método de pago" a "recordatorio del primer cargo".
+    const tieneMetodoPago =
+      billing !== null && defaultPaymentMethodDe(billing) !== null;
 
     const appUrl = getAppUrlOrFallback();
     await ctx.runAction(internal.email.actions.sendTrialEndingEmail, {
@@ -1192,6 +1266,8 @@ export const notifyTrialEnding = internalAction({
       nombreAdmin: data.owner.name,
       clinicaNombre: data.clinic.nombre,
       diasRestantes,
+      tieneMetodoPago,
+      trialEnd: billing?.trialEnd,
       portalUrl: `${appUrl}/mi-clinica/suscripcion`,
     });
   },
@@ -1285,12 +1361,13 @@ async function anularYCancelarSubResidual(
  * (IGIC vs inversión del sujeto pasivo) y se emite la primera factura con el
  * impuesto correcto:
  *
- *   - `attach_pm_end_trial`: adjunta el PM a la S1, fija `default_tax_rates`
- *     y termina el trial con `trial_end: 'now'` en una sola llamada → Stripe
- *     cobra y la sub pasa a `active` vía webhooks
- *     (`customer.subscription.updated`, `invoice.paid`). Si el trial venció
- *     mientras el usuario estaba en Checkout (S1 en `past_due`), se paga la
- *     factura pendiente con la tarjeta nueva.
+ *   - `attach_pm_end_trial`: adjunta el PM a la S1 y fija `default_tax_rates`
+ *     sin tocar el trial: la prueba sigue hasta su `trial_end` y ese día
+ *     Stripe emite y cobra la primera factura con el régimen ya fijado; la
+ *     sub pasa a `active` vía webhooks (`customer.subscription.updated`,
+ *     `invoice.paid`). Si el trial venció mientras el usuario estaba en
+ *     Checkout (S1 en `past_due`), se paga la factura pendiente con la
+ *     tarjeta nueva.
  *   - `create_subscription` (canceled | none | incomplete | trial vencido):
  *     anula y cancela residuales, crea la S2 en servidor con el PM y los tax
  *     rates y persiste su id en `clinicBilling`. Si el banco exige reto SCA
@@ -1298,9 +1375,9 @@ async function anularYCancelarSubResidual(
  *     caduca sola; el usuario repite Checkout.
  *
  * Idempotente frente a reentregas del webhook: PM y régimen se comparan
- * antes de escribir, el `trial_end: 'now'` solo se envía si la S1 sigue en
- * trial y la S2 lleva `idempotencyKey` por sesión además de detectarse por
- * `metadata.checkoutSessionId`.
+ * antes de escribir, la actualización de la S1 es un no-op si ya lleva ese
+ * PM y esos tax rates, y la S2 lleva `idempotencyKey` por sesión además de
+ * detectarse por `metadata.checkoutSessionId`.
  */
 export const finalizeCheckout = internalAction({
   args: {
@@ -1408,28 +1485,16 @@ export const finalizeCheckout = internalAction({
           }
         }
       } else if (sub.status === "trialing") {
-        if (data.billing?.limiteFisios !== undefined) {
-          // Contrato a medida: el trial lo pactó ventas y forma parte del
-          // contrato. Solo se adjunta la tarjeta y se fija el régimen; el
-          // primer cobro sale en la fecha de `trial_end` que hay en Stripe.
-          await stripe.subscriptions.update(subIdLocal, {
-            default_payment_method: pmId,
-            default_tax_rates: defaultTaxRates,
-            automatic_tax: { enabled: false },
-          });
-        } else {
-          // Una sola llamada: el régimen viaja con la request que genera la
-          // primera factura. Stripe acepta el literal "now" (SDK 20 lo tipa
-          // como `'now' | number`); un timestamp `Date.now()` puede llegar ya
-          // en el pasado por latencia y ser rechazado.
-          await stripe.subscriptions.update(subIdLocal, {
-            default_payment_method: pmId,
-            trial_end: "now",
-            proration_behavior: "none",
-            default_tax_rates: defaultTaxRates,
-            automatic_tax: { enabled: false },
-          });
-        }
+        // La prueba sigue su curso (autoservicio y a medida por igual): solo
+        // se adjunta la tarjeta y se fija el régimen. El primer cobro sale en
+        // el `trial_end` de Stripe, que es lo que el Checkout y el resumen
+        // previo le han dicho al cliente. `end_behavior: create_invoice` ya
+        // no aplica porque hay PM: Stripe cobra la factura automáticamente.
+        await stripe.subscriptions.update(subIdLocal, {
+          default_payment_method: pmId,
+          default_tax_rates: defaultTaxRates,
+          automatic_tax: { enabled: false },
+        });
       } else if (esSubscriptionActualizable(sub.status)) {
         // Reentrega del webhook con la S1 ya `active`: no volver a tocar el
         // trial, solo asegurar PM y régimen.
@@ -1731,11 +1796,17 @@ export const notifyCheckoutCompleted = internalAction({
     );
     if (!data.owner) return;
 
+    // En trial la tarjeta no activa nada todavía: el email debe decir cuándo
+    // será el primer cargo, no "tu suscripción está activa".
+    const trialEnd =
+      billing?.estadoLocal === "trialing" ? billing.trialEnd : undefined;
+
     const appUrl = getAppUrlOrFallback();
     await ctx.runAction(internal.email.actions.sendWelcomeAfterCheckoutEmail, {
       to: data.owner.email,
       nombreAdmin: data.owner.name,
       clinicaNombre: data.clinic.nombre,
+      trialEnd,
       portalUrl: `${appUrl}/mi-clinica/suscripcion`,
     });
 
@@ -1939,32 +2010,7 @@ export const getProximaFacturaForClinic = action({
     const subscriptionId = billing?.stripeSubscriptionId;
     if (!customerId || !subscriptionId) return null;
 
-    try {
-      const stripe = getStripeClient();
-      const preview = await stripe.invoices.createPreview({
-        customer: customerId,
-        subscription: subscriptionId,
-      });
-      const total = preview.total ?? 0;
-      // `total_excluding_tax` ya descuenta cupones; si Stripe no lo informa
-      // (sin impuestos configurados) el total es también el neto.
-      const subtotal = preview.total_excluding_tax ?? total;
-      const fechaSeg = preview.next_payment_attempt ?? preview.period_end;
-      return {
-        subtotal,
-        impuestos: total - subtotal,
-        total,
-        moneda: preview.currency ?? "eur",
-        fecha: fechaSeg ? fechaSeg * 1000 : null,
-      };
-    } catch (err) {
-      // Una sub cancelada o sin próxima factura hace que Stripe rechace el
-      // preview; no es un error de la pantalla.
-      console.warn(
-        `[billing] getProximaFacturaForClinic: sin preview para clinic=${clinicId}: ${(err as Error).message}`,
-      );
-      return null;
-    }
+    return previewProximaFactura(getStripeClient(), customerId, subscriptionId);
   },
 });
 

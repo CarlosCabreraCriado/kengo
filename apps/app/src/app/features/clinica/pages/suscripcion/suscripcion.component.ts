@@ -9,7 +9,7 @@ import {
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 
 import { SubscriptionService } from '../../../../core/billing/subscription.service';
 import { ConvexService } from '../../../../core/convex/convex.service';
@@ -18,6 +18,12 @@ import { DialogService } from '../../../../shared/services/dialog/dialog.service
 import { ToastService } from '../../../../shared/services/toast/toast.service';
 import { ContactarVentasDialogComponent } from '../../components/contactar-ventas-dialog/contactar-ventas-dialog.component';
 import { PricingCardsComponent } from '../../components/pricing-cards/pricing-cards.component';
+import {
+  ResumenCheckoutDialogComponent,
+  type ResumenCheckoutAccion,
+  type ResumenCheckoutDialogData,
+  type ResumenCheckoutDialogResult,
+} from '../../components/resumen-checkout-dialog/resumen-checkout-dialog.component';
 import {
   Ui2BackButtonComponent,
   Ui2BigTitleComponent,
@@ -269,6 +275,17 @@ export class SuscripcionComponent {
   });
 
   /**
+   * Trial con tarjeta guardada: la prueba sigue hasta su fecha y el primer
+   * cargo sale entonces. Ya no hay nada que añadir, solo gestionar.
+   */
+  protected readonly trialConTarjeta = computed<boolean>(
+    () =>
+      this.suscripcion()?.estado === 'trialing' &&
+      !!this.metodoPagoActivo() &&
+      !this.metodoPagoPendiente(),
+  );
+
+  /**
    * Variante elegida en el segmented pre-checkout. `null` = seguir la
    * persistida de la clínica (evita un effect de inicialización). Estado
    * efímero de UI: no se persiste hasta que el owner lanza el checkout.
@@ -464,6 +481,51 @@ export class SuscripcionComponent {
     return INVOICE_ESTADO_VM[estado] ?? INVOICE_ESTADO_VM.draft;
   }
 
+  /**
+   * Resumen previo al Checkout: el Checkout de Stripe va en `mode: 'setup'`
+   * y no pinta importe, así que aquí el owner ve qué pagará, con qué
+   * impuesto según su dirección fiscal y cuándo. Devuelve `true` si acepta.
+   */
+  private async confirmarResumenCheckout(
+    accion: ResumenCheckoutAccion,
+  ): Promise<boolean> {
+    const sub = this.suscripcion();
+    if (!sub) return false;
+    const esAMedida = this.esAMedida();
+    const plan = this.planActual();
+    // En pre-checkout manda la variante elegida en el segmented (es la que
+    // viaja a `iniciarCheckout`); en trial la sub ya tiene la suya.
+    const variante = this.preCheckout() ? this.varianteCards() : this.variante();
+
+    let planLabel = 'Tu plan';
+    let importeMensualEur: number | null = null;
+    if (esAMedida) {
+      planLabel = 'A medida';
+      const pf = this.proximaFactura();
+      importeMensualEur = pf ? pf.subtotal / 100 : null;
+    } else if (plan) {
+      planLabel = variante === 'ilimitada' ? `${plan.nombre} Ilimitado` : plan.nombre;
+      importeMensualEur =
+        variante === 'ilimitada' ? plan.precioIlimitadoEur : plan.precioBaseEur;
+    }
+
+    const ref = this.dialogService.openSheet<
+      ResumenCheckoutDialogComponent,
+      ResumenCheckoutDialogData,
+      ResumenCheckoutDialogResult
+    >(ResumenCheckoutDialogComponent, {
+      data: {
+        accion,
+        esAMedida,
+        planLabel,
+        fisios: Math.max(1, this.fisiosActuales()),
+        importeMensualEur,
+        trialEnd: sub.trialEnd,
+      },
+    });
+    return (await firstValueFrom(ref.closed)) === true;
+  }
+
   protected async accionPrincipal(): Promise<void> {
     const id = this.clinicId();
     if (!id) return;
@@ -474,6 +536,7 @@ export class SuscripcionComponent {
     // No usamos `abrirPortal` porque el Portal no permite re-suscribirse
     // desde cero a un customer cuya subscription terminó.
     if (estado === 'canceled') {
+      if (!(await this.confirmarResumenCheckout('create_subscription'))) return;
       await this.subs.iniciarCheckout(id, this.varianteCards());
       return;
     }
@@ -488,12 +551,20 @@ export class SuscripcionComponent {
       return;
     }
     // `trialing` abre Checkout en `mode: 'setup'` (solo recoge el método de
-    // pago sobre la sub existente): la variante no aplica ahí.
+    // pago sobre la sub existente): la variante no aplica ahí. Con tarjeta
+    // ya guardada la prueba sigue hasta su fecha y cobra sola: la acción es
+    // gestionarla en el Portal, no volver a Checkout.
     if (estado === 'trialing') {
+      if (this.trialConTarjeta()) {
+        await this.subs.abrirPortal(id);
+        return;
+      }
+      if (!(await this.confirmarResumenCheckout('attach_pm_end_trial'))) return;
       await this.subs.iniciarCheckout(id);
       return;
     }
     if (estado === 'none' || estado === 'incomplete') {
+      if (!(await this.confirmarResumenCheckout('create_subscription'))) return;
       await this.subs.iniciarCheckout(id, this.varianteCards());
       return;
     }
@@ -509,7 +580,8 @@ export class SuscripcionComponent {
     if (this.metodoPagoPendiente()) return 'Añadir método de pago';
     if (estado === 'none' || estado === 'incomplete')
       return 'Activar suscripción';
-    if (estado === 'trialing') return 'Añadir método de pago';
+    if (estado === 'trialing')
+      return this.trialConTarjeta() ? 'Gestionar pago' : 'Añadir método de pago';
     if (estado === 'past_due' || estado === 'unpaid')
       return 'Actualizar método de pago';
     return 'Gestionar pago';
@@ -521,6 +593,7 @@ export class SuscripcionComponent {
     if (estado === 'canceled' || this.cancelaAlFinDelPeriodo())
       return 'restart_alt';
     if (estado === 'active') return 'settings';
+    if (estado === 'trialing' && this.trialConTarjeta()) return 'settings';
     return 'arrow_forward';
   }
 

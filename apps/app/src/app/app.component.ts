@@ -386,7 +386,9 @@ export class AppComponent implements OnInit {
             void this.externalBrowser.close();
             const status = parsed.searchParams.get('status');
             if (status === 'success') {
-              this.toast.success('¡Suscripción activada!');
+              // En trial la tarjeta no activa nada todavía; el panel de
+              // suscripción explica cuándo se cobra.
+              this.toast.success('Método de pago guardado.');
             } else if (status === 'cancel') {
               this.toast.info('Has cancelado el pago.');
             }

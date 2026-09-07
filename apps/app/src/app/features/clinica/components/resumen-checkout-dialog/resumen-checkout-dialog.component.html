@@ -1,0 +1,84 @@
+<ui2-dialog-host variant="sheet">
+  <ui2-dialog-header
+    title="Antes de ir a Stripe"
+    subtitle="Resumen de lo que vas a contratar"
+    (closeClick)="cancelar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    <div class="flex flex-col gap-3">
+      <ui2-list-row
+        icon="workspace_premium"
+        title="Plan"
+        [subtitle]="planSubtitulo"
+        [isFirst]="true"
+      >
+        <ui2-pill variant="soft" size="sm" data-testid="resumen-importe">
+          @if (importe !== null) {
+            {{ importe | number:'1.0-0' }} €/mes + imp.
+          } @else {
+            Según contrato
+          }
+        </ui2-pill>
+      </ui2-list-row>
+
+      <ui2-card variant="tinted" [padding]="14">
+        <p class="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-2">
+          Impuestos según tu dirección fiscal
+        </p>
+        <ul class="flex flex-col gap-2 text-sm text-ink-700" data-testid="resumen-impuestos">
+          <li class="flex items-start gap-2">
+            <span class="material-symbols-outlined text-base text-ink-500" aria-hidden="true">location_on</span>
+            <span>
+              <span class="font-medium text-ink-900">Clínica en Canarias:</span>
+              +{{ igicPorcentaje }} % IGIC
+              @if (totalIgic !== null) {
+                → <span class="font-semibold text-ink-900">{{ totalIgic | number:'1.2-2' }} €/mes</span>
+              }
+            </span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="material-symbols-outlined text-base text-ink-500" aria-hidden="true">public</span>
+            <span>
+              <span class="font-medium text-ink-900">Resto de España, UE y otros países:</span>
+              sin cuota de impuesto en factura (inversión del sujeto pasivo)
+              @if (importe !== null) {
+                → <span class="font-semibold text-ink-900">{{ importe | number:'1.0-0' }} €/mes</span>
+              }
+            </span>
+          </li>
+        </ul>
+      </ui2-card>
+
+      <ui2-list-row
+        icon="event"
+        [title]="cuandoSeCobra.fecha ? cuandoSeCobra.titulo + ' ' + (cuandoSeCobra.fecha | date:'dd/MM/yyyy') : cuandoSeCobra.titulo"
+        [subtitle]="cuandoSeCobra.detalle"
+        [isFirst]="true"
+        data-testid="resumen-cobro"
+      ></ui2-list-row>
+
+      <ui2-list-row
+        icon="credit_card"
+        title="Qué te pedirá Stripe"
+        subtitle="Tarjeta · Dirección fiscal completa · NIF/CIF de la clínica"
+        [isFirst]="false"
+      ></ui2-list-row>
+
+      <p class="flex items-start gap-2 text-sm text-ink-500">
+        <span class="material-symbols-outlined text-base" aria-hidden="true">info</span>
+        <span>
+          En la página de Stripe no se cobra nada: solo se guarda la tarjeta.
+          El cargo lo hace Kengo con el impuesto que corresponda a tu dirección.
+        </span>
+      </p>
+    </div>
+  </ui2-dialog-content>
+
+  <ui2-dialog-actions align="end">
+    <ui2-button variant="ghost" (clicked)="cancelar()">Cancelar</ui2-button>
+    <ui2-button variant="primary" iconRight="arrow_forward" (clicked)="continuar()">
+      Continuar a Stripe
+    </ui2-button>
+  </ui2-dialog-actions>
+</ui2-dialog-host>

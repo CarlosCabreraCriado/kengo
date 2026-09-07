@@ -38,9 +38,9 @@ son las **plazas contratadas**, y pasan a ser el techo de asientos facturables
   `create_subscription` (sin sub viva crearía una S2 con price de
   autoservicio); **en trial el Checkout sí se permite**: es `mode: setup`,
   adjunta la tarjeta y fija el régimen fiscal sin tocar el price, y
-  `finalizeCheckout` **respeta el `trial_end` pactado** (no envía
-  `trial_end: 'now'` como en autoservicio). Con la sub viva el owner gestiona la
-  tarjeta desde el Portal, que no tiene gate a medida.
+  `finalizeCheckout` **respeta el `trial_end` pactado** (desde 2026-09 el
+  autoservicio se comporta igual: la tarjeta no termina el trial). Con la sub
+  viva el owner gestiona la tarjeta desde el Portal, que no tiene gate a medida.
 - Sin cap de pacientes (`checkCapacidadPacientes`), igual que
   `enterprise_pending`.
 - La query `getMyClinicSubscription` devuelve `esAMedida: true`, `plan: null` y

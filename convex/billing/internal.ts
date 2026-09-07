@@ -257,6 +257,8 @@ export const getBillingContext = internalQuery({
             stripeCustomerId: billing.stripeCustomerId,
             stripeSubscriptionId: billing.stripeSubscriptionId,
             estadoLocal: billing.estadoLocal,
+            trialEnd: billing.trialEnd,
+            currentPeriodEnd: billing.currentPeriodEnd,
             variante: billing.variante,
             limiteFisios: billing.limiteFisios,
             regimenFiscal: billing.regimenFiscal,
