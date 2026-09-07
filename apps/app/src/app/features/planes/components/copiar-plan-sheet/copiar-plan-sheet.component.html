@@ -1,0 +1,29 @@
+<ui2-dialog-host variant="sheet">
+  <ui2-dialog-header
+    title="Copiar plan"
+    [subtitle]="subtitulo"
+    (closeClick)="cerrar()"
+  ></ui2-dialog-header>
+
+  <ui2-dialog-content>
+    <div class="cps-options">
+      <ui2-cta-bar
+        variant="primary"
+        icon="person"
+        title="MISMO PACIENTE"
+        [subtitle]="'Para ' + data.pacienteNombre"
+        data-testid="cps-mismo"
+        (clicked)="seleccionar('mismo')"
+      ></ui2-cta-bar>
+
+      <ui2-cta-bar
+        variant="secondary"
+        icon="group"
+        title="OTRO PACIENTE"
+        subtitle="Elige a quién asignar la copia."
+        data-testid="cps-otro"
+        (clicked)="seleccionar('otro')"
+      ></ui2-cta-bar>
+    </div>
+  </ui2-dialog-content>
+</ui2-dialog-host>

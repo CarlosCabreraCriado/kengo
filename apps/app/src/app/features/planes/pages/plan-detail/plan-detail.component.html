@@ -15,8 +15,21 @@
           variant="ghost"
           iconLeft="picture_as_pdf"
           size="sm"
+          ariaLabel="Exportar plan a PDF"
+          [iconOnly]="esMobile()"
           (clicked)="abrirOpcionesPdf()"
-        >PDF</ui2-button>
+        >@if (!esMobile()) {PDF}</ui2-button>
+        @if (sessionService.puedeEditarRecursos()) {
+          <ui2-button
+            variant="secondary"
+            iconLeft="content_copy"
+            size="sm"
+            ariaLabel="Copiar plan al carrito"
+            [iconOnly]="esMobile()"
+            [disabled]="totalEjercicios() === 0"
+            (clicked)="copiarPlan()"
+          >@if (!esMobile()) {Copiar}</ui2-button>
+        }
         @if (sessionService.puedeEditarRecursos() && !esModificado()) {
           <ui2-button
             variant="primary"

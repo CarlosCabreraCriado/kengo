@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgOptimizedImage } from '@angular/common';
+import { Location, NgOptimizedImage } from '@angular/common';
+import { Dialog } from '@angular/cdk/dialog';
+import { firstValueFrom } from 'rxjs';
 import { assetUrl, rawAssetUrl } from '../../../../core/utils/asset-url';
 
 import { PlanesService } from '../../data-access/planes.service';
@@ -17,6 +19,10 @@ import {
 } from '../../../../../types/global';
 import { DialogService, ToastService } from '../../../../../app/shared';
 import type { DialogoPdfData } from '../../../../../app/shared';
+import type {
+  CopiarPlanDestino,
+  CopiarPlanSheetData,
+} from '../../components/copiar-plan-sheet/copiar-plan-sheet.component';
 import {
   getTodayYmd,
   patientTzOf,
@@ -42,6 +48,7 @@ import {
 } from '../../../../shared/ui-v2';
 import { PlanWeekDotsComponent } from '../../components/plan-week-dots/plan-week-dots.component';
 import { PlanMiniCalendarComponent } from '../../components/plan-mini-calendar/plan-mini-calendar.component';
+import { useResponsive } from '../../../../shared/composables/use-responsive';
 
 @Component({
   selector: 'app-plan-detail',
@@ -71,15 +78,19 @@ import { PlanMiniCalendarComponent } from '../../components/plan-mini-calendar/p
 export class PlanDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private planesService = inject(PlanesService);
   private planBuilderService = inject(PlanBuilderService);
   private cumplimientoService = inject(CumplimientoService);
   public sessionService = inject(SessionService);
   private dialogService = inject(DialogService);
+  private dialog = inject(Dialog);
   private toastService = inject(ToastService);
   private pageLoader = inject(PageLoaderService);
   private logger = inject(LoggerService);
   private readonly PAGE_LOADER_KEY = 'plan-detail';
+  /** En móvil PDF y Copiar van solo con icono para que las 4 acciones quepan en una fila. */
+  readonly esMobile = useResponsive().esMobile;
 
   plan = signal<PlanCompleto | null>(null);
   isLoading = signal(true);
@@ -217,6 +228,10 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     const action = this.route.snapshot.queryParams['action'];
     if (action === 'created' || action === 'updated') {
       this.actionType.set(action);
+      // El hero de éxito ya está fijado en memoria: quitar `?action` de la
+      // URL (sin renavegar) para que volver atrás a esta página, o recargarla,
+      // no vuelva a tratarse como "recién creado" y resetee el carrito.
+      this.location.replaceState(this.location.path().split('?')[0]);
     }
 
     const planId = this.route.snapshot.params['id'];
@@ -237,7 +252,14 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
       const plan = await this.planesService.getPlanById(id);
       if (plan) {
         this.plan.set(plan);
-        this.planBuilderService.resetForNewPlan();
+        // Solo hay estado obsoleto que limpiar al venir del builder (plan
+        // creado/actualizado: `submitPlan` no vacía los items en memoria) o
+        // si quedó un modo edición abandonado. Un carrito de plan nuevo se
+        // conserva: resetear siempre borraba, vía autosave, el borrador en
+        // localStorage del paciente activo con solo abrir un detalle.
+        if (this.actionType() !== null || this.planBuilderService.isEditMode()) {
+          this.planBuilderService.resetForNewPlan();
+        }
         this.cargarMetricasPaciente(plan);
       }
     } finally {
@@ -298,6 +320,102 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
   irAVersionActual() {
     const sucesor = this.planSucesorId();
     if (sucesor) this.router.navigate(['/planes', sucesor]);
+  }
+
+  /**
+   * Copia los ejercicios del plan al carrito para crear un plan nuevo (para
+   * el mismo paciente u otro) y lleva al catálogo con el carrito abierto.
+   * Disponible también en planes históricos (`modificado`), completados y
+   * cancelados: reutilizar un plan antiguo es un caso de uso legítimo.
+   */
+  async copiarPlan(): Promise<void> {
+    const p = this.plan();
+    if (!p || !this.sessionService.puedeEditarRecursos()) return;
+    const total = this.totalEjercicios();
+    if (total === 0) return;
+
+    const pacienteOrigen = this.paciente();
+    const nombreOrigen =
+      `${pacienteOrigen?.first_name ?? ''} ${pacienteOrigen?.last_name ?? ''}`.trim() ||
+      'el mismo paciente';
+
+    const { CopiarPlanSheetComponent } = await import(
+      '../../components/copiar-plan-sheet/copiar-plan-sheet.component'
+    );
+    const sheetRef = this.dialogService.openSheet<
+      InstanceType<typeof CopiarPlanSheetComponent>,
+      CopiarPlanSheetData,
+      CopiarPlanDestino | null
+    >(CopiarPlanSheetComponent, {
+      data: { pacienteNombre: nombreOrigen, totalEjercicios: total },
+    });
+    const destino = await firstValueFrom(sheetRef.closed);
+    if (!destino) return;
+
+    let pacienteDestino: Usuario | null = null;
+    if (destino === 'mismo') {
+      if (!pacienteOrigen?.id) return;
+      // El paciente del `PlanCompleto` es un usuario básico (sin avatar):
+      // se resuelve completo para que la pestaña del carrito lo muestre igual
+      // que si viniera del selector. Si falla, el básico sirve.
+      try {
+        pacienteDestino =
+          (await this.planBuilderService.getPacienteById(pacienteOrigen.id)) ??
+          pacienteOrigen;
+      } catch (err) {
+        this.logger.warn('[plan-detail] no se pudo resolver el paciente', err);
+        pacienteDestino = pacienteOrigen;
+      }
+    } else {
+      pacienteDestino = await this.seleccionarPaciente();
+    }
+    if (!pacienteDestino) return;
+
+    // Reemplazar solo con aviso si hay algo que perder: el carrito en
+    // memoria o un borrador persistido del paciente destino.
+    const enCarrito = this.planBuilderService.items().length;
+    const enBorrador = this.planBuilderService.countItemsFor(pacienteDestino.id);
+    const previos = Math.max(enCarrito, enBorrador);
+    if (previos > 0) {
+      const confirmed = await this.dialogService.confirm({
+        title: 'Reemplazar carrito',
+        message: `El carrito ya tiene ${previos} ${previos === 1 ? 'ejercicio' : 'ejercicios'}. Se sustituirán por los ${total} de este plan.`,
+        confirmText: 'Reemplazar',
+        cancelText: 'Cancelar',
+      });
+      if (!confirmed) return;
+    }
+
+    const res = this.planBuilderService.loadFromPlan(p, pacienteDestino);
+    if (res.cargados === 0) {
+      this.toastService.error('Este plan no tiene ejercicios que se puedan copiar');
+      return;
+    }
+
+    this.toastService.success(
+      `${res.cargados} ${res.cargados === 1 ? 'ejercicio copiado' : 'ejercicios copiados'} al carrito de ${pacienteDestino.first_name}`,
+    );
+    if (res.omitidos > 0) {
+      this.toastService.warning(
+        `${res.omitidos} ${res.omitidos === 1 ? 'ejercicio ya no existe' : 'ejercicios ya no existen'} en el catálogo y se ${res.omitidos === 1 ? 'ha' : 'han'} omitido`,
+      );
+    }
+
+    this.planBuilderService.navigateAndOpenDrawer();
+  }
+
+  /** Mismo patrón que `rutinas-list` y el carrito: selector de la clínica activa. */
+  private async seleccionarPaciente(): Promise<Usuario | null> {
+    const { SelectorPacienteComponent } = await import(
+      '../../../../shared/ui/selector-paciente/selector-paciente.component'
+    );
+    const ref = this.dialog.open<Usuario | undefined>(SelectorPacienteComponent, {
+      width: '500px',
+      maxWidth: '95vw',
+      panelClass: 'selector-paciente-dialog',
+    });
+    const paciente = await firstValueFrom(ref.closed);
+    return paciente ?? null;
   }
 
   /**

@@ -28,6 +28,7 @@ import {
   ID,
   Ejercicio,
   EjercicioPlan,
+  PlanCompleto,
   CreateRutinaPayload,
 } from '../../../../types/global';
 import { BuilderItemsState } from './internal/builder-items-state';
@@ -52,6 +53,14 @@ interface PersistedStateV1 extends PersistedEnvelope {
 const PLAN_STORAGE_PREFIX = 'kengo:plan_builder:v1:';
 const SCHEMA_VERSION = 1;
 const DEFAULT_TTL_DAYS = 1;
+
+/** Resultado de `PlanBuilderService.loadFromPlan`. */
+export interface LoadFromPlanResult {
+  /** Ejercicios que han entrado en el carrito. */
+  cargados: number;
+  /** Ejercicios del plan origen que ya no existen en el catálogo. */
+  omitidos: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PlanBuilderService implements SessionResettable {
@@ -673,6 +682,104 @@ export class PlanBuilderService implements SessionResettable {
       this.logger.error('Error al cargar rutina:', error);
       return false;
     }
+  }
+
+  // ============================================
+  // COPIAR PLAN
+  // ============================================
+
+  /**
+   * Carga los ejercicios de un plan existente en el carrito como base de un
+   * plan NUEVO para `paciente` (el mismo del plan u otro).
+   *
+   * No es un duplicado en servidor: descarta los ids y las fechas del plan
+   * origen, sale del modo edición y reemplaza el carrito (misma semántica que
+   * `loadFromRutina`). Título y descripción se dejan vacíos para que el builder
+   * los autogenere. Si tras filtrar no queda ningún ejercicio válido no toca
+   * el estado. Quien llama decide si abre el drawer o navega.
+   */
+  loadFromPlan(plan: PlanCompleto, paciente: Usuario): LoadFromPlanResult {
+    const origen = [...(plan.items ?? [])].sort((a, b) => a.sort - b.sort);
+    const vistos = new Set<string>();
+    const items: EjercicioPlan[] = [];
+    let omitidos = 0;
+
+    for (const item of origen) {
+      const ejercicio = item.ejercicio;
+      // `mapConvexToEjercicioPlan` deja un "fantasma" sin nombre cuando el
+      // ejercicio fue borrado del catálogo: no puede volver a asignarse.
+      if (!ejercicio?.id || !ejercicio.nombre?.trim()) {
+        omitidos++;
+        continue;
+      }
+      // Misma deduplicación que `BuilderItemsState.add`.
+      if (vistos.has(ejercicio.id)) continue;
+      vistos.add(ejercicio.id);
+
+      const tipo = item.tipo ?? ejercicio.tipo ?? 'repeticiones';
+      const esDuracion = tipo === 'duracion';
+      // Objeto nuevo, sin spread: así no se cuelan `id`, `planId`,
+      // `planItemId` ni `dateCreated` del plan origen.
+      items.push({
+        sort: items.length + 1,
+        ejercicio,
+        tipo,
+        series: item.series ?? 3,
+        repeticiones: esDuracion ? undefined : (item.repeticiones ?? 12),
+        duracionSeg: esDuracion
+          ? (item.duracionSeg ?? ejercicio.duracionDefectoSeg ?? 30)
+          : undefined,
+        descansoSeg: item.descansoSeg ?? 45,
+        diasSemana: item.diasSemana?.length
+          ? [...item.diasSemana]
+          : ['L', 'X', 'V'],
+        instruccionesPaciente: item.instruccionesPaciente,
+        notasFisio: item.notasFisio,
+      });
+    }
+
+    if (items.length === 0) return { cargados: 0, omitidos };
+
+    // Cancelar cualquier escritura pendiente del estado anterior.
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+
+    // Salir del modo edición: la copia es un plan nuevo, no una versión.
+    this.planId.set(null);
+    this.originalSnapshot.set(null);
+    this.hasActivity.set(false);
+    this.currentVersion.set(1);
+
+    // `CarritoPointers.read()` exige ambas claves; sin `fisioId` la pestaña
+    // del carrito no se restauraría tras recargar.
+    this.paciente.set(paciente);
+    const fisioId = this.fisioId();
+    CarritoPointers.set({
+      pacienteId: paciente.id,
+      ...(fisioId ? { fisioId } : {}),
+    });
+
+    this.itemsState.setItems(items);
+    this.titulo.set('');
+    this.descripcion.set('');
+    this.fechaInicio.set(null);
+    this.fechaFin.set(null);
+
+    return { cargados: items.length, omitidos };
+  }
+
+  /**
+   * Ejercicios que perdería el fisio si se reemplaza el carrito de
+   * `pacienteId`: los que hay en memoria si es el paciente activo, o los del
+   * borrador persistido en localStorage si es otro.
+   */
+  countItemsFor(pacienteId: string): number {
+    if (this.paciente()?.id === pacienteId) return this.items().length;
+    const f = this.fisioId();
+    if (!f) return 0;
+    return this.planPersistence.read({ fisioId: f, pacienteId })?.items.length ?? 0;
   }
 
   /**
