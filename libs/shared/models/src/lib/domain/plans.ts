@@ -26,6 +26,11 @@ export interface Plan {
   dateUpdated?: string;
   planAnterior?: string | null;
   planSucesor?: string | null;
+  /**
+   * `true` si `planSucesor` apunta a un plan que sigue existiendo y no está
+   * cancelado. Derivado en el backend; `false` en cadenas rotas.
+   */
+  sucesorExiste?: boolean;
   version?: number;
 }
 

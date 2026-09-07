@@ -7,6 +7,10 @@
  * `recalculateClinicMetrics`, `calculateDailyCompliance`) se eliminaron.
  *
  * Pasos (en este orden):
+ *  - Reparar cadenas de versiones de planes rotas (predecesor `modificado`
+ *    cuyo sucesor ya no existe o está cancelado). Va primero para que un
+ *    plan restaurado a `activo` entre en el sync del aggregate y en los
+ *    snapshots de la misma noche.
  *  - Expirar planes vencidos.
  *  - Sincronizar `patientsWithActivePlanByClinic` con `isPlanEnCurso`.
  *  - Procesar rollups stale (semanales y mensuales).
@@ -40,6 +44,7 @@ import { internal } from "../_generated/api";
 import { MutationCtx } from "../_generated/server";
 
 const STEPS = [
+  "repairPlanChains",
   "expirePlans",
   "syncActivePatients",
   "weeklyRollups",
@@ -135,6 +140,11 @@ async function runStep(
   cursor: string | undefined,
 ): Promise<MaintenanceStepResult> {
   switch (step) {
+    case "repairPlanChains":
+      return await ctx.runMutation(
+        internal.plans.internal.repairBrokenPlanChains,
+        { cursor },
+      );
     case "expirePlans":
       return await ctx.runMutation(internal.plans.internal.expireOverduePlans, {
         cursor,

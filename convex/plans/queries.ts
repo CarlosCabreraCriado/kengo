@@ -22,12 +22,36 @@ async function attachUserNames(ctx: any, plans: any[]) {
     ...plans.map((p) => p.pacienteId),
     ...plans.map((p) => p.fisioId),
   ];
-  const usersMap = await batchGetMap<"users">(ctx, userIds);
+  const [usersMap, sucesorExiste] = await Promise.all([
+    batchGetMap<"users">(ctx, userIds),
+    loadSucesorExiste(ctx, plans),
+  ]);
   return plans.map((p) => ({
     ...p,
     pacienteNombre: fullName(usersMap.get(p.pacienteId)),
     fisioNombre: fullName(usersMap.get(p.fisioId)),
+    sucesorExiste: sucesorExiste.get(p._id) ?? false,
   }));
+}
+
+// `sucesorExiste`: true si el plan tiene `planSucesor` y ese sucesor sigue
+// existiendo y no está cancelado. El cliente lo usa para no ofrecer "Ver
+// versión actual" hacia un plan borrado (cadena rota; el mantenimiento
+// nocturno la repara).
+async function loadSucesorExiste(
+  ctx: any,
+  plans: any[],
+): Promise<Map<Id<"plans">, boolean>> {
+  const sucesorIds = plans.map((p) => p.planSucesor).filter(Boolean);
+  const sucesores = sucesorIds.length
+    ? await batchGetMap<"plans">(ctx, sucesorIds)
+    : new Map<Id<"plans">, Doc<"plans">>();
+  const out = new Map<Id<"plans">, boolean>();
+  for (const p of plans) {
+    const s = p.planSucesor ? sucesores.get(p.planSucesor) : undefined;
+    out.set(p._id, !!s && s.estado !== "cancelado");
+  }
+  return out;
 }
 
 // Carga los planExercises de cada plan + el catálogo de exercises asociado
@@ -50,9 +74,10 @@ async function enrichPlans(ctx: any, plans: any[]) {
     ...plans.map((p) => p.pacienteId),
     ...plans.map((p) => p.fisioId),
   ];
-  const [exercisesMap, usersMap] = await Promise.all([
+  const [exercisesMap, usersMap, sucesorExiste] = await Promise.all([
     batchGetMap<"exercises">(ctx, exerciseIds),
     batchGetMap<"users">(ctx, userIds),
+    loadSucesorExiste(ctx, plans),
   ]);
 
   return plans.map((plan, i) => {
@@ -81,6 +106,7 @@ async function enrichPlans(ctx: any, plans: any[]) {
       pacienteNombre: fullName(usersMap.get(plan.pacienteId)),
       pacienteEmail: usersMap.get(plan.pacienteId)?.email ?? "",
       fisioNombre: fullName(usersMap.get(plan.fisioId)),
+      sucesorExiste: sucesorExiste.get(plan._id) ?? false,
     };
   });
 }

@@ -62,11 +62,24 @@ const TIPO_ICON: Record<string, string> = {
       @if (isLoading()) {
         <div class="atl-loading"><ui2-spinner /></div>
       } @else if (sesiones().length === 0) {
-        <ui2-empty-state
-          icon="event_busy"
-          title="Sin actividad registrada"
-          message="Cuando el paciente complete sesiones aparecerán aquí."
-        />
+        @if (ultimaActividadLabel(); as ultimaLabel) {
+          <!-- Sin sesiones en la ventana visible, pero el paciente SÍ tiene
+               historial: decirlo y enlazar a esa sesión. -->
+          <ui2-empty-state
+            icon="event_busy"
+            title="Sin sesiones en los últimos {{ rangoLabel() }}"
+            [message]="ultimaLabel"
+            actionLabel="Ver esa sesión"
+            actionIcon="history"
+            (action)="verUltimaSesion.emit()"
+          />
+        } @else {
+          <ui2-empty-state
+            icon="event_busy"
+            title="Sin actividad registrada"
+            message="Cuando el paciente complete sesiones aparecerán aquí."
+          />
+        }
       } @else {
         <ul class="atl-feed">
           @for (sesion of sesiones(); track sesion.fecha) {
@@ -410,8 +423,15 @@ export class PdActivityTimelineComponent {
   readonly diasSinActividad = input<number>(0);
   readonly isLoading = input<boolean>(false);
   readonly bare = input<boolean>(false);
+  /**
+   * "Última sesión el 15 ago (hace 23 días)." cuando el paciente tiene
+   * historial fuera de la ventana visible; `null` si nunca entrenó.
+   */
+  readonly ultimaActividadLabel = input<string | null>(null);
 
   readonly verSesion = output<SesionAgrupada>();
+  /** Abrir la última sesión real (fuera de la ventana visible). */
+  readonly verUltimaSesion = output<void>();
   readonly toggleComentarios = output<string>();
   readonly marcarComentarioRevisado = output<NotificacionFisio>();
 

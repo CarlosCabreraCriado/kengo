@@ -61,6 +61,10 @@
                       (clicked)="irAVersionActual()"
                     >Ver versión actual</ui2-button>
                   </div>
+                } @else {
+                  <p class="pd-success__sub">
+                    La versión que sustituyó a este plan ya no existe. Este plan se restaurará automáticamente en el próximo mantenimiento.
+                  </p>
                 }
               </div>
             </div>

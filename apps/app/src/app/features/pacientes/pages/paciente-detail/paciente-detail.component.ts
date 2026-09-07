@@ -21,6 +21,10 @@ import { PlanesService } from '../../../planes/data-access/planes.service';
 import { PlanBuilderService } from '../../../planes/data-access/plan-builder.service';
 import { DialogService } from '../../../../shared/services/dialog/dialog.service';
 import { CumplimientoService } from '../../data-access/cumplimiento.service';
+import {
+  UltimaActividad,
+  ultimaActividadLabel,
+} from '../../data-access/ultima-actividad.util';
 import { ComentariosPacienteService } from '../../data-access/comentarios-paciente.service';
 import { AsignacionesService } from '../../data-access/asignaciones.service';
 import { ClinicasService } from '../../../clinica/data-access/clinicas.service';
@@ -174,7 +178,9 @@ interface DialogClosedResult {
                     [diasProgramados]="diasProgramados()"
                     [diasSinActividad]="diasSinActividad()"
                     [isLoading]="isLoadingSesiones()"
+                    [ultimaActividadLabel]="ultimaActividadLabel()"
                     (verSesion)="verSesion($event)"
+                    (verUltimaSesion)="verUltimaSesion()"
                     (toggleComentarios)="toggleComentarios($event)"
                     (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
                   />
@@ -253,7 +259,9 @@ interface DialogClosedResult {
                   [diasSinActividad]="diasSinActividad()"
                   [isLoading]="isLoadingSesiones()"
                   [bare]="true"
+                  [ultimaActividadLabel]="ultimaActividadLabel()"
                   (verSesion)="verSesion($event)"
+                  (verUltimaSesion)="verUltimaSesion()"
                   (toggleComentarios)="toggleComentarios($event)"
                   (marcarComentarioRevisado)="marcarComentarioRevisado($event)"
                 />
@@ -433,6 +441,12 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     adherence: null,
     pain: null,
   });
+  /**
+   * Última sesión real del paciente, sin límite temporal. La ventana de
+   * cumplimiento es de 15 días: sin esto, un paciente inactivo desde hace
+   * más tiempo aparecía como "Sin actividad registrada".
+   */
+  readonly ultimaActividad = signal<UltimaActividad | null>(null);
 
   readonly isLoadingPaciente = signal(true);
   readonly isLoadingPlanes = signal(true);
@@ -529,8 +543,18 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     clinica: this.clinicaNombre(),
   }));
 
+  // Prioridad: última sesión real (cualquier fecha) > cálculo dentro de la
+  // ventana de 15 días (solo mientras la query directa no ha respondido).
   readonly diasUltimaActividad = computed<number | null>(
-    () => this.estadisticas()?.diasDesdeUltimaSesion ?? null,
+    () =>
+      this.ultimaActividad()?.diasDesde ??
+      this.estadisticas()?.diasDesdeUltimaSesion ??
+      null,
+  );
+
+  /** Texto del estado vacío de Actividad si hay historial fuera de ventana. */
+  readonly ultimaActividadLabel = computed<string | null>(() =>
+    ultimaActividadLabel(this.ultimaActividad()),
   );
 
   readonly planActivo = computed<Plan | null>(
@@ -612,8 +636,26 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     // espere solo en el paso final (evita pintar sesiones sin comentarios).
     const comentariosReady = this.cargarComentarios(pacienteId);
     this.cargarCumplimiento(pacienteId, comentariosReady);
+    this.cargarUltimaActividad(pacienteId);
     this.cargarSnapshotDolor(pacienteId);
     this.cargarFisioResponsable(pacienteId);
+  }
+
+  private async cargarUltimaActividad(pacienteId: string): Promise<void> {
+    try {
+      const clinicId = this.clinicaActiva.selectedClinicaId();
+      const ultima = (await this.convex.query(
+        api.sessions.queries.getLastActivityByPaciente,
+        {
+          pacienteId,
+          ...(clinicId ? { clinicId: clinicId as never } : {}),
+        },
+      )) as UltimaActividad | null;
+      this.ultimaActividad.set(ultima);
+    } catch (err) {
+      this.logger.error('Error cargando la última actividad:', err);
+      this.ultimaActividad.set(null);
+    }
   }
 
   ngOnDestroy(): void {
@@ -692,11 +734,14 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
       const hasta = getTodayYmd(tzPaciente);
       const desde = offsetTodayYmd(tzPaciente, -(RANGO_DIAS - 1));
 
+      // `clinicId`: aislamiento multiclínica (el paciente puede tener
+      // rollups de otra clínica donde este fisio no es miembro).
       const { actual, trend } =
         await this.cumplimientoService.getCumplimientoConTendencia(
           pacienteId,
           desde,
           hasta,
+          this.clinicaActiva.selectedClinicaId(),
         );
 
       this.trend.set(trend);
@@ -947,6 +992,13 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     if (sesion.tipo === 'descanso') return;
     const pacienteId = this.route.snapshot.params['id'];
     this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', sesion.fecha]);
+  }
+
+  verUltimaSesion(): void {
+    const ultima = this.ultimaActividad();
+    if (!ultima) return;
+    const pacienteId = this.route.snapshot.params['id'];
+    this.router.navigate(['/mis-pacientes', pacienteId, 'sesion', ultima.fecha]);
   }
 
   irASesionComentario(comentario: NotificacionFisio): void {

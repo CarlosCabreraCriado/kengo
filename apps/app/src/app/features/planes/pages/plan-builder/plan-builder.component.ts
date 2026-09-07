@@ -483,7 +483,14 @@ export class PlanBuilderComponent implements OnInit, OnDestroy {
       // El gate de suscripción ya abre su diálogo desde el interceptor de
       // `ConvexService` y re-lanza: un toast encima serían dos avisos.
       if (!esErrorYaGestionado(error)) {
-        this.toastService.error('No se pudo guardar el plan');
+        // El backend rechaza versionar un plan que ya tiene una versión más
+        // reciente: ese mensaje sí es accionable para el fisio.
+        const msg = error instanceof Error ? error.message : '';
+        this.toastService.error(
+          msg.includes('versión más reciente')
+            ? 'Este plan ya tiene una versión más reciente. Edita esa versión en su lugar.'
+            : 'No se pudo guardar el plan',
+        );
       }
     } finally {
       this.isSaving.set(false);

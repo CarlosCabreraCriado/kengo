@@ -134,6 +134,7 @@ export function mapConvexToPlanCompleto(r: {
   fechaFin?: string;
   planAnterior?: string | null;
   planSucesor?: string | null;
+  sucesorExiste?: boolean;
   version?: number;
   ejercicios?: Parameters<typeof mapConvexToEjercicioPlan>[0][];
 }): PlanCompleto {
@@ -148,6 +149,7 @@ export function mapConvexToPlanCompleto(r: {
     fechaFin: r.fechaFin,
     planAnterior: r.planAnterior ?? null,
     planSucesor: r.planSucesor ?? null,
+    sucesorExiste: r.sucesorExiste ?? false,
     version: r.version,
     items: ((r.ejercicios ?? []) as Parameters<typeof mapConvexToEjercicioPlan>[0][])
       .map((e) => mapConvexToEjercicioPlan(e))

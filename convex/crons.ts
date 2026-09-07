@@ -3,9 +3,10 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Mantenimiento diario: expira planes vencidos + sync del aggregate de
-// pacientes activos + rollups stale + snapshots + alertas. Cada paso corre en
-// su propia transacción encadenada (ver `compliance/internal.ts`).
+// Mantenimiento diario: repara cadenas de versiones de planes rotas + expira
+// planes vencidos + sync del aggregate de pacientes activos + rollups stale +
+// snapshots + alertas. Cada paso corre en su propia transacción encadenada
+// (ver `compliance/internal.ts`).
 // Hora fija: 03:00 UTC.
 //   Península invierno: 04:00 / verano: 05:00
 //   Canarias  invierno: 03:00 / verano: 04:00

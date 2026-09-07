@@ -27,6 +27,14 @@ import {
 
 type FiltroEstado = 'todos' | EstadoPlan;
 
+/** Resultado de `plans.mutations.remove`. */
+export interface RemovePlanResult {
+  /** `true` si el plan tenía actividad y se conservó como cancelado. */
+  softDeleted: boolean;
+  /** Id de la versión anterior restaurada, si el plan era una versión sucesora. */
+  predecesorRestaurado: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlanesService {
   private convex = inject(ConvexService);
@@ -171,15 +179,38 @@ export class PlanesService {
     }
   }
 
-  async removePlan(id: string): Promise<{ softDeleted: boolean } | null> {
+  /**
+   * Elimina (o cancela, si tiene actividad) un plan. Si el plan era una
+   * versión sucesora, el backend restaura la versión anterior y devuelve su
+   * id en `predecesorRestaurado`.
+   */
+  async removePlan(id: string): Promise<RemovePlanResult | null> {
     try {
-      return await this.convex.mutation(api.plans.mutations.remove, {
-        planId: id as any,
+      const raw = await this.convex.mutation(api.plans.mutations.remove, {
+        planId: id as Id<'plans'>,
       });
+      return {
+        softDeleted: !!raw?.softDeleted,
+        predecesorRestaurado: raw?.predecesorRestaurado
+          ? String(raw.predecesorRestaurado)
+          : null,
+      };
     } catch (error) {
       this.logger.error('Error al eliminar plan:', error);
       return null;
     }
+  }
+
+  /**
+   * Comprueba en el backend si el plan tiene ejecuciones registradas. Es el
+   * mismo criterio que usa `plans.remove` para decidir entre cancelar y
+   * borrar. Re-lanza el error para que el caller aplique su propio fallback.
+   */
+  async checkPlanHasActivity(id: string): Promise<boolean> {
+    const has = await this.convex.query(api.plans.queries.checkPlanHasActivity, {
+      planId: id as Id<'plans'>,
+    });
+    return !!has;
   }
 
   // ========= Planes por paciente =========
@@ -248,6 +279,7 @@ export class PlanesService {
       fechaFin: r.fechaFin,
       planAnterior: r.planAnterior ?? null,
       planSucesor: r.planSucesor ?? null,
+      sucesorExiste: r.sucesorExiste ?? false,
       version: r.version,
     };
   }

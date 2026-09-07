@@ -162,3 +162,23 @@ test("computeVersionDates: plan viejo con inicio futuro → la nueva versión he
   assert.equal(out.nuevoInicio, "2026-07-20");
   assert.equal(out.oldFechaFin, "2026-07-20"); // piso en su fechaInicio (degenerado, dropSuperseded lo cubre)
 });
+
+// ─── cadenas rotas (sucesor borrado) ───
+
+test("sucesor borrado a mitad de cadena → devuelve el último plan EXISTENTE", async () => {
+  const ctx = makeCtx([
+    { _id: "p1" as Id<"plans">, planSucesor: "p2" as Id<"plans"> },
+    { _id: "p2" as Id<"plans">, planSucesor: "pX" as Id<"plans"> },
+    // pX no existe (hard-delete de la versión nueva).
+  ]);
+  const out = await resolveCanonicalPlanId(ctx as never, "p1" as Id<"plans">);
+  assert.equal(out, "p2");
+});
+
+test("sucesor borrado en el primer salto → devuelve el id de partida", async () => {
+  const ctx = makeCtx([
+    { _id: "p1" as Id<"plans">, planSucesor: "pX" as Id<"plans"> },
+  ]);
+  const out = await resolveCanonicalPlanId(ctx as never, "p1" as Id<"plans">);
+  assert.equal(out, "p1");
+});

@@ -83,6 +83,10 @@ export async function resolveCanonicalPlanId(
 
   const visited = new Set<Id<"plans">>();
   let current: Id<"plans"> = planId;
+  // Último id de la cadena que EXISTE. Si un sucesor fue borrado (cadena
+  // rota), no se promociona: devolver un id inexistente haría que las
+  // executions del predecesor no casaran con ningún plan en los rollups.
+  let last: Id<"plans"> = planId;
   for (let i = 0; i < MAX_SUCESOR_HOPS; i++) {
     if (visited.has(current)) {
       console.warn(
@@ -92,10 +96,12 @@ export async function resolveCanonicalPlanId(
     }
     visited.add(current);
     const plan: Doc<"plans"> | null = await ctx.db.get(current);
-    if (!plan || !plan.planSucesor) break;
+    if (!plan) break;
+    last = current;
+    if (!plan.planSucesor) break;
     current = plan.planSucesor;
   }
 
-  if (cache) cache.set(planId, current);
-  return current;
+  if (cache) cache.set(planId, last);
+  return last;
 }

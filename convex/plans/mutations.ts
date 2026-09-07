@@ -17,8 +17,11 @@ import { normalizarMetricaEjercicio } from "../_helpers/exercises";
 import { getCurrentDateInTz } from "../_helpers/datetime";
 import { getPatientTz, tzOf } from "../_helpers/patientTz";
 import { computeVersionDates } from "../_helpers/planVersioning";
+import {
+  afterPlanChainChange,
+  repairBrokenChain,
+} from "../_helpers/planChainRepair";
 import { _syncPatientActiveStateInClinic } from "../snapshots/internal";
-import { recomputeAggregatesAndCheckAutoCloseImpl } from "../sessions/internal";
 
 // Encola una push al paciente avisando de que tiene un plan nuevo o
 // recién activado. Llamar SOLO cuando el plan pase a `estado === "activo"`
@@ -290,10 +293,22 @@ export const update = mutation({
 // ─── REMOVE ───
 // Si el plan tiene actividad, soft-delete (cancelado) para preservar history.
 // Sin actividad, hard-delete con cascade de planExercises.
+//
+// Si el plan es una versión sucesora (tiene `planAnterior`), eliminarlo
+// DESHACE el versionado: el predecesor (que quedó `modificado` y apuntando a
+// este plan) recupera su fechaFin previa y vuelve a `activo`/`completado`
+// según la fecha. Sin esto el predecesor quedaba huérfano: oculto en todos
+// los listados e inmutable (ver `_helpers/planChainRepair.ts`).
 
 export const remove = mutation({
   args: { planId: v.id("plans") },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    softDeleted: boolean;
+    predecesorRestaurado: Id<"plans"> | null;
+  }> => {
     const user = await getAuthenticatedUser(ctx);
     const plan = await assertCanManagePlan(ctx, user._id, args.planId);
     if (plan.estado === "modificado") {
@@ -303,31 +318,54 @@ export const remove = mutation({
     }
     await requireActiveSubscription(ctx, plan.clinicId);
 
-    const exercises = await ctx.db
-      .query("planExercises")
-      .withIndex("by_planId", (q) => q.eq("planId", args.planId))
-      .collect();
-
-    if (await planHasActivity(ctx, args.planId)) {
-      await ctx.db.patch(args.planId, { estado: "cancelado" });
-      await _syncPatientActiveStateInClinic(
-        ctx,
-        plan.pacienteId,
-        plan.clinicId,
-      );
-      return { softDeleted: true };
-    }
-
-    for (const ex of exercises) {
-      await ctx.db.delete(ex._id);
-    }
-    await ctx.db.delete(args.planId);
-    await _syncPatientActiveStateInClinic(
-      ctx,
-      plan.pacienteId,
-      plan.clinicId,
+    const today = getCurrentDateInTz(
+      await getPatientTz(ctx, plan.pacienteId),
     );
-    return { softDeleted: false };
+
+    // Leer el predecesor ANTES de borrar: solo se restaura si la cadena es
+    // la esperada (predecesor `modificado` que apunta a este plan).
+    const pred = plan.planAnterior
+      ? await ctx.db.get(plan.planAnterior)
+      : null;
+    const restauraPred =
+      !!pred &&
+      pred.estado === "modificado" &&
+      pred.planSucesor === plan._id;
+    if (pred && !restauraPred) {
+      console.warn(
+        `[plans.remove] predecesor ${pred._id} en estado inesperado (estado=${pred.estado}, planSucesor=${pred.planSucesor ?? "—"}); no se restaura`,
+      );
+    }
+
+    const tieneActividad = await planHasActivity(ctx, args.planId);
+    if (tieneActividad) {
+      await ctx.db.patch(args.planId, { estado: "cancelado" });
+    } else {
+      await deletePlanExercises(ctx, args.planId);
+      await ctx.db.delete(args.planId);
+    }
+
+    let predecesorRestaurado: Id<"plans"> | null = null;
+    if (restauraPred) {
+      const out = await repairBrokenChain(ctx, pred, {
+        today,
+        motivo: tieneActividad ? "sucesor_cancelado" : "sucesor_inexistente",
+        apply: true,
+        migracion: "plans.remove",
+      });
+      if (out.accion === "restaurado") predecesorRestaurado = pred._id;
+    }
+
+    await afterPlanChainChange(ctx, {
+      pacienteId: plan.pacienteId,
+      clinicId: plan.clinicId,
+      today,
+      // Los días en que la versión eliminada estuvo vigente se recomputan
+      // contra el predecesor restaurado.
+      recomputeDesde: restauraPred ? plan.fechaInicio : undefined,
+    });
+
+    return { softDeleted: tieneActividad, predecesorRestaurado };
   },
 });
 
@@ -345,6 +383,14 @@ export const version = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     const oldPlan = await assertCanManagePlan(ctx, user._id, args.oldPlanId);
+    // Un plan ya versionado no puede volver a versionarse: se rompería la
+    // cadena (dos sucesores para el mismo predecesor) y el plan quedaría
+    // referenciado por una versión que nunca fue la vigente.
+    if (oldPlan.estado === "modificado" || oldPlan.planSucesor) {
+      throw new Error(
+        "Este plan ya tiene una versión más reciente. Edita esa versión en su lugar.",
+      );
+    }
     await requireActiveSubscription(ctx, oldPlan.clinicId);
 
     // Fechas efectivas: la nueva versión rige desde HOY (el día del paciente
@@ -362,9 +408,12 @@ export const version = mutation({
 
     // Marcar el plan anterior como "modificado": indica que fue reemplazado
     // por una nueva versión (no que se completó naturalmente).
+    // `fechaFinPreVersion` guarda la fechaFin original para poder deshacer el
+    // versionado con exactitud si la versión nueva se elimina (`remove`).
     await ctx.db.patch(args.oldPlanId, {
       estado: "modificado" as const,
       fechaFin: oldFechaFin,
+      fechaFinPreVersion: oldPlan.fechaFin ?? null,
     });
 
     // Create new plan — hereda la clínica del anterior.
@@ -392,35 +441,14 @@ export const version = mutation({
       newPlanId,
       args.titulo,
     );
-    // version() siempre crea un plan activo nuevo, así que el sync
-    // garantiza que el paciente esté en `patientsWithActivePlanByClinic`
-    // (no-op si ya estaba). Llamada coherente con el resto de mutations
-    // que tocan plans.estado o sus fechas.
-    await _syncPatientActiveStateInClinic(
-      ctx,
-      oldPlan.pacienteId,
-      oldPlan.clinicId,
-    );
-
-    // El versionado cambia los esperados de HOY: refrescar la sesión abierta
-    // del día (que a su vez recomputa el rollup) o, si no hay sesión, el
-    // rollup directamente. Nota: si lo ya ejecutado hoy satisface la versión
-    // nueva, el recompute puede auto-cerrar la sesión como completada — es la
-    // semántica correcta.
-    const sesionHoy = await ctx.db
-      .query("sessions")
-      .withIndex("by_pacienteId_fecha", (q) =>
-        q.eq("pacienteId", oldPlan.pacienteId).eq("fecha", today),
-      )
-      .first();
-    if (sesionHoy) {
-      await recomputeAggregatesAndCheckAutoCloseImpl(ctx, sesionHoy._id);
-    } else {
-      await ctx.runMutation(internal.rollups.internal.recomputeDayAndPropagate, {
-        pacienteId: oldPlan.pacienteId,
-        fecha: today,
-      });
-    }
+    // version() siempre crea un plan activo nuevo: sync del aggregate de
+    // activos + recompute de HOY (los esperados de hoy cambian con la
+    // versión nueva). Ver `afterPlanChainChange`.
+    await afterPlanChainChange(ctx, {
+      pacienteId: oldPlan.pacienteId,
+      clinicId: oldPlan.clinicId,
+      today,
+    });
 
     return newPlanId;
   },

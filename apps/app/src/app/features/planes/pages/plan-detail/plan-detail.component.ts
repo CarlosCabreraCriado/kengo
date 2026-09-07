@@ -184,7 +184,16 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
    */
   esModificado = computed(() => this.estadoActual() === 'modificado');
 
-  planSucesorId = computed<string | null>(() => this.plan()?.planSucesor ?? null);
+  /**
+   * Id de la versión que sustituyó a este plan, solo si sigue existiendo
+   * (`sucesorExiste` lo deriva el backend). En una cadena rota (sucesor
+   * borrado o cancelado) se oculta el CTA en vez de navegar a un plan
+   * inexistente; el mantenimiento nocturno restaura este plan.
+   */
+  planSucesorId = computed<string | null>(() => {
+    const p = this.plan();
+    return p?.planSucesor && p.sucesorExiste ? p.planSucesor : null;
+  });
 
   /** True si las fechas del plan permiten que esté en estado "activo". */
   puedeActivar = computed(() => {
@@ -354,12 +363,28 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
     const p = this.plan();
     if (!p) return;
 
-    const conActividad = this.tieneActividad();
+    // Mismo criterio que el backend (`plans.remove`): así el aviso coincide
+    // con lo que va a pasar (cancelar vs borrar). Si la consulta falla, cae a
+    // la heurística local de adherencia/dolor.
+    let conActividad = this.tieneActividad();
+    try {
+      conActividad = await this.planesService.checkPlanHasActivity(p.id);
+    } catch (err) {
+      this.logger.warn('No se pudo comprobar la actividad del plan:', err);
+    }
+
+    const restauraAnterior = !!p.planAnterior;
+    const versionAnterior = Math.max(1, (p.version ?? 2) - 1);
+    const base = conActividad
+      ? `El plan "${p.titulo}" tiene registros del paciente, así que se conservará en el historial como cancelado y dejará de estar accesible.`
+      : `El plan "${p.titulo}" se eliminará permanentemente. Esta acción no se puede deshacer.`;
+    const message = restauraAnterior
+      ? `${base} La versión anterior (v${versionAnterior}) volverá a estar disponible.`
+      : base;
+
     const confirmed = await this.dialogService.confirm({
       title: 'Eliminar plan',
-      message: conActividad
-        ? `El plan "${p.titulo}" tiene registros del paciente, así que se conservará en el historial como cancelado y dejará de estar accesible.`
-        : `El plan "${p.titulo}" se eliminará permanentemente. Esta acción no se puede deshacer.`,
+      message,
       confirmText: 'Eliminar plan',
       cancelText: 'Cancelar',
       confirmVariant: 'danger',
@@ -371,12 +396,19 @@ export class PlanDetailComponent implements OnInit, OnDestroy {
       this.toastService.error('Error al eliminar el plan');
       return;
     }
+    const baseToast = result.softDeleted
+      ? 'Plan cancelado y conservado en el historial'
+      : 'Plan eliminado';
     this.toastService.success(
-      result.softDeleted
-        ? 'Plan cancelado y conservado en el historial'
-        : 'Plan eliminado',
+      result.predecesorRestaurado
+        ? `${baseToast}. Se ha restaurado la versión anterior`
+        : baseToast,
     );
-    this.router.navigate(this.backRoute() as unknown[]);
+    if (result.predecesorRestaurado) {
+      this.router.navigate(['/planes', result.predecesorRestaurado]);
+    } else {
+      this.router.navigate(this.backRoute() as unknown[]);
+    }
   }
 
   // `dateStr` es una fecha CIVIL YYYY-MM-DD: parsearla con `new Date()` la

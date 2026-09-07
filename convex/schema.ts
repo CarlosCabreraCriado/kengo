@@ -226,6 +226,14 @@ export default defineSchema({
     clinicId: v.id("clinics"),
     planAnterior: v.optional(v.id("plans")),
     planSucesor: v.optional(v.id("plans")),
+    /**
+     * `fechaFin` que tenía el plan ANTES de que `plans.version` la truncase
+     * al día previo al inicio de la versión nueva. Permite deshacer el
+     * versionado con exactitud si la versión nueva se elimina. `null` =
+     * no tenía fechaFin; ausente = versionado antes de existir este campo
+     * (legacy: al restaurar se conserva la fechaFin truncada).
+     */
+    fechaFinPreVersion: v.optional(v.union(v.string(), v.null())),
     version: v.number(),
   })
     .index("by_fisioId", ["fisioId"])
@@ -800,7 +808,10 @@ export default defineSchema({
   // `repairSessionsIntegrity`) y revertir manualmente casos puntuales.
   dataRepairAudit: defineTable({
     migracion: v.string(),
-    sessionId: v.id("sessions"),
+    /** Entidad reparada: sesión (reparaciones de sesiones/TZ)... */
+    sessionId: v.optional(v.id("sessions")),
+    /** ...o plan (reparación de cadenas de versiones, `planChainRepair`). */
+    planId: v.optional(v.id("plans")),
     pacienteId: v.id("users"),
     clinicId: v.id("clinics"),
     fecha: v.string(),
@@ -809,7 +820,9 @@ export default defineSchema({
     /** JSON.stringify del subconjunto de campos tras la reparación. */
     despues: v.string(),
     createdAt: v.number(),
-  }).index("by_migracion_sessionId", ["migracion", "sessionId"]),
+  })
+    .index("by_migracion_sessionId", ["migracion", "sessionId"])
+    .index("by_migracion_planId", ["migracion", "planId"]),
 
   // Bitácora de eventos Stripe procesados. Garantiza idempotencia del
   // `onEvent` handler en `convex/http.ts`: aunque Stripe reentregue un

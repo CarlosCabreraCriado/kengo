@@ -9,11 +9,12 @@ import {
   getActivePlansForPatientOnDate,
   getExpectedExercisesForPatientOnDate,
 } from "../_helpers/expectedExercises";
-import { getDiaSemana } from "../_helpers/datetime";
+import { diffDaysYMD, getDiaSemana } from "../_helpers/datetime";
 import { computeEstadoDia } from "../_helpers/rollupComputation";
 import { computeDayCounts, ExpectedSlot } from "../_helpers/sessionCounting";
 import { enrichExecutionsForCount } from "../_helpers/sessionCountingDb";
 import { resolveCanonicalPlanId } from "../_helpers/planVersioning";
+import { getPatientToday } from "../_helpers/patientTz";
 
 export const getById = query({
   args: { sessionId: v.id("sessions") },
@@ -109,6 +110,61 @@ export const listRecentByPaciente = query({
         planTitulo: plan?.titulo ?? null,
       };
     });
+  },
+});
+
+// ─── ÚLTIMA ACTIVIDAD REAL (independiente de ventana) ───
+
+/** Cota de sesiones leídas hacia atrás buscando la última con ejercicios. */
+const LAST_ACTIVITY_MAX_READS = 400;
+
+/**
+ * Última sesión del paciente con al menos un ejercicio completado, sin
+ * límite temporal. La ficha del fisio solo carga los últimos 15 días de
+ * rollups: sin esta query, un paciente inactivo desde hace más tiempo
+ * aparecía como "Sin actividad registrada" aunque tuviera historial.
+ *
+ * Recorre `by_pacienteId_fecha` en orden descendente de forma perezosa
+ * (`for await`) y se detiene en la primera sesión válida. Excluye las
+ * sintéticas y las que no tienen `totalCompletados > 0` (sesiones abiertas
+ * y cerradas por el cron sin ejercicios). Con `clinicId` aplica aislamiento
+ * multiclínica.
+ */
+export const getLastActivityByPaciente = query({
+  args: {
+    pacienteId: v.optional(v.string()),
+    clinicId: v.optional(v.id("clinics")),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    const { pacienteId: targetUserId, clinicId: targetClinicId } =
+      await resolveAndAssertPacienteAndClinic(
+        ctx,
+        args.pacienteId,
+        args.clinicId,
+        user._id,
+      );
+    const today = await getPatientToday(ctx, targetUserId);
+
+    let leidas = 0;
+    for await (const s of ctx.db
+      .query("sessions")
+      .withIndex("by_pacienteId_fecha", (q) =>
+        q.eq("pacienteId", targetUserId),
+      )
+      .order("desc")) {
+      if (++leidas > LAST_ACTIVITY_MAX_READS) break;
+      if (targetClinicId && s.clinicId !== targetClinicId) continue;
+      if (s.esSintetica) continue;
+      if ((s.totalCompletados ?? 0) <= 0) continue;
+      return {
+        sessionId: s._id,
+        fecha: s.fecha,
+        totalCompletados: s.totalCompletados ?? 0,
+        diasDesde: Math.max(0, diffDaysYMD(s.fecha, today)),
+      };
+    }
+    return null;
   },
 });
 
