@@ -933,6 +933,15 @@ main > router-outlet + * {
   max-width: 440px;
 }
 
+/* Override puntual: el resumen previo al Checkout son cuatro filas cortas y
+   una tarjeta de dos líneas; a 500px queda desproporcionado en escritorio.
+   Solo fuera del rango móvil, donde el sheet debe seguir a 100vw. */
+@media (min-width: 768px) {
+  .ui-dialog-panel--sheet:has(app-resumen-checkout-dialog) {
+    max-width: 420px;
+  }
+}
+
 /* Override puntual: el wizard de crear clínica tiene un stepper horizontal
    de 5 pasos + branding grid; con 500px del default standard el stepper
    apretaba. 540px da margen al header sin que el diálogo se sienta vacío

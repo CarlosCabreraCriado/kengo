@@ -34,11 +34,11 @@ chevron_right
 clinical_notes
 close
 close_fullscreen
-cloud_done
 cloud_off
 content_copy
 cookie
 credit_card
+credit_card_off
 delete
 delete_forever
 description
@@ -71,6 +71,7 @@ group
 group_add
 group_off
 groups
+handshake
 healing
 heart_broken
 help
