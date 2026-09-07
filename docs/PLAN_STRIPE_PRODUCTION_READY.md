@@ -185,6 +185,15 @@ dependen de él. Requiere migración de datos: planificar con cuidado.
 
 **Estado**: ⬜ Pendiente
 
+> **Superado (2026-09-07)**: Stripe Tax se retiró. Kengo factura desde
+> Canarias y Stripe Tax ni calcula IGIC a clientes canarios ni debe cobrar
+> IVA a los peninsulares (inversión del sujeto pasivo). Ahora el impuesto se
+> aplica con un Tax Rate manual IGIC 7 % + `tax_exempt: reverse`, decidido
+> por el CP del customer, y todo Checkout es `mode: setup` con la primera
+> factura emitida en servidor (`finalizeCheckout`). Ver
+> `docs/SETUP_STRIPE_CONVEX.md` → "Impuestos". Las casillas de
+> `automatic_tax` de abajo quedan como histórico.
+
 > Cumplimiento fiscal B2B España. Depende del Bloque J (customer Stripe se
 > inicializa con datos del owner). Coordina con configuración del Dashboard.
 

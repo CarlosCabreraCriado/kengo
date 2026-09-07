@@ -228,8 +228,11 @@ export function trialEndingTemplate(
 <p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
   Hola ${nombreAdmin}, el periodo de prueba de <strong style="color: ${BRAND_COLOR};">${clinicaNombre}</strong> está a punto de finalizar.
 </p>
-<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
   Para que tu equipo pueda seguir trabajando sin interrupciones, añade un método de pago antes de que termine.
+</p>
+<p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  Al añadirlo te pediremos la dirección fiscal y el NIF/CIF de la clínica: con ellos emitimos la factura con el régimen correcto (IGIC si la clínica está en Canarias; inversión del sujeto pasivo en el resto).
 </p>
 ${ctaButton(portalUrl, "Activar suscripción")}
 <p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">

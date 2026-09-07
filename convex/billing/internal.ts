@@ -259,9 +259,58 @@ export const getBillingContext = internalQuery({
             estadoLocal: billing.estadoLocal,
             variante: billing.variante,
             limiteFisios: billing.limiteFisios,
+            regimenFiscal: billing.regimenFiscal,
+            codigoPostalFiscal: billing.codigoPostalFiscal,
           }
         : null,
     };
+  },
+});
+
+/**
+ * Espeja en `clinicBilling` el régimen fiscal que se acaba de aplicar en
+ * Stripe (`billing.actions.syncRegimenFiscal` y el finalize del Checkout).
+ * Deliberadamente estrecha, como `setLimiteFisios`: no toca estado ni
+ * dispara nada. Idempotente: si nada cambia, no escribe.
+ */
+export const setRegimenFiscal = internalMutation({
+  args: {
+    clinicId: v.id("clinics"),
+    regimenFiscal: v.union(
+      v.literal("igic"),
+      v.literal("inversion"),
+      v.literal("desconocido"),
+    ),
+    paisFiscal: v.optional(v.string()),
+    codigoPostalFiscal: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { clinicId, regimenFiscal, paisFiscal, codigoPostalFiscal },
+  ) => {
+    const existing = await ctx.db
+      .query("clinicBilling")
+      .withIndex("by_clinicId", (q) => q.eq("clinicId", clinicId))
+      .unique();
+    if (!existing) return { cambiado: false };
+
+    if (
+      existing.regimenFiscal === regimenFiscal &&
+      existing.paisFiscal === paisFiscal &&
+      existing.codigoPostalFiscal === codigoPostalFiscal
+    ) {
+      return { cambiado: false };
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(existing._id, {
+      regimenFiscal,
+      paisFiscal,
+      codigoPostalFiscal,
+      regimenFiscalActualizadoEn: now,
+      actualizadoEn: now,
+    });
+    return { cambiado: true };
   },
 });
 
@@ -589,6 +638,7 @@ export const listBillingConCustomer = internalQuery({
     const filas: {
       clinicId: Id<"clinics">;
       stripeCustomerId: string;
+      stripeSubscriptionId: string | undefined;
       nombre: string;
     }[] = [];
     for (const b of billings) {
@@ -598,6 +648,7 @@ export const listBillingConCustomer = internalQuery({
       filas.push({
         clinicId: b.clinicId,
         stripeCustomerId: b.stripeCustomerId,
+        stripeSubscriptionId: b.stripeSubscriptionId,
         nombre: clinic.nombre,
       });
     }

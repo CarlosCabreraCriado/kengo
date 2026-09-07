@@ -17,6 +17,16 @@ export type SubscriptionEstado =
 /** Variante de pricing: "base" (con cap de pacientes) o "ilimitada". */
 export type PlanVariante = 'base' | 'ilimitada';
 
+/**
+ * Régimen fiscal aplicado a las facturas de la clínica, decidido sobre la
+ * dirección de facturación recogida por Stripe Checkout:
+ *  - `igic`: cliente en Canarias → IGIC 7 % en factura.
+ *  - `inversion`: resto de España, UE y no-UE → sin cuota, "inversión del
+ *    sujeto pasivo".
+ *  - `desconocido`: todavía no hay dirección fiscal (trial sin Checkout).
+ */
+export type RegimenFiscal = 'igic' | 'inversion' | 'desconocido';
+
 export interface PlanInfo {
   /** Nombre comercial del plan: "Lonely" | "Smart" | "Medium". */
   nombre: string;
@@ -96,6 +106,11 @@ export interface ClinicSubscription {
     aportadaPorNombre: string;
     aportadaPorEsOwner: boolean;
   } | null;
+  /**
+   * Régimen fiscal aplicado en Stripe. Opcional para que los clientes nativos
+   * anteriores sigan funcionando; ausente equivale a `desconocido`.
+   */
+  regimenFiscal?: RegimenFiscal;
 }
 
 /**

@@ -129,6 +129,7 @@ export const getMyClinicSubscription = query({
         // backend). Flag calculado en servidor para que el frontend no tenga
         // que replicar `billingPermiteOperar` y no bloquee un `none` ambiguo.
         bloqueada: false,
+        regimenFiscal: "desconocido" as const,
       };
     }
 
@@ -169,6 +170,9 @@ export const getMyClinicSubscription = query({
         billing,
         clinic.ownerUserId,
       ),
+      // Régimen fiscal aplicado en Stripe (IGIC vs inversión del sujeto
+      // pasivo). `desconocido` hasta que Checkout recoja la dirección fiscal.
+      regimenFiscal: billing.regimenFiscal ?? ("desconocido" as const),
     };
   },
 });

@@ -385,3 +385,20 @@
   .pricing-banner__action { flex-shrink: 0; }
   .pricing-banner__action ui2-button { width: auto; }
 }
+
+/* Los precios son netos: el IGIC (Canarias) o la inversión del sujeto pasivo
+   se aplican en la factura según la dirección fiscal de la clínica. */
+.pricing-card__price {
+  flex-wrap: wrap;
+}
+
+.pricing-card__tax {
+  flex-basis: 100%;
+  margin-top: -4px;
+  font-family: Galvji, "Helvetica Neue", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-500);
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}

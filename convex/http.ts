@@ -197,6 +197,21 @@ registerStripeRoutes(http, components.stripe, {
                 null,
             },
           );
+          // Régimen fiscal: si cambió la dirección de facturación (Portal,
+          // Dashboard o el `customer_update` de Checkout) o alguien tocó
+          // `tax_exempt`, recalcular IGIC/inversión. El filtro por
+          // `previous_attributes` evita lanzar una action por cada update
+          // nuestro (etiqueta de tramo, footer, default PM).
+          const prev = event.data.previous_attributes as
+            | Record<string, unknown>
+            | undefined;
+          if (!prev || "address" in prev || "tax_exempt" in prev) {
+            await ctx.scheduler.runAfter(
+              0,
+              internal.billing.actions.syncRegimenFiscal,
+              { clinicId },
+            );
+          }
           break;
         }
         case "payment_method.attached": {
@@ -316,27 +331,24 @@ registerStripeRoutes(http, components.stripe, {
         case "checkout.session.completed": {
           if (!clinicId) break;
           const session = event.data.object;
-          // Bifurcación según el modo de la session:
-          //   - `setup`: el customer acaba de añadir su método de pago para
-          //     terminar el trial. `finalizeSetupCheckout` adjunta el PM a la
-          //     sub existente y pone `trial_end: 'now'` → Stripe cobra y la
-          //     sub pasa a `active` vía webhooks posteriores.
-          //   - `subscription`: el customer reactiva tras un `canceled`. Stripe
-          //     ha creado una nueva subscription S2; `finalizeSubscriptionCheckout`
-          //     persiste su ID en `clinicBilling.stripeSubscriptionId` para que
-          //     futuras acciones operen contra S2 y no contra la S1 huérfana.
-          // En ambos casos, además, encolamos el welcome email (idempotente).
+          // Todo Checkout es `mode: 'setup'` (tarjeta + dirección fiscal +
+          // NIF, sin cobro). `finalizeCheckout` decide con la dirección el
+          // régimen fiscal y, según `metadata.action`, termina el trial de la
+          // S1 o crea la S2 en servidor con el impuesto correcto. Además
+          // encolamos el welcome email (idempotente).
           if (session.mode === "setup") {
             await ctx.scheduler.runAfter(
               0,
-              internal.billing.actions.finalizeSetupCheckout,
+              internal.billing.actions.finalizeCheckout,
               { clinicId, sessionId: session.id },
             );
-          } else if (session.mode === "subscription") {
-            await ctx.scheduler.runAfter(
-              0,
-              internal.billing.actions.finalizeSubscriptionCheckout,
-              { clinicId, sessionId: session.id },
+          } else {
+            // Sesión `subscription` creada antes de unificar el Checkout en
+            // modo setup. Stripe ya creó y cobró la S2 sin régimen fiscal:
+            // reparar a mano con `recoverClinicSubscriptionId` +
+            // `syncRegimenFiscal`.
+            console.warn(
+              `[stripe webhook] checkout.session.completed con mode=${session.mode} (session=${session.id}, clinic=${clinicId}); requiere reparación manual.`,
             );
           }
           await ctx.scheduler.runAfter(

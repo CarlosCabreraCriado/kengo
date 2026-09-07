@@ -157,7 +157,7 @@ El proyecto es Convex self-hosted en Railway, así que las env vars se gestionan
 
 1. https://railway.app/dashboard → proyecto Kengo → servicio que corre Convex (suele llamarse `convex` o `backend`).
 2. Pestaña **Variables** → **+ New Variable**.
-3. Añade estas 8:
+3. Añade estas 9:
 
    | Variable | Valor | Notas |
    |---|---|---|
@@ -165,6 +165,7 @@ El proyecto es Convex self-hosted en Railway, así que las env vars se gestionan
    | `STRIPE_WEBHOOK_SECRET` | `whsec_...` | Paso 5 |
    | `STRIPE_PRICE_ID_BASE` | `price_1...` | Paso 3 — price base (89/249/449) |
    | `STRIPE_PRICE_ID_ILIMITADO` | `price_1...` | Paso 3 — price ilimitado (109/279/489) |
+   | `STRIPE_TAX_RATE_ID_IGIC` | `txr_...` | Sección "Impuestos" — Tax Rate manual IGIC 7 % (test o live según la clave) |
    | `STRIPE_TRIAL_DAYS` | `14` | Días de trial gratuitos al crear clínica |
    | `STRIPE_GRACE_PERIOD_DAYS` | `7` | Días tras impago antes de bloquear el acceso |
    | `KENGO_APP_URL` | `https://kengoapp.com` (prod) o `http://localhost:4200` (dev) | URL base usada en `successUrl`/`cancelUrl` de Stripe Checkout |
@@ -225,14 +226,66 @@ Cuando vayas a publicar en producción:
 
 ---
 
-## Stripe Tax (opcional pero recomendado en EU)
+## Impuestos: Tax Rate IGIC manual (no Stripe Tax)
 
-Si vendes a clínicas en España u otros países EU:
+Kengo factura desde Canarias, fuera del territorio del IVA. Para un SaaS B2B
+eso da dos regímenes, y **Stripe Tax no sirve para ninguno**: no calcula
+impuesto para clientes en Canarias, Ceuta y Melilla aunque haya registro
+español ([docs](https://docs.stripe.com/tax/zero-tax#excluded-territories)), y
+con registro español cobraría 21 % de IVA a las clínicas peninsulares, que no
+corresponde. Por eso el impuesto se aplica a mano:
 
-1. Stripe Dashboard → **More → Tax** → **Activate**
-2. Configura el **Origin address** (sede fiscal de la empresa)
-3. En cada Price o subscription, Stripe Tax aplica IVA automáticamente según país del customer
-4. Activarlo después no rompe suscripciones existentes; el IVA se añade en la siguiente factura
+| Dirección fiscal del customer | Régimen (`clinicBilling.regimenFiscal`) | En Stripe |
+|---|---|---|
+| España, CP 35xxx / 38xxx (o `state` canario) | `igic` | `default_tax_rates: [IGIC]` en la sub, `tax_exempt: none` |
+| Resto (Península, Baleares, Ceuta, Melilla, UE, no-UE) | `inversion` | sin tax rates, `tax_exempt: reverse` (Stripe imprime "Inversión del sujeto pasivo") + pie legal |
+| Sin dirección todavía | `desconocido` | nada; se resuelve al completar Checkout |
+
+La decisión es la función pura `resolveRegimenFiscal` (`convex/billing/_taxHelpers.ts`)
+sobre `customer.address` de Stripe: la dirección que recoge Checkout
+(`billing_address_collection: required`) y que el cliente puede editar en el
+Customer Portal. **Nunca** se usa el CP de la ficha de la clínica.
+
+### Configuración (test y live)
+
+1. **Tax Rate**: Dashboard → Products → **Tax rates** → New: display name
+   `IGIC`, 7 %, **exclusive**, country `ES`, jurisdiction `Canarias`. Deja
+   `tax_type` sin fijar (el enum de Stripe no contempla IGIC). Copia el
+   `txr_...` a `STRIPE_TAX_RATE_ID_IGIC`.
+2. **Prices**: en los dos prices de autoservicio pon `tax_behavior` =
+   **exclusive** (solo se puede fijar una vez). Los precios de la app son
+   netos ("+ impuestos").
+3. **Customer Portal** → Customer information: dirección de facturación
+   editable (así el cliente corrige su régimen sin soporte).
+4. **Stripe Tax** puede quedar activado a nivel de cuenta: no afecta a subs
+   con `automatic_tax.enabled = false`. No registres España en Stripe Tax.
+5. No hace falta suscribir eventos nuevos: `customer.updated` ya llega.
+
+### Dónde se aplica en código
+
+- `createCheckoutSession`: todo Checkout es `mode: setup` (tarjeta +
+  dirección + NIF, sin cobro). `metadata.action` = `attach_pm_end_trial` o
+  `create_subscription`.
+- `finalizeCheckout` (webhook `checkout.session.completed`): lee la dirección
+  del customer, alinea `tax_exempt`/footer, y termina el trial de la S1 o crea
+  la S2 **con los tax rates en la misma llamada que emite la primera factura**.
+- `syncRegimenFiscal` (webhook `customer.updated` cuando cambia `address` o
+  `tax_exempt`): recalcula y realinea customer y sub. Idempotente.
+- `backfillRegimenFiscal { apply }`: barrido de todas las clínicas
+  (migración desde Stripe Tax; apaga `automatic_tax` en las subs vivas).
+
+### Migración desde Stripe Tax (una vez)
+
+```bash
+npx convex run billing/actions:backfillRegimenFiscal '{"apply": false}'   # revisar `cambios`
+npx convex run billing/actions:backfillRegimenFiscal '{"apply": true}'
+npx convex run billing/actions:backfillRegimenFiscal '{"apply": false}'   # debe devolver 0 cambios
+```
+
+> El texto del pie de factura (`FOOTER_INVERSION_SUJETO_PASIVO`) está
+> pendiente de validación por la asesoría. Si cambia, basta con editar la
+> constante y volver a lanzar el backfill: solo sustituye pies que sean
+> nuestros.
 
 ---
 
@@ -242,6 +295,8 @@ Si vendes a clínicas en España u otros países EU:
 |---|---|---|
 | `Stripe error: No such price: price_xxx` | `STRIPE_PRICE_ID` apunta a un price de modo distinto al de la `STRIPE_SECRET_KEY` | Asegurar que ambos son test, o ambos live |
 | `Invalid signature` en webhook | `STRIPE_WEBHOOK_SECRET` no actualizado tras crear/recrear el endpoint | Re-copiar el `whsec_...` actual del endpoint y re-deploy |
+| Factura a clínica canaria sin línea IGIC, o peninsular sin "Inversión del sujeto pasivo" | `customer.address.postal_code` vacío o erróneo en Stripe, o `STRIPE_TAX_RATE_ID_IGIC` sin configurar | Corregir la dirección en el Dashboard (dispara `customer.updated`) o lanzar `billing/actions:syncRegimenFiscal {"clinicId"}`; comprobar `clinicBilling.regimenFiscal` |
+| `STRIPE_TAX_RATE_ID_IGIC no configurada` al completar Checkout | Env var ausente en el deployment | Crear el Tax Rate (sección Impuestos) y añadir la variable; reintentar el evento desde el Dashboard de Stripe |
 | Eventos llegan al webhook pero no se persisten | El componente `@convex-dev/stripe` maneja la persistencia automáticamente. Si la tabla `clinicBilling` (custom) no se actualiza, mira el handler `events`/`onEvent` en `convex/http.ts` (sesión 3 del plan) | Verificar que el handler está conectado y que el `subscription.metadata.orgId` contiene el `clinicId` |
 | Customer Portal "Page not found" | URL portal no creada o branding incompleto | Volver a paso 4 y guardar |
 | `KENGO_APP_URL` mal en redirects de checkout | Mezcla local/prod | Distinguir env vars por entorno; en local usar `http://localhost:4200` |

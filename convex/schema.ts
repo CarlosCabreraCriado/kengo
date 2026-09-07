@@ -716,6 +716,22 @@ export default defineSchema({
     // PM nuevo o al fijarse un default vivo. Ver `clinicPaymentMethods`.
     metodoPagoPendienteDesde: v.optional(v.number()),
     metodoPagoRetiradoPorUserId: v.optional(v.id("users")),
+    // Régimen fiscal aplicado en Stripe, espejo de lo que decide
+    // `resolveRegimenFiscal` (`billing/_taxHelpers.ts`) sobre la dirección de
+    // facturación del customer: `igic` (cliente en Canarias, Tax Rate IGIC),
+    // `inversion` (resto: `tax_exempt: reverse`) o `desconocido` (Checkout
+    // aún no recogió la dirección). Solo informativo para la UI; la fuente de
+    // verdad sigue siendo el customer de Stripe.
+    regimenFiscal: v.optional(
+      v.union(
+        v.literal("igic"),
+        v.literal("inversion"),
+        v.literal("desconocido"),
+      ),
+    ),
+    paisFiscal: v.optional(v.string()),
+    codigoPostalFiscal: v.optional(v.string()),
+    regimenFiscalActualizadoEn: v.optional(v.number()),
     actualizadoEn: v.number(),
   })
     .index("by_clinicId", ["clinicId"])

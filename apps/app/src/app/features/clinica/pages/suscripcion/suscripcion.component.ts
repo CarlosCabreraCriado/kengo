@@ -40,6 +40,7 @@ import type {
   InvoiceItem,
   PlanInfo,
   PlanVariante,
+  RegimenFiscal,
   SubscriptionEstado,
 } from '@kengo/shared-models';
 
@@ -48,6 +49,35 @@ interface EstadoVm {
   variant: Ui2PillVariant;
   icon: string;
 }
+
+interface RegimenFiscalVm {
+  texto: string;
+  detalle: string;
+  icon: string;
+}
+
+/**
+ * Régimen fiscal que Stripe aplica en factura según la dirección fiscal de la
+ * clínica (Kengo factura desde Canarias). Los precios de la app son netos.
+ */
+const REGIMEN_FISCAL_VM: Record<RegimenFiscal, RegimenFiscalVm> = {
+  igic: {
+    texto: 'IGIC 7 %',
+    detalle: 'Clínica en Canarias: el impuesto se suma al precio del plan.',
+    icon: 'receipt_long',
+  },
+  inversion: {
+    texto: 'Inversión del sujeto pasivo',
+    detalle: 'Factura sin cuota de impuesto; el IVA lo autoliquida tu clínica.',
+    icon: 'receipt_long',
+  },
+  desconocido: {
+    texto: 'Pendiente de dirección fiscal',
+    detalle:
+      'Se determina al añadir el método de pago. Puedes corregir la dirección desde el portal de pago.',
+    icon: 'pin_drop',
+  },
+};
 
 interface InvoiceEstadoVm {
   texto: string;
@@ -160,6 +190,17 @@ export class SuscripcionComponent {
     () => this.suscripcion()?.currentPeriodEnd ?? this.suscripcion()?.trialEnd,
   );
 
+  /**
+   * Régimen fiscal aplicado en Stripe. Sin fila de billing (`none`) no hay
+   * nada que mostrar; un cliente antiguo sin el campo equivale a
+   * `desconocido`.
+   */
+  protected readonly regimenFiscalVm = computed<RegimenFiscalVm | null>(() => {
+    const sub = this.suscripcion();
+    if (!sub || sub.estado === 'none') return null;
+    return REGIMEN_FISCAL_VM[sub.regimenFiscal ?? 'desconocido'];
+  });
+
   protected readonly planActual = computed<PlanInfo | null>(
     () => this.suscripcion()?.plan ?? null,
   );
@@ -213,10 +254,11 @@ export class SuscripcionComponent {
   protected readonly capPacientesAlcanzado = this.subs.capPacientesAlcanzado;
 
   /**
-   * Estados sin sub viva en los que el CTA principal crea una sub nueva
-   * (`mode: 'subscription'`). Solo aquí tiene sentido elegir variante antes
-   * del checkout; con sub viva el cambio va por la sección "Pacientes
-   * ilimitados" (`setPlanVariante`, con prorrateo).
+   * Estados sin sub viva en los que el CTA principal acaba creando una sub
+   * nueva (Checkout en modo setup + `finalizeCheckout` en servidor). Solo aquí
+   * tiene sentido elegir variante antes del checkout; con sub viva el cambio
+   * va por la sección "Pacientes ilimitados" (`setPlanVariante`, con
+   * prorrateo).
    */
   protected readonly preCheckout = computed<boolean>(() => {
     const estado = this.suscripcion()?.estado ?? 'none';
@@ -464,8 +506,8 @@ export class SuscripcionComponent {
     const confirmado = await this.dialogService.confirm({
       title: aIlimitada ? 'Pasar a pacientes ilimitados' : 'Volver al plan base',
       message: aIlimitada
-        ? `Tu suscripción pasará de ${precioActual} € a ${precioNuevo} €/mes (prorrateado en el ciclo actual) y podrás vincular pacientes sin límite.`
-        : `Tu suscripción pasará de ${precioActual} € a ${precioNuevo} €/mes. El plan ${plan.nombre} base admite hasta ${plan.limitePacientes} pacientes vinculados.`,
+        ? `Tu suscripción pasará de ${precioActual} € a ${precioNuevo} €/mes + impuestos (prorrateado en el ciclo actual) y podrás vincular pacientes sin límite.`
+        : `Tu suscripción pasará de ${precioActual} € a ${precioNuevo} €/mes + impuestos. El plan ${plan.nombre} base admite hasta ${plan.limitePacientes} pacientes vinculados.`,
       confirmText: aIlimitada ? 'Pasar a ilimitado' : 'Volver a base',
       cancelText: 'Cancelar',
     });

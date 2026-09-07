@@ -156,6 +156,39 @@ referencia técnica en `docs/GUIA_ENTERPRISE_VENTAS.md`.
 
 ---
 
+### 3.9 Régimen fiscal (IGIC vs inversión del sujeto pasivo)
+
+Requiere `STRIPE_TAX_RATE_ID_IGIC` (Tax Rate IGIC 7 % de modo test) en el
+deployment. Todo Checkout es `mode: setup`; el cobro lo hace `finalizeCheckout`.
+
+- [ ] **A. Canarias, trial**: clínica nueva → sub `trialing` sin `automatic_tax`
+      → la página de suscripción muestra "Pendiente de dirección fiscal" →
+      Checkout con `4242…`, dirección ES y CP `35001` → tras el retorno:
+      customer `tax_exempt: none`, sub `default_tax_rates = [txr IGIC]`,
+      factura con línea IGIC 7 %, UI "IGIC 7 %".
+- [ ] **B. Madrid, trial**: igual con CP `28001` → customer `tax_exempt:
+      reverse` + footer legal, factura sin cuota con "Inversión del sujeto
+      pasivo", UI "Inversión del sujeto pasivo".
+- [ ] **C. Reactivación**: cancelar la sub en el Dashboard → estado `canceled`
+      → Checkout (setup) con CP `38001` → `finalizeCheckout` crea la S2 en
+      servidor con IGIC, `clinicBilling.stripeSubscriptionId` apunta a la S2,
+      factura pagada, UI activa. La S1 `canceled` no se toca.
+- [ ] **D. Cambio de dirección en el Portal**: pasar de `28001` a `35001` →
+      `customer.updated` → `syncRegimenFiscal` añade IGIC a la sub, quita
+      `reverse` y retira el footer. Volver a `28001` → inverso. En logs, el
+      segundo `customer.updated` (el que provoca nuestro propio update) no
+      escribe nada.
+- [ ] **E. SCA en reactivación**: tarjeta `4000 0027 6000 3184` en el flujo C
+      → S2 `incomplete` → UI bloqueada con CTA; caduca sola o se repite el
+      Checkout.
+- [ ] **F. Ceuta `51001` y Francia** → `inversion`.
+- [ ] **G. Trial vencido sin tarjeta** (`missing_payment_method:
+      create_invoice`, S1 `past_due`) → Checkout → `create_subscription`
+      anula la factura abierta de la S1, la cancela y crea la S2 con el
+      régimen correcto.
+- [ ] **H. Backfill**: `backfillRegimenFiscal {"apply": false}` → revisar →
+      `{"apply": true}` → repetir el dry-run devuelve 0 cambios.
+
 ## 4. Comandos útiles
 
 ```bash

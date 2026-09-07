@@ -488,7 +488,7 @@ export class MiClinicaComponent implements OnInit, OnDestroy {
     if (sub.estado === 'past_due') return 'Pago pendiente';
     if (sub.plan) {
       const sufijo = sub.variante === 'ilimitada' ? ' Ilimitado' : '';
-      return `Activa · ${sub.plan.nombre}${sufijo} · ${sub.precioMensualActualEur} €/mes`;
+      return `Activa · ${sub.plan.nombre}${sufijo} · ${sub.precioMensualActualEur} €/mes + imp.`;
     }
     return 'Activa';
   });

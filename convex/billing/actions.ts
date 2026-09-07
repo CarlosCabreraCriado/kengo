@@ -18,6 +18,14 @@ import {
 } from "./_helpers";
 import type { MetodoDePagoAportado } from "./paymentMethods";
 import { esPriceAMedida } from "./_webhookHelpers";
+import {
+  resolveRegimenFiscal,
+  buildCustomerRegimenPatch,
+  buildSubscriptionRegimenPatch,
+  subscriptionTaxRatesFor,
+  esSubscriptionActualizable,
+  type RegimenFiscal,
+} from "./_taxHelpers";
 
 const stripeApi = new StripeSubscriptions(components.stripe);
 
@@ -190,18 +198,18 @@ async function getOrCreateCustomerForClinic(
 }
 
 /**
- * Fija en el customer los dos campos que no se pueden pasar en la creación:
+ * Fija en el customer la `description` (nombre de la clínica), que el
+ * componente no permite pasar en la creación. `name` y `email` son los del
+ * owner, así que un fisio con varias clínicas genera un customer por clínica
+ * todos con el mismo nombre y correo, indistinguibles en el Dashboard salvo
+ * abriendo cada uno a mirar el `metadata`. `description` es la columna que
+ * Stripe enseña en la lista de Customers y, a diferencia de `name`, Checkout
+ * no la sobrescribe (`customer_update: { name: "auto" }`).
  *
- *  - `address.country`: Stripe Tax rechaza crear una subscription con
- *    `automatic_tax: enabled` si el customer no tiene país. Ponemos ES como
- *    baseline; Checkout lo sobrescribe con la dirección fiscal real vía
- *    `customer_update: { address: "auto" }`.
- *  - `description`: el nombre de la clínica. `name` y `email` son los del
- *    owner, así que un fisio con varias clínicas genera un customer por
- *    clínica todos con el mismo nombre y correo, indistinguibles en el
- *    Dashboard salvo abriendo cada uno a mirar el `metadata`. `description` es
- *    la columna que Stripe enseña en la lista de Customers y, a diferencia de
- *    `name`, Checkout no la sobrescribe (`customer_update: { name: "auto" }`).
+ * No se rellena ningún `address` por defecto: la dirección fiscal la recoge
+ * Checkout y sobre ella decide `resolveRegimenFiscal`. Un país inventado
+ * convertiría un régimen `desconocido` en `inversion` sin que el cliente
+ * haya dicho dónde está.
  *
  * Un solo `retrieve` y, como mucho, un `update`; idempotente.
  */
@@ -212,15 +220,88 @@ async function syncCustomerDefaults(
 ): Promise<void> {
   const customer = await stripe.customers.retrieve(customerId);
   if ("deleted" in customer) return;
+  if (customer.description === nombreClinica) return;
 
-  const patch: Stripe.CustomerUpdateParams = {};
-  if (!customer.address?.country) patch.address = { country: "ES" };
-  if (customer.description !== nombreClinica) {
-    patch.description = nombreClinica;
+  await stripe.customers.update(customerId, { description: nombreClinica });
+}
+
+// ─── Régimen fiscal (IGIC / inversión del sujeto pasivo) ───
+//
+// Kengo factura desde Canarias. Stripe Tax no calcula impuesto para clientes
+// canarios y cobraría IVA a los peninsulares, así que el impuesto se aplica a
+// mano: Tax Rate IGIC en la suscripción de los clientes canarios y
+// `tax_exempt: "reverse"` (inversión del sujeto pasivo) en el resto. La lógica
+// de decisión es pura (`_taxHelpers.ts`); aquí solo se lee y escribe Stripe.
+
+/** Tax Rate manual "IGIC 7 %" creado en el Dashboard (test y live). */
+function getIgicTaxRateId(): string {
+  return getEnv("STRIPE_TAX_RATE_ID_IGIC");
+}
+
+interface RegimenAplicado {
+  regimen: RegimenFiscal;
+  address: Stripe.Address | null;
+}
+
+/**
+ * Qué debe hacer `finalizeCheckout` al completarse una sesión de Checkout
+ * (siempre `mode: 'setup'`). Viaja en `metadata.action` de la sesión y del
+ * SetupIntent.
+ */
+type CheckoutAction = "attach_pm_end_trial" | "create_subscription";
+
+/**
+ * Lee la dirección fiscal del customer, resuelve el régimen y alinea
+ * `tax_exempt` y el pie de factura. Idempotente: si el customer ya está como
+ * debe, no escribe (así el `customer.updated` que dispara nuestro propio
+ * update no provoca otro update).
+ */
+async function syncCustomerRegimen(
+  stripe: Stripe,
+  customerId: string,
+): Promise<RegimenAplicado> {
+  const customer = await stripe.customers.retrieve(customerId);
+  if ("deleted" in customer) {
+    throw new Error(`Customer ${customerId} borrado en Stripe`);
   }
-  if (Object.keys(patch).length === 0) return;
+  const regimen = resolveRegimenFiscal(customer.address);
+  const patch = buildCustomerRegimenPatch(customer, regimen);
+  if (patch) {
+    await stripe.customers.update(customerId, patch);
+  }
+  return { regimen, address: customer.address ?? null };
+}
 
-  await stripe.customers.update(customerId, patch);
+/**
+ * Alinea `default_tax_rates` de una suscripción viva con el régimen y apaga
+ * `automatic_tax` si seguía activo de la etapa Stripe Tax. Devuelve `true`
+ * si escribió. Las subs `canceled`/`incomplete_expired` son inmutables y se
+ * ignoran.
+ */
+async function syncSubscriptionRegimen(
+  stripe: Stripe,
+  sub: Stripe.Subscription,
+  regimen: RegimenFiscal,
+): Promise<boolean> {
+  if (!esSubscriptionActualizable(sub.status)) return false;
+  const patch = buildSubscriptionRegimenPatch(sub, regimen, getIgicTaxRateId());
+  if (!patch) return false;
+  await stripe.subscriptions.update(sub.id, patch);
+  return true;
+}
+
+/** Espeja el régimen en `clinicBilling` para la UI. */
+async function persistRegimen(
+  ctx: ActionCtx,
+  clinicId: Id<"clinics">,
+  { regimen, address }: RegimenAplicado,
+): Promise<void> {
+  await ctx.runMutation(internal.billing.internal.setRegimenFiscal, {
+    clinicId,
+    regimenFiscal: regimen,
+    paisFiscal: address?.country ?? undefined,
+    codigoPostalFiscal: address?.postal_code ?? undefined,
+  });
 }
 
 /**
@@ -426,16 +507,16 @@ export const startTrialForClinic = internalAction({
         trial_settings: {
           end_behavior: { missing_payment_method: "create_invoice" },
         },
-        // Stripe Tax: calcula IVA automáticamente al emitir facturas. Si el
-        // admin no completó Checkout (donde se recoge NIF/CIF + address), la
-        // primera factura post-trial saldrá sin tax — el correo
-        // `trial_will_end` debe insistir en completar datos antes del final
-        // del trial.
-        automatic_tax: { enabled: true },
+        // Sin impuesto todavía: la dirección fiscal se conoce al completar
+        // Checkout y es ahí (`finalizeCheckout`) donde se fija el IGIC o la
+        // inversión del sujeto pasivo, en la misma llamada que emite la
+        // primera factura. Nunca `automatic_tax` (ver `_taxHelpers.ts`).
       },
       // M-2: clave de idempotencia por clínica. Si la action se reintenta tras
       // crear la sub pero antes de persistirla (timeout/fallo parcial), Stripe
-      // devuelve la MISMA sub en vez de crear una segunda sub de trial.
+      // devuelve la MISMA sub en vez de crear una segunda sub de trial. Ojo:
+      // reutilizar la clave con un body distinto dentro de las 24 h de
+      // ventana da un 400 de Stripe; se autocorrige cuando la clave caduca.
       { idempotencyKey: `trial-sub-${clinicId}` },
     );
 
@@ -455,6 +536,12 @@ export const startTrialForClinic = internalAction({
       currentPeriodEnd,
       cantidadFisios: quantity,
       variante,
+    });
+    // Explícito para que la UI muestre "Pendiente de dirección fiscal" en vez
+    // de un hueco.
+    await ctx.runMutation(internal.billing.internal.setRegimenFiscal, {
+      clinicId,
+      regimenFiscal: "desconocido",
     });
 
     return { ok: true, trialEnd } as const;
@@ -624,52 +711,53 @@ export const createCheckoutSession = action({
       ? `${appUrl}/billing-return.html?status=cancel`
       : `${appUrl}/mi-clinica/suscripcion?cancel=1`;
 
-    // Bifurcación por estado:
-    //   - `trialing`: la sub S1 ya existe y solo necesitamos recoger el
-    //     método de pago. Usamos `mode: 'setup'` y, en el webhook
-    //     `checkout.session.completed`, adjuntamos el PaymentMethod a S1 y
-    //     ponemos `trial_end: 'now'` para terminar el trial → Stripe cobra
-    //     y la sub pasa a `active`. Una única sub durante toda la vida.
-    //   - `canceled | none | incomplete`: necesitamos crear una nueva sub
-    //     (Stripe no permite revivir una sub `canceled`). `mode:
-    //     'subscription'` crea S2 sin trial (los prices v2 base/ilimitado no
-    //     tienen `trial_period_days` configurado a nivel de Price). El webhook
-    //     persiste el `stripeSubscriptionId` nuevo en `clinicBilling`.
+    // Todo Checkout es `mode: 'setup'`: recoge tarjeta, dirección fiscal y
+    // NIF sin cobrar nada. El cobro lo hace después `finalizeCheckout` (webhook
+    // `checkout.session.completed`), que ya conoce la dirección y puede fijar
+    // el impuesto correcto (IGIC vs inversión del sujeto pasivo) en la misma
+    // llamada que emite la primera factura. Un `mode: 'subscription'`
+    // cobraría dentro del propio Checkout, antes de saber el código postal.
     //
-    // Cumplimiento fiscal España (B2B), común a ambos modos:
+    // La `action` de la sesión le dice al finalize qué hacer:
+    //   - `attach_pm_end_trial` (trialing): la S1 ya existe; adjuntar el PM y
+    //     terminar el trial con `trial_end: 'now'`. Una única sub durante
+    //     toda la vida.
+    //   - `create_subscription` (canceled | none | incomplete | trial
+    //     vencido): Stripe no permite revivir una sub `canceled`; el finalize
+    //     crea la S2 en servidor con el PM y los tax rates.
+    //
+    // Cumplimiento fiscal España (B2B):
     //   - `tax_id_collection.required: 'if_supported'`: pide NIF/CIF al
-    //     comprador. Stripe lo guarda en el customer y lo incluye en la
-    //     factura.
+    //     comprador (para España resulta obligatorio). Stripe lo guarda en el
+    //     customer y lo incluye en la factura.
     //   - `billing_address_collection: 'required'`: dirección fiscal
-    //     completa (calle/CP/ciudad), obligatoria en factura B2B España.
+    //     completa (calle/CP/ciudad). Sobre su CP decide `resolveRegimenFiscal`.
     //   - `customer_update`: tras Checkout, Stripe actualiza
     //     name/address/tax_id en el customer existente.
-    //   - `payment_method_collection: 'always'` (solo subscription): tras
-    //     una cancelación, evita que Stripe reutilice un método caducado.
-    //   - `automatic_tax` (solo subscription): aplica al invoice del nuevo
-    //     sub. En `trialing` el `automatic_tax` ya está activo en S1 desde
-    //     `startTrialForClinic`, así que la factura post-trial llevará IVA.
 
     const estado = data.billing?.estadoLocal ?? "none";
-    const useSetupMode = estado === "trialing";
+    const esTrial = estado === "trialing";
+    const checkoutAction: CheckoutAction = esTrial
+      ? "attach_pm_end_trial"
+      : "create_subscription";
 
-    // Variante efectiva de la sesión. En modo setup (trialing) el arg se
-    // ignora: la S1 ya existe con su price y cambiarlo aquí puentearía el
-    // flujo `setPlanVariante` (proration). No lanzamos para no convertir en
-    // error una carrera benigna de UI (el estado cambió entre render y click).
+    // Variante efectiva de la sesión. Durante el trial el arg se ignora: la
+    // S1 ya existe con su price y cambiarlo aquí puentearía el flujo
+    // `setPlanVariante` (proration). No lanzamos para no convertir en error
+    // una carrera benigna de UI (el estado cambió entre render y click).
     const variantePersistida: PlanVariante = data.billing?.variante ?? "base";
-    const varianteEfectiva: PlanVariante = useSetupMode
+    const varianteEfectiva: PlanVariante = esTrial
       ? variantePersistida
       : (varianteArg ?? variantePersistida);
-    if (useSetupMode && varianteArg && varianteArg !== variantePersistida) {
+    if (esTrial && varianteArg && varianteArg !== variantePersistida) {
       console.warn(
-        `[billing] createCheckoutSession: variante '${varianteArg}' ignorada en modo setup (clinic=${clinicId})`,
+        `[billing] createCheckoutSession: variante '${varianteArg}' ignorada durante el trial (clinic=${clinicId})`,
       );
     }
 
     // Mismo guard que `setPlanVariante`: no se puede contratar la variante
     // base con más pacientes vinculados que su cap.
-    if (!useSetupMode && varianteEfectiva === "base") {
+    if (!esTrial && varianteEfectiva === "base") {
       const { excede, limite } = excedeCapBase(
         Math.max(1, data.cantidadFisios),
         data.cantidadPacientes,
@@ -689,7 +777,7 @@ export const createCheckoutSession = action({
     // reconfirmarán desde el priceId. Si el usuario abandona el Checkout la
     // variante queda cambiada — aceptable en pre-checkout (la UI se
     // inicializa desde ella).
-    if (!useSetupMode && varianteArg && varianteArg !== variantePersistida) {
+    if (!esTrial && varianteArg && varianteArg !== variantePersistida) {
       await ctx.runMutation(internal.billing.internal.upsertClinicBilling, {
         clinicId,
         variante: varianteArg,
@@ -705,82 +793,50 @@ export const createCheckoutSession = action({
       varianteEfectiva,
     );
 
-    // H-2: en modo `subscription` (reactivar / none / canceled) evitamos crear
-    // una segunda subscription mientras el customer tenga una viva en Stripe.
-    // Si hay una `active`/`trialing`, rechazamos (debe gestionarse desde el
-    // Portal). Si hay residuales `past_due`/`unpaid`/`incomplete` (una S1
-    // huérfana de un impago o de un pago SCA sin confirmar), las cancelamos
-    // antes de crear la S2 para no acabar con doble facturación.
-    if (!useSetupMode) {
+    // H-2: al reactivar (none / canceled / incomplete) no abrimos Checkout si
+    // el customer ya tiene una sub viva en Stripe (debe gestionarse desde el
+    // Portal). Solo la comprobación: la limpieza de residuales
+    // `past_due`/`unpaid`/`incomplete` la hace `finalizeCheckout` justo antes
+    // de crear la S2, para no destruir nada si el usuario abandona el Checkout.
+    if (checkoutAction === "create_subscription") {
       const existentes = await stripe.subscriptions.list({
         customer: customerId,
         status: "all",
         limit: 100,
       });
-      for (const s of existentes.data) {
-        if (s.status === "active" || s.status === "trialing") {
-          throw new ConvexError({
-            code: "SUBSCRIPTION_ALREADY_ACTIVE",
-            message:
-              "Ya existe una suscripción activa para esta clínica. Gestiónala desde el portal de pago.",
-          });
-        }
-        if (
-          s.status === "past_due" ||
-          s.status === "unpaid" ||
-          s.status === "incomplete"
-        ) {
-          try {
-            await stripe.subscriptions.cancel(s.id);
-          } catch (err) {
-            console.error(
-              `[billing] createCheckoutSession: no se pudo cancelar la sub residual ${s.id} (clinic=${clinicId})`,
-              err,
-            );
-          }
-        }
+      if (
+        existentes.data.some(
+          (s) => s.status === "active" || s.status === "trialing",
+        )
+      ) {
+        throw new ConvexError({
+          code: "SUBSCRIPTION_ALREADY_ACTIVE",
+          message:
+            "Ya existe una suscripción activa para esta clínica. Gestiónala desde el portal de pago.",
+        });
       }
     }
 
-    const session = useSetupMode
-      ? await stripe.checkout.sessions.create({
-          mode: "setup",
-          customer: customerId,
-          payment_method_types: ["card"],
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-          billing_address_collection: "required",
-          tax_id_collection: { enabled: true, required: "if_supported" },
-          customer_update: { name: "auto", address: "auto" },
-          setup_intent_data: {
-            metadata: {
-              orgId: clinicId,
-              action: "attach_pm_end_trial",
-            },
-          },
-          metadata: { orgId: clinicId },
-        })
-      : await stripe.checkout.sessions.create({
-          mode: "subscription",
-          customer: customerId,
-          line_items: [
-            {
-              price: getPriceIdForVariante(varianteEfectiva),
-              quantity: Math.max(1, data.cantidadFisios),
-            },
-          ],
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-          payment_method_collection: "always",
-          billing_address_collection: "required",
-          automatic_tax: { enabled: true },
-          tax_id_collection: { enabled: true, required: "if_supported" },
-          customer_update: { name: "auto", address: "auto" },
-          metadata: { orgId: clinicId },
-          subscription_data: {
-            metadata: { orgId: clinicId },
-          },
-        });
+    const session = await stripe.checkout.sessions.create({
+      mode: "setup",
+      customer: customerId,
+      payment_method_types: ["card"],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true, required: "if_supported" },
+      customer_update: { name: "auto", address: "auto" },
+      setup_intent_data: {
+        metadata: {
+          orgId: clinicId,
+          action: checkoutAction,
+          variante: varianteEfectiva,
+        },
+      },
+      // `action` también en la sesión: el finalize la lee sin expandir el
+      // SetupIntent.
+      metadata: { orgId: clinicId, action: checkoutAction },
+    });
 
     if (!session.url) throw new Error("Stripe no devolvió URL de checkout");
     return { url: session.url };
@@ -1157,24 +1213,88 @@ export const notifyPaymentFailed = internalAction({
 });
 
 /**
- * Envía un email de bienvenida al propietario tras completar el primer
- * checkout exitoso (`checkout.session.completed`). Idempotente vía
- * `clinicBilling.welcomeEmailSentAt`: si una clínica reactiva tras una
- * cancelación previa, no se reenvía la bienvenida.
+ * Deduce la `action` de una sesión de Checkout completada. Prioriza la
+ * metadata que grabó `createCheckoutSession`; si falta (sesión antigua),
+ * cae al estado local: con S1 en trial se adjunta el PM, si no se crea una
+ * S2. Si la action pide adjuntar pero no hay sub local, también se crea.
  */
+function resolveCheckoutAction(
+  session: Stripe.Checkout.Session,
+  setupIntent: Stripe.SetupIntent,
+  billing: { estadoLocal: string; stripeSubscriptionId?: string } | null,
+): CheckoutAction {
+  const declarada =
+    session.metadata?.["action"] ?? setupIntent.metadata?.["action"];
+  const puedeAdjuntar =
+    billing?.estadoLocal === "trialing" && !!billing.stripeSubscriptionId;
+  if (declarada === "attach_pm_end_trial") {
+    return puedeAdjuntar || billing?.stripeSubscriptionId
+      ? "attach_pm_end_trial"
+      : "create_subscription";
+  }
+  if (declarada === "create_subscription") return "create_subscription";
+  return puedeAdjuntar ? "attach_pm_end_trial" : "create_subscription";
+}
+
 /**
- * Llamada desde el webhook `checkout.session.completed` cuando la session
- * estaba en `mode: 'setup'` (caso "primer pago durante trial"). Recupera el
- * SetupIntent, adjunta el PaymentMethod al customer como default, lo asigna
- * a la subscription existente (S1) y termina el trial con `trial_end:
- * 'now'`. Stripe entonces emite `customer.subscription.updated` (status →
- * `active`) e `invoice.paid`, que actualizan el `clinicBilling` por el flujo
- * normal de webhooks.
- *
- * Idempotente: si el customer ya tiene el mismo default_payment_method y la
- * sub ya está en `active`, las llamadas a Stripe son no-ops.
+ * Anula la última factura abierta de una sub residual antes de cancelarla:
+ * si el trial venció sin tarjeta (`missing_payment_method: create_invoice`)
+ * esa factura salió sin régimen fiscal y no debe seguir en dunning una vez
+ * que la S2 cobra correctamente. Best-effort: nunca lanza.
  */
-export const finalizeSetupCheckout = internalAction({
+async function anularYCancelarSubResidual(
+  stripe: Stripe,
+  sub: Stripe.Subscription,
+  clinicId: Id<"clinics">,
+): Promise<void> {
+  const invoiceId = idDeRef(sub.latest_invoice);
+  if (invoiceId) {
+    try {
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      if (invoice.status === "open") {
+        await stripe.invoices.voidInvoice(invoiceId);
+      }
+    } catch (err) {
+      console.warn(
+        `[billing] finalizeCheckout: no se pudo anular la invoice ${invoiceId} de la sub residual ${sub.id} (clinic=${clinicId}): ${(err as Error).message}`,
+      );
+    }
+  }
+  try {
+    await stripe.subscriptions.cancel(sub.id);
+  } catch (err) {
+    console.error(
+      `[billing] finalizeCheckout: no se pudo cancelar la sub residual ${sub.id} (clinic=${clinicId})`,
+      err,
+    );
+  }
+}
+
+/**
+ * Llamada desde el webhook `checkout.session.completed`. Todo Checkout es
+ * `mode: 'setup'`: recoge tarjeta, dirección fiscal y NIF sin cobrar nada.
+ * Aquí, ya con la dirección en el customer, se decide el régimen fiscal
+ * (IGIC vs inversión del sujeto pasivo) y se emite la primera factura con el
+ * impuesto correcto:
+ *
+ *   - `attach_pm_end_trial`: adjunta el PM a la S1, fija `default_tax_rates`
+ *     y termina el trial con `trial_end: 'now'` en una sola llamada → Stripe
+ *     cobra y la sub pasa a `active` vía webhooks
+ *     (`customer.subscription.updated`, `invoice.paid`). Si el trial venció
+ *     mientras el usuario estaba en Checkout (S1 en `past_due`), se paga la
+ *     factura pendiente con la tarjeta nueva.
+ *   - `create_subscription` (canceled | none | incomplete | trial vencido):
+ *     anula y cancela residuales, crea la S2 en servidor con el PM y los tax
+ *     rates y persiste su id en `clinicBilling`. Si el banco exige reto SCA
+ *     la S2 queda `incomplete` (estado ya soportado por UI y webhooks) y
+ *     caduca sola; el usuario repite Checkout.
+ *
+ * Idempotente frente a reentregas del webhook: PM y régimen se comparan
+ * antes de escribir, el `trial_end: 'now'` solo se envía si la S1 sigue en
+ * trial y la S2 lleva `idempotencyKey` por sesión además de detectarse por
+ * `metadata.checkoutSessionId`.
+ */
+export const finalizeCheckout = internalAction({
   args: {
     clinicId: v.id("clinics"),
     sessionId: v.string(),
@@ -1185,38 +1305,38 @@ export const finalizeSetupCheckout = internalAction({
       { clinicId },
     );
     const customerId = data.billing?.stripeCustomerId;
-    const subId = data.billing?.stripeSubscriptionId;
-    if (!customerId || !subId) {
+    if (!customerId) {
       console.warn(
-        `[billing] finalizeSetupCheckout sin customerId/subId locales clinic=${clinicId}; abortando.`,
+        `[billing] finalizeCheckout sin customerId local clinic=${clinicId}; abortando.`,
       );
       return;
     }
 
     const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const setupIntentId =
-      typeof session.setup_intent === "string"
-        ? session.setup_intent
-        : session.setup_intent?.id;
+    if (session.mode !== "setup") {
+      console.warn(
+        `[billing] finalizeCheckout session=${sessionId} con mode=${session.mode}; solo se procesan sesiones 'setup'.`,
+      );
+      return;
+    }
+    const setupIntentId = idDeRef(session.setup_intent);
     if (!setupIntentId) {
       console.warn(
-        `[billing] finalizeSetupCheckout session=${sessionId} sin setup_intent; abortando.`,
+        `[billing] finalizeCheckout session=${sessionId} sin setup_intent; abortando.`,
       );
       return;
     }
 
     const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
-    const pmId =
-      typeof setupIntent.payment_method === "string"
-        ? setupIntent.payment_method
-        : setupIntent.payment_method?.id;
+    const pmId = idDeRef(setupIntent.payment_method);
     if (!pmId) {
       console.warn(
-        `[billing] finalizeSetupCheckout setupIntent=${setupIntentId} sin payment_method; abortando.`,
+        `[billing] finalizeCheckout setupIntent=${setupIntentId} sin payment_method; abortando.`,
       );
       return;
     }
+    const action = resolveCheckoutAction(session, setupIntent, data.billing);
 
     await stripe.customers.update(customerId, {
       invoice_settings: { default_payment_method: pmId },
@@ -1237,99 +1357,346 @@ export const finalizeSetupCheckout = internalAction({
       { clinicId, subscriptionDefault: pmId, customerDefault: pmId },
     );
 
-    // El comportamiento depende del estado real de la subscription: si el
-    // trial ya expiró (end_behavior `create_invoice` dejó una invoice abierta
-    // y la sub en `past_due`/`unpaid`), poner `trial_end` NO cobra esa
-    // invoice; hay que pagarla con el método nuevo. Si el trial sigue vigente,
-    // lo terminamos con `trial_end: 'now'` para disparar el primer cobro.
-    const sub = await stripe.subscriptions.retrieve(subId);
-    if (sub.status === "past_due" || sub.status === "unpaid") {
-      await stripe.subscriptions.update(subId, {
-        default_payment_method: pmId,
-      });
-      const latestInvoiceId =
-        typeof sub.latest_invoice === "string"
-          ? sub.latest_invoice
-          : sub.latest_invoice?.id;
-      if (latestInvoiceId) {
-        try {
-          await stripe.invoices.pay(latestInvoiceId, { payment_method: pmId });
-        } catch (err) {
-          console.error(
-            `[billing] finalizeSetupCheckout: error pagando invoice ${latestInvoiceId} clinic=${clinicId}`,
-            err,
-          );
+    // Régimen fiscal: SIEMPRE antes de emitir factura alguna. Checkout exige
+    // la dirección, así que `desconocido` aquí es una anomalía que hay que ver.
+    const aplicado = await syncCustomerRegimen(stripe, customerId);
+    if (aplicado.regimen === "desconocido") {
+      console.warn(
+        `[billing] finalizeCheckout: customer=${customerId} sin dirección fiscal tras Checkout (clinic=${clinicId}); la factura saldrá sin régimen.`,
+      );
+    }
+    const taxRates = subscriptionTaxRatesFor(
+      aplicado.regimen,
+      getIgicTaxRateId(),
+    );
+    const defaultTaxRates: Stripe.Emptyable<string[]> =
+      taxRates.length > 0 ? taxRates : "";
+
+    const subIdLocal = data.billing?.stripeSubscriptionId;
+    if (action === "attach_pm_end_trial" && subIdLocal) {
+      const sub = await stripe.subscriptions.retrieve(subIdLocal);
+      if (sub.status === "past_due" || sub.status === "unpaid") {
+        // El trial venció entre abrir y completar el Checkout:
+        // `end_behavior: create_invoice` dejó una factura abierta. Poner
+        // `trial_end` no la cobra; hay que pagarla con el método nuevo. Esa
+        // factura ya está finalizada, así que sale con el régimen que tuviera
+        // (normalmente ninguno); las siguientes ya llevan el correcto.
+        await stripe.subscriptions.update(subIdLocal, {
+          default_payment_method: pmId,
+          default_tax_rates: defaultTaxRates,
+          automatic_tax: { enabled: false },
+        });
+        const latestInvoiceId = idDeRef(sub.latest_invoice);
+        if (latestInvoiceId) {
+          try {
+            await stripe.invoices.pay(latestInvoiceId, {
+              payment_method: pmId,
+            });
+          } catch (err) {
+            console.error(
+              `[billing] finalizeCheckout: error pagando invoice ${latestInvoiceId} clinic=${clinicId}`,
+              err,
+            );
+          }
         }
+      } else if (sub.status === "trialing") {
+        // Una sola llamada: el régimen viaja con la request que genera la
+        // primera factura. Stripe acepta el literal "now" (SDK 20 lo tipa
+        // como `'now' | number`); un timestamp `Date.now()` puede llegar ya
+        // en el pasado por latencia y ser rechazado.
+        await stripe.subscriptions.update(subIdLocal, {
+          default_payment_method: pmId,
+          trial_end: "now",
+          proration_behavior: "none",
+          default_tax_rates: defaultTaxRates,
+          automatic_tax: { enabled: false },
+        });
+      } else if (esSubscriptionActualizable(sub.status)) {
+        // Reentrega del webhook con la S1 ya `active`: no volver a tocar el
+        // trial, solo asegurar PM y régimen.
+        await stripe.subscriptions.update(subIdLocal, {
+          default_payment_method: pmId,
+          default_tax_rates: defaultTaxRates,
+          automatic_tax: { enabled: false },
+        });
+      } else {
+        console.warn(
+          `[billing] finalizeCheckout: la S1 ${subIdLocal} está ${sub.status} y no admite cambios (clinic=${clinicId}).`,
+        );
       }
     } else {
-      // Stripe acepta el literal "now" (SDK 20 lo tipa como `'now' | number`);
-      // un timestamp `Date.now()` puede llegar ya en el pasado por latencia y
-      // ser rechazado con "trial_end is in the past".
-      await stripe.subscriptions.update(subId, {
-        default_payment_method: pmId,
-        trial_end: "now",
-        proration_behavior: "none",
+      // create_subscription
+      const existentes = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 100,
       });
+      const yaCreada = existentes.data.find(
+        (s) => s.metadata?.["checkoutSessionId"] === sessionId,
+      );
+      const viva = existentes.data.find(
+        (s) => s.status === "active" || s.status === "trialing",
+      );
+      if (yaCreada) {
+        // Reentrega: la S2 de esta sesión ya existe. Solo asegurar el puntero.
+        await ctx.runMutation(
+          internal.billing.internal.upsertStripeSubscriptionId,
+          { clinicId, stripeSubscriptionId: yaCreada.id },
+        );
+      } else if (viva) {
+        // H-2 defensivo: alguien activó otra sub entre abrir y completar el
+        // Checkout. No crear una segunda; los webhooks de la viva mandan.
+        console.warn(
+          `[billing] finalizeCheckout: el customer ${customerId} ya tiene la sub ${viva.id} ${viva.status}; no se crea S2 (clinic=${clinicId}).`,
+        );
+      } else {
+        for (const s of existentes.data) {
+          if (
+            s.status === "past_due" ||
+            s.status === "unpaid" ||
+            s.status === "incomplete"
+          ) {
+            await anularYCancelarSubResidual(stripe, s, clinicId);
+          }
+        }
+
+        const variante: PlanVariante = data.billing?.variante ?? "base";
+        const quantity = Math.max(1, data.cantidadFisios);
+        const sub = await stripe.subscriptions.create(
+          {
+            customer: customerId,
+            items: [{ price: getPriceIdForVariante(variante), quantity }],
+            default_payment_method: pmId,
+            default_tax_rates: taxRates.length > 0 ? taxRates : undefined,
+            metadata: { orgId: clinicId, checkoutSessionId: sessionId },
+            // La tarjeta se guardó en Checkout para uso off-session; si el
+            // banco exige reto igualmente, la sub queda `incomplete` y
+            // caduca sola en vez de perder el PM ya adjuntado.
+            payment_behavior: "allow_incomplete",
+            off_session: true,
+          },
+          { idempotencyKey: `sub-checkout-${sessionId}` },
+        );
+
+        await ctx.runMutation(
+          internal.billing.internal.upsertStripeSubscriptionId,
+          { clinicId, stripeSubscriptionId: sub.id },
+        );
+        // Aplicar el estado real de la S2 inmediatamente: sus webhooks
+        // (`customer.subscription.created`, `invoice.paid`) pueden llegar
+        // ANTES de que se persista el puntero y el filtro anti-zombi (H-1)
+        // los descartaría como "sub ajena". Sin `eventCreatedMs` para no
+        // sellar el ordering.
+        const item = sub.items.data[0];
+        await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
+          clinicId,
+          status: sub.status,
+          trialEnd: sub.trial_end ? sub.trial_end * 1000 : undefined,
+          currentPeriodEnd: item?.current_period_end
+            ? item.current_period_end * 1000
+            : undefined,
+          cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+          quantity: item?.quantity,
+          stripeSubscriptionId: sub.id,
+        });
+        await syncStripeCustomerTierLabel(stripe, customerId, quantity, variante);
+      }
+    }
+
+    await persistRegimen(ctx, clinicId, aplicado);
+  },
+});
+
+/**
+ * Recalcula y aplica el régimen fiscal de una clínica a partir de la
+ * dirección actual de su customer. La dispara el webhook `customer.updated`
+ * cuando cambia `address` o `tax_exempt` (el cliente editó la dirección en el
+ * Customer Portal, o soporte en el Dashboard) y sirve también para reparar a
+ * mano una clínica concreta.
+ *
+ * Nunca lanza: un fallo transitorio de Stripe no debe hacer que el webhook
+ * reintente en bucle. Idempotente: si customer y sub ya están alineados, no
+ * escribe, así que el `customer.updated` que provoca nuestro propio update
+ * termina aquí sin efectos.
+ */
+export const syncRegimenFiscal = internalAction({
+  args: { clinicId: v.id("clinics") },
+  handler: async (ctx, { clinicId }): Promise<void> => {
+    try {
+      const data = await ctx.runQuery(
+        internal.billing.internal.getBillingContext,
+        { clinicId },
+      );
+      const customerId = data.billing?.stripeCustomerId;
+      if (!customerId) return;
+
+      const stripe = getStripeClient();
+      const aplicado = await syncCustomerRegimen(stripe, customerId);
+
+      const subId = data.billing?.stripeSubscriptionId;
+      if (subId) {
+        const sub = await stripe.subscriptions
+          .retrieve(subId)
+          .catch(() => null);
+        if (sub) {
+          await syncSubscriptionRegimen(stripe, sub, aplicado.regimen);
+        }
+      }
+
+      await persistRegimen(ctx, clinicId, aplicado);
+    } catch (err) {
+      console.warn(
+        `[billing] syncRegimenFiscal falló para clinic=${clinicId}: ${(err as Error).message}`,
+      );
     }
   },
 });
 
 /**
- * Llamada desde el webhook `checkout.session.completed` cuando la session
- * estaba en `mode: 'subscription'` (caso "reactivar tras canceled"). Stripe
- * acaba de crear una nueva subscription S2; aquí persistimos su ID en
- * `clinicBilling.stripeSubscriptionId` para que las acciones posteriores
- * (`cancelSubscription`, `reactivateSubscription`, etc.) operen contra S2 y
- * no contra la S1 huérfana. Esto corrige un bug arquitectónico
- * pre-existente.
+ * Backfill puntual para la migración de Stripe Tax a Tax Rates manuales:
+ * recorre todas las clínicas con customer, resuelve su régimen a partir de la
+ * dirección del customer y alinea `tax_exempt`/footer del customer y
+ * `default_tax_rates`/`automatic_tax` de la sub viva. Con `apply: false`
+ * (default) solo informa de lo que cambiaría.
+ *
+ * Errores capturados por fila, como `backfillCustomerDescriptions`: las
+ * filas que apuntan a customers de modo test fallan con `No such customer`
+ * y no deben abortar el barrido.
+ *
+ *   npx convex run billing/actions:backfillRegimenFiscal '{"apply": false}'
  */
-export const finalizeSubscriptionCheckout = internalAction({
-  args: {
-    clinicId: v.id("clinics"),
-    sessionId: v.string(),
-  },
-  handler: async (ctx, { clinicId, sessionId }): Promise<void> => {
-    const stripe = getStripeClient();
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const newSubId =
-      typeof session.subscription === "string"
-        ? session.subscription
-        : session.subscription?.id;
-    if (!newSubId) {
-      console.warn(
-        `[billing] finalizeSubscriptionCheckout session=${sessionId} sin subscription; abortando.`,
-      );
-      return;
-    }
-    await ctx.runMutation(
-      internal.billing.internal.upsertStripeSubscriptionId,
-      { clinicId, stripeSubscriptionId: newSubId },
+export const backfillRegimenFiscal = internalAction({
+  args: { apply: v.optional(v.boolean()) },
+  handler: async (
+    ctx,
+    { apply = false },
+  ): Promise<{
+    apply: boolean;
+    revisadas: number;
+    cambios: {
+      clinicId: Id<"clinics">;
+      nombre: string;
+      customerId: string;
+      regimen: RegimenFiscal;
+      codigoPostal: string | null;
+      customerPatch: boolean;
+      subPatch: boolean;
+    }[];
+    yaCorrectas: number;
+    fallidas: { clinicId: Id<"clinics">; customerId: string; motivo: string }[];
+  }> => {
+    const filas: {
+      clinicId: Id<"clinics">;
+      stripeCustomerId: string;
+      stripeSubscriptionId: string | undefined;
+      nombre: string;
+    }[] = await ctx.runQuery(
+      internal.billing.internal.listBillingConCustomer,
+      {},
     );
+    const stripe = getStripeClient();
+    const igicId = getIgicTaxRateId();
 
-    // Aplicar el estado real de la S2 inmediatamente. Sus webhooks
-    // (`customer.subscription.created`, `invoice.paid`) suelen llegar ANTES de
-    // que esta action persista el puntero, por lo que el filtro anti-zombi
-    // (H-1) los descarta como "sub ajena" mientras el puntero apunta a la S1.
-    // Sin este sync la clínica seguiría `canceled` (bloqueada) hasta el
-    // siguiente evento de la S2, que puede tardar un ciclo de facturación.
-    // No pasamos `eventCreatedMs` para no sellar el ordering: los eventos
-    // legítimos de la S2 que lleguen después deben poder aplicarse.
-    const sub = await stripe.subscriptions.retrieve(newSubId);
-    const item = sub.items.data[0];
-    await ctx.runMutation(internal.billing.internal.applySubscriptionEvent, {
-      clinicId,
-      status: sub.status,
-      trialEnd: sub.trial_end ? sub.trial_end * 1000 : undefined,
-      currentPeriodEnd: item?.current_period_end
-        ? item.current_period_end * 1000
-        : undefined,
-      cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
-      quantity: item?.quantity,
-      stripeSubscriptionId: newSubId,
-    });
+    const cambios: {
+      clinicId: Id<"clinics">;
+      nombre: string;
+      customerId: string;
+      regimen: RegimenFiscal;
+      codigoPostal: string | null;
+      customerPatch: boolean;
+      subPatch: boolean;
+    }[] = [];
+    let yaCorrectas = 0;
+    const fallidas: {
+      clinicId: Id<"clinics">;
+      customerId: string;
+      motivo: string;
+    }[] = [];
+
+    for (const fila of filas) {
+      try {
+        const customer = await stripe.customers.retrieve(fila.stripeCustomerId);
+        if ("deleted" in customer) {
+          fallidas.push({
+            clinicId: fila.clinicId,
+            customerId: fila.stripeCustomerId,
+            motivo: "customer borrado en Stripe",
+          });
+          continue;
+        }
+        const regimen = resolveRegimenFiscal(customer.address);
+        const customerPatch = buildCustomerRegimenPatch(customer, regimen);
+
+        let sub: Stripe.Subscription | null = null;
+        if (fila.stripeSubscriptionId) {
+          sub = await stripe.subscriptions
+            .retrieve(fila.stripeSubscriptionId)
+            .catch(() => null);
+        }
+        const subPatch =
+          sub && esSubscriptionActualizable(sub.status)
+            ? buildSubscriptionRegimenPatch(sub, regimen, igicId)
+            : null;
+
+        if (!customerPatch && !subPatch) {
+          yaCorrectas++;
+          if (apply) {
+            await ctx.runMutation(internal.billing.internal.setRegimenFiscal, {
+              clinicId: fila.clinicId,
+              regimenFiscal: regimen,
+              paisFiscal: customer.address?.country ?? undefined,
+              codigoPostalFiscal: customer.address?.postal_code ?? undefined,
+            });
+          }
+          continue;
+        }
+
+        cambios.push({
+          clinicId: fila.clinicId,
+          nombre: fila.nombre,
+          customerId: fila.stripeCustomerId,
+          regimen,
+          codigoPostal: customer.address?.postal_code ?? null,
+          customerPatch: customerPatch !== null,
+          subPatch: subPatch !== null,
+        });
+
+        if (apply) {
+          if (customerPatch) {
+            await stripe.customers.update(fila.stripeCustomerId, customerPatch);
+          }
+          if (sub && subPatch) {
+            await stripe.subscriptions.update(sub.id, subPatch);
+          }
+          await ctx.runMutation(internal.billing.internal.setRegimenFiscal, {
+            clinicId: fila.clinicId,
+            regimenFiscal: regimen,
+            paisFiscal: customer.address?.country ?? undefined,
+            codigoPostalFiscal: customer.address?.postal_code ?? undefined,
+          });
+        }
+      } catch (err) {
+        fallidas.push({
+          clinicId: fila.clinicId,
+          customerId: fila.stripeCustomerId,
+          motivo: (err as Error).message,
+        });
+      }
+    }
+
+    console.log(
+      `[billing] backfillRegimenFiscal apply=${apply}: ${cambios.length} cambio(s), ${yaCorrectas} ya correcta(s), ${fallidas.length} fallida(s)`,
+    );
+    return { apply, revisadas: filas.length, cambios, yaCorrectas, fallidas };
   },
 });
 
+/**
+ * Envía un email de bienvenida al propietario tras completar el primer
+ * checkout exitoso (`checkout.session.completed`). Idempotente vía
+ * `clinicBilling.welcomeEmailSentAt`: si una clínica reactiva tras una
+ * cancelación previa, no se reenvía la bienvenida.
+ */
 export const notifyCheckoutCompleted = internalAction({
   args: { clinicId: v.id("clinics") },
   handler: async (ctx, { clinicId }): Promise<void> => {

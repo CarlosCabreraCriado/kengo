@@ -238,6 +238,7 @@
             <span class="plan-hero__currency">€</span>
             <span class="plan-hero__amount">{{ precioActualEur() | number:'1.0-0' }}</span>
             <span class="plan-hero__period">/mes</span>
+            <span class="plan-hero__tax">+ impuestos</span>
           </p>
         </div>
       }
@@ -269,7 +270,7 @@
             ></ui2-progress-bar>
             @if (tierLleno() && siguientePlan(); as siguiente) {
               <p class="stat__hint">
-                +1 fisio más → {{ siguiente.nombre }} ({{ precioDe(siguiente) | number:'1.0-0' }} €/mes)
+                +1 fisio más → {{ siguiente.nombre }} ({{ precioDe(siguiente) | number:'1.0-0' }} €/mes + imp.)
               </p>
             }
           </div>
@@ -306,6 +307,19 @@
                 <span class="material-symbols-outlined" aria-hidden="true">event</span>
                 {{ suscripcion()!.currentPeriodEnd | date:'dd/MM/yyyy' }}
               </span>
+            </div>
+          }
+
+          <!-- Régimen fiscal aplicado en factura: IGIC (Canarias) o inversión
+               del sujeto pasivo, decidido por la dirección fiscal de Stripe. -->
+          @if (regimenFiscalVm(); as regimen) {
+            <div class="stat stat--billing stat--fiscal">
+              <span class="stat__label">Impuestos en factura</span>
+              <span class="stat__date">
+                <span class="material-symbols-outlined" aria-hidden="true">{{ regimen.icon }}</span>
+                {{ regimen.texto }}
+              </span>
+              <p class="stat__hint">{{ regimen.detalle }}</p>
             </div>
           }
         </div>
