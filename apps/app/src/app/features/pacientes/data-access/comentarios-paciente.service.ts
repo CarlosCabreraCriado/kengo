@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ConvexService } from '../../../core/convex/convex.service';
 import { api } from '../../../../../../../convex/_generated/api';
+import type { Id } from '../../../../../../../convex/_generated/dataModel';
 import type { ComentariosPacienteResponse } from '../../../../types/global';
 
 interface AlertDoc {
@@ -22,12 +23,23 @@ interface AlertDoc {
 export class ComentariosPacienteService {
   private convex = inject(ConvexService);
 
-  async getComentarios(pacienteId: string): Promise<ComentariosPacienteResponse> {
+  /**
+   * `clinicId` = clínica activa del fisio: un paciente multiclínica tiene
+   * comentarios en cada clínica y solo deben verse los de la activa.
+   */
+  async getComentarios(
+    pacienteId: string,
+    clinicId?: string | null,
+  ): Promise<ComentariosPacienteResponse> {
     // Lectura del modelo nuevo `physioAlerts`. Filtra a `tipo: comentario`
     // para mantener la semántica del legacy `listCommentsByPatient`.
     const result = (await this.convex.query(
       api.alerts.queries.listByPaciente,
-      { pacienteId, tipo: 'comentario' },
+      {
+        pacienteId,
+        tipo: 'comentario',
+        clinicId: (clinicId ?? undefined) as Id<'clinics'> | undefined,
+      },
     )) as { items: AlertDoc[]; pendientes: number; total: number };
 
     const comentarios = result.items.map((a) => ({
@@ -62,10 +74,16 @@ export class ComentariosPacienteService {
     });
   }
 
-  async marcarTodasRevisadas(pacienteId: string): Promise<void> {
+  async marcarTodasRevisadas(
+    pacienteId: string,
+    clinicId?: string | null,
+  ): Promise<void> {
     await this.convex.mutation(
       api.alerts.mutations.markAllAsReadForPatient,
-      { pacienteId },
+      {
+        pacienteId,
+        clinicId: (clinicId ?? undefined) as Id<'clinics'> | undefined,
+      },
     );
   }
 }

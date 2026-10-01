@@ -548,6 +548,49 @@ ${codeBlock(codigo, "Tu código de acceso:")}
   );
 }
 
+/**
+ * Aviso a un paciente que YA usaba Kengo en otra clínica y al que una clínica
+ * nueva acaba de vincular. A diferencia de `patientInvitationTemplate`, no le
+ * invita a registrarse (ya tiene cuenta y el registro le respondería "este
+ * email ya está registrado") ni incluye código de acceso.
+ */
+export function patientAddedToClinicTemplate(
+  nombre: string,
+  accessUrl: string,
+  nombreFisio: string | null,
+  nombreClinica: string | null,
+): string {
+  const clinica = nombreClinica
+    ? `<strong>${nombreClinica}</strong>`
+    : "una nueva clínica";
+  const remitente = nombreFisio
+    ? `<strong>${nombreFisio}</strong> te ha añadido como paciente de ${clinica}`
+    : `Te han añadido como paciente de ${clinica}`;
+
+  const content = `
+<h2 style="margin: 0 0 20px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  ¡Hola ${nombre}!
+</h2>
+<p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  ${remitente} en <strong style="color: ${BRAND_COLOR};">Kengo</strong>.
+</p>
+<p style="margin: 0 0 24px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+  No necesitas registrarte de nuevo: entra con tu cuenta de siempre y elige la clínica desde el selector de clínicas. También puedes pulsar el botón para entrar directamente:
+</p>
+${ctaButton(accessUrl, "Acceder a mis ejercicios")}
+<p style="margin: 0 0 12px 0; color: ${BRAND_COLOR}; font-size: 14px; font-weight: 500; line-height: 1.6; text-align: center;">
+  El enlace expira en 30 días.
+</p>
+<p style="margin: 24px 0 0 0; color: #888888; font-size: 13px; line-height: 1.5; text-align: center;">
+  Cada clínica solo ve los planes y el seguimiento que gestiona ella. Si no esperabas este mensaje, puedes ignorarlo.
+</p>`;
+
+  return baseLayout(
+    content,
+    "Este email fue enviado por Kengo.<br>Si no esperabas este mensaje, puedes ignorarlo.",
+  );
+}
+
 function fechaLarga(ms: number | undefined): string {
   if (!ms) return "la próxima renovación";
   return new Date(ms).toLocaleDateString("es-ES", {

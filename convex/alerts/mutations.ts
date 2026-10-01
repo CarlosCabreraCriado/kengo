@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "../_helpers/permissions";
 import {
   assertFisioInClinic,
   getManagedClinicIds,
+  getSharedClinicIdsForPaciente,
 } from "../_helpers/patientAccess";
 
 /**
@@ -80,24 +81,33 @@ export const markAllAsRead = mutation({
 export const markAllAsReadForPatient = mutation({
   args: {
     pacienteId: v.string(),
+    // Clínica activa del fisio (opcional para clientes antiguos).
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args): Promise<{ revisadas: number }> => {
     const user = await getAuthenticatedUser(ctx);
     const targetId = args.pacienteId as Id<"users">;
 
-    const membership = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_userId", (q) => q.eq("userId", targetId))
-      .first();
-    if (!membership) return { revisadas: 0 };
-    await assertFisioInClinic(ctx, user._id, membership.clinicId);
+    // Solo se tocan alertas de clínicas que el fisio gestiona y comparte con
+    // el paciente: un paciente multiclínica tiene alertas de otras clínicas
+    // que este fisio no debe marcar.
+    const clinicas = new Set<Id<"clinics">>(
+      await getSharedClinicIdsForPaciente(
+        ctx,
+        user._id,
+        targetId,
+        args.clinicId,
+      ),
+    );
 
-    const pendientes = await ctx.db
-      .query("physioAlerts")
-      .withIndex("by_pacienteId_estado", (q) =>
-        q.eq("pacienteId", targetId).eq("estado", "pendiente"),
-      )
-      .collect();
+    const pendientes = (
+      await ctx.db
+        .query("physioAlerts")
+        .withIndex("by_pacienteId_estado", (q) =>
+          q.eq("pacienteId", targetId).eq("estado", "pendiente"),
+        )
+        .collect()
+    ).filter((a) => clinicas.has(a.clinicId));
 
     const fechaRevision = new Date().toISOString();
     let revisadas = 0;

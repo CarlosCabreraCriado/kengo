@@ -132,6 +132,9 @@ export const validateAndConsume = internalMutation({
   },
 });
 
+/** Vida mínima restante para reutilizar un magic link en vez de acuñar otro. */
+const MIN_VIDA_REUTILIZABLE_MS = 7 * 24 * 60 * 60 * 1000;
+
 export const getOrCreateForUser = internalMutation({
   args: {
     pacienteId: v.id("users"),
@@ -147,11 +150,17 @@ export const getOrCreateForUser = internalMutation({
       .withIndex("by_userId", (q) => q.eq("userId", args.pacienteId))
       .collect();
 
+    // Solo se reutiliza un token con margen de vida: el enlace se envía con
+    // la promesa de 30 días y reaprovechar uno a punto de caducar (p. ej. el
+    // que generó otra clínica para un paciente multiclínica) deja al paciente
+    // sin acceso a los pocos días.
     const now = new Date();
+    const minExpiracion = now.getTime() + MIN_VIDA_REUTILIZABLE_MS;
     const activo = existing.find(
       (t) =>
         t.activo &&
-        (!t.fechaExpiracion || new Date(t.fechaExpiracion) > now),
+        (!t.fechaExpiracion ||
+          new Date(t.fechaExpiracion).getTime() > minExpiracion),
     );
     if (activo) return { token: activo.token, url: buildUrl(activo.token) };
 

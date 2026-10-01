@@ -53,6 +53,8 @@ export const createPatient = action({
     accessToken?: { id: string; url: string };
     codigoAcceso?: string;
     emailEnviado?: boolean;
+    /** El paciente ya tenía cuenta en otra clínica: sin código de registro. */
+    cuentaExistente?: boolean;
   }> => {
     const firstName = args.firstName.trim();
     const lastName = args.lastName.trim();
@@ -109,6 +111,7 @@ export const createPatient = action({
     //   - LIMITE_PACIENTES_ALCANZADO → cap de pacientes de la variante base.
     let userId: string;
     let created: boolean;
+    let cuentaExistente: boolean;
     try {
       const result = await ctx.runMutation(
         internal.users.mutations.upsertPatientWithMembership,
@@ -123,6 +126,7 @@ export const createPatient = action({
       );
       userId = result.userId as unknown as string;
       created = result.created;
+      cuentaExistente = result.cuentaExistente;
     } catch (err) {
       if (err instanceof ConvexError) {
         const data = err.data as { code?: string; message?: string } | undefined;
@@ -200,15 +204,66 @@ export const createPatient = action({
 
     if (!requester) throw new Error("Usuario fisio no encontrado");
 
+    // A partir de aquí el alta YA está escrita (usuario + membresía). Ningún
+    // paso posterior debe lanzar: el fisio vería un error sobre un alta que
+    // sí se hizo, y al reintentar recibiría "ya está registrado".
+
     // Magic link de 30 días: el paciente entra sin contraseña.
-    const tokenResult = await ctx.runMutation(
-      internal.accessTokens.mutations.getOrCreateForUser,
-      {
-        pacienteId: userId as Id<"users">,
-        creadoPor: requester._id as Id<"users">,
-      },
-    );
-    const accessToken = { id: "", url: tokenResult.url };
+    let accessToken: { id: string; url: string } | undefined;
+    try {
+      const tokenResult = await ctx.runMutation(
+        internal.accessTokens.mutations.getOrCreateForUser,
+        {
+          pacienteId: userId as Id<"users">,
+          creadoPor: requester._id as Id<"users">,
+        },
+      );
+      accessToken = { id: "", url: tokenResult.url };
+    } catch (err) {
+      console.warn("[createPatient] generación de magic link falló:", err);
+    }
+
+    // Paciente que ya usaba Kengo en otra clínica: ya tiene credenciales. Ni
+    // código de registro (el registro le diría "este email ya está
+    // registrado") ni invitación: solo un aviso de la clínica nueva.
+    if (cuentaExistente) {
+      let emailEnviado = false;
+      if (accessToken) {
+        try {
+          const clinica = await ctx.runQuery(
+            internal.clinics.internal.getById,
+            { clinicId: args.clinicId },
+          );
+          const nombreFisio = `${requester.firstName ?? ""} ${requester.lastName ?? ""}`.trim();
+          // Su nombre real: el upsert no pisa los datos de una cuenta activa,
+          // así que el del formulario puede no coincidir.
+          const paciente = await ctx.runQuery(
+            internal.users.internal.resolveUser,
+            { idOrUuid: userId },
+          );
+          emailEnviado = await ctx.runAction(
+            internal.email.actions.sendPatientAddedToClinicEmail,
+            {
+              to: email,
+              nombre: paciente?.firstName || firstName,
+              accessUrl: accessToken.url,
+              nombreFisio: nombreFisio || undefined,
+              nombreClinica: clinica?.nombre || undefined,
+            },
+          );
+        } catch (err) {
+          console.warn("[createPatient] aviso de vinculación falló:", err);
+        }
+      }
+      return {
+        success: true,
+        userId: userId as string,
+        accessToken,
+        codigoAcceso: undefined,
+        emailEnviado,
+        cuentaExistente: true,
+      };
+    }
 
     // Código de acceso nominal vinculado al email del paciente — alternativa
     // al magic link si el paciente prefiere registrarse manualmente o pierde
@@ -232,7 +287,7 @@ export const createPatient = action({
     // Enviar email al paciente con magic link + código. Fire-and-forget:
     // si el envío falla, no abortamos la creación.
     let emailEnviado = false;
-    if (codigoAcceso) {
+    if (codigoAcceso && accessToken) {
       try {
         const clinica = await ctx.runQuery(
           internal.clinics.internal.getById,
@@ -261,6 +316,7 @@ export const createPatient = action({
       accessToken,
       codigoAcceso,
       emailEnviado,
+      cuentaExistente: false,
     };
   },
 });

@@ -481,10 +481,6 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
   }
 
   // Computeds
-  readonly idsClinicas = computed(
-    () => this.sessionService.usuario()?.clinicas.map((c) => c.clinicId) ?? [],
-  );
-
   /**
    * Visible para fisios y admins en modo fisio. La diferencia de
    * comportamiento (admin puede ejecutar, fisio recibe diálogo informativo)
@@ -666,7 +662,11 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     try {
       const snap = (await this.convex.query(
         api.snapshots.queries.getPatientMetricsByPaciente,
-        { pacienteId: pacienteId as never, ventana: '15d' },
+        {
+          pacienteId: pacienteId as never,
+          ventana: '15d',
+          clinicId: (this.clinicaActiva.selectedClinicaId() ?? undefined) as never,
+        },
       )) as { dolorPromedio?: number } | null;
       this.dolorSnapshot.set(snap?.dolorPromedio ?? null);
     } catch (err) {
@@ -814,21 +814,27 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
   private async cargarComentarios(pacienteId: string): Promise<void> {
     this.isLoadingComentarios.set(true);
     try {
-      const response = await this.comentariosService.getComentarios(pacienteId);
+      const response = await this.comentariosService.getComentarios(
+        pacienteId,
+        this.clinicaActiva.selectedClinicaId(),
+      );
       this.comentarios.set(response.comentarios);
       this.comentariosPendientes.set(response.pendientes);
     } catch (err) {
       this.logger.error('Error cargando comentarios:', err);
+      this.toast.error('No se pudieron cargar los comentarios del paciente.');
     } finally {
       this.isLoadingComentarios.set(false);
     }
   }
 
   private cargarFisioResponsable(pacienteId: string): void {
-    const clinicas = this.idsClinicas();
-    if (!clinicas.length) return;
+    // El responsable es por clínica: el de la clínica activa, no el de la
+    // primera clínica del fisio (que puede no ser la del paciente).
+    const clinicId = this.clinicaActiva.selectedClinicaId();
+    if (!clinicId) return;
     this.asignacionesService
-      .getFisioResponsable(pacienteId, String(clinicas[0]))
+      .getFisioResponsable(pacienteId, String(clinicId))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (asignacion) => {
@@ -885,9 +891,13 @@ export class PacienteDetailComponent implements OnInit, OnDestroy {
     );
     this.comentariosPendientes.set(0);
     try {
-      await this.comentariosService.marcarTodasRevisadas(pacienteId);
+      await this.comentariosService.marcarTodasRevisadas(
+        pacienteId,
+        this.clinicaActiva.selectedClinicaId(),
+      );
     } catch (err) {
       this.logger.error('Error marcando todos:', err);
+      this.toast.error('No se pudieron marcar los comentarios como revisados.');
       this.comentarios.set(prevComentarios);
       this.comentariosPendientes.set(prevPendientes);
     }

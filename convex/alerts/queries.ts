@@ -6,6 +6,7 @@ import { esAdmin, getAuthenticatedUser } from "../_helpers/permissions";
 import {
   assertFisioInClinic,
   getManagedClinicIds,
+  getSharedClinicIdsForPaciente,
 } from "../_helpers/patientAccess";
 
 const severidad = v.union(
@@ -93,21 +94,26 @@ export const listByPaciente = query({
         v.literal("descartada"),
       ),
     ),
+    // Clínica activa del fisio. Opcional para clientes antiguos: sin ella se
+    // devuelven las alertas de todas las clínicas que comparten.
+    clinicId: v.optional(v.id("clinics")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     const targetId = args.pacienteId as Id<"users">;
 
-    // Permiso: el fisio debe gestionar al menos una clínica que comparta el
-    // paciente. Tomamos cualquier clinicId del paciente y validamos.
-    const membership = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_userId", (q) => q.eq("userId", targetId))
-      .first();
-    if (!membership) {
-      return { items: [] as Doc<"physioAlerts">[], pendientes: 0, total: 0 };
-    }
-    await assertFisioInClinic(ctx, user._id, membership.clinicId);
+    // Permiso y aislamiento: solo las alertas de clínicas que el fisio
+    // gestiona y en las que el paciente está. Antes se tomaba la primera
+    // membresía del paciente, que en un paciente multiclínica podía ser una
+    // clínica ajena al fisio y la query fallaba.
+    const clinicas = new Set<Id<"clinics">>(
+      await getSharedClinicIdsForPaciente(
+        ctx,
+        user._id,
+        targetId,
+        args.clinicId,
+      ),
+    );
 
     // Lectura: índice by_pacienteId_estado. Si filtra por estado, lo
     // aprovechamos directamente; si no, escaneamos los 3 estados manualmente.
@@ -144,6 +150,8 @@ export const listByPaciente = query({
       docs = [...pendientes, ...revisadas, ...descartadas];
       docs.sort((a, b) => b.fechaGeneracion.localeCompare(a.fechaGeneracion));
     }
+
+    docs = docs.filter((d) => clinicas.has(d.clinicId));
 
     // Filtro por tipo (en memoria; sin índice dedicado).
     if (args.tipo) {

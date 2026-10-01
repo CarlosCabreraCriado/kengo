@@ -2,7 +2,10 @@ import { v } from "convex/values";
 import { query, QueryCtx } from "../_generated/server";
 import { Doc, Id } from "../_generated/dataModel";
 import { getAuthenticatedUser } from "../_helpers/permissions";
-import { assertFisioInClinic } from "../_helpers/patientAccess";
+import {
+  assertFisioInClinic,
+  getSharedClinicIdsForPaciente,
+} from "../_helpers/patientAccess";
 import { assertCanAccessPaciente } from "../_helpers/authorization";
 import { patientsByClinicAdherencia } from "../aggregates/patientsByClinicAdherencia";
 
@@ -130,11 +133,28 @@ export const getPatientMetricsByPaciente = query({
       );
     if (args.clinicId !== undefined) {
       const clinicId = args.clinicId;
+      if (user._id !== args.pacienteId) {
+        await getSharedClinicIdsForPaciente(
+          ctx,
+          user._id,
+          args.pacienteId,
+          clinicId,
+        );
+      }
       return await base
         .filter((q) => q.eq(q.field("clinicId"), clinicId))
         .first();
     }
-    return await base.first();
+    if (user._id === args.pacienteId) return await base.first();
+    // Fisio sin clínica (clientes antiguos): nunca el snapshot de una clínica
+    // que no comparte con el paciente.
+    const compartidas = await getSharedClinicIdsForPaciente(
+      ctx,
+      user._id,
+      args.pacienteId,
+    );
+    const snaps = await base.collect();
+    return snaps.find((s) => compartidas.includes(s.clinicId)) ?? null;
   },
 });
 

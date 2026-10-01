@@ -21,6 +21,32 @@ async function getPacienteNombre(
 }
 
 /**
+ * Clínica de la alerta: la de la ejecución o sesión que la origina (que a su
+ * vez es la del plan). Un paciente multiclínica tiene alertas en cada clínica
+ * y atribuirlas a su primera membresía las ocultaría al fisio responsable y
+ * las expondría a otra clínica. La primera membresía solo queda como
+ * fallback para datos legados sin origen.
+ */
+async function resolveAlertClinicId(
+  ctx: MutationCtx,
+  args: {
+    pacienteId: Id<"users">;
+    sessionId?: Id<"sessions">;
+    exerciseExecutionId?: Id<"exerciseExecutions">;
+  },
+): Promise<Id<"clinics"> | null> {
+  if (args.exerciseExecutionId) {
+    const execution = await ctx.db.get(args.exerciseExecutionId);
+    if (execution?.clinicId) return execution.clinicId;
+  }
+  if (args.sessionId) {
+    const session = await ctx.db.get(args.sessionId);
+    if (session?.clinicId) return session.clinicId;
+  }
+  return await getClinicIdForPatient(ctx, args.pacienteId);
+}
+
+/**
  * Inserta una alerta tipo "comentario" cuando el paciente registra una nota
  * (por ejercicio o como observación general de fin de sesión).
  *
@@ -41,7 +67,7 @@ export const createCommentAlert = internalMutation({
   handler: async (ctx, args): Promise<Id<"physioAlerts"> | null> => {
     if (!args.texto.trim()) return null;
 
-    const clinicId = await getClinicIdForPatient(ctx, args.pacienteId);
+    const clinicId = await resolveAlertClinicId(ctx, args);
     if (!clinicId) return null;
 
     if (args.exerciseExecutionId) {
@@ -107,7 +133,7 @@ export const createDolorAltoAlert = internalMutation({
     dolorEscala: v.number(),
   },
   handler: async (ctx, args): Promise<Id<"physioAlerts"> | null> => {
-    const clinicId = await getClinicIdForPatient(ctx, args.pacienteId);
+    const clinicId = await resolveAlertClinicId(ctx, args);
     if (!clinicId) return null;
 
     // Idempotencia por sessionId + tipo.
@@ -152,6 +178,7 @@ type AlertaTipoDiaria = "inactividad";
 async function hayPendiente(
   ctx: MutationCtx,
   pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
   tipo: AlertaTipoDiaria,
 ): Promise<boolean> {
   const existing = await ctx.db
@@ -159,7 +186,9 @@ async function hayPendiente(
     .withIndex("by_pacienteId_estado", (q) =>
       q.eq("pacienteId", pacienteId).eq("estado", "pendiente"),
     )
-    .filter((q) => q.eq(q.field("tipo"), tipo))
+    .filter((q) =>
+      q.and(q.eq(q.field("tipo"), tipo), q.eq(q.field("clinicId"), clinicId)),
+    )
     .first();
   return existing !== null;
 }
@@ -191,10 +220,22 @@ export const runDailyAlertRules = internalMutation({
       .query("plans")
       .withIndex("by_estado", (q) => q.eq("estado", "activo"))
       .collect();
-    const pacienteIds = Array.from(
-      new Set(planesActivos.map((p) => p.pacienteId)),
-    );
-    if (pacienteIds.length === 0) {
+    // Universo por (paciente, clínica del plan): un paciente multiclínica se
+    // evalúa en cada clínica donde tiene un plan activo, con el snapshot de
+    // esa clínica. Los planes legados sin clinicId recaen en su primera
+    // membresía.
+    const pares = new Map<string, { pacienteId: Id<"users">; clinicId: Id<"clinics"> }>();
+    for (const plan of planesActivos) {
+      const clinicId =
+        plan.clinicId ?? (await getClinicIdForPatient(ctx, plan.pacienteId));
+      if (!clinicId) continue;
+      pares.set(`${plan.pacienteId}|${clinicId}`, {
+        pacienteId: plan.pacienteId,
+        clinicId,
+      });
+    }
+    const pacienteIds = new Set(planesActivos.map((p) => p.pacienteId));
+    if (pares.size === 0) {
       console.log("[alerts:daily] sin pacientes con plan activo");
       return { generadas: 0, porTipo };
     }
@@ -203,10 +244,7 @@ export const runDailyAlertRules = internalMutation({
     const tzCache = new TzCache(ctx);
 
     let generadas = 0;
-    for (const pacienteId of pacienteIds) {
-      const clinicId = await getClinicIdForPatient(ctx, pacienteId);
-      if (!clinicId) continue;
-
+    for (const { pacienteId, clinicId } of pares.values()) {
       // "Hoy" en la TZ de cada paciente: coherente con sus rollups diarios.
       const tz = await tzCache.get(pacienteId);
       const hoy = getCurrentDateInTz(tz);
@@ -241,7 +279,7 @@ export const runDailyAlertRules = internalMutation({
           diffDaysYMD(refInicio, hoy) >= AS3_INACTIVIDAD_DIAS_WARN;
         if (
           suficienteAntiguedad &&
-          !(await hayPendiente(ctx, pacienteId, "inactividad"))
+          !(await hayPendiente(ctx, pacienteId, clinicId, "inactividad"))
         ) {
           const pacienteNombre = await getPacienteNombre(ctx, pacienteId);
           await ctx.db.insert("physioAlerts", {
@@ -262,7 +300,7 @@ export const runDailyAlertRules = internalMutation({
     }
 
     console.log(
-      `[alerts:daily] pacientes=${pacienteIds.length} generadas=${generadas} inactividad=${porTipo.inactividad}`,
+      `[alerts:daily] pacientes=${pacienteIds.size} pares=${pares.size} generadas=${generadas} inactividad=${porTipo.inactividad}`,
     );
     return { generadas, porTipo };
   },

@@ -36,6 +36,8 @@ interface Resultado {
   magicLink: string | null;
   codigo: string | null;
   emailEnviado: boolean;
+  /** Ya tenía cuenta en otra clínica: no hay código ni registro. */
+  cuentaExistente: boolean;
 }
 
 @Component({
@@ -165,13 +167,17 @@ export class AddPacienteDialogComponent {
     let confirmReuseExisting = false;
     if (precheck.status === 'existing_active') {
       const nombre = `${precheck.firstName ?? ''} ${precheck.lastName ?? ''}`.trim() || 'un usuario existente';
+      // No es un error: es un paciente multiclínica. El título anterior
+      // ("Email ya registrado") se leía como un fallo del alta.
       const ok = await this.dialogs.confirm({
-        title: 'Email ya registrado',
+        title: 'Esta persona ya usa Kengo',
         message:
-          `Hemos encontrado a ${nombre} con ese email. ` +
-          'Si lo vinculas a tu clínica como paciente, sus datos personales ' +
-          '(nombre, apellidos y teléfono) no se modificarán. ¿Quieres continuar?',
-        confirmText: 'Vincular',
+          `${nombre} ya tiene cuenta en Kengo con ese email (por ejemplo, ` +
+          'como paciente de otra clínica). Puedes añadirlo también a tu ' +
+          'clínica: entrará con su cuenta de siempre y no verás sus datos de ' +
+          'otras clínicas. Su nombre, apellidos y teléfono no se modificarán. ' +
+          '¿Quieres añadirlo?',
+        confirmText: 'Añadir a mi clínica',
         cancelText: 'Cancelar',
       });
       if (!ok) return;
@@ -219,6 +225,7 @@ export class AddPacienteDialogComponent {
       magicLink: result.accessToken?.url ?? null,
       codigo: result.codigoAcceso ?? null,
       emailEnviado: !!result.emailEnviado,
+      cuentaExistente: !!result.cuentaExistente,
     });
   }
 

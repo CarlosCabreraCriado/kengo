@@ -60,12 +60,20 @@ export async function openOrResumeImpl(
   fecha: string,
   clinicIdArg?: Id<"clinics">,
 ): Promise<Id<"sessions">> {
-  const existing = await ctx.db
+  // Con clínica explícita, la sesión del día es la de ESA clínica: un
+  // paciente multiclínica tiene una sesión por (clínica, fecha) y reanudar la
+  // de otra clínica mezclaría ejecuciones de ambas.
+  // Como mucho hay una sesión por clínica y día, así que el filtro en memoria
+  // es barato.
+  const delDia = await ctx.db
     .query("sessions")
     .withIndex("by_pacienteId_fecha", (q) =>
       q.eq("pacienteId", pacienteId).eq("fecha", fecha),
     )
-    .first();
+    .collect();
+  const existing = clinicIdArg
+    ? delDia.find((s) => s.clinicId === clinicIdArg)
+    : delDia[0];
 
   if (existing) {
     if (existing.estado === "en_curso") return existing._id;
@@ -138,7 +146,7 @@ export const recomputeAggregatesAndCheckAutoClose = internalMutation({
  * - Agregados dolor/esfuerzo/duración sobre las ejecuciones dedup (una
  *   repetición fantasma no pondera el dolorPromedio).
  */
-async function refreshSessionCounts(
+export async function refreshSessionCounts(
   ctx: MutationCtx,
   session: Doc<"sessions">,
 ): Promise<DayCounts> {

@@ -9,7 +9,13 @@
     @if (resultado(); as r) {
       <div class="add-paciente-result">
         <p class="add-paciente-result__intro">
-          @if (r.emailEnviado) {
+          @if (r.cuentaExistente) {
+            @if (r.emailEnviado) {
+              Este paciente ya tenía cuenta en Kengo y ahora también es paciente de tu clínica. Le hemos avisado por email: entrará con su cuenta de siempre.
+            } @else {
+              Este paciente ya tenía cuenta en Kengo y ahora también es paciente de tu clínica. No hemos podido avisarle por email: compártele tú el enlace de acceso.
+            }
+          } @else if (r.emailEnviado) {
             Hemos enviado al paciente un email con el enlace de acceso y el código.
           } @else {
             El paciente ha sido creado, pero no hemos podido enviar el email automático. Comparte tú mismo los siguientes datos.
@@ -51,7 +57,11 @@
         }
 
         <p class="add-paciente-result__hint">
-          El enlace y el código caducan en 30 días. Solo puede usarlos quien tenga el email del paciente.
+          @if (r.codigo) {
+            El enlace y el código caducan en 30 días. Solo puede usarlos quien tenga el email del paciente.
+          } @else {
+            El enlace caduca en 30 días.
+          }
         </p>
       </div>
     } @else {

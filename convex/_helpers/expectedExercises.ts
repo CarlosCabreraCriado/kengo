@@ -147,6 +147,11 @@ export async function getExpectedExercisesForPatientOnDate(
 /**
  * Devuelve el clinicId del paciente (su primer membership). Devuelve null
  * si el paciente no tiene membership asignado.
+ *
+ * @deprecated Solo como fallback para datos legados (planes sin `clinicId`).
+ * Con un paciente multiclínica devuelve la membresía más antigua, que no
+ * tiene por qué ser la del plan: atribuye datos a la clínica equivocada.
+ * Deriva la clínica del plan, la sesión o la ejecución de origen.
  */
 export async function getClinicIdForPatient(
   ctx: DBCtx,

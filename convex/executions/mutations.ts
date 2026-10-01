@@ -36,6 +36,31 @@ function derivePatientFecha(
   return fecha;
 }
 
+/**
+ * Clínica a la que se atribuye una ejecución: la del PLAN, no la primera
+ * membresía del paciente. Un paciente multiclínica entrena planes de varias
+ * clínicas y cada ejecución (y su sesión y alertas) debe quedar en la suya,
+ * o la clínica dueña del plan deja de ver la adherencia y la otra ve datos
+ * ajenos. Los planes legados sin `clinicId` recaen en la primera membresía.
+ *
+ * Verifica además que el plan pertenece al paciente autenticado.
+ */
+async function resolveClinicIdForPlan(
+  ctx: MutationCtx,
+  planId: Id<"plans">,
+  pacienteId: Id<"users">,
+): Promise<Id<"clinics">> {
+  const plan = await ctx.db.get(planId);
+  if (!plan) throw new Error(`plan no encontrado: ${planId}`);
+  if (plan.pacienteId !== pacienteId) {
+    throw new Error("No tienes acceso a este recurso");
+  }
+  const clinicId =
+    plan.clinicId ?? (await getClinicIdForPatient(ctx, pacienteId));
+  if (!clinicId) throw new Error("Paciente sin clínica asignada");
+  return clinicId;
+}
+
 const exerciseExecutionArgs = {
   planExerciseId: v.id("planExercises"),
   fechaHora: v.string(),
@@ -166,14 +191,13 @@ export const createBatch = mutation({
     const user = await getAuthenticatedUser(ctx);
     if (args.entradas.length === 0) return [];
 
-    const clinicId = await getClinicIdForPatient(ctx, user._id);
-    if (!clinicId) throw new Error("Paciente sin clínica asignada");
-
     const ids: Id<"exerciseExecutions">[] = [];
     const sesionesAfectadas = new Set<Id<"sessions">>();
 
-    // Cache local: planExerciseId → planId, para evitar lookups repetidos.
+    // Caches locales para evitar lookups repetidos: planExerciseId → planId
+    // y planId → clínica del plan.
     const planIdCache = new Map<Id<"planExercises">, Id<"plans">>();
+    const clinicIdCache = new Map<Id<"plans">, Id<"clinics">>();
 
     for (const entrada of args.entradas) {
       let planId = planIdCache.get(entrada.planExerciseId);
@@ -188,8 +212,14 @@ export const createBatch = mutation({
         planIdCache.set(entrada.planExerciseId, planId);
       }
 
+      let clinicId = clinicIdCache.get(planId);
+      if (!clinicId) {
+        clinicId = await resolveClinicIdForPlan(ctx, planId, user._id);
+        clinicIdCache.set(planId, clinicId);
+      }
+
       const fecha = derivePatientFecha(user._id, tzOf(user), entrada.fecha);
-      const sessionId = await openOrResumeImpl(ctx, user._id, fecha);
+      const sessionId = await openOrResumeImpl(ctx, user._id, fecha, clinicId);
 
       const executionId = await upsertExecutionImpl(ctx, {
         sessionId,
@@ -320,12 +350,11 @@ async function createImpl(
   if (!planExercise) throw new Error("planExercise no encontrado");
   const planId = planExercise.planId;
 
-  const clinicId = await getClinicIdForPatient(ctx, pacienteId);
-  if (!clinicId) throw new Error("Paciente sin clínica asignada");
+  const clinicId = await resolveClinicIdForPlan(ctx, planId, pacienteId);
 
   const fecha = derivePatientFecha(pacienteId, tzOf(paciente), args.fecha);
 
-  const sessionId = await openOrResumeImpl(ctx, pacienteId, fecha);
+  const sessionId = await openOrResumeImpl(ctx, pacienteId, fecha, clinicId);
 
   const executionId = await upsertExecutionImpl(ctx, {
     sessionId,

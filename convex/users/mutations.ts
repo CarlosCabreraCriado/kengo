@@ -242,7 +242,7 @@ export const updateAvatar = mutation({
  *  - Existe activo + `confirmReuseExisting=true` → NO toca firstName/lastName/
  *    telefono; solo añade la membresía como paciente.
  *
- * Devuelve `{ userId, created }`. `created` es true solo cuando se inserta
+ * Devuelve `{ userId, created, cuentaExistente }`. `created` es true solo cuando se inserta
  * un documento `users` nuevo.
  */
 export const upsertPatientWithMembership = internalMutation({
@@ -262,6 +262,10 @@ export const upsertPatientWithMembership = internalMutation({
       .unique();
 
     let created = false;
+    // true cuando se vincula una cuenta ACTIVA que ya usaba Kengo en otra
+    // clínica: ya tiene credenciales, así que no hay que invitarla a
+    // registrarse sino avisarla de la nueva clínica.
+    let cuentaExistente = false;
     if (!user) {
       const searchableText = buildSearchableText(
         args.firstName,
@@ -328,6 +332,7 @@ export const upsertPatientWithMembership = internalMutation({
         }
 
         // Confirmado: vinculamos sin tocar nombre/apellidos/teléfono globales.
+        cuentaExistente = true;
       }
     }
 
@@ -353,7 +358,7 @@ export const upsertPatientWithMembership = internalMutation({
       });
     }
 
-    return { userId: user._id as Id<"users">, created };
+    return { userId: user._id as Id<"users">, created, cuentaExistente };
   },
 });
 

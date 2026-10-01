@@ -12,6 +12,7 @@ import {
   subscriptionCanceledTemplate,
   migrationAnnouncementTemplate,
   enterpriseInvitationTemplate,
+  patientAddedToClinicTemplate,
   patientInvitationTemplate,
   therapistInvitationTemplate,
   paymentMethodRemovedTemplate,
@@ -405,6 +406,47 @@ export const sendPatientInvitationEmail = internalAction({
       return false;
     }
     console.log(`[Email] Invitación de paciente enviada a ${args.to}`);
+    return true;
+  },
+});
+
+/**
+ * Aviso de vinculación a una clínica nueva para un paciente que ya tenía
+ * cuenta en Kengo (paciente multiclínica). Sin código de registro.
+ */
+export const sendPatientAddedToClinicEmail = internalAction({
+  args: {
+    to: v.string(),
+    nombre: v.string(),
+    accessUrl: v.string(),
+    nombreFisio: v.optional(v.string()),
+    nombreClinica: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo envío");
+      return false;
+    }
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: "Kengo <noreply@kengoapp.com>",
+      to: args.to,
+      subject: args.nombreClinica
+        ? `${args.nombreClinica} te ha añadido en Kengo`
+        : "Te han añadido a una nueva clínica en Kengo",
+      html: patientAddedToClinicTemplate(
+        args.nombre,
+        args.accessUrl,
+        args.nombreFisio ?? null,
+        args.nombreClinica ?? null,
+      ),
+    });
+    if (error) {
+      console.error("[Email] Error enviando aviso de vinculación de paciente:", error);
+      return false;
+    }
+    console.log(`[Email] Aviso de vinculación de paciente enviado a ${args.to}`);
     return true;
   },
 });

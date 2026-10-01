@@ -111,3 +111,42 @@ export async function getManagedClinicIds(
     .collect();
   return memberships.filter((m) => tieneGestion(m.puesto)).map((m) => m.clinicId);
 }
+
+/**
+ * Clínicas desde las que el fisio `userId` puede ver los datos clínicos de
+ * `pacienteId`: las que gestiona (fisio/admin) y en las que el paciente actúa
+ * como tal. Un paciente multiclínica solo expone a cada fisio los datos de
+ * las clínicas que comparten.
+ *
+ * - Con `clinicId`: exige gestión en esa clínica y que el paciente sea
+ *   paciente allí; devuelve solo esa clínica.
+ * - Sin `clinicId` (clientes antiguos): devuelve la intersección completa.
+ *
+ * Lanza si no comparten ninguna clínica.
+ */
+export async function getSharedClinicIdsForPaciente(
+  ctx: AnyCtx,
+  userId: Id<"users">,
+  pacienteId: Id<"users">,
+  clinicId?: Id<"clinics">,
+): Promise<Id<"clinics">[]> {
+  const candidatas = clinicId
+    ? [clinicId]
+    : await getManagedClinicIds(ctx, userId);
+  if (clinicId) await assertFisioInClinic(ctx, userId, clinicId);
+
+  const compartidas: Id<"clinics">[] = [];
+  for (const c of candidatas) {
+    const pacienteEnClinica = await ctx.db
+      .query("clinicMemberships")
+      .withIndex("by_userId_clinicId", (q) =>
+        q.eq("userId", pacienteId).eq("clinicId", c),
+      )
+      .unique();
+    if (membershipEsPaciente(pacienteEnClinica)) compartidas.push(c);
+  }
+  if (compartidas.length === 0) {
+    throw new Error("No tienes acceso a este recurso");
+  }
+  return compartidas;
+}
