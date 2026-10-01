@@ -14,8 +14,8 @@ Guía operativa para llevar la app de Capacitor a TestFlight. El proyecto Xcode 
 | Apple Developer Team | `LTZK7CBKWL` | ✅ listo |
 | Code Sign Style | `Automatic` | ✅ listo (Xcode gestiona certs y profiles) |
 | iOS Deployment Target | `15.0` | ✅ válido (Apple exige iOS 12+; recomendado 13+) |
-| `MARKETING_VERSION` | `1.2.0` | ✅ (borrado de cuenta del propietario, 2026-08-25) |
-| `CURRENT_PROJECT_VERSION` | `7` | ⚠️ hay que incrementarlo en cada subida |
+| `MARKETING_VERSION` | `1.2.1` | ✅ (hotfix, 2026-10-01) |
+| `CURRENT_PROJECT_VERSION` | `8` | ⚠️ hay que incrementarlo en cada subida |
 | `aps-environment` (entitlements) | `production` | ✅ aplicado (ver §3.1) |
 | Push Notifications | AppDelegate cablea APNs ↔ Firebase | ✅ código listo. Falta APNs Auth Key + capability "Push Notifications" en Apple Developer |
 | `ITSAppUsesNonExemptEncryption` | `false` en `Info.plist` | ✅ aplicado (ver §3.2); evita el estado "Missing Compliance" |
@@ -129,7 +129,7 @@ Para evitar que Apple te pregunte en cada build "¿usas cifrado no exento?", añ
 
 ### 3.3 Incrementar build number
 
-Cada subida a TestFlight necesita un `CFBundleVersion` (`CURRENT_PROJECT_VERSION`) único y monótonamente creciente. Hoy está en `7`. **Un build ya subido no se puede reutilizar**: si App Store Connect rechaza el binario por número repetido, es esto.
+Cada subida a TestFlight necesita un `CFBundleVersion` (`CURRENT_PROJECT_VERSION`) único y monótonamente creciente. Hoy está en `8`. **Un build ya subido no se puede reutilizar**: si App Store Connect rechaza el binario por número repetido, es esto.
 
 Opciones:
 - **Manual**: en Xcode, target `App`, pestaña General, campo `Build` → poner `1` ahora, subir a `2`, `3`, ... en cada upload.

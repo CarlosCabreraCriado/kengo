@@ -256,7 +256,29 @@ Aparece en la ficha. Formato Apple-friendly:
 
 > Aparece en la pestaña "Novedades" de la ficha y en la pantalla de actualización dentro de la app. Aplica a cada versión `MARKETING_VERSION`, no a cada build TestFlight.
 
-**Versión 1.2.0 — la que se envía a App Store** **(602/4000)**:
+**Versión 1.2.1 — hotfix, la que se envía a App Store y Play** **(629/4000)**:
+
+> En App Store Connect la 1.2.0 nunca pasó de TestFlight: se renombra la versión a 1.2.1 y se usa este texto. En Play sí se publicó la 1.2.0, así que este texto va en "Novedades" de la nueva versión de producción.
+
+```
+Kengo 1.2.1 corrige errores y mejora la experiencia.
+
+Novedades:
+• Fisioterapeutas: copia un plan existente para crear uno nuevo, para el
+  mismo paciente o para otro, sin volver a buscar los ejercicios.
+
+Correcciones:
+• El vídeo del ejercicio se abre a pantalla completa con el reproductor del
+  sistema y se cierra sin problemas.
+• Si te tratas en varias clínicas, tu progreso y tus sesiones se muestran en
+  la clínica correcta.
+• Eliminar una versión de un plan ya no oculta la versión anterior.
+• Mejoras en la gestión de la suscripción de la clínica.
+
+Gracias por usar Kengo. Cuéntanos qué mejorarías en info@kengoapp.com.
+```
+
+**Versión 1.2.0 — enviada solo a TestFlight (iOS) y publicada en Play** **(602/4000)**:
 
 ```
 Kengo llega a la App Store.
@@ -419,7 +441,7 @@ App Preview (vídeos): opcional. Si lo añades, formato 1080×1920 vertical, 15-
 - [ ] Support URL, Marketing URL, Privacy Policy URL publicadas, respondiendo 200 y con el `<title>` correcto (no el de la portada).
 - [ ] `https://kengoapp.com/.well-known/apple-app-site-association` devuelve `Content-Type: application/json` y **JSON en el body** (no `<!doctype html>`).
 - [ ] Copyright = `© 2026 KENGO SC` (igual que §7).
-- [ ] Release Notes v1.2.0 pegadas (§8).
+- [ ] Release Notes v1.2.1 pegadas (§8).
 - [ ] Beta App Description pegada (TestFlight).
 - [ ] Feedback Email = `info@kengoapp.com`.
 - [x] Demo accounts creadas en producción (2026-07-30) — ver `docs/CUENTAS_REVISION_TIENDAS.md`.
