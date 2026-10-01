@@ -19,6 +19,7 @@ import type * as _helpers_mutationWithTriggers from "../_helpers/mutationWithTri
 import type * as _helpers_patientAccess from "../_helpers/patientAccess.js";
 import type * as _helpers_patientTz from "../_helpers/patientTz.js";
 import type * as _helpers_permissions from "../_helpers/permissions.js";
+import type * as _helpers_planChainRepair from "../_helpers/planChainRepair.js";
 import type * as _helpers_planStatus from "../_helpers/planStatus.js";
 import type * as _helpers_planVersioning from "../_helpers/planVersioning.js";
 import type * as _helpers_rollupComputation from "../_helpers/rollupComputation.js";
@@ -127,6 +128,8 @@ import type * as migrations_purgeAggregatesForInactivePatients from "../migratio
 import type * as migrations_purgeOrphanConversations from "../migrations/purgeOrphanConversations.js";
 import type * as migrations_recomputeOverlappingPlanVersions from "../migrations/recomputeOverlappingPlanVersions.js";
 import type * as migrations_repairAssignmentsFromPlans from "../migrations/repairAssignmentsFromPlans.js";
+import type * as migrations_repairExecutionClinicFromPlan from "../migrations/repairExecutionClinicFromPlan.js";
+import type * as migrations_repairOrphanPlanVersions from "../migrations/repairOrphanPlanVersions.js";
 import type * as migrations_repairSessionsIntegrity from "../migrations/repairSessionsIntegrity.js";
 import type * as migrations_repairTimezoneFechas from "../migrations/repairTimezoneFechas.js";
 import type * as migrations_setTambienEsPacienteForFisios from "../migrations/setTambienEsPacienteForFisios.js";
@@ -186,6 +189,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/patientAccess": typeof _helpers_patientAccess;
   "_helpers/patientTz": typeof _helpers_patientTz;
   "_helpers/permissions": typeof _helpers_permissions;
+  "_helpers/planChainRepair": typeof _helpers_planChainRepair;
   "_helpers/planStatus": typeof _helpers_planStatus;
   "_helpers/planVersioning": typeof _helpers_planVersioning;
   "_helpers/rollupComputation": typeof _helpers_rollupComputation;
@@ -294,6 +298,8 @@ declare const fullApi: ApiFromModules<{
   "migrations/purgeOrphanConversations": typeof migrations_purgeOrphanConversations;
   "migrations/recomputeOverlappingPlanVersions": typeof migrations_recomputeOverlappingPlanVersions;
   "migrations/repairAssignmentsFromPlans": typeof migrations_repairAssignmentsFromPlans;
+  "migrations/repairExecutionClinicFromPlan": typeof migrations_repairExecutionClinicFromPlan;
+  "migrations/repairOrphanPlanVersions": typeof migrations_repairOrphanPlanVersions;
   "migrations/repairSessionsIntegrity": typeof migrations_repairSessionsIntegrity;
   "migrations/repairTimezoneFechas": typeof migrations_repairTimezoneFechas;
   "migrations/setTambienEsPacienteForFisios": typeof migrations_setTambienEsPacienteForFisios;
