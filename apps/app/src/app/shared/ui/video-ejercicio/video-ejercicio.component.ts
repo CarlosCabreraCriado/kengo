@@ -8,8 +8,18 @@ import {
   ViewChild,
   ElementRef,
   AfterViewInit,
+  DestroyRef,
+  inject,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { buildAssetUrl, parseAssetUrl } from '../../../core/utils/asset-url';
+import { BackButtonService, BackHandler } from '../../../core/services/back-button.service';
+
+/** APIs de fullscreen con prefijo WebKit (iOS/Safari), ausentes del lib.dom. */
+interface WebkitVideoElement extends HTMLVideoElement {
+  webkitEnterFullscreen?: () => void;
+  webkitRequestFullscreen?: () => Promise<void> | void;
+}
 
 /** Tamaño del póster: el contenedor es 16:9 a ancho completo. */
 const POSTER_WIDTH = 1280;
@@ -22,8 +32,12 @@ const POSTER_HEIGHT = 720;
   template: `
     <div
       class="video-container relative aspect-video w-full cursor-pointer overflow-hidden rounded-3xl bg-zinc-800 shadow-xl transition-all duration-300"
-      [class.expanded]="expandido()"
+      role="button"
+      tabindex="0"
+      [attr.aria-label]="pausado() ? 'Reproducir vídeo' : 'Pausar vídeo'"
       (click)="togglePausa()"
+      (keydown.enter)="togglePausa()"
+      (keydown.space)="$event.preventDefault(); togglePausa()"
     >
       @if (videoUrl) {
         <video
@@ -37,6 +51,7 @@ const POSTER_HEIGHT = 720;
           muted
           playsinline
           (loadeddata)="onVideoLoaded()"
+          (webkitendfullscreen)="onSalirPantallaCompleta()"
         ></video>
       } @else if (posterUrl) {
         <img
@@ -70,42 +85,29 @@ const POSTER_HEIGHT = 720;
         </div>
       }
 
-      <!-- Botón expandir -->
-      <button
-        type="button"
-        class="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-md transition-colors hover:bg-white/25"
-        (click)="toggleExpandir($event)"
-      >
-        <span class="material-symbols-outlined text-white">
-          {{ expandido() ? 'close_fullscreen' : 'open_in_full' }}
-        </span>
-      </button>
+      <!-- Botón pantalla completa: delega en el reproductor nativo -->
+      @if (videoUrl) {
+        <button
+          type="button"
+          class="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-md transition-colors hover:bg-white/25"
+          aria-label="Ver a pantalla completa"
+          (click)="abrirPantallaCompleta($event)"
+        >
+          <span class="material-symbols-outlined text-white" aria-hidden="true">open_in_full</span>
+        </button>
+      }
     </div>
   `,
   styles: `
-    .video-container.expanded {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: var(--z-modal);
-      border-radius: 0;
-      aspect-ratio: auto;
-    }
-
-    .video-container.expanded video,
-    .video-container.expanded img {
-      object-fit: contain;
-      background: #000;
-    }
-
     .loading-spinner {
       border-top-color: var(--kengo-primary);
     }
   `,
 })
-export class VideoEjercicioComponent implements AfterViewInit {
+export class VideoEjercicioComponent implements AfterViewInit, BackHandler {
+  private readonly document = inject(DOCUMENT);
+  private readonly backButton = inject(BackButtonService);
+
   @Input() videoUrl: string | null = null;
   @Input() posterUrl: string | null = null;
 
@@ -136,6 +138,26 @@ export class VideoEjercicioComponent implements AfterViewInit {
   readonly pausado = signal(false);
   readonly expandido = signal(false);
   readonly cargando = signal(true);
+
+  /** Si el vídeo se estaba reproduciendo al entrar en pantalla completa. */
+  private reproduciendoAlEntrar = false;
+
+  constructor() {
+    // Salida del fullscreen estándar (web, Android): Esc, gesto atrás o
+    // control nativo. iOS usa `webkitendfullscreen` en el propio <video>.
+    const onFullscreenChange = () => {
+      if (this.expandido() && !this.document.fullscreenElement) {
+        this.onSalirPantallaCompleta();
+      }
+    };
+    this.document.addEventListener('fullscreenchange', onFullscreenChange);
+    this.document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    inject(DestroyRef).onDestroy(() => {
+      this.document.removeEventListener('fullscreenchange', onFullscreenChange);
+      this.document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+      this.backButton.unregister(this);
+    });
+  }
 
   ngAfterViewInit(): void {
     if (this.autoplay && this.videoRef?.nativeElement) {
@@ -177,10 +199,59 @@ export class VideoEjercicioComponent implements AfterViewInit {
     }
   }
 
-  toggleExpandir(event: Event): void {
+  /**
+   * Abre el reproductor nativo en vez de un overlay propio: un `fixed` dentro
+   * de un ancestro con containment (p. ej. `container-type`) o transform no
+   * cubre el viewport y el botón de cerrar podía quedar fuera de pantalla.
+   */
+  abrirPantallaCompleta(event: Event): void {
     event.stopPropagation();
-    const nuevoEstado = !this.expandido();
-    this.expandido.set(nuevoEstado);
-    this.expandirChange.emit(nuevoEstado);
+    const video = this.videoRef?.nativeElement as WebkitVideoElement | undefined;
+    if (!video) return;
+
+    this.reproduciendoAlEntrar = !video.paused;
+    video.controls = true;
+    this.expandido.set(true);
+    this.expandirChange.emit(true);
+    this.backButton.register(this);
+
+    // Web y Android: Fullscreen API estándar. iOS (iPhone) no la expone en
+    // elementos, pero sí `webkitEnterFullscreen`, que abre AVPlayer nativo.
+    const request = video.requestFullscreen?.bind(video) ?? video.webkitRequestFullscreen?.bind(video);
+    if (request) {
+      Promise.resolve(request()).catch(() => this.onSalirPantallaCompleta());
+    } else if (typeof video.webkitEnterFullscreen === 'function') {
+      video.webkitEnterFullscreen();
+    } else {
+      this.onSalirPantallaCompleta();
+    }
+  }
+
+  onSalirPantallaCompleta(): void {
+    if (!this.expandido()) return;
+    this.expandido.set(false);
+    this.expandirChange.emit(false);
+    this.backButton.unregister(this);
+
+    const video = this.videoRef?.nativeElement;
+    if (!video) return;
+    video.controls = false;
+    // iOS pausa al cerrar AVPlayer; reanudamos si iba reproduciéndose.
+    if (this.reproduciendoAlEntrar && video.paused) {
+      this.reproducir();
+    } else {
+      this.pausado.set(video.paused);
+    }
+  }
+
+  /** Botón atrás de Android con el vídeo a pantalla completa. */
+  handleBack(): boolean {
+    if (!this.expandido()) return false;
+    if (this.document.fullscreenElement) {
+      void this.document.exitFullscreen().catch(() => undefined);
+    } else {
+      this.onSalirPantallaCompleta();
+    }
+    return true;
   }
 }
