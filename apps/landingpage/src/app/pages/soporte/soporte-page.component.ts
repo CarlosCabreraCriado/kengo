@@ -102,8 +102,8 @@ const CANONICAL = 'https://www.kengoapp.com/soporte';
               <li>
                 <span>Dirección</span>
                 <p>
-                  KENGO SC<br />
-                  Calle Quevedo 10 P02 A DCHA<br />
+                  KENGO S.C.<br />
+                  Calle Quevedo, 10, 2.º A derecha<br />
                   38005 Santa Cruz de Tenerife (España)
                 </p>
               </li>
