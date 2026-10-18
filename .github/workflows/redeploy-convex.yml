@@ -14,18 +14,54 @@ on:
 jobs:
   redeploy:
     runs-on: ubuntu-latest
+    # Un cuelgue no debe quemar minutos de la cuota de Actions.
+    timeout-minutes: 30
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      SVC: a7f4e53a-fc4f-4f76-8ae5-80ae35167b1c
     steps:
+      # Versión fija: el script depende del formato de `deployment list --json`.
       - name: Instalar Railway CLI
-        run: npm i -g @railway/cli
+        run: npm i -g @railway/cli@5.68.0
 
-      - name: Redeploy del servicio Convex Backend
-        run: railway redeploy --service a7f4e53a-fc4f-4f76-8ae5-80ae35167b1c --yes
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Redeploy con reintentos
+        # El éxito se mide por el estado del despliegue NUEVO en Railway, nunca
+        # solo por /version: si el nuevo falla, Railway mantiene vivo el anterior
+        # y /version sigue en 200. Así pasó en verde el fallo del 2026-10-18.
+        run: |
+          set -euo pipefail
+          ultimo() { railway deployment list --service "$SVC" --limit 1 --json | jq -r ".[0].$1"; }
+
+          for intento in 1 2 3; do
+            previo=$(ultimo id)
+            echo "Intento $intento: despliegue previo $previo"
+            railway redeploy --service "$SVC" --yes
+
+            estado=""
+            for _ in $(seq 1 40); do # 40 × 15 s = 10 min
+              sleep 15
+              id=$(ultimo id)
+              [ "$id" = "$previo" ] && continue
+              estado=$(ultimo status)
+              echo "  $id -> $estado"
+              case "$estado" in
+                SUCCESS|FAILED|CRASHED|REMOVED) break ;;
+              esac
+            done
+
+            if [ "$estado" = "SUCCESS" ]; then
+              echo "Despliegue $id en SUCCESS"
+              exit 0
+            fi
+            echo "::warning::Intento $intento sin SUCCESS (estado: ${estado:-sin despliegue nuevo})"
+            if [ "$intento" = 1 ]; then sleep 120; elif [ "$intento" = 2 ]; then sleep 300; fi
+          done
+
+          echo "::error::Ningún redeploy llegó a SUCCESS; sigue vivo el despliegue anterior y la RAM no se ha liberado"
+          exit 1
 
       - name: Verificar healthcheck
         run: |
-          sleep 60
           for i in $(seq 1 10); do
             code=$(curl -s -m 10 -o /dev/null -w '%{http_code}' https://convex.kengoapp.com/version || true)
             echo "Intento $i: /version -> $code"

@@ -47,7 +47,9 @@ Techo de cachés: de ~2.5 GB a ~0.5 GB. Coste: más cache-misses (re-ejecutar qu
 
 ### 2. Actualizar la imagen (recomendado, dashboard de Railway)
 
-La imagen es de abril de 2026. En el servicio → Settings → Source, fijar un tag reciente **pineado** de `ghcr.io/get-convex/convex-backend` (no `latest` flotante) y actualizar `convex-dashboard` al mismo tag. Hay fixes de memoria/isolates posteriores a abril.
+La imagen es de abril de 2026. En el servicio → Settings → Source, fijar un tag reciente **pineado** de `ghcr.io/convex/convex-backend` (no `latest` flotante) y actualizar `convex-dashboard` al mismo tag. Hay fixes de memoria/isolates posteriores a abril.
+
+> **Org renombrada (2026-10-16):** Convex pasó su org de GitHub de `get-convex` a `convex`. Las imágenes viven ahora en `ghcr.io/convex/convex-backend` y `ghcr.io/convex/convex-dashboard`; la ruta antigua `ghcr.io/get-convex/…` da 403 y ghcr no redirige. El 2026-10-18 eso hizo fallar el redeploy semanal en `CREATE_CONTAINER` (_"We were unable to connect to the registry for this image"_) sin caída, porque Railway mantuvo vivo el despliegue anterior. Pero el workflow solo miraba `/version` y salió verde. Corregido: ambos servicios en la ruta nueva (backend con el mismo digest `sha256:d715e9ec…`, el dashboard sí avanzó a la `latest` actual) y el workflow ahora exige que el despliegue nuevo llegue a `SUCCESS`, con 3 reintentos.
 
 ### 3. Reinicio periódico programado (recomendado)
 
