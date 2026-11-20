@@ -10,9 +10,16 @@
 
 import { v } from "convex/values";
 import { query, QueryCtx } from "../_generated/server";
-import { Id } from "../_generated/dataModel";
-import { getAuthenticatedUser, tieneGestion } from "../_helpers/permissions";
-import { assertFisioInClinic } from "../_helpers/patientAccess";
+import { Doc, Id } from "../_generated/dataModel";
+import { getAuthenticatedUser } from "../_helpers/permissions";
+import {
+  assertFisioInClinic,
+  getManagedClinicIds,
+} from "../_helpers/patientAccess";
+import {
+  contarSesionesPorFecha,
+  getPacientesVisiblesEnClinica,
+} from "../_helpers/fisioScope";
 import {
   CLINIC_REF_TZ,
   DiaSemana,
@@ -34,97 +41,83 @@ function fechaDentroDe(days: number): string {
   return getDateOffsetInTz(CLINIC_REF_TZ, days);
 }
 
-async function getFisioIdsEnClinicasDelUsuario(
-  ctx: Parameters<typeof query>[0] extends never ? never : any,
-  userId: Id<"users">,
-): Promise<Set<Id<"users">>> {
-  const misMemberships = await ctx.db
-    .query("clinicMemberships")
-    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
-    .collect();
-
-  const clinicIdsGestion = misMemberships
-    .filter((m: any) => tieneGestion(m.puesto))
-    .map((m: any) => m.clinicId as Id<"clinics">);
-
-  const fisioIds = new Set<Id<"users">>();
-  for (const clinicId of clinicIdsGestion) {
-    const members = await ctx.db
-      .query("clinicMemberships")
-      .withIndex("by_clinicId", (q: any) => q.eq("clinicId", clinicId))
-      .collect();
-    for (const m of members) {
-      if (tieneGestion(m.puesto)) {
-        fisioIds.add(m.userId as Id<"users">);
-      }
-    }
-  }
-
-  return fisioIds;
-}
-
 /**
- * Planes activos del fisio actual (de las clínicas que gestiona) cuya
- * `fechaFin` cae entre hoy y hoy + 7 días. Devuelve top 10 ordenados por
- * fechaFin ascendente.
+ * Planes activos cuya `fechaFin` cae entre hoy y hoy + 7 días, de las
+ * clínicas que gestiona el usuario. Visibilidad por clínica
+ * (`getPacientesVisiblesEnClinica`): los admins ven todos los planes de la
+ * clínica; los fisios, solo los de sus pacientes asignados. Devuelve top 10
+ * ordenados por fechaFin ascendente.
+ *
+ * `clinicId` es opcional por compatibilidad: la app desplegada no lo envía y
+ * recibe las clínicas gestionadas mezcladas; con él se acota a esa clínica.
  */
 export const planesPorVencer = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { clinicId: v.optional(v.id("clinics")) },
+  handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const fisioIds = await getFisioIdsEnClinicasDelUsuario(ctx, user._id);
-    if (fisioIds.size === 0) return [];
+    let clinicIds: Id<"clinics">[];
+    if (args.clinicId) {
+      await assertFisioInClinic(ctx, user._id, args.clinicId);
+      clinicIds = [args.clinicId];
+    } else {
+      clinicIds = await getManagedClinicIds(ctx, user._id);
+    }
+    if (clinicIds.length === 0) return [];
 
     const hoy = fechaHoy();
     const limite = fechaDentroDe(7);
-    const planesPorVencer: Array<{
-      id: string;
-      titulo: string;
-      fechaFin: string;
-      pacienteNombre: string;
-      pacienteId: string;
-    }> = [];
+    const vence = (plan: Doc<"plans">) =>
+      !!plan.fechaFin && plan.fechaFin >= hoy && plan.fechaFin <= limite;
 
-    // 1) Recolectar los planes que vencen (una query por fisio de la clínica).
-    const planesVencen: Array<(typeof planesPorVencer)[number] & {
-      pacienteId: Id<"users">;
-    }> = [];
-    for (const fisioId of fisioIds) {
-      const planes = await ctx.db
-        .query("plans")
-        .withIndex("by_fisioId_estado", (q) =>
-          q.eq("fisioId", fisioId).eq("estado", "activo"),
-        )
-        .collect();
-      for (const plan of planes) {
-        if (!plan.fechaFin) continue;
-        if (plan.fechaFin >= hoy && plan.fechaFin <= limite) {
-          planesVencen.push({
-            id: plan._id,
-            titulo: plan.titulo,
-            fechaFin: plan.fechaFin,
-            pacienteNombre: "",
-            pacienteId: plan.pacienteId,
-          });
-        }
+    // 1) Recolectar los planes que vencen, según lo que el usuario ve en
+    //    cada clínica.
+    const planesVencen: Doc<"plans">[] = [];
+    for (const clinicId of new Set(clinicIds)) {
+      const visibles = await getPacientesVisiblesEnClinica(
+        ctx,
+        user._id,
+        clinicId,
+      );
+      if (visibles === null) {
+        const planes = await ctx.db
+          .query("plans")
+          .withIndex("by_clinicId_estado", (q) =>
+            q.eq("clinicId", clinicId).eq("estado", "activo"),
+          )
+          .collect();
+        planesVencen.push(...planes.filter(vence));
+        continue;
+      }
+      for (const pacienteId of visibles) {
+        const planes = await ctx.db
+          .query("plans")
+          .withIndex("by_pacienteId_estado", (q) =>
+            q.eq("pacienteId", pacienteId).eq("estado", "activo"),
+          )
+          .collect();
+        planesVencen.push(
+          ...planes.filter((p) => p.clinicId === clinicId && vence(p)),
+        );
       }
     }
 
-    // 2) Resolver nombres de paciente en un único batch (antes: un `get` por
-    //    plan dentro del loop → N+1).
+    // 2) Resolver nombres de paciente en un único batch.
     const pacientes = await batchGetMap(
       ctx,
       planesVencen.map((p) => p.pacienteId),
     );
-    for (const p of planesVencen) {
-      const paciente = pacientes.get(p.pacienteId);
-      planesPorVencer.push({
-        ...p,
+    const planesPorVencer = planesVencen.map((plan) => {
+      const paciente = pacientes.get(plan.pacienteId);
+      return {
+        id: plan._id as string,
+        titulo: plan.titulo,
+        fechaFin: plan.fechaFin as string,
         pacienteNombre: paciente
           ? `${paciente.firstName} ${paciente.lastName}`.trim()
           : "",
-      });
-    }
+        pacienteId: plan.pacienteId as string,
+      };
+    });
 
     planesPorVencer.sort((a, b) => a.fechaFin.localeCompare(b.fechaFin));
     return planesPorVencer.slice(0, 10);
@@ -168,7 +161,8 @@ async function loadActividadDiaria_aggregate(
 /**
  * Sesiones reales (no sintéticas) por día en la clínica para los últimos 10
  * días, junto al total de los 10 días previos para calcular un delta. La
- * normalización 0-1 y el copy del delta se componen en el cliente.
+ * normalización 0-1 y el copy del delta se componen en el cliente. Los
+ * fisios solo cuentan las sesiones de sus pacientes asignados.
  */
 export const getActividadDiariaClinica = query({
   args: { clinicId: v.id("clinics") },
@@ -183,11 +177,26 @@ export const getActividadDiariaClinica = query({
 
     const fechasActual = rangeOfDates(inicioActual, hoy);
     const fechasPrevia = rangeOfDates(inicioPrevia, finPrevia);
-    const counts = await loadActividadDiaria_aggregate(
+    // Admins: aggregate de toda la clínica. Fisios: solo las sesiones de sus
+    // pacientes asignados (misma semántica: sesiones reales por fecha).
+    const visibles = await getPacientesVisiblesEnClinica(
       ctx,
+      user._id,
       args.clinicId,
-      [...fechasActual, ...fechasPrevia],
     );
+    const counts =
+      visibles === null
+        ? await loadActividadDiaria_aggregate(ctx, args.clinicId, [
+            ...fechasActual,
+            ...fechasPrevia,
+          ])
+        : await contarSesionesPorFecha(
+            ctx,
+            visibles,
+            args.clinicId,
+            inicioPrevia,
+            hoy,
+          );
 
     const days: ActividadDia[] = fechasActual.map((fecha) => ({
       fecha,

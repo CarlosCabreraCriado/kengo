@@ -14,6 +14,7 @@ import type * as _helpers_capacity from "../_helpers/capacity.js";
 import type * as _helpers_datetime from "../_helpers/datetime.js";
 import type * as _helpers_exercises from "../_helpers/exercises.js";
 import type * as _helpers_expectedExercises from "../_helpers/expectedExercises.js";
+import type * as _helpers_fisioScope from "../_helpers/fisioScope.js";
 import type * as _helpers_inactividad from "../_helpers/inactividad.js";
 import type * as _helpers_mutationWithTriggers from "../_helpers/mutationWithTriggers.js";
 import type * as _helpers_patientAccess from "../_helpers/patientAccess.js";
@@ -184,6 +185,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/datetime": typeof _helpers_datetime;
   "_helpers/exercises": typeof _helpers_exercises;
   "_helpers/expectedExercises": typeof _helpers_expectedExercises;
+  "_helpers/fisioScope": typeof _helpers_fisioScope;
   "_helpers/inactividad": typeof _helpers_inactividad;
   "_helpers/mutationWithTriggers": typeof _helpers_mutationWithTriggers;
   "_helpers/patientAccess": typeof _helpers_patientAccess;

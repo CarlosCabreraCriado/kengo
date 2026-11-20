@@ -43,3 +43,25 @@ export async function pacienteTienePlanEnCurso(
   return planesActivos.some((p) => isPlanEnCurso(p, hoyMadrid));
 }
 
+
+/**
+ * Variante de `pacienteTienePlanEnCurso` acotada a una clínica: un paciente
+ * multiclínica solo cuenta como activo en las clínicas donde tiene un plan
+ * en curso (misma partición que el aggregate `patientsWithActivePlanByClinic`).
+ */
+export async function pacienteTienePlanEnCursoEnClinica(
+  ctx: Ctx,
+  pacienteId: Id<"users">,
+  clinicId: Id<"clinics">,
+  hoy: string,
+): Promise<boolean> {
+  const planesActivos = await ctx.db
+    .query("plans")
+    .withIndex("by_pacienteId_estado", (q) =>
+      q.eq("pacienteId", pacienteId).eq("estado", "activo"),
+    )
+    .collect();
+  return planesActivos.some(
+    (p) => p.clinicId === clinicId && isPlanEnCurso(p, hoy),
+  );
+}
