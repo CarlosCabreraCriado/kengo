@@ -11,21 +11,10 @@ import {
   assertCanManageRoutine,
   getRoutineIfOwned,
 } from "../_helpers/authorization";
-import { diaSemana, tipoEjercicio } from "../_helpers/validators";
-import { normalizarMetricaEjercicio } from "../_helpers/exercises";
+import { ejercicioPrescritoArgs } from "../_helpers/validators";
+import { sanearEjercicioPrescrito } from "../_helpers/exercises";
 
-const ejercicioRutinaValidator = v.object({
-  exerciseId: v.id("exercises"),
-  sort: v.number(),
-  tipo: v.optional(tipoEjercicio),
-  series: v.optional(v.number()),
-  repeticiones: v.optional(v.number()),
-  duracionSeg: v.optional(v.number()),
-  descansoSeg: v.optional(v.number()),
-  diasSemana: v.optional(v.array(diaSemana)),
-  instruccionesPaciente: v.optional(v.string()),
-  notasFisio: v.optional(v.string()),
-});
+const ejercicioRutinaValidator = ejercicioPrescritoArgs;
 
 export const create = mutation({
   args: {
@@ -73,20 +62,9 @@ export const create = mutation({
     });
 
     for (const ejercicio of args.ejercicios) {
-      const { repeticiones, duracionSeg } =
-        normalizarMetricaEjercicio(ejercicio);
       await ctx.db.insert("routineExercises", {
         routineId,
-        exerciseId: ejercicio.exerciseId,
-        sort: ejercicio.sort,
-        tipo: ejercicio.tipo,
-        series: ejercicio.series,
-        repeticiones,
-        duracionSeg,
-        descansoSeg: ejercicio.descansoSeg,
-        diasSemana: ejercicio.diasSemana,
-        instruccionesPaciente: ejercicio.instruccionesPaciente,
-        notasFisio: ejercicio.notasFisio,
+        ...sanearEjercicioPrescrito(ejercicio),
       });
     }
 
@@ -216,20 +194,9 @@ export const update = mutation({
       }
 
       for (const ejercicio of args.ejercicios) {
-        const { repeticiones, duracionSeg } =
-          normalizarMetricaEjercicio(ejercicio);
         await ctx.db.insert("routineExercises", {
           routineId: args.routineId,
-          exerciseId: ejercicio.exerciseId,
-          sort: ejercicio.sort,
-          tipo: ejercicio.tipo,
-          series: ejercicio.series,
-          repeticiones,
-          duracionSeg,
-          descansoSeg: ejercicio.descansoSeg,
-          diasSemana: ejercicio.diasSemana,
-          instruccionesPaciente: ejercicio.instruccionesPaciente,
-          notasFisio: ejercicio.notasFisio,
+          ...sanearEjercicioPrescrito(ejercicio),
         });
       }
     }

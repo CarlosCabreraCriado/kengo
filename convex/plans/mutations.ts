@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation } from "../_helpers/mutationWithTriggers";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import {
   getAuthenticatedUser,
   PUESTOS_GESTION,
@@ -12,8 +13,11 @@ import {
   assertCanManagePlan,
 } from "../_helpers/authorization";
 import { membershipEsPaciente } from "../_helpers/patientAccess";
-import { diaSemana, tipoEjercicio } from "../_helpers/validators";
-import { normalizarMetricaEjercicio } from "../_helpers/exercises";
+import { ejercicioPrescritoArgs } from "../_helpers/validators";
+import {
+  type EjercicioPrescritoEntrada,
+  sanearEjercicioPrescrito,
+} from "../_helpers/exercises";
 import { getCurrentDateInTz } from "../_helpers/datetime";
 import { getPatientTz, tzOf } from "../_helpers/patientTz";
 import { computeVersionDates } from "../_helpers/planVersioning";
@@ -45,49 +49,17 @@ async function schedulePushNuevoPlan(
   });
 }
 
-const ejercicioPlanArgs = v.object({
-  exerciseId: v.id("exercises"),
-  sort: v.number(),
-  tipo: v.optional(tipoEjercicio),
-  series: v.optional(v.number()),
-  repeticiones: v.optional(v.number()),
-  duracionSeg: v.optional(v.number()),
-  descansoSeg: v.optional(v.number()),
-  diasSemana: v.optional(v.array(diaSemana)),
-  instruccionesPaciente: v.optional(v.string()),
-  notasFisio: v.optional(v.string()),
-});
+const ejercicioPlanArgs = ejercicioPrescritoArgs;
 
 async function insertPlanExercises(
-  ctx: any,
-  planId: any,
-  ejercicios: Array<{
-    exerciseId: any;
-    sort: number;
-    tipo?: "repeticiones" | "duracion";
-    series?: number;
-    repeticiones?: number;
-    duracionSeg?: number;
-    descansoSeg?: number;
-    diasSemana?: string[];
-    instruccionesPaciente?: string;
-    notasFisio?: string;
-  }>,
+  ctx: MutationCtx,
+  planId: Id<"plans">,
+  ejercicios: EjercicioPrescritoEntrada<Id<"exercises">>[],
 ) {
   for (const ej of ejercicios) {
-    const { repeticiones, duracionSeg } = normalizarMetricaEjercicio(ej);
     await ctx.db.insert("planExercises", {
       planId,
-      exerciseId: ej.exerciseId,
-      sort: ej.sort,
-      tipo: ej.tipo,
-      series: ej.series,
-      repeticiones,
-      duracionSeg,
-      descansoSeg: ej.descansoSeg,
-      diasSemana: ej.diasSemana,
-      instruccionesPaciente: ej.instruccionesPaciente,
-      notasFisio: ej.notasFisio,
+      ...sanearEjercicioPrescrito(ej),
     });
   }
 }
