@@ -208,6 +208,89 @@ ${ctaButton(`mailto:${email}?subject=Re: ${asunto}`, "Responder")}`;
   );
 }
 
+/** Escapa texto de usuario antes de interpolarlo en HTML. */
+function escapeHtml(raw: string): string {
+  return raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export interface LeadEmailData {
+  nombre: string;
+  clinica: string;
+  numFisios: string;
+  ciudad: string;
+  telefono: string;
+  email: string;
+  preferenciaContacto: "telefono" | "whatsapp" | "email";
+}
+
+const PREFERENCIA_LABEL: Record<LeadEmailData["preferenciaContacto"], string> = {
+  telefono: "Llamada de teléfono",
+  whatsapp: "WhatsApp",
+  email: "Email",
+};
+
+/**
+ * Aviso interno de un lead del formulario «Te llamamos» de la landing.
+ * El CTA lleva al canal que la clínica ha elegido.
+ */
+export function leadNotificationTemplate(lead: LeadEmailData): string {
+  const e = {
+    nombre: escapeHtml(lead.nombre),
+    clinica: escapeHtml(lead.clinica),
+    numFisios: escapeHtml(lead.numFisios),
+    ciudad: escapeHtml(lead.ciudad),
+    telefono: escapeHtml(lead.telefono),
+    email: escapeHtml(lead.email),
+  };
+  const digitos = lead.telefono.replace(/\D/g, "");
+  // wa.me exige prefijo internacional; si viene un móvil nacional, se asume +34.
+  const waNumero = digitos.length === 9 ? `34${digitos}` : digitos;
+
+  const cta =
+    lead.preferenciaContacto === "whatsapp"
+      ? ctaButton(`https://wa.me/${waNumero}`, "Escribir por WhatsApp")
+      : lead.preferenciaContacto === "email"
+        ? ctaButton(
+            `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent("Kengo · tu demo")}`,
+            "Responder por email",
+          )
+        : ctaButton(`tel:${encodeURIComponent(lead.telefono)}`, "Llamar");
+
+  const fila = (etiqueta: string, valor: string) => `
+  <tr>
+    <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">${etiqueta}</td>
+    <td style="padding: 8px 0; color: #1a1a1a; font-size: 15px; font-weight: 600;">${valor}</td>
+  </tr>`;
+
+  const content = `
+<h2 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">
+  Nuevo lead: ${e.clinica}
+</h2>
+<p style="margin: 0 0 24px 0; color: #4a4a4a; font-size: 15px; line-height: 1.6;">
+  Hemos prometido respuesta en <strong>menos de 24 h</strong>.
+</p>
+<table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f8f8f8; border-left: 4px solid ${BRAND_COLOR}; border-radius: 8px; padding: 16px 20px; margin: 0 0 24px 0;">
+  ${fila("Nombre", e.nombre)}
+  ${fila("Clínica", e.clinica)}
+  ${fila("Nº de fisios", e.numFisios)}
+  ${fila("Ciudad", e.ciudad)}
+  ${fila("Teléfono", e.telefono)}
+  ${fila("Email", e.email)}
+  ${fila("Prefiere", PREFERENCIA_LABEL[lead.preferenciaContacto])}
+</table>
+${cta}`;
+
+  return baseLayout(
+    content,
+    "Lead recibido desde el formulario «Te llamamos» de www.kengoapp.com. Queda guardado en la tabla leads de Convex.",
+  );
+}
+
 export function trialEndingTemplate(
   nombreAdmin: string,
   clinicaNombre: string,

@@ -9,6 +9,7 @@ import {
   esPriceAMedida,
 } from "./billing/_webhookHelpers";
 import { idDeRef, resumenTarjeta } from "./billing/_helpers";
+import { esBot, validarLead } from "./contact/_leadHelpers";
 import {
   authComponent,
   createAuth,
@@ -824,6 +825,96 @@ http.route({
       JSON.stringify({ success: true, message: "Mensaje enviado correctamente" }),
       { status: 200, headers },
     );
+  }),
+});
+
+// ─── LEADS («Te llamamos») ───
+// Formulario comercial de la landing (sección #contacto de www.kengoapp.com).
+// A diferencia del contacto genérico, el lead se GUARDA (tabla `leads`) antes
+// de avisar a ventas: si Resend falla, el contacto no se pierde.
+
+http.route({
+  path: "/api/leads/send",
+  method: "OPTIONS",
+  handler: optionsHandler(),
+});
+
+http.route({
+  path: "/api/leads/send",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const headers = corsHeaders(request);
+
+    let body: Record<string, unknown>;
+    try {
+      const parsed: unknown = await request.json();
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("not an object");
+      }
+      body = parsed as Record<string, unknown>;
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, message: "Invalid JSON" }),
+        { status: 400, headers },
+      );
+    }
+
+    // Honeypot: al bot se le responde como si hubiera ido bien, para que no
+    // aprenda a esquivarlo, pero no se guarda ni se avisa.
+    if (esBot(body)) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers,
+      });
+    }
+
+    const validacion = validarLead(body);
+    if (!validacion.ok) {
+      return new Response(
+        JSON.stringify({ success: false, message: validacion.message }),
+        { status: 400, headers },
+      );
+    }
+
+    // Mismo rate limit que el contacto genérico, con bucket propio para que
+    // un formulario no agote el cupo del otro.
+    const ip =
+      request.headers.get("cf-connecting-ip") ??
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "unknown";
+    const { allowed } = await ctx.runMutation(
+      internal.contact.internal.hitContactRateLimit,
+      { bucket: `lead:${ip}` },
+    );
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
+        }),
+        { status: 429, headers },
+      );
+    }
+
+    const lead = validacion.lead;
+    await ctx.runMutation(internal.contact.internal.createLead, lead);
+
+    // El aviso va en segundo plano: la respuesta no espera a Resend y un
+    // fallo del email no convierte en error un lead ya guardado.
+    await ctx.scheduler.runAfter(0, internal.email.actions.sendLeadNotification, {
+      nombre: lead.nombre,
+      clinica: lead.clinica,
+      numFisios: lead.numFisios,
+      ciudad: lead.ciudad,
+      telefono: lead.telefono,
+      email: lead.email,
+      preferenciaContacto: lead.preferenciaContacto,
+    });
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers,
+    });
   }),
 });
 

@@ -18,6 +18,7 @@ import {
   paymentMethodRemovedTemplate,
   ownershipTransferredNewOwnerTemplate,
   ownershipTransferredPreviousOwnerTemplate,
+  leadNotificationTemplate,
 } from "./templates";
 
 export const sendEmail = internalAction({
@@ -493,6 +494,59 @@ export const sendContactForm = internalAction({
     }
 
     console.log(`[Email] Email de contacto enviado desde ${args.email}`);
+    return true;
+  },
+});
+
+/**
+ * Aviso a ventas (CONTACT_EMAILS) de un lead del formulario «Te llamamos».
+ * El lead ya está guardado en `leads` antes de llamar a esta acción: si el
+ * email falla, solo se pierde el aviso, no el contacto.
+ */
+export const sendLeadNotification = internalAction({
+  args: {
+    nombre: v.string(),
+    clinica: v.string(),
+    numFisios: v.string(),
+    ciudad: v.string(),
+    telefono: v.string(),
+    email: v.string(),
+    preferenciaContacto: v.union(
+      v.literal("telefono"),
+      v.literal("whatsapp"),
+      v.literal("email"),
+    ),
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env["RESEND_API_KEY"];
+    if (!apiKey) {
+      console.warn("[Email] RESEND_API_KEY no configurada, omitiendo aviso de lead");
+      return false;
+    }
+
+    const contactEmails = (
+      process.env["CONTACT_EMAILS"] || "info@kengoapp.com"
+    )
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+
+    const resend = new Resend(apiKey);
+
+    const { error } = await resend.emails.send({
+      from: "Kengo Contacto <noreply@kengoapp.com>",
+      to: contactEmails,
+      replyTo: args.email,
+      subject: `[Lead web] ${args.clinica} · ${args.numFisios} fisios · ${args.ciudad}`,
+      html: leadNotificationTemplate(args),
+    });
+
+    if (error) {
+      console.error("[Email] Error enviando aviso de lead:", error);
+      return false;
+    }
+
+    console.log(`[Email] Aviso de lead enviado (${args.clinica})`);
     return true;
   },
 });

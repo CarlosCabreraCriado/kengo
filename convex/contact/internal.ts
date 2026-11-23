@@ -38,3 +38,37 @@ export const hitContactRateLimit = internalMutation({
     return { allowed: true };
   },
 });
+
+// Alta de un lead del formulario «Te llamamos» de la landing. La validación
+// (listas cerradas, RGPD, formatos) ya se hizo en `validarLead`; aquí solo se
+// persiste, antes de intentar el aviso por email, para no perder el lead si
+// Resend falla.
+export const createLead = internalMutation({
+  args: {
+    nombre: v.string(),
+    clinica: v.string(),
+    numFisios: v.union(
+      v.literal("1"),
+      v.literal("2-4"),
+      v.literal("5-9"),
+      v.literal("10+"),
+    ),
+    ciudad: v.string(),
+    telefono: v.string(),
+    email: v.string(),
+    preferenciaContacto: v.union(
+      v.literal("telefono"),
+      v.literal("whatsapp"),
+      v.literal("email"),
+    ),
+    privacidadVersion: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("leads", {
+      ...args,
+      origen: "demo-form",
+      estado: "nuevo",
+      createdAt: Date.now(),
+    });
+  },
+});

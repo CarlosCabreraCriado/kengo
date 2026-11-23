@@ -852,6 +852,37 @@ export default defineSchema({
     windowStartMs: v.number(),
   }).index("by_bucket", ["bucket"]),
 
+  // Leads comerciales del formulario «Te llamamos» de la landing
+  // (`/api/leads/send`). Se guardan aunque falle el aviso por email, y
+  // `privacidadVersion` deja constancia de qué política aceptó (art. 7.1
+  // RGPD). Valores admitidos en `convex/contact/_leadHelpers.ts`.
+  leads: defineTable({
+    nombre: v.string(),
+    clinica: v.string(),
+    numFisios: v.union(
+      v.literal("1"),
+      v.literal("2-4"),
+      v.literal("5-9"),
+      v.literal("10+"),
+    ),
+    ciudad: v.string(),
+    telefono: v.string(),
+    email: v.string(),
+    preferenciaContacto: v.union(
+      v.literal("telefono"),
+      v.literal("whatsapp"),
+      v.literal("email"),
+    ),
+    privacidadVersion: v.string(),
+    origen: v.literal("demo-form"),
+    estado: v.union(
+      v.literal("nuevo"),
+      v.literal("contactado"),
+      v.literal("descartado"),
+    ),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
+
   // === ESTADO DE SINCRONIZACIÓN DIRECTUS ===
   // Una fila por colección Directus sincronizada. `lastSyncedAt` es la cota
   // superior (max date_updated visto) usada como filtro `_gt` en el siguiente
