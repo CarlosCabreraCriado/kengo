@@ -1,18 +1,13 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
-import { ContactFormComponent } from '../contact-form/contact-form.component';
+import { CONTACT_EMAIL, SOCIAL } from '../../shared/site-config';
 
 @Component({
   selector: 'web-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ScrollAnimateDirective, RouterLink, ContactFormComponent],
+  imports: [ScrollAnimateDirective, RouterLink],
   template: `
     <footer>
       <div class="wrap">
@@ -25,6 +20,27 @@ import { ContactFormComponent } from '../contact-form/contact-form.component';
               La plataforma que mantiene el tratamiento vivo entre sesión y
               sesión.
             </p>
+            <a class="mail" [href]="'mailto:' + contactEmail">{{ contactEmail }}</a>
+            @if (social.instagram || social.linkedin) {
+              <div class="social">
+                @if (social.instagram) {
+                  <a [href]="social.instagram" target="_blank" rel="noopener" aria-label="Kengo en Instagram">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <rect x="3" y="3" width="18" height="18" rx="5" />
+                      <circle cx="12" cy="12" r="4" />
+                      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                    </svg>
+                  </a>
+                }
+                @if (social.linkedin) {
+                  <a [href]="social.linkedin" target="_blank" rel="noopener" aria-label="Kengo en LinkedIn">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4V21H3V9.75Zm6.5 0h3.83v1.54h.06c.53-1.01 1.84-2.07 3.79-2.07 4.05 0 4.8 2.67 4.8 6.13V21h-4v-4.98c0-1.19-.02-2.72-1.66-2.72-1.66 0-1.92 1.3-1.92 2.63V21h-4V9.75Z" />
+                    </svg>
+                  </a>
+                }
+              </div>
+            }
           </div>
           <div class="foot-cols">
             <div class="foot-col">
@@ -32,16 +48,15 @@ import { ContactFormComponent } from '../contact-form/contact-form.component';
               <!-- routerLink + fragment en vez de href="#...": desde una
                    página legal el ancla suelta no lleva a ninguna parte. -->
               <a routerLink="/" fragment="fisios">Para fisios</a>
-              <a routerLink="/" fragment="pacientes">Para pacientes</a>
-              <a routerLink="/" fragment="clinicas">Clínicas</a>
-              <a routerLink="/" fragment="como">Cómo funciona</a>
+              <a routerLink="/" fragment="clinicas">Para clínicas</a>
+              <a routerLink="/" fragment="precios">Precios</a>
+              <a routerLink="/" fragment="faq">Preguntas frecuentes</a>
             </div>
             <div class="foot-col">
               <h5>Empresa</h5>
-              <a routerLink="/">Sobre Kengo</a>
-              <button type="button" class="foot-link" (click)="abrirModal()">
-                Contacto
-              </button>
+              <a routerLink="/" fragment="equipo">Sobre Kengo</a>
+              <a routerLink="/" fragment="demo">Pide una demo</a>
+              <a routerLink="/" fragment="contacto">Contacto</a>
               <a routerLink="/soporte">Soporte</a>
             </div>
             <div class="foot-col">
@@ -60,47 +75,6 @@ import { ContactFormComponent } from '../contact-form/contact-form.component';
         </div>
       </div>
     </footer>
-
-    <!-- Modal de contacto -->
-    @if (modalAbierto()) {
-      <div
-        class="modal-overlay"
-        role="button"
-        tabindex="0"
-        aria-label="Cerrar contacto"
-        (click)="onBackdrop($event)"
-        (keydown.escape)="cerrarModal()"
-      >
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3 class="modal-title">Contacto</h3>
-            <button
-              (click)="cerrarModal()"
-              class="modal-close"
-              aria-label="Cerrar"
-            >
-              <svg
-                class="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div class="modal-body">
-            <web-contact-form #contactForm idPrefix="contacto" />
-          </div>
-        </div>
-      </div>
-    }
   `,
   styles: [
     `
@@ -154,22 +128,14 @@ import { ContactFormComponent } from '../contact-form/contact-form.component';
         font-weight: 700;
       }
 
-      .foot-col a,
-      .foot-col .foot-link {
+      .foot-col a {
         display: block;
         color: var(--color-ink-700);
         margin-bottom: 9px;
         text-decoration: none;
-        background: none;
-        border: none;
-        padding: 0;
-        font: inherit;
-        cursor: pointer;
-        text-align: left;
       }
 
-      .foot-col a:hover,
-      .foot-col .foot-link:hover {
+      .foot-col a:hover {
         color: var(--color-primary);
       }
 
@@ -183,246 +149,45 @@ import { ContactFormComponent } from '../contact-form/contact-form.component';
         color: #7d6b62;
       }
 
-      /* ============ Modal ============ */
-      .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(67, 52, 44, 0.45);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 16px;
-        animation: fadeIn 0.2s ease;
-      }
-
-      .modal-container {
-        background: #fff;
-        border: 1px solid var(--color-ink-200);
-        border-radius: 24px;
-        width: 100%;
-        max-width: 480px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 25px 60px rgba(150, 100, 70, 0.25);
-        animation: slideUp 0.3s ease;
-      }
-
-      .modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 24px 24px 0;
-      }
-
-      .modal-title {
-        font-size: 20px;
+      .mail {
+        display: inline-block;
+        margin-top: 14px;
+        color: var(--color-primary-dark);
         font-weight: 700;
-        color: var(--color-ink);
-        margin: 0;
+        text-decoration: none;
       }
 
-      .modal-close {
-        background: var(--color-sand);
-        border: 1px solid var(--color-ink-200);
-        border-radius: 12px;
-        color: var(--color-ink-700);
-        cursor: pointer;
-        padding: 8px;
-        transition: all 0.2s ease;
+      .social {
         display: flex;
-        align-items: center;
-        justify-content: center;
+        gap: 10px;
+        margin-top: 16px;
       }
 
-      .modal-close:hover {
-        background: var(--color-peach);
-        color: var(--color-ink);
-      }
-
-      .modal-body {
-        padding: 24px;
-      }
-
-      .form-group {
-        margin-bottom: 16px;
-      }
-
-      .form-label {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--color-ink-700);
-        margin-bottom: 6px;
-      }
-
-      .form-input {
-        width: 100%;
-        background: var(--color-cream);
-        border: 1px solid var(--color-ink-200);
-        border-radius: 12px;
-        padding: 12px 14px;
-        font-size: 15px;
-        color: var(--color-ink);
-        font-family: inherit;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        box-sizing: border-box;
-      }
-
-      .form-input::placeholder {
-        color: var(--color-ink-500);
-      }
-
-      .form-input:focus {
-        outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(224, 112, 79, 0.15);
-      }
-
-      .form-textarea {
-        resize: vertical;
-        min-height: 100px;
-      }
-
-      .submit-btn {
-        width: 100%;
-        background: var(--color-primary);
-        color: #fff;
-        border: none;
-        border-radius: 999px;
-        padding: 14px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: inherit;
-        box-shadow: 0 8px 22px rgba(224, 112, 79, 0.28);
-      }
-
-      .submit-btn:hover:not(:disabled) {
-        background: var(--color-primary-dark);
-        transform: translateY(-1px);
-      }
-
-      .submit-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .state-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 32px 0;
-        text-align: center;
-      }
-
-      .state-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--color-ink);
-        margin: 16px 0 8px;
-      }
-
-      .state-text {
-        font-size: 14px;
-        color: var(--color-ink-700);
-        margin: 0;
-      }
-
-      .spinner {
+      .social a {
         width: 40px;
         height: 40px;
-        border: 3px solid var(--color-ink-200);
-        border-top-color: var(--color-primary);
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--color-ink-200);
+        color: var(--color-ink-strong);
+        background: #fff;
       }
 
-      .success-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: rgba(93, 138, 95, 0.16);
-        color: #3f6b45;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      .social a:hover {
+        color: var(--color-primary);
+        border-color: var(--color-primary);
       }
 
-      .error-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: rgba(224, 112, 79, 0.15);
-        color: var(--color-primary-dark);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .h-5 {
-        width: 20px;
-        height: 20px;
-      }
-      .h-8 {
-        width: 32px;
-        height: 32px;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-
-      @keyframes slideUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
+      .social svg {
+        width: 18px;
+        height: 18px;
       }
     `,
   ],
 })
 export class FooterComponent {
-  currentYear = new Date().getFullYear();
-  modalAbierto = signal(false);
-
-  /**
-   * El formulario vive en `ContactFormComponent`, compartido con las páginas
-   * de soporte y de eliminación de cuenta. Aquí solo se gobierna el modal.
-   */
-  private contactForm = viewChild(ContactFormComponent);
-
-  onBackdrop(event: MouseEvent) {
-    if (event.target === event.currentTarget) {
-      this.cerrarModal();
-    }
-  }
-
-  abrirModal() {
-    this.modalAbierto.set(true);
-    // El componente se crea al abrirse el modal, así que se reinicia en el
-    // siguiente tick, cuando ya existe la instancia.
-    queueMicrotask(() => this.contactForm()?.reiniciar());
-  }
-
-  cerrarModal() {
-    this.modalAbierto.set(false);
-  }
+  protected readonly currentYear = new Date().getFullYear();
+  protected readonly contactEmail = CONTACT_EMAIL;
+  protected readonly social = SOCIAL;
 }

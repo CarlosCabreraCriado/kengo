@@ -137,7 +137,12 @@ interface FeatureRow {
         margin-bottom: -1px;
       }
       .band-soft .num {
-        color: #3f6b45;
+        color: #2f5a35;
+      }
+      /* Texto oscuro sobre la banda verde clara (contraste AA holgado) */
+      .band-soft p,
+      .band-soft .ticks li {
+        color: var(--color-ink-strong);
       }
       .band-soft .ticks li::before {
         background-color: rgba(93, 138, 95, 0.14);

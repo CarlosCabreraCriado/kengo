@@ -1,24 +1,34 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import {
+  APP_STORE_ENABLED,
+  APP_STORE_URL,
+  PLAY_STORE_URL,
+  TRIAL_DIAS,
+} from '../../shared/site-config';
 
 @Component({
   selector: 'web-hero',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
+  imports: [RouterLink],
   template: `
     <header class="hero" id="top">
       <div class="wrap hero-in">
         <div class="hero-copy">
           <h1 class="font-display">
-            Tu rehabilitación,<br /><em>siempre contigo</em>
+            El tratamiento no termina<br /><em>en la camilla</em>
           </h1>
           <p class="lead">
-            Tu fisio te deja el plan en el móvil, con vídeo en cada ejercicio, tu
-            progreso a la vista y <b>una línea directa con él</b> entre sesiones.
+            Tus pacientes se llevan el plan al móvil, con vídeo en cada
+            ejercicio. Tú ves <b>quién lo hace y quién se descuelga</b>, ajustas
+            sin esperar a la próxima cita y tu clínica gana pacientes que
+            vuelven.
           </p>
           <div class="hero-cta">
-            <a [href]="registroUrl" class="btn btn-primary">
-              Empieza gratis
+            <a routerLink="/" fragment="demo" class="btn btn-primary">
+              Agenda una demo de 15 min
               <svg
                 fill="none"
                 stroke="currentColor"
@@ -26,12 +36,22 @@ import { environment } from '../../../environments/environment';
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </a>
-            <a href="#fisios" class="btn btn-ghost">Ver la app por dentro</a>
+            <a [href]="registroUrl" class="btn btn-ghost">Prueba {{ trialDias }} días gratis</a>
           </div>
+          <p class="platforms">
+            Disponible en web, Android e iOS · Sin permanencia
+            @if (appStoreEnabled && appStoreUrl) {
+              · <a [href]="appStoreUrl" target="_blank" rel="noopener">App Store</a>
+            }
+            @if (playStoreUrl) {
+              · <a [href]="playStoreUrl" target="_blank" rel="noopener">Google Play</a>
+            }
+          </p>
         </div>
         <div class="hero-shot">
           <picture>
@@ -135,9 +155,20 @@ import { environment } from '../../../environments/environment';
         width: 100%;
       }
 
+      .platforms {
+        margin: 18px 0 0;
+        font-size: 13.5px;
+        color: var(--color-ink-700);
+      }
+
+      .platforms a {
+        color: var(--color-primary-dark);
+        font-weight: 700;
+      }
+
       .hero h1 {
         margin: 0;
-        font-size: clamp(38px, 6vw, 90px);
+        font-size: clamp(36px, 5.6vw, 84px);
         color: var(--color-ink);
         letter-spacing: 0.02em;
       }
@@ -157,7 +188,7 @@ import { environment } from '../../../environments/environment';
       }
 
       .hero p.lead b {
-        color: var(--color-ink);
+        color: var(--color-ink-strong);
         font-weight: 700;
       }
 
@@ -198,6 +229,9 @@ import { environment } from '../../../environments/environment';
         .hero {
           padding-top: 112px;
         }
+        .hero p.lead {
+          font-size: 17px;
+        }
         .hero-shot {
           max-height: none;
           padding: 0 var(--gutter);
@@ -212,4 +246,8 @@ import { environment } from '../../../environments/environment';
 })
 export class HeroComponent {
   protected readonly registroUrl = `${environment.appUrl}/registro`;
+  protected readonly trialDias = TRIAL_DIAS;
+  protected readonly appStoreEnabled = APP_STORE_ENABLED;
+  protected readonly appStoreUrl = APP_STORE_URL;
+  protected readonly playStoreUrl = PLAY_STORE_URL;
 }

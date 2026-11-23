@@ -1,16 +1,21 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { CLINICAS_USUARIAS, TRIAL_DIAS } from '../../shared/site-config';
 
 interface Kpi {
   value: string;
   label: string;
 }
 
+/**
+ * Cifras de la franja bajo el hero. Solo datos reales y comprobables: nada de
+ * porcentajes de adherencia o resultados que no podamos respaldar.
+ */
 @Component({
   selector: 'web-stats',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   template: `
-    <section class="stats">
+    <section class="stats" aria-label="Kengo en cifras">
       <div class="wrap">
         <div class="stats-in">
           @for (kpi of kpis; track kpi.value) {
@@ -59,7 +64,7 @@ interface Kpi {
         display: block;
         font-size: 42px;
         line-height: 1;
-        color: var(--color-primary);
+        color: var(--color-primary-dark);
         letter-spacing: 0.02em;
       }
 
@@ -84,20 +89,31 @@ interface Kpi {
         }
       }
 
-      /* En móvil se omiten los KPIs para acortar el scroll hasta el contenido */
       @media (max-width: 640px) {
-        :host {
-          display: none;
+        .stats {
+          padding-top: 24px;
+        }
+        .stats-in {
+          border-radius: 24px;
+        }
+        .stat {
+          padding: 22px 18px;
+        }
+        .stat b {
+          font-size: 32px;
+        }
+        .stat span {
+          font-size: 12.5px;
         }
       }
     `,
   ],
 })
 export class StatsComponent {
-  kpis: Kpi[] = [
-    { value: '+500', label: 'ejercicios grabados en vídeo, listos para asignar' },
-    { value: '87%', label: 'de adherencia media en pacientes con plan activo' },
-    { value: '2 min', label: 'para montar un plan completo desde una rutina' },
-    { value: '3', label: 'perfiles: fisio, paciente y administrador de clínica' },
+  protected readonly kpis: Kpi[] = [
+    { value: String(CLINICAS_USUARIAS), label: 'clínicas ya trabajan con Kengo' },
+    { value: `${TRIAL_DIAS} días`, label: 'de prueba gratis, sin tarjeta' },
+    { value: '<2 min', label: 'para montar un plan completo desde una rutina' },
+    { value: '0', label: 'permanencia: cancelas cuando quieras' },
   ];
 }

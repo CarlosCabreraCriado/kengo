@@ -21,7 +21,8 @@
     "lib": ["ES2022", "dom"],
     "paths": {
       "@kengo/shared-models": ["libs/shared/models/src/index.ts"],
-      "@kengo/legal": ["libs/shared/legal/src/index.ts"]
+      "@kengo/legal": ["libs/shared/legal/src/index.ts"],
+      "@kengo/legal/metadata": ["libs/shared/legal/src/lib/legal-docs.metadata.ts"]
     }
   },
   "angularCompilerOptions": {

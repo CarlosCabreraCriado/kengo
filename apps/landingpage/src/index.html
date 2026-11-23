@@ -6,12 +6,12 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#fff0e4" />
-    <meta name="description" content="Kengo conecta a fisioterapeutas y pacientes entre sesiones: planes con vídeo, adherencia real y feedback directo." />
+    <meta name="description" content="Kengo es la plataforma para clínicas de fisioterapia que mantiene el tratamiento vivo entre sesiones: planes con vídeo, seguimiento de la adherencia y chat con el paciente. 14 días gratis, sin permanencia." />
     <link rel="canonical" href="https://www.kengoapp.com/" />
 
     <!-- Preload de fuentes above-the-fold (crossorigin obligatorio en preload de fuentes) -->
     <link rel="preload" href="/fonts/SocialGothic-Bold.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/galvji.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/poppins-400.woff2" as="font" type="font/woff2" crossorigin />
 
     <!-- Preload de la imagen LCP del hero -->
     <link
@@ -29,7 +29,7 @@
     <meta property="og:site_name" content="Kengo" />
     <meta property="og:locale" content="es_ES" />
     <meta property="og:title" content="Kengo — El tratamiento no termina en la camilla" />
-    <meta property="og:description" content="Kengo conecta a fisioterapeutas y pacientes entre sesiones: planes con vídeo, adherencia real y feedback directo." />
+    <meta property="og:description" content="Kengo es la plataforma para clínicas de fisioterapia que mantiene el tratamiento vivo entre sesiones: planes con vídeo, seguimiento de la adherencia y chat con el paciente. 14 días gratis, sin permanencia." />
     <meta property="og:image" content="https://www.kengoapp.com/assets/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -39,7 +39,7 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Kengo — El tratamiento no termina en la camilla" />
-    <meta name="twitter:description" content="Kengo conecta a fisioterapeutas y pacientes entre sesiones: planes con vídeo, adherencia real y feedback directo." />
+    <meta name="twitter:description" content="Kengo es la plataforma para clínicas de fisioterapia que mantiene el tratamiento vivo entre sesiones: planes con vídeo, seguimiento de la adherencia y chat con el paciente. 14 días gratis, sin permanencia." />
     <meta name="twitter:image" content="https://www.kengoapp.com/assets/og-image.jpg" />
 
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
@@ -69,10 +69,15 @@
             "name": "Kengo",
             "operatingSystem": "iOS, Android, Web",
             "applicationCategory": "HealthApplication",
-            "description": "Kengo conecta a fisioterapeutas y pacientes entre sesiones: planes con vídeo, adherencia real y feedback directo.",
+            "description": "Kengo es la plataforma para clínicas de fisioterapia que mantiene el tratamiento vivo entre sesiones: planes con vídeo, seguimiento de la adherencia y chat con el paciente. 14 días gratis, sin permanencia.",
             "url": "https://www.kengoapp.com/",
             "publisher": { "@id": "https://www.kengoapp.com/#org" },
-            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+            "offers": {
+              "@type": "AggregateOffer",
+              "lowPrice": "89",
+              "highPrice": "489",
+              "priceCurrency": "EUR"
+            }
           }
         ]
       }

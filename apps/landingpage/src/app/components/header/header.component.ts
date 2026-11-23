@@ -27,25 +27,46 @@ import { environment } from '../../../environments/environment';
           </svg>
         </a>
         <div class="nav-links">
-          <a routerLink="/" fragment="fisios">Para fisios</a>
-          <a routerLink="/" fragment="pacientes">Para pacientes</a>
-          <a routerLink="/" fragment="clinicas">Clínicas</a>
-          <a routerLink="/" fragment="como">Cómo funciona</a>
+          @for (link of links; track link.fragment) {
+            <a routerLink="/" [fragment]="link.fragment">{{ link.label }}</a>
+          }
         </div>
-        <a [href]="registroUrl" class="btn btn-primary">
-          Empieza gratis
-          <svg
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            viewBox="0 0 24 24"
+        <div class="nav-actions">
+          <a [href]="loginUrl" class="login">Entrar</a>
+          <a routerLink="/" fragment="demo" class="btn btn-primary btn-demo">
+            Pide una demo
+          </a>
+          <button
+            type="button"
+            class="burger"
+            [attr.aria-expanded]="menuAbierto()"
+            aria-controls="menu-movil"
+            [attr.aria-label]="menuAbierto() ? 'Cerrar menú' : 'Abrir menú'"
+            (click)="menuAbierto.set(!menuAbierto())"
           >
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </a>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              @if (menuAbierto()) {
+                <path d="M6 6l12 12M18 6L6 18" />
+              } @else {
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              }
+            </svg>
+          </button>
+        </div>
       </div>
+
+      @if (menuAbierto()) {
+        <div class="menu-movil" id="menu-movil">
+          @for (link of links; track link.fragment) {
+            <a routerLink="/" [fragment]="link.fragment" (click)="cerrarMenu()">{{ link.label }}</a>
+          }
+          <a routerLink="/" fragment="equipo" (click)="cerrarMenu()">Quiénes somos</a>
+          <a [href]="loginUrl">Entrar</a>
+          <a routerLink="/" fragment="demo" class="btn btn-primary" (click)="cerrarMenu()">
+            Pide una demo de 15 min
+          </a>
+        </div>
+      }
     </nav>
   `,
   styles: [
@@ -108,8 +129,88 @@ import { environment } from '../../../environments/environment';
         color: var(--color-primary);
       }
 
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .login {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--color-ink-700);
+        text-decoration: none;
+      }
+
+      .login:hover {
+        color: var(--color-primary);
+      }
+
+      .burger {
+        display: none;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 1px solid var(--color-ink-200);
+        background: #fff;
+        color: var(--color-ink);
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .burger svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .menu-movil {
+        max-width: 1240px;
+        margin: 10px auto 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 14px;
+        border-radius: 24px;
+        background: rgba(255, 251, 247, 0.98);
+        border: 1px solid var(--color-ink-200);
+        box-shadow: 0 18px 40px rgba(150, 100, 70, 0.18);
+      }
+
+      .menu-movil a:not(.btn) {
+        padding: 12px 10px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--color-ink-strong);
+        text-decoration: none;
+        border-radius: 12px;
+      }
+
+      .menu-movil a:not(.btn):hover {
+        background: var(--color-peach);
+      }
+
+      .menu-movil .btn {
+        justify-content: center;
+        margin-top: 8px;
+      }
+
       @media (max-width: 1080px) {
-        .nav-links {
+        .nav-links,
+        .login {
+          display: none;
+        }
+        .burger {
+          display: inline-flex;
+        }
+        .nav-actions {
+          gap: 10px;
+        }
+      }
+
+      @media (min-width: 1081px) {
+        .menu-movil {
           display: none;
         }
       }
@@ -118,17 +219,47 @@ import { environment } from '../../../environments/environment';
         nav {
           padding: 12px 16px;
         }
+        .nav-in {
+          padding: 8px 8px 8px 18px;
+          gap: 12px;
+        }
+        .btn-demo {
+          padding: 11px 16px;
+          font-size: 14px;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .nav-in .logo {
+          height: 24px;
+        }
+        .btn-demo {
+          padding: 10px 12px;
+          font-size: 13px;
+        }
       }
     `,
   ],
 })
 export class HeaderComponent {
-  protected readonly registroUrl = `${environment.appUrl}/registro`;
+  protected readonly loginUrl = `${environment.appUrl}/login`;
 
-  isScrolled = signal(false);
+  protected readonly links = [
+    { fragment: 'fisios', label: 'Para fisios' },
+    { fragment: 'clinicas', label: 'Para clínicas' },
+    { fragment: 'precios', label: 'Precios' },
+  ] as const;
+
+  protected readonly isScrolled = signal(false);
+  protected readonly menuAbierto = signal(false);
 
   @HostListener('window:scroll')
   onScroll() {
     this.isScrolled.set(window.scrollY > 20);
+  }
+
+  @HostListener('document:keydown.escape')
+  cerrarMenu() {
+    this.menuAbierto.set(false);
   }
 }

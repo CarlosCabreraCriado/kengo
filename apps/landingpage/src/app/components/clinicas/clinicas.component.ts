@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ScrollAnimateDirective } from '../../directives/scroll-animate.directive';
 
 @Component({
   selector: 'web-clinicas',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [ScrollAnimateDirective],
+  imports: [ScrollAnimateDirective, RouterLink],
   template: `
     <section class="brand-sec" id="clinicas">
       <div class="wrap brand-in scroll-reveal" webScrollAnimate>
@@ -13,15 +14,17 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
           <span class="eyebrow">Para clínicas</span>
           <h2 class="font-display">Tu clínica,<br />tus colores</h2>
           <p>
-            Logo, color corporativo y datos de la clínica. Tus pacientes ven tu
-            marca, no la nuestra. Y tú gestionas todo el equipo desde un solo
-            panel.
+            Tus pacientes ven tu logo y tu color, no los nuestros: Kengo se
+            convierte en la app de tu centro. Y desde un solo panel ves cómo va
+            todo el equipo, sin hojas de cálculo ni grupos de WhatsApp.
           </p>
           <ul class="ticks">
-            <li>Códigos de acceso para dar de alta fisios y pacientes sin fricción</li>
-            <li>Varias clínicas bajo un mismo usuario</li>
-            <li>Actividad y adherencia agregadas de todo el centro</li>
+            <li>Altas de fisios y pacientes con un código de 8 caracteres</li>
+            <li>Adherencia y actividad de todo el centro, por fisio y por paciente</li>
+            <li>Rutinas compartidas: el protocolo que funciona, disponible para todos</li>
+            <li>Varias clínicas bajo un mismo usuario, cada una con su marca</li>
           </ul>
+          <a routerLink="/" fragment="precios" class="btn btn-ghost see-prices">Ver precios por clínica</a>
           <div class="swatches">
             <span class="swatch" style="background:#e0704f"></span>
             <span class="swatch" style="background:#5d8a5f"></span>
@@ -89,9 +92,24 @@ import { ScrollAnimateDirective } from '../../directives/scroll-animate.directiv
       p {
         font-size: 17px;
         line-height: 1.68;
-        color: var(--color-ink-700);
+        color: var(--color-ink-strong);
         margin: 20px 0 0;
         max-width: 30em;
+      }
+
+      /* Banda verde clara: texto oscuro para mantener el contraste */
+      .eyebrow {
+        color: #2f5a35;
+      }
+      .eyebrow::before {
+        background: #3f6b45;
+      }
+      .ticks li {
+        color: var(--color-ink-strong);
+      }
+
+      .see-prices {
+        margin-top: 28px;
       }
 
       .swatches {
