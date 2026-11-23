@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -37,16 +37,16 @@ const TELEFONO_PATTERN = /^\+?[\d\s\-.()]{9,20}$/;
         <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
           <div class="grid">
             <div class="field">
-              <label for="lead-nombre">Tu nombre</label>
-              <input id="lead-nombre" type="text" formControlName="nombre" autocomplete="name" />
+              <label [for]="idPrefix() + '-nombre'">Tu nombre</label>
+              <input [id]="idPrefix() + '-nombre'" type="text" formControlName="nombre" autocomplete="name" />
             </div>
             <div class="field">
-              <label for="lead-clinica">Clínica</label>
-              <input id="lead-clinica" type="text" formControlName="clinica" autocomplete="organization" />
+              <label [for]="idPrefix() + '-clinica'">Clínica</label>
+              <input [id]="idPrefix() + '-clinica'" type="text" formControlName="clinica" autocomplete="organization" />
             </div>
             <div class="field">
-              <label for="lead-fisios">Nº de fisios</label>
-              <select id="lead-fisios" formControlName="numFisios">
+              <label [for]="idPrefix() + '-fisios'">Nº de fisios</label>
+              <select [id]="idPrefix() + '-fisios'" formControlName="numFisios">
                 <option value="" disabled>Elige</option>
                 @for (op of numFisiosOpciones; track op) {
                   <option [value]="op">{{ op }}</option>
@@ -54,16 +54,16 @@ const TELEFONO_PATTERN = /^\+?[\d\s\-.()]{9,20}$/;
               </select>
             </div>
             <div class="field">
-              <label for="lead-ciudad">Ciudad</label>
-              <input id="lead-ciudad" type="text" formControlName="ciudad" autocomplete="address-level2" />
+              <label [for]="idPrefix() + '-ciudad'">Ciudad</label>
+              <input [id]="idPrefix() + '-ciudad'" type="text" formControlName="ciudad" autocomplete="address-level2" />
             </div>
             <div class="field">
-              <label for="lead-telefono">Teléfono</label>
-              <input id="lead-telefono" type="tel" inputmode="tel" formControlName="telefono" autocomplete="tel" />
+              <label [for]="idPrefix() + '-telefono'">Teléfono</label>
+              <input [id]="idPrefix() + '-telefono'" type="tel" inputmode="tel" formControlName="telefono" autocomplete="tel" />
             </div>
             <div class="field">
-              <label for="lead-email">Email</label>
-              <input id="lead-email" type="email" formControlName="email" autocomplete="email" />
+              <label [for]="idPrefix() + '-email'">Email</label>
+              <input [id]="idPrefix() + '-email'" type="email" formControlName="email" autocomplete="email" />
             </div>
           </div>
 
@@ -81,8 +81,8 @@ const TELEFONO_PATTERN = /^\+?[\d\s\-.()]{9,20}$/;
 
           <!-- Honeypot: invisible para personas; los bots lo rellenan. -->
           <div class="hp" aria-hidden="true">
-            <label for="lead-website">Web</label>
-            <input id="lead-website" type="text" formControlName="website" tabindex="-1" autocomplete="off" />
+            <label [for]="idPrefix() + '-website'">Web</label>
+            <input [id]="idPrefix() + '-website'" type="text" formControlName="website" tabindex="-1" autocomplete="off" />
           </div>
 
           <label class="rgpd">
@@ -348,6 +348,13 @@ const TELEFONO_PATTERN = /^\+?[\d\s\-.()]{9,20}$/;
   ],
 })
 export class LeadFormComponent {
+  /**
+   * Prefijo de los `id` de los campos. El formulario puede estar dos veces en
+   * la página (sección `#contacto` y popup del botón flotante) y los `id`
+   * repetidos rompen la asociación label ↔ campo.
+   */
+  readonly idPrefix = input('lead');
+
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly http = inject(HttpClient);
 

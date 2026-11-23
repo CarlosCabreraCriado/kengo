@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CLINICAS_USUARIAS, TRIAL_DIAS } from '../../shared/site-config';
+import { TRIAL_DIAS } from '../../shared/site-config';
 
 interface Kpi {
   value: string;
@@ -8,7 +8,8 @@ interface Kpi {
 
 /**
  * Cifras de la franja bajo el hero. Solo datos reales y comprobables: nada de
- * porcentajes de adherencia o resultados que no podamos respaldar.
+ * porcentajes de adherencia o resultados que no podamos respaldar. Tampoco
+ * el número de clínicas clientes: con una base todavía pequeña resta confianza.
  */
 @Component({
   selector: 'web-stats',
@@ -111,7 +112,7 @@ interface Kpi {
 })
 export class StatsComponent {
   protected readonly kpis: Kpi[] = [
-    { value: String(CLINICAS_USUARIAS), label: 'clínicas ya trabajan con Kengo' },
+    { value: '+500', label: 'ejercicios en vídeo listos para asignar' },
     { value: `${TRIAL_DIAS} días`, label: 'de prueba gratis, sin tarjeta' },
     { value: '<2 min', label: 'para montar un plan completo desde una rutina' },
     { value: '0', label: 'permanencia: cancelas cuando quieras' },

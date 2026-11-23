@@ -90,21 +90,19 @@ export const PLANES_WEB: readonly PlanWeb[] = [
 
 /**
  * Oferta de lanzamiento. El contador se actualiza A MANO al cerrar cada
- * clínica fundadora; con `plazasRestantes: 0` el banner desaparece. El
+ * clínica fundadora; con `plazasRestantes: 0` el banner desaparece. En la web
+ * solo se publican las plazas que quedan, nunca el total (dejaría ver cuántas
+ * clínicas hay ya dentro). El
  * descuento lo aplica ventas con un cupón de Stripe (nunca con un price
  * nuevo: marcaría la suscripción como «a medida»).
  */
 export const OFERTA_FUNDADORA = {
   descuentoPct: 30,
   meses: 4,
-  plazasTotales: 10,
   plazasRestantes: 6,
 } as const;
 
 // ─── Prueba social ──────────────────────────────────────────────────────────
-
-/** Clínicas que usan Kengo hoy (dato real, no redondear al alza). */
-export const CLINICAS_USUARIAS = 4;
 
 export interface Logo {
   nombre: string;

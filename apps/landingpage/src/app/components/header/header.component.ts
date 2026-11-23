@@ -247,6 +247,7 @@ export class HeaderComponent {
   protected readonly links = [
     { fragment: 'fisios', label: 'Para fisios' },
     { fragment: 'clinicas', label: 'Para clínicas' },
+    { fragment: 'monetizacion', label: 'Monetización' },
     { fragment: 'precios', label: 'Precios' },
   ] as const;
 

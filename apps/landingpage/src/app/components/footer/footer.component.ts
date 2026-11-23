@@ -49,6 +49,7 @@ import { CONTACT_EMAIL, SOCIAL } from '../../shared/site-config';
                    página legal el ancla suelta no lleva a ninguna parte. -->
               <a routerLink="/" fragment="fisios">Para fisios</a>
               <a routerLink="/" fragment="clinicas">Para clínicas</a>
+              <a routerLink="/" fragment="monetizacion">Monetización</a>
               <a routerLink="/" fragment="precios">Precios</a>
               <a routerLink="/" fragment="faq">Preguntas frecuentes</a>
             </div>

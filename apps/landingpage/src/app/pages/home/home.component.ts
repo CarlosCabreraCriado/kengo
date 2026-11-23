@@ -15,16 +15,19 @@ import { StatsComponent } from '../../components/stats/stats.component';
 import { FeaturesComponent } from '../../components/features/features.component';
 import { ClinicasComponent } from '../../components/clinicas/clinicas.component';
 import { HowItWorksComponent } from '../../components/how-it-works/how-it-works.component';
+import { MonetizacionComponent } from '../../components/monetizacion/monetizacion.component';
 import { PricingComponent } from '../../components/pricing/pricing.component';
 import { TeamComponent } from '../../components/team/team.component';
 import { FaqComponent } from '../../components/faq/faq.component';
 import { DemoContactComponent } from '../../components/demo-contact/demo-contact.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { WhatsappFabComponent } from '../../components/whatsapp-fab/whatsapp-fab.component';
+import { ContactoFabComponent } from '../../components/contacto-fab/contacto-fab.component';
 import { applyHomeSeo } from '../../shared/seo';
 
 /**
- * Portada orientada a la clínica: qué gana → cómo funciona → cuánto cuesta →
+ * Portada orientada a la clínica: qué gana → cómo funciona → cómo lo
+ * monetiza → cuánto cuesta →
  * quién está detrás → dudas → demo o «te llamamos».
  *
  * Todas las secciones se prerenderizan (llegan en el HTML, también las
@@ -42,12 +45,14 @@ import { applyHomeSeo } from '../../shared/seo';
     FeaturesComponent,
     ClinicasComponent,
     HowItWorksComponent,
+    MonetizacionComponent,
     PricingComponent,
     TeamComponent,
     FaqComponent,
     DemoContactComponent,
     FooterComponent,
     WhatsappFabComponent,
+    ContactoFabComponent,
   ],
   template: `
     <web-header />
@@ -70,6 +75,11 @@ import { applyHomeSeo } from '../../shared/seo';
         <div style="min-height: 200px"></div>
       }
       @defer (hydrate on viewport) {
+        <web-monetizacion />
+      } @placeholder {
+        <div style="min-height: 400px"></div>
+      }
+      @defer (hydrate on viewport) {
         <web-pricing />
       } @placeholder {
         <div style="min-height: 400px"></div>
@@ -90,6 +100,7 @@ import { applyHomeSeo } from '../../shared/seo';
     </main>
     <web-footer />
     <web-whatsapp-fab />
+    <web-contacto-fab />
   `,
 })
 export class HomeComponent {
@@ -102,7 +113,38 @@ export class HomeComponent {
     const scroller = inject(ViewportScroller);
     const destroyRef = inject(DestroyRef);
     let observer: MutationObserver | null = null;
-    destroyRef.onDestroy(() => observer?.disconnect());
+    let soltarAncla: (() => void) | null = null;
+    destroyRef.onDestroy(() => {
+      observer?.disconnect();
+      soltarAncla?.();
+    });
+
+    // Mientras se pintan las secciones con @defer, sus placeholders miden
+    // menos que el contenido real y la página crece: el ancla que ya habíamos
+    // alcanzado se desplaza cientos de px (p. ej. «Monetización» o «Precios»
+    // desde una página legal). Durante 2,5 s, cada vez que cambia el alto de
+    // la página la reencajamos al instante, salvo que el usuario ya esté
+    // haciendo scroll o tocando la página.
+    const mantenerAncla = (fragment: string): (() => void) => {
+      if (typeof ResizeObserver === 'undefined') return () => undefined;
+      let alto = document.body.scrollHeight;
+      const ro = new ResizeObserver(() => {
+        const nuevo = document.body.scrollHeight;
+        if (nuevo === alto) return;
+        alto = nuevo;
+        document.getElementById(fragment)?.scrollIntoView({ behavior: 'instant', block: 'start' });
+      });
+      const eventos = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+      const soltar = () => {
+        ro.disconnect();
+        clearTimeout(tope);
+        eventos.forEach((ev) => window.removeEventListener(ev, soltar));
+      };
+      const tope = setTimeout(soltar, 2500);
+      eventos.forEach((ev) => window.addEventListener(ev, soltar, { passive: true }));
+      ro.observe(document.body);
+      return soltar;
+    };
 
     // Al llegar a la home por navegación cliente (p. ej. «Precios» desde una
     // página legal), las secciones con @defer aún no están en el DOM cuando
@@ -112,7 +154,11 @@ export class HomeComponent {
       .fragment.pipe(takeUntilDestroyed())
       .subscribe((fragment) => {
         observer?.disconnect();
-        if (!fragment || document.getElementById(fragment)) return;
+        soltarAncla?.();
+        soltarAncla = null;
+        if (!fragment) return;
+        soltarAncla = mantenerAncla(fragment);
+        if (document.getElementById(fragment)) return;
 
         observer = new MutationObserver(() => {
           if (!document.getElementById(fragment)) return;

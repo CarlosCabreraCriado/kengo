@@ -47,8 +47,8 @@ const eurDecimal = new Intl.NumberFormat('es-ES', {
             <span class="founder-tag">Oferta fundadora</span>
             <p>
               <b>-{{ oferta.descuentoPct }} % durante {{ oferta.meses }} meses</b>
-              para las primeras {{ oferta.plazasTotales }} clínicas.
-              <span class="left">Quedan {{ oferta.plazasRestantes }} de {{ oferta.plazasTotales }} plazas.</span>
+              para clínicas fundadoras.
+              <span class="left">Quedan solo {{ oferta.plazasRestantes }} plazas.</span>
             </p>
             <a routerLink="/" fragment="demo" class="btn btn-light">Reservar mi plaza</a>
           </div>
@@ -100,15 +100,6 @@ const eurDecimal = new Intl.NumberFormat('es-ES', {
             </ul>
             <a routerLink="/" fragment="demo" class="btn btn-ghost">Hablemos</a>
           </article>
-        </div>
-
-        <div class="roi scroll-reveal" webScrollAnimate>
-          <b class="font-display">Sube 1 € por sesión y Kengo te sale gratis</b>
-          <p>
-            Con {{ planes[0].precioEur }} sesiones al mes ya cubres el plan
-            {{ planes[0].nombre }}. Y tu paciente se lleva algo que antes no
-            tenía: su plan en el móvil y una línea directa contigo.
-          </p>
         </div>
 
         <p class="fine">
@@ -276,28 +267,6 @@ const eurDecimal = new Intl.NumberFormat('es-ES', {
 
       .plan-xl .ticks {
         margin-bottom: 22px;
-      }
-
-      .roi {
-        margin-top: 28px;
-        padding: 26px 28px;
-        border-radius: 24px;
-        background: #fff;
-        border: 1px solid var(--color-ink-200);
-      }
-
-      .roi b {
-        display: block;
-        font-size: clamp(22px, 2.4vw, 30px);
-        color: var(--color-primary-dark);
-      }
-
-      .roi p {
-        margin: 10px 0 0;
-        font-size: 16px;
-        line-height: 1.6;
-        color: var(--color-ink-strong);
-        max-width: 46em;
       }
 
       .fine {

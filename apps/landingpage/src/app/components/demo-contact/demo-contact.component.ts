@@ -40,7 +40,7 @@ import { DEMO_CALENDAR_URL, PLAZO_RESPUESTA } from '../../shared/site-config';
               ></iframe>
             } @else {
               <h3>Agenda una demo de 15 min</h3>
-              <p class="sub">Te atienden Guille o Pablo, fisios del equipo de Kengo.</p>
+              <p class="sub">Te atienden Guille o Pablo, del equipo de Kengo.</p>
               <ul class="ticks">
                 <li>Cómo montar un plan con vídeo en menos de 2 minutos</li>
                 <li>Qué ve tu paciente en casa y cómo te avisa si se descuelga</li>

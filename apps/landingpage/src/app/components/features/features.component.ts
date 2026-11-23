@@ -34,7 +34,7 @@ interface FeatureRow {
         [class.band-soft]="f.band === 'soft'"
         [class.bleed-left]="f.bleed === 'left'"
         [class.bleed-right]="f.bleed === 'right'"
-        [id]="f.id || null"
+        [attr.id]="f.id || null"
       >
         <div class="wrap feat-in scroll-reveal" webScrollAnimate>
           <div>

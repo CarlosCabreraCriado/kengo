@@ -29,7 +29,8 @@ import { WHATSAPP_MENSAJE, WHATSAPP_NUMBER } from '../../shared/site-config';
       .fab {
         position: fixed;
         right: max(18px, env(safe-area-inset-right));
-        bottom: max(18px, env(safe-area-inset-bottom));
+        /* Encima del botón «¿Hablamos?» (56px + 14px de aire), que ocupa la esquina. */
+        bottom: calc(max(18px, env(safe-area-inset-bottom)) + 70px);
         z-index: 90; /* por debajo del nav (100) para no tapar el menú móvil */
         width: 56px;
         height: 56px;

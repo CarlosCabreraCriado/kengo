@@ -54,9 +54,7 @@ describe('site-config', () => {
   });
 
   it('la oferta fundadora es coherente', () => {
+    expect(Number.isInteger(OFERTA_FUNDADORA.plazasRestantes)).toBe(true);
     expect(OFERTA_FUNDADORA.plazasRestantes).toBeGreaterThanOrEqual(0);
-    expect(OFERTA_FUNDADORA.plazasRestantes).toBeLessThanOrEqual(
-      OFERTA_FUNDADORA.plazasTotales,
-    );
   });
 });
