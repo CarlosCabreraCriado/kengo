@@ -19,6 +19,7 @@ import type * as _helpers_inactividad from "../_helpers/inactividad.js";
 import type * as _helpers_mutationWithTriggers from "../_helpers/mutationWithTriggers.js";
 import type * as _helpers_patientAccess from "../_helpers/patientAccess.js";
 import type * as _helpers_patientTz from "../_helpers/patientTz.js";
+import type * as _helpers_pdfLayout from "../_helpers/pdfLayout.js";
 import type * as _helpers_permissions from "../_helpers/permissions.js";
 import type * as _helpers_planChainRepair from "../_helpers/planChainRepair.js";
 import type * as _helpers_planStatus from "../_helpers/planStatus.js";
@@ -71,6 +72,7 @@ import type * as clinics_internal from "../clinics/internal.js";
 import type * as clinics_mutations from "../clinics/mutations.js";
 import type * as clinics_queries from "../clinics/queries.js";
 import type * as compliance_internal from "../compliance/internal.js";
+import type * as contact__leadHelpers from "../contact/_leadHelpers.js";
 import type * as contact_internal from "../contact/internal.js";
 import type * as conversations_helpers from "../conversations/helpers.js";
 import type * as conversations_mutations from "../conversations/mutations.js";
@@ -139,6 +141,7 @@ import type * as notificationPreferences_mutations from "../notificationPreferen
 import type * as notificationPreferences_queries from "../notificationPreferences/queries.js";
 import type * as pdf_actions from "../pdf/actions.js";
 import type * as pdf_internal from "../pdf/internal.js";
+import type * as pdf_render from "../pdf/render.js";
 import type * as plans_internal from "../plans/internal.js";
 import type * as plans_mutations from "../plans/mutations.js";
 import type * as plans_queries from "../plans/queries.js";
@@ -190,6 +193,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/mutationWithTriggers": typeof _helpers_mutationWithTriggers;
   "_helpers/patientAccess": typeof _helpers_patientAccess;
   "_helpers/patientTz": typeof _helpers_patientTz;
+  "_helpers/pdfLayout": typeof _helpers_pdfLayout;
   "_helpers/permissions": typeof _helpers_permissions;
   "_helpers/planChainRepair": typeof _helpers_planChainRepair;
   "_helpers/planStatus": typeof _helpers_planStatus;
@@ -242,6 +246,7 @@ declare const fullApi: ApiFromModules<{
   "clinics/mutations": typeof clinics_mutations;
   "clinics/queries": typeof clinics_queries;
   "compliance/internal": typeof compliance_internal;
+  "contact/_leadHelpers": typeof contact__leadHelpers;
   "contact/internal": typeof contact_internal;
   "conversations/helpers": typeof conversations_helpers;
   "conversations/mutations": typeof conversations_mutations;
@@ -310,6 +315,7 @@ declare const fullApi: ApiFromModules<{
   "notificationPreferences/queries": typeof notificationPreferences_queries;
   "pdf/actions": typeof pdf_actions;
   "pdf/internal": typeof pdf_internal;
+  "pdf/render": typeof pdf_render;
   "plans/internal": typeof plans_internal;
   "plans/mutations": typeof plans_mutations;
   "plans/queries": typeof plans_queries;
